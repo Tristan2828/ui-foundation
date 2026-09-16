@@ -12,8 +12,11 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run preview -- --port 4173',
+    // Self-contained: build then preview, so `playwright test` doesn't
+    // depend on a build step having already run in the calling shell/CI job.
+    command: 'npm run build && npm run preview -- --port 4173',
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
   },
 })
