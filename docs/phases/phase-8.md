@@ -144,6 +144,14 @@
   `docker` availability check, as expected with no Docker installed.
   Everything before that check in the script has been verified
   independently (see above).
+- **CI, pushed to `main`**: the new `verify-backend` job failed on the
+  first push (`bash scripts/verify.sh`, exit 127) — the script only
+  looked for `.venv/Scripts|bin/python`, but CI installs into the
+  system Python directly, with no venv. Fixed with a `command -v
+  python` fallback (commit `2ed6987`); both `verify-backend` and the
+  existing `verify` job are green on `main` as of that commit,
+  confirming the backend gate actually works in a clean environment,
+  not just against this machine's own `.venv`.
 
 ## What the next session needs to know
 
