@@ -7,7 +7,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PY=".venv/Scripts/python"
-[ -x "$PY" ] || PY=".venv/bin/python"
+if [ ! -x "$PY" ]; then PY=".venv/bin/python"; fi
+if [ ! -x "$PY" ]; then PY="$(command -v python)"; fi
 
 "$PY" -m mypy app scripts/check_spec_conformance.py
 "$PY" -m pytest -q
