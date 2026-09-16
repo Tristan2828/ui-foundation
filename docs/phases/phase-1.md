@@ -64,6 +64,15 @@
 `check-deps.mjs`, `vitest run` (no-op), `playwright test` (1 passed).
 `scripts/check-phase-1.sh`: **PASS**.
 
+First CI run failed: Playwright's `webServer` ran `vite preview` with no
+prior build step, so there was no `dist/` to serve and the health check
+timed out after 60s. My local run had passed only because I'd manually run
+`npm run build` earlier in the session. Fixed by making the `webServer`
+command self-contained (`npm run build && npm run preview -- --port 4173`)
+so `verify` doesn't depend on step ordering outside the script. Confirmed
+by deleting `dist/` locally and re-running, then confirmed green on CI
+(`gh run watch`).
+
 ## What the next session needs to know
 
 - Next up: Phase 2 (Contract and Boundary) — no backend required. This is
