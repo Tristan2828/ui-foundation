@@ -47,7 +47,7 @@
         "table",
         "tooltip"
       ],
-      "dependencies": ["@tanstack/react-query", "@tanstack/react-table", "lucide-react", "next-themes"],
+      "dependencies": ["@tanstack/react-query", "@tanstack/react-table", "lucide-react", "next-themes", "react-router"],
       "files": [
         { "path": "src/components/app/app-shell.tsx", "type": "registry:file", "target": "~/src/components/app/app-shell.tsx" },
         { "path": "src/components/app/route-error-boundary.tsx", "type": "registry:file", "target": "~/src/components/app/route-error-boundary.tsx" },
