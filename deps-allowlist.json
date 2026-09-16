@@ -5,6 +5,12 @@
     "vite": "8.3.0",
     "@playwright/test": "1.63.0"
   },
+  "shadcnInit": {
+    "$comment": "Exact flags used for `npx shadcn@<tools.shadcn> init` — reuse these, don't re-prompt, so every session's `add` commands land in a project configured the same way.",
+    "template": "vite",
+    "base": "base",
+    "preset": "nova"
+  },
   "dependencies": [
     "react",
     "react-dom",
@@ -16,14 +22,21 @@
     "zod",
     "openapi-fetch",
     "class-variance-authority",
-    "clsx",
-    "tailwind-merge",
-    "lucide-react"
+    "cn",
+    "lucide-react",
+    "@base-ui/react",
+    "@fontsource-variable/geist",
+    "tw-animate-css",
+    "shadcn"
   ],
   "devDependencies": [
     "vite",
     "@vitejs/plugin-react",
     "typescript",
+    "@types/node",
+    "@types/react",
+    "@types/react-dom",
+    "globals",
     "tailwindcss",
     "@tailwindcss/vite",
     "eslint",

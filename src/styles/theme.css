@@ -1,0 +1,107 @@
+/*
+ * Two-layer design tokens (see docs/BUILD-PLAN.md, Phase 5).
+ *
+ * Layer 1 — primitives: raw palette values. Never referenced from
+ * components directly.
+ * Layer 2 — semantic: what components actually consume (bg-primary,
+ * text-muted-foreground, ...). Remapped per theme/mode; primitives are not.
+ *
+ * The values below are shadcn's generated defaults (Nova preset),
+ * reorganized into the two-layer shape. Phase 1 only needs the structure to
+ * exist; Phase 5 is where the primitive palette itself is deliberately
+ * chosen and this file's diff should be small.
+ */
+
+:root {
+  /* Layer 1 — primitives */
+  --white: oklch(1 0 0);
+  --white-a10: oklch(1 0 0 / 10%);
+  --white-a15: oklch(1 0 0 / 15%);
+  --black: oklch(0.145 0 0);
+
+  --gray-50: oklch(0.985 0 0);
+  --gray-100: oklch(0.97 0 0);
+  --gray-200: oklch(0.922 0 0);
+  --gray-300: oklch(0.87 0 0);
+  --gray-400: oklch(0.708 0 0);
+  --gray-500: oklch(0.556 0 0);
+  --gray-600: oklch(0.439 0 0);
+  --gray-700: oklch(0.371 0 0);
+  --gray-900: oklch(0.269 0 0);
+  --gray-950: oklch(0.205 0 0);
+
+  --red-500: oklch(0.577 0.245 27.325);
+  --red-400: oklch(0.704 0.191 22.216);
+  --blue-500: oklch(0.488 0.243 264.376);
+
+  --radius-base: 0.625rem;
+
+  /* Layer 2 — semantic (light) */
+  --background: var(--white);
+  --foreground: var(--black);
+  --card: var(--white);
+  --card-foreground: var(--black);
+  --popover: var(--white);
+  --popover-foreground: var(--black);
+  --primary: var(--gray-950);
+  --primary-foreground: var(--gray-50);
+  --secondary: var(--gray-100);
+  --secondary-foreground: var(--gray-950);
+  --muted: var(--gray-100);
+  --muted-foreground: var(--gray-500);
+  --accent: var(--gray-100);
+  --accent-foreground: var(--gray-950);
+  --destructive: var(--red-500);
+  --border: var(--gray-200);
+  --input: var(--gray-200);
+  --ring: var(--gray-400);
+  --chart-1: var(--gray-300);
+  --chart-2: var(--gray-500);
+  --chart-3: var(--gray-600);
+  --chart-4: var(--gray-700);
+  --chart-5: var(--gray-900);
+  --radius: var(--radius-base);
+  --sidebar: var(--gray-50);
+  --sidebar-foreground: var(--black);
+  --sidebar-primary: var(--gray-950);
+  --sidebar-primary-foreground: var(--gray-50);
+  --sidebar-accent: var(--gray-100);
+  --sidebar-accent-foreground: var(--gray-950);
+  --sidebar-border: var(--gray-200);
+  --sidebar-ring: var(--gray-400);
+}
+
+.dark {
+  /* Layer 2 — semantic (dark). Only this block is remapped; Layer 1 is not. */
+  --background: var(--black);
+  --foreground: var(--gray-50);
+  --card: var(--gray-950);
+  --card-foreground: var(--gray-50);
+  --popover: var(--gray-950);
+  --popover-foreground: var(--gray-50);
+  --primary: var(--gray-200);
+  --primary-foreground: var(--gray-950);
+  --secondary: var(--gray-900);
+  --secondary-foreground: var(--gray-50);
+  --muted: var(--gray-900);
+  --muted-foreground: var(--gray-400);
+  --accent: var(--gray-900);
+  --accent-foreground: var(--gray-50);
+  --destructive: var(--red-400);
+  --border: var(--white-a10);
+  --input: var(--white-a15);
+  --ring: var(--gray-500);
+  --chart-1: var(--gray-300);
+  --chart-2: var(--gray-500);
+  --chart-3: var(--gray-600);
+  --chart-4: var(--gray-700);
+  --chart-5: var(--gray-900);
+  --sidebar: var(--gray-950);
+  --sidebar-foreground: var(--gray-50);
+  --sidebar-primary: var(--blue-500);
+  --sidebar-primary-foreground: var(--gray-50);
+  --sidebar-accent: var(--gray-900);
+  --sidebar-accent-foreground: var(--gray-50);
+  --sidebar-border: var(--white-a10);
+  --sidebar-ring: var(--gray-500);
+}
