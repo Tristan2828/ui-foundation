@@ -52,6 +52,7 @@
     "msw",
     "openapi-typescript",
     "ajv",
-    "openapi-response-validator"
+    "openapi-response-validator",
+    "js-yaml"
   ]
 }

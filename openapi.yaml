@@ -1,0 +1,303 @@
+openapi: 3.1.0
+info:
+  title: UI Foundation Demo API — Widgets
+  version: "1.0.0"
+  description: >
+    Contract for the Widgets demo domain (Phase 2). Owned by the ui-foundation
+    repo, not by any backend. Frozen at the end of Phase 2 per
+    docs/BUILD-PLAN.md — changes wait for v1.1.0.
+
+    Wire pagination deliberately does not match the UI's Page<T> contract
+    (offset/limit + {items,total} here vs. {items,total,page,pageSize} in
+    src/api/contracts.ts) so the gateway's translation is a real seam, not a
+    passthrough. Validation errors follow FastAPI's default shape
+    ({"detail": [...]}) since FastAPI is the planned Phase 8 backend; other
+    errors use a single {"detail": string} shape, matching FastAPI's default
+    HTTPException body.
+
+servers:
+  - url: /api
+
+paths:
+  /categories:
+    get:
+      operationId: listCategories
+      summary: Search categories for the widget-form combobox
+      tags: [categories]
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Case-insensitive substring match on name.
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Matching categories, unpaginated (typeahead result set, not a table).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Category" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets — server-side pagination, sorting, filtering
+      tags: [widgets]
+      parameters:
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            pattern: "^(name|status|availableFrom|price):(asc|desc)$"
+          description: 'Single sort field and direction, e.g. "name:asc".'
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/WidgetStatus" }
+        - name: categoryId
+          in: query
+          schema: { type: integer }
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Case-insensitive substring match on name.
+      responses:
+        "200":
+          description: A page of widgets.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WidgetListResponse" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    post:
+      operationId: createWidget
+      summary: Create a widget
+      tags: [widgets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WidgetCreate" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Widget" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /widgets/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: getWidget
+      summary: Get a single widget
+      tags: [widgets]
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Widget" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    patch:
+      operationId: updateWidget
+      summary: Partially update a widget
+      tags: [widgets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WidgetUpdate" }
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Widget" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+    delete:
+      operationId: deleteWidget
+      summary: Delete a widget
+      tags: [widgets]
+      responses:
+        "204":
+          description: Deleted.
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+components:
+  schemas:
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer, readOnly: true }
+        name: { type: string, minLength: 1, maxLength: 100 }
+
+    WidgetStatus:
+      type: string
+      enum: [draft, active, archived]
+      description: Enum field — forces Select input + badge rendering (Phase 4).
+
+    Widget:
+      type: object
+      description: >
+        The six properties below are the Phase 4 field-type requirements —
+        one field per force, so each maps unambiguously to the UI pattern it
+        exercises. Do not add a seventh; see docs/BUILD-PLAN.md Scope Ceiling.
+      required:
+        - id
+        - name
+        - categoryId
+        - status
+        - availableFrom
+        - price
+        - description
+      properties:
+        id: { type: integer, readOnly: true }
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Display label. Not one of the six forcing field types.
+        categoryId:
+          type: integer
+          description: >
+            Foreign key to Category.id — forces a combobox with async search
+            (Phase 4). Required: every widget belongs to a category.
+        status:
+          allOf: [{ $ref: "#/components/schemas/WidgetStatus" }]
+          default: draft
+        availableFrom:
+          type: string
+          format: date-time
+          description: >
+            Datetime field — forces a date picker plus timezone handling
+            (Phase 4). ISO 8601 with offset, e.g. "2026-09-15T00:00:00Z".
+        assigneeEmail:
+          type: ["string", "null"]
+          format: email
+          description: >
+            Nullable field — forces empty-state display when null and
+            optional (not required-when-present) validation (Phase 4).
+        price:
+          type: string
+          pattern: "^\\d+\\.\\d{2}$"
+          description: >
+            Decimal field, represented as a fixed-2-decimal-place string
+            (never a float) to avoid binary rounding on money — forces
+            locale-aware formatting on display and parsing on input
+            (Phase 4). Example: "19.99".
+        description:
+          type: string
+          maxLength: 2000
+          description: >
+            Long-text field — forces a textarea on the form and truncation
+            in the table (Phase 4).
+
+    WidgetCreate:
+      type: object
+      description: Widget without a server-assigned id.
+      required: [name, categoryId, status, availableFrom, price, description]
+      properties:
+        name: { $ref: "#/components/schemas/Widget/properties/name" }
+        categoryId: { $ref: "#/components/schemas/Widget/properties/categoryId" }
+        status: { $ref: "#/components/schemas/WidgetStatus" }
+        availableFrom: { $ref: "#/components/schemas/Widget/properties/availableFrom" }
+        assigneeEmail: { $ref: "#/components/schemas/Widget/properties/assigneeEmail" }
+        price: { $ref: "#/components/schemas/Widget/properties/price" }
+        description: { $ref: "#/components/schemas/Widget/properties/description" }
+
+    WidgetUpdate:
+      type: object
+      description: All fields optional — PATCH semantics.
+      properties:
+        name: { $ref: "#/components/schemas/Widget/properties/name" }
+        categoryId: { $ref: "#/components/schemas/Widget/properties/categoryId" }
+        status: { $ref: "#/components/schemas/WidgetStatus" }
+        availableFrom: { $ref: "#/components/schemas/Widget/properties/availableFrom" }
+        assigneeEmail: { $ref: "#/components/schemas/Widget/properties/assigneeEmail" }
+        price: { $ref: "#/components/schemas/Widget/properties/price" }
+        description: { $ref: "#/components/schemas/Widget/properties/description" }
+
+    WidgetListResponse:
+      type: object
+      description: >
+        Wire pagination shape — deliberately not Page<T>. The gateway
+        computes page/pageSize from offset/limit; see src/api/gateway/.
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Widget" }
+        total:
+          type: integer
+          minimum: 0
+
+    ValidationErrorBody:
+      type: object
+      description: FastAPI's default 422 shape (RequestValidationError).
+      required: [detail]
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            required: [loc, msg, type]
+            properties:
+              loc:
+                type: array
+                items:
+                  type: ["string", "integer"]
+              msg: { type: string }
+              type: { type: string }
+
+    HTTPErrorBody:
+      type: object
+      description: FastAPI's default HTTPException shape.
+      required: [detail]
+      properties:
+        detail: { type: string }
+
+  responses:
+    ValidationError:
+      description: Validation failed on one or more fields.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ValidationErrorBody" }
+    NotFoundError:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    UnauthorizedError:
+      description: Missing or invalid credentials.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    ServerError:
+      description: Unhandled server error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }

@@ -2,6 +2,7 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import tanstackQuery from '@tanstack/eslint-plugin-query'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
@@ -13,7 +14,7 @@ const TAILWIND_PALETTE_CLASS =
 const HEX_COLOR = '/#[0-9a-f]{3,8}/i'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'public/mockServiceWorker.js']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -39,6 +40,26 @@ export default defineConfig([
           message:
             'No raw hex colors in style props. Use a semantic token from src/styles/theme.css.',
         },
+        {
+          selector: "CallExpression[callee.name='fetch']",
+          message:
+            'Do not call fetch directly. All server state goes through TanStack Query, which calls src/api/gateway/, which is the only caller of src/api/transport/.',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/transport', '**/transport/*', '**/api/transport', '**/api/transport/*'],
+              message: 'Import from src/api/gateway/ instead — only the gateway may call transport/.',
+            },
+            {
+              group: ['**/auth-provider', '**/auth/auth-provider'],
+              message: 'Import useAuth from src/auth/use-auth instead — auth-provider.tsx is the only file that knows how auth works.',
+            },
+          ],
+        },
       ],
     },
   },
@@ -51,4 +72,42 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    // The gateway is the one permitted caller of transport/ — the anti-
+    // corruption layer boundary this rule exists to enforce (see
+    // docs/BUILD-PLAN.md "Anti-Corruption Layer").
+    files: ['src/api/gateway/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
+    // transport/ is the one place a bare fetch call, or an import of itself,
+    // is expected.
+    files: ['src/api/transport/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
+    // src/auth/ is the boundary itself — its own files may reference
+    // auth-provider.tsx directly.
+    files: ['src/auth/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
+  {
+    // Tests exercise the HTTP boundary directly (gateway tests stub fetch;
+    // mock-conformance tests call it against the real MSW handlers; e2e
+    // specs call it from inside the browser page via page.evaluate) — the
+    // no-bare-fetch rule exists to keep app code on the gateway, not to
+    // keep tests off the network primitive they're testing.
+    files: ['tests/**/*.{ts,tsx}', 'e2e/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': 'off',
+    },
+  },
+  ...tanstackQuery.configs['flat/recommended'],
 ])
