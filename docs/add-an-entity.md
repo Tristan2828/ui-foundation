@@ -10,6 +10,22 @@ Do not skip steps or reorder them. Replace `<Entity>` with the PascalCase
 entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
 (`invoice`) throughout.
 
+0. **Bootstrap, only if `package.json` has no `gen:api` script** (a sign
+   this is the first entity added since installing the registry — the
+   registry ships files and npm `dependencies`/`devDependencies`, but has
+   no way to merge npm scripts into `package.json` for you). If missing,
+   add exactly these three scripts:
+   ```json
+   "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
+   "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
+   "verify": "npm run verify:fast && playwright test"
+   ```
+   Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
+   `npx msw init public/ --save` once so the MSW service worker installed
+   by `starter` actually registers. Do not add an `openapi.yaml` freeze
+   check here — that discipline is specific to the ui-foundation repo's
+   own frozen `Widgets` demo (see `docs/BUILD-PLAN.md` if present), not to
+   a spec you are actively extending.
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete. Reuse the `Page` and error components already in the spec; do
    not redefine pagination or error shapes per entity.

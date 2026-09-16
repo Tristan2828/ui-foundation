@@ -88,9 +88,8 @@ and training data lags them.
 ## Before You Finish
 Run `npm run verify`. It must pass. Do not report a task complete
 on a failing gate — the developer does not review this code by reading it.
-No Stop hook enforces this yet (optional tier, never added — see
-docs/BUILD-PLAN.md Phase 0 table); until one exists, running `verify`
-before ending a session is on you, not a gate.
+No Stop hook enforces this yet; until one exists, running `verify` before
+ending a session is on you, not a gate.
 
 ## Reference Implementations — Copy These Patterns
 - Data table:   src/routes/widgets/widgets-table.tsx (thin consumer of the
@@ -110,6 +109,8 @@ Copy the routes/widgets/* files per entity. Extend the composites
 per-entity.
 
 ## Full Plan
-The complete build plan, including architecture, verification strategy,
-and phase-by-phase detail, is at `docs/BUILD-PLAN.md`. Read it in full at
-the start of every session.
+`docs/BUILD-PLAN.md` is this file's own design document — the ui-foundation
+repo's build plan, not something every consuming app has. If it exists in
+this repo, read it in full at the start of every session; if it doesn't
+(a fresh app that installed this registry), everything you need is in this
+file and `docs/add-an-entity.md`.

@@ -12,11 +12,17 @@
 #     `ref` defaults to the latest git tag (falls back to v1.0.0).
 #
 #   scripts/consume-test.sh <ref> <EntityName>
-#     The full Phase 7 dogfood run (install, then launch a fresh agent
-#     with `/new-entity <EntityName>` and no memory of this repo). Not
-#     implemented yet — Phase 7 scope, not Phase 6's.
+#     The full Phase 7 dogfood run: install, then launch a *fresh* agent
+#     (no memory of this repo — a new process in a directory it has never
+#     seen) with a single instruction, `/new-entity <EntityName>`, and run
+#     `npm run verify` in the result. Exits non-zero if the agent run
+#     fails/times out or verify fails afterward. The transcript is always
+#     preserved under logs/consume-test/ for review — see
+#     docs/BUILD-PLAN.md Phase 7 step 2 ("read the transcript for every
+#     question the agent asked...").
 set -euo pipefail
 cd "$(dirname "$0")/.."
+REPO_ROOT="$(pwd)"
 
 REPO="Tristan2828/ui-foundation"
 fail() { echo "consume-test: $1" >&2; exit 1; }
@@ -25,23 +31,26 @@ VITE_VERSION=$(node -p "require('./deps-allowlist.json').tools.vite")
 SHADCN_VERSION=$(node -p "require('./deps-allowlist.json').tools.shadcn")
 
 INSTALL_ONLY=false
-REF=""
+POSITIONAL=()
 for arg in "$@"; do
   case "$arg" in
     --install-only) INSTALL_ONLY=true ;;
-    *) [ -z "$REF" ] && REF="$arg" ;;
+    *) POSITIONAL+=("$arg") ;;
   esac
 done
 
+REF="${POSITIONAL[0]:-}"
+ENTITY="${POSITIONAL[1]:-}"
 if [ "$INSTALL_ONLY" != true ]; then
-  fail "full dogfood mode (fresh agent + /new-entity) is Phase 7 scope and is not implemented yet. Use --install-only."
+  [ -n "$ENTITY" ] || fail "full dogfood mode requires an entity name: consume-test.sh <ref> <EntityName>"
 fi
-
 [ -n "$REF" ] || REF=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
 
 WORKDIR=$(mktemp -d)
-trap 'rm -rf "$WORKDIR"' EXIT
 APP="$WORKDIR/consume-test-app"
+KEEP=false
+cleanup() { [ "$KEEP" = true ] || rm -rf "$WORKDIR"; }
+trap cleanup EXIT
 
 # `npm create vite` mis-joins an absolute path with the caller's cwd on
 # Windows/Git Bash when passed as an argument (it prints the right target
@@ -119,15 +128,50 @@ npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes --overwrite
 for f in \
   AGENTS.md CLAUDE.md docs/add-an-entity.md \
   .claude/skills/new-entity/SKILL.md .claude/agents/spec-tester.md \
-  src/styles/theme.css \
+  .claude/hooks/deny-impl-read.mjs scripts/check-deps.mjs \
+  src/styles/theme.css src/index.css \
   src/components/app/app-shell.tsx src/components/app/data-table.tsx \
   src/components/app/entity-form.tsx src/components/app/error-state.tsx \
   src/components/app/route-error-boundary.tsx \
+  src/components/theme-provider.tsx \
   src/api/contracts.ts src/api/transport/index.ts src/api/query-client.ts \
+  src/api/gateway/errors.ts src/api/gateway/widgets.ts src/api/gateway/categories.ts \
   src/auth/auth-context.ts src/auth/auth-provider.tsx src/auth/use-auth.ts \
+  src/main.tsx src/App.tsx src/routes/home.tsx src/routes/kitchen-sink.tsx \
+  src/mocks/browser.ts src/mocks/server.ts src/mocks/data.ts \
+  src/mocks/handlers.ts src/mocks/e2e-hooks.ts \
+  src/routes/widgets/use-widgets.ts src/routes/widgets/use-categories.ts \
+  src/routes/widgets/widget-schema.ts src/routes/widgets/widgets-columns.tsx \
+  src/routes/widgets/widgets-table.tsx src/routes/widgets/widget-form.tsx \
+  src/routes/widgets/delete-widget-action.tsx \
+  tests/gateway/widgets.test.ts tests/gateway/categories.test.ts \
+  tests/mocks/conformance.test.ts tests/widget-schema.test.ts \
+  e2e/global.d.ts e2e/msw-contract.spec.ts e2e/shell.spec.ts e2e/smoke.spec.ts \
+  e2e/widget-form.spec.ts e2e/widgets-table.spec.ts \
+  vitest.config.ts playwright.config.ts tsconfig.test.json openapi.yaml \
 ; do
   [ -f "$f" ] || fail "expected file missing after install: $f"
 done
+
+# MSW's browser worker (src/mocks/browser.ts, imported unconditionally by
+# main.tsx unless VITE_API=real) needs a generated service-worker script in
+# public/ to actually intercept requests — registry.json can't ship this
+# (it's a generated artifact, not source), so it's part of getting MSW
+# running at all, same as `npm install` itself.
+echo "consume-test: npx msw init public/ --save"
+npx msw init public/ --save
+
+# `verify:fast`'s `git diff --exit-code -- src/api/schema.d.ts` needs an
+# actual repo to diff against, and the entity playbook's own "commit,
+# then stop" BLOCKERS.md instruction (AGENTS.md Scope and Stopping) needs
+# one to act on. A real consuming app has this from the moment it's
+# created; `npm create vite` does not do it automatically.
+echo "consume-test: git init (verify:fast's git diff check and the entity playbook's commit step both need a real repo)"
+git init -q
+git config user.email "consume-test@localhost"
+git config user.name "consume-test"
+git add -A
+git commit -q -m "Initial scaffold: fresh Vite app + $REPO/starter#$REF"
 
 # Plain `tsc --noEmit` against a solution-style tsconfig (what both this
 # repo's own Phase 1 scaffold and a fresh `create vite` produce) checks
@@ -137,4 +181,62 @@ done
 echo "consume-test: tsc -b"
 npx tsc -b
 
-echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks clean"
+if [ "$INSTALL_ONLY" = true ]; then
+  echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks clean"
+  exit 0
+fi
+
+# --- Phase 7 dogfood mode: a fresh agent, /new-entity, then verify ---
+#
+# "Fresh" here means a new `claude` process started in a directory it has
+# never seen before — not a flag. $APP has no session history with this
+# repo; everything the agent knows about the foundation's conventions
+# comes from what the registry actually installed (AGENTS.md, CLAUDE.md,
+# the new-entity skill, spec-tester) — same as a real consumer would see.
+STAMP=$(date +%Y%m%d-%H%M%S)
+LOGDIR="$REPO_ROOT/logs/consume-test/${REF}-${ENTITY}-${STAMP}"
+mkdir -p "$LOGDIR"
+TRANSCRIPT="$LOGDIR/transcript.jsonl"
+
+echo "consume-test: launching a fresh agent in $APP — /new-entity $ENTITY"
+echo "consume-test: transcript -> $TRANSCRIPT"
+
+# No --max-turns flag exists in this Claude Code CLI version (2.1.273) —
+# docs/BUILD-PLAN.md's run-phase.sh reference assumed one does. A wall-clock
+# budget via `timeout` is the stand-in; see docs/phases/phase-7.md.
+#
+# --dangerously-skip-permissions: the plan's reference loop uses
+# `--permission-mode acceptEdits`, but that mode still prompts for Bash
+# (npm install, gen:api, vitest, playwright) with no one to answer, which
+# hangs forever headless. $APP is a disposable temp directory the fresh
+# agent has never touched before, not this repo, so a full bypass is
+# scoped to something safe to bypass on.
+# MSYS_NO_PATHCONV=1: Git Bash on Windows rewrites a leading-slash argument
+# into an absolute Windows path before claude.exe ever sees it — without
+# this, "/new-entity Invoice" arrives as the literal string
+# "C:/Program Files/Git/new-entity Invoice", which is not a slash-command
+# at all. Confirmed by a first real dogfood run: the fresh agent correctly
+# diagnosed the mangling itself and refused to hand-replicate the skill's
+# steps (disable-model-invocation working as designed) rather than
+# guessing — but the run was wasted on a test-harness bug, not a
+# foundation one. See docs/phases/phase-7.md.
+AGENT_EXIT=0
+MSYS_NO_PATHCONV=1 timeout 3600 claude -p "/new-entity $ENTITY" \
+  --dangerously-skip-permissions \
+  --output-format stream-json --verbose \
+  > "$TRANSCRIPT" 2> "$LOGDIR/stderr.log" || AGENT_EXIT=$?
+
+if [ "$AGENT_EXIT" -ne 0 ]; then
+  KEEP=true
+  cp -r "$APP" "$LOGDIR/app" 2>/dev/null || true
+  fail "fresh agent run exited $AGENT_EXIT (124 = timed out after 3600s) — transcript: $TRANSCRIPT, app snapshot: $LOGDIR/app"
+fi
+
+echo "consume-test: fresh agent finished — running npm run verify in the consuming app"
+if ! (cd "$APP" && npm run verify) 2>&1 | tee "$LOGDIR/verify.log"; then
+  KEEP=true
+  cp -r "$APP" "$LOGDIR/app" 2>/dev/null || true
+  fail "npm run verify failed in the consuming app after /new-entity $ENTITY — transcript: $TRANSCRIPT, verify log: $LOGDIR/verify.log, app snapshot: $LOGDIR/app"
+fi
+
+echo "consume-test: PASS — a fresh agent with no memory of this repo built $ENTITY entirely from $REPO/starter#$REF, npm run verify passes. Transcript: $TRANSCRIPT"

@@ -15,6 +15,17 @@ Do not skip steps. Do not reorder them. Do not add anything beyond what
 this list covers — note extra ideas in `docs/DEFERRED.md` instead of
 building them.
 
+0. Bootstrap, only if `package.json` has no `gen:api` script (a sign this
+   is the first entity added since installing the registry — it ships
+   files and npm dependencies, but cannot merge npm scripts into
+   `package.json`). If missing, add:
+   `"gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts"`,
+   `"verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run"`,
+   `"verify": "npm run verify:fast && playwright test"`. Then, only if
+   `public/mockServiceWorker.js` doesn't exist yet, run
+   `npx msw init public/ --save` once. Do not add an openapi.yaml freeze
+   check — that's specific to this repo's own frozen `Widgets` demo, not
+   to a spec you are actively extending.
 1. Add `<Entity>` to `openapi.yaml` — schema, list, get, create, update,
    delete. Reuse the existing `Page` and error components; do not
    redefine pagination or error shapes per entity.
