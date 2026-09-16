@@ -173,15 +173,24 @@ git config user.name "consume-test"
 git add -A
 git commit -q -m "Initial scaffold: fresh Vite app + $REPO/starter#$REF"
 
-# Plain `tsc --noEmit` against a solution-style tsconfig (what both this
-# repo's own Phase 1 scaffold and a fresh `create vite` produce) checks
-# zero files and exits 0 unconditionally — a silent no-op discovered the
-# hard way in this repo's own Phase 4 (docs/phases/phase-4.md). `tsc -b`
-# is the command that actually type-checks a solution-style project.
-echo "consume-test: tsc -b"
-npx tsc -b
-
 if [ "$INSTALL_ONLY" = true ]; then
+  # src/api/schema.d.ts is generated from openapi.yaml (openapi-typescript),
+  # never shipped as a file — the widgets reference files that DO ship all
+  # import it. A real consumer's first /new-entity run generates it as its
+  # own Step 0 (docs/add-an-entity.md); --install-only has no agent to do
+  # that, so it runs the generator directly here, the same way it fakes
+  # the Tailwind/alias setup above, to get a meaningful type-check at all.
+  echo "consume-test: npx openapi-typescript openapi.yaml (schema.d.ts is generated, not shipped — see comment above)"
+  npx openapi-typescript openapi.yaml -o src/api/schema.d.ts
+
+  # Plain `tsc --noEmit` against a solution-style tsconfig (what both this
+  # repo's own Phase 1 scaffold and a fresh `create vite` produce) checks
+  # zero files and exits 0 unconditionally — a silent no-op discovered the
+  # hard way in this repo's own Phase 4 (docs/phases/phase-4.md). `tsc -b`
+  # is the command that actually type-checks a solution-style project.
+  echo "consume-test: tsc -b"
+  npx tsc -b
+
   echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks clean"
   exit 0
 fi
