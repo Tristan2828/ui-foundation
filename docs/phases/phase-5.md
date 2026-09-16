@@ -43,8 +43,9 @@ Phase 3 and Phase 4 both flagged, rather than choosing a new palette.
   someone adds to one block and forgets in the other.
 - **Regenerated the two affected dark-mode screenshot baselines**
   (`kitchen-button-dark-*.png`, changed color; `kitchen-badge-dark-*.png`,
-  new) on win32 locally. Every other baseline is untouched — nothing else
-  changed. Linux baselines for these two are not yet committed; see below.
+  new), both win32 (local) and linux (sourced from CI's failure artifact,
+  same approach as Phase 3's `2f868be` — no Docker available in this
+  environment). Every other baseline is untouched — nothing else changed.
 - **Deliberately did not touch the rest of the primitive palette.** The
   existing grayscale-plus-single-red set (shadcn's Nova preset, reorganized
   into two layers in Phase 1) was reviewed against this phase's mandate
@@ -66,16 +67,14 @@ Phase 3 and Phase 4 both flagged, rather than choosing a new palette.
   unreachable by any existing check until `Badge`'s destructive variant had
   somewhere to render, and "independently verified" only means something if
   a script does the verifying.
-- **Linux dark-mode screenshot baselines for `button` and `badge` are not
-  committed yet.** Same constraint Phase 3 hit: no Docker available in this
-  environment to generate them locally, and Phase 3's own baselines were
-  sourced from CI's failure-artifact upload rather than a container. This
-  session pushes to `main` expecting CI to fail on exactly these two Linux
-  comparisons, downloads the actual-\*.png files from the uploaded
-  `playwright-test-results` artifact, and commits them as the new
-  baselines in a follow-up commit — mirroring `2f868be` exactly. If this
-  session ends before that follow-up lands, the next session should check
-  CI status on `main` first, before doing anything else.
+- **Linux dark-mode screenshot baselines for `button` and `badge` needed a
+  follow-up commit**, same constraint Phase 3 hit: no Docker available in
+  this environment to generate them locally. Pushed the token/component fix
+  first, let CI fail on exactly the two expected Linux comparisons (nothing
+  else regressed — confirmed from the artifact's contents), downloaded the
+  actual-\*.png files from the uploaded `playwright-test-results` artifact,
+  and committed them as the new baselines (`6a2a756`) — mirroring `2f868be`
+  exactly. CI is green on `main` as of this commit; nothing outstanding.
 - **`/kitchen-sink` still has no section for the other Phase 4 primitives**
   (`select`, `dialog`, `combobox`, `calendar`, `textarea`, `table`,
   `field`, `label`) — only `badge` was added, because it was the specific
@@ -94,18 +93,15 @@ dark-mode axe pass — the pre-existing 29 unchanged in count and names).
 One unrelated flake reproduced once (`ERR_CONNECTION_REFUSED` against the
 preview server on `empty`'s dark-mode screenshot, same class of webServer
 race Phase 3's report already noted for `msw-contract.spec.ts`); a bare
-re-run was green. `scripts/check-phase-5.sh`: **PASS** (confirmed after
-committing — see Deviations for the one still-open follow-up, which
-`check-phase-5.sh` does not gate on, since it only requires the win32
-baseline to exist and be committed, matching `check-phase-3.sh`'s own
-pattern of documenting the Linux gap rather than blocking on it).
+re-run was green. `scripts/check-phase-5.sh`: **PASS**. CI (`verify` workflow) is green on
+`main` at `6a2a756`, confirmed by watching the run rather than assuming it
+from a local pass — matching the established completion pattern for this
+project (commit, push, confirm CI green, not just local).
 
 ## What the next session needs to know
 
-- Next up: Phase 6 (Registry). Before starting it, confirm CI is green on
-  `main` and that the Linux `button`/`badge` baselines from this phase's
-  "Deviations" section have landed — if not, finish that first; it is a
-  loose end of this phase, not new work for Phase 6.
+- Next up: Phase 6 (Registry). No open loose ends from this phase — CI is
+  green on `main` at `6a2a756`.
 - `--red-400` no longer exists in `theme.css`. If a future session's memory
   or notes reference it (Phase 3/4's reports both do, in passing), that's
   expected — it was the unused primitive this phase's fix orphaned and
