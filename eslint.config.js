@@ -1,5 +1,6 @@
 import js from '@eslint/js'
 import globals from 'globals'
+import checkFile from 'eslint-plugin-check-file'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tanstackQuery from '@tanstack/eslint-plugin-query'
@@ -96,6 +97,34 @@ export default defineConfig([
     files: ['src/auth/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': 'off',
+    },
+  },
+  {
+    // Phase 4: shadcn's own files are kebab-case; enforce the same
+    // convention on everything we hand-author so the agent doesn't pick a
+    // different one per session (docs/BUILD-PLAN.md Phase 4 note). Scoped
+    // to hand-authored directories — src/App.tsx and src/main.tsx are
+    // Vite's own scaffold naming from Phase 1 and predate this rule, and
+    // src/components/ui/** is CLI-owned (already its own kebab-case
+    // convention, governed by the registry, not this rule).
+    files: [
+      'src/routes/**/*.{ts,tsx}',
+      'src/components/app/**/*.{ts,tsx}',
+      'src/api/**/*.{ts,tsx}',
+      'src/auth/**/*.{ts,tsx}',
+      'src/mocks/**/*.{ts,tsx}',
+      'src/hooks/**/*.{ts,tsx}',
+      'src/lib/**/*.{ts,tsx}',
+      'e2e/**/*.ts',
+      'tests/**/*.ts',
+    ],
+    plugins: { 'check-file': checkFile },
+    rules: {
+      'check-file/filename-naming-convention': [
+        'error',
+        { '**/*.{ts,tsx}': 'KEBAB_CASE' },
+        { ignoreMiddleExtensions: true },
+      ],
     },
   },
   {

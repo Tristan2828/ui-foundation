@@ -1,12 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { createQueryClient } from '@/api/query-client'
 import { AuthProvider } from '@/auth/use-auth'
 import { ThemeProvider } from '@/components/theme-provider'
 import './index.css'
 import App from './App.tsx'
 
-const queryClient = new QueryClient()
+const queryClient = createQueryClient()
 
 // MSW serves the whole API contract until a real backend exists (Phase 8
 // swaps this for VITE_API=real against a running backend — see
@@ -16,7 +17,16 @@ const queryClient = new QueryClient()
 async function enableMocking() {
   if (import.meta.env.VITE_API === 'real') return
   const { worker } = await import('./mocks/browser')
-  return worker.start({ onUnhandledRequest: 'bypass' })
+  // start() before exposeMswForE2E(): worker.start() resets the runtime
+  // handler list to the ones setupWorker() was configured with, so a
+  // worker.use() override registered before start() gets silently
+  // discarded rather than applied. React doesn't render (and so doesn't
+  // issue its first fetch) until this whole function's returned promise
+  // resolves, so applying the override after start() is still safely
+  // ahead of any app code.
+  await worker.start({ onUnhandledRequest: 'bypass' })
+  const { exposeMswForE2E } = await import('./mocks/e2e-hooks')
+  exposeMswForE2E()
 }
 
 enableMocking().then(() => {

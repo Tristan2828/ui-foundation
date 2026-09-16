@@ -31,7 +31,11 @@ function resolveRef(ref: string): OpenAPIDoc {
 
 function validatorFor(pathKey: string, method: string): OpenAPIResponseValidator {
   const operation = spec.paths[pathKey][method];
-  const responses: Record<string, { schema: unknown }> = {};
+  // OpenAPIDoc (any): the parsed YAML is untyped, same as elsewhere in this
+  // file — openapi-response-validator's own Schema/SchemaObject types don't
+  // line up with js-yaml's plain-object output closely enough to bother
+  // narrowing here.
+  const responses: Record<string, { schema: OpenAPIDoc }> = {};
   for (const [status, defOrRef] of Object.entries(operation.responses) as [string, OpenAPIDoc][]) {
     const def = defOrRef.$ref ? resolveRef(defOrRef.$ref) : defOrRef;
     const schema = def.content?.["application/json"]?.schema;

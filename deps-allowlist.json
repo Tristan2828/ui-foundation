@@ -29,7 +29,13 @@
     "tw-animate-css",
     "shadcn",
     "sonner",
-    "next-themes"
+    "next-themes",
+    "react-hook-form",
+    "@hookform/resolvers",
+    "zod",
+    "@tanstack/react-table",
+    "react-day-picker",
+    "date-fns"
   ],
   "devDependencies": [
     "vite",

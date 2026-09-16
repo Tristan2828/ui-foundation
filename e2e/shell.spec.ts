@@ -20,6 +20,7 @@ const KITCHEN_SECTIONS = [
 
 const NAV_ENTRIES = [
   { path: '/', label: 'Home', content: { role: 'button', name: 'Get started' } },
+  { path: '/widgets', label: 'Widgets', content: { role: 'heading', name: 'Widgets' } },
   { path: '/kitchen-sink', label: 'Kitchen Sink', content: { role: 'heading', name: 'Kitchen Sink' } },
 ] as const
 
