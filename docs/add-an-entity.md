@@ -26,6 +26,18 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    check here — that discipline is specific to the ui-foundation repo's
    own frozen `Widgets` demo (see `docs/BUILD-PLAN.md` if present), not to
    a spec you are actively extending.
+
+   Also, only if `e2e/shell.spec.ts-snapshots/` doesn't exist yet, run
+   `npx playwright test e2e/shell.spec.ts --update-snapshots` once to
+   generate this machine's own dark-mode screenshot baselines for the
+   kitchen-sink page. These are never shipped by the registry — GitHub's
+   API can't reliably serve binary files to the `gh` CLI (confirmed:
+   `gh api` corrupts PNG content requested via the raw-content header,
+   independent of anything in this registry), and baselines are
+   machine/OS-specific regardless (font rasterization differs — see
+   `docs/BUILD-PLAN.md` Phase 3 if present), so shipping one machine's
+   images to another's would be the wrong fix even if it worked. Commit
+   the generated PNGs once satisfied they look right.
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete. Reuse the `Page` and error components already in the spec; do
    not redefine pagination or error shapes per entity.

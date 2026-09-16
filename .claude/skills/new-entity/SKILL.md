@@ -25,7 +25,13 @@ building them.
    `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once. Do not add an openapi.yaml freeze
    check — that's specific to this repo's own frozen `Widgets` demo, not
-   to a spec you are actively extending.
+   to a spec you are actively extending. Also, only if
+   `e2e/shell.spec.ts-snapshots/` doesn't exist yet, run
+   `npx playwright test e2e/shell.spec.ts --update-snapshots` once to
+   generate this machine's own dark-mode screenshot baselines — these
+   are never shipped by the registry (binary files can't be reliably
+   fetched from a private GitHub repo via the `gh` CLI, and baselines are
+   machine/OS-specific regardless). Commit the generated PNGs.
 1. Add `<Entity>` to `openapi.yaml` — schema, list, get, create, update,
    delete. Reuse the existing `Page` and error components; do not
    redefine pagination or error shapes per entity.
