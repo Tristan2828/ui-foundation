@@ -21,7 +21,7 @@ grep -q "^description:" .claude/skills/new-entity/SKILL.md ||
 # Scope ceiling: exactly three registry items (docs/BUILD-PLAN.md Scope
 # Ceiling), not counted by eye.
 [ -f registry.json ] || fail "registry.json missing"
-ITEM_COUNT=$(node -p "require('./registry.json').items.length")
+ITEM_COUNT=$(node -p "String(require('./registry.json').items.length)")
 [ "$ITEM_COUNT" = "3" ] ||
   fail "registry.json must expose exactly 3 items (conventions, theme, starter); found $ITEM_COUNT"
 for item in conventions theme starter; do
