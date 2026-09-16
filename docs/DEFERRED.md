@@ -13,6 +13,8 @@ full rationale behind each row.
 | Monorepo | Two or more consuming apps share a release cycle |
 | Row virtualization | A table exceeds ~5k rows |
 | Error reporting | An app is actually deployed |
+| Cloud Postgres (e.g. Supabase) in place of local Docker Compose Postgres | The developer wants to stop running Postgres locally, or a deployed backend needs a real hosted database — Phase 8 shipped `docker-compose.yml` for local dev per an explicit choice to do Docker first and cloud later |
+| Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `deps-allowlist.json`/`check-deps.mjs` on the npm side | The backend gains a second contributor/session where an unreviewed Python dependency is a real risk — Phase 8 pinned versions by hand with no mechanical gate |
 
 ## Excluded
 

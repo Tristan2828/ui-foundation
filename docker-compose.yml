@@ -1,0 +1,23 @@
+# Local Postgres only — the backend itself runs on the host (`uvicorn
+# app.main:app --reload` from backend/, after `alembic upgrade head`), not
+# in a container. See docs/BUILD-PLAN.md Phase 8 and docs/DEFERRED.md for
+# the planned cloud-Postgres (e.g. Supabase) alternative to this file.
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ui_foundation
+      POSTGRES_PASSWORD: ui_foundation
+      POSTGRES_DB: ui_foundation
+    ports:
+      - "5432:5432"
+    volumes:
+      - ui-foundation-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ui_foundation"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  ui-foundation-postgres:

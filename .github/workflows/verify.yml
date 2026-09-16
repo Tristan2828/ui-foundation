@@ -23,3 +23,25 @@ jobs:
           name: playwright-test-results
           path: test-results/
           retention-days: 7
+
+  verify-backend:
+    # Phase 8 item 6: diffs FastAPI's generated OpenAPI document against
+    # openapi.yaml (see backend/scripts/check_spec_conformance.py). No
+    # Postgres service here — app.openapi() only introspects route
+    # signatures, and the pytest suite runs against SQLite (see
+    # backend/tests/conftest.py). The Postgres-backed run is
+    # scripts/check-phase-8.sh, run locally at the phase boundary, the
+    # same way scripts/consume-test.sh is for Phases 6-7.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: bash scripts/verify.sh

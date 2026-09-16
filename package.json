@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
     "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && node scripts/check-openapi-freeze.mjs && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
-    "verify": "npm run verify:fast && playwright test"
+    "verify": "npm run verify:fast && playwright test",
+    "verify:backend": "bash backend/scripts/verify.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

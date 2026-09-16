@@ -27,6 +27,28 @@ Don't review this code by reading it — that's not how it's meant to be checked
 
 Start with [`AGENTS.md`](AGENTS.md) (imported by `CLAUDE.md` for Claude Code). It has every hard rule and names the mechanical check that enforces it. The most common task — adding a new entity end to end — is documented at `docs/add-an-entity.md` and shipped as an invocable skill once Phase 6 lands.
 
+## Backend (Phase 8, optional)
+
+The UI runs fully on MSW with no backend at all. `backend/` is a FastAPI +
+SQLModel + Alembic implementation of `openapi.yaml`, for testing the
+contract against a real database:
+
+```bash
+docker compose up -d                                   # Postgres only
+cd backend
+python -m venv .venv && .venv/Scripts/pip install -e ".[dev]"
+.venv/Scripts/alembic upgrade head
+.venv/Scripts/uvicorn app.main:app --reload             # http://localhost:8000
+.venv/Scripts/python -m mypy app && .venv/Scripts/python -m pytest
+
+# in another shell, from the repo root:
+VITE_API=real npm run dev                               # proxies /api to the backend
+```
+
+See `docs/phases/phase-8.md` for what's built and `docs/DEFERRED.md` for
+the planned cloud-Postgres (Supabase) alternative to the local Docker
+Compose Postgres.
+
 ## Consuming this as a registry
 
 Once a version is tagged (Phase 6+):

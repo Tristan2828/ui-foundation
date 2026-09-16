@@ -13,3 +13,12 @@ playwright/.cache/
 !.env.example
 
 .claude/settings.local.json
+
+# Phase 8 backend (Python)
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/*.egg-info/
+

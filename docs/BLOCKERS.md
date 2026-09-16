@@ -15,3 +15,21 @@ read implementation files. Denied: <path>. Write tests from openapi.yaml
 and contracts.ts only."
 No further action needed; the temporal-isolation workaround from Phase 2
 can be retired in favor of the real subagent for future entity work. -->
+
+## Open
+
+- **Docker Desktop is not installed on this machine**, so `scripts/check-phase-8.sh`
+  cannot be run to completion — everything up to its Postgres-backed final
+  section passes (`backend/scripts/verify.sh`: mypy, pytest, spec
+  conformance; the `src/api/gateway`/`src/api/transport` diff against
+  `v1.1.0` is empty). What, why, what's needed: the exit criteria require
+  `npm run verify` to pass with `VITE_API=real` against a running backend,
+  which needs a live Postgres. The developer chose Docker Desktop for local
+  Postgres now (docker-compose.yml is written, untested — see
+  docs/phases/phase-8.md), with a cloud option (e.g. Supabase) deferred for
+  later (docs/DEFERRED.md). Next session: confirm Docker Desktop is
+  installed and running, then `docker compose up -d postgres` and run
+  `scripts/check-phase-8.sh`. If anything in the untested
+  Postgres-integration path (docker-compose healthcheck polling, the
+  Alembic migration, the uvicorn boot) fails, fix it there — everything
+  before it is already verified.
