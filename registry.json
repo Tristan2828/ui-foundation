@@ -1,0 +1,66 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "ui-foundation",
+  "homepage": "https://github.com/Tristan2828/ui-foundation",
+  "items": [
+    {
+      "name": "conventions",
+      "type": "registry:item",
+      "title": "Project Conventions",
+      "description": "Agent instructions, the entity playbook as an invocable skill, the spec-tester subagent, and the dependency allowlist.",
+      "files": [
+        { "path": "AGENTS.md", "type": "registry:file", "target": "~/AGENTS.md" },
+        { "path": "CLAUDE.md", "type": "registry:file", "target": "~/CLAUDE.md" },
+        { "path": "docs/add-an-entity.md", "type": "registry:file", "target": "~/docs/add-an-entity.md" },
+        { "path": ".claude/skills/new-entity/SKILL.md", "type": "registry:file", "target": "~/.claude/skills/new-entity/SKILL.md" },
+        { "path": ".claude/skills/new-entity/SKILL.md", "type": "registry:file", "target": "~/.codex/skills/new-entity/SKILL.md" },
+        { "path": ".claude/agents/spec-tester.md", "type": "registry:file", "target": "~/.claude/agents/spec-tester.md" },
+        { "path": ".claude/hooks/deny-impl-read.mjs", "type": "registry:file", "target": "~/.claude/hooks/deny-impl-read.mjs" },
+        { "path": "deps-allowlist.json", "type": "registry:file", "target": "~/deps-allowlist.json" },
+        { "path": "eslint.config.js", "type": "registry:file", "target": "~/eslint.config.js" }
+      ]
+    },
+    {
+      "name": "theme",
+      "type": "registry:item",
+      "title": "Design Tokens",
+      "description": "Two-layer semantic token structure (primitives + semantic aliases), light and dark, that every component consumes instead of raw colors.",
+      "files": [
+        { "path": "src/styles/theme.css", "type": "registry:file", "target": "~/src/styles/theme.css" }
+      ]
+    },
+    {
+      "name": "starter",
+      "type": "registry:item",
+      "title": "Full Foundation",
+      "description": "The anti-corruption layer (contracts, transport, query client), the auth boundary, and the app-shell/data-table/entity-form composites the widgets reference screens are built from.",
+      "registryDependencies": [
+        "Tristan2828/ui-foundation/conventions",
+        "Tristan2828/ui-foundation/theme",
+        "button",
+        "empty",
+        "field",
+        "sidebar",
+        "skeleton",
+        "sonner",
+        "spinner",
+        "table",
+        "tooltip"
+      ],
+      "dependencies": ["@tanstack/react-query", "@tanstack/react-table", "lucide-react", "next-themes"],
+      "files": [
+        { "path": "src/components/app/app-shell.tsx", "type": "registry:component" },
+        { "path": "src/components/app/route-error-boundary.tsx", "type": "registry:component" },
+        { "path": "src/components/app/data-table.tsx", "type": "registry:component" },
+        { "path": "src/components/app/entity-form.tsx", "type": "registry:component" },
+        { "path": "src/components/app/error-state.tsx", "type": "registry:component" },
+        { "path": "src/api/contracts.ts", "type": "registry:file", "target": "~/src/api/contracts.ts" },
+        { "path": "src/api/transport/index.ts", "type": "registry:file", "target": "~/src/api/transport/index.ts" },
+        { "path": "src/api/query-client.ts", "type": "registry:file", "target": "~/src/api/query-client.ts" },
+        { "path": "src/auth/auth-context.ts", "type": "registry:file", "target": "~/src/auth/auth-context.ts" },
+        { "path": "src/auth/auth-provider.tsx", "type": "registry:component" },
+        { "path": "src/auth/use-auth.ts", "type": "registry:file", "target": "~/src/auth/use-auth.ts" }
+      ]
+    }
+  ]
+}

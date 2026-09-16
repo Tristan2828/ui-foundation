@@ -35,6 +35,9 @@ check is right. Do not disable, skip, or work around it.
   return types are the contracts; tsc.)
 - NEVER write a gateway test by reading the gateway. Tests come from
   openapi.yaml. (Enforced: the spec-tester subagent cannot read gateway/.)
+- NEVER name a file in PascalCase or snake_case. Kebab-case everywhere —
+  routes, components, hooks, tests (`widget-form.tsx`, not `WidgetForm.tsx`).
+  (Enforced: eslint-plugin-check-file's filename-naming-convention rule.)
 
 ## Required States
 Every data view handles: loading, empty, error, and success.
@@ -66,21 +69,45 @@ form.setError(field, { message: err.fieldErrors[field][0] })
 
 // Color — semantic tokens only
 <div className="bg-card text-card-foreground border-border" />
+
+// Forms — FieldGroup wraps every field, never a bare <label>+<input> stack
+<FieldGroup>
+  <Field>
+    <FieldLabel htmlFor="name">Name</FieldLabel>
+    <Input id="name" {...register('name')} />
+  </Field>
+</FieldGroup>
 ```
+
+## Tooling
+Look up current shadcn component APIs via the shadcn MCP server
+(`npx shadcn@4.21.0 mcp init --client claude`) or `npx shadcn@4.21.0 view
+<name>` before hand-guessing props — component APIs move between releases
+and training data lags them.
 
 ## Before You Finish
 Run `npm run verify`. It must pass. Do not report a task complete
 on a failing gate — the developer does not review this code by reading it.
-(Enforced: the Stop hook runs verify:fast and will not let you stop on
-a failure, once that hook is added — see docs/BUILD-PLAN.md Phase 0 table.)
+No Stop hook enforces this yet (optional tier, never added — see
+docs/BUILD-PLAN.md Phase 0 table); until one exists, running `verify`
+before ending a session is on you, not a gate.
 
 ## Reference Implementations — Copy These Patterns
-- Data table:  src/routes/widgets/widgets-table.tsx
-- Create/edit: src/routes/widgets/widget-form.tsx
-- App shell:   src/components/app/app-shell.tsx
-- New entity:  docs/add-an-entity.md  (invoke as /new-entity <Name>)
+- Data table:   src/routes/widgets/widgets-table.tsx (thin consumer of the
+  `<DataTable>` composite, src/components/app/data-table.tsx)
+- Create/edit:  src/routes/widgets/widget-form.tsx (thin consumer of the
+  `<EntityForm>` composite, src/components/app/entity-form.tsx)
+- Query hooks:  src/routes/widgets/use-widgets.ts, use-categories.ts
+- Form schema:  src/routes/widgets/widget-schema.ts (zod schema + form ↔
+  wire conversion functions)
+- Error display: src/components/app/error-state.tsx (`<ErrorState>`,
+  keyed by `AppError.kind`)
+- App shell:    src/components/app/app-shell.tsx
+- New entity:   docs/add-an-entity.md (invoke as `/new-entity <Name>`)
 
-(These files do not exist yet as of Phase 0 — they land in Phases 3-4.)
+Copy the routes/widgets/* files per entity. Extend the composites
+(data-table.tsx, entity-form.tsx) in place — they are shared, not
+per-entity.
 
 ## Full Plan
 The complete build plan, including architecture, verification strategy,
