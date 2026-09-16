@@ -10,7 +10,15 @@ import { readFileSync } from "node:fs";
 const specPath = new URL("../openapi.yaml", import.meta.url);
 const lockPath = new URL("../openapi.yaml.sha256", import.meta.url);
 
-const actual = createHash("sha256").update(readFileSync(specPath)).digest("hex");
+// Hash the content, not the raw bytes: git's CRLF/LF normalization (there's
+// no .gitattributes pinning this file's line endings) means the same commit
+// can check out as LF or CRLF depending on the machine's core.autocrlf, and
+// a byte-for-byte hash would flake on that alone.
+function normalize(text) {
+  return text.replace(/\r\n/g, "\n");
+}
+
+const actual = createHash("sha256").update(normalize(readFileSync(specPath, "utf8"))).digest("hex");
 const expected = readFileSync(lockPath, "utf8").trim();
 
 if (actual !== expected) {

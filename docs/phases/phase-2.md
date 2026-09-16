@@ -117,6 +117,23 @@
   deliberately updated in the same commit) without requiring out-of-band
   git tag coordination, and works the same in a shallow CI checkout as
   locally.
+- **Added `.gitattributes` (`* text=auto eol=lf`) after two real bugs from
+  the same root cause.** This dev machine has `core.autocrlf=true` and the
+  repo had no `.gitattributes`, so any operation that re-checks-out a file
+  (a `git pull --rebase` picking up a README someone added on GitHub, in
+  this case) can silently flip its line endings from LF to CRLF. That broke
+  `check-openapi-freeze.mjs` (a raw-byte sha256 mismatched on a
+  content-identical file) and `check-phase-2.sh`'s own bash-based
+  line-flattening grep (joined lines left stray `\r` bytes glued to the
+  next word, breaking the phrase match). Fixed the immediate breaks
+  (normalize line endings before hashing; strip `\r` before flattening in
+  the check script) and the root cause (`.gitattributes` pins text files to
+  LF so future checkouts can't do this again). Notably, the existing
+  `schema.d.ts` freeze check (`git diff --exit-code`) was never actually
+  vulnerable to this — `git diff` normalizes through the same filter git
+  used to store the blob, unlike a raw byte hash, which is exactly why
+  Phase 1 chose that mechanism for `schema.d.ts` and why the new
+  `openapi.yaml.sha256` check needed the same care applied explicitly.
 - **`openapi.yaml` was not yet committed at the time it was edited during
   this session** (Phases 0-1 were already committed on `main` before this
   session started; this phase's new work, including `openapi.yaml`, was

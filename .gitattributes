@@ -1,0 +1,7 @@
+# Pin text files to LF regardless of core.autocrlf. Without this, a checkout
+# on a machine with autocrlf=true (this dev machine) can silently flip a
+# file's line endings on any operation that touches it (checkout, rebase,
+# merge) — which broke both the openapi.yaml freeze hash and a bash-based
+# check script's line-flattening in the same session. See
+# docs/phases/phase-2.md.
+* text=auto eol=lf

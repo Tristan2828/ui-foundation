@@ -59,7 +59,7 @@ declare -a FORCES=(
   "forces locale-aware formatting"
   "forces a textarea"
 )
-FLATTENED=$(tr '\n' ' ' < openapi.yaml | tr -s ' ')
+FLATTENED=$(tr -d '\r' < openapi.yaml | tr '\n' ' ' | tr -s ' ')
 for force in "${FORCES[@]}"; do
   echo "$FLATTENED" | grep -qi "$force" || fail "openapi.yaml's Widget schema is missing a field documented to: $force"
 done
