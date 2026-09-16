@@ -1,5 +1,6 @@
 import { InfoIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -67,6 +68,13 @@ export function KitchenSinkRoute() {
         <Button variant="destructive">Destructive</Button>
         <Button variant="link">Link</Button>
         <Button disabled>Disabled</Button>
+      </Section>
+
+      <Section name="badge" title="Badge">
+        <Badge variant="default">Default</Badge>
+        <Badge variant="secondary">Secondary</Badge>
+        <Badge variant="outline">Outline</Badge>
+        <Badge variant="destructive">Destructive</Badge>
       </Section>
 
       <Section name="card" title="Card">

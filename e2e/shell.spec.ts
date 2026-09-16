@@ -6,6 +6,7 @@ import { expect, test } from '@playwright/test'
 // with the sections that file renders.
 const KITCHEN_SECTIONS = [
   'button',
+  'badge',
   'card',
   'input',
   'sidebar',
@@ -64,6 +65,18 @@ test.describe('kitchen sink dark mode screenshots', () => {
 test('kitchen sink has zero axe violations', async ({ page }) => {
   await page.goto('/kitchen-sink')
   await expect(page.getByRole('heading', { name: 'Kitchen Sink', level: 1 })).toBeVisible()
+  const results = await new AxeBuilder({ page }).analyze()
+  expect(results.violations).toEqual([])
+})
+
+// Phase 3 and 4 both flagged dark-mode contrast for --destructive /
+// --destructive-foreground as verified only by hand-computed ratios, never
+// by a check. axe's color-contrast rule running against the rendered dark
+// DOM is that check, for this token and every other one.
+test('kitchen sink has zero axe violations in dark mode', async ({ page }) => {
+  await page.goto('/kitchen-sink')
+  await page.getByRole('button', { name: 'Toggle dark mode' }).click()
+  await expect(page.locator('html')).toHaveClass(/dark/)
   const results = await new AxeBuilder({ page }).analyze()
   expect(results.violations).toEqual([])
 })
