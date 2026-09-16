@@ -27,7 +27,9 @@
     "@base-ui/react",
     "@fontsource-variable/geist",
     "tw-animate-css",
-    "shadcn"
+    "shadcn",
+    "sonner",
+    "next-themes"
   ],
   "devDependencies": [
     "vite",

@@ -52,6 +52,7 @@
   --accent: var(--gray-100);
   --accent-foreground: var(--gray-950);
   --destructive: var(--red-500);
+  --destructive-foreground: var(--white);
   --border: var(--gray-200);
   --input: var(--gray-200);
   --ring: var(--gray-400);
@@ -88,6 +89,7 @@
   --accent: var(--gray-900);
   --accent-foreground: var(--gray-50);
   --destructive: var(--red-400);
+  --destructive-foreground: var(--white);
   --border: var(--white-a10);
   --input: var(--white-a15);
   --ring: var(--gray-500);

@@ -1,13 +1,26 @@
-import { Button } from '@/components/ui/button'
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import { AppShell } from '@/components/app/app-shell'
+import { RouteErrorBoundary } from '@/components/app/route-error-boundary'
+import { HomeRoute } from '@/routes/home'
+import { KitchenSinkRoute } from '@/routes/kitchen-sink'
 
-// Placeholder home route for Phase 1 (proves the scaffold + tokens work).
-// Replaced by the real app shell in Phase 3.
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppShell />,
+    children: [
+      { index: true, element: <HomeRoute />, errorElement: <RouteErrorBoundary /> },
+      {
+        path: 'kitchen-sink',
+        element: <KitchenSinkRoute />,
+        errorElement: <RouteErrorBoundary />,
+      },
+    ],
+  },
+])
+
 function App() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-background text-foreground">
-      <Button>UI Foundation</Button>
-    </main>
-  )
+  return <RouterProvider router={router} />
 }
 
 export default App

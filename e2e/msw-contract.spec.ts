@@ -6,7 +6,12 @@ import { test, expect } from '@playwright/test'
 // VITE_API flag in src/main.tsx.
 test('MSW serves the widgets contract with no backend process running', async ({ page }) => {
   await page.goto('/')
-  await page.evaluate(() => navigator.serviceWorker.ready)
+  // .ready resolves once the worker is activated, but the current page isn't
+  // guaranteed to be its controller (and therefore have its fetches
+  // intercepted) in that same tick — waiting on .controller is the actual
+  // precondition for interception and is what removed this test's
+  // under-load flakiness (intermittent under heavy parallel test workers).
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null)
 
   const result = await page.evaluate(async () => {
     const res = await fetch('/api/widgets?offset=0&limit=20')
