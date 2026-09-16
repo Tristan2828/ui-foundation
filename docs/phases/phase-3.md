@@ -120,16 +120,23 @@
   intermittently fails for reasons unrelated to the phase being checked
   breaks every later phase's own check script, which is cumulative on
   `npm run verify` passing — in scope to fix, not defer.
-- **Screenshot baselines are win32, not Linux — see `docs/BLOCKERS.md`.**
-  No `docker` or WSL distribution is available in this session's
-  environment, so the plan's prescribed
+- **Screenshot baselines were win32-only at first commit, then resolved
+  using CI itself as the Linux container.** No `docker` or WSL is
+  available in this session's environment, so the plan's prescribed
   `docker run ... mcr.microsoft.com/playwright:v4.21.0 ...` command
-  couldn't be run. The 11 baseline PNGs are genuinely committed and the
-  screenshot mechanism is proven working locally, but CI
-  (`ubuntu-latest`) will look for differently-named
-  (`*-linux.png`) files that don't exist yet and is expected to fail on
-  first run. Logged in `docs/BLOCKERS.md` with three concrete regeneration
-  options for whoever has Docker/Linux access.
+  couldn't be run locally. Pushed the win32 baselines anyway, which — as
+  expected — failed `verify.yml`'s Playwright step on `ubuntu-latest`
+  looking for `*-linux.png` files that didn't exist yet (all 11 screenshot
+  tests failed; the other 6 tests, including axe and the msw-contract fix,
+  passed on real Linux, independently confirming those two fixes). Added
+  an `actions/upload-artifact@v4` step to `verify.yml` (`if: failure()`,
+  uploads `test-results/`), pushed, let CI fail once more, downloaded the
+  artifact, and copied its 11 `*-actual.png` files into
+  `e2e/shell.spec.ts-snapshots/` renamed to the `*-chromium-linux.png`
+  convention. Both platform sets are now committed side by side — win32
+  for local runs on this dev machine, linux for CI — since Playwright
+  picks the matching one automatically. `docs/BLOCKERS.md`'s entry for
+  this is removed per its own "resolved items are removed" convention.
 - **`SidebarInset` (from the `sidebar` registry item) already renders a
   `<main>`.** The first app-shell draft wrapped `<Outlet />` in its own
   `<main>` inside `SidebarInset`, producing an invalid nested-`<main>`
@@ -177,10 +184,9 @@ by hand, not just existence:
 - Next up: Phase 4 (Reference Screens) — `widgets-table.tsx` and
   `widget-form.tsx` against the six field types already frozen into
   `openapi.yaml`'s `Widget` schema in Phase 2.
-- **Before anything else touches CI:** resolve the win32/Linux baseline
-  mismatch in `docs/BLOCKERS.md`. The first CI run on this branch is
-  expected to fail the Playwright screenshot step for exactly that reason
-  — don't mistake it for a real regression.
+- The win32/Linux screenshot-baseline gap is resolved (see Deviations
+  above) — CI is expected to be green on this branch's second push, not
+  just the first.
 - `src/auth/` is now three files, not the plan's two
   (`auth-provider.tsx` + `use-auth.ts`) — `auth-context.ts` holds the
   `AuthContext`/`FAKE_USER`. If Phase 8 replaces the fake user with a real
