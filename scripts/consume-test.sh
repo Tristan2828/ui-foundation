@@ -43,19 +43,91 @@ WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
 APP="$WORKDIR/consume-test-app"
 
+# `npm create vite` mis-joins an absolute path with the caller's cwd on
+# Windows/Git Bash when passed as an argument (it prints the right target
+# in its own banner, then mkdirs the cwd + that path concatenated). `cd`
+# into WORKDIR first and pass a relative name instead of fighting it.
 echo "consume-test: scaffolding a fresh Vite app ($VITE_VERSION) at $APP"
-npm create vite@"$VITE_VERSION" "$APP" -- --template react-ts --yes >/dev/null 2>&1 ||
-  npm create vite@"$VITE_VERSION" "$APP" -- --template react-ts
+cd "$WORKDIR"
+npm create vite@"$VITE_VERSION" consume-test-app -- --template react-ts --yes
 
 cd "$APP"
 echo "consume-test: npm install"
 npm install --silent
 
+# `create vite`'s react-ts template ships with no Tailwind and no `@`
+# alias — this repo's own Phase 1 added both by hand before `shadcn init`
+# would run (init refuses without them). Reproduce that minimum, not the
+# rest of this repo's setup: only Tailwind + the alias unblock init, and
+# these are throwaway-app files, not this repo's own pinned deps.
+echo "consume-test: installing Tailwind and configuring the @ alias (Phase 1's prerequisite for shadcn init)"
+npm install --silent tailwindcss @tailwindcss/vite
+
+cat > vite.config.ts <<'EOF'
+import path from 'node:path'
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+})
+EOF
+
+cat > tsconfig.json <<'EOF'
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+EOF
+
+node -e "
+const fs = require('fs');
+const p = 'tsconfig.app.json';
+const c = JSON.parse(fs.readFileSync(p, 'utf8').replace(/\/\*.*?\*\//gs, ''));
+c.compilerOptions.baseUrl = '.';
+c.compilerOptions.paths = { '@/*': ['./src/*'] };
+fs.writeFileSync(p, JSON.stringify(c, null, 2));
+"
+
+sed -i '1i @import "tailwindcss";' src/index.css
+
 echo "consume-test: npx shadcn@$SHADCN_VERSION init"
 npx --yes shadcn@"$SHADCN_VERSION" init -t vite -b base -p nova -y
 
 echo "consume-test: npx shadcn@$SHADCN_VERSION add $REPO/starter#$REF"
-npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes
+npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes --overwrite
+
+# `add`'s overwrite prompts are non-interactive-safe with --yes/--overwrite
+# above, but confirm the files actually landed rather than trusting a
+# silent tsc pass — an empty install would type-check clean too, since
+# nothing would import the missing modules.
+for f in \
+  AGENTS.md CLAUDE.md docs/add-an-entity.md \
+  .claude/skills/new-entity/SKILL.md .claude/agents/spec-tester.md \
+  src/styles/theme.css \
+  src/components/app/app-shell.tsx src/components/app/data-table.tsx \
+  src/components/app/entity-form.tsx src/components/app/error-state.tsx \
+  src/components/app/route-error-boundary.tsx \
+  src/api/contracts.ts src/api/transport/index.ts src/api/query-client.ts \
+  src/auth/auth-context.ts src/auth/auth-provider.tsx src/auth/use-auth.ts \
+; do
+  [ -f "$f" ] || fail "expected file missing after install: $f"
+done
 
 # Plain `tsc --noEmit` against a solution-style tsconfig (what both this
 # repo's own Phase 1 scaffold and a fresh `create vite` produce) checks

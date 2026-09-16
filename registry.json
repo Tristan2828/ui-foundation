@@ -49,16 +49,16 @@
       ],
       "dependencies": ["@tanstack/react-query", "@tanstack/react-table", "lucide-react", "next-themes"],
       "files": [
-        { "path": "src/components/app/app-shell.tsx", "type": "registry:component" },
-        { "path": "src/components/app/route-error-boundary.tsx", "type": "registry:component" },
-        { "path": "src/components/app/data-table.tsx", "type": "registry:component" },
-        { "path": "src/components/app/entity-form.tsx", "type": "registry:component" },
-        { "path": "src/components/app/error-state.tsx", "type": "registry:component" },
+        { "path": "src/components/app/app-shell.tsx", "type": "registry:file", "target": "~/src/components/app/app-shell.tsx" },
+        { "path": "src/components/app/route-error-boundary.tsx", "type": "registry:file", "target": "~/src/components/app/route-error-boundary.tsx" },
+        { "path": "src/components/app/data-table.tsx", "type": "registry:file", "target": "~/src/components/app/data-table.tsx" },
+        { "path": "src/components/app/entity-form.tsx", "type": "registry:file", "target": "~/src/components/app/entity-form.tsx" },
+        { "path": "src/components/app/error-state.tsx", "type": "registry:file", "target": "~/src/components/app/error-state.tsx" },
         { "path": "src/api/contracts.ts", "type": "registry:file", "target": "~/src/api/contracts.ts" },
         { "path": "src/api/transport/index.ts", "type": "registry:file", "target": "~/src/api/transport/index.ts" },
         { "path": "src/api/query-client.ts", "type": "registry:file", "target": "~/src/api/query-client.ts" },
         { "path": "src/auth/auth-context.ts", "type": "registry:file", "target": "~/src/auth/auth-context.ts" },
-        { "path": "src/auth/auth-provider.tsx", "type": "registry:component" },
+        { "path": "src/auth/auth-provider.tsx", "type": "registry:file", "target": "~/src/auth/auth-provider.tsx" },
         { "path": "src/auth/use-auth.ts", "type": "registry:file", "target": "~/src/auth/use-auth.ts" }
       ]
     }
