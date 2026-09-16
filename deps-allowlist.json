@@ -1,0 +1,44 @@
+{
+  "$comment": "Every dependency the agent is permitted to install. Checked by scripts/check-deps.mjs against package.json. An addition here is a deliberate human decision, not something the agent edits on its own — see AGENTS.md.",
+  "tools": {
+    "shadcn": "4.21.0",
+    "vite": "8.3.0",
+    "@playwright/test": "1.63.0"
+  },
+  "dependencies": [
+    "react",
+    "react-dom",
+    "react-router",
+    "@tanstack/react-query",
+    "@tanstack/react-table",
+    "react-hook-form",
+    "@hookform/resolvers",
+    "zod",
+    "openapi-fetch",
+    "class-variance-authority",
+    "clsx",
+    "tailwind-merge",
+    "lucide-react"
+  ],
+  "devDependencies": [
+    "vite",
+    "@vitejs/plugin-react",
+    "typescript",
+    "tailwindcss",
+    "@tailwindcss/vite",
+    "eslint",
+    "@eslint/js",
+    "typescript-eslint",
+    "eslint-plugin-react-hooks",
+    "eslint-plugin-react-refresh",
+    "eslint-plugin-check-file",
+    "@tanstack/eslint-plugin-query",
+    "vitest",
+    "@playwright/test",
+    "@axe-core/playwright",
+    "msw",
+    "openapi-typescript",
+    "ajv",
+    "openapi-response-validator"
+  ]
+}
