@@ -1,0 +1,45 @@
+# Status
+
+At-a-glance phase checklist. This replaces the Notion tracker this
+project used during early development — everything now lives in the
+repo, in one place, versioned alongside the code it describes.
+
+**Definition of done for the whole project:** `scripts/check-phase-7.sh`
+passes — a fresh agent, with no memory of this repo, builds a new entity
+screen entirely from the published registry, with zero edits to the
+foundation. Met as of Phase 7. Phase 8 (backend) is optional, additional
+work on top of that, not a prerequisite for it.
+
+For the reasoning behind any decision below, see the Decision Ledger in
+[`docs/BUILD-PLAN.md`](BUILD-PLAN.md). For the full narrative of what was
+built, what deviated from the plan, and what broke — one file per phase,
+each written at the end of that phase's session — see
+[`docs/phases/`](phases). For anything currently unresolved, see
+[`docs/BLOCKERS.md`](BLOCKERS.md) (empty as of Phase 8).
+
+## Phase Checklist
+
+| Phase | Status | Exit criteria | Notes |
+|---|---|---|---|
+| 0 — Session Zero | Done (2026-09-15) | `check-phase-0.sh` passes | `AGENTS.md`/`CLAUDE.md`, `deps-allowlist.json`, `check-deps.mjs`, `spec-tester` subagent + deny hook, repo created & pushed |
+| 1 — Scaffold and Tokens | Done (2026-09-15) | `check-phase-1.sh` passes | Vite scaffold, Tailwind v4, shadcn init (Base UI/Nova), two-layer `theme.css`, token lint rule, CI green |
+| 2 — Contract and Boundary | Done (2026-09-16) | `check-phase-2.sh` passes | `openapi.yaml` (all 6 field types, frozen via sha256 lock), hand-rolled transport + gateway (`openapi-fetch` dropped — incompatible with Node's `Request` under vitest), MSW mocks + conformance tests, gateway tests via temporal isolation (`spec-tester` subagent wasn't invokable in this harness at the time — since confirmed working, see `docs/BLOCKERS.md`'s resolved entries) |
+| 3 — App Shell | Done (2026-09-16) | `check-phase-3.sh` passes | Sidebar/header shell, auth stub, per-route error boundaries, kitchen-sink (11 primitives), nav+axe+dark-mode-screenshot e2e coverage. CI green — Linux baselines sourced from CI's own artifact output (no Docker needed at the time) |
+| 4 — Reference Screens | Done (2026-09-16) | `check-phase-4.sh` passes | `widgets-table`/`widget-form` built on `data-table`/`entity-form` composites (+ `error-state`). Found and fixed a project-wide bug: `tsc --noEmit` had been a total no-op since Phase 1 (solution-style tsconfig needs `-b`) |
+| 5 — Tokens (palette) | Done (2026-09-16) | `check-phase-5.sh` passes | Kept the existing primitive palette as the deliberate v1 choice (not a new brand). Fixed `Badge`'s `destructive` variant (tinted → solid, matching `Button`'s Phase 3 fix) and a real dark-mode contrast bug the fix surfaced. Added a dark-mode axe pass + a `theme.css` token set-equality vitest |
+| 6 — Registry | Done (2026-09-16) | `check-phase-6.sh` passes | `registry.json` (conventions/theme/starter), `new-entity` skill, tagged `v1.0.0` — install-tested in a fresh Vite app, not just schema-validated. Found & fixed two real bugs: `registry:component` silently flattens subdirectories, and `starter` was missing `react-router` as a declared dependency |
+| 7 — Dogfood | Done (2026-09-16) | `check-phase-7.sh` passes | Fresh agent, no memory of this repo, built a full CRUD entity (Invoice) end to end via `/new-entity` from the published registry alone — 54 vitest + 41 Playwright, zero foundation edits. Found & fixed 5 real bugs along the way (see `docs/phases/phase-7.md`). Tagged `v1.1.0` — **this is the project's definition of done** |
+| 8 — Backend (optional) | Done (2026-09-17) | `check-phase-8.sh` passes | FastAPI + SQLModel + Alembic against `openapi.yaml`, zero changes to `src/api/gateway` or `src/api/transport`. Found & fixed 4 real bugs once run against real Postgres (see `docs/phases/phase-8.md`). Not tagged — touches no registry-shipped path |
+
+## Decision Ledger (highlights)
+
+Full ledger with rationale in `docs/BUILD-PLAN.md`.
+
+- **Primitives:** Base UI (shadcn default since July 2026), not Radix
+- **Framework:** Vite SPA (not Next.js) — avoids RSC boundary issues
+- **Router:** React Router v7
+- **Distribution:** Private GitHub repo as shadcn registry (not npm) — keeps components open-code/editable
+- **Backend:** FastAPI + SQLModel + Postgres, built *after* Phase 7, against a contract the UI already proved
+- **Verification:** everything is a script (`verify:fast` / `verify`); nothing is "looks right"
+
+Pinned tool versions live in [`deps-allowlist.json`](../deps-allowlist.json) (npm side) and [`backend/pyproject.toml`](../backend/pyproject.toml) (Python side) — not repeated here to avoid a second place they can drift out of sync.

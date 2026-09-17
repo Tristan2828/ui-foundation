@@ -10,7 +10,7 @@ This foundation is explicitly not trying to be polished. It's trying to be reusa
 
 ## Status
 
-Current phase and what's next: see the latest report in [`docs/phases/`](docs/phases). Full plan, decision ledger, architecture, and exit criteria for every phase: [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md).
+At-a-glance phase checklist: [`docs/STATUS.md`](docs/STATUS.md). Full narrative per phase: [`docs/phases/`](docs/phases). Full plan, decision ledger, architecture, and exit criteria for every phase: [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md).
 
 ## For humans
 
