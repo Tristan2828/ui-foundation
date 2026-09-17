@@ -98,9 +98,13 @@
   and dogfood-verified (target: `v1.2.0`).
 - The dogfood re-run (`scripts/consume-test.sh <ref> <Entity>`) needs the
   work pushed to GitHub first — `shadcn add` fetches from the real repo,
-  not local disk. This was run against the pushed ref as this phase's
-  final verification step (see the commit this file ships with for the
-  result).
+  not local disk. Run against `main` after both fix commits: **PASS** — a
+  fresh agent with no memory of this repo built a full `Ticket` CRUD
+  entity from `starter#main` alone, and `npm run verify` passed all 62
+  tests (12 Storybook screenshot + 24 axe + the new entity's own 14 +
+  Widgets' existing 12), confirming the Step 0 bootstrap script additions
+  (`storybook`/`build-storybook`/`preview-storybook`) and the new registry
+  files work correctly from a blank install.
 - Baselines in `e2e/storybook-visual.spec.ts-snapshots/` were generated on
   win32, same caveat as every prior phase's baselines (not CI's Linux
   container — see `docs/BLOCKERS.md`).
