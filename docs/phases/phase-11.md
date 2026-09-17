@@ -118,8 +118,16 @@ became a broken CI run.
   flagged stays open — still not needed for a personal/local deployment,
   but now a slightly larger gap than before since anyone reaching the app
   can create their own account to brute-force against.
+- Opened as PR #4 (`phase-11-registration` → `main`), following Phase
+  10/the dev-dx session's precedent of going through a PR rather than a
+  direct push. Both required CI checks (`verify`, `verify-backend`) passed
+  green.
 - Not yet tagged — this phase follows Phase 9/10's pattern (registry-
   shipped content changed, so it needs an install-test via
   `consume-test.sh --install-only` against a real pushed+tagged ref before
   it can be marked fully done, the same reason Phase 10 closed out in two
-  parts). See the PR for how this session closed out.
+  parts: merge first, then tag + install-test once merged to `main`). That
+  second half is still open — a future session (or the developer) should
+  tag `v1.4.0` on the merge commit and run
+  `scripts/consume-test.sh --install-only v1.4.0` before calling Phase 11
+  fully closed out, the same way Phase 10's session did.
