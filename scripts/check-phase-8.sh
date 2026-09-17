@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# Exit criteria for Phase 8 — Backend (optional; docs/BUILD-PLAN.md). Four
-# assertions, in order: Phases 1-5 (verify, tokens) still pass; nothing
-# the registry ships has changed since v1.1.0 (Phase 8 adds backend/ and
-# local-only frontend config — it does not touch the registry, so this is
-# the honest cumulative check, not check-phase-6/7.sh's "HEAD must be a
-# freshly-tagged commit" + a full fresh-agent dogfood rebuild, which
-# proves nothing new for a phase that ships no registry change); the
+# Exit criteria for Phase 8 — Backend (optional; docs/BUILD-PLAN.md). Three
+# assertions, in order: Phases 1-5 (verify, tokens) still pass; the
 # backend's own gate (mypy, pytest, spec conformance — no database needed
-# for any of these, see backend/scripts/verify.sh); the gateway/transport
-# boundary is untouched since v1.1.0 ("if the gateway needed changes, the
-# contract was wrong"); and a real Postgres-backed run of the app end to
-# end.
+# for any of these, see backend/scripts/verify.sh); and a real
+# Postgres-backed run of the app end to end.
 #
-# The last assertion needs Docker Desktop running locally — it is not
+# Originally had two more (registry-shipped paths and src/api/gateway/
+# transport unchanged since v1.1.0), proving Phase 8 itself introduced no
+# registry or ACL change. Both were one-time claims about Phase 8's own
+# diff, already recorded in docs/phases/phase-8.md — not standing
+# regression tests. Retired in Phase 10, which legitimately changes both
+# (a new auth gateway file, registry-shipped auth UI) — kept, they would
+# fail forever on every commit after Phase 10, the same reason Phase 9
+# rewrote check-phase-3.sh/check-phase-5.sh's kitchen-sink assertions
+# instead of leaving them permanently red.
+#
+# The Postgres assertion needs Docker Desktop running locally — it is not
 # part of `npm run verify` or CI (see docs/phases/phase-8.md for why: the
 # existing widgets-table/widget-form Playwright specs force loading/empty/
 # error/validation states through MSW overrides that do not exist when
@@ -27,16 +30,8 @@ fail() { echo "check-phase-8: $1" >&2; exit 1; }
 # Cumulative: Phase 8 must not have broken Phases 1-5.
 scripts/check-phase-5.sh
 
-echo "check-phase-8: registry-shipped paths unchanged since v1.1.0"
-git diff --exit-code v1.1.0 -- registry.json docs/add-an-entity.md .claude .codex src config ||
-  fail "a registry-shipped path changed since v1.1.0 — if Phase 8 needed to touch the registry, re-run check-phase-6.sh/7.sh (tag, validate, dogfood) instead of this shortcut"
-
 echo "check-phase-8: backend verify (mypy, pytest, spec conformance)"
 bash backend/scripts/verify.sh || fail "backend/scripts/verify.sh failed"
-
-echo "check-phase-8: gateway/transport diff against v1.1.0"
-git diff --exit-code v1.1.0 -- src/api/gateway src/api/transport ||
-  fail "src/api/gateway or src/api/transport changed since v1.1.0 — if the gateway needed changes, the contract was wrong"
 
 command -v docker >/dev/null 2>&1 ||
   fail "Docker is required for the Postgres-backed run and is not installed — see docs/BLOCKERS.md"
