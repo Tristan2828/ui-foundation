@@ -34,16 +34,21 @@ SQLModel + Alembic implementation of `openapi.yaml`, for testing the
 contract against a real database:
 
 ```bash
-docker compose up -d                                   # Postgres only
-cd backend
-python -m venv .venv && .venv/Scripts/pip install -e ".[dev]"
-.venv/Scripts/alembic upgrade head
-.venv/Scripts/uvicorn app.main:app --reload             # http://localhost:8000
-.venv/Scripts/python -m mypy app && .venv/Scripts/python -m pytest
+bash backend/scripts/dev.sh   # Postgres (Docker) + venv + migrations + API, http://localhost:8000
 
 # in another shell, from the repo root:
-VITE_API=real npm run dev                               # proxies /api to the backend
+VITE_API=real npm run dev     # proxies /api to the backend
 ```
+
+Log in with the seeded dev user: `dev@example.com` / `dev-password-123`
+(`backend/.env.example` — override `SEED_USER_EMAIL`/`SEED_USER_PASSWORD`
+before this ever runs against a real deployment).
+
+`backend/scripts/dev.sh` does what used to be five manual commands
+(`docker compose up`, create/activate a venv, `pip install -e`,
+`alembic upgrade head`, `uvicorn --reload`) in one call, idempotently —
+safe to re-run. For the backend's own verify gate (mypy + pytest + spec
+conformance), see `backend/scripts/verify.sh`.
 
 See `docs/phases/phase-8.md` for what's built and `docs/DEFERRED.md` for
 the planned cloud-Postgres (Supabase) alternative to the local Docker
@@ -54,7 +59,7 @@ Compose Postgres.
 Once a version is tagged (Phase 6+):
 
 ```bash
-npx shadcn@<pinned> add Tristan2828/ui-foundation/starter#v1.0.0
+npx shadcn@<pinned> add Tristan2828/ui-foundation/starter#v1.3.0
 ```
 
 ## Contributing
