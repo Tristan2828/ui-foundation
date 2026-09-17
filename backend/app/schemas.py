@@ -80,6 +80,17 @@ class WidgetUpdate(CamelModel):
     description: str | None = Field(default=None, max_length=2000)
 
 
+class UserOut(CamelModel):
+    id: int
+    email: str
+    name: str
+
+
+class LoginRequest(CamelModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+
+
 class HTTPErrorBody(CamelModel):
     detail: str
 

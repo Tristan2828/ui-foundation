@@ -7,7 +7,8 @@ full rationale behind each row.
 
 | Item | Revisit when |
 |---|---|
-| Real auth | Backend language is chosen |
+| Self-service registration | Someone other than the developer needs their own account — Phase 10 shipped login only, against a seeded user |
+| Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat model, not a personal/local deployment |
 | Additional themes | A second app needs a distinct look |
 | Monorepo | Two or more consuming apps share a release cycle |
 | Row virtualization | A table exceeds ~5k rows |

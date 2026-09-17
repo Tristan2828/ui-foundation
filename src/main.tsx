@@ -33,11 +33,13 @@ enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <AuthProvider>
-          <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          {/* AuthProvider queries /auth/me via TanStack Query (Phase 10),
+              so it must sit inside QueryClientProvider, not outside it. */}
+          <AuthProvider>
             <App />
-          </QueryClientProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </QueryClientProvider>
       </ThemeProvider>
     </StrictMode>,
   )

@@ -1,22 +1,26 @@
 import { createContext } from 'react'
 
 export type AuthUser = {
-  id: string
+  id: number
   name: string
   email: string
 }
 
+export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
+
 export type AuthContextValue = {
-  user: AuthUser
+  user: AuthUser | null
+  status: AuthStatus
+  login: (email: string, password: string) => Promise<void>
+  logout: () => Promise<void>
 }
 
-// Hardcoded fake user (see docs/BUILD-PLAN.md "Auth Boundary"). A real
-// mechanism (session cookies, JWT, or a managed provider) is chosen once
-// the backend is, in Phase 8.
-export const FAKE_USER: AuthUser = {
-  id: 'user_1',
-  name: 'Alex Rivera',
-  email: 'alex@example.com',
-}
-
-export const AuthContext = createContext<AuthContextValue>({ user: FAKE_USER })
+// Real session-cookie auth as of Phase 10 (docs/BUILD-PLAN.md) — the
+// previous hardcoded FAKE_USER stub is gone. auth-provider.tsx is still the
+// only file that knows how any of this works; see AGENTS.md's hard rule.
+export const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  status: 'loading',
+  login: async () => {},
+  logout: async () => {},
+})

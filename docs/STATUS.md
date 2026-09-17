@@ -13,7 +13,12 @@ change what the registry's `starter` item ships, so its own dogfood proof
 was re-run directly (`scripts/consume-test.sh <ref> <Entity>` — the same
 proof check-phase-7.sh runs, without re-chaining onto that script's
 freshly-tagged-HEAD + full-rebuild requirements, mirroring how Phase 8
-scoped its own cumulative check).
+scoped its own cumulative check). Phase 10 (auth) is optional, additional
+work on top of Phase 7's definition of done, but — unlike Phase 8 — it
+*does* change registry-shipped content (`src/auth/**`, `app-shell.tsx`,
+`main.tsx`, the mocks, plus new `routes/login.tsx`/`gateway/auth.ts`), so
+it follows Phase 6/7/9's pattern instead: `registry.json` updated, install-
+tested via `consume-test.sh --install-only`, tagged `v1.3.0`.
 
 For the reasoning behind any decision below, see the Decision Ledger in
 [`docs/BUILD-PLAN.md`](BUILD-PLAN.md). For the full narrative of what was
@@ -36,6 +41,7 @@ each written at the end of that phase's session — see
 | 7 — Dogfood | Done (2026-09-16) | `check-phase-7.sh` passes | Fresh agent, no memory of this repo, built a full CRUD entity (Invoice) end to end via `/new-entity` from the published registry alone — 54 vitest + 41 Playwright, zero foundation edits. Found & fixed 5 real bugs along the way (see `docs/phases/phase-7.md`). Tagged `v1.1.0` — **this is the project's definition of done** |
 | 8 — Backend (optional) | Done (2026-09-17) | `check-phase-8.sh` passes | FastAPI + SQLModel + Alembic against `openapi.yaml`, zero changes to `src/api/gateway` or `src/api/transport`. Found & fixed 4 real bugs once run against real Postgres (see `docs/phases/phase-8.md`). Not tagged — touches no registry-shipped path |
 | 9 — Storybook (optional) | Done (2026-09-17) | `check-phase-9.sh` passes | Kitchen-sink route retired everywhere (dev route, `registry.json`'s `starter` item, Phase 3/5 permanent checks, `consume-test.sh`) once its own Phase 1 deferral condition was met. Full replacement, not additive — see `docs/phases/phase-9.md` for the internal-only-vs-full-replacement tradeoff. Registry-shipped content changed, so this *is* tagged (`v1.2.0`) |
+| 10 — Real Auth (optional) | Done (2026-09-17) | `check-phase-10.sh` passes | Closed the "Real auth" deferral now that Phase 8 picked the backend. Session cookies (stdlib-only: PBKDF2 password hashing, `secrets`-generated tokens, a server-side sessions table), login only against a seeded user — no self-service registration. `/auth/login`, `/auth/logout`, `/auth/me` added to `openapi.yaml` (a deliberate, reviewed unfreeze — see `openapi.yaml.sha256`); widgets/categories now require a session on the backend, not just the UI. Registry-shipped content changed (auth boundary, app shell, mocks, new login screen) — `registry.json` updated, install-tested, tagged `v1.3.0`. See `docs/phases/phase-10.md` for the bugs the real run found |
 
 ## Decision Ledger (highlights)
 

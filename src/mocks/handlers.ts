@@ -3,11 +3,12 @@
 // whole UI run with no backend at all. See docs/BUILD-PLAN.md "Backend
 // Decoupling".
 import { http, HttpResponse } from "msw";
-import { categories, nextWidgetId, widgets } from "./data";
+import { categories, isAuthenticated, mockUser, MOCK_PASSWORD, nextWidgetId, setAuthenticated, widgets } from "./data";
 import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
 type WidgetCreate = components["schemas"]["WidgetCreate"];
+type LoginRequest = components["schemas"]["LoginRequest"];
 type WidgetUpdate = components["schemas"]["WidgetUpdate"];
 type ValidationIssue = components["schemas"]["ValidationErrorBody"]["detail"][number];
 
@@ -65,6 +66,27 @@ function sortWidgets(list: Widget[], sort: string | null): Widget[] {
 }
 
 export const handlers = [
+  http.post("*/api/auth/login", async ({ request }) => {
+    const body = (await request.json()) as LoginRequest;
+    if (body.email !== mockUser.email || body.password !== MOCK_PASSWORD) {
+      return HttpResponse.json({ detail: "Invalid email or password" }, { status: 401 });
+    }
+    setAuthenticated(true);
+    return HttpResponse.json(mockUser);
+  }),
+
+  http.post("*/api/auth/logout", () => {
+    setAuthenticated(false);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get("*/api/auth/me", () => {
+    if (!isAuthenticated) {
+      return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 });
+    }
+    return HttpResponse.json(mockUser);
+  }),
+
   http.get("*/api/categories", ({ request }) => {
     const url = new URL(request.url);
     const search = url.searchParams.get("search")?.toLowerCase();
