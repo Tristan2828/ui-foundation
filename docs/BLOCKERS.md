@@ -18,18 +18,29 @@ can be retired in favor of the real subagent for future entity work. -->
 
 ## Open
 
-- **Docker Desktop is not installed on this machine**, so `scripts/check-phase-8.sh`
-  cannot be run to completion — everything up to its Postgres-backed final
+- **Docker Desktop is installed on this machine but cannot start: "Virtualization
+  support not detected."** `scripts/check-phase-8.sh` cannot be run to
+  completion as a result — everything up to its Postgres-backed final
   section passes (`backend/scripts/verify.sh`: mypy, pytest, spec
   conformance; the `src/api/gateway`/`src/api/transport` diff against
   `v1.1.0` is empty). What, why, what's needed: the exit criteria require
   `npm run verify` to pass with `VITE_API=real` against a running backend,
-  which needs a live Postgres. The developer chose Docker Desktop for local
-  Postgres now (docker-compose.yml is written, untested — see
-  docs/phases/phase-8.md), with a cloud option (e.g. Supabase) deferred for
-  later (docs/DEFERRED.md). Next session: confirm Docker Desktop is
-  installed and running, then `docker compose up -d postgres` and run
-  `scripts/check-phase-8.sh`. If anything in the untested
-  Postgres-integration path (docker-compose healthcheck polling, the
-  Alembic migration, the uvicorn boot) fails, fix it there — everything
-  before it is already verified.
+  which needs a live Postgres. Docker Desktop was installed and launched,
+  but its backend (`com.docker.backend`) can't reach a Linux engine —
+  `wsl --list --verbose` reports **zero installed distributions** (not
+  even Docker's own internal `docker-desktop`/`docker-desktop-data`), and
+  Docker Desktop itself reports virtualization isn't detected. This is a
+  BIOS/firmware (VT-x/AMD-V) or Windows-feature-activation issue, not a
+  Docker or project misconfiguration — the fix is almost certainly a
+  restart (Windows feature activation and BIOS virtualization changes both
+  typically require one to take effect), which the developer explicitly
+  declined for now. Two ways to get a real Postgres running without Docker
+  were discussed and declined for now, in case a future session picks
+  this up before a reboot happens: (1) a portable/zip EnterpriseDB
+  Postgres binary run standalone via `initdb`/`pg_ctl`, no installer or
+  virtualization needed; (2) pull the deferred cloud-Postgres task
+  (`docs/DEFERRED.md`) forward instead of waiting on Docker. Next session:
+  ask whether a restart has happened; if so, `docker compose up -d
+  postgres` then `scripts/check-phase-8.sh` as originally planned. If not,
+  offer the two alternatives above again rather than re-diagnosing from
+  scratch.

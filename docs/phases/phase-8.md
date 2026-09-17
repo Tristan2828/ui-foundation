@@ -125,6 +125,17 @@
   specifically is the most likely thing to need adjustment once it can
   be tried against a real `docker compose` version. Everything before
   that line in the script has run and passed.
+- **Follow-up, same day, after Docker Desktop was installed:** it still
+  couldn't start — Docker's own error is "Virtualization support not
+  detected," and `wsl --list --verbose` reports zero installed
+  distributions (not even Docker's internal `docker-desktop`/
+  `docker-desktop-data`). This is a BIOS/firmware or Windows-feature
+  activation issue, not a project or Docker-config problem, and almost
+  certainly needs a restart to resolve — declined for now. See the
+  updated `docs/BLOCKERS.md` entry, which also records two
+  Docker-free alternatives discussed and deferred (a portable
+  EnterpriseDB Postgres binary; pulling the already-deferred cloud
+  Postgres task forward).
 
 ## Verification
 
