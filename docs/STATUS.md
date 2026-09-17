@@ -18,7 +18,10 @@ work on top of Phase 7's definition of done, but — unlike Phase 8 — it
 *does* change registry-shipped content (`src/auth/**`, `app-shell.tsx`,
 `main.tsx`, the mocks, plus new `routes/login.tsx`/`gateway/auth.ts`), so
 it follows Phase 6/7/9's pattern instead: `registry.json` updated, install-
-tested via `consume-test.sh --install-only`, tagged `v1.3.0`.
+tested via `consume-test.sh --install-only`, tagged `v1.3.0`. Phase 11
+(self-service registration) also changes registry-shipped content — the new
+`routes/register.tsx`/`register-schema.ts`, and `auth-provider.tsx`/
+`auth-context.ts` gaining `register()` — so it follows the same pattern too.
 
 For the reasoning behind any decision below, see the Decision Ledger in
 [`docs/BUILD-PLAN.md`](BUILD-PLAN.md). For the full narrative of what was
@@ -42,7 +45,7 @@ each written at the end of that phase's session — see
 | 8 — Backend (optional) | Done (2026-09-17) | `check-phase-8.sh` passes | FastAPI + SQLModel + Alembic against `openapi.yaml`, zero changes to `src/api/gateway` or `src/api/transport`. Found & fixed 4 real bugs once run against real Postgres (see `docs/phases/phase-8.md`). Not tagged — touches no registry-shipped path |
 | 9 — Storybook (optional) | Done (2026-09-17) | `check-phase-9.sh` passes | Kitchen-sink route retired everywhere (dev route, `registry.json`'s `starter` item, Phase 3/5 permanent checks, `consume-test.sh`) once its own Phase 1 deferral condition was met. Full replacement, not additive — see `docs/phases/phase-9.md` for the internal-only-vs-full-replacement tradeoff. Registry-shipped content changed, so this *is* tagged (`v1.2.0`) |
 | 10 — Real Auth (optional) | Done (2026-09-17) | `check-phase-10.sh` passes | Closed the "Real auth" deferral now that Phase 8 picked the backend. Session cookies (stdlib-only: PBKDF2 password hashing, `secrets`-generated tokens, a server-side sessions table), login only against a seeded user — no self-service registration. `/auth/login`, `/auth/logout`, `/auth/me` added to `openapi.yaml` (a deliberate, reviewed unfreeze — see `openapi.yaml.sha256`); widgets/categories now require a session on the backend, not just the UI. Registry-shipped content changed (auth boundary, app shell, mocks, new login screen) — `registry.json` updated, install-tested, tagged `v1.3.0`. See `docs/phases/phase-10.md` for the bugs the real run found |
-| 11 — Self-Service Registration (optional) | Planned (2026-09-17) | `check-phase-11.sh` passes | Not started. Closes the "self-service registration" row in `docs/DEFERRED.md`, triggered now that the foundation is about to back a real app with more than one user. Scoped in `docs/BUILD-PLAN.md` |
+| 11 — Self-Service Registration (optional) | Done (2026-09-17) | `check-phase-11.sh` passes | Closed the "self-service registration" row in `docs/DEFERRED.md`. `POST /auth/register` added to `openapi.yaml` (another deliberate, reviewed unfreeze); duplicate email is a 422 field error, not a 409; registering auto-logs in via the same session-creation path `login()` uses. `/register` screen built the way `/login` was (`FieldGroup`/`Field`, not `EntityForm`), plus a client-only password-confirmation field. Registry-shipped content changed — see `docs/phases/phase-11.md` |
 | 12 — Cloud Postgres Support (optional) | Planned (2026-09-17) | `check-phase-12.sh` passes | Not started. Additive `DATABASE_SSL` support plus a Supabase runbook; local Docker Compose stays the default. Scoped in `docs/BUILD-PLAN.md` |
 | 13 — Storybook Controls/Autodocs Polish (optional) | Planned (2026-09-17) | `check-phase-13.sh` passes | Not started. Authorizes `@storybook/addon-docs`; rewrites the 12 registry stories to `args`-driven controls. Expect a win32-vs-Linux baseline round-trip through CI, same as Phases 3 and 9. Scoped in `docs/BUILD-PLAN.md` |
 

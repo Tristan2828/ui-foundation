@@ -60,6 +60,26 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("MSW mock conformance", () => {
+  it("POST /auth/register matches its 200 schema", async () => {
+    const res = await fetch("http://localhost/api/auth/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "new-user@example.com", name: "New User", password: "a-strong-password" }),
+    });
+    expect(res.status).toBe(200);
+    await validate("/auth/register", "post", res);
+  });
+
+  it("POST /auth/register matches its 422 schema on a duplicate email", async () => {
+    const res = await fetch("http://localhost/api/auth/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "dev@example.com", name: "Someone Else", password: "a-strong-password" }),
+    });
+    expect(res.status).toBe(422);
+    await validate("/auth/register", "post", res);
+  });
+
   it("POST /auth/login matches its 200 schema", async () => {
     const res = await fetch("http://localhost/api/auth/login", {
       method: "POST",

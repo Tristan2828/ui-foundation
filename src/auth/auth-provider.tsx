@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AppError } from '@/api/contracts'
-import { getCurrentUser, login as loginRequest, logout as logoutRequest } from '@/api/gateway/auth'
+import {
+  getCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+  register as registerRequest,
+} from '@/api/gateway/auth'
 import { AuthContext, type AuthStatus, type AuthUser } from './auth-context'
 
 // TanStack Query, not useEffect — AGENTS.md's "NEVER fetch in useEffect"
@@ -36,7 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.setQueryData(AUTH_QUERY_KEY, null)
   }
 
+  async function register(email: string, name: string, password: string) {
+    const registeredUser = await registerRequest({ email, name, password })
+    queryClient.setQueryData(AUTH_QUERY_KEY, registeredUser)
+  }
+
   return (
-    <AuthContext.Provider value={{ user: user ?? null, status, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user: user ?? null, status, login, logout, register }}>
+      {children}
+    </AuthContext.Provider>
   )
 }

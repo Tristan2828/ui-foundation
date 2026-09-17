@@ -91,6 +91,12 @@ class LoginRequest(CamelModel):
     password: str = Field(min_length=8)
 
 
+class RegisterRequest(CamelModel):
+    email: EmailStr
+    name: str = Field(min_length=1, max_length=200)
+    password: str = Field(min_length=8)
+
+
 class HTTPErrorBody(CamelModel):
     detail: str
 

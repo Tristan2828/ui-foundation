@@ -20,6 +20,11 @@ info:
     and scripts/check-openapi-freeze.mjs. Every other path now requires an
     authenticated session (401 via UnauthorizedError).
 
+    /auth/register added in Phase 11 (self-service registration) — another
+    deliberate, reviewed unfreeze. A duplicate email is a 422 field error
+    (ValidationError), not a 409, matching the shape every other validation
+    failure in this contract already uses.
+
 servers:
   - url: /api
 
@@ -41,6 +46,25 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
         "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /auth/register:
+    post:
+      operationId: register
+      summary: Create an account and immediately log in, receiving a session cookie
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "200":
+          description: Registered and authenticated. Sets the session_id cookie.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
         "422": { $ref: "#/components/responses/ValidationError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
@@ -212,6 +236,14 @@ components:
       properties:
         email: { type: string, format: email }
         password: { type: string, minLength: 8 }
+
+    RegisterRequest:
+      type: object
+      required: [email, name, password]
+      properties:
+        email: { $ref: "#/components/schemas/User/properties/email" }
+        name: { $ref: "#/components/schemas/User/properties/name" }
+        password: { $ref: "#/components/schemas/LoginRequest/properties/password" }
 
     Category:
       type: object

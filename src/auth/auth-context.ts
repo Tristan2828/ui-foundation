@@ -13,14 +13,17 @@ export type AuthContextValue = {
   status: AuthStatus
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  register: (email: string, name: string, password: string) => Promise<void>
 }
 
 // Real session-cookie auth as of Phase 10 (docs/BUILD-PLAN.md) — the
 // previous hardcoded FAKE_USER stub is gone. auth-provider.tsx is still the
 // only file that knows how any of this works; see AGENTS.md's hard rule.
+// register() added in Phase 11 (self-service registration).
 export const AuthContext = createContext<AuthContextValue>({
   user: null,
   status: 'loading',
   login: async () => {},
   logout: async () => {},
+  register: async () => {},
 })

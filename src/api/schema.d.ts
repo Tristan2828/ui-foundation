@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create an account and immediately log in, receiving a session cookie */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -125,6 +142,11 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+        };
+        RegisterRequest: {
+            email: components["schemas"]["User"]["email"];
+            name: components["schemas"]["User"]["name"];
+            password: components["schemas"]["LoginRequest"]["password"];
         };
         Category: {
             readonly id: number;
@@ -272,6 +294,32 @@ export interface operations {
                 };
             };
             401: components["responses"]["UnauthorizedError"];
+            422: components["responses"]["ValidationError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Registered and authenticated. Sets the session_id cookie. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
             422: components["responses"]["ValidationError"];
             500: components["responses"]["ServerError"];
         };
