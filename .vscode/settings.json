@@ -1,0 +1,25 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+  "files.exclude": {
+    "**/node_modules": true,
+    "dist": true,
+    "storybook-static": true,
+    "test-results": true,
+    "playwright-report": true,
+    "backend/.venv": true,
+    "backend/.mypy_cache": true,
+    "backend/.pytest_cache": true,
+    "backend/**/__pycache__": true
+  },
+  "search.exclude": {
+    "package-lock.json": true,
+    "backend/**/*.egg-info": true
+  }
+}

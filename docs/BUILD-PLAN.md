@@ -6,7 +6,7 @@
 **Core constraint:** The developer is a back-end engineer who does not intend to learn front-end. Every decision below optimizes for *AI-authorability* over developer familiarity.
 
 - **Stack:** Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui (Base UI primitives — see Decision Ledger)
-- **Distribution:** Private GitHub repository used as a shadcn registry
+- **Distribution:** GitHub repository (public as of Phase 10) used as a shadcn registry
 - **Backend:** FastAPI + SQLModel + PostgreSQL — built after Phase 7, against a contract the UI has already proven
 - **Plan date:** August 27, 2026 · **Revised:** September 15, 2026 (v1.2)
 
@@ -33,7 +33,7 @@ The failure mode for this project is not building the wrong thing. It is buildin
 | Primitive library | Base UI (shadcn default since July 2026) | **Confirmed against the changelog.** Every shadcn component ships for both Radix and Base UI. Base UI is the default the CLI, docs and `llms.txt` now assume, so it is what the agent's tooling will describe. Radix has denser training data; if the agent repeatedly reaches for Radix APIs, `shadcn init -b radix` is a one-flag reversal at Phase 1 only. React Aria became a third base in July 2026 (`--base aria`) — not chosen, noted so the agent does not treat it as invalid |
 | Framework | Vite SPA | Next.js server features duplicate the backend; RSC boundaries are a top AI error source |
 | Router | React Router v7 | Densest training data |
-| Distribution | Private GitHub registry | Pinned refs without the `node_modules` black box |
+| Distribution | GitHub registry | Pinned refs without the `node_modules` black box |
 | Component browser | Kitchen-sink route | Storybook deferred until 3+ custom composites exist |
 | Component browser (Phase 9) | Storybook, replacing kitchen-sink everywhere (dev route, registry `starter` item, permanent Phase 3/5 checks) | The Phase 1 deferral condition was met (3 composites shipped; visual regression already existed) — see docs/phases/phase-9.md for the full-replacement-vs-internal-only tradeoff |
 | Theming | Two-layer tokens, installed in Phase 1 | Multi-theme is nearly free later if the discipline holds from day one — so the discipline must exist before the first screen, not after |
@@ -58,7 +58,7 @@ The failure mode for this project is not building the wrong thing. It is buildin
 ## Repository Topology
 
 ```plain text
-ui-foundation/  (private GitHub repo — this IS the registry)
+ui-foundation/  (GitHub repo — this IS the registry)
 ├── registry.json           Registry manifest
 ├── AGENTS.md               Conventions every agent reads (Codex, Cursor, Copilot, Gemini…)
 ├── CLAUDE.md               One line: "@AGENTS.md" — Claude Code reads this
@@ -469,6 +469,30 @@ Optional and deliberately last. The UI is fully functional on MSW without it.
 > [!Warning]
 > Apply the same minimalism the C# option was rejected for lacking. No repository pattern, no service layer, no CQRS. One router module per entity. If a router module exceeds ~60 lines, stop and write the reason to `docs/BLOCKERS.md` rather than refactoring around it.
 
+## Phase 9 — Storybook
+
+Optional, ships after Phase 8. A **full replacement** of the kitchen-sink dev route, not an addition — kitchen-sink was already load-bearing in `registry.json`'s `starter` item, the permanent Phase 3/5 checks, and `consume-test.sh`, not just a dev-only page.
+
+1. Add `storybook` + `@storybook/react-vite` only — no `addon-a11y` (a11y coverage reuses the existing `@axe-core/playwright` dependency against the built Storybook instead), no `addon-themes` (a light/dark toolbar toggle is a ~10-line custom decorator), no Chromatic
+2. One `*.stories.tsx` per primitive in `src/components/ui/`, each reproducing its retired kitchen-sink section as a single `AllVariants` story
+3. Visual regression runs against `storybook build` + `vite preview`, not `storybook dev` — matches the main app's own build-then-preview `webServer` shape and avoids the dev server's on-demand-compilation flakiness under parallel Playwright workers
+4. Retire kitchen-sink everywhere it was referenced: the dev route itself, `registry.json`, `check-phase-3.sh`/`check-phase-5.sh`, `consume-test.sh`'s expected-file list
+
+**Exit criteria (`scripts/check-phase-9.sh`):** kitchen-sink is gone from every location above; one screenshot baseline and two axe passes (light + dark) per primitive; `check-phase-5.sh` still passes.
+
+## Phase 10 — Real Auth
+
+Closes the "Real auth" row in `docs/DEFERRED.md`, whose stated revisit condition — a backend language being chosen — Phase 8 met.
+
+1. Session-cookie auth, stdlib-only on both sides — PBKDF2 password hashing, `secrets`-generated session tokens, sha256-at-rest token hashing, zero new dependency either side
+2. Login only, against one seeded user (`SEED_USER_EMAIL`/`SEED_USER_PASSWORD`) — no self-service registration, matching this repo's personal-database-application framing
+3. Add `/auth/login`, `/auth/logout`, `/auth/me` to `openapi.yaml` — a deliberate, reviewed unfreeze of the sha256 lock (see `scripts/check-openapi-freeze.mjs`)
+4. Backend routers enforce the session, not just the UI — `widgets`/`categories` gate on a `get_current_user` dependency
+5. Rewrite `auth-provider.tsx` from the Phase 3 `FAKE_USER` stub to a real TanStack-Query-backed login/logout; `AppShell` gates on it (loading skeleton → redirect to `/login` → shell)
+6. MSW defaults to authenticated, so no pre-existing spec or Storybook story needs to change
+
+**Exit criteria (`scripts/check-phase-10.sh`):** `npm run verify` passes; chaining onto `check-phase-8.sh`'s real-Postgres proof, an unauthenticated `GET /api/widgets` returns 401.
+
 # Registry Configuration
 ---
 
@@ -556,7 +580,7 @@ npx shadcn@4.21.0 add <you>/ui-foundation/starter#v1.0.0
 npx shadcn@4.21.0 add <you>/ui-foundation/starter --dry-run
 ```
 
-- Private repos work after `gh auth login` — no server, no published JSON. In CI or an agent container without `gh`, set `GH_TOKEN` to a fine-grained PAT with read-only Contents access.
+- This repo is public as of Phase 10, so `npx shadcn add` needs no auth at all. The line below is retained for whoever forks this into a *private* registry of their own: private repos work after `gh auth login` — no server, no published JSON. In CI or an agent container without `gh`, set `GH_TOKEN` to a fine-grained PAT with read-only Contents access.
 - Refs may be branches, tags, or full 40-character commit SHAs. SHAs are the most reproducible.
 - Registry files are capped at 5 MiB each; GitHub Enterprise hosts are not supported.
 
@@ -844,7 +868,7 @@ Two things to set deliberately: `--max-turns` (Claude Code) or the Codex equival
 
 ## Cloud and Other Harnesses
 
-Cloud agents (Codex cloud, Claude Code on the web, Copilot coding agent) start from a clean container on each task, which makes this plan's fresh-context-per-phase rule the default rather than a discipline. They need a setup script (`npm ci && npx playwright install --with-deps`) and `GH_TOKEN` for the private registry in Phase 7. Their PR-per-task model maps directly onto branch-per-phase; the CI `verify` job is the merge gate, and the human merges.
+Cloud agents (Codex cloud, Claude Code on the web, Copilot coding agent) start from a clean container on each task, which makes this plan's fresh-context-per-phase rule the default rather than a discipline. They need a setup script (`npm ci && npx playwright install --with-deps`); `GH_TOKEN` was needed for the registry in Phase 7 while the repo was still private — now that it's public (Phase 10), no token is required. Their PR-per-task model maps directly onto branch-per-phase; the CI `verify` job is the merge gate, and the human merges.
 
 Cursor and Copilot read `AGENTS.md`; Gemini CLI reads `GEMINI.md` (or `AGENTS.md` if configured). None of them need anything beyond the instruction file and the CI gate — the hooks and subagents are a Claude Code / Codex refinement, not a requirement. The check scripts and the allowlist test in `verify` work in every harness because they are just scripts.
 

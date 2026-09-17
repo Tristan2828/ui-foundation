@@ -15,6 +15,7 @@ full rationale behind each row.
 | Error reporting | An app is actually deployed |
 | Cloud Postgres (e.g. Supabase) in place of local Docker Compose Postgres | The developer wants to stop running Postgres locally, or a deployed backend needs a real hosted database — Phase 8 shipped `docker-compose.yml` for local dev per an explicit choice to do Docker first and cloud later |
 | Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `deps-allowlist.json`/`check-deps.mjs` on the npm side | The backend gains a second contributor/session where an unreviewed Python dependency is a real risk — Phase 8 pinned versions by hand with no mechanical gate |
+| Storybook Controls/autodocs polish — rewrite `src/components/ui/*.stories.tsx` from static `AllVariants` renders to `args`-driven stories, add a Docs tab | The developer decides it's worth it. Two real costs, not just effort: (1) needs `@storybook/addon-docs` added to `deps-allowlist.json` — not there today, a deliberate human call per AGENTS.md's dependency hard rule; (2) the 12 stories are registry-shipped and keyed by 24 screenshot/axe baselines in `e2e/storybook-visual.spec.ts` — restructuring them risks the same win32-vs-Linux baseline churn Phases 3 and 9 both hit |
 
 ## Excluded
 

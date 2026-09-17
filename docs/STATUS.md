@@ -25,7 +25,7 @@ For the reasoning behind any decision below, see the Decision Ledger in
 built, what deviated from the plan, and what broke — one file per phase,
 each written at the end of that phase's session — see
 [`docs/phases/`](phases). For anything currently unresolved, see
-[`docs/BLOCKERS.md`](BLOCKERS.md) (empty as of Phase 8).
+[`docs/BLOCKERS.md`](BLOCKERS.md) (empty as of Phase 10).
 
 ## Phase Checklist
 
@@ -50,7 +50,7 @@ Full ledger with rationale in `docs/BUILD-PLAN.md`.
 - **Primitives:** Base UI (shadcn default since July 2026), not Radix
 - **Framework:** Vite SPA (not Next.js) — avoids RSC boundary issues
 - **Router:** React Router v7
-- **Distribution:** Private GitHub repo as shadcn registry (not npm) — keeps components open-code/editable
+- **Distribution:** GitHub repo (public as of Phase 10) as shadcn registry (not npm) — keeps components open-code/editable
 - **Backend:** FastAPI + SQLModel + Postgres, built *after* Phase 7, against a contract the UI already proved
 - **Verification:** everything is a script (`verify:fast` / `verify`); nothing is "looks right"
 
