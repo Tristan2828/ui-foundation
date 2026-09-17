@@ -76,6 +76,20 @@
    there's no surrounding page to crop out. Baselines are mostly dark
    background around a small rendered component as a result; this is
    expected, not a regression.
+5. **Pushed with only win32 baselines committed, same gap Phase 3 already
+   solved once** — CI's Linux runner has no `*-chromium-linux.png`
+   baseline for any of the 12 new Storybook stories, so `verify.yml`
+   failed on the pushed commit (all 12 screenshot tests: "snapshot doesn't
+   exist," writing actual). Same fix as Phase 3
+   (`docs/phases/phase-3.md`): `verify.yml`'s existing
+   `actions/upload-artifact@v4` (`if: failure()`) step had already
+   uploaded the 12 actual PNGs; downloaded that artifact
+   (`gh run download <id> -n playwright-test-results`) and committed them
+   renamed to the `*-chromium-linux.png` convention, same as every other
+   baseline in this repo. Worth remembering for next time: **generating
+   baselines on win32 only is never sufficient — always expect a Linux
+   round-trip through CI for any new screenshot baseline**, not just at
+   Phase 3 when the pattern was first established.
 
 ## What the next session needs to know
 
