@@ -7,15 +7,15 @@ full rationale behind each row.
 
 | Item | Revisit when |
 |---|---|
-| Self-service registration | Someone other than the developer needs their own account — Phase 10 shipped login only, against a seeded user |
-| Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat model, not a personal/local deployment |
+| Self-service registration | ~~Someone other than the developer needs their own account~~ — **triggered 2026-09-17; scoped as `docs/BUILD-PLAN.md` Phase 11.** Row removed once Phase 11 ships |
+| Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat model, not a personal/local deployment. **Still deferred as of Phase 11's scoping** — flagged there as a real gap self-service registration widens, not yet picked up |
 | Additional themes | A second app needs a distinct look |
 | Monorepo | Two or more consuming apps share a release cycle |
 | Row virtualization | A table exceeds ~5k rows |
 | Error reporting | An app is actually deployed |
-| Cloud Postgres (e.g. Supabase) in place of local Docker Compose Postgres | The developer wants to stop running Postgres locally, or a deployed backend needs a real hosted database — Phase 8 shipped `docker-compose.yml` for local dev per an explicit choice to do Docker first and cloud later |
+| Cloud Postgres (e.g. Supabase) in place of local Docker Compose Postgres | ~~The developer wants to stop running Postgres locally, or a deployed backend needs a real hosted database~~ — **triggered 2026-09-17; scoped as `docs/BUILD-PLAN.md` Phase 12.** Row removed once Phase 12 ships |
 | Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `deps-allowlist.json`/`check-deps.mjs` on the npm side | The backend gains a second contributor/session where an unreviewed Python dependency is a real risk — Phase 8 pinned versions by hand with no mechanical gate |
-| Storybook Controls/autodocs polish — rewrite `src/components/ui/*.stories.tsx` from static `AllVariants` renders to `args`-driven stories, add a Docs tab | The developer decides it's worth it. Two real costs, not just effort: (1) needs `@storybook/addon-docs` added to `deps-allowlist.json` — not there today, a deliberate human call per AGENTS.md's dependency hard rule; (2) the 12 stories are registry-shipped and keyed by 24 screenshot/axe baselines in `e2e/storybook-visual.spec.ts` — restructuring them risks the same win32-vs-Linux baseline churn Phases 3 and 9 both hit |
+| Storybook Controls/autodocs polish — rewrite `src/components/ui/*.stories.tsx` from static `AllVariants` renders to `args`-driven stories, add a Docs tab | ~~The developer decides it's worth it~~ — **decided 2026-09-17; scoped as `docs/BUILD-PLAN.md` Phase 13**, which authorizes the `@storybook/addon-docs` addition to `deps-allowlist.json` this row was blocked on. Row removed once Phase 13 ships |
 
 ## Excluded
 

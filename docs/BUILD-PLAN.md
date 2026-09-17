@@ -8,7 +8,7 @@
 - **Stack:** Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui (Base UI primitives — see Decision Ledger)
 - **Distribution:** GitHub repository (public as of Phase 10) used as a shadcn registry
 - **Backend:** FastAPI + SQLModel + PostgreSQL — built after Phase 7, against a contract the UI has already proven
-- **Plan date:** August 27, 2026 · **Revised:** September 15, 2026 (v1.2)
+- **Plan date:** August 27, 2026 · **Revised:** September 17, 2026 (v1.3)
 
 ## Who Reads This Document
 
@@ -493,6 +493,49 @@ Closes the "Real auth" row in `docs/DEFERRED.md`, whose stated revisit condition
 
 **Exit criteria (`scripts/check-phase-10.sh`):** `npm run verify` passes; chaining onto `check-phase-8.sh`'s real-Postgres proof, an unauthenticated `GET /api/widgets` returns 401.
 
+## Phase 11 — Self-Service Registration
+
+Closes the "Self-service registration" row in `docs/DEFERRED.md`, whose revisit condition — someone besides the developer needing their own account — is now true.
+
+1. Add `POST /auth/register` to `openapi.yaml` — a `RegisterRequest` schema (`email`, `name`, `password`, mirroring `User`'s required fields plus `LoginRequest`'s password constraint), same response set as `/auth/login` (`ValidationError` covers a duplicate email as a field error, not a separate status code). Another deliberate, reviewed unfreeze — update `openapi.yaml.sha256` the same way Phase 10 did
+2. `npm run gen:api`
+3. Gateway test in the `spec-tester` subagent: `register` translates a duplicate-email 422 into `AppError.kind: 'validation'` with `fieldErrors.email` populated
+4. MSW handler + mock-conformance test extension for `register`
+5. Backend: hash the password with the existing `security.py` helpers (no new dependency); enforce email uniqueness as a 422 field error, not a 409, matching the contract's existing error shape; auto-login on success (reuse `login()`'s session-creation path) so registering signs you in immediately
+6. Frontend: `register.tsx` / `register-schema.ts`, built the way `login.tsx` was — `FieldGroup`/`Field` directly, not `EntityForm` (a registration form has no "cancel" destination either). Add a client-side password-confirmation field (zod `.refine`) — the one addition beyond a literal mirror of `LoginRequest`, since a mistyped password with no confirmation is a real, cheaply-prevented failure mode
+7. `auth-provider.tsx` / `use-auth.ts` gain `register()` alongside `login()`/`logout()`; add a "Create account" link on `/login` and a "Sign in instead" link on `/register`
+8. `e2e/register.spec.ts` — mirror `e2e/auth.spec.ts`'s state coverage: validation (duplicate email, weak password, mismatched confirmation), success (redirects in, authenticated)
+9. Extend backend `test_auth.py`; confirm mypy and spec-conformance both cover the new route
+
+**Exit criteria (`scripts/check-phase-11.sh`):** `npm run verify` passes; chaining onto `check-phase-8.sh`'s real-Postgres proof, registering a duplicate email against the real backend returns 422 with a populated `fieldErrors.email`, and a fresh registration can immediately call an authenticated endpoint with no separate login step.
+
+> [!Warning]
+> This phase deliberately does not add login rate limiting or lockout — still a separate, unselected row in `docs/DEFERRED.md`. Self-service registration means anyone who can reach the app can create an account, and anyone can attempt unlimited password guesses against any account: a materially larger attack surface than "one seeded user, no registration." Acceptable for a personal/internal deployment; revisit rate limiting before this is exposed anywhere a stranger can reach it.
+
+## Phase 12 — Cloud Postgres Support
+
+Closes the "Cloud Postgres" row in `docs/DEFERRED.md`. Additive, not a replacement — `docker-compose.yml` stays the default local-dev path; this phase makes pointing `DATABASE_URL` at a hosted instance (Supabase, or any SSL-requiring managed Postgres) a supported, documented configuration instead of an unverified one.
+
+1. `backend/app/config.py`: add `DATABASE_SSL` (env-driven bool, default `false`, matching the existing `COOKIE_SECURE` pattern); `backend/app/db.py` passes `connect_args={"ssl": True}` to `create_async_engine` when set — asyncpg's own SSL flag, not the `sslmode=` query param libpq/psycopg use, since `postgresql+asyncpg://` doesn't parse that
+2. `backend/migrations/env.py` needs the same `connect_args` — it constructs its own engine from `DATABASE_URL` independently of `db.py` and must not silently skip SSL
+3. `backend/.env.example` gains a second, commented example block: a placeholder Supabase-shaped connection string plus `DATABASE_SSL=true`
+4. New `docs/cloud-postgres.md`: provisioning steps for a free-tier Supabase project (the concrete worked example — the code is provider-agnostic, only requires standard Postgres + SSL), the env vars to set, and the one gotcha to expect: pooled connection strings (Supabase's pooler port) may not support the prepared statements Alembic's DDL needs, so migrations may require the direct-connection port even when the app itself uses the pooler
+5. `docker-compose.yml`'s header comment updates to say "the local option," not "the only option"
+
+**Exit criteria (`scripts/check-phase-12.sh`):** requires `CLOUD_DATABASE_URL`, set by the developer to their own provisioned instance — fails fast with a message pointing at `docs/cloud-postgres.md` if unset (the same "a human must actually provision this" shape Phase 8's Docker step had, not something a script can fake). When set: runs `alembic upgrade head` against it, runs `backend/scripts/verify.sh` with `DATABASE_URL`/`DATABASE_SSL` pointed at it, and curls a live endpoint. Also chains onto `check-phase-8.sh` to confirm the local Docker path still works unmodified.
+
+## Phase 13 — Storybook Controls/Autodocs Polish
+
+Closes the "Storybook Controls/autodocs polish" row in `docs/DEFERRED.md`. The row's blocking condition was a human dependency decision on `@storybook/addon-docs`; that decision is made by this plan addition — add it to `deps-allowlist.json`'s `devDependencies` as the first step, not as an agent-initiated install.
+
+1. `.storybook/main.ts` registers `@storybook/addon-docs`; enable autodocs (`tags: ['autodocs']`) globally or per-story
+2. Rewrite each of the 12 `src/components/ui/*.stories.tsx` from a single static `AllVariants` render into `args`-driven stories with `argTypes` (e.g. `badge.stories.tsx`'s four hardcoded `<Badge variant="…">` instances become one story with a `variant` Control) — one story per primitive still; this changes each file's shape, not its count
+3. Update `e2e/storybook-visual.spec.ts` for any story-name changes the rewrite causes
+4. Regenerate screenshot baselines locally, then **expect the same win32-vs-Linux round-trip Phases 3 and 9 both hit**: push, let CI fail once, download the actuals via `gh run download <id> -n playwright-test-results`, commit those as the real baselines. Do not attempt to generate Linux-correct baselines on this machine — that has never worked in this repo
+5. Confirm `check-phase-9.sh` still passes — kitchen-sink stays retired; this phase only changes what's inside the stories that replaced it
+
+**Exit criteria (`scripts/check-phase-13.sh`):** chains onto `check-phase-9.sh`; `npm run verify` passes; every `*.stories.tsx` declares `argTypes` (script greps for it — a story with zero controls didn't get rewritten); `storybook build` succeeds and its output contains a Docs page for at least one primitive.
+
 # Registry Configuration
 ---
 
@@ -901,14 +944,11 @@ The predictable ways this goes wrong, and what to do about each.
 
 ## Deferred
 
-| Item | Revisit when |
-|---|---|
-| Storybook | 3+ custom composites, or visual regression is needed |
-| Real auth | Backend language is chosen |
-| Additional themes | A second app needs a distinct look |
-| Monorepo | Two or more consuming apps share a release cycle |
-| Row virtualization | A table exceeds ~5k rows. Server-side pagination is mandatory regardless; TanStack Virtual is the escape hatch |
-| Error reporting | An app is actually deployed. Sentry free tier, ~10 lines — premature before then |
+Storybook (Phase 9) and Real auth (Phase 10) both shipped and are removed
+from this table. The live deferred list — including items that surfaced
+after v1.2, like Storybook Controls/autodocs polish and backend dependency-
+allowlist enforcement — is tracked in `docs/DEFERRED.md`, not duplicated
+here, so it can't drift out of sync with this file again.
 
 ## Excluded
 
@@ -932,6 +972,30 @@ Front-end tooling moves fast and parts of this plan rest on information that may
 
 > [!Tip]
 > Feed this plan to the coding agent alongside the shadcn `llms.txt` at `ui.shadcn.com/llms.txt`. The combination gives it both the project-specific conventions and current library knowledge. Do **not** feed it `docs/OPERATOR.md`.
+
+# Changes in v1.3
+---
+
+Added three optional phases, scoped after a status review found the base
+plan (Phases 0-10) fully complete and `docs/BLOCKERS.md` empty. Three rows
+in `docs/DEFERRED.md` had their revisit conditions newly triggered by the
+developer's plan to reuse this foundation for a real app — the rest stay
+deferred, since their conditions (second app, real deployment, brute-force
+exposure) still haven't fired and building them speculatively would be
+exactly the "building forever" failure mode the Scope Ceiling warns about.
+
+- **Phase 11 — Self-Service Registration.** `POST /auth/register` closes
+  the "someone other than the developer needs an account" row.
+- **Phase 12 — Cloud Postgres Support.** `DATABASE_SSL` plus a Supabase
+  runbook, additive to the existing local Docker Compose path.
+- **Phase 13 — Storybook Controls/Autodocs Polish.** Authorizes
+  `@storybook/addon-docs` (a `deps-allowlist.json` addition, the one
+  human decision the row was blocked on) and rewrites the 12 registry
+  stories from static renders to `args`-driven controls.
+- **Fixed: this file's own "Deferred and Excluded" section was stale.**
+  It still listed Storybook and Real Auth as deferred after both shipped
+  in Phases 9-10. The live list moved fully to `docs/DEFERRED.md`; this
+  file no longer duplicates it.
 
 # Changes in v1.2
 ---
