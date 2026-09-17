@@ -54,10 +54,12 @@
   with a response schema exposing the same property names. Needs no
   database; wired into a new `verify-backend` CI job in
   `.github/workflows/verify.yml`.
-- **`scripts/check-phase-8.sh`**: cumulative with `check-phase-7.sh`,
-  then backend verify, the `src/api/gateway`/`src/api/transport` diff
-  against `v1.1.0`, and a real Postgres-backed run (see below —
-  written but not yet run to completion; no Docker on this machine).
+- **`scripts/check-phase-8.sh`**: cumulative with `check-phase-5.sh` (see
+  Deviations for why not 6/7), then an explicit "no registry-shipped path
+  changed since v1.1.0" assertion, backend verify, the
+  `src/api/gateway`/`src/api/transport` diff against `v1.1.0`, and a real
+  Postgres-backed run. **PASS, end to end**, including the
+  `VITE_API=real` Playwright run against the live backend.
 
 ## Deviations from the plan
 
@@ -108,34 +110,74 @@
   `ValidationErrorBody` anyway (same `loc`/`msg`/`type` fields, just a
   different component name), so this has no effect on the frontend
   gateway.
+- **Three more real bugs, found only once Docker actually worked and the
+  migration ran against real Postgres** — none of these were visible from
+  mypy, pytest-against-SQLite, or reading the code:
+  1. `migrations/versions/0001_initial.py`'s enum used generic `sa.Enum(...,
+     create_type=False)`. That kwarg does not exist on the generic class —
+     it is silently accepted and ignored (confirmed via
+     `getattr(instance, 'create_type', 'NO ATTR')` — `NO ATTR`) — so
+     `create_table`'s own automatic enum-creation side effect ran anyway,
+     duplicating the type this migration had just explicitly created one
+     statement earlier (`DuplicateObjectError: type "widgetstatus"
+     already exists`). Fixed by using
+     `sqlalchemy.dialects.postgresql.ENUM` instead, which is the class
+     `create_type` actually belongs to.
+  2. The same migration's seed data passed `available_from`/`price` as
+     raw strings to `op.bulk_insert`. `asyncpg`'s parameter binding for a
+     direct `INSERT` — unlike an ORM insert, which runs values through
+     Pydantic/SQLAlchemy type coercion first — requires real
+     `datetime`/`Decimal` objects and raises `DataError` otherwise. This
+     is the exact same class of bug already found and fixed in
+     `tests/conftest.py`'s fixture; it recurred here because that
+     fixture, being SQLite-backed, never exercises this file.
+  3. `check-phase-8.sh` originally chained onto `check-phase-7.sh` for its
+     "must not have broken earlier phases" cumulative check. That chain
+     demands `HEAD` be an exact, freshly-pushed git tag and then spawns a
+     full fresh-agent dogfood rebuild via `consume-test.sh` — expensive
+     machinery that exists to catch *registry* regressions. `git diff
+     v1.1.0 -- registry.json docs/add-an-entity.md .claude .codex src
+     config` confirmed Phase 8 changes none of that, so the chain was
+     both impossible to satisfy mid-phase (no fresh tag yet) and would
+     have proven nothing relevant even if satisfied. Replaced with
+     `check-phase-5.sh` plus an explicit assertion that no
+     registry-shipped path changed since `v1.1.0` — cheaper, and a more
+     honest statement of what Phase 8 actually needs to prove.
+  Also fixed in the same pass: the script's backgrounded `uvicorn` used
+  `(cd backend && "../$PY" ...) &` and captured `$!` — that PID belongs to
+  the wrapping subshell, not `uvicorn` itself, so the cleanup trap's `kill`
+  could have left `uvicorn` running as an orphan. Fixed with `exec` inside
+  the subshell so `$!` is `uvicorn`'s own PID.
 
 ## Environment notes
 
-- **No Docker, no `psql`, no local Postgres service on this machine**
-  (confirmed via `docker --version`, `psql --version`, and a Windows
-  `Get-Service` check — all absent; `C:\Program Files\Docker\Docker\
-  Docker Desktop.exe` does not exist). The developer chose to install
-  Docker Desktop themselves rather than have it installed
-  non-interactively (it can require a reboot for WSL2). See
-  `docs/BLOCKERS.md`.
-- Because of the above, **the Postgres-backed section of
-  `scripts/check-phase-8.sh` (from `docker compose up -d postgres`
-  onward) is written but has never actually run** — the `docker compose
-  ps postgres --format '{{.Health}}'` healthcheck-polling loop
-  specifically is the most likely thing to need adjustment once it can
-  be tried against a real `docker compose` version. Everything before
-  that line in the script has run and passed.
-- **Follow-up, same day, after Docker Desktop was installed:** it still
-  couldn't start — Docker's own error is "Virtualization support not
-  detected," and `wsl --list --verbose` reports zero installed
-  distributions (not even Docker's internal `docker-desktop`/
-  `docker-desktop-data`). This is a BIOS/firmware or Windows-feature
-  activation issue, not a project or Docker-config problem, and almost
-  certainly needs a restart to resolve — declined for now. See the
-  updated `docs/BLOCKERS.md` entry, which also records two
-  Docker-free alternatives discussed and deferred (a portable
-  EnterpriseDB Postgres binary; pulling the already-deferred cloud
-  Postgres task forward).
+- **No Docker, no `psql`, no local Postgres service on this machine at
+  the start of this phase** (confirmed via `docker --version`, `psql
+  --version`, and a Windows `Get-Service` check — all absent). The
+  developer installed Docker Desktop themselves; its first launch failed
+  with "Virtualization support not detected" (`wsl --list --verbose`
+  showed zero installed distributions, not even Docker's own internal
+  `docker-desktop`/`docker-desktop-data`) — a BIOS/firmware issue, not a
+  project or Docker misconfiguration. **Resolved by the developer on
+  their end the same day**, without the restart that seemed likely to be
+  required — once fixed, `docker ps` and `docker compose` worked
+  immediately.
+- Once Docker worked, `docker compose up -d postgres` itself failed on
+  the first attempt: **`postgres:18`'s Docker image changed its expected
+  volume-mount convention** — 18+ expects a single mount at
+  `/var/lib/postgresql` (the image manages a major-version-specific
+  subdirectory itself, for `pg_upgrade --link` compatibility), not
+  `/var/lib/postgresql/data` (the pre-18 convention `docker-compose.yml`
+  originally used). The container exited immediately with a clear log
+  message ("PostgreSQL data in /var/lib/postgresql/data (unused
+  mount/volume)"), not a silent failure. Fixed by mounting the named
+  volume at `/var/lib/postgresql` instead.
+- The `docker compose ps postgres --format '{{.Health}}'` syntax in
+  `check-phase-8.sh` (flagged in the previous version of this doc as the
+  most likely thing to need adjustment) turned out to be **correct as
+  written** — it returned nothing only because the container had exited
+  (excluded from `ps` output without `-a`), not because of a syntax
+  problem with this `docker compose` version (v5.5.1).
 
 ## Verification
 
@@ -151,44 +193,57 @@
   neither of which is gateway or transport.
 - `bash backend/scripts/verify.sh`: **PASS** — `mypy --strict` on 12
   source files, 5 pytest tests, spec-conformance check, all green.
-- `scripts/check-phase-8.sh`: **not run to completion** — fails at the
-  `docker` availability check, as expected with no Docker installed.
-  Everything before that check in the script has been verified
-  independently (see above).
+- **`scripts/check-phase-8.sh`: PASS, end to end** — including
+  `docker compose up -d postgres`, `alembic upgrade head` against the
+  real database, `uvicorn` serving the FastAPI app, and
+  `VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts`
+  (19 tests) against it. Manually spot-checked the live backend beyond
+  what the script asserts: `GET /api/categories`/`/api/widgets` return
+  the exact camelCase shapes and seed data the gateway expects
+  (`availableFrom` even round-trips with a `Z` suffix, matching
+  `src/mocks/data.ts`'s own format, not just an equivalent one); `GET
+  /api/widgets/999` returns `{"detail":"Widget not found"}` at 404; an
+  invalid `price` on `POST /api/widgets` returns the contract's
+  `{"detail":[{"loc":["body","price"],...}]}` shape at 422.
 - **CI, pushed to `main`**: the new `verify-backend` job failed on the
   first push (`bash scripts/verify.sh`, exit 127) — the script only
   looked for `.venv/Scripts|bin/python`, but CI installs into the
   system Python directly, with no venv. Fixed with a `command -v
   python` fallback (commit `2ed6987`); both `verify-backend` and the
-  existing `verify` job are green on `main` as of that commit,
-  confirming the backend gate actually works in a clean environment,
-  not just against this machine's own `.venv`.
+  existing `verify` job are green on `main` at every commit through
+  this phase's end.
 
 ## What the next session needs to know
 
-- **Phase 8 is optional and this is as far as it goes without Docker.**
-  The UI remains fully functional on MSW; nothing here changes that.
+- **Phase 8 is done.** `scripts/check-phase-8.sh` passes end to end,
+  which is its exit criterion. The UI remains fully functional on MSW
+  without the backend — nothing here changes that, and
   `docs/BUILD-PLAN.md`'s definition of done for the whole project
-  (`check-phase-7.sh` passing) was already met before this phase
-  started and remains met.
-- **Next step, once Docker Desktop is installed:** `docker compose up -d
-  postgres` from the repo root, then `scripts/check-phase-8.sh`. Expect
-  to need to debug the untested section (see Environment notes) —
-  likely candidates are the `docker compose ps --format` health check
-  syntax and whether `uvicorn`'s background-process readiness polling
-  (`curl -sf http://localhost:8000/api/categories`) is reliable on
-  this machine.
+  (`check-phase-7.sh` passing) was already met before this phase and
+  remains met independently.
+- **This phase was not tagged.** Phases 6/7 tag a registry release
+  (`v1.0.0`, `v1.1.0`) because they change what the registry ships;
+  Phase 8 provably doesn't (see the `check-phase-8.sh` design note in
+  Deviations), so there's nothing registry-side to version. If a future
+  session wants a marker for "backend exists," that's a separate,
+  smaller decision than a registry tag.
 - **The seed data in `migrations/versions/0001_initial.py` is a literal
   copy of `src/mocks/data.ts`.** If the mock data ever changes, update
   both, or the real backend and MSW will show different demo data —
   there's no mechanical check tying them together (unlike
   `check-openapi-freeze.mjs` for the spec itself).
 - **`backend/pyproject.toml` has no allowlist enforcement** — see the
-  new row in `docs/DEFERRED.md`. Every version in it was pinned by hand
+  row in `docs/DEFERRED.md`. Every version in it was pinned by hand
   against current PyPI (`pip index versions <pkg>`, run live this
   session) the same way `deps-allowlist.json` pins the npm side, but
   nothing fails `verify` if a future session adds an unreviewed one.
+- **Cloud Postgres (Supabase or similar) is still deferred**
+  (`docs/DEFERRED.md`) — the developer chose Docker Compose for now.
+  `backend/.env.example`'s `DATABASE_URL` is the only thing that would
+  need to change to point at a hosted database instead; nothing else in
+  `backend/` assumes Docker specifically.
 - The Notion tracker (`Frontend Design System`, page id
   `3dd2b1f9153e8047a2b9de3867b13195`) is updated at the end of this
-  session with Phase 8's status (in progress — blocked on Docker
-  install, not done) and a new Session Log entry.
+  session: Phase 8's row flipped to done, and the Session Log entry
+  amended to reflect the full resolution rather than left as
+  "blocked."
