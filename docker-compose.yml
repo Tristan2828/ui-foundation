@@ -12,7 +12,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ui-foundation-postgres:/var/lib/postgresql/data
+      # postgres:18+ images expect a single mount at /var/lib/postgresql
+      # (not .../data) — the image manages a major-version-specific
+      # subdirectory itself now, for pg_upgrade --link compatibility.
+      # Mounting at .../data (the pre-18 convention) makes the image
+      # refuse to start ("PostgreSQL data in ... (unused mount/volume)").
+      - ui-foundation-postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ui_foundation"]
       interval: 2s
