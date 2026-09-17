@@ -1,13 +1,16 @@
-"""POST /auth/login, POST /auth/logout, GET /auth/me — see openapi.yaml
-operationIds login, logout, getCurrentUser. Session-cookie auth chosen in
-docs/BUILD-PLAN.md Phase 10 (same-origin deployment, stdlib-only, zero new
-dependency). `get_current_user` is exported for reuse as a router-level
+"""POST /auth/register, POST /auth/login, POST /auth/logout, GET /auth/me —
+see openapi.yaml operationIds register, login, logout, getCurrentUser.
+Session-cookie auth chosen in docs/BUILD-PLAN.md Phase 10 (same-origin
+deployment, stdlib-only, zero new dependency); register added in Phase 11
+and reuses login's session-creation path via `_start_session`.
+`get_current_user` is exported for reuse as a router-level
 `dependencies=[Depends(get_current_user)]` on widgets/categories.
 """
 
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
+from fastapi.exceptions import RequestValidationError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -16,13 +19,14 @@ from app.db import get_session
 from app.models import Session as UserSession
 from app.models import User
 from app.openapi_responses import SERVER_ERROR, UNAUTHORIZED, VALIDATION
-from app.schemas import LoginRequest, UserOut
-from app.security import generate_session_token, hash_token, verify_password
+from app.schemas import LoginRequest, RegisterRequest, UserOut
+from app.security import generate_session_token, hash_password, hash_token, verify_password
 
 router = APIRouter(tags=["auth"])
 
 COOKIE_NAME = "session_id"
 LOGIN_RESPONSES = {**UNAUTHORIZED, **VALIDATION, **SERVER_ERROR}
+REGISTER_RESPONSES = {**VALIDATION, **SERVER_ERROR}
 
 
 async def get_current_user(
@@ -53,19 +57,11 @@ async def get_current_user(
     return user
 
 
-@router.post("/auth/login", response_model=UserOut, responses=LOGIN_RESPONSES)
-async def login(
-    body: LoginRequest,
-    response: Response,
-    session: AsyncSession = Depends(get_session),
-) -> User:
-    stmt = select(User).where(User.email == body.email)
-    result = await session.exec(stmt)
-    user = result.first()
-    if user is None or not verify_password(body.password, user.password_hash):
-        # Deliberately generic — never confirm whether the email exists.
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
+async def _start_session(user: User, response: Response, session: AsyncSession) -> User:
+    """Issue a session cookie for `user`. Shared by login and register so
+    "register auto-logs you in" is literally the same code path as logging
+    in, not a second implementation of it.
+    """
     token = generate_session_token()
     expires_at = datetime.now(timezone.utc) + timedelta(days=SESSION_TTL_DAYS)
     session.add(UserSession(user_id=user.id, token_hash=hash_token(token), expires_at=expires_at))
@@ -84,6 +80,46 @@ async def login(
         max_age=SESSION_TTL_DAYS * 24 * 60 * 60,
     )
     return user
+
+
+@router.post("/auth/register", response_model=UserOut, responses=REGISTER_RESPONSES)
+async def register(
+    body: RegisterRequest,
+    response: Response,
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    stmt = select(User).where(User.email == body.email)
+    result = await session.exec(stmt)
+    if result.first() is not None:
+        # Shaped like FastAPI's own RequestValidationError so it lands on
+        # the same 422/ValidationErrorBody path every other field error
+        # uses — a duplicate email is a validation failure, not a 409.
+        raise RequestValidationError(
+            [{"loc": ("body", "email"), "msg": "email already registered", "type": "value_error.email_exists"}]
+        )
+
+    user = User(email=body.email, name=body.name, password_hash=hash_password(body.password))
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+
+    return await _start_session(user, response, session)
+
+
+@router.post("/auth/login", response_model=UserOut, responses=LOGIN_RESPONSES)
+async def login(
+    body: LoginRequest,
+    response: Response,
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    stmt = select(User).where(User.email == body.email)
+    result = await session.exec(stmt)
+    user = result.first()
+    if user is None or not verify_password(body.password, user.password_hash):
+        # Deliberately generic — never confirm whether the email exists.
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    return await _start_session(user, response, session)
 
 
 @router.post("/auth/logout", status_code=204, responses=SERVER_ERROR)

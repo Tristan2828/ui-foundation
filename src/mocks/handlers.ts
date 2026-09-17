@@ -3,12 +3,25 @@
 // whole UI run with no backend at all. See docs/BUILD-PLAN.md "Backend
 // Decoupling".
 import { http, HttpResponse } from "msw";
-import { categories, isAuthenticated, mockUser, MOCK_PASSWORD, nextWidgetId, setAuthenticated, widgets } from "./data";
+import {
+  categories,
+  getCurrentMockUser,
+  isAuthenticated,
+  isEmailRegistered,
+  mockUser,
+  MOCK_PASSWORD,
+  nextWidgetId,
+  registerMockUser,
+  setAuthenticated,
+  setCurrentMockUser,
+  widgets,
+} from "./data";
 import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
 type WidgetCreate = components["schemas"]["WidgetCreate"];
 type LoginRequest = components["schemas"]["LoginRequest"];
+type RegisterRequest = components["schemas"]["RegisterRequest"];
 type WidgetUpdate = components["schemas"]["WidgetUpdate"];
 type ValidationIssue = components["schemas"]["ValidationErrorBody"]["detail"][number];
 
@@ -66,11 +79,39 @@ function sortWidgets(list: Widget[], sort: string | null): Widget[] {
 }
 
 export const handlers = [
+  http.post("*/api/auth/register", async ({ request }) => {
+    const body = (await request.json()) as Partial<RegisterRequest>;
+    // Mirrors backend/app/routers/auth.py's register(): Pydantic-level
+    // field validation, then the hand-raised duplicate-email check, both
+    // landing on the same 422/{detail:[...]} shape.
+    const issues: ValidationIssue[] = [];
+    if (!body.name) issues.push({ loc: ["body", "name"], msg: "field required", type: "value_error.missing" });
+    if (!body.email) issues.push({ loc: ["body", "email"], msg: "field required", type: "value_error.missing" });
+    if (!body.password || body.password.length < 8) {
+      issues.push({
+        loc: ["body", "password"],
+        msg: "ensure this value has at least 8 characters",
+        type: "value_error.any_str.min_length",
+      });
+    }
+    if (body.email && isEmailRegistered(body.email)) {
+      issues.push({ loc: ["body", "email"], msg: "email already registered", type: "value_error.email_exists" });
+    }
+    if (issues.length > 0) {
+      return HttpResponse.json({ detail: issues }, { status: 422 });
+    }
+
+    const user = registerMockUser(body.email!, body.name!);
+    setAuthenticated(true);
+    return HttpResponse.json(user);
+  }),
+
   http.post("*/api/auth/login", async ({ request }) => {
     const body = (await request.json()) as LoginRequest;
     if (body.email !== mockUser.email || body.password !== MOCK_PASSWORD) {
       return HttpResponse.json({ detail: "Invalid email or password" }, { status: 401 });
     }
+    setCurrentMockUser(mockUser);
     setAuthenticated(true);
     return HttpResponse.json(mockUser);
   }),
@@ -84,7 +125,7 @@ export const handlers = [
     if (!isAuthenticated) {
       return HttpResponse.json({ detail: "Not authenticated" }, { status: 401 });
     }
-    return HttpResponse.json(mockUser);
+    return HttpResponse.json(getCurrentMockUser());
   }),
 
   http.get("*/api/categories", ({ request }) => {

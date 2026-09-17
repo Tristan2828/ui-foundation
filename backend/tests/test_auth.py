@@ -74,6 +74,61 @@ async def test_logout_clears_session(auth_client: AsyncClient) -> None:
     assert me_response.status_code == 401
 
 
+@pytest_asyncio.fixture
+async def register_client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    # No pre-seeded user, unlike auth_client — registration needs to be the
+    # one creating the first row.
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+        yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+    app.dependency_overrides.clear()
+
+
+async def test_register_creates_user_and_logs_in(register_client: AsyncClient) -> None:
+    response = await register_client.post(
+        "/api/auth/register",
+        json={"email": "new-user@example.com", "name": "New User", "password": "a-strong-password"},
+    )
+    assert response.status_code == 200
+    assert response.json()["email"] == "new-user@example.com"
+    assert response.json()["name"] == "New User"
+    assert "session_id" in response.cookies
+
+    # Auto-login: no separate POST /auth/login needed to reach an
+    # authenticated endpoint (docs/BUILD-PLAN.md Phase 11 exit criteria).
+    me_response = await register_client.get("/api/auth/me")
+    assert me_response.status_code == 200
+    assert me_response.json()["email"] == "new-user@example.com"
+
+
+async def test_register_duplicate_email_is_422_with_field_error(register_client: AsyncClient) -> None:
+    await register_client.post(
+        "/api/auth/register",
+        json={"email": "dupe@example.com", "name": "First", "password": "a-strong-password"},
+    )
+    response = await register_client.post(
+        "/api/auth/register",
+        json={"email": "dupe@example.com", "name": "Second", "password": "another-password"},
+    )
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert any(issue["loc"][-1] == "email" for issue in detail)
+
+
+async def test_register_weak_password_is_422(register_client: AsyncClient) -> None:
+    response = await register_client.post(
+        "/api/auth/register",
+        json={"email": "short-pw@example.com", "name": "Someone", "password": "short"},
+    )
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert any(issue["loc"][-1] == "password" for issue in detail)
+
+
 async def test_expired_session_is_401(auth_client: AsyncClient, session: AsyncSession) -> None:
     token = generate_session_token()
     session.add(

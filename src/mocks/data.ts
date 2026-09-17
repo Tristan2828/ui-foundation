@@ -22,6 +22,34 @@ export function setAuthenticated(value: boolean): void {
   isAuthenticated = value;
 }
 
+// Registration store (Phase 11) — mirrors the real backend's email-
+// uniqueness check (User.email is a unique column) and its "auto-login"
+// behavior (a new registration becomes the session's current user, same as
+// backend/app/routers/auth.py's shared _start_session path). Starts with
+// just the seeded dev user's email taken.
+let registeredUsers = new Map<string, User>([[mockUser.email, mockUser]]);
+let currentUser: User = mockUser;
+let nextUserId = 2;
+
+export function isEmailRegistered(email: string): boolean {
+  return registeredUsers.has(email);
+}
+
+export function registerMockUser(email: string, name: string): User {
+  const user: User = { id: nextUserId++, email, name };
+  registeredUsers.set(email, user);
+  currentUser = user;
+  return user;
+}
+
+export function getCurrentMockUser(): User {
+  return currentUser;
+}
+
+export function setCurrentMockUser(user: User): void {
+  currentUser = user;
+}
+
 const initialCategories: Category[] = [
   { id: 1, name: "Electronics" },
   { id: 2, name: "Furniture" },
@@ -70,6 +98,9 @@ export function resetMockData(): void {
   widgets = structuredClone(initialWidgets);
   nextId = widgets.length + 1;
   isAuthenticated = true;
+  registeredUsers = new Map([[mockUser.email, mockUser]]);
+  currentUser = mockUser;
+  nextUserId = 2;
 }
 
 export function nextWidgetId(): number {

@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app/app-shell'
 import { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 import { HomeRoute } from '@/routes/home'
 import { LoginRoute } from '@/routes/login'
+import { RegisterRoute } from '@/routes/register'
 import { WidgetFormRoute } from '@/routes/widgets/widget-form'
 import { WidgetsTableRoute } from '@/routes/widgets/widgets-table'
 
@@ -11,6 +12,7 @@ const router = createBrowserRouter([
   // to here when unauthenticated, so this route must sit outside that
   // redirect or the two would loop.
   { path: '/login', element: <LoginRoute />, errorElement: <RouteErrorBoundary /> },
+  { path: '/register', element: <RegisterRoute />, errorElement: <RouteErrorBoundary /> },
   {
     path: '/',
     element: <AppShell />,

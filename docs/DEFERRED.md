@@ -7,8 +7,7 @@ full rationale behind each row.
 
 | Item | Revisit when |
 |---|---|
-| Self-service registration | ~~Someone other than the developer needs their own account~~ — **triggered 2026-09-17; scoped as `docs/BUILD-PLAN.md` Phase 11.** Row removed once Phase 11 ships |
-| Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat model, not a personal/local deployment. **Still deferred as of Phase 11's scoping** — flagged there as a real gap self-service registration widens, not yet picked up |
+| Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat model, not a personal/local deployment. **Still deferred as of Phase 11** (docs/phases/phase-11.md) — flagged there as a real gap self-service registration widens, not yet picked up |
 | Additional themes | A second app needs a distinct look |
 | Monorepo | Two or more consuming apps share a release cycle |
 | Row virtualization | A table exceeds ~5k rows |

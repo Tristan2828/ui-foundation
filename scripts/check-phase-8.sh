@@ -21,6 +21,11 @@
 # error/validation states through MSW overrides that do not exist when
 # VITE_API=real, so only the MSW-independent specs — shell, smoke — run
 # here; this is a deliberate scope decision, not a gap).
+#
+# Phase 11 (self-service registration) added two more assertions to this
+# same live-server section, the same way Phase 10 added the unauthenticated-
+# 401 check below — check-phase-11.sh chains onto this script rather than
+# re-running the Docker/Postgres/uvicorn lifecycle a second time.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT="$(pwd)"
@@ -79,6 +84,29 @@ done
 echo "check-phase-8: unauthenticated request is rejected (Phase 10)"
 unauth_status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/widgets)
 [ "$unauth_status" = "401" ] || fail "GET /api/widgets with no session cookie returned $unauth_status, expected 401"
+
+echo "check-phase-8: registering a duplicate email is a 422 field error, not a 409 (Phase 11)"
+DUP_BODY=$(mktemp)
+dup_status=$(curl -s -o "$DUP_BODY" -w '%{http_code}' -X POST http://localhost:8000/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"dev@example.com","name":"Someone Else","password":"a-strong-password"}')
+[ "$dup_status" = "422" ] || fail "registering dev@example.com again returned $dup_status, expected 422 — got: $(cat "$DUP_BODY")"
+grep -q '"email"' "$DUP_BODY" || fail "duplicate-email 422 body has no field error naming 'email': $(cat "$DUP_BODY")"
+rm -f "$DUP_BODY"
+
+echo "check-phase-8: a fresh registration can call an authenticated endpoint immediately, no separate login (Phase 11)"
+COOKIE_JAR=$(mktemp)
+# A unique email per run — Postgres data persists across invocations (no
+# reset between runs, unlike the SQLite pytest fixture), so a fixed address
+# would 422 as "already registered" on the second run of this script.
+FRESH_EMAIL="check-phase-8-register-$(date +%s)-$$@example.com"
+register_status=$(curl -s -c "$COOKIE_JAR" -o /dev/null -w '%{http_code}' -X POST http://localhost:8000/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$FRESH_EMAIL\",\"name\":\"Check Phase 8\",\"password\":\"a-strong-password\"}")
+[ "$register_status" = "200" ] || fail "fresh registration returned $register_status, expected 200"
+widgets_status=$(curl -s -b "$COOKIE_JAR" -o /dev/null -w '%{http_code}' http://localhost:8000/api/widgets)
+rm -f "$COOKIE_JAR"
+[ "$widgets_status" = "200" ] || fail "GET /api/widgets with a freshly-registered session returned $widgets_status, expected 200 — auto-login is broken"
 
 echo "check-phase-8: VITE_API=real npx playwright test (MSW-independent specs only)"
 VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts ||
