@@ -15,10 +15,59 @@ info:
     errors use a single {"detail": string} shape, matching FastAPI's default
     HTTPException body.
 
+    /auth/* added in Phase 10 (session-cookie auth) — a deliberate,
+    reviewed change to this otherwise-frozen file; see openapi.yaml.sha256
+    and scripts/check-openapi-freeze.mjs. Every other path now requires an
+    authenticated session (401 via UnauthorizedError).
+
 servers:
   - url: /api
 
 paths:
+  /auth/login:
+    post:
+      operationId: login
+      summary: Log in with email and password, receiving a session cookie
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Authenticated. Sets the session_id cookie.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Clear the current session
+      tags: [auth]
+      responses:
+        "204":
+          description: Logged out (always, whether or not a session existed).
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: The currently authenticated user
+      tags: [auth]
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
   /categories:
     get:
       operationId: listCategories
@@ -40,6 +89,7 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Category" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
   /widgets:
@@ -148,6 +198,21 @@ paths:
 
 components:
   schemas:
+    User:
+      type: object
+      required: [id, email, name]
+      properties:
+        id: { type: integer, readOnly: true }
+        email: { type: string, format: email }
+        name: { type: string, minLength: 1, maxLength: 200 }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+
     Category:
       type: object
       required: [id, name]

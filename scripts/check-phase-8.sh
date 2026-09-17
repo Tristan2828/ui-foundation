@@ -72,10 +72,18 @@ echo "check-phase-8: starting uvicorn on :8000"
 (cd backend && exec "../$PY" -m uvicorn app.main:app --port 8000 >"$REPO_ROOT/logs/phase-8-uvicorn.log" 2>&1) &
 UVICORN_PID=$!
 for i in $(seq 1 30); do
-  curl -sf http://localhost:8000/api/categories >/dev/null 2>&1 && break
+  # /api/categories now requires auth (Phase 10) — 401 still proves uvicorn
+  # is up and enforcing the contract; `curl -f` alone would treat that 401
+  # as "not ready yet" and this loop would never break.
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/categories 2>/dev/null || echo "000")
+  { [ "$status" = "200" ] || [ "$status" = "401" ]; } && break
   [ "$i" -eq 30 ] && fail "backend did not respond on :8000 within 30s — see logs/phase-8-uvicorn.log"
   sleep 1
 done
+
+echo "check-phase-8: unauthenticated request is rejected (Phase 10)"
+unauth_status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/widgets)
+[ "$unauth_status" = "401" ] || fail "GET /api/widgets with no session cookie returned $unauth_status, expected 401"
 
 echo "check-phase-8: VITE_API=real npx playwright test (MSW-independent specs only)"
 VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts ||

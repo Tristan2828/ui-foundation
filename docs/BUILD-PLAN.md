@@ -39,7 +39,7 @@ The failure mode for this project is not building the wrong thing. It is buildin
 | Theming | Two-layer tokens, installed in Phase 1 | Multi-theme is nearly free later if the discipline holds from day one — so the discipline must exist before the first screen, not after |
 | Backend coupling | Contract-first OpenAPI + anti-corruption layer | Protocol is sealed; backend becomes one implementation of an owned contract |
 | Backend | FastAPI + SQLModel | Least code per entity; best OpenAPI story. Chosen over C# to minimize generated surface rather than to maximize reviewability |
-| Auth | Single provider file | Mechanism deferred until backend is chosen |
+| Auth (Phase 10) | Single provider file; session cookies once the backend was chosen | Same-origin deployment (Phase 8's `StaticFiles` mount) makes cookies the simplest option — see "Auth Boundary" below |
 | Verification | Automated gate, not inspection | The developer cannot review front-end code by reading it |
 | Exit criteria | Executable check scripts | An exit criterion the agent can self-assess is one it can talk itself past. `scripts/check-phase-N.sh` is the only judge of done |
 | Rule enforcement | Every hard rule has a mechanical enforcer | Agents route around instructions they don't see the point of. A rule that exists only in `AGENTS.md` is a wish |
@@ -287,6 +287,8 @@ src/auth/
 | Managed (Clerk, Supabase, Auth0) | Yes | Backend only validates a token; least work |
 
 **Recommendation:** Stub `useAuth()` with a hardcoded user in Phase 3. Choose a real mechanism when the backend is chosen.
+
+**Resolved in Phase 10** (docs/phases/phase-10.md): session cookies, chosen for exactly the reason the table above predicts — the app is same-origin (Phase 8's `StaticFiles` mount), so cookies are simplest and need no token-storage strategy. Implemented stdlib-only (PBKDF2 password hashing, `secrets`-generated session tokens, a server-side sessions table) — zero new dependency, on either side. Login only, against a seeded user; no self-service registration (see docs/DEFERRED.md). `auth-provider.tsx` still is the one file that knows any of this — it now calls `/auth/me`/`/auth/login`/`/auth/logout` through `src/api/gateway/auth.ts` via TanStack Query, the same as every other resource.
 
 # Build Phases
 ---

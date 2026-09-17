@@ -9,10 +9,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import STATIC_DIR
 from app.errors import register_error_handlers
-from app.routers import categories, widgets
+from app.routers import auth, categories, widgets
 
 app = FastAPI(title="UI Foundation Demo API — Widgets", version="1.0.0")
 register_error_handlers(app)
+app.include_router(auth.router, prefix="/api")
 app.include_router(categories.router, prefix="/api")
 app.include_router(widgets.router, prefix="/api")
 

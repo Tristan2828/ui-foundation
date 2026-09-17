@@ -4,6 +4,23 @@ import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
 type Category = components["schemas"]["Category"];
+type User = components["schemas"]["User"];
+
+// Same demo credentials as the real backend's seeded dev user
+// (backend/app/config.py's SEED_USER_EMAIL/SEED_USER_PASSWORD defaults) —
+// keeps "log in" behave identically whether MSW or the real API answers.
+export const mockUser: User = { id: 1, email: "dev@example.com", name: "Dev User" };
+export const MOCK_PASSWORD = "dev-password-123";
+
+// Defaults to true: every existing widgets/shell spec and Storybook story
+// predates Phase 10 and assumes access, and MSW (not a real cookie) is what
+// those runs treat as ground truth. e2e/auth.spec.ts is what actually
+// exercises the false path, via a runtime override — see e2e/e2e-hooks.ts.
+export let isAuthenticated = true;
+
+export function setAuthenticated(value: boolean): void {
+  isAuthenticated = value;
+}
 
 const initialCategories: Category[] = [
   { id: 1, name: "Electronics" },
@@ -52,6 +69,7 @@ export function resetMockData(): void {
   categories = structuredClone(initialCategories);
   widgets = structuredClone(initialWidgets);
   nextId = widgets.length + 1;
+  isAuthenticated = true;
 }
 
 export function nextWidgetId(): number {

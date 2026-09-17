@@ -60,6 +60,41 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("MSW mock conformance", () => {
+  it("POST /auth/login matches its 200 schema", async () => {
+    const res = await fetch("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "dev@example.com", password: "dev-password-123" }),
+    });
+    expect(res.status).toBe(200);
+    await validate("/auth/login", "post", res);
+  });
+
+  it("POST /auth/login matches its 401 schema on bad credentials", async () => {
+    const res = await fetch("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "dev@example.com", password: "wrong-password" }),
+    });
+    expect(res.status).toBe(401);
+    await validate("/auth/login", "post", res);
+  });
+
+  it("GET /auth/me matches its 200 schema", async () => {
+    const res = await fetch("http://localhost/api/auth/me");
+    expect(res.status).toBe(200);
+    await validate("/auth/me", "get", res);
+  });
+
+  it("POST /auth/logout returns 204, then GET /auth/me matches its 401 schema", async () => {
+    const logoutRes = await fetch("http://localhost/api/auth/logout", { method: "POST" });
+    expect(logoutRes.status).toBe(204);
+
+    const meRes = await fetch("http://localhost/api/auth/me");
+    expect(meRes.status).toBe(401);
+    await validate("/auth/me", "get", meRes);
+  });
+
   it("GET /categories matches its 200 schema", async () => {
     const res = await fetch("http://localhost/api/categories");
     await validate("/categories", "get", res);

@@ -18,7 +18,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.db import get_session
 from app.main import app
-from app.models import Category, Widget, WidgetStatus
+from app.models import Category, User, Widget, WidgetStatus
+from app.routers.auth import get_current_user
 
 
 @pytest_asyncio.fixture
@@ -52,7 +53,16 @@ async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
+    # widgets/categories require auth as of Phase 10 (docs/BUILD-PLAN.md) —
+    # this fixture is shared by test_widgets.py, which tests the widgets
+    # domain, not login, so it stands in a fixed authenticated user rather
+    # than making every test log in first. test_auth.py exercises the real
+    # get_current_user dependency directly, unoverridden.
+    async def override_get_current_user() -> User:
+        return User(id=1, email="test@example.com", name="Test User", password_hash="unused")
+
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_user] = override_get_current_user
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac

@@ -10,6 +10,26 @@ from enum import Enum
 from sqlmodel import Field, SQLModel
 
 
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(max_length=255, unique=True, index=True)
+    name: str = Field(max_length=200)
+    password_hash: str = Field(max_length=255)
+
+
+class Session(SQLModel, table=True):
+    __tablename__ = "sessions"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    # sha256 of the token in the browser's cookie — never the token itself,
+    # so a DB dump can't be replayed as a live session. See app/security.py.
+    token_hash: str = Field(max_length=64, unique=True, index=True)
+    expires_at: datetime
+
+
 class WidgetStatus(str, Enum):
     draft = "draft"
     active = "active"
