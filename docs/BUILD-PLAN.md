@@ -35,6 +35,7 @@ The failure mode for this project is not building the wrong thing. It is buildin
 | Router | React Router v7 | Densest training data |
 | Distribution | Private GitHub registry | Pinned refs without the `node_modules` black box |
 | Component browser | Kitchen-sink route | Storybook deferred until 3+ custom composites exist |
+| Component browser (Phase 9) | Storybook, replacing kitchen-sink everywhere (dev route, registry `starter` item, permanent Phase 3/5 checks) | The Phase 1 deferral condition was met (3 composites shipped; visual regression already existed) — see docs/phases/phase-9.md for the full-replacement-vs-internal-only tradeoff |
 | Theming | Two-layer tokens, installed in Phase 1 | Multi-theme is nearly free later if the discipline holds from day one — so the discipline must exist before the first screen, not after |
 | Backend coupling | Contract-first OpenAPI + anti-corruption layer | Protocol is sealed; backend becomes one implementation of an owned contract |
 | Backend | FastAPI + SQLModel | Least code per entity; best OpenAPI story. Chosen over C# to minimize generated surface rather than to maximize reviewability |

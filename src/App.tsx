@@ -2,7 +2,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import { AppShell } from '@/components/app/app-shell'
 import { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 import { HomeRoute } from '@/routes/home'
-import { KitchenSinkRoute } from '@/routes/kitchen-sink'
 import { WidgetFormRoute } from '@/routes/widgets/widget-form'
 import { WidgetsTableRoute } from '@/routes/widgets/widgets-table'
 
@@ -25,11 +24,6 @@ const router = createBrowserRouter([
       {
         path: 'widgets/:id/edit',
         element: <WidgetFormRoute />,
-        errorElement: <RouteErrorBoundary />,
-      },
-      {
-        path: 'kitchen-sink',
-        element: <KitchenSinkRoute />,
         errorElement: <RouteErrorBoundary />,
       },
     ],

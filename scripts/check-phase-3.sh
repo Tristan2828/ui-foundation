@@ -13,23 +13,26 @@ scripts/check-phase-2.sh
 [ -f src/components/app/route-error-boundary.tsx ] || fail "src/components/app/route-error-boundary.tsx missing (route-level error boundary)"
 [ -f src/auth/auth-provider.tsx ] || fail "src/auth/auth-provider.tsx missing"
 [ -f src/auth/use-auth.ts ] || fail "src/auth/use-auth.ts missing"
-[ -f src/routes/kitchen-sink.tsx ] || fail "src/routes/kitchen-sink.tsx missing"
 
-# Every installed shadcn primitive gets a <Section name="..."> (rendered as
-# <section data-kitchen={name}> — checked at runtime by e2e/shell.spec.ts's
-# screenshot tests, which is why this greps the JSX call site, not the
-# computed attribute).
-for name in button card input sidebar sheet tooltip separator skeleton spinner empty toast; do
-  grep -q "name=\"$name\"" src/routes/kitchen-sink.tsx ||
-    fail "kitchen-sink.tsx has no <Section name=\"$name\">"
+# Phase 9 retired the kitchen-sink route in favor of Storybook (see
+# docs/phases/phase-9.md) — this originally asserted a <Section
+# name="..."> per primitive on /kitchen-sink; it now asserts a
+# *.stories.tsx file per primitive instead. Everything else below is
+# unchanged from Phase 3.
+[ -f .storybook/main.ts ] || fail ".storybook/main.ts missing"
+for name in button card input sidebar sheet tooltip separator skeleton spinner empty; do
+  [ -f "src/components/ui/$name.stories.tsx" ] || fail "src/components/ui/$name.stories.tsx missing"
 done
+[ -f src/components/ui/sonner.stories.tsx ] || fail "src/components/ui/sonner.stories.tsx missing (toast)"
 
 [ -f e2e/shell.spec.ts ] || fail "e2e/shell.spec.ts missing"
 grep -q "This page hit an error" e2e/shell.spec.ts || fail "shell.spec.ts does not test the error boundary is absent on normal nav"
-grep -q "AxeBuilder" e2e/shell.spec.ts || fail "shell.spec.ts does not run axe on /kitchen-sink"
-grep -q "toHaveScreenshot" e2e/shell.spec.ts || fail "shell.spec.ts does not take dark-mode screenshots"
 
-SNAPSHOT_DIR="e2e/shell.spec.ts-snapshots"
+[ -f e2e/storybook-visual.spec.ts ] || fail "e2e/storybook-visual.spec.ts missing"
+grep -q "AxeBuilder" e2e/storybook-visual.spec.ts || fail "storybook-visual.spec.ts does not run axe on the primitive stories"
+grep -q "toHaveScreenshot" e2e/storybook-visual.spec.ts || fail "storybook-visual.spec.ts does not take dark-mode screenshots"
+
+SNAPSHOT_DIR="e2e/storybook-visual.spec.ts-snapshots"
 [ -d "$SNAPSHOT_DIR" ] || fail "$SNAPSHOT_DIR missing — dark-mode baselines were never generated"
 SNAPSHOT_COUNT=$(find "$SNAPSHOT_DIR" -name '*.png' | wc -l | tr -d ' ')
 [ "$SNAPSHOT_COUNT" -ge 11 ] || fail "expected at least 11 committed dark-mode baselines, found $SNAPSHOT_COUNT"

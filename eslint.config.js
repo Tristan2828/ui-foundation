@@ -15,7 +15,7 @@ const TAILWIND_PALETTE_CLASS =
 const HEX_COLOR = '/#[0-9a-f]{3,8}/i'
 
 export default defineConfig([
-  globalIgnores(['dist', 'public/mockServiceWorker.js']),
+  globalIgnores(['dist', 'storybook-static', 'public/mockServiceWorker.js']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

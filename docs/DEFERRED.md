@@ -7,7 +7,6 @@ full rationale behind each row.
 
 | Item | Revisit when |
 |---|---|
-| Storybook | 3+ custom composites, or visual regression is needed |
 | Real auth | Backend language is chosen |
 | Additional themes | A second app needs a distinct look |
 | Monorepo | Two or more consuming apps share a release cycle |

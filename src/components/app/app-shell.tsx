@@ -1,4 +1,4 @@
-import { HomeIcon, LayoutGridIcon, MoonIcon, PackageIcon, SunIcon } from 'lucide-react'
+import { HomeIcon, MoonIcon, PackageIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
@@ -24,7 +24,6 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 const NAV_ITEMS = [
   { to: '/', label: 'Home', icon: HomeIcon, end: true },
   { to: '/widgets', label: 'Widgets', icon: PackageIcon, end: false },
-  { to: '/kitchen-sink', label: 'Kitchen Sink', icon: LayoutGridIcon, end: false },
 ] as const
 
 function ThemeToggle() {

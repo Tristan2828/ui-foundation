@@ -134,10 +134,17 @@ for f in \
   src/components/app/entity-form.tsx src/components/app/error-state.tsx \
   src/components/app/route-error-boundary.tsx \
   src/components/theme-provider.tsx \
+  src/components/ui/button.stories.tsx src/components/ui/badge.stories.tsx \
+  src/components/ui/card.stories.tsx src/components/ui/input.stories.tsx \
+  src/components/ui/sidebar.stories.tsx src/components/ui/sheet.stories.tsx \
+  src/components/ui/tooltip.stories.tsx src/components/ui/separator.stories.tsx \
+  src/components/ui/skeleton.stories.tsx src/components/ui/spinner.stories.tsx \
+  src/components/ui/empty.stories.tsx src/components/ui/sonner.stories.tsx \
+  .storybook/main.ts .storybook/preview.ts \
   src/api/contracts.ts src/api/transport/index.ts src/api/query-client.ts \
   src/api/gateway/errors.ts src/api/gateway/widgets.ts src/api/gateway/categories.ts \
   src/auth/auth-context.ts src/auth/auth-provider.tsx src/auth/use-auth.ts \
-  src/main.tsx src/App.tsx src/routes/home.tsx src/routes/kitchen-sink.tsx \
+  src/main.tsx src/App.tsx src/routes/home.tsx \
   src/mocks/browser.ts src/mocks/server.ts src/mocks/data.ts \
   src/mocks/handlers.ts src/mocks/e2e-hooks.ts \
   src/routes/widgets/use-widgets.ts src/routes/widgets/use-categories.ts \
@@ -146,7 +153,8 @@ for f in \
   src/routes/widgets/delete-widget-action.tsx \
   tests/gateway/widgets.test.ts tests/gateway/categories.test.ts \
   tests/mocks/conformance.test.ts tests/widget-schema.test.ts \
-  e2e/global.d.ts e2e/msw-contract.spec.ts e2e/shell.spec.ts e2e/smoke.spec.ts \
+  e2e/global.d.ts e2e/msw-contract.spec.ts e2e/shell.spec.ts \
+  e2e/storybook-visual.spec.ts e2e/smoke.spec.ts \
   e2e/widget-form.spec.ts e2e/widgets-table.spec.ts \
   vitest.config.ts playwright.config.ts tsconfig.test.json openapi.yaml \
 ; do

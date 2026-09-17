@@ -14,11 +14,14 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    this is the first entity added since installing the registry — the
    registry ships files and npm `dependencies`/`devDependencies`, but has
    no way to merge npm scripts into `package.json` for you). If missing,
-   add exactly these three scripts:
+   add exactly these six scripts:
    ```json
    "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
-   "verify": "npm run verify:fast && playwright test"
+   "verify": "npm run verify:fast && playwright test",
+   "storybook": "storybook dev -p 6006",
+   "build-storybook": "storybook build",
+   "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort"
    ```
    Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once so the MSW service worker installed
@@ -27,17 +30,19 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    own frozen `Widgets` demo (see `docs/BUILD-PLAN.md` if present), not to
    a spec you are actively extending.
 
-   Also, only if `e2e/shell.spec.ts-snapshots/` doesn't exist yet, run
-   `npx playwright test e2e/shell.spec.ts --update-snapshots` once to
-   generate this machine's own dark-mode screenshot baselines for the
-   kitchen-sink page. These are never shipped by the registry — GitHub's
-   API can't reliably serve binary files to the `gh` CLI (confirmed:
-   `gh api` corrupts PNG content requested via the raw-content header,
-   independent of anything in this registry), and baselines are
-   machine/OS-specific regardless (font rasterization differs — see
-   `docs/BUILD-PLAN.md` Phase 3 if present), so shipping one machine's
-   images to another's would be the wrong fix even if it worked. Commit
-   the generated PNGs once satisfied they look right.
+   Also, only if `e2e/storybook-visual.spec.ts-snapshots/` doesn't exist
+   yet, run
+   `npx playwright test e2e/storybook-visual.spec.ts --update-snapshots`
+   once to generate this machine's own dark-mode screenshot baselines for
+   every primitive's Storybook story (`src/components/ui/*.stories.tsx`).
+   These are never shipped by the registry — GitHub's API can't reliably
+   serve binary files to the `gh` CLI (confirmed: `gh api` corrupts PNG
+   content requested via the raw-content header, independent of anything
+   in this registry), and baselines are machine/OS-specific regardless
+   (font rasterization differs — see `docs/BUILD-PLAN.md` Phase 3 if
+   present), so shipping one machine's images to another's would be the
+   wrong fix even if it worked. Commit the generated PNGs once satisfied
+   they look right.
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete. Reuse the `Page` and error components already in the spec; do
    not redefine pagination or error shapes per entity.
