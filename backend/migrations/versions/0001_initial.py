@@ -8,17 +8,26 @@ Revises:
 Create Date: 2026-09-16
 
 """
+from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects.postgresql import ENUM as PGEnum
 
 revision: str = "0001"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-widget_status = sa.Enum("draft", "active", "archived", name="widgetstatus")
+# create_type=False: the type is created explicitly below (checkfirst=True,
+# so re-running upgrade() after a partial failure doesn't error) — without
+# this flag, create_table's own enum-creation side effect duplicates it
+# ("type widgetstatus already exists"). Generic sa.Enum silently ignores
+# create_type (it's not a recognized kwarg there) — this needs the
+# postgres-specific ENUM class for the flag to actually take effect.
+widget_status = PGEnum("draft", "active", "archived", name="widgetstatus", create_type=False)
 
 
 def upgrade() -> None:
@@ -60,9 +69,9 @@ def upgrade() -> None:
                 "name": "Wireless Mouse",
                 "category_id": 1,
                 "status": "active",
-                "available_from": "2026-01-15T00:00:00Z",
+                "available_from": datetime(2026, 1, 15, tzinfo=timezone.utc),
                 "assignee_email": "alice@example.com",
-                "price": "24.99",
+                "price": Decimal("24.99"),
                 "description": "A basic wireless mouse with a 2.4GHz USB receiver.",
             },
             {
@@ -70,9 +79,9 @@ def upgrade() -> None:
                 "name": "Standing Desk",
                 "category_id": 2,
                 "status": "draft",
-                "available_from": "2026-03-01T00:00:00Z",
+                "available_from": datetime(2026, 3, 1, tzinfo=timezone.utc),
                 "assignee_email": None,
-                "price": "349.00",
+                "price": Decimal("349.00"),
                 "description": "Electric height-adjustable desk, 120x60cm top.",
             },
             {
@@ -80,9 +89,9 @@ def upgrade() -> None:
                 "name": "Fountain Pen",
                 "category_id": 3,
                 "status": "archived",
-                "available_from": "2025-06-01T00:00:00Z",
+                "available_from": datetime(2025, 6, 1, tzinfo=timezone.utc),
                 "assignee_email": "bob@example.com",
-                "price": "12.50",
+                "price": Decimal("12.50"),
                 "description": "Fine-nib fountain pen, discontinued.",
             },
         ],

@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
-# Exit criteria for Phase 8 — Backend (optional; docs/BUILD-PLAN.md). Three
-# assertions, in order: the backend's own gate (mypy, pytest, spec
-# conformance — no database needed for any of these, see
-# backend/scripts/verify.sh), the gateway/transport boundary is untouched
-# since v1.1.0 ("if the gateway needed changes, the contract was wrong"),
-# and a real Postgres-backed run of the app end to end.
+# Exit criteria for Phase 8 — Backend (optional; docs/BUILD-PLAN.md). Four
+# assertions, in order: Phases 1-5 (verify, tokens) still pass; nothing
+# the registry ships has changed since v1.1.0 (Phase 8 adds backend/ and
+# local-only frontend config — it does not touch the registry, so this is
+# the honest cumulative check, not check-phase-6/7.sh's "HEAD must be a
+# freshly-tagged commit" + a full fresh-agent dogfood rebuild, which
+# proves nothing new for a phase that ships no registry change); the
+# backend's own gate (mypy, pytest, spec conformance — no database needed
+# for any of these, see backend/scripts/verify.sh); the gateway/transport
+# boundary is untouched since v1.1.0 ("if the gateway needed changes, the
+# contract was wrong"); and a real Postgres-backed run of the app end to
+# end.
 #
-# The third assertion needs Docker Desktop running locally — it is not
+# The last assertion needs Docker Desktop running locally — it is not
 # part of `npm run verify` or CI (see docs/phases/phase-8.md for why: the
 # existing widgets-table/widget-form Playwright specs force loading/empty/
 # error/validation states through MSW overrides that do not exist when
@@ -18,8 +24,12 @@ REPO_ROOT="$(pwd)"
 
 fail() { echo "check-phase-8: $1" >&2; exit 1; }
 
-# Cumulative: Phase 8 must not have broken Phases 1-7.
-scripts/check-phase-7.sh
+# Cumulative: Phase 8 must not have broken Phases 1-5.
+scripts/check-phase-5.sh
+
+echo "check-phase-8: registry-shipped paths unchanged since v1.1.0"
+git diff --exit-code v1.1.0 -- registry.json docs/add-an-entity.md .claude .codex src config ||
+  fail "a registry-shipped path changed since v1.1.0 — if Phase 8 needed to touch the registry, re-run check-phase-6.sh/7.sh (tag, validate, dogfood) instead of this shortcut"
 
 echo "check-phase-8: backend verify (mypy, pytest, spec conformance)"
 bash backend/scripts/verify.sh || fail "backend/scripts/verify.sh failed"
@@ -56,7 +66,10 @@ echo "check-phase-8: alembic upgrade head"
 (cd backend && "../$PY" -m alembic upgrade head) || fail "alembic upgrade head failed"
 
 echo "check-phase-8: starting uvicorn on :8000"
-(cd backend && "../$PY" -m uvicorn app.main:app --port 8000 >"$REPO_ROOT/logs/phase-8-uvicorn.log" 2>&1) &
+# `exec` replaces the subshell with uvicorn itself, so $! is uvicorn's own
+# PID — without it, $! is the subshell wrapping it, and killing that can
+# leave uvicorn running as an orphan.
+(cd backend && exec "../$PY" -m uvicorn app.main:app --port 8000 >"$REPO_ROOT/logs/phase-8-uvicorn.log" 2>&1) &
 UVICORN_PID=$!
 for i in $(seq 1 30); do
   curl -sf http://localhost:8000/api/categories >/dev/null 2>&1 && break
