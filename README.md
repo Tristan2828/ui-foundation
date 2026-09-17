@@ -4,7 +4,7 @@
 
 A reusable UI foundation for personal database-backed apps, built and maintained primarily by AI coding agents.
 
-**Stack:** Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui (Base UI primitives) · **Distribution:** private GitHub shadcn registry · **Backend:** FastAPI + SQLModel + PostgreSQL, added after the UI has proven the contract on its own (Phase 8).
+**Stack:** Vite + React 19 + TypeScript + Tailwind v4 + shadcn/ui (Base UI primitives) · **Distribution:** GitHub shadcn registry · **Backend:** FastAPI + SQLModel + PostgreSQL, added after the UI has proven the contract on its own (Phase 8).
 
 This foundation is explicitly not trying to be polished. It's trying to be reusable — see the Decision Ledger in the build plan for why. "Reusable" is proven by Phase 7: a fresh agent with no memory of this repo builds a new entity screen entirely from the published registry, with zero edits here.
 
@@ -57,8 +57,10 @@ Once a version is tagged (Phase 6+):
 npx shadcn@<pinned> add Tristan2828/ui-foundation/starter#v1.0.0
 ```
 
-Requires `gh auth login`, or `GH_TOKEN` set to a fine-grained PAT with read-only Contents access, since this is a private repo.
+## Contributing
+
+Invite-only for now — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the branch/PR/verify workflow.
 
 ## License
 
-Private and unpublished. Not intended for use outside this owner's own projects.
+[MIT](LICENSE)
