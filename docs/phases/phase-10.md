@@ -123,28 +123,27 @@ backend is up and correctly rejecting me" for "not ready yet."
 
 ## What the next session needs to know
 
-- **Not yet merged.** Per the developer's explicit choice this session
-  (given the branch-protection-vs-direct-push tension flagged in a
-  previous session's memory), this went through a PR
-  (`phase-10-auth` → `main`) instead of a direct push, for the first time
-  in this project's history. `main` requires 2 status checks (`verify`,
-  `verify-backend`) and 1 approving review; the developer has admin bypass
-  rights but chose not to use them here. **The PR needs the developer's
-  review/merge before this phase is actually done.**
-- **Tag and install-test still pending, and can't happen until after
-  merge**: `consume-test.sh --install-only` fetches from the real GitHub
-  repo (`shadcn add <repo>/starter#<ref>`), not local disk — same
-  constraint Phase 9's dogfood re-run hit. Once merged, tag `v1.3.0` and
-  run `scripts/consume-test.sh --install-only v1.3.0` before considering
-  the registry-shipped side of this phase actually proven, not just
-  locally validated (`registry validate registry.json` passed locally;
-  that only checks schema shape, not that a real install works).
-- Local proof that **does** exist as of this session: `npm run verify`
-  (37 vitest + 55 Playwright, MSW-backed) and `scripts/check-phase-10.sh`
-  (which chains through `check-phase-8.sh`'s real-Postgres run, including
-  a fresh `POST /auth/login` → `GET /auth/me` → `GET /api/widgets`
-  round trip against actual Postgres) both pass clean on the
-  `phase-10-auth` branch.
+- **Merged, tagged, install-tested — this phase is fully done.** Per the
+  developer's explicit choice (given the branch-protection-vs-direct-push
+  tension flagged in a previous session's memory), this went through a PR
+  (`phase-10-auth` → `main`, PR #2) instead of a direct push, for the
+  first time in this project's history for a phase's own work. `main`
+  requires 2 status checks (`verify`, `verify-backend`) and 1 approving
+  review; the developer has admin bypass rights but chose not to use them
+  — both checks passed in CI, the developer reviewed/approved and merged,
+  then tested the login flow themselves locally against MSW and confirmed
+  it works.
+- Tagged `v1.3.0` on the merge commit and ran
+  `scripts/consume-test.sh --install-only v1.3.0`: **PASS** — a fresh Vite
+  app installing `Tristan2828/ui-foundation/starter#v1.3.0` from the real
+  GitHub repo (not local disk) type-checks clean. This is the actual proof
+  the registry-shipped side works, not just `registry validate`'s schema
+  check.
+- Local proof that also exists: `npm run verify` (37 vitest + 55
+  Playwright, MSW-backed) and `scripts/check-phase-10.sh` (chains through
+  `check-phase-8.sh`'s real-Postgres run, including a fresh
+  `POST /auth/login` → `GET /auth/me` → `GET /api/widgets` round trip
+  against actual Postgres) both passed clean before the PR was opened.
 - `docs/DEFERRED.md` gained two new rows this phase created rather than
   resolved: self-service registration, and login rate-limiting/lockout.
   Neither is needed for a personal/local deployment; revisit conditions
