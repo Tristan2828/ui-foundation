@@ -10,6 +10,7 @@ and reuses login's session-creation path via `_start_session`.
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -112,7 +113,10 @@ async def register(
             [{"loc": ("body", "email"), "msg": "email already registered", "type": "value_error.email_exists"}]
         )
 
-    user = User(email=body.email, name=body.name, password_hash=hash_password(body.password))
+    # PBKDF2 at 600k iterations is deliberately slow CPU work; run inline in
+    # an async handler it stalls every other request on the event loop.
+    password_hash = await run_in_threadpool(hash_password, body.password)
+    user = User(email=body.email, name=body.name, password_hash=password_hash)
     session.add(user)
     await session.commit()
     await session.refresh(user)
@@ -129,7 +133,7 @@ async def login(
     stmt = select(User).where(User.email == body.email)
     result = await session.exec(stmt)
     user = result.first()
-    if user is None or not verify_password(body.password, user.password_hash):
+    if user is None or not await run_in_threadpool(verify_password, body.password, user.password_hash):
         # Deliberately generic — never confirm whether the email exists.
         raise HTTPException(status_code=401, detail="Invalid email or password")
 

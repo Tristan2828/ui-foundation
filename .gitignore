@@ -13,6 +13,7 @@ playwright/.cache/
 .env
 .env.*
 !.env.example
+!.env.real
 
 .claude/settings.local.json
 

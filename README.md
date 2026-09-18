@@ -64,20 +64,20 @@ bash backend/scripts/dev.sh             # venv + migrations + API, http://localh
 VITE_API=real npm run dev     # proxies /api to the backend
 ```
 
-Log in with the seeded dev user: `dev@example.com` / `dev-password-123` (`backend/.env.example` — override `SEED_USER_EMAIL`/`SEED_USER_PASSWORD` before this ever runs against a real deployment).
+Log in with the seeded dev user: `dev@example.com` / `dev-password-123`. Deploying for real? Follow [`docs/deploy.md`](docs/deploy.md) — with `APP_ENV=production` the backend refuses to start while that password still works.
 
 The backend's database is Supabase by default ([`docs/cloud-postgres.md`](docs/cloud-postgres.md) covers setup, including the pooler port and root-CA gotchas). `backend/scripts/dev.sh` creates the venv, installs, runs `alembic upgrade head` and starts `uvicorn --reload` in one call, idempotently — safe to re-run. For offline work, `bash backend/scripts/dev.sh --local` uses the Docker Compose Postgres instead; `scripts/check-phase-8.sh` always does, so automated runs never write test users into Supabase. For the backend's own verify gate (mypy + pytest + spec conformance), see `backend/scripts/verify.sh`.
 
 See [`docs/phases/phase-8.md`](docs/phases/phase-8.md) for what's built.
 
-Widgets are private to the user who created them (categories are shared). If you serve the built SPA from FastAPI (`npm run build`, then run the backend), deep links like `/widgets/3/edit` fall back to `index.html` for client-side routing.
+Widgets are private to the user who created them (categories are shared). If you serve the built SPA from FastAPI (`npm run build:real` — a plain `npm run build` bundles the mocks — then run the backend), deep links like `/widgets/3/edit` fall back to `index.html` for client-side routing.
 
 ## Consuming this as a registry
 
-Latest tag is `v1.8.0`. Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
+Latest tag is `v1.9.0`. Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
 
 ```bash
-npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.8.0
+npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.9.0
 ```
 
 ## Contributing
