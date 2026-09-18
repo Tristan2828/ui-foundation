@@ -154,8 +154,8 @@ for f in \
   src/api/gateway/auth.ts \
   src/main.tsx src/App.tsx src/routes/home.tsx \
   src/routes/login.tsx src/routes/login-schema.ts \
-  src/routes/register.tsx src/routes/register-schema.ts \
-  tests/gateway/auth.test.ts e2e/auth.spec.ts e2e/register.spec.ts \
+  src/routes/register.tsx src/routes/register-schema.ts src/routes/return-path.ts \
+  tests/gateway/auth.test.ts tests/return-path.test.ts e2e/auth.spec.ts e2e/register.spec.ts \
   src/mocks/browser.ts src/mocks/server.ts src/mocks/data.ts \
   src/mocks/handlers.ts src/mocks/e2e-hooks.ts \
   src/routes/widgets/use-widgets.ts src/routes/widgets/use-categories.ts \
