@@ -172,6 +172,17 @@ for f in \
   [ -f "$f" ] || fail "expected file missing after install: $f"
 done
 
+# Existing isn't enough: until audit Phase A, starter pulled these through
+# an unpinned registryDependency, so they arrived from main no matter which
+# ref was installed — and every check above still passed. Compare them to
+# the same files at $REF (CRLF-insensitive: git's working-copy conversion).
+for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json; do
+  expected=$(git -C "$REPO_ROOT" show "$REF:$f" 2>/dev/null || git -C "$REPO_ROOT" show "origin/$REF:$f") ||
+    fail "can't read $f at $REF from the local repo (fetch first?)"
+  [ "$(tr -d '\r' < "$f")" = "$(printf '%s' "$expected" | tr -d '\r')" ] ||
+    fail "$f installed from starter#$REF doesn't match $REF's own copy — a registry item is resolving from a different ref"
+done
+
 # MSW's browser worker (src/mocks/browser.ts, imported unconditionally by
 # main.tsx unless VITE_API=real) needs a generated service-worker script in
 # public/ to actually intercept requests — registry.json can't ship this
