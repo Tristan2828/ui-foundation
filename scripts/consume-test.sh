@@ -142,7 +142,11 @@ for f in \
   src/api/contracts.ts src/api/transport/index.ts src/api/query-client.ts \
   src/api/gateway/errors.ts src/api/gateway/widgets.ts src/api/gateway/categories.ts \
   src/auth/auth-context.ts src/auth/auth-provider.tsx src/auth/use-auth.ts \
+  src/api/gateway/auth.ts \
   src/main.tsx src/App.tsx src/routes/home.tsx \
+  src/routes/login.tsx src/routes/login-schema.ts \
+  src/routes/register.tsx src/routes/register-schema.ts \
+  tests/gateway/auth.test.ts e2e/auth.spec.ts e2e/register.spec.ts \
   src/mocks/browser.ts src/mocks/server.ts src/mocks/data.ts \
   src/mocks/handlers.ts src/mocks/e2e-hooks.ts \
   src/routes/widgets/use-widgets.ts src/routes/widgets/use-categories.ts \
@@ -188,6 +192,17 @@ if [ "$INSTALL_ONLY" = true ]; then
   # the Tailwind/alias setup above, to get a meaningful type-check at all.
   echo "consume-test: npx openapi-typescript openapi.yaml (schema.d.ts is generated, not shipped — see comment above)"
   npx openapi-typescript openapi.yaml -o src/api/schema.d.ts
+
+  # Also the playbook's Step 0: reference the shipped tsconfig.test.json
+  # from the root tsconfig, or `tsc -b` below never sees tests/ or e2e/
+  # and a broken shipped test would still "type-check clean".
+  echo "consume-test: referencing tsconfig.test.json from tsconfig.json (playbook Step 0)"
+  node -e "
+  const fs = require('fs');
+  const c = JSON.parse(fs.readFileSync('tsconfig.json', 'utf8'));
+  c.references.push({ path: './tsconfig.test.json' });
+  fs.writeFileSync('tsconfig.json', JSON.stringify(c, null, 2));
+  "
 
   # Plain `tsc --noEmit` against a solution-style tsconfig (what both this
   # repo's own Phase 1 scaffold and a fresh `create vite` produce) checks

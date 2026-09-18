@@ -78,8 +78,9 @@
         "ajv",
         "openapi-response-validator",
         "js-yaml",
-        "storybook",
-        "@storybook/react-vite"
+        "storybook@^10.6.0",
+        "@storybook/react-vite@^10.6.0",
+        "@storybook/addon-docs@^10.6.0"
       ],
       "files": [
         { "path": "src/components/ui/button.tsx", "type": "registry:file", "target": "~/src/components/ui/button.tsx" },

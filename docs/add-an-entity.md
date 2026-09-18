@@ -23,6 +23,10 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    "build-storybook": "storybook build",
    "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort"
    ```
+   Then, only if the root `tsconfig.json`'s `references` array has no
+   `{ "path": "./tsconfig.test.json" }` entry, add one — the registry ships
+   `tsconfig.test.json` but can't edit your root `tsconfig.json`, and
+   without the reference `tsc -b` never type-checks `tests/` or `e2e/`.
    Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once so the MSW service worker installed
    by `starter` actually registers. Do not add an `openapi.yaml` freeze

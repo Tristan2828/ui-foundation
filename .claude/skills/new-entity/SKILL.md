@@ -25,7 +25,11 @@ building them.
    `"storybook": "storybook dev -p 6006"`,
    `"build-storybook": "storybook build"`,
    `"preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort"`.
-   Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
+   Then, only if the root `tsconfig.json`'s `references` array has no
+   `{ "path": "./tsconfig.test.json" }` entry, add one (the registry ships
+   that file but can't edit your root `tsconfig.json`; without it `tsc -b`
+   never type-checks `tests/` or `e2e/`). Then, only if
+   `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once. Do not add an openapi.yaml freeze
    check — that's specific to this repo's own frozen `Widgets` demo, not
    to a spec you are actively extending. Also, only if
@@ -33,9 +37,9 @@ building them.
    `npx playwright test e2e/storybook-visual.spec.ts --update-snapshots`
    once to generate this machine's own dark-mode screenshot baselines for
    every primitive's Storybook story — these are never shipped by the
-   registry (binary files can't be reliably fetched from a private GitHub
-   repo via the `gh` CLI, and baselines are machine/OS-specific
-   regardless). Commit the generated PNGs.
+   registry (the `gh` CLI corrupts binary files fetched from GitHub, and
+   baselines are machine/OS-specific regardless). Commit the generated
+   PNGs.
 1. Add `<Entity>` to `openapi.yaml` — schema, list, get, create, update,
    delete. Reuse the existing `Page` and error components; do not
    redefine pagination or error shapes per entity.
