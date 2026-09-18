@@ -34,4 +34,34 @@ since v1.1.0" assertion, since Phase 8 touches no registry-shipped file.
 
 ## Open
 
-Nothing open as of Phase 13.
+### Supabase setup for local dev (needs the developer — credentials)
+
+**What:** Supabase became the default dev database in PR #8
+(`backend/.env.example`, `backend/scripts/dev.sh`), but this machine's
+`backend/.env` still points at the local Docker Postgres, and Supabase's
+database has not had migration `0003` (per-user widget ownership + lowercase
+emails, PR #7) applied yet.
+
+**Why it's here:** it needs the Supabase database password, which an agent
+must not type or store. Only the developer can do these steps.
+
+**Steps** (full walkthrough, including the two gotchas, in
+[`docs/cloud-postgres.md`](cloud-postgres.md)):
+
+1. In `backend/.env`, replace `DATABASE_URL` with the Supabase **pooler**
+   connection string on **session-mode port 5432** (not 6543, not the
+   IPv6-only `db.<ref>.supabase.co` host), and set `DATABASE_SSL=true`.
+   `backend/.env.example` shows the exact shape.
+2. Download Supabase's root CA (dashboard: **Project Settings → Database →
+   SSL Configuration**) to `backend/certs/supabase-root-ca.pem` (gitignored),
+   and set `DATABASE_SSL_CA_FILE=./certs/supabase-root-ca.pem`.
+3. Run `bash backend/scripts/dev.sh`. It should print `using hosted Postgres
+   at <pooler host>` (not "starting Docker Compose"), then apply migration
+   `0003` via `alembic upgrade head`.
+4. Run `VITE_API=real npm run dev` and log in at http://localhost:5173 as
+   the seeded dev user. Existing widgets were assigned to that user by `0003`.
+
+**Done when:** `dev.sh` reports the pooler host, `alembic current` against
+Supabase shows `0003 (head)`, and the app loads widgets through it. Remove
+this entry then. (`scripts/check-phase-8.sh` is unaffected either way — it
+always forces the local Docker database.)

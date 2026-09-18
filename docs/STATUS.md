@@ -33,7 +33,8 @@ For the reasoning behind any decision below, see the Decision Ledger in
 built, what deviated from the plan, and what broke — one file per phase,
 each written at the end of that phase's session — see
 [`docs/phases/`](phases). For anything currently unresolved, see
-[`docs/BLOCKERS.md`](BLOCKERS.md) (empty as of Phase 13).
+[`docs/BLOCKERS.md`](BLOCKERS.md) (one open item: the developer's own Supabase
+setup — see there).
 
 ## Phase Checklist
 
