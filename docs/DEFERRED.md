@@ -12,7 +12,6 @@ full rationale behind each row.
 | Monorepo | Two or more consuming apps share a release cycle |
 | Row virtualization | A table exceeds ~5k rows |
 | Error reporting | An app is actually deployed |
-| Cloud Postgres (e.g. Supabase) in place of local Docker Compose Postgres | ~~The developer wants to stop running Postgres locally, or a deployed backend needs a real hosted database~~ — **triggered 2026-09-17; scoped as `docs/BUILD-PLAN.md` Phase 12.** Row removed once Phase 12 ships |
 | Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `deps-allowlist.json`/`check-deps.mjs` on the npm side | The backend gains a second contributor/session where an unreviewed Python dependency is a real risk — Phase 8 pinned versions by hand with no mechanical gate |
 | Storybook Controls/autodocs polish — rewrite `src/components/ui/*.stories.tsx` from static `AllVariants` renders to `args`-driven stories, add a Docs tab | ~~The developer decides it's worth it~~ — **decided 2026-09-17; scoped as `docs/BUILD-PLAN.md` Phase 13**, which authorizes the `@storybook/addon-docs` addition to `deps-allowlist.json` this row was blocked on. Row removed once Phase 13 ships |
 
