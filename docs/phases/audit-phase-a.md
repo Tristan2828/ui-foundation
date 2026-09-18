@@ -29,6 +29,16 @@ First of five remediation phases from the pre-reuse audit — see
   auth files landed. Both new failure classes above are now caught by the
   fast check, not only by the hour-long dogfood.
 
+- **`starter` is self-contained (the biggest fix, not in the audit).**
+  `starter` pulled `conventions`/`theme` through `registryDependencies`
+  with no ref, so `starter#<tag>` has always installed AGENTS.md, the
+  playbook, `eslint.config.js`, `deps-allowlist.json` and the theme CSS
+  from `main`'s tip — every tag since v1.0.0. `starter` now lists those
+  files/deps itself; `tests/registry.test.ts` guards against regressing
+  or drifting. `consume-test.sh` now byte-compares those installed files
+  against the ref under test (negative control: the pre-fix commit
+  `23252f3` fails it).
+
 ## Deviations
 
 - **The first attempt at the tsconfig fix was prose** ("add a reference
@@ -42,10 +52,21 @@ First of five remediation phases from the pre-reuse audit — see
   reported patching it itself as an "out-of-scope fix". Read the dogfood
   agent's final report every time — that's where this surfaced.
 
+- **Three dogfood runs "passed" without proving anything.** Runs 1–2
+  were against the branch name, run 3 against a SHA; all three agents got
+  `main`'s old playbook (the unpinned-dependency bug above). Run 2 also
+  looked like a CDN-cache problem (`raw.githubusercontent.com` sends
+  `max-age=300`), which is real but wasn't the cause. `consume-test.sh`
+  now warns on branch refs anyway. **Lesson: a PASS from the dogfood only
+  counts after checking in the transcript that the agent used the
+  version you meant to test** — the new byte-compare makes that
+  mechanical for the convention files.
+
 ## What the next session needs to know
 
-- Dogfood evidence: run 1 (before the two fixes above) PASS, 64 vitest +
-  71 Playwright; run 2 result recorded in the PR.
+- Always pass `consume-test.sh` a tag or a commit SHA, never a branch.
+- Dogfood evidence (valid run pinned to the final SHA) is recorded in
+  PR #18.
 - After merge: tag `v1.8.0`, then `scripts/consume-test.sh --install-only
   v1.8.0`, update the README's latest tag.
 - Next is **Phase B — auth robustness** (`docs/AUDIT-2026-09-18.md`).
