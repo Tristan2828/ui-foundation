@@ -89,6 +89,54 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
   })
 
+  test('sort and filters live in the URL and survive the edit round trip', async ({ page }) => {
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Name' }).click()
+    await expect(page.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'ascending')
+    await page.getByLabel('Search widgets').fill('mouse')
+    await expect(page).toHaveURL(/[?&]search=mouse/)
+    await expect(page).toHaveURL(/[?&]sort=name%3Aasc|[?&]sort=name:asc/)
+    await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Edit Wireless Mouse' }).click()
+    await expect(page).toHaveURL('/widgets/1/edit')
+    await page.goBack()
+
+    await expect(page.getByLabel('Search widgets')).toHaveValue('mouse')
+    await expect(page.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'ascending')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
+  })
+
+  test('search sends one request once typing pauses, not one per keystroke', async ({ page }) => {
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const counter = window as unknown as { __searchRequests: number }
+      counter.__searchRequests = 0
+      window.__msw.worker.events.on('request:start', ({ request }) => {
+        const url = new URL(request.url)
+        if (url.pathname === '/api/widgets' && url.searchParams.has('search')) counter.__searchRequests++
+      })
+    })
+
+    await page.getByLabel('Search widgets').pressSequentially('mouse', { delay: 50 })
+    await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
+
+    const requests = await page.evaluate(() => (window as unknown as { __searchRequests: number }).__searchRequests)
+    expect(requests).toBe(1)
+  })
+
+  test('a page past the end (stale link, or last row deleted) falls back to the last page', async ({ page }) => {
+    await page.goto('/widgets?page=2')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await expect(page).toHaveURL('/widgets')
+    await expect(page.getByText('No widgets yet')).toHaveCount(0)
+  })
+
   test('success: the default MSW data renders in the table', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()

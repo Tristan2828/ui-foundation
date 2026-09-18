@@ -100,6 +100,8 @@
         { "path": "src/components/ui/button.tsx", "type": "registry:file", "target": "~/src/components/ui/button.tsx" },
         { "path": "src/components/ui/badge.tsx", "type": "registry:file", "target": "~/src/components/ui/badge.tsx" },
         { "path": "src/hooks/use-mobile.ts", "type": "registry:file", "target": "~/src/hooks/use-mobile.ts" },
+        { "path": "src/hooks/use-debounced-value.ts", "type": "registry:file", "target": "~/src/hooks/use-debounced-value.ts" },
+        { "path": "src/hooks/use-table-url-state.ts", "type": "registry:file", "target": "~/src/hooks/use-table-url-state.ts" },
         { "path": "src/components/app/app-shell.tsx", "type": "registry:file", "target": "~/src/components/app/app-shell.tsx" },
         { "path": "src/components/app/route-error-boundary.tsx", "type": "registry:file", "target": "~/src/components/app/route-error-boundary.tsx" },
         { "path": "src/components/app/data-table.tsx", "type": "registry:file", "target": "~/src/components/app/data-table.tsx" },

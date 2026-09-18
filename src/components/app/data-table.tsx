@@ -11,6 +11,7 @@
 // pagination tree-shakeable and independently swappable, which buys nothing
 // here: every row model is manual (the server sorts and pages), so this
 // table never uses TanStack's own sorted/paginated row models at all.
+import { useEffect } from 'react'
 import { flexRender } from '@tanstack/react-table'
 import { getCoreRowModel, useLegacyTable, type LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
@@ -28,7 +29,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-type SortingState = { id: string; desc: boolean }[]
+export type SortingState = { id: string; desc: boolean }[]
 
 export type DataTableProps<TData extends Record<string, unknown>> = {
   columns: LegacyColumnDef<TData, unknown>[]
@@ -105,7 +106,16 @@ export function DataTable<TData extends Record<string, unknown>>({
     getCoreRowModel: getCoreRowModel(),
   })
 
-  const isEmpty = !isLoading && !error && data.length === 0
+  // Past the last page — e.g. after deleting the only row on the last page,
+  // or a stale ?page= link. The server still reports rows (total > 0), so
+  // this is not "empty": go to the real last page instead of showing
+  // "No widgets yet" with data one click away.
+  const isPastLastPage = !isLoading && !error && data.length === 0 && total > 0 && page > pageCount
+  useEffect(() => {
+    if (isPastLastPage) onPageChange(pageCount)
+  }, [isPastLastPage, pageCount, onPageChange])
+
+  const isEmpty = !isLoading && !error && data.length === 0 && !isPastLastPage
 
   return (
     <div className="flex flex-col gap-4">
@@ -113,7 +123,7 @@ export function DataTable<TData extends Record<string, unknown>>({
 
       {error ? (
         <ErrorState error={error} onRetry={onRetry} />
-      ) : isLoading ? (
+      ) : isLoading || isPastLastPage ? (
         <TableSkeleton columnCount={columns.length} />
       ) : isEmpty ? (
         <Empty data-state="empty">
@@ -133,7 +143,18 @@ export function DataTable<TData extends Record<string, unknown>>({
                     const canSort = header.column.getCanSort()
                     const sortDirection = header.column.getIsSorted()
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        aria-sort={
+                          !canSort
+                            ? undefined
+                            : sortDirection === 'asc'
+                              ? 'ascending'
+                              : sortDirection === 'desc'
+                                ? 'descending'
+                                : 'none'
+                        }
+                      >
                         {header.isPlaceholder ? null : canSort ? (
                           <button
                             type="button"

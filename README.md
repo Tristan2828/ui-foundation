@@ -80,6 +80,8 @@ Latest tag is `v1.9.0`. Use the shadcn CLI version pinned in [`deps-allowlist.js
 npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.9.0
 ```
 
+Installed files are yours from then on. To take a later release safely (never `--overwrite` an app with entities), or to get the backend, see [`docs/consuming.md`](docs/consuming.md).
+
 ## Contributing
 
 Invite-only for now — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the branch/PR/verify workflow.
