@@ -12,6 +12,7 @@ full rationale behind each row.
 | Monorepo | Two or more consuming apps share a release cycle |
 | TypeScript 7 (native compiler) | typescript-eslint, openapi-typescript and Storybook's react-docgen-typescript all support it. TS 7's package exposes no classic JS API (`require('typescript')` has only `version`), and all three are built on that API — typescript-eslint caps at `<6.1` even in its v9 alpha. The tsconfigs are already TS 7-clean (no `baseUrl`, which TS 7 drops). When revisiting, also drop the `openapi-typescript` → `typescript` entry in `package.json`'s `overrides` once openapi-typescript's own peer range covers the installed TypeScript |
 | Row virtualization | A table exceeds ~5k rows |
+| `AppError` kinds for 403 (`forbidden`) and 409 (`conflict`) — today both render as the generic `server` error | A backend actually returns either. None does now: another user's widget is a deliberate 404 and a duplicate email is a 422. Considered and not built in audit Phase D (`docs/phases/audit-phase-d.md`) |
 | Error reporting | An app is actually deployed |
 | Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `deps-allowlist.json`/`check-deps.mjs` on the npm side | The backend gains a second contributor/session where an unreviewed Python dependency is a real risk — Phase 8 pinned versions by hand with no mechanical gate |
 

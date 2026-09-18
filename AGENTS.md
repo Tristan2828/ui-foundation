@@ -103,6 +103,13 @@ Copy the routes/widgets/* files per entity. Extend the composites
 (data-table.tsx, entity-form.tsx) in place — they are shared, not
 per-entity.
 
+## Updating the Foundation
+This app was installed from the `Tristan2828/ui-foundation` registry.
+Never re-run `shadcn add .../starter --overwrite` here — it resets
+openapi.yaml, routes, nav and mocks to the demo. Follow
+https://github.com/Tristan2828/ui-foundation/blob/main/docs/consuming.md
+(`--dry-run`, then `--diff` per file).
+
 ## Working in the ui-foundation Repo Itself
 Skip this section in an app that installed this registry — it has no
 `docs/BUILD-PLAN.md`, and everything it needs is above and in
