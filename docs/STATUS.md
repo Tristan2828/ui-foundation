@@ -25,8 +25,9 @@ tested via `consume-test.sh --install-only`, tagged `v1.3.0`. Phase 11
 `registry.json` updated, install-tested, tagged `v1.4.0`. Phase 12 (cloud
 Postgres) touches no registry-shipped path, so — like Phase 8 — it is not
 tagged. Phase 13 (Storybook Controls/autodocs) changes the shipped story
-files, so it is tagged `v1.5.0`. The zod 4 upgrade after it is tagged `v1.6.0`,
-the latest release (see Dependency Upgrades below).
+files, so it is tagged `v1.5.0`. The zod 4 upgrade after it is tagged `v1.6.0`
+and TypeScript 6 `v1.7.0` (see Dependency Upgrades below). The latest release
+is `v1.8.0`, audit Phase A (see Pre-Reuse Audit below).
 
 For the reasoning behind any decision below, see the Decision Ledger in
 [`docs/BUILD-PLAN.md`](BUILD-PLAN.md). For the full narrative of what was
@@ -105,6 +106,18 @@ One PR per major, each verified with `npm run verify`, both builds, and
   openapi-typescript's peer range is still `^5.x`, so `package.json`
   `overrides` points its `typescript` at ours; generated `schema.d.ts` is
   byte-identical. **TypeScript 7 is deferred** — see `docs/DEFERRED.md`.
+
+## Pre-Reuse Audit
+
+Five remediation phases, one PR each — plan and status in
+[`docs/AUDIT-2026-09-18.md`](AUDIT-2026-09-18.md).
+
+- **Phase A — registry consumer gaps** (#18) — `starter` is self-contained
+  (it had always installed `conventions`/`theme` files from `main`, not
+  the requested tag); ships `@storybook/addon-docs` and the patched
+  `use-mobile.ts`; consumers type-check `tests/`/`e2e/`; consumer-safe
+  `AGENTS.md`. Proven by a full dogfood pinned to a commit SHA. Tagged
+  `v1.8.0`, install-tested. See `docs/phases/audit-phase-a.md`.
 
 ## Decision Ledger (highlights)
 
