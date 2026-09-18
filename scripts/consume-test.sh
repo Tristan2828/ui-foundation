@@ -131,7 +131,7 @@ for f in \
   src/components/app/app-shell.tsx src/components/app/data-table.tsx \
   src/components/app/entity-form.tsx src/components/app/error-state.tsx \
   src/components/app/route-error-boundary.tsx \
-  src/components/theme-provider.tsx \
+  src/components/theme-provider.tsx src/hooks/use-mobile.ts \
   src/components/ui/button.stories.tsx src/components/ui/badge.stories.tsx \
   src/components/ui/card.stories.tsx src/components/ui/input.stories.tsx \
   src/components/ui/sidebar.stories.tsx src/components/ui/sheet.stories.tsx \
@@ -193,17 +193,6 @@ if [ "$INSTALL_ONLY" = true ]; then
   echo "consume-test: npx openapi-typescript openapi.yaml (schema.d.ts is generated, not shipped — see comment above)"
   npx openapi-typescript openapi.yaml -o src/api/schema.d.ts
 
-  # Also the playbook's Step 0: reference the shipped tsconfig.test.json
-  # from the root tsconfig, or `tsc -b` below never sees tests/ or e2e/
-  # and a broken shipped test would still "type-check clean".
-  echo "consume-test: referencing tsconfig.test.json from tsconfig.json (playbook Step 0)"
-  node -e "
-  const fs = require('fs');
-  const c = JSON.parse(fs.readFileSync('tsconfig.json', 'utf8'));
-  c.references.push({ path: './tsconfig.test.json' });
-  fs.writeFileSync('tsconfig.json', JSON.stringify(c, null, 2));
-  "
-
   # Plain `tsc --noEmit` against a solution-style tsconfig (what both this
   # repo's own Phase 1 scaffold and a fresh `create vite` produce) checks
   # zero files and exits 0 unconditionally — a silent no-op discovered the
@@ -212,7 +201,19 @@ if [ "$INSTALL_ONLY" = true ]; then
   echo "consume-test: tsc -b"
   npx tsc -b
 
-  echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks clean"
+  # The root tsconfig a fresh app has doesn't reference tsconfig.test.json,
+  # so `tsc -b` never sees tests/ or e2e/ — the playbook's Step 0
+  # verify:fast adds this same call for the same reason.
+  echo "consume-test: tsc -p tsconfig.test.json (shipped tests/ and e2e/)"
+  npx tsc -p tsconfig.test.json
+
+  # A lint failure in a shipped or registry-dependency file (e.g. upstream
+  # shadcn's use-mobile.ts vs. react-hooks' set-state-in-effect rule) fails
+  # every consumer's first verify, but is invisible to tsc.
+  echo "consume-test: eslint (the shipped eslint.config.js, as verify runs it)"
+  npx eslint . --max-warnings 0
+
+  echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks and lints clean"
   exit 0
 fi
 

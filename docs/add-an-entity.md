@@ -17,16 +17,15 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    add exactly these six scripts:
    ```json
    "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
-   "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
+   "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && tsc -p tsconfig.test.json && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
    "verify": "npm run verify:fast && playwright test",
    "storybook": "storybook dev -p 6006",
    "build-storybook": "storybook build",
    "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort"
    ```
-   Then, only if the root `tsconfig.json`'s `references` array has no
-   `{ "path": "./tsconfig.test.json" }` entry, add one — the registry ships
-   `tsconfig.test.json` but can't edit your root `tsconfig.json`, and
-   without the reference `tsc -b` never type-checks `tests/` or `e2e/`.
+   (`tsc -p tsconfig.test.json` is there because the registry can't add
+   `tsconfig.test.json` to your root `tsconfig.json`'s references, so
+   `tsc -b` alone never type-checks `tests/` or `e2e/`.)
    Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once so the MSW service worker installed
    by `starter` actually registers. Do not add an `openapi.yaml` freeze

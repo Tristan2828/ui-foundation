@@ -20,16 +20,14 @@ building them.
    files and npm dependencies, but cannot merge npm scripts into
    `package.json`). If missing, add:
    `"gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts"`,
-   `"verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run"`,
+   `"verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && tsc -p tsconfig.test.json && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run"`,
    `"verify": "npm run verify:fast && playwright test"`,
    `"storybook": "storybook dev -p 6006"`,
    `"build-storybook": "storybook build"`,
    `"preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort"`.
-   Then, only if the root `tsconfig.json`'s `references` array has no
-   `{ "path": "./tsconfig.test.json" }` entry, add one (the registry ships
-   that file but can't edit your root `tsconfig.json`; without it `tsc -b`
-   never type-checks `tests/` or `e2e/`). Then, only if
-   `public/mockServiceWorker.js` doesn't exist yet, run
+   (`tsc -p tsconfig.test.json` type-checks `tests/` and `e2e/`, which
+   `tsc -b` alone never reaches in an app that installed this registry.)
+   Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once. Do not add an openapi.yaml freeze
    check — that's specific to this repo's own frozen `Widgets` demo, not
    to a spec you are actively extending. Also, only if
