@@ -16,15 +16,20 @@ export const WIDGET_STATUSES = ['draft', 'active', 'archived'] as const satisfie
 
 const PRICE_PATTERN = /^\d+\.\d{2}$/
 
+// zod 4 dropped `required_error`; an error function that only answers for a
+// missing value keeps the default message for every other issue.
+const requiredError = (message: string) => (issue: { input: unknown }) =>
+  issue.input === undefined ? message : undefined
+
 export const widgetFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200, 'Name must be 200 characters or fewer'),
-  categoryId: z.number({ required_error: 'Category is required' }),
+  categoryId: z.number({ error: requiredError('Category is required') }),
   status: z.enum(WIDGET_STATUSES),
-  availableFrom: z.date({ required_error: 'Available-from date is required' }),
+  availableFrom: z.date({ error: requiredError('Available-from date is required') }),
   // The input stays a plain string; '' means "no assignee" and is mapped to
   // null at submit time (formValuesToWidgetInput), not encoded in the schema
   // itself, so the empty string is always valid here.
-  assigneeEmail: z.union([z.literal(''), z.string().trim().email('Enter a valid email address')]),
+  assigneeEmail: z.union([z.literal(''), z.string().trim().pipe(z.email('Enter a valid email address'))]),
   price: z
     .string()
     .trim()

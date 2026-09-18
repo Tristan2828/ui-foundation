@@ -67,7 +67,7 @@
         "react-router",
         "react-hook-form",
         "@hookform/resolvers",
-        "zod"
+        "zod@^4.6.5"
       ],
       "devDependencies": [
         "msw",
