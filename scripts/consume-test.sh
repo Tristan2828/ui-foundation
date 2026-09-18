@@ -57,7 +57,9 @@ fi
 
 WORKDIR=$(mktemp -d)
 APP="$WORKDIR/consume-test-app"
-KEEP=false
+# KEEP_APP=1 keeps the scaffolded app (path printed at the end), e.g. to run
+# an agent against a fresh install by hand.
+KEEP=${KEEP_APP:+true}; KEEP=${KEEP:-false}
 cleanup() { [ "$KEEP" = true ] || rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
@@ -134,6 +136,7 @@ npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes --overwrite
 # nothing would import the missing modules.
 for f in \
   AGENTS.md CLAUDE.md docs/add-an-entity.md \
+  docs/entities/_template.md docs/entities/widget.md \
   .claude/skills/new-entity/SKILL.md .claude/agents/spec-tester.md \
   .claude/hooks/deny-impl-read.mjs scripts/check-deps.mjs \
   src/styles/theme.css src/index.css \
@@ -229,6 +232,7 @@ if [ "$INSTALL_ONLY" = true ]; then
   npx eslint . --max-warnings 0
 
   echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks and lints clean"
+  [ "$KEEP" = true ] && echo "consume-test: kept the app at $APP"
   exit 0
 fi
 
@@ -239,6 +243,17 @@ fi
 # repo; everything the agent knows about the foundation's conventions
 # comes from what the registry actually installed (AGENTS.md, CLAUDE.md,
 # the new-entity skill, spec-tester) — same as a real consumer would see.
+# /new-entity never guesses an entity (docs/add-an-entity.md): it builds
+# from docs/entities/<entity>.md, and with no plan it stops to plan with
+# the developer — which a headless run can't do. Hand it the plan a real
+# developer would have written, from scripts/fixtures/entity-plans/.
+ENTITY_KEBAB=$(printf '%s' "$ENTITY" | sed -E 's/([a-z0-9])([A-Z])/\1-\2/g' | tr '[:upper:]' '[:lower:]')
+PLAN_FIXTURE="$REPO_ROOT/scripts/fixtures/entity-plans/$ENTITY_KEBAB.md"
+[ -f "$PLAN_FIXTURE" ] || fail "no entity plan fixture for $ENTITY — add $PLAN_FIXTURE (format: docs/entities/_template.md)"
+mkdir -p "$APP/docs/entities"
+cp "$PLAN_FIXTURE" "$APP/docs/entities/$ENTITY_KEBAB.md"
+(cd "$APP" && git add docs/entities && git commit -q -m "Entity plan: $ENTITY")
+
 STAMP=$(date +%Y%m%d-%H%M%S)
 LOGDIR="$REPO_ROOT/logs/consume-test/${REF}-${ENTITY}-${STAMP}"
 mkdir -p "$LOGDIR"

@@ -78,6 +78,11 @@ unpinned registry dependency resolves to `main`, not the tag).
 - Anything a consumer must edit that the registry can't (npm scripts) is
   Step 0 of [`add-an-entity.md`](add-an-entity.md) — the only copy of the
   entity playbook; `/new-entity` runs it.
+- **Entities are never guessed.** `/new-entity` builds from a plan file,
+  `docs/entities/<entity>.md` (format: [`entities/_template.md`](entities/_template.md)),
+  and plans one with the developer when it's missing. The template's
+  supported-type list is the contract: anything outside it stops the
+  build instead of being improvised.
 
 ## Verification
 

@@ -10,6 +10,27 @@ Do not skip steps or reorder them. Replace `<Entity>` with the PascalCase
 entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
 (`invoice`) throughout.
 
+## Before anything: the entity plan
+
+**Never guess what an entity is.** Every field, type, option list and rule
+comes from `docs/entities/<entity>.md` — the developer's plan, in the
+format of `docs/entities/_template.md` (`docs/entities/widget.md` is a
+filled-in example).
+
+- **The plan file exists:** it is the approved spec. Read it in full and
+  build exactly what it says — no extra fields, no invented options, no
+  renamed labels. If something the build needs isn't in it, stop and ask;
+  don't fill the gap yourself.
+- **It doesn't exist:** don't build anything yet. Work the plan out with
+  the developer — ask about purpose, each field and its type, required,
+  option lists, what the table shows, sorts and filters on, and ownership
+  — for as long as it takes. Write `docs/entities/<entity>.md` from the
+  answers, show it, and wait for an explicit go-ahead before Step 0.
+- **Either way, stop and raise it (don't improvise) if** the plan has an
+  unresolved item under "Open questions", or needs a field type or screen
+  shape the foundation doesn't support yet (the supported list is in the
+  template). Write the case in `docs/BLOCKERS.md`.
+
 0. **Bootstrap, only if `package.json` has no `gen:api` script** (a sign
    this is the first entity added since installing the registry — the
    registry ships files and npm `dependencies`/`devDependencies`, but has
@@ -27,8 +48,11 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    `npx msw init public/ --save` once so the MSW service worker installed
    by `starter` actually registers.
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
-   delete. Reuse the `Page` and error components already in the spec; do
-   not redefine pagination or error shapes per entity.
+   delete — exactly as the plan specifies: its fields, types, required
+   fields, option lists (as enums) and length/format rules, and a list
+   query parameter for each field the plan marks as a filter. Reuse the
+   `Page` and error components already in the spec; do not redefine
+   pagination or error shapes per entity.
 2. **`npm run gen:api`** to regenerate `src/api/schema.d.ts`. Never
    hand-edit it.
 3. **Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from
@@ -45,7 +69,12 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    tests pass. Wire → `Page<T>` / `AppError` translation only; no
    hand-written types (everything comes from `schema.d.ts`).
 6. **Copy the widgets reference files, one for one, not just the two
-   screens:**
+   screens** — shaped by the plan: table columns and sortable columns from
+   its "List" column, toolbar filters from its "Filter" column, form fields
+   and labels from its field table, and field types by pattern (a
+   `reference` field copies Category's searchable combobox, a
+   `single choice` copies Status's select, a `date-time` copies
+   Available From's date picker):
    - `src/routes/widgets/use-widgets.ts`, `use-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)
