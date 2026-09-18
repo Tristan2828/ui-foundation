@@ -70,6 +70,11 @@ per-user ownership against real Postgres).
   (and existing rows in `0003`).
 - **Expired-session cleanup** — deleted when presented, and pruned per user
   on login.
+- **Supabase is the dev database default** — `backend/.env.example` and
+  `backend/scripts/dev.sh` now assume a hosted Postgres
+  (`docs/cloud-postgres.md`). Docker Compose stays for offline work
+  (`dev.sh --local`) and for `check-phase-8.sh`, which always forces it so
+  automated runs never write test users into Supabase.
 
 ## Decision Ledger (highlights)
 
