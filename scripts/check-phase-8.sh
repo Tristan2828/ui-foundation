@@ -120,7 +120,25 @@ echo "check-phase-8: a fresh registration sees none of the seeded user's widgets
 grep -q '"total":0' "$WIDGETS_BODY" || fail "freshly-registered user can see other users' widgets: $(cat "$WIDGETS_BODY")"
 seed_widget_status=$(curl -s -b "$COOKIE_JAR" -o /dev/null -w '%{http_code}' http://localhost:8000/api/widgets/1)
 [ "$seed_widget_status" = "404" ] || fail "GET /api/widgets/1 (the seeded user's widget) as a fresh user returned $seed_widget_status, expected 404"
-rm -f "$COOKIE_JAR" "$WIDGETS_BODY"
+
+# Every check above only *reads* widgets, and pytest runs on SQLite, which
+# ignores column timezone-awareness — so nothing had ever written a
+# timestamp column through the ORM against real Postgres. That's how
+# Phase 10's Session.expires_at bug (tz-naive ORM mapping vs. a tz-aware
+# column) hid until a real login; Widget.available_from is the same class.
+echo "check-phase-8: create and update a widget against real Postgres (audit Phase C)"
+WIDGET_BODY=$(mktemp)
+create_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X POST http://localhost:8000/api/widgets \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Phase C widget","categoryId":1,"status":"draft","availableFrom":"2026-09-18T00:00:00Z","price":"12.50","description":"written by check-phase-8"}')
+[ "$create_status" = "201" ] || fail "POST /api/widgets returned $create_status, expected 201 — got: $(cat "$WIDGET_BODY") (see logs/phase-8-uvicorn.log)"
+widget_id=$(node -p "String(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).id)" "$WIDGET_BODY")
+update_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" \
+  -H 'Content-Type: application/json' \
+  -d '{"availableFrom":"2026-10-01T12:30:00Z"}')
+[ "$update_status" = "200" ] || fail "PATCH /api/widgets/$widget_id returned $update_status, expected 200 — got: $(cat "$WIDGET_BODY")"
+grep -q '"availableFrom":"2026-10-01T12:30:00' "$WIDGET_BODY" || fail "PATCH didn't round-trip availableFrom: $(cat "$WIDGET_BODY")"
+rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-phase-8: VITE_API=real npx playwright test (MSW-independent specs only)"
 VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts ||

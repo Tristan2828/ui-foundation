@@ -41,6 +41,11 @@ STATIC_DIR: str = os.environ.get(
     os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "dist")),
 )
 
+# "production" turns on app/deploy_checks.py at startup: the app refuses to
+# start with an insecure cookie or a still-default seeded account. Anything
+# else (the default) is development, with no startup checks.
+APP_ENV: str = os.environ.get("APP_ENV", "development")
+
 # Session cookie (see docs/BUILD-PLAN.md Phase 10). Local dev is plain
 # HTTP, so the Secure flag defaults off; a real deployment sets it.
 COOKIE_SECURE: bool = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
@@ -48,5 +53,9 @@ SESSION_TTL_DAYS: int = int(os.environ.get("SESSION_TTL_DAYS", "7"))
 
 # Seeded dev user (migration 0002 — see docs/BUILD-PLAN.md Phase 10). Not a
 # production credential; a real deployment sets its own before going live.
-SEED_USER_EMAIL: str = os.environ.get("SEED_USER_EMAIL", "dev@example.com")
-SEED_USER_PASSWORD: str = os.environ.get("SEED_USER_PASSWORD", "dev-password-123")
+# The defaults are published in the README, which is why production refuses
+# to start while any account still accepts DEFAULT_SEED_PASSWORD.
+DEFAULT_SEED_EMAIL = "dev@example.com"
+DEFAULT_SEED_PASSWORD = "dev-password-123"
+SEED_USER_EMAIL: str = os.environ.get("SEED_USER_EMAIL", DEFAULT_SEED_EMAIL)
+SEED_USER_PASSWORD: str = os.environ.get("SEED_USER_PASSWORD", DEFAULT_SEED_PASSWORD)

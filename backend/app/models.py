@@ -57,7 +57,12 @@ class Widget(SQLModel, table=True):
     name: str = Field(max_length=200)
     category_id: int = Field(foreign_key="categories.id", index=True)
     status: WidgetStatus = Field(default=WidgetStatus.draft, index=True)
-    available_from: datetime
+    # Explicitly tz-aware, same as Session.expires_at above: the bare
+    # `datetime` annotation mapped tz-naive at the ORM level, so every
+    # widget create/update 500'd against real Postgres (asyncpg rejects a
+    # tz-aware value for a naive parameter). SQLite-backed pytest can't see
+    # this; scripts/check-phase-8.sh now writes a widget to catch it.
+    available_from: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     assignee_email: str | None = Field(default=None)
     price: Decimal = Field(max_digits=10, decimal_places=2)
     description: str = Field(max_length=2000)
