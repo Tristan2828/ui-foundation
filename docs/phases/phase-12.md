@@ -118,6 +118,12 @@ reflect what was actually verified to work.
 - **Not tagged** — same reasoning as Phase 8: `git diff` shows no
   registry-shipped path changed, so there's no registry release to
   version.
+- **Merged — this phase is fully done.** Opened as PR #5
+  (`phase-12-cloud-postgres` → `main`), following the Phase 9/10/11
+  precedent of going through a PR under branch protection rather than a
+  direct push. Merged by the developer (merge commit `60e01d4`); local
+  `main` fast-forwarded, and the branch was deleted both locally and on
+  GitHub (auto-deleted on merge).
 - **Real, unresolved Supabase-platform oddity, not this repo's bug,
   worth knowing about if cloud-Postgres work continues here**: for a
   stretch of this session, the Supabase Management API (`GET /v1/
