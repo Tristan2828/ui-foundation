@@ -7,7 +7,8 @@
 # Usage:
 #   scripts/consume-test.sh --install-only [ref]
 #     Scaffold a throwaway Vite app in a temp dir, run
-#     `shadcn add <repo>/starter#<ref>`, and type-check. No edits, no
+#     `shadcn add <repo>/starter#<ref>`, then type-check (app + shipped
+#     tests) and lint the result. No edits, no
 #     entity, no agent — this is what scripts/check-phase-6.sh runs.
 #     `ref` defaults to the latest git tag (falls back to v1.0.0).
 #
@@ -45,6 +46,14 @@ if [ "$INSTALL_ONLY" != true ]; then
   [ -n "$ENTITY" ] || fail "full dogfood mode requires an entity name: consume-test.sh <ref> <EntityName>"
 fi
 [ -n "$REF" ] || REF=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+
+# raw.githubusercontent.com serves files with Cache-Control: max-age=300,
+# so a *branch* ref tested within ~5 minutes of a push can install a mix
+# of new and stale files (seen in audit Phase A: new use-mobile.ts, stale
+# SKILL.md). Tags and commit SHAs are immutable URLs and can't go stale.
+if ! [[ "$REF" =~ ^v[0-9] || "$REF" =~ ^[0-9a-f]{7,40}$ ]]; then
+  echo "consume-test: WARNING — '$REF' looks like a branch; GitHub may serve files cached up to 5 min old. Prefer a commit SHA (git rev-parse HEAD)." >&2
+fi
 
 WORKDIR=$(mktemp -d)
 APP="$WORKDIR/consume-test-app"
@@ -131,7 +140,7 @@ for f in \
   src/components/app/app-shell.tsx src/components/app/data-table.tsx \
   src/components/app/entity-form.tsx src/components/app/error-state.tsx \
   src/components/app/route-error-boundary.tsx \
-  src/components/theme-provider.tsx \
+  src/components/theme-provider.tsx src/hooks/use-mobile.ts \
   src/components/ui/button.stories.tsx src/components/ui/badge.stories.tsx \
   src/components/ui/card.stories.tsx src/components/ui/input.stories.tsx \
   src/components/ui/sidebar.stories.tsx src/components/ui/sheet.stories.tsx \
@@ -142,7 +151,11 @@ for f in \
   src/api/contracts.ts src/api/transport/index.ts src/api/query-client.ts \
   src/api/gateway/errors.ts src/api/gateway/widgets.ts src/api/gateway/categories.ts \
   src/auth/auth-context.ts src/auth/auth-provider.tsx src/auth/use-auth.ts \
+  src/api/gateway/auth.ts \
   src/main.tsx src/App.tsx src/routes/home.tsx \
+  src/routes/login.tsx src/routes/login-schema.ts \
+  src/routes/register.tsx src/routes/register-schema.ts \
+  tests/gateway/auth.test.ts e2e/auth.spec.ts e2e/register.spec.ts \
   src/mocks/browser.ts src/mocks/server.ts src/mocks/data.ts \
   src/mocks/handlers.ts src/mocks/e2e-hooks.ts \
   src/routes/widgets/use-widgets.ts src/routes/widgets/use-categories.ts \
@@ -157,6 +170,17 @@ for f in \
   vitest.config.ts playwright.config.ts tsconfig.test.json openapi.yaml \
 ; do
   [ -f "$f" ] || fail "expected file missing after install: $f"
+done
+
+# Existing isn't enough: until audit Phase A, starter pulled these through
+# an unpinned registryDependency, so they arrived from main no matter which
+# ref was installed — and every check above still passed. Compare them to
+# the same files at $REF (CRLF-insensitive: git's working-copy conversion).
+for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json; do
+  expected=$(git -C "$REPO_ROOT" show "$REF:$f" 2>/dev/null || git -C "$REPO_ROOT" show "origin/$REF:$f") ||
+    fail "can't read $f at $REF from the local repo (fetch first?)"
+  [ "$(tr -d '\r' < "$f")" = "$(printf '%s' "$expected" | tr -d '\r')" ] ||
+    fail "$f installed from starter#$REF doesn't match $REF's own copy — a registry item is resolving from a different ref"
 done
 
 # MSW's browser worker (src/mocks/browser.ts, imported unconditionally by
@@ -197,7 +221,19 @@ if [ "$INSTALL_ONLY" = true ]; then
   echo "consume-test: tsc -b"
   npx tsc -b
 
-  echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks clean"
+  # The root tsconfig a fresh app has doesn't reference tsconfig.test.json,
+  # so `tsc -b` never sees tests/ or e2e/ — the playbook's Step 0
+  # verify:fast adds this same call for the same reason.
+  echo "consume-test: tsc -p tsconfig.test.json (shipped tests/ and e2e/)"
+  npx tsc -p tsconfig.test.json
+
+  # A lint failure in a shipped or registry-dependency file (e.g. upstream
+  # shadcn's use-mobile.ts vs. react-hooks' set-state-in-effect rule) fails
+  # every consumer's first verify, but is invisible to tsc.
+  echo "consume-test: eslint (the shipped eslint.config.js, as verify runs it)"
+  npx eslint . --max-warnings 0
+
+  echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks and lints clean"
   exit 0
 fi
 

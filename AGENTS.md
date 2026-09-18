@@ -16,7 +16,7 @@ check is right. Do not disable, skip, or work around it.
   allowlist + registry diff at review.)
 - NEVER add a dependency that is not in deps-allowlist.json. If you
   believe one is needed, write the case in docs/BLOCKERS.md and stop.
-  (Enforced: PreToolUse hook blocks the install; check-deps fails verify.)
+  (Enforced: scripts/check-deps.mjs fails verify.)
 - NEVER hand-write an API type. All types come from src/api/schema.d.ts,
   which is generated. If a type is missing, run `npm run gen:api`.
   (Enforced: codegen diff in verify.)
@@ -45,18 +45,13 @@ Use <Skeleton>, <Empty>, and the error boundary. Do not omit these.
 Every screen has one Playwright test per state, forced via MSW overrides.
 
 ## Scope and Stopping
-- Work on exactly one phase per session. The phase is named in the
-  session's opening instruction. Do not begin the next phase.
-- A phase is done when `scripts/check-phase-N.sh` exits zero. Not before,
-  not after. Your own judgment of completeness is not an input.
-- If the check cannot be made to pass, or an instruction conflicts with
-  current library docs, or a change would exceed this plan's scope:
-  write docs/BLOCKERS.md (what, why, what you tried), commit, and stop.
-  Do not guess, do not widen scope, do not wait.
+- Do the task you were given and nothing beyond it. A task is done when
+  `npm run verify` passes — not when it feels complete.
+- If verify cannot be made to pass without breaking a Hard Rule, or an
+  instruction conflicts with current library docs, or the change would
+  exceed the task's scope: write docs/BLOCKERS.md (what, why, what you
+  tried), commit, and stop. Do not guess, do not widen scope, do not wait.
 - Ideas that are out of scope go in docs/DEFERRED.md, not in code.
-- At the end of every session, write docs/phases/phase-N.md: what was
-  built, what deviated from the plan and why, what the next session
-  needs to know. The next session has no memory of this one.
 
 ## Correct Patterns
 ```tsx
@@ -88,8 +83,8 @@ and training data lags them.
 ## Before You Finish
 Run `npm run verify`. It must pass. Do not report a task complete
 on a failing gate — the developer does not review this code by reading it.
-No Stop hook enforces this yet; until one exists, running `verify` before
-ending a session is on you, not a gate.
+No hook enforces this; running `verify` before you stop is on you. CI runs
+it again on every pull request.
 
 ## Reference Implementations — Copy These Patterns
 - Data table:   src/routes/widgets/widgets-table.tsx (thin consumer of the
@@ -108,9 +103,20 @@ Copy the routes/widgets/* files per entity. Extend the composites
 (data-table.tsx, entity-form.tsx) in place — they are shared, not
 per-entity.
 
-## Full Plan
-`docs/BUILD-PLAN.md` is this file's own design document — the ui-foundation
-repo's build plan, not something every consuming app has. If it exists in
-this repo, read it in full at the start of every session; if it doesn't
-(a fresh app that installed this registry), everything you need is in this
-file and `docs/add-an-entity.md`.
+## Working in the ui-foundation Repo Itself
+Skip this section in an app that installed this registry — it has no
+`docs/BUILD-PLAN.md`, and everything it needs is above and in
+`docs/add-an-entity.md`.
+
+If `docs/BUILD-PLAN.md` exists, you are in the foundation repo:
+- Read `docs/BUILD-PLAN.md` in full at the start of every session, plus
+  `docs/STATUS.md` and any open item in `docs/BLOCKERS.md`.
+- Work on exactly one phase per session, named in the opening
+  instruction. A phase is done when its `scripts/check-phase-N.sh` exits
+  zero (or, for non-phase work, when `npm run verify` passes).
+- At the end of the session, write `docs/phases/<phase>.md`: what was
+  built, what deviated and why, what the next session needs to know. The
+  next session has no memory of this one.
+- A change to any path listed in `registry.json` needs
+  `scripts/consume-test.sh` against the branch before merge and a new tag
+  after it.

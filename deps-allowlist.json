@@ -1,5 +1,5 @@
 {
-  "$comment": "Every dependency the agent is permitted to install. Checked by scripts/check-deps.mjs against package.json. An addition here is a deliberate human decision, not something the agent edits on its own — see AGENTS.md. Covers the npm side only — backend/pyproject.toml pins the Phase 8 Python backend's dependencies with no mechanical allowlist enforcer yet (see docs/BLOCKERS.md).",
+  "$comment": "Every dependency the agent is permitted to install. Checked by scripts/check-deps.mjs against package.json. An addition here is a deliberate human decision, not something the agent edits on its own — see AGENTS.md. Covers the npm side only — backend/pyproject.toml pins the Phase 8 Python backend's dependencies with no mechanical allowlist enforcer yet (see docs/DEFERRED.md).",
   "tools": {
     "shadcn": "4.21.0",
     "vite": "8.3.0",
@@ -21,7 +21,6 @@
     "react-hook-form",
     "@hookform/resolvers",
     "zod",
-    "openapi-fetch",
     "class-variance-authority",
     "cn",
     "lucide-react",
@@ -31,10 +30,6 @@
     "shadcn",
     "sonner",
     "next-themes",
-    "react-hook-form",
-    "@hookform/resolvers",
-    "zod",
-    "@tanstack/react-table",
     "react-day-picker",
     "date-fns"
   ],
