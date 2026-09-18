@@ -80,6 +80,9 @@ per-user ownership against real Postgres).
 
 ## Dependency Upgrades
 
+Full narrative and lessons for this and the section above:
+[`docs/phases/maintenance-2026-09-18.md`](phases/maintenance-2026-09-18.md).
+
 One PR per major, each verified with `npm run verify`, both builds, and
 `consume-test.sh --install-only` on the branch.
 
