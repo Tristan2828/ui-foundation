@@ -1,0 +1,68 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Frontend: dev (MSW)",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "app" },
+      "detail": "Vite dev server on :5173 — mocked via MSW, no backend needed"
+    },
+    {
+      "label": "Frontend: dev (real API)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "env": { "VITE_API": "real" } },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "app" },
+      "detail": "Vite dev server on :5173, proxied to the backend on :8000"
+    },
+    {
+      "label": "Backend: dev",
+      "type": "shell",
+      "command": "bash backend/scripts/dev.sh",
+      "windows": {
+        "options": {
+          "shell": { "executable": "C:\\Program Files\\Git\\bin\\bash.exe", "args": ["-c"] }
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "app" },
+      "detail": "FastAPI on :8000 — venv, migrations, uvicorn --reload against whatever backend/.env points at (Supabase by default; see docs/BLOCKERS.md until that's set up)"
+    },
+    {
+      "label": "Backend: dev (local Postgres)",
+      "type": "shell",
+      "command": "bash backend/scripts/dev.sh --local",
+      "windows": {
+        "options": {
+          "shell": { "executable": "C:\\Program Files\\Git\\bin\\bash.exe", "args": ["-c"] }
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "app" },
+      "detail": "FastAPI on :8000 — same as above but forced to Docker Compose Postgres, for offline work"
+    },
+    {
+      "label": "Storybook",
+      "type": "npm",
+      "script": "storybook",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "group": "app" },
+      "detail": "Storybook on :6006 — stop it before `npm run verify`, or Playwright tests this server instead of a fresh build"
+    },
+    {
+      "label": "Start All: Backend + Frontend (real API)",
+      "dependsOn": ["Backend: dev", "Frontend: dev (real API)"],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "detail": "Runs the backend and a frontend pointed at it, side by side"
+    }
+  ]
+}
