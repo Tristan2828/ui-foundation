@@ -50,7 +50,7 @@ were judged over-built for this focus. They stay; don't let them grow.
 - **Work declared complete without a green gate:** don't accept it. Point
   it back at `npm run verify` (plus `scripts/check-backend-postgres.sh` for
   backend changes, and `scripts/consume-test.sh <sha>` for anything
-  `registry.json` ships). A dogfood PASS only counts after checking its
+  `registry.json` ships). A Fresh UI Build PASS only counts after checking its
   transcript used the version you meant to test (`phases/audit-phase-a.md`).
 - **A gate is permanently red** (e.g. a screenshot baseline that only
   exists for Windows): fix the gate before anything else — a gate that's

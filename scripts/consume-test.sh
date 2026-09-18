@@ -13,7 +13,7 @@
 #     `ref` defaults to the latest git tag (falls back to v1.0.0).
 #
 #   scripts/consume-test.sh <ref> <EntityName>
-#     The full Phase 7 dogfood run: install, then launch a *fresh* agent
+#     The Fresh UI Build (first run in Phase 7): install, then launch a *fresh* agent
 #     (no memory of this repo — a new process in a directory it has never
 #     seen) with a single instruction, `/new-entity <EntityName>`, and run
 #     `npm run verify` in the result. Exits non-zero if the agent run
@@ -43,7 +43,7 @@ done
 REF="${POSITIONAL[0]:-}"
 ENTITY="${POSITIONAL[1]:-}"
 if [ "$INSTALL_ONLY" != true ]; then
-  [ -n "$ENTITY" ] || fail "full dogfood mode requires an entity name: consume-test.sh <ref> <EntityName>"
+  [ -n "$ENTITY" ] || fail "a Fresh UI Build requires an entity name: consume-test.sh <ref> <EntityName>"
 fi
 [ -n "$REF" ] || REF=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
 
@@ -57,7 +57,9 @@ fi
 
 WORKDIR=$(mktemp -d)
 APP="$WORKDIR/consume-test-app"
-KEEP=false
+# KEEP_APP=1 keeps the scaffolded app (path printed at the end), e.g. to run
+# an agent against a fresh install by hand.
+KEEP=${KEEP_APP:+true}; KEEP=${KEEP:-false}
 cleanup() { [ "$KEEP" = true ] || rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
@@ -134,6 +136,7 @@ npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes --overwrite
 # nothing would import the missing modules.
 for f in \
   AGENTS.md CLAUDE.md docs/add-an-entity.md \
+  docs/entities/_template.md docs/entities/widget.md \
   .claude/skills/new-entity/SKILL.md .claude/agents/spec-tester.md \
   .claude/hooks/deny-impl-read.mjs scripts/check-deps.mjs \
   src/styles/theme.css src/index.css \
@@ -229,16 +232,28 @@ if [ "$INSTALL_ONLY" = true ]; then
   npx eslint . --max-warnings 0
 
   echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks and lints clean"
+  [ "$KEEP" = true ] && echo "consume-test: kept the app at $APP"
   exit 0
 fi
 
-# --- Phase 7 dogfood mode: a fresh agent, /new-entity, then verify ---
+# --- Fresh UI Build: a fresh agent, /new-entity, then verify ---
 #
 # "Fresh" here means a new `claude` process started in a directory it has
 # never seen before — not a flag. $APP has no session history with this
 # repo; everything the agent knows about the foundation's conventions
 # comes from what the registry actually installed (AGENTS.md, CLAUDE.md,
 # the new-entity skill, spec-tester) — same as a real consumer would see.
+# /new-entity never guesses an entity (docs/add-an-entity.md): it builds
+# from docs/entities/<entity>.md, and with no plan it stops to plan with
+# the developer — which a headless run can't do. Hand it the plan a real
+# developer would have written, from scripts/fixtures/entity-plans/.
+ENTITY_KEBAB=$(printf '%s' "$ENTITY" | sed -E 's/([a-z0-9])([A-Z])/\1-\2/g' | tr '[:upper:]' '[:lower:]')
+PLAN_FIXTURE="$REPO_ROOT/scripts/fixtures/entity-plans/$ENTITY_KEBAB.md"
+[ -f "$PLAN_FIXTURE" ] || fail "no entity plan fixture for $ENTITY — add $PLAN_FIXTURE (format: docs/entities/_template.md)"
+mkdir -p "$APP/docs/entities"
+cp "$PLAN_FIXTURE" "$APP/docs/entities/$ENTITY_KEBAB.md"
+(cd "$APP" && git add docs/entities && git commit -q -m "Entity plan: $ENTITY")
+
 STAMP=$(date +%Y%m%d-%H%M%S)
 LOGDIR="$REPO_ROOT/logs/consume-test/${REF}-${ENTITY}-${STAMP}"
 mkdir -p "$LOGDIR"
@@ -261,7 +276,7 @@ echo "consume-test: transcript -> $TRANSCRIPT"
 # into an absolute Windows path before claude.exe ever sees it — without
 # this, "/new-entity Invoice" arrives as the literal string
 # "C:/Program Files/Git/new-entity Invoice", which is not a slash-command
-# at all. Confirmed by a first real dogfood run: the fresh agent correctly
+# at all. Confirmed by the first real Fresh UI Build: the fresh agent correctly
 # diagnosed the mangling itself and refused to hand-replicate the skill's
 # steps (disable-model-invocation working as designed) rather than
 # guessing — but the run was wasted on a test-harness bug, not a
@@ -285,4 +300,4 @@ if ! (cd "$APP" && npm run verify) 2>&1 | tee "$LOGDIR/verify.log"; then
   fail "npm run verify failed in the consuming app after /new-entity $ENTITY — transcript: $TRANSCRIPT, verify log: $LOGDIR/verify.log, app snapshot: $LOGDIR/app"
 fi
 
-echo "consume-test: PASS — a fresh agent with no memory of this repo built $ENTITY entirely from $REPO/starter#$REF, npm run verify passes. Transcript: $TRANSCRIPT"
+echo "consume-test: Fresh UI Build PASS — a fresh agent with no memory of this repo built $ENTITY entirely from $REPO/starter#$REF, npm run verify passes. Transcript: $TRANSCRIPT"
