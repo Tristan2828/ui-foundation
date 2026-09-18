@@ -12,19 +12,30 @@ import {
   SidebarProvider,
 } from '@/components/ui/sidebar'
 
+// collapsible stays "none" — the collapsed/offcanvas states need real
+// viewport interaction, not something a static screenshot can show
+// meaningfully. side/variant are the Controls that do.
 const meta: Meta<typeof Sidebar> = {
   title: 'ui/Sidebar',
-}
-
-export default meta
-type Story = StoryObj<typeof Sidebar>
-
-export const AllVariants: Story = {
-  render: () => (
+  argTypes: {
+    side: {
+      control: 'select',
+      options: ['left', 'right'],
+    },
+    variant: {
+      control: 'select',
+      options: ['sidebar', 'floating', 'inset'],
+    },
+  },
+  args: {
+    side: 'left',
+    variant: 'sidebar',
+  },
+  render: (args) => (
     <div className="h-64 w-56 overflow-hidden rounded-lg border border-border">
       <SidebarProvider>
         <nav aria-label="Sidebar demo">
-          <Sidebar collapsible="none">
+          <Sidebar collapsible="none" side={args.side} variant={args.variant}>
             <SidebarHeader>
               <span className="px-2 text-sm font-semibold text-sidebar-foreground">Demo</span>
             </SidebarHeader>
@@ -49,3 +60,8 @@ export const AllVariants: Story = {
     </div>
   ),
 }
+
+export default meta
+type Story = StoryObj<typeof Sidebar>
+
+export const Default: Story = {}

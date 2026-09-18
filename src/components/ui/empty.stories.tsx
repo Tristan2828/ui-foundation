@@ -10,26 +10,43 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 
-const meta: Meta<typeof Empty> = {
-  title: 'ui/Empty',
+// Empty is a compound component with no cva variant prop of its own — its
+// Controls surface the slotted text content instead of a discrete variant.
+interface EmptyStoryArgs {
+  title: string
+  description: string
+  actionLabel: string
 }
 
-export default meta
-type Story = StoryObj<typeof Empty>
-
-export const AllVariants: Story = {
-  render: () => (
+const meta: Meta<EmptyStoryArgs> = {
+  title: 'ui/Empty',
+  argTypes: {
+    title: { control: 'text' },
+    description: { control: 'text' },
+    actionLabel: { control: 'text' },
+  },
+  args: {
+    title: 'No items yet',
+    description: 'Create one to get started.',
+    actionLabel: 'Create item',
+  },
+  render: (args) => (
     <Empty className="w-full border border-dashed border-border">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <InfoIcon />
         </EmptyMedia>
-        <EmptyTitle>No items yet</EmptyTitle>
-        <EmptyDescription>Create one to get started.</EmptyDescription>
+        <EmptyTitle>{args.title}</EmptyTitle>
+        <EmptyDescription>{args.description}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button size="sm">Create item</Button>
+        <Button size="sm">{args.actionLabel}</Button>
       </EmptyContent>
     </Empty>
   ),
 }
+
+export default meta
+type Story = StoryObj<EmptyStoryArgs>
+
+export const Default: Story = {}

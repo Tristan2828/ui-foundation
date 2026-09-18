@@ -18,6 +18,9 @@ const withTheme: Decorator = (Story, context) => {
 }
 
 const preview: Preview = {
+  // Every story gets a Docs page (@storybook/addon-docs, registered in
+  // main.ts) without opting in per file.
+  tags: ['autodocs'],
   globalTypes: {
     theme: {
       description: 'Light/dark theme',
