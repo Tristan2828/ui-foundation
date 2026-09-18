@@ -32,6 +32,14 @@ REPO_ROOT="$(pwd)"
 
 fail() { echo "check-phase-8: $1" >&2; exit 1; }
 
+# Always the throwaway docker-compose.yml Postgres, never whatever
+# backend/.env points at (Supabase by default) — this script registers test
+# users and runs migrations, which shouldn't land in a real database.
+# python-dotenv doesn't override variables already set, so these win.
+export DATABASE_URL="postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation"
+export DATABASE_SSL=false
+unset DATABASE_SSL_CA_FILE
+
 # Cumulative: Phase 8 must not have broken Phases 1-5.
 scripts/check-phase-5.sh
 
