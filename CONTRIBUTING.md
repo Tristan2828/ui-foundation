@@ -30,7 +30,7 @@ npx playwright install --with-deps
 
 ## Scope
 
-If a task is split into phases (see `docs/BUILD-PLAN.md` if present),
+If a task is split into phases (see `docs/ARCHITECTURE.md` and `docs/phases/`),
 stick to one phase per PR. If something's blocked or out of scope,
 write it up in `docs/BLOCKERS.md` or `docs/DEFERRED.md` rather than
 guessing or expanding scope.

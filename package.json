@@ -13,8 +13,8 @@
     "build-storybook": "storybook build",
     "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort",
     "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
-    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && node scripts/check-openapi-freeze.mjs && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
-    "verify": "npm run verify:fast && playwright test",
+    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
+    "verify": "npm run verify:fast && playwright test && playwright test -c playwright.storybook.config.ts",
     "verify:backend": "bash backend/scripts/verify.sh"
   },
   "dependencies": {

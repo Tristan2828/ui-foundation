@@ -3,8 +3,8 @@
 The most-repeated task in this system: add a full CRUD entity — spec, mocks,
 gateway, tests, table, form, routes — following the patterns in
 `src/routes/widgets/`. This is the human-readable version of the playbook;
-`.claude/skills/new-entity/SKILL.md` is the same steps as an invocable skill
-(`/new-entity <Name>`).
+the `/new-entity <Name>` skill (`.claude/skills/new-entity/SKILL.md`) runs
+exactly this file — it is the only copy of the steps.
 
 Do not skip steps or reorder them. Replace `<Entity>` with the PascalCase
 entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
@@ -14,38 +14,18 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    this is the first entity added since installing the registry — the
    registry ships files and npm `dependencies`/`devDependencies`, but has
    no way to merge npm scripts into `package.json` for you). If missing,
-   add exactly these six scripts:
+   add exactly these three scripts:
    ```json
    "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && tsc -p tsconfig.test.json && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
-   "verify": "npm run verify:fast && playwright test",
-   "storybook": "storybook dev -p 6006",
-   "build-storybook": "storybook build",
-   "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort"
+   "verify": "npm run verify:fast && playwright test"
    ```
    (`tsc -p tsconfig.test.json` is there because the registry can't add
    `tsconfig.test.json` to your root `tsconfig.json`'s references, so
    `tsc -b` alone never type-checks `tests/` or `e2e/`.)
    Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once so the MSW service worker installed
-   by `starter` actually registers. Do not add an `openapi.yaml` freeze
-   check here — that discipline is specific to the ui-foundation repo's
-   own frozen `Widgets` demo (see `docs/BUILD-PLAN.md` if present), not to
-   a spec you are actively extending.
-
-   Also, only if `e2e/storybook-visual.spec.ts-snapshots/` doesn't exist
-   yet, run
-   `npx playwright test e2e/storybook-visual.spec.ts --update-snapshots`
-   once to generate this machine's own dark-mode screenshot baselines for
-   every primitive's Storybook story (`src/components/ui/*.stories.tsx`).
-   These are never shipped by the registry — GitHub's API can't reliably
-   serve binary files to the `gh` CLI (confirmed: `gh api` corrupts PNG
-   content requested via the raw-content header, independent of anything
-   in this registry), and baselines are machine/OS-specific regardless
-   (font rasterization differs — see `docs/BUILD-PLAN.md` Phase 3 if
-   present), so shipping one machine's images to another's would be the
-   wrong fix even if it worked. Commit the generated PNGs once satisfied
-   they look right.
+   by `starter` actually registers.
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete. Reuse the `Page` and error components already in the spec; do
    not redefine pagination or error shapes per entity.
@@ -100,7 +80,9 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
    post-navigation `worker.use()` call gated on
    `waitForFunction(() => window.__msw !== undefined)`.
 9. **Register the nav entry and route names** in `e2e/shell.spec.ts`'s
-   `NAV_ENTRIES` so the shell smoke test covers the new screen.
+   `NAV_ENTRIES` so the shell smoke test covers the new screen, and add
+   `/<entity>/new` to `e2e/a11y.spec.ts`'s `FORM_ROUTES` (the table page is
+   picked up from the sidebar automatically; the form isn't in it).
 10. **`npm run verify`.** Fix until it passes. Then stop — do not add
     anything beyond what this list covers; note ideas in
     `docs/DEFERRED.md` instead.

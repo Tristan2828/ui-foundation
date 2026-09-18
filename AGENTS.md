@@ -22,7 +22,8 @@ check is right. Do not disable, skip, or work around it.
   (Enforced: codegen diff in verify.)
 - NEVER use a raw hex value or a Tailwind palette color (bg-blue-500).
   Semantic tokens only: bg-primary, text-muted-foreground.
-  (Enforced: ESLint token rule; dark-mode screenshots.)
+  (Enforced: ESLint token rule; axe contrast in light and dark mode,
+  e2e/a11y.spec.ts.)
 - NEVER fetch in useEffect. All server state goes through TanStack Query.
   (Enforced: eslint-plugin-query + no-restricted-syntax on fetch.)
 - NEVER read auth state outside useAuth(). auth-provider.tsx is the only
@@ -112,18 +113,20 @@ https://github.com/Tristan2828/ui-foundation/blob/main/docs/consuming.md
 
 ## Working in the ui-foundation Repo Itself
 Skip this section in an app that installed this registry — it has no
-`docs/BUILD-PLAN.md`, and everything it needs is above and in
+`docs/ARCHITECTURE.md`, and everything it needs is above and in
 `docs/add-an-entity.md`.
 
-If `docs/BUILD-PLAN.md` exists, you are in the foundation repo:
-- Read `docs/BUILD-PLAN.md` in full at the start of every session, plus
-  `docs/STATUS.md` and any open item in `docs/BLOCKERS.md`.
-- Work on exactly one phase per session, named in the opening
-  instruction. A phase is done when its `scripts/check-phase-N.sh` exits
-  zero (or, for non-phase work, when `npm run verify` passes).
-- At the end of the session, write `docs/phases/<phase>.md`: what was
+If `docs/ARCHITECTURE.md` exists, you are in the foundation repo:
+- Read `docs/ARCHITECTURE.md` at the start of every session (its gates
+  table says which checks a change needs), plus `docs/STATUS.md` and any
+  open item in `docs/BLOCKERS.md`. `docs/BUILD-PLAN.md` is history — read
+  the part you need, not the whole file.
+- Work on the one task or phase named in the opening instruction. It is
+  done when every gate that `docs/ARCHITECTURE.md` lists for that kind of
+  change passes.
+- A change to any path `registry.json` ships needs
+  `scripts/consume-test.sh` against the **commit SHA** (never a branch)
+  before merge, and a tag after it.
+- At the end of the session, write `docs/phases/<name>.md`: what was
   built, what deviated and why, what the next session needs to know. The
   next session has no memory of this one.
-- A change to any path listed in `registry.json` needs
-  `scripts/consume-test.sh` against the branch before merge and a new tag
-  after it.

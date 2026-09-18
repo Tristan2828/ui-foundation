@@ -9,7 +9,7 @@
 #     Scaffold a throwaway Vite app in a temp dir, run
 #     `shadcn add <repo>/starter#<ref>`, then type-check (app + shipped
 #     tests) and lint the result. No edits, no
-#     entity, no agent — this is what scripts/check-phase-6.sh runs.
+#     entity, no agent — the fast check to run before every registry release.
 #     `ref` defaults to the latest git tag (falls back to v1.0.0).
 #
 #   scripts/consume-test.sh <ref> <EntityName>
@@ -142,13 +142,7 @@ for f in \
   src/components/app/route-error-boundary.tsx \
   src/components/theme-provider.tsx src/hooks/use-mobile.ts \
   src/hooks/use-debounced-value.ts src/hooks/use-table-url-state.ts \
-  src/components/ui/button.stories.tsx src/components/ui/badge.stories.tsx \
-  src/components/ui/card.stories.tsx src/components/ui/input.stories.tsx \
-  src/components/ui/sidebar.stories.tsx src/components/ui/sheet.stories.tsx \
-  src/components/ui/tooltip.stories.tsx src/components/ui/separator.stories.tsx \
-  src/components/ui/skeleton.stories.tsx src/components/ui/spinner.stories.tsx \
-  src/components/ui/empty.stories.tsx src/components/ui/sonner.stories.tsx \
-  .storybook/main.ts .storybook/preview.ts \
+  src/components/ui/combobox.tsx \
   src/api/contracts.ts src/api/transport/index.ts src/api/query-client.ts \
   src/api/gateway/errors.ts src/api/gateway/widgets.ts src/api/gateway/categories.ts \
   src/auth/auth-context.ts src/auth/auth-provider.tsx src/auth/use-auth.ts \
@@ -166,7 +160,7 @@ for f in \
   tests/gateway/widgets.test.ts tests/gateway/categories.test.ts \
   tests/mocks/conformance.test.ts tests/widget-schema.test.ts \
   e2e/global.d.ts e2e/msw-contract.spec.ts e2e/shell.spec.ts \
-  e2e/storybook-visual.spec.ts e2e/smoke.spec.ts \
+  e2e/a11y.spec.ts e2e/smoke.spec.ts \
   e2e/widget-form.spec.ts e2e/widgets-table.spec.ts \
   vitest.config.ts playwright.config.ts tsconfig.test.json openapi.yaml \
 ; do

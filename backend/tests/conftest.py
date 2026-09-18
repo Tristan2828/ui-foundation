@@ -1,7 +1,7 @@
 """Exercises app wiring, validation and error-shape conformance against an
 in-memory SQLite engine instead of Postgres — fast and dependency-free for
 the inner loop. This does NOT stand in for the Postgres-specific checks
-`scripts/check-phase-8.sh` runs against a real database (enum/numeric
+`scripts/check-backend-postgres.sh` runs against a real database (enum/numeric
 column behavior, Alembic migrations); see docs/phases/phase-8.md.
 """
 

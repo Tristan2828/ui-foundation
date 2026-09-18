@@ -1,25 +1,13 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-// Every primitive gets one CSF story titled `ui/<Name>` with a single,
-// args-driven `Default` export (see src/components/ui/*.stories.tsx) —
-// kept in sync by hand with the primitives listed here. Story ids are
-// Storybook's own deterministic `title`+export slug, e.g. `ui-button--default`.
+// Only the primitives this repo patches and ships (see registry.json):
+// the rest are upstream shadcn, which a consumer gets live, so a baseline
+// here would test upstream's code. Accessibility of the real screens —
+// including dark-mode contrast — is e2e/a11y.spec.ts. Run by
+// playwright.storybook.config.ts; story ids are `title`+export slugs.
 const STORYBOOK_URL = 'http://localhost:6006'
-const PRIMITIVES = [
-  'button',
-  'badge',
-  'card',
-  'input',
-  'sidebar',
-  'sheet',
-  'tooltip',
-  'separator',
-  'skeleton',
-  'spinner',
-  'empty',
-  'toast',
-]
+const PRIMITIVES = ['button', 'badge']
 
 function storyUrl(name: string, theme: 'light' | 'dark') {
   return `${STORYBOOK_URL}/iframe.html?id=ui-${name}--default&viewMode=story&globals=theme:${theme}`

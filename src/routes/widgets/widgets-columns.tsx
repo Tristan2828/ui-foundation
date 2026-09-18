@@ -97,7 +97,8 @@ export function buildWidgetsColumns(
     },
     {
       id: 'actions',
-      header: '',
+      // Visually empty, but a <th> with no text is an axe violation.
+      header: () => <span className="sr-only">Actions</span>,
       enableSorting: false,
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">

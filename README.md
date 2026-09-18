@@ -4,7 +4,7 @@
 
 A reusable UI foundation for personal database-backed apps, built and maintained primarily by AI coding agents.
 
-This foundation is explicitly not trying to be polished. It's trying to be reusable — see the Decision Ledger in the build plan for why. "Reusable" is proven by Phase 7: a fresh agent with no memory of this repo builds a new entity screen entirely from the published registry, with zero edits here.
+This foundation is explicitly not trying to be polished. It's trying to be reusable — see the Decision Ledger in the (historical) build plan for why. "Reusable" is proven by a dogfood run (`scripts/consume-test.sh`, first done in Phase 7): a fresh agent with no memory of this repo builds a new entity screen entirely from the published registry, with zero edits here.
 
 ## Contents
 
@@ -34,7 +34,8 @@ This foundation is explicitly not trying to be polished. It's trying to be reusa
 | --- | --- |
 | At-a-glance phase checklist | [`docs/STATUS.md`](docs/STATUS.md) |
 | Full narrative per phase | [`docs/phases/`](docs/phases) |
-| Full plan, decision ledger, architecture, exit criteria | [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md) |
+| How it fits together, and which checks a change needs | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| The original build plan and decision ledger (historical) | [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md) |
 
 ## For humans
 
@@ -46,7 +47,7 @@ npm run verify:fast    # inner loop, no Playwright
 ```
 
 > [!NOTE]
-> Don't review this code by reading it — that's not how it's meant to be checked. `npm run verify` passing is the only thing that certifies a change is good; see "Verification Strategy" in the build plan.
+> Don't review this code by reading it — that's not how it's meant to be checked. `npm run verify` passing is the only thing that certifies a change is good; see "Verification" in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## For agents
 
@@ -66,7 +67,7 @@ VITE_API=real npm run dev     # proxies /api to the backend
 
 Log in with the seeded dev user: `dev@example.com` / `dev-password-123`. Deploying for real? Follow [`docs/deploy.md`](docs/deploy.md) — with `APP_ENV=production` the backend refuses to start while that password still works.
 
-The backend's database is Supabase by default ([`docs/cloud-postgres.md`](docs/cloud-postgres.md) covers setup, including the pooler port and root-CA gotchas). `backend/scripts/dev.sh` creates the venv, installs, runs `alembic upgrade head` and starts `uvicorn --reload` in one call, idempotently — safe to re-run. For offline work, `bash backend/scripts/dev.sh --local` uses the Docker Compose Postgres instead; `scripts/check-phase-8.sh` always does, so automated runs never write test users into Supabase. For the backend's own verify gate (mypy + pytest + spec conformance), see `backend/scripts/verify.sh`.
+The backend's database is Supabase by default ([`docs/cloud-postgres.md`](docs/cloud-postgres.md) covers setup, including the pooler port and root-CA gotchas). `backend/scripts/dev.sh` creates the venv, installs, runs `alembic upgrade head` and starts `uvicorn --reload` in one call, idempotently — safe to re-run. For offline work, `bash backend/scripts/dev.sh --local` uses the Docker Compose Postgres instead; `scripts/check-backend-postgres.sh` always does, so automated runs never write test users into Supabase. For the backend's own verify gate (mypy + pytest + spec conformance), see `backend/scripts/verify.sh`.
 
 See [`docs/phases/phase-8.md`](docs/phases/phase-8.md) for what's built.
 
