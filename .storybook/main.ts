@@ -11,6 +11,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 // here rather than shared.
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.tsx'],
+  addons: ['@storybook/addon-docs'],
   framework: {
     name: '@storybook/react-vite',
     options: {},

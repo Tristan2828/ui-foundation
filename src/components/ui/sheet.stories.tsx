@@ -10,21 +10,36 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 
-const meta: Meta<typeof Sheet> = {
-  title: 'ui/Sheet',
+// SheetContent's own `side` prop plus the slotted title/description text are
+// the meaningful Controls here; Sheet/SheetTrigger have nothing to expose.
+interface SheetStoryArgs {
+  side: 'top' | 'right' | 'bottom' | 'left'
+  title: string
+  description: string
 }
 
-export default meta
-type Story = StoryObj<typeof Sheet>
-
-export const AllVariants: Story = {
-  render: () => (
+const meta: Meta<SheetStoryArgs> = {
+  title: 'ui/Sheet',
+  argTypes: {
+    side: {
+      control: 'select',
+      options: ['top', 'right', 'bottom', 'left'],
+    },
+    title: { control: 'text' },
+    description: { control: 'text' },
+  },
+  args: {
+    side: 'right',
+    title: 'Sheet title',
+    description: 'Sheet description text.',
+  },
+  render: (args) => (
     <Sheet>
       <SheetTrigger render={<Button variant="outline">Open sheet</Button>} />
-      <SheetContent>
+      <SheetContent side={args.side}>
         <SheetHeader>
-          <SheetTitle>Sheet title</SheetTitle>
-          <SheetDescription>Sheet description text.</SheetDescription>
+          <SheetTitle>{args.title}</SheetTitle>
+          <SheetDescription>{args.description}</SheetDescription>
         </SheetHeader>
         <SheetFooter>
           <Button>Save</Button>
@@ -33,3 +48,8 @@ export const AllVariants: Story = {
     </Sheet>
   ),
 }
+
+export default meta
+type Story = StoryObj<SheetStoryArgs>
+
+export const Default: Story = {}

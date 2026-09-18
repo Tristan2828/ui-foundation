@@ -64,6 +64,7 @@
     "openapi-response-validator",
     "js-yaml",
     "storybook",
-    "@storybook/react-vite"
+    "@storybook/react-vite",
+    "@storybook/addon-docs"
   ]
 }

@@ -1,10 +1,10 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-// Every primitive gets one CSF story titled `ui/<Name>` with a single
-// `AllVariants` export (see src/components/ui/*.stories.tsx) — kept in
-// sync by hand with the primitives listed here. Story ids are Storybook's
-// own deterministic `title`+export slug, e.g. `ui-button--all-variants`.
+// Every primitive gets one CSF story titled `ui/<Name>` with a single,
+// args-driven `Default` export (see src/components/ui/*.stories.tsx) —
+// kept in sync by hand with the primitives listed here. Story ids are
+// Storybook's own deterministic `title`+export slug, e.g. `ui-button--default`.
 const STORYBOOK_URL = 'http://localhost:6006'
 const PRIMITIVES = [
   'button',
@@ -22,7 +22,7 @@ const PRIMITIVES = [
 ]
 
 function storyUrl(name: string, theme: 'light' | 'dark') {
-  return `${STORYBOOK_URL}/iframe.html?id=ui-${name}--all-variants&viewMode=story&globals=theme:${theme}`
+  return `${STORYBOOK_URL}/iframe.html?id=ui-${name}--default&viewMode=story&globals=theme:${theme}`
 }
 
 // Storybook's iframe.html is an isolated component preview, not a full
