@@ -47,6 +47,14 @@ if [ "$INSTALL_ONLY" != true ]; then
 fi
 [ -n "$REF" ] || REF=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
 
+# raw.githubusercontent.com serves files with Cache-Control: max-age=300,
+# so a *branch* ref tested within ~5 minutes of a push can install a mix
+# of new and stale files (seen in audit Phase A: new use-mobile.ts, stale
+# SKILL.md). Tags and commit SHAs are immutable URLs and can't go stale.
+if ! [[ "$REF" =~ ^v[0-9] || "$REF" =~ ^[0-9a-f]{7,40}$ ]]; then
+  echo "consume-test: WARNING — '$REF' looks like a branch; GitHub may serve files cached up to 5 min old. Prefer a commit SHA (git rev-parse HEAD)." >&2
+fi
+
 WORKDIR=$(mktemp -d)
 APP="$WORKDIR/consume-test-app"
 KEEP=false
