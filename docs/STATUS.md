@@ -90,7 +90,11 @@ One PR per major, each verified with `npm run verify`, both builds, and
   `v1.6.0`, install-tested.
 - **vite 7 → 8, @vitejs/plugin-react 5 → 6** — matches `deps-allowlist.json`'s
   `tools.vite`. No registry-shipped path changed, so not tagged.
-- **Still to do:** eslint 10 (+ globals 17), TypeScript 7.
+- **eslint 9 → 10** (+ `@eslint/js` 10, `globals` 17,
+  `eslint-plugin-react-refresh` 0.5) — no config changes needed; every
+  custom rule re-checked against a deliberate-violation probe file. The
+  shipped `eslint.config.js` is unchanged, so not tagged.
+- **Still to do:** TypeScript 7.
 
 ## Decision Ledger (highlights)
 
