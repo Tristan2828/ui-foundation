@@ -5,7 +5,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { useAuth } from '@/auth/use-auth'
 import { ErrorState } from '@/components/app/error-state'
@@ -15,10 +15,12 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { REGISTER_FORM_DEFAULTS, registerFormSchema, type RegisterFormValues } from './register-schema'
+import { returnPath } from './return-path'
 
 export function RegisterRoute() {
   const { register } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<AppError | null>(null)
 
@@ -32,7 +34,7 @@ export function RegisterRoute() {
     setIsSubmitting(true)
     try {
       await register(values.email, values.name, values.password)
-      navigate('/', { replace: true })
+      navigate(returnPath(location.state), { replace: true })
     } catch (err) {
       const error = err as AppError
       if (error.kind === 'validation' && error.fieldErrors) {
@@ -115,7 +117,7 @@ export function RegisterRoute() {
               Create account
             </Button>
 
-            <Button variant="link" size="sm" nativeButton={false} render={<Link to="/login" />}>
+            <Button variant="link" size="sm" nativeButton={false} render={<Link to="/login" state={location.state} />}>
               Sign in instead
             </Button>
           </form>

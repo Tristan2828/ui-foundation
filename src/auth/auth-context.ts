@@ -1,4 +1,5 @@
 import { createContext } from 'react'
+import type { AppError } from '@/api/contracts'
 
 export type AuthUser = {
   id: number
@@ -6,11 +7,18 @@ export type AuthUser = {
   email: string
 }
 
-export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
+// 'unavailable' means the session check itself failed (network/server
+// error on /auth/me) — not "logged out". Showing /login for a backend
+// outage would send a logged-in user to a form that can't work either.
+export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'unavailable'
 
 export type AuthContextValue = {
   user: AuthUser | null
   status: AuthStatus
+  /** Why the session check failed; set only when status is 'unavailable'. */
+  error: AppError | null
+  /** Re-runs the session check (the 'unavailable' state's retry). */
+  retry: () => void
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   register: (email: string, name: string, password: string) => Promise<void>
@@ -23,6 +31,8 @@ export type AuthContextValue = {
 export const AuthContext = createContext<AuthContextValue>({
   user: null,
   status: 'loading',
+  error: null,
+  retry: () => {},
   login: async () => {},
   logout: async () => {},
   register: async () => {},
