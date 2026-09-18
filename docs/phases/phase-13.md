@@ -107,14 +107,17 @@ round-trip this session expects to need only covers 4 files, not all 12.
   run download <id> -n playwright-test-results` and commit them as
   `*-chromium-linux.png`, replacing the stale Phase 9-era Linux baselines
   for those same 4 files. The other 8 Linux baselines need no change.
-- `docs/DEFERRED.md`'s Storybook Controls/autodocs polish row is **not
-  yet removed** — left in place until this phase is actually merged, same
-  discipline as every prior phase's close-out.
-- **Not yet merged, not yet tagged.** Opened on branch
-  `phase-13-storybook-controls`, following the PR-not-direct-push
-  precedent established at Phase 10. Registry-shipped content changed
-  (all 12 story files' content, `.storybook/main.ts`, `.storybook/
-  preview.ts`) — `registry.json` itself needs no path changes (every
-  story file was already individually listed there), but this phase
-  should still get a tag once merged and install-tested, matching Phase
-  9's precedent (the last phase to change story-file content).
+- `docs/DEFERRED.md`'s Storybook Controls/autodocs polish row is removed
+  (its stated condition for removal).
+- **Merged, tagged, install-tested — this phase is fully done.** Opened
+  as PR #6 (`phase-13-storybook-controls` → `main`), both CI checks
+  (`verify`, `verify-backend`) green after one expected Linux-baseline
+  round-trip for the 4 changed stories (see Deviations above), merged by
+  the developer (merge commit `633ded4`). Tagged `v1.5.0` on the merge
+  commit; `scripts/consume-test.sh --install-only v1.5.0` — **PASS**, a
+  fresh Vite app installing `Tristan2828/ui-foundation/starter#v1.5.0`
+  from the real GitHub repo type-checks clean. Local `main` fast-forwarded,
+  `phase-13-storybook-controls` branch deleted both locally and remotely
+  (auto-deleted on merge). `registry.json` needed no path changes — every
+  story file was already individually listed there from Phase 9, so only
+  their contents changed.
