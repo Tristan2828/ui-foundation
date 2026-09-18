@@ -9,11 +9,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import func
-from sqlmodel import select
+from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
-from app.models import User, Widget, WidgetStatus
+from app.models import User, Widget, WidgetStatus, WidgetTag, WidgetTagLink
 from app.openapi_responses import (
     CREATE_RESPONSES,
     DELETE_RESPONSES,
@@ -51,6 +51,7 @@ async def list_widgets(
     status: WidgetStatus | None = None,
     categoryId: int | None = None,
     search: str | None = None,
+    tags: list[WidgetTag] | None = Query(default=None),
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Page[Widget]:
@@ -61,6 +62,11 @@ async def list_widgets(
         stmt = stmt.where(Widget.category_id == categoryId)
     if search is not None:
         stmt = stmt.where(func.lower(Widget.name).contains(search.lower()))
+    if tags:
+        # Any of the given tags (openapi.yaml) — a subquery on the join
+        # table, identical on Postgres and SQLite.
+        tagged = select(WidgetTagLink.widget_id).where(col(WidgetTagLink.tag).in_(tags))
+        stmt = stmt.where(col(Widget.id).in_(tagged))
     total = (await session.exec(select(func.count()).select_from(stmt.subquery()))).one()
     if sort is not None:
         field, direction = sort.split(":")
@@ -77,7 +83,8 @@ async def create_widget(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Widget:
-    widget = Widget(**payload.model_dump(exclude={"price"}), price=Decimal(payload.price), owner_id=user.id)
+    widget = Widget(**payload.model_dump(exclude={"price", "tags"}), price=Decimal(payload.price), owner_id=user.id)
+    widget.set_tags(payload.tags)
     session.add(widget)
     await session.commit()
     await session.refresh(widget)
@@ -102,6 +109,9 @@ async def update_widget(
 ) -> Widget:
     widget = await _get_or_404(widget_id, user, session)
     updates = payload.model_dump(exclude_unset=True)
+    if "tags" in updates:
+        # Sent → replaces the whole set ([] clears it); omitted → unchanged.
+        widget.set_tags(updates.pop("tags") or [])
     if "price" in updates:
         updates["price"] = Decimal(updates["price"])
     for field, value in updates.items():

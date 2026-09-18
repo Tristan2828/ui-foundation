@@ -137,6 +137,26 @@ test.describe('widgets table', () => {
     await expect(page.getByText('No widgets yet')).toHaveCount(0)
   })
 
+  test('multi choice filter: picking tags filters to widgets with any of them, via the URL', async ({
+    page,
+  }) => {
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+
+    await page.getByLabel('Filter by tags').click()
+    await page.getByRole('option', { name: 'bulky', exact: true }).click()
+    await page.keyboard.press('Escape')
+
+    await expect(page).toHaveURL(/[?&]tags=bulky/)
+    await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
+
+    // A shared or reloaded link restores the same filter.
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'Remove bulky' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
+  })
+
   test('success: the default MSW data renders in the table', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()

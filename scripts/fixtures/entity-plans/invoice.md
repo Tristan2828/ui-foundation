@@ -19,6 +19,7 @@ An invoice sent to a customer, tracked until it's paid.
 | issuedAt | Issued | date-time | yes | picked with a calendar; shown as a date | column, sortable | |
 | dueDate | Due | date | no | empty means no due date | column, sortable | |
 | notes | Notes | long text | no | up to 2000 chars | | |
+| labels | Labels | multi choice | no | urgent, recurring, disputed; any number, no repeats | column | yes (any of) |
 
 ## List screen
 

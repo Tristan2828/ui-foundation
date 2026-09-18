@@ -1,5 +1,5 @@
 // Form-side validation, mirroring the WidgetCreate/WidgetUpdate schemas in
-// openapi.yaml (frozen — see AGENTS.md "NEVER hand-write an API type").
+// openapi.yaml (see AGENTS.md "NEVER hand-write an API type").
 // This schema does not replace those generated types; it validates the
 // form's own shapes (a Date for the picker, a nullable string for the email
 // input) and the conversion functions below translate between this and the
@@ -11,8 +11,12 @@ type Widget = components['schemas']['Widget']
 type WidgetCreate = components['schemas']['WidgetCreate']
 type WidgetUpdate = components['schemas']['WidgetUpdate']
 type WidgetStatus = components['schemas']['WidgetStatus']
+type WidgetTag = components['schemas']['WidgetTag']
 
 export const WIDGET_STATUSES = ['draft', 'active', 'archived'] as const satisfies readonly WidgetStatus[]
+// Multi-choice options, in display order. `satisfies` makes tsc fail if
+// this ever lists a value openapi.yaml's WidgetTag enum doesn't have.
+export const WIDGET_TAGS = ['fragile', 'bulky', 'seasonal', 'featured'] as const satisfies readonly WidgetTag[]
 
 const PRICE_PATTERN = /^\d+\.\d{2}$/
 
@@ -39,6 +43,11 @@ export const widgetFormSchema = z.object({
     .trim()
     .min(1, 'Description is required')
     .max(2000, 'Description must be 2000 characters or fewer'),
+  // Multi choice: any number of options, none required, no repeats (the
+  // combobox can't produce a repeat, but the wire contract forbids one).
+  tags: z
+    .array(z.enum(WIDGET_TAGS))
+    .refine((tags) => new Set(tags).size === tags.length, 'Each tag can only be chosen once'),
 })
 
 export type WidgetFormValues = z.infer<typeof widgetFormSchema>
@@ -51,6 +60,7 @@ export const WIDGET_FORM_DEFAULTS: WidgetFormValues = {
   assigneeEmail: '',
   price: '',
   description: '',
+  tags: [],
 }
 
 // Widget.availableFrom is a full datetime (openapi.yaml: format date-time).
@@ -79,6 +89,7 @@ export function widgetToFormValues(widget: Widget): WidgetFormValues {
     assigneeEmail: widget.assigneeEmail ?? '',
     price: widget.price,
     description: widget.description,
+    tags: widget.tags,
   }
 }
 
@@ -91,6 +102,7 @@ function formValuesToWidgetInput(values: WidgetFormValues): WidgetCreate {
     assigneeEmail: values.assigneeEmail === '' ? null : values.assigneeEmail,
     price: values.price,
     description: values.description,
+    tags: values.tags,
   }
 }
 

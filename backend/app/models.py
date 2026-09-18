@@ -8,7 +8,7 @@ from decimal import Decimal
 from enum import Enum
 
 from sqlalchemy import Column, DateTime
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 
 class User(SQLModel, table=True):
@@ -43,6 +43,25 @@ class WidgetStatus(str, Enum):
     archived = "archived"
 
 
+class WidgetTag(str, Enum):
+    fragile = "fragile"
+    bulky = "bulky"
+    seasonal = "seasonal"
+    featured = "featured"
+
+
+class WidgetTagLink(SQLModel, table=True):
+    """One row per (widget, tag) — the multi-choice field as a join table
+    (migration 0004), not an array/JSON column: it filters the same way on
+    Postgres and on SQLite (the pytest engine), and it's the plain
+    relational shape any future multi-choice field can copy."""
+
+    __tablename__ = "widget_tags"
+
+    widget_id: int = Field(foreign_key="widgets.id", primary_key=True, ondelete="CASCADE")
+    tag: WidgetTag = Field(primary_key=True)
+
+
 class Category(SQLModel, table=True):
     __tablename__ = "categories"
 
@@ -70,3 +89,18 @@ class Widget(SQLModel, table=True):
     # openapi.yaml don't mention it; the router scopes every query to the
     # session's user instead, and another user's widget is a plain 404.
     owner_id: int = Field(foreign_key="users.id", index=True)
+    # lazy="selectin": loaded with every widget query in one extra SELECT —
+    # the async session can't lazy-load on attribute access later.
+    tag_links: list[WidgetTagLink] = Relationship(
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"}
+    )
+
+    @property
+    def tags(self) -> list[WidgetTag]:
+        """The wire field (WidgetOut.tags), in the enum's display order."""
+        order = list(WidgetTag)
+        return sorted((link.tag for link in self.tag_links), key=order.index)
+
+    def set_tags(self, tags: list[WidgetTag]) -> None:
+        """Replace the whole set — PATCH semantics for tags (openapi.yaml)."""
+        self.tag_links = [WidgetTagLink(tag=tag) for tag in tags]

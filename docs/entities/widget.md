@@ -20,6 +20,7 @@ foundation supports has a working, tested reference.
 | assigneeEmail | Assignee Email | email | no | empty means unassigned | column | |
 | price | Price | decimal | yes | 2 places, e.g. 19.99 | column, sortable | |
 | description | Description | long text | yes | up to 2000 chars | column | |
+| tags | Tags | multi choice | no | fragile, bulky, seasonal, featured; any number, no repeats; none means untagged | column | yes (any of) |
 
 ## List screen
 

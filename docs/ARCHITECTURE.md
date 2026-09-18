@@ -45,7 +45,7 @@ src/api/gateway/             anti-corruption layer: wire → Page<T> / AppError
 src/api/contracts.ts         UI-owned Page<T>, AppError, QuerySpec
 src/routes/<entity>/use-*.ts TanStack Query hooks over the gateway
 src/components/app/          three composites: app-shell, data-table, entity-form
-                             (+ error-state, route-error-boundary)
+                             (+ error-state, route-error-boundary, multi-choice)
 src/auth/auth-provider.tsx   the only file that knows how auth works
 ```
 
