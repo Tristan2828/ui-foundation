@@ -4,7 +4,7 @@
 
 A reusable UI foundation for personal database-backed apps, built and maintained primarily by AI coding agents.
 
-This foundation is explicitly not trying to be polished. It's trying to be reusable — see the Decision Ledger in the (historical) build plan for why. "Reusable" is proven by a dogfood run (`scripts/consume-test.sh`, first done in Phase 7): a fresh agent with no memory of this repo builds a new entity screen entirely from the published registry, with zero edits here.
+This foundation is explicitly not trying to be polished. It's trying to be reusable — see the Decision Ledger in the (historical) build plan for why. "Reusable" is proven by a Fresh UI Build (`scripts/consume-test.sh`, first done in Phase 7): a fresh agent with no memory of this repo builds a new entity screen entirely from the published registry, with zero edits here.
 
 ## Contents
 

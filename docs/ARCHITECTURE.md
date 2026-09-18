@@ -94,13 +94,13 @@ unpinned registry dependency resolves to `main`, not the tag).
 | `scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + a live server on real Postgres |
 | `scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
 | `scripts/consume-test.sh --install-only <sha>` | any change to a file `registry.json` ships | a fresh app installs, type-checks (incl. shipped tests), lints, and gets the files of *that* ref |
-| `scripts/consume-test.sh <sha> <Entity>` | playbook/composite changes, before a tag | a fresh agent builds an entity from the registry alone; its `verify` passes |
+| `scripts/consume-test.sh <sha> <Entity>` — the **Fresh UI Build** | playbook/composite changes, before a tag | a brand-new agent, with no memory of this repo, builds an entity from the registry alone (given its plan file); its `verify` passes |
 
 Rules learned the hard way (each cost a phase to find):
 
 - **Always test a ref by commit SHA or tag, never a branch** — GitHub's raw
   CDN caches for five minutes.
-- **A dogfood PASS counts only after reading its transcript** — confirm the
+- **A Fresh UI Build PASS counts only after reading its transcript** — confirm the
   agent used the version under test and reported no workarounds.
 - **A new test counts only after a negative control** — remove the fix,
   watch the test fail, restore.

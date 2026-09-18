@@ -1,6 +1,6 @@
 # Invoice — entity plan
 
-Fixture for `scripts/consume-test.sh <ref> Invoice`: the dogfood agent
+Fixture for `scripts/consume-test.sh <ref> Invoice`: the Fresh UI Build agent
 gets this plan (as `docs/entities/invoice.md`) instead of inventing an
 entity, the same way a real app's developer would provide one.
 

@@ -102,7 +102,7 @@ Five remediation phases, one PR each — plan and status in
   (it had always installed `conventions`/`theme` files from `main`, not
   the requested tag); ships `@storybook/addon-docs` and the patched
   `use-mobile.ts`; consumers type-check `tests/`/`e2e/`; consumer-safe
-  `AGENTS.md`. Proven by a full dogfood pinned to a commit SHA. Tagged
+  `AGENTS.md`. Proven by a full Fresh UI Build pinned to a commit SHA. Tagged
   `v1.8.0`, install-tested. See `docs/phases/audit-phase-a.md`.
 - **Phase B — auth robustness** (#20) — user-scoped query cache cleared on
   every session change; a mid-session 401 returns to `/login`; return-to

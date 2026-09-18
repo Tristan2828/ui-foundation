@@ -13,7 +13,7 @@
 #     `ref` defaults to the latest git tag (falls back to v1.0.0).
 #
 #   scripts/consume-test.sh <ref> <EntityName>
-#     The full Phase 7 dogfood run: install, then launch a *fresh* agent
+#     The Fresh UI Build (first run in Phase 7): install, then launch a *fresh* agent
 #     (no memory of this repo — a new process in a directory it has never
 #     seen) with a single instruction, `/new-entity <EntityName>`, and run
 #     `npm run verify` in the result. Exits non-zero if the agent run
@@ -43,7 +43,7 @@ done
 REF="${POSITIONAL[0]:-}"
 ENTITY="${POSITIONAL[1]:-}"
 if [ "$INSTALL_ONLY" != true ]; then
-  [ -n "$ENTITY" ] || fail "full dogfood mode requires an entity name: consume-test.sh <ref> <EntityName>"
+  [ -n "$ENTITY" ] || fail "a Fresh UI Build requires an entity name: consume-test.sh <ref> <EntityName>"
 fi
 [ -n "$REF" ] || REF=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
 
@@ -236,7 +236,7 @@ if [ "$INSTALL_ONLY" = true ]; then
   exit 0
 fi
 
-# --- Phase 7 dogfood mode: a fresh agent, /new-entity, then verify ---
+# --- Fresh UI Build: a fresh agent, /new-entity, then verify ---
 #
 # "Fresh" here means a new `claude` process started in a directory it has
 # never seen before — not a flag. $APP has no session history with this
@@ -276,7 +276,7 @@ echo "consume-test: transcript -> $TRANSCRIPT"
 # into an absolute Windows path before claude.exe ever sees it — without
 # this, "/new-entity Invoice" arrives as the literal string
 # "C:/Program Files/Git/new-entity Invoice", which is not a slash-command
-# at all. Confirmed by a first real dogfood run: the fresh agent correctly
+# at all. Confirmed by the first real Fresh UI Build: the fresh agent correctly
 # diagnosed the mangling itself and refused to hand-replicate the skill's
 # steps (disable-model-invocation working as designed) rather than
 # guessing — but the run was wasted on a test-harness bug, not a
@@ -300,4 +300,4 @@ if ! (cd "$APP" && npm run verify) 2>&1 | tee "$LOGDIR/verify.log"; then
   fail "npm run verify failed in the consuming app after /new-entity $ENTITY — transcript: $TRANSCRIPT, verify log: $LOGDIR/verify.log, app snapshot: $LOGDIR/app"
 fi
 
-echo "consume-test: PASS — a fresh agent with no memory of this repo built $ENTITY entirely from $REPO/starter#$REF, npm run verify passes. Transcript: $TRANSCRIPT"
+echo "consume-test: Fresh UI Build PASS — a fresh agent with no memory of this repo built $ENTITY entirely from $REPO/starter#$REF, npm run verify passes. Transcript: $TRANSCRIPT"
