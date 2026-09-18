@@ -94,7 +94,13 @@ One PR per major, each verified with `npm run verify`, both builds, and
   `eslint-plugin-react-refresh` 0.5) — no config changes needed; every
   custom rule re-checked against a deliberate-violation probe file. The
   shipped `eslint.config.js` is unchanged, so not tagged.
-- **Still to do:** TypeScript 7.
+- **TypeScript 5.9 → 6.0** — the last JS-based release, the bridge to 7.
+  Removed the deprecated `baseUrl` from the tsconfigs (TS 6 errors on it;
+  `paths` resolves relative to the tsconfig without it), including the
+  registry-shipped `tsconfig.test.json` — tagged `v1.7.0` after merge.
+  openapi-typescript's peer range is still `^5.x`, so `package.json`
+  `overrides` points its `typescript` at ours; generated `schema.d.ts` is
+  byte-identical. **TypeScript 7 is deferred** — see `docs/DEFERRED.md`.
 
 ## Decision Ledger (highlights)
 

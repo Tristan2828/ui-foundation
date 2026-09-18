@@ -96,7 +96,6 @@ cat > tsconfig.json <<'EOF'
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
@@ -108,7 +107,6 @@ node -e "
 const fs = require('fs');
 const p = 'tsconfig.app.json';
 const c = JSON.parse(fs.readFileSync(p, 'utf8').replace(/\/\*.*?\*\//gs, ''));
-c.compilerOptions.baseUrl = '.';
 c.compilerOptions.paths = { '@/*': ['./src/*'] };
 fs.writeFileSync(p, JSON.stringify(c, null, 2));
 "
