@@ -1,7 +1,8 @@
-# Local Postgres only — the backend itself runs on the host (`uvicorn
-# app.main:app --reload` from backend/, after `alembic upgrade head`), not
-# in a container. See docs/BUILD-PLAN.md Phase 8 and docs/DEFERRED.md for
-# the planned cloud-Postgres (e.g. Supabase) alternative to this file.
+# The local option, not the only one — the backend itself runs on the host
+# (`uvicorn app.main:app --reload` from backend/, after `alembic upgrade
+# head`), not in a container. See docs/BUILD-PLAN.md Phase 8 for this file,
+# and docs/cloud-postgres.md (Phase 12) for pointing DATABASE_URL at a
+# hosted instance instead.
 services:
   postgres:
     image: postgres:18

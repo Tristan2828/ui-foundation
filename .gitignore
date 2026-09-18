@@ -24,3 +24,9 @@ backend/.mypy_cache/
 backend/.pytest_cache/
 backend/*.egg-info/
 
+# Phase 12 cloud Postgres — provider CA certs are per-developer, not shipped
+backend/certs/
+# Supabase CLI's own local link-cache (project ref, org id) — regenerated
+# by `supabase link`/`supabase projects create`, not project state
+supabase/
+
