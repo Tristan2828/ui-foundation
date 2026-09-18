@@ -104,9 +104,15 @@ register_status=$(curl -s -c "$COOKIE_JAR" -o /dev/null -w '%{http_code}' -X POS
   -H 'Content-Type: application/json' \
   -d "{\"email\":\"$FRESH_EMAIL\",\"name\":\"Check Phase 8\",\"password\":\"a-strong-password\"}")
 [ "$register_status" = "200" ] || fail "fresh registration returned $register_status, expected 200"
-widgets_status=$(curl -s -b "$COOKIE_JAR" -o /dev/null -w '%{http_code}' http://localhost:8000/api/widgets)
-rm -f "$COOKIE_JAR"
+WIDGETS_BODY=$(mktemp)
+widgets_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGETS_BODY" -w '%{http_code}' http://localhost:8000/api/widgets)
 [ "$widgets_status" = "200" ] || fail "GET /api/widgets with a freshly-registered session returned $widgets_status, expected 200 — auto-login is broken"
+
+echo "check-phase-8: a fresh registration sees none of the seeded user's widgets (per-user ownership, migration 0003)"
+grep -q '"total":0' "$WIDGETS_BODY" || fail "freshly-registered user can see other users' widgets: $(cat "$WIDGETS_BODY")"
+seed_widget_status=$(curl -s -b "$COOKIE_JAR" -o /dev/null -w '%{http_code}' http://localhost:8000/api/widgets/1)
+[ "$seed_widget_status" = "404" ] || fail "GET /api/widgets/1 (the seeded user's widget) as a fresh user returned $seed_widget_status, expected 404"
+rm -f "$COOKIE_JAR" "$WIDGETS_BODY"
 
 echo "check-phase-8: VITE_API=real npx playwright test (MSW-independent specs only)"
 VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts ||

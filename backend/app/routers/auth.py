@@ -42,13 +42,9 @@ async def get_current_user(
     if user_session is None:
         raise HTTPException(status_code=401, detail="Session expired or invalid")
 
-    # SQLite (the pytest fixture engine — see conftest.py) drops tzinfo on
-    # round-trip even though the column is declared timezone-aware for
-    # Postgres; normalize before comparing so this works under both.
-    expires_at = user_session.expires_at
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at < datetime.now(timezone.utc):
+    if _is_expired(user_session):
+        await session.delete(user_session)
+        await session.commit()
         raise HTTPException(status_code=401, detail="Session expired or invalid")
 
     user = await session.get(User, user_session.user_id)
@@ -57,11 +53,29 @@ async def get_current_user(
     return user
 
 
+def _is_expired(user_session: UserSession) -> bool:
+    # SQLite (the pytest fixture engine — see conftest.py) drops tzinfo on
+    # round-trip even though the column is declared timezone-aware for
+    # Postgres; normalize before comparing so this works under both.
+    expires_at = user_session.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    return expires_at < datetime.now(timezone.utc)
+
+
 async def _start_session(user: User, response: Response, session: AsyncSession) -> User:
     """Issue a session cookie for `user`. Shared by login and register so
     "register auto-logs you in" is literally the same code path as logging
     in, not a second implementation of it.
+
+    Also prunes the user's expired sessions — nothing else removes a session
+    that's never presented again, so without this the table only grows.
     """
+    existing = await session.exec(select(UserSession).where(UserSession.user_id == user.id))
+    for stale in existing.all():
+        if _is_expired(stale):
+            await session.delete(stale)
+
     token = generate_session_token()
     expires_at = datetime.now(timezone.utc) + timedelta(days=SESSION_TTL_DAYS)
     session.add(UserSession(user_id=user.id, token_hash=hash_token(token), expires_at=expires_at))

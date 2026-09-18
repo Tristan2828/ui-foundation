@@ -13,7 +13,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
-from app.models import Widget, WidgetStatus
+from app.models import User, Widget, WidgetStatus
 from app.openapi_responses import (
     CREATE_RESPONSES,
     DELETE_RESPONSES,
@@ -34,9 +34,11 @@ SORT_COLUMNS: dict[str, Any] = {
 }
 
 
-async def _get_or_404(widget_id: int, session: AsyncSession) -> Widget:
+async def _get_or_404(widget_id: int, user: User, session: AsyncSession) -> Widget:
     widget = await session.get(Widget, widget_id)
-    if widget is None:
+    # Someone else's widget is indistinguishable from a missing one — a 403
+    # would confirm the id exists.
+    if widget is None or widget.owner_id != user.id:
         raise HTTPException(status_code=404, detail="Widget not found")
     return widget
 
@@ -49,9 +51,10 @@ async def list_widgets(
     status: WidgetStatus | None = None,
     categoryId: int | None = None,
     search: str | None = None,
+    user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Page[Widget]:
-    stmt = select(Widget)
+    stmt = select(Widget).where(Widget.owner_id == user.id)
     if status is not None:
         stmt = stmt.where(Widget.status == status)
     if categoryId is not None:
@@ -69,8 +72,12 @@ async def list_widgets(
 
 
 @router.post("/widgets", response_model=WidgetOut, status_code=201, responses=CREATE_RESPONSES)
-async def create_widget(payload: WidgetCreate, session: AsyncSession = Depends(get_session)) -> Widget:
-    widget = Widget(**payload.model_dump(exclude={"price"}), price=Decimal(payload.price))
+async def create_widget(
+    payload: WidgetCreate,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Widget:
+    widget = Widget(**payload.model_dump(exclude={"price"}), price=Decimal(payload.price), owner_id=user.id)
     session.add(widget)
     await session.commit()
     await session.refresh(widget)
@@ -78,15 +85,22 @@ async def create_widget(payload: WidgetCreate, session: AsyncSession = Depends(g
 
 
 @router.get("/widgets/{widget_id}", response_model=WidgetOut, responses=GET_RESPONSES)
-async def get_widget(widget_id: int, session: AsyncSession = Depends(get_session)) -> Widget:
-    return await _get_or_404(widget_id, session)
+async def get_widget(
+    widget_id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Widget:
+    return await _get_or_404(widget_id, user, session)
 
 
 @router.patch("/widgets/{widget_id}", response_model=WidgetOut, responses=UPDATE_RESPONSES)
 async def update_widget(
-    widget_id: int, payload: WidgetUpdate, session: AsyncSession = Depends(get_session)
+    widget_id: int,
+    payload: WidgetUpdate,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
 ) -> Widget:
-    widget = await _get_or_404(widget_id, session)
+    widget = await _get_or_404(widget_id, user, session)
     updates = payload.model_dump(exclude_unset=True)
     if "price" in updates:
         updates["price"] = Decimal(updates["price"])
@@ -99,8 +113,12 @@ async def update_widget(
 
 
 @router.delete("/widgets/{widget_id}", status_code=204, responses=DELETE_RESPONSES)
-async def delete_widget(widget_id: int, session: AsyncSession = Depends(get_session)) -> Response:
-    widget = await _get_or_404(widget_id, session)
+async def delete_widget(
+    widget_id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    widget = await _get_or_404(widget_id, user, session)
     await session.delete(widget)
     await session.commit()
     return Response(status_code=204)

@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
@@ -142,3 +143,53 @@ async def test_expired_session_is_401(auth_client: AsyncClient, session: AsyncSe
     auth_client.cookies.set("session_id", token)
     response = await auth_client.get("/api/auth/me")
     assert response.status_code == 401
+
+
+async def test_login_email_is_case_insensitive(auth_client: AsyncClient) -> None:
+    response = await auth_client.post(
+        "/api/auth/login", json={"email": TEST_EMAIL.upper(), "password": TEST_PASSWORD}
+    )
+    assert response.status_code == 200
+    assert response.json()["email"] == TEST_EMAIL
+
+
+async def test_register_duplicate_email_differing_only_by_case_is_422(register_client: AsyncClient) -> None:
+    first = await register_client.post(
+        "/api/auth/register",
+        json={"email": "Case@Example.com", "name": "First", "password": "a-strong-password"},
+    )
+    assert first.json()["email"] == "case@example.com"
+    response = await register_client.post(
+        "/api/auth/register",
+        json={"email": "case@example.com", "name": "Second", "password": "another-password"},
+    )
+    assert response.status_code == 422
+
+
+async def _session_count(session: AsyncSession) -> int:
+    return len((await session.exec(select(UserSession).where(UserSession.user_id == 99))).all())
+
+
+async def test_expired_session_is_deleted_when_presented(auth_client: AsyncClient, session: AsyncSession) -> None:
+    token = generate_session_token()
+    session.add(
+        UserSession(user_id=99, token_hash=hash_token(token), expires_at=datetime.now(timezone.utc) - timedelta(days=1))
+    )
+    await session.commit()
+    auth_client.cookies.set("session_id", token)
+    await auth_client.get("/api/auth/me")
+    assert await _session_count(session) == 0
+
+
+async def test_login_prunes_the_users_expired_sessions(auth_client: AsyncClient, session: AsyncSession) -> None:
+    session.add(
+        UserSession(
+            user_id=99,
+            token_hash=hash_token(generate_session_token()),
+            expires_at=datetime.now(timezone.utc) - timedelta(days=1),
+        )
+    )
+    await session.commit()
+    await auth_client.post("/api/auth/login", json={"email": TEST_EMAIL, "password": TEST_PASSWORD})
+    # Only the session login just issued remains.
+    assert await _session_count(session) == 1

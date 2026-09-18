@@ -30,6 +30,9 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     async with AsyncSession(engine) as session:
+        # Owner of the seeded widget, and the same id the `client` fixture's
+        # stand-in user has — widgets are scoped per user (migration 0003).
+        session.add(User(id=1, email="test@example.com", name="Test User", password_hash="unused"))
         session.add(Category(id=1, name="Electronics"))
         session.add(
             Widget(
@@ -41,6 +44,7 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
                 assignee_email="alice@example.com",
                 price=Decimal("24.99"),
                 description="A basic wireless mouse.",
+                owner_id=1,
             )
         )
         await session.commit()

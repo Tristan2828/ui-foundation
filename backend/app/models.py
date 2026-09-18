@@ -61,3 +61,7 @@ class Widget(SQLModel, table=True):
     assignee_email: str | None = Field(default=None)
     price: Decimal = Field(max_digits=10, decimal_places=2)
     description: str = Field(max_length=2000)
+    # Per-user ownership (migration 0003). Never on the wire — WidgetOut and
+    # openapi.yaml don't mention it; the router scopes every query to the
+    # session's user instead, and another user's widget is a plain 404.
+    owner_id: int = Field(foreign_key="users.id", index=True)

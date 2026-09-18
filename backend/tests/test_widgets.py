@@ -2,7 +2,16 @@
 replacement for the Postgres-backed run in scripts/check-phase-8.sh.
 """
 
-from httpx import AsyncClient
+from collections.abc import AsyncGenerator
+
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from app.db import get_session
+from app.main import app
+from app.models import User, Widget
+from app.routers.auth import get_current_user
 
 
 async def test_list_widgets_is_paginated_and_camel_cased(client: AsyncClient) -> None:
@@ -58,3 +67,50 @@ async def test_delete_widget_returns_204_then_404(client: AsyncClient) -> None:
     assert res.status_code == 204
     res = await client.get("/api/widgets/1")
     assert res.status_code == 404
+
+
+@pytest_asyncio.fixture
+async def other_user_client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Same as `client`, but authenticated as a second user who owns nothing."""
+    session.add(User(id=2, email="other@example.com", name="Other User", password_hash="unused"))
+    await session.commit()
+
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
+        yield session
+
+    async def override_get_current_user() -> User:
+        return User(id=2, email="other@example.com", name="Other User", password_hash="unused")
+
+    app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+    app.dependency_overrides.clear()
+
+
+async def test_widgets_are_invisible_to_other_users(other_user_client: AsyncClient) -> None:
+    res = await other_user_client.get("/api/widgets")
+    assert res.json() == {"items": [], "total": 0}
+    for method in ("GET", "PATCH", "DELETE"):
+        res = await other_user_client.request(method, "/api/widgets/1", json={"name": "x"} if method == "PATCH" else None)
+        assert res.status_code == 404, method
+        assert res.json() == {"detail": "Widget not found"}
+
+
+async def test_created_widget_belongs_to_its_creator(other_user_client: AsyncClient, session: AsyncSession) -> None:
+    res = await other_user_client.post(
+        "/api/widgets",
+        json={
+            "name": "Mine",
+            "categoryId": 1,
+            "availableFrom": "2026-05-01T00:00:00Z",
+            "price": "1.00",
+            "description": "d",
+        },
+    )
+    assert res.status_code == 201
+    widget = await session.get(Widget, res.json()["id"])
+    assert widget is not None and widget.owner_id == 2
+    listed = (await other_user_client.get("/api/widgets")).json()
+    assert [w["name"] for w in listed["items"]] == ["Mine"]
