@@ -63,5 +63,5 @@ must not type or store. Only the developer can do these steps.
 
 **Done when:** `dev.sh` reports the pooler host, `alembic current` against
 Supabase shows `0003 (head)`, and the app loads widgets through it. Remove
-this entry then. (`scripts/check-phase-8.sh` is unaffected either way — it
+this entry then. (`scripts/check-backend-postgres.sh` is unaffected either way — it
 always forces the local Docker database.)

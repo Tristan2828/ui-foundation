@@ -54,10 +54,12 @@ export function RegisterRoute() {
   })
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-screen items-center justify-center bg-background p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-lg">Create an account</CardTitle>
+          <CardTitle className="text-lg">
+            <h1>Create an account</h1>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
@@ -123,6 +125,6 @@ export function RegisterRoute() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
   )
 }

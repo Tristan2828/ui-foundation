@@ -30,7 +30,7 @@ jobs:
     # Postgres service here — app.openapi() only introspects route
     # signatures, and the pytest suite runs against SQLite (see
     # backend/tests/conftest.py). The Postgres-backed run is
-    # scripts/check-phase-8.sh, run locally at the phase boundary, the
+    # scripts/check-backend-postgres.sh, run locally at the phase boundary, the
     # same way scripts/consume-test.sh is for Phases 6-7.
     runs-on: ubuntu-latest
     defaults:

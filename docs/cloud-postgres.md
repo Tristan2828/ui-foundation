@@ -3,13 +3,13 @@
 Supabase is the backend's default database for day-to-day development
 (`backend/.env.example` is shaped for it). `docker-compose.yml`'s local
 Postgres remains for offline work (`bash backend/scripts/dev.sh --local`)
-and for automated checks — `scripts/check-phase-8.sh` always forces it, so
+and for automated checks — `scripts/check-backend-postgres.sh` always forces it, so
 test runs never register throwaway users in your hosted database. This page
 covers setting up the hosted instance. The code is
 provider-agnostic — it only requires standard Postgres reachable over
 SSL — but the steps below use Supabase's free tier as the concrete worked
 example, since that's what this repo has actually verified against
-end-to-end (`scripts/check-phase-12.sh`).
+end-to-end (`scripts/check-cloud-postgres.sh`).
 
 ## 1. Provision a free-tier Supabase project
 
@@ -105,12 +105,12 @@ managed providers do) needs `DATABASE_SSL=true` alone — leave
 
 ## 4. Verify
 
-`scripts/check-phase-12.sh` automates all of the above: it requires
+`scripts/check-cloud-postgres.sh` automates all of the above: it requires
 `CLOUD_DATABASE_URL` (and optionally `CLOUD_DATABASE_SSL_CA_FILE`) to
 already point at a provisioned instance — this script cannot provision one
 for you — runs `alembic upgrade head` against it, runs
 `backend/scripts/verify.sh` with the same env pointed at it, and curls a
 live endpoint to confirm the app actually serves requests against the
-hosted database. It also re-runs `check-phase-8.sh` to confirm the local
+hosted database. It also re-runs `check-backend-postgres.sh` to confirm the local
 Docker Compose path still works unmodified — this feature is additive,
 not a replacement.

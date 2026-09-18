@@ -61,7 +61,7 @@ class Widget(SQLModel, table=True):
     # `datetime` annotation mapped tz-naive at the ORM level, so every
     # widget create/update 500'd against real Postgres (asyncpg rejects a
     # tz-aware value for a naive parameter). SQLite-backed pytest can't see
-    # this; scripts/check-phase-8.sh now writes a widget to catch it.
+    # this; scripts/check-backend-postgres.sh now writes a widget to catch it.
     available_from: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     assignee_email: str | None = Field(default=None)
     price: Decimal = Field(max_digits=10, decimal_places=2)

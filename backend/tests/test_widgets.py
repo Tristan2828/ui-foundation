@@ -1,5 +1,5 @@
 """Contract-shape checks — see tests/conftest.py for scope. Not a
-replacement for the Postgres-backed run in scripts/check-phase-8.sh.
+replacement for the Postgres-backed run in scripts/check-backend-postgres.sh.
 """
 
 from collections.abc import AsyncGenerator

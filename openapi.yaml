@@ -3,9 +3,10 @@ info:
   title: UI Foundation Demo API — Widgets
   version: "1.0.0"
   description: >
-    Contract for the Widgets demo domain (Phase 2). Owned by the ui-foundation
-    repo, not by any backend. Frozen at the end of Phase 2 per
-    docs/BUILD-PLAN.md — changes wait for v1.1.0.
+    Contract for the Widgets demo domain (Phase 2). Owned by the app, not by
+    any backend: change it deliberately, then run `npm run gen:api` — the
+    mock-conformance tests and the backend's spec-conformance check both
+    fail until mocks and backend match it.
 
     Wire pagination deliberately does not match the UI's Page<T> contract
     (offset/limit + {items,total} here vs. {items,total,page,pageSize} in
@@ -15,13 +16,11 @@ info:
     errors use a single {"detail": string} shape, matching FastAPI's default
     HTTPException body.
 
-    /auth/* added in Phase 10 (session-cookie auth) — a deliberate,
-    reviewed change to this otherwise-frozen file; see openapi.yaml.sha256
-    and scripts/check-openapi-freeze.mjs. Every other path now requires an
-    authenticated session (401 via UnauthorizedError).
+    /auth/* added in Phase 10 (session-cookie auth). Every other path
+    requires an authenticated session (401 via UnauthorizedError).
 
-    /auth/register added in Phase 11 (self-service registration) — another
-    deliberate, reviewed unfreeze. A duplicate email is a 422 field error
+    /auth/register added in Phase 11 (self-service registration). A
+    duplicate email is a 422 field error
     (ValidationError), not a 409, matching the shape every other validation
     failure in this contract already uses.
 

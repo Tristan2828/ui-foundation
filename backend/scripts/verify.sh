@@ -2,7 +2,7 @@
 # Backend verify gate (Phase 8 item 7): mypy is the compiler-equivalent
 # check; pytest exercises app wiring against SQLite (see tests/conftest.py
 # for why, and its limits — it does not replace the Postgres-backed run in
-# scripts/check-phase-8.sh).
+# scripts/check-backend-postgres.sh).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

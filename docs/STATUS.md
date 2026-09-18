@@ -4,30 +4,12 @@ At-a-glance phase checklist. This replaces the Notion tracker this
 project used during early development — everything now lives in the
 repo, in one place, versioned alongside the code it describes.
 
-**Definition of done for the whole project:** `scripts/check-phase-7.sh`
-passes — a fresh agent, with no memory of this repo, builds a new entity
-screen entirely from the published registry, with zero edits to the
-foundation. Met as of Phase 7. Phase 8 (backend) is optional, additional
-work on top of that, not a prerequisite for it. Phase 9 (Storybook) *did*
-change what the registry's `starter` item ships, so its own dogfood proof
-was re-run directly (`scripts/consume-test.sh <ref> <Entity>` — the same
-proof check-phase-7.sh runs, without re-chaining onto that script's
-freshly-tagged-HEAD + full-rebuild requirements, mirroring how Phase 8
-scoped its own cumulative check). Phase 10 (auth) is optional, additional
-work on top of Phase 7's definition of done, but — unlike Phase 8 — it
-*does* change registry-shipped content (`src/auth/**`, `app-shell.tsx`,
-`main.tsx`, the mocks, plus new `routes/login.tsx`/`gateway/auth.ts`), so
-it follows Phase 6/7/9's pattern instead: `registry.json` updated, install-
-tested via `consume-test.sh --install-only`, tagged `v1.3.0`. Phase 11
-(self-service registration) also changes registry-shipped content — the new
-`routes/register.tsx`/`register-schema.ts`, and `auth-provider.tsx`/
-`auth-context.ts` gaining `register()` — so it follows the same pattern too:
-`registry.json` updated, install-tested, tagged `v1.4.0`. Phase 12 (cloud
-Postgres) touches no registry-shipped path, so — like Phase 8 — it is not
-tagged. Phase 13 (Storybook Controls/autodocs) changes the shipped story
-files, so it is tagged `v1.5.0`. The zod 4 upgrade after it is tagged `v1.6.0`
-and TypeScript 6 `v1.7.0` (see Dependency Upgrades below). The latest release
-is `v1.8.0`, audit Phase A (see Pre-Reuse Audit below).
+**Current state:** the original plan (Phases 0–13) and the pre-reuse audit
+(Phases A–E below) are done. The latest release tag is kept in one place,
+the README's "Consuming this as a registry" section. How the repo works and
+which checks a change needs: [`ARCHITECTURE.md`](ARCHITECTURE.md). The
+standing proof of reusability is still Phase 7's: a fresh agent builds an
+entity from the published registry alone (`scripts/consume-test.sh`).
 
 For the reasoning behind any decision below, see the Decision Ledger in
 [`docs/BUILD-PLAN.md`](BUILD-PLAN.md). For the full narrative of what was
@@ -38,6 +20,10 @@ each written at the end of that phase's session — see
 setup — see there).
 
 ## Phase Checklist
+
+The exit-criteria column is historical: the `check-phase-N.sh` scripts were
+retired in audit Phase E (last present at `v1.10.0`). Phase 8's and 12's live
+on as `scripts/check-backend-postgres.sh` and `scripts/check-cloud-postgres.sh`.
 
 | Phase | Status | Exit criteria | Notes |
 |---|---|---|---|
@@ -59,7 +45,7 @@ setup — see there).
 ## Post-v1.5.0 Maintenance
 
 Review-driven fixes, not a phase — backend-only, no registry-shipped path
-changed, so not tagged. `check-phase-8.sh` passes (now also asserting
+changed, so not tagged. `check-phase-8.sh` (now `check-backend-postgres.sh`) passes (now also asserting
 per-user ownership against real Postgres).
 
 - **Per-user widget ownership** — Phase 11's self-service registration let
@@ -76,7 +62,7 @@ per-user ownership against real Postgres).
 - **Supabase is the dev database default** — `backend/.env.example` and
   `backend/scripts/dev.sh` now assume a hosted Postgres
   (`docs/cloud-postgres.md`). Docker Compose stays for offline work
-  (`dev.sh --local`) and for `check-phase-8.sh`, which always forces it so
+  (`dev.sh --local`) and for `check-backend-postgres.sh`, which always forces it so
   automated runs never write test users into Supabase.
 
 ## Dependency Upgrades
@@ -118,6 +104,21 @@ Five remediation phases, one PR each — plan and status in
   `use-mobile.ts`; consumers type-check `tests/`/`e2e/`; consumer-safe
   `AGENTS.md`. Proven by a full dogfood pinned to a commit SHA. Tagged
   `v1.8.0`, install-tested. See `docs/phases/audit-phase-a.md`.
+- **Phase B — auth robustness** (#20) — user-scoped query cache cleared on
+  every session change; a mid-session 401 returns to `/login`; return-to
+  after login; backend outage is not "logged out". Tagged `v1.9.0`.
+- **Phase C — backend correctness and deploy safety** (#21) — widget
+  create/update 500'd on real Postgres (fixed); a plain `npm run build`
+  shipped the mocks (`npm run build:real`); `APP_ENV=production` startup
+  guard; `docs/deploy.md`. Backend-only, not tagged.
+- **Phase D — consumer lifecycle and data table** (#22) — `docs/consuming.md`
+  (safe upgrades, getting the backend); table state in the URL, debounced
+  search, page clamp, `aria-sort`. Tagged `v1.10.0`.
+- **Phase E — pruning** — one playbook copy; `ARCHITECTURE.md` in front of
+  the now-historical `BUILD-PLAN.md`; `check-phase-*.sh` retired; `openapi.yaml`
+  freeze dropped; Storybook out of `starter` with screenshots only for the
+  patched primitives, replaced by `e2e/a11y.spec.ts` on the real screens
+  (which found three real violations, fixed). See `docs/phases/audit-phase-e.md`.
 
 ## Decision Ledger (highlights)
 

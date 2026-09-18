@@ -6,7 +6,7 @@ const NAV_ENTRIES = [
 ] as const
 
 // This spec is MSW-independent by design (see docs/BUILD-PLAN.md Phase 8) —
-// scripts/check-phase-8.sh also runs it against the real backend
+// scripts/check-backend-postgres.sh also runs it against the real backend
 // (VITE_API=real), which has no MSW to default-authenticate it. `page.request`
 // shares the page's own cookie jar, so logging in here is enough to
 // authenticate the rest of the test's navigation. No-op under the default

@@ -1,5 +1,5 @@
 # Offline/test database. Supabase is the dev default (docs/cloud-postgres.md);
-# this is what `backend/scripts/dev.sh --local` and scripts/check-phase-8.sh
+# this is what `backend/scripts/dev.sh --local` and scripts/check-backend-postgres.sh
 # use. The backend itself runs on the host
 # (`uvicorn app.main:app --reload` from backend/, after `alembic upgrade
 # head`), not in a container. See docs/BUILD-PLAN.md Phase 8 for this file,

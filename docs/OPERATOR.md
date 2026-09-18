@@ -36,10 +36,11 @@ unfolds.
 - **Agent asks to add a dependency not on the allowlist:** read the
   `docs/BLOCKERS.md` case. Decide here, in `deps-allowlist.json` terms —
   don't approve it inside the agent's session.
-- **Agent declares a phase complete without a green check script:** don't
-  accept it. Point it back at `scripts/check-phase-N.sh` and, if it keeps
-  happening, that's the signal to add the `phase-verifier` subagent (Phase 0
-  optional tier).
+- **Agent declares work complete without a green gate:** don't accept it.
+  Point it back at `npm run verify` (plus `scripts/check-backend-postgres.sh`
+  for backend changes, and `scripts/consume-test.sh <sha>` for anything
+  `registry.json` ships). A dogfood PASS only counts after checking its
+  transcript used the version you meant to test (docs/phases/audit-phase-a.md).
 - **Agent tries to skip ahead to a later phase "to make things easier
   later":** stop it. Note the impulse in this file if it recurs — that's a
   sign a phase boundary is drawn wrong, not that the agent should be
