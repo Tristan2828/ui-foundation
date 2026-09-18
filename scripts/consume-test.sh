@@ -7,7 +7,8 @@
 # Usage:
 #   scripts/consume-test.sh --install-only [ref]
 #     Scaffold a throwaway Vite app in a temp dir, run
-#     `shadcn add <repo>/starter#<ref>`, and type-check. No edits, no
+#     `shadcn add <repo>/starter#<ref>`, then type-check (app + shipped
+#     tests) and lint the result. No edits, no
 #     entity, no agent — this is what scripts/check-phase-6.sh runs.
 #     `ref` defaults to the latest git tag (falls back to v1.0.0).
 #
