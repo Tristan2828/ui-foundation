@@ -14,6 +14,25 @@ and maintained mostly by AI agents, distributed as a **shadcn registry**
 Tailwind v4, shadcn/ui on Base UI, React Router 7, TanStack Query. An
 optional FastAPI backend (`backend/`) implements the same contract.
 
+## Focus: what to build next, and what not to
+
+**Near-term apps are simple: tables that display (and sometimes edit)
+database rows.** The foundation is shaped around that — `DataTable`,
+`EntityForm`, URL-kept table state, the contract-first gateway, MSW so a
+screen can be built with no backend.
+
+- **Don't extend the foundation speculatively.** A new capability goes in
+  only when a real app needs it, after that app exists; until then it's a
+  row in [`DEFERRED.md`](DEFERRED.md) with a revisit condition. The plan's
+  own warning stands: the failure mode here is building forever.
+- **Built ahead of a real app — keep, but don't grow until an app needs
+  it:** auth, self-service registration and per-user ownership (shipped in
+  `starter`, so every app gets a login screen); the FastAPI backend and its
+  cloud/deploy hardening; Storybook. Assessed as over-built for the current
+  focus on 2026-09-18 — cost already paid, so not removed.
+- **Known gap for this focus:** `/new-entity` always builds full CRUD. A
+  read-only table entity has no path yet (`DEFERRED.md`).
+
 ## The layers
 
 ```
