@@ -22,14 +22,17 @@ tested via `consume-test.sh --install-only`, tagged `v1.3.0`. Phase 11
 (self-service registration) also changes registry-shipped content — the new
 `routes/register.tsx`/`register-schema.ts`, and `auth-provider.tsx`/
 `auth-context.ts` gaining `register()` — so it follows the same pattern too:
-`registry.json` updated, install-tested, tagged `v1.4.0`.
+`registry.json` updated, install-tested, tagged `v1.4.0`. Phase 12 (cloud
+Postgres) touches no registry-shipped path, so — like Phase 8 — it is not
+tagged. Phase 13 (Storybook Controls/autodocs) changes the shipped story
+files, so it is tagged `v1.5.0`, the latest release.
 
 For the reasoning behind any decision below, see the Decision Ledger in
 [`docs/BUILD-PLAN.md`](BUILD-PLAN.md). For the full narrative of what was
 built, what deviated from the plan, and what broke — one file per phase,
 each written at the end of that phase's session — see
 [`docs/phases/`](phases). For anything currently unresolved, see
-[`docs/BLOCKERS.md`](BLOCKERS.md) (empty as of Phase 10).
+[`docs/BLOCKERS.md`](BLOCKERS.md) (empty as of Phase 13).
 
 ## Phase Checklist
 
@@ -49,6 +52,24 @@ each written at the end of that phase's session — see
 | 11 — Self-Service Registration (optional) | Done (2026-09-17) | `check-phase-11.sh` passes | Closed the "self-service registration" row in `docs/DEFERRED.md`. `POST /auth/register` added to `openapi.yaml` (another deliberate, reviewed unfreeze); duplicate email is a 422 field error, not a 409; registering auto-logs in via the same session-creation path `login()` uses. `/register` screen built the way `/login` was (`FieldGroup`/`Field`, not `EntityForm`), plus a client-only password-confirmation field. Registry-shipped content changed — `registry.json` updated, install-tested, tagged `v1.4.0`. See `docs/phases/phase-11.md` |
 | 12 — Cloud Postgres Support (optional) | Done (2026-09-18) | `check-phase-12.sh` passes | Closed the "Cloud Postgres" row in `docs/DEFERRED.md`. Additive `DATABASE_SSL`/`DATABASE_SSL_CA_FILE` support (`backend/app/config.py`'s `database_connect_args()`, shared by `db.py` and `migrations/env.py`); local Docker Compose stays the default. Verified end-to-end against a real free-tier Supabase project — found and fixed two real bugs invisible from any static check (see `docs/phases/phase-12.md`): Supabase's "direct connection" host is IPv6-only (use the pooler's session-mode port instead), and its Postgres cert chains to a private root CA needing explicit pinning. Not tagged — touches no registry-shipped path, same as Phase 8 |
 | 13 — Storybook Controls/Autodocs Polish (optional) | Done (2026-09-18) | `check-phase-13.sh` passes | Closed the "Storybook Controls/autodocs polish" row in `docs/DEFERRED.md`. Added `@storybook/addon-docs` (registered in `.storybook/main.ts`, `tags: ['autodocs']` in `preview.ts`). Rewrote all 12 `src/components/ui/*.stories.tsx` from static multi-instance `AllVariants` renders to a single `args`-driven `Default` export with `argTypes` Controls. Only 4 of the 12 (badge, button, input, separator) actually changed visual output — the rest kept identical default content, so their screenshot baselines were untouched. Registry-shipped content changed — `registry.json` needed no path changes (every story file was already individually listed), tagged `v1.5.0`, install-tested. See `docs/phases/phase-13.md` |
+
+## Post-v1.5.0 Maintenance
+
+Review-driven fixes, not a phase — backend-only, no registry-shipped path
+changed, so not tagged. `check-phase-8.sh` passes (now also asserting
+per-user ownership against real Postgres).
+
+- **Per-user widget ownership** — Phase 11's self-service registration let
+  any account read and edit every widget. Migration `0003` adds
+  `widgets.owner_id` (existing rows go to the seeded dev user); the router
+  scopes every query to the session's user, and another user's widget is a
+  404. Categories stay shared. No `openapi.yaml` change.
+- **SPA deep-link fallback** — `backend/app/spa.py`: the single-deployable
+  setup 404'd on a refresh of any client route but `/`.
+- **Case-insensitive emails** — normalized to lowercase on login/register
+  (and existing rows in `0003`).
+- **Expired-session cleanup** — deleted when presented, and pruned per user
+  on login.
 
 ## Decision Ledger (highlights)
 

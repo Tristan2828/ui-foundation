@@ -86,15 +86,26 @@ class UserOut(CamelModel):
     name: str
 
 
+def _normalize_email(v: str) -> str:
+    # Emails are stored lowercased (migration 0003), so login and register
+    # must match on the same form — otherwise `Dev@Example.com` registers
+    # as a second account alongside `dev@example.com`.
+    return v.lower()
+
+
 class LoginRequest(CamelModel):
     email: EmailStr
     password: str = Field(min_length=8)
+
+    _email_lower = field_validator("email")(_normalize_email)
 
 
 class RegisterRequest(CamelModel):
     email: EmailStr
     name: str = Field(min_length=1, max_length=200)
     password: str = Field(min_length=8)
+
+    _email_lower = field_validator("email")(_normalize_email)
 
 
 class HTTPErrorBody(CamelModel):
