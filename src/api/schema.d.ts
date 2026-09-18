@@ -157,34 +157,28 @@ export interface components {
          * @enum {string}
          */
         WidgetStatus: "draft" | "active" | "archived";
-        /** @description The six properties below are the Phase 4 field-type requirements — one field per force, so each maps unambiguously to the UI pattern it exercises. Do not add a seventh; see docs/BUILD-PLAN.md Scope Ceiling.
-         *      */
+        /** @description The six properties below are the Phase 4 field-type requirements — one field per force, so each maps unambiguously to the UI pattern it exercises. Do not add a seventh; see docs/BUILD-PLAN.md Scope Ceiling. */
         Widget: {
             readonly id: number;
             /** @description Display label. Not one of the six forcing field types. */
             name: string;
-            /** @description Foreign key to Category.id — forces a combobox with async search (Phase 4). Required: every widget belongs to a category.
-             *      */
+            /** @description Foreign key to Category.id — forces a combobox with async search (Phase 4). Required: every widget belongs to a category. */
             categoryId: number;
             /** @default draft */
             status: components["schemas"]["WidgetStatus"];
             /**
              * Format: date-time
              * @description Datetime field — forces a date picker plus timezone handling (Phase 4). ISO 8601 with offset, e.g. "2026-09-15T00:00:00Z".
-             *
              */
             availableFrom: string;
             /**
              * Format: email
              * @description Nullable field — forces empty-state display when null and optional (not required-when-present) validation (Phase 4).
-             *
              */
             assigneeEmail?: string | null;
-            /** @description Decimal field, represented as a fixed-2-decimal-place string (never a float) to avoid binary rounding on money — forces locale-aware formatting on display and parsing on input (Phase 4). Example: "19.99".
-             *      */
+            /** @description Decimal field, represented as a fixed-2-decimal-place string (never a float) to avoid binary rounding on money — forces locale-aware formatting on display and parsing on input (Phase 4). Example: "19.99". */
             price: string;
-            /** @description Long-text field — forces a textarea on the form and truncation in the table (Phase 4).
-             *      */
+            /** @description Long-text field — forces a textarea on the form and truncation in the table (Phase 4). */
             description: string;
         };
         /** @description Widget without a server-assigned id. */
@@ -207,8 +201,7 @@ export interface components {
             price?: components["schemas"]["Widget"]["price"];
             description?: components["schemas"]["Widget"]["description"];
         };
-        /** @description Wire pagination shape — deliberately not Page<T>. The gateway computes page/pageSize from offset/limit; see src/api/gateway/.
-         *      */
+        /** @description Wire pagination shape — deliberately not Page<T>. The gateway computes page/pageSize from offset/limit; see src/api/gateway/. */
         WidgetListResponse: {
             items: components["schemas"]["Widget"][];
             total: number;
