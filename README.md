@@ -74,10 +74,10 @@ Widgets are private to the user who created them (categories are shared). If you
 
 ## Consuming this as a registry
 
-Latest tag is `v1.5.0`. Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
+Latest tag is `v1.6.0`. Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
 
 ```bash
-npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.5.0
+npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.6.0
 ```
 
 ## Contributing

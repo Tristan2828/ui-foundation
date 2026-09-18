@@ -25,7 +25,8 @@ tested via `consume-test.sh --install-only`, tagged `v1.3.0`. Phase 11
 `registry.json` updated, install-tested, tagged `v1.4.0`. Phase 12 (cloud
 Postgres) touches no registry-shipped path, so — like Phase 8 — it is not
 tagged. Phase 13 (Storybook Controls/autodocs) changes the shipped story
-files, so it is tagged `v1.5.0`, the latest release.
+files, so it is tagged `v1.5.0`. The zod 4 upgrade after it is tagged `v1.6.0`,
+the latest release (see Dependency Upgrades below).
 
 For the reasoning behind any decision below, see the Decision Ledger in
 [`docs/BUILD-PLAN.md`](BUILD-PLAN.md). For the full narrative of what was
@@ -75,6 +76,21 @@ per-user ownership against real Postgres).
   (`docs/cloud-postgres.md`). Docker Compose stays for offline work
   (`dev.sh --local`) and for `check-phase-8.sh`, which always forces it so
   automated runs never write test users into Supabase.
+
+## Dependency Upgrades
+
+One PR per major, each verified with `npm run verify`, both builds, and
+`consume-test.sh --install-only` on the branch.
+
+- **In-range minor/patch** (#9) — not tagged.
+- **zod 3 → 4** (#10) — `required_error` replaced by an `error` function;
+  `.email()` → `.pipe(z.email())`. `tests/form-schemas.test.ts` pins every
+  message and passes on both versions. `registry.json` now pins
+  `zod@^4.6.5` (unversioned resolved to zod 3 in a fresh app). Tagged
+  `v1.6.0`, install-tested.
+- **vite 7 → 8, @vitejs/plugin-react 5 → 6** — matches `deps-allowlist.json`'s
+  `tools.vite`. No registry-shipped path changed, so not tagged.
+- **Still to do:** eslint 10 (+ globals 17), TypeScript 7.
 
 ## Decision Ledger (highlights)
 
