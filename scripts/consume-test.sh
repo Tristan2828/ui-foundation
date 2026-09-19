@@ -28,8 +28,6 @@ REPO_ROOT="$(pwd)"
 REPO="Tristan2828/ui-foundation"
 fail() { echo "consume-test: $1" >&2; exit 1; }
 
-VITE_VERSION=$(node -p "require('./deps-allowlist.json').tools.vite")
-SHADCN_VERSION=$(node -p "require('./deps-allowlist.json').tools.shadcn")
 
 INSTALL_ONLY=false
 POSITIONAL=()
@@ -63,72 +61,16 @@ KEEP=${KEEP_APP:+true}; KEEP=${KEEP:-false}
 cleanup() { [ "$KEEP" = true ] || rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-# `npm create vite` mis-joins an absolute path with the caller's cwd on
-# Windows/Git Bash when passed as an argument (it prints the right target
-# in its own banner, then mkdirs the cwd + that path concatenated). `cd`
-# into WORKDIR first and pass a relative name instead of fighting it.
-echo "consume-test: scaffolding a fresh Vite app ($VITE_VERSION) at $APP"
+# The app is created by scripts/create-app.sh, the same script
+# docs/create-an-app.md tells a developer or AI to run, so every release
+# tests the documented path. It scaffolds, installs starter#$REF, runs
+# msw init and commits. Headless, so git gets an identity from the env.
+export GIT_AUTHOR_NAME=consume-test GIT_AUTHOR_EMAIL=consume-test@localhost
+export GIT_COMMITTER_NAME=consume-test GIT_COMMITTER_EMAIL=consume-test@localhost
+echo "consume-test: scripts/create-app.sh consume-test-app $REF"
 cd "$WORKDIR"
-npm create vite@"$VITE_VERSION" consume-test-app -- --template react-ts --yes
-
+bash "$REPO_ROOT/scripts/create-app.sh" consume-test-app "$REF"
 cd "$APP"
-echo "consume-test: npm install"
-npm install --silent
-
-# `create vite`'s react-ts template ships with no Tailwind and no `@`
-# alias — this repo's own Phase 1 added both by hand before `shadcn init`
-# would run (init refuses without them). Reproduce that minimum, not the
-# rest of this repo's setup: only Tailwind + the alias unblock init, and
-# these are throwaway-app files, not this repo's own pinned deps.
-echo "consume-test: installing Tailwind and configuring the @ alias (Phase 1's prerequisite for shadcn init)"
-npm install --silent tailwindcss @tailwindcss/vite
-
-cat > vite.config.ts <<'EOF'
-import path from 'node:path'
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': path.resolve(import.meta.dirname, './src'),
-    },
-  },
-})
-EOF
-
-cat > tsconfig.json <<'EOF'
-{
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
-}
-EOF
-
-node -e "
-const fs = require('fs');
-const p = 'tsconfig.app.json';
-const c = JSON.parse(fs.readFileSync(p, 'utf8').replace(/\/\*.*?\*\//gs, ''));
-c.compilerOptions.paths = { '@/*': ['./src/*'] };
-fs.writeFileSync(p, JSON.stringify(c, null, 2));
-"
-
-sed -i '1i @import "tailwindcss";' src/index.css
-
-echo "consume-test: npx shadcn@$SHADCN_VERSION init"
-npx --yes shadcn@"$SHADCN_VERSION" init -t vite -b base -p nova -y
-
-echo "consume-test: npx shadcn@$SHADCN_VERSION add $REPO/starter#$REF"
-npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes --overwrite
 
 # `add`'s overwrite prompts are non-interactive-safe with --yes/--overwrite
 # above, but confirm the files actually landed rather than trusting a
@@ -182,25 +124,6 @@ for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps
     fail "$f installed from starter#$REF doesn't match $REF's own copy — a registry item is resolving from a different ref"
 done
 
-# MSW's browser worker (src/mocks/browser.ts, imported unconditionally by
-# main.tsx unless VITE_API=real) needs a generated service-worker script in
-# public/ to actually intercept requests — registry.json can't ship this
-# (it's a generated artifact, not source), so it's part of getting MSW
-# running at all, same as `npm install` itself.
-echo "consume-test: npx msw init public/ --save"
-npx msw init public/ --save
-
-# `verify:fast`'s `git diff --exit-code -- src/api/schema.d.ts` needs an
-# actual repo to diff against, and the entity playbook's own "commit,
-# then stop" BLOCKERS.md instruction (AGENTS.md Scope and Stopping) needs
-# one to act on. A real consuming app has this from the moment it's
-# created; `npm create vite` does not do it automatically.
-echo "consume-test: git init (verify:fast's git diff check and the entity playbook's commit step both need a real repo)"
-git init -q
-git config user.email "consume-test@localhost"
-git config user.name "consume-test"
-git add -A
-git commit -q -m "Initial scaffold: fresh Vite app + $REPO/starter#$REF"
 
 if [ "$INSTALL_ONLY" = true ]; then
   # src/api/schema.d.ts is generated from openapi.yaml (openapi-typescript),

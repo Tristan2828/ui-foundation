@@ -5,40 +5,20 @@ Commands use the shadcn CLI version pinned in `deps-allowlist.json`.
 
 ## Starting a new app
 
-In an empty folder for the new repo (Git Bash on Windows). This is the
-same setup `scripts/consume-test.sh` runs and verifies on every release.
-
-1. **Scaffold Vite** (the version pinned in `deps-allowlist.json`):
-   ```bash
-   npm create vite@8.3.0 my-app -- --template react-ts
-   cd my-app && npm install
-   npm install tailwindcss @tailwindcss/vite
-   ```
-2. **Add Tailwind and the `@` alias**, which `shadcn init` requires:
-   - `vite.config.ts`: add `tailwindcss()` to `plugins`, and
-     `resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } }`.
-   - `tsconfig.json` and `tsconfig.app.json`: add
-     `"compilerOptions": { "paths": { "@/*": ["./src/*"] } }`.
-   - `src/index.css`: first line `@import "tailwindcss";`.
-3. **Initialize shadcn and install the foundation** (always pin a tag —
-   the latest is in the README):
-   ```bash
-   npx shadcn@4.21.0 init -t vite -b base -p nova -y
-   npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#<tag> --yes --overwrite
-   npx msw init public/ --save
-   git init && git add -A && git commit -m "Scaffold from ui-foundation <tag>"
-   ```
-   `--overwrite` is right here, on a fresh scaffold — and never again
-   afterwards (see "Taking a later release").
-4. **Plan your first entity** in `docs/entities/<entity>.md` (format and
+1. **Create it** with [`create-an-app.md`](create-an-app.md) — point any AI
+   tool at that file, or follow it yourself. One script
+   (`scripts/create-app.sh <name> <tag>`, the same one every release is
+   tested with) scaffolds Vite, Tailwind and shadcn, installs
+   `starter#<tag>` and commits; then the playbook's Step 0 and a passing
+   `npm run verify`.
+2. **Plan your first entity** in `docs/entities/<entity>.md` (format and
    supported field types: `docs/entities/_template.md`; example:
    `docs/entities/widget.md`) — or ask your AI tool to plan it with you in
    conversation. Entities are never guessed.
-5. **Build it** by having any AI tool follow `docs/add-an-entity.md` (in
-   Claude Code, `/new-entity <Name>` is a shortcut). Its Step 0 adds the npm
-   scripts the registry can't (`gen:api`, `verify:fast`, `verify`). Delete
-   the Widgets demo once your own entity works.
-6. **Choose a data source** (below) before you need real data — the UI
+3. **Build it** by having any AI tool follow `docs/add-an-entity.md` (in
+   Claude Code, `/new-entity <Name>` is a shortcut). Delete the Widgets demo
+   once your own entity works.
+4. **Choose a data source** (below) before you need real data — the UI
    runs on MSW mocks until then.
 
 ## You own the files
@@ -107,7 +87,7 @@ Alembic) is a reference implementation of the same `openapi.yaml`, with
 auth, per-user ownership and the Widgets demo. Copy it from the same tag:
 
 ```bash
-TAG=v2.0.0   # the tag you installed starter from
+TAG=v2.1.0   # the tag you installed starter from
 curl -L "https://github.com/Tristan2828/ui-foundation/archive/refs/tags/$TAG.tar.gz" \
   | tar -xz --strip-components=1 "ui-foundation-${TAG#v}/backend" "ui-foundation-${TAG#v}/docker-compose.yml"
 ```
