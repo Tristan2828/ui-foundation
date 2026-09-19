@@ -25,7 +25,7 @@ were judged over-built for this focus. They stay; don't let them grow.
   a revisit condition, not code. An agent proposing "while we're here…"
   improvements to the foundation is the building-forever failure mode.
 - **Build it against the app that needs it.** The likely first one is a
-  read-only table entity (`/new-entity` always builds full CRUD today) —
+  read-only table entity (the entity playbook always builds full CRUD today) —
   design it from your first real read-only screen, not in advance.
 - **Before an app is reachable by strangers:** login rate limiting and
   error reporting (`DEFERRED.md`, `deploy.md`). Not before.

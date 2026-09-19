@@ -35,7 +35,9 @@ check is right. Do not disable, skip, or work around it.
   translates; nothing above it knows the wire format. (Enforced: gateway
   return types are the contracts; tsc.)
 - NEVER write a gateway test by reading the gateway. Tests come from
-  openapi.yaml. (Enforced: the spec-tester subagent cannot read gateway/.)
+  openapi.yaml. (Enforced in Claude Code: the spec-tester subagent cannot
+  read gateway/. In other tools: write them before the gateway exists —
+  docs/add-an-entity.md step 3.)
 - NEVER name a file in PascalCase or snake_case. Kebab-case everywhere —
   routes, components, hooks, tests (`widget-form.tsx`, not `WidgetForm.tsx`).
   (Enforced: eslint-plugin-check-file's filename-naming-convention rule.)
@@ -98,11 +100,19 @@ it again on every pull request.
 - Error display: src/components/app/error-state.tsx (`<ErrorState>`,
   keyed by `AppError.kind`)
 - App shell:    src/components/app/app-shell.tsx
-- New entity:   docs/add-an-entity.md (invoke as `/new-entity <Name>`)
+- New entity:   docs/add-an-entity.md (any tool; `/new-entity <Name>` in
+  Claude Code)
 
 Copy the routes/widgets/* files per entity. Extend the composites
 (data-table.tsx, entity-form.tsx) in place — they are shared, not
 per-entity.
+
+## Adding an Entity
+In any AI tool, follow `docs/add-an-entity.md` — it's plain instructions,
+not tied to one tool. It starts from the entity's plan,
+`docs/entities/<entity>.md`: build exactly that, and if there's no plan,
+work one out with the developer first. Never guess the fields. (Claude
+Code's `/new-entity <Name>` is a shortcut to the same file.)
 
 ## Updating the Foundation
 This app was installed from the `Tristan2828/ui-foundation` registry.

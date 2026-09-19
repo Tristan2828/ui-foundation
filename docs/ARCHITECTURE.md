@@ -30,7 +30,7 @@ screen can be built with no backend.
   `starter`, so every app gets a login screen); the FastAPI backend and its
   cloud/deploy hardening; Storybook. Assessed as over-built for the current
   focus on 2026-09-18 — cost already paid, so not removed.
-- **Known gap for this focus:** `/new-entity` always builds full CRUD. A
+- **Known gap for this focus:** the entity playbook always builds full CRUD. A
   read-only table entity has no path yet (`DEFERRED.md`).
 
 ## The layers
@@ -77,8 +77,9 @@ unpinned registry dependency resolves to `main`, not the tag).
 - **Binary files can't ship** (the `gh` CLI corrupts them).
 - Anything a consumer must edit that the registry can't (npm scripts) is
   Step 0 of [`add-an-entity.md`](add-an-entity.md) — the only copy of the
-  entity playbook; `/new-entity` runs it.
-- **Entities are never guessed.** `/new-entity` builds from a plan file,
+  entity playbook, plain instructions for any AI tool (Claude Code's
+  `/new-entity` is a shortcut to it).
+- **Entities are never guessed.** The playbook builds from a plan file,
   `docs/entities/<entity>.md` (format: [`entities/_template.md`](entities/_template.md)),
   and plans one with the developer when it's missing. The template's
   supported-type list is the contract: anything outside it stops the

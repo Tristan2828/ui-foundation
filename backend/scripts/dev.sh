@@ -3,10 +3,10 @@
 # the foreground. Replaces the manual steps in the README's Backend section
 # with one. Run from anywhere; paths are resolved relative to this script.
 #
-# The database is whatever DATABASE_URL (backend/.env) points at — Supabase
-# by default, see docs/cloud-postgres.md. Local Docker Compose Postgres is
-# only started when DATABASE_URL points at localhost (or with --local, which
-# forces it regardless of backend/.env).
+# The database is whatever DATABASE_URL (backend/.env) points at — the local
+# Docker Compose Postgres by default, which this starts for you. Point it at
+# a hosted database (Supabase is the cloud choice, docs/cloud-postgres.md)
+# and Docker is skipped; --local forces the local one regardless of .env.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

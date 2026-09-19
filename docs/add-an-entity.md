@@ -2,9 +2,10 @@
 
 The most-repeated task in this system: add a full CRUD entity — spec, mocks,
 gateway, tests, table, form, routes — following the patterns in
-`src/routes/widgets/`. This is the human-readable version of the playbook;
-the `/new-entity <Name>` skill (`.claude/skills/new-entity/SKILL.md`) runs
-exactly this file — it is the only copy of the steps.
+`src/routes/widgets/`. This file is the only copy of the steps, written for
+**any AI coding tool or a person**: follow it directly ("add a Game entity
+following docs/add-an-entity.md"). In Claude Code, `/new-entity <Name>` is
+a shortcut that runs this same file.
 
 Do not skip steps or reorder them. Replace `<Entity>` with the PascalCase
 entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
@@ -56,11 +57,17 @@ filled-in example).
 2. **`npm run gen:api`** to regenerate `src/api/schema.d.ts`. Never
    hand-edit it.
 3. **Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from
-   the spec.** Use the `spec-tester` subagent for this step — it cannot
-   read `src/api/gateway/` or `src/api/transport/`, so its tests assert
+   the spec** — `openapi.yaml` and `src/api/contracts.ts` only, never the
+   code in `src/api/gateway/` or `src/api/transport/`, so the tests assert
    what the spec promises, not what an implementation happens to do. Write
-   the tests to fail first; the gateway that makes them pass does not
-   exist yet.
+   them to fail first; the gateway that makes them pass doesn't exist yet.
+   - **If your tool can run an isolated subagent, use one** that can't see
+     those two folders. In Claude Code that's `spec-tester`
+     (`.claude/agents/spec-tester.md`), whose hook *blocks* reading them —
+     the enforced version of this rule.
+   - **Otherwise** write the tests yourself, now, before step 5 creates the
+     gateway, and don't open either folder while writing them. It's the
+     same rule, kept by discipline instead of a hook.
 4. **Add MSW handlers in `src/mocks/<entity>.ts`** and register them in
    `src/mocks/handlers.ts`. Extend `tests/mocks/conformance.test.ts` so the
    new handlers are validated against `openapi.yaml`, the same way
