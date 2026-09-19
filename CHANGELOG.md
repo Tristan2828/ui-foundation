@@ -15,6 +15,8 @@ build and its hardening, one phase at a time — that history is in
   refused. Removed: the skill is a shortcut, not a gate. What still stops
   an agent from building on its own is the entity plan — no approved
   `docs/entities/<entity>.md`, no build.
+- `create-app.sh` (and the download step in `create-an-app.md`) retries its
+  GitHub downloads, so a dropped connection doesn't stop app creation.
 - **Existing apps:** delete the `disable-model-invocation: true` line from
   `.claude/skills/new-entity/SKILL.md` (a one-line change; nothing else
   differs).

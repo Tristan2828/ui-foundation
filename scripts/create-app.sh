@@ -25,7 +25,7 @@ git config user.email >/dev/null || [ -n "${GIT_AUTHOR_EMAIL:-}" ] ||
 # Tool versions come from deps-allowlist.json *at the ref being installed*,
 # so a pinned tag always gets the versions it was tested with — no copy of
 # the foundation repo needed. Tags and SHAs are immutable, so no CDN staleness.
-ALLOWLIST=$(curl -fsSL "https://raw.githubusercontent.com/$REPO/$REF/deps-allowlist.json") ||
+ALLOWLIST=$(curl -fsSL --retry 4 --retry-delay 2 --retry-all-errors "https://raw.githubusercontent.com/$REPO/$REF/deps-allowlist.json") ||
   fail "can't fetch deps-allowlist.json at '$REF' — is it a real tag or commit SHA of $REPO?"
 VITE_VERSION=$(printf '%s' "$ALLOWLIST" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf8')).tools.vite)")
 SHADCN_VERSION=$(printf '%s' "$ALLOWLIST" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf8')).tools.shadcn)")

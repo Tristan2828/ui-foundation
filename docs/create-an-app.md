@@ -32,7 +32,7 @@ ending your turn while one is still running leaves a half-built app.
 1. **Download the script at that tag** into the parent folder (it creates
    `./<app-name>` next to itself):
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/Tristan2828/ui-foundation/<tag>/scripts/create-app.sh -o create-app.sh
+   curl -fsSL --retry 4 --retry-all-errors https://raw.githubusercontent.com/Tristan2828/ui-foundation/<tag>/scripts/create-app.sh -o create-app.sh
    ```
 2. **Run it, then delete it:**
    ```bash
