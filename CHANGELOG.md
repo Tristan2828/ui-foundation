@@ -6,6 +6,19 @@ Releases are git tags; apps install one with
 build and its hardening, one phase at a time — that history is in
 `docs/STATUS.md` and `docs/phases/`.
 
+## 2.1.1 — 2026-09-19
+
+- **Adding an entity no longer requires Claude's `/new-entity` command.**
+  The skill had `disable-model-invocation: true`, so when a developer asked
+  in plain words ("add a Game entity following docs/add-an-entity.md"),
+  Claude Code treated the workflow as reserved for the slash command and
+  refused. Removed: the skill is a shortcut, not a gate. What still stops
+  an agent from building on its own is the entity plan — no approved
+  `docs/entities/<entity>.md`, no build.
+- **Existing apps:** delete the `disable-model-invocation: true` line from
+  `.claude/skills/new-entity/SKILL.md` (a one-line change; nothing else
+  differs).
+
 ## 2.1.0 — 2026-09-19
 
 - **Create an app from one instruction.** `docs/create-an-app.md` is

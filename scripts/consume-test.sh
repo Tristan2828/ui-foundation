@@ -207,9 +207,10 @@ echo "consume-test: transcript -> $TRANSCRIPT"
 # "C:/Program Files/Git/new-entity Invoice", which is not a slash-command
 # at all. Confirmed by the first real Fresh UI Build: the fresh agent correctly
 # diagnosed the mangling itself and refused to hand-replicate the skill's
-# steps (disable-model-invocation working as designed) rather than
-# guessing — but the run was wasted on a test-harness bug, not a
-# foundation one. See docs/phases/phase-7.md.
+# steps (the skill then had disable-model-invocation, removed in 2.1.1
+# because it also blocked plain-language requests) rather than guessing —
+# but the run was wasted on a test-harness bug, not a foundation one. See
+# docs/phases/phase-7.md.
 AGENT_EXIT=0
 MSYS_NO_PATHCONV=1 timeout 3600 claude -p "$AGENT_PROMPT" \
   --dangerously-skip-permissions \

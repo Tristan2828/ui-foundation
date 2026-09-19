@@ -87,7 +87,7 @@ Alembic) is a reference implementation of the same `openapi.yaml`, with
 auth, per-user ownership and the Widgets demo. Copy it from the same tag:
 
 ```bash
-TAG=v2.1.0   # the tag you installed starter from
+TAG=v2.1.1   # the tag you installed starter from
 curl -L "https://github.com/Tristan2828/ui-foundation/archive/refs/tags/$TAG.tar.gz" \
   | tar -xz --strip-components=1 "ui-foundation-${TAG#v}/backend" "ui-foundation-${TAG#v}/docker-compose.yml"
 ```
