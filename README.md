@@ -75,10 +75,10 @@ Widgets are private to the user who created them (categories are shared). If you
 
 ## Consuming this as a registry
 
-Latest tag is `v1.12.0`. Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
+Latest tag is `v1.13.0`. Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
 
 ```bash
-npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.12.0
+npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.13.0
 ```
 
 Installed files are yours from then on. To take a later release safely (never `--overwrite` an app with entities), or to get the backend, see [`docs/consuming.md`](docs/consuming.md).

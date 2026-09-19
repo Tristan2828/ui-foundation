@@ -39,8 +39,8 @@ since v1.1.0" assertion, since Phase 8 touches no registry-shipped file.
 **What:** Supabase became the default dev database in PR #8
 (`backend/.env.example`, `backend/scripts/dev.sh`), but this machine's
 `backend/.env` still points at the local Docker Postgres, and Supabase's
-database has not had migration `0003` (per-user widget ownership + lowercase
-emails, PR #7) applied yet.
+database has not had migrations `0003` (per-user widget ownership + lowercase
+emails, PR #7) and `0004` (widget tags, PR #27) applied yet.
 
 **Why it's here:** it needs the Supabase database password, which an agent
 must not type or store. Only the developer can do these steps.
@@ -56,12 +56,13 @@ must not type or store. Only the developer can do these steps.
    SSL Configuration**) to `backend/certs/supabase-root-ca.pem` (gitignored),
    and set `DATABASE_SSL_CA_FILE=./certs/supabase-root-ca.pem`.
 3. Run `bash backend/scripts/dev.sh`. It should print `using hosted Postgres
-   at <pooler host>` (not "starting Docker Compose"), then apply migration
-   `0003` via `alembic upgrade head`.
+   at <pooler host>` (not "starting Docker Compose"), then apply migrations
+   `0003` and `0004` via `alembic upgrade head` (it applies both, in order).
 4. Run `VITE_API=real npm run dev` and log in at http://localhost:5173 as
    the seeded dev user. Existing widgets were assigned to that user by `0003`.
 
 **Done when:** `dev.sh` reports the pooler host, `alembic current` against
-Supabase shows `0003 (head)`, and the app loads widgets through it. Remove
+Supabase shows `0004 (head)`, and the app loads widgets (with their tags)
+through it. Remove
 this entry then. (`scripts/check-backend-postgres.sh` is unaffected either way — it
 always forces the local Docker database.)

@@ -120,6 +120,23 @@ Five remediation phases, one PR each — plan and status in
   patched primitives, replaced by `e2e/a11y.spec.ts` on the real screens
   (which found three real violations, fixed). See `docs/phases/audit-phase-e.md`.
 
+## After the Audit: First Real Project
+
+Mapping the developer's Notion "Multiplayer Game List" onto the foundation
+exposed two gaps; both closed the same day (2026-09-18).
+
+- **Phase F — entity plans** (#26, `v1.12.0`) — `/new-entity` builds only
+  from a plan file, `docs/entities/<entity>.md` (template and a Widget
+  example ship with `starter`), and plans with the developer when there
+  isn't one — never guesses. Also: the full new-app setup and a
+  Postgres-vs-Notion-API choice in `docs/consuming.md` (the Notion adapter
+  is deferred). See `docs/phases/phase-f-entity-plans.md`.
+- **Phase G — multi-select** (#27, `v1.13.0`) — multi choice as a
+  demonstrated field type: Widget `tags`, `<MultiChoice>` on the form and
+  as a table filter, a `widget_tags` join table (migration `0004`). Found
+  and fixed an array-field gap in the gateway's error mapping and an
+  unlabelled chip button upstream. See `docs/phases/phase-g-multi-select.md`.
+
 ## Decision Ledger (highlights)
 
 Full ledger with rationale in `docs/BUILD-PLAN.md`.

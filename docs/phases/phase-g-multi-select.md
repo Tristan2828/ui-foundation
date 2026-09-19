@@ -33,7 +33,12 @@ Widget gained `tags` (fragile, bulky, seasonal, featured), end to end, so
 - `scripts/check-backend-postgres.sh` now PATCHes tags and filters by them
   against real Postgres — the enum and join table only exist there.
 - The Fresh UI Build's Invoice plan gained a multi-choice `labels` field,
-  so the build proves a fresh agent can copy the pattern. Result in the PR.
+  so the build proves a fresh agent can copy the pattern. Pinned to
+  `19c9c93`: PASS, 99 vitest + 63 Playwright in the consuming app; the
+  agent built `labels` as an `InvoiceLabel` array (urgent, recurring,
+  disputed) with `uniqueItems` and a repeated-param filter, used
+  `<MultiChoice>` on the form and as a URL-kept table filter, and badges
+  in the column. No workarounds. Merged as #27, tagged `v1.13.0`.
 
 ## What the next session needs to know
 
