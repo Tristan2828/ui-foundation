@@ -34,7 +34,12 @@ Other tools get the same rule as an instruction (write the tests from
   The Fresh UI Build for this release used a **plain request with no skill
   and no hint** — "Add an Invoice entity to this app." — to test what a
   non-Claude tool relies on: finding the playbook through `AGENTS.md`.
-  Result in the PR.
+  Pinned to `dd41e2b`: PASS, 94 vitest + 64 Playwright in the consuming
+  app. The agent's **first action** was to list `docs/entities/` and print
+  both the Invoice plan and `docs/add-an-entity.md` — nothing in the
+  prompt named either, so `AGENTS.md`'s "Adding an Entity" section is what
+  sent it there. It then used `spec-tester` (the playbook's step 3), built
+  the plan's multi-choice `labels`, and reported no workarounds.
 - Non-Claude tools themselves weren't run (no Codex/Cursor/Gemini CLI on
   this machine); the plain-prompt run is the closest available check.
 
