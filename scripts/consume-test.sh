@@ -142,6 +142,7 @@ for f in \
   src/styles/theme.css src/index.css \
   src/components/app/app-shell.tsx src/components/app/data-table.tsx \
   src/components/app/entity-form.tsx src/components/app/error-state.tsx \
+  src/components/app/multi-choice.tsx \
   src/components/app/route-error-boundary.tsx \
   src/components/theme-provider.tsx src/hooks/use-mobile.ts \
   src/hooks/use-debounced-value.ts src/hooks/use-table-url-state.ts \

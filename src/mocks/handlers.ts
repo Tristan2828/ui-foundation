@@ -24,6 +24,9 @@ type LoginRequest = components["schemas"]["LoginRequest"];
 type RegisterRequest = components["schemas"]["RegisterRequest"];
 type WidgetUpdate = components["schemas"]["WidgetUpdate"];
 type ValidationIssue = components["schemas"]["ValidationErrorBody"]["detail"][number];
+type WidgetTag = components["schemas"]["WidgetTag"];
+
+const WIDGET_TAGS: readonly WidgetTag[] = ["fragile", "bulky", "seasonal", "featured"];
 
 const REQUIRED_FIELDS = ["name", "categoryId", "status", "availableFrom", "price", "description"] as const;
 const PRICE_RE = /^\d+\.\d{2}$/;
@@ -48,6 +51,15 @@ function validateWidgetInput(
       msg: 'string does not match regex "^\\d+\\.\\d{2}$"',
       type: "value_error.str.regex",
     });
+  }
+  if (input.tags !== undefined) {
+    const tags = input.tags as unknown[];
+    const valid = Array.isArray(tags) && tags.every((tag) => WIDGET_TAGS.includes(tag as WidgetTag));
+    if (!valid) {
+      issues.push({ loc: ["body", "tags"], msg: "value is not a valid enumeration member", type: "type_error.enum" });
+    } else if (new Set(tags).size !== tags.length) {
+      issues.push({ loc: ["body", "tags"], msg: "tags must be unique", type: "value_error.list.unique_items" });
+    }
   }
   if (input.status !== undefined && !["draft", "active", "archived"].includes(String(input.status))) {
     issues.push({ loc: ["body", "status"], msg: "value is not a valid enumeration member", type: "type_error.enum" });
@@ -143,11 +155,14 @@ export const handlers = [
     const status = url.searchParams.get("status");
     const categoryId = url.searchParams.get("categoryId");
     const search = url.searchParams.get("search")?.toLowerCase();
+    // Repeated param (tags=a&tags=b), matching any of them — openapi.yaml.
+    const tags = url.searchParams.getAll("tags");
 
     let result = widgets;
     if (status) result = result.filter((w) => w.status === status);
     if (categoryId) result = result.filter((w) => w.categoryId === Number(categoryId));
     if (search) result = result.filter((w) => w.name.toLowerCase().includes(search));
+    if (tags.length > 0) result = result.filter((w) => w.tags.some((tag) => tags.includes(tag)));
     result = sortWidgets(result, url.searchParams.get("sort"));
 
     const total = result.length;
@@ -169,7 +184,7 @@ export const handlers = [
     if (issues.length > 0) {
       return HttpResponse.json({ detail: issues }, { status: 422 });
     }
-    const widget: Widget = { assigneeEmail: null, ...input, id: nextWidgetId() };
+    const widget: Widget = { assigneeEmail: null, ...input, tags: input.tags ?? [], id: nextWidgetId() };
     widgets.push(widget);
     return HttpResponse.json(widget, { status: 201 });
   }),

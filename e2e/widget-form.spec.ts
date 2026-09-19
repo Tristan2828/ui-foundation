@@ -30,6 +30,14 @@ async function pickAvailableFromDate(page: Page) {
   await page.getByRole('button', { name: /^Today,/ }).click()
 }
 
+// Multi choice: open the chips input and pick an option; Escape closes the
+// list, which stays open between picks in multiple mode.
+async function pickTag(page: Page, name: string) {
+  await page.locator('#widget-tags').click()
+  await page.getByRole('option', { name, exact: true }).click()
+  await page.keyboard.press('Escape')
+}
+
 test.describe('widget form', () => {
   test('loading: editing shows a skeleton before the widget loads', async ({ page }) => {
     await forceWidgetGetOverride(page, {
@@ -108,11 +116,30 @@ test.describe('widget form', () => {
     await pickAvailableFromDate(page)
     await page.locator('#widget-price').fill('9.99')
     await page.locator('#widget-description').fill('Created by the success e2e test.')
+    await pickTag(page, 'bulky')
+    await pickTag(page, 'seasonal')
     await page.getByRole('button', { name: 'Create widget' }).click()
 
     await expect(page).toHaveURL(/\/widgets$/)
-    await expect(
-      page.getByRole('cell', { name: 'Playwright Success Widget', exact: true }),
-    ).toBeVisible()
+    const row = page.getByRole('row', { name: /Playwright Success Widget/ })
+    await expect(row).toBeVisible()
+    await expect(row.getByText('bulky', { exact: true })).toBeVisible()
+    await expect(row.getByText('seasonal', { exact: true })).toBeVisible()
+  })
+
+  test('multi choice: existing tags are removable chips, and the edited set is what saves', async ({
+    page,
+  }) => {
+    await page.goto('/widgets/1/edit')
+    await expect(page.getByRole('button', { name: 'Remove fragile' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Remove fragile' }).click()
+    await pickTag(page, 'featured')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL(/\/widgets$/)
+    const row = page.getByRole('row', { name: /Wireless Mouse/ })
+    await expect(row.getByText('featured', { exact: true })).toBeVisible()
+    await expect(row.getByText('fragile', { exact: true })).toHaveCount(0)
   })
 })

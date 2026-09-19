@@ -143,6 +143,16 @@ paths:
           in: query
           schema: { type: string }
           description: Case-insensitive substring match on name.
+        - name: tags
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items: { $ref: "#/components/schemas/WidgetTag" }
+          description: >
+            Widgets with any of these tags. Repeat the parameter once per
+            tag, e.g. "tags=fragile&tags=seasonal".
       responses:
         "200":
           description: A page of widgets.
@@ -256,12 +266,19 @@ components:
       enum: [draft, active, archived]
       description: Enum field — forces Select input + badge rendering (Phase 4).
 
+    WidgetTag:
+      type: string
+      enum: [fragile, bulky, seasonal, featured]
+      description: One option of the multi-choice tags field.
+
     Widget:
       type: object
       description: >
-        The six properties below are the Phase 4 field-type requirements —
-        one field per force, so each maps unambiguously to the UI pattern it
-        exercises. Do not add a seventh; see docs/BUILD-PLAN.md Scope Ceiling.
+        One property per field type the foundation supports, so each maps
+        unambiguously to the UI pattern it exercises and /new-entity has a
+        reference to copy (docs/entities/widget.md). Six came from Phase 4;
+        tags (multi choice) was added in Phase G because a real project
+        needed it. Add a type only when a real app needs one.
       required:
         - id
         - name
@@ -270,6 +287,7 @@ components:
         - availableFrom
         - price
         - description
+        - tags
       properties:
         id: { type: integer, readOnly: true }
         name:
@@ -311,10 +329,18 @@ components:
           description: >
             Long-text field — forces a textarea on the form and truncation
             in the table (Phase 4).
+        tags:
+          type: array
+          items: { $ref: "#/components/schemas/WidgetTag" }
+          uniqueItems: true
+          description: >
+            Multi-choice field — forces a multi-select combobox with chips on
+            the form, badges in the table, and an any-of list filter
+            (Phase G). Always present on read; empty when none are chosen.
 
     WidgetCreate:
       type: object
-      description: Widget without a server-assigned id.
+      description: Widget without a server-assigned id. tags defaults to [].
       required: [name, categoryId, status, availableFrom, price, description]
       properties:
         name: { $ref: "#/components/schemas/Widget/properties/name" }
@@ -324,10 +350,13 @@ components:
         assigneeEmail: { $ref: "#/components/schemas/Widget/properties/assigneeEmail" }
         price: { $ref: "#/components/schemas/Widget/properties/price" }
         description: { $ref: "#/components/schemas/Widget/properties/description" }
+        tags: { $ref: "#/components/schemas/Widget/properties/tags" }
 
     WidgetUpdate:
       type: object
-      description: All fields optional — PATCH semantics.
+      description: >
+        All fields optional — PATCH semantics. tags, when sent, replaces the
+        whole set (send [] to clear it).
       properties:
         name: { $ref: "#/components/schemas/Widget/properties/name" }
         categoryId: { $ref: "#/components/schemas/Widget/properties/categoryId" }
@@ -336,6 +365,7 @@ components:
         assigneeEmail: { $ref: "#/components/schemas/Widget/properties/assigneeEmail" }
         price: { $ref: "#/components/schemas/Widget/properties/price" }
         description: { $ref: "#/components/schemas/Widget/properties/description" }
+        tags: { $ref: "#/components/schemas/Widget/properties/tags" }
 
     WidgetListResponse:
       type: object

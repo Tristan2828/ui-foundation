@@ -32,6 +32,7 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
     assigneeEmail: null,
     price: "19.99",
     description: "A widget",
+    tags: [],
     ...overrides,
   };
 }
@@ -60,6 +61,22 @@ function calledUrl(fetchMock: ReturnType<typeof vi.fn>, callIndex = 0): URL {
   // The gateway may call fetch with a string, a URL, or a Request — coerce
   // to a URL against a dummy origin so relative "/api/..." paths parse.
   return new URL(String(urlArg), "http://localhost");
+}
+
+// The JSON body the gateway sent. Handles fetch(url, init) with a string
+// body as well as fetch(new Request(...)).
+async function calledJsonBody(
+  fetchMock: ReturnType<typeof vi.fn>,
+  callIndex = 0,
+): Promise<unknown> {
+  const [input, init] = fetchMock.mock.calls[callIndex];
+  if (init?.body !== undefined && init?.body !== null) {
+    return JSON.parse(String(init.body));
+  }
+  if (input instanceof Request) {
+    return input.clone().json();
+  }
+  throw new Error("fetch was called without a request body");
 }
 
 afterEach(() => {
@@ -129,6 +146,47 @@ describe("listWidgets", () => {
       kind: "auth",
     } satisfies Partial<AppError>);
   });
+
+  // openapi.yaml: `tags` query param is style: form, explode: true —
+  // "Repeat the parameter once per tag, e.g. tags=fragile&tags=seasonal".
+  it("sends filters.tags as a repeated (exploded) tags parameter, one per tag, not comma-joined", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({
+      page: 1,
+      pageSize: 20,
+      filters: { tags: ["fragile", "seasonal"] },
+    });
+
+    const url = calledUrl(fetchMock);
+    expect(url.searchParams.getAll("tags")).toEqual(["fragile", "seasonal"]);
+    expect(url.searchParams.getAll("tags")).not.toContain("fragile,seasonal");
+  });
+
+  it("sends no tags parameter when filters.tags is an empty array", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({ page: 1, pageSize: 20, filters: { tags: [] } });
+
+    const url = calledUrl(fetchMock);
+    expect(url.searchParams.has("tags")).toBe(false);
+  });
+
+  it("passes each item's tags array through to the caller unchanged", async () => {
+    const wireBody: WidgetListResponse = {
+      items: [
+        makeWidget({ id: 1, tags: ["fragile", "featured"] }),
+        makeWidget({ id: 2, tags: [] }),
+      ],
+      total: 2,
+    };
+    stubFetch(jsonResponse(wireBody, 200));
+
+    const result = await listWidgets({ page: 1, pageSize: 20 });
+
+    expect(result.items[0].tags).toEqual(["fragile", "featured"]);
+    expect(result.items[1].tags).toEqual([]);
+  });
 });
 
 describe("getWidget", () => {
@@ -141,6 +199,14 @@ describe("getWidget", () => {
     const url = calledUrl(fetchMock);
     expect(url.pathname).toBe("/api/widgets/7");
     expect(result).toEqual(widget);
+  });
+
+  it("passes the widget's tags array through to the caller unchanged", async () => {
+    stubFetch(jsonResponse(makeWidget({ id: 7, tags: ["fragile", "featured"] }), 200));
+
+    const result = await getWidget(7);
+
+    expect(result.tags).toEqual(["fragile", "featured"]);
   });
 
   it("throws AppError{kind:'notfound'} on 404, using the detail string as the message", async () => {
@@ -175,6 +241,23 @@ describe("createWidget", () => {
     expect(result).toEqual(created);
   });
 
+  it("sends tags in the JSON request body exactly as given", async () => {
+    const fetchMock = stubFetch(
+      jsonResponse(makeWidget({ id: 99, tags: ["fragile", "seasonal"] }), 201),
+    );
+
+    const result = await createWidget({
+      ...input,
+      name: "Tagged",
+      price: "9.99",
+      tags: ["fragile", "seasonal"],
+    });
+
+    const body = (await calledJsonBody(fetchMock)) as WidgetCreate;
+    expect(body.tags).toEqual(["fragile", "seasonal"]);
+    expect(result.tags).toEqual(["fragile", "seasonal"]);
+  });
+
   it("throws AppError{kind:'validation'} with fieldErrors keyed by the last loc segment, grouping repeated fields, on 422", async () => {
     const body = {
       detail: [
@@ -204,6 +287,96 @@ describe("createWidget", () => {
     });
   });
 
+  // openapi.yaml ValidationErrorBody: detail[].loc items are
+  // type: ["string", "integer"]. Integer segments index into array-valued
+  // fields (Widget.tags), so a bad tag comes back as loc ["body","tags",0].
+  // AppError.fieldErrors is keyed by form field name — the last *string*
+  // segment of loc — never by the trailing array index.
+  async function catchAppError(promise: Promise<unknown>): Promise<AppError> {
+    try {
+      await promise;
+    } catch (err) {
+      return err as AppError;
+    }
+    expect.unreachable("expected the gateway call to throw an AppError");
+  }
+
+  it("keys a 422 on an array item (loc ['body','tags',0]) under fieldErrors.tags, not fieldErrors['0']", async () => {
+    stubFetch(
+      jsonResponse(
+        {
+          detail: [
+            {
+              loc: ["body", "tags", 0],
+              msg: "String should have at most 32 characters",
+              type: "string_too_long",
+            },
+          ],
+        },
+        422,
+      ),
+    );
+
+    const caught = await catchAppError(
+      createWidget({ ...input, tags: ["fragile"] /* response is stubbed; body content is irrelevant */ }),
+    );
+
+    expect(caught.kind).toBe("validation");
+    expect(caught.fieldErrors?.tags).toEqual([
+      "String should have at most 32 characters",
+    ]);
+    expect(caught.fieldErrors).not.toHaveProperty("0");
+  });
+
+  it("still keys an ordinary 422 (loc ['body','price']) under fieldErrors.price", async () => {
+    stubFetch(
+      jsonResponse(
+        {
+          detail: [
+            {
+              loc: ["body", "price"],
+              msg: "string does not match regex",
+              type: "value_error.str.regex",
+            },
+          ],
+        },
+        422,
+      ),
+    );
+
+    const caught = await catchAppError(createWidget(input));
+
+    expect(caught.kind).toBe("validation");
+    expect(caught.fieldErrors).toEqual({
+      price: ["string does not match regex"],
+    });
+  });
+
+  it("collects 422 messages for different indices of the same array field under one fieldErrors.tags entry", async () => {
+    stubFetch(
+      jsonResponse(
+        {
+          detail: [
+            { loc: ["body", "tags", 0], msg: "first tag is invalid", type: "value_error" },
+            { loc: ["body", "tags", 1], msg: "second tag is invalid", type: "value_error" },
+          ],
+        },
+        422,
+      ),
+    );
+
+    const caught = await catchAppError(
+      createWidget({ ...input, tags: ["bulky", "fragile"] /* response is stubbed; body content is irrelevant */ }),
+    );
+
+    expect(caught.kind).toBe("validation");
+    expect(caught.fieldErrors).toEqual({
+      tags: ["first tag is invalid", "second tag is invalid"],
+    });
+    expect(caught.fieldErrors).not.toHaveProperty("0");
+    expect(caught.fieldErrors).not.toHaveProperty("1");
+  });
+
   it("throws AppError{kind:'server'} on 500", async () => {
     stubFetch(jsonResponse({ detail: "Internal Server Error" }, 500));
 
@@ -227,6 +400,30 @@ describe("updateWidget", () => {
     const [, init] = fetchMock.mock.calls[0];
     expect(init?.method).toBe("PATCH");
     expect(result).toEqual(updated);
+  });
+
+  it("sends tags in the JSON request body exactly as given", async () => {
+    const fetchMock = stubFetch(
+      jsonResponse(makeWidget({ id: 3, tags: ["bulky", "featured"] }), 200),
+    );
+
+    const result = await updateWidget(3, { tags: ["bulky", "featured"] });
+
+    const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
+    expect(body).toEqual({ tags: ["bulky", "featured"] });
+    expect(result.tags).toEqual(["bulky", "featured"]);
+  });
+
+  // openapi.yaml WidgetUpdate: "tags, when sent, replaces the whole set
+  // (send [] to clear it)" — so [] must reach the wire, not be dropped.
+  it("sends tags: [] in the body (clears the set) rather than omitting it", async () => {
+    const fetchMock = stubFetch(jsonResponse(makeWidget({ id: 3, tags: [] }), 200));
+
+    const result = await updateWidget(3, { tags: [] });
+
+    const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
+    expect(body).toEqual({ tags: [] });
+    expect(result.tags).toEqual([]);
   });
 
   it("throws AppError{kind:'notfound'} on 404", async () => {

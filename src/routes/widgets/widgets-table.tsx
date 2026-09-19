@@ -7,6 +7,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router'
 import type { QuerySpec } from '@/api/contracts'
 import { DataTable } from '@/components/app/data-table'
+import { MultiChoice } from '@/components/app/multi-choice'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
-import { WIDGET_STATUSES } from './widget-schema'
+import { WIDGET_STATUSES, WIDGET_TAGS } from './widget-schema'
 import { buildWidgetsColumns } from './widgets-columns'
 import { useCategoriesQuery } from './use-categories'
 import { useWidgetsQuery } from './use-widgets'
@@ -26,14 +27,24 @@ import { useWidgetsQuery } from './use-widgets'
 const PAGE_SIZE = 10
 const STATUS_FILTER_ALL = 'all'
 const FILTERS = ['search', 'status'] as const
+const MULTI_FILTERS = ['tags'] as const
 const SEARCH_DEBOUNCE_MS = 300
 
 export function WidgetsTableRoute() {
   // Page, sort and filters live in the URL (?page=2&sort=name:asc&...), so
   // they survive the round trip to the edit form — see the hook.
-  const { page, setPage, sorting, setSorting, filters, setFilter } = useTableUrlState(FILTERS)
+  const { page, setPage, sorting, setSorting, filters, setFilter, multiFilters, setMultiFilter } =
+    useTableUrlState(FILTERS, MULTI_FILTERS)
   const search = filters.search
   const statusFilter = filters.status || STATUS_FILTER_ALL
+  // Joined so useMemo sees a stable value (getAll returns a new array every
+  // render); anything that isn't a real tag (a hand-edited URL) is dropped
+  // rather than sent to the API.
+  const tagsParam = multiFilters.tags.filter((tag) => (WIDGET_TAGS as readonly string[]).includes(tag)).join(',')
+  const tagsFilter = useMemo(
+    () => (tagsParam ? tagsParam.split(',') : []) as (typeof WIDGET_TAGS)[number][],
+    [tagsParam],
+  )
   // The input shows `search` live; the request waits for typing to pause.
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
@@ -45,9 +56,10 @@ export function WidgetsTableRoute() {
       filters: {
         search: debouncedSearch || undefined,
         status: statusFilter === STATUS_FILTER_ALL ? undefined : statusFilter,
+        tags: tagsFilter,
       },
     }),
-    [page, sorting, debouncedSearch, statusFilter],
+    [page, sorting, debouncedSearch, statusFilter, tagsFilter],
   )
 
   const widgetsQuery = useWidgetsQuery(query)
@@ -60,7 +72,7 @@ export function WidgetsTableRoute() {
 
   const columns = useMemo(() => buildWidgetsColumns(categoriesById), [categoriesById])
 
-  const hasActiveFilters = search !== '' || statusFilter !== STATUS_FILTER_ALL
+  const hasActiveFilters = search !== '' || statusFilter !== STATUS_FILTER_ALL || tagsFilter.length > 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,7 +98,7 @@ export function WidgetsTableRoute() {
         onRetry={() => widgetsQuery.refetch()}
         emptyTitle={hasActiveFilters ? 'No widgets match your filters' : 'No widgets yet'}
         emptyDescription={
-          hasActiveFilters ? 'Try a different search or status.' : 'Create one to get started.'
+          hasActiveFilters ? 'Try a different search, status or tag.' : 'Create one to get started.'
         }
         emptyAction={
           !hasActiveFilters && (
@@ -122,6 +134,14 @@ export function WidgetsTableRoute() {
                 ))}
               </SelectContent>
             </Select>
+            <MultiChoice
+              options={WIDGET_TAGS}
+              value={tagsFilter}
+              onValueChange={(tags) => setMultiFilter('tags', tags)}
+              placeholder="Any tag"
+              aria-label="Filter by tags"
+              className="w-56"
+            />
           </div>
         }
         getRowId={(widget) => String(widget.id)}

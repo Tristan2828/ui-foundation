@@ -13,7 +13,7 @@ from typing import Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from pydantic.alias_generators import to_camel
 
-from app.models import WidgetStatus
+from app.models import WidgetStatus, WidgetTag
 
 T = TypeVar("T")
 
@@ -40,6 +40,14 @@ class CategoryOut(CamelModel):
     name: str
 
 
+def _unique_tags(v: list[WidgetTag] | None) -> list[WidgetTag] | None:
+    # openapi.yaml: tags has uniqueItems — a repeat is a 422, same shape as
+    # any other field error, not silently deduplicated.
+    if v is not None and len(set(v)) != len(v):
+        raise ValueError("tags must be unique")
+    return v
+
+
 def _format_price(v: object) -> object:
     return f"{v:.2f}" if isinstance(v, Decimal) else v
 
@@ -53,6 +61,7 @@ class WidgetOut(CamelModel):
     assignee_email: str | None
     price: str
     description: str
+    tags: list[WidgetTag]
 
     @field_validator("price", mode="before")
     @classmethod
@@ -68,6 +77,9 @@ class WidgetCreate(CamelModel):
     assignee_email: EmailStr | None = None
     price: str = Field(pattern=PRICE_PATTERN)
     description: str = Field(max_length=2000)
+    tags: list[WidgetTag] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
+
+    _check_tags = field_validator("tags")(_unique_tags)
 
 
 class WidgetUpdate(CamelModel):
@@ -78,6 +90,9 @@ class WidgetUpdate(CamelModel):
     assignee_email: EmailStr | None = None
     price: str | None = Field(default=None, pattern=PRICE_PATTERN)
     description: str | None = Field(default=None, max_length=2000)
+    tags: list[WidgetTag] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
+
+    _check_tags = field_validator("tags")(_unique_tags)
 
 
 class UserOut(CamelModel):

@@ -22,7 +22,12 @@ function buildListQuery(query: QuerySpec): string {
   }
   if (query.filters) {
     for (const [key, value] of Object.entries(query.filters)) {
-      if (value !== undefined && value !== null) {
+      if (Array.isArray(value)) {
+        // Multi-value filters repeat the parameter (style: form, explode:
+        // true in openapi.yaml) — tags=a&tags=b, never "a,b". An empty
+        // array means "no filter", so it sends nothing.
+        for (const item of value) params.append(key, String(item));
+      } else if (value !== undefined && value !== null) {
         params.set(key, String(value));
       }
     }

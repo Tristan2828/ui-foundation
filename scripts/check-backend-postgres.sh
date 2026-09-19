@@ -117,7 +117,7 @@ echo "check-backend-postgres: create and update a widget against real Postgres (
 WIDGET_BODY=$(mktemp)
 create_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X POST http://localhost:8000/api/widgets \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Phase C widget","categoryId":1,"status":"draft","availableFrom":"2026-09-18T00:00:00Z","price":"12.50","description":"written by check-backend-postgres"}')
+  -d '{"name":"Phase C widget","categoryId":1,"status":"draft","availableFrom":"2026-09-18T00:00:00Z","price":"12.50","description":"written by check-backend-postgres","tags":["seasonal","fragile"]}')
 [ "$create_status" = "201" ] || fail "POST /api/widgets returned $create_status, expected 201 — got: $(cat "$WIDGET_BODY") (see logs/backend-postgres-uvicorn.log)"
 widget_id=$(node -p "String(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).id)" "$WIDGET_BODY")
 update_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" \
@@ -125,6 +125,18 @@ update_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X 
   -d '{"availableFrom":"2026-10-01T12:30:00Z"}')
 [ "$update_status" = "200" ] || fail "PATCH /api/widgets/$widget_id returned $update_status, expected 200 — got: $(cat "$WIDGET_BODY")"
 grep -q '"availableFrom":"2026-10-01T12:30:00' "$WIDGET_BODY" || fail "PATCH didn't round-trip availableFrom: $(cat "$WIDGET_BODY")"
+
+# Tags (Phase G): a Postgres enum through a join table — the same bug class
+# as 0001's enum and Phase C's datetime, invisible to SQLite-backed pytest.
+echo "check-backend-postgres: tags create, replace and any-of filter against real Postgres (Phase G)"
+tags_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id"   -H 'Content-Type: application/json' -d '{"tags":["featured","bulky"]}')
+[ "$tags_status" = "200" ] || fail "PATCH tags returned $tags_status — got: $(cat "$WIDGET_BODY")"
+grep -q '"tags":\["bulky","featured"\]' "$WIDGET_BODY" || fail "PATCH didn't replace tags (expected [bulky, featured] in display order): $(cat "$WIDGET_BODY")"
+filter_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' "http://localhost:8000/api/widgets?tags=featured&tags=fragile")
+[ "$filter_status" = "200" ] || fail "GET /api/widgets?tags=... returned $filter_status — got: $(cat "$WIDGET_BODY")"
+grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "tags filter didn't return widget $widget_id: $(cat "$WIDGET_BODY")"
+none_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' "http://localhost:8000/api/widgets?tags=fragile")
+grep -q '"total":0' "$WIDGET_BODY" || fail "tags=fragile should match nothing after the replace (status $none_status): $(cat "$WIDGET_BODY")"
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"

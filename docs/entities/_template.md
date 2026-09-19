@@ -22,12 +22,13 @@ One or two sentences: what one record is, and who uses the screens.
   - *Demonstrated by the Widget reference* (copied directly): `text` (one
     line), `long text`, `decimal` (fixed places — say how many),
     `date-time`, `email`, `single choice` (list the options, in display
-    order), `reference` (to another entity — name it; a searchable
-    combobox).
+    order), `multi choice` (list the options; any number can be picked —
+    chips on the form, badges in the table, an any-of filter), `reference`
+    (to another entity — name it; a searchable combobox).
   - *Close variants* (built by a small, stated change to the nearest
     pattern): `integer` (from decimal), `url` (from email — a format
     check), `date` (from date-time — no time part).
-  - *Not supported yet:* multi choice, boolean, file, and anything else.
+  - *Not supported yet:* boolean, file, and anything else.
     Write it anyway with a note; `/new-entity` will stop and raise it
     rather than improvise.
 - **Required**: `yes`, or `no` (then say whether empty means "unknown").

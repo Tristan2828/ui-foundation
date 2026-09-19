@@ -74,7 +74,11 @@ filled-in example).
    and labels from its field table, and field types by pattern (a
    `reference` field copies Category's searchable combobox, a
    `single choice` copies Status's select, a `date-time` copies
-   Available From's date picker):
+   Available From's date picker, a `multi choice` copies Tags — the
+   `<MultiChoice>` control (`src/components/app/multi-choice.tsx`) on the
+   form and as a toolbar filter via `useTableUrlState`'s multi filters,
+   badges in the table, and a `filters` array the gateway sends as a
+   repeated parameter):
    - `src/routes/widgets/use-widgets.ts`, `use-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)

@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import type { AppError } from '@/api/contracts'
 import { EntityForm } from '@/components/app/entity-form'
 import { ErrorState } from '@/components/app/error-state'
+import { MultiChoice } from '@/components/app/multi-choice'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -38,6 +39,7 @@ import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from
 import {
   WIDGET_FORM_DEFAULTS,
   WIDGET_STATUSES,
+  WIDGET_TAGS,
   formValuesToWidgetCreate,
   formValuesToWidgetUpdate,
   widgetFormSchema,
@@ -285,6 +287,25 @@ export function WidgetFormRoute() {
           {...form.register('description')}
         />
         <FieldError errors={[form.formState.errors.description]} />
+      </Field>
+
+      <Field data-invalid={!!form.formState.errors.tags}>
+        <FieldLabel htmlFor="widget-tags">Tags</FieldLabel>
+        <Controller
+          control={form.control}
+          name="tags"
+          render={({ field }) => (
+            <MultiChoice
+              id="widget-tags"
+              options={WIDGET_TAGS}
+              value={field.value}
+              onValueChange={field.onChange}
+              placeholder="Add tags"
+              aria-invalid={!!form.formState.errors.tags}
+            />
+          )}
+        />
+        <FieldError errors={[form.formState.errors.tags]} />
       </Field>
     </EntityForm>
   )

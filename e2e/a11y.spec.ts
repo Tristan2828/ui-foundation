@@ -8,8 +8,10 @@ import { expect, test, type Page } from '@playwright/test'
 // the check that dark-mode tokens stay readable. The theme follows the OS
 // setting (ThemeProvider defaultTheme="system"), so emulateMedia switches it.
 
-// Form screens aren't in the sidebar. Add each entity's create route here.
-const FORM_ROUTES = ['/widgets/new']
+// Form screens aren't in the sidebar. Add each entity's create route here,
+// plus an edit route when the form shows something only existing data has
+// (the Wireless Mouse's tag chips, with their remove buttons).
+const FORM_ROUTES = ['/widgets/new', '/widgets/1/edit']
 const LOGGED_OUT_ROUTES = ['/login', '/register']
 
 async function expectNoViolations(page: Page) {

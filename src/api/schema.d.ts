@@ -157,7 +157,12 @@ export interface components {
          * @enum {string}
          */
         WidgetStatus: "draft" | "active" | "archived";
-        /** @description The six properties below are the Phase 4 field-type requirements — one field per force, so each maps unambiguously to the UI pattern it exercises. Do not add a seventh; see docs/BUILD-PLAN.md Scope Ceiling. */
+        /**
+         * @description One option of the multi-choice tags field.
+         * @enum {string}
+         */
+        WidgetTag: "fragile" | "bulky" | "seasonal" | "featured";
+        /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it. Add a type only when a real app needs one. */
         Widget: {
             readonly id: number;
             /** @description Display label. Not one of the six forcing field types. */
@@ -180,8 +185,10 @@ export interface components {
             price: string;
             /** @description Long-text field — forces a textarea on the form and truncation in the table (Phase 4). */
             description: string;
+            /** @description Multi-choice field — forces a multi-select combobox with chips on the form, badges in the table, and an any-of list filter (Phase G). Always present on read; empty when none are chosen. */
+            tags: components["schemas"]["WidgetTag"][];
         };
-        /** @description Widget without a server-assigned id. */
+        /** @description Widget without a server-assigned id. tags defaults to []. */
         WidgetCreate: {
             name: components["schemas"]["Widget"]["name"];
             categoryId: components["schemas"]["Widget"]["categoryId"];
@@ -190,8 +197,9 @@ export interface components {
             assigneeEmail?: components["schemas"]["Widget"]["assigneeEmail"];
             price: components["schemas"]["Widget"]["price"];
             description: components["schemas"]["Widget"]["description"];
+            tags?: components["schemas"]["Widget"]["tags"];
         };
-        /** @description All fields optional — PATCH semantics. */
+        /** @description All fields optional — PATCH semantics. tags, when sent, replaces the whole set (send [] to clear it). */
         WidgetUpdate: {
             name?: components["schemas"]["Widget"]["name"];
             categoryId?: components["schemas"]["Widget"]["categoryId"];
@@ -200,6 +208,7 @@ export interface components {
             assigneeEmail?: components["schemas"]["Widget"]["assigneeEmail"];
             price?: components["schemas"]["Widget"]["price"];
             description?: components["schemas"]["Widget"]["description"];
+            tags?: components["schemas"]["Widget"]["tags"];
         };
         /** @description Wire pagination shape — deliberately not Page<T>. The gateway computes page/pageSize from offset/limit; see src/api/gateway/. */
         WidgetListResponse: {
@@ -395,6 +404,8 @@ export interface operations {
                 categoryId?: number;
                 /** @description Case-insensitive substring match on name. */
                 search?: string;
+                /** @description Widgets with any of these tags. Repeat the parameter once per tag, e.g. "tags=fragile&tags=seasonal". */
+                tags?: components["schemas"]["WidgetTag"][];
             };
             header?: never;
             path?: never;

@@ -22,7 +22,10 @@ export function toAppError(status: number, body: unknown): AppError {
     const detail = (body as ValidationErrorBody | undefined)?.detail ?? [];
     const fieldErrors: Record<string, string[]> = {};
     for (const issue of detail) {
-      const field = String(issue.loc[issue.loc.length - 1]);
+      // The field is the last *string* segment: integer segments index into
+      // an array field (["body", "tags", 0] is a bad tag), and a form binds
+      // errors by field name, never by position.
+      const field = String([...issue.loc].reverse().find((segment) => typeof segment === "string") ?? issue.loc[issue.loc.length - 1]);
       (fieldErrors[field] ??= []).push(issue.msg);
     }
     return { kind: "validation", message: "Validation failed", fieldErrors };

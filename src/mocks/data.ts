@@ -66,6 +66,7 @@ const initialWidgets: Widget[] = [
     assigneeEmail: "alice@example.com",
     price: "24.99",
     description: "A basic wireless mouse with a 2.4GHz USB receiver.",
+    tags: ["fragile"],
   },
   {
     id: 2,
@@ -76,6 +77,7 @@ const initialWidgets: Widget[] = [
     assigneeEmail: null,
     price: "349.00",
     description: "Electric height-adjustable desk, 120x60cm top.",
+    tags: ["bulky", "featured"],
   },
   {
     id: 3,
@@ -86,6 +88,7 @@ const initialWidgets: Widget[] = [
     assigneeEmail: "bob@example.com",
     price: "12.50",
     description: "Fine-nib fountain pen, discontinued.",
+    tags: [],
   },
 ];
 

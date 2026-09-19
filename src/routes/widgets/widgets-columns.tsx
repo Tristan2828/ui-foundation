@@ -96,6 +96,27 @@ export function buildWidgetsColumns(
       ),
     },
     {
+      // Multi choice: one outline badge per selected option; an em dash
+      // when none (same empty display as Assignee), never an empty cell.
+      id: 'tags',
+      accessorKey: 'tags',
+      header: 'Tags',
+      enableSorting: false,
+      cell: ({ getValue }) => {
+        const tags = getValue() as Widget['tags']
+        if (tags.length === 0) return <span className="text-muted-foreground">—</span>
+        return (
+          <div className="flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="outline">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )
+      },
+    },
+    {
       id: 'actions',
       // Visually empty, but a <th> with no text is an axe violation.
       header: () => <span className="sr-only">Actions</span>,
