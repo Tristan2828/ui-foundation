@@ -23,6 +23,12 @@ work at every tag.
 
 ## Steps
 
+**Steps 2 and 4 each take several minutes** (npm installs, a production
+build, a browser test run). Run them in the foreground and wait for them to
+finish. If your tool times out or backgrounds long commands, give these a
+longer timeout (15 minutes) instead — every later step depends on them, and
+ending your turn while one is still running leaves a half-built app.
+
 1. **Download the script at that tag** into the parent folder (it creates
    `./<app-name>` next to itself):
    ```bash
