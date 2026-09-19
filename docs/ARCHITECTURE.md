@@ -75,6 +75,9 @@ unpinned registry dependency resolves to `main`, not the tag).
   one is silently lost unless the file is listed in `starter`: `button`,
   `badge`, `combobox`, `src/hooks/use-mobile.ts` today.
 - **Binary files can't ship** (the `gh` CLI corrupts them).
+- **New apps** are created by `scripts/create-app.sh` (instructions for
+  any AI: [`create-an-app.md`](create-an-app.md)); `consume-test.sh` runs
+  the same script, so a release that breaks app creation fails its tests.
 - Anything a consumer must edit that the registry can't (npm scripts) is
   Step 0 of [`add-an-entity.md`](add-an-entity.md) — the only copy of the
   entity playbook, plain instructions for any AI tool (Claude Code's

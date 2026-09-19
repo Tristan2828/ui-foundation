@@ -6,6 +6,16 @@ Releases are git tags; apps install one with
 build and its hardening, one phase at a time — that history is in
 `docs/STATUS.md` and `docs/phases/`.
 
+## 2.1.0 — 2026-09-19
+
+- **Create an app from one instruction.** `docs/create-an-app.md` is
+  written for any AI tool (or a person): download `scripts/create-app.sh`
+  at a tag, run it, do the playbook's Step 0, confirm `npm run verify`
+  passes, stop. The script replaces the manual setup steps, and
+  `scripts/consume-test.sh` now runs it on every release, so the
+  documented path is the tested one.
+- No change to what `starter` installs.
+
 ## 2.0.0 — 2026-09-18 — first stable release
 
 The first release meant to be built on. What an app gets:
