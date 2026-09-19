@@ -17,6 +17,7 @@ full rationale behind each row.
 | `AppError` kinds for 403 (`forbidden`) and 409 (`conflict`) — today both render as the generic `server` error | A backend actually returns either. None does now: another user's widget is a deliberate 404 and a duplicate email is a 422. Considered and not built in audit Phase D (`docs/phases/audit-phase-d.md`) |
 | Error reporting | An app is actually deployed |
 | Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `deps-allowlist.json`/`check-deps.mjs` on the npm side | The backend gains a second contributor/session where an unreviewed Python dependency is a real risk — Phase 8 pinned versions by hand with no mechanical gate |
+| Column-level documentation convention for the Postgres backend — `COMMENT ON TABLE`/`COMMENT ON COLUMN` on every table, required whenever a column's meaning isn't obvious from its name/type. No existing convention (zero `COMMENT ON` usage anywhere in `backend/` today) and no mechanical check. Found while planning a Game List app whose `game_ratings` table needs to be understood by a second, context-free agent with direct read-write Postgres access and no view of `openapi.yaml` or this repo | That app's migration actually ships `COMMENT ON` for real (its own plan documents the convention and a Row-Level Security policy alongside it); once proven there, decide whether it graduates to a Hard Rule with a mechanical check across `backend/`, the way other Hard Rules are enforced |
 
 ## Excluded
 
