@@ -51,15 +51,15 @@ npm run verify:fast    # inner loop, no Playwright
 
 ## For agents
 
-Start with [`AGENTS.md`](AGENTS.md) (imported by `CLAUDE.md` for Claude Code). It has every hard rule and names the mechanical check that enforces it. The most common task — adding a new entity end to end — is documented at [`docs/add-an-entity.md`](docs/add-an-entity.md) and shipped as the `/new-entity <Name>` skill.
+Any AI coding tool works here. Start with [`AGENTS.md`](AGENTS.md) — the cross-tool instruction file (Codex, Cursor, Copilot, Gemini CLI and others read it; `CLAUDE.md` imports it for Claude Code). It has every hard rule and names the mechanical check that enforces it. The most common task — adding a new entity end to end — is plain instructions at [`docs/add-an-entity.md`](docs/add-an-entity.md), starting from a plan in [`docs/entities/`](docs/entities); Claude Code also has a `/new-entity <Name>` shortcut to it.
 
 ## Backend (Phase 8, optional)
 
 The UI runs fully on MSW with no backend at all. `backend/` is a FastAPI + SQLModel + Alembic implementation of `openapi.yaml`, for testing the contract against a real database:
 
 ```bash
-cp backend/.env.example backend/.env   # then fill in your Supabase connection — see docs/cloud-postgres.md
-bash backend/scripts/dev.sh             # venv + migrations + API, http://localhost:8000
+cp backend/.env.example backend/.env   # local Docker Postgres by default — no account needed
+bash backend/scripts/dev.sh             # Docker Postgres + venv + migrations + API, http://localhost:8000
 
 # in another shell, from the repo root:
 VITE_API=real npm run dev     # proxies /api to the backend
@@ -67,7 +67,7 @@ VITE_API=real npm run dev     # proxies /api to the backend
 
 Log in with the seeded dev user: `dev@example.com` / `dev-password-123`. Deploying for real? Follow [`docs/deploy.md`](docs/deploy.md) — with `APP_ENV=production` the backend refuses to start while that password still works.
 
-The backend's database is Supabase by default ([`docs/cloud-postgres.md`](docs/cloud-postgres.md) covers setup, including the pooler port and root-CA gotchas). `backend/scripts/dev.sh` creates the venv, installs, runs `alembic upgrade head` and starts `uvicorn --reload` in one call, idempotently — safe to re-run. For offline work, `bash backend/scripts/dev.sh --local` uses the Docker Compose Postgres instead; `scripts/check-backend-postgres.sh` always does, so automated runs never write test users into Supabase. For the backend's own verify gate (mypy + pytest + spec conformance), see `backend/scripts/verify.sh`.
+The backend's database is the local Docker Compose Postgres by default (needs Docker running). `backend/scripts/dev.sh` starts it, creates the venv, installs, runs `alembic upgrade head` and starts `uvicorn --reload` in one call, idempotently — safe to re-run. **Supabase is the cloud choice** for an app that needs real, shared or deployed data: [`docs/cloud-postgres.md`](docs/cloud-postgres.md) covers switching, including the pooler port and root-CA gotchas. `scripts/check-backend-postgres.sh` always uses the local database, so automated runs never write test users into a cloud one. For the backend's own verify gate (mypy + pytest + spec conformance), see `backend/scripts/verify.sh`.
 
 See [`docs/phases/phase-8.md`](docs/phases/phase-8.md) for what's built.
 
@@ -75,10 +75,10 @@ Widgets are private to the user who created them (categories are shared). If you
 
 ## Consuming this as a registry
 
-Latest tag is `v1.13.0`. Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
+Latest tag is `v2.0.0` — the first stable release ([`CHANGELOG.md`](CHANGELOG.md)). Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
 
 ```bash
-npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v1.13.0
+npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v2.0.0
 ```
 
 Installed files are yours from then on. To take a later release safely (never `--overwrite` an app with entities), or to get the backend, see [`docs/consuming.md`](docs/consuming.md).

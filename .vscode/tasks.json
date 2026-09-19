@@ -32,7 +32,7 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": { "panel": "dedicated", "group": "app" },
-      "detail": "FastAPI on :8000 — venv, migrations, uvicorn --reload against whatever backend/.env points at (Supabase by default; see docs/BLOCKERS.md until that's set up)"
+      "detail": "FastAPI on :8000 — venv, migrations, uvicorn --reload against whatever backend/.env points at (local Docker Postgres by default; Supabase is the cloud choice, docs/cloud-postgres.md)"
     },
     {
       "label": "Backend: dev (local Postgres)",

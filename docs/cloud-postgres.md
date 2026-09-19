@@ -1,11 +1,12 @@
 # Cloud Postgres
 
-Supabase is the backend's default database for day-to-day development
-(`backend/.env.example` is shaped for it). `docker-compose.yml`'s local
-Postgres remains for offline work (`bash backend/scripts/dev.sh --local`)
-and for automated checks — `scripts/check-backend-postgres.sh` always forces it, so
-test runs never register throwaway users in your hosted database. This page
-covers setting up the hosted instance. The code is
+The backend runs on `docker-compose.yml`'s local Postgres by default —
+`backend/scripts/dev.sh` starts it, with no account or secrets. **Supabase
+is the cloud choice**, for an app that needs real, shared or deployed data;
+this page covers setting that up (`backend/.env.example` has the Supabase
+lines, commented out). Automated checks always use the local database —
+`scripts/check-backend-postgres.sh` forces it, so test runs never register
+throwaway users in your hosted database. The code is
 provider-agnostic — it only requires standard Postgres reachable over
 SSL — but the steps below use Supabase's free tier as the concrete worked
 example, since that's what this repo has actually verified against

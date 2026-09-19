@@ -260,7 +260,12 @@ LOGDIR="$REPO_ROOT/logs/consume-test/${REF}-${ENTITY}-${STAMP}"
 mkdir -p "$LOGDIR"
 TRANSCRIPT="$LOGDIR/transcript.jsonl"
 
-echo "consume-test: launching a fresh agent in $APP — /new-entity $ENTITY"
+# AGENT_PROMPT overrides the instruction. The default is Claude Code's
+# /new-entity shortcut; a plain request with no skill and no hint (e.g.
+# AGENT_PROMPT="Add an Invoice entity to this app.") tests what any AI tool
+# relies on instead: AGENTS.md routing it to docs/add-an-entity.md.
+AGENT_PROMPT="${AGENT_PROMPT:-/new-entity $ENTITY}"
+echo "consume-test: launching a fresh agent in $APP — $AGENT_PROMPT"
 echo "consume-test: transcript -> $TRANSCRIPT"
 
 # No --max-turns flag exists in this Claude Code CLI version (2.1.273) —
@@ -283,7 +288,7 @@ echo "consume-test: transcript -> $TRANSCRIPT"
 # guessing — but the run was wasted on a test-harness bug, not a
 # foundation one. See docs/phases/phase-7.md.
 AGENT_EXIT=0
-MSYS_NO_PATHCONV=1 timeout 3600 claude -p "/new-entity $ENTITY" \
+MSYS_NO_PATHCONV=1 timeout 3600 claude -p "$AGENT_PROMPT" \
   --dangerously-skip-permissions \
   --output-format stream-json --verbose \
   > "$TRANSCRIPT" 2> "$LOGDIR/stderr.log" || AGENT_EXIT=$?

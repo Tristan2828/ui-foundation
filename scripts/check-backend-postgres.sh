@@ -20,7 +20,7 @@ REPO_ROOT="$(pwd)"
 fail() { echo "check-backend-postgres: $1" >&2; exit 1; }
 
 # Always the throwaway docker-compose.yml Postgres, never whatever
-# backend/.env points at (Supabase by default) — this script registers test
+# backend/.env points at (possibly a cloud database like Supabase) — this script registers test
 # users and runs migrations, which shouldn't land in a real database.
 # python-dotenv doesn't override variables already set, so these win.
 export DATABASE_URL="postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation"

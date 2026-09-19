@@ -1,10 +1,12 @@
 # <Entity> — entity plan
 
-The input to `/new-entity`. It builds exactly what this file says — no
-invented fields, options or rules. Copy this file to
-`docs/entities/<entity>.md` (kebab-case, singular: `game.md`) and fill it
-in, or run `/new-entity <Name>` without one and it will talk it through
-with you and write it. `docs/entities/widget.md` is a filled-in example.
+The input to the entity playbook (`docs/add-an-entity.md`, which any AI
+tool can follow; Claude Code's `/new-entity` is a shortcut). It builds
+exactly what this file says — no invented fields, options or rules. Copy
+this file to `docs/entities/<entity>.md` (kebab-case, singular: `game.md`)
+and fill it in, or ask your AI tool to plan the entity with you and it
+will talk it through and write this file. `docs/entities/widget.md` is a
+filled-in example.
 
 ## Purpose
 
@@ -29,7 +31,7 @@ One or two sentences: what one record is, and who uses the screens.
     pattern): `integer` (from decimal), `url` (from email — a format
     check), `date` (from date-time — no time part).
   - *Not supported yet:* boolean, file, and anything else.
-    Write it anyway with a note; `/new-entity` will stop and raise it
+    Write it anyway with a note; the playbook will stop and raise it
     rather than improvise.
 - **Required**: `yes`, or `no` (then say whether empty means "unknown").
 - **List**: `column` if it shows in the table, and `sortable` if you can
@@ -45,12 +47,12 @@ One or two sentences: what one record is, and who uses the screens.
 
 ## Screens and access
 
-- Screens: list, create, edit, delete (the only shape `/new-entity` builds
+- Screens: list, create, edit, delete (the only shape the playbook builds
   today).
 - Ownership: **shared** (every signed-in user sees every record) or
   **per-user** (each user sees only their own).
 
 ## Open questions
 
-Anything not decided yet. `/new-entity` won't start while this section has
+Anything not decided yet. The playbook won't start while this section has
 an unresolved item.

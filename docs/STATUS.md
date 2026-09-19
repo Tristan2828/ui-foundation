@@ -4,8 +4,9 @@ At-a-glance phase checklist. This replaces the Notion tracker this
 project used during early development — everything now lives in the
 repo, in one place, versioned alongside the code it describes.
 
-**Current state:** the original plan (Phases 0–13) and the pre-reuse audit
-(Phases A–E below) are done. The latest release tag is kept in one place,
+**Current state:** `v2.0.0`, the first stable release ([`CHANGELOG.md`](../CHANGELOG.md)),
+after the original plan (Phases 0–13), the pre-reuse audit (Phases A–E) and
+the first-real-project follow-ups (Phases F–G), all below. The latest release tag is kept in one place,
 the README's "Consuming this as a registry" section. How the repo works and
 which checks a change needs: [`ARCHITECTURE.md`](ARCHITECTURE.md). The
 standing proof of reusability is still Phase 7's: a fresh agent builds an
