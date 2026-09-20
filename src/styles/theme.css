@@ -31,7 +31,12 @@
   --gray-950: oklch(0.205 0 0);
 
   --red-500: oklch(0.577 0.245 27.325);
+  --red-700: oklch(0.5 0.21 27.325);
+  --red-400: oklch(0.74 0.19 27.325);
   --blue-500: oklch(0.488 0.243 264.376);
+  --green-700: oklch(0.527 0.154 150.069);
+  --green-800: oklch(0.43 0.13 150.069);
+  --green-400: oklch(0.75 0.16 150.069);
 
   --radius-base: 0.625rem;
 
@@ -52,6 +57,18 @@
   --accent-foreground: var(--gray-950);
   --destructive: var(--red-500);
   --destructive-foreground: var(--white);
+  --success: var(--green-700);
+  --success-foreground: var(--white);
+  /* success/destructive above are a fixed bg+fg pair for a SOLID fill only
+     (always white text, so the fill can stay one shade in both themes).
+     Used as text or a border on the page's own background instead — an
+     outline badge, an icon tint — that same shade fails contrast (red-500
+     text on white is ~3.8:1, under the 4.5:1 minimum) or is just too dark
+     to read on a dark ground. success-text/destructive-text are the
+     separate, per-theme-adjusted shades for that job. First used, and
+     verified against real WCAG contrast checks, in the game-list app. */
+  --success-text: var(--green-800);
+  --destructive-text: var(--red-700);
   --border: var(--gray-200);
   --input: var(--gray-200);
   --ring: var(--gray-400);
@@ -89,6 +106,10 @@
   --accent-foreground: var(--gray-50);
   --destructive: var(--red-500);
   --destructive-foreground: var(--white);
+  --success: var(--green-700);
+  --success-foreground: var(--white);
+  --success-text: var(--green-400);
+  --destructive-text: var(--red-400);
   --border: var(--white-a10);
   --input: var(--white-a15);
   --ring: var(--gray-500);

@@ -7,7 +7,17 @@ const meta: Meta<typeof Badge> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'secondary', 'outline', 'destructive', 'ghost', 'link'],
+      options: [
+        'default',
+        'secondary',
+        'outline',
+        'destructive',
+        'success',
+        'outline-destructive',
+        'outline-success',
+        'ghost',
+        'link',
+      ],
     },
     children: {
       control: 'text',
