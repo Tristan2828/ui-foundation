@@ -75,11 +75,22 @@ Widgets are private to the user who created them (categories are shared). If you
 
 ## Consuming this as a registry
 
-Latest tag is `v2.1.1` (2.0.0 was the first stable release — [`CHANGELOG.md`](CHANGELOG.md)). Use the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
+Install a **tag**, never `main` — GitHub's raw CDN caches branch refs for
+five minutes, so a branch install can mix new and stale files. Tags are cut
+automatically on every merge that changes a file the registry ships:
+
+**→ [Latest release](https://github.com/Tristan2828/ui-foundation/releases/latest)**
+(2.0.0 was the first stable release — [`CHANGELOG.md`](CHANGELOG.md))
+
+Use that tag with the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
 
 ```bash
-npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#v2.1.1
+npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#<tag>
 ```
+
+This links the release rather than naming a version on purpose: a hardcoded
+number here is a manual bump on every release, and is wrong the first time
+one is missed.
 
 **Starting a new app?** Point any AI tool at [`docs/create-an-app.md`](docs/create-an-app.md) — it stands the app up and verifies it, ready for your first entity plan. Installed files are yours from then on. To take a later release safely (never `--overwrite` an app with entities), or to get the backend, see [`docs/consuming.md`](docs/consuming.md).
 
