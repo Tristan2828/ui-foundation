@@ -110,6 +110,31 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
   })
 
+  test('an unset filter shows its label, not the sentinel value', async ({ page }) => {
+    // Regression: the Status trigger read the literal "all". Base UI's
+    // <SelectValue> renders the raw value, and STATUS_FILTER_ALL is a real
+    // value, so `placeholder` never applied. Every entity's toolbar is
+    // copied from widgets-table.tsx (docs/add-an-entity.md), so this
+    // shipped to every consuming app.
+    //
+    // Note what this asserts that the filter tests above do not: the
+    // *unset* state. Asserting only after a value is picked passes either
+    // way, because WIDGET_STATUSES' values are their own labels.
+    await page.goto('/widgets')
+    await expect(page.getByLabel('Filter by status')).toContainText('All statuses')
+    await expect(page.getByLabel('Filter by status')).not.toHaveText(/^all/)
+
+    // A picked value still shows itself, and clearing returns to the
+    // label rather than falling back to the sentinel.
+    await page.getByLabel('Filter by status').click()
+    await page.getByRole('option', { name: 'active', exact: true }).click()
+    await expect(page.getByLabel('Filter by status')).toContainText('active')
+
+    await page.getByLabel('Filter by status').click()
+    await page.getByRole('option', { name: 'All statuses' }).click()
+    await expect(page.getByLabel('Filter by status')).toContainText('All statuses')
+  })
+
   test('search sends one request once typing pauses, not one per keystroke', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
