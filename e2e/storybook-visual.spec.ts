@@ -9,8 +9,18 @@ import { expect, test } from '@playwright/test'
 const STORYBOOK_URL = 'http://localhost:6006'
 const PRIMITIVES = ['button', 'badge']
 
+// Stories that exist to be contrast-checked rather than screenshotted:
+// every semantic tone in every style on screen at once, so axe sees all
+// nine combinations in both themes. Adding a tone or a style without
+// adding it here would ship an unmeasured color.
+const TONE_STORY_IDS = ['ui-badge--all-tones']
+
+function storyUrlById(id: string, theme: 'light' | 'dark') {
+  return `${STORYBOOK_URL}/iframe.html?id=${id}&viewMode=story&globals=theme:${theme}`
+}
+
 function storyUrl(name: string, theme: 'light' | 'dark') {
-  return `${STORYBOOK_URL}/iframe.html?id=ui-${name}--default&viewMode=story&globals=theme:${theme}`
+  return storyUrlById(`ui-${name}--default`, theme)
 }
 
 // Storybook's iframe.html is an isolated component preview, not a full
@@ -61,5 +71,26 @@ test.describe('storybook stories have zero axe violations in dark mode', () => {
       const results = await analyzeStory(page)
       expect(results.violations).toEqual([])
     })
+  }
+})
+
+// The semantic tones (success / warning / destructive, each as a solid
+// fill, an outline and a tinted chip) are the one part of the design
+// language whose whole correctness is a contrast ratio. theme.css records
+// the measured numbers; this is what proves them against the rendered DOM,
+// in both themes, before a consuming app inherits them.
+test.describe('semantic tones meet contrast in both themes', () => {
+  for (const id of TONE_STORY_IDS) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${id} has zero axe violations (${theme})`, async ({ page }) => {
+        await page.goto(storyUrlById(id, theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        // Guard against a silently empty story: an iframe that rendered
+        // nothing would pass every contrast rule trivially.
+        await expect(page.getByText('outline-success')).toBeVisible()
+        const results = await analyzeStory(page)
+        expect(results.violations).toEqual([])
+      })
+    }
   }
 })

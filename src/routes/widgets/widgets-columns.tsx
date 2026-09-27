@@ -12,13 +12,22 @@ import { DeleteWidgetAction } from './delete-widget-action'
 type Widget = components['schemas']['Widget']
 type WidgetStatus = components['schemas']['WidgetStatus']
 
-const STATUS_BADGE_VARIANT: Record<WidgetStatus, 'default' | 'secondary' | 'outline'> = {
-  // Not `destructive` for "archived": the shadcn-shipped destructive badge
-  // is a tinted (not solid) variant that fails WCAG AA contrast — the same
-  // bug Phase 3 fixed on the Button component but left open on Badge (a
-  // Phase 5 palette concern). Using it here would reintroduce that failure.
+// Enum → tone-mapped badge: group the values by what they *mean* (good /
+// neutral / bad) first, then pick one style for the whole column. The
+// grouping is the real decision; the style is mostly consistency with the
+// table's other columns. See docs/design-language.md.
+//
+// Only `active` earns a tone. `archived` is an end state, not a failure,
+// so it stays neutral — a red badge would tell the reader something is
+// wrong when nothing is.
+//
+// (An earlier comment here said the `destructive` badge fails AA contrast.
+// That was true of the tinted variant shadcn originally shipped; Phase 5
+// replaced it with a solid fill, and white on `--destructive` measures
+// 4.76:1, which passes. The claim outlived the bug.)
+const STATUS_BADGE_VARIANT: Record<WidgetStatus, 'outline' | 'outline-success' | 'secondary'> = {
   draft: 'outline',
-  active: 'default',
+  active: 'outline-success',
   archived: 'secondary',
 }
 
