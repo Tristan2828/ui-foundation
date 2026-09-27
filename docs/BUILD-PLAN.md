@@ -28,6 +28,22 @@ Human-only material (effort budgets, when to cut scope, how to respond when the 
 
 ## Scope Ceiling
 
+> [!Note]
+> **These were v1.0 ship guards, and v1.0 shipped.** The scope budget and
+> the "does not need to be good" non-goal below did their job: they got the
+> foundation to a released, reusable state instead of an endless component
+> library. They are **no longer the current stance**, and they are cited by
+> name often enough (source comments quote "Phase 4 Scope Ceiling") to be
+> worth flagging here and not only at the top of this file.
+>
+> Since 2026-09-20 the rule is two tracks: *design language* — tokens,
+> tones, variant styles, cell patterns, typography, density — grows freely
+> now that a real application exists and wants polish, while *structure* —
+> composites, registry items, backend, infrastructure — stays need-driven
+> and keeps the "building forever" warning below. See
+> [`DEFERRED.md`](DEFERRED.md) "Direction" and
+> [`ARCHITECTURE.md`](ARCHITECTURE.md) "Focus", both current.
+
 The failure mode for this project is not building the wrong thing. It is building forever.
 
 - **Definition of done:** `scripts/check-phase-7.sh` passes. Not "the component library feels complete."
