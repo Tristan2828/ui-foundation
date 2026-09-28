@@ -1,11 +1,32 @@
 import * as React from "react"
 import { cn } from "cn"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+// `containerRef`/`containerClassName` are this repo's patch to the upstream
+// primitive. Upstream wraps the <table> in a scroll container that nothing
+// outside can reach, so anything keyed to the scroll viewport — a sticky
+// scrollbar, a pinned column, an IntersectionObserver — had to find that
+// div with querySelector('[data-slot="table-container"]') and re-find it on
+// every render. Forwarding a real ref is the same capability without the
+// DOM lookup. See src/components/app/data-table.tsx's `pinFirstColumn`.
+//
+// Patched primitives must be listed as files in registry.json (see
+// docs/ARCHITECTURE.md "The registry") — otherwise `registryDependencies`
+// pulls the unpatched upstream copy at install time and this is silently
+// lost in every consuming app.
+function Table({
+  className,
+  containerRef,
+  containerClassName,
+  ...props
+}: React.ComponentProps<"table"> & {
+  containerRef?: React.Ref<HTMLDivElement>
+  containerClassName?: string
+}) {
   return (
     <div
+      ref={containerRef}
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className={cn("relative w-full overflow-x-auto", containerClassName)}
     >
       <table
         data-slot="table"
@@ -30,7 +51,16 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
+      // Zebra striping, scoped to the body so the header is never tinted.
+      // NOTE the specificity trap this creates: `tr:nth-child(even)` is
+      // (0,2,1) while any `tr:hover` rule is (0,2,0), so the stripe
+      // outranks hover and even rows would not light up — a whole-row
+      // hover here lights only the odd rows. data-table.tsx handles this
+      // by highlighting a single pinned cell instead of the row.
+      className={cn(
+        "[&_tr:last-child]:border-0 [&_tr:nth-child(even)]:bg-muted/40",
+        className
+      )}
       {...props}
     />
   )

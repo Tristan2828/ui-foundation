@@ -11,8 +11,9 @@
 // pagination tree-shakeable and independently swappable, which buys nothing
 // here: every row model is manual (the server sorts and pages), so this
 // table never uses TanStack's own sorted/paginated row models at all.
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { flexRender } from '@tanstack/react-table'
+import { cn } from 'cn'
 import { getCoreRowModel, useLegacyTable, type LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import type { AppError } from '@/api/contracts'
@@ -49,6 +50,12 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
   emptyAction?: React.ReactNode
   toolbar?: React.ReactNode
   getRowId?: (row: TData) => string
+  /**
+   * Pins the first column so it stays put while the rest scrolls
+   * horizontally, and adds a second scrollbar stuck to the viewport's
+   * bottom edge. Opt in per table — a narrow table needs neither.
+   */
+  pinFirstColumn?: boolean
 }
 
 function TableSkeleton({ columnCount }: { columnCount: number }) {
@@ -63,6 +70,96 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
       ))}
     </div>
   )
+}
+
+// The pinned cell gets a flat `bg-background`, not `bg-inherit`: the zebra
+// stripe (table.tsx) is a *translucent* color, so inheriting it would let
+// the columns scrolling behind show through at 40% opacity — exactly the
+// bleed-through a solid background avoids. That also means the pinned
+// column shows no stripe, which is why it is the thing that carries the
+// hover highlight. --accent is only ~3% off the page background, so a
+// solid left edge marker carries the signal; an inset shadow rather than a
+// border, so nothing reflows.
+const PINNED_COLUMN_CLASS =
+  'sticky left-0 z-10 border-r bg-background group-hover/row:bg-accent ' +
+  'group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]'
+
+// Hover highlights the pinned cell, not the whole row. A row-level hover
+// cannot be made consistent against the zebra stripe: `tr:nth-child(even)`
+// is specificity (0,2,1) and `tr:hover` is (0,2,0), so the stripe wins and
+// even rows stay unlit — odd rows highlight, even rows don't.
+// `hover:bg-transparent` drops table.tsx's own `hover:bg-muted/50` via
+// tailwind-merge so no row hover is attempted at all. The pinned cell is
+// the better target anyway: it names the row, it sits on an opaque
+// background so it reads identically on striped and unstriped rows, and it
+// stays on screen when the table is scrolled right.
+const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
+
+// A second horizontal scrollbar, stuck to the viewport's bottom edge. The
+// real one sits directly under the last row, which on a full page is
+// off-screen until you have already scrolled past every row. Only rendered
+// once the content actually overflows.
+function useBottomScrollbar(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isSuccessView: boolean,
+) {
+  const barRef = useRef<HTMLDivElement>(null)
+  const [scrollWidth, setScrollWidth] = useState(0)
+  const [clientWidth, setClientWidth] = useState(0)
+  const isOverflowing = scrollWidth > clientWidth
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!isSuccessView || !container) return
+    const contentTable = container.querySelector('table')
+    if (!contentTable) return
+
+    const measure = () => {
+      setScrollWidth(container.scrollWidth)
+      setClientWidth(container.clientWidth)
+    }
+    measure()
+
+    // The inner <table> grows with column and content width; the container
+    // changes with the viewport and the sidebar. Either can change whether,
+    // and how far, there is to scroll.
+    const resizeObserver = new ResizeObserver(measure)
+    resizeObserver.observe(container)
+    resizeObserver.observe(contentTable)
+    return () => resizeObserver.disconnect()
+  }, [containerRef, isSuccessView])
+
+  // Separate from the measuring effect: the bar only enters the DOM once
+  // `isOverflowing` is true, which that effect is what sets. Wiring the
+  // listeners there would read barRef.current before the bar had ever
+  // rendered and silently attach to nothing.
+  useEffect(() => {
+    const container = containerRef.current
+    const bar = barRef.current
+    if (!isSuccessView || !isOverflowing || !container || !bar) return
+
+    let isSyncing = false
+    const syncBarFromContainer = () => {
+      if (isSyncing) return
+      isSyncing = true
+      bar.scrollLeft = container.scrollLeft
+      isSyncing = false
+    }
+    const syncContainerFromBar = () => {
+      if (isSyncing) return
+      isSyncing = true
+      container.scrollLeft = bar.scrollLeft
+      isSyncing = false
+    }
+    container.addEventListener('scroll', syncBarFromContainer)
+    bar.addEventListener('scroll', syncContainerFromBar)
+    return () => {
+      container.removeEventListener('scroll', syncBarFromContainer)
+      bar.removeEventListener('scroll', syncContainerFromBar)
+    }
+  }, [containerRef, isSuccessView, isOverflowing])
+
+  return { barRef, isOverflowing, scrollWidth }
 }
 
 export function DataTable<TData extends Record<string, unknown>>({
@@ -82,6 +179,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   emptyAction,
   toolbar,
   getRowId,
+  pinFirstColumn,
 }: DataTableProps<TData>) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
 
@@ -116,6 +214,13 @@ export function DataTable<TData extends Record<string, unknown>>({
   }, [isPastLastPage, pageCount, onPageChange])
 
   const isEmpty = !isLoading && !error && data.length === 0 && !isPastLastPage
+  const isSuccessView = !error && !isLoading && !isPastLastPage && !isEmpty
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { barRef, isOverflowing, scrollWidth } = useBottomScrollbar(
+    containerRef,
+    Boolean(pinFirstColumn) && isSuccessView,
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -135,16 +240,28 @@ export function DataTable<TData extends Record<string, unknown>>({
         </Empty>
       ) : (
         <>
-          <Table data-state="success">
+          <Table
+            data-state="success"
+            containerRef={containerRef}
+            // With the sticky bar below as the visible scrollbar, hide the
+            // container's own. It stays overflow-x-auto and fully
+            // scrollable (wheel, trackpad, drag, and the sync effect); it
+            // just no longer draws a bar directly under the last row.
+            containerClassName={cn(
+              pinFirstColumn &&
+                '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+            )}
+          >
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
+                  {headerGroup.headers.map((header, index) => {
                     const canSort = header.column.getCanSort()
                     const sortDirection = header.column.getIsSorted()
                     return (
                       <TableHead
                         key={header.id}
+                        className={cn(pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS)}
                         aria-sort={
                           !canSort
                             ? undefined
@@ -181,9 +298,12 @@ export function DataTable<TData extends Record<string, unknown>>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                <TableRow key={row.id} className={cn(pinFirstColumn && ROW_GROUP_CLASS)}>
+                  {row.getVisibleCells().map((cell, index) => (
+                    <TableCell
+                      key={cell.id}
+                      className={cn(pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS)}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -191,6 +311,18 @@ export function DataTable<TData extends Record<string, unknown>>({
               ))}
             </TableBody>
           </Table>
+
+          {pinFirstColumn && isOverflowing && (
+            <div
+              ref={barRef}
+              aria-hidden="true"
+              tabIndex={-1}
+              data-slot="bottom-scrollbar"
+              className="sticky bottom-0 z-20 h-4 overflow-x-auto border-t border-border bg-background"
+            >
+              <div style={{ width: scrollWidth, height: 1 }} />
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">

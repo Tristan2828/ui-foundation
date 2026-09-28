@@ -145,6 +145,7 @@ export function WidgetsTableRoute() {
           </div>
         }
         getRowId={(widget) => String(widget.id)}
+        pinFirstColumn
       />
     </div>
   )

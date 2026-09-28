@@ -157,6 +157,109 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
   })
 
+  test('the first column stays pinned when the table scrolls horizontally', async ({ page }) => {
+    // A sticky column can render perfectly and still not stick (an
+    // overflow-hidden ancestor, a stray position: relative) with nothing in
+    // the DOM to show it — so this checks actual scroll behaviour, not the
+    // presence of the sticky classes. A narrow viewport guarantees the
+    // table overflows regardless of how wide any one column renders.
+    await page.setViewportSize({ width: 800, height: 720 })
+    await page.goto('/widgets')
+    const nameCell = page.getByRole('cell', { name: 'Wireless Mouse', exact: true })
+    await expect(nameCell).toBeVisible()
+
+    const container = page.locator('[data-slot="table-container"]')
+    const before = await nameCell.boundingBox()
+    const scrollLeft = await container.evaluate((el) => {
+      el.scrollLeft = el.scrollWidth
+      return el.scrollLeft
+    })
+    const after = await nameCell.boundingBox()
+
+    // Proves the table actually overflows here — otherwise scrollLeft stays
+    // 0 and the position check below passes trivially.
+    expect(scrollLeft).toBeGreaterThan(0)
+    expect(before).not.toBeNull()
+    expect(after).not.toBeNull()
+    expect(after!.x).toBeCloseTo(before!.x, 0)
+  })
+
+  test('hovering highlights the pinned cell identically on striped and unstriped rows', async ({
+    page,
+  }) => {
+    // The zebra stripe is `tr:nth-child(even)` at specificity (0,2,1) and
+    // beats any `tr:hover` rule at (0,2,0), so a whole-row hover lights the
+    // odd rows and leaves the even ones striped and unlit. The highlight
+    // therefore lives on the pinned cell, which sits on an opaque
+    // background regardless of the stripe and reads the same on every row.
+    await page.setViewportSize({ width: 800, height: 720 })
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+
+    const read = async (rowIndex: number) => {
+      const row = page.locator('tbody tr').nth(rowIndex)
+      const nameCell = row.locator('td').first()
+      const idle = await nameCell.evaluate((el) => getComputedStyle(el).backgroundColor)
+      await row.getByRole('button', { name: /^Edit / }).hover()
+      const hovered = await nameCell.evaluate((el) => ({
+        background: getComputedStyle(el).backgroundColor,
+        boxShadow: getComputedStyle(el).boxShadow,
+      }))
+      return { idle, hovered }
+    }
+
+    const oddRow = await read(0) // unstriped
+    const evenRow = await read(1) // striped
+
+    for (const { idle, hovered } of [oddRow, evenRow]) {
+      // The pinned cell reacts to the hover...
+      expect(hovered.background).not.toBe(idle)
+      // ...stays fully opaque, so scrolled columns can't bleed through...
+      expect(hovered.background).not.toMatch(/\/\s*[\d.]+\s*\)$/)
+      // ...and carries the inset left-edge marker.
+      expect(hovered.boxShadow).toContain('inset')
+    }
+
+    // The regression itself: the highlight must not depend on which side of
+    // the zebra stripe a row falls on.
+    expect(evenRow.hovered.background).toBe(oddRow.hovered.background)
+    expect(oddRow.idle).toBe(evenRow.idle)
+  })
+
+  test('a bottom scrollbar stays reachable without scrolling past every row, and mirrors the real one', async ({
+    page,
+  }) => {
+    // The container's own scrollbar sits directly under the last row, which
+    // on a full page is off-screen until you have already scrolled past
+    // every row. This second bar is stuck to the viewport bottom and stays
+    // in sync with the container in both directions.
+    await page.setViewportSize({ width: 800, height: 720 })
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+
+    const bar = page.locator('[data-slot="bottom-scrollbar"]')
+    await expect(bar).toBeVisible()
+    const container = page.locator('[data-slot="table-container"]')
+
+    const barScrollLeft = await bar.evaluate((el) => {
+      el.scrollLeft = el.scrollWidth
+      return el.scrollLeft
+    })
+    expect(barScrollLeft).toBeGreaterThan(0)
+    await expect.poll(() => container.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0)
+
+    await container.evaluate((el) => {
+      el.scrollLeft = 0
+    })
+    await expect.poll(() => bar.evaluate((el) => el.scrollLeft)).toBe(0)
+
+    // The container's native scrollbar is hidden now that the sticky bar is
+    // the visible one — it stays fully functional (this test just scrolled
+    // it by script), so there is exactly one visible scrollbar.
+    const scrollbarWidth = await container.evaluate((el) => getComputedStyle(el).scrollbarWidth)
+    expect(scrollbarWidth).toBe('none')
+  })
+
   test('success: the default MSW data renders in the table', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()

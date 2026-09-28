@@ -107,6 +107,7 @@
         { "path": "src/components/ui/button.tsx", "type": "registry:file", "target": "~/src/components/ui/button.tsx" },
         { "path": "src/components/ui/badge.tsx", "type": "registry:file", "target": "~/src/components/ui/badge.tsx" },
         { "path": "src/components/ui/combobox.tsx", "type": "registry:file", "target": "~/src/components/ui/combobox.tsx" },
+        { "path": "src/components/ui/table.tsx", "type": "registry:file", "target": "~/src/components/ui/table.tsx" },
         { "path": "src/hooks/use-mobile.ts", "type": "registry:file", "target": "~/src/hooks/use-mobile.ts" },
         { "path": "src/hooks/use-debounced-value.ts", "type": "registry:file", "target": "~/src/hooks/use-debounced-value.ts" },
         { "path": "src/hooks/use-table-url-state.ts", "type": "registry:file", "target": "~/src/hooks/use-table-url-state.ts" },
