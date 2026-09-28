@@ -106,6 +106,56 @@ filled-in example).
      `src/routes/<entity>/<entity>-form.tsx` — thin consumer of
      `<EntityForm>` (`src/components/app/entity-form.tsx`). Swap the zod
      schema and fields; do not fork `<EntityForm>` itself.
+
+   **`<SelectValue>` shows the value, not the label.** Base UI renders the
+   raw *value*, and `placeholder` only applies when the value is `null`.
+   Any `Select` whose "nothing chosen" state is a sentinel rather than
+   `null` therefore displays that sentinel on screen unless you pass the
+   children function. This bit every `Select` in the first app built on
+   this registry. Two cases, both needing it:
+
+   - **A toolbar filter**, where "no filter" is `'all'` — copied straight
+     from `widgets-table.tsx`, which now carries the shape to copy: a
+     label constant read by both the trigger and its `<SelectItem>`.
+   - **An optional `single choice` field**, which Widget has no example of
+     (its `status` is required and its `categoryId` is a combobox). A Base
+     UI `Select` item's value cannot be `''`, so the field's own unset
+     value is remapped through a sentinel:
+
+     ```tsx
+     const UNSET = '__unset__'
+     const UNSET_LABEL = 'Not set'   // the plan's "not set" label
+     // ...
+     <Controller
+       control={form.control}
+       name="priority"
+       render={({ field }) => (
+         <Select
+           value={field.value === '' ? UNSET : field.value}
+           onValueChange={(value) => field.onChange(value === UNSET ? '' : value)}
+         >
+           <SelectTrigger id="<entity>-priority">
+             {/* Without this the trigger reads the literal "__unset__" */}
+             <SelectValue>{(value) => (value === UNSET ? UNSET_LABEL : value)}</SelectValue>
+           </SelectTrigger>
+           <SelectContent>
+             <SelectItem value={UNSET}>{UNSET_LABEL}</SelectItem>
+             {PRIORITIES.map((option) => (
+               <SelectItem key={option} value={option}>{option}</SelectItem>
+             ))}
+           </SelectContent>
+         </Select>
+       )}
+     />
+     ```
+
+     The zod schema keeps `''` as the unset value and converts it to
+     `null` on the way to the wire, the way `widget-schema.ts` already
+     handles a blank `assigneeEmail`. Step 8's specs must assert the
+     **unset** display, not only a picked one — a select whose enum values
+     equal their labels passes either way, which is exactly how this
+     shipped unnoticed.
+
    **Choosing how each column looks.** The plan says what a field *means*,
    not how its cell should render. For most columns plain text is right and
    there is nothing to decide. Where there is:

@@ -18,13 +18,15 @@ One or two sentences: what one record is, and who uses the screens.
 |---|---|---|---|---|---|---|
 | title | Title | text | yes | 1–200 chars | column, sortable | search |
 | status | Status | single choice | yes | Backlog, Playing, Finished; default Backlog | column, sortable | yes |
+| priority | Priority | single choice | no | Low, Normal, High; empty means not set | column, sortable | yes |
 
 - **Field**: camelCase, as it appears in the API (`releaseDate`).
 - **Type** — what the foundation supports today:
   - *Demonstrated by the Widget reference* (copied directly): `text` (one
     line), `long text`, `decimal` (fixed places — say how many),
     `date-time`, `email`, `single choice` (list the options, in display
-    order), `multi choice` (list the options; any number can be picked —
+    order; see the note below if it is *optional*), `multi choice` (list
+    the options; any number can be picked —
     chips on the form, badges in the table, an any-of filter), `reference`
     (to another entity — name it; a searchable combobox).
   - *Close variants* (built by a small, stated change to the nearest
@@ -34,6 +36,13 @@ One or two sentences: what one record is, and who uses the screens.
     Write it anyway with a note; the playbook will stop and raise it
     rather than improvise.
 - **Required**: `yes`, or `no` (then say whether empty means "unknown").
+  An **optional `single choice`** needs one extra decision: the label for
+  "not set" (`Not checked`, `Any`, `None`…), because the form shows it as
+  a real option rather than a blank. Say it in the Options column. Widget
+  has no optional choice field, so the playbook builds this one from the
+  worked example in `docs/add-an-entity.md` step 6 rather than by copying
+  a screen — a Base UI `Select` can't take `""` as an item value, so the
+  pattern needs a sentinel and gets the display wrong without one.
 - **List**: `column` if it shows in the table, and `sortable` if you can
   sort by it; blank if it's form-only.
 - **Filter**: `search` (the text search box), `yes` (a filter control), or

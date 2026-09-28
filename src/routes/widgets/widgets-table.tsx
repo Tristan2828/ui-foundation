@@ -26,6 +26,19 @@ import { useWidgetsQuery } from './use-widgets'
 
 const PAGE_SIZE = 10
 const STATUS_FILTER_ALL = 'all'
+// The "no filter" option's label. Needed twice — as the <SelectItem>'s
+// text and in the <SelectValue> children function below — so it is defined
+// once here rather than typed in both places.
+//
+// That children function is not optional. Base UI's <SelectValue> renders
+// the raw *value*, not the chosen item's label, and its `placeholder` only
+// applies when the value is null — which it never is here, because "no
+// filter" is the STATUS_FILTER_ALL sentinel, a real value. Without it this
+// trigger reads the literal "all" in its default, unfiltered state. Every
+// entity's toolbar is copied from this file (docs/add-an-entity.md), so
+// keep this shape when adding a filter: a label constant, the children
+// function, and a test that asserts the *unset* display.
+const STATUS_FILTER_ALL_LABEL = 'All statuses'
 const FILTERS = ['search', 'status'] as const
 const MULTI_FILTERS = ['tags'] as const
 const SEARCH_DEBOUNCE_MS = 300
@@ -123,10 +136,12 @@ export function WidgetsTableRoute() {
               }
             >
               <SelectTrigger aria-label="Filter by status" className="w-36">
-                <SelectValue placeholder="Status" />
+                <SelectValue>
+                  {(value) => (value === STATUS_FILTER_ALL ? STATUS_FILTER_ALL_LABEL : value)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={STATUS_FILTER_ALL}>All statuses</SelectItem>
+                <SelectItem value={STATUS_FILTER_ALL}>{STATUS_FILTER_ALL_LABEL}</SelectItem>
                 {WIDGET_STATUSES.map((status) => (
                   <SelectItem key={status} value={status}>
                     {status}

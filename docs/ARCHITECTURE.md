@@ -21,10 +21,19 @@ database rows.** The foundation is shaped around that — `DataTable`,
 `EntityForm`, URL-kept table state, the contract-first gateway, MSW so a
 screen can be built with no backend.
 
-- **Don't extend the foundation speculatively.** A new capability goes in
-  only when a real app needs it, after that app exists; until then it's a
-  row in [`DEFERRED.md`](DEFERRED.md) with a revisit condition. The plan's
-  own warning stands: the failure mode here is building forever.
+- **Two tracks, different rules** (decided 2026-09-20, after the first real
+  app shipped — [`DEFERRED.md`](DEFERRED.md) "Direction"):
+  - *Design language* — tokens, semantic tones, `Badge`/variant styles,
+    cell patterns, typography, density, themes — **grows freely**, without
+    waiting for a second app or a second use. It is what a consuming app
+    cannot cheaply get right alone (contrast, both themes, consistency),
+    and it is cheap to review by looking at results. Every addition still
+    ships with axe contrast coverage in both themes.
+  - *Structure* — composites, new registry items, backend, auth,
+    infrastructure — **stays need-driven**: built against a real app's
+    actual screen, not in advance. Until then it's a row in
+    [`DEFERRED.md`](DEFERRED.md) with a revisit condition. The plan's own
+    warning still applies here: the failure mode is building forever.
 - **Built ahead of a real app — keep, but don't grow until an app needs
   it:** auth, self-service registration and per-user ownership (shipped in
   `starter`, so every app gets a login screen); the FastAPI backend and its
@@ -97,8 +106,8 @@ unpinned registry dependency resolves to `main`, not the tag).
 | `npm run verify:backend` | backend changes; CI | mypy strict, pytest (SQLite), spec conformance |
 | `scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + a live server on real Postgres |
 | `scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
-| `scripts/consume-test.sh --install-only <sha>` | any change to a file `registry.json` ships | a fresh app installs, type-checks (incl. shipped tests), lints, and gets the files of *that* ref |
-| `scripts/consume-test.sh <sha> <Entity>` — the **Fresh UI Build** | playbook/composite changes, before a tag | a brand-new agent, with no memory of this repo, builds an entity from the registry alone (given its plan file); its `verify` passes |
+| `scripts/consume-test.sh --install-only <sha>` | **automatic** — the `registry` workflow, on any PR touching a path `registry.json` ships | a fresh app installs, type-checks (incl. shipped tests), lints, and gets the files of *that* ref |
+| `scripts/consume-test.sh <sha> <Entity>` — the **Fresh UI Build** | **on demand**, not a release gate — run it when the playbook or a composite changes in a way that could confuse a fresh agent | a brand-new agent, with no memory of this repo, builds an entity from the registry alone (given its plan file); its `verify` passes |
 
 Rules learned the hard way (each cost a phase to find):
 
@@ -116,7 +125,23 @@ Rules learned the hard way (each cost a phase to find):
 ## Releasing
 
 Changes go through a PR (`main` is protected: `verify` + `verify-backend`
-and a review). If the PR changed anything `registry.json` ships: after
-merge, tag the merge commit (`vX.Y.Z`), run
-`scripts/consume-test.sh --install-only <tag>`, and bump the tag in the
-README. Deploying an app: [`deploy.md`](deploy.md).
+and a review). **Releasing is otherwise automatic**, as of 2026-09-27 —
+there is no manual tag, no re-run, no README bump:
+
+- On the PR, the `registry` workflow runs
+  `consume-test.sh --install-only` against the PR's **head SHA**, but only
+  when `scripts/registry-paths-changed.mjs` says a shipped path changed.
+  That script derives the path list from `registry.json`, so a newly
+  shipped file is covered as soon as it is listed.
+- On merge, the `tag` workflow cuts the next patch tag and a GitHub
+  release, again only when a shipped path changed since the last tag. A
+  minor or major bump is still deliberate: push that tag by hand and the
+  workflow carries on from it, since the next version comes from
+  `git describe`, not from a number committed in a file.
+- The README links the latest release instead of naming a version, so
+  nothing has to be committed back to `main` — the workflow only pushes a
+  tag, which branch protection does not block.
+
+What made the old post-merge re-run redundant: the PR already
+install-tested that exact tree, and a tag on the merge commit points at the
+same tree. Deploying an app: [`deploy.md`](deploy.md).
