@@ -102,7 +102,7 @@ unpinned registry dependency resolves to `main`, not the tag).
 | Gate | Runs | Covers |
 |---|---|---|
 | `npm run verify:fast` | every change | codegen drift, `tsc -b`, ESLint (boundaries, tokens, filenames), dependency allowlist, vitest |
-| `npm run verify` | before any PR; CI | + Playwright (every screen's states, auth, `a11y.spec.ts` in light and dark) and the Storybook screenshots of the patched primitives (`playwright.storybook.config.ts`) |
+| `npm run verify` | before any PR; CI | + Playwright (every screen's states, auth, `a11y.spec.ts` in light and dark, and a phone-width project) and the Storybook checks on the patched primitives — axe, and that every colour they paint resolves to a token (`playwright.storybook.config.ts`) |
 | `npm run verify:backend` | backend changes; CI | mypy strict, pytest (SQLite), spec conformance |
 | `scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + a live server on real Postgres |
 | `scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
@@ -119,8 +119,6 @@ Rules learned the hard way (each cost a phase to find):
   watch the test fail, restore.
 - **SQLite passing proves nothing about Postgres** — timestamp columns in
   particular; `check-backend-postgres.sh` writes through the ORM for this.
-- **Screenshot baselines need a Linux round-trip** through CI's artifact
-  upload; a Windows-generated baseline alone always fails CI.
 
 ## Releasing
 

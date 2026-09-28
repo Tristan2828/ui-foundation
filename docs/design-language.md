@@ -77,6 +77,40 @@ Two rules that keep this honest:
 
 Tones say good or bad. A value that is merely *different* from its
 neighbours — a genre, a team, a category — needs a different mechanism, and
-this foundation deliberately has none yet: `--chart-1..5` are greys, and
-per-value tokens don't scale. See the categorical-colour row in
-`DEFERRED.md` before inventing one.
+it is `--category-1` through `--category-8`.
+
+They are **generic slots, not per-value tokens**. An app maps its enum to a
+slot in its own columns file, so a new enum value costs a line there rather
+than three tokens in the design system:
+
+```tsx
+const GENRE_COLOR: Record<Genre, string> = {
+  Survival: 'text-category-1',
+  Shooter: 'text-category-2',
+  RPG: 'text-category-3',
+}
+```
+
+Tailwind needs whole class names, so map the value to a complete class —
+never build one by interpolation, or the class won't be generated.
+
+Four things about them:
+
+- **The hues avoid red, green and amber**, which the tones already spend. A
+  category drawn in red reads as "this one is bad" even when nothing is
+  wrong.
+- **They are ordered by distinctness, not by hue angle.** An app using
+  three categories gets three obviously different colours. Past about five,
+  hue alone stops separating them — slots 3 and 7 are both yellow-greens —
+  so the glyph has to carry the meaning and the colour only reinforces it.
+- **Tint the glyph, never fill behind text.** The label stays
+  `text-foreground`, so readability never depends on the hue. A slot used
+  as a background needs its own contrast check, which nothing here does
+  for you.
+- **Nothing re-measures them automatically.** All eight clear the 3:1
+  non-text minimum in both themes (measured, recorded in `theme.css`), but
+  axe checks text contrast, not icon contrast — so a change to these
+  values is not caught by any gate.
+
+If you find yourself wanting a ninth, that is usually a sign the column
+should be showing a shape or a label rather than more colours.

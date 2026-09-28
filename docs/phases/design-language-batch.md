@@ -131,6 +131,43 @@ both the input and the button and broke four existing auth tests on strict
 mode. The button's name is right for users, so the tests got `exact: true`
 and the component carries a comment saying why.
 
+## Third follow-up pass (same session)
+
+Categorical colour slots, and the screenshot baselines replaced. 16 open
+rows before this, 14 after.
+
+**Categorical slots** are `--category-1..8`, generic rather than per-value:
+an app maps its enum to a slot in its own columns file, so a new enum value
+costs a line there instead of three tokens here. Hues avoid the red, green
+and amber the tones already spend — a category drawn in red reads as "bad"
+— and they are ordered by *distinctness* rather than hue angle, so an app
+using three gets three obviously different colours. Honest limit, stated in
+the docs: past about five, hue alone stops separating them and the glyph
+has to carry the meaning. All eight clear 3:1 in both themes (measured),
+but axe does not check icon contrast, so nothing re-measures them.
+
+**The screenshot baselines are gone**, replaced by a test that asserts
+every colour a shipped primitive paints resolves to a token. Two
+non-obvious mechanics took iterations to get right, and both are worth
+knowing before touching it:
+
+1. `ctx.fillStyle = value; ctx.fillStyle` does **not** normalise a modern
+   colour — Chrome echoes `oklch(...)` back in the same space. Rasterising
+   (`fillRect` then `getImageData`) is what actually converts.
+2. `getComputedStyle` **resolves** custom properties by name but does not
+   **enumerate** them, so the token list cannot come from the computed
+   style. It is collected from the stylesheets' own `:root`/`.dark` rules.
+
+Alpha is stripped from the string before normalising, so `bg-success/15`
+still counts as `--success`.
+
+**The negative control is the reason this swap is defensible.** An inline
+`style={{ color: '#ff00aa' }}` on `Badge`: ESLint's token rule **exits 0**
+— it genuinely cannot see it, which is exactly why the screenshots existed
+— while the new test fails in both themes. Same failure caught, no images,
+runs on any OS, and no Linux round-trip through CI's artifact upload. That
+last rule is deleted from ARCHITECTURE's learned-the-hard-way list.
+
 ## Still open
 
 - The three rows added at the start of this session: the phone-width
