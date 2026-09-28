@@ -21,10 +21,19 @@ database rows.** The foundation is shaped around that — `DataTable`,
 `EntityForm`, URL-kept table state, the contract-first gateway, MSW so a
 screen can be built with no backend.
 
-- **Don't extend the foundation speculatively.** A new capability goes in
-  only when a real app needs it, after that app exists; until then it's a
-  row in [`DEFERRED.md`](DEFERRED.md) with a revisit condition. The plan's
-  own warning stands: the failure mode here is building forever.
+- **Two tracks, different rules** (decided 2026-09-20, after the first real
+  app shipped — [`DEFERRED.md`](DEFERRED.md) "Direction"):
+  - *Design language* — tokens, semantic tones, `Badge`/variant styles,
+    cell patterns, typography, density, themes — **grows freely**, without
+    waiting for a second app or a second use. It is what a consuming app
+    cannot cheaply get right alone (contrast, both themes, consistency),
+    and it is cheap to review by looking at results. Every addition still
+    ships with axe contrast coverage in both themes.
+  - *Structure* — composites, new registry items, backend, auth,
+    infrastructure — **stays need-driven**: built against a real app's
+    actual screen, not in advance. Until then it's a row in
+    [`DEFERRED.md`](DEFERRED.md) with a revisit condition. The plan's own
+    warning still applies here: the failure mode is building forever.
 - **Built ahead of a real app — keep, but don't grow until an app needs
   it:** auth, self-service registration and per-user ownership (shipped in
   `starter`, so every app gets a login screen); the FastAPI backend and its

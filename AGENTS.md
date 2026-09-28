@@ -47,6 +47,23 @@ Every data view handles: loading, empty, error, and success.
 Use <Skeleton>, <Empty>, and the error boundary. Do not omit these.
 Every screen has one Playwright test per state, forced via MSW overrides.
 
+## Design Language
+Two tracks, and they have different rules (docs/DEFERRED.md "Direction").
+
+- **Design language grows freely.** Tokens, semantic tones, `Badge` and
+  other variant styles, cell patterns, typography and density may be added
+  or improved without waiting for a second app or a second use, and without
+  a docs/BLOCKERS.md entry. This is the part a consuming app cannot get
+  right on its own — contrast, both themes, consistency across screens.
+  Every addition still ships with axe contrast coverage in both themes
+  (e2e/a11y.spec.ts), and the Hard Rules above are unchanged: semantic
+  tokens only, shadcn before hand-rolling. Stronger tokens make the token
+  rule more useful, not less.
+- **Structure stays need-driven.** New composites, new registry items,
+  backend, auth and infrastructure are built against a real app's actual
+  screen, not in advance. That is where "building forever" is the real
+  risk, and it is what "Scope and Stopping" below is about.
+
 ## Scope and Stopping
 - Do the task you were given and nothing beyond it. A task is done when
   `npm run verify` passes — not when it feels complete.
@@ -84,10 +101,11 @@ Look up current shadcn component APIs via the shadcn MCP server
 and training data lags them.
 
 ## Before You Finish
-Run `npm run verify`. It must pass. Do not report a task complete
-on a failing gate — the developer does not review this code by reading it.
-No hook enforces this; running `verify` before you stop is on you. CI runs
-it again on every pull request.
+Run `npm run verify`. It must pass. Do not report a task complete on a
+failing gate. The developer reviews **results** — the running app, a
+screenshot, an options page — not every line, so the gates are the safety
+net rather than a second opinion. No hook enforces this; running `verify`
+before you stop is on you. CI runs it again on every pull request.
 
 ## Reference Implementations — Copy These Patterns
 - Data table:   src/routes/widgets/widgets-table.tsx (thin consumer of the
