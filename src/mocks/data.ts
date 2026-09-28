@@ -90,6 +90,24 @@ const initialWidgets: Widget[] = [
     description: "Fine-nib fountain pen, discontinued.",
     tags: [],
   },
+  {
+    // The deliberately sparse row: every optional field at its empty
+    // state at once. Convention, not decoration — without one, no test
+    // ever loads a record with an optional field unset, and the "empty
+    // value" rendering path (an em dash in a cell, a "not set" label on a
+    // form control) goes uncovered. That is exactly how a Select shipped
+    // showing a raw sentinel on screen with `verify` green. Keep one of
+    // these per entity; see docs/add-an-entity.md step 4.
+    id: 4,
+    name: "Blank Slate",
+    categoryId: 1,
+    status: "draft",
+    availableFrom: "2025-07-01T00:00:00Z",
+    assigneeEmail: null,
+    price: "0.00",
+    description: "Every optional field empty — the empty-state fixture.",
+    tags: [],
+  },
 ];
 
 export let categories: Category[] = structuredClone(initialCategories);

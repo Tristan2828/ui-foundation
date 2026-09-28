@@ -11,6 +11,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { useAuth } from '@/auth/use-auth'
 import { ErrorState } from '@/components/app/error-state'
+import { PasswordInput } from '@/components/app/password-input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -79,9 +80,8 @@ export function LoginRoute() {
 
               <Field data-invalid={!!form.formState.errors.password}>
                 <FieldLabel htmlFor="login-password">Password</FieldLabel>
-                <Input
+                <PasswordInput
                   id="login-password"
-                  type="password"
                   autoComplete="current-password"
                   aria-invalid={!!form.formState.errors.password}
                   {...form.register('password')}

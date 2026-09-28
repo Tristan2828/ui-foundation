@@ -36,11 +36,12 @@ filled-in example).
    this is the first entity added since installing the registry — the
    registry ships files and npm `dependencies`/`devDependencies`, but has
    no way to merge npm scripts into `package.json` for you). If missing,
-   add exactly these three scripts:
+   add exactly these four scripts:
    ```json
    "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && tsc -p tsconfig.test.json && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
-   "verify": "npm run verify:fast && playwright test"
+   "verify": "npm run verify:fast && playwright test",
+   "build:real": "tsc -b && vite build --mode real"
    ```
    (`tsc -p tsconfig.test.json` is there because the registry can't add
    `tsconfig.test.json` to your root `tsconfig.json`'s references, so
@@ -48,6 +49,21 @@ filled-in example).
    Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
    `npx msw init public/ --save` once so the MSW service worker installed
    by `starter` actually registers.
+
+   Finally, create `.env.real` at the project root — one line, plus why:
+   ```
+   # `vite build --mode real` (npm run build:real) loads this: a production
+   # bundle that talks to the real backend. VITE_API is baked in at build
+   # time, so a plain `npm run build` ships MSW and serves mock data (that
+   # build is what Playwright tests). Not a secret; commit it.
+   VITE_API=real
+   ```
+   **This one is easy to skip and fails silently.** `VITE_API` is read at
+   *build* time, so without `build:real` + `.env.real` a plain
+   `npm run build` produces a bundle with MSW inside it — the deployed app
+   then serves the mock fixture and a seeded demo user while looking
+   entirely normal. If your `.gitignore` ignores `.env.*`, add a
+   `!.env.real` exception: the file is not a secret and must be committed.
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete — exactly as the plan specifies: its fields, types, required
    fields, option lists (as enums) and length/format rules, and a list
@@ -69,7 +85,13 @@ filled-in example).
      gateway, and don't open either folder while writing them. It's the
      same rule, kept by discipline instead of a hook.
 4. **Add MSW handlers in `src/mocks/<entity>.ts`** and register them in
-   `src/mocks/handlers.ts`. Extend `tests/mocks/conformance.test.ts` so the
+   `src/mocks/handlers.ts`. **Include one deliberately sparse row** whose
+   every optional field is empty at once (see `Blank Slate` in
+   `src/mocks/data.ts`). Rows that all populate every field are the reason
+   an "empty value" path goes untested: nothing ever loads a record with a
+   field unset, so an em dash that never renders, or a form control showing
+   a raw sentinel instead of a "not set" label, passes `verify` unnoticed.
+   One row costs nothing and step 8 asserts it. Extend `tests/mocks/conformance.test.ts` so the
    new handlers are validated against `openapi.yaml`, the same way
    `widgets`/`categories` already are.
 5. **Add a gateway module in `src/api/gateway/<entity>.ts`** until step 3's

@@ -98,6 +98,39 @@ sidebar trigger — collapsing it — and then waited for a sheet that was
 never coming. Keyed off the `isMobile` fixture instead. A racy DOM read is
 not a substitute for knowing which device you are on.
 
+## Second follow-up pass (same session)
+
+Five more rows: the password-visibility toggle, the nested-worktree scan,
+`build:real`/`.env.real`, the sparse-fixture convention, and a guard for
+patched primitives. 45 open rows at the start of the session, 16 now.
+
+**`build:real` was the one with teeth.** `VITE_API` is read at *build*
+time, so a plain `npm run build` produces a bundle with MSW inside it and
+the deployed app serves the mock fixture behind a seeded demo user, looking
+entirely normal. The registry cannot ship the escape hatch (npm scripts
+can't be merged into `package.json`, and a dotfile isn't a registry file),
+so it is Step 0 of the playbook — and a step done by hand is a step that
+gets skipped. `consume-test.sh` now builds both modes and asserts the real
+one contains no MSW, with an inline negative control asserting the default
+build *does* (otherwise the grep proves nothing). Verified locally first:
+1.2 MB real vs 1.6 MB mock, and the string present in exactly one.
+
+**Two registry mistakes caught before merge, both the same shape.** The new
+`password-input.tsx` imports shadcn's `input-group`, which was neither
+shipped as a file nor listed in `registryDependencies` — a fresh install
+would have broken on an import of something that was never installed. And
+`table` was still a `registryDependency` *after* #39 started shipping a
+patched copy as a file, so upstream's unpatched version could overwrite the
+patch. `consume-test.sh` now compares `table.tsx`, `button.tsx` and
+`badge.tsx` against the ref, so a patched primitive silently arriving
+unpatched fails loudly instead of passing every other check.
+
+**A self-inflicted API collision:** the toggle's `aria-label="Show
+password"` contains "Password", so `getByLabel('Password')` began matching
+both the input and the button and broke four existing auth tests on strict
+mode. The button's name is right for users, so the tests got `exact: true`
+and the component carries a comment saying why.
+
 ## Still open
 
 - The three rows added at the start of this session: the phone-width
