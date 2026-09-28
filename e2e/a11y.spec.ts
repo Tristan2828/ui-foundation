@@ -19,9 +19,25 @@ async function expectNoViolations(page: Page) {
   expect(results.violations).toEqual([])
 }
 
-async function navRoutes(page: Page): Promise<string[]> {
+async function navRoutes(page: Page, isMobile: boolean | undefined): Promise<string[]> {
   await page.goto('/')
-  const nav = page.getByRole('navigation', { name: 'Primary' })
+
+  // Below the sidebar's mobile breakpoint the nav renders into an
+  // off-canvas Sheet, which is *portaled to document.body* — so it lands
+  // outside the <nav aria-label="Primary"> wrapper in app-shell.tsx, and
+  // that landmark never contains the links, open or closed. Read them from
+  // the sheet instead. (The nav landmark not containing the nav on a phone
+  // is a real markup quirk, not a test artefact — see docs/DEFERRED.md.)
+  //
+  // Keyed off the `isMobile` fixture, deliberately not off a link count:
+  // count() does not retry, so on a slow first paint it read 0 on desktop
+  // too, clicked the trigger (which *collapses* the desktop sidebar) and
+  // then looked for a sheet that was never going to exist.
+  const nav = isMobile
+    ? (await page.getByRole('button', { name: 'Toggle Sidebar' }).first().click(),
+      page.getByRole('dialog'))
+    : page.getByRole('navigation', { name: 'Primary' })
+
   await expect(nav.getByRole('link').first()).toBeVisible()
   return nav.getByRole('link').evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).pathname))
 }
@@ -32,8 +48,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme })
     })
 
-    test('every nav page has zero axe violations', async ({ page }) => {
-      for (const route of await navRoutes(page)) {
+    test('every nav page has zero axe violations', async ({ page, isMobile }) => {
+      for (const route of await navRoutes(page, isMobile)) {
         await page.goto(route)
         await expect(page.locator('html')).toHaveClass(colorScheme)
         // Wait for data, not the loading skeleton, so the real UI is checked.

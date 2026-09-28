@@ -211,7 +211,12 @@ test.describe('widgets table', () => {
 
   test('hovering highlights the pinned cell identically on striped and unstriped rows', async ({
     page,
+    isMobile,
   }) => {
+    // Hover is a pointer affordance; a touch device has no hover state to
+    // assert. The pinned column itself is still covered on mobile by the
+    // horizontal-scroll test above.
+    test.skip(!!isMobile, 'no hover on a touch device')
     // The zebra stripe is `tr:nth-child(even)` at specificity (0,2,1) and
     // beats any `tr:hover` rule at (0,2,0), so a whole-row hover lights the
     // odd rows and leaves the even ones striped and unlit. The highlight
