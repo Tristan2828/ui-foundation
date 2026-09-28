@@ -155,6 +155,22 @@ filled-in example).
      **unset** display, not only a picked one — a select whose enum values
      equal their labels passes either way, which is exactly how this
      shipped unnoticed.
+
+   **Choosing how each column looks.** The plan says what a field *means*,
+   not how its cell should render. For most columns plain text is right and
+   there is nothing to decide. Where there is:
+
+   - [`cell-patterns.md`](cell-patterns.md) is the catalogue — icon + label,
+     icon in a badge, icon-only with a tooltip, enum → tone-mapped badge,
+     clustered multi-value, link button, relative date, ordinal scale,
+     summary + popover — each with the parts a first attempt gets wrong.
+     They are markup to copy, not components to import.
+   - If the developer doesn't have a preference, don't pick for them and
+     don't guess: follow [`column-options.md`](column-options.md) to build
+     a short page of numbered options over the same sample rows, and let
+     them choose. That is how every pattern in the catalogue was picked.
+   - Any colour involved: [`design-language.md`](design-language.md). Most
+     values should stay grey, and colour is never the only signal.
 7. **Register routes** for `/<entity>`, `/<entity>/new`,
    `/<entity>/:id/edit` in `src/App.tsx`, and add a nav entry to
    `src/components/app/app-shell.tsx`'s sidebar.

@@ -82,7 +82,7 @@ unpinned registry dependency resolves to `main`, not the tag).
 - **Patched primitives must ship as files.** `registryDependencies` pull
   shadcn components live from upstream at install time, so a local fix to
   one is silently lost unless the file is listed in `starter`: `button`,
-  `badge`, `combobox`, `src/hooks/use-mobile.ts` today.
+  `badge`, `combobox`, `table`, `src/hooks/use-mobile.ts` today.
 - **Binary files can't ship** (the `gh` CLI corrupts them).
 - **New apps** are created by `scripts/create-app.sh` (instructions for
   any AI: [`create-an-app.md`](create-an-app.md)); `consume-test.sh` runs
