@@ -4,10 +4,16 @@ At-a-glance phase checklist. This replaces the Notion tracker this
 project used during early development — everything now lives in the
 repo, in one place, versioned alongside the code it describes.
 
-**Current state:** `v2.0.0`, the first stable release ([`CHANGELOG.md`](../CHANGELOG.md)),
-after the original plan (Phases 0–13), the pre-reuse audit (Phases A–E) and
-the first-real-project follow-ups (Phases F–G), all below. The latest release tag is kept in one place,
-the README's "Consuming this as a registry" section. How the repo works and
+**Current state:** the `v2.1.x` line (`v2.1.7` as of 2026-09-28 — patch
+tags are cut automatically on merge, so the README's latest-release link is
+the authority, not this line). `v2.0.0` was the first stable
+release ([`CHANGELOG.md`](../CHANGELOG.md)), after the original plan (Phases
+0–13), the pre-reuse audit (Phases A–E) and the first-real-project
+follow-ups (Phases F–G); the `v2.1.x` releases since are below (release
+process: `ARCHITECTURE.md` "Releasing"). **What to build
+next** is the queue in [`DEFERRED.md`](DEFERRED.md) — its "Direction"
+section is the current, developer-set rule for which work goes ahead and
+which waits for a real app. How the repo works and
 which checks a change needs: [`ARCHITECTURE.md`](ARCHITECTURE.md). The
 standing proof of reusability is still Phase 7's: a fresh agent builds an
 entity from the published registry alone (`scripts/consume-test.sh`).
@@ -137,6 +143,31 @@ exposed two gaps; both closed the same day (2026-09-18).
   as a table filter, a `widget_tags` join table (migration `0004`). Found
   and fixed an array-field gap in the gateway's error mapping and an
   unlabelled chip button upstream. See `docs/phases/phase-g-multi-select.md`.
+
+## After 2.0: Creating Apps, and the Two-Track Direction
+
+- **`v2.1.0`–`v2.1.1`** (#31, 2026-09-19) — create an app from one
+  instruction: `docs/create-an-app.md` + `scripts/create-app.sh`, which
+  `consume-test.sh` now runs on every release; the `/new-entity` skill is a
+  shortcut, not a gate. See `CHANGELOG.md`.
+- **Direction set** (2026-09-20, while building the Game List app) — design
+  language grows freely, structure stays need-driven. Recorded in
+  `DEFERRED.md` "Direction"; the docs that still described the old stance
+  were updated in #35.
+- **Design-language batch** (#34–#42, `v2.1.2`–`v2.1.7`, 2026-09-27) —
+  drained the backlog the Game List app had accumulated: the
+  `<SelectValue>` label defect (#34); release automation, PR install-test
+  and auto-tag (#36); semantic tones (#37); the cell-pattern catalogue and
+  column-options step (#38); `table.tsx` forwards a container ref and
+  `DataTable` pins its first column (#39); the mock-mode banner,
+  `password-input`, `build:real` and a guard for patched primitives
+  (#40–#41); categorical colour slots `--category-1..8`, and the pixel
+  screenshot baselines replaced by a token-resolution check (#42). See
+  `docs/phases/design-language-batch.md`.
+- **Consumer findings logged** (#43–#44, 2026-09-28) — the Game List app's
+  upgrade to `v2.1.7` surfaced new `DEFERRED.md` rows: a drift check for
+  consuming apps, `setFilters`/`applyView`, binary MSW overrides, a
+  frozen-clock test convention, and `pinLastColumn`.
 
 ## Decision Ledger (highlights)
 
