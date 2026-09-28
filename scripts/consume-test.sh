@@ -117,7 +117,12 @@ done
 # an unpinned registryDependency, so they arrived from main no matter which
 # ref was installed — and every check above still passed. Compare them to
 # the same files at $REF (CRLF-insensitive: git's working-copy conversion).
-for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json; do
+# The patched primitives are in this list for a specific failure: each one
+# also exists upstream, so if it is ever dropped from starter's file list
+# (or a registryDependency re-introduces it), the install silently gets
+# upstream's copy and the local patch vanishes with every check still
+# green. Comparing content against $REF is what catches that.
+for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json          src/components/ui/table.tsx src/components/ui/button.tsx src/components/ui/badge.tsx; do
   expected=$(git -C "$REPO_ROOT" show "$REF:$f" 2>/dev/null || git -C "$REPO_ROOT" show "origin/$REF:$f") ||
     fail "can't read $f at $REF from the local repo (fetch first?)"
   [ "$(tr -d '\r' < "$f")" = "$(printf '%s' "$expected" | tr -d '\r')" ] ||
@@ -154,6 +159,32 @@ if [ "$INSTALL_ONLY" = true ]; then
   # every consumer's first verify, but is invisible to tsc.
   echo "consume-test: eslint (the shipped eslint.config.js, as verify runs it)"
   npx eslint . --max-warnings 0
+
+  # VITE_API is baked in at BUILD time, so `npm run build` produces a
+  # bundle with MSW inside it — a deployed app then serves the mock
+  # fixture and a seeded demo user while looking completely normal. The
+  # escape is `build:real` + `.env.real`, which the registry cannot ship
+  # (npm scripts can't be merged into package.json, and a dotfile isn't a
+  # registry file) — they are Step 0 of docs/add-an-entity.md instead, and
+  # a step you have to do by hand is a step that gets skipped.
+  #
+  # --install-only has no agent to run Step 0, so it writes the two here
+  # exactly as the playbook specifies and then checks the real build is
+  # actually mock-free. The assertion is the point: a real-mode bundle
+  # must not contain MSW's worker bootstrap.
+  echo "consume-test: build:real must produce a bundle with no MSW in it"
+  printf 'VITE_API=real
+' > .env.real
+  npx vite build --mode real --outDir dist-real >/dev/null
+  if grep -rql "mockServiceWorker" dist-real/assets 2>/dev/null; then
+    fail "a --mode real bundle still contains MSW — .env.real/build:real is not taking effect"
+  fi
+  # Negative control, inline: the default build MUST contain it, otherwise
+  # the grep above is matching nothing and proves nothing.
+  npx vite build --outDir dist-mock >/dev/null
+  grep -rql "mockServiceWorker" dist-mock/assets >/dev/null 2>&1 ||
+    fail "the default build has no MSW either — the mock-free check above is vacuous"
+  rm -rf dist-real dist-mock
 
   echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks and lints clean"
   [ "$KEEP" = true ] && echo "consume-test: kept the app at $APP"

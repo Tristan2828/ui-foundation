@@ -290,11 +290,35 @@ test.describe('widgets table', () => {
     expect(scrollbarWidth).toBe('none')
   })
 
+  test('the sparse fixture renders every empty optional field, on both screens', async ({
+    page,
+  }) => {
+    // Guards the convention itself, not just this row. "Blank Slate" has
+    // every optional field empty at once (src/mocks/data.ts); without such
+    // a row nothing exercises the empty-value rendering path, which is how
+    // a Select once shipped displaying a raw sentinel with verify green.
+    await page.goto('/widgets')
+    const row = page.getByRole('row').filter({ hasText: 'Blank Slate' })
+    await expect(row).toBeVisible()
+
+    // A null assignee and an empty tag list both render the shared em
+    // dash, never a blank cell — a blank reads as a rendering bug.
+    // Matched on the <td> with exactly that text: a substring match also
+    // catches the wrapping cell of a <span>-wrapped dash, so the count
+    // depends on markup rather than on behaviour.
+    await expect(row.locator('td').filter({ hasText: /^—$/ })).toHaveCount(2)
+
+    // And the form shows empty controls rather than placeholder values.
+    await page.goto('/widgets/4/edit')
+    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
+    await expect(page.locator('#widget-assignee')).toHaveValue('')
+  })
+
   test('success: the default MSW data renders in the table', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
-    await expect(page.getByText('1–3 of 3')).toBeVisible()
+    await expect(page.getByText('1–4 of 4')).toBeVisible()
   })
 })

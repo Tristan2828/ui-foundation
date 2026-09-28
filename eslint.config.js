@@ -15,7 +15,16 @@ const TAILWIND_PALETTE_CLASS =
 const HEX_COLOR = '/#[0-9a-f]{3,8}/i'
 
 export default defineConfig([
-  globalIgnores(['dist', 'storybook-static', 'public/mockServiceWorker.js']),
+  // .claude/worktrees: this repo is worked on mostly by AI agents, and a
+  // session running in a git worktree nested under the project root is a
+  // normal occurrence, not a hypothetical. Without this, one session's
+  // in-progress files fail another session's verify.
+  globalIgnores([
+    'dist',
+    'storybook-static',
+    'public/mockServiceWorker.js',
+    '.claude/worktrees',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

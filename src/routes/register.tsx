@@ -9,6 +9,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { useAuth } from '@/auth/use-auth'
 import { ErrorState } from '@/components/app/error-state'
+import { PasswordInput } from '@/components/app/password-input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -89,9 +90,8 @@ export function RegisterRoute() {
 
               <Field data-invalid={!!form.formState.errors.password}>
                 <FieldLabel htmlFor="register-password">Password</FieldLabel>
-                <Input
+                <PasswordInput
                   id="register-password"
-                  type="password"
                   autoComplete="new-password"
                   aria-invalid={!!form.formState.errors.password}
                   {...form.register('password')}
@@ -101,9 +101,8 @@ export function RegisterRoute() {
 
               <Field data-invalid={!!form.formState.errors.confirmPassword}>
                 <FieldLabel htmlFor="register-confirm-password">Confirm password</FieldLabel>
-                <Input
+                <PasswordInput
                   id="register-confirm-password"
-                  type="password"
                   autoComplete="new-password"
                   aria-invalid={!!form.formState.errors.confirmPassword}
                   {...form.register('confirmPassword')}

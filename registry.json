@@ -51,6 +51,7 @@
         "empty",
         "field",
         "input",
+        "input-group",
         "popover",
         "select",
         "separator",
@@ -58,7 +59,6 @@
         "skeleton",
         "sonner",
         "spinner",
-        "table",
         "textarea",
         "tooltip"
       ],
@@ -119,6 +119,7 @@
         { "path": "src/components/app/error-state.tsx", "type": "registry:file", "target": "~/src/components/app/error-state.tsx" },
         { "path": "src/components/app/multi-choice.tsx", "type": "registry:file", "target": "~/src/components/app/multi-choice.tsx" },
         { "path": "src/components/app/mock-mode-banner.tsx", "type": "registry:file", "target": "~/src/components/app/mock-mode-banner.tsx" },
+        { "path": "src/components/app/password-input.tsx", "type": "registry:file", "target": "~/src/components/app/password-input.tsx" },
         { "path": "src/components/theme-provider.tsx", "type": "registry:file", "target": "~/src/components/theme-provider.tsx" },
         { "path": "src/api/contracts.ts", "type": "registry:file", "target": "~/src/api/contracts.ts" },
         { "path": "src/api/transport/index.ts", "type": "registry:file", "target": "~/src/api/transport/index.ts" },
