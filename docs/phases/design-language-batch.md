@@ -68,6 +68,36 @@ the dark run while light still passes. That asymmetry *is* the bug the
 two-token split exists to prevent, so the test binds to the real failure
 mode rather than to a colour value.
 
+## Follow-up pass (same session)
+
+Draining the rest of the cheap rows, and reconciling the backlog itself:
+`enableSortingRemoval` as an opt-in `DataTable` prop, the `meta.align`
+column option, persistent toolbar filter captions, the mock-mode banner,
+the collapse-aware sidebar brand text, and a **phone-width Playwright
+project**.
+
+`DEFERRED.md` had drifted badly: `AGENTS.md`, `ARCHITECTURE.md` and
+`design-language.md` all cite its "Direction" section, but that section
+had only ever existed on an unmerged branch — so `main` shipped a
+dangling reference, `AGENTS.md`'s copy of it reaching every consuming
+app. The full file is now on `main`, 27 shipped rows are removed (a queue,
+not a log), and three new rows were added from what the phone-width run
+turned up.
+
+**The phone-width project earned itself immediately** — it failed four
+tests on its first run. None was a product bug: below the sidebar's
+breakpoint the nav renders into a Sheet *portaled to document.body*, so it
+lands outside `app-shell.tsx`'s `<nav aria-label="Primary">` wrapper and
+the landmark is empty; and hover has no meaning on a touch device. The
+specs were wrong about phone width, not the app.
+
+One self-inflicted bug worth remembering: the first fix branched on
+`(await nav.getByRole('link').count()) === 0`. `count()` does **not**
+retry, so on a slow first paint it read 0 on *desktop* too, clicked the
+sidebar trigger — collapsing it — and then waited for a sheet that was
+never coming. Keyed off the `isMobile` fixture instead. A racy DOM read is
+not a substitute for knowing which device you are on.
+
 ## Still open
 
 - The three rows added at the start of this session: the phone-width

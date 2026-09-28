@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createQueryClient } from '@/api/query-client'
 import { AuthProvider } from '@/auth/use-auth'
+import { MockModeBanner } from '@/components/app/mock-mode-banner'
 import { ThemeProvider } from '@/components/theme-provider'
 import './index.css'
 import App from './App.tsx'
@@ -33,6 +34,8 @@ enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        {/* Above the router so it shows on every route, /login included. */}
+        <MockModeBanner />
         <QueryClientProvider client={queryClient}>
           {/* AuthProvider queries /auth/me via TanStack Query (Phase 10),
               so it must sit inside QueryClientProvider, not outside it. */}

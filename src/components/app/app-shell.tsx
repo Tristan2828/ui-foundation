@@ -97,7 +97,10 @@ export function AppShell() {
         <nav aria-label="Primary">
           <Sidebar collapsible="icon">
             <SidebarHeader>
-              <span className="px-2 text-sm font-semibold text-sidebar-foreground">
+              {/* Hidden on the icon rail: unlike a menu button's label, a
+                  bare span gets no collapse treatment from the sidebar
+                  primitive, so it would wrap onto itself at rail width. */}
+              <span className="px-2 text-sm font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
                 UI Foundation
               </span>
             </SidebarHeader>

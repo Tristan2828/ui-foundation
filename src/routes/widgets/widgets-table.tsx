@@ -24,6 +24,20 @@ import { buildWidgetsColumns } from './widgets-columns'
 import { useCategoriesQuery } from './use-categories'
 import { useWidgetsQuery } from './use-widgets'
 
+// A visual-only caption above each toolbar filter, so the field stays
+// identifiable once a value is picked and the control shows that value
+// instead of its placeholder. The control's own aria-label remains its
+// accessible name — this is decorative, hence aria-hidden, not a second
+// label. Every entity's toolbar is copied from this file, so new filters
+// should follow the same shape.
+function FilterLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span aria-hidden="true" className="text-xs font-medium text-muted-foreground">
+      {children}
+    </span>
+  )
+}
+
 const PAGE_SIZE = 10
 const STATUS_FILTER_ALL = 'all'
 // The "no filter" option's label. Needed twice — as the <SelectItem>'s
@@ -121,14 +135,19 @@ export function WidgetsTableRoute() {
           )
         }
         toolbar={
-          <div className="flex flex-wrap items-center gap-2">
-            <Input
-              value={search}
-              onChange={(event) => setFilter('search', event.target.value)}
-              placeholder="Search by name"
-              aria-label="Search widgets"
-              className="max-w-64"
-            />
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-col gap-1">
+              <FilterLabel>Search</FilterLabel>
+              <Input
+                value={search}
+                onChange={(event) => setFilter('search', event.target.value)}
+                placeholder="Search by name"
+                aria-label="Search widgets"
+                className="max-w-64"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+            <FilterLabel>Status</FilterLabel>
             <Select
               value={statusFilter}
               onValueChange={(value) =>
@@ -149,14 +168,18 @@ export function WidgetsTableRoute() {
                 ))}
               </SelectContent>
             </Select>
-            <MultiChoice
-              options={WIDGET_TAGS}
-              value={tagsFilter}
-              onValueChange={(tags) => setMultiFilter('tags', tags)}
-              placeholder="Any tag"
-              aria-label="Filter by tags"
-              className="w-56"
-            />
+            </div>
+            <div className="flex flex-col gap-1">
+              <FilterLabel>Tags</FilterLabel>
+              <MultiChoice
+                options={WIDGET_TAGS}
+                value={tagsFilter}
+                onValueChange={(tags) => setMultiFilter('tags', tags)}
+                placeholder="Any tag"
+                aria-label="Filter by tags"
+                className="w-56"
+              />
+            </div>
           </div>
         }
         getRowId={(widget) => String(widget.id)}

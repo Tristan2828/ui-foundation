@@ -13,6 +13,7 @@
 // table never uses TanStack's own sorted/paginated row models at all.
 import { useEffect, useRef, useState } from 'react'
 import { flexRender } from '@tanstack/react-table'
+import type { CellData, RowData, TableFeatures } from '@tanstack/react-table'
 import { cn } from 'cn'
 import { getCoreRowModel, useLegacyTable, type LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
@@ -31,6 +32,27 @@ import {
 } from '@/components/ui/table'
 
 export type SortingState = { id: string; desc: boolean }[]
+
+// ColumnMeta is an empty interface upstream; this augmentation is TanStack's
+// own documented way to give it a shape. Scoped to '@tanstack/table-core',
+// where ColumnMeta actually lives ('@tanstack/react-table' only re-exports
+// it), so the merge applies whichever of the two a column def imports from.
+// A column opts in with `meta: { align: 'center' }` — right for a cell whose
+// content is a single glyph, which otherwise reads off-centre under a
+// wider header.
+declare module '@tanstack/table-core' {
+  /* eslint-disable @typescript-eslint/no-unused-vars -- interface merging
+     requires matching the original's exact type parameter list; none of the
+     three need to appear in this interface's own body. */
+  interface ColumnMeta<
+    TFeatures extends TableFeatures,
+    TData extends RowData,
+    TValue extends CellData = CellData,
+  > {
+    align?: 'center'
+  }
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+}
 
 export type DataTableProps<TData extends Record<string, unknown>> = {
   columns: LegacyColumnDef<TData, unknown>[]
@@ -56,6 +78,16 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * bottom edge. Opt in per table — a narrow table needs neither.
    */
   pinFirstColumn?: boolean
+  /**
+   * Set false when the caller supplies a default sort it falls back to
+   * whenever `sorting` is empty. TanStack's cycle is asc → desc →
+   * unsorted, and that third click hands back `[]`, which such a caller
+   * immediately turns back into the same default — so the header looks
+   * stuck and can never advance past it. Leaving this undefined keeps
+   * TanStack's own behaviour, so a table with no default sort is
+   * unaffected. See docs/entities/_template.md "Default sort".
+   */
+  enableSortingRemoval?: boolean
 }
 
 function TableSkeleton({ columnCount }: { columnCount: number }) {
@@ -180,6 +212,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   toolbar,
   getRowId,
   pinFirstColumn,
+  enableSortingRemoval,
 }: DataTableProps<TData>) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
 
@@ -192,6 +225,7 @@ export function DataTable<TData extends Record<string, unknown>>({
       pagination: { pageIndex: page - 1, pageSize },
     },
     manualSorting: true,
+    ...(enableSortingRemoval === undefined ? {} : { enableSortingRemoval }),
     manualPagination: true,
     pageCount,
     onSortingChange: (updater) =>
@@ -261,7 +295,10 @@ export function DataTable<TData extends Record<string, unknown>>({
                     return (
                       <TableHead
                         key={header.id}
-                        className={cn(pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS)}
+                        className={cn(
+                          pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
+                          header.column.columnDef.meta?.align === 'center' && 'text-center',
+                        )}
                         aria-sort={
                           !canSort
                             ? undefined
@@ -275,7 +312,10 @@ export function DataTable<TData extends Record<string, unknown>>({
                         {header.isPlaceholder ? null : canSort ? (
                           <button
                             type="button"
-                            className="flex items-center gap-1 text-foreground"
+                            className={cn(
+                              'flex items-center gap-1 text-foreground',
+                              header.column.columnDef.meta?.align === 'center' && 'w-full justify-center',
+                            )}
                             onClick={header.column.getToggleSortingHandler()}
                           >
                             {flexRender(header.column.columnDef.header, header.getContext())}
@@ -302,7 +342,10 @@ export function DataTable<TData extends Record<string, unknown>>({
                   {row.getVisibleCells().map((cell, index) => (
                     <TableCell
                       key={cell.id}
-                      className={cn(pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS)}
+                      className={cn(
+                        pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
+                        cell.column.columnDef.meta?.align === 'center' && 'text-center',
+                      )}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
