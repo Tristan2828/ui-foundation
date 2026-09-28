@@ -1,0 +1,59 @@
+name: registry
+
+# The install-only consume-test, moved off the developer's machine.
+#
+# It used to be a manual step run against a tag *after* merge, which meant a
+# broken registry was found after it was published. Running it here, on the
+# PR's own head SHA, catches the same failure before merge and costs nobody
+# a terminal.
+#
+# Only runs when the PR touches a path registry.json actually ships —
+# most PRs don't, and a fresh scaffold + install is slow.
+
+on:
+  pull_request:
+
+jobs:
+  install-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # consume-test.sh compares the installed files against the same
+          # files at $REF via `git show $REF:<file>`, so the full history
+          # has to be present, and the checkout has to be the PR's head
+          # commit rather than the default merge commit — that merge commit
+          # exists only on the runner and raw.githubusercontent.com could
+          # never serve it.
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - id: changed
+        name: Does this PR touch anything the registry ships?
+        run: |
+          paths=$(node scripts/registry-paths-changed.mjs \
+            "origin/${{ github.event.pull_request.base.ref }}" \
+            "${{ github.event.pull_request.head.sha }}")
+          if [ -n "$paths" ]; then
+            echo "shipped=true" >> "$GITHUB_OUTPUT"
+            echo "Registry-shipped paths changed:"
+            echo "$paths"
+          else
+            echo "shipped=false" >> "$GITHUB_OUTPUT"
+            echo "No registry-shipped path changed — skipping the install test."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.changed.outputs.shipped == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install a fresh app from this commit
+        if: steps.changed.outputs.shipped == 'true'
+        # The head SHA, never the branch name: raw.githubusercontent.com
+        # serves branch refs with Cache-Control: max-age=300, so a branch
+        # tested right after a push can install a mix of new and stale
+        # files. A SHA is an immutable URL. consume-test.sh warns about
+        # this too — this is the same rule, enforced.
+        run: bash scripts/consume-test.sh --install-only "${{ github.event.pull_request.head.sha }}"

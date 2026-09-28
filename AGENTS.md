@@ -152,9 +152,10 @@ If `docs/ARCHITECTURE.md` exists, you are in the foundation repo:
 - Work on the one task or phase named in the opening instruction. It is
   done when every gate that `docs/ARCHITECTURE.md` lists for that kind of
   change passes.
-- A change to any path `registry.json` ships needs
-  `scripts/consume-test.sh` against the **commit SHA** (never a branch)
-  before merge, and a tag after it.
+- A change to any path `registry.json` ships is install-tested and tagged
+  **automatically** (the `registry` and `tag` workflows) — don't tag by
+  hand or bump a version in the README. If you run `consume-test.sh`
+  locally, pass the **commit SHA**, never a branch.
 - At the end of the session, write `docs/phases/<name>.md`: what was
   built, what deviated and why, what the next session needs to know. The
   next session has no memory of this one.
