@@ -2,8 +2,8 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 // Only the primitives this repo patches and ships (see registry.json):
-// the rest are upstream shadcn, which a consumer gets live, so a baseline
-// here would test upstream's code. Accessibility of the real screens —
+// the rest are upstream shadcn, which a consumer gets live, so checking
+// them here would test upstream's code. Accessibility of the real screens —
 // including dark-mode contrast — is e2e/a11y.spec.ts. Run by
 // playwright.storybook.config.ts; story ids are `title`+export slugs.
 const STORYBOOK_URL = 'http://localhost:6006'
@@ -34,18 +34,6 @@ function analyzeStory(page: import('@playwright/test').Page) {
     .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
     .analyze()
 }
-
-test.describe('storybook dark mode screenshots', () => {
-  for (const name of PRIMITIVES) {
-    test(`${name} story matches its dark-mode baseline`, async ({ page }) => {
-      await page.goto(storyUrl(name, 'dark'))
-      await expect(page.locator('html')).toHaveClass(/dark/)
-      await expect(page).toHaveScreenshot(`storybook-${name}-dark.png`, {
-        animations: 'disabled',
-      })
-    })
-  }
-})
 
 test.describe('storybook stories have zero axe violations', () => {
   for (const name of PRIMITIVES) {
@@ -90,6 +78,148 @@ test.describe('semantic tones meet contrast in both themes', () => {
         await expect(page.getByText('outline-success')).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
+      })
+    }
+  }
+})
+
+// Every colour a shipped primitive paints must come from a token.
+//
+// This replaces the pixel screenshot baselines that used to guard the same
+// thing. Those existed to catch hardcoded colours the ESLint token rule
+// cannot see — an inline style, an SVG fill — but they cost a Linux
+// round-trip through CI's artifact upload to regenerate, and every new
+// variant multiplied the images to review. This asserts the actual
+// property instead of a picture of it, runs on any OS, and needs no
+// baseline.
+//
+// The mechanics that make it work: a computed colour is not a token
+// *string* — `--success` reads back as `oklch(52.7% .154 150.069)` while
+// the element computes `oklch(0.527 0.154 150.069)`, and an opacity
+// modifier computes as `oklab(0.527 -0.133 0.077 / 0.15)`. All three are
+// the same colour. So both sides are normalised through a canvas, which
+// resolves any CSS colour to sRGB, and alpha is dropped — an opacity
+// modifier is still the token's colour.
+const COLOR_PROPERTIES = ['backgroundColor', 'color', 'borderTopColor', 'fill'] as const
+
+async function offTokenColors(page: import('@playwright/test').Page) {
+  return page.evaluate((properties) => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')!
+
+    // Assigning to fillStyle does NOT normalise a modern colour: Chrome
+    // echoes `oklch(...)` back in the same space. Rasterising does — fill a
+    // 1x1 pixel and read it, and the browser has done the conversion for
+    // us, whatever the input space.
+    //
+    // Alpha is stripped from the string first rather than handled after:
+    // an opacity modifier is still the token's colour, and an opaque fill
+    // reads back as exact integers with no rounding to tolerate.
+    const stripAlpha = (value: string): string | null => {
+      const slash = value.match(/^(\w+)\((.*?)\s*\/\s*([\d.%]+)\s*\)$/)
+      if (slash) {
+        const alpha = slash[3].endsWith('%') ? Number(slash[3].slice(0, -1)) / 100 : Number(slash[3])
+        return alpha === 0 ? null : `${slash[1]}(${slash[2]})`
+      }
+      const rgba = value.match(/^rgba?\(([^)]+)\)$/)
+      if (rgba) {
+        const parts = rgba[1].split(',').map((p) => p.trim())
+        if (parts.length === 4 && Number(parts[3]) === 0) return null
+        return `rgb(${parts.slice(0, 3).join(', ')})`
+      }
+      return value
+    }
+
+    const toRgb = (value: string): string | null => {
+      const opaque = stripAlpha(value.trim())
+      if (!opaque) return null // fully transparent: paints nothing
+      ctx.clearRect(0, 0, 1, 1)
+      ctx.fillStyle = '#000000'
+      ctx.fillStyle = opaque
+      ctx.fillRect(0, 0, 1, 1)
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+      return `rgb(${r}, ${g}, ${b})`
+    }
+
+    const rootStyle = getComputedStyle(document.documentElement)
+
+    // getComputedStyle does not *enumerate* custom properties, only resolve
+    // them by name — so the token names have to come from the stylesheets
+    // themselves. Any `--x` declared on :root or .dark counts, which picks
+    // up both layers: the semantic tokens components consume and the
+    // primitives those resolve to. Either is a token; a hardcoded colour is
+    // neither.
+    const tokenNames = new Set<string>()
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList
+      try {
+        rules = sheet.cssRules
+      } catch {
+        continue // cross-origin sheet; nothing of ours lives there
+      }
+      for (const rule of Array.from(rules)) {
+        const style = (rule as CSSStyleRule).style
+        const selector = (rule as CSSStyleRule).selectorText
+        if (!style || !selector) continue
+        if (!selector.includes(':root') && !selector.includes('.dark')) continue
+        for (const name of Array.from(style)) {
+          if (name.startsWith('--')) tokenNames.add(name)
+        }
+      }
+    }
+
+    const allowed = new Set<string>()
+    for (const name of tokenNames) {
+      const declared = rootStyle.getPropertyValue(name).trim()
+      if (!declared) continue
+      const rgb = toRgb(declared)
+      if (rgb) allowed.add(rgb)
+    }
+    // Pure black and white are legitimate even when no token resolves to
+    // them — a UA default border, an SVG with no fill of its own.
+    for (const extra of ['rgb(0, 0, 0)', 'rgb(255, 255, 255)']) allowed.add(extra)
+
+    if (tokenNames.size === 0) {
+      return ['no custom properties found in any stylesheet — the check would be vacuous']
+    }
+
+    const offenders: string[] = []
+    const root = document.querySelector('#storybook-root')
+    if (!root) return ['#storybook-root not found — the story did not render']
+    for (const element of [root, ...Array.from(root.querySelectorAll('*'))]) {
+      const style = getComputedStyle(element as Element)
+      for (const property of properties) {
+        const raw = style[property as 'color']
+        if (!raw || raw === 'none') continue
+        const rgb = toRgb(raw)
+        if (rgb && !allowed.has(rgb)) {
+          offenders.push(`<${element.tagName.toLowerCase()}> ${property}: ${raw} -> ${rgb}`)
+        }
+      }
+    }
+    return offenders
+  }, COLOR_PROPERTIES as unknown as string[])
+}
+
+test.describe('primitives paint only token colours', () => {
+  for (const name of PRIMITIVES) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${name} uses only tokens (${theme})`, async ({ page }) => {
+        await page.goto(storyUrl(name, theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        await expect(page.locator('#storybook-root')).toBeVisible()
+        expect(await offTokenColors(page)).toEqual([])
+      })
+    }
+  }
+
+  for (const id of TONE_STORY_IDS) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${id} uses only tokens (${theme})`, async ({ page }) => {
+        await page.goto(storyUrlById(id, theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        await expect(page.getByText('outline-success')).toBeVisible()
+        expect(await offTokenColors(page)).toEqual([])
       })
     }
   }
