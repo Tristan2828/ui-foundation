@@ -46,7 +46,6 @@
       "registryDependencies": [
         "calendar",
         "card",
-        "combobox",
         "dialog",
         "empty",
         "field",

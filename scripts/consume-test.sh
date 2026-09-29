@@ -121,8 +121,12 @@ done
 # also exists upstream, so if it is ever dropped from starter's file list
 # (or a registryDependency re-introduces it), the install silently gets
 # upstream's copy and the local patch vanishes with every check still
-# green. Comparing content against $REF is what catches that.
-for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json          src/components/ui/table.tsx src/components/ui/button.tsx src/components/ui/badge.tsx; do
+# green. Comparing content against $REF is what catches that. Every file
+# ARCHITECTURE.md "The registry" lists as patched belongs here — use-mobile.ts
+# especially, since `sidebar` pulls upstream's copy and can't be dropped.
+for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json \
+  src/components/ui/table.tsx src/components/ui/button.tsx src/components/ui/badge.tsx \
+  src/components/ui/combobox.tsx src/hooks/use-mobile.ts; do
   expected=$(git -C "$REPO_ROOT" show "$REF:$f" 2>/dev/null || git -C "$REPO_ROOT" show "origin/$REF:$f") ||
     fail "can't read $f at $REF from the local repo (fetch first?)"
   [ "$(tr -d '\r' < "$f")" = "$(printf '%s' "$expected" | tr -d '\r')" ] ||
