@@ -168,6 +168,13 @@ exposed two gaps; both closed the same day (2026-09-18).
   upgrade to `v2.1.7` surfaced new `DEFERRED.md` rows: a drift check for
   consuming apps, `setFilters`/`applyView`, binary MSW overrides, a
   frozen-clock test convention, and `pinLastColumn`.
+- **Protect the patched combobox; ship the drift check** (#46–#47,
+  2026-09-28), and the "starter kit now, shared code later" direction (#48).
+- **Pushed up the Game List app's forks** (2026-09-28): `setFilters()` /
+  `applyView()` on `useTableUrlState`, a binary body for the e2e MSW
+  override, and `DataTable`'s `pinLastColumn`. `pinLastColumn` also needed
+  the app's `min-w-0` fix on `<SidebarInset>`: without it a wide table
+  scrolled the whole page. See `docs/phases/push-up-game-list-forks.md`.
 - **Combobox guard and drift check** (2026-09-28) — `combobox` no longer
   pulled from upstream alongside its patched copy (with a vitest guard for
   every shipped primitive); `registry.json`-only changes now trigger the

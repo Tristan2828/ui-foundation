@@ -145,7 +145,12 @@ export function AppShell() {
             </SidebarFooter>
           </Sidebar>
         </nav>
-        <SidebarInset>
+        {/* min-w-0: <SidebarInset> is a flex item beside <Sidebar> with
+            the default min-width:auto, which floors it at its content's
+            width — so a wide table grew the whole page sideways instead of
+            scrolling inside its own container, and a right-pinned column
+            sat off-screen. Passed via className: sidebar.tsx is shadcn's. */}
+        <SidebarInset className="min-w-0">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
             <SidebarTrigger />
             <div className="flex-1" />

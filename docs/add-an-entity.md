@@ -208,7 +208,12 @@ filled-in example).
    need `page.addInitScript` before navigation; states forced after the
    page is already up (a mutation's error response) can use a
    post-navigation `worker.use()` call gated on
-   `waitForFunction(() => window.__msw !== undefined)`.
+   `waitForFunction(() => window.__msw !== undefined)`. To stub what an
+   `<img>` loads (a cover or avatar cell), give the override `bodyBase64`
+   and `contentType` instead of `body` — a JSON body makes the image fire
+   `onError` — and stub it through the override, never `page.route`,
+   which cannot see requests the MSW service worker makes
+   (`e2e/msw-contract.spec.ts` has an example).
 9. **Register the nav entry and route names** in `e2e/shell.spec.ts`'s
    `NAV_ENTRIES` so the shell smoke test covers the new screen, and add
    `/<entity>/new` to `e2e/a11y.spec.ts`'s `FORM_ROUTES` (the table page is

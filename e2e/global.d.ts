@@ -18,6 +18,11 @@ declare global {
       status?: number;
       body?: unknown;
       delayMs?: number;
+      // Kept in step with OverrideSpec in src/mocks/e2e-hooks.ts by hand,
+      // since this project never imports app source — tsc flags a spec
+      // using a field that is missing here.
+      bodyBase64?: string;
+      contentType?: string;
     };
   }
 }
