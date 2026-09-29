@@ -3,6 +3,12 @@
 // calls a suite with its own routes, instead of carrying a copy of the spec
 // to edit (each of these was forked by the first real app for exactly that).
 //
+// Call a suite inside the spec file's own `test.describe(...)`. Playwright
+// locates a test where test() is called, which for a suite is this package;
+// a file argument (`playwright test e2e/a11y.spec.ts`) keeps a test only if
+// it or an enclosing describe is located in that file. Without the app's
+// own describe, selecting the spec by file runs nothing.
+//
 // Runs in Node, inside Playwright: @playwright/test and @axe-core/playwright
 // are optional peer dependencies, needed only by apps that import this.
 import AxeBuilder from '@axe-core/playwright'
@@ -133,9 +139,6 @@ export type MockModeBannerSuiteOptions = {
  * Against the real backend (`VITE_API=real`) it asserts the opposite: no
  * banner on any route. That half catches a mock bundle shipped as if it
  * were production, which is what the banner exists for.
- *
- * Like every suite here, its tests are located in this package, not the
- * app's spec file, so select them by title (`--grep`), not by file path.
  */
 export function defineMockModeBannerSuite({
   routes,

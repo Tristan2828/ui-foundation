@@ -143,12 +143,7 @@ grep -q '"total":0' "$WIDGET_BODY" || fail "tags=fragile should match nothing af
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"
-VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts ||
+VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts e2e/mock-mode-banner.spec.ts ||
   fail "Playwright failed against the real backend"
-# The banner suite's tests are defined inside the package, so Playwright
-# locates them there, not in e2e/mock-mode-banner.spec.ts: a file filter
-# selects nothing. Select it by its real-mode title instead.
-VITE_API=real npx playwright test --grep "no mock-mode banner" ||
-  fail "the mock-mode banner showed against the real backend"
 
 echo "check-backend-postgres: PASS"

@@ -21,11 +21,18 @@ Game List workaround it makes removable.
 - **`defineMockModeBannerSuite` in real mode** (#53): new optional
   `mockMode`, defaulting to `process.env.VITE_API !== 'real'`. Against the
   real backend the suite asserts the banner is *absent*. The template's
-  `check-backend-postgres.sh` now runs it in its real-mode pass. To do the
-  same in an app, select it by title
-  (`VITE_API=real npx playwright test --grep "no mock-mode banner"`), not
-  by file: Playwright locates a package suite's tests in the package, so
-  `playwright test e2e/mock-mode-banner.spec.ts` finds none.
+  `check-backend-postgres.sh` now runs it in its real-mode pass; add
+  `e2e/mock-mode-banner.spec.ts` to yours.
+- **Selecting a suite's spec by file** now works, with a one-line change in
+  the app: wrap each `defineA11ySuite` / `defineMockModeBannerSuite` call
+  in the spec's own `test.describe('…', () => { … })`. Playwright locates a
+  test where `test()` is called, which for a suite is the package, so
+  until now `playwright test e2e/mock-mode-banner.spec.ts` ran no tests.
+  With the app's own describe around it, the file argument matches. The
+  template's `e2e/a11y.spec.ts` and `e2e/mock-mode-banner.spec.ts` show it.
+- **`check-backend-postgres.sh`** creates `logs/` before starting uvicorn.
+  The folder is gitignored, so in a fresh clone the log redirect failed and
+  uvicorn never started. Copy the line into your app's script.
 - **`getMockCurrentUser()`** from `/mocks` (#54): the user the mock
   session is signed in as, or `null` when signed out. For an app's own
   handlers that act as the signed-in user, in place of `MOCK_USER`, which

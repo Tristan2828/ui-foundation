@@ -169,7 +169,9 @@ branch, with the app's `verify` green before and after.
      and `export default [...uiFoundation()]`
    - `e2e/a11y.spec.ts` and `e2e/mock-mode-banner.spec.ts`: the
      `defineA11ySuite` / `defineMockModeBannerSuite` calls from
-     `@tristan2828/ui-foundation/testing`. `e2e/global.d.ts` becomes one
+     `@tristan2828/ui-foundation/testing`, each inside the file's own
+     `test.describe(...)` so the spec can be selected by file (see the
+     template's specs). `e2e/global.d.ts` becomes one
      line: `import '@tristan2828/ui-foundation/testing'`
 5. **Scripts.** Replace `node scripts/check-deps.mjs` in `verify:fast` with
    `ui-foundation sync --check && ui-foundation check-contract && ui-foundation check-deps`,
