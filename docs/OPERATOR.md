@@ -56,11 +56,13 @@ truth; `ARCHITECTURE.md`'s "Focus" repeats it for agents):
   it.
 - **Secrets.** Database passwords, tokens and API keys never go in a chat
   with an agent. Write them to the gitignored `backend/.env` yourself.
-- **Merging.** `main` is protected (CI `verify` + `verify-backend` + a
-  review). Agents open PRs; you merge. Releasing is automatic
+- **Merging.** `main` requires no review and no passing checks (removed
+  2026-09-28; force-pushes and deletion are still blocked), so you can
+  push to it directly or merge a PR yourself. Releasing is automatic
   (`ARCHITECTURE.md` "Releasing"): the `registry` workflow install-tests
-  the PR's head SHA when a shipped path changed, and the `tag` workflow
-  cuts the next patch tag on merge. Nobody tags by hand except a
+  a PR's head SHA when a shipped path changed, and the `tag` workflow
+  cuts the next patch tag on every push to `main`. A direct push skips
+  the install test, so changes to shipped paths are safer as a PR. Nobody tags by hand except a
   deliberate minor or major bump.
 
 ## When a session goes sideways

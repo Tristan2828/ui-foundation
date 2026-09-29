@@ -12,7 +12,10 @@ npx playwright install --with-deps
 
 ## Workflow
 
-1. Branch off `main` — no direct pushes to `main`, it's protected.
+1. Push to `main` directly, or branch off it and open a PR. `main` needs
+   no review and no passing checks (it only refuses force-pushes and
+   deletion). Open a PR when a change touches anything `registry.json`
+   ships: only a PR runs the install test before the release is tagged.
 2. Make your change. Read `AGENTS.md` first; it has the hard rules this
    codebase enforces (semantic color tokens only, no hand-rolled shadcn
    components, kebab-case filenames, etc.) and where the reference
@@ -22,11 +25,10 @@ npx playwright install --with-deps
    running servers lock files in `node_modules` on Windows. For dependency
    changes, also run a clean `npm ci` (see
    `docs/phases/maintenance-2026-09-18.md`).
-4. Run `npm run verify` locally before opening a PR. This is the same
-   check CI runs, and it's required to pass before merge.
-5. Open a PR into `main`. CI (`.github/workflows/verify.yml`) runs
-   automatically; it must pass and the PR must get one approving review
-   before it can merge.
+4. Run `npm run verify` locally before pushing. It is the same check CI
+   runs (`.github/workflows/verify.yml`, on every PR and every push to
+   `main`), but nothing blocks a push on it any more, so a failure on
+   `main` shows up only after it has landed.
 
 ## Scope
 

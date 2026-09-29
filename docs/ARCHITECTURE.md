@@ -129,16 +129,20 @@ Rules learned the hard way (each cost a phase to find):
 
 ## Releasing
 
-Changes go through a PR (`main` is protected: `verify` + `verify-backend`
-and a review). **Releasing is otherwise automatic**, as of 2026-09-27 —
-there is no manual tag, no re-run, no README bump:
+Since 2026-09-28 `main` requires no review and no passing checks, only
+blocking force-pushes and deletion (one developer, so the review gate only
+added friction). Changes land by a PR or a direct push. `verify` and
+`verify-backend` still run on both, but on a direct push they report after
+the fact rather than gate. **Releasing is automatic** (since 2026-09-27):
+there is no manual tag, no re-run, no README bump.
 
 - On the PR, the `registry` workflow runs
   `consume-test.sh --install-only` against the PR's **head SHA**, but only
   when `scripts/registry-paths-changed.mjs` says a shipped path changed.
   That script derives the path list from `registry.json`, so a newly
   shipped file is covered as soon as it is listed.
-- On merge, the `tag` workflow cuts the next patch tag and a GitHub
+- On every push to `main` (a merge or a direct push), the `tag` workflow
+  cuts the next patch tag and a GitHub
   release, again only when a shipped path changed since the last tag. A
   minor or major bump is still deliberate: push that tag by hand and the
   workflow carries on from it, since the next version comes from
@@ -147,6 +151,9 @@ there is no manual tag, no re-run, no README bump:
   nothing has to be committed back to `main` — the workflow only pushes a
   tag, which branch protection does not block.
 
-What made the old post-merge re-run redundant: the PR already
-install-tested that exact tree, and a tag on the merge commit points at the
-same tree. Deploying an app: [`deploy.md`](deploy.md).
+**A direct push to a shipped path skips the install test.** The
+`registry` workflow runs only on pull requests, and the `tag` workflow
+does not wait for it, so a push that breaks installing is tagged anyway.
+Open a PR for changes to anything `registry.json` ships. What made the old
+post-merge re-run redundant: the PR already install-tested that exact
+tree, and a tag on the merge commit points at the same tree. Deploying an app: [`deploy.md`](deploy.md).
