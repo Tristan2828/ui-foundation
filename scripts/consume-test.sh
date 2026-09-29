@@ -79,6 +79,17 @@ if grep -qE '^package/(src|tests|e2e)/' "$WORKDIR/tarball-files.txt"; then
   fail "the packed tarball ships source or tests — check the package's \"files\""
 fi
 
+# `npm publish` normalises package.json more strictly than `npm pack`, and
+# silently drops what it rejects — once, the `ui-foundation` bin, which
+# every app's verify runs. A dry run needs no login; any correction fails.
+echo "consume-test: npm publish --dry-run (no auto-corrections allowed)"
+PUBLISH_OUT=$(npm publish -w @tristan2828/ui-foundation --dry-run --provenance=false 2>&1) ||
+  fail "npm publish --dry-run failed: $PUBLISH_OUT"
+if printf '%s' "$PUBLISH_OUT" | grep -q "errors corrected"; then
+  printf '%s\n' "$PUBLISH_OUT" | grep -A5 "errors corrected" >&2
+  fail "npm would auto-correct package.json on publish — fix packages/ui-foundation/package.json (npm pkg fix shows how)"
+fi
+
 export GIT_AUTHOR_NAME=consume-test GIT_AUTHOR_EMAIL=consume-test@localhost
 export GIT_COMMITTER_NAME=consume-test GIT_COMMITTER_EMAIL=consume-test@localhost
 echo "consume-test: scripts/create-app.sh consume-test-app (template at $SHA, package from the tarball)"

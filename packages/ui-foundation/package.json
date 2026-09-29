@@ -21,7 +21,7 @@
     "openapi"
   ],
   "bin": {
-    "ui-foundation": "./bin/ui-foundation.mjs"
+    "ui-foundation": "bin/ui-foundation.mjs"
   },
   "exports": {
     ".": {
