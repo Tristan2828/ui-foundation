@@ -79,6 +79,14 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   pinFirstColumn?: boolean
   /**
+   * Pins the last column to the right edge, the mirror of
+   * `pinFirstColumn`, for a table whose row actions sit there: on a wide
+   * table they otherwise scroll off-screen, so the control used most is
+   * the one that can't be seen. No second scrollbar of its own. Opt in per
+   * table.
+   */
+  pinLastColumn?: boolean
+  /**
    * Set false when the caller supplies a default sort it falls back to
    * whenever `sorting` is empty. TanStack's cycle is asc → desc →
    * unsorted, and that third click hands back `[]`, which such a caller
@@ -115,6 +123,12 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
 const PINNED_COLUMN_CLASS =
   'sticky left-0 z-10 border-r bg-background group-hover/row:bg-accent ' +
   'group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]'
+
+// The right-edge mirror, opaque for the same reason. Its edge marker points
+// inward from the right, so the two pinned columns bracket the row.
+const PINNED_LAST_COLUMN_CLASS =
+  'sticky right-0 z-10 border-l bg-background group-hover/row:bg-accent ' +
+  'group-hover/row:shadow-[inset_-3px_0_0_0_var(--primary)]'
 
 // Hover highlights the pinned cell, not the whole row. A row-level hover
 // cannot be made consistent against the zebra stripe: `tr:nth-child(even)`
@@ -212,6 +226,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   toolbar,
   getRowId,
   pinFirstColumn,
+  pinLastColumn,
   enableSortingRemoval,
 }: DataTableProps<TData>) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
@@ -297,6 +312,9 @@ export function DataTable<TData extends Record<string, unknown>>({
                         key={header.id}
                         className={cn(
                           pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
+                          pinLastColumn &&
+                            index === headerGroup.headers.length - 1 &&
+                            PINNED_LAST_COLUMN_CLASS,
                           header.column.columnDef.meta?.align === 'center' && 'text-center',
                         )}
                         aria-sort={
@@ -338,12 +356,15 @@ export function DataTable<TData extends Record<string, unknown>>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className={cn(pinFirstColumn && ROW_GROUP_CLASS)}>
+                <TableRow key={row.id} className={cn((pinFirstColumn || pinLastColumn) && ROW_GROUP_CLASS)}>
                   {row.getVisibleCells().map((cell, index) => (
                     <TableCell
                       key={cell.id}
                       className={cn(
                         pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
+                        pinLastColumn &&
+                          index === row.getVisibleCells().length - 1 &&
+                          PINNED_LAST_COLUMN_CLASS,
                         cell.column.columnDef.meta?.align === 'center' && 'text-center',
                       )}
                     >

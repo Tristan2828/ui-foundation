@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router'
 import type { SortingState } from '@/components/app/data-table'
+import { applyUrlChanges, serializeSort, viewToUrlChanges, type TableView, type UrlChanges } from './table-url-changes'
 
 // A table's page, sort and filters, kept in the URL query string
 // (`?page=2&sort=name:asc&search=mouse&tags=fragile&tags=bulky`) instead of
@@ -10,6 +11,8 @@ import type { SortingState } from '@/components/app/data-table'
 // Single-value filters are strings ('' when unset). Multi-value filters
 // (multi-choice fields) are string arrays, repeated in the URL the same way
 // the API takes them. Changing the sort or any filter returns to page 1.
+//
+// Every setter is one update(), and must stay one: see setFilters.
 export function useTableUrlState<F extends string, M extends string = never>(
   filterNames: readonly F[],
   multiFilterNames: readonly M[] = [],
@@ -30,19 +33,8 @@ export function useTableUrlState<F extends string, M extends string = never>(
     string[]
   >
 
-  function update(changes: Record<string, string | string[] | null>) {
-    setParams(
-      (previous) => {
-        const next = new URLSearchParams(previous)
-        for (const [key, value] of Object.entries(changes)) {
-          next.delete(key)
-          if (Array.isArray(value)) for (const item of value) next.append(key, item)
-          else if (value !== null && value !== '') next.set(key, value)
-        }
-        return next
-      },
-      { replace: true },
-    )
+  function update(changes: UrlChanges) {
+    setParams((previous) => applyUrlChanges(previous, changes), { replace: true })
   }
 
   return {
@@ -51,9 +43,17 @@ export function useTableUrlState<F extends string, M extends string = never>(
     filters,
     multiFilters,
     setPage: (next: number) => update({ page: next > 1 ? String(next) : null }),
-    setSorting: (next: SortingState) =>
-      update({ sort: next[0] ? `${next[0].id}:${next[0].desc ? 'desc' : 'asc'}` : null, page: null }),
+    setSorting: (next: SortingState) => update({ sort: serializeSort(next), page: null }),
     setFilter: (name: F, value: string) => update({ [name]: value, page: null }),
+    // Several single-value filters in one call — for any user action that
+    // changes more than one (both ends of a date range, "clear all"). Two
+    // setFilter()s in the same tick lose all but the last: react-router
+    // hands each setSearchParams updater the params from the last render,
+    // not the ones the previous updater produced.
+    setFilters: (changes: Partial<Record<F, string>>) => update({ ...changes, page: null }),
     setMultiFilter: (name: M, values: string[]) => update({ [name]: values, page: null }),
+    // Replaces the whole filter + sort state at once — a saved view. See
+    // viewToUrlChanges() for why anything the view doesn't set is cleared.
+    applyView: (view: TableView<F, M>) => update(viewToUrlChanges(filterNames, multiFilterNames, view)),
   }
 }

@@ -209,6 +209,60 @@ test.describe('widgets table', () => {
     expect(after!.x).toBeCloseTo(before!.x, 0)
   })
 
+  test('a narrow window scrolls the table, not the whole page', async ({ page }) => {
+    // Without min-w-0 on <SidebarInset> (app-shell.tsx) the page grows to
+    // the table's width: the table's own scroll container never overflows,
+    // and its right edge — with any right-pinned column — sits off-screen.
+    await page.setViewportSize({ width: 800, height: 720 })
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+
+    const pageOverflows = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
+    const tableOverflows = await page
+      .locator('[data-slot="table-container"]')
+      .evaluate((el) => el.scrollWidth > el.clientWidth)
+
+    expect(pageOverflows).toBe(false)
+    expect(tableOverflows).toBe(true)
+  })
+
+  test('the actions column stays pinned to the right edge, opaque, when scrolled', async ({ page }) => {
+    // The mirror of the test above. At the left edge, before scrolling, a
+    // right-pinned column already sits at the viewport's right edge rather
+    // than off-screen — so it must also not move once scrolled fully right.
+    await page.setViewportSize({ width: 800, height: 720 })
+    await page.goto('/widgets')
+    const editButton = page.getByRole('button', { name: 'Edit Wireless Mouse' })
+    await expect(editButton).toBeInViewport()
+
+    const container = page.locator('[data-slot="table-container"]')
+    const before = await editButton.boundingBox()
+    const scrollLeft = await container.evaluate((el) => {
+      el.scrollLeft = el.scrollWidth
+      return el.scrollLeft
+    })
+    const after = await editButton.boundingBox()
+
+    expect(scrollLeft).toBeGreaterThan(0)
+    expect(before).not.toBeNull()
+    expect(after).not.toBeNull()
+    expect(after!.x).toBeCloseTo(before!.x, 0)
+
+    // Opaque on every row, striped or not, so scrolled columns can't bleed
+    // through. Alpha is the "/ A" of Tailwind v4's oklch(L C H / A), or the
+    // fourth value of rgba() — which is how a cell with no background at
+    // all serializes: rgba(0, 0, 0, 0).
+    const alphas = await page.locator('tbody tr td:last-child').evaluateAll((cells) =>
+      cells.map((cell) => {
+        const color = getComputedStyle(cell).backgroundColor
+        const alpha = color.match(/\/\s*([\d.]+)\s*\)$/) ?? color.match(/^rgba\(.*,\s*([\d.]+)\)$/)
+        return alpha ? parseFloat(alpha[1]) : 1
+      }),
+    )
+    expect(alphas.length).toBeGreaterThan(1)
+    for (const alpha of alphas) expect(alpha).toBe(1)
+  })
+
   test('hovering highlights the pinned cell identically on striped and unstriped rows', async ({
     page,
     isMobile,

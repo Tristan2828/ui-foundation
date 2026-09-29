@@ -16,6 +16,14 @@ type OverrideSpec = {
   status?: number;
   body?: unknown;
   delayMs?: number;
+  // A non-JSON body, for stubbing what an <img>, <script> or stylesheet
+  // loads. A JSON body with the wrong content type makes an <img> fire
+  // onError, which looks exactly like the failure a test is ruling out.
+  // Base64 so a spec can inline a tiny fixture instead of committing a
+  // binary file (which the registry can't ship). Keep in step with
+  // e2e/global.d.ts.
+  bodyBase64?: string;
+  contentType?: string;
 };
 
 declare global {
@@ -42,6 +50,13 @@ export function exposeMswForE2E(): void {
     worker.use(
       http[override.method](override.path, async () => {
         if (override.delayMs) await delay(override.delayMs);
+        if (override.bodyBase64 !== undefined) {
+          const bytes = Uint8Array.from(atob(override.bodyBase64), (character) => character.charCodeAt(0));
+          return new HttpResponse(bytes, {
+            status: override.status ?? 200,
+            headers: { "Content-Type": override.contentType ?? "application/octet-stream" },
+          });
+        }
         return HttpResponse.json(override.body ?? {}, { status: override.status ?? 200 });
       }),
     );
