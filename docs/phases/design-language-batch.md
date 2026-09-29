@@ -170,6 +170,15 @@ last rule is deleted from ARCHITECTURE's learned-the-hard-way list.
 
 ## Still open
 
+> **Correction (2026-09-28 plan review):** this list was written before the
+> follow-up passes above and was not updated after them. Everything in it
+> shipped except the sticky bottom scrollbar: the phone-width project and
+> the sparse-fixture convention (follow-up passes), the `table.tsx`
+> container ref and `pinFirstColumn` (#39), and categorical colour and the
+> screenshot-baseline replacement (#42). What is actually open is
+> `DEFERRED.md` — read that, not this list.
+
+
 - The three rows added at the start of this session: the phone-width
   Playwright project, and the sparse-fixture testing convention (the
   `<SelectValue>` row is now closed by #34).
