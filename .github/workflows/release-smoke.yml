@@ -1,0 +1,47 @@
+name: release-smoke
+
+# Creates an app from a live release — the template at the tag, the package
+# from npm — and runs that app's full verify. Everything before a release
+# tests a tarball; this is the one check of exactly what apps get.
+#
+# Run by hand once a staged release has been approved on npm (it can't run
+# earlier: an unapproved version doesn't install):
+#   gh workflow run release-smoke.yml -f tag=v3.0.1
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to test (vX.Y.Z), already approved and live on npm"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  create-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: The version is live on npm
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          npm view "@tristan2828/ui-foundation@${TAG#v}" version ||
+            { echo "${TAG#v} isn't live on npm — approve the staged release first."; exit 1; }
+      - name: Create an app from the release and verify it
+        env:
+          TAG: ${{ inputs.tag }}
+          GIT_AUTHOR_NAME: release-smoke
+          GIT_AUTHOR_EMAIL: release-smoke@localhost
+          GIT_COMMITTER_NAME: release-smoke
+          GIT_COMMITTER_EMAIL: release-smoke@localhost
+        run: |
+          cd "$RUNNER_TEMP"
+          bash "$GITHUB_WORKSPACE/scripts/create-app.sh" release-smoke "$TAG"
+          cd release-smoke
+          npx playwright install --with-deps chromium
+          npm run verify

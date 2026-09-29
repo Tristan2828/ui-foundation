@@ -179,43 +179,56 @@ Rules learned the hard way (each cost a phase to find):
 
 ## Releasing
 
-Releasing is automatic: `.github/workflows/release.yml` runs on every push
-to `main` that changes `packages/ui-foundation/`, `template/` or
-`scripts/create-app.sh`. It then:
+Releases are cut automatically and **go live by approval**.
+`.github/workflows/release.yml` runs on every push to `main` that changes
+`packages/ui-foundation/`, `template/` or `scripts/create-app.sh`. It:
 
 1. picks the version: the next patch after the latest `v*` tag, or the
    version in `packages/ui-foundation/package.json` if that is higher. A
    minor or major release is made by bumping it there in the PR, and
    nothing is committed back.
-2. publishes `@tristan2828/ui-foundation@<version>` to npm through trusted
-   publishing (OIDC, with provenance; no stored token),
-3. tags the commit `v<version>` and creates a GitHub release. The template
-   at that tag and the package at that version always belong together,
-4. creates an app from the published release (`create-app.sh`, package from
-   npm) and runs its `verify` — the one check of exactly what apps get.
+2. **stages** `@tristan2828/ui-foundation@<version>` on npm through trusted
+   publishing (OIDC; no stored token),
+3. tags the commit `v<version>` and creates a GitHub release that says the
+   version is waiting for approval. The template at that tag and the
+   package at that version always belong together.
+
+Then the developer approves the staged version with their passkey. They
+can do it on npmjs.com (the package → Staged Packages), or run
+`npm stage list @tristan2828/ui-foundation` and then
+`npm stage approve <stage-id>`. Approval stays disabled until npm's malware
+scan finishes. Until approval, `npm install` of that version and
+`create-app.sh` at that tag both fail. After approving, run the
+`release-smoke` workflow for the tag
+(`gh workflow run release-smoke.yml -f tag=v<version>`). It creates an app
+from the live release and runs its `verify`, the one check of exactly what
+apps get.
+
+Why staged: the release job runs `npm ci` with permission to publish, and
+every app installs `^3.x`. With the trusted publisher limited to staging,
+neither a compromised dependency nor a stolen GitHub session can put a
+version in front of apps without the passkey. The trusted-publisher entry
+deliberately leaves "allow npm publish" unchecked, so a plain
+`npm publish` from the workflow is rejected.
+
+A version that's rejected, or never approved, keeps its tag and release,
+and the next release takes the next number. Delete the GitHub release, or
+edit its notes, so nobody creates an app from it.
 
 `main` needs no review and no passing checks (one developer). A push
-straight to `main` is released without the install test, which runs only
-on pull requests (`package` workflow). So open a PR for any change to the
+straight to `main` is staged without the install test, which runs only on
+pull requests (`package` workflow). So open a PR for any change to the
 package or the template.
 
-**A breaking change** to anything the package exports, or to what
-`sync` writes, gets a major version, a `CHANGELOG.md` entry and upgrade
-steps in [`consuming.md`](consuming.md).
+**A breaking change** to anything the package exports, or to what `sync`
+writes, gets a major version, a `CHANGELOG.md` entry and upgrade steps in
+[`consuming.md`](consuming.md).
 
-**One-time npm setup**, done by the developer before the first automatic
-release. npm lets trusted publishing be configured only on a package that
-already exists:
-
-1. Create the npm account `tristan2828` (with 2FA), and `npm login`.
-2. Before merging the 3.0 PR, publish 3.0.0 once by hand from a clean
-   checkout of its final commit: `npm ci && npm publish -w
-   @tristan2828/ui-foundation` (the package's `prepack` builds it).
-3. On npmjs.com → the package → Settings → Trusted Publisher: GitHub
-   Actions, repository `Tristan2828/ui-foundation`, workflow `release.yml`.
-   Then set "Publishing access" to require trusted publishing (no tokens).
-4. Merge. The release workflow picks 3.0.0 and sees it's already on npm,
-   so it skips publishing. It tags `v3.0.0`, creates the release, and
-   creates an app from it. Every later release publishes itself.
+**npm setup** (done 2026-09-28): the account `tristan2828` has passkey 2FA.
+3.0.0 was published by hand, because trusted publishing can only be
+configured on a package that already exists. The trusted publisher is
+GitHub Actions, `Tristan2828/ui-foundation`, workflow `release.yml`, with
+"allow npm publish" unchecked (staging only). Merging the 3.0 PR finds
+3.0.0 already live, skips staging, and tags `v3.0.0`.
 
 Deploying an app: `template/docs/deploy.md`.

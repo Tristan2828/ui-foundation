@@ -21,7 +21,13 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Decisions that are yours
 
-- **Versions.** Patch releases are automatic. A minor or major release is
+- **Releases go live when you approve them.** Every merge that touches the
+  package or the template stages a version on npm. Approve it with your
+  passkey on npmjs.com (the package → Staged Packages), then run the
+  `release-smoke` workflow for its tag (`ARCHITECTURE.md` "Releasing").
+  Approving is the moment to look at the result. Reject a release you
+  don't want apps to get.
+- **Versions.** Patch versions are picked automatically. A minor or major release is
   a version bump in `packages/ui-foundation/package.json`, made in the PR.
   Anything that breaks an app's code or its synced files is a major, with a
   `CHANGELOG.md` entry and upgrade steps. When an agent's change looks
@@ -36,12 +42,14 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
   itself; you run it.
 - **Secrets.** Database passwords, tokens and API keys never go in a chat
   with an agent. Write them to the gitignored `backend/.env` yourself.
-  Publishing to npm needs no token (trusted publishing). Keep it that way.
+  Publishing to npm needs no token (trusted publishing, staging only), and
+  approving needs your passkey. Keep it that way: never create an npm
+  access token for CI.
 - **Merging.** `main` requires no review and no passing checks (force-pushes
   and deletion are still blocked), so you can push to it directly or merge
   a PR yourself. Every push to `main` that touches the package or the
-  template is published to npm. A direct push skips the PR-only install
-  test, so changes there are safer as a PR.
+  template stages a release. A direct push skips the PR-only install test,
+  so changes there are safer as a PR.
 
 ## When a session goes sideways
 

@@ -1,8 +1,8 @@
 # Changelog
 
 Notable releases and what an app must do to take them. Every merge that
-changes the package or the template also cuts a patch release
-automatically; those are listed on the
+changes the package or the template also stages a patch release on npm,
+which goes live when the developer approves it; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
 ## 3.0.0 — shared code

@@ -1,18 +1,24 @@
 name: release
 
 # On every push to main that changes the package, the template or
-# create-app.sh: publish @tristan2828/ui-foundation to npm, then tag the
+# create-app.sh: *stage* @tristan2828/ui-foundation on npm, then tag the
 # commit vX.Y.Z and create a GitHub release. One version names both: apps
 # install the package at X.Y.Z, and create-app.sh copies template/ from tag
 # vX.Y.Z.
 #
+# Staged, not published: the version goes live only when the developer
+# approves it on npmjs.com (or `npm stage approve`) with their passkey, so a
+# compromised workflow or dependency can't push a release to every app on
+# its own. The trusted-publisher entry deliberately does not allow plain
+# `npm publish`. After approving, run the `release-smoke` workflow for the
+# tag to create an app from the live release.
+#
 # The version: the next patch after the latest tag — unless
 # packages/ui-foundation/package.json says something higher, which is how a
 # minor or major release is made (bump it there in the PR). Nothing is
-# committed back; the published package.json carries the computed version.
+# committed back; the staged package.json carries the computed version.
 #
-# npm authenticates by trusted publishing (OIDC, no stored token), which
-# the package's settings on npmjs.com must allow for this workflow — a
+# npm authenticates by trusted publishing (OIDC, no stored token) — a
 # one-time setup, in docs/ARCHITECTURE.md "Releasing".
 
 on:
@@ -64,19 +70,23 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
-      - name: Build and publish to npm
+      - id: stage
+        name: Build and stage on npm
         if: steps.decide.outputs.version != ''
         env:
           VERSION: ${{ steps.decide.outputs.version }}
         run: |
-          # Trusted publishing needs npm 11.5.1 or later.
-          npm install -g npm@11.7.0
+          # Staged publishing needs npm 11.15.0 or later.
+          npm install -g npm@11.20.0
           npm ci
           if npm view "@tristan2828/ui-foundation@$VERSION" version >/dev/null 2>&1; then
-            echo "$VERSION is already on npm (a re-run) — not publishing again."
+            # A re-run, or a version published by hand (3.0.0 was).
+            echo "$VERSION is already live on npm — nothing to stage."
+            echo "status=live" >> "$GITHUB_OUTPUT"
           else
             npm version "$VERSION" -w @tristan2828/ui-foundation --no-git-tag-version --allow-same-version
-            npm publish -w @tristan2828/ui-foundation
+            npm stage publish -w @tristan2828/ui-foundation --access public
+            echo "status=staged" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Tag and release
@@ -85,30 +95,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: v${{ steps.decide.outputs.version }}
           VERSION: ${{ steps.decide.outputs.version }}
+          STATUS: ${{ steps.stage.outputs.status }}
         run: |
           git tag "$TAG"
           git push origin "$TAG"
+          if [ "$STATUS" = "staged" ]; then
+            pending="**Staged on npm, waiting for approval.** Until it's approved, \`npm install\` of $VERSION fails. Approve it on npmjs.com (the package → Staged Packages) or with \`npm stage list @tristan2828/ui-foundation\` then \`npm stage approve <stage-id>\`; then run the \`release-smoke\` workflow for $TAG."
+          else
+            pending=""
+          fi
           gh release create "$TAG" --title "$TAG" --notes "$(cat <<EOF
+          $pending
+
           Upgrade an app: \`npm install @tristan2828/ui-foundation@$VERSION && npx ui-foundation sync\`, then \`npm run verify\`.
 
           New app: \`bash create-app.sh <name> $TAG\` (docs/create-an-app.md).
           EOF
           )"
-
-      - name: Create an app from the published release
-        # The documented path, end to end: the template from the tag just
-        # pushed, the package from npm. Everything before this tested a
-        # tarball; this is the only check of what apps actually get.
-        if: steps.decide.outputs.version != ''
-        env:
-          TAG: v${{ steps.decide.outputs.version }}
-          GIT_AUTHOR_NAME: release-smoke
-          GIT_AUTHOR_EMAIL: release-smoke@localhost
-          GIT_COMMITTER_NAME: release-smoke
-          GIT_COMMITTER_EMAIL: release-smoke@localhost
-        run: |
-          cd "$RUNNER_TEMP"
-          bash "$GITHUB_WORKSPACE/scripts/create-app.sh" release-smoke "$TAG"
-          cd release-smoke
-          npx playwright install --with-deps chromium
-          npm run verify
