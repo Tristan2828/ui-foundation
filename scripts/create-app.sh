@@ -96,6 +96,18 @@ npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes --overwrite
 echo "create-app: generating the MSW service worker"
 npx msw init public/ --save
 
+# What scripts/check-foundation-drift.mjs compares against. The registry
+# never ships this file, so taking a later release can't overwrite it —
+# bump "tag" by hand when you take one (docs/consuming.md).
+cat > foundation.json <<EOF
+{
+  "tag": "$REF",
+  "appOwned": [],
+  "removed": {},
+  "forked": {}
+}
+EOF
+
 git init -q
 git add -A
 git commit -q -m "Scaffold from $REPO starter#$REF"

@@ -27,6 +27,18 @@ describe("registry.json starter item", () => {
     expect(own).toEqual([]);
   });
 
+  // A primitive shipped as a file is a patched one (button, badge, table,
+  // combobox): if the same name is also a registryDependency, upstream's
+  // unpatched copy is installed too and can win, silently undoing the patch.
+  // Found twice — `table` in the design-language batch, `combobox` after it.
+  it("does not also pull a primitive it ships as a file from upstream", () => {
+    const shippedPrimitives = starter.files
+      .map((f) => f.path.match(/^src\/components\/ui\/([a-z0-9-]+)\.tsx$/)?.[1])
+      .filter((name): name is string => name !== undefined);
+    const pulled = (starter.registryDependencies ?? []).filter((dep) => shippedPrimitives.includes(dep));
+    expect(pulled).toEqual([]);
+  });
+
   for (const name of ["conventions", "theme"]) {
     it(`ships every file and dependency the ${name} item does`, () => {
       const other = item(name);

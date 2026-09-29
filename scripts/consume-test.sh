@@ -81,6 +81,7 @@ for f in \
   docs/entities/_template.md docs/entities/widget.md \
   .claude/skills/new-entity/SKILL.md .claude/agents/spec-tester.md \
   .claude/hooks/deny-impl-read.mjs scripts/check-deps.mjs \
+  scripts/check-foundation-drift.mjs foundation.json \
   src/styles/theme.css src/index.css \
   src/components/app/app-shell.tsx src/components/app/data-table.tsx \
   src/components/app/entity-form.tsx src/components/app/error-state.tsx \
@@ -121,13 +122,30 @@ done
 # also exists upstream, so if it is ever dropped from starter's file list
 # (or a registryDependency re-introduces it), the install silently gets
 # upstream's copy and the local patch vanishes with every check still
-# green. Comparing content against $REF is what catches that.
-for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json          src/components/ui/table.tsx src/components/ui/button.tsx src/components/ui/badge.tsx; do
+# green. Comparing content against $REF is what catches that. Every file
+# ARCHITECTURE.md "The registry" lists as patched belongs here — use-mobile.ts
+# especially, since `sidebar` pulls upstream's copy and can't be dropped.
+for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json \
+  src/components/ui/table.tsx src/components/ui/button.tsx src/components/ui/badge.tsx \
+  src/components/ui/combobox.tsx src/hooks/use-mobile.ts; do
   expected=$(git -C "$REPO_ROOT" show "$REF:$f" 2>/dev/null || git -C "$REPO_ROOT" show "origin/$REF:$f") ||
     fail "can't read $f at $REF from the local repo (fetch first?)"
   [ "$(tr -d '\r' < "$f")" = "$(printf '%s' "$expected" | tr -d '\r')" ] ||
     fail "$f installed from starter#$REF doesn't match $REF's own copy — a registry item is resolving from a different ref"
 done
+
+# The drift check every app gets: a fresh install from $REF must read as in
+# sync with $REF — which also proves create-app.sh wrote foundation.json and
+# that the script's built-in defaults and import sweep don't flag a clean
+# app. Then a negative control: an edited shipped file must fail it.
+echo "consume-test: scripts/check-foundation-drift.mjs (fresh app must be in sync)"
+node scripts/check-foundation-drift.mjs ||
+  fail "a fresh install from starter#$REF doesn't read as in sync with $REF"
+echo "// local edit" >> src/hooks/use-debounced-value.ts
+if node scripts/check-foundation-drift.mjs >/dev/null; then
+  fail "check-foundation-drift passed with a shipped file edited — the check is vacuous"
+fi
+git checkout -q -- src/hooks/use-debounced-value.ts
 
 
 if [ "$INSTALL_ONLY" = true ]; then

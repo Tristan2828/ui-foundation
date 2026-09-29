@@ -19,7 +19,11 @@ if (!base || !head) {
 }
 
 const registry = JSON.parse(readFileSync(new URL('../registry.json', import.meta.url), 'utf8'))
-const shipped = new Set()
+// registry.json is shipped too, in effect: consumers read it at the tag to
+// decide what to install. A change that only edits it (dropping a
+// registryDependency, say) changes what every consumer gets, so it must
+// be install-tested and released like any shipped file.
+const shipped = new Set(['registry.json'])
 for (const item of registry.items ?? []) {
   for (const file of item.files ?? []) {
     if (file.path) shipped.add(file.path)

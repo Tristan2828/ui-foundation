@@ -40,6 +40,11 @@ go back to the Widgets demo.
 
 Instead:
 
+0. **See where you stand:** `node scripts/check-foundation-drift.mjs`
+   (`npm run check:foundation` once Step 0 has added it). It compares every
+   shipped file with the release in `foundation.json`, so you know which
+   files are yours before anything new arrives. Pass the new tag to preview
+   the release itself: `node scripts/check-foundation-drift.mjs <new-tag>`.
 1. Read what changed between your tag and the new one:
    `https://github.com/Tristan2828/ui-foundation/compare/<your-tag>...<new-tag>`
    (`docs/phases/` in that diff explains each change).
@@ -55,12 +60,43 @@ Instead:
    ```
    Take the new version if you haven't changed that file; merge by hand if
    you have. Ignore app-owned files unless the release notes say otherwise.
-4. `npm run verify`.
+4. Set `"tag"` in `foundation.json` to the new tag, then run the drift
+   check again and `npm run verify`.
 
 Primitives in `src/components/ui/` come from upstream shadcn at install
-time (only `button`, `badge`, `combobox` and `src/hooks/use-mobile.ts` are
-shipped by this registry), so the dry run may also show upstream drift there — take
-it or not on its own merits.
+time (only `button`, `badge`, `combobox`, `table` and
+`src/hooks/use-mobile.ts` are shipped by this registry), so the dry run may
+also show upstream drift there — take it or not on its own merits.
+
+### The drift check and `foundation.json`
+
+`scripts/check-foundation-drift.mjs` (shipped in `starter`)
+reports each shipped file as **DRIFTED** (you changed it), **MISSING** (the
+release ships it, you don't have it), a **declared fork**, or **not
+imported** (present, but nothing uses it — taking a file isn't adopting
+it). It exits non-zero on anything drifted or missing, and stays out of
+`verify` on purpose. What it treats as intentional lives in
+`foundation.json`, which `create-app.sh` writes and the registry never
+overwrites:
+
+```json
+{
+  "tag": "v2.1.9",
+  "appOwned": ["e2e/msw-contract.spec.ts"],
+  "removed": { "src/routes/register.tsx": "no self-service sign-up" },
+  "forked": { "src/main.tsx": "adds the app's own providers" }
+}
+```
+
+The app-owned files in the table above and the Widgets demo are covered
+by default, so you don't list those. Every `removed` or `forked` entry
+needs a reason. The check also flags entries that stopped being true: a
+declared fork that matches the release again, or a removed file that is
+back. **An app created before the drift check shipped** has neither
+file. The script arrives as a new file when you take a later release. Then
+create `foundation.json` by hand with the tag you're actually on: the last
+release you took, or the one in your first commit's message ("Scaffold
+from … starter#<tag>").
 
 ## Choosing a data source: Postgres or the Notion API
 

@@ -46,7 +46,6 @@
       "registryDependencies": [
         "calendar",
         "card",
-        "combobox",
         "dialog",
         "empty",
         "field",
@@ -100,6 +99,7 @@
         { "path": ".claude/agents/spec-tester.md", "type": "registry:file", "target": "~/.claude/agents/spec-tester.md" },
         { "path": ".claude/hooks/deny-impl-read.mjs", "type": "registry:file", "target": "~/.claude/hooks/deny-impl-read.mjs" },
         { "path": "scripts/check-deps.mjs", "type": "registry:file", "target": "~/scripts/check-deps.mjs" },
+        { "path": "scripts/check-foundation-drift.mjs", "type": "registry:file", "target": "~/scripts/check-foundation-drift.mjs" },
         { "path": "deps-allowlist.json", "type": "registry:file", "target": "~/deps-allowlist.json" },
         { "path": "eslint.config.js", "type": "registry:file", "target": "~/eslint.config.js" },
         { "path": "src/styles/theme.css", "type": "registry:file", "target": "~/src/styles/theme.css" },

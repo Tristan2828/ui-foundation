@@ -46,8 +46,9 @@ ending your turn while one is still running leaves a half-built app.
    it.
 3. **Finish the setup inside the app** (`cd <app-name>`): do **Step 0 of
    the app's own `docs/add-an-entity.md`** (the bootstrap — it adds the
-   `gen:api`, `verify:fast`, `verify` and `build:real` npm scripts the
-   registry can't, plus the `.env.real` that last one reads).
+   `gen:api`, `verify:fast`, `verify`, `build:real` and `check:foundation`
+   npm scripts the registry can't, plus the `.env.real` that `build:real`
+   reads).
    Only Step 0; the rest of that file is for adding an entity later.
 4. **Prove it works:** `npm run verify`. It must pass — types, lint, unit
    tests and every Playwright test, run against the included Widgets demo.
