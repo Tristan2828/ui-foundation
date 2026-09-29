@@ -5,6 +5,32 @@ changes the package or the template also stages a patch release on npm,
 which goes live when the developer approves it; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.1.0 — findings from moving Game List onto 3.0
+
+Additive: nothing to change in an app to take it. Each item names the
+Game List workaround it makes removable.
+
+- **Collapsed sidebar clicks** (#51): on the icon rail, a hidden
+  `SidebarGroupLabel` no longer takes clicks meant for the last entry of
+  the group above it. Any `AppShell` with a `sidebarExtra` group hit this.
+  Drop a local `group-data-[collapsible=icon]:pointer-events-none` on your
+  own labels.
+- **`check-contract` and optional paths** (#52): a component reachable only
+  from an `x-optional` path the app leaves out may be left out too. An app
+  without `/auth/register` no longer needs an unused `RegisterRequest`.
+- **`defineMockModeBannerSuite` in real mode** (#53): new optional
+  `mockMode`, defaulting to `process.env.VITE_API !== 'real'`. Against the
+  real backend the suite asserts the banner is *absent*. The template's
+  `check-backend-postgres.sh` now runs it in its real-mode pass. To do the
+  same in an app, select it by title
+  (`VITE_API=real npx playwright test --grep "no mock-mode banner"`), not
+  by file: Playwright locates a package suite's tests in the package, so
+  `playwright test e2e/mock-mode-banner.spec.ts` finds none.
+- **`getMockCurrentUser()`** from `/mocks` (#54): the user the mock
+  session is signed in as, or `null` when signed out. For an app's own
+  handlers that act as the signed-in user, in place of `MOCK_USER`, which
+  is wrong after a mock registration.
+
 ## 3.0.0 — shared code
 
 The foundation is now an npm package, `@tristan2828/ui-foundation`, and apps

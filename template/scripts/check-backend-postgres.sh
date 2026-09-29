@@ -10,9 +10,11 @@
 # asyncpg parameter binding) — every bug of that class this repo has had
 # was only caught here. Run it for any backend change.
 #
-# Only shell.spec/smoke.spec run against the real backend: the other specs
-# force loading/empty/error states through MSW overrides that don't exist
-# with VITE_API=real (a deliberate scope decision).
+# Only shell.spec, smoke.spec and the mock-mode banner suite run against
+# the real backend: the other specs force loading/empty/error states through MSW
+# overrides that don't exist with VITE_API=real (a deliberate scope
+# decision). The banner suite flips there: it asserts no banner, which is
+# what catches a mock bundle shipped as the real one.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT="$(pwd)"
@@ -61,6 +63,7 @@ echo "check-backend-postgres: alembic upgrade head"
 (cd backend && "../$PY" -m alembic upgrade head) || fail "alembic upgrade head failed"
 
 echo "check-backend-postgres: starting uvicorn on :8000"
+mkdir -p logs # gitignored, so absent in a fresh clone
 # `exec` replaces the subshell with uvicorn itself, so $! is uvicorn's own
 # PID — without it, $! is the subshell wrapping it, and killing that can
 # leave uvicorn running as an orphan.
@@ -142,5 +145,10 @@ rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"
 VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts ||
   fail "Playwright failed against the real backend"
+# The banner suite's tests are defined inside the package, so Playwright
+# locates them there, not in e2e/mock-mode-banner.spec.ts: a file filter
+# selects nothing. Select it by its real-mode title instead.
+VITE_API=real npx playwright test --grep "no mock-mode banner" ||
+  fail "the mock-mode banner showed against the real backend"
 
 echo "check-backend-postgres: PASS"

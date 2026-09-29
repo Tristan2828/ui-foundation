@@ -33,6 +33,16 @@ export function setMockAuthenticated(value: boolean): void {
   authenticated = value
 }
 
+/**
+ * The user the mock session is signed in as, or null when signed out — the
+ * same answer GET /auth/me gives. For an app's own handlers that act as the
+ * signed-in user (per-user rows): after a mock registration this is the new
+ * user, not MOCK_USER. On null, answer 401 as /auth/me does.
+ */
+export function getMockCurrentUser(): User | null {
+  return authenticated ? currentUser : null
+}
+
 export function resetMockAuth(): void {
   authenticated = true
   registeredUsers = new Map([[MOCK_USER.email, MOCK_USER]])

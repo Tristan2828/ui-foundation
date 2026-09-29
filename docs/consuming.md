@@ -129,7 +129,8 @@ branch, with the app's `verify` green before and after.
    - No self-service sign-up: render `<LoginRoute registerPath={null} />`,
      drop the `/register` route and `e2e/register.spec.ts`. The package's
      `register()` stays but goes unused, and `/auth/register` may be left
-     out of `openapi.yaml`.
+     out of `openapi.yaml`, along with `RegisterRequest` (from 3.1.0;
+     `check-contract` requires only what the paths the app has reach).
    - `entity-form.tsx` delete-on-edit: `EntityForm`'s `danger` slot.
 3. **Delete the foundation's files from the app.** Every file the package
    now provides:

@@ -160,6 +160,42 @@ function normalise(value) {
 
 const same = (a, b) => JSON.stringify(normalise(a)) === JSON.stringify(normalise(b))
 
+// Every component a value reaches through $refs, following refs inside the
+// components themselves, as 'section/name' keys.
+function reachableComponents(roots, components) {
+  const found = new Set()
+  const walk = (value) => {
+    if (Array.isArray(value)) return value.forEach(walk)
+    if (!value || typeof value !== 'object') return
+    for (const [key, child] of Object.entries(value)) {
+      const match = key === '$ref' && typeof child === 'string' && child.match(/^#\/components\/([^/]+)\/([^/]+)/)
+      if (match) {
+        const id = `${match[1]}/${match[2]}`
+        if (!found.has(id)) {
+          found.add(id)
+          walk(components[match[1]]?.[match[2]])
+        }
+      } else {
+        walk(child)
+      }
+    }
+  }
+  roots.forEach(walk)
+  return found
+}
+
+// Components reachable from optional paths the app leaves out, and from no
+// path it must (or does) have.
+function optionalOnlyComponents(foundation, appHasPath) {
+  const required = []
+  const omitted = []
+  for (const [route, item] of Object.entries(foundation.paths)) {
+    ;(item['x-optional'] && !appHasPath(route) ? omitted : required).push(item)
+  }
+  const requiredIds = reachableComponents(required, foundation.components)
+  return new Set([...reachableComponents(omitted, foundation.components)].filter((id) => !requiredIds.has(id)))
+}
+
 function checkContract(specPath) {
   const target = path.resolve(APP_ROOT, specPath)
   if (!existsSync(target)) fail(`check-contract: no ${specPath} here`)
@@ -175,11 +211,18 @@ function checkContract(specPath) {
       problems.push(`path ${route} differs`)
     }
   }
+  // A component only an omitted optional path uses may be left out with it
+  // (RegisterRequest, when there's no /auth/register). Computed from the
+  // refs, so a future optional path can't forget to mark its schemas.
+  const optionalOnly = optionalOnlyComponents(foundation, (route) => app.paths?.[route] !== undefined)
   for (const [section, entries] of Object.entries(foundation.components)) {
     for (const [name, entry] of Object.entries(entries)) {
       const appEntry = app.components?.[section]?.[name]
-      if (appEntry === undefined) problems.push(`missing components.${section}.${name}`)
-      else if (!same(appEntry, entry)) problems.push(`components.${section}.${name} differs`)
+      if (appEntry === undefined) {
+        if (!optionalOnly.has(`${section}/${name}`)) problems.push(`missing components.${section}.${name}`)
+      } else if (!same(appEntry, entry)) {
+        problems.push(`components.${section}.${name} differs`)
+      }
     }
   }
 
