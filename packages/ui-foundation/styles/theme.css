@@ -1,5 +1,5 @@
 /*
- * Two-layer design tokens (see docs/BUILD-PLAN.md, Phase 5).
+ * Two-layer design tokens (conventions/docs/design-language.md).
  *
  * Layer 1 — primitives: raw palette values. Never referenced from
  * components directly.

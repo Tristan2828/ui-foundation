@@ -1,6 +1,5 @@
-"""Async engine + session dependency. No repository layer — see
-docs/BUILD-PLAN.md Phase 8's minimalism warning; routers call the session
-directly.
+"""Async engine + session dependency. No repository layer on purpose —
+routers call the session directly.
 """
 
 from collections.abc import AsyncGenerator

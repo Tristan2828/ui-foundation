@@ -3,7 +3,7 @@
 Plain `StaticFiles(html=True)` only serves index.html for directory URLs,
 so a hard refresh (or a pasted link) on any React Router route other than
 `/` — `/widgets`, `/widgets/3/edit`, `/login` — 404s in the single-deployable
-setup (docs/BUILD-PLAN.md Phase 8 item 8). This falls back to index.html for
+setup. This falls back to index.html for
 those, but never for `api/...` paths (an unknown API route must stay a JSON
 404, not an HTML page) or for paths with a file extension (a missing
 `/assets/foo.js` must stay a 404, not silently become HTML).

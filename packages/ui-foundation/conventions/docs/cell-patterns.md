@@ -6,7 +6,9 @@ per-entity, and only the shape is reusable. Copy the markup into your
 `<entity>-columns.tsx`.
 
 Every pattern below was chosen for a real column, from a page of
-alternatives (`docs/column-options.md`), not designed in the abstract.
+alternatives ([`column-options.md`](column-options.md)), not designed in the abstract.
+A pattern that proves generic is worth raising for the foundation, so it
+ships here for every app.
 
 ## The rules that apply to every cell
 
@@ -95,7 +97,7 @@ narrow.
 - Base UI's `TooltipTrigger` renders a **`<button>`** by default. A
   read-only cell isn't a button: `render={<span role="img" aria-label … tabIndex={0} />}`
   keeps it focusable and named without faking one.
-- Needs the `TooltipProvider` that `app-shell.tsx` mounts — free in any
+- Needs the `TooltipProvider` that `AppShell` mounts — free in any
   cell, absent in an isolated Storybook story.
 - Encode the value in the glyph's **shape** (solid / half / slashed /
   dashed), not its colour.

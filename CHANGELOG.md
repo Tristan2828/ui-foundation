@@ -1,77 +1,69 @@
 # Changelog
 
-Releases are git tags; apps install one with
-`npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#<tag>`
-(`docs/consuming.md`). Before 2.0.0, tags `v1.0.0`–`v1.13.0` marked the
-build and its hardening, one phase at a time — that history is in
-`docs/STATUS.md` and `docs/phases/`.
+Notable releases and what an app must do to take them. Every merge that
+changes the package or the template also cuts a patch release
+automatically; those are listed on the
+[releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 2.1.1 — 2026-09-19
+## 3.0.0 — shared code
 
-- **Adding an entity no longer requires Claude's `/new-entity` command.**
-  The skill had `disable-model-invocation: true`, so when a developer asked
-  in plain words ("add a Game entity following docs/add-an-entity.md"),
-  Claude Code treated the workflow as reserved for the slash command and
-  refused. Removed: the skill is a shortcut, not a gate. What still stops
-  an agent from building on its own is the entity plan — no approved
-  `docs/entities/<entity>.md`, no build.
-- `create-app.sh` (and the download step in `create-an-app.md`) retries its
-  GitHub downloads, so a dropped connection doesn't stop app creation.
-- **Existing apps:** delete the `disable-model-invocation: true` line from
-  `.claude/skills/new-entity/SKILL.md` (a one-line change; nothing else
-  differs).
+The foundation is now an npm package, `@tristan2828/ui-foundation`, and apps
+upgrade by bumping its version. Until 2.x, apps installed a copy of every
+file and kept it. The first real app shows why that stopped working: it
+fell seven releases behind and ended up with 16 local forks
+(`docs/ARCHITECTURE.md` "Why shared code").
 
-## 2.1.0 — 2026-09-19
+- **The package** holds everything apps share: the shadcn primitives
+  (`@tristan2828/ui-foundation/ui/<name>`), `AppShell`, `DataTable`,
+  `EntityForm`, `ErrorState`, `MultiChoice`, `PasswordInput`, the login and
+  register screens, auth (`useAuth`), `Page`/`AppError`/`QuerySpec`, the
+  gateway's `safeFetch`/`toAppError` (`/gateway`), MSW auth handlers and
+  the e2e override (`/mocks`), the Playwright a11y and mock-banner suites
+  (`/testing`), the lint config (`/eslint`) and tokens with base styles
+  (`/styles.css`).
+- **`ui-foundation sync`** writes the conventions into an app: a marked
+  block at the top of `AGENTS.md`, `docs/foundation/` (the entity playbook
+  and design docs), and the agent files. `sync --check`,
+  `check-contract` (the app's spec must keep the foundation's `/auth/*` and
+  error shapes) and `check-deps` run in every app's `verify:fast`.
+- **The template** (`template/`) replaces the shadcn registry's `starter`
+  item. `create-app.sh` copies it at a release tag and pins the package at
+  the same version. There's no Vite scaffold, `shadcn init` or manual
+  Step 0 any more.
+- **From the first app's forks**, now configuration:
+  `AppShell`'s `title`, `nav`, `sidebarExtra` and `defaultSidebarOpen`
+  (the sidebar's cookie is read back); the collapsed-rail footer and a
+  top-centre `Toaster` are built in; `EntityForm`'s `danger` slot;
+  `LoginRoute`'s `registerPath` (`null` for an app without sign-up).
+- **Checks:** Storybook accessibility and token-colour checks now cover
+  every primitive the package ships, not only the patched ones. Lint
+  rejects importing the package's internals, or one of its primitives from
+  the app's own `src/components/ui/`.
+- **Removed:** the shadcn registry (`registry.json`), the drift check and
+  `foundation.json` (a package can't drift), and the per-phase history docs
+  (`BUILD-PLAN.md`, `STATUS.md`, `docs/phases/`, all in git history).
 
-- **Create an app from one instruction.** `docs/create-an-app.md` is
-  written for any AI tool (or a person): download `scripts/create-app.sh`
-  at a tag, run it, do the playbook's Step 0, confirm `npm run verify`
-  passes, stop. The script replaces the manual setup steps, and
-  `scripts/consume-test.sh` now runs it on every release, so the
-  documented path is the tested one.
-- No change to what `starter` installs.
+**Apps on 2.x:** follow `docs/consuming.md` "Moving a 2.x app onto the
+package". Registry tags `v1.0.0`–`v2.1.x` still install as before.
 
-## 2.0.0 — 2026-09-18 — first stable release
+## 2.x — the registry, in use (2026-09-18 → 2026-09-28)
 
-The first release meant to be built on. What an app gets:
+- **2.0.0**, the first stable release: contract-first data layer (OpenAPI →
+  generated types → gateway → `Page<T>`/`AppError`, MSW mocks), the app
+  shell with session auth, `DataTable` (URL-kept state, debounced search),
+  `EntityForm`, entity plans, the lint and verify gates, and the optional
+  FastAPI backend.
+- **2.1.x**: `create-an-app.md` and `create-app.sh`; the two-track
+  direction; semantic tones, the cell-pattern catalogue and the
+  column-options step; automatic releases; the mock-mode banner,
+  `PasswordInput` and `build:real`; categorical colour slots; the drift
+  check; `setFilters`/`applyView`, `pinLastColumn` and the binary MSW
+  override, brought back from the first real app.
 
-- **Contract-first data layer** — `openapi.yaml` → generated types → a
-  gateway that turns any backend's responses into `Page<T>` / `AppError`,
-  with MSW mocks so screens run with no backend.
-- **Screens** — app shell with auth (session cookies, login, registration,
-  expiry handling), `DataTable` (server-side sort/filter/pagination kept in
-  the URL, debounced search), `EntityForm`, and a Widgets reference entity
-  covering every supported field type, including multi choice.
-- **Entity plans** — new entities are built from a written plan
-  (`docs/entities/<entity>.md`), never guessed. `docs/add-an-entity.md` is
-  plain instructions any AI tool (or person) follows; Claude Code also has
-  a `/new-entity` shortcut.
-- **Guardrails** — ESLint boundaries and design tokens, a dependency
-  allowlist, and `npm run verify`: types, lint, unit, contract, every
-  screen's loading/empty/error/success states, and accessibility in light
-  and dark mode.
-- **Optional backend** — FastAPI + SQLModel + Alembic implementing the
-  same contract; local Docker Postgres by default, Supabase as the cloud
-  choice, and a production startup check (`docs/deploy.md`).
+## 1.x — the build (2026-09-15 → 2026-09-18)
 
-### Changed for apps on 1.x
-
-Apps installed from a 1.x tag own their files; take these by hand
-(`docs/consuming.md`, "Taking a later release"):
-
-- `starter` is self-contained — before, its conventions and theme files
-  came from `main`, whatever tag was installed.
-- Storybook is no longer installed; accessibility is checked on real
-  screens (`e2e/a11y.spec.ts`).
-- `/new-entity` requires a plan file; the Step 0 `verify:fast` script
-  type-checks `tests/` and `e2e/`.
-- `AuthContextValue` gained `error` and `retry` (`status` can be
-  `'unavailable'`); `useTableUrlState` gained multi-value filters.
-- Patched primitives ship with `starter`: `button`, `badge`, `combobox`,
-  and `src/hooks/use-mobile.ts`.
-
-### Not included yet
-
-Tracked in `docs/DEFERRED.md`, each with the condition that brings it in:
-read-only entities, board views, a Notion API data source, login rate
-limiting, error reporting.
+Tags `v1.0.0`–`v1.13.0` marked the original build (scaffold, tokens,
+contract, shell, reference screens, registry, the first fresh-agent build,
+backend, Storybook, real auth, registration, cloud Postgres), then a
+pre-reuse audit and the first real project's gaps (entity plans,
+multi-select). The history is in git.

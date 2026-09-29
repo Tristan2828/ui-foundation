@@ -14,7 +14,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     // A static build, not `storybook dev`: the dev server's on-demand
-    // compilation races Playwright's parallel first loads (docs/phases/phase-9.md).
+    // compilation races Playwright's parallel first loads.
     command: 'npm run build-storybook && npm run preview-storybook',
     url: 'http://localhost:6006',
     reuseExistingServer: !process.env.CI,

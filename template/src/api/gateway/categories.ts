@@ -1,6 +1,5 @@
 // Anti-corruption layer for the Categories resource (used by the widget
-// form's async-search combobox). See docs/BUILD-PLAN.md "Anti-Corruption
-// Layer".
+// form's async-search combobox).
 import type { components } from "../schema";
 import { safeFetch, toAppError } from "@tristan2828/ui-foundation/gateway";
 

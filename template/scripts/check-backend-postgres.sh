@@ -12,7 +12,7 @@
 #
 # Only shell.spec/smoke.spec run against the real backend: the other specs
 # force loading/empty/error states through MSW overrides that don't exist
-# with VITE_API=real (a deliberate scope decision — docs/phases/phase-8.md).
+# with VITE_API=real (a deliberate scope decision).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT="$(pwd)"

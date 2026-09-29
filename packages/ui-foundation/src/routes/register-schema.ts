@@ -2,7 +2,7 @@
 // login-schema.ts. Mirrors RegisterRequest (email, name, password) plus one
 // addition beyond the wire shape: a client-only confirmPassword field, since
 // a mistyped password with no confirmation is a real, cheaply-prevented
-// failure mode (docs/BUILD-PLAN.md Phase 11).
+// failure mode.
 import { z } from 'zod'
 
 export const registerFormSchema = z

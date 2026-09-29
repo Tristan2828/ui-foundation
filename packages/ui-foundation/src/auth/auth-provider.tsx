@@ -40,8 +40,8 @@ function endSession(queryClient: QueryClient) {
 }
 
 // This is the only file that knows how auth works — everything else
-// consumes useAuth() from ./use-auth. See docs/BUILD-PLAN.md "Auth
-// Boundary" and its Phase 10 (session cookies against the real backend).
+// consumes useAuth() from ./use-auth, and the package exports nothing else
+// of it (docs/ARCHITECTURE.md "The layers").
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const {

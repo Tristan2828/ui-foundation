@@ -1,6 +1,6 @@
 // A multi-choice picker: selected options as removable chips, the rest in a
 // filterable dropdown. The one control for every "multi choice" field
-// (docs/entities/_template.md) — on a form (Widget Tags) and as a table
+// (conventions/docs/entity-plan-template.md) — on a form (Widget Tags) and as a table
 // filter — so entities reuse it rather than re-assembling the combobox
 // primitive each time. Built on shadcn's Combobox `multiple` mode, following
 // its own ComboboxMultiple example.

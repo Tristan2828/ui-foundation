@@ -1,0 +1,34 @@
+name: package
+
+# Creates a fresh app from the PR's head commit — the package as `npm pack`
+# builds it, installed from the tarball rather than linked, and template/
+# as create-app.sh copies it — and runs that app's own verify:fast. This is
+# what catches a missing entry in the package's `files`, a broken export,
+# or a template that only works inside this repo, before anything is
+# published.
+
+on:
+  pull_request:
+    paths:
+      - "packages/ui-foundation/**"
+      - "template/**"
+      - "scripts/create-app.sh"
+      - "scripts/consume-test.sh"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  install-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The PR's head commit, not the default merge commit: the result
+          # should belong to the commit that will be merged.
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: bash scripts/consume-test.sh --install-only

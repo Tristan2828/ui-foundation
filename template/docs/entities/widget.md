@@ -1,7 +1,7 @@
 # Widget — entity plan
 
 The demo entity the foundation ships with, written up as a filled-in plan
-(format: `_template.md`). Its code in `src/routes/widgets/` is what
+(format: `docs/foundation/entity-plan-template.md`). Its code in `src/routes/widgets/` is what
 the entity playbook copies for every new entity.
 
 ## Purpose

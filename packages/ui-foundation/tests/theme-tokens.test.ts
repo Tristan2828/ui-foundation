@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-// Phase 5 exit criteria (docs/BUILD-PLAN.md): every semantic (layer 2) token
+// Every semantic (layer 2) token
 // in theme.css must be defined in both the light (:root) and dark (.dark)
 // blocks, so a token added to one and forgotten in the other — the exact
 // way a component silently loses its dark-mode value — fails verify instead

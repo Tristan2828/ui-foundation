@@ -1,7 +1,7 @@
 // Shared wire-error -> AppError translation for the gateway, plus a thin
 // wrapper that turns a rejected apiFetch (network-level failure) into
-// AppError{kind:'network'} instead of letting a raw fetch error escape. See
-// docs/BUILD-PLAN.md "Anti-Corruption Layer" — this is the ACL's error seam.
+// AppError{kind:'network'} instead of letting a raw fetch error escape. This
+// is the anti-corruption layer's error seam (docs/ARCHITECTURE.md).
 import { apiFetch, type ApiResponse } from "../transport";
 import type { AppError } from "../contracts";
 import type { components } from "../schema";

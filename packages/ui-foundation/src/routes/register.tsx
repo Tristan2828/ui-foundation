@@ -1,5 +1,5 @@
-// Screen: /register (Phase 11 — see docs/BUILD-PLAN.md "Phase 11 — Self-
-// Service Registration"). Built the same way login.tsx was: FieldGroup/
+// Screen: /register (self-service sign-up; an app without it doesn't mount
+// this route). Built the same way login.tsx was: FieldGroup/
 // Field directly, not EntityForm — a registration form has no "cancel"
 // destination either.
 import { zodResolver } from '@hookform/resolvers/zod'

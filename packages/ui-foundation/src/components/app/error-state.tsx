@@ -1,6 +1,6 @@
 // The composite AGENTS.md's "Correct Patterns" section names directly:
 // `if (error) return <ErrorState error={error} />`. Renders an AppError —
-// never a raw response, see docs/BUILD-PLAN.md "Anti-Corruption Layer" —
+// never a raw response (the gateway translates every failure) —
 // using the same <Empty> primitive the "no rows" state uses, so a screen's
 // error and empty states read as one family instead of two unrelated
 // widgets.

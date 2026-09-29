@@ -1,6 +1,6 @@
 """Password hashing and session-token helpers. Stdlib only (hashlib,
-hmac, secrets) — see docs/BUILD-PLAN.md Phase 10: session cookies were
-chosen specifically because they need no new dependency.
+hmac, secrets) — session cookies were chosen specifically because they
+need no new dependency.
 """
 
 import hashlib

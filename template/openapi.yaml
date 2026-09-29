@@ -3,26 +3,24 @@ info:
   title: UI Foundation Demo API — Widgets
   version: "1.0.0"
   description: >
-    Contract for the Widgets demo domain (Phase 2). Owned by the app, not by
-    any backend: change it deliberately, then run `npm run gen:api` — the
-    mock-conformance tests and the backend's spec-conformance check both
-    fail until mocks and backend match it.
+    The app's API contract. Owned by the app, not by any backend: change it
+    deliberately, then run `npm run gen:api` — the mock-conformance tests
+    and the backend's spec-conformance check both fail until mocks and
+    backend match it.
 
-    Wire pagination deliberately does not match the UI's Page<T> contract
-    (offset/limit + {items,total} here vs. {items,total,page,pageSize} in
-    src/api/contracts.ts) so the gateway's translation is a real seam, not a
-    passthrough. Validation errors follow FastAPI's default shape
-    ({"detail": [...]}) since FastAPI is the planned Phase 8 backend; other
-    errors use a single {"detail": string} shape, matching FastAPI's default
-    HTTPException body.
+    /auth/* and the error bodies (ValidationErrorBody, HTTPErrorBody and the
+    four error responses) are the foundation's part of the contract: the
+    @tristan2828/ui-foundation package calls exactly these shapes, and
+    `ui-foundation check-contract` fails verify if they drift. Everything
+    else is this app's.
 
-    /auth/* added in Phase 10 (session-cookie auth). Every other path
-    requires an authenticated session (401 via UnauthorizedError).
-
-    /auth/register added in Phase 11 (self-service registration). A
-    duplicate email is a 422 field error
-    (ValidationError), not a 409, matching the shape every other validation
-    failure in this contract already uses.
+    Wire pagination deliberately does not match the UI's Page<T> (offset/limit
+    and {items,total} here, {items,total,page,pageSize} in the UI), so the
+    gateway's translation is a real seam, not a passthrough. Validation
+    errors follow FastAPI's default shape ({"detail": [...]}), other errors
+    FastAPI's HTTPException body ({"detail": string}). Every path except
+    /auth/login and /auth/register requires a session (401 otherwise). A
+    duplicate email on register is a 422 field error, not a 409.
 
 servers:
   - url: /api

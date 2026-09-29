@@ -1,7 +1,7 @@
 """/widgets — see openapi.yaml operationIds listWidgets, createWidget,
-getWidget, updateWidget, deleteWidget. One router, no service layer (see
-docs/BUILD-PLAN.md Phase 8 minimalism warning: stop and write
-docs/BLOCKERS.md rather than growing this past ~60 lines).
+getWidget, updateWidget, deleteWidget. One router, no service layer on
+purpose: stop and write docs/BLOCKERS.md rather than growing a router past
+~60 lines.
 """
 
 from decimal import Decimal

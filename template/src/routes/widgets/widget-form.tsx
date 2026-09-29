@@ -1,7 +1,7 @@
-// Screen B (docs/BUILD-PLAN.md Phase 4). Handles both create (/widgets/new)
-// and edit (/widgets/:id/edit) — a thin consumer of the EntityForm
-// composite. Table + form are Phase 6's copy-this-file reference for the
-// entity playbook.
+// The widget form. Handles both create (/widgets/new) and edit
+// (/widgets/:id/edit) — a thin consumer of the EntityForm composite. Table
+// and form are the copy-this-file reference for the entity playbook
+// (docs/foundation/add-an-entity.md).
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'

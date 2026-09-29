@@ -1,12 +1,12 @@
 # <Entity> — entity plan
 
-The input to the entity playbook (`docs/add-an-entity.md`, which any AI
+The input to the entity playbook (`docs/foundation/add-an-entity.md`, which any AI
 tool can follow; Claude Code's `/new-entity` is a shortcut). It builds
 exactly what this file says — no invented fields, options or rules. Copy
 this file to `docs/entities/<entity>.md` (kebab-case, singular: `game.md`)
 and fill it in, or ask your AI tool to plan the entity with you and it
-will talk it through and write this file. `docs/entities/widget.md` is a
-filled-in example.
+will talk it through and write this file. `docs/entities/widget.md` (the
+template's demo entity, until you delete it) is a filled-in example.
 
 ## Purpose
 
@@ -40,7 +40,7 @@ One or two sentences: what one record is, and who uses the screens.
   "not set" (`Not checked`, `Any`, `None`…), because the form shows it as
   a real option rather than a blank. Say it in the Options column. Widget
   has no optional choice field, so the playbook builds this one from the
-  worked example in `docs/add-an-entity.md` step 6 rather than by copying
+  worked example in `docs/foundation/add-an-entity.md` step 6 rather than by copying
   a screen — a Base UI `Select` can't take `""` as an item value, so the
   pattern needs a sentinel and gets the display wrong without one.
 - **List**: `column` if it shows in the table, and `sortable` if you can

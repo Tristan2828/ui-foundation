@@ -1,7 +1,6 @@
 // Split out of widgets-columns.tsx: eslint-plugin-react-refresh flags a file
 // that exports both a component and a non-component (buildWidgetsColumns) —
-// same fast-refresh hazard Phase 3 hit splitting src/auth/. See
-// docs/phases/phase-3.md.
+// a fast-refresh hazard.
 import { TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'

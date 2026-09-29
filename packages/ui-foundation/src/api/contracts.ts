@@ -1,6 +1,6 @@
 // UI-owned types. The gateway translates every backend response into these;
-// nothing above the gateway may see a wire-shaped response. See
-// docs/BUILD-PLAN.md "Anti-Corruption Layer".
+// nothing above the gateway may see a wire-shaped response (the
+// anti-corruption layer — docs/ARCHITECTURE.md "The layers").
 
 export type Page<T> = {
   items: T[];

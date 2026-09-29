@@ -2,8 +2,7 @@
 // that's TypeScript-only and vanishes at runtime) and validate every MSW
 // handler's actual response body against the operation's declared response
 // schema. Without this, the mocks are a second, unversioned contract that
-// can silently drift from openapi.yaml. See docs/BUILD-PLAN.md
-// "Verification Strategy".
+// can silently drift from openapi.yaml.
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { load as loadYaml } from "js-yaml";

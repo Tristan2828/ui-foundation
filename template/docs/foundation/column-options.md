@@ -115,6 +115,8 @@ rather than hand-writing a standalone HTML page.
 
 ## After the pick
 
-Implement it in `<entity>-columns.tsx`, and if the pattern isn't already in
-[`cell-patterns.md`](cell-patterns.md), add it — with the bits that were
-non-obvious while building it, not just the final markup.
+Implement it in `<entity>-columns.tsx`. If the pattern isn't already in
+[`cell-patterns.md`](cell-patterns.md), raise it for the foundation — that
+file is synced from the package, so an addition there reaches every app —
+with the bits that were non-obvious while building it, not just the final
+markup.

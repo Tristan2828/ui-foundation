@@ -12,7 +12,7 @@ DATABASE_URL: str = os.environ.get(
     "postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation",
 )
 
-# Cloud Postgres support (see docs/BUILD-PLAN.md Phase 12, docs/cloud-postgres.md).
+# Cloud Postgres support (docs/cloud-postgres.md).
 # asyncpg's own SSL flag — postgresql+asyncpg:// doesn't parse libpq's
 # sslmode= query param, so this can't be folded into DATABASE_URL itself.
 DATABASE_SSL: bool = os.environ.get("DATABASE_SSL", "false").lower() == "true"
@@ -46,12 +46,12 @@ STATIC_DIR: str = os.environ.get(
 # else (the default) is development, with no startup checks.
 APP_ENV: str = os.environ.get("APP_ENV", "development")
 
-# Session cookie (see docs/BUILD-PLAN.md Phase 10). Local dev is plain
+# Session cookie. Local dev is plain
 # HTTP, so the Secure flag defaults off; a real deployment sets it.
 COOKIE_SECURE: bool = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 SESSION_TTL_DAYS: int = int(os.environ.get("SESSION_TTL_DAYS", "7"))
 
-# Seeded dev user (migration 0002 — see docs/BUILD-PLAN.md Phase 10). Not a
+# Seeded dev user (migration 0002). Not a
 # production credential; a real deployment sets its own before going live.
 # The defaults are published in the README, which is why production refuses
 # to start while any account still accepts DEFAULT_SEED_PASSWORD.

@@ -1,8 +1,8 @@
 """POST /auth/register, POST /auth/login, POST /auth/logout, GET /auth/me —
 see openapi.yaml operationIds register, login, logout, getCurrentUser.
-Session-cookie auth chosen in docs/BUILD-PLAN.md Phase 10 (same-origin
-deployment, stdlib-only, zero new dependency); register added in Phase 11
-and reuses login's session-creation path via `_start_session`.
+Session-cookie auth (same-origin deployment, stdlib-only, zero new
+dependency); register reuses login's session-creation path via
+`_start_session`.
 `get_current_user` is exported for reuse as a router-level
 `dependencies=[Depends(get_current_user)]` on widgets/categories.
 """

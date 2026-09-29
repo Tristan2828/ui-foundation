@@ -2,9 +2,8 @@
 # this is what `backend/scripts/dev.sh --local` and scripts/check-backend-postgres.sh
 # use. The backend itself runs on the host
 # (`uvicorn app.main:app --reload` from backend/, after `alembic upgrade
-# head`), not in a container. See docs/BUILD-PLAN.md Phase 8 for this file,
-# and docs/cloud-postgres.md (Phase 12) for pointing DATABASE_URL at a
-# hosted instance instead.
+# head`), not in a container. See docs/cloud-postgres.md for pointing
+# DATABASE_URL at a hosted instance instead.
 services:
   postgres:
     image: postgres:18

@@ -114,7 +114,7 @@ test.describe('widgets table', () => {
     // Regression: the Status trigger read the literal "all". Base UI's
     // <SelectValue> renders the raw value, and STATUS_FILTER_ALL is a real
     // value, so `placeholder` never applied. Every entity's toolbar is
-    // copied from widgets-table.tsx (docs/add-an-entity.md), so this
+    // copied from widgets-table.tsx (docs/foundation/add-an-entity.md), so this
     // shipped to every consuming app.
     //
     // Note what this asserts that the filter tests above do not: the

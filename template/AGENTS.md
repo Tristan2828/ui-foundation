@@ -154,4 +154,16 @@ doesn't do:
 
 ## This app
 
-What this app is, and anything an agent needs that the rules above don't cover.
+The foundation's template: a working app with one demo entity, Widgets
+(`src/routes/widgets/`, `docs/entities/widget.md`), which is the reference
+to copy when adding an entity. Replace this section with what the app is,
+and anything an agent needs that the rules above don't cover.
+
+- Screens: `src/routes/`; routes in `src/App.tsx`; sidebar in `src/nav.ts`.
+- Data: `openapi.yaml` → `src/api/schema.d.ts` (generated) →
+  `src/api/gateway/` → TanStack Query hooks beside each screen.
+- Mocks: `src/mocks/` (MSW), validated against `openapi.yaml` by
+  `tests/mocks/conformance.test.ts`.
+- Backend: `backend/`, a reference implementation of `openapi.yaml`
+  (`npm run verify:backend`; `scripts/check-backend-postgres.sh` against
+  real Postgres).

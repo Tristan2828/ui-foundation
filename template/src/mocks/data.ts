@@ -54,7 +54,7 @@ const initialWidgets: Widget[] = [
     // value" rendering path (an em dash in a cell, a "not set" label on a
     // form control) goes uncovered. That is exactly how a Select shipped
     // showing a raw sentinel on screen with `verify` green. Keep one of
-    // these per entity; see docs/add-an-entity.md step 4.
+    // these per entity; see docs/foundation/add-an-entity.md step 4.
     id: 4,
     name: "Blank Slate",
     categoryId: 1,

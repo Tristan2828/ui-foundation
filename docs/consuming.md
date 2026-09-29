@@ -1,138 +1,189 @@
-# Consuming the Foundation
+# Building an App on the Foundation
 
-How an app gets this foundation, takes later fixes, and gets a backend.
-Commands use the shadcn CLI version pinned in `deps-allowlist.json`.
+How an app starts, takes later releases, changes the foundation, and gets
+a data source. For the design behind it, see
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Starting a new app
 
-1. **Create it** with [`create-an-app.md`](create-an-app.md) — point any AI
-   tool at that file, or follow it yourself. One script
-   (`scripts/create-app.sh <name> <tag>`, the same one every release is
-   tested with) scaffolds Vite, Tailwind and shadcn, installs
-   `starter#<tag>` and commits; then the playbook's Step 0 and a passing
-   `npm run verify`.
+1. **Create it** with [`create-an-app.md`](create-an-app.md): point any AI
+   tool at that file, or follow it yourself. One script copies the template
+   at a release tag, installs the package at that version, and commits.
 2. **Plan your first entity** in `docs/entities/<entity>.md` (format and
-   supported field types: `docs/entities/_template.md`; example:
-   `docs/entities/widget.md`) — or ask your AI tool to plan it with you in
-   conversation. Entities are never guessed.
-3. **Build it** by having any AI tool follow `docs/add-an-entity.md` (in
-   Claude Code, `/new-entity <Name>` is a shortcut). Delete the Widgets demo
-   once your own entity works.
-4. **Choose a data source** (below) before you need real data — the UI
-   runs on MSW mocks until then.
+   supported field types: `docs/foundation/entity-plan-template.md`;
+   example: `docs/entities/widget.md`), or ask your AI tool to plan it with
+   you. Entities are never guessed.
+3. **Build it** by having any AI tool follow
+   `docs/foundation/add-an-entity.md` (in Claude Code, `/new-entity <Name>`).
+   Delete the Widgets demo once your own entity works: `src/routes/widgets/`,
+   `src/api/gateway/{widgets,categories}.ts`, their mocks, tests, specs and
+   plan, the nav entry, and the backend's widget router and migrations if
+   you're keeping the backend.
+4. **Choose a data source** (below) before you need real data. The UI runs
+   on MSW mocks until then.
 
-## You own the files
+## What's the app's, what's the package's
 
-From install on, every installed file is **yours**, the shadcn model:
-nothing updates behind your back, and nothing else will.
-
-The installed files fall into two groups, which matters when upgrading:
-
-| You'll edit these (app-owned) | You normally won't (foundation-owned) |
+| The app's (in its repo) | The package's (`@tristan2828/ui-foundation`) |
 |---|---|
-| `openapi.yaml`, `src/App.tsx`, `src/components/app/app-shell.tsx` (nav), `src/mocks/handlers.ts`, `src/mocks/data.ts`, `tests/mocks/conformance.test.ts`, `e2e/shell.spec.ts`, `deps-allowlist.json`, `src/routes/widgets/**` (delete once you have your own entity) | `src/components/app/{data-table,entity-form,error-state,multi-choice,route-error-boundary}.tsx`, `src/auth/**`, `src/api/{contracts,query-client}.ts`, `src/api/transport/**`, `src/api/gateway/errors.ts`, `src/hooks/**`, `src/routes/{login,register,return-path}*`, `eslint.config.js`, `AGENTS.md`, `docs/add-an-entity.md`, `.claude/**` |
+| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/`, `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell`, `DataTable`, `EntityForm`, `ErrorState`, `MultiChoice`, login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
+
+The app's column changes whenever the app wants. The package's column
+changes only through a release, which reaches every app.
 
 ## Taking a later release
 
-**Never re-run `add starter --overwrite` in an app that has entities.** It
-replaces app-owned files too — your `openapi.yaml`, routes, nav and mocks
-go back to the Widgets demo.
-
-Instead:
-
-0. **See where you stand:** `node scripts/check-foundation-drift.mjs`
-   (`npm run check:foundation` once Step 0 has added it). It compares every
-   shipped file with the release in `foundation.json`, so you know which
-   files are yours before anything new arrives. Pass the new tag to preview
-   the release itself: `node scripts/check-foundation-drift.mjs <new-tag>`.
-1. Read what changed between your tag and the new one:
-   `https://github.com/Tristan2828/ui-foundation/compare/<your-tag>...<new-tag>`
-   (`docs/phases/` in that diff explains each change).
-2. Preview, without writing anything:
-   ```bash
-   npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#<new-tag> --dry-run
-   ```
-   It lists every file as new, overwrite or identical.
-3. For each **foundation-owned** file marked overwrite, inspect it
-   (`-` is your copy, `+` is the release):
-   ```bash
-   npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#<new-tag> --diff src/auth/auth-provider.tsx
-   ```
-   Take the new version if you haven't changed that file; merge by hand if
-   you have. Ignore app-owned files unless the release notes say otherwise.
-4. Set `"tag"` in `foundation.json` to the new tag, then run the drift
-   check again and `npm run verify`.
-
-Primitives in `src/components/ui/` come from upstream shadcn at install
-time (only `button`, `badge`, `combobox`, `table` and
-`src/hooks/use-mobile.ts` are shipped by this registry), so the dry run may
-also show upstream drift there — take it or not on its own merits.
-
-### The drift check and `foundation.json`
-
-`scripts/check-foundation-drift.mjs` (shipped in `starter`)
-reports each shipped file as **DRIFTED** (you changed it), **MISSING** (the
-release ships it, you don't have it), a **declared fork**, or **not
-imported** (present, but nothing uses it — taking a file isn't adopting
-it). It exits non-zero on anything drifted or missing, and stays out of
-`verify` on purpose. What it treats as intentional lives in
-`foundation.json`, which `create-app.sh` writes and the registry never
-overwrites:
-
-```json
-{
-  "tag": "v2.1.9",
-  "appOwned": ["e2e/msw-contract.spec.ts"],
-  "removed": { "src/routes/register.tsx": "no self-service sign-up" },
-  "forked": { "src/main.tsx": "adds the app's own providers" }
-}
+```bash
+npm install @tristan2828/ui-foundation@<version>
+npx ui-foundation sync     # rewrites the AGENTS.md block, docs/foundation/, agent files
+npm run verify
 ```
 
-The app-owned files in the table above and the Widgets demo are covered
-by default, so you don't list those. Every `removed` or `forked` entry
-needs a reason. The check also flags entries that stopped being true: a
-declared fork that matches the release again, or a removed file that is
-back. **An app created before the drift check shipped** has neither
-file. The script arrives as a new file when you take a later release. Then
-create `foundation.json` by hand with the tag you're actually on: the last
-release you took, or the one in your first commit's message ("Scaffold
-from … starter#<tag>").
+Read the release notes between your version and the new one first
+(https://github.com/Tristan2828/ui-foundation/releases, and
+[`CHANGELOG.md`](../CHANGELOG.md) for anything major). Patch and minor
+releases don't change what the package exports in a breaking way. A major
+one lists its upgrade steps in the changelog.
+
+`verify` makes the upgrade complete. `sync --check` fails until `sync` has
+run, `check-contract` fails if the foundation's part of the contract
+changed, and the lint rules and types flag whatever the release changed.
+
+## Changing the foundation
+
+When an app needs something the package doesn't do:
+
+1. **Configure it.** The composites take props and slots for the variations
+   apps have actually needed. Check the type declarations before assuming a
+   change is needed.
+2. **Raise it for the foundation** if another app would want it too. Open
+   an issue or a PR against `packages/ui-foundation` in this repo. Once the
+   release ships, the app upgrades and builds its screen on it. This is how
+   Game List's forks became `setFilters`/`applyView`, `pinLastColumn`, the
+   binary MSW override and `EntityForm`'s `danger` slot.
+3. **Build on top of it** if it is genuinely the app's alone: a new
+   component in the app's `src/` that uses the package's exports. Never a
+   modified copy of a package file. Lint rejects importing the package's
+   internals, or a primitive it ships from anywhere but the package.
+
+A primitive the package doesn't ship: `npx shadcn@<tools.shadcn> add <name>`
+into the app's `src/components/ui/`, as usual. If shadcn also writes a
+primitive the package does ship (because the new one depends on it), delete
+that copy and point the import at the package. Lint names every such
+import.
 
 ## Choosing a data source: Postgres or the Notion API
 
-The UI doesn't care: it talks to `openapi.yaml` through the gateway, and
+The UI doesn't care. It talks to `openapi.yaml` through the gateway, and
 either option serves that same contract. Decide per project.
 
 | | Postgres (the reference backend) | Notion API |
 |---|---|---|
 | Source of truth | This app's database | Your Notion database — Notion stays the editor |
-| Status | Built and tested (`backend/`, below) | **Not built yet** — deferred until a project picks it (`DEFERRED.md`) |
+| Status | Built and tested (`backend/`, below) | **Not built yet**, deferred until a project picks it (`DEFERRED.md`) |
 | Good when | The web app replaces the spreadsheet/database; you want speed, real queries, per-user data | You still want to edit in Notion, or other tools (e.g. AI refresh jobs) already write to it |
 | Watch out for | A one-time import if the data lives elsewhere today | Notion's API rate limit (about 3 requests/second), its query limits for filtering and sorting, and mapping Notion property types to the spec |
 
-Either way there is a backend: the Notion integration token is a secret
+Either way there is a backend. The Notion integration token is a secret,
 and Notion's API can't be called from a browser, so a Notion-backed app
-needs a thin server holding the token and translating Notion ↔
-`openapi.yaml`. The frontend is identical in both cases — only what sits
+needs a thin server that holds the token and translates Notion ↔
+`openapi.yaml`. The frontend is identical in both cases; only what sits
 behind `/api` changes.
 
-## Getting the backend
+## The backend
 
-The registry ships the frontend only. `backend/` (FastAPI + SQLModel +
-Alembic) is a reference implementation of the same `openapi.yaml`, with
-auth, per-user ownership and the Widgets demo. Copy it from the same tag:
+Every app starts with `backend/`, a FastAPI + SQLModel + Alembic reference
+implementation of the template's `openapi.yaml`: auth, per-user ownership
+and the Widgets demo. Unlike the frontend package, it is **copied in** and
+the app's own from then on. A fix to the reference backend here doesn't
+reach an app on its own.
 
-```bash
-TAG=v2.1.1   # the tag you installed starter from
-curl -L "https://github.com/Tristan2828/ui-foundation/archive/refs/tags/$TAG.tar.gz" \
-  | tar -xz --strip-components=1 "ui-foundation-${TAG#v}/backend" "ui-foundation-${TAG#v}/docker-compose.yml"
-```
-
-It's yours from then on, same as the frontend. Two things to know:
-
-- **The entity playbook covers the frontend only.** A new entity's backend side
-  (model, migration, router) is written by hand against the spec, following
-  `backend/app/routers/widgets.py`; `backend/scripts/check_spec_conformance.py`
+- The entity playbook covers the frontend only. A new entity's backend side
+  (model, migration, router) is written by hand against the spec,
+  following `backend/app/routers/widgets.py`. `npm run verify:backend`
   fails until the backend matches `openapi.yaml`.
-- Setup is in `docs/cloud-postgres.md` and deploying in `docs/deploy.md` —
-  copy those too, or read them here.
+- Setup and hosting are in the app's `docs/cloud-postgres.md` and
+  `docs/deploy.md`.
+- Not using it (a Notion-backed app, say)? Delete `backend/`,
+  `docker-compose.yml` and the `verify:backend` script.
+
+## Moving a 2.x app onto the package (3.0)
+
+Apps created before 3.0 installed the shadcn registry and hold their own
+copy of every foundation file. Moving one onto the package means deleting
+those copies and importing the package instead. Do it as one change, on a
+branch, with the app's `verify` green before and after.
+
+1. **Allow and install the package.** Add `@tristan2828/ui-foundation` to
+   `deps-allowlist.json`, then `npm install @tristan2828/ui-foundation@^3`.
+2. **Carry forks over as configuration first.** Go through the app's
+   `foundation.json` `forked` map (or its drift-check script's `FORKED`) and
+   find each fork's replacement in 3.0. A fork with no replacement is either
+   the app's own (build it on top of the package, step 3 of "Changing the
+   foundation") or worth raising upstream before migrating.
+   - `app-shell.tsx`: the nav moves to `src/nav.ts` and is passed as
+     `<AppShell title nav sidebarExtra defaultSidebarOpen />`.
+     `sidebarExtra` holds extra sidebar groups (external links, say).
+     Reading back the sidebar cookie, the collapsed-rail footer and a
+     top-centre `Toaster` are built in.
+   - No self-service sign-up: render `<LoginRoute registerPath={null} />`,
+     drop the `/register` route and `e2e/register.spec.ts`. The package's
+     `register()` stays but goes unused, and `/auth/register` may be left
+     out of `openapi.yaml`.
+   - `entity-form.tsx` delete-on-edit: `EntityForm`'s `danger` slot.
+3. **Delete the foundation's files from the app.** Every file the package
+   now provides:
+   - `src/components/ui/` primitives the package ships (see its README).
+     Keep any the app added itself.
+   - `src/components/app/`, `src/components/theme-provider.tsx`,
+     `src/auth/`, `src/hooks/`, `src/api/contracts.ts`,
+     `src/api/query-client.ts`, `src/api/transport/`,
+     `src/api/gateway/{errors,auth}.ts`, `src/mocks/e2e-hooks.ts`,
+     `src/styles/theme.css`, `src/routes/{login,login-schema,register,register-schema,return-path}.ts(x)`
+   - their unit tests (`tests/return-path.test.ts`, `tests/gateway/auth.test.ts`, …)
+   - `scripts/check-deps.mjs`, `scripts/check-foundation-drift.mjs`,
+     `foundation.json`, and the old copied `docs/add-an-entity.md`,
+     `docs/design-language.md`, `docs/cell-patterns.md`,
+     `docs/column-options.md`, `docs/entities/_template.md`
+4. **Point the imports at the package**, starting from the template at the
+   same tag for each file's shape:
+   - `@/components/ui/<name>` → `@tristan2828/ui-foundation/ui/<name>`
+   - composites, `useAuth`, `useTableUrlState`, `useDebouncedValue`,
+     `createQueryClient`, `Page`/`AppError`/`QuerySpec` →
+     `@tristan2828/ui-foundation`
+   - the gateway's `./errors` → `@tristan2828/ui-foundation/gateway`
+   - `src/index.css`: `@import "tailwindcss";` then
+     `@import "@tristan2828/ui-foundation/styles.css";`, plus the app's own
+     rules after them
+   - `src/main.tsx`: `<FoundationProviders mockMode={IS_MOCK_MODE}>`, and
+     `exposeMswForE2E(worker)` from `@tristan2828/ui-foundation/mocks`.
+     Keep the *literal* `import.meta.env.VITE_API === 'real'` check around
+     the MSW import, or `build:real` still bundles MSW
+   - `src/mocks/`: spread `authHandlers` into the handler list and call
+     `resetMockAuth()` from the app's reset. The app's own copy of the auth
+     handlers and user store goes
+   - `src/lib/utils.ts`: `export { cn } from '@tristan2828/ui-foundation'`
+     (for primitives the app adds with shadcn)
+   - `eslint.config.js`: `import uiFoundation from '@tristan2828/ui-foundation/eslint'`
+     and `export default [...uiFoundation()]`
+   - `e2e/a11y.spec.ts` and `e2e/mock-mode-banner.spec.ts`: the
+     `defineA11ySuite` / `defineMockModeBannerSuite` calls from
+     `@tristan2828/ui-foundation/testing`. `e2e/global.d.ts` becomes one
+     line: `import '@tristan2828/ui-foundation/testing'`
+5. **Scripts.** Replace `node scripts/check-deps.mjs` in `verify:fast` with
+   `ui-foundation sync --check && ui-foundation check-contract && ui-foundation check-deps`,
+   and drop `check:foundation`. The template's `package.json` has the exact
+   lines.
+6. **Sync the conventions.** `npx ui-foundation sync`. It puts the
+   foundation block at the top of `AGENTS.md`. Delete the older copy of the
+   foundation's sections below it, keeping only the app's own notes.
+7. **`npm run verify`.** Lint names every import still pointing at a
+   deleted file, `check-contract` names any drift in `/auth/*` or the error
+   bodies, and the Playwright suite proves the screens still work.
+
+## Before 3.0: apps on the registry
+
+Tags `v1.0.0` to `v2.1.x` were a shadcn registry
+(`npx shadcn add Tristan2828/ui-foundation/starter#<tag>`). Those tags still
+install exactly as they did. For how 2.x apps took releases, read this file
+at a 2.x tag.

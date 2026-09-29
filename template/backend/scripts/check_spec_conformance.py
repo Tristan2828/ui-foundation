@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Phase 8 item 6: diff FastAPI's generated OpenAPI document against the
-hand-written openapi.yaml. Treats the generated spec as a conformance
-test of the contract (docs/BUILD-PLAN.md "Contract Direction"), not a
+"""Diff FastAPI's generated OpenAPI document against the hand-written
+openapi.yaml. The contract is the source of truth and the backend conforms
+to it, so this is a conformance test of the contract, not a
 byte-for-byte comparison — component names and extra FastAPI-only
 responses (e.g. its automatic 422 on routes with typed query/path params,
 which openapi.yaml does not document) are expected to differ. What must

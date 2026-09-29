@@ -9,10 +9,8 @@ import { cn } from "cn"
 // every render. Forwarding a real ref is the same capability without the
 // DOM lookup. See src/components/app/data-table.tsx's `pinFirstColumn`.
 //
-// Patched primitives must be listed as files in registry.json (see
-// docs/ARCHITECTURE.md "The registry") — otherwise `registryDependencies`
-// pulls the unpatched upstream copy at install time and this is silently
-// lost in every consuming app.
+// A local patch to a shadcn primitive: re-running `shadcn add table` here
+// would overwrite it. Diff against upstream before taking a new version.
 function Table({
   className,
   containerRef,

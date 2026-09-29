@@ -1,8 +1,6 @@
 // Generic server-side data table: sorting, pagination and a toolbar slot for
 // filters, all driven externally (the caller owns the QuerySpec and re-fetches
-// via TanStack Query — this component never fetches). See
-// docs/BUILD-PLAN.md Phase 4 "Scope Ceiling": this is one of exactly three
-// app/ composites.
+// via TanStack Query — this component never fetches).
 //
 // Built on @tanstack/react-table's useLegacyTable, not the v9 useTable +
 // tableFeatures() API. useLegacyTable is TanStack's own officially shipped,
@@ -93,7 +91,7 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * immediately turns back into the same default — so the header looks
    * stuck and can never advance past it. Leaving this undefined keeps
    * TanStack's own behaviour, so a table with no default sort is
-   * unaffected. See docs/entities/_template.md "Default sort".
+   * unaffected. See conventions/docs/entity-plan-template.md "Default sort".
    */
   enableSortingRemoval?: boolean
 }

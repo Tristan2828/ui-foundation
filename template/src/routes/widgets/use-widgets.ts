@@ -1,7 +1,7 @@
 // TanStack Query hooks for the Widgets resource. Consumes src/api/gateway/
 // only — nothing here sees a wire-shaped response or calls fetch directly.
-// See docs/BUILD-PLAN.md "Anti-Corruption Layer" and AGENTS.md's "NEVER
-// fetch in useEffect" rule (this is the TanStack Query alternative).
+// See AGENTS.md's "NEVER fetch in useEffect" rule (this is the TanStack
+// Query alternative).
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AppError, Page, QuerySpec } from '@tristan2828/ui-foundation'
 import {

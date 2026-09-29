@@ -1,8 +1,7 @@
 // Anti-corruption layer for the Widgets resource. Translates between the
 // wire shapes in openapi.yaml (offset/limit, {items,total}, FastAPI-style
-// error bodies) and the UI-owned contracts in src/api/contracts.ts. Nothing
-// above this module may see a wire-shaped response — see
-// docs/BUILD-PLAN.md "Anti-Corruption Layer".
+// error bodies) and the foundation's UI-owned contracts (Page, QuerySpec,
+// AppError). Nothing above this module may see a wire-shaped response.
 import type { Page, QuerySpec } from "@tristan2828/ui-foundation";
 import type { components } from "../schema";
 import { safeFetch, toAppError } from "@tristan2828/ui-foundation/gateway";

@@ -1,6 +1,6 @@
-// Column definitions for the widgets table. Table + form are Phase 6's
-// copy-this-file reference for the entity playbook — see
-// docs/BUILD-PLAN.md "Reference Implementations".
+// Column definitions for the widgets table. Table and form are the
+// copy-this-file reference for the entity playbook
+// (docs/foundation/add-an-entity.md).
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { PencilIcon } from 'lucide-react'
 import { Link } from 'react-router'
@@ -15,7 +15,7 @@ type WidgetStatus = components['schemas']['WidgetStatus']
 // Enum → tone-mapped badge: group the values by what they *mean* (good /
 // neutral / bad) first, then pick one style for the whole column. The
 // grouping is the real decision; the style is mostly consistency with the
-// table's other columns. See docs/design-language.md.
+// table's other columns. See docs/foundation/design-language.md.
 //
 // Only `active` earns a tone. `archived` is an end state, not a failure,
 // so it stays neutral — a red badge would tell the reader something is

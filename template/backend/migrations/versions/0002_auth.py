@@ -1,6 +1,6 @@
-"""Auth: users, sessions — see docs/BUILD-PLAN.md Phase 10. Seeds one dev
+"""Auth: users, sessions. Seeds one dev
 user from SEED_USER_EMAIL/SEED_USER_PASSWORD (app/config.py) so
-check-phase-10.sh and the two real-backend Playwright specs have someone
+check-backend-postgres.sh and the two real-backend Playwright specs have someone
 to log in as.
 
 Revision ID: 0002

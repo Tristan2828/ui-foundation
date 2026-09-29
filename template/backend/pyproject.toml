@@ -1,7 +1,7 @@
 [project]
 name = "ui-foundation-backend"
 version = "0.1.0"
-description = "FastAPI + SQLModel implementation of openapi.yaml (Phase 8 — see docs/BUILD-PLAN.md). Conforms to a contract it does not own."
+description = "FastAPI + SQLModel reference implementation of openapi.yaml. Conforms to a contract it does not own."
 requires-python = ">=3.11"
 dependencies = [
   "fastapi==0.141.1",

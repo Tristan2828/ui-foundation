@@ -10,6 +10,7 @@
     "postinstall": "npm run build -w @tristan2828/ui-foundation",
     "build": "npm run build -w @tristan2828/ui-foundation",
     "dev": "npm run build && npm run dev -w template",
+    "sync": "npm run build && npm run sync:foundation -w template",
     "verify:fast": "npm run verify:fast -w @tristan2828/ui-foundation && npm run verify:fast -w template",
     "verify": "npm run verify -w @tristan2828/ui-foundation && npm run verify -w template",
     "verify:backend": "npm run verify:backend -w template"

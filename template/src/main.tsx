@@ -9,7 +9,11 @@ import App from './App.tsx'
 // backend (VITE_API=real). Enabled by default, including in the Playwright
 // preview build, so there is no backend process to run before then.
 async function enableMocking() {
-  if (!IS_MOCK_MODE) return
+  // The literal check, not IS_MOCK_MODE: the bundler folds
+  // `import.meta.env.VITE_API` to a constant only where it is written, so
+  // only this form lets `build:real` drop MSW entirely. Behind an imported
+  // constant the dynamic imports below survive and MSW ships to production.
+  if (import.meta.env.VITE_API === 'real') return
   const { worker } = await import('./mocks/browser')
   // start() before exposeMswForE2E(): worker.start() resets the runtime
   // handler list to the ones setupWorker() was configured with, so a

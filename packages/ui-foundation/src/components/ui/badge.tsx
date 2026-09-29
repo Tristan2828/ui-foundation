@@ -23,7 +23,7 @@ const badgeVariants = cva(
         // fill tokens: `border-destructive`/`text-destructive` would use
         // the shade chosen to carry white text, which is too light to read
         // against the page in light mode and too dark in dark mode. See
-        // src/styles/theme.css and docs/design-language.md.
+        // styles/theme.css and conventions/docs/design-language.md.
         "outline-success": "border-success-text text-success-text",
         "outline-warning": "border-warning-text text-warning-text",
         "outline-destructive": "border-destructive-text text-destructive-text",

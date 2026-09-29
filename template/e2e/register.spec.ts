@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
 
-// Mirrors e2e/auth.spec.ts's state coverage (docs/BUILD-PLAN.md Phase 11):
+// Mirrors e2e/auth.spec.ts's state coverage:
 // validation (duplicate email, weak password, mismatched confirmation) and
 // success (redirects in, authenticated). No forced MSW override needed —
 // /register sits outside AppShell's auth redirect (same as /login) and the
-// real mocked POST /auth/register handler (src/mocks/handlers.ts) already
+// real mocked POST /auth/register handler (the foundation's authHandlers) already
 // covers every case exercised here.
 
 test.describe('register', () => {

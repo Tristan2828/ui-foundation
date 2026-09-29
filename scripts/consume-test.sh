@@ -65,13 +65,16 @@ TARBALL="$(native "$WORKDIR")/$TARBALL_NAME"
 # The published file list is the package's `files` field — check the
 # tarball carries what apps need, since a workspace link would hide a
 # missing entry.
+# Listed once into a file: grep -q on a live tar pipe exits early, tar
+# gets SIGPIPE, and pipefail turns a match into a failure.
+tar -tzf "$WORKDIR/$TARBALL_NAME" > "$WORKDIR/tarball-files.txt"
 for f in package/dist/index.js package/dist/index.d.ts package/dist/components/ui/button.js \
   package/dist/gateway.js package/dist/mocks/index.js package/dist/testing/index.js \
   package/styles/index.css package/styles/theme.css package/eslint/index.js \
   package/bin/ui-foundation.mjs package/conventions/AGENTS.md package/openapi/foundation.yaml; do
-  tar -tzf "$WORKDIR/$TARBALL_NAME" | grep -qx "$f" || fail "the packed tarball is missing $f"
+  grep -qx "$f" "$WORKDIR/tarball-files.txt" || fail "the packed tarball is missing $f"
 done
-if tar -tzf "$WORKDIR/$TARBALL_NAME" | grep -qE '^package/(src|tests|e2e)/'; then
+if grep -qE '^package/(src|tests|e2e)/' "$WORKDIR/tarball-files.txt"; then
   fail "the packed tarball ships source or tests — check the package's \"files\""
 fi
 

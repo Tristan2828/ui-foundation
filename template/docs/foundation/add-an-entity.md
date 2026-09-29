@@ -4,8 +4,9 @@ The most-repeated task in this system: add a full CRUD entity — spec, mocks,
 gateway, tests, table, form, routes — following the patterns in
 `src/routes/widgets/`. This file is the only copy of the steps, written for
 **any AI coding tool or a person**: follow it directly ("add a Game entity
-following docs/add-an-entity.md"). In Claude Code, `/new-entity <Name>` is
-a shortcut that runs this same file.
+following docs/foundation/add-an-entity.md"). In Claude Code,
+`/new-entity <Name>` is a shortcut that runs this same file. It is synced
+from `@tristan2828/ui-foundation` — don't edit it here.
 
 Do not skip steps or reorder them. Replace `<Entity>` with the PascalCase
 entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
@@ -15,8 +16,8 @@ entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
 
 **Never guess what an entity is.** Every field, type, option list and rule
 comes from `docs/entities/<entity>.md` — the developer's plan, in the
-format of `docs/entities/_template.md` (`docs/entities/widget.md` is a
-filled-in example).
+format of `docs/foundation/entity-plan-template.md` (`docs/entities/widget.md`
+is a filled-in example while the Widgets demo is still here).
 
 - **The plan file exists:** it is the approved spec. Read it in full and
   build exactly what it says — no extra fields, no invented options, no
@@ -26,66 +27,33 @@ filled-in example).
   the developer — ask about purpose, each field and its type, required,
   option lists, what the table shows, sorts and filters on, and ownership
   — for as long as it takes. Write `docs/entities/<entity>.md` from the
-  answers, show it, and wait for an explicit go-ahead before Step 0.
+  answers, show it, and wait for an explicit go-ahead before step 1.
 - **Either way, stop and raise it (don't improvise) if** the plan has an
   unresolved item under "Open questions", or needs a field type or screen
   shape the foundation doesn't support yet (the supported list is in the
   template). Write the case in `docs/BLOCKERS.md`.
 
-0. **Bootstrap, only if `package.json` has no `gen:api` script** (a sign
-   this is the first entity added since installing the registry — the
-   registry ships files and npm `dependencies`/`devDependencies`, but has
-   no way to merge npm scripts into `package.json` for you). If missing,
-   add exactly these five scripts:
-   ```json
-   "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
-   "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && tsc -p tsconfig.test.json && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
-   "verify": "npm run verify:fast && playwright test",
-   "build:real": "tsc -b && vite build --mode real",
-   "check:foundation": "node scripts/check-foundation-drift.mjs"
-   ```
-   (`check:foundation` is deliberately not part of `verify`: a declared
-   fork is legitimate, and being behind a release isn't a build failure.)
-   (`tsc -p tsconfig.test.json` is there because the registry can't add
-   `tsconfig.test.json` to your root `tsconfig.json`'s references, so
-   `tsc -b` alone never type-checks `tests/` or `e2e/`.)
-   Then, only if `public/mockServiceWorker.js` doesn't exist yet, run
-   `npx msw init public/ --save` once so the MSW service worker installed
-   by `starter` actually registers.
-
-   Finally, create `.env.real` at the project root — one line, plus why:
-   ```
-   # `vite build --mode real` (npm run build:real) loads this: a production
-   # bundle that talks to the real backend. VITE_API is baked in at build
-   # time, so a plain `npm run build` ships MSW and serves mock data (that
-   # build is what Playwright tests). Not a secret; commit it.
-   VITE_API=real
-   ```
-   **This one is easy to skip and fails silently.** `VITE_API` is read at
-   *build* time, so without `build:real` + `.env.real` a plain
-   `npm run build` produces a bundle with MSW inside it — the deployed app
-   then serves the mock fixture and a seeded demo user while looking
-   entirely normal. If your `.gitignore` ignores `.env.*`, add a
-   `!.env.real` exception: the file is not a secret and must be committed.
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete — exactly as the plan specifies: its fields, types, required
    fields, option lists (as enums) and length/format rules, and a list
    query parameter for each field the plan marks as a filter. Reuse the
    `Page` and error components already in the spec; do not redefine
-   pagination or error shapes per entity.
+   pagination or error shapes per entity, and leave the foundation's part
+   of the spec (`/auth/*`, the error bodies) alone — `ui-foundation
+   check-contract` fails verify if it changes.
 2. **`npm run gen:api`** to regenerate `src/api/schema.d.ts`. Never
    hand-edit it.
 3. **Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from
-   the spec** — `openapi.yaml` and `src/api/contracts.ts` only, never the
-   code in `src/api/gateway/` or `src/api/transport/`, so the tests assert
+   the spec** — `openapi.yaml` and the UI contracts (`Page<T>`, `AppError`,
+   `QuerySpec`) only, never the code in `src/api/gateway/`, so the tests assert
    what the spec promises, not what an implementation happens to do. Write
    them to fail first; the gateway that makes them pass doesn't exist yet.
    - **If your tool can run an isolated subagent, use one** that can't see
      those two folders. In Claude Code that's `spec-tester`
-     (`.claude/agents/spec-tester.md`), whose hook *blocks* reading them —
+     (`.claude/agents/spec-tester.md`), whose hook *blocks* reading it —
      the enforced version of this rule.
    - **Otherwise** write the tests yourself, now, before step 5 creates the
-     gateway, and don't open either folder while writing them. It's the
+     gateway, and don't open that folder while writing them. It's the
      same rule, kept by discipline instead of a hook.
 4. **Add MSW handlers in `src/mocks/<entity>.ts`** and register them in
    `src/mocks/handlers.ts`. **Include one deliberately sparse row** whose
@@ -98,8 +66,10 @@ filled-in example).
    new handlers are validated against `openapi.yaml`, the same way
    `widgets`/`categories` already are.
 5. **Add a gateway module in `src/api/gateway/<entity>.ts`** until step 3's
-   tests pass. Wire → `Page<T>` / `AppError` translation only; no
-   hand-written types (everything comes from `schema.d.ts`).
+   tests pass, built on `safeFetch`/`toAppError` from
+   `@tristan2828/ui-foundation/gateway` (see `src/api/gateway/widgets.ts`).
+   Wire → `Page<T>` / `AppError` translation only; no hand-written types
+   (everything comes from `schema.d.ts`).
 6. **Copy the widgets reference files, one for one, not just the two
    screens** — shaped by the plan: table columns and sortable columns from
    its "List" column, toolbar filters from its "Filter" column, form fields
@@ -107,7 +77,7 @@ filled-in example).
    `reference` field copies Category's searchable combobox, a
    `single choice` copies Status's select, a `date-time` copies
    Available From's date picker, a `multi choice` copies Tags — the
-   `<MultiChoice>` control (`src/components/app/multi-choice.tsx`) on the
+   `<MultiChoice>` control from the foundation on the
    form and as a toolbar filter via `useTableUrlState`'s multi filters,
    badges in the table, and a `filters` array the gateway sends as a
    repeated parameter):
@@ -124,20 +94,20 @@ filled-in example).
      row-action dialogs into their own file, as
      `delete-widget-action.tsx` does — a fast-refresh hazard otherwise)
    - `src/routes/widgets/widgets-table.tsx` →
-     `src/routes/<entity>/<entity>-table.tsx` — thin consumer of
-     `<DataTable>` (`src/components/app/data-table.tsx`). Swap the type,
-     columns, and toolbar filters; do not fork `<DataTable>` itself.
+     `src/routes/<entity>/<entity>-table.tsx` — thin consumer of the
+     foundation's `<DataTable>`. Swap the type, columns, and toolbar
+     filters.
    - `src/routes/widgets/widget-form.tsx` →
-     `src/routes/<entity>/<entity>-form.tsx` — thin consumer of
-     `<EntityForm>` (`src/components/app/entity-form.tsx`). Swap the zod
-     schema and fields; do not fork `<EntityForm>` itself.
+     `src/routes/<entity>/<entity>-form.tsx` — thin consumer of the
+     foundation's `<EntityForm>` (its `danger` slot takes an edit-only
+     delete). Swap the zod schema and fields.
 
    **`<SelectValue>` shows the value, not the label.** Base UI renders the
    raw *value*, and `placeholder` only applies when the value is `null`.
    Any `Select` whose "nothing chosen" state is a sentinel rather than
    `null` therefore displays that sentinel on screen unless you pass the
    children function. This bit every `Select` in the first app built on
-   this registry. Two cases, both needing it:
+   this foundation. Two cases, both needing it:
 
    - **A toolbar filter**, where "no filter" is `'all'` — copied straight
      from `widgets-table.tsx`, which now carries the shape to copy: a
@@ -198,11 +168,11 @@ filled-in example).
      values should stay grey, and colour is never the only signal.
 7. **Register routes** for `/<entity>`, `/<entity>/new`,
    `/<entity>/:id/edit` in `src/App.tsx`, and add a nav entry to
-   `src/components/app/app-shell.tsx`'s sidebar.
+   `src/nav.ts`.
 8. **Add Playwright specs for both screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
-   MSW overrides — see `src/mocks/e2e-hooks.ts`'s
-   `window.__E2E_MSW_OVERRIDE__` protocol and
+   MSW overrides — `forceMswOverride`, `waitForMswReady` and the
+   `window.__msw` handle from `@tristan2828/ui-foundation/testing`, and
    `e2e/widgets-table.spec.ts`/`e2e/widget-form.spec.ts` for the pattern.
    States forced via a first-load init script (loading, load-time error)
    need `page.addInitScript` before navigation; states forced after the
@@ -216,18 +186,19 @@ filled-in example).
    (`e2e/msw-contract.spec.ts` has an example).
 9. **Register the nav entry and route names** in `e2e/shell.spec.ts`'s
    `NAV_ENTRIES` so the shell smoke test covers the new screen, and add
-   `/<entity>/new` to `e2e/a11y.spec.ts`'s `FORM_ROUTES` (the table page is
+   `/<entity>/new` to `e2e/a11y.spec.ts`'s `formRoutes` (the table page is
    picked up from the sidebar automatically; the form isn't in it).
 10. **`npm run verify`.** Fix until it passes. Then stop — do not add
-    anything beyond what this list covers; note ideas in
-    `docs/DEFERRED.md` instead.
+    anything beyond what this list covers; note ideas in the app's
+    backlog instead.
 
 ## What not to copy
 
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
-  are demo-domain content, not foundation code — write the entity's own
-  versions rather than adapting these by find-and-replace.
-- `src/components/app/data-table.tsx`, `entity-form.tsx`, `error-state.tsx`,
-  `app-shell.tsx` are shared composites. Extend them in place if a new
-  entity needs a capability they don't have yet (a new field-type widget,
-  say) — do not fork a per-entity copy.
+  are demo-domain content — write the entity's own versions rather than
+  adapting these by find-and-replace.
+- The composites (`DataTable`, `EntityForm`, `ErrorState`, `AppShell`)
+  are the foundation's and shared by every app. If a new entity needs a
+  capability they don't have (a new field-type widget, say), don't copy
+  one into `src/` to change it: raise it for the foundation (AGENTS.md
+  "Changing the Foundation") and build the screen once the release ships.

@@ -1,6 +1,6 @@
 """SQLModel table models — DB shape only. Column names stay snake_case;
-JSON casing lives in app/schemas.py, never here. See docs/BUILD-PLAN.md
-Phase 8 warning: table models are never returned directly from a router.
+JSON casing lives in app/schemas.py, never here. Table models are never
+returned directly from a router.
 """
 
 from datetime import datetime

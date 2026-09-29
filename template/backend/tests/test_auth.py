@@ -100,7 +100,7 @@ async def test_register_creates_user_and_logs_in(register_client: AsyncClient) -
     assert "session_id" in response.cookies
 
     # Auto-login: no separate POST /auth/login needed to reach an
-    # authenticated endpoint (docs/BUILD-PLAN.md Phase 11 exit criteria).
+    # authenticated endpoint.
     me_response = await register_client.get("/api/auth/me")
     assert me_response.status_code == 200
     assert me_response.json()["email"] == "new-user@example.com"

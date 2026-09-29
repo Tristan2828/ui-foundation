@@ -1,7 +1,6 @@
-// Screen A (docs/BUILD-PLAN.md Phase 4). A thin consumer of the DataTable
+// The widgets table. A thin consumer of the foundation's DataTable
 // composite: this file owns widget-specific state (the QuerySpec, the
-// column defs) and none of the table's rendering logic — see
-// src/components/app/data-table.tsx.
+// column defs) and none of the table's rendering logic.
 import { PlusIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
@@ -51,7 +50,7 @@ const STATUS_FILTER_ALL = 'all'
 // applies when the value is null — which it never is here, because "no
 // filter" is the STATUS_FILTER_ALL sentinel, a real value. Without it this
 // trigger reads the literal "all" in its default, unfiltered state. Every
-// entity's toolbar is copied from this file (docs/add-an-entity.md), so
+// entity's toolbar is copied from this file (docs/foundation/add-an-entity.md), so
 // keep this shape when adding a filter: a label constant, the children
 // function, and a test that asserts the *unset* display.
 const STATUS_FILTER_ALL_LABEL = 'All statuses'

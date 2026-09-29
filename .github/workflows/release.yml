@@ -1,0 +1,113 @@
+name: release
+
+# On every push to main that changes the package, the template or
+# create-app.sh: publish @tristan2828/ui-foundation to npm, then tag the
+# commit vX.Y.Z and create a GitHub release. One version names both: apps
+# install the package at X.Y.Z, and create-app.sh copies template/ from tag
+# vX.Y.Z.
+#
+# The version: the next patch after the latest tag — unless
+# packages/ui-foundation/package.json says something higher, which is how a
+# minor or major release is made (bump it there in the PR). Nothing is
+# committed back; the published package.json carries the computed version.
+#
+# npm authenticates by trusted publishing (OIDC, no stored token), which
+# the package's settings on npmjs.com must allow for this workflow — a
+# one-time setup, in docs/ARCHITECTURE.md "Releasing".
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: decide
+        name: Does this push need a release, and which version?
+        run: |
+          latest=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || echo "")
+          if [ -n "$latest" ]; then
+            paths=$(git diff --name-only "$latest" HEAD -- packages/ui-foundation template scripts/create-app.sh)
+            if [ -z "$paths" ]; then
+              echo "Nothing released changed since $latest — no release."
+              echo "version=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Changed since $latest:"
+            echo "$paths"
+          fi
+          committed=$(node -p "require('./packages/ui-foundation/package.json').version")
+          version=$(LATEST="${latest#v}" COMMITTED="$committed" node -e '
+            const parse = (v) => v.split(".").map(Number)
+            const cmp = (a, b) => { for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0 }
+            const committed = parse(process.env.COMMITTED)
+            if (!process.env.LATEST) { console.log(process.env.COMMITTED); process.exit(0) }
+            const next = parse(process.env.LATEST); next[2]++
+            console.log((cmp(committed, next) > 0 ? committed : next).join("."))
+          ')
+          echo "Next version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.decide.outputs.version != ''
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: Build and publish to npm
+        if: steps.decide.outputs.version != ''
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          # Trusted publishing needs npm 11.5.1 or later.
+          npm install -g npm@11.7.0
+          npm ci
+          if npm view "@tristan2828/ui-foundation@$VERSION" version >/dev/null 2>&1; then
+            echo "$VERSION is already on npm (a re-run) — not publishing again."
+          else
+            npm version "$VERSION" -w @tristan2828/ui-foundation --no-git-tag-version --allow-same-version
+            npm publish -w @tristan2828/ui-foundation
+          fi
+
+      - name: Tag and release
+        if: steps.decide.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.decide.outputs.version }}
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" --title "$TAG" --notes "$(cat <<EOF
+          Upgrade an app: \`npm install @tristan2828/ui-foundation@$VERSION && npx ui-foundation sync\`, then \`npm run verify\`.
+
+          New app: \`bash create-app.sh <name> $TAG\` (docs/create-an-app.md).
+          EOF
+          )"
+
+      - name: Create an app from the published release
+        # The documented path, end to end: the template from the tag just
+        # pushed, the package from npm. Everything before this tested a
+        # tarball; this is the only check of what apps actually get.
+        if: steps.decide.outputs.version != ''
+        env:
+          TAG: v${{ steps.decide.outputs.version }}
+          GIT_AUTHOR_NAME: release-smoke
+          GIT_AUTHOR_EMAIL: release-smoke@localhost
+          GIT_COMMITTER_NAME: release-smoke
+          GIT_COMMITTER_EMAIL: release-smoke@localhost
+        run: |
+          cd "$RUNNER_TEMP"
+          bash "$GITHUB_WORKSPACE/scripts/create-app.sh" release-smoke "$TAG"
+          cd release-smoke
+          npm run verify:fast

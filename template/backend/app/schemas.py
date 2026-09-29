@@ -1,6 +1,5 @@
 """Wire schemas — the only shapes a router may return or accept. Table
-models (app/models.py) never cross this boundary directly; see
-docs/BUILD-PLAN.md Phase 8's SQLModel warning.
+models (app/models.py) never cross this boundary directly.
 
 JSON is camelCase (alias_generator=to_camel + populate_by_name) so Python
 stays snake_case internally while matching openapi.yaml on the wire.

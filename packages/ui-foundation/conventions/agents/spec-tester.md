@@ -10,9 +10,11 @@ hooks:
           command: "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/deny-impl-read.mjs"
 ---
 
-Write gateway tests from `openapi.yaml` and `src/api/contracts.ts`. You have
-not seen the implementation in `src/api/gateway/` or `src/api/transport/`
-and must not read it — a `PreToolUse` hook will refuse those reads.
+Write gateway tests from `openapi.yaml` and the UI contracts `Page<T>`,
+`AppError` and `QuerySpec` (their type declarations are in
+`node_modules/@tristan2828/ui-foundation/dist/api/contracts.d.ts`). You have
+not seen the implementation in `src/api/gateway/` and must not read it — a
+`PreToolUse` hook will refuse those reads.
 
 Assert, from the spec alone:
 

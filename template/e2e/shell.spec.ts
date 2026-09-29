@@ -5,7 +5,7 @@ const NAV_ENTRIES = [
   { path: '/widgets', label: 'Widgets', content: { role: 'heading', name: 'Widgets' } },
 ] as const
 
-// This spec is MSW-independent by design (see docs/BUILD-PLAN.md Phase 8) —
+// This spec is MSW-independent by design —
 // scripts/check-backend-postgres.sh also runs it against the real backend
 // (VITE_API=real), which has no MSW to default-authenticate it. `page.request`
 // shares the page's own cookie jar, so logging in here is enough to

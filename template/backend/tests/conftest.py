@@ -2,7 +2,7 @@
 in-memory SQLite engine instead of Postgres — fast and dependency-free for
 the inner loop. This does NOT stand in for the Postgres-specific checks
 `scripts/check-backend-postgres.sh` runs against a real database (enum/numeric
-column behavior, Alembic migrations); see docs/phases/phase-8.md.
+column behavior, Alembic migrations).
 """
 
 from collections.abc import AsyncGenerator
@@ -57,7 +57,7 @@ async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
-    # widgets/categories require auth as of Phase 10 (docs/BUILD-PLAN.md) —
+    # widgets/categories require auth —
     # this fixture is shared by test_widgets.py, which tests the widgets
     # domain, not login, so it stands in a fixed authenticated user rather
     # than making every test log in first. test_auth.py exercises the real

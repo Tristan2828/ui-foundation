@@ -2,9 +2,9 @@
 
 The part of this foundation a consuming app cannot cheaply get right on
 its own: color that carries meaning, checked for contrast in both themes.
-Tokens and styles here **grow freely** — they do not wait for a second app
-(`DEFERRED.md` "Direction"). New components and per-entity logic still
-don't; that's the other track.
+Tokens and styles here **grow freely**, in the foundation package, so every
+app gets them: they do not wait for a second app to need them. New
+composites don't grow that way; they are built against a real app's screen.
 
 ## Semantic tones
 
@@ -24,7 +24,7 @@ shade in both themes, because it always carries white text and the page
 behind it never enters the calculation.
 
 Measured ratios (WCAG 2.x, sRGB) are recorded next to each primitive in
-`src/styles/theme.css`, and `e2e/storybook-visual.spec.ts` re-checks all
+the package's `styles/theme.css`, and its `e2e/storybook-visual.spec.ts` re-checks all
 nine tone/style combinations with axe against the rendered DOM in both
 themes. **A new tone or style is not done until it appears in that story.**
 

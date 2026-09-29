@@ -1,5 +1,5 @@
-// Screen: /login (Phase 10 — see docs/BUILD-PLAN.md "Auth Boundary"). The
-// one route AppShell's auth redirect never catches (see app.tsx). Not built
+// Screen: /login. The one route AppShell's auth redirect never catches (an
+// app mounts it outside the AppShell route, see template/src/App.tsx). Not built
 // on the EntityForm composite — that's specifically create/edit-an-entity
 // chrome (title + Cancel + Submit), and a login screen has no "cancel"
 // destination — so this uses the same mandated FieldGroup/Field primitives
