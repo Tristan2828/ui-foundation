@@ -207,13 +207,15 @@ steps in [`consuming.md`](consuming.md).
 release. npm lets trusted publishing be configured only on a package that
 already exists:
 
-1. Create the npm account `tristan2828` (with 2FA).
-2. Publish 3.0.0 once by hand from a clean checkout of the release commit:
-   `npm ci && npm publish -w @tristan2828/ui-foundation` (the package's
-   `prepack` builds it). Then push the tag: `git tag v3.0.0 && git push
-   origin v3.0.0`.
+1. Create the npm account `tristan2828` (with 2FA), and `npm login`.
+2. Before merging the 3.0 PR, publish 3.0.0 once by hand from a clean
+   checkout of its final commit: `npm ci && npm publish -w
+   @tristan2828/ui-foundation` (the package's `prepack` builds it).
 3. On npmjs.com → the package → Settings → Trusted Publisher: GitHub
    Actions, repository `Tristan2828/ui-foundation`, workflow `release.yml`.
    Then set "Publishing access" to require trusted publishing (no tokens).
+4. Merge. The release workflow picks 3.0.0 and sees it's already on npm,
+   so it skips publishing. It tags `v3.0.0`, creates the release, and
+   creates an app from it. Every later release publishes itself.
 
 Deploying an app: `template/docs/deploy.md`.
