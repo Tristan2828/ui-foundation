@@ -84,6 +84,13 @@ unpinned registry dependency resolves to `main`, not the tag).
   one is silently lost unless the file is listed in `starter`: `button`,
   `badge`, `combobox`, `table`, `src/hooks/use-mobile.ts` today.
 - **Binary files can't ship** (the `gh` CLI corrupts them).
+- **Apps can see their own drift.** `starter` ships
+  `scripts/check-foundation-drift.mjs`, which compares each shipped file
+  with the tag in the app's `foundation.json` (written by `create-app.sh`,
+  never shipped). The app's own decisions (app-owned files, removals and
+  forks, each with a reason) live in that JSON, not in the script, so the
+  script itself never drifts. `consume-test.sh` asserts that a fresh app
+  reads as in sync, and that an edited file doesn't.
 - **New apps** are created by `scripts/create-app.sh` (instructions for
   any AI: [`create-an-app.md`](create-an-app.md)); `consume-test.sh` runs
   the same script, so a release that breaks app creation fails its tests.

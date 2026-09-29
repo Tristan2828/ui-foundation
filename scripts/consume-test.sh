@@ -81,6 +81,7 @@ for f in \
   docs/entities/_template.md docs/entities/widget.md \
   .claude/skills/new-entity/SKILL.md .claude/agents/spec-tester.md \
   .claude/hooks/deny-impl-read.mjs scripts/check-deps.mjs \
+  scripts/check-foundation-drift.mjs foundation.json \
   src/styles/theme.css src/index.css \
   src/components/app/app-shell.tsx src/components/app/data-table.tsx \
   src/components/app/entity-form.tsx src/components/app/error-state.tsx \
@@ -132,6 +133,19 @@ for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps
   [ "$(tr -d '\r' < "$f")" = "$(printf '%s' "$expected" | tr -d '\r')" ] ||
     fail "$f installed from starter#$REF doesn't match $REF's own copy — a registry item is resolving from a different ref"
 done
+
+# The drift check every app gets: a fresh install from $REF must read as in
+# sync with $REF — which also proves create-app.sh wrote foundation.json and
+# that the script's built-in defaults and import sweep don't flag a clean
+# app. Then a negative control: an edited shipped file must fail it.
+echo "consume-test: scripts/check-foundation-drift.mjs (fresh app must be in sync)"
+node scripts/check-foundation-drift.mjs ||
+  fail "a fresh install from starter#$REF doesn't read as in sync with $REF"
+echo "// local edit" >> src/hooks/use-debounced-value.ts
+if node scripts/check-foundation-drift.mjs >/dev/null; then
+  fail "check-foundation-drift passed with a shipped file edited — the check is vacuous"
+fi
+git checkout -q -- src/hooks/use-debounced-value.ts
 
 
 if [ "$INSTALL_ONLY" = true ]; then
