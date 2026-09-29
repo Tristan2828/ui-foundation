@@ -139,6 +139,12 @@ openapi.yaml, routes, nav and mocks to the demo. Follow
 https://github.com/Tristan2828/ui-foundation/blob/main/docs/consuming.md
 (`--dry-run`, then `--diff` per file).
 
+`node scripts/check-foundation-drift.mjs` reports every shipped file this
+app has changed since the release named in `foundation.json`. If you
+change one on purpose, add it to that file's `forked` map with a reason.
+Better still, if the change is generic, raise it for the foundation.
+Undeclared drift is a file maintained twice with nothing saying so.
+
 ## Working in the ui-foundation Repo Itself
 Skip this section in an app that installed this registry — it has no
 `docs/ARCHITECTURE.md`, and everything it needs is above and in

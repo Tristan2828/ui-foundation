@@ -168,6 +168,13 @@ exposed two gaps; both closed the same day (2026-09-18).
   upgrade to `v2.1.7` surfaced new `DEFERRED.md` rows: a drift check for
   consuming apps, `setFilters`/`applyView`, binary MSW overrides, a
   frozen-clock test convention, and `pinLastColumn`.
+- **Combobox guard and drift check** (2026-09-28) — `combobox` no longer
+  pulled from upstream alongside its patched copy (with a vitest guard for
+  every shipped primitive); `registry.json`-only changes now trigger the
+  install test and a tag; and every app gets
+  `scripts/check-foundation-drift.mjs` with a `foundation.json`, including a
+  sweep for shipped modules nothing imports. See
+  `docs/phases/drift-check.md`.
 
 ## Decision Ledger (highlights)
 

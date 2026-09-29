@@ -36,13 +36,16 @@ filled-in example).
    this is the first entity added since installing the registry — the
    registry ships files and npm `dependencies`/`devDependencies`, but has
    no way to merge npm scripts into `package.json` for you). If missing,
-   add exactly these four scripts:
+   add exactly these five scripts:
    ```json
    "gen:api": "openapi-typescript ./openapi.yaml -o ./src/api/schema.d.ts",
    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts && tsc -b && tsc -p tsconfig.test.json && eslint . --max-warnings 0 && node scripts/check-deps.mjs && vitest run",
    "verify": "npm run verify:fast && playwright test",
-   "build:real": "tsc -b && vite build --mode real"
+   "build:real": "tsc -b && vite build --mode real",
+   "check:foundation": "node scripts/check-foundation-drift.mjs"
    ```
+   (`check:foundation` is deliberately not part of `verify`: a declared
+   fork is legitimate, and being behind a release isn't a build failure.)
    (`tsc -p tsconfig.test.json` is there because the registry can't add
    `tsconfig.test.json` to your root `tsconfig.json`'s references, so
    `tsc -b` alone never type-checks `tests/` or `e2e/`.)
