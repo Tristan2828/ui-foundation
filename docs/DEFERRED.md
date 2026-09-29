@@ -21,13 +21,26 @@ Set by the developer, and it supersedes the "don't extend speculatively" framing
 - **Process ceremony is negotiable.** The consume-test/tag/README release routine and the pixel screenshot baselines were up for slimming or replacement — both done: releasing is automatic (#36, `ARCHITECTURE.md` "Releasing") and the baselines were replaced by a token-resolution check (#42).
 - **Unchanged:** the Hard Rules (semantic tokens only, shadcn before hand-rolling, gateway boundaries, dependency allowlist). Every design-language addition still ships with axe contrast coverage in both themes. Stronger tokens make the token rule more useful, not less.
 
+## Starter kit now, shared code later (decided 2026-09-28)
+
+Set by the developer, after asking whether the apps actually share code. They don't, past the moment of install, and that is now the stated model rather than a surprise.
+
+- **What this repo is: a starter kit with shared conventions.** It is distributed as a shadcn registry, where installed files are copied in and belong to the app from then on. An app gets a fast start (auth, composites, gateway, mocks, tests, tokens, the AI playbook) and the same rules and gates everywhere, but it does not get later fixes automatically. Taking a release is a deliberate, manual upgrade (`consuming.md`, "Taking a later release"). The evidence: the Game List app sat on `v2.1.0` through seven releases, rebuilt things shipped better here, and even after catching up to `v2.1.7` carries 16 declared forks, four of them features this repo still lacks.
+- **Keep building it as a starter kit.** Don't start the shared-code move yet. With one app, it can't be told apart whether the forking is structural or a first-app growing pain.
+- **Shared code is the likely later step, and it doesn't need a new repo.** When it happens, the shape is a versioned package holding the *foundation-owned* layer (composites, auth, gateway plumbing, hooks, tokens), which apps upgrade by bumping a version. The starter kit stays alongside it, copying in only the *app-owned* files (`openapi.yaml`, nav, mocks, the example entity) and adding the package as a dependency. The package can live in this repo as a subfolder (see the Monorepo row below). A separate repo is an option only if a clean split is wanted for its own sake. This would reverse the "npm package" entry under Excluded, but only for the foundation-owned layer.
+- **The boundary is already drawn:** `consuming.md`'s app-owned / foundation-owned table is the package boundary, and the gateway and lint boundaries (`AGENTS.md` Hard Rules) are what make that layer extractable.
+- **Revisit when** a second app starts, or when apps repeatedly fork the same foundation-owned files. Two apps forking the same file is the point where packaging it pays for itself.
+- **What keeps the later move cheap, starting now:**
+  - Push generic changes from apps back up here, rather than letting them live as forks. The Game List app's four PUSH UP forks are the current backlog of that. They're three rows below, since the binary MSW override spans two files.
+  - Use the drift check (`scripts/check-foundation-drift.mjs`, PR #47) to decide what to extract. Files apps keep in sync are safe to package. Files they keep forking aren't generic yet, and packaging them early just moves the conflict into package options.
+
 ## Deferred
 
 | Item | Revisit when |
 |---|---|
 | Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat model, not a personal/local deployment. **Still deferred as of Phase 11** (docs/phases/phase-11.md) — flagged there as a real gap self-service registration widens, not yet picked up |
 | Additional themes | **No longer gated on a second app** (see Direction) — themes are design language. Pick up when the developer wants a distinct look; the token architecture already supports it. Still no theme-switcher UI (see Excluded) |
-| Monorepo | Two or more consuming apps share a release cycle |
+| Monorepo | Two or more consuming apps share a release cycle, or the foundation-owned layer becomes a package (see "Starter kit now, shared code later" above). The package would most likely live in this repo, beside the registry |
 | TypeScript 7 (native compiler) | typescript-eslint, openapi-typescript and Storybook's react-docgen-typescript all support it. TS 7's package exposes no classic JS API (`require('typescript')` has only `version`), and all three are built on that API — typescript-eslint caps at `<6.1` even in its v9 alpha. The tsconfigs are already TS 7-clean (no `baseUrl`, which TS 7 drops). When revisiting, also drop the `openapi-typescript` → `typescript` entry in `package.json`'s `overrides` once openapi-typescript's own peer range covers the installed TypeScript |
 | Read-only entity path in the playbook (`/new-entity` for a list/detail table with no create, edit or delete — today it always builds full CRUD, and the near-term focus is display tables; see `docs/ARCHITECTURE.md` "Focus") | The first real app needs a read-only table. Build it against that app's actual screen, not in advance |
 | Notion API as a data source — a thin backend that serves `openapi.yaml` from a Notion database instead of Postgres (the choice is documented in `docs/consuming.md`) | A real project picks Notion as its source of truth. Build it against that project's actual database and property types, not a hypothetical one |
@@ -48,7 +61,7 @@ Set by the developer, and it supersedes the "don't extend speculatively" framing
 
 ## Excluded
 
-- **npm package** — forfeits open-code editability, the reason for this stack
+- **npm package** for the whole foundation — forfeits open-code editability, the reason for this stack. A package for the *foundation-owned layer only* is a deferred candidate, not excluded ("Starter kit now, shared code later" above)
 - **Custom primitives** — shadcn's are already yours to edit
 - **Theme switcher UI** — build the token architecture, not the feature
 - **SSR / SEO tooling** — irrelevant for personal database applications
