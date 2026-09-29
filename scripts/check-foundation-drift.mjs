@@ -252,7 +252,8 @@ report('NOT IMPORTED — shipped and present, but nothing imports it (informatio
 // when every file matches. Best-effort: no network, no line.
 const latest = await fetchText(`https://api.github.com/repos/${REPO}/releases/latest`)
 const latestTag = latest ? JSON.parse(latest).tag_name : null
-if (latestTag && latestTag !== ref) {
+// Only against a tag: a commit SHA may well be newer than the latest release.
+if (latestTag && /^v\d/.test(ref) && latestTag !== ref) {
   console.log(`\nThe latest foundation release is ${latestTag}. See docs/consuming.md in the foundation, "Taking a later release".`)
 }
 
