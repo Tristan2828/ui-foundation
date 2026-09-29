@@ -1,265 +1,147 @@
 #!/usr/bin/env bash
-# Consumes the ui-foundation registry from a fresh app, the way a real
-# consuming project would — the actual test of "is this reusable," per
-# docs/BUILD-PLAN.md Phase 7 ("Foundation never gets used" is the risk
-# register's top row).
+# Creates a fresh app from this checkout the way a real one is created —
+# scripts/create-app.sh, template/ and the package as `npm pack` builds it —
+# and runs that app's own gates. The test of "is this reusable": it proves
+# the package installs from its tarball (not the workspace link), that its
+# entry points, CSS and CLI work from node_modules, and that the template
+# stands on its own outside this repo.
 #
 # Usage:
-#   scripts/consume-test.sh --install-only [ref]
-#     Scaffold a throwaway Vite app in a temp dir, run
-#     `shadcn add <repo>/starter#<ref>`, then type-check (app + shipped
-#     tests) and lint the result. No edits, no
-#     entity, no agent — the fast check to run before every registry release.
-#     `ref` defaults to the latest git tag (falls back to v1.0.0).
+#   scripts/consume-test.sh --install-only
+#     Create the app and run its `verify:fast` (codegen, sync --check,
+#     contract, deps, tsc, lint, unit tests), then check the real-mode
+#     build is mock-free. Run by the `package` workflow on every PR that
+#     touches the package, the template or this script.
 #
-#   scripts/consume-test.sh <ref> <EntityName>
-#     The Fresh UI Build (first run in Phase 7): install, then launch a *fresh* agent
-#     (no memory of this repo — a new process in a directory it has never
-#     seen) with a single instruction, `/new-entity <EntityName>`, and run
-#     `npm run verify` in the result. Exits non-zero if the agent run
-#     fails/times out or verify fails afterward. The transcript is always
-#     preserved under logs/consume-test/ for review — see
-#     docs/BUILD-PLAN.md Phase 7 step 2 ("read the transcript for every
-#     question the agent asked...").
+#   scripts/consume-test.sh <EntityName>
+#     The Fresh UI Build: create the app, then a *fresh* agent (a new
+#     process in a directory it has never seen) adds <EntityName> from its
+#     plan fixture with one instruction, and the app's full `verify` must
+#     pass. On demand, not a release gate: run it when the playbook or a
+#     composite changes in a way that could confuse a fresh agent. The
+#     transcript is kept under logs/consume-test/ — a PASS counts only
+#     after reading it (the agent used this version and reported no
+#     workarounds).
+#
+# Tests the committed HEAD. Uncommitted changes to the package or template
+# are refused, so a result always belongs to a commit.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT="$(pwd)"
-
-REPO="Tristan2828/ui-foundation"
 fail() { echo "consume-test: $1" >&2; exit 1; }
 
-
 INSTALL_ONLY=false
-POSITIONAL=()
+ENTITY=""
 for arg in "$@"; do
   case "$arg" in
     --install-only) INSTALL_ONLY=true ;;
-    *) POSITIONAL+=("$arg") ;;
+    *) ENTITY="$arg" ;;
   esac
 done
+[ "$INSTALL_ONLY" = true ] || [ -n "$ENTITY" ] ||
+  fail "usage: consume-test.sh --install-only | consume-test.sh <EntityName>"
 
-REF="${POSITIONAL[0]:-}"
-ENTITY="${POSITIONAL[1]:-}"
-if [ "$INSTALL_ONLY" != true ]; then
-  [ -n "$ENTITY" ] || fail "a Fresh UI Build requires an entity name: consume-test.sh <ref> <EntityName>"
+if [ -n "$(git status --porcelain -- packages/ui-foundation template scripts/create-app.sh)" ]; then
+  fail "uncommitted changes under packages/ui-foundation, template/ or scripts/create-app.sh — commit first, so the result belongs to a SHA"
 fi
-[ -n "$REF" ] || REF=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
-
-# raw.githubusercontent.com serves files with Cache-Control: max-age=300,
-# so a *branch* ref tested within ~5 minutes of a push can install a mix
-# of new and stale files (seen in audit Phase A: new use-mobile.ts, stale
-# SKILL.md). Tags and commit SHAs are immutable URLs and can't go stale.
-if ! [[ "$REF" =~ ^v[0-9] || "$REF" =~ ^[0-9a-f]{7,40}$ ]]; then
-  echo "consume-test: WARNING — '$REF' looks like a branch; GitHub may serve files cached up to 5 min old. Prefer a commit SHA (git rev-parse HEAD)." >&2
-fi
+SHA=$(git rev-parse HEAD)
 
 WORKDIR=$(mktemp -d)
 APP="$WORKDIR/consume-test-app"
-# KEEP_APP=1 keeps the scaffolded app (path printed at the end), e.g. to run
-# an agent against a fresh install by hand.
+# KEEP_APP=1 keeps the created app (path printed at the end).
 KEEP=${KEEP_APP:+true}; KEEP=${KEEP:-false}
 cleanup() { [ "$KEEP" = true ] || rm -rf "$WORKDIR"; }
 trap cleanup EXIT
 
-# The app is created by scripts/create-app.sh, the same script
-# docs/create-an-app.md tells a developer or AI to run, so every release
-# tests the documented path. It scaffolds, installs starter#$REF, runs
-# msw init and commits. Headless, so git gets an identity from the env.
+# npm on Windows can't read a Git Bash path like /tmp/...; cygpath gives
+# it C:/... instead. A no-op elsewhere.
+native() { cygpath -m "$1" 2>/dev/null || printf '%s' "$1"; }
+
+echo "consume-test: npm pack @tristan2828/ui-foundation at $SHA"
+TARBALL_NAME=$(npm pack -w @tristan2828/ui-foundation --pack-destination "$(native "$WORKDIR")" --silent | tail -1)
+TARBALL="$(native "$WORKDIR")/$TARBALL_NAME"
+[ -f "$WORKDIR/$TARBALL_NAME" ] || fail "npm pack produced no tarball"
+
+# The published file list is the package's `files` field — check the
+# tarball carries what apps need, since a workspace link would hide a
+# missing entry.
+for f in package/dist/index.js package/dist/index.d.ts package/dist/components/ui/button.js \
+  package/dist/gateway.js package/dist/mocks/index.js package/dist/testing/index.js \
+  package/styles/index.css package/styles/theme.css package/eslint/index.js \
+  package/bin/ui-foundation.mjs package/conventions/AGENTS.md package/openapi/foundation.yaml; do
+  tar -tzf "$WORKDIR/$TARBALL_NAME" | grep -qx "$f" || fail "the packed tarball is missing $f"
+done
+if tar -tzf "$WORKDIR/$TARBALL_NAME" | grep -qE '^package/(src|tests|e2e)/'; then
+  fail "the packed tarball ships source or tests — check the package's \"files\""
+fi
+
 export GIT_AUTHOR_NAME=consume-test GIT_AUTHOR_EMAIL=consume-test@localhost
 export GIT_COMMITTER_NAME=consume-test GIT_COMMITTER_EMAIL=consume-test@localhost
-echo "consume-test: scripts/create-app.sh consume-test-app $REF"
+echo "consume-test: scripts/create-app.sh consume-test-app (template at $SHA, package from the tarball)"
 cd "$WORKDIR"
-bash "$REPO_ROOT/scripts/create-app.sh" consume-test-app "$REF"
+FOUNDATION_REPO_DIR="$REPO_ROOT" FOUNDATION_TARBALL="$TARBALL" bash "$REPO_ROOT/scripts/create-app.sh" consume-test-app "$SHA"
 cd "$APP"
 
-# `add`'s overwrite prompts are non-interactive-safe with --yes/--overwrite
-# above, but confirm the files actually landed rather than trusting a
-# silent tsc pass — an empty install would type-check clean too, since
-# nothing would import the missing modules.
-for f in \
-  AGENTS.md CLAUDE.md docs/add-an-entity.md \
-  docs/entities/_template.md docs/entities/widget.md \
-  .claude/skills/new-entity/SKILL.md .claude/agents/spec-tester.md \
-  .claude/hooks/deny-impl-read.mjs scripts/check-deps.mjs \
-  scripts/check-foundation-drift.mjs foundation.json \
-  src/styles/theme.css src/index.css \
-  src/components/app/app-shell.tsx src/components/app/data-table.tsx \
-  src/components/app/entity-form.tsx src/components/app/error-state.tsx \
-  src/components/app/multi-choice.tsx \
-  src/components/app/route-error-boundary.tsx \
-  src/components/theme-provider.tsx src/hooks/use-mobile.ts \
-  src/hooks/use-debounced-value.ts src/hooks/use-table-url-state.ts \
-  src/components/ui/combobox.tsx \
-  src/api/contracts.ts src/api/transport/index.ts src/api/query-client.ts \
-  src/api/gateway/errors.ts src/api/gateway/widgets.ts src/api/gateway/categories.ts \
-  src/auth/auth-context.ts src/auth/auth-provider.tsx src/auth/use-auth.ts \
-  src/api/gateway/auth.ts \
-  src/main.tsx src/App.tsx src/routes/home.tsx \
-  src/routes/login.tsx src/routes/login-schema.ts \
-  src/routes/register.tsx src/routes/register-schema.ts src/routes/return-path.ts \
-  tests/gateway/auth.test.ts tests/return-path.test.ts e2e/auth.spec.ts e2e/register.spec.ts \
-  src/mocks/browser.ts src/mocks/server.ts src/mocks/data.ts \
-  src/mocks/handlers.ts src/mocks/e2e-hooks.ts \
-  src/routes/widgets/use-widgets.ts src/routes/widgets/use-categories.ts \
-  src/routes/widgets/widget-schema.ts src/routes/widgets/widgets-columns.tsx \
-  src/routes/widgets/widgets-table.tsx src/routes/widgets/widget-form.tsx \
-  src/routes/widgets/delete-widget-action.tsx \
-  tests/gateway/widgets.test.ts tests/gateway/categories.test.ts \
-  tests/mocks/conformance.test.ts tests/widget-schema.test.ts \
-  e2e/global.d.ts e2e/msw-contract.spec.ts e2e/shell.spec.ts \
-  e2e/a11y.spec.ts e2e/smoke.spec.ts \
-  e2e/widget-form.spec.ts e2e/widgets-table.spec.ts \
-  vitest.config.ts playwright.config.ts tsconfig.test.json openapi.yaml \
-; do
-  [ -f "$f" ] || fail "expected file missing after install: $f"
-done
+# Installed, not linked: a symlink here would mean the workspace leaked in.
+[ ! -L node_modules/@tristan2828/ui-foundation ] || fail "the package is a symlink — expected an install from the tarball"
 
-# Existing isn't enough: until audit Phase A, starter pulled these through
-# an unpinned registryDependency, so they arrived from main no matter which
-# ref was installed — and every check above still passed. Compare them to
-# the same files at $REF (CRLF-insensitive: git's working-copy conversion).
-# The patched primitives are in this list for a specific failure: each one
-# also exists upstream, so if it is ever dropped from starter's file list
-# (or a registryDependency re-introduces it), the install silently gets
-# upstream's copy and the local patch vanishes with every check still
-# green. Comparing content against $REF is what catches that. Every file
-# ARCHITECTURE.md "The registry" lists as patched belongs here — use-mobile.ts
-# especially, since `sidebar` pulls upstream's copy and can't be dropped.
-for f in AGENTS.md docs/add-an-entity.md .claude/skills/new-entity/SKILL.md deps-allowlist.json \
-  src/components/ui/table.tsx src/components/ui/button.tsx src/components/ui/badge.tsx \
-  src/components/ui/combobox.tsx src/hooks/use-mobile.ts; do
-  expected=$(git -C "$REPO_ROOT" show "$REF:$f" 2>/dev/null || git -C "$REPO_ROOT" show "origin/$REF:$f") ||
-    fail "can't read $f at $REF from the local repo (fetch first?)"
-  [ "$(tr -d '\r' < "$f")" = "$(printf '%s' "$expected" | tr -d '\r')" ] ||
-    fail "$f installed from starter#$REF doesn't match $REF's own copy — a registry item is resolving from a different ref"
-done
+echo "consume-test: npm run verify:fast in the new app"
+npm run verify:fast
 
-# The drift check every app gets: a fresh install from $REF must read as in
-# sync with $REF — which also proves create-app.sh wrote foundation.json and
-# that the script's built-in defaults and import sweep don't flag a clean
-# app. Then a negative control: an edited shipped file must fail it.
-echo "consume-test: scripts/check-foundation-drift.mjs (fresh app must be in sync)"
-node scripts/check-foundation-drift.mjs ||
-  fail "a fresh install from starter#$REF doesn't read as in sync with $REF"
-echo "// local edit" >> src/hooks/use-debounced-value.ts
-if node scripts/check-foundation-drift.mjs >/dev/null; then
-  fail "check-foundation-drift passed with a shipped file edited — the check is vacuous"
+# VITE_API is baked in at build time, so a plain `npm run build` bundles
+# MSW — a deployed app would then serve mock data while looking normal.
+# `build:real` + `.env.real` (both in the template) are the escape; prove
+# the real bundle has no MSW, and — as the negative control — that the
+# default one does, or the grep proves nothing.
+echo "consume-test: build:real must produce a bundle with no MSW in it"
+npx vite build --mode real --outDir dist-real >/dev/null
+if grep -rql "mockServiceWorker" dist-real/assets 2>/dev/null; then
+  fail "a --mode real bundle still contains MSW — .env.real/build:real is not taking effect"
 fi
-git checkout -q -- src/hooks/use-debounced-value.ts
-
+npx vite build --outDir dist-mock >/dev/null
+grep -rql "mockServiceWorker" dist-mock/assets >/dev/null 2>&1 ||
+  fail "the default build has no MSW either — the mock-free check above is vacuous"
+rm -rf dist-real dist-mock
 
 if [ "$INSTALL_ONLY" = true ]; then
-  # src/api/schema.d.ts is generated from openapi.yaml (openapi-typescript),
-  # never shipped as a file — the widgets reference files that DO ship all
-  # import it. A real consumer's first /new-entity run generates it as its
-  # own Step 0 (docs/add-an-entity.md); --install-only has no agent to do
-  # that, so it runs the generator directly here, the same way it fakes
-  # the Tailwind/alias setup above, to get a meaningful type-check at all.
-  echo "consume-test: npx openapi-typescript openapi.yaml (schema.d.ts is generated, not shipped — see comment above)"
-  npx openapi-typescript openapi.yaml -o src/api/schema.d.ts
-
-  # Plain `tsc --noEmit` against a solution-style tsconfig (what both this
-  # repo's own Phase 1 scaffold and a fresh `create vite` produce) checks
-  # zero files and exits 0 unconditionally — a silent no-op discovered the
-  # hard way in this repo's own Phase 4 (docs/phases/phase-4.md). `tsc -b`
-  # is the command that actually type-checks a solution-style project.
-  echo "consume-test: tsc -b"
-  npx tsc -b
-
-  # The root tsconfig a fresh app has doesn't reference tsconfig.test.json,
-  # so `tsc -b` never sees tests/ or e2e/ — the playbook's Step 0
-  # verify:fast adds this same call for the same reason.
-  echo "consume-test: tsc -p tsconfig.test.json (shipped tests/ and e2e/)"
-  npx tsc -p tsconfig.test.json
-
-  # A lint failure in a shipped or registry-dependency file (e.g. upstream
-  # shadcn's use-mobile.ts vs. react-hooks' set-state-in-effect rule) fails
-  # every consumer's first verify, but is invisible to tsc.
-  echo "consume-test: eslint (the shipped eslint.config.js, as verify runs it)"
-  npx eslint . --max-warnings 0
-
-  # VITE_API is baked in at BUILD time, so `npm run build` produces a
-  # bundle with MSW inside it — a deployed app then serves the mock
-  # fixture and a seeded demo user while looking completely normal. The
-  # escape is `build:real` + `.env.real`, which the registry cannot ship
-  # (npm scripts can't be merged into package.json, and a dotfile isn't a
-  # registry file) — they are Step 0 of docs/add-an-entity.md instead, and
-  # a step you have to do by hand is a step that gets skipped.
-  #
-  # --install-only has no agent to run Step 0, so it writes the two here
-  # exactly as the playbook specifies and then checks the real build is
-  # actually mock-free. The assertion is the point: a real-mode bundle
-  # must not contain MSW's worker bootstrap.
-  echo "consume-test: build:real must produce a bundle with no MSW in it"
-  printf 'VITE_API=real
-' > .env.real
-  npx vite build --mode real --outDir dist-real >/dev/null
-  if grep -rql "mockServiceWorker" dist-real/assets 2>/dev/null; then
-    fail "a --mode real bundle still contains MSW — .env.real/build:real is not taking effect"
-  fi
-  # Negative control, inline: the default build MUST contain it, otherwise
-  # the grep above is matching nothing and proves nothing.
-  npx vite build --outDir dist-mock >/dev/null
-  grep -rql "mockServiceWorker" dist-mock/assets >/dev/null 2>&1 ||
-    fail "the default build has no MSW either — the mock-free check above is vacuous"
-  rm -rf dist-real dist-mock
-
-  echo "consume-test: PASS — $REPO/starter#$REF installs into a fresh app and type-checks and lints clean"
+  echo "consume-test: PASS — an app created from $SHA installs the packed package, and its verify:fast passes"
   [ "$KEEP" = true ] && echo "consume-test: kept the app at $APP"
   exit 0
 fi
 
-# --- Fresh UI Build: a fresh agent, /new-entity, then verify ---
+# --- Fresh UI Build: a fresh agent adds an entity, then the full verify ---
 #
-# "Fresh" here means a new `claude` process started in a directory it has
-# never seen before — not a flag. $APP has no session history with this
-# repo; everything the agent knows about the foundation's conventions
-# comes from what the registry actually installed (AGENTS.md, CLAUDE.md,
-# the new-entity skill, spec-tester) — same as a real consumer would see.
-# /new-entity never guesses an entity (docs/add-an-entity.md): it builds
-# from docs/entities/<entity>.md, and with no plan it stops to plan with
-# the developer — which a headless run can't do. Hand it the plan a real
-# developer would have written, from scripts/fixtures/entity-plans/.
+# "Fresh" means a new `claude` process in a directory it has never seen.
+# Everything it knows about the foundation comes from what the app
+# contains (AGENTS.md, docs/foundation/, the new-entity skill, spec-tester)
+# — exactly what a real app's agent sees. The playbook never guesses an
+# entity: hand it the plan a developer would have written.
 ENTITY_KEBAB=$(printf '%s' "$ENTITY" | sed -E 's/([a-z0-9])([A-Z])/\1-\2/g' | tr '[:upper:]' '[:lower:]')
 PLAN_FIXTURE="$REPO_ROOT/scripts/fixtures/entity-plans/$ENTITY_KEBAB.md"
-[ -f "$PLAN_FIXTURE" ] || fail "no entity plan fixture for $ENTITY — add $PLAN_FIXTURE (format: docs/entities/_template.md)"
-mkdir -p "$APP/docs/entities"
-cp "$PLAN_FIXTURE" "$APP/docs/entities/$ENTITY_KEBAB.md"
-(cd "$APP" && git add docs/entities && git commit -q -m "Entity plan: $ENTITY")
+[ -f "$PLAN_FIXTURE" ] || fail "no entity plan fixture for $ENTITY — add $PLAN_FIXTURE (format: docs/foundation/entity-plan-template.md)"
+mkdir -p docs/entities
+cp "$PLAN_FIXTURE" "docs/entities/$ENTITY_KEBAB.md"
+git add docs/entities && git commit -q -m "Entity plan: $ENTITY"
 
 STAMP=$(date +%Y%m%d-%H%M%S)
-LOGDIR="$REPO_ROOT/logs/consume-test/${REF}-${ENTITY}-${STAMP}"
+LOGDIR="$REPO_ROOT/logs/consume-test/${SHA:0:12}-${ENTITY}-${STAMP}"
 mkdir -p "$LOGDIR"
 TRANSCRIPT="$LOGDIR/transcript.jsonl"
 
 # AGENT_PROMPT overrides the instruction. The default is Claude Code's
-# /new-entity shortcut; a plain request with no skill and no hint (e.g.
-# AGENT_PROMPT="Add an Invoice entity to this app.") tests what any AI tool
-# relies on instead: AGENTS.md routing it to docs/add-an-entity.md.
+# /new-entity shortcut; a plain request (AGENT_PROMPT="Add an Invoice
+# entity to this app.") tests what any AI tool relies on instead: AGENTS.md
+# routing it to docs/foundation/add-an-entity.md.
 AGENT_PROMPT="${AGENT_PROMPT:-/new-entity $ENTITY}"
 echo "consume-test: launching a fresh agent in $APP — $AGENT_PROMPT"
 echo "consume-test: transcript -> $TRANSCRIPT"
 
-# No --max-turns flag exists in this Claude Code CLI version (2.1.273) —
-# docs/BUILD-PLAN.md's run-phase.sh reference assumed one does. A wall-clock
-# budget via `timeout` is the stand-in; see docs/phases/phase-7.md.
-#
-# --dangerously-skip-permissions: the plan's reference loop uses
-# `--permission-mode acceptEdits`, but that mode still prompts for Bash
-# (npm install, gen:api, vitest, playwright) with no one to answer, which
-# hangs forever headless. $APP is a disposable temp directory the fresh
-# agent has never touched before, not this repo, so a full bypass is
-# scoped to something safe to bypass on.
-# MSYS_NO_PATHCONV=1: Git Bash on Windows rewrites a leading-slash argument
-# into an absolute Windows path before claude.exe ever sees it — without
-# this, "/new-entity Invoice" arrives as the literal string
-# "C:/Program Files/Git/new-entity Invoice", which is not a slash-command
-# at all. Confirmed by the first real Fresh UI Build: the fresh agent correctly
-# diagnosed the mangling itself and refused to hand-replicate the skill's
-# steps (the skill then had disable-model-invocation, removed in 2.1.1
-# because it also blocked plain-language requests) rather than guessing —
-# but the run was wasted on a test-harness bug, not a foundation one. See
-# docs/phases/phase-7.md.
+# No turn limit exists in the CLI, so `timeout` is the budget.
+# --dangerously-skip-permissions: acceptEdits still prompts for Bash (npm,
+# vitest, playwright) with nobody to answer, which hangs forever headless;
+# $APP is a disposable temp directory, so a full bypass is safe there.
+# MSYS_NO_PATHCONV=1: Git Bash otherwise rewrites "/new-entity" into a
+# Windows path before claude.exe sees it.
 AGENT_EXIT=0
 MSYS_NO_PATHCONV=1 timeout 3600 claude -p "$AGENT_PROMPT" \
   --dangerously-skip-permissions \
@@ -272,11 +154,11 @@ if [ "$AGENT_EXIT" -ne 0 ]; then
   fail "fresh agent run exited $AGENT_EXIT (124 = timed out after 3600s) — transcript: $TRANSCRIPT, app snapshot: $LOGDIR/app"
 fi
 
-echo "consume-test: fresh agent finished — running npm run verify in the consuming app"
-if ! (cd "$APP" && npm run verify) 2>&1 | tee "$LOGDIR/verify.log"; then
+echo "consume-test: fresh agent finished — running npm run verify in the app"
+if ! npm run verify 2>&1 | tee "$LOGDIR/verify.log"; then
   KEEP=true
   cp -r "$APP" "$LOGDIR/app" 2>/dev/null || true
-  fail "npm run verify failed in the consuming app after /new-entity $ENTITY — transcript: $TRANSCRIPT, verify log: $LOGDIR/verify.log, app snapshot: $LOGDIR/app"
+  fail "npm run verify failed after the agent added $ENTITY — transcript: $TRANSCRIPT, verify log: $LOGDIR/verify.log, app snapshot: $LOGDIR/app"
 fi
 
-echo "consume-test: Fresh UI Build PASS — a fresh agent with no memory of this repo built $ENTITY entirely from $REPO/starter#$REF, npm run verify passes. Transcript: $TRANSCRIPT"
+echo "consume-test: Fresh UI Build PASS — a fresh agent built $ENTITY in an app created from $SHA; npm run verify passes. Read the transcript before counting it: $TRANSCRIPT"

@@ -1,0 +1,156 @@
+openapi: 3.1.0
+info:
+  title: UI Foundation — the contract every app shares
+  version: "3.0.0"
+  description: >
+    The part of an app's API contract that the foundation package's own code
+    calls: session-cookie auth under /auth/*, and the two error envelopes the
+    gateway's toAppError() translates (FastAPI's default 422 and
+    HTTPException shapes). An app's openapi.yaml must contain every path and
+    component here, unchanged — `ui-foundation check-contract` fails verify
+    when it drifts. Descriptions, summaries and examples may differ; shapes
+    may not.
+
+    A path marked `x-optional: true` may be left out of an app's spec (an
+    app without self-service sign-up omits /auth/register), but if present
+    it must match.
+
+servers:
+  - url: /api
+
+paths:
+  /auth/login:
+    post:
+      operationId: login
+      summary: Log in with email and password, receiving a session cookie
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Authenticated. Sets the session_id cookie.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /auth/register:
+    x-optional: true
+    post:
+      operationId: register
+      summary: Create an account and immediately log in, receiving a session cookie
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "200":
+          description: Registered and authenticated. Sets the session_id cookie.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Clear the current session
+      tags: [auth]
+      responses:
+        "204":
+          description: Logged out (always, whether or not a session existed).
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: The currently authenticated user
+      tags: [auth]
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+components:
+  schemas:
+    User:
+      type: object
+      required: [id, email, name]
+      properties:
+        id: { type: integer, readOnly: true }
+        email: { type: string, format: email }
+        name: { type: string, minLength: 1, maxLength: 200 }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+
+    RegisterRequest:
+      type: object
+      required: [email, name, password]
+      properties:
+        email: { $ref: "#/components/schemas/User/properties/email" }
+        name: { $ref: "#/components/schemas/User/properties/name" }
+        password: { $ref: "#/components/schemas/LoginRequest/properties/password" }
+
+    ValidationErrorBody:
+      type: object
+      description: FastAPI's default 422 shape (RequestValidationError).
+      required: [detail]
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            required: [loc, msg, type]
+            properties:
+              loc:
+                type: array
+                items:
+                  type: ["string", "integer"]
+              msg: { type: string }
+              type: { type: string }
+
+    HTTPErrorBody:
+      type: object
+      description: FastAPI's default HTTPException shape.
+      required: [detail]
+      properties:
+        detail: { type: string }
+
+  responses:
+    ValidationError:
+      description: Validation failed on one or more fields.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ValidationErrorBody" }
+    NotFoundError:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    UnauthorizedError:
+      description: Missing or invalid credentials.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    ServerError:
+      description: Unhandled server error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
