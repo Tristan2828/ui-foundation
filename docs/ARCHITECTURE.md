@@ -143,7 +143,7 @@ the app:
 | `npm run verify:backend` | backend changes; CI | the template backend's mypy strict, pytest (SQLite), spec conformance |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + a live server on real Postgres |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
-| `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on any PR touching the package, the template or the scripts | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's `verify:fast` and a mock-free `build:real` must pass |
+| `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on any PR touching the package, the template or the scripts | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |
 | `scripts/consume-test.sh <Entity>`, the **Fresh UI Build** | on demand, when the playbook or a composite changes in a way that could confuse a fresh agent | a brand-new agent with no memory of this repo builds an entity in such an app from its plan; its `verify` passes |
 
 Rules learned the hard way (each cost a phase to find):
@@ -192,7 +192,7 @@ to `main` that changes `packages/ui-foundation/`, `template/` or
 3. tags the commit `v<version>` and creates a GitHub release. The template
    at that tag and the package at that version always belong together,
 4. creates an app from the published release (`create-app.sh`, package from
-   npm) and runs its `verify:fast` — the one check of exactly what apps get.
+   npm) and runs its `verify` — the one check of exactly what apps get.
 
 `main` needs no review and no passing checks (one developer). A push
 straight to `main` is released without the install test, which runs only

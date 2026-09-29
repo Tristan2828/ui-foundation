@@ -2,7 +2,7 @@ name: package
 
 # Creates a fresh app from the PR's head commit — the package as `npm pack`
 # builds it, installed from the tarball rather than linked, and template/
-# as create-app.sh copies it — and runs that app's own verify:fast. This is
+# as create-app.sh copies it — and runs that app's own verify. This is
 # what catches a missing entry in the package's `files`, a broken export,
 # or a template that only works inside this repo, before anything is
 # published.
@@ -31,4 +31,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - run: bash scripts/consume-test.sh --install-only

@@ -8,9 +8,10 @@
 #
 # Usage:
 #   scripts/consume-test.sh --install-only
-#     Create the app and run its `verify:fast` (codegen, sync --check,
-#     contract, deps, tsc, lint, unit tests), then check the real-mode
-#     build is mock-free. Run by the `package` workflow on every PR that
+#     Create the app and run its full `verify` (codegen, sync --check,
+#     contract, deps, tsc, lint, unit tests, Playwright — the only thing
+#     that loads the /testing entry point from node_modules the way Node
+#     does), then check the real-mode build is mock-free. Run by the `package` workflow on every PR that
 #     touches the package, the template or this script.
 #
 #   scripts/consume-test.sh <EntityName>
@@ -88,8 +89,8 @@ cd "$APP"
 # Installed, not linked: a symlink here would mean the workspace leaked in.
 [ ! -L node_modules/@tristan2828/ui-foundation ] || fail "the package is a symlink — expected an install from the tarball"
 
-echo "consume-test: npm run verify:fast in the new app"
-npm run verify:fast
+echo "consume-test: npm run verify in the new app"
+npm run verify
 
 # VITE_API is baked in at build time, so a plain `npm run build` bundles
 # MSW — a deployed app would then serve mock data while looking normal.
@@ -107,7 +108,7 @@ grep -rql "mockServiceWorker" dist-mock/assets >/dev/null 2>&1 ||
 rm -rf dist-real dist-mock
 
 if [ "$INSTALL_ONLY" = true ]; then
-  echo "consume-test: PASS — an app created from $SHA installs the packed package, and its verify:fast passes"
+  echo "consume-test: PASS — an app created from $SHA installs the packed package, and its verify passes"
   [ "$KEEP" = true ] && echo "consume-test: kept the app at $APP"
   exit 0
 fi

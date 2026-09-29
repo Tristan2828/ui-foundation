@@ -110,4 +110,5 @@ jobs:
           cd "$RUNNER_TEMP"
           bash "$GITHUB_WORKSPACE/scripts/create-app.sh" release-smoke "$TAG"
           cd release-smoke
-          npm run verify:fast
+          npx playwright install --with-deps chromium
+          npm run verify
