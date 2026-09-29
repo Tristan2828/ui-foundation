@@ -1,0 +1,5 @@
+/* Storybook renders the package from source, so Tailwind scans src/ here
+   rather than the dist/ that styles/index.css points apps at. */
+@import "tailwindcss";
+@import "../styles/index.css";
+@source "../src";

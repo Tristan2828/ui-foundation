@@ -1,0 +1,158 @@
+{
+  "name": "@tristan2828/ui-foundation",
+  "version": "3.0.0",
+  "description": "Shared UI foundation for contract-first, database-backed React apps: shadcn primitives, DataTable/EntityForm composites, auth, the gateway error seam, design tokens, lint rules and the AI playbook.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tristan2828/ui-foundation.git",
+    "directory": "packages/ui-foundation"
+  },
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "styles",
+    "eslint",
+    "bin",
+    "conventions",
+    "openapi"
+  ],
+  "bin": {
+    "ui-foundation": "bin/ui-foundation.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ui/*": {
+      "types": "./dist/components/ui/*.d.ts",
+      "default": "./dist/components/ui/*.js"
+    },
+    "./gateway": {
+      "types": "./dist/gateway.d.ts",
+      "default": "./dist/gateway.js"
+    },
+    "./mocks": {
+      "types": "./dist/mocks/index.d.ts",
+      "default": "./dist/mocks/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    },
+    "./eslint": {
+      "types": "./eslint/index.d.ts",
+      "default": "./eslint/index.js"
+    },
+    "./styles.css": {
+      "style": "./styles/index.css",
+      "default": "./styles/index.css"
+    },
+    "./openapi.yaml": "./openapi/foundation.yaml",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepack": "npm run build",
+    "gen:api": "openapi-typescript ./openapi/foundation.yaml -o ./src/api/schema.ts",
+    "lint": "eslint .",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort",
+    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.ts && tsc -b && eslint . --max-warnings 0 && node bin/ui-foundation.mjs check-deps && npm run build && vitest run",
+    "verify": "npm run verify:fast && playwright test -c playwright.storybook.config.ts"
+  },
+  "peerDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@base-ui/react": "^1.8.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@tanstack/eslint-plugin-query": "^5.103.1",
+    "@tanstack/react-query": "^5.103.1",
+    "@tanstack/react-table": "^9.2.4",
+    "eslint": "^10.10.0",
+    "eslint-plugin-check-file": "^3.3.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "msw": "^2.15.0",
+    "next-themes": "^0.4.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-hook-form": "^7.88.0",
+    "react-router": "^7.18.4",
+    "sonner": "^2.0.8",
+    "tailwindcss": "^4.3.3",
+    "typescript-eslint": "^8.70.0",
+    "zod": "^4.6.5"
+  },
+  "peerDependenciesMeta": {
+    "@axe-core/playwright": { "optional": true },
+    "@eslint/js": { "optional": true },
+    "@playwright/test": { "optional": true },
+    "@tanstack/eslint-plugin-query": { "optional": true },
+    "eslint": { "optional": true },
+    "eslint-plugin-check-file": { "optional": true },
+    "eslint-plugin-react-hooks": { "optional": true },
+    "eslint-plugin-react-refresh": { "optional": true },
+    "globals": { "optional": true },
+    "msw": { "optional": true },
+    "typescript-eslint": { "optional": true }
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@hookform/resolvers": "^5.9.1",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.3.0",
+    "date-fns": "^4.4.0",
+    "js-yaml": "^5.4.2",
+    "lucide-react": "^1.47.0",
+    "react-day-picker": "^10.0.1",
+    "shadcn": "^4.21.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@base-ui/react": "^1.8.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@storybook/addon-docs": "^10.6.0",
+    "@storybook/react-vite": "^10.6.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/eslint-plugin-query": "^5.103.1",
+    "@tanstack/react-query": "^5.103.1",
+    "@tanstack/react-table": "^9.2.4",
+    "@types/node": "^24.13.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-check-file": "^3.3.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "msw": "^2.15.0",
+    "next-themes": "^0.4.6",
+    "openapi-typescript": "^7.13.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-hook-form": "^7.88.0",
+    "react-router": "^7.18.4",
+    "sonner": "^2.0.8",
+    "storybook": "^10.6.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
+    "zod": "^4.6.5"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

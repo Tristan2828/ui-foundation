@@ -2,101 +2,72 @@
 
 ![verify](https://github.com/Tristan2828/ui-foundation/actions/workflows/verify.yml/badge.svg)
 
-A reusable UI foundation for personal database-backed apps, built and maintained primarily by AI coding agents.
+Shared code for small, contract-first, database-backed web apps (tables of
+rows, sometimes with editing), built and maintained mostly by AI coding
+agents.
 
-This foundation is explicitly not trying to be polished. It's trying to be reusable — see the Decision Ledger in the (historical) build plan for why. "Reusable" is proven by a Fresh UI Build (`scripts/consume-test.sh`, first done in Phase 7): a fresh agent with no memory of this repo builds a new entity screen entirely from the published registry, with zero edits here.
+- **[`@tristan2828/ui-foundation`](packages/ui-foundation)**, an npm package
+  with everything apps share: shadcn primitives, the `DataTable` and
+  `EntityForm` composites, an app shell with session-cookie auth, the
+  gateway's error seam, design tokens, lint rules, Playwright suites, and
+  the conventions an agent follows (synced into each app). Apps get fixes
+  by bumping its version.
+- **[The template](template)**, a working app with one demo entity and a
+  FastAPI reference backend. It is what every new app starts as, and is the
+  app's own from then on.
 
-## Contents
-
-- [Stack](#stack)
-- [Status](#status)
-- [For humans](#for-humans)
-- [For agents](#for-agents)
-- [Backend (Phase 8, optional)](#backend-phase-8-optional)
-- [Consuming this as a registry](#consuming-this-as-a-registry)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Stack
-
-| Layer | Technology |
-| --- | --- |
-| Build tool | Vite |
-| Framework | React 19 + TypeScript |
-| Styling | Tailwind v4 |
-| Components | shadcn/ui (Base UI primitives) |
-| Distribution | GitHub shadcn registry |
-| Backend | FastAPI + SQLModel + PostgreSQL — added after the UI has proven the contract on its own (Phase 8) |
-
-## Status
-
-| What | Where |
-| --- | --- |
-| At-a-glance phase checklist | [`docs/STATUS.md`](docs/STATUS.md) |
-| Full narrative per phase | [`docs/phases/`](docs/phases) |
-| How it fits together, and which checks a change needs | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
-| The original build plan and decision ledger (historical) | [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md) |
-
-## For humans
-
-```bash
-npm install
-npm run dev            # http://localhost:5173
-npm run verify         # full gate: types, lint, dependency allowlist, unit tests, Playwright
-npm run verify:fast    # inner loop, no Playwright
-```
-
-> [!NOTE]
-> Don't review this code by reading it — that's not how it's meant to be checked. `npm run verify` passing is the only thing that certifies a change is good; see "Verification" in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
-
-## For agents
-
-Any AI coding tool works here. Start with [`AGENTS.md`](AGENTS.md) — the cross-tool instruction file (Codex, Cursor, Copilot, Gemini CLI and others read it; `CLAUDE.md` imports it for Claude Code). It has every hard rule and names the mechanical check that enforces it. The most common task — adding a new entity end to end — is plain instructions at [`docs/add-an-entity.md`](docs/add-an-entity.md), starting from a plan in [`docs/entities/`](docs/entities); Claude Code also has a `/new-entity <Name>` shortcut to it.
-
-## Backend (Phase 8, optional)
-
-The UI runs fully on MSW with no backend at all. `backend/` is a FastAPI + SQLModel + Alembic implementation of `openapi.yaml`, for testing the contract against a real database:
-
-```bash
-cp backend/.env.example backend/.env   # local Docker Postgres by default — no account needed
-bash backend/scripts/dev.sh             # Docker Postgres + venv + migrations + API, http://localhost:8000
-
-# in another shell, from the repo root:
-VITE_API=real npm run dev     # proxies /api to the backend
-```
-
-Log in with the seeded dev user: `dev@example.com` / `dev-password-123`. Deploying for real? Follow [`docs/deploy.md`](docs/deploy.md) — with `APP_ENV=production` the backend refuses to start while that password still works.
-
-The backend's database is the local Docker Compose Postgres by default (needs Docker running). `backend/scripts/dev.sh` starts it, creates the venv, installs, runs `alembic upgrade head` and starts `uvicorn --reload` in one call, idempotently — safe to re-run. **Supabase is the cloud choice** for an app that needs real, shared or deployed data: [`docs/cloud-postgres.md`](docs/cloud-postgres.md) covers switching, including the pooler port and root-CA gotchas. `scripts/check-backend-postgres.sh` always uses the local database, so automated runs never write test users into a cloud one. For the backend's own verify gate (mypy + pytest + spec conformance), see `backend/scripts/verify.sh`.
-
-See [`docs/phases/phase-8.md`](docs/phases/phase-8.md) for what's built.
-
-Widgets are private to the user who created them (categories are shared). If you serve the built SPA from FastAPI (`npm run build:real` — a plain `npm run build` bundles the mocks — then run the backend), deep links like `/widgets/3/edit` fall back to `index.html` for client-side routing.
-
-## Consuming this as a registry
-
-Install a **tag**, never `main` — GitHub's raw CDN caches branch refs for
-five minutes, so a branch install can mix new and stale files. Tags are cut
-automatically on every merge that changes a file the registry ships:
+Stack: Vite, React 19, TypeScript, Tailwind v4, shadcn/ui on Base UI,
+React Router 7, TanStack Query; FastAPI + SQLModel + PostgreSQL behind an
+OpenAPI contract the app owns. The UI runs fully on MSW mocks with no
+backend at all.
 
 **→ [Latest release](https://github.com/Tristan2828/ui-foundation/releases/latest)**
-(2.0.0 was the first stable release — [`CHANGELOG.md`](CHANGELOG.md))
+· [Changelog](CHANGELOG.md)
 
-Use that tag with the shadcn CLI version pinned in [`deps-allowlist.json`](deps-allowlist.json):
+## Using it
+
+| To | Read |
+|---|---|
+| Start a new app (any AI tool, or by hand) | [`docs/create-an-app.md`](docs/create-an-app.md) |
+| Upgrade an app, change the foundation from an app, pick a data source, move a 2.x app onto the package | [`docs/consuming.md`](docs/consuming.md) |
+| See what the package exports | [`packages/ui-foundation/README.md`](packages/ui-foundation/README.md) |
+
+Upgrading an app is:
 
 ```bash
-npx shadcn@4.21.0 add Tristan2828/ui-foundation/starter#<tag>
+npm install @tristan2828/ui-foundation@<version>
+npx ui-foundation sync
+npm run verify
 ```
 
-This links the release rather than naming a version on purpose: a hardcoded
-number here is a manual bump on every release, and is wrong the first time
-one is missed.
+## Working on the foundation
 
-**Starting a new app?** Point any AI tool at [`docs/create-an-app.md`](docs/create-an-app.md) — it stands the app up and verifies it, ready for your first entity plan. Installed files are yours from then on. To take a later release safely (never `--overwrite` an app with entities), or to get the backend, see [`docs/consuming.md`](docs/consuming.md).
+```bash
+npm install                             # workspaces; builds the package
+npx playwright install --with-deps chromium
+npm run dev                             # the template on http://localhost:5173, mock API
+npm run verify                          # the full gate — what CI runs
+```
 
-## Contributing
+Agents start at [`AGENTS.md`](AGENTS.md). It is the cross-tool instruction
+file (Codex, Cursor, Copilot, Gemini CLI and others read it; `CLAUDE.md`
+imports it for Claude Code).
 
-Invite-only for now — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the branch/PR/verify workflow.
+> [!NOTE]
+> Don't review this code by reading it. `npm run verify` passing is what
+> certifies a change; see "Verification" in
+> [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+| Doc | What |
+|---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | how it fits together, why it's shared code, the gates, releasing |
+| [`docs/DEFERRED.md`](docs/DEFERRED.md) | the direction (what gets built and what waits) and the queue |
+| [`docs/OPERATOR.md`](docs/OPERATOR.md) | the developer's judgment calls |
+| [`docs/BLOCKERS.md`](docs/BLOCKERS.md) | open items needing a decision or an action |
+
+Invite-only for now: push to `main`, or open a PR for anything touching
+the package or the template (only a PR runs the install test before
+release).
 
 ## License
 

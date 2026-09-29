@@ -1,63 +1,72 @@
-# Deferred and Excluded
+# Direction and Deferred
 
-Out-of-scope ideas land here, never in code. See `docs/BUILD-PLAN.md` for the
-full rationale behind each row.
+The developer's standing decisions about what gets built, and the queue of
+what is left. When another doc disagrees with this one, this one wins, and
+the other doc is updated to match. Out-of-scope ideas land here, never in
+code. A row is **removed when it ships**: this is a queue, not a log (git
+history has every removed row).
 
-A row is **removed when it ships** — this is a queue of what is left, not a
-log of what was done. 33 rows were drained on 2026-09-27/28 (semantic
-tones, the cell-pattern catalogue, the column-options step, the release
-automation, the `<SelectValue>` defect and the phone-width project); what
-each became, and what deviated, is in
-[`phases/design-language-batch.md`](phases/design-language-batch.md). Their
-full text is in git history.
+## Direction
 
-## Direction (decided 2026-09-20, while building the Game List app)
-
-Set by the developer, and it supersedes the "don't extend speculatively" framing wherever the two conflict. Rows below marked **Met** or **Decided** follow from it.
-
-- **Two tracks.** *Design language* — tokens, semantic tones, `Badge`/variant styles, cell patterns, typography, density, themes — grows freely and does not wait for a second app or a second use. *Structure* — composites, new registry items, backend, auth, infrastructure — stays need-driven: built against a real app, not in advance. Why the split: design language is cheap to review by looking at results and is exactly what a consuming app cannot get right alone (contrast, both themes, consistency); structure is where "building forever" is a real risk.
-- **The "basic" look was a v1 leftover, not a design position.** BUILD-PLAN's non-goal ("This foundation does not need to be good. It needs to be reusable. Polish is what the first real application is for") and its v1.0 scope budget (exactly three composites, three registry items, six field types) were ship guards. v1 shipped, a real application now exists, and it wants polish — so both stop capping design-language work.
-- **Review model.** The developer reviews *results* (the running app, the per-column options pages), not every line of code. Mechanical gates remain the safety net; the goal is a foundation strong enough that line-by-line review isn't needed. The docs that described the old stance were updated in #35; `OPERATOR.md`, the human-facing half, was brought in line on 2026-09-28.
-- **Process ceremony is negotiable.** The consume-test/tag/README release routine and the pixel screenshot baselines were up for slimming or replacement — both done: releasing is automatic (#36, `ARCHITECTURE.md` "Releasing") and the baselines were replaced by a token-resolution check (#42).
-- **Unchanged:** the Hard Rules (semantic tokens only, shadcn before hand-rolling, gateway boundaries, dependency allowlist). Every design-language addition still ships with axe contrast coverage in both themes. Stronger tokens make the token rule more useful, not less.
-
-## Starter kit now, shared code later (decided 2026-09-28)
-
-Set by the developer, after asking whether the apps actually share code. They don't, past the moment of install, and that is now the stated model rather than a surprise.
-
-- **What this repo is: a starter kit with shared conventions.** It is distributed as a shadcn registry, where installed files are copied in and belong to the app from then on. An app gets a fast start (auth, composites, gateway, mocks, tests, tokens, the AI playbook) and the same rules and gates everywhere, but it does not get later fixes automatically. Taking a release is a deliberate, manual upgrade (`consuming.md`, "Taking a later release"). The evidence: the Game List app sat on `v2.1.0` through seven releases, rebuilt things shipped better here, and even after catching up to `v2.1.7` carries 16 declared forks, four of them features this repo still lacks.
-- **Keep building it as a starter kit.** Don't start the shared-code move yet. With one app, it can't be told apart whether the forking is structural or a first-app growing pain.
-- **Shared code is the likely later step, and it doesn't need a new repo.** When it happens, the shape is a versioned package holding the *foundation-owned* layer (composites, auth, gateway plumbing, hooks, tokens), which apps upgrade by bumping a version. The starter kit stays alongside it, copying in only the *app-owned* files (`openapi.yaml`, nav, mocks, the example entity) and adding the package as a dependency. The package can live in this repo as a subfolder (see the Monorepo row below). A separate repo is an option only if a clean split is wanted for its own sake. This would reverse the "npm package" entry under Excluded, but only for the foundation-owned layer.
-- **The boundary is already drawn:** `consuming.md`'s app-owned / foundation-owned table is the package boundary, and the gateway and lint boundaries (`AGENTS.md` Hard Rules) are what make that layer extractable.
-- **Revisit when** a second app starts, or when apps repeatedly fork the same foundation-owned files. Two apps forking the same file is the point where packaging it pays for itself.
-- **What keeps the later move cheap, starting now:**
-  - Push generic changes from apps back up here, rather than letting them live as forks. The Game List app's four PUSH UP forks were the first backlog of that; all four shipped on 2026-09-28 ([`phases/push-up-game-list-forks.md`](phases/push-up-game-list-forks.md)), and the Game List app can now drop them from its `FORKED` map.
-  - Use the drift check (`scripts/check-foundation-drift.mjs`, PR #47) to decide what to extract. Files apps keep in sync are safe to package. Files they keep forking aren't generic yet, and packaging them early just moves the conflict into package options.
+- **Shared code, not a starter kit** (decided 2026-09-28, shipped as 3.0).
+  The foundation-owned layer is the npm package
+  `@tristan2828/ui-foundation`, and apps upgrade by bumping its version. The
+  template is copied once, and what it copies is the app's own
+  ([`ARCHITECTURE.md`](ARCHITECTURE.md) "Why shared code"). Generic changes
+  found in an app are raised here and released, not kept as local variants.
+  That is the path a fix takes to every app.
+- **Two tracks** (decided 2026-09-20, while building the Game List app).
+  *Design language* grows freely and does not wait for a second app or a
+  second use: tokens, semantic tones, `Badge` and variant styles, cell
+  patterns, typography, density, themes. *Structure* stays need-driven,
+  built against a real app's actual screen and not in advance: composites,
+  new entry points or exports, backend, auth, infrastructure. Why the
+  split: design language is cheap to review by looking at results, and it
+  is exactly what an app can't get right alone (contrast, both themes,
+  consistency). Structure is where "building forever" is the real risk.
+- **Configuration grows from real forks.** A new prop or slot on a
+  composite is structure: it is added when an app needs the variation, not
+  in advance. Every one so far (`AppShell`'s `nav`/`sidebarExtra`/
+  `defaultSidebarOpen`, `EntityForm`'s `danger`, `LoginRoute`'s
+  `registerPath`) replaced a fork in Game List.
+- **Polish is wanted.** The v1 "doesn't need to be good, needs to be
+  reusable" stance was a ship guard, not a design position. Now that a real
+  app exists, design-language work is not capped.
+- **Review model.** The developer reviews *results* (the running app,
+  options pages, screenshots), not every line. The mechanical gates are the
+  safety net, and the goal is a foundation strong enough that line-by-line
+  review isn't needed.
+- **Unchanged:** the Hard Rules (semantic tokens only, shadcn before
+  hand-rolling, gateway boundaries, the dependency allowlist). Every
+  design-language addition ships with axe contrast coverage in both themes.
 
 ## Deferred
 
 | Item | Revisit when |
 |---|---|
-| Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat model, not a personal/local deployment. **Still deferred as of Phase 11** (docs/phases/phase-11.md) — flagged there as a real gap self-service registration widens, not yet picked up |
-| Additional themes | **No longer gated on a second app** (see Direction) — themes are design language. Pick up when the developer wants a distinct look; the token architecture already supports it. Still no theme-switcher UI (see Excluded) |
-| Monorepo | Two or more consuming apps share a release cycle, or the foundation-owned layer becomes a package (see "Starter kit now, shared code later" above). The package would most likely live in this repo, beside the registry |
-| TypeScript 7 (native compiler) | typescript-eslint, openapi-typescript and Storybook's react-docgen-typescript all support it. TS 7's package exposes no classic JS API (`require('typescript')` has only `version`), and all three are built on that API — typescript-eslint caps at `<6.1` even in its v9 alpha. The tsconfigs are already TS 7-clean (no `baseUrl`, which TS 7 drops). When revisiting, also drop the `openapi-typescript` → `typescript` entry in `package.json`'s `overrides` once openapi-typescript's own peer range covers the installed TypeScript |
-| Read-only entity path in the playbook (`/new-entity` for a list/detail table with no create, edit or delete — today it always builds full CRUD, and the near-term focus is display tables; see `docs/ARCHITECTURE.md` "Focus") | The first real app needs a read-only table. Build it against that app's actual screen, not in advance |
-| Notion API as a data source — a thin backend that serves `openapi.yaml` from a Notion database instead of Postgres (the choice is documented in `docs/consuming.md`) | A real project picks Notion as its source of truth. Build it against that project's actual database and property types, not a hypothetical one |
+| Move the Game List app onto 3.0 (`consuming.md` "Moving a 2.x app onto the package"). It is the first real test of the migration path and of the configuration props, which came from its forks | The next Game List session with room for it. Take 3.0 whole in one branch. Whatever doesn't map onto the package's props is a finding for here, not a new fork |
+| Sharing the backend. `template/backend/` is copied into each app and diverges from then on, so a backend fix (auth, the deploy checks, the SPA fallback) reaches no app on its own | Two apps need the same backend fix, or a second app keeps the reference backend. Then decide between a Python package for the auth/deploy/SPA layer and a documented patch routine |
+| Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat, not a personal/local deployment. Self-service registration widens this gap |
+| Error reporting | An app is actually deployed to strangers |
+| Additional themes | The developer wants a distinct look; the two-layer tokens already support it. Still no theme-switcher UI (see Excluded) |
+| TypeScript 7 (native compiler) | typescript-eslint, openapi-typescript and Storybook's react-docgen-typescript all support it. TS 7's package exposes no classic JS API, and all three are built on that API. The tsconfigs are already TS 7-clean. When revisiting, drop the `openapi-typescript` → `typescript` entry in the `overrides` of the root and template `package.json` once openapi-typescript's own peer range covers the installed TypeScript |
+| Read-only entity path in the playbook (a list/detail table with no create, edit or delete; today it always builds full CRUD) | The first real app needs a read-only table. Build it against that app's actual screen |
+| Notion API as a data source: a thin backend that serves `openapi.yaml` from a Notion database instead of Postgres (`consuming.md` compares the two) | A real project picks Notion as its source of truth. Build it against that project's database and property types |
 | Row virtualization | A table exceeds ~5k rows |
-| `AppError` kinds for 403 (`forbidden`) and 409 (`conflict`) — today both render as the generic `server` error | A backend actually returns either. None does now: another user's widget is a deliberate 404 and a duplicate email is a 422. Considered and not built in audit Phase D (`docs/phases/audit-phase-d.md`) |
-| Error reporting | An app is actually deployed |
-| Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `deps-allowlist.json`/`check-deps.mjs` on the npm side | The backend gains a second contributor/session where an unreviewed Python dependency is a real risk — Phase 8 pinned versions by hand with no mechanical gate |
-| Column-level documentation convention for the Postgres backend — `COMMENT ON TABLE`/`COMMENT ON COLUMN` on every table, required whenever a column's meaning isn't obvious from its name/type. No existing convention (zero `COMMENT ON` usage anywhere in `backend/` today) and no mechanical check. Found while planning a Game List app whose `game_ratings` table needs to be understood by a second, context-free agent with direct read-write Postgres access and no view of `openapi.yaml` or this repo | That app's migration actually ships `COMMENT ON` for real (its own plan documents the convention and a Row-Level Security policy alongside it); once proven there, decide whether it graduates to a Hard Rule with a mechanical check across `backend/`, the way other Hard Rules are enforced |
-| **The `<nav>` landmark does not contain the nav at phone width.** `app-shell.tsx` wraps `<Sidebar>` in `<nav aria-label="Primary">`, but below the sidebar's mobile breakpoint the sidebar renders into a Sheet that is *portaled to document.body* — so the links land outside the landmark, which is then an empty `<nav>`. axe does not flag it (an empty landmark is legal, and the links are reachable and labelled), and the new `mobile-chrome` Playwright project passes with zero violations, so this is a semantics quirk rather than a defect. Fixing it means either moving the `<nav>` inside the sidebar's own content or dropping the wrapper and letting the sheet carry the landmark — both touch a registry-shipped file and a shadcn-owned one, so it wants a deliberate look rather than a drive-by. `e2e/a11y.spec.ts` documents the behaviour and reads the links from the sheet on mobile. Found while adding the phone-width project | Someone changes `app-shell.tsx`'s nav markup for another reason, or a screen-reader pass on a phone is actually done. Don't fix it blind — confirm first how it reads in a real mobile screen reader, since the current shape may well be fine in practice |
-| **Phone-width is asserted, but nothing is *designed* for it.** The new `mobile-chrome` project proves the app works at 393px — the sidebar becomes a sheet, the toolbar wraps, `DataTable` scrolls behind its pinned column — but all of that is inherited from shadcn, not chosen. `src/routes` and `src/components/app` still contain **zero** `sm:`/`md:`/`lg:` breakpoints. What a phone user actually gets: the whole first viewport is filters before any row appears, and every column past the second is off-screen with no column-visibility or density control. This is *structure*, so it stays need-driven | A consuming app is genuinely used on a phone and someone complains about the scrolling, not before. Decide the target first — "usable at 393px" (today) versus "designed for 393px" (column priority, a density toggle, or a card layout under a breakpoint). Only the second is real work, and it belongs to whichever app needs it |
-| **The `mobile-chrome` project excludes `shell.spec.ts`, and nothing covers the sheet's own behaviour.** That spec asserts the persistent sidebar and its expand/collapse cookie, which below the breakpoint is a different component (a Sheet), not a narrower one — so running it there tested nothing meaningful. `a11y.spec.ts` opens the sheet and axe-checks it, but no test asserts the sheet *works*: opens on the trigger, closes on navigation, traps focus. Found while adding the phone-width project | The sheet breaks, or `shell.spec.ts` is touched for another reason. Small and self-contained whenever picked up |
-| **Nothing here freezes the clock, and any relative-time cell is untestable without it.** `docs/cell-patterns.md`'s "date, relative" entry already says to freeze the clock with Playwright's `page.clock` (added 2026-09-27), but there is no worked example of such a test anywhere in the repo — and this repo has no relative-date cell to write one against. A fixture with a pinned date drifts, so a naive assertion rots with the calendar. The Game List app's release-date column shipped with `verify` green and zero coverage for exactly this reason, and now has a test pinning 2026-06-01 that asserts a shipped game reads "6 years ago" and an unreleased one "in 5 months" — the second being what proves the unit ladder rather than a single-unit "in 153 days". Reference: the frozen-clock test in `e2e/games-table.spec.ts` in the Game List app | Whenever a relative or duration cell is added here, or the cell-patterns catalogue is next edited — extend the "date, relative" entry from a one-line instruction to a short worked example (pin a date, assert one past and one future value so the unit ladder is proven), so the next app does not ship the same blind spot. Cheap: one line of setup per spec |
-| **`app-shell.tsx` is app-owned, so a generic fix in it is invisible to the drift check.** `consuming.md` and `check-foundation-drift.mjs`'s `DEFAULT_APP_OWNED` treat the whole file as the app's because it holds the nav, but it also holds foundation layout: the auth redirect, the header, `<SidebarInset>`. The Game List app had fixed a real layout defect there (`min-w-0` on `<SidebarInset>`, without which a wide table grows the whole page sideways instead of scrolling in its own container), and the drift check never listed it as PUSH UP because it never looks at the file. It surfaced here only because `pinLastColumn` could not work without it (shipped with that change on 2026-09-28). Splitting the nav out (a `nav.ts` the shell imports) would let `app-shell.tsx` become foundation-owned and checked | The shared-code move starts (the split is part of drawing the package boundary), or a second generic fix is found in an app's `app-shell.tsx`. Until then, when reading an app's shell, diff it by hand for non-nav changes |
+| `AppError` kinds for 403 (`forbidden`) and 409 (`conflict`); both render as the generic `server` error today | A backend actually returns either. None does: another user's widget is a deliberate 404, and a duplicate email is a 422 |
+| Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `ui-foundation check-deps` on the npm side | The backend gains a second contributor or session where an unreviewed Python dependency is a real risk |
+| Column-level documentation convention for the Postgres backend (`COMMENT ON TABLE`/`COMMENT ON COLUMN` wherever a column's meaning isn't obvious). Found planning a Game List table that a second, context-free agent reads with direct Postgres access | That app's migration ships `COMMENT ON` for real. Once proven there, decide whether it becomes a Hard Rule with a check |
+| **The `<nav>` landmark doesn't contain the nav at phone width.** `AppShell` wraps `<Sidebar>` in `<nav aria-label="Primary">`, but below the mobile breakpoint the sidebar renders into a Sheet portaled to `document.body`, so the landmark is empty there. axe doesn't flag it and the links are reachable and labelled, so this is a semantics quirk. The a11y suite reads the links from the sheet on mobile | `AppShell`'s nav markup changes for another reason, or a screen-reader pass on a phone is actually done. Confirm first how it reads in a real mobile screen reader |
+| **Phone width is asserted, not designed.** The `mobile-chrome` project proves the app works at 393px, but that is inherited from shadcn, not chosen: the first viewport is all filters, and every column past the second is off-screen with no column-visibility or density control | An app is genuinely used on a phone and someone complains. Decide first between "usable at 393px" (today) and "designed for 393px" (column priority, density, a card layout) |
+| **Nothing covers the mobile sidebar sheet's own behaviour.** `shell.spec.ts` is excluded from `mobile-chrome` (it asserts the persistent sidebar), and the a11y suite opens the sheet but doesn't assert that it opens, closes on navigation and traps focus | The sheet breaks, or the shell spec is touched for another reason. Small and self-contained |
+| **No worked example of a frozen-clock test.** `cell-patterns.md`'s "date, relative" entry says to freeze the clock with Playwright's `page.clock`, but nothing here shows it, and this repo has no relative-date cell. The Game List app has one (`e2e/games-table.spec.ts` pins 2026-06-01 and asserts one past and one future value) | A relative or duration cell is added here, or the cell-patterns catalogue is next edited: extend the entry to a short worked example |
 
 ## Excluded
 
-- **npm package** for the whole foundation — forfeits open-code editability, the reason for this stack. A package for the *foundation-owned layer only* is a deferred candidate, not excluded ("Starter kit now, shared code later" above)
-- **Custom primitives** — shadcn's are already yours to edit
-- **Theme switcher UI** — build the token architecture, not the feature
-- **SSR / SEO tooling** — irrelevant for personal database applications
+- **Per-app edits to package components.** Configure through props, build
+  on top, or raise the change here (`consuming.md` "Changing the
+  foundation").
+- **Custom primitives.** shadcn's are the base; the package patches them
+  where needed.
+- **Theme switcher UI.** Build the token architecture, not the feature.
+- **SSR / SEO tooling.** Irrelevant for personal database applications.

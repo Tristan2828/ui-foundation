@@ -1,0 +1,26 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+logs/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.playwright-mcp/
+.env
+.env.*
+!.env.example
+!.env.real
+
+.claude/settings.local.json
+.claude/worktrees/
+
+# Reference backend (Python)
+backend/.venv/
+backend/**/__pycache__/
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/*.egg-info/
+# Cloud Postgres CA certs are per-developer, not committed (docs/cloud-postgres.md)
+backend/certs/

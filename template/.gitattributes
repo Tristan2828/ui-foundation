@@ -1,0 +1,4 @@
+# Pin text files to LF regardless of core.autocrlf, so a Windows checkout
+# can't flip a file's line endings under a hash, a codegen diff or a bash
+# script.
+* text=auto eol=lf

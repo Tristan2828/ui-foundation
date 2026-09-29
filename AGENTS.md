@@ -1,167 +1,91 @@
-## Stack
-Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui (Base UI primitives),
-React Router v7, TanStack Query. Contract-first: openapi.yaml is the source
-of truth and is owned by this repo. In development, MSW serves the
-contract — there may be no backend at all.
+# Working in the ui-foundation repo
 
-Pinned tool versions live in `deps-allowlist.json`. Do not use `@latest`
-for any tool command in this repo.
+This repo ships two things under one version: the npm package
+**`@tristan2828/ui-foundation`** (`packages/ui-foundation/`), which holds
+everything apps share, and **the template** (`template/`), the app every
+new app starts as. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) at
+the start of every session, then [`docs/DEFERRED.md`](docs/DEFERRED.md) (the
+direction and the queue) and any open item in
+[`docs/BLOCKERS.md`](docs/BLOCKERS.md).
 
-## Hard Rules
-Each rule names the check that enforces it. If you hit the check, the
-check is right. Do not disable, skip, or work around it.
+## The rules
 
-- NEVER hand-roll a component that exists in shadcn. Run
-  `npx shadcn@4.21.0 add <name>` instead. (Enforced: dependency
-  allowlist + registry diff at review.)
-- NEVER add a dependency that is not in deps-allowlist.json. If you
-  believe one is needed, write the case in docs/BLOCKERS.md and stop.
-  (Enforced: scripts/check-deps.mjs fails verify.)
-- NEVER hand-write an API type. All types come from src/api/schema.d.ts,
-  which is generated. If a type is missing, run `npm run gen:api`.
-  (Enforced: codegen diff in verify.)
-- NEVER use a raw hex value or a Tailwind palette color (bg-blue-500).
-  Semantic tokens only: bg-primary, text-muted-foreground.
-  (Enforced: ESLint token rule; axe contrast in light and dark mode,
-  e2e/a11y.spec.ts.)
-- NEVER fetch in useEffect. All server state goes through TanStack Query.
-  (Enforced: eslint-plugin-query + no-restricted-syntax on fetch.)
-- NEVER read auth state outside useAuth(). auth-provider.tsx is the only
-  file that knows how auth works. (Enforced: no-restricted-imports.)
-- NEVER import from api/transport/ outside api/gateway/. Components and
-  hooks consume the gateway. (Enforced: no-restricted-imports.)
-- NEVER let a backend-shaped response reach a component. Paginated data is
-  Page<T>. Failures are AppError. Queries are QuerySpec. The gateway
-  translates; nothing above it knows the wire format. (Enforced: gateway
-  return types are the contracts; tsc.)
-- NEVER write a gateway test by reading the gateway. Tests come from
-  openapi.yaml. (Enforced in Claude Code: the spec-tester subagent cannot
-  read gateway/. In other tools: write them before the gateway exists —
-  docs/add-an-entity.md step 3.)
-- NEVER name a file in PascalCase or snake_case. Kebab-case everywhere —
-  routes, components, hooks, tests (`widget-form.tsx`, not `WidgetForm.tsx`).
-  (Enforced: eslint-plugin-check-file's filename-naming-convention rule.)
+- **`template/` is an app.** Everything in the package's app rules
+  ([`packages/ui-foundation/conventions/AGENTS.md`](packages/ui-foundation/conventions/AGENTS.md),
+  synced into `template/AGENTS.md`) applies there exactly as in any app:
+  the Hard Rules, the required states, kebab-case, the entity playbook.
+- **The package follows the same Hard Rules from the inside.** Semantic
+  tokens only, shadcn before hand-rolling (`npx shadcn@4.21.0 add <name>`
+  run inside `packages/ui-foundation/`), no fetch outside `src/api/transport/`,
+  and only the gateway modules may call it. `auth-provider.tsx` is the only
+  file that knows how auth works. No hand-written API types: the package's
+  come from `openapi/foundation.yaml` (`npm run gen:api` in the package).
+  Each is enforced by the package's own lint, tsc and codegen diff.
+- **Everything the package exports is a contract with every app.** Prefer
+  additive changes: a new optional prop, a new export. A breaking change
+  (a removed or renamed export, a changed prop, a changed synced file an
+  app relies on) needs a major version bump in
+  `packages/ui-foundation/package.json`, a `CHANGELOG.md` entry and upgrade
+  steps in `docs/consuming.md`. Then stop and let the developer decide
+  (`docs/OPERATOR.md` "Versions").
+- **Conventions are edited in the package, never in the template.**
+  `template/AGENTS.md`'s foundation block, `template/docs/foundation/` and
+  the template's `.claude/`/`.codex/` agent files are written by `sync`.
+  Edit `packages/ui-foundation/conventions/`, run `npm run sync`, and
+  commit both. `verify` fails if they differ.
+- **Two tracks** ([`docs/DEFERRED.md`](docs/DEFERRED.md) "Direction"):
+  design language (tokens, tones, variants, cell patterns, typography,
+  density) grows freely, with axe contrast coverage in both themes.
+  Structure (composites, props, exports, backend, auth, infrastructure) is
+  built against a real app's need, not in advance.
+- **Dependencies:** the package's allowlist is
+  `packages/ui-foundation/deps-allowlist.json`, the template's (every new
+  app's) is `template/deps-allowlist.json`. Never add a dependency that
+  isn't listed. Write the case in `docs/BLOCKERS.md` and stop. Pinned tool
+  versions are in the template's `tools`; never `@latest`.
+- **Never hand-tag or hand-publish.** A merge stages the release; the developer approves it
+  (`docs/ARCHITECTURE.md` "Releasing"). Open a PR for any change to the
+  package or the template, so the install test runs before it ships.
 
-## Required States
-Every data view handles: loading, empty, error, and success.
-Use <Skeleton>, <Empty>, and the error boundary. Do not omit these.
-Every screen has one Playwright test per state, forced via MSW overrides.
+## Scope and stopping
 
-## Design Language
-Two tracks, and they have different rules (docs/DEFERRED.md "Direction").
+- Do the task you were given and nothing beyond it. Out-of-scope ideas go
+  in `docs/DEFERRED.md`, never in code.
+- A task is done when `npm run verify` (root) passes: the package's gate,
+  then the template's against the package as built. Backend changes also
+  need `npm run verify:backend`, and `template/scripts/check-backend-postgres.sh`
+  if Docker is available. The table in `docs/ARCHITECTURE.md` "Verification"
+  says what each gate covers.
+- If verify can't pass without breaking a rule, an instruction conflicts
+  with current library docs, or the change would exceed the task's scope:
+  write `docs/BLOCKERS.md` (what, why, what you tried) and stop.
+- A new check counts only after a negative control: break the thing, watch
+  it fail, restore it.
 
-- **Design language grows freely.** Tokens, semantic tones, `Badge` and
-  other variant styles, cell patterns, typography and density may be added
-  or improved without waiting for a second app or a second use, and without
-  a docs/BLOCKERS.md entry. This is the part a consuming app cannot get
-  right on its own — contrast, both themes, consistency across screens.
-  Every addition still ships with axe contrast coverage in both themes
-  (e2e/a11y.spec.ts), and the Hard Rules above are unchanged: semantic
-  tokens only, shadcn before hand-rolling. Stronger tokens make the token
-  rule more useful, not less.
-- **Structure stays need-driven.** New composites, new registry items,
-  backend, auth and infrastructure are built against a real app's actual
-  screen, not in advance. That is where "building forever" is the real
-  risk, and it is what "Scope and Stopping" below is about.
+## At the end of a session
 
-## Scope and Stopping
-- Do the task you were given and nothing beyond it. A task is done when
-  `npm run verify` passes — not when it feels complete.
-- If verify cannot be made to pass without breaking a Hard Rule, or an
-  instruction conflicts with current library docs, or the change would
-  exceed the task's scope: write docs/BLOCKERS.md (what, why, what you
-  tried), commit, and stop. Do not guess, do not widen scope, do not wait.
-- Ideas that are out of scope go in docs/DEFERRED.md, not in code.
+There are no per-session log files. Whatever the next session needs to
+know goes where it will be read:
 
-## Correct Patterns
-```tsx
-// Error handling — AppError, never a raw response
-const { data, error } = useWidgets(query)
-if (error) return <ErrorState error={error} />   // error is AppError
+- **What changed and why**, including anything that deviated from the task
+  and what was found along the way: the PR description or commit message.
+- **What's left:** `docs/DEFERRED.md` (remove rows that shipped, add new
+  ones with a revisit condition) and `docs/BLOCKERS.md`.
+- **What apps must do to upgrade**, for a notable release: `CHANGELOG.md`.
+- **Anything that changes how the repo works:** `docs/ARCHITECTURE.md`.
 
-// Validation — server field errors bind straight to the form
-form.setError(field, { message: err.fieldErrors[field][0] })
+## Commands
 
-// Color — semantic tokens only
-<div className="bg-card text-card-foreground border-border" />
-
-// Forms — FieldGroup wraps every field, never a bare <label>+<input> stack
-<FieldGroup>
-  <Field>
-    <FieldLabel htmlFor="name">Name</FieldLabel>
-    <Input id="name" {...register('name')} />
-  </Field>
-</FieldGroup>
+```bash
+npm install                 # installs every workspace and builds the package
+npm run dev                 # builds the package, then the template on :5173 (mock API)
+npm run verify:fast         # package + template gates, no browsers
+npm run verify              # everything, including Storybook and Playwright
+npm run sync                # rebuild the package and re-sync conventions into template/
+npm run verify:backend      # the template's reference backend (mypy, pytest, spec conformance)
+bash scripts/consume-test.sh --install-only   # a fresh app from the packed tarball (commit first)
 ```
 
-## Tooling
-Look up current shadcn component APIs via the shadcn MCP server
-(`npx shadcn@4.21.0 mcp init --client claude`) or `npx shadcn@4.21.0 view
-<name>` before hand-guessing props — component APIs move between releases
-and training data lags them.
-
-## Before You Finish
-Run `npm run verify`. It must pass. Do not report a task complete on a
-failing gate. The developer reviews **results** — the running app, a
-screenshot, an options page — not every line, so the gates are the safety
-net rather than a second opinion. No hook enforces this; running `verify`
-before you stop is on you. CI runs it again on every pull request.
-
-## Reference Implementations — Copy These Patterns
-- Data table:   src/routes/widgets/widgets-table.tsx (thin consumer of the
-  `<DataTable>` composite, src/components/app/data-table.tsx)
-- Create/edit:  src/routes/widgets/widget-form.tsx (thin consumer of the
-  `<EntityForm>` composite, src/components/app/entity-form.tsx)
-- Query hooks:  src/routes/widgets/use-widgets.ts, use-categories.ts
-- Form schema:  src/routes/widgets/widget-schema.ts (zod schema + form ↔
-  wire conversion functions)
-- Error display: src/components/app/error-state.tsx (`<ErrorState>`,
-  keyed by `AppError.kind`)
-- App shell:    src/components/app/app-shell.tsx
-- New entity:   docs/add-an-entity.md (any tool; `/new-entity <Name>` in
-  Claude Code)
-
-Copy the routes/widgets/* files per entity. Extend the composites
-(data-table.tsx, entity-form.tsx) in place — they are shared, not
-per-entity.
-
-## Adding an Entity
-In any AI tool, follow `docs/add-an-entity.md` — it's plain instructions,
-not tied to one tool. It starts from the entity's plan,
-`docs/entities/<entity>.md`: build exactly that, and if there's no plan,
-work one out with the developer first. Never guess the fields. (Claude
-Code's `/new-entity <Name>` is a shortcut to the same file.)
-
-## Updating the Foundation
-This app was installed from the `Tristan2828/ui-foundation` registry.
-Never re-run `shadcn add .../starter --overwrite` here — it resets
-openapi.yaml, routes, nav and mocks to the demo. Follow
-https://github.com/Tristan2828/ui-foundation/blob/main/docs/consuming.md
-(`--dry-run`, then `--diff` per file).
-
-`node scripts/check-foundation-drift.mjs` reports every shipped file this
-app has changed since the release named in `foundation.json`. If you
-change one on purpose, add it to that file's `forked` map with a reason.
-Better still, if the change is generic, raise it for the foundation.
-Undeclared drift is a file maintained twice with nothing saying so.
-
-## Working in the ui-foundation Repo Itself
-Skip this section in an app that installed this registry — it has no
-`docs/ARCHITECTURE.md`, and everything it needs is above and in
-`docs/add-an-entity.md`.
-
-If `docs/ARCHITECTURE.md` exists, you are in the foundation repo:
-- Read `docs/ARCHITECTURE.md` at the start of every session (its gates
-  table says which checks a change needs), plus `docs/STATUS.md` and any
-  open item in `docs/BLOCKERS.md`. `docs/BUILD-PLAN.md` is history — read
-  the part you need, not the whole file.
-- Work on the one task or phase named in the opening instruction. It is
-  done when every gate that `docs/ARCHITECTURE.md` lists for that kind of
-  change passes.
-- A change to any path `registry.json` ships is install-tested and tagged
-  **automatically** (the `registry` and `tag` workflows) — don't tag by
-  hand or bump a version in the README. If you run `consume-test.sh`
-  locally, pass the **commit SHA**, never a branch.
-- At the end of the session, write `docs/phases/<name>.md`: what was
-  built, what deviated and why, what the next session needs to know. The
-  next session has no memory of this one.
+After changing package source, `npm run build` (or any of the above)
+before running the template's own tools directly. The template imports the
+package's built `dist/`, the same way every app does.

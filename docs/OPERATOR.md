@@ -1,82 +1,72 @@
-# Operator Notes (human-facing)
+# Operator Notes
 
-Judgment calls that are yours, not an agent's: what's worth building, when
-to say no, how to respond when a session goes sideways. The agent-facing
-side — how the repo works and which checks a change needs — is
-[`ARCHITECTURE.md`](ARCHITECTURE.md). Status is [`STATUS.md`](STATUS.md);
-the build history is [`phases/`](phases).
-
-## What the foundation is for (right now)
-
-Simple apps that **display tables of database rows**, sometimes with
-editing. That's the whole near-term focus (also in `ARCHITECTURE.md`'s
-"Focus" section, so agents see it too).
-
-The original build, the 2026-09-18 audit and the first real app (the Game
-List) are done. Since 2026-09-20 foundation work runs on **two tracks with
-different rules** ([`DEFERRED.md`](DEFERRED.md) "Direction" is the source of
-truth; `ARCHITECTURE.md`'s "Focus" repeats it for agents):
-
-- **Design language grows freely** — tokens, semantic tones, `Badge` and
-  other variant styles, cell patterns, typography, density, themes. No
-  second app or second use required. You review it by looking at results
-  (the running app, the per-column options pages); every addition still
-  ships with axe contrast coverage in both themes.
-- **Structure stays need-driven** — composites, new registry items,
-  backend, auth, infrastructure. Parts of it were built before any app
-  existed (auth with self-service registration and per-user ownership, the
-  backend's cloud/deploy hardening, Storybook) and were judged over-built
-  for this focus. They stay; don't let them grow.
+The judgment calls that are yours, not an agent's: what's worth building,
+when to say no, and how to respond when a session goes sideways. What gets
+built and what waits is set in [`DEFERRED.md`](DEFERRED.md) "Direction".
+How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Saying no to structure work
 
-- **The test for new structure:** has a real app hit the need? If not,
-  it's a row in [`DEFERRED.md`](DEFERRED.md) with a revisit condition, not
-  code. An agent proposing "while we're here…" structure is the
-  building-forever failure mode. Design-language work doesn't take this
-  test.
-- **A consuming app's finding counts as a real need.** The Game List rows
-  in `DEFERRED.md` (drift check, `setFilters`/`applyView`, `pinLastColumn`,
-  binary MSW overrides) each point at a working implementation in that app
-  — port it, don't redesign it. Rows whose revisit condition is "next time
-  X is touched" won't be picked up by an agent on its own; to do one now,
-  hand it over as the session's named task.
-- **Build it against the app that needs it.** A read-only table entity is
-  still unbuilt (the entity playbook always builds full CRUD) — design it
-  from the first real read-only screen, not in advance.
+- **The test for new structure:** has a real app hit the need? If not, it's
+  a row in `DEFERRED.md` with a revisit condition, not code. An agent
+  proposing "while we're here…" structure is the building-forever failure
+  mode. Design-language work doesn't take this test.
+- **An app's finding counts as a real need.** When an app works around the
+  package, bring the workaround here as a prop, slot or fix: port the app's
+  working version, don't redesign it. Rows whose revisit condition is "next
+  time X is touched" won't be picked up by an agent on its own. To do one
+  now, hand it over as the session's named task.
 - **Before an app is reachable by strangers:** login rate limiting and
-  error reporting (`DEFERRED.md`, `deploy.md`). Not before.
+  error reporting (`DEFERRED.md`, the app's `docs/deploy.md`). Not before.
 
 ## Decisions that are yours
 
+- **Releases go live when you approve them.** Every merge that touches the
+  package or the template stages a version on npm. Approve it with your
+  passkey on npmjs.com (the package → Staged Packages), then run the
+  `release-smoke` workflow for its tag (`ARCHITECTURE.md` "Releasing").
+  Approving is the moment to look at the result. Reject a release you
+  don't want apps to get.
+- **Versions.** Patch versions are picked automatically. A minor or major release is
+  a version bump in `packages/ui-foundation/package.json`, made in the PR.
+  Anything that breaks an app's code or its synced files is a major, with a
+  `CHANGELOG.md` entry and upgrade steps. When an agent's change looks
+  breaking, decide whether it's worth a major or should be made additive.
+- **When an app upgrades.** Nothing upgrades an app behind its back. It
+  moves when someone runs `npm install …@<version> && npx ui-foundation
+  sync`. Upgrading each app regularly is what keeps the shared code shared.
 - **New dependencies.** An agent that needs one writes the case in
-  `docs/BLOCKERS.md` and stops. Decide in `deps-allowlist.json` terms (npm
-  side; the Python side has no allowlist enforcer yet), outside the
-  agent's session. Expect auto-mode to refuse the install itself — you run
-  it.
+  `docs/BLOCKERS.md` and stops. Decide in allowlist terms: the package has
+  `packages/ui-foundation/deps-allowlist.json`, each app has its own (the
+  Python side has no enforcer yet). Expect auto-mode to refuse the install
+  itself; you run it.
 - **Secrets.** Database passwords, tokens and API keys never go in a chat
   with an agent. Write them to the gitignored `backend/.env` yourself.
-- **Merging.** `main` requires no review and no passing checks (removed
-  2026-09-28; force-pushes and deletion are still blocked), so you can
-  push to it directly or merge a PR yourself. Releasing is automatic
-  (`ARCHITECTURE.md` "Releasing"): the `registry` workflow install-tests
-  a PR's head SHA when a shipped path changed, and the `tag` workflow
-  cuts the next patch tag on every push to `main`. A direct push skips
-  the install test, so changes to shipped paths are safer as a PR. Nobody tags by hand except a
-  deliberate minor or major bump.
+  Publishing to npm needs no token (trusted publishing, staging only), and
+  approving needs your passkey. Keep it that way: never create an npm
+  access token for CI.
+- **Merging.** `main` requires no review and no passing checks (force-pushes
+  and deletion are still blocked), so you can push to it directly or merge
+  a PR yourself. Every push to `main` that touches the package or the
+  template stages a release. A direct push skips the PR-only install test,
+  so changes there are safer as a PR.
 
 ## When a session goes sideways
 
 - **Work declared complete without a green gate:** don't accept it. Point
-  it back at `npm run verify` (plus `scripts/check-backend-postgres.sh` for
-  backend changes; the `registry` workflow covers anything `registry.json`
-  ships). A Fresh UI Build PASS only counts after checking its transcript
-  used the version you meant to test (`phases/audit-phase-a.md`).
-- **A gate is permanently red** (e.g. a check that only passes on one
-  OS — the reason the pixel screenshot baselines were retired): fix the gate before anything else — a gate that's
-  always red teaches the agent to ignore it.
-- **The agent disables or works around a check to get green:** revert
-  that change. `AGENTS.md`'s rule is that the check is right.
-- **The same failure keeps recurring across sessions:** read the relevant
-  `docs/phases/*.md` and `docs/BLOCKERS.md` before another attempt — it
+  it back at `npm run verify` (plus `npm run verify:backend` and
+  `template/scripts/check-backend-postgres.sh` for backend changes). A Fresh
+  UI Build PASS only counts after checking its transcript used the version
+  you meant to test.
+- **A gate is permanently red** (a check that only passes on one OS, for
+  example — why the pixel screenshot baselines were retired): fix the gate
+  before anything else. A gate that's always red teaches the agent to
+  ignore it.
+- **The agent disables or works around a check to get green:** revert that
+  change. The check is right.
+- **An app copies a package file to change it:** lint should already have
+  stopped it. If it didn't, that's a gap in the lint rules, so fix it here.
+  Then turn the change into a prop, a slot or a release.
+- **The same failure keeps recurring across sessions:** read
+  `docs/BLOCKERS.md` and the relevant PRs before another attempt. It
   usually needs a decision from you, not more agent time.

@@ -15,18 +15,17 @@ playwright/.cache/
 !.env.example
 !.env.real
 
-.claude/settings.local.json
+**/.claude/settings.local.json
+**/.claude/worktrees/
+*.tgz
 
-# Phase 8 backend (Python)
-backend/.venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/.mypy_cache/
-backend/.pytest_cache/
-backend/*.egg-info/
-
-# Phase 12 cloud Postgres — provider CA certs are per-developer, not shipped
-backend/certs/
+# Reference backend (Python), under template/
+**/.venv/
+**/__pycache__/
+**/.mypy_cache/
+**/.pytest_cache/
+**/*.egg-info/
+**/backend/certs/
 # Supabase CLI's own local link-cache (project ref, org id) — regenerated
 # by `supabase link`/`supabase projects create`, not project state
 supabase/

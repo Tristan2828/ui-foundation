@@ -1,116 +1,80 @@
 #!/usr/bin/env bash
-# Creates a new app on the ui-foundation registry, ready for its first
-# entity plan. The steps in docs/create-an-app.md; scripts/consume-test.sh
-# runs this same script on every release, so the path is always tested.
+# Creates a new app from the ui-foundation template, ready for its first
+# entity plan: template/ at the given tag, depending on
+# @tristan2828/ui-foundation at that same version. The steps in
+# docs/create-an-app.md; scripts/consume-test.sh runs this same script, so
+# the documented path is the tested one.
 #
 # Usage (from the folder the app should be created *in*):
 #   bash create-app.sh <app-name> <tag>
-#   e.g. bash create-app.sh game-list v2.1.0
+#   e.g. bash create-app.sh game-list v3.0.0
 #
-# Needs: Node/npm, git, curl, and Git Bash on Windows. Stops at the first
-# failure. Doesn't touch anything outside ./<app-name>.
+# For testing an unreleased commit (consume-test.sh sets both):
+#   FOUNDATION_REPO_DIR  copy template/ from this local clone (`git archive`)
+#                        instead of downloading the tag from GitHub
+#   FOUNDATION_TARBALL   install the package from this `npm pack` tarball
+#                        instead of from npm
+#
+# Needs: Node/npm, git, curl and tar (Git Bash on Windows). Stops at the
+# first failure. Doesn't touch anything outside ./<app-name>.
 set -euo pipefail
 
 REPO="Tristan2828/ui-foundation"
+PACKAGE="@tristan2828/ui-foundation"
 fail() { echo "create-app: $1" >&2; exit 1; }
 
 APP_NAME="${1:-}"
 REF="${2:-}"
-[ -n "$APP_NAME" ] && [ -n "$REF" ] || fail "usage: bash create-app.sh <app-name> <tag>   (e.g. game-list v2.1.0)"
+[ -n "$APP_NAME" ] && [ -n "$REF" ] || fail "usage: bash create-app.sh <app-name> <tag>   (e.g. game-list v3.0.0)"
 [[ "$APP_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]] || fail "app name must be kebab-case (lowercase letters, digits, dashes): '$APP_NAME'"
 [ ! -e "$APP_NAME" ] || fail "./$APP_NAME already exists — pick another name or remove it first"
 git config user.email >/dev/null || [ -n "${GIT_AUTHOR_EMAIL:-}" ] ||
   fail "git has no user.email — run: git config --global user.email you@example.com (and user.name)"
 
-# Tool versions come from deps-allowlist.json *at the ref being installed*,
-# so a pinned tag always gets the versions it was tested with — no copy of
-# the foundation repo needed. Tags and SHAs are immutable, so no CDN staleness.
-ALLOWLIST=$(curl -fsSL --retry 4 --retry-delay 2 --retry-all-errors "https://raw.githubusercontent.com/$REPO/$REF/deps-allowlist.json") ||
-  fail "can't fetch deps-allowlist.json at '$REF' — is it a real tag or commit SHA of $REPO?"
-VITE_VERSION=$(printf '%s' "$ALLOWLIST" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf8')).tools.vite)")
-SHADCN_VERSION=$(printf '%s' "$ALLOWLIST" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync(0,'utf8')).tools.shadcn)")
-
-# A relative name, not an absolute path: `npm create vite` mis-joins an
-# absolute path with the cwd on Windows/Git Bash.
-echo "create-app: scaffolding Vite $VITE_VERSION (react-ts) in ./$APP_NAME"
-npm create vite@"$VITE_VERSION" "$APP_NAME" -- --template react-ts --yes
+mkdir "$APP_NAME"
+if [ -n "${FOUNDATION_REPO_DIR:-}" ]; then
+  echo "create-app: copying template/ at $REF from $FOUNDATION_REPO_DIR"
+  git -C "$FOUNDATION_REPO_DIR" archive "$REF" template | tar -x --strip-components=1 -C "$APP_NAME" ||
+    fail "can't read template/ at '$REF' in $FOUNDATION_REPO_DIR"
+else
+  # A tag or SHA, never a branch: those URLs are immutable, so there's no
+  # CDN staleness to reason about.
+  echo "create-app: downloading template/ at $REF"
+  curl -fsSL --retry 4 --retry-delay 2 --retry-all-errors "https://codeload.github.com/$REPO/tar.gz/$REF" |
+    tar -xz --strip-components=2 -C "$APP_NAME" --wildcards '*/template/*' ||
+    fail "can't download template/ at '$REF' — is it a real tag of $REPO?"
+fi
 cd "$APP_NAME"
-npm install --silent
+[ -f package.json ] || fail "the template at $REF has no package.json — is $REF older than v3.0.0? Apps before 3.0 were created with the shadcn registry"
 
-# shadcn init refuses to run without Tailwind and the @ alias.
-echo "create-app: adding Tailwind and the @ alias"
-npm install --silent tailwindcss @tailwindcss/vite
-
-cat > vite.config.ts <<'EOF'
-import path from 'node:path'
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': path.resolve(import.meta.dirname, './src'),
-    },
-  },
-})
-EOF
-
-cat > tsconfig.json <<'EOF'
-{
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
-}
-EOF
-
-node -e "
-const fs = require('fs');
-const p = 'tsconfig.app.json';
-const c = JSON.parse(fs.readFileSync(p, 'utf8').replace(/\/\*.*?\*\//gs, ''));
-c.compilerOptions.paths = { '@/*': ['./src/*'] };
-fs.writeFileSync(p, JSON.stringify(c, null, 2));
+# The app's own name, and the package at exactly the release the template
+# came from (a caret range, so patch releases arrive with `npm update`).
+if [ -n "${FOUNDATION_TARBALL:-}" ]; then
+  SPEC="file:$FOUNDATION_TARBALL"
+elif [[ "$REF" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+  SPEC="^${BASH_REMATCH[1]}"
+else
+  fail "'$REF' isn't a release tag (vX.Y.Z); to test a commit, set FOUNDATION_REPO_DIR and FOUNDATION_TARBALL (scripts/consume-test.sh does)"
+fi
+APP_NAME="$APP_NAME" SPEC="$SPEC" PACKAGE="$PACKAGE" node -e "
+const fs = require('fs')
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+pkg.name = process.env.APP_NAME
+pkg.dependencies[process.env.PACKAGE] = process.env.SPEC
+fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n')
 "
+sed -i "s#<title>UI Foundation</title>#<title>$APP_NAME</title>#" index.html
 
-sed -i '1i @import "tailwindcss";' src/index.css
+echo "create-app: npm install ($PACKAGE $SPEC)"
+npm install --no-audit --no-fund
 
-echo "create-app: shadcn $SHADCN_VERSION init"
-npx --yes shadcn@"$SHADCN_VERSION" init -t vite -b base -p nova -y
-
-# --overwrite is right here, on a fresh scaffold, and never again: on an
-# app with its own entities it would reset them to the demo
-# (docs/consuming.md, "Taking a later release").
-echo "create-app: installing $REPO/starter#$REF"
-npx --yes shadcn@"$SHADCN_VERSION" add "$REPO/starter#$REF" --yes --overwrite
-
-# MSW's service worker is a generated file the registry can't ship; the
-# app runs on mock data until it has a backend.
-echo "create-app: generating the MSW service worker"
-npx msw init public/ --save
-
-# What scripts/check-foundation-drift.mjs compares against. The registry
-# never ships this file, so taking a later release can't overwrite it —
-# bump "tag" by hand when you take one (docs/consuming.md).
-cat > foundation.json <<EOF
-{
-  "tag": "$REF",
-  "appOwned": [],
-  "removed": {},
-  "forked": {}
-}
-EOF
+# The template's synced files came from the same release as the package,
+# so this only confirms it; a mismatch means the release itself is broken.
+npx ui-foundation sync --check
 
 git init -q
 git add -A
-git commit -q -m "Scaffold from $REPO starter#$REF"
+git commit -q -m "Create $APP_NAME from $REPO template $REF"
 
-echo "create-app: done — ./$APP_NAME, installed from starter#$REF and committed."
-echo "create-app: next, docs/create-an-app.md step 3 (Step 0 of docs/add-an-entity.md, then npm run verify)."
+echo "create-app: done — ./$APP_NAME, from the $REF template with $PACKAGE $SPEC, committed."
+echo "create-app: next, docs/create-an-app.md step 3 (npm run verify)."
