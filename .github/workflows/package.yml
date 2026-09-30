@@ -6,16 +6,14 @@ name: package
 # what catches a missing entry in the package's `files`, a broken export,
 # or a template that only works inside this repo, before anything is
 # published.
+#
+# Runs on every PR, not only ones touching the package: branch protection
+# on main requires it, and a required check that never starts would block
+# a docs-only PR forever. Merging to main publishes with no further review
+# (release.yml), so this is the last check before every app.
 
 on:
   pull_request:
-    paths:
-      - "packages/ui-foundation/**"
-      - "template/**"
-      - "scripts/create-app.sh"
-      - "scripts/consume-test.sh"
-      - "package.json"
-      - "package-lock.json"
 
 jobs:
   install-test:

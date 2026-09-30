@@ -1,8 +1,8 @@
 # Changelog
 
 Notable releases and what an app must do to take them. Every merge that
-changes the package or the template also stages a patch release on npm,
-which goes live when the developer approves it; those are listed on the
+changes the package or the template also publishes a patch release to
+npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
 ## 3.1.0 — findings from moving Game List onto 3.0

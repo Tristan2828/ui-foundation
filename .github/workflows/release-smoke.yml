@@ -2,36 +2,52 @@ name: release-smoke
 
 # Creates an app from a live release — the template at the tag, the package
 # from npm — and runs that app's full verify. Everything before a release
-# tests a tarball; this is the one check of exactly what apps get.
+# tests a tarball; this is the one check of exactly what apps get. Then it
+# writes the result at the top of the GitHub release's notes.
 #
-# Run by hand once a staged release has been approved on npm (it can't run
-# earlier: an unapproved version doesn't install):
+# Runs automatically as release.yml's last job. By hand, e.g. to re-check a
+# release after a fix elsewhere:
 #   gh workflow run release-smoke.yml -f tag=v3.0.1
+#
+# A failure fails the run (GitHub emails the repo owner) and marks the
+# release notes, so nobody upgrades an app onto it unawares.
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to test (vX.Y.Z), already approved and live on npm"
+        description: "Release tag to test (vX.Y.Z), already live on npm"
+        required: true
+  workflow_call:
+    inputs:
+      tag:
+        type: string
         required: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   create-app:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
       - name: The version is live on npm
         env:
           TAG: ${{ inputs.tag }}
         run: |
-          npm view "@tristan2828/ui-foundation@${TAG#v}" version ||
-            { echo "${TAG#v} isn't live on npm — approve the staged release first."; exit 1; }
+          # Right after publishing, the registry can take a moment to serve it.
+          for attempt in $(seq 1 10); do
+            npm view "@tristan2828/ui-foundation@${TAG#v}" version && exit 0
+            echo "Not visible on npm yet (attempt $attempt); retrying in 30s."
+            sleep 30
+          done
+          echo "${TAG#v} isn't live on npm."
+          exit 1
       - name: Create an app from the release and verify it
         env:
           TAG: ${{ inputs.tag }}
@@ -45,3 +61,32 @@ jobs:
           cd release-smoke
           npx playwright install --with-deps chromium
           npm run verify
+
+  record:
+    needs: create-app
+    if: always() && needs.create-app.result != 'cancelled'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Write the result into the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.tag }}
+          RESULT: ${{ needs.create-app.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$RESULT" = "success" ]; then
+            status="**Live on npm, and [release-smoke]($RUN_URL) passed:** an app created from this release passes \`verify\`."
+          else
+            status="**Live on npm, but [release-smoke]($RUN_URL) failed:** an app created from this release doesn't pass \`verify\`. Don't upgrade apps onto it; the fix ships as the next patch."
+          fi
+          # Replace an earlier status paragraph (this workflow's, release.yml's,
+          # or a pre-3.1 "staged" one), keep the rest of the notes.
+          {
+            echo "$status"
+            gh release view "$TAG" --json body --jq .body |
+              grep -v -E '^\*\*(Published to npm|Live on npm|Staged on npm)'
+          } > notes.md
+          gh release edit "$TAG" --notes-file notes.md
