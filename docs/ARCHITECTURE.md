@@ -192,17 +192,28 @@ Releases are cut automatically and **go live by approval**.
 3. tags the commit `v<version>` and creates a GitHub release that says the
    version is waiting for approval. The template at that tag and the
    package at that version always belong together.
+4. opens an issue, "Approve @tristan2828/ui-foundation <version> on npm",
+   assigned to the developer.
 
-Then the developer approves the staged version with their passkey. They
-can do it on npmjs.com (the package → Staged Packages), or run
+Approving the staged version with their passkey is the developer's only
+step. They can do it on npmjs.com (the package → Staged Packages), or run
 `npm stage list @tristan2828/ui-foundation` and then
 `npm stage approve <stage-id>`. Approval stays disabled until npm's malware
 scan finishes. Until approval, `npm install` of that version and
-`create-app.sh` at that tag both fail. After approving, run the
-`release-smoke` workflow for the tag
-(`gh workflow run release-smoke.yml -f tag=v<version>`). It creates an app
-from the live release and runs its `verify`, the one check of exactly what
-apps get.
+`create-app.sh` at that tag both fail.
+
+Everything after approval is automatic. npm can't notify GitHub, so
+`.github/workflows/release-watch.yml` polls every 30 minutes
+(`gh workflow run release-watch.yml` skips the wait). When the oldest
+release still marked waiting is live on npm, it runs `release-smoke`: an
+app created from the live release, with its full `verify`, the one check
+of exactly what apps get. Then it rewrites the release notes with the
+result and closes the approval issue. If the smoke test fails, the notes
+say so, the issue stays open with a comment, the run fails (GitHub emails
+the developer), and the release isn't retried: fix it, then
+`gh workflow run release-smoke.yml -f tag=v<version>` by hand. GitHub
+disables scheduled workflows after 60 days without repository activity;
+re-enable `release-watch` under Actions if that happens.
 
 Why staged: the release job runs `npm ci` with permission to publish, and
 every app installs `^3.x`. With the trusted publisher limited to staging,

@@ -10,8 +10,9 @@ name: release
 # approves it on npmjs.com (or `npm stage approve`) with their passkey, so a
 # compromised workflow or dependency can't push a release to every app on
 # its own. The trusted-publisher entry deliberately does not allow plain
-# `npm publish`. After approving, run the `release-smoke` workflow for the
-# tag to create an app from the live release.
+# `npm publish`. A staged release opens an issue asking for that approval;
+# release-watch.yml notices when it goes live, runs release-smoke, updates
+# the release notes and closes the issue.
 #
 # The version: the next patch after the latest tag — unless
 # packages/ui-foundation/package.json says something higher, which is how a
@@ -28,6 +29,7 @@ on:
 permissions:
   contents: write
   id-token: write
+  issues: write
 
 jobs:
   release:
@@ -100,7 +102,7 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
           if [ "$STATUS" = "staged" ]; then
-            pending="**Staged on npm, waiting for approval.** Until it's approved, \`npm install\` of $VERSION fails. Approve it on npmjs.com (the package → Staged Packages) or with \`npm stage list @tristan2828/ui-foundation\` then \`npm stage approve <stage-id>\`; then run the \`release-smoke\` workflow for $TAG."
+            pending="**Staged on npm, waiting for approval.** Until it's approved, \`npm install\` of $VERSION fails. Approve it on npmjs.com (the package → Staged Packages) or with \`npm stage list @tristan2828/ui-foundation\` then \`npm stage approve <stage-id>\`. The \`release-watch\` workflow then runs \`release-smoke\` for $TAG and updates these notes."
           else
             pending=""
           fi
@@ -112,3 +114,18 @@ jobs:
           New app: \`bash create-app.sh <name> $TAG\` (docs/create-an-app.md).
           EOF
           )"
+          if [ "$STATUS" = "staged" ]; then
+            # The one step that needs a person, delivered as a notification.
+            # release-watch.yml closes it once the release is live and smoke-tested.
+            gh issue create --assignee "$GITHUB_REPOSITORY_OWNER" \
+              --title "Approve @tristan2828/ui-foundation $VERSION on npm" \
+              --body "$(cat <<EOF
+          $TAG is staged on npm and waits for your passkey:
+
+          - npmjs.com → @tristan2828/ui-foundation → Staged Packages, or
+          - \`npm stage list @tristan2828/ui-foundation\`, then \`npm stage approve <stage-id>\`
+
+          Nothing else to do. Within 30 minutes of approval, \`release-watch\` runs \`release-smoke\` against the live release, updates the [release notes]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG) and closes this issue. To skip the wait: \`gh workflow run release-watch.yml\`.
+          EOF
+          )"
+          fi
