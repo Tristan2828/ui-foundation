@@ -1,6 +1,8 @@
 # UI Foundation
 
-![verify](https://github.com/Tristan2828/ui-foundation/actions/workflows/verify.yml/badge.svg)
+[![npm](https://img.shields.io/npm/v/@tristan2828/ui-foundation)](https://www.npmjs.com/package/@tristan2828/ui-foundation)
+[![verify](https://github.com/Tristan2828/ui-foundation/actions/workflows/verify.yml/badge.svg)](https://github.com/Tristan2828/ui-foundation/actions/workflows/verify.yml)
+[![release](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml/badge.svg)](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml)
 
 Shared code for small, contract-first, database-backed web apps (tables of
 rows, sometimes with editing), built and maintained mostly by AI coding
@@ -65,9 +67,10 @@ imports it for Claude Code).
 | [`docs/OPERATOR.md`](docs/OPERATOR.md) | the developer's judgment calls |
 | [`docs/BLOCKERS.md`](docs/BLOCKERS.md) | open items needing a decision or an action |
 
-Invite-only for now: push to `main`, or open a PR for anything touching
-the package or the template (only a PR runs the install test before
-release).
+Invite-only for now. Every change goes through a PR: `main` requires one,
+with its `verify`, `verify-backend` and `install-test` checks green. A
+merge that touches the package or the template publishes a release to npm
+on its own (`docs/ARCHITECTURE.md` "Releasing").
 
 ## License
 
