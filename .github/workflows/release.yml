@@ -1,41 +1,47 @@
 name: release
 
 # On every push to main that changes the package, the template or
-# create-app.sh: *stage* @tristan2828/ui-foundation on npm, then tag the
-# commit vX.Y.Z and create a GitHub release. One version names both: apps
-# install the package at X.Y.Z, and create-app.sh copies template/ from tag
-# vX.Y.Z.
+# create-app.sh: publish @tristan2828/ui-foundation to npm, tag the commit
+# vX.Y.Z with a GitHub release, then create an app from the live release and
+# verify it (release-smoke). One version names both halves: apps install the
+# package at X.Y.Z, and create-app.sh copies template/ from tag vX.Y.Z. No
+# step needs a person.
 #
-# Staged, not published: the version goes live only when the developer
-# approves it on npmjs.com (or `npm stage approve`) with their passkey, so a
-# compromised workflow or dependency can't push a release to every app on
-# its own. The trusted-publisher entry deliberately does not allow plain
-# `npm publish`. A staged release opens an issue asking for that approval;
-# release-watch.yml notices when it goes live, runs release-smoke, updates
-# the release notes and closes the issue.
+# npm authenticates by trusted publishing: a short-lived OIDC token that only
+# this workflow, on this repo, can mint. No npm token is stored anywhere.
+# Because nothing reviews a version before it goes live, the job that can
+# publish runs no third-party code: `build` installs dependencies and packs
+# the tarball with no publish permission, and `publish` gets id-token: write
+# but no checkout and no `npm ci`, only `npm publish <tarball>`. Third-party
+# actions are pinned to commit SHAs. What stands between a change and every
+# app is the PR gate (verify, install-test), which branch protection on main
+# requires (docs/ARCHITECTURE.md "Releasing").
 #
-# The version: the next patch after the latest tag — unless
+# The version: the next patch after the latest tag, unless
 # packages/ui-foundation/package.json says something higher, which is how a
 # minor or major release is made (bump it there in the PR). Nothing is
-# committed back; the staged package.json carries the computed version.
-#
-# npm authenticates by trusted publishing (OIDC, no stored token) — a
-# one-time setup, in docs/ARCHITECTURE.md "Releasing".
+# committed back; the published package.json carries the computed version.
 
 on:
   push:
     branches: [main]
 
-permissions:
-  contents: write
-  id-token: write
-  issues: write
+permissions: {}
+
+# Releases in merge order, never two at once.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  release:
+  decide:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.decide.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
@@ -65,67 +71,91 @@ jobs:
           echo "Next version: $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-node@v4
-        if: steps.decide.outputs.version != ''
+  build:
+    needs: decide
+    if: needs.decide.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
-          registry-url: https://registry.npmjs.org
-
-      - id: stage
-        name: Build and stage on npm
-        if: steps.decide.outputs.version != ''
+      - name: Build and pack the package at the release version
         env:
-          VERSION: ${{ steps.decide.outputs.version }}
+          VERSION: ${{ needs.decide.outputs.version }}
         run: |
-          # Staged publishing needs npm 11.15.0 or later.
-          npm install -g npm@11.20.0
           npm ci
+          npm version "$VERSION" -w @tristan2828/ui-foundation --no-git-tag-version --allow-same-version
+          mkdir -p "$RUNNER_TEMP/pack"
+          npm pack -w @tristan2828/ui-foundation --pack-destination "$RUNNER_TEMP/pack"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: package-tarball
+          path: ${{ runner.temp }}/pack/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [decide, build]
+    runs-on: ubuntu-latest
+    # The only job that can publish. No checkout, no npm ci: nothing from the
+    # repo or its dependency tree runs here.
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: package-tarball
+          path: pack
+      - name: Publish to npm (trusted publishing, with provenance)
+        env:
+          VERSION: ${{ needs.decide.outputs.version }}
+        run: |
+          # Trusted publishing needs npm 11.5.1 or later; Node 22 ships 10.x.
+          npm install -g npm@11.20.0
           if npm view "@tristan2828/ui-foundation@$VERSION" version >/dev/null 2>&1; then
             # A re-run, or a version published by hand (3.0.0 was).
-            echo "$VERSION is already live on npm — nothing to stage."
-            echo "status=live" >> "$GITHUB_OUTPUT"
+            echo "$VERSION is already live on npm; nothing to publish."
           else
-            npm version "$VERSION" -w @tristan2828/ui-foundation --no-git-tag-version --allow-same-version
-            npm stage publish -w @tristan2828/ui-foundation --access public
-            echo "status=staged" >> "$GITHUB_OUTPUT"
+            npm publish pack/*.tgz --access public --provenance
           fi
 
-      - name: Tag and release
-        if: steps.decide.outputs.version != ''
+  tag:
+    needs: [decide, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Tag the commit and create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v${{ steps.decide.outputs.version }}
-          VERSION: ${{ steps.decide.outputs.version }}
-          STATUS: ${{ steps.stage.outputs.status }}
+          GH_REPO: ${{ github.repository }}
+          TAG: v${{ needs.decide.outputs.version }}
+          VERSION: ${{ needs.decide.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          git tag "$TAG"
-          git push origin "$TAG"
-          if [ "$STATUS" = "staged" ]; then
-            pending="**Staged on npm, waiting for approval.** Until it's approved, \`npm install\` of $VERSION fails. Approve it on npmjs.com (the package → Staged Packages) or with \`npm stage list @tristan2828/ui-foundation\` then \`npm stage approve <stage-id>\`. The \`release-watch\` workflow then runs \`release-smoke\` for $TAG and updates these notes."
-          else
-            pending=""
-          fi
-          gh release create "$TAG" --title "$TAG" --notes "$(cat <<EOF
-          $pending
+          # --target creates the tag at this commit, so no checkout is needed.
+          # release-smoke replaces the first paragraph with its result.
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes "$(cat <<EOF
+          **Published to npm; [release-smoke]($RUN_URL) is checking it.** Wait for its result here before upgrading an app.
 
           Upgrade an app: \`npm install @tristan2828/ui-foundation@$VERSION && npx ui-foundation sync\`, then \`npm run verify\`.
 
           New app: \`bash create-app.sh <name> $TAG\` (docs/create-an-app.md).
           EOF
           )"
-          if [ "$STATUS" = "staged" ]; then
-            # The one step that needs a person, delivered as a notification.
-            # release-watch.yml closes it once the release is live and smoke-tested.
-            gh issue create --assignee "$GITHUB_REPOSITORY_OWNER" \
-              --title "Approve @tristan2828/ui-foundation $VERSION on npm" \
-              --body "$(cat <<EOF
-          $TAG is staged on npm and waits for your passkey:
 
-          - npmjs.com → @tristan2828/ui-foundation → Staged Packages, or
-          - \`npm stage list @tristan2828/ui-foundation\`, then \`npm stage approve <stage-id>\`
-
-          Nothing else to do. Within 30 minutes of approval, \`release-watch\` runs \`release-smoke\` against the live release, updates the [release notes]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG) and closes this issue. To skip the wait: \`gh workflow run release-watch.yml\`.
-          EOF
-          )"
-          fi
+  smoke:
+    needs: [decide, tag]
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-smoke.yml
+    with:
+      tag: v${{ needs.decide.outputs.version }}

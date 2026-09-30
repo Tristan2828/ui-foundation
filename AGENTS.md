@@ -43,9 +43,10 @@ direction and the queue) and any open item in
   app's) is `template/deps-allowlist.json`. Never add a dependency that
   isn't listed. Write the case in `docs/BLOCKERS.md` and stop. Pinned tool
   versions are in the template's `tools`; never `@latest`.
-- **Never hand-tag or hand-publish.** A merge stages the release; the developer approves it
-  (`docs/ARCHITECTURE.md` "Releasing"). Open a PR for any change to the
-  package or the template, so the install test runs before it ships.
+- **Never hand-tag or hand-publish.** A merge to `main` publishes the release
+  to npm with no further review (`docs/ARCHITECTURE.md` "Releasing"), so
+  the PR's checks are the last gate before every app. Open a PR for every
+  change.
 
 ## Scope and stopping
 

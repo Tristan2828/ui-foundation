@@ -143,7 +143,7 @@ the app:
 | `npm run verify:backend` | backend changes; CI | the template backend's mypy strict, pytest (SQLite), spec conformance |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + a live server on real Postgres |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
-| `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on any PR touching the package, the template or the scripts | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |
+| `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on every PR (a required check on `main`) | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |
 | `scripts/consume-test.sh <Entity>`, the **Fresh UI Build** | on demand, when the playbook or a composite changes in a way that could confuse a fresh agent | a brand-new agent with no memory of this repo builds an entity in such an app from its plan; its `verify` passes |
 
 Rules learned the hard way (each cost a phase to find):
@@ -179,7 +179,7 @@ Rules learned the hard way (each cost a phase to find):
 
 ## Releasing
 
-Releases are cut automatically and **go live by approval**.
+Releases are cut and published automatically; no step needs a person.
 `.github/workflows/release.yml` runs on every push to `main` that changes
 `packages/ui-foundation/`, `template/` or `scripts/create-app.sh`. It:
 
@@ -187,49 +187,43 @@ Releases are cut automatically and **go live by approval**.
    version in `packages/ui-foundation/package.json` if that is higher. A
    minor or major release is made by bumping it there in the PR, and
    nothing is committed back.
-2. **stages** `@tristan2828/ui-foundation@<version>` on npm through trusted
-   publishing (OIDC; no stored token),
-3. tags the commit `v<version>` and creates a GitHub release that says the
-   version is waiting for approval. The template at that tag and the
-   package at that version always belong together.
-4. opens an issue, "Approve @tristan2828/ui-foundation <version> on npm",
-   assigned to the developer.
+2. builds and packs the package (`build` job),
+3. **publishes** `@tristan2828/ui-foundation@<version>` to npm through
+   trusted publishing, with provenance (`publish` job; OIDC, no stored
+   token),
+4. tags the commit `v<version>` and creates a GitHub release. The template
+   at that tag and the package at that version always belong together.
+5. runs `release-smoke`: an app created from the live release, with its
+   full `verify`, the one check of exactly what apps get. It writes the
+   result at the top of the release notes. A failure also fails the run,
+   and GitHub emails the developer. Re-run it by hand with
+   `gh workflow run release-smoke.yml -f tag=v<version>`.
 
-Approving the staged version with their passkey is the developer's only
-step. They can do it on npmjs.com (the package → Staged Packages), or run
-`npm stage list @tristan2828/ui-foundation` and then
-`npm stage approve <stage-id>`. Approval stays disabled until npm's malware
-scan finishes. Until approval, `npm install` of that version and
-`create-app.sh` at that tag both fail.
+**What guards a release** (decided 2026-09-30; until then every version
+waited for the developer's passkey approval on npm): the PR gate. Branch
+protection on `main` requires a pull request and the `verify`,
+`verify-backend` and `install-test` checks, with no reviewer, so every
+published version has passed the install test. Beyond that, the workflow
+limits what could publish a bad version:
 
-Everything after approval is automatic. npm can't notify GitHub, so
-`.github/workflows/release-watch.yml` polls every 30 minutes
-(`gh workflow run release-watch.yml` skips the wait). When the oldest
-release still marked waiting is live on npm, it runs `release-smoke`: an
-app created from the live release, with its full `verify`, the one check
-of exactly what apps get. Then it rewrites the release notes with the
-result and closes the approval issue. If the smoke test fails, the notes
-say so, the issue stays open with a comment, the run fails (GitHub emails
-the developer), and the release isn't retried: fix it, then
-`gh workflow run release-smoke.yml -f tag=v<version>` by hand. GitHub
-disables scheduled workflows after 60 days without repository activity;
-re-enable `release-watch` under Actions if that happens.
+- Only the `publish` job can publish, and it runs no third-party code: no
+  checkout, no `npm ci`, only `npm publish` of the tarball `build` packed.
+  `build` installs the dependency tree without that permission.
+- Third-party actions in `release.yml` and `release-smoke.yml` are pinned
+  to commit SHAs.
+- No npm token exists. The trusted publisher (GitHub Actions,
+  `Tristan2828/ui-foundation`, workflow `release.yml`) is the only thing
+  that can publish besides the developer's own passkey-protected account.
 
-Why staged: the release job runs `npm ci` with permission to publish, and
-every app installs `^3.x`. With the trusted publisher limited to staging,
-neither a compromised dependency nor a stolen GitHub session can put a
-version in front of apps without the passkey. The trusted-publisher entry
-deliberately leaves "allow npm publish" unchecked, so a plain
-`npm publish` from the workflow is rejected.
+What that gives up: a malicious change that passes the checks and gets
+merged reaches every app installing `^3.x`, with no human look at the
+built package. The passkey step cost one manual approval per release;
+the developer chose automation over it.
 
-A version that's rejected, or never approved, keeps its tag and release,
-and the next release takes the next number. Delete the GitHub release, or
-edit its notes, so nobody creates an app from it.
-
-`main` needs no review and no passing checks (one developer). A push
-straight to `main` is staged without the install test, which runs only on
-pull requests (`package` workflow). So open a PR for any change to the
-package or the template.
+**A bad release** keeps its version: npm versions can't be reused. Ship
+the fix as the next patch, and meanwhile
+`npm deprecate @tristan2828/ui-foundation@<version> "<why>; use <next>"`
+so installs warn. `release-smoke` marks its notes if it failed.
 
 **A breaking change** to anything the package exports, or to what `sync`
 writes, gets a major version, a `CHANGELOG.md` entry and upgrade steps in
@@ -238,8 +232,8 @@ writes, gets a major version, a `CHANGELOG.md` entry and upgrade steps in
 **npm setup** (done 2026-09-28): the account `tristan2828` has passkey 2FA.
 3.0.0 was published by hand, because trusted publishing can only be
 configured on a package that already exists. The trusted publisher is
-GitHub Actions, `Tristan2828/ui-foundation`, workflow `release.yml`, with
-"allow npm publish" unchecked (staging only). Merging the 3.0 PR finds
-3.0.0 already live, skips staging, and tags `v3.0.0`.
+GitHub Actions, `Tristan2828/ui-foundation`, workflow `release.yml`. It
+allowed staging only until 2026-09-30, when "allow npm publish" was turned
+on. 3.1.0 was the last staged release.
 
 Deploying an app: `template/docs/deploy.md`.
