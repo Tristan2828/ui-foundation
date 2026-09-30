@@ -3,6 +3,7 @@
 // unless it imports this.
 export {
   authHandlers,
+  getMockCurrentUser,
   isMockAuthenticated,
   MOCK_PASSWORD,
   MOCK_USER,

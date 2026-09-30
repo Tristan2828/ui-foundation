@@ -58,6 +58,16 @@ test.describe('storybook stories have zero axe violations', () => {
   }
 })
 
+// The collapsed icon rail hides each group label with opacity and pulls it
+// up over the group above (-mt-8). Invisible is not inert: without
+// pointer-events-none, a second group's label swallows clicks on the last
+// entry of the first. click() fails on "element intercepts pointer events".
+test('collapsed sidebar: a second group label does not swallow clicks on the group above', async ({ page }) => {
+  await page.goto(storyUrlById('ui-sidebar--collapsed-with-two-groups', 'light'))
+  await page.getByRole('button', { name: 'Item two' }).click({ timeout: 5_000 })
+  await expect(page.getByText('Clicked: Item two')).toBeVisible()
+})
+
 // Phase 3 and 4 both flagged dark-mode contrast for --destructive /
 // --destructive-foreground as verified only by hand-computed ratios, never
 // by a check. axe's color-contrast rule running against the rendered dark

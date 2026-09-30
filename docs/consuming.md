@@ -129,7 +129,8 @@ branch, with the app's `verify` green before and after.
    - No self-service sign-up: render `<LoginRoute registerPath={null} />`,
      drop the `/register` route and `e2e/register.spec.ts`. The package's
      `register()` stays but goes unused, and `/auth/register` may be left
-     out of `openapi.yaml`.
+     out of `openapi.yaml`, along with `RegisterRequest` (from 3.1.0;
+     `check-contract` requires only what the paths the app has reach).
    - `entity-form.tsx` delete-on-edit: `EntityForm`'s `danger` slot.
 3. **Delete the foundation's files from the app.** Every file the package
    now provides:
@@ -168,7 +169,9 @@ branch, with the app's `verify` green before and after.
      and `export default [...uiFoundation()]`
    - `e2e/a11y.spec.ts` and `e2e/mock-mode-banner.spec.ts`: the
      `defineA11ySuite` / `defineMockModeBannerSuite` calls from
-     `@tristan2828/ui-foundation/testing`. `e2e/global.d.ts` becomes one
+     `@tristan2828/ui-foundation/testing`, each inside the file's own
+     `test.describe(...)` so the spec can be selected by file (see the
+     template's specs). `e2e/global.d.ts` becomes one
      line: `import '@tristan2828/ui-foundation/testing'`
 5. **Scripts.** Replace `node scripts/check-deps.mjs` in `verify:fast` with
    `ui-foundation sync --check && ui-foundation check-contract && ui-foundation check-deps`,

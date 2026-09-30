@@ -3,6 +3,12 @@
 // calls a suite with its own routes, instead of carrying a copy of the spec
 // to edit (each of these was forked by the first real app for exactly that).
 //
+// Call a suite inside the spec file's own `test.describe(...)`. Playwright
+// locates a test where test() is called, which for a suite is this package;
+// a file argument (`playwright test e2e/a11y.spec.ts`) keeps a test only if
+// it or an enclosing describe is located in that file. Without the app's
+// own describe, selecting the spec by file runs nothing.
+//
 // Runs in Node, inside Playwright: @playwright/test and @axe-core/playwright
 // are optional peer dependencies, needed only by apps that import this.
 import AxeBuilder from '@axe-core/playwright'
@@ -10,6 +16,10 @@ import { expect, test, type Page } from '@playwright/test'
 import type { MswOverride } from '../mocks/override'
 
 export type { MswHandle, MswOverride } from '../mocks/override'
+
+// This module runs in Node (Playwright), but the package builds without
+// Node's types; this is the one global it reads.
+declare const process: { env: Record<string, string | undefined> }
 
 /**
  * Forces a response for the page's *first* load: set before navigation, so
@@ -110,17 +120,52 @@ export function defineA11ySuite({ formRoutes, loggedOutRoutes }: A11ySuiteOption
   }
 }
 
+export type MockModeBannerSuiteOptions = {
+  /** Screens to check, logged-out ones included (e.g. '/login'). */
+  routes: readonly string[]
+  /**
+   * Whether this run's app is MSW-backed. Defaults to
+   * `process.env.VITE_API !== 'real'`, the same switch the app is built with.
+   * When false (a run against the real backend) the banner must be absent.
+   */
+  mockMode?: boolean
+}
+
 /**
  * Mock mode is announced on every route, logged-out ones included — /login
  * is where a mock session passing for a real one first cost someone time.
  * The default Playwright run is MSW-backed, so the banner must be there.
+ *
+ * Against the real backend (`VITE_API=real`) it asserts the opposite: no
+ * banner on any route. That half catches a mock bundle shipped as if it
+ * were production, which is what the banner exists for.
  */
-export function defineMockModeBannerSuite({ routes }: { routes: readonly string[] }): void {
-  test('mock mode is announced on every route, including logged-out ones', async ({ page }) => {
+export function defineMockModeBannerSuite({
+  routes,
+  mockMode = process.env.VITE_API !== 'real',
+}: MockModeBannerSuiteOptions): void {
+  if (mockMode) {
+    test('mock mode is announced on every route, including logged-out ones', async ({ page }) => {
+      const banner = page.getByRole('status').filter({ hasText: 'Mock data' })
+      for (const route of routes) {
+        await page.goto(route)
+        await test.step(route, () => expect(banner).toBeVisible())
+      }
+    })
+    return
+  }
+
+  test('no mock-mode banner on any route against the real backend', async ({ page }) => {
     const banner = page.getByRole('status').filter({ hasText: 'Mock data' })
     for (const route of routes) {
       await page.goto(route)
-      await test.step(route, () => expect(banner).toBeVisible())
+      await test.step(route, async () => {
+        // The banner renders beside the router, so once a screen's <main>
+        // is on the page the banner would be too. Without this wait a
+        // blank page would pass the count check trivially.
+        await expect(page.getByRole('main')).toBeVisible()
+        await expect(banner).toHaveCount(0)
+      })
     }
   })
 }

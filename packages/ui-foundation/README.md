@@ -18,7 +18,7 @@ than installing this by hand:
 | `@tristan2828/ui-foundation` | `AppShell`, `DataTable`, `EntityForm`, `ErrorState`, `MultiChoice`, `PasswordInput`, `RouteErrorBoundary`, `FoundationProviders`, `LoginRoute`, `RegisterRoute`, `useAuth`, `useTableUrlState`, `useDebouncedValue`, `createQueryClient`, `cn`; types `Page`, `AppError`, `QuerySpec` |
 | `@tristan2828/ui-foundation/ui/<name>` | shadcn primitives: badge, button, calendar, card, combobox, dialog, empty, field, input, input-group, label, popover, select, separator, sheet, sidebar, skeleton, sonner, spinner, table, textarea, tooltip |
 | `@tristan2828/ui-foundation/gateway` | `safeFetch`, `toAppError`, `networkError` — for an app's `src/api/gateway/` only |
-| `@tristan2828/ui-foundation/mocks` | MSW: `authHandlers`, `resetMockAuth`, `exposeMswForE2E` |
+| `@tristan2828/ui-foundation/mocks` | MSW: `authHandlers`, `resetMockAuth`, `getMockCurrentUser`, `MOCK_USER`, `exposeMswForE2E` |
 | `@tristan2828/ui-foundation/testing` | Playwright: `defineA11ySuite`, `defineMockModeBannerSuite`, `forceMswOverride`, `forceLoggedOut`, `waitForMswReady` |
 | `@tristan2828/ui-foundation/eslint` | the lint rules, as a flat config: `export default [...uiFoundation()]` |
 | `@tristan2828/ui-foundation/styles.css` | tokens and base styles, after `@import "tailwindcss";` |
@@ -34,7 +34,8 @@ Run from an app's root:
   `sync --check` (in `verify`) fails when they differ from the installed
   version.
 - `ui-foundation check-contract [openapi.yaml]` fails unless the app's spec
-  contains the foundation's part unchanged.
+  contains the foundation's part unchanged. A path marked `x-optional` may
+  be left out, and so may the components only such a path uses.
 - `ui-foundation check-deps` fails if `package.json` names a dependency
   missing from `deps-allowlist.json`.
 
