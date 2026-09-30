@@ -1,5 +1,8 @@
 # @tristan2828/ui-foundation
 
+[![npm](https://img.shields.io/npm/v/@tristan2828/ui-foundation)](https://www.npmjs.com/package/@tristan2828/ui-foundation)
+[![release](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml/badge.svg)](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml)
+
 The shared layer of a family of small, contract-first, database-backed React
 apps: shadcn primitives, the `DataTable`/`EntityForm` composites, an app
 shell with session-cookie auth, the gateway's error seam, design tokens,

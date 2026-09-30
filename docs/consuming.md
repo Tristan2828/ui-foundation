@@ -41,7 +41,10 @@ npm run verify
 
 Read the release notes between your version and the new one first
 (https://github.com/Tristan2828/ui-foundation/releases, and
-[`CHANGELOG.md`](../CHANGELOG.md) for anything major). Patch and minor
+[`CHANGELOG.md`](../CHANGELOG.md) for anything major). Releases publish
+automatically on merge, and each one's notes open with its `release-smoke`
+result: a fresh app created from that release, verified. Take a release
+whose notes say it passed. A failed or still-running one says so there. Patch and minor
 releases don't change what the package exports in a breaking way. A major
 one lists its upgrade steps in the changelog.
 
