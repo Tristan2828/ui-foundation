@@ -124,7 +124,9 @@ jobs:
             # A re-run, or a version published by hand (3.0.0 was).
             echo "$VERSION is already live on npm; nothing to publish."
           else
-            npm publish pack/*.tgz --access public --provenance
+            # The ./ matters: npm reads `pack/x.tgz` as a GitHub user/repo
+            # shorthand and tries to git-clone it.
+            npm publish ./pack/*.tgz --access public --provenance
           fi
 
   tag:
