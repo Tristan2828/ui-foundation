@@ -44,4 +44,7 @@ mock API.
   implementation of `openapi.yaml`, copied in with the template and yours
   from then on. A new entity's backend side is written by hand against the
   spec, following `backend/app/routers/widgets.py`;
-  `npm run verify:backend` fails until it conforms.
+  `npm run verify:backend` fails until it conforms. Every table and column
+  it adds gets a `COMMENT ON` in its migration
+  (`backend/migrations/versions/0005_schema_comments.py`);
+  `scripts/check-backend-postgres.sh` fails on one without.

@@ -17,15 +17,18 @@ const badgeVariants = cva(
           "bg-success text-success-foreground focus-visible:ring-success/20 dark:focus-visible:ring-success/40 [a]:hover:bg-success/90",
         warning:
           "bg-warning text-warning-foreground focus-visible:ring-warning/20 dark:focus-visible:ring-warning/40 [a]:hover:bg-warning/90",
+        info:
+          "bg-info text-info-foreground focus-visible:ring-info/20 dark:focus-visible:ring-info/40 [a]:hover:bg-info/90",
         outline:
           "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
-        // Three tones x three styles. The *-text tokens, never the solid
+        // Four tones x three styles. The *-text tokens, never the solid
         // fill tokens: `border-destructive`/`text-destructive` would use
         // the shade chosen to carry white text, which is too light to read
         // against the page in light mode and too dark in dark mode. See
         // styles/theme.css and conventions/docs/design-language.md.
         "outline-success": "border-success-text text-success-text",
         "outline-warning": "border-warning-text text-warning-text",
+        "outline-info": "border-info-text text-info-text",
         "outline-destructive": "border-destructive-text text-destructive-text",
         // The fill is the solid token at low alpha (a wash of the tone),
         // while the text is the *-text shade — mixing the two is the point.
@@ -33,6 +36,7 @@ const badgeVariants = cva(
         // against a near-black page.
         "tinted-success": "bg-success/15 text-success-text dark:bg-success/20",
         "tinted-warning": "bg-warning/15 text-warning-text dark:bg-warning/20",
+        "tinted-info": "bg-info/15 text-info-text dark:bg-info/20",
         "tinted-destructive":
           "bg-destructive/15 text-destructive-text dark:bg-destructive/20",
         ghost:

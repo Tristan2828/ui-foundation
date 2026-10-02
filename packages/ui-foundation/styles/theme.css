@@ -53,6 +53,9 @@
   --amber-700: oklch(0.555 0.163 48.998); /* white on it: 5.05 */
   --amber-800: oklch(0.47 0.14 48.998); /* on white: 7.20 */
   --amber-400: oklch(0.828 0.189 84.429); /* on near-black: 11.53 */
+  --blue-700: oklch(0.52 0.17 255); /* white on it: 5.59 */
+  --blue-800: oklch(0.45 0.15 255); /* on white: 7.54 */
+  --blue-400: oklch(0.75 0.12 255); /* on near-black: 8.90 */
   /*
    * Categorical slots. For values that differ from each other but are not
    * better or worse than each other — a genre, a team, a category. Tones
@@ -65,7 +68,8 @@
    *
    * Hues avoid the red and green bands that destructive/success already
    * spend, and the amber that warning does — a category drawn in red reads
-   * as "bad". They are ordered by distinctness, not by hue angle, so an app
+   * as "bad". The blue slots (1, 6, 8) sit near info's hue, which came
+   * later: a table using info keeps its categories off those three. They are ordered by distinctness, not by hue angle, so an app
    * using only the first three gets three obviously different colours.
    * Past about five, hue alone stops separating them and the glyph has to
    * carry the meaning; see docs/design-language.md.
@@ -116,7 +120,9 @@
   --success-foreground: var(--white);
   --warning: var(--amber-700);
   --warning-foreground: var(--white);
-  /* The three pairs above are a SOLID fill plus its own text color, and
+  --info: var(--blue-700);
+  --info-foreground: var(--white);
+  /* The four pairs above are a SOLID fill plus its own text color, and
      nothing else. Used as text or a border on the page's own background —
      an outline badge, a tinted chip, an icon tint — a fill shade is the
      wrong value: it was picked to carry white, not to read against the
@@ -125,6 +131,7 @@
   --destructive-text: var(--red-700);
   --success-text: var(--green-800);
   --warning-text: var(--amber-800);
+  --info-text: var(--blue-800);
   /* Categorical slots — a glyph tint, never a fill behind text. */
   --category-1: var(--category-1-700);
   --category-2: var(--category-2-700);
@@ -175,12 +182,15 @@
   --success-foreground: var(--white);
   --warning: var(--amber-700);
   --warning-foreground: var(--white);
+  --info: var(--blue-700);
+  --info-foreground: var(--white);
   /* Solid fills keep one shade in both themes — they always carry white
      text, so the page behind them never enters the calculation. Only the
      *-text shades flip, because those read against the page. */
   --destructive-text: var(--red-400);
   --success-text: var(--green-400);
   --warning-text: var(--amber-400);
+  --info-text: var(--blue-400);
   /* Categorical slots — lighter shades to read against the dark page. */
   --category-1: var(--category-1-400);
   --category-2: var(--category-2-400);

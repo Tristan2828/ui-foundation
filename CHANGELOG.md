@@ -5,6 +5,37 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.2.0 — the info tone; comments on every database column
+
+Additive. `npx ui-foundation sync` after the bump writes the new Hard Rule
+and design-language text.
+
+- **Info tone.** A fourth semantic tone for *notice this* with no verdict
+  (in progress, new, scheduled): `--info`, `--info-foreground`,
+  `--info-text`, Tailwind's `bg-info`/`text-info-text`/`border-info-text`,
+  and `Badge` variants `info`, `outline-info` and `tinted-info`. Measured
+  and axe-checked in both themes like the other three.
+  `docs/foundation/design-language.md` says when to use it. One catch: its
+  blue sits near category slots 1, 6 and 8, so a table that shows an info
+  badge keeps its categories off those three.
+- **New Hard Rule: every database table and column has a `COMMENT ON`.**
+  It applies to an app with a Postgres backend. The backend is copy-in, so
+  bring the check across by hand:
+  1. Copy `backend/scripts/check_db_comments.py` from the template.
+  2. In `scripts/check-backend-postgres.sh`, run it after `alembic upgrade
+     head` (copy the two lines from the template).
+  3. Add it to the mypy line in `backend/scripts/verify.sh`.
+  4. Run it once. It lists every table and column with no comment. The
+     template's own tables (`users`, `sessions`, and `categories`/`widgets`
+     if you kept them) are commented in the template's
+     `migrations/versions/0005_schema_comments.py`; copy the parts you
+     need into a new migration of your own, numbered after your latest.
+- **3.1.2** (released with no entry here): at phone width the sidebar
+  sheet now closes when one of its links navigates, and the first Escape
+  closes it even with focus on a nav link. Copy the template's
+  `e2e/mobile-sidebar.spec.ts` and its two `playwright.config.ts` lines to
+  cover it in your app.
+
 ## 3.1.0 — findings from moving Game List onto 3.0
 
 Additive: nothing to change in an app to take it. Each item names the

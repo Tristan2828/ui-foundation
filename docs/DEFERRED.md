@@ -44,7 +44,6 @@ history has every removed row).
 
 | Item | Revisit when |
 |---|---|
-| Move the Game List app onto 3.0 (`consuming.md` "Moving a 2.x app onto the package"). It is the first real test of the migration path and of the configuration props, which came from its forks | The next Game List session with room for it. Take 3.0 whole in one branch. Whatever doesn't map onto the package's props is a finding for here, not a new fork |
 | Sharing the backend. `template/backend/` is copied into each app and diverges from then on, so a backend fix (auth, the deploy checks, the SPA fallback) reaches no app on its own | Two apps need the same backend fix, or a second app keeps the reference backend. Then decide between a Python package for the auth/deploy/SPA layer and a documented patch routine |
 | Login rate limiting / lockout on repeated failed attempts | The app is exposed somewhere a brute-force attempt is a real threat, not a personal/local deployment. Self-service registration widens this gap |
 | Error reporting | An app is actually deployed to strangers |
@@ -55,7 +54,6 @@ history has every removed row).
 | Row virtualization | A table exceeds ~5k rows |
 | `AppError` kinds for 403 (`forbidden`) and 409 (`conflict`); both render as the generic `server` error today | A backend actually returns either. None does: another user's widget is a deliberate 404, and a duplicate email is a 422 |
 | Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `ui-foundation check-deps` on the npm side | The backend gains a second contributor or session where an unreviewed Python dependency is a real risk |
-| Column-level documentation convention for the Postgres backend (`COMMENT ON TABLE`/`COMMENT ON COLUMN` wherever a column's meaning isn't obvious). Found planning a Game List table that a second, context-free agent reads with direct Postgres access | That app's migration ships `COMMENT ON` for real. Once proven there, decide whether it becomes a Hard Rule with a check |
 | **The `<nav>` landmark doesn't contain the nav at phone width.** `AppShell` wraps `<Sidebar>` in `<nav aria-label="Primary">`, but below the mobile breakpoint the sidebar renders into a Sheet portaled to `document.body`, so the landmark is empty there. axe doesn't flag it and the links are reachable and labelled, so this is a semantics quirk. The a11y suite reads the links from the sheet on mobile | `AppShell`'s nav markup changes for another reason, or a screen-reader pass on a phone is actually done. Confirm first how it reads in a real mobile screen reader |
 | **Phone width is asserted, not designed.** The `mobile-chrome` project proves the app works at 393px, but that is inherited from shadcn, not chosen: the first viewport is all filters, and every column past the second is off-screen with no column-visibility or density control | An app is genuinely used on a phone and someone complains. Decide first between "usable at 393px" (today) and "designed for 393px" (column priority, density, a card layout) |
 

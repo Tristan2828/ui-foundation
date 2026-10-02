@@ -8,16 +8,24 @@ composites don't grow that way; they are built against a real app's screen.
 
 ## Semantic tones
 
-Three tones carry meaning: **success**, **warning**, **destructive**. Grey
-is not a tone — it is the absence of one, and most values should stay grey.
+Four tones carry meaning: **success**, **warning**, **destructive** and
+**info**. Grey is not a tone — it is the absence of one, and most values
+should stay grey.
+
+The first three say good or bad. **Info** says neither: *notice this*,
+without a verdict. It is for a state that is worth seeing but isn't good
+news or bad news: in progress, new, scheduled, beta. If the honest answer
+to "is this good?" is "neither, but it matters right now", it's info. If
+the answer is "neither, and it doesn't", it's grey: info is still a
+colour, and the "about a third" limit below counts it.
 
 Each tone has two kinds of token, and picking the wrong one is the single
 most common way to ship an unreadable label:
 
 | Token | For | Why it can't be the other one |
 |---|---|---|
-| `--success` / `--warning` / `--destructive` (+ `-foreground`) | a **solid fill**, always with white text on it | chosen to contrast with *white*, so on the page background it's too light in light mode |
-| `--success-text` / `--warning-text` / `--destructive-text` | the tone as **text, a border or an icon** on the page background | chosen to contrast with *the page*, so as a fill under white text it's needlessly dark |
+| `--success` / `--warning` / `--destructive` / `--info` (+ `-foreground`) | a **solid fill**, always with white text on it | chosen to contrast with *white*, so on the page background it's too light in light mode |
+| `--success-text` / `--warning-text` / `--destructive-text` / `--info-text` | the tone as **text, a border or an icon** on the page background | chosen to contrast with *the page*, so as a fill under white text it's needlessly dark |
 
 Only the `*-text` tokens are remapped in `.dark`. A solid fill keeps one
 shade in both themes, because it always carries white text and the page
@@ -25,20 +33,22 @@ behind it never enters the calculation.
 
 Measured ratios (WCAG 2.x, sRGB) are recorded next to each primitive in
 the package's `styles/theme.css`, and its `e2e/storybook-visual.spec.ts` re-checks all
-nine tone/style combinations with axe against the rendered DOM in both
+twelve tone/style combinations with axe against the rendered DOM in both
 themes. **A new tone or style is not done until it appears in that story.**
 
 ## The three badge styles
 
 `Badge` ships each tone in three styles. They are not interchangeable:
 
-- **Outline** — `outline-success`, `outline-warning`, `outline-destructive`.
+- **Outline** — `outline-success`, `outline-warning`, `outline-destructive`,
+  `outline-info`.
   The default choice, and the one proven across real columns. Quiet enough
   to repeat down 25 rows without the column becoming a wall of color.
-- **Tinted** — `tinted-success`, `tinted-warning`, `tinted-destructive`. A
+- **Tinted** — `tinted-success`, `tinted-warning`, `tinted-destructive`,
+  `tinted-info`. A
   low-alpha wash of the tone with `*-text` on top. More presence than
   outline; use when the value is the point of the row, not a detail of it.
-- **Solid** — `success`, `warning`, `destructive`. The loudest. Use for one
+- **Solid** — `success`, `warning`, `destructive`, `info`. The loudest. Use for one
   value that must be impossible to miss, rarely for a whole column: solid
   reads as an alert, and a column of alerts reads as noise.
 
@@ -75,7 +85,7 @@ Two rules that keep this honest:
 
 ## Categorical colour
 
-Tones say good or bad. A value that is merely *different* from its
+Tones say good, bad or *notice this*. A value that is merely *different* from its
 neighbours — a genre, a team, a category — needs a different mechanism, and
 it is `--category-1` through `--category-8`.
 
@@ -98,7 +108,9 @@ Four things about them:
 
 - **The hues avoid red, green and amber**, which the tones already spend. A
   category drawn in red reads as "this one is bad" even when nothing is
-  wrong.
+  wrong. Info's blue came later, and slots 1, 6 and 8 sit near it: a table
+  that shows an info badge keeps its categories off those three, so a blue
+  genre isn't read as "notice this".
 - **They are ordered by distinctness, not by hue angle.** An app using
   three categories gets three obviously different colours. Past about five,
   hue alone stops separating them — slots 3 and 7 are both yellow-greens —

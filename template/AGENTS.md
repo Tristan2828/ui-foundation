@@ -53,6 +53,13 @@ is right. Do not disable, skip, or work around it.
 - NEVER import `@tristan2828/ui-foundation/gateway` outside
   `src/api/gateway/`. Components and hooks call a gateway module through
   TanStack Query. (Enforced: no-restricted-imports.)
+- NEVER add a database table or column without a comment. The migration
+  that creates it also runs `COMMENT ON TABLE` / `COMMENT ON COLUMN`,
+  saying what it holds in words someone with only database access can use:
+  units, what null means, which table an id points at. A second agent with
+  credentials and no repo reads the schema alone. Applies to an app with a
+  Postgres backend. (Enforced: `backend/scripts/check_db_comments.py`, run
+  by `scripts/check-backend-postgres.sh` after `alembic upgrade head`.)
 - NEVER let a backend-shaped response reach a component. Paginated data is
   `Page<T>`. Failures are `AppError`. Queries are `QuerySpec`. The gateway
   translates; nothing above it knows the wire format. (Enforced: gateway
