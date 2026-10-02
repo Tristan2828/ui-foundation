@@ -73,6 +73,21 @@ class WidgetExtraCategoryLink(SQLModel, table=True):
     category_id: int = Field(foreign_key="categories.id", primary_key=True, ondelete="CASCADE")
 
 
+class WidgetChecklistItem(SQLModel, table=True):
+    """One item of a widget's checklist — the sub-records pattern (migration
+    0008). A child table with its own surrogate id and a `position`, since
+    order is part of the data; the wire never sees either column (the list
+    is read and written whole, in order)."""
+
+    __tablename__ = "widget_checklist_items"
+
+    id: int | None = Field(default=None, primary_key=True)
+    widget_id: int = Field(foreign_key="widgets.id", index=True, ondelete="CASCADE")
+    position: int
+    text: str = Field(max_length=300)
+    done: bool = Field(default=False)
+
+
 class Category(SQLModel, table=True):
     __tablename__ = "categories"
 
@@ -111,6 +126,26 @@ class Widget(SQLModel, table=True):
     extra_category_links: list[WidgetExtraCategoryLink] = Relationship(
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"}
     )
+    checklist_items: list[WidgetChecklistItem] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "cascade": "all, delete-orphan",
+            "order_by": "WidgetChecklistItem.position",
+        }
+    )
+
+    @property
+    def checklist(self) -> list[WidgetChecklistItem]:
+        """The wire field (WidgetOut.checklist), in saved order."""
+        return sorted(self.checklist_items, key=lambda item: item.position)
+
+    def set_checklist(self, items: list[tuple[str, bool]]) -> None:
+        """Replace the whole list — PATCH semantics, like set_tags; the order
+        given is the order stored."""
+        self.checklist_items = [
+            WidgetChecklistItem(position=position, text=text, done=done)
+            for position, (text, done) in enumerate(items)
+        ]
 
     @property
     def extra_category_ids(self) -> list[int]:

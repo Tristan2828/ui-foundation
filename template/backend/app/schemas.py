@@ -75,6 +75,23 @@ def _format_price(v: object) -> object:
     return f"{v:.2f}" if isinstance(v, Decimal) else v
 
 
+class ChecklistItem(CamelModel):
+    """openapi.yaml ChecklistItem — both directions. Surrounding spaces are
+    trimmed before the length check, so "  " is a 422 on its text."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    text: str = Field(min_length=1, max_length=300)
+    done: bool
+
+
+def _not_null_checklist(v: list[ChecklistItem] | None) -> list[ChecklistItem] | None:
+    # Leaving checklist out of a PATCH keeps it; [] clears it; null is a 422.
+    if v is None:
+        raise ValueError("checklist can't be null")
+    return v
+
+
 class WidgetOut(CamelModel):
     id: int
     name: str
@@ -87,6 +104,7 @@ class WidgetOut(CamelModel):
     tags: list[WidgetTag]
     in_stock: bool
     extra_category_ids: list[int]
+    checklist: list[ChecklistItem]
 
     @field_validator("price", mode="before")
     @classmethod
@@ -105,6 +123,7 @@ class WidgetCreate(CamelModel):
     tags: list[WidgetTag] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
     in_stock: bool = True
     extra_category_ids: list[int] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
+    checklist: list[ChecklistItem] = Field(default_factory=list, max_length=50)
 
     _check_tags = field_validator("tags")(_unique_tags)
     _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)
@@ -121,8 +140,10 @@ class WidgetUpdate(CamelModel):
     tags: list[WidgetTag] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
     in_stock: bool | None = None
     extra_category_ids: list[int] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
+    checklist: list[ChecklistItem] | None = Field(default=None, max_length=50)
 
     _check_tags = field_validator("tags")(_unique_tags)
+    _check_checklist = field_validator("checklist")(_not_null_checklist)
     _check_in_stock = field_validator("in_stock")(_not_null)
     _check_extra_category_ids = field_validator("extra_category_ids")(_not_null_ids)
 

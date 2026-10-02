@@ -73,11 +73,36 @@ function validateWidgetInput(
       issues.push({ loc: ["body", "extraCategoryIds"], msg: "unknown category ids", type: "value_error.foreign_key" });
     }
   }
+  // Sub-records: an ordered list of {text, done}, at most 50. A problem in
+  // one item is keyed by its path, e.g. ["body", "checklist", 2, "text"].
+  if (input.checklist !== undefined) {
+    const items = input.checklist as unknown;
+    if (!Array.isArray(items)) {
+      issues.push({ loc: ["body", "checklist"], msg: "value is not a valid list", type: "type_error.list" });
+    } else if (items.length > 50) {
+      issues.push({ loc: ["body", "checklist"], msg: "List should have at most 50 items", type: "too_long" });
+    } else {
+      items.forEach((item, index) => {
+        const text = typeof item?.text === "string" ? item.text.trim() : "";
+        if (text.length < 1 || text.length > 300) {
+          issues.push({ loc: ["body", "checklist", index, "text"], msg: "Text must be 1–300 characters", type: "string_too_short" });
+        }
+        if (typeof item?.done !== "boolean") {
+          issues.push({ loc: ["body", "checklist", index, "done"], msg: "value is not a valid boolean", type: "bool_type" });
+        }
+      });
+    }
+  }
   if (input.categoryId !== undefined && !categories.some((c) => c.id === input.categoryId)) {
     issues.push({ loc: ["body", "categoryId"], msg: "category not found", type: "value_error.foreign_key" });
   }
 
   return issues;
+}
+
+// The backend trims item text before storing it; so do the mocks.
+function trimChecklist(items: Widget["checklist"]): Widget["checklist"] {
+  return items.map((item) => ({ text: item.text.trim(), done: item.done }));
 }
 
 function sortWidgets(list: Widget[], sort: string | null): Widget[] {
@@ -159,6 +184,7 @@ export const handlers = [
       tags: input.tags ?? [],
       inStock: input.inStock ?? true,
       extraCategoryIds: [...(input.extraCategoryIds ?? [])].sort((a, b) => a - b),
+      checklist: trimChecklist(input.checklist ?? []),
       id: nextWidgetId(),
     };
     widgets.push(widget);
@@ -178,6 +204,7 @@ export const handlers = [
     Object.assign(widget, input);
     // Read back in ascending id order, like the backend.
     if (input.extraCategoryIds) widget.extraCategoryIds = [...input.extraCategoryIds].sort((a, b) => a - b);
+    if (input.checklist) widget.checklist = trimChecklist(input.checklist);
     return HttpResponse.json(widget);
   }),
 

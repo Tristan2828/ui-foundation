@@ -56,6 +56,20 @@ export const widgetFormSchema = z.object({
   extraCategoryIds: z
     .array(z.number())
     .refine((ids) => new Set(ids).size === ids.length, 'Each category can only be chosen once'),
+  // Sub-records: an ordered list, saved whole with the widget. Each item's
+  // own rules mirror openapi.yaml's ChecklistItem.
+  checklist: z
+    .array(
+      z.object({
+        text: z
+          .string()
+          .trim()
+          .min(1, 'Write something or remove the item')
+          .max(300, 'An item must be 300 characters or fewer'),
+        done: z.boolean(),
+      }),
+    )
+    .max(50, 'A checklist can have at most 50 items'),
 })
 
 export type WidgetFormValues = z.infer<typeof widgetFormSchema>
@@ -72,6 +86,7 @@ export const WIDGET_FORM_DEFAULTS: WidgetFormValues = {
   // The same default the API applies when a create leaves inStock out.
   inStock: true,
   extraCategoryIds: [],
+  checklist: [],
 }
 
 // Widget.availableFrom is a full datetime (openapi.yaml: format date-time).
@@ -103,6 +118,7 @@ export function widgetToFormValues(widget: Widget): WidgetFormValues {
     tags: widget.tags,
     inStock: widget.inStock,
     extraCategoryIds: widget.extraCategoryIds,
+    checklist: widget.checklist,
   }
 }
 
@@ -118,6 +134,7 @@ function formValuesToWidgetInput(values: WidgetFormValues): WidgetCreate {
     tags: values.tags,
     inStock: values.inStock,
     extraCategoryIds: values.extraCategoryIds,
+    checklist: values.checklist,
   }
 }
 

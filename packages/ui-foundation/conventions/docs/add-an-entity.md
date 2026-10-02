@@ -95,7 +95,15 @@ is a filled-in example while the Widgets demo is still here).
    search results alone: a saved pick the current search doesn't return
    would show without a name. The table looks up every id on its page in
    one request; the backend rejects an unknown id as a 422 on the field,
-   never a foreign-key 500):
+   never a foreign-key 500 — and each **sub-records** list copies
+   Checklist: an array of item objects on the wire, read and written
+   whole and in order (no item ids), a child table with a `position`
+   column, react-hook-form's `useFieldArray` feeding the foundation's
+   `<ListEditor>` inside a `FieldSet`/`FieldLegend` on the form, each row's
+   controls named by position ("Item 2 text"), a per-item `FieldError`
+   (a server 422 at `["body", "checklist", 2, "text"]` arrives as
+   `fieldErrors["checklist.2.text"]` and binds to that row), and a summary
+   in the table, never the items):
    - `src/routes/widgets/use-widgets.ts`, `use-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)

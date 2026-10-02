@@ -35,4 +35,4 @@ events" view; once I mark it happened, they become doable.
 1. Toggling a yes/no straight from the list row (the field itself is
    supported since 3.4.0; today it's changed on the edit form).
 2. The "tasks waiting" count is a computed, read-only field: the same gap
-   as `task.md` open question 2.
+   as `task.md` open question 1.

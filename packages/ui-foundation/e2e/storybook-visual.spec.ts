@@ -11,6 +11,7 @@ const PRIMITIVES = [
   'badge',
   'button',
   'card',
+  'checkbox',
   'empty',
   'input',
   'separator',

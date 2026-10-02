@@ -107,12 +107,13 @@ async def create_widget(
 ) -> Widget:
     await _check_categories_exist(payload.extra_category_ids, session)
     widget = Widget(
-        **payload.model_dump(exclude={"price", "tags", "extra_category_ids"}),
+        **payload.model_dump(exclude={"price", "tags", "extra_category_ids", "checklist"}),
         price=Decimal(payload.price),
         owner_id=user.id,
     )
     widget.set_tags(payload.tags)
     widget.set_extra_category_ids(payload.extra_category_ids)
+    widget.set_checklist([(item.text, item.done) for item in payload.checklist])
     session.add(widget)
     await session.commit()
     await session.refresh(widget)
@@ -144,6 +145,9 @@ async def update_widget(
         ids = updates.pop("extra_category_ids")
         await _check_categories_exist(ids, session)
         widget.set_extra_category_ids(ids)
+    if "checklist" in updates:
+        updates.pop("checklist")
+        widget.set_checklist([(item.text, item.done) for item in payload.checklist or []])
     if "price" in updates:
         updates["price"] = Decimal(updates["price"])
     for field, value in updates.items():

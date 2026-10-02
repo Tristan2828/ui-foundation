@@ -5,12 +5,20 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Controller, useForm, useWatch } from 'react-hook-form'
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
-import { type AppError, EntityForm, ErrorState, MultiChoice, MultiReference } from '@tristan2828/ui-foundation'
+import {
+  type AppError,
+  EntityForm,
+  ErrorState,
+  ListEditor,
+  MultiChoice,
+  MultiReference,
+} from '@tristan2828/ui-foundation'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import { Calendar } from '@tristan2828/ui-foundation/ui/calendar'
+import { Checkbox } from '@tristan2828/ui-foundation/ui/checkbox'
 import {
   Combobox,
   ComboboxContent,
@@ -19,7 +27,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@tristan2828/ui-foundation/ui/combobox'
-import { Field, FieldError, FieldLabel } from '@tristan2828/ui-foundation/ui/field'
+import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@tristan2828/ui-foundation/ui/field'
 import { Input } from '@tristan2828/ui-foundation/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@tristan2828/ui-foundation/ui/popover'
 import {
@@ -95,6 +103,10 @@ export function WidgetFormRoute() {
     // resolves.
     values: isEdit && widgetQuery.data ? widgetToFormValues(widgetQuery.data) : undefined,
   })
+
+  // Sub-records: the items live in the form's own state and save with the
+  // widget. useFieldArray's `fields` carry the stable keys ListEditor needs.
+  const checklist = useFieldArray({ control: form.control, name: 'checklist' })
 
   // Hooks above any early return. The watched value is the form's current
   // pick, so a chip added from search is named by the same lookup.
@@ -341,6 +353,52 @@ export function WidgetFormRoute() {
         />
         <FieldError errors={[form.formState.errors.extraCategoryIds]} />
       </Field>
+
+      {/* Sub-records: a fieldset, since the legend names a group of inputs
+          rather than one. Each row's controls are named by position
+          ("Item 2 text"), which is also how the row buttons name it. */}
+      <FieldSet>
+        <FieldLegend variant="label">Checklist (optional)</FieldLegend>
+        <ListEditor
+          aria-label="Checklist"
+          items={checklist.fields}
+          itemName={(index) => `item ${index + 1}`}
+          addLabel="Add item"
+          emptyText="No items yet."
+          max={50}
+          onAdd={() => checklist.append({ text: '', done: false })}
+          onRemove={checklist.remove}
+          onMove={checklist.move}
+          renderItem={(index) => {
+            const error = form.formState.errors.checklist?.[index]?.text
+            return (
+              <>
+                <Controller
+                  control={form.control}
+                  name={`checklist.${index}.done`}
+                  render={({ field }) => (
+                    <Checkbox
+                      className="mt-2.5"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label={`Item ${index + 1} done`}
+                    />
+                  )}
+                />
+                <Field data-invalid={!!error} className="min-w-0 flex-1">
+                  <Input
+                    aria-label={`Item ${index + 1} text`}
+                    aria-invalid={!!error}
+                    {...form.register(`checklist.${index}.text`)}
+                  />
+                  <FieldError errors={[error]} />
+                </Field>
+              </>
+            )
+          }}
+        />
+        <FieldError errors={[form.formState.errors.checklist?.root ?? form.formState.errors.checklist]} />
+      </FieldSet>
 
       {/* Yes/no: a Switch with its label beside it (Field orientation
           "horizontal"), never a Select of Yes/No. The label is the

@@ -292,3 +292,63 @@ async def test_categories_by_ids_returns_exactly_those_ignoring_unknown(
     res = await client.get("/api/categories", params=[("ids", "3"), ("ids", "1"), ("ids", "99")])
     assert res.status_code == 200
     assert sorted(c["id"] for c in res.json()) == [1, 3]
+
+
+# --- checklist: the sub-records pattern (3.6.0) -----------------------------
+
+
+async def test_checklist_defaults_to_empty_and_keeps_the_order_saved(client: AsyncClient) -> None:
+    empty = await client.post("/api/widgets", json=_NEW_WIDGET)
+    assert empty.json()["checklist"] == []
+    items = [{"text": "Second?", "done": False}, {"text": "First", "done": True}]
+    created = await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": items})
+    assert created.status_code == 201
+    assert created.json()["checklist"] == items
+    fetched = await client.get(f"/api/widgets/{created.json()['id']}")
+    assert fetched.json()["checklist"] == items
+
+
+async def test_patch_checklist_replaces_reorders_clears_or_leaves_it(client: AsyncClient) -> None:
+    a, b = {"text": "A", "done": False}, {"text": "B", "done": True}
+    widget_id = (await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": [a, b]})).json()["id"]
+    reordered = await client.patch(f"/api/widgets/{widget_id}", json={"checklist": [b, a]})
+    assert reordered.json()["checklist"] == [b, a]
+    untouched = await client.patch(f"/api/widgets/{widget_id}", json={"name": "Renamed"})
+    assert untouched.json()["checklist"] == [b, a]
+    cleared = await client.patch(f"/api/widgets/{widget_id}", json={"checklist": []})
+    assert cleared.json()["checklist"] == []
+
+
+async def test_checklist_text_is_trimmed_and_blank_is_a_field_error_on_that_item(client: AsyncClient) -> None:
+    trimmed = await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": [{"text": "  Tidy  ", "done": False}]})
+    assert trimmed.json()["checklist"] == [{"text": "Tidy", "done": False}]
+
+    blank = await client.post(
+        "/api/widgets",
+        json={**_NEW_WIDGET, "checklist": [{"text": "Fine", "done": False}, {"text": "   ", "done": False}]},
+    )
+    assert blank.status_code == 422
+    assert any(item["loc"] == ["body", "checklist", 1, "text"] for item in blank.json()["detail"])
+
+
+async def test_too_many_or_null_checklist_items_are_field_errors(client: AsyncClient) -> None:
+    too_many = [{"text": f"Item {i}", "done": False} for i in range(51)]
+    res = await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": too_many})
+    assert res.status_code == 422
+    assert any(item["loc"][-1] == "checklist" for item in res.json()["detail"])
+
+    widget_id = (await client.post("/api/widgets", json=_NEW_WIDGET)).json()["id"]
+    null = await client.patch(f"/api/widgets/{widget_id}", json={"checklist": None})
+    assert null.status_code == 422
+
+
+async def test_deleting_a_widget_deletes_its_checklist(client: AsyncClient, session: AsyncSession) -> None:
+    widget_id = (
+        await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": [{"text": "Gone soon", "done": False}]})
+    ).json()["id"]
+    assert (await client.delete(f"/api/widgets/{widget_id}")).status_code == 204
+    from app.models import WidgetChecklistItem
+    from sqlmodel import select
+
+    left = (await session.exec(select(WidgetChecklistItem).where(WidgetChecklistItem.widget_id == widget_id))).all()
+    assert left == []

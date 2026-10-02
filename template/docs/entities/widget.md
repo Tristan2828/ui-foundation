@@ -24,6 +24,18 @@ foundation supports has a working, tested reference.
 | extraCategoryIds | Extra Categories | multi reference → Category | no | any number, no repeats; picked from a searchable list; none means no extra categories | column | yes (any of) |
 | inStock | In Stock | yes/no | yes | default yes; filter labels Any stock, In stock, Out of stock | column | yes |
 
+## Sub-records
+
+### checklist — Checklist
+
+- Most items: 50.
+- In the table: a done-count (`1/2 done`); an em dash when empty.
+
+| Field | Label | Type | Required | Options / rules |
+|---|---|---|---|---|
+| text | Text | text | yes | 1–300 chars, trimmed |
+| done | Done | yes/no | yes | default no |
+
 ## List screen
 
 - Default sort: none (server order).

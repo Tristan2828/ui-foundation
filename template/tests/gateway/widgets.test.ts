@@ -35,6 +35,7 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
     tags: [],
     inStock: true,
     extraCategoryIds: [],
+    checklist: [],
     ...overrides,
   };
 }
@@ -507,6 +508,37 @@ describe("updateWidget", () => {
     await expect(updateWidget(3, { extraCategoryIds: [99] })).rejects.toMatchObject({
       kind: "validation",
       fieldErrors: { extraCategoryIds: ["unknown category ids"] },
+    });
+  });
+
+  // openapi.yaml: checklist is replaced whole and keeps the order sent.
+  it("sends the checklist in the body in the order given", async () => {
+    const checklist = [
+      { text: "Second", done: true },
+      { text: "First", done: false },
+    ];
+    const fetchMock = stubFetch(jsonResponse(makeWidget({ id: 3, checklist }), 200));
+
+    const result = await updateWidget(3, { checklist });
+
+    const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
+    expect(body).toEqual({ checklist });
+    expect(result.checklist).toEqual(checklist);
+  });
+
+  // openapi.yaml: "A field error inside an item is keyed by its path, e.g.
+  // loc ["body", "checklist", 2, "text"]" — so it lands on that row.
+  it("keys a 422 inside a checklist item under fieldErrors['checklist.2.text']", async () => {
+    stubFetch(
+      jsonResponse(
+        { detail: [{ loc: ["body", "checklist", 2, "text"], msg: "Text must be 1–300 characters", type: "string_too_short" }] },
+        422,
+      ),
+    );
+
+    await expect(updateWidget(3, { checklist: [] })).rejects.toMatchObject({
+      kind: "validation",
+      fieldErrors: { "checklist.2.text": ["Text must be 1–300 characters"] },
     });
   });
 

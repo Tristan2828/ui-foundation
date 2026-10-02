@@ -305,9 +305,9 @@ components:
         unambiguously to the UI pattern it exercises and /new-entity has a
         reference to copy (docs/entities/widget.md). Six came from Phase 4;
         tags (multi choice) was added in Phase G because a real project
-        needed it, inStock (yes/no) in 3.4.0 and extraCategoryIds (multi
-        reference) in 3.5.0 for the Task Dashboard app. Add a type only
-        when a real app needs one.
+        needed it; inStock (yes/no) in 3.4.0, extraCategoryIds (multi
+        reference) in 3.5.0 and checklist (sub-records) in 3.6.0 for the
+        Task Dashboard app. Add a type only when a real app needs one.
       required:
         - id
         - name
@@ -319,6 +319,7 @@ components:
         - tags
         - inStock
         - extraCategoryIds
+        - checklist
       properties:
         id: { type: integer, readOnly: true }
         name:
@@ -386,12 +387,23 @@ components:
             names as badges in the table, and an any-of list filter.
             Always present on read, in ascending id order; empty when none.
             An id that isn't a category is a 422 field error.
+        checklist:
+          type: array
+          items: { $ref: "#/components/schemas/ChecklistItem" }
+          maxItems: 50
+          description: >
+            Sub-records — an ordered list of items that belong to this
+            widget alone, edited on its form and saved with it. Forces a
+            list editor (add, remove, move up/down) on the form and a
+            done-count in the table. Always present on read, in the order
+            saved; empty when none. A field error inside an item is keyed
+            by its path, e.g. loc ["body", "checklist", 2, "text"].
 
     WidgetCreate:
       type: object
       description: >
-        Widget without a server-assigned id. tags and extraCategoryIds
-        default to [], inStock to true.
+        Widget without a server-assigned id. tags, extraCategoryIds and
+        checklist default to [], inStock to true.
       required: [name, categoryId, status, availableFrom, price, description]
       properties:
         name: { $ref: "#/components/schemas/Widget/properties/name" }
@@ -404,12 +416,14 @@ components:
         tags: { $ref: "#/components/schemas/Widget/properties/tags" }
         inStock: { $ref: "#/components/schemas/Widget/properties/inStock" }
         extraCategoryIds: { $ref: "#/components/schemas/Widget/properties/extraCategoryIds" }
+        checklist: { $ref: "#/components/schemas/Widget/properties/checklist" }
 
     WidgetUpdate:
       type: object
       description: >
         All fields optional — PATCH semantics. tags, when sent, replaces the
-        whole set (send [] to clear it); so does extraCategoryIds.
+        whole set (send [] to clear it); so do extraCategoryIds and
+        checklist (which also keeps the order sent).
       properties:
         name: { $ref: "#/components/schemas/Widget/properties/name" }
         categoryId: { $ref: "#/components/schemas/Widget/properties/categoryId" }
@@ -421,6 +435,23 @@ components:
         tags: { $ref: "#/components/schemas/Widget/properties/tags" }
         inStock: { $ref: "#/components/schemas/Widget/properties/inStock" }
         extraCategoryIds: { $ref: "#/components/schemas/Widget/properties/extraCategoryIds" }
+        checklist: { $ref: "#/components/schemas/Widget/properties/checklist" }
+
+    ChecklistItem:
+      type: object
+      description: >
+        One item of a widget's checklist. No id of its own: the list is
+        read and written whole, in order.
+      required: [text, done]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: What to do. Surrounding spaces are trimmed; blank is a 422.
+        done:
+          type: boolean
+          description: Ticked off.
 
     WidgetListResponse:
       type: object
