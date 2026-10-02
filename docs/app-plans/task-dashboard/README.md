@@ -8,12 +8,13 @@ files to the app's `docs/entities/` and delete them here.
 | Plan | Build order | Ready for the playbook? |
 |---|---|---|
 | [`category.md`](category.md) | 1 | Yes |
-| [`trigger.md`](trigger.md) | 2 | No: needs a row toggle |
-| [`requirement.md`](requirement.md) | 3 | No: needs a row toggle |
+| [`trigger.md`](trigger.md) | 2 | Yes |
+| [`requirement.md`](requirement.md) | 3 | Yes |
 | [`task.md`](task.md) | 4 | Yes |
 
 Yes/no fields shipped in foundation 3.4.0, multi reference in 3.5.0,
-sub-records in 3.6.0, computed fields in 3.7.0.
+sub-records in 3.6.0, computed fields in 3.7.0, row toggles in 3.8.0:
+every plan is ready for the playbook.
 
 ## Decisions behind the plans
 

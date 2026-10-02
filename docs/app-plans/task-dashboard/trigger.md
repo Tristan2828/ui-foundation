@@ -15,14 +15,15 @@ events" view; once I mark it happened, they become doable.
 | Field | Label | Type | Required | Options / rules | List | Filter |
 |---|---|---|---|---|---|---|
 | name | Name | text | yes | 1–100 chars; unique per user | column, sortable | search |
-| hasHappened | Happened | yes/no | yes | default off; filter labels Any, Happened, Not yet; toggled straight from the list row (**not supported yet**) | column | yes |
+| hasHappened | Happened | yes/no | yes | default off; filter labels Any, Happened, Not yet; flipped straight from its row | column, toggle | yes |
 | waitingCount | Tasks Waiting | computed | — | how many tasks list this trigger under Waiting On (a scalar subquery); sorts as a number | column, sortable | |
 
 ## List screen
 
 - Default sort: name, A–Z.
 - Page size: 25.
-- Row actions: toggle happened, edit, delete (with confirmation). Deleting
+- Row actions: edit, delete (with confirmation). Happened flips in its
+  own column (above), not from a row action. Deleting
   a trigger removes it from every task.
 
 ## Screens and access
@@ -32,5 +33,4 @@ events" view; once I mark it happened, they become doable.
 
 ## Open questions
 
-1. Toggling a yes/no straight from the list row (the field itself is
-   supported since 3.4.0; today it's changed on the edit form).
+None.

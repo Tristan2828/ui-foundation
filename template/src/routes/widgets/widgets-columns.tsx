@@ -2,13 +2,14 @@
 // copy-this-file reference for the entity playbook
 // (docs/foundation/add-an-entity.md).
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
-import { CheckIcon, PencilIcon } from 'lucide-react'
+import { PencilIcon } from 'lucide-react'
 import { Link } from 'react-router'
 import { Badge } from '@tristan2828/ui-foundation/ui/badge'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import type { components } from '@/api/schema'
 import { CategoryName } from './category-names'
 import { DeleteWidgetAction } from './delete-widget-action'
+import { InStockToggle } from './in-stock-toggle'
 import { CHECKLIST_STATE_LABELS } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
@@ -192,23 +193,13 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
       },
     },
     {
-      // Yes/no (cell-patterns.md pattern 12): the word carries the value and
-      // the check only reinforces it; "No" is muted, not red, because being
-      // out of stock isn't an error. Never a checkbox: a read-only cell
-      // must not look clickable.
+      // Yes/no, flipped straight from the row (cell-patterns.md pattern 15):
+      // a Switch that saves on its own. See in-stock-toggle.tsx.
       id: 'inStock',
       accessorKey: 'inStock',
       header: 'In Stock',
       enableSorting: false,
-      cell: ({ getValue }) =>
-        getValue() ? (
-          <span className="inline-flex items-center gap-1">
-            <CheckIcon aria-hidden="true" className="size-4 text-success-text" />
-            Yes
-          </span>
-        ) : (
-          <span className="text-muted-foreground">No</span>
-        ),
+      cell: ({ row }) => <InStockToggle widget={row.original} />,
     },
     {
       id: 'actions',

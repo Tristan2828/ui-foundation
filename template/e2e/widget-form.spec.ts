@@ -318,7 +318,7 @@ test.describe('widget form', () => {
 
     await expect(page).toHaveURL(/\/widgets$/)
     const row = page.getByRole('row', { name: /Out Of Stock Widget/ })
-    await expect(row.getByRole('cell', { name: 'No', exact: true })).toBeVisible()
+    await expect(row.getByRole('switch', { name: 'In stock: Out Of Stock Widget' })).not.toBeChecked()
   })
 
   test('yes/no: editing shows the stored value, and turning it on saves', async ({ page }) => {
@@ -333,6 +333,6 @@ test.describe('widget form', () => {
 
     await expect(page).toHaveURL(/\/widgets$/)
     const row = page.getByRole('row', { name: /Fountain Pen/ })
-    await expect(row.getByRole('cell', { name: 'Yes', exact: true })).toBeVisible()
+    await expect(row.getByRole('switch', { name: 'In stock: Fountain Pen' })).toBeChecked()
   })
 })

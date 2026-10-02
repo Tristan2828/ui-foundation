@@ -72,3 +72,34 @@ export function useDeleteWidgetMutation() {
     },
   })
 }
+
+// A yes/no flipped straight from a table row: saves on its own (a PATCH of
+// that one field) instead of through the form. Optimistic: every cached
+// list page shows the new value at once, and goes back if the save fails.
+// Afterwards the lists refetch, so a filter on the field (In stock only)
+// drops the row once the server agrees.
+export function useToggleWidgetInStockMutation() {
+  const queryClient = useQueryClient()
+  type Snapshot = [readonly unknown[], Page<Widget> | undefined][]
+  return useMutation<Widget, AppError, { id: number; inStock: boolean }, { snapshot: Snapshot }>({
+    mutationFn: ({ id, inStock }) => updateWidget(id, { inStock }),
+    onMutate: async ({ id, inStock }) => {
+      const lists = { queryKey: [...widgetsKeys.all, 'list'] }
+      await queryClient.cancelQueries(lists)
+      const snapshot = queryClient.getQueriesData<Page<Widget>>(lists)
+      queryClient.setQueriesData<Page<Widget>>(lists, (page) =>
+        page && {
+          ...page,
+          items: page.items.map((widget) => (widget.id === id ? { ...widget, inStock } : widget)),
+        },
+      )
+      return { snapshot }
+    },
+    onError: (_error, _input, context) => {
+      for (const [queryKey, page] of context?.snapshot ?? []) queryClient.setQueryData(queryKey, page)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: widgetsKeys.all })
+    },
+  })
+}

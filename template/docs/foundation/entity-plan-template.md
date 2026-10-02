@@ -55,7 +55,8 @@ One or two sentences: what one record is, and who uses the screens.
   a screen — a Base UI `Select` can't take `""` as an item value, so the
   pattern needs a sentinel and gets the display wrong without one.
 - **List**: `column` if it shows in the table, and `sortable` if you can
-  sort by it; blank if it's form-only.
+  sort by it; blank if it's form-only. A `yes/no` can also say `toggle`:
+  flipped straight from its row, saved on its own (cell pattern 15).
 - **Filter**: `search` (the text search box), `yes` (a filter control), or
   blank.
 

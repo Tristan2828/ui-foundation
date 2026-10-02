@@ -5,6 +5,17 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.8.0 — flip a yes/no from the table row
+
+Docs and template only; no package code changed. Run
+`npx ui-foundation sync` after the bump.
+
+- **A `yes/no` can be flipped straight from its row.** Plans mark it
+  `column, toggle`. The template's In Stock column is the reference (cell
+  pattern 15): a `Switch` that saves that one field on its own, updates
+  every cached list page at once, and puts the value back with a toast if
+  the save fails.
+
 ## 3.7.0 — computed fields; stable table columns
 
 Docs and template only; no package code changed. Run

@@ -330,3 +330,23 @@ A person: an assignee or an owner.
 - **Cost:** a column of faces draws the eye more than any other cell. Use
   it when *who* matters most in the row, not as decoration.
 
+## 15. Yes/no you flip in the row
+
+A yes/no the user changes more often than they open the form ("available
+now", "happened"). Widget's In Stock column is the reference
+(`src/routes/widgets/in-stock-toggle.tsx`).
+
+- **A `Switch`, never a checkbox.** It acts at once; a checkbox in a row
+  reads as "select this row".
+- **It saves on its own:** a PATCH of that one field, not the form. Show
+  the new value at once (optimistic) and put it back, with a toast naming
+  the row, if the save fails (`useToggleWidgetInStockMutation`).
+- **Keep the word beside it** (pattern 12), `aria-hidden` since the switch
+  announces its own state. Give the switch a row-specific name
+  (`In stock: ${row.original.name}`).
+- Its own component in its own file, rendered from the column's `cell`,
+  so the hook lives in a component and the columns stay stable
+  ([`add-an-entity.md`](add-an-entity.md) "Keep column definitions
+  stable").
+- **Cost:** one click changes data, with no confirmation. Only for values
+  that are cheap to flip back; never for anything destructive.

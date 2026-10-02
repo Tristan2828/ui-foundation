@@ -23,7 +23,7 @@ foundation supports has a working, tested reference.
 | tags | Tags | multi choice | no | fragile, bulky, seasonal, featured; any number, no repeats; none means untagged | column | yes (any of) |
 | extraCategoryIds | Extra Categories | multi reference → Category | no | any number, no repeats; picked from a searchable list; none means no extra categories | column | yes (any of) |
 | checklistState | Progress | computed | — | from the checklist: none (no items), open (any item not done), complete (all done); sorts in that order | column, sortable | yes |
-| inStock | In Stock | yes/no | yes | default yes; filter labels Any stock, In stock, Out of stock | column | yes |
+| inStock | In Stock | yes/no | yes | default yes; filter labels Any stock, In stock, Out of stock | column, toggle | yes |
 
 ## Sub-records
 
