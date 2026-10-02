@@ -5,10 +5,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
-import { type AppError, EntityForm, ErrorState, MultiChoice } from '@tristan2828/ui-foundation'
+import { type AppError, EntityForm, ErrorState, MultiChoice, MultiReference } from '@tristan2828/ui-foundation'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import { Calendar } from '@tristan2828/ui-foundation/ui/calendar'
 import {
@@ -32,7 +32,7 @@ import {
 import { Skeleton } from '@tristan2828/ui-foundation/ui/skeleton'
 import { Switch } from '@tristan2828/ui-foundation/ui/switch'
 import { Textarea } from '@tristan2828/ui-foundation/ui/textarea'
-import { useCategoriesQuery } from './use-categories'
+import { categoryNames, useCategoriesByIdsQuery, useCategoriesQuery } from './use-categories'
 import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from './use-widgets'
 import {
   WIDGET_FORM_DEFAULTS,
@@ -80,6 +80,11 @@ export function WidgetFormRoute() {
     return Object.fromEntries(entries) as Record<number, string>
   }, [categoriesQuery.data])
 
+  // Multi reference: its own search (independent of the Category combobox
+  // above) for the dropdown, and a lookup by id for the picked chips' names.
+  const [extraCategorySearch, setExtraCategorySearch] = useState('')
+  const extraCategoryOptionsQuery = useCategoriesQuery(extraCategorySearch)
+
   const [submitError, setSubmitError] = useState<AppError | null>(null)
 
   const form = useForm<WidgetFormValues>({
@@ -90,6 +95,12 @@ export function WidgetFormRoute() {
     // resolves.
     values: isEdit && widgetQuery.data ? widgetToFormValues(widgetQuery.data) : undefined,
   })
+
+  // Hooks above any early return. The watched value is the form's current
+  // pick, so a chip added from search is named by the same lookup.
+  const pickedExtraCategoryIds = useWatch({ control: form.control, name: 'extraCategoryIds' })
+  const pickedExtraCategoriesQuery = useCategoriesByIdsQuery(pickedExtraCategoryIds ?? [])
+  const extraCategoryNames = categoryNames(extraCategoryOptionsQuery.data, pickedExtraCategoriesQuery.data)
 
   if (isEdit && widgetQuery.isLoading) {
     return <WidgetFormSkeleton />
@@ -304,6 +315,31 @@ export function WidgetFormRoute() {
           )}
         />
         <FieldError errors={[form.formState.errors.tags]} />
+      </Field>
+
+      <Field data-invalid={!!form.formState.errors.extraCategoryIds}>
+        <FieldLabel htmlFor="widget-extra-categories">Extra Categories (optional)</FieldLabel>
+        <Controller
+          control={form.control}
+          name="extraCategoryIds"
+          render={({ field }) => (
+            <MultiReference
+              id="widget-extra-categories"
+              options={(extraCategoryOptionsQuery.data ?? []).map((category) => ({
+                id: category.id,
+                label: category.name,
+              }))}
+              value={field.value}
+              onValueChange={field.onChange}
+              getLabel={(id) => extraCategoryNames.get(id)}
+              onSearchChange={setExtraCategorySearch}
+              placeholder="Search categories"
+              emptyText="No categories found."
+              aria-invalid={!!form.formState.errors.extraCategoryIds}
+            />
+          )}
+        />
+        <FieldError errors={[form.formState.errors.extraCategoryIds]} />
       </Field>
 
       {/* Yes/no: a Switch with its label beside it (Field orientation

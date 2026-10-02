@@ -32,6 +32,14 @@ async function pickAvailableFromDate(page: Page) {
 
 // Multi choice: open the chips input and pick an option; Escape closes the
 // list, which stays open between picks in multiple mode.
+// Multi reference: type to search the server, pick the match, close the
+// list. The search is the server's (GET /categories?search=...).
+async function pickExtraCategory(page: Page, search: string, name: string) {
+  await page.locator('#widget-extra-categories').fill(search)
+  await page.getByRole('option', { name, exact: true }).click()
+  await page.keyboard.press('Escape')
+}
+
 async function pickTag(page: Page, name: string) {
   await page.locator('#widget-tags').click()
   await page.getByRole('option', { name, exact: true }).click()
@@ -141,6 +149,72 @@ test.describe('widget form', () => {
     const row = page.getByRole('row', { name: /Wireless Mouse/ })
     await expect(row.getByText('featured', { exact: true })).toBeVisible()
     await expect(row.getByText('fragile', { exact: true })).toHaveCount(0)
+  })
+
+  test('multi reference: picks found by searching save, and show by name in the table', async ({ page }) => {
+    await page.goto('/widgets/new')
+    await page.locator('#widget-name').fill('Linked Widget')
+    await pickCategory(page, 'Electronics')
+    await pickAvailableFromDate(page)
+    await page.locator('#widget-price').fill('3.00')
+    await page.locator('#widget-description').fill('Has two extra categories.')
+    await pickExtraCategory(page, 'furn', 'Furniture')
+    await pickExtraCategory(page, 'stat', 'Stationery')
+    await expect(page.getByRole('button', { name: 'Remove Furniture' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
+    await page.getByRole('button', { name: 'Create widget' }).click()
+
+    await expect(page).toHaveURL(/\/widgets$/)
+    const row = page.getByRole('row', { name: /Linked Widget/ })
+    await expect(row.getByText('Furniture', { exact: true })).toBeVisible()
+    await expect(row.getByText('Stationery', { exact: true })).toBeVisible()
+  })
+
+  test('multi reference: saved picks keep their names while a search shows other records', async ({ page }) => {
+    // Standing Desk (id 2) links Electronics and Stationery. Searching
+    // "furn" returns only Furniture, so the two chips' names must come from
+    // the lookup by id, not from the search results.
+    await page.goto('/widgets/2/edit')
+    await expect(page.getByRole('button', { name: 'Remove Electronics' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
+
+    await page.locator('#widget-extra-categories').fill('furn')
+    await expect(page.getByRole('option', { name: 'Furniture', exact: true })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'Electronics', exact: true })).toHaveCount(0)
+    // The open list makes the rest of the form inert, so the chips are
+    // matched by their visible text rather than by role.
+    const chips = page.locator('[data-slot="combobox-chip"]')
+    await expect(chips.filter({ hasText: /^Electronics$/ })).toBeVisible()
+    await expect(chips.filter({ hasText: /^Stationery$/ })).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    await page.getByRole('button', { name: 'Remove Electronics' }).click()
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL(/\/widgets$/)
+    const row = page.getByRole('row', { name: /Standing Desk/ })
+    await expect(row.getByText('Stationery', { exact: true })).toBeVisible()
+    await expect(row.getByText('Electronics', { exact: true })).toHaveCount(0)
+  })
+
+  test('multi reference: a 422 on the field binds to it', async ({ page }) => {
+    await page.goto('/widgets/1/edit')
+    await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const { worker, http, HttpResponse } = window.__msw
+      worker.use(
+        http.patch('*/api/widgets/1', () =>
+          HttpResponse.json(
+            { detail: [{ loc: ['body', 'extraCategoryIds'], msg: 'unknown category ids: [99]', type: 'value_error.foreign_key' }] },
+            { status: 422 },
+          ),
+        ),
+      )
+    })
+    await page.getByRole('button', { name: 'Save changes' }).click()
+    await expect(page.getByText('unknown category ids: [99]')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
   })
 
   test('yes/no: a new widget starts in stock, and the switch state is what saves', async ({ page }) => {

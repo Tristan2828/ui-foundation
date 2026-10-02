@@ -44,7 +44,7 @@ const priceFormatter = new Intl.NumberFormat(undefined, {
 })
 
 export function buildWidgetsColumns(
-  categoriesById: Record<number, string>,
+  categoryNames: ReadonlyMap<number, string>,
 ): LegacyColumnDef<Widget, unknown>[] {
   return [
     {
@@ -55,7 +55,7 @@ export function buildWidgetsColumns(
     },
     {
       id: 'category',
-      accessorFn: (widget) => categoriesById[widget.categoryId] ?? `#${widget.categoryId}`,
+      accessorFn: (widget) => categoryNames.get(widget.categoryId) ?? `#${widget.categoryId}`,
       header: 'Category',
       enableSorting: false,
     },
@@ -119,6 +119,29 @@ export function buildWidgetsColumns(
             {tags.map((tag) => (
               <Badge key={tag} variant="outline">
                 {tag}
+              </Badge>
+            ))}
+          </div>
+        )
+      },
+    },
+    {
+      // Multi reference: one outline badge per linked record, by name (the
+      // table looks up every id on the page at once; see widgets-table.tsx).
+      // An em dash when none, like Tags. A name still loading shows "…",
+      // never a bare id.
+      id: 'extraCategories',
+      accessorKey: 'extraCategoryIds',
+      header: 'Extra Categories',
+      enableSorting: false,
+      cell: ({ getValue }) => {
+        const ids = getValue() as Widget['extraCategoryIds']
+        if (ids.length === 0) return <span className="text-muted-foreground">—</span>
+        return (
+          <div className="flex flex-wrap gap-1">
+            {ids.map((id) => (
+              <Badge key={id} variant="outline">
+                {categoryNames.get(id) ?? '…'}
               </Badge>
             ))}
           </div>

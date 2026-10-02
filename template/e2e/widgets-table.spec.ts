@@ -214,6 +214,27 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
   })
 
+  test('multi reference: the column shows names, and the filter matches any pick, via the URL', async ({ page }) => {
+    await page.goto('/widgets')
+    const desk = page.getByRole('row').filter({ hasText: 'Standing Desk' })
+    // Names, never ids, in the cell.
+    await expect(desk.getByText('Stationery', { exact: true })).toBeVisible()
+
+    await page.getByLabel('Filter by extra categories').fill('stat')
+    await page.getByRole('option', { name: 'Stationery', exact: true }).click()
+    await page.keyboard.press('Escape')
+
+    await expect(page).toHaveURL(/[?&]extraCategoryIds=3/)
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
+
+    // A reloaded link names its pick without any search typed.
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
+  })
+
   test('yes/no cell: the word carries the value, never a checkbox', async ({ page }) => {
     await page.goto('/widgets')
     const mouse = page.getByRole('row').filter({ hasText: 'Wireless Mouse' })
@@ -397,12 +418,12 @@ test.describe('widgets table', () => {
     const row = page.getByRole('row').filter({ hasText: 'Blank Slate' })
     await expect(row).toBeVisible()
 
-    // A null assignee and an empty tag list both render the shared em
+    // A null assignee, an empty tag list and no extra categories all render the shared em
     // dash, never a blank cell — a blank reads as a rendering bug.
     // Matched on the <td> with exactly that text: a substring match also
     // catches the wrapping cell of a <span>-wrapped dash, so the count
     // depends on markup rather than on behaviour.
-    await expect(row.locator('td').filter({ hasText: /^—$/ })).toHaveCount(2)
+    await expect(row.locator('td').filter({ hasText: /^—$/ })).toHaveCount(3)
 
     // And the form shows empty controls rather than placeholder values.
     await page.goto('/widgets/4/edit')

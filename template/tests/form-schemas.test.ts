@@ -36,6 +36,13 @@ describe('widgetFormSchema', () => {
     expect(widgetFormSchema.safeParse({ ...validWidget, inStock: undefined }).success).toBe(false)
   })
 
+  it('accepts any number of distinct extra category ids, but not a repeat', () => {
+    expect(WIDGET_FORM_DEFAULTS.extraCategoryIds).toEqual([])
+    expect(widgetFormSchema.safeParse({ ...validWidget, extraCategoryIds: [1, 3] }).success).toBe(true)
+    const repeated = widgetFormSchema.safeParse({ ...validWidget, extraCategoryIds: [2, 2] })
+    expect(fieldMessages(repeated).extraCategoryIds).toBe('Each category can only be chosen once')
+  })
+
   it('accepts an empty assignee and a padded valid one, rejects an invalid one', () => {
     expect(widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '' }).success).toBe(true)
     const padded = widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '  a@example.com ' })

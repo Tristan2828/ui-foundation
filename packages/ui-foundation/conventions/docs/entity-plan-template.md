@@ -30,7 +30,10 @@ One or two sentences: what one record is, and who uses the screens.
     order; see the note below if it is *optional*), `multi choice` (list
     the options; any number can be picked —
     chips on the form, badges in the table, an any-of filter), `reference`
-    (to another entity — name it; a searchable combobox).
+    (to another entity — name it; a searchable combobox), `multi reference`
+    (to any number of records of another entity — name it; chips with a
+    searchable dropdown, names as badges in the table, an any-of filter;
+    the other entity's list endpoint must also accept `ids`).
   - *Close variants* (built by a small, stated change to the nearest
     pattern): `integer` (from decimal), `url` (from email — a format
     check), `date` (from date-time — no time part).

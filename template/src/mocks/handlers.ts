@@ -61,6 +61,18 @@ function validateWidgetInput(
   ) {
     issues.push({ loc: ["body", "assigneeEmail"], msg: "value is not a valid email address", type: "value_error.email" });
   }
+  // Multi reference: a list of unique, existing category ids. null is a
+  // 422 on PATCH (leaving it out keeps the set).
+  if (input.extraCategoryIds !== undefined) {
+    const ids = input.extraCategoryIds as unknown;
+    if (!Array.isArray(ids) || !ids.every((id) => Number.isInteger(id))) {
+      issues.push({ loc: ["body", "extraCategoryIds"], msg: "value is not a valid list of ids", type: "type_error.list" });
+    } else if (new Set(ids).size !== ids.length) {
+      issues.push({ loc: ["body", "extraCategoryIds"], msg: "extraCategoryIds must be unique", type: "value_error.list.unique_items" });
+    } else if (!ids.every((id) => categories.some((c) => c.id === id))) {
+      issues.push({ loc: ["body", "extraCategoryIds"], msg: "unknown category ids", type: "value_error.foreign_key" });
+    }
+  }
   if (input.categoryId !== undefined && !categories.some((c) => c.id === input.categoryId)) {
     issues.push({ loc: ["body", "categoryId"], msg: "category not found", type: "value_error.foreign_key" });
   }
@@ -88,7 +100,10 @@ export const handlers = [
     const url = new URL(request.url);
     const search = url.searchParams.get("search")?.toLowerCase();
     const limit = Number(url.searchParams.get("limit") ?? 20);
-    const result = search ? categories.filter((c) => c.name.toLowerCase().includes(search)) : categories;
+    // Repeated ids=1&ids=3: exactly those, unknown ones left out (openapi.yaml).
+    const ids = url.searchParams.getAll("ids").map(Number);
+    let result = search ? categories.filter((c) => c.name.toLowerCase().includes(search)) : categories;
+    if (ids.length > 0) result = result.filter((c) => ids.includes(c.id));
     return HttpResponse.json(result.slice(0, limit));
   }),
 
@@ -103,6 +118,8 @@ export const handlers = [
     const tags = url.searchParams.getAll("tags");
     // "true" or "false"; absent means either (openapi.yaml).
     const inStock = url.searchParams.get("inStock");
+    // Repeated, any of them (openapi.yaml).
+    const extraCategoryIds = url.searchParams.getAll("extraCategoryIds").map(Number);
 
     let result = widgets;
     if (status) result = result.filter((w) => w.status === status);
@@ -111,6 +128,9 @@ export const handlers = [
     if (tags.length > 0) result = result.filter((w) => w.tags.some((tag) => tags.includes(tag)));
     if (inStock === "true" || inStock === "false") {
       result = result.filter((w) => w.inStock === (inStock === "true"));
+    }
+    if (extraCategoryIds.length > 0) {
+      result = result.filter((w) => w.extraCategoryIds.some((id) => extraCategoryIds.includes(id)));
     }
     result = sortWidgets(result, url.searchParams.get("sort"));
 
@@ -138,6 +158,7 @@ export const handlers = [
       ...input,
       tags: input.tags ?? [],
       inStock: input.inStock ?? true,
+      extraCategoryIds: [...(input.extraCategoryIds ?? [])].sort((a, b) => a - b),
       id: nextWidgetId(),
     };
     widgets.push(widget);
@@ -155,6 +176,8 @@ export const handlers = [
       return HttpResponse.json({ detail: issues }, { status: 422 });
     }
     Object.assign(widget, input);
+    // Read back in ascending id order, like the backend.
+    if (input.extraCategoryIds) widget.extraCategoryIds = [...input.extraCategoryIds].sort((a, b) => a - b);
     return HttpResponse.json(widget);
   }),
 

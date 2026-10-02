@@ -21,6 +21,7 @@ foundation supports has a working, tested reference.
 | price | Price | decimal | yes | 2 places, e.g. 19.99 | column, sortable | |
 | description | Description | long text | yes | up to 2000 chars | column | |
 | tags | Tags | multi choice | no | fragile, bulky, seasonal, featured; any number, no repeats; none means untagged | column | yes (any of) |
+| extraCategoryIds | Extra Categories | multi reference → Category | no | any number, no repeats; picked from a searchable list; none means no extra categories | column | yes (any of) |
 | inStock | In Stock | yes/no | yes | default yes; filter labels Any stock, In stock, Out of stock | column | yes |
 
 ## List screen

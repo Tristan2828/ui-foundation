@@ -2,12 +2,13 @@
 // composite: this file owns widget-specific state (the QuerySpec, the
 // column defs) and none of the table's rendering logic.
 import { PlusIcon } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import {
   type QuerySpec,
   DataTable,
   MultiChoice,
+  MultiReference,
   useDebouncedValue,
   useTableUrlState,
 } from '@tristan2828/ui-foundation'
@@ -22,7 +23,7 @@ import {
 } from '@tristan2828/ui-foundation/ui/select'
 import { WIDGET_STATUSES, WIDGET_TAGS } from './widget-schema'
 import { buildWidgetsColumns } from './widgets-columns'
-import { useCategoriesQuery } from './use-categories'
+import { categoryNames, useCategoriesByIdsQuery, useCategoriesQuery } from './use-categories'
 import { useWidgetsQuery } from './use-widgets'
 
 // A visual-only caption above each toolbar filter, so the field stays
@@ -64,7 +65,7 @@ const IN_STOCK_FILTER_LABELS: Record<string, string> = {
   false: 'Out of stock',
 }
 const FILTERS = ['search', 'status', 'inStock'] as const
-const MULTI_FILTERS = ['tags'] as const
+const MULTI_FILTERS = ['tags', 'extraCategoryIds'] as const
 const SEARCH_DEBOUNCE_MS = 300
 
 export function WidgetsTableRoute() {
@@ -85,6 +86,15 @@ export function WidgetsTableRoute() {
     () => (tagsParam ? tagsParam.split(',') : []) as (typeof WIDGET_TAGS)[number][],
     [tagsParam],
   )
+  // Multi-reference filter: ids live in the URL as strings; anything that
+  // isn't a positive integer (a hand-edited URL) is dropped.
+  const extraCategoryParam = multiFilters.extraCategoryIds.filter((id) => /^[1-9]\d*$/.test(id)).join(',')
+  const extraCategoryFilter = useMemo(
+    () => (extraCategoryParam ? extraCategoryParam.split(',').map(Number) : []),
+    [extraCategoryParam],
+  )
+  const [extraCategorySearch, setExtraCategorySearch] = useState('')
+  const extraCategoryOptionsQuery = useCategoriesQuery(extraCategorySearch)
   // The input shows `search` live; the request waits for typing to pause.
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
@@ -97,26 +107,38 @@ export function WidgetsTableRoute() {
         search: debouncedSearch || undefined,
         status: statusFilter === STATUS_FILTER_ALL ? undefined : statusFilter,
         tags: tagsFilter,
+        extraCategoryIds: extraCategoryFilter,
         inStock: inStockFilter === IN_STOCK_FILTER_ALL ? undefined : inStockFilter === 'true',
       },
     }),
-    [page, sorting, debouncedSearch, statusFilter, tagsFilter, inStockFilter],
+    [page, sorting, debouncedSearch, statusFilter, tagsFilter, inStockFilter, extraCategoryFilter],
   )
 
   const widgetsQuery = useWidgetsQuery(query)
-  const categoriesQuery = useCategoriesQuery('')
+  // Every category id on this page (each row's category and extra ones)
+  // plus the filter's picks, named in one lookup by id: a name never
+  // depends on what a search happened to return.
+  const items = widgetsQuery.data?.items
+  const referencedCategoryIds = useMemo(
+    () => [
+      ...(items ?? []).flatMap((widget) => [widget.categoryId, ...widget.extraCategoryIds]),
+      ...extraCategoryFilter,
+    ],
+    [items, extraCategoryFilter],
+  )
+  const referencedCategoriesQuery = useCategoriesByIdsQuery(referencedCategoryIds)
+  const names = useMemo(
+    () => categoryNames(extraCategoryOptionsQuery.data, referencedCategoriesQuery.data),
+    [extraCategoryOptionsQuery.data, referencedCategoriesQuery.data],
+  )
 
-  const categoriesById = useMemo(() => {
-    const entries = (categoriesQuery.data ?? []).map((category) => [category.id, category.name] as const)
-    return Object.fromEntries(entries)
-  }, [categoriesQuery.data])
-
-  const columns = useMemo(() => buildWidgetsColumns(categoriesById), [categoriesById])
+  const columns = useMemo(() => buildWidgetsColumns(names), [names])
 
   const hasActiveFilters =
     search !== '' ||
     statusFilter !== STATUS_FILTER_ALL ||
     tagsFilter.length > 0 ||
+    extraCategoryFilter.length > 0 ||
     inStockFilter !== IN_STOCK_FILTER_ALL
 
   return (
@@ -143,7 +165,7 @@ export function WidgetsTableRoute() {
         onRetry={() => widgetsQuery.refetch()}
         emptyTitle={hasActiveFilters ? 'No widgets match your filters' : 'No widgets yet'}
         emptyDescription={
-          hasActiveFilters ? 'Try a different search, status, tag or stock filter.' : 'Create one to get started.'
+          hasActiveFilters ? 'Try a different search, status, tag, category or stock filter.' : 'Create one to get started.'
         }
         emptyAction={
           !hasActiveFilters && (
@@ -195,6 +217,23 @@ export function WidgetsTableRoute() {
                 onValueChange={(tags) => setMultiFilter('tags', tags)}
                 placeholder="Any tag"
                 aria-label="Filter by tags"
+                className="w-56"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <FilterLabel>Extra Categories</FilterLabel>
+              <MultiReference
+                options={(extraCategoryOptionsQuery.data ?? []).map((category) => ({
+                  id: category.id,
+                  label: category.name,
+                }))}
+                value={extraCategoryFilter}
+                onValueChange={(ids) => setMultiFilter('extraCategoryIds', ids.map(String))}
+                getLabel={(id) => names.get(id)}
+                onSearchChange={setExtraCategorySearch}
+                placeholder="Any category"
+                emptyText="No categories found."
+                aria-label="Filter by extra categories"
                 className="w-56"
               />
             </div>

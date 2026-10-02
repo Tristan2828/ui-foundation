@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
 from app.main import app
-from app.models import User, Widget
+from app.models import Category, User, Widget
 from app.routers.auth import get_current_user
 
 
@@ -220,3 +220,75 @@ async def test_null_or_non_boolean_in_stock_is_a_field_error(client: AsyncClient
     garbage = await client.post("/api/widgets", json={**_NEW_WIDGET, "inStock": "maybe"})
     assert garbage.status_code == 422
     assert any(item["loc"][-1] == "inStock" for item in garbage.json()["detail"])
+
+
+# --- extraCategoryIds: the multi-reference field (3.5.0) --------------------
+
+
+async def _add_categories(session: AsyncSession) -> None:
+    session.add(Category(id=2, name="Furniture"))
+    session.add(Category(id=3, name="Stationery"))
+    await session.commit()
+
+
+async def test_extra_categories_default_to_empty_and_read_back_ascending(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await _add_categories(session)
+    empty = await client.post("/api/widgets", json=_NEW_WIDGET)
+    assert empty.json()["extraCategoryIds"] == []
+    linked = await client.post("/api/widgets", json={**_NEW_WIDGET, "extraCategoryIds": [3, 1]})
+    assert linked.status_code == 201
+    assert linked.json()["extraCategoryIds"] == [1, 3]
+
+
+async def test_patch_extra_categories_replaces_clears_or_leaves_the_set(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await _add_categories(session)
+    widget_id = (await client.post("/api/widgets", json={**_NEW_WIDGET, "extraCategoryIds": [2]})).json()["id"]
+    replaced = await client.patch(f"/api/widgets/{widget_id}", json={"extraCategoryIds": [1, 3]})
+    assert replaced.json()["extraCategoryIds"] == [1, 3]
+    untouched = await client.patch(f"/api/widgets/{widget_id}", json={"name": "Renamed"})
+    assert untouched.json()["extraCategoryIds"] == [1, 3]
+    cleared = await client.patch(f"/api/widgets/{widget_id}", json={"extraCategoryIds": []})
+    assert cleared.json()["extraCategoryIds"] == []
+
+
+async def test_extra_categories_filter_matches_any_of_the_given_ids(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await _add_categories(session)
+    await client.post("/api/widgets", json={**_NEW_WIDGET, "name": "A", "extraCategoryIds": [2]})
+    await client.post("/api/widgets", json={**_NEW_WIDGET, "name": "B", "extraCategoryIds": [3]})
+    await client.post("/api/widgets", json={**_NEW_WIDGET, "name": "C"})
+    res = await client.get("/api/widgets", params=[("extraCategoryIds", "2"), ("extraCategoryIds", "3")])
+    assert sorted(w["name"] for w in res.json()["items"]) == ["A", "B"]
+
+
+async def test_unknown_duplicate_or_null_extra_categories_are_field_errors(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await _add_categories(session)
+    unknown = await client.post("/api/widgets", json={**_NEW_WIDGET, "extraCategoryIds": [1, 99]})
+    assert unknown.status_code == 422
+    assert any(item["loc"][-1] == "extraCategoryIds" for item in unknown.json()["detail"])
+
+    duplicate = await client.post("/api/widgets", json={**_NEW_WIDGET, "extraCategoryIds": [2, 2]})
+    assert duplicate.status_code == 422
+    assert any(item["loc"][-1] == "extraCategoryIds" for item in duplicate.json()["detail"])
+
+    widget_id = (await client.post("/api/widgets", json=_NEW_WIDGET)).json()["id"]
+    unknown_patch = await client.patch(f"/api/widgets/{widget_id}", json={"extraCategoryIds": [42]})
+    assert unknown_patch.status_code == 422
+    null = await client.patch(f"/api/widgets/{widget_id}", json={"extraCategoryIds": None})
+    assert null.status_code == 422
+
+
+async def test_categories_by_ids_returns_exactly_those_ignoring_unknown(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await _add_categories(session)
+    res = await client.get("/api/categories", params=[("ids", "3"), ("ids", "1"), ("ids", "99")])
+    assert res.status_code == 200
+    assert sorted(c["id"] for c in res.json()) == [1, 3]

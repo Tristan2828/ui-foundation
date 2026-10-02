@@ -5,6 +5,26 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.5.0 — the multi-reference field type
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook and plan template.
+
+- **Multi reference is a supported field type.** Entity plans can now say
+  `multi reference → <Entity>`: links to any number of records of another
+  entity. The template's Widget gains `extraCategoryIds` as the reference
+  to copy: chips with a searchable dropdown on the form, names as badges
+  in the table, and an any-of filter sent as a repeated parameter.
+- **New composite:** `MultiReference`, `MultiChoice`'s sibling for record
+  ids. It never guesses a name: the app passes `getLabel`, fed by a lookup
+  by id on the referenced entity (`GET /categories?ids=...` in the
+  template), so a saved pick is named even when the current search doesn't
+  return it.
+- **Nothing to change in an existing app.** The Widget changes are in the
+  template only (migration `0007_widget_extra_categories.py`, the
+  `/categories` `ids` parameter, and the matching spec, mock, gateway and
+  screen changes).
+
 ## 3.4.0 — the yes/no field type
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

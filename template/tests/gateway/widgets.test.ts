@@ -34,6 +34,7 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
     description: "A widget",
     tags: [],
     inStock: true,
+    extraCategoryIds: [],
     ...overrides,
   };
 }
@@ -226,6 +227,25 @@ describe("listWidgets", () => {
     const result = await listWidgets({ page: 1, pageSize: 20 });
 
     expect(result.items.map((item) => item.inStock)).toEqual([true, false]);
+  });
+});
+
+describe("listWidgets: extraCategoryIds", () => {
+  // openapi.yaml: extraCategoryIds is style: form, explode: true, any of.
+  it("sends filters.extraCategoryIds as a repeated parameter, one per id", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({ page: 1, pageSize: 20, filters: { extraCategoryIds: [1, 3] } });
+
+    expect(calledUrl(fetchMock).searchParams.getAll("extraCategoryIds")).toEqual(["1", "3"]);
+  });
+
+  it("sends no extraCategoryIds parameter for an empty array", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({ page: 1, pageSize: 20, filters: { extraCategoryIds: [] } });
+
+    expect(calledUrl(fetchMock).searchParams.has("extraCategoryIds")).toBe(false);
   });
 });
 
@@ -464,6 +484,30 @@ describe("updateWidget", () => {
     const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
     expect(body).toEqual({ tags: [] });
     expect(result.tags).toEqual([]);
+  });
+
+  it("sends extraCategoryIds: [] in the body (clears the set) rather than omitting it", async () => {
+    const fetchMock = stubFetch(jsonResponse(makeWidget({ id: 3, extraCategoryIds: [] }), 200));
+
+    const result = await updateWidget(3, { extraCategoryIds: [] });
+
+    const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
+    expect(body).toEqual({ extraCategoryIds: [] });
+    expect(result.extraCategoryIds).toEqual([]);
+  });
+
+  it("keys a 422 on extraCategoryIds (loc ['body','extraCategoryIds']) under fieldErrors.extraCategoryIds", async () => {
+    stubFetch(
+      jsonResponse(
+        { detail: [{ loc: ["body", "extraCategoryIds"], msg: "unknown category ids", type: "value_error.foreign_key" }] },
+        422,
+      ),
+    );
+
+    await expect(updateWidget(3, { extraCategoryIds: [99] })).rejects.toMatchObject({
+      kind: "validation",
+      fieldErrors: { extraCategoryIds: ["unknown category ids"] },
+    });
   });
 
   it("sends inStock: false in the body rather than omitting it", async () => {

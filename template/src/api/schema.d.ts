@@ -162,7 +162,7 @@ export interface components {
          * @enum {string}
          */
         WidgetTag: "fragile" | "bulky" | "seasonal" | "featured";
-        /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it, and inStock (yes/no) in 3.4.0 for the Task Dashboard app. Add a type only when a real app needs one. */
+        /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it, inStock (yes/no) in 3.4.0 and extraCategoryIds (multi reference) in 3.5.0 for the Task Dashboard app. Add a type only when a real app needs one. */
         Widget: {
             readonly id: number;
             /** @description Display label. Not one of the six forcing field types. */
@@ -192,8 +192,10 @@ export interface components {
              * @default true
              */
             inStock: boolean;
+            /** @description Multi-reference field — links to any number of Category records by id. Forces a multi-select combobox with async search and chips on the form (names fetched with GET /categories?ids=...), names as badges in the table, and an any-of list filter. Always present on read, in ascending id order; empty when none. An id that isn't a category is a 422 field error. */
+            extraCategoryIds: number[];
         };
-        /** @description Widget without a server-assigned id. tags defaults to [] and inStock to true. */
+        /** @description Widget without a server-assigned id. tags and extraCategoryIds default to [], inStock to true. */
         WidgetCreate: {
             name: components["schemas"]["Widget"]["name"];
             categoryId: components["schemas"]["Widget"]["categoryId"];
@@ -204,8 +206,9 @@ export interface components {
             description: components["schemas"]["Widget"]["description"];
             tags?: components["schemas"]["Widget"]["tags"];
             inStock?: components["schemas"]["Widget"]["inStock"];
+            extraCategoryIds?: components["schemas"]["Widget"]["extraCategoryIds"];
         };
-        /** @description All fields optional — PATCH semantics. tags, when sent, replaces the whole set (send [] to clear it). */
+        /** @description All fields optional — PATCH semantics. tags, when sent, replaces the whole set (send [] to clear it); so does extraCategoryIds. */
         WidgetUpdate: {
             name?: components["schemas"]["Widget"]["name"];
             categoryId?: components["schemas"]["Widget"]["categoryId"];
@@ -216,6 +219,7 @@ export interface components {
             description?: components["schemas"]["Widget"]["description"];
             tags?: components["schemas"]["Widget"]["tags"];
             inStock?: components["schemas"]["Widget"]["inStock"];
+            extraCategoryIds?: components["schemas"]["Widget"]["extraCategoryIds"];
         };
         /** @description Wire pagination shape — deliberately not Page<T>. The gateway computes page/pageSize from offset/limit; see src/api/gateway/. */
         WidgetListResponse: {
@@ -379,6 +383,8 @@ export interface operations {
             query?: {
                 /** @description Case-insensitive substring match on name. */
                 search?: string;
+                /** @description Only these categories, e.g. "ids=1&ids=3" — how a form or table gets the names of references it already holds, whether or not they match the current search. Unknown ids are left out. */
+                ids?: number[];
                 limit?: number;
             };
             header?: never;
@@ -415,6 +421,8 @@ export interface operations {
                 tags?: components["schemas"]["WidgetTag"][];
                 /** @description Only widgets whose inStock matches, sent as "inStock=true" or "inStock=false". Absent means either. */
                 inStock?: boolean;
+                /** @description Widgets linked to any of these categories through extraCategoryIds. Repeat the parameter once per id, e.g. "extraCategoryIds=1&extraCategoryIds=3". */
+                extraCategoryIds?: number[];
             };
             header?: never;
             path?: never;

@@ -99,6 +99,18 @@ paths:
           in: query
           schema: { type: string }
           description: Case-insensitive substring match on name.
+        - name: ids
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items: { type: integer }
+            maxItems: 100
+          description: >
+            Only these categories, e.g. "ids=1&ids=3" — how a form or table
+            gets the names of references it already holds, whether or not
+            they match the current search. Unknown ids are left out.
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
@@ -157,6 +169,17 @@ paths:
           description: >
             Only widgets whose inStock matches, sent as "inStock=true" or
             "inStock=false". Absent means either.
+        - name: extraCategoryIds
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items: { type: integer }
+          description: >
+            Widgets linked to any of these categories through
+            extraCategoryIds. Repeat the parameter once per id, e.g.
+            "extraCategoryIds=1&extraCategoryIds=3".
       responses:
         "200":
           description: A page of widgets.
@@ -282,8 +305,9 @@ components:
         unambiguously to the UI pattern it exercises and /new-entity has a
         reference to copy (docs/entities/widget.md). Six came from Phase 4;
         tags (multi choice) was added in Phase G because a real project
-        needed it, and inStock (yes/no) in 3.4.0 for the Task Dashboard
-        app. Add a type only when a real app needs one.
+        needed it, inStock (yes/no) in 3.4.0 and extraCategoryIds (multi
+        reference) in 3.5.0 for the Task Dashboard app. Add a type only
+        when a real app needs one.
       required:
         - id
         - name
@@ -294,6 +318,7 @@ components:
         - description
         - tags
         - inStock
+        - extraCategoryIds
       properties:
         id: { type: integer, readOnly: true }
         name:
@@ -350,12 +375,23 @@ components:
             Yes/no field — forces a switch on the form, a Yes/No cell in the
             table and an either/yes/no list filter. Never null: always
             present on read, true when a create leaves it out.
+        extraCategoryIds:
+          type: array
+          items: { type: integer }
+          uniqueItems: true
+          description: >
+            Multi-reference field — links to any number of Category records
+            by id. Forces a multi-select combobox with async search and
+            chips on the form (names fetched with GET /categories?ids=...),
+            names as badges in the table, and an any-of list filter.
+            Always present on read, in ascending id order; empty when none.
+            An id that isn't a category is a 422 field error.
 
     WidgetCreate:
       type: object
       description: >
-        Widget without a server-assigned id. tags defaults to [] and inStock
-        to true.
+        Widget without a server-assigned id. tags and extraCategoryIds
+        default to [], inStock to true.
       required: [name, categoryId, status, availableFrom, price, description]
       properties:
         name: { $ref: "#/components/schemas/Widget/properties/name" }
@@ -367,12 +403,13 @@ components:
         description: { $ref: "#/components/schemas/Widget/properties/description" }
         tags: { $ref: "#/components/schemas/Widget/properties/tags" }
         inStock: { $ref: "#/components/schemas/Widget/properties/inStock" }
+        extraCategoryIds: { $ref: "#/components/schemas/Widget/properties/extraCategoryIds" }
 
     WidgetUpdate:
       type: object
       description: >
         All fields optional — PATCH semantics. tags, when sent, replaces the
-        whole set (send [] to clear it).
+        whole set (send [] to clear it); so does extraCategoryIds.
       properties:
         name: { $ref: "#/components/schemas/Widget/properties/name" }
         categoryId: { $ref: "#/components/schemas/Widget/properties/categoryId" }
@@ -383,6 +420,7 @@ components:
         description: { $ref: "#/components/schemas/Widget/properties/description" }
         tags: { $ref: "#/components/schemas/Widget/properties/tags" }
         inStock: { $ref: "#/components/schemas/Widget/properties/inStock" }
+        extraCategoryIds: { $ref: "#/components/schemas/Widget/properties/extraCategoryIds" }
 
     WidgetListResponse:
       type: object

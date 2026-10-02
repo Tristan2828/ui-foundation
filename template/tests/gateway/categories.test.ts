@@ -7,7 +7,7 @@
 // style error, because src/api/gateway/categories.ts does not exist yet.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listCategories } from "../../src/api/gateway/categories";
+import { getCategoriesByIds, listCategories } from "../../src/api/gateway/categories";
 import type { AppError } from "@tristan2828/ui-foundation";
 import type { components } from "../../src/api/schema";
 
@@ -81,6 +81,43 @@ describe("listCategories", () => {
 
     await expect(listCategories("x")).rejects.toMatchObject({
       kind: "network",
+    } satisfies Partial<AppError>);
+  });
+});
+
+// openapi.yaml: GET /categories?ids=1&ids=3 — "how a form or table gets the
+// names of references it already holds". Repeated (exploded) parameter.
+describe("getCategoriesByIds", () => {
+  it("sends each id as a repeated ids parameter, with no search, and resolves with Category[]", async () => {
+    const categories: Category[] = [
+      { id: 1, name: "Alpha" },
+      { id: 3, name: "Gamma" },
+    ];
+    const fetchMock = stubFetch(jsonResponse(categories, 200));
+
+    const result = await getCategoriesByIds([1, 3]);
+
+    const url = calledUrl(fetchMock);
+    expect(url.pathname).toBe("/api/categories");
+    expect(url.searchParams.getAll("ids")).toEqual(["1", "3"]);
+    expect(url.searchParams.has("search")).toBe(false);
+    expect(result).toEqual(categories);
+  });
+
+  it("resolves with [] for no ids without making a request (no ids would mean every category)", async () => {
+    const fetchMock = stubFetch(jsonResponse([{ id: 1, name: "Alpha" }], 200));
+
+    const result = await getCategoriesByIds([]);
+
+    expect(result).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("throws AppError{kind:'server'} on 500", async () => {
+    stubFetch(jsonResponse({ detail: "Internal Server Error" }, 500));
+
+    await expect(getCategoriesByIds([1])).rejects.toMatchObject({
+      kind: "server",
     } satisfies Partial<AppError>);
   });
 });

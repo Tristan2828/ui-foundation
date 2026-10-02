@@ -10,9 +10,9 @@ files to the app's `docs/entities/` and delete them here.
 | [`category.md`](category.md) | 1 | Yes |
 | [`trigger.md`](trigger.md) | 2 | No: needs a row toggle and a computed count |
 | [`requirement.md`](requirement.md) | 3 | No: needs a row toggle |
-| [`task.md`](task.md) | 4 | No: needs multi reference, sub-records and a computed field |
+| [`task.md`](task.md) | 4 | No: needs sub-records and a computed field |
 
-Yes/no fields shipped in foundation 3.4.0.
+Yes/no fields shipped in foundation 3.4.0, multi reference in 3.5.0.
 
 ## Decisions behind the plans
 
