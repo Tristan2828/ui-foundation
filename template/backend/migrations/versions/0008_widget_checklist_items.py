@@ -33,6 +33,12 @@ COLUMN_COMMENTS = {
 }
 
 
+def _quote(value: str) -> str:
+    # A SQL string literal: a ' inside the text (as in "item's") is doubled,
+    # as in 0005. An unquoted apostrophe ends the literal early.
+    return "'" + value.replace("'", "''") + "'"
+
+
 def upgrade() -> None:
     items = op.create_table(
         "widget_checklist_items",
@@ -55,9 +61,9 @@ def upgrade() -> None:
         )
 
     if bind.dialect.name == "postgresql":
-        op.execute(f"COMMENT ON TABLE widget_checklist_items IS '{TABLE_COMMENT}'")
+        op.execute(f"COMMENT ON TABLE widget_checklist_items IS {_quote(TABLE_COMMENT)}")
         for column, comment in COLUMN_COMMENTS.items():
-            op.execute(f"COMMENT ON COLUMN widget_checklist_items.{column} IS '{comment}'")
+            op.execute(f"COMMENT ON COLUMN widget_checklist_items.{column} IS {_quote(comment)}")
 
 
 def downgrade() -> None:
