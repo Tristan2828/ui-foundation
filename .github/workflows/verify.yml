@@ -33,9 +33,27 @@ jobs:
   verify-backend:
     # The reference backend's gate: mypy, pytest (SQLite) and a diff of
     # FastAPI's generated OpenAPI document against template/openapi.yaml.
-    # The Postgres-backed run is template/scripts/check-backend-postgres.sh,
-    # run locally for backend changes (it needs Docker).
+    # Then the migrations against a real Postgres and the COMMENT ON check
+    # (scripts/check_db_comments.py), which SQLite can't run. The full
+    # Postgres-backed run (live server, real-mode Playwright) is
+    # template/scripts/check-backend-postgres.sh, run locally for backend
+    # changes (it needs Docker).
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Same image and credentials as template/docker-compose.yml.
+        image: postgres:18
+        env:
+          POSTGRES_USER: ui_foundation
+          POSTGRES_PASSWORD: ui_foundation
+          POSTGRES_DB: ui_foundation
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ui_foundation"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
     defaults:
       run:
         working-directory: template/backend
@@ -48,3 +66,10 @@ jobs:
           cache-dependency-path: template/backend/pyproject.toml
       - run: pip install -e ".[dev]"
       - run: bash scripts/verify.sh
+      - name: Migrations and COMMENT ON check against Postgres
+        env:
+          DATABASE_URL: postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation
+          DATABASE_SSL: "false"
+        run: |
+          python -m alembic upgrade head
+          python scripts/check_db_comments.py
