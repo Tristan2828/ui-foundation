@@ -7,10 +7,13 @@ import { Link } from 'react-router'
 import { Badge } from '@tristan2828/ui-foundation/ui/badge'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import type { components } from '@/api/schema'
+import { CategoryName } from './category-names'
 import { DeleteWidgetAction } from './delete-widget-action'
+import { CHECKLIST_STATE_LABELS } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
 type WidgetStatus = components['schemas']['WidgetStatus']
+type WidgetChecklistState = components['schemas']['WidgetChecklistState']
 
 // Enum → tone-mapped badge: group the values by what they *mean* (good /
 // neutral / bad) first, then pick one style for the whole column. The
@@ -31,6 +34,15 @@ const STATUS_BADGE_VARIANT: Record<WidgetStatus, 'outline' | 'outline-success' |
   archived: 'secondary',
 }
 
+// Computed field (the server works it out): an enum → tone-mapped badge
+// like Status. Only `complete` earns a tone; an empty or unfinished list
+// isn't a problem.
+const CHECKLIST_STATE_BADGE_VARIANT: Record<WidgetChecklistState, 'outline' | 'outline-success' | 'secondary'> = {
+  none: 'secondary',
+  open: 'outline',
+  complete: 'outline-success',
+}
+
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   year: 'numeric',
   month: 'short',
@@ -43,9 +55,10 @@ const priceFormatter = new Intl.NumberFormat(undefined, {
   currency: 'USD',
 })
 
-export function buildWidgetsColumns(
-  categoryNames: ReadonlyMap<number, string>,
-): LegacyColumnDef<Widget, unknown>[] {
+// Takes nothing that changes after the first render: rebuilt columns
+// remount every cell (see category-names.tsx). Data that arrives later
+// (names) reaches the cells through context instead.
+export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
   return [
     {
       id: 'name',
@@ -55,7 +68,8 @@ export function buildWidgetsColumns(
     },
     {
       id: 'category',
-      accessorFn: (widget) => categoryNames.get(widget.categoryId) ?? `#${widget.categoryId}`,
+      accessorKey: 'categoryId',
+      cell: ({ getValue }) => <CategoryName id={getValue() as number} />,
       header: 'Category',
       enableSorting: false,
     },
@@ -141,7 +155,7 @@ export function buildWidgetsColumns(
           <div className="flex flex-wrap gap-1">
             {ids.map((id) => (
               <Badge key={id} variant="outline">
-                {categoryNames.get(id) ?? '…'}
+                <CategoryName id={id} />
               </Badge>
             ))}
           </div>
@@ -164,6 +178,17 @@ export function buildWidgetsColumns(
             {done}/{items.length} done
           </span>
         )
+      },
+    },
+    {
+      // Computed, read-only: sortable because the server sorts on it.
+      id: 'checklistState',
+      accessorKey: 'checklistState',
+      header: 'Progress',
+      enableSorting: true,
+      cell: ({ getValue }) => {
+        const state = getValue() as WidgetChecklistState
+        return <Badge variant={CHECKLIST_STATE_BADGE_VARIANT[state]}>{CHECKLIST_STATE_LABELS[state]}</Badge>
       },
     },
     {

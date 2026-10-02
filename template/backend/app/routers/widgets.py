@@ -9,12 +9,22 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.exceptions import RequestValidationError
-from sqlalchemy import func
+from sqlalchemy import ColumnElement, case, exists, func
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
-from app.models import Category, User, Widget, WidgetExtraCategoryLink, WidgetStatus, WidgetTag, WidgetTagLink
+from app.models import (
+    Category,
+    User,
+    Widget,
+    WidgetChecklistItem,
+    WidgetChecklistState,
+    WidgetExtraCategoryLink,
+    WidgetStatus,
+    WidgetTag,
+    WidgetTagLink,
+)
 from app.openapi_responses import (
     CREATE_RESPONSES,
     DELETE_RESPONSES,
@@ -27,11 +37,36 @@ from app.schemas import Page, WidgetCreate, WidgetOut, WidgetUpdate
 
 router = APIRouter(tags=["widgets"], dependencies=[Depends(get_current_user)])
 
+def checklist_state_expr() -> ColumnElement[str]:
+    """The computed checklistState as SQL, so the list can filter and sort
+    on it across pages (a value computed in Python could only order the
+    page already fetched). Correlated EXISTS subqueries, the same on
+    Postgres and SQLite. Widget.checklist_state is its Python mirror."""
+    items = select(WidgetChecklistItem.id).where(WidgetChecklistItem.widget_id == Widget.id)
+    open_items = items.where(WidgetChecklistItem.done == False)  # noqa: E712 (SQL, not Python)
+    return case(
+        (~exists(items), WidgetChecklistState.none.value),
+        (exists(open_items), WidgetChecklistState.open.value),
+        else_=WidgetChecklistState.complete.value,
+    )
+
+
+def checklist_state_order() -> ColumnElement[int]:
+    """The enum's own order (none < open < complete), not alphabetical."""
+    state = checklist_state_expr()
+    return case(
+        (state == WidgetChecklistState.none.value, 0),
+        (state == WidgetChecklistState.open.value, 1),
+        else_=2,
+    )
+
+
 SORT_COLUMNS: dict[str, Any] = {
     "name": Widget.name,
     "status": Widget.status,
     "availableFrom": Widget.available_from,
     "price": Widget.price,
+    "checklistState": checklist_state_order(),
 }
 
 
@@ -60,12 +95,15 @@ async def _get_or_404(widget_id: int, user: User, session: AsyncSession) -> Widg
 async def list_widgets(
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
-    sort: str | None = Query(default=None, pattern=r"^(name|status|availableFrom|price):(asc|desc)$"),
+    sort: str | None = Query(
+        default=None, pattern=r"^(name|status|availableFrom|price|checklistState):(asc|desc)$"
+    ),
     status: WidgetStatus | None = None,
     categoryId: int | None = None,
     search: str | None = None,
     tags: list[WidgetTag] | None = Query(default=None),
     inStock: bool | None = None,
+    checklistState: WidgetChecklistState | None = None,
     extraCategoryIds: list[int] | None = Query(default=None),
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
@@ -84,6 +122,8 @@ async def list_widgets(
         stmt = stmt.where(col(Widget.id).in_(tagged))
     if inStock is not None:
         stmt = stmt.where(Widget.in_stock == inStock)
+    if checklistState is not None:
+        stmt = stmt.where(checklist_state_expr() == checklistState.value)
     if extraCategoryIds:
         linked = select(WidgetExtraCategoryLink.widget_id).where(
             col(WidgetExtraCategoryLink.category_id).in_(extraCategoryIds)

@@ -352,3 +352,59 @@ async def test_deleting_a_widget_deletes_its_checklist(client: AsyncClient, sess
 
     left = (await session.exec(select(WidgetChecklistItem).where(WidgetChecklistItem.widget_id == widget_id))).all()
     assert left == []
+
+
+# --- checklistState: the computed, read-only field (3.7.0) ------------------
+
+_STATES = {
+    "Empty": [],
+    "Half": [{"text": "a", "done": True}, {"text": "b", "done": False}],
+    "AllDone": [{"text": "a", "done": True}],
+}
+
+
+async def _make_state_widgets(client: AsyncClient) -> None:
+    for name, checklist in _STATES.items():
+        await client.post("/api/widgets", json={**_NEW_WIDGET, "name": name, "checklist": checklist})
+
+
+async def test_checklist_state_is_computed_on_every_read(client: AsyncClient) -> None:
+    created = await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": _STATES["Half"]})
+    assert created.json()["checklistState"] == "open"
+    widget_id = created.json()["id"]
+    ticked = await client.patch(
+        f"/api/widgets/{widget_id}", json={"checklist": [{"text": "a", "done": True}, {"text": "b", "done": True}]}
+    )
+    assert ticked.json()["checklistState"] == "complete"
+    cleared = await client.patch(f"/api/widgets/{widget_id}", json={"checklist": []})
+    assert cleared.json()["checklistState"] == "none"
+
+
+async def test_checklist_state_sent_by_a_client_is_ignored(client: AsyncClient) -> None:
+    res = await client.post("/api/widgets", json={**_NEW_WIDGET, "checklistState": "complete"})
+    assert res.status_code == 201
+    assert res.json()["checklistState"] == "none"
+
+
+async def test_filter_and_python_agree_on_every_state(client: AsyncClient) -> None:
+    # The SQL expression (filter, sort) and the Python property (the value
+    # each widget reads back with) must never disagree.
+    await _make_state_widgets(client)
+    for state in ("none", "open", "complete"):
+        res = (await client.get("/api/widgets", params={"checklistState": state, "limit": 100})).json()
+        assert res["items"], state
+        assert all(item["checklistState"] == state for item in res["items"]), state
+    everything = (await client.get("/api/widgets", params={"limit": 100})).json()
+    by_state = 0
+    for state in ("none", "open", "complete"):
+        by_state += (await client.get("/api/widgets", params={"checklistState": state, "limit": 100})).json()["total"]
+    assert by_state == everything["total"]
+
+
+async def test_sort_by_checklist_state_uses_the_enum_order_not_alphabetical(client: AsyncClient) -> None:
+    await _make_state_widgets(client)
+    names = {"Empty", "Half", "AllDone"}
+    asc = [w["name"] for w in (await client.get("/api/widgets", params={"sort": "checklistState:asc", "limit": 100})).json()["items"] if w["name"] in names]
+    assert asc == ["Empty", "Half", "AllDone"]
+    desc = [w["name"] for w in (await client.get("/api/widgets", params={"sort": "checklistState:desc", "limit": 100})).json()["items"] if w["name"] in names]
+    assert desc == ["AllDone", "Half", "Empty"]

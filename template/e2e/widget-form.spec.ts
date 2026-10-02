@@ -254,6 +254,18 @@ test.describe('widget form', () => {
     await expect(page.getByLabel('Item 3 text')).toHaveCount(0)
   })
 
+  test('computed field: never on the form, and recomputed by the server after a save', async ({ page }) => {
+    await page.goto('/widgets/1/edit')
+    await expect(page.getByText('In progress')).toHaveCount(0)
+    // Ticking the last open item makes the whole checklist complete.
+    await page.getByLabel('Item 2 done').click()
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL(/\/widgets$/)
+    const row = page.getByRole('row', { name: /Wireless Mouse/ })
+    await expect(row.getByText('Complete', { exact: true })).toBeVisible()
+  })
+
   test('sub-records: an empty list says so, and a blank item is caught on its own row', async ({ page }) => {
     await page.goto('/widgets/2/edit')
     await expect(page.getByText('No items yet.')).toBeVisible()

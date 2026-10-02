@@ -5,6 +5,34 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.7.0 — computed fields; stable table columns
+
+Docs and template only; no package code changed. Run
+`npx ui-foundation sync` after the bump.
+
+- **Computed fields are supported.** Entity plans can now say `computed`:
+  a read-only value the server works out from other data on every read
+  (a status derived from related records, a count). The template's Widget
+  gains `checklistState` (Progress: none / open / complete, from its
+  checklist) as the reference: one SQL expression drives the filter and
+  sort across pages, a Python mirror gives each row its value, and a test
+  proves the two agree.
+- **Fix in the template's widgets table: cells no longer remount when
+  category names arrive.** Its columns were rebuilt from the names, which
+  load after the rows, and TanStack's `flexRender` treats each `cell` as a
+  component, so every cell remounted about 30ms after first paint (focus
+  lost; an intermittent failure in the pinned-column e2e tests). Columns
+  are now built once and names reach the cells through context. **If your
+  app builds columns from data that loads later** (names for reference
+  ids, usually), do the same: see the template's
+  `src/routes/widgets/category-names.tsx` and the playbook's "Keep column
+  definitions stable".
+- **Fix in the template's `e2e/msw-contract.spec.ts`:** the binary-body
+  test now also waits for `window.__msw`, not only for a controlled page.
+  The override is installed after the worker starts, so an image requested
+  in between occasionally reached the dev server. Copy the one added
+  `waitForFunction` line if your app has this spec.
+
 ## 3.6.0 — sub-records edited on the parent's form
 
 Additive, with one small change to error keys (below). Run

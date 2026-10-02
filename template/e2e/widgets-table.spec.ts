@@ -242,6 +242,30 @@ test.describe('widgets table', () => {
     await expect(mouse.getByText('Pair the receiver')).toHaveCount(0)
   })
 
+  test('computed field: the server-worked-out value shows, filters and sorts in its own order', async ({ page }) => {
+    await page.goto('/widgets')
+    const mouse = page.getByRole('row').filter({ hasText: 'Wireless Mouse' })
+    await expect(mouse.getByText('In progress', { exact: true })).toBeVisible()
+    const desk = page.getByRole('row').filter({ hasText: 'Standing Desk' })
+    await expect(desk.getByText('No checklist', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('Filter by progress')).toContainText('Any progress')
+
+    await page.getByLabel('Filter by progress').click()
+    await page.getByRole('option', { name: 'In progress' }).click()
+    await expect(page).toHaveURL(/[?&]checklistState=open/)
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
+    await page.getByLabel('Filter by progress').click()
+    await page.getByRole('option', { name: 'Any progress' }).click()
+
+    // Descending: In progress (open) before the No checklist rows, the
+    // enum's order rather than the alphabet's.
+    await page.getByRole('button', { name: 'Progress' }).click()
+    await page.getByRole('button', { name: 'Progress' }).click()
+    await expect(page.getByRole('columnheader', { name: 'Progress' })).toHaveAttribute('aria-sort', 'descending')
+    await expect(page.getByRole('row').nth(1)).toContainText('Wireless Mouse')
+  })
+
   test('yes/no cell: the word carries the value, never a checkbox', async ({ page }) => {
     await page.goto('/widgets')
     const mouse = page.getByRole('row').filter({ hasText: 'Wireless Mouse' })

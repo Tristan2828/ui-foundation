@@ -43,6 +43,14 @@ class WidgetStatus(str, Enum):
     archived = "archived"
 
 
+class WidgetChecklistState(str, Enum):
+    """The computed checklistState (openapi.yaml), in its sort order."""
+
+    none = "none"
+    open = "open"
+    complete = "complete"
+
+
 class WidgetTag(str, Enum):
     fragile = "fragile"
     bulky = "bulky"
@@ -133,6 +141,17 @@ class Widget(SQLModel, table=True):
             "order_by": "WidgetChecklistItem.position",
         }
     )
+
+    @property
+    def checklist_state(self) -> WidgetChecklistState:
+        """The wire field (WidgetOut.checklistState), from the loaded items.
+        Mirrors checklist_state_expr() in app/routers/widgets.py, which the
+        list's filter and sort use; tests/test_widgets.py checks they agree."""
+        if not self.checklist_items:
+            return WidgetChecklistState.none
+        if any(not item.done for item in self.checklist_items):
+            return WidgetChecklistState.open
+        return WidgetChecklistState.complete
 
     @property
     def checklist(self) -> list[WidgetChecklistItem]:

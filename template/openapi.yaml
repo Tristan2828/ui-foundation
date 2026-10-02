@@ -141,7 +141,7 @@ paths:
           in: query
           schema:
             type: string
-            pattern: "^(name|status|availableFrom|price):(asc|desc)$"
+            pattern: "^(name|status|availableFrom|price|checklistState):(asc|desc)$"
           description: 'Single sort field and direction, e.g. "name:asc".'
         - name: status
           in: query
@@ -163,6 +163,10 @@ paths:
           description: >
             Widgets with any of these tags. Repeat the parameter once per
             tag, e.g. "tags=fragile&tags=seasonal".
+        - name: checklistState
+          in: query
+          schema: { $ref: "#/components/schemas/WidgetChecklistState" }
+          description: Only widgets whose computed checklistState matches.
         - name: inStock
           in: query
           schema: { type: boolean }
@@ -306,8 +310,8 @@ components:
         reference to copy (docs/entities/widget.md). Six came from Phase 4;
         tags (multi choice) was added in Phase G because a real project
         needed it; inStock (yes/no) in 3.4.0, extraCategoryIds (multi
-        reference) in 3.5.0 and checklist (sub-records) in 3.6.0 for the
-        Task Dashboard app. Add a type only when a real app needs one.
+        reference) in 3.5.0, checklist (sub-records) in 3.6.0 and
+        checklistState (computed) in 3.7.0 for the Task Dashboard app. Add a type only when a real app needs one.
       required:
         - id
         - name
@@ -320,6 +324,7 @@ components:
         - inStock
         - extraCategoryIds
         - checklist
+        - checklistState
       properties:
         id: { type: integer, readOnly: true }
         name:
@@ -398,6 +403,15 @@ components:
             done-count in the table. Always present on read, in the order
             saved; empty when none. A field error inside an item is keyed
             by its path, e.g. loc ["body", "checklist", 2, "text"].
+        checklistState:
+          allOf: [{ $ref: "#/components/schemas/WidgetChecklistState" }]
+          readOnly: true
+          description: >
+            Computed, read-only field — worked out by the server from other
+            data on every read, never stored and never sent by a client
+            (absent from WidgetCreate/WidgetUpdate). Forces a read-only
+            badge column, a filter and a sort that the server evaluates, so
+            they hold across pages.
 
     WidgetCreate:
       type: object
@@ -436,6 +450,13 @@ components:
         inStock: { $ref: "#/components/schemas/Widget/properties/inStock" }
         extraCategoryIds: { $ref: "#/components/schemas/Widget/properties/extraCategoryIds" }
         checklist: { $ref: "#/components/schemas/Widget/properties/checklist" }
+
+    WidgetChecklistState:
+      type: string
+      enum: [none, open, complete]
+      description: >
+        none: the checklist is empty. open: at least one item isn't done.
+        complete: every item is done. Sorts in this order.
 
     ChecklistItem:
       type: object
