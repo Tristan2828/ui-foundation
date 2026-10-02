@@ -25,6 +25,7 @@ const initialWidgets: Widget[] = [
     description: "A basic wireless mouse with a 2.4GHz USB receiver.",
     tags: ["fragile"],
     inStock: true,
+    extraCategoryIds: [3],
   },
   {
     id: 2,
@@ -37,6 +38,7 @@ const initialWidgets: Widget[] = [
     description: "Electric height-adjustable desk, 120x60cm top.",
     tags: ["bulky", "featured"],
     inStock: true,
+    extraCategoryIds: [1, 3],
   },
   {
     id: 3,
@@ -49,6 +51,7 @@ const initialWidgets: Widget[] = [
     description: "Fine-nib fountain pen, discontinued.",
     tags: [],
     inStock: false,
+    extraCategoryIds: [],
   },
   {
     // The deliberately sparse row: every optional field at its empty
@@ -68,6 +71,7 @@ const initialWidgets: Widget[] = [
     description: "Every optional field empty — the empty-state fixture.",
     tags: [],
     inStock: false,
+    extraCategoryIds: [],
   },
 ];
 

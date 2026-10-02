@@ -27,10 +27,10 @@ what's possible right now.
 | interest | Interest | integer | no | 1–5, picked from a list and shown as 1–5 stars. Meant for learning tasks but allowed on any. Not set label: "Not rated" | column, sortable | |
 | costBand | Cost | single choice | no | free, under_50, from_50_to_250, from_250_to_1k, over_1k (labels Free, Under $50, $50–250, $250–1k, $1k+). Estimated materials/parts cost, not actual spend. Not set label: "Unknown" | column, sortable | yes |
 | repairKind | Fix or Improvement | single choice | no | fix, improvement (labels Fix, Improvement). Fix = something broken; Improvement = an upgrade, nothing broken. Not set label: "Neither" | column | yes |
-| categoryIds | Categories | multi reference → Category (**not supported yet**) | no | any number, no repeats; none means uncategorised | column | yes (any of) |
-| requirementIds | Needs | multi reference → Requirement (**not supported yet**) | no | any number, no repeats; none means nothing special needed | column | yes (any of) |
-| triggerIds | Waiting On | multi reference → Trigger (**not supported yet**) | no | any number, no repeats; none means not waiting on a life event | column | |
-| blockedByIds | Blocked By | multi reference → Task (**not supported yet**) | no | other tasks that must be done first; can't include itself; no loops (A waits on B waits on A is refused) | column | |
+| categoryIds | Categories | multi reference → Category | no | any number, no repeats; none means uncategorised | column | yes (any of) |
+| requirementIds | Needs | multi reference → Requirement | no | any number, no repeats; none means nothing special needed | column | yes (any of) |
+| triggerIds | Waiting On | multi reference → Trigger | no | any number, no repeats; none means not waiting on a life event | column | |
+| blockedByIds | Blocked By | multi reference → Task | no | other tasks that must be done first; can't include itself; no loops (A waits on B waits on A is refused) | column | |
 | readiness | Can Do Now | computed, read-only (**not supported yet**) | — | worked out by the server, never stored. **waiting** if any trigger hasn't happened; else **blocked** if any blocked-by task isn't done; else **needs** if any requirement is unavailable; else **ready**. Labels: Ready, Needs…, Waiting, Blocked; "Needs…" names the missing requirements | column | yes |
 
 Sub-records edited on the task's own page (**not supported yet**: the
@@ -64,11 +64,9 @@ playbook builds flat records only):
 
 These are foundation gaps, not product decisions. Each is marked
 **not supported yet** above, so the playbook will stop on them until it
-can build them (yes/no shipped in 3.4.0):
+can build them (yes/no shipped in 3.4.0, multi reference in 3.5.0; each
+referenced entity's list endpoint takes `ids` for naming picks):
 
-1. **Multi reference field** (categoryIds, requirementIds, triggerIds,
-   blockedByIds): today only a single `reference` or an enum
-   `multi choice` exists.
-2. **Sub-records edited on the parent's page** (checklist items, links).
-3. **Computed, read-only field** shown and filtered in the list
+1. **Sub-records edited on the parent's page** (checklist items, links).
+2. **Computed, read-only field** shown and filtered in the list
    (readiness).

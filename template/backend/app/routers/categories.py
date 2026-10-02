@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
-from sqlmodel import select
+from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
@@ -19,12 +19,16 @@ LIST_RESPONSES = {**UNAUTHORIZED, **SERVER_ERROR}
 @router.get("/categories", response_model=list[CategoryOut], responses=LIST_RESPONSES)
 async def list_categories(
     search: str | None = None,
+    ids: list[int] | None = Query(default=None, max_length=100),
     limit: int = Query(default=20, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
 ) -> list[Category]:
     stmt = select(Category)
     if search is not None:
         stmt = stmt.where(func.lower(Category.name).contains(search.lower()))
+    if ids:
+        # Exactly these (openapi.yaml): how a form names references it holds.
+        stmt = stmt.where(col(Category.id).in_(ids))
     stmt = stmt.limit(limit)
     result = await session.exec(stmt)
     return list(result.all())

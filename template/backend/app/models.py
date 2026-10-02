@@ -62,6 +62,17 @@ class WidgetTagLink(SQLModel, table=True):
     tag: WidgetTag = Field(primary_key=True)
 
 
+class WidgetExtraCategoryLink(SQLModel, table=True):
+    """One row per (widget, category) — the multi-reference field as a join
+    table (migration 0007), the same shape as WidgetTagLink with a foreign
+    key in place of the enum. Deleting either side deletes the link."""
+
+    __tablename__ = "widget_extra_categories"
+
+    widget_id: int = Field(foreign_key="widgets.id", primary_key=True, ondelete="CASCADE")
+    category_id: int = Field(foreign_key="categories.id", primary_key=True, ondelete="CASCADE")
+
+
 class Category(SQLModel, table=True):
     __tablename__ = "categories"
 
@@ -97,6 +108,19 @@ class Widget(SQLModel, table=True):
     tag_links: list[WidgetTagLink] = Relationship(
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"}
     )
+    extra_category_links: list[WidgetExtraCategoryLink] = Relationship(
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"}
+    )
+
+    @property
+    def extra_category_ids(self) -> list[int]:
+        """The wire field (WidgetOut.extraCategoryIds), ascending by id."""
+        return sorted(link.category_id for link in self.extra_category_links)
+
+    def set_extra_category_ids(self, ids: list[int]) -> None:
+        """Replace the whole set — PATCH semantics, like set_tags. The router
+        checks every id is a real category first."""
+        self.extra_category_links = [WidgetExtraCategoryLink(category_id=category_id) for category_id in ids]
 
     @property
     def tags(self) -> list[WidgetTag]:

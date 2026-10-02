@@ -85,7 +85,17 @@ is a filled-in example while the Widgets demo is still here).
    `<MultiChoice>` control from the foundation on the
    form and as a toolbar filter via `useTableUrlState`'s multi filters,
    badges in the table, and a `filters` array the gateway sends as a
-   repeated parameter):
+   repeated parameter — and a `multi reference` copies Extra Categories:
+   the `<MultiReference>` control on the form and as a toolbar filter, an
+   array of ids on the wire, a repeated any-of list filter, and names from
+   a **lookup by id** on the referenced entity
+   (`GET /categories?ids=1&ids=3`, `getCategoriesByIds`,
+   `useCategoriesByIdsQuery`). Add that `ids` parameter to the referenced
+   entity's list endpoint if it lacks one. Never name a picked id from
+   search results alone: a saved pick the current search doesn't return
+   would show without a name. The table looks up every id on its page in
+   one request; the backend rejects an unknown id as a 422 on the field,
+   never a foreign-key 500):
    - `src/routes/widgets/use-widgets.ts`, `use-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)

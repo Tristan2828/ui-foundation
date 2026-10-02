@@ -47,6 +47,21 @@ def _unique_tags(v: list[WidgetTag] | None) -> list[WidgetTag] | None:
     return v
 
 
+def _unique_ids(v: list[int] | None) -> list[int] | None:
+    # openapi.yaml: extraCategoryIds has uniqueItems — a repeat is a 422.
+    if v is not None and len(set(v)) != len(v):
+        raise ValueError("extraCategoryIds must be unique")
+    return v
+
+
+def _not_null_ids(v: list[int] | None) -> list[int] | None:
+    # Leaving extraCategoryIds out of a PATCH keeps the set; [] clears it;
+    # null is a 422 rather than a silent clear.
+    if v is None:
+        raise ValueError("extraCategoryIds can't be null")
+    return _unique_ids(v)
+
+
 def _not_null(v: bool | None) -> bool | None:
     # openapi.yaml: inStock is a plain boolean. Leaving it out of a PATCH
     # keeps the stored value; an explicit null is a 422, never a NOT NULL
@@ -71,6 +86,7 @@ class WidgetOut(CamelModel):
     description: str
     tags: list[WidgetTag]
     in_stock: bool
+    extra_category_ids: list[int]
 
     @field_validator("price", mode="before")
     @classmethod
@@ -88,8 +104,10 @@ class WidgetCreate(CamelModel):
     description: str = Field(max_length=2000)
     tags: list[WidgetTag] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
     in_stock: bool = True
+    extra_category_ids: list[int] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
 
     _check_tags = field_validator("tags")(_unique_tags)
+    _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)
 
 
 class WidgetUpdate(CamelModel):
@@ -102,9 +120,11 @@ class WidgetUpdate(CamelModel):
     description: str | None = Field(default=None, max_length=2000)
     tags: list[WidgetTag] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
     in_stock: bool | None = None
+    extra_category_ids: list[int] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
 
     _check_tags = field_validator("tags")(_unique_tags)
     _check_in_stock = field_validator("in_stock")(_not_null)
+    _check_extra_category_ids = field_validator("extra_category_ids")(_not_null_ids)
 
 
 class UserOut(CamelModel):

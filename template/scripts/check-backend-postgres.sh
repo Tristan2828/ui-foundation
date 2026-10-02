@@ -157,6 +157,20 @@ curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widgets?in
 grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "inStock=false filter didn't return widget $widget_id: $(cat "$WIDGET_BODY")"
 curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widgets?inStock=true"
 grep -q '"total":0' "$WIDGET_BODY" || fail "inStock=true should match nothing for this user now: $(cat "$WIDGET_BODY")"
+
+# extraCategoryIds (3.5.0): a join table with two foreign keys (migration
+# 0007), the any-of filter, an unknown id as a 422 rather than a
+# foreign-key 500, and GET /categories?ids=... for naming them.
+echo "check-backend-postgres: extraCategoryIds links, filter, unknown id and categories?ids against real Postgres (3.5.0)"
+links_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"extraCategoryIds":[3,2]}')
+[ "$links_status" = "200" ] || fail "PATCH extraCategoryIds returned $links_status — got: $(cat "$WIDGET_BODY")"
+grep -q '"extraCategoryIds":\[2,3\]' "$WIDGET_BODY" || fail "PATCH didn't store extraCategoryIds [2,3] (ascending): $(cat "$WIDGET_BODY")"
+curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widgets?extraCategoryIds=3"
+grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "extraCategoryIds=3 filter didn't return widget $widget_id: $(cat "$WIDGET_BODY")"
+unknown_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"extraCategoryIds":[9999]}')
+[ "$unknown_status" = "422" ] || fail "an unknown extraCategoryIds id returned $unknown_status, expected 422: $(cat "$WIDGET_BODY")"
+curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/categories?ids=3&ids=9999"
+grep -q '"id":3' "$WIDGET_BODY" && ! grep -q '"id":1,' "$WIDGET_BODY" || fail "categories?ids=3 should return only category 3: $(cat "$WIDGET_BODY")"
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"
