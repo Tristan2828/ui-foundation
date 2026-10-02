@@ -18,6 +18,7 @@ const PRIMITIVES = [
   'sidebar',
   'skeleton',
   'spinner',
+  'switch',
   'table',
   'toast',
   'tooltip',

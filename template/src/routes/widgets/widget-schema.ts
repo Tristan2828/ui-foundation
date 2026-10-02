@@ -48,6 +48,9 @@ export const widgetFormSchema = z.object({
   tags: z
     .array(z.enum(WIDGET_TAGS))
     .refine((tags) => new Set(tags).size === tags.length, 'Each tag can only be chosen once'),
+  // Yes/no: always true or false, never unset, so there is no "not set"
+  // value to map (unlike an optional single choice).
+  inStock: z.boolean(),
 })
 
 export type WidgetFormValues = z.infer<typeof widgetFormSchema>
@@ -61,6 +64,8 @@ export const WIDGET_FORM_DEFAULTS: WidgetFormValues = {
   price: '',
   description: '',
   tags: [],
+  // The same default the API applies when a create leaves inStock out.
+  inStock: true,
 }
 
 // Widget.availableFrom is a full datetime (openapi.yaml: format date-time).
@@ -90,6 +95,7 @@ export function widgetToFormValues(widget: Widget): WidgetFormValues {
     price: widget.price,
     description: widget.description,
     tags: widget.tags,
+    inStock: widget.inStock,
   }
 }
 
@@ -103,6 +109,7 @@ function formValuesToWidgetInput(values: WidgetFormValues): WidgetCreate {
     price: values.price,
     description: values.description,
     tags: values.tags,
+    inStock: values.inStock,
   }
 }
 

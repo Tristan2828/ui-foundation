@@ -181,3 +181,42 @@ async def test_deleting_a_tagged_widget_removes_its_tags(client: AsyncClient) ->
     assert (await client.delete(f"/api/widgets/{widget_id}")).status_code == 204
     res = await client.get("/api/widgets", params={"tags": "bulky"})
     assert res.json()["total"] == 0
+
+
+# --- inStock: the yes/no field (3.4.0) --------------------------------------
+
+
+async def test_in_stock_defaults_to_true_and_is_always_present_on_read(client: AsyncClient) -> None:
+    created = await client.post("/api/widgets", json=_NEW_WIDGET)
+    assert created.status_code == 201
+    assert created.json()["inStock"] is True
+    listed = (await client.get("/api/widgets")).json()["items"]
+    assert all(isinstance(item["inStock"], bool) for item in listed)
+
+
+async def test_patch_in_stock_sets_or_leaves_it(client: AsyncClient) -> None:
+    widget_id = (await client.post("/api/widgets", json={**_NEW_WIDGET, "inStock": False})).json()["id"]
+    untouched = await client.patch(f"/api/widgets/{widget_id}", json={"name": "Renamed"})
+    assert untouched.json()["inStock"] is False
+    flipped = await client.patch(f"/api/widgets/{widget_id}", json={"inStock": True})
+    assert flipped.json()["inStock"] is True
+
+
+async def test_in_stock_filter_matches_exactly(client: AsyncClient) -> None:
+    await client.post("/api/widgets", json={**_NEW_WIDGET, "name": "Out", "inStock": False})
+    out_of_stock = (await client.get("/api/widgets", params={"inStock": "false"})).json()
+    assert [w["name"] for w in out_of_stock["items"]] == ["Out"]
+    in_stock = (await client.get("/api/widgets", params={"inStock": "true"})).json()
+    assert "Out" not in [w["name"] for w in in_stock["items"]]
+    assert in_stock["total"] >= 1
+
+
+async def test_null_or_non_boolean_in_stock_is_a_field_error(client: AsyncClient) -> None:
+    widget_id = (await client.post("/api/widgets", json=_NEW_WIDGET)).json()["id"]
+    null = await client.patch(f"/api/widgets/{widget_id}", json={"inStock": None})
+    assert null.status_code == 422
+    assert any(item["loc"][-1] == "inStock" for item in null.json()["detail"])
+
+    garbage = await client.post("/api/widgets", json={**_NEW_WIDGET, "inStock": "maybe"})
+    assert garbage.status_code == 422
+    assert any(item["loc"][-1] == "inStock" for item in garbage.json()["detail"])

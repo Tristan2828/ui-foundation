@@ -76,7 +76,12 @@ is a filled-in example while the Widgets demo is still here).
    and labels from its field table, and field types by pattern (a
    `reference` field copies Category's searchable combobox, a
    `single choice` copies Status's select, a `date-time` copies
-   Available From's date picker, a `multi choice` copies Tags — the
+   Available From's date picker, a `yes/no` copies In Stock — a `Switch`
+   (`@tristan2828/ui-foundation/ui/switch`) in a horizontal `Field` with
+   its label beside it on the form, cell pattern 12 (the word Yes/No) in
+   the table, and a three-way toolbar `Select` (either / yes / no) whose URL
+   value is `'true'`/`'false'` and whose `filters` value is a real boolean,
+   so `false` reaches the wire — and a `multi choice` copies Tags — the
    `<MultiChoice>` control from the foundation on the
    form and as a toolbar filter via `useTableUrlState`'s multi filters,
    badges in the table, and a `filters` array the gateway sends as a

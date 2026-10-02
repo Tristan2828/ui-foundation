@@ -7,7 +7,9 @@ per-entity, and only the shape is reusable. Copy the markup into your
 
 Patterns 1–10 were each chosen for a real column, from a page of
 alternatives ([`column-options.md`](column-options.md)), not designed in the abstract.
-Patterns from 11 on are marked **Unproven**: written ahead of a real
+Pattern 12 (boolean) is the template's own reference: Widget's In Stock
+column renders it and its specs pin it. The other patterns from 11 on are
+marked **Unproven**: written ahead of a real
 column, so no app has tested them on real data yet. Prefer a proven
 pattern when one fits. When you use an unproven one, say so in the
 entity's plan, and raise what you learned for the foundation, so the
@@ -257,9 +259,11 @@ cell: ({ getValue }) => {
   template's `USD` is the demo's.
 - **Cost:** none to speak of. It's the plain-text pattern with formatting.
 
-## 12. Boolean — *Unproven*
+## 12. Boolean
 
-A yes/no field.
+A yes/no field. Widget's In Stock column (`src/routes/widgets/widgets-columns.tsx`)
+is the reference; its value is never null, so it drops the `emptyCell`
+branch below.
 
 ```tsx
 cell: ({ getValue }) => {

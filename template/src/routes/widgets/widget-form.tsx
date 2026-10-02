@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from '@tristan2828/ui-foundation/ui/select'
 import { Skeleton } from '@tristan2828/ui-foundation/ui/skeleton'
+import { Switch } from '@tristan2828/ui-foundation/ui/switch'
 import { Textarea } from '@tristan2828/ui-foundation/ui/textarea'
 import { useCategoriesQuery } from './use-categories'
 import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from './use-widgets'
@@ -303,6 +304,26 @@ export function WidgetFormRoute() {
           )}
         />
         <FieldError errors={[form.formState.errors.tags]} />
+      </Field>
+
+      {/* Yes/no: a Switch with its label beside it (Field orientation
+          "horizontal"), never a Select of Yes/No. The label is the
+          question; the switch is the answer. */}
+      <Field orientation="horizontal" data-invalid={!!form.formState.errors.inStock}>
+        <Controller
+          control={form.control}
+          name="inStock"
+          render={({ field }) => (
+            <Switch
+              id="widget-in-stock"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              aria-invalid={!!form.formState.errors.inStock}
+            />
+          )}
+        />
+        <FieldLabel htmlFor="widget-in-stock">In Stock</FieldLabel>
+        <FieldError errors={[form.formState.errors.inStock]} />
       </Field>
     </EntityForm>
   )

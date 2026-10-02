@@ -142,4 +142,41 @@ test.describe('widget form', () => {
     await expect(row.getByText('featured', { exact: true })).toBeVisible()
     await expect(row.getByText('fragile', { exact: true })).toHaveCount(0)
   })
+
+  test('yes/no: a new widget starts in stock, and the switch state is what saves', async ({ page }) => {
+    await page.goto('/widgets/new')
+    const inStock = page.getByRole('switch', { name: 'In Stock' })
+    // The default the API also applies: on.
+    await expect(inStock).toBeChecked()
+
+    // Clicking the label toggles it too: the label is wired to the switch.
+    await page.getByText('In Stock', { exact: true }).click()
+    await expect(inStock).not.toBeChecked()
+
+    await page.locator('#widget-name').fill('Out Of Stock Widget')
+    await pickCategory(page, 'Furniture')
+    await pickAvailableFromDate(page)
+    await page.locator('#widget-price').fill('5.00')
+    await page.locator('#widget-description').fill('Saved with the switch off.')
+    await page.getByRole('button', { name: 'Create widget' }).click()
+
+    await expect(page).toHaveURL(/\/widgets$/)
+    const row = page.getByRole('row', { name: /Out Of Stock Widget/ })
+    await expect(row.getByRole('cell', { name: 'No', exact: true })).toBeVisible()
+  })
+
+  test('yes/no: editing shows the stored value, and turning it on saves', async ({ page }) => {
+    // Fountain Pen (id 3) is out of stock in the mocks.
+    await page.goto('/widgets/3/edit')
+    const inStock = page.getByRole('switch', { name: 'In Stock' })
+    await expect(inStock).not.toBeChecked()
+
+    await inStock.click()
+    await expect(inStock).toBeChecked()
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL(/\/widgets$/)
+    const row = page.getByRole('row', { name: /Fountain Pen/ })
+    await expect(row.getByRole('cell', { name: 'Yes', exact: true })).toBeVisible()
+  })
 })

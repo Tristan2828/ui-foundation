@@ -30,6 +30,12 @@ describe('widgetFormSchema', () => {
     expect(messages.name).toBe('Name is required')
   })
 
+  it('defaults inStock to true and accepts either boolean, but not a missing value', () => {
+    expect(WIDGET_FORM_DEFAULTS.inStock).toBe(true)
+    expect(widgetFormSchema.safeParse({ ...validWidget, inStock: false }).success).toBe(true)
+    expect(widgetFormSchema.safeParse({ ...validWidget, inStock: undefined }).success).toBe(false)
+  })
+
   it('accepts an empty assignee and a padded valid one, rejects an invalid one', () => {
     expect(widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '' }).success).toBe(true)
     const padded = widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '  a@example.com ' })

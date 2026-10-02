@@ -151,6 +151,12 @@ paths:
           description: >
             Widgets with any of these tags. Repeat the parameter once per
             tag, e.g. "tags=fragile&tags=seasonal".
+        - name: inStock
+          in: query
+          schema: { type: boolean }
+          description: >
+            Only widgets whose inStock matches, sent as "inStock=true" or
+            "inStock=false". Absent means either.
       responses:
         "200":
           description: A page of widgets.
@@ -276,7 +282,8 @@ components:
         unambiguously to the UI pattern it exercises and /new-entity has a
         reference to copy (docs/entities/widget.md). Six came from Phase 4;
         tags (multi choice) was added in Phase G because a real project
-        needed it. Add a type only when a real app needs one.
+        needed it, and inStock (yes/no) in 3.4.0 for the Task Dashboard
+        app. Add a type only when a real app needs one.
       required:
         - id
         - name
@@ -286,6 +293,7 @@ components:
         - price
         - description
         - tags
+        - inStock
       properties:
         id: { type: integer, readOnly: true }
         name:
@@ -335,10 +343,19 @@ components:
             Multi-choice field — forces a multi-select combobox with chips on
             the form, badges in the table, and an any-of list filter
             (Phase G). Always present on read; empty when none are chosen.
+        inStock:
+          type: boolean
+          default: true
+          description: >
+            Yes/no field — forces a switch on the form, a Yes/No cell in the
+            table and an either/yes/no list filter. Never null: always
+            present on read, true when a create leaves it out.
 
     WidgetCreate:
       type: object
-      description: Widget without a server-assigned id. tags defaults to [].
+      description: >
+        Widget without a server-assigned id. tags defaults to [] and inStock
+        to true.
       required: [name, categoryId, status, availableFrom, price, description]
       properties:
         name: { $ref: "#/components/schemas/Widget/properties/name" }
@@ -349,6 +366,7 @@ components:
         price: { $ref: "#/components/schemas/Widget/properties/price" }
         description: { $ref: "#/components/schemas/Widget/properties/description" }
         tags: { $ref: "#/components/schemas/Widget/properties/tags" }
+        inStock: { $ref: "#/components/schemas/Widget/properties/inStock" }
 
     WidgetUpdate:
       type: object
@@ -364,6 +382,7 @@ components:
         price: { $ref: "#/components/schemas/Widget/properties/price" }
         description: { $ref: "#/components/schemas/Widget/properties/description" }
         tags: { $ref: "#/components/schemas/Widget/properties/tags" }
+        inStock: { $ref: "#/components/schemas/Widget/properties/inStock" }
 
     WidgetListResponse:
       type: object

@@ -5,6 +5,24 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.4.0 — the yes/no field type
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook, plan template and cell patterns.
+
+- **Yes/no is a supported field type.** Entity plans can now say
+  `yes/no` (a boolean that is always yes or no, with a default). The
+  template's Widget gains `inStock` as the reference to copy: a `Switch`
+  on the form, cell pattern 12 (now proven) in the table, and an
+  either/yes/no toolbar filter sent as `inStock=true|false`. A yes/no that
+  can also be unset is still unsupported.
+- **New primitive:** `@tristan2828/ui-foundation/ui/switch` (shadcn's, on
+  Base UI), with Storybook axe and token checks in both themes.
+- **Nothing to change in an existing app.** The Widget changes are in the
+  template only; an app that kept the Widgets demo can ignore them, or copy
+  migration `0006_widget_in_stock.py` and the matching spec, mock, gateway
+  and screen changes if it wants the reference running locally.
+
 ## 3.3.0 — typography roles, table density, four new cell patterns
 
 Additive. Nothing looks different until an app opts in. Run

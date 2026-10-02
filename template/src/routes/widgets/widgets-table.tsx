@@ -54,7 +54,16 @@ const STATUS_FILTER_ALL = 'all'
 // keep this shape when adding a filter: a label constant, the children
 // function, and a test that asserts the *unset* display.
 const STATUS_FILTER_ALL_LABEL = 'All statuses'
-const FILTERS = ['search', 'status'] as const
+// A yes/no filter is a three-way choice: either (no filter), yes or no.
+// The URL holds 'true'/'false' ('' for either), the same strings the API
+// takes; the labels say what each one means for this field.
+const IN_STOCK_FILTER_ALL = 'all'
+const IN_STOCK_FILTER_LABELS: Record<string, string> = {
+  [IN_STOCK_FILTER_ALL]: 'Any stock',
+  true: 'In stock',
+  false: 'Out of stock',
+}
+const FILTERS = ['search', 'status', 'inStock'] as const
 const MULTI_FILTERS = ['tags'] as const
 const SEARCH_DEBOUNCE_MS = 300
 
@@ -65,6 +74,9 @@ export function WidgetsTableRoute() {
     useTableUrlState(FILTERS, MULTI_FILTERS)
   const search = filters.search
   const statusFilter = filters.status || STATUS_FILTER_ALL
+  // Anything but 'true'/'false' (a hand-edited URL) means no filter.
+  const inStockFilter =
+    filters.inStock === 'true' || filters.inStock === 'false' ? filters.inStock : IN_STOCK_FILTER_ALL
   // Joined so useMemo sees a stable value (getAll returns a new array every
   // render); anything that isn't a real tag (a hand-edited URL) is dropped
   // rather than sent to the API.
@@ -85,9 +97,10 @@ export function WidgetsTableRoute() {
         search: debouncedSearch || undefined,
         status: statusFilter === STATUS_FILTER_ALL ? undefined : statusFilter,
         tags: tagsFilter,
+        inStock: inStockFilter === IN_STOCK_FILTER_ALL ? undefined : inStockFilter === 'true',
       },
     }),
-    [page, sorting, debouncedSearch, statusFilter, tagsFilter],
+    [page, sorting, debouncedSearch, statusFilter, tagsFilter, inStockFilter],
   )
 
   const widgetsQuery = useWidgetsQuery(query)
@@ -100,7 +113,11 @@ export function WidgetsTableRoute() {
 
   const columns = useMemo(() => buildWidgetsColumns(categoriesById), [categoriesById])
 
-  const hasActiveFilters = search !== '' || statusFilter !== STATUS_FILTER_ALL || tagsFilter.length > 0
+  const hasActiveFilters =
+    search !== '' ||
+    statusFilter !== STATUS_FILTER_ALL ||
+    tagsFilter.length > 0 ||
+    inStockFilter !== IN_STOCK_FILTER_ALL
 
   return (
     <div className="flex flex-col gap-6">
@@ -126,7 +143,7 @@ export function WidgetsTableRoute() {
         onRetry={() => widgetsQuery.refetch()}
         emptyTitle={hasActiveFilters ? 'No widgets match your filters' : 'No widgets yet'}
         emptyDescription={
-          hasActiveFilters ? 'Try a different search, status or tag.' : 'Create one to get started.'
+          hasActiveFilters ? 'Try a different search, status, tag or stock filter.' : 'Create one to get started.'
         }
         emptyAction={
           !hasActiveFilters && (
@@ -180,6 +197,28 @@ export function WidgetsTableRoute() {
                 aria-label="Filter by tags"
                 className="w-56"
               />
+            </div>
+            <div className="flex flex-col gap-1">
+              <FilterLabel>In Stock</FilterLabel>
+              <Select
+                value={inStockFilter}
+                onValueChange={(value) =>
+                  setFilter('inStock', value === IN_STOCK_FILTER_ALL ? '' : (value as string))
+                }
+              >
+                <SelectTrigger aria-label="Filter by stock" className="w-36">
+                  {/* Same reason as Status: without the children function the
+                      trigger shows the raw value ('all', 'true'). */}
+                  <SelectValue>{(value) => IN_STOCK_FILTER_LABELS[value as string] ?? value}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {[IN_STOCK_FILTER_ALL, 'true', 'false'].map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {IN_STOCK_FILTER_LABELS[value]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         }

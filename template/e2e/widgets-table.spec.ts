@@ -182,6 +182,48 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
   })
 
+  test('yes/no filter: either by default, then in or out of stock, via the URL', async ({ page }) => {
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    // The unset state shows its label, not the 'all' sentinel.
+    await expect(page.getByLabel('Filter by stock')).toContainText('Any stock')
+    await expect(page.getByLabel('Filter by stock')).not.toHaveText(/^all/)
+
+    // false is a real filter value, not "no filter".
+    await page.getByLabel('Filter by stock').click()
+    await page.getByRole('option', { name: 'Out of stock' }).click()
+    await expect(page).toHaveURL(/[?&]inStock=false/)
+    await expect(page.getByLabel('Filter by stock')).toContainText('Out of stock')
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
+
+    await page.getByLabel('Filter by stock').click()
+    await page.getByRole('option', { name: 'In stock', exact: true }).click()
+    await expect(page).toHaveURL(/[?&]inStock=true/)
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
+
+    // A reloaded link restores it.
+    await page.reload()
+    await expect(page.getByLabel('Filter by stock')).toContainText('In stock')
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
+
+    await page.getByLabel('Filter by stock').click()
+    await page.getByRole('option', { name: 'Any stock' }).click()
+    await expect(page).not.toHaveURL(/inStock=/)
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
+  })
+
+  test('yes/no cell: the word carries the value, never a checkbox', async ({ page }) => {
+    await page.goto('/widgets')
+    const mouse = page.getByRole('row').filter({ hasText: 'Wireless Mouse' })
+    const pen = page.getByRole('row').filter({ hasText: 'Fountain Pen' })
+    await expect(mouse.getByRole('cell', { name: 'Yes', exact: true })).toBeVisible()
+    await expect(pen.getByRole('cell', { name: 'No', exact: true })).toBeVisible()
+    await expect(page.getByRole('table').getByRole('checkbox')).toHaveCount(0)
+    await expect(page.getByRole('table').getByRole('switch')).toHaveCount(0)
+  })
+
   test('the first column stays pinned when the table scrolls horizontally', async ({ page }) => {
     // A sticky column can render perfectly and still not stick (an
     // overflow-hidden ancestor, a stray position: relative) with nothing in
