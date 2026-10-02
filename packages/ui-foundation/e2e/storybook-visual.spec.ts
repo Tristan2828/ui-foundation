@@ -24,7 +24,7 @@ const PRIMITIVES = [
 
 // Stories that exist to be contrast-checked rather than screenshotted:
 // every semantic tone in every style on screen at once, so axe sees all
-// nine combinations in both themes. Adding a tone or a style without
+// twelve combinations in both themes. Adding a tone or a style without
 // adding it here would ship an unmeasured color.
 const TONE_STORY_IDS = ['ui-badge--all-tones']
 
@@ -85,7 +85,7 @@ test.describe('storybook stories have zero axe violations in dark mode', () => {
   }
 })
 
-// The semantic tones (success / warning / destructive, each as a solid
+// The semantic tones (success / warning / destructive / info, each as a solid
 // fill, an outline and a tinted chip) are the one part of the design
 // language whose whole correctness is a contrast ratio. theme.css records
 // the measured numbers; this is what proves them against the rendered DOM,

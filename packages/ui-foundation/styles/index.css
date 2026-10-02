@@ -44,6 +44,9 @@
     --color-warning: var(--warning);
     --color-warning-foreground: var(--warning-foreground);
     --color-warning-text: var(--warning-text);
+    --color-info: var(--info);
+    --color-info-foreground: var(--info-foreground);
+    --color-info-text: var(--info-text);
     --color-category-1: var(--category-1);
     --color-category-2: var(--category-2);
     --color-category-3: var(--category-3);
