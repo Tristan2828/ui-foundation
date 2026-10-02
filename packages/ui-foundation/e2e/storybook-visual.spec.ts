@@ -18,8 +18,10 @@ const PRIMITIVES = [
   'sidebar',
   'skeleton',
   'spinner',
+  'table',
   'toast',
   'tooltip',
+  'typography',
 ]
 
 // Stories that exist to be contrast-checked rather than screenshotted:
@@ -245,5 +247,52 @@ test.describe('primitives paint only token colours', () => {
         expect(await offTokenColors(page)).toEqual([])
       })
     }
+  }
+})
+
+// Density is tokens, not a prop (styles/theme.css), so nothing type-checks
+// that data-density reaches the cells. This measures it: in the Densities
+// story, each step must make both the header and the body rows taller.
+test('table density tokens change row height: compact < default < comfortable', async ({ page }) => {
+  await page.goto(storyUrlById('ui-table--densities', 'light'))
+  const heights = async (density: string, part: 'th' | 'td') =>
+    page
+      .getByRole('table', { name: `Widgets (${density})` })
+      .locator(part)
+      .first()
+      .evaluate((cell) => cell.getBoundingClientRect().height)
+  for (const part of ['th', 'td'] as const) {
+    const [compact, standard, comfortable] = [
+      await heights('compact', part),
+      await heights('default', part),
+      await heights('comfortable', part),
+    ]
+    expect(compact, `${part}: compact vs default`).toBeLessThan(standard)
+    expect(standard, `${part}: default vs comfortable`).toBeLessThan(comfortable)
+  }
+})
+
+// The type-* roles are @utility rules over --type-* tokens. A typo in
+// either is silent: the class just sets nothing. Each role's computed font
+// size must equal its token, so an unbuilt or misnamed role fails here.
+test('typography roles resolve to their tokens', async ({ page }) => {
+  await page.goto(storyUrlById('ui-typography--default', 'light'))
+  const roles = ['page-title', 'section-title', 'body', 'label', 'caption']
+  for (const role of roles) {
+    const { size, expected, weight, expectedWeight } = await page
+      .locator(`[data-role="type-${role}"]`)
+      .evaluate((el, name) => {
+        const root = getComputedStyle(document.documentElement)
+        const px = (rem: string) => `${parseFloat(rem) * parseFloat(root.fontSize)}px`
+        const style = getComputedStyle(el)
+        return {
+          size: style.fontSize,
+          expected: px(root.getPropertyValue(`--type-${name}-size`)),
+          weight: style.fontWeight,
+          expectedWeight: root.getPropertyValue(`--type-${name}-weight`).trim(),
+        }
+      }, role)
+    expect(size, `type-${role} font-size`).toBe(expected)
+    expect(weight, `type-${role} font-weight`).toBe(expectedWeight)
   }
 })

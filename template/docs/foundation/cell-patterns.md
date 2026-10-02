@@ -5,10 +5,14 @@ first attempt gets wrong — **not components**: the lookup maps are always
 per-entity, and only the shape is reusable. Copy the markup into your
 `<entity>-columns.tsx`.
 
-Every pattern below was chosen for a real column, from a page of
+Patterns 1–10 were each chosen for a real column, from a page of
 alternatives ([`column-options.md`](column-options.md)), not designed in the abstract.
-A pattern that proves generic is worth raising for the foundation, so it
-ships here for every app.
+Patterns from 11 on are marked **Unproven**: written ahead of a real
+column, so no app has tested them on real data yet. Prefer a proven
+pattern when one fits. When you use an unproven one, say so in the
+entity's plan, and raise what you learned for the foundation, so the
+entry can lose its label. A pattern that proves generic is worth raising
+too, so it ships here for every app.
 
 ## The rules that apply to every cell
 
@@ -223,3 +227,102 @@ A one-to-many value (`★ 4.7 (3)` opening a per-person breakdown).
 - **Cost:** the detail can't be scanned down the column, and an average
   can't be sorted server-side without a backend change
   (`enableSorting: false`).
+
+## 11. Number or currency — *Unproven*
+
+A count, a quantity, a price.
+
+```tsx
+// Module scope: one formatter per column, not one per cell render.
+const priceFormatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' })
+
+cell: ({ getValue }) => {
+  const value = getValue<string | null>()
+  return value == null ? emptyCell : <span className="tabular-nums">{priceFormatter.format(Number(value))}</span>
+}
+```
+
+- `tabular-nums` gives every digit the same width, so values line up down
+  the column even when left-aligned.
+- **Zero is a value, not an empty cell.** Test `value == null`, never
+  falsiness, or `0` renders as an em dash.
+- An API `format: decimal` arrives as a **string**. `Number()` is exact
+  enough to display (about 15 significant digits). Never add up money in
+  floats on the client: totals come from the backend.
+- **Right-aligning isn't available yet.** `DataTable`'s `meta.align` only
+  supports `'center'`, and a right-aligned cell under a left-aligned header
+  looks broken. Stay left-aligned until a real column needs
+  `align: 'right'`, then raise it for the foundation.
+- The currency code comes from the data or the plan, never a guess. The
+  template's `USD` is the demo's.
+- **Cost:** none to speak of. It's the plain-text pattern with formatting.
+
+## 12. Boolean — *Unproven*
+
+A yes/no field.
+
+```tsx
+cell: ({ getValue }) => {
+  const value = getValue<boolean | null>()
+  if (value == null) return emptyCell
+  return value ? (
+    <span className="inline-flex items-center gap-1">
+      <CheckIcon aria-hidden="true" className="size-4 text-success-text" />
+      Yes
+    </span>
+  ) : (
+    <span className="text-muted-foreground">No</span>
+  )
+}
+```
+
+- **The word carries the value.** The check only reinforces it, so the
+  cell survives greyscale and a screen reader hears "Yes".
+- **Never a checkbox** in a read-only cell. It looks editable, and people
+  will try to click it.
+- "No" is muted, not red. False is rarely bad. If it is, the field is
+  really an enum with a verdict, and pattern 5 fits better.
+- **Nullable means three states.** `null` is the em dash, distinct from
+  "No". Check the schema before collapsing them.
+- **Cost:** a column that is mostly "Yes" is noise. If almost every row
+  shares the value, consider showing only the exception.
+
+## 13. Progress bar — *Unproven*
+
+A percentage, or a count out of a total (`7 of 12 done`).
+
+- The package doesn't ship `progress`. Install shadcn's into
+  `src/components/ui/` (`npx shadcn@<tools.shadcn> add progress`, after
+  checking its dependencies against `deps-allowlist.json`).
+- **Always print the number** beside the bar (`72%`, `7 / 12`). The bar
+  shows roughly how far; the number says exactly.
+- Fix the bar's width (`w-24`) so bars compare down the column. A bar that
+  stretches with the column compares nothing.
+- The default colour is `bg-primary`. Tone it (`bg-success`) only when the
+  value means something, like "complete", and say that in the plan.
+- Clamp to the schema's range. A value of 105% from bad data shouldn't
+  draw past the track.
+- Give each bar a row-specific `aria-label` (`${row.original.name}
+  progress`).
+- **Cost:** a bar takes far more width than the number it replaces. On a
+  wide table, the plain number from pattern 11 usually wins.
+
+## 14. Avatar and name — *Unproven*
+
+A person: an assignee or an owner.
+
+- The package doesn't ship `avatar`. Install shadcn's the same way as
+  pattern 13.
+- **Always render the fallback** (initials). Images fail, load slowly, or
+  aren't set, and the cell must still look intentional.
+- The image is decorative (`alt=""`) because the name is right beside
+  it. Otherwise a screen reader reads the name twice.
+- `size-6` keeps the row height unchanged at `compact` density
+  ([`design-language.md`](design-language.md) "Density").
+- Initials on `bg-muted text-muted-foreground`. Categorical colours
+  would make every person look like a category.
+- Avatar URLs load from wherever the API points. Use `loading="lazy"` so a
+  25-row page doesn't fetch every image up front.
+- **Cost:** a column of faces draws the eye more than any other cell. Use
+  it when *who* matters most in the row, not as decoration.
+

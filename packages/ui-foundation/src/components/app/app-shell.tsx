@@ -183,7 +183,7 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }
                   otherwise the name's truncated sliver pushes the button off
                   the rail. */}
               <div className="flex items-center justify-between gap-2 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-                <span className="truncate text-xs text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
+                <span className="truncate type-caption text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
                   {user.name}
                 </span>
                 <Button variant="ghost" size="icon-sm" aria-label="Log out"

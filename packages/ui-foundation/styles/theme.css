@@ -99,6 +99,41 @@
 
   --radius-base: 0.625rem;
 
+  /*
+   * Typography roles (conventions/docs/design-language.md "Typography").
+   * Each role is a size, a line height and a weight, consumed only through
+   * the type-* utilities in index.css. Named type-*, not text-*: the class
+   * merger (cn, tailwind-merge) reads an unknown text-* class as a colour,
+   * so `cn('text-page-title', 'text-foreground')` would drop the title.
+   * The values are what the package and template already used, so moving
+   * onto a role changes nothing visible.
+   */
+  --type-page-title-size: 1.125rem; /* was text-lg font-semibold */
+  --type-page-title-leading: 1.75rem;
+  --type-page-title-weight: 600;
+  --type-section-title-size: 1rem;
+  --type-section-title-leading: 1.5rem;
+  --type-section-title-weight: 600;
+  --type-body-size: 0.875rem; /* text-sm: tables, forms, most UI text */
+  --type-body-leading: 1.25rem;
+  --type-body-weight: 400;
+  --type-label-size: 0.875rem; /* column headers, field labels */
+  --type-label-leading: 1.25rem;
+  --type-label-weight: 500;
+  --type-caption-size: 0.75rem; /* counts, metadata, helper text */
+  --type-caption-leading: 1rem;
+  --type-caption-weight: 400;
+
+  /*
+   * Table density (design-language.md "Density"). The table primitive's
+   * cells read these, so density is a CSS choice, not a DataTable prop: an
+   * app sets data-density on any ancestor (a wrapper, a route, <html>).
+   * The default is what the table always had.
+   */
+  --table-cell-px: 0.5rem;
+  --table-cell-py: 0.5rem;
+  --table-head-height: 2.5rem;
+
   /* Layer 2 — semantic (light) */
   --background: var(--white);
   --foreground: var(--black);
@@ -158,6 +193,16 @@
   --sidebar-accent-foreground: var(--gray-950);
   --sidebar-border: var(--gray-200);
   --sidebar-ring: var(--gray-400);
+}
+
+[data-density="compact"] {
+  --table-cell-py: 0.25rem;
+  --table-head-height: 2rem;
+}
+
+[data-density="comfortable"] {
+  --table-cell-py: 0.75rem;
+  --table-head-height: 3rem;
 }
 
 .dark {

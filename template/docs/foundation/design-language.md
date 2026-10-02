@@ -126,3 +126,57 @@ Four things about them:
 
 If you find yourself wanting a ninth, that is usually a sign the column
 should be showing a shape or a label rather than more colours.
+
+## Typography
+
+Five roles cover every screen. Each is one class that sets size, line
+height and weight together, from tokens in the package's `styles/theme.css`:
+
+| Class | For | Size / weight |
+|---|---|---|
+| `type-page-title` | the screen's one `<h1>` (a table's title, a form's title) | 18px / 600 |
+| `type-section-title` | a heading inside a screen (a form section, a card group) | 16px / 600 |
+| `type-body` | running text, table cells, form text, the pagination summary | 14px / 400 |
+| `type-label` | column headers, field labels, a small heading over a group | 14px / 500 |
+| `type-caption` | counts, metadata, helper text under a field | 12px / 400 |
+
+- **Use a role instead of size and weight classes,** not as well as them.
+  `type-page-title` replaces `text-lg font-semibold`. Combining a role with
+  `text-sm`, `font-medium` or `leading-*` makes two classes set the same
+  property, and which one wins depends on the order of rules in the
+  stylesheet, not on the order in `className`.
+- **Colour stays separate:** `type-caption text-muted-foreground`. A role
+  never sets a colour, so any text token pairs with it.
+- **Why `type-*` and not `text-*`:** `cn` (tailwind-merge) treats an
+  unknown `text-*` class as a colour, so
+  `cn('text-page-title', 'text-foreground')` would silently drop the title.
+- A shadcn primitive keeps its own sizes (`CardTitle`, `Button`). Don't put
+  a role on one: its built-in size classes would then compete with the role.
+
+## Density
+
+Tables have three densities, set with `data-density` on **any ancestor**
+(a wrapper `<div>`, a route's layout, or `<html>` for the whole app). It is
+a token set, not a `DataTable` prop:
+
+```tsx
+<div data-density="compact">
+  <DataTable … />
+</div>
+```
+
+| `data-density` | Cell padding (vertical) | Header height | For |
+|---|---|---|---|
+| `compact` | 4px | 32px | wide tables people scan, many rows per screen |
+| *(unset)* | 8px | 40px | the default |
+| `comfortable` | 12px | 48px | short tables, or rows people read rather than scan |
+
+- Density changes padding only. Text keeps `type-body`, so compact never
+  drops below a readable size.
+- Pick **one density per screen**. Two tables at different densities side
+  by side look like a mistake.
+- Under the hood, the table primitive's cells read `--table-cell-px`,
+  `--table-cell-py` and `--table-head-height`, and the `data-density`
+  selectors in `styles/theme.css` set them. The package's Storybook check
+  measures that each step really changes the row height.
+

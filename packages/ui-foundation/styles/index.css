@@ -78,6 +78,34 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Typography roles: one class sets size, line height and weight together,
+   from the --type-* tokens in theme.css. */
+@utility type-page-title {
+  font-size: var(--type-page-title-size);
+  line-height: var(--type-page-title-leading);
+  font-weight: var(--type-page-title-weight);
+}
+@utility type-section-title {
+  font-size: var(--type-section-title-size);
+  line-height: var(--type-section-title-leading);
+  font-weight: var(--type-section-title-weight);
+}
+@utility type-body {
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
+  font-weight: var(--type-body-weight);
+}
+@utility type-label {
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-leading);
+  font-weight: var(--type-label-weight);
+}
+@utility type-caption {
+  font-size: var(--type-caption-size);
+  line-height: var(--type-caption-leading);
+  font-weight: var(--type-caption-weight);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

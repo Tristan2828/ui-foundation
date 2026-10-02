@@ -5,6 +5,29 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.3.0 — typography roles, table density, four new cell patterns
+
+Additive. Nothing looks different until an app opts in. Run
+`npx ui-foundation sync` after the bump for the new docs.
+
+- **Typography roles:** `type-page-title`, `type-section-title`,
+  `type-body`, `type-label` and `type-caption`. Each sets size, line height
+  and weight from `--type-*` tokens. The values match what the package
+  already used, so `EntityForm`'s title, `DataTable`'s pagination text and
+  `AppShell`'s user name now use roles with no visible change. To adopt
+  them, replace pairs like `text-lg font-semibold` on your own headings
+  with the role (`type-page-title`), and never combine a role with
+  `text-*`/`font-*` size or weight classes
+  (`docs/foundation/design-language.md` "Typography").
+- **Table density:** set `data-density="compact"` or `"comfortable"` on
+  any ancestor of a table. It's a token set, not a prop, so `DataTable`'s
+  API is unchanged. The table primitive's padding now reads
+  `--table-cell-px`, `--table-cell-py` and `--table-head-height`, whose
+  defaults equal the old fixed values.
+- **Cell patterns 11–14**, marked *Unproven* (written ahead of a real
+  column): number or currency, boolean, progress bar, avatar and name. If
+  you use one, note it in the entity's plan and report back what worked.
+
 ## 3.2.0 — the info tone; comments on every database column
 
 Additive. `npx ui-foundation sync` after the bump writes the new Hard Rule

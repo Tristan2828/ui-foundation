@@ -387,7 +387,7 @@ export function DataTable<TData extends Record<string, unknown>>({
           )}
 
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+            <p className="type-body text-muted-foreground">
               {total === 0 ? 0 : (page - 1) * pageSize + 1}
               {'–'}
               {Math.min(page * pageSize, total)} of {total}
@@ -402,7 +402,7 @@ export function DataTable<TData extends Record<string, unknown>>({
               >
                 <ChevronLeftIcon />
               </Button>
-              <span className="text-sm text-muted-foreground">
+              <span className="type-body text-muted-foreground">
                 Page {page} of {pageCount}
               </span>
               <Button
