@@ -85,6 +85,9 @@ class Widget(SQLModel, table=True):
     assignee_email: str | None = Field(default=None)
     price: Decimal = Field(max_digits=10, decimal_places=2)
     description: str = Field(max_length=2000)
+    # Yes/no field (migration 0006). Never null; True when a create leaves it
+    # out, matching the server_default existing rows were given.
+    in_stock: bool = Field(default=True)
     # Per-user ownership (migration 0003). Never on the wire — WidgetOut and
     # openapi.yaml don't mention it; the router scopes every query to the
     # session's user instead, and another user's widget is a plain 404.

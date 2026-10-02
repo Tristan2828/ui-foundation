@@ -143,6 +143,20 @@ filter_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' "ht
 grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "tags filter didn't return widget $widget_id: $(cat "$WIDGET_BODY")"
 none_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' "http://localhost:8000/api/widgets?tags=fragile")
 grep -q '"total":0' "$WIDGET_BODY" || fail "tags=fragile should match nothing after the replace (status $none_status): $(cat "$WIDGET_BODY")"
+
+# inStock (3.4.0): migration 0006's server default, a PATCH and the filter,
+# against the real column type rather than SQLite's integer-backed boolean.
+echo "check-backend-postgres: inStock default, update and filter against real Postgres (3.4.0)"
+seed_stock_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' "http://localhost:8000/api/widgets/$widget_id")
+[ "$seed_stock_status" = "200" ] || fail "GET widget $widget_id returned $seed_stock_status"
+grep -q '"inStock":true' "$WIDGET_BODY" || fail "a widget created without inStock should be in stock: $(cat "$WIDGET_BODY")"
+stock_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"inStock":false}')
+[ "$stock_status" = "200" ] || fail "PATCH inStock returned $stock_status — got: $(cat "$WIDGET_BODY")"
+grep -q '"inStock":false' "$WIDGET_BODY" || fail "PATCH didn't set inStock to false: $(cat "$WIDGET_BODY")"
+curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widgets?inStock=false"
+grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "inStock=false filter didn't return widget $widget_id: $(cat "$WIDGET_BODY")"
+curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widgets?inStock=true"
+grep -q '"total":0' "$WIDGET_BODY" || fail "inStock=true should match nothing for this user now: $(cat "$WIDGET_BODY")"
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"

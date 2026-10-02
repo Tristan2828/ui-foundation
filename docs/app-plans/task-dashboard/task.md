@@ -19,7 +19,7 @@ what's possible right now.
 | title | Title | text | yes | 1–200 chars | column, sortable | search |
 | type | Type | single choice | yes | project, learning (labels Project, Learning); default project | column, sortable | yes |
 | status | Status | single choice | yes | idea, considering, doing, done, dropped (labels Idea, Considering, Doing, Done, Dropped), in that display order; default idea | column, sortable | yes |
-| isFocus | Focus | boolean (**not supported yet**) | yes | default off. Only allowed while status is doing. At most 3 tasks across the whole list can have it on: turning on a 4th is refused with "You already have 3 focus tasks; unfocus one first." Moving status to done or dropped turns it off | column | yes |
+| isFocus | Focus | yes/no | yes | default off; filter labels Any, Focused, Not focused. Only allowed while status is doing. At most 3 tasks across the whole list can have it on: turning on a 4th is refused with "You already have 3 focus tasks; unfocus one first." Moving status to done or dropped turns it off | column | yes |
 | goal | Goal | text | no | up to 500 chars; empty means no goal written yet | column | |
 | notes | Notes | long text | no | up to 20000 chars; I write Markdown in it; shown as plain text for now | | |
 | effort | Effort | single choice | no | quick_win, small, large (labels Quick win, Small, Large). Quick win = minutes to about an hour; Small = one session of a few hours; Large = several sessions. Not set label: "Not sized" | column, sortable | yes |
@@ -36,7 +36,7 @@ what's possible right now.
 Sub-records edited on the task's own page (**not supported yet**: the
 playbook builds flat records only):
 
-- **Checklist items**: text (1–300 chars), done (boolean), order. The
+- **Checklist items**: text (1–300 chars), done (yes/no), order. The
   list shows progress as "4/6"; a task with no items shows nothing.
 - **Links**: url (required), label (optional, up to 100 chars), order.
 
@@ -64,13 +64,11 @@ playbook builds flat records only):
 
 These are foundation gaps, not product decisions. Each is marked
 **not supported yet** above, so the playbook will stop on them until it
-can build them:
+can build them (yes/no shipped in 3.4.0):
 
-1. **Boolean field** (isFocus; also the checklist's done, Requirement's
-   isAvailable and Trigger's hasHappened).
-2. **Multi reference field** (categoryIds, requirementIds, triggerIds,
+1. **Multi reference field** (categoryIds, requirementIds, triggerIds,
    blockedByIds): today only a single `reference` or an enum
    `multi choice` exists.
-3. **Sub-records edited on the parent's page** (checklist items, links).
-4. **Computed, read-only field** shown and filtered in the list
+2. **Sub-records edited on the parent's page** (checklist items, links).
+3. **Computed, read-only field** shown and filtered in the list
    (readiness).

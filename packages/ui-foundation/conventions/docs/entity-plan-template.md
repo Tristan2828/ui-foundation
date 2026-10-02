@@ -24,7 +24,9 @@ One or two sentences: what one record is, and who uses the screens.
 - **Type** — what the foundation supports today:
   - *Demonstrated by the Widget reference* (copied directly): `text` (one
     line), `long text`, `decimal` (fixed places — say how many),
-    `date-time`, `email`, `single choice` (list the options, in display
+    `date-time`, `email`, `yes/no` (a boolean that is always yes or no:
+    say its default and the filter's three labels, e.g. Any stock /
+    In stock / Out of stock), `single choice` (list the options, in display
     order; see the note below if it is *optional*), `multi choice` (list
     the options; any number can be picked —
     chips on the form, badges in the table, an any-of filter), `reference`
@@ -32,7 +34,8 @@ One or two sentences: what one record is, and who uses the screens.
   - *Close variants* (built by a small, stated change to the nearest
     pattern): `integer` (from decimal), `url` (from email — a format
     check), `date` (from date-time — no time part).
-  - *Not supported yet:* boolean, file, and anything else.
+  - *Not supported yet:* a yes/no that can also be unset (three states),
+    file, and anything else.
     Write it anyway with a note; the playbook will stop and raise it
     rather than improvise.
 - **Required**: `yes`, or `no` (then say whether empty means "unknown").

@@ -47,6 +47,15 @@ def _unique_tags(v: list[WidgetTag] | None) -> list[WidgetTag] | None:
     return v
 
 
+def _not_null(v: bool | None) -> bool | None:
+    # openapi.yaml: inStock is a plain boolean. Leaving it out of a PATCH
+    # keeps the stored value; an explicit null is a 422, never a NOT NULL
+    # violation (a 500) at commit.
+    if v is None:
+        raise ValueError("inStock can't be null")
+    return v
+
+
 def _format_price(v: object) -> object:
     return f"{v:.2f}" if isinstance(v, Decimal) else v
 
@@ -61,6 +70,7 @@ class WidgetOut(CamelModel):
     price: str
     description: str
     tags: list[WidgetTag]
+    in_stock: bool
 
     @field_validator("price", mode="before")
     @classmethod
@@ -77,6 +87,7 @@ class WidgetCreate(CamelModel):
     price: str = Field(pattern=PRICE_PATTERN)
     description: str = Field(max_length=2000)
     tags: list[WidgetTag] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
+    in_stock: bool = True
 
     _check_tags = field_validator("tags")(_unique_tags)
 
@@ -90,8 +101,10 @@ class WidgetUpdate(CamelModel):
     price: str | None = Field(default=None, pattern=PRICE_PATTERN)
     description: str | None = Field(default=None, max_length=2000)
     tags: list[WidgetTag] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
+    in_stock: bool | None = None
 
     _check_tags = field_validator("tags")(_unique_tags)
+    _check_in_stock = field_validator("in_stock")(_not_null)
 
 
 class UserOut(CamelModel):

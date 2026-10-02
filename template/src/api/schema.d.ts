@@ -162,7 +162,7 @@ export interface components {
          * @enum {string}
          */
         WidgetTag: "fragile" | "bulky" | "seasonal" | "featured";
-        /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it. Add a type only when a real app needs one. */
+        /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it, and inStock (yes/no) in 3.4.0 for the Task Dashboard app. Add a type only when a real app needs one. */
         Widget: {
             readonly id: number;
             /** @description Display label. Not one of the six forcing field types. */
@@ -187,8 +187,13 @@ export interface components {
             description: string;
             /** @description Multi-choice field — forces a multi-select combobox with chips on the form, badges in the table, and an any-of list filter (Phase G). Always present on read; empty when none are chosen. */
             tags: components["schemas"]["WidgetTag"][];
+            /**
+             * @description Yes/no field — forces a switch on the form, a Yes/No cell in the table and an either/yes/no list filter. Never null: always present on read, true when a create leaves it out.
+             * @default true
+             */
+            inStock: boolean;
         };
-        /** @description Widget without a server-assigned id. tags defaults to []. */
+        /** @description Widget without a server-assigned id. tags defaults to [] and inStock to true. */
         WidgetCreate: {
             name: components["schemas"]["Widget"]["name"];
             categoryId: components["schemas"]["Widget"]["categoryId"];
@@ -198,6 +203,7 @@ export interface components {
             price: components["schemas"]["Widget"]["price"];
             description: components["schemas"]["Widget"]["description"];
             tags?: components["schemas"]["Widget"]["tags"];
+            inStock?: components["schemas"]["Widget"]["inStock"];
         };
         /** @description All fields optional — PATCH semantics. tags, when sent, replaces the whole set (send [] to clear it). */
         WidgetUpdate: {
@@ -209,6 +215,7 @@ export interface components {
             price?: components["schemas"]["Widget"]["price"];
             description?: components["schemas"]["Widget"]["description"];
             tags?: components["schemas"]["Widget"]["tags"];
+            inStock?: components["schemas"]["Widget"]["inStock"];
         };
         /** @description Wire pagination shape — deliberately not Page<T>. The gateway computes page/pageSize from offset/limit; see src/api/gateway/. */
         WidgetListResponse: {
@@ -406,6 +413,8 @@ export interface operations {
                 search?: string;
                 /** @description Widgets with any of these tags. Repeat the parameter once per tag, e.g. "tags=fragile&tags=seasonal". */
                 tags?: components["schemas"]["WidgetTag"][];
+                /** @description Only widgets whose inStock matches, sent as "inStock=true" or "inStock=false". Absent means either. */
+                inStock?: boolean;
             };
             header?: never;
             path?: never;

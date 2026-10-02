@@ -33,6 +33,7 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
     price: "19.99",
     description: "A widget",
     tags: [],
+    inStock: true,
     ...overrides,
   };
 }
@@ -186,6 +187,45 @@ describe("listWidgets", () => {
 
     expect(result.items[0].tags).toEqual(["fragile", "featured"]);
     expect(result.items[1].tags).toEqual([]);
+  });
+
+  // openapi.yaml: `inStock` is a boolean query param — "inStock=true" or
+  // "inStock=false", absent means either. false is a real filter value, so
+  // it must reach the wire rather than be dropped as falsy.
+  it("sends filters.inStock: false as inStock=false, not omitted", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({ page: 1, pageSize: 20, filters: { inStock: false } });
+
+    expect(calledUrl(fetchMock).searchParams.getAll("inStock")).toEqual(["false"]);
+  });
+
+  it("sends filters.inStock: true as inStock=true", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({ page: 1, pageSize: 20, filters: { inStock: true } });
+
+    expect(calledUrl(fetchMock).searchParams.getAll("inStock")).toEqual(["true"]);
+  });
+
+  it("sends no inStock parameter when filters.inStock is undefined", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({ page: 1, pageSize: 20, filters: { inStock: undefined } });
+
+    expect(calledUrl(fetchMock).searchParams.has("inStock")).toBe(false);
+  });
+
+  it("passes each item's inStock boolean through to the caller unchanged", async () => {
+    const wireBody: WidgetListResponse = {
+      items: [makeWidget({ id: 1, inStock: true }), makeWidget({ id: 2, inStock: false })],
+      total: 2,
+    };
+    stubFetch(jsonResponse(wireBody, 200));
+
+    const result = await listWidgets({ page: 1, pageSize: 20 });
+
+    expect(result.items.map((item) => item.inStock)).toEqual([true, false]);
   });
 });
 
@@ -424,6 +464,16 @@ describe("updateWidget", () => {
     const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
     expect(body).toEqual({ tags: [] });
     expect(result.tags).toEqual([]);
+  });
+
+  it("sends inStock: false in the body rather than omitting it", async () => {
+    const fetchMock = stubFetch(jsonResponse(makeWidget({ id: 3, inStock: false }), 200));
+
+    const result = await updateWidget(3, { inStock: false });
+
+    const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
+    expect(body).toEqual({ inStock: false });
+    expect(result.inStock).toBe(false);
   });
 
   it("throws AppError{kind:'notfound'} on 404", async () => {

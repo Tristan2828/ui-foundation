@@ -46,6 +46,11 @@ function validateWidgetInput(
       issues.push({ loc: ["body", "tags"], msg: "tags must be unique", type: "value_error.list.unique_items" });
     }
   }
+  // inStock is a plain boolean (never null): an omitted one keeps its value
+  // on PATCH and defaults to true on create; anything else is a 422.
+  if (input.inStock !== undefined && typeof input.inStock !== "boolean") {
+    issues.push({ loc: ["body", "inStock"], msg: "value is not a valid boolean", type: "type_error.bool" });
+  }
   if (input.status !== undefined && !["draft", "active", "archived"].includes(String(input.status))) {
     issues.push({ loc: ["body", "status"], msg: "value is not a valid enumeration member", type: "type_error.enum" });
   }
@@ -96,12 +101,17 @@ export const handlers = [
     const search = url.searchParams.get("search")?.toLowerCase();
     // Repeated param (tags=a&tags=b), matching any of them — openapi.yaml.
     const tags = url.searchParams.getAll("tags");
+    // "true" or "false"; absent means either (openapi.yaml).
+    const inStock = url.searchParams.get("inStock");
 
     let result = widgets;
     if (status) result = result.filter((w) => w.status === status);
     if (categoryId) result = result.filter((w) => w.categoryId === Number(categoryId));
     if (search) result = result.filter((w) => w.name.toLowerCase().includes(search));
     if (tags.length > 0) result = result.filter((w) => w.tags.some((tag) => tags.includes(tag)));
+    if (inStock === "true" || inStock === "false") {
+      result = result.filter((w) => w.inStock === (inStock === "true"));
+    }
     result = sortWidgets(result, url.searchParams.get("sort"));
 
     const total = result.length;
@@ -123,7 +133,13 @@ export const handlers = [
     if (issues.length > 0) {
       return HttpResponse.json({ detail: issues }, { status: 422 });
     }
-    const widget: Widget = { assigneeEmail: null, ...input, tags: input.tags ?? [], id: nextWidgetId() };
+    const widget: Widget = {
+      assigneeEmail: null,
+      ...input,
+      tags: input.tags ?? [],
+      inStock: input.inStock ?? true,
+      id: nextWidgetId(),
+    };
     widgets.push(widget);
     return HttpResponse.json(widget, { status: 201 });
   }),

@@ -15,7 +15,7 @@ events" view; once I mark it happened, they become doable.
 | Field | Label | Type | Required | Options / rules | List | Filter |
 |---|---|---|---|---|---|---|
 | name | Name | text | yes | 1–100 chars; unique per user | column, sortable | search |
-| hasHappened | Happened | boolean (**not supported yet**) | yes | default off; toggled straight from the list row | column | yes |
+| hasHappened | Happened | yes/no | yes | default off; filter labels Any, Happened, Not yet; toggled straight from the list row (**not supported yet**) | column | yes |
 
 ## List screen
 
@@ -32,7 +32,7 @@ events" view; once I mark it happened, they become doable.
 
 ## Open questions
 
-1. Boolean field (hasHappened), and toggling it from the list row: the
-   same gap as `task.md` open question 1.
+1. Toggling a yes/no straight from the list row (the field itself is
+   supported since 3.4.0; today it's changed on the edit form).
 2. The "tasks waiting" count is a computed, read-only field: the same gap
-   as `task.md` open question 4.
+   as `task.md` open question 3.

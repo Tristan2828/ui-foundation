@@ -52,6 +52,7 @@ async def list_widgets(
     categoryId: int | None = None,
     search: str | None = None,
     tags: list[WidgetTag] | None = Query(default=None),
+    inStock: bool | None = None,
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Page[Widget]:
@@ -67,6 +68,8 @@ async def list_widgets(
         # table, identical on Postgres and SQLite.
         tagged = select(WidgetTagLink.widget_id).where(col(WidgetTagLink.tag).in_(tags))
         stmt = stmt.where(col(Widget.id).in_(tagged))
+    if inStock is not None:
+        stmt = stmt.where(Widget.in_stock == inStock)
     total = (await session.exec(select(func.count()).select_from(stmt.subquery()))).one()
     if sort is not None:
         field, direction = sort.split(":")
