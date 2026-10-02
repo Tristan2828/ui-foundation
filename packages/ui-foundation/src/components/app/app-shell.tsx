@@ -1,6 +1,6 @@
 import { LogOutIcon, MoonIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
 import { ErrorState } from '@/components/app/error-state'
@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -59,6 +60,19 @@ const SIDEBAR_COOKIE_NAME = 'sidebar_state'
 function storedSidebarOpen(fallback: boolean): boolean {
   const match = document.cookie.match(new RegExp(`(?:^|; )${SIDEBAR_COOKIE_NAME}=([^;]*)`))
   return match ? match[1] === 'true' : fallback
+}
+
+// Below the mobile breakpoint the sidebar is a modal sheet, and the
+// primitive leaves it open when one of its links navigates, covering the
+// page the user just asked for. Keyed on location.key, so following a link
+// to the page already showing closes it too. Covers sidebarExtra's links.
+function CloseMobileSidebarOnNavigate() {
+  const { setOpenMobile } = useSidebar()
+  const { key } = useLocation()
+  useEffect(() => {
+    setOpenMobile(false)
+  }, [key, setOpenMobile])
+  return null
 }
 
 function ThemeToggle() {
@@ -126,6 +140,7 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={storedSidebarOpen(defaultSidebarOpen)}>
+        <CloseMobileSidebarOnNavigate />
         <nav aria-label="Primary">
           <Sidebar collapsible="icon">
             <SidebarHeader>

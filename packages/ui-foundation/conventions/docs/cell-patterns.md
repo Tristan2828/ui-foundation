@@ -162,7 +162,28 @@ When the useful question is "how soon?" rather than "which day?".
   rebuilt as UTC midnight** (`Date.UTC(y, m, d)`). Subtracting `Date.now()`
   shifts the answer by a day for anyone west of UTC.
 - Relative text **goes stale**, so a fixture pinning a date drifts. Freeze
-  the clock (Playwright's `page.clock`) in any test asserting one.
+  the clock (Playwright's `page.clock`) in any test asserting one, and
+  assert one past and one future value:
+
+```ts
+// West of UTC, where subtracting Date.now() would be off by a day.
+test.use({ timezoneId: 'America/Los_Angeles' })
+
+test('release dates read relative to today', async ({ page }) => {
+  // Before goto, so the first render already sees it. Noon UTC is the same
+  // calendar day in every timezone from UTC-11 to UTC+11.
+  await page.clock.setFixedTime(new Date('2026-06-01T12:00:00Z'))
+  await page.goto('/games')
+  // Mock fixtures: one released 2026-04-01, one due 2026-06-22.
+  await expect(page.getByRole('cell', { name: '2 months ago' })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'in 3 weeks' })).toBeVisible()
+})
+```
+
+`setFixedTime` pins `Date.now()` and `new Date()` and leaves the real
+timers alone, so debounces and TanStack Query behave as usual. Reach for
+`page.clock.install()` only when a test has to move time forward.
+
 - `title` is mouse-only. If the exact date matters, use pattern 4 instead.
 - **Cost:** "2 years ago" is vague, and the column doesn't look sorted even
   though server-side sorting still works.

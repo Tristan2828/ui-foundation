@@ -508,6 +508,11 @@ function SidebarMenuButton({
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { isMobile, state } = useSidebar()
+  // Patched (ui-foundation): upstream keeps the tooltip on mobile and only
+  // hides its content, so keyboard focus still opened an invisible tooltip
+  // and the first Escape closed that instead of the sidebar sheet. On
+  // mobile the label is always visible, so there is no tooltip at all.
+  const hasTooltip = !!tooltip && !isMobile
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
@@ -516,7 +521,7 @@ function SidebarMenuButton({
       },
       props
     ),
-    render: !tooltip ? render : <TooltipTrigger render={render} />,
+    render: !hasTooltip ? render : <TooltipTrigger render={render} />,
     state: {
       slot: "sidebar-menu-button",
       sidebar: "menu-button",
@@ -525,7 +530,7 @@ function SidebarMenuButton({
     },
   })
 
-  if (!tooltip) {
+  if (!hasTooltip) {
     return comp
   }
 
@@ -541,7 +546,7 @@ function SidebarMenuButton({
       <TooltipContent
         side="right"
         align="center"
-        hidden={state !== "collapsed" || isMobile}
+        hidden={state !== "collapsed"}
         {...tooltip}
       />
     </Tooltip>

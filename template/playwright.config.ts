@@ -11,7 +11,12 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      // The off-canvas sheet only exists below the mobile breakpoint.
+      testIgnore: ['mobile-sidebar.spec.ts'],
+    },
     // A phone-width run of the screen-state specs only, not a second full
     // suite. Nothing in src/routes or src/components/app carries a
     // breakpoint: what responsiveness exists is inherited from shadcn (the
@@ -25,8 +30,8 @@ export default defineConfig({
       // Not shell.spec.ts: it asserts the *persistent* sidebar and its
       // expand/collapse cookie, which below the mobile breakpoint is an
       // off-canvas sheet instead — a different component, not a narrower
-      // one. a11y.spec.ts opens that sheet and checks it there.
-      testMatch: ['widgets-table.spec.ts', 'a11y.spec.ts'],
+      // one. mobile-sidebar.spec.ts covers that sheet.
+      testMatch: ['widgets-table.spec.ts', 'a11y.spec.ts', 'mobile-sidebar.spec.ts'],
     },
   ],
   webServer: {
