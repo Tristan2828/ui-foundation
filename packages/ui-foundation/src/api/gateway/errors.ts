@@ -22,10 +22,7 @@ export function toAppError(status: number, body: unknown): AppError {
     const detail = (body as ValidationErrorBody | undefined)?.detail ?? [];
     const fieldErrors: Record<string, string[]> = {};
     for (const issue of detail) {
-      // The field is the last *string* segment: integer segments index into
-      // an array field (["body", "tags", 0] is a bad tag), and a form binds
-      // errors by field name, never by position.
-      const field = String([...issue.loc].reverse().find((segment) => typeof segment === "string") ?? issue.loc[issue.loc.length - 1]);
+      const field = fieldKey(issue.loc);
       (fieldErrors[field] ??= []).push(issue.msg);
     }
     return { kind: "validation", message: "Validation failed", fieldErrors };
@@ -35,6 +32,23 @@ export function toAppError(status: number, body: unknown): AppError {
   if (status === 404) return { kind: "notfound", message };
   if (status === 401) return { kind: "auth", message };
   return { kind: "server", message };
+}
+
+// The key a form binds a 422 to (react-hook-form's field path):
+// - ["body", "price"] → "price"
+// - ["body", "tags", 0] → "tags": an item of a list of values is the list's
+//   error, never a position.
+// - ["body", "checklist", 2, "text"] → "checklist.2.text": a field inside an
+//   item of a list of objects, so it lands on that row's input.
+// Anything else keeps the last string segment, as before nested paths
+// existed (["body", "address", "city"] → "city").
+function fieldKey(loc: readonly (string | number)[]): string {
+  const path = loc.slice(1); // drop "body" / "query"
+  const listIndex = path.findIndex((segment) => typeof segment === "number");
+  if (listIndex > 0 && path.slice(listIndex + 1).some((segment) => typeof segment === "string")) {
+    return path.join(".");
+  }
+  return String([...loc].reverse().find((segment) => typeof segment === "string") ?? loc[loc.length - 1]);
 }
 
 export function networkError(): AppError {

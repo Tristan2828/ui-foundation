@@ -54,6 +54,28 @@ One or two sentences: what one record is, and who uses the screens.
 - **Filter**: `search` (the text search box), `yes` (a filter control), or
   blank.
 
+## Sub-records
+
+Optional. A list of small items that belong to one record alone and are
+edited on its form, saved with it (a checklist, a set of links). One block
+per list; delete the section if there are none.
+
+### checklist — Checklist
+
+- Most items: 50.
+- In the table: a done-count (`2/6 done`), or blank if the list isn't
+  shown.
+
+| Field | Label | Type | Required | Options / rules |
+|---|---|---|---|---|
+| text | Text | text | yes | 1–300 chars, trimmed |
+| done | Done | yes/no | yes | default no |
+
+- Item fields use the same types as the main table (`text`, `url`,
+  `yes/no`… — not another sub-record or a reference). Items have no screen
+  of their own: they're added, edited, reordered and removed on the
+  record's form, and the order is kept.
+
 ## List screen
 
 - Default sort:

@@ -217,6 +217,76 @@ test.describe('widget form', () => {
     await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
   })
 
+  test('sub-records: a saved checklist loads in order, and add, tick, reorder and remove all save', async ({
+    page,
+  }) => {
+    // Wireless Mouse (id 1): "Charge the battery" (done), "Pair the receiver".
+    await page.goto('/widgets/1/edit')
+    await expect(page.getByLabel('Item 1 text')).toHaveValue('Charge the battery')
+    await expect(page.getByLabel('Item 1 done')).toBeChecked()
+    await expect(page.getByLabel('Item 2 text')).toHaveValue('Pair the receiver')
+    await expect(page.getByLabel('Item 2 done')).not.toBeChecked()
+    // The first row can't move up, the last can't move down.
+    await expect(page.getByRole('button', { name: 'Move item 1 up' })).toBeDisabled()
+    await expect(page.getByRole('button', { name: 'Move item 2 down' })).toBeDisabled()
+
+    await page.getByRole('button', { name: 'Add item' }).click()
+    // The new row's text box takes focus, ready to type.
+    await expect(page.getByLabel('Item 3 text')).toBeFocused()
+    await page.keyboard.type('Test the scroll wheel')
+    await page.getByLabel('Item 3 done').click()
+    await page.getByRole('button', { name: 'Move item 3 up' }).click()
+    await expect(page.getByLabel('Item 2 text')).toHaveValue('Test the scroll wheel')
+    await page.getByRole('button', { name: 'Remove item 1' }).click()
+    await expect(page.getByLabel('Item 1 text')).toHaveValue('Test the scroll wheel')
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL(/\/widgets$/)
+    const row = page.getByRole('row', { name: /Wireless Mouse/ })
+    await expect(row.getByRole('cell', { name: '1/2 done', exact: true })).toBeVisible()
+
+    // Reopening shows the saved order. Through the row's Edit link, not
+    // page.goto: a full load restarts the mocks with their seed data.
+    await page.getByRole('button', { name: 'Edit Wireless Mouse' }).click()
+    await expect(page.getByLabel('Item 1 text')).toHaveValue('Test the scroll wheel')
+    await expect(page.getByLabel('Item 1 done')).toBeChecked()
+    await expect(page.getByLabel('Item 2 text')).toHaveValue('Pair the receiver')
+    await expect(page.getByLabel('Item 3 text')).toHaveCount(0)
+  })
+
+  test('sub-records: an empty list says so, and a blank item is caught on its own row', async ({ page }) => {
+    await page.goto('/widgets/2/edit')
+    await expect(page.getByText('No items yet.')).toBeVisible()
+    await page.getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page.getByText('Write something or remove the item')).toBeVisible()
+    await expect(page.getByLabel('Item 1 text')).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
+  })
+
+  test('sub-records: a server 422 inside one item binds to that row', async ({ page }) => {
+    await page.goto('/widgets/1/edit')
+    await expect(page.getByLabel('Item 2 text')).toHaveValue('Pair the receiver')
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const { worker, http, HttpResponse } = window.__msw
+      worker.use(
+        http.patch('*/api/widgets/1', () =>
+          HttpResponse.json(
+            { detail: [{ loc: ['body', 'checklist', 1, 'text'], msg: 'That step is not allowed', type: 'value_error' }] },
+            { status: 422 },
+          ),
+        ),
+      )
+    })
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page.getByText('That step is not allowed')).toBeVisible()
+    await expect(page.getByLabel('Item 2 text')).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByLabel('Item 1 text')).not.toHaveAttribute('aria-invalid', 'true')
+  })
+
   test('yes/no: a new widget starts in stock, and the switch state is what saves', async ({ page }) => {
     await page.goto('/widgets/new')
     const inStock = page.getByRole('switch', { name: 'In Stock' })

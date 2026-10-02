@@ -43,6 +43,18 @@ describe('widgetFormSchema', () => {
     expect(fieldMessages(repeated).extraCategoryIds).toBe('Each category can only be chosen once')
   })
 
+  it('trims checklist text and rejects a blank item on that item', () => {
+    expect(WIDGET_FORM_DEFAULTS.checklist).toEqual([])
+    const ok = widgetFormSchema.safeParse({ ...validWidget, checklist: [{ text: '  Pair it  ', done: false }] })
+    expect(ok.success && ok.data.checklist).toEqual([{ text: 'Pair it', done: false }])
+    const blank = widgetFormSchema.safeParse({
+      ...validWidget,
+      checklist: [{ text: 'Fine', done: true }, { text: '   ', done: false }],
+    })
+    expect(blank.error?.issues[0]?.path).toEqual(['checklist', 1, 'text'])
+    expect(blank.error?.issues[0]?.message).toBe('Write something or remove the item')
+  })
+
   it('accepts an empty assignee and a padded valid one, rejects an invalid one', () => {
     expect(widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '' }).success).toBe(true)
     const padded = widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '  a@example.com ' })

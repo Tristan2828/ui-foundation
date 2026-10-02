@@ -235,6 +235,13 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
   })
 
+  test('sub-records: the column shows a done-count, not the items', async ({ page }) => {
+    await page.goto('/widgets')
+    const mouse = page.getByRole('row').filter({ hasText: 'Wireless Mouse' })
+    await expect(mouse.getByRole('cell', { name: '1/2 done', exact: true })).toBeVisible()
+    await expect(mouse.getByText('Pair the receiver')).toHaveCount(0)
+  })
+
   test('yes/no cell: the word carries the value, never a checkbox', async ({ page }) => {
     await page.goto('/widgets')
     const mouse = page.getByRole('row').filter({ hasText: 'Wireless Mouse' })
@@ -418,12 +425,12 @@ test.describe('widgets table', () => {
     const row = page.getByRole('row').filter({ hasText: 'Blank Slate' })
     await expect(row).toBeVisible()
 
-    // A null assignee, an empty tag list and no extra categories all render the shared em
+    // A null assignee, an empty tag list, no extra categories and an empty checklist all render the shared em
     // dash, never a blank cell — a blank reads as a rendering bug.
     // Matched on the <td> with exactly that text: a substring match also
     // catches the wrapping cell of a <span>-wrapped dash, so the count
     // depends on markup rather than on behaviour.
-    await expect(row.locator('td').filter({ hasText: /^—$/ })).toHaveCount(3)
+    await expect(row.locator('td').filter({ hasText: /^—$/ })).toHaveCount(4)
 
     // And the form shows empty controls rather than placeholder values.
     await page.goto('/widgets/4/edit')

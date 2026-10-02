@@ -149,6 +149,24 @@ export function buildWidgetsColumns(
       },
     },
     {
+      // Sub-records: a done-count, not the items themselves (they're edited
+      // on the form). An em dash when the list is empty.
+      id: 'checklist',
+      accessorKey: 'checklist',
+      header: 'Checklist',
+      enableSorting: false,
+      cell: ({ getValue }) => {
+        const items = getValue() as Widget['checklist']
+        if (items.length === 0) return <span className="text-muted-foreground">—</span>
+        const done = items.filter((item) => item.done).length
+        return (
+          <span className="tabular-nums">
+            {done}/{items.length} done
+          </span>
+        )
+      },
+    },
+    {
       // Yes/no (cell-patterns.md pattern 12): the word carries the value and
       // the check only reinforces it; "No" is muted, not red, because being
       // out of stock isn't an error. Never a checkbox: a read-only cell

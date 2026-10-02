@@ -5,6 +5,31 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.6.0 — sub-records edited on the parent's form
+
+Additive, with one small change to error keys (below). Run
+`npx ui-foundation sync` after the bump for the updated playbook and plan
+template.
+
+- **Sub-records are supported.** Entity plans gain a `## Sub-records`
+  section: a list of small items that belong to one record and are edited
+  on its form (a checklist, a set of links). The template's Widget gains
+  `checklist` (`{text, done}` items) as the reference to copy: add, tick,
+  reorder and remove on the form, saved with the widget, and a
+  `1/2 done` count in the table.
+- **New composite:** `ListEditor` (row chrome: move up, move down, remove,
+  and an Add button; the item fields are the app's).
+- **New primitive:** `@tristan2828/ui-foundation/ui/checkbox` (shadcn's, on
+  Base UI), with Storybook axe and token checks in both themes.
+- **Error keys for items in a list of objects.** A 422 at
+  `["body", "checklist", 2, "text"]` is now keyed
+  `fieldErrors["checklist.2.text"]`, react-hook-form's path, so it lands on
+  that row. It used to be keyed `"text"`. Nothing else moves: a plain
+  field, an item of a list of values (`["body", "tags", 0]` → `tags`) and a
+  nested object with no list in its path keep their keys. If your app
+  matched the old `"text"`-style key for such errors, match the path
+  instead.
+
 ## 3.5.0 — the multi-reference field type
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

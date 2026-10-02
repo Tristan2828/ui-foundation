@@ -171,6 +171,16 @@ unknown_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X
 [ "$unknown_status" = "422" ] || fail "an unknown extraCategoryIds id returned $unknown_status, expected 422: $(cat "$WIDGET_BODY")"
 curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/categories?ids=3&ids=9999"
 grep -q '"id":3' "$WIDGET_BODY" && ! grep -q '"id":1,' "$WIDGET_BODY" || fail "categories?ids=3 should return only category 3: $(cat "$WIDGET_BODY")"
+
+# checklist (3.6.0): a child table with a position column (migration 0008),
+# order kept across a replace, and a blank item as a 422 on its own path.
+echo "check-backend-postgres: checklist order, replace and per-item 422 against real Postgres (3.6.0)"
+list_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"checklist":[{"text":"Second","done":true},{"text":"First","done":false}]}')
+[ "$list_status" = "200" ] || fail "PATCH checklist returned $list_status — got: $(cat "$WIDGET_BODY")"
+grep -q '"checklist":\[{"text":"Second","done":true},{"text":"First","done":false}\]' "$WIDGET_BODY" || fail "PATCH didn't keep the checklist order: $(cat "$WIDGET_BODY")"
+blank_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"checklist":[{"text":"  ","done":false}]}')
+[ "$blank_status" = "422" ] || fail "a blank checklist item returned $blank_status, expected 422: $(cat "$WIDGET_BODY")"
+grep -q '"loc":\["body","checklist",0,"text"\]' "$WIDGET_BODY" || fail "a blank item's 422 should be keyed to checklist.0.text: $(cat "$WIDGET_BODY")"
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"

@@ -33,12 +33,28 @@ what's possible right now.
 | blockedByIds | Blocked By | multi reference → Task | no | other tasks that must be done first; can't include itself; no loops (A waits on B waits on A is refused) | column | |
 | readiness | Can Do Now | computed, read-only (**not supported yet**) | — | worked out by the server, never stored. **waiting** if any trigger hasn't happened; else **blocked** if any blocked-by task isn't done; else **needs** if any requirement is unavailable; else **ready**. Labels: Ready, Needs…, Waiting, Blocked; "Needs…" names the missing requirements | column | yes |
 
-Sub-records edited on the task's own page (**not supported yet**: the
-playbook builds flat records only):
+## Sub-records
 
-- **Checklist items**: text (1–300 chars), done (yes/no), order. The
-  list shows progress as "4/6"; a task with no items shows nothing.
-- **Links**: url (required), label (optional, up to 100 chars), order.
+### checklist — Checklist
+
+- Most items: 50.
+- In the table: a done-count (`4/6 done`); an em dash when there are no
+  items (the foundation never leaves a cell blank).
+
+| Field | Label | Type | Required | Options / rules |
+|---|---|---|---|---|
+| text | Text | text | yes | 1–300 chars, trimmed |
+| done | Done | yes/no | yes | default no |
+
+### links — Links
+
+- Most items: 20.
+- Not shown in the table.
+
+| Field | Label | Type | Required | Options / rules |
+|---|---|---|---|---|
+| url | URL | url | yes | a full http(s) link |
+| label | Label | text | no | up to 100 chars; empty means show the URL |
 
 ## List screen
 
@@ -64,9 +80,9 @@ playbook builds flat records only):
 
 These are foundation gaps, not product decisions. Each is marked
 **not supported yet** above, so the playbook will stop on them until it
-can build them (yes/no shipped in 3.4.0, multi reference in 3.5.0; each
-referenced entity's list endpoint takes `ids` for naming picks):
+can build them (yes/no shipped in 3.4.0, multi reference in 3.5.0,
+sub-records in 3.6.0; each referenced entity's list endpoint takes `ids`
+for naming picks):
 
-1. **Sub-records edited on the parent's page** (checklist items, links).
-2. **Computed, read-only field** shown and filtered in the list
+1. **Computed, read-only field** shown and filtered in the list
    (readiness).
