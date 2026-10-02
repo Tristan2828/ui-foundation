@@ -90,12 +90,16 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
+// Patched (ui-foundation): padding and header height come from the
+// --table-* density tokens in styles/theme.css instead of upstream's fixed
+// h-10 / p-2, so data-density on an ancestor retunes every table. The
+// defaults equal upstream's values.
 function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
+        "h-(--table-head-height) px-(--table-cell-px) text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -108,7 +112,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "px-(--table-cell-px) py-(--table-cell-py) align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
