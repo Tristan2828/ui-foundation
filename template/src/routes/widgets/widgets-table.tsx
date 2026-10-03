@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@tristan2828/ui-foundation/ui/select'
-import { WIDGET_STATUSES, WIDGET_TAGS } from './widget-schema'
+import { CHECKLIST_STATE_LABELS, CHECKLIST_STATES, WIDGET_STATUSES, WIDGET_TAGS } from './widget-schema'
+import { CategoryNamesContext } from './category-names-context'
 import { buildWidgetsColumns } from './widgets-columns'
 import { categoryNames, useCategoriesByIdsQuery, useCategoriesQuery } from './use-categories'
 import { useWidgetsQuery } from './use-widgets'
@@ -64,7 +65,10 @@ const IN_STOCK_FILTER_LABELS: Record<string, string> = {
   true: 'In stock',
   false: 'Out of stock',
 }
-const FILTERS = ['search', 'status', 'inStock'] as const
+// A computed field filters like any single choice: the server evaluates it.
+const PROGRESS_FILTER_ALL = 'all'
+const PROGRESS_FILTER_ALL_LABEL = 'Any progress'
+const FILTERS = ['search', 'status', 'inStock', 'checklistState'] as const
 const MULTI_FILTERS = ['tags', 'extraCategoryIds'] as const
 const SEARCH_DEBOUNCE_MS = 300
 
@@ -75,6 +79,9 @@ export function WidgetsTableRoute() {
     useTableUrlState(FILTERS, MULTI_FILTERS)
   const search = filters.search
   const statusFilter = filters.status || STATUS_FILTER_ALL
+  const progressFilter = (CHECKLIST_STATES as readonly string[]).includes(filters.checklistState)
+    ? filters.checklistState
+    : PROGRESS_FILTER_ALL
   // Anything but 'true'/'false' (a hand-edited URL) means no filter.
   const inStockFilter =
     filters.inStock === 'true' || filters.inStock === 'false' ? filters.inStock : IN_STOCK_FILTER_ALL
@@ -109,9 +116,10 @@ export function WidgetsTableRoute() {
         tags: tagsFilter,
         extraCategoryIds: extraCategoryFilter,
         inStock: inStockFilter === IN_STOCK_FILTER_ALL ? undefined : inStockFilter === 'true',
+        checklistState: progressFilter === PROGRESS_FILTER_ALL ? undefined : progressFilter,
       },
     }),
-    [page, sorting, debouncedSearch, statusFilter, tagsFilter, inStockFilter, extraCategoryFilter],
+    [page, sorting, debouncedSearch, statusFilter, tagsFilter, inStockFilter, extraCategoryFilter, progressFilter],
   )
 
   const widgetsQuery = useWidgetsQuery(query)
@@ -132,14 +140,17 @@ export function WidgetsTableRoute() {
     [extraCategoryOptionsQuery.data, referencedCategoriesQuery.data],
   )
 
-  const columns = useMemo(() => buildWidgetsColumns(names), [names])
+  // Built once: names reach the cells through CategoryNamesContext, so a
+  // name arriving never rebuilds (and so remounts) the table's cells.
+  const columns = useMemo(() => buildWidgetsColumns(), [])
 
   const hasActiveFilters =
     search !== '' ||
     statusFilter !== STATUS_FILTER_ALL ||
     tagsFilter.length > 0 ||
     extraCategoryFilter.length > 0 ||
-    inStockFilter !== IN_STOCK_FILTER_ALL
+    inStockFilter !== IN_STOCK_FILTER_ALL ||
+    progressFilter !== PROGRESS_FILTER_ALL
 
   return (
     <div className="flex flex-col gap-6">
@@ -151,120 +162,149 @@ export function WidgetsTableRoute() {
         </Button>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={widgetsQuery.data?.items ?? []}
-        total={widgetsQuery.data?.total ?? 0}
-        page={page}
-        pageSize={PAGE_SIZE}
-        onPageChange={setPage}
-        sorting={sorting}
-        onSortingChange={setSorting}
-        isLoading={widgetsQuery.isLoading}
-        error={widgetsQuery.error}
-        onRetry={() => widgetsQuery.refetch()}
-        emptyTitle={hasActiveFilters ? 'No widgets match your filters' : 'No widgets yet'}
-        emptyDescription={
-          hasActiveFilters ? 'Try a different search, status, tag, category or stock filter.' : 'Create one to get started.'
-        }
-        emptyAction={
-          !hasActiveFilters && (
-            <Button size="sm" nativeButton={false} render={<Link to="/widgets/new" />}>
-              Create widget
-            </Button>
-          )
-        }
-        toolbar={
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="flex flex-col gap-1">
-              <FilterLabel>Search</FilterLabel>
-              <Input
-                value={search}
-                onChange={(event) => setFilter('search', event.target.value)}
-                placeholder="Search by name"
-                aria-label="Search widgets"
-                className="max-w-64"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-            <FilterLabel>Status</FilterLabel>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) =>
-                setFilter('status', value === STATUS_FILTER_ALL ? '' : (value as string))
-              }
-            >
-              <SelectTrigger aria-label="Filter by status" className="w-36">
-                <SelectValue>
-                  {(value) => (value === STATUS_FILTER_ALL ? STATUS_FILTER_ALL_LABEL : value)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={STATUS_FILTER_ALL}>{STATUS_FILTER_ALL_LABEL}</SelectItem>
-                {WIDGET_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <FilterLabel>Tags</FilterLabel>
-              <MultiChoice
-                options={WIDGET_TAGS}
-                value={tagsFilter}
-                onValueChange={(tags) => setMultiFilter('tags', tags)}
-                placeholder="Any tag"
-                aria-label="Filter by tags"
-                className="w-56"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <FilterLabel>Extra Categories</FilterLabel>
-              <MultiReference
-                options={(extraCategoryOptionsQuery.data ?? []).map((category) => ({
-                  id: category.id,
-                  label: category.name,
-                }))}
-                value={extraCategoryFilter}
-                onValueChange={(ids) => setMultiFilter('extraCategoryIds', ids.map(String))}
-                getLabel={(id) => names.get(id)}
-                onSearchChange={setExtraCategorySearch}
-                placeholder="Any category"
-                emptyText="No categories found."
-                aria-label="Filter by extra categories"
-                className="w-56"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <FilterLabel>In Stock</FilterLabel>
+      <CategoryNamesContext.Provider value={names}>
+        <DataTable
+          columns={columns}
+          data={widgetsQuery.data?.items ?? []}
+          total={widgetsQuery.data?.total ?? 0}
+          page={page}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+          sorting={sorting}
+          onSortingChange={setSorting}
+          isLoading={widgetsQuery.isLoading}
+          error={widgetsQuery.error}
+          onRetry={() => widgetsQuery.refetch()}
+          emptyTitle={hasActiveFilters ? 'No widgets match your filters' : 'No widgets yet'}
+          emptyDescription={
+            hasActiveFilters ? 'Try different filters.' : 'Create one to get started.'
+          }
+          emptyAction={
+            !hasActiveFilters && (
+              <Button size="sm" nativeButton={false} render={<Link to="/widgets/new" />}>
+                Create widget
+              </Button>
+            )
+          }
+          toolbar={
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="flex flex-col gap-1">
+                <FilterLabel>Search</FilterLabel>
+                <Input
+                  value={search}
+                  onChange={(event) => setFilter('search', event.target.value)}
+                  placeholder="Search by name"
+                  aria-label="Search widgets"
+                  className="max-w-64"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+              <FilterLabel>Status</FilterLabel>
               <Select
-                value={inStockFilter}
+                value={statusFilter}
                 onValueChange={(value) =>
-                  setFilter('inStock', value === IN_STOCK_FILTER_ALL ? '' : (value as string))
+                  setFilter('status', value === STATUS_FILTER_ALL ? '' : (value as string))
                 }
               >
-                <SelectTrigger aria-label="Filter by stock" className="w-36">
-                  {/* Same reason as Status: without the children function the
-                      trigger shows the raw value ('all', 'true'). */}
-                  <SelectValue>{(value) => IN_STOCK_FILTER_LABELS[value as string] ?? value}</SelectValue>
+                <SelectTrigger aria-label="Filter by status" className="w-36">
+                  <SelectValue>
+                    {(value) => (value === STATUS_FILTER_ALL ? STATUS_FILTER_ALL_LABEL : value)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {[IN_STOCK_FILTER_ALL, 'true', 'false'].map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {IN_STOCK_FILTER_LABELS[value]}
+                  <SelectItem value={STATUS_FILTER_ALL}>{STATUS_FILTER_ALL_LABEL}</SelectItem>
+                  {WIDGET_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <FilterLabel>Tags</FilterLabel>
+                <MultiChoice
+                  options={WIDGET_TAGS}
+                  value={tagsFilter}
+                  onValueChange={(tags) => setMultiFilter('tags', tags)}
+                  placeholder="Any tag"
+                  aria-label="Filter by tags"
+                  className="w-56"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FilterLabel>Extra Categories</FilterLabel>
+                <MultiReference
+                  options={(extraCategoryOptionsQuery.data ?? []).map((category) => ({
+                    id: category.id,
+                    label: category.name,
+                  }))}
+                  value={extraCategoryFilter}
+                  onValueChange={(ids) => setMultiFilter('extraCategoryIds', ids.map(String))}
+                  getLabel={(id) => names.get(id)}
+                  onSearchChange={setExtraCategorySearch}
+                  placeholder="Any category"
+                  emptyText="No categories found."
+                  aria-label="Filter by extra categories"
+                  className="w-56"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FilterLabel>Progress</FilterLabel>
+                <Select
+                  value={progressFilter}
+                  onValueChange={(value) =>
+                    setFilter('checklistState', value === PROGRESS_FILTER_ALL ? '' : (value as string))
+                  }
+                >
+                  <SelectTrigger aria-label="Filter by progress" className="w-36">
+                    <SelectValue>
+                      {(value) =>
+                        value === PROGRESS_FILTER_ALL
+                          ? PROGRESS_FILTER_ALL_LABEL
+                          : CHECKLIST_STATE_LABELS[value as keyof typeof CHECKLIST_STATE_LABELS]
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={PROGRESS_FILTER_ALL}>{PROGRESS_FILTER_ALL_LABEL}</SelectItem>
+                    {CHECKLIST_STATES.map((state) => (
+                      <SelectItem key={state} value={state}>
+                        {CHECKLIST_STATE_LABELS[state]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <FilterLabel>In Stock</FilterLabel>
+                <Select
+                  value={inStockFilter}
+                  onValueChange={(value) =>
+                    setFilter('inStock', value === IN_STOCK_FILTER_ALL ? '' : (value as string))
+                  }
+                >
+                  <SelectTrigger aria-label="Filter by stock" className="w-36">
+                    {/* Same reason as Status: without the children function the
+                        trigger shows the raw value ('all', 'true'). */}
+                    <SelectValue>{(value) => IN_STOCK_FILTER_LABELS[value as string] ?? value}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[IN_STOCK_FILTER_ALL, 'true', 'false'].map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {IN_STOCK_FILTER_LABELS[value]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        }
-        getRowId={(widget) => String(widget.id)}
-        pinFirstColumn
-        pinLastColumn
-      />
+          }
+          getRowId={(widget) => String(widget.id)}
+          pinFirstColumn
+          pinLastColumn
+        />
+      </CategoryNamesContext.Provider>
     </div>
   )
 }

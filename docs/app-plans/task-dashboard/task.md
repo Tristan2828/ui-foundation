@@ -31,7 +31,7 @@ what's possible right now.
 | requirementIds | Needs | multi reference → Requirement | no | any number, no repeats; none means nothing special needed | column | yes (any of) |
 | triggerIds | Waiting On | multi reference → Trigger | no | any number, no repeats; none means not waiting on a life event | column | |
 | blockedByIds | Blocked By | multi reference → Task | no | other tasks that must be done first; can't include itself; no loops (A waits on B waits on A is refused) | column | |
-| readiness | Can Do Now | computed, read-only (**not supported yet**) | — | worked out by the server, never stored. **waiting** if any trigger hasn't happened; else **blocked** if any blocked-by task isn't done; else **needs** if any requirement is unavailable; else **ready**. Labels: Ready, Needs…, Waiting, Blocked; "Needs…" names the missing requirements | column | yes |
+| readiness | Can Do Now | computed | — | worked out by the server, never stored. **waiting** if any trigger hasn't happened; else **blocked** if any blocked-by task isn't done; else **needs** if any requirement is unavailable; else **ready**. Labels: Ready, Needs…, Waiting, Blocked; "Needs…" names the missing requirements | column | yes |
 
 ## Sub-records
 
@@ -78,11 +78,11 @@ what's possible right now.
 
 ## Open questions
 
-These are foundation gaps, not product decisions. Each is marked
-**not supported yet** above, so the playbook will stop on them until it
-can build them (yes/no shipped in 3.4.0, multi reference in 3.5.0,
-sub-records in 3.6.0; each referenced entity's list endpoint takes `ids`
-for naming picks):
+None. Every field type here is supported as of foundation 3.7.0. Notes for
+the build:
 
-1. **Computed, read-only field** shown and filtered in the list
-   (readiness).
+- Each referenced entity's list endpoint takes `ids`, for naming picks
+  (the playbook's multi-reference step).
+- `readiness` is one SQL expression (correlated `EXISTS` over triggers,
+  blocked-by tasks and requirements) driving the filter and sort, with a
+  Python mirror and a test that they agree (the playbook's computed step).

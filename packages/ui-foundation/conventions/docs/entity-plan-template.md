@@ -33,7 +33,12 @@ One or two sentences: what one record is, and who uses the screens.
     (to another entity — name it; a searchable combobox), `multi reference`
     (to any number of records of another entity — name it; chips with a
     searchable dropdown, names as badges in the table, an any-of filter;
-    the other entity's list endpoint must also accept `ids`).
+    the other entity's list endpoint must also accept `ids`),
+    `computed` (read-only: the server works it out from other data on
+    every read and never stores it — give its rule, and if it's a choice,
+    its values in sort order; a read-only column, a filter and a sort the
+    server evaluates, never on the form). A count of related records is a
+    `computed` integer.
   - *Close variants* (built by a small, stated change to the nearest
     pattern): `integer` (from decimal), `url` (from email — a format
     check), `date` (from date-time — no time part).

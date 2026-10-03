@@ -12,7 +12,7 @@ from typing import Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from pydantic.alias_generators import to_camel
 
-from app.models import WidgetStatus, WidgetTag
+from app.models import WidgetChecklistState, WidgetStatus, WidgetTag
 
 T = TypeVar("T")
 
@@ -105,6 +105,9 @@ class WidgetOut(CamelModel):
     in_stock: bool
     extra_category_ids: list[int]
     checklist: list[ChecklistItem]
+    # Computed on every read (Widget.checklist_state); never accepted on
+    # create or update, so it's absent from WidgetCreate/WidgetUpdate.
+    checklist_state: WidgetChecklistState
 
     @field_validator("price", mode="before")
     @classmethod

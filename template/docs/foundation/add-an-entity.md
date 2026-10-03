@@ -103,7 +103,23 @@ is a filled-in example while the Widgets demo is still here).
    controls named by position ("Item 2 text"), a per-item `FieldError`
    (a server 422 at `["body", "checklist", 2, "text"]` arrives as
    `fieldErrors["checklist.2.text"]` and binds to that row), and a summary
-   in the table, never the items):
+   in the table, never the items — and a `computed` field copies
+   Progress (`checklistState`): `readOnly` in `openapi.yaml` and absent
+   from `<Entity>Create`/`<Entity>Update`, one SQL expression in the
+   router that the filter and sort use (correlated `EXISTS`, or a scalar
+   subquery for a count, so they hold across pages), a Python mirror on
+   the model for the value each row reads back with, a test that the two
+   agree for every value, the mocks recomputing it on every write and
+   ignoring any client-sent value, a read-only column and a filter, and
+   nothing on the form):
+
+   **Keep column definitions stable.** Build them once
+   (`useMemo(() => build<Entity>Columns(), [])`) from nothing that loads
+   later. TanStack's `flexRender` treats each column's `cell` as a
+   component, so rebuilt columns remount every cell: focus is lost and the
+   table flickers when, say, reference names arrive after the rows. Data
+   that arrives later reaches the cells through context, as
+   `category-names.tsx` does for category names.
    - `src/routes/widgets/use-widgets.ts`, `use-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)

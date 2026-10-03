@@ -40,6 +40,12 @@ test('the e2e override can serve a binary body an <img> accepts', async ({ page 
   })
   await page.goto('/')
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null)
+  // A controlled page isn't enough: main.tsx starts the worker first and
+  // installs this override only after (exposeMswForE2E), so an image
+  // requested in between went past MSW to the dev server and failed, now
+  // and then. window.__msw is set in the same synchronous step that
+  // installs the override.
+  await page.waitForFunction(() => window.__msw !== undefined)
 
   const result = await page.evaluate(
     () =>

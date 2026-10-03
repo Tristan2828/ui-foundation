@@ -162,7 +162,7 @@ export interface components {
          * @enum {string}
          */
         WidgetTag: "fragile" | "bulky" | "seasonal" | "featured";
-        /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it; inStock (yes/no) in 3.4.0, extraCategoryIds (multi reference) in 3.5.0 and checklist (sub-records) in 3.6.0 for the Task Dashboard app. Add a type only when a real app needs one. */
+        /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it; inStock (yes/no) in 3.4.0, extraCategoryIds (multi reference) in 3.5.0, checklist (sub-records) in 3.6.0 and checklistState (computed) in 3.7.0 for the Task Dashboard app. Add a type only when a real app needs one. */
         Widget: {
             readonly id: number;
             /** @description Display label. Not one of the six forcing field types. */
@@ -196,6 +196,8 @@ export interface components {
             extraCategoryIds: number[];
             /** @description Sub-records — an ordered list of items that belong to this widget alone, edited on its form and saved with it. Forces a list editor (add, remove, move up/down) on the form and a done-count in the table. Always present on read, in the order saved; empty when none. A field error inside an item is keyed by its path, e.g. loc ["body", "checklist", 2, "text"]. */
             checklist: components["schemas"]["ChecklistItem"][];
+            /** @description Computed, read-only field — worked out by the server from other data on every read, never stored and never sent by a client (absent from WidgetCreate/WidgetUpdate). Forces a read-only badge column, a filter and a sort that the server evaluates, so they hold across pages. */
+            readonly checklistState: components["schemas"]["WidgetChecklistState"];
         };
         /** @description Widget without a server-assigned id. tags, extraCategoryIds and checklist default to [], inStock to true. */
         WidgetCreate: {
@@ -225,6 +227,11 @@ export interface components {
             extraCategoryIds?: components["schemas"]["Widget"]["extraCategoryIds"];
             checklist?: components["schemas"]["Widget"]["checklist"];
         };
+        /**
+         * @description none: the checklist is empty. open: at least one item isn't done. complete: every item is done. Sorts in this order.
+         * @enum {string}
+         */
+        WidgetChecklistState: "none" | "open" | "complete";
         /** @description One item of a widget's checklist. No id of its own: the list is read and written whole, in order. */
         ChecklistItem: {
             /** @description What to do. Surrounding spaces are trimmed; blank is a 422. */
@@ -430,6 +437,8 @@ export interface operations {
                 search?: string;
                 /** @description Widgets with any of these tags. Repeat the parameter once per tag, e.g. "tags=fragile&tags=seasonal". */
                 tags?: components["schemas"]["WidgetTag"][];
+                /** @description Only widgets whose computed checklistState matches. */
+                checklistState?: components["schemas"]["WidgetChecklistState"];
                 /** @description Only widgets whose inStock matches, sent as "inStock=true" or "inStock=false". Absent means either. */
                 inStock?: boolean;
                 /** @description Widgets linked to any of these categories through extraCategoryIds. Repeat the parameter once per id, e.g. "extraCategoryIds=1&extraCategoryIds=3". */

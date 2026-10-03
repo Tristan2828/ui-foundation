@@ -36,6 +36,7 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
     inStock: true,
     extraCategoryIds: [],
     checklist: [],
+    checklistState: "none",
     ...overrides,
   };
 }
@@ -247,6 +248,38 @@ describe("listWidgets: extraCategoryIds", () => {
     await listWidgets({ page: 1, pageSize: 20, filters: { extraCategoryIds: [] } });
 
     expect(calledUrl(fetchMock).searchParams.has("extraCategoryIds")).toBe(false);
+  });
+});
+
+describe("listWidgets: checklistState", () => {
+  // openapi.yaml: checklistState is a computed, read-only enum the server
+  // filters and sorts on, so both go to the wire as plain parameters.
+  it("sends filters.checklistState and a checklistState sort to the wire", async () => {
+    const fetchMock = stubFetch(jsonResponse({ items: [], total: 0 }, 200));
+
+    await listWidgets({
+      page: 1,
+      pageSize: 20,
+      sort: { field: "checklistState", dir: "desc" },
+      filters: { checklistState: "open" },
+    });
+
+    const url = calledUrl(fetchMock);
+    expect(url.searchParams.get("checklistState")).toBe("open");
+    expect(url.searchParams.get("sort")).toBe("checklistState:desc");
+  });
+
+  it("passes each item's checklistState through to the caller unchanged", async () => {
+    stubFetch(
+      jsonResponse(
+        { items: [makeWidget({ id: 1, checklistState: "complete" }), makeWidget({ id: 2 })], total: 2 },
+        200,
+      ),
+    );
+
+    const result = await listWidgets({ page: 1, pageSize: 20 });
+
+    expect(result.items.map((item) => item.checklistState)).toEqual(["complete", "none"]);
   });
 });
 

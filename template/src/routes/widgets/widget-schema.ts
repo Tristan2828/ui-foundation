@@ -12,11 +12,21 @@ type WidgetCreate = components['schemas']['WidgetCreate']
 type WidgetUpdate = components['schemas']['WidgetUpdate']
 type WidgetStatus = components['schemas']['WidgetStatus']
 type WidgetTag = components['schemas']['WidgetTag']
+type WidgetChecklistState = components['schemas']['WidgetChecklistState']
 
 export const WIDGET_STATUSES = ['draft', 'active', 'archived'] as const satisfies readonly WidgetStatus[]
 // Multi-choice options, in display order. `satisfies` makes tsc fail if
 // this ever lists a value openapi.yaml's WidgetTag enum doesn't have.
 export const WIDGET_TAGS = ['fragile', 'bulky', 'seasonal', 'featured'] as const satisfies readonly WidgetTag[]
+// Computed, read-only: shown and filtered in the table, never on the form
+// and never in widgetFormSchema (the server works it out). Labels typed as
+// a Record so tsc fails when openapi.yaml gains a value.
+export const CHECKLIST_STATE_LABELS: Record<WidgetChecklistState, string> = {
+  none: 'No checklist',
+  open: 'In progress',
+  complete: 'Complete',
+}
+export const CHECKLIST_STATES = ['none', 'open', 'complete'] as const satisfies readonly WidgetChecklistState[]
 
 const PRICE_PATTERN = /^\d+\.\d{2}$/
 

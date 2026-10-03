@@ -30,6 +30,7 @@ const initialWidgets: Widget[] = [
       { text: "Charge the battery", done: true },
       { text: "Pair the receiver", done: false },
     ],
+    checklistState: "open",
   },
   {
     id: 2,
@@ -44,6 +45,7 @@ const initialWidgets: Widget[] = [
     inStock: true,
     extraCategoryIds: [1, 3],
     checklist: [],
+    checklistState: "none",
   },
   {
     id: 3,
@@ -58,6 +60,7 @@ const initialWidgets: Widget[] = [
     inStock: false,
     extraCategoryIds: [],
     checklist: [],
+    checklistState: "none",
   },
   {
     // The deliberately sparse row: every optional field at its empty
@@ -79,6 +82,7 @@ const initialWidgets: Widget[] = [
     inStock: false,
     extraCategoryIds: [],
     checklist: [],
+    checklistState: "none",
   },
 ];
 

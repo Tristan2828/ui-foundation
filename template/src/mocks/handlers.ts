@@ -105,12 +105,22 @@ function trimChecklist(items: Widget["checklist"]): Widget["checklist"] {
   return items.map((item) => ({ text: item.text.trim(), done: item.done }));
 }
 
+// The computed, read-only checklistState (openapi.yaml): worked out from
+// the checklist on every write, never taken from the request.
+function checklistStateOf(checklist: Widget["checklist"]): Widget["checklistState"] {
+  if (checklist.length === 0) return "none";
+  return checklist.some((item) => !item.done) ? "open" : "complete";
+}
+
+// checklistState sorts in its enum order, not alphabetically.
+const CHECKLIST_STATE_ORDER: Record<Widget["checklistState"], number> = { none: 0, open: 1, complete: 2 };
+
 function sortWidgets(list: Widget[], sort: string | null): Widget[] {
   if (!sort) return list;
   const [field, dir] = sort.split(":") as [keyof Widget, "asc" | "desc"];
   const sorted = [...list].sort((a, b) => {
-    const av = a[field];
-    const bv = b[field];
+    const av = field === "checklistState" ? CHECKLIST_STATE_ORDER[a.checklistState] : a[field];
+    const bv = field === "checklistState" ? CHECKLIST_STATE_ORDER[b.checklistState] : b[field];
     if (av == null || bv == null) return 0;
     return av < bv ? -1 : av > bv ? 1 : 0;
   });
@@ -143,6 +153,7 @@ export const handlers = [
     const tags = url.searchParams.getAll("tags");
     // "true" or "false"; absent means either (openapi.yaml).
     const inStock = url.searchParams.get("inStock");
+    const checklistState = url.searchParams.get("checklistState");
     // Repeated, any of them (openapi.yaml).
     const extraCategoryIds = url.searchParams.getAll("extraCategoryIds").map(Number);
 
@@ -154,6 +165,7 @@ export const handlers = [
     if (inStock === "true" || inStock === "false") {
       result = result.filter((w) => w.inStock === (inStock === "true"));
     }
+    if (checklistState) result = result.filter((w) => w.checklistState === checklistState);
     if (extraCategoryIds.length > 0) {
       result = result.filter((w) => w.extraCategoryIds.some((id) => extraCategoryIds.includes(id)));
     }
@@ -186,6 +198,8 @@ export const handlers = [
       extraCategoryIds: [...(input.extraCategoryIds ?? [])].sort((a, b) => a - b),
       checklist: trimChecklist(input.checklist ?? []),
       id: nextWidgetId(),
+      // Last, so a client-sent checklistState can't survive the spread.
+      checklistState: checklistStateOf(input.checklist ?? []),
     };
     widgets.push(widget);
     return HttpResponse.json(widget, { status: 201 });
@@ -205,6 +219,9 @@ export const handlers = [
     // Read back in ascending id order, like the backend.
     if (input.extraCategoryIds) widget.extraCategoryIds = [...input.extraCategoryIds].sort((a, b) => a - b);
     if (input.checklist) widget.checklist = trimChecklist(input.checklist);
+    // Recomputed after every write, and never taken from the request.
+    // (readOnly in the generated type, since only the server sets it.)
+    Object.assign(widget, { checklistState: checklistStateOf(widget.checklist) });
     return HttpResponse.json(widget);
   }),
 
