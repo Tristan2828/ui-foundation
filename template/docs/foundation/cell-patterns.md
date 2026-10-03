@@ -7,8 +7,9 @@ per-entity, and only the shape is reusable. Copy the markup into your
 
 Patterns 1–10 were each chosen for a real column, from a page of
 alternatives ([`column-options.md`](column-options.md)), not designed in the abstract.
-Pattern 12 (boolean) is the template's own reference: Widget's In Stock
-column renders it and its specs pin it. The other patterns from 11 on are
+Patterns 12 (boolean) and 16 (title linking to its view) are the
+template's own references: Widget's In Stock and Name columns render them
+and their specs pin them. The other patterns from 11 on are
 marked **Unproven**: written ahead of a real
 column, so no app has tested them on real data yet. Prefer a proven
 pattern when one fits. When you use an unproven one, say so in the
@@ -350,3 +351,40 @@ now", "happened"). Widget's In Stock column is the reference
   stable").
 - **Cost:** one click changes data, with no confirmation. Only for values
   that are cheap to flip back; never for anything destructive.
+
+## 16. Title linking to the record's view
+
+The column that names a record (its name or title), when the entity has a
+view (`/<entity>/:id`). Widget's Name column is the reference
+(`src/routes/widgets/widgets-columns.tsx`).
+
+```tsx
+const TITLE_LINK_CLASS =
+  'rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline ' +
+  'focus-visible:underline focus-visible:ring-3 focus-visible:ring-ring/50'
+
+cell: ({ row }) => (
+  <Link to={`/widgets/${row.original.id}`} className={TITLE_LINK_CLASS}>
+    {row.original.name}
+  </Link>
+)
+```
+
+- **A plain `Link`, not a `Button`.** It goes somewhere and does nothing
+  else; a button-styled title down every row is a wall of buttons
+  (pattern 7's cost).
+- **The record's own name is the link text**, so each row's link is
+  already distinct for a screen reader, with no `aria-label`.
+- `font-medium` marks it as the row's name; the underline appears on hover
+  and keyboard focus. Foreground, not `text-primary`: it's the row's
+  heading, and a column of coloured text pulls the eye from every other
+  column.
+- **The view replaces the row actions.** Edit and Delete live in the
+  view's header, so a table whose title links to a view has no actions
+  column. A `yes/no` marked `toggle` (pattern 15) stays in its row.
+- **A reference to another record** (a cell showing a linked record's
+  name) uses the same link when *that* entity has a view, pointing at
+  `/<other>/${id}`, on the table and on the view alike.
+- **Cost:** none to speak of. Specs that match the title as a cell still
+  work (`getByRole('cell', { name })` reads the link's text); ones that
+  opened the form from a row button go through the view's Edit instead.

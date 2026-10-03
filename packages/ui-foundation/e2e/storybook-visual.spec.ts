@@ -32,6 +32,13 @@ const PRIMITIVES = [
 // adding it here would ship an unmeasured color.
 const TONE_STORY_IDS = ['ui-badge--all-tones']
 
+// Composites whose job is design language rather than structure: <Markdown>
+// styles every app's long text (headings, lists, links, tables, code), so
+// it answers for its contrast and its colours the way a primitive does.
+// Each id comes with text the story must show, so an iframe that rendered
+// nothing can't pass every rule trivially.
+const COMPOSITE_STORIES = [{ id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' }]
+
 function storyUrlById(id: string, theme: 'light' | 'dark') {
   return `${STORYBOOK_URL}/iframe.html?id=${id}&viewMode=story&globals=theme:${theme}`
 }
@@ -59,6 +66,20 @@ test.describe('storybook stories have zero axe violations', () => {
       const results = await analyzeStory(page)
       expect(results.violations).toEqual([])
     })
+  }
+})
+
+test.describe('composite stories have zero axe violations in both themes', () => {
+  for (const { id, mustShow } of COMPOSITE_STORIES) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${id} is accessible (${theme})`, async ({ page }) => {
+        await page.goto(storyUrlById(id, theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        await expect(page.getByText(mustShow)).toBeVisible()
+        const results = await analyzeStory(page)
+        expect(results.violations).toEqual([])
+      })
+    }
   }
 })
 
@@ -235,6 +256,17 @@ test.describe('primitives paint only token colours', () => {
         await page.goto(storyUrl(name, theme))
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
         await expect(page.locator('#storybook-root')).toBeVisible()
+        expect(await offTokenColors(page)).toEqual([])
+      })
+    }
+  }
+
+  for (const { id, mustShow } of COMPOSITE_STORIES) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${id} uses only tokens (${theme})`, async ({ page }) => {
+        await page.goto(storyUrlById(id, theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        await expect(page.getByText(mustShow)).toBeVisible()
         expect(await offTokenColors(page)).toEqual([])
       })
     }

@@ -3,8 +3,8 @@
 ## Stack
 Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui (Base UI primitives),
 React Router v7, TanStack Query. The shared layer — primitives, the
-`DataTable`/`EntityForm` composites, the app shell, auth, the gateway error
-seam, design tokens, lint rules — is the npm package
+`DataTable`/`EntityView`/`EntityForm` composites, the app shell, auth,
+the gateway error seam, design tokens, lint rules — is the npm package
 `@tristan2828/ui-foundation`, updated by bumping its version. Everything in
 `src/` is this app's own.
 
@@ -75,7 +75,8 @@ is right. Do not disable, skip, or work around it.
 
 ## Required States
 Every data view handles: loading, empty, error, and success. Use
-`<Skeleton>`, `<Empty>`, and the error boundary — `DataTable` already does.
+`<Skeleton>`, `<Empty>`, and the error boundary — `DataTable` already does,
+and `EntityView` (one record) adds not found: a plain 404, never a retry.
 Every screen has one Playwright test per state, forced via MSW overrides
 (`@tristan2828/ui-foundation/testing`).
 

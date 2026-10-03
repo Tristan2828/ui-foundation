@@ -9,8 +9,8 @@ rows, sometimes with editing), built and maintained mostly by AI coding
 agents.
 
 - **[`@tristan2828/ui-foundation`](packages/ui-foundation)**, an npm package
-  with everything apps share: shadcn primitives, the `DataTable` and
-  `EntityForm` composites, an app shell with session-cookie auth, the
+  with everything apps share: shadcn primitives, the `DataTable`,
+  `EntityView` and `EntityForm` composites, an app shell with session-cookie auth, the
   gateway's error seam, design tokens, lint rules, Playwright suites, and
   the conventions an agent follows (synced into each app). Apps get fixes
   by bumping its version.

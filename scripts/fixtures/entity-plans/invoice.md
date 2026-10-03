@@ -18,18 +18,31 @@ An invoice sent to a customer, tracked until it's paid.
 | status | Status | single choice | yes | draft, sent, paid; default draft | column, sortable | yes |
 | issuedAt | Issued | date-time | yes | picked with a calendar; shown as a date | column, sortable | |
 | dueDate | Due | date | no | empty means no due date | column, sortable | |
-| notes | Notes | long text | no | up to 2000 chars | | |
+| notes | Notes | long text, Markdown | no | up to 2000 chars | | |
 | labels | Labels | multi choice | no | urgent, recurring, disputed; any number, no repeats | column | yes (any of) |
 
 ## List screen
 
 - Default sort: none (server order).
 - Page size: 10.
-- Row actions: edit, delete (with confirmation).
+
+## View screen
+
+- Title: `number`.
+- Badges beside the title: `status`.
+- Sections, in order:
+
+| Section | Fields |
+|---|---|
+| Details | customerName, amount, issuedAt, dueDate, labels |
+| Notes | notes |
+
+- "Not set" labels: `dueDate`: No due date; `labels`: No labels; `notes`:
+  No notes.
 
 ## Screens and access
 
-- Screens: list, create, edit, delete.
+- Screens: list, view, create, edit, delete.
 - Ownership: frontend only in this run (no backend); follow the Widget
   reference.
 

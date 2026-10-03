@@ -7,8 +7,15 @@
 export { AppShell, type AppShellProps, type NavItem } from '@/components/app/app-shell'
 export { DataTable, type DataTableProps, type SortingState } from '@/components/app/data-table'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
+export {
+  EntityView,
+  type EntityViewField,
+  type EntityViewProps,
+  type EntityViewSection,
+} from '@/components/app/entity-view'
 export { ErrorState } from '@/components/app/error-state'
 export { FoundationProviders } from '@/components/app/foundation-providers'
+export { Markdown, type MarkdownProps } from '@/components/app/markdown'
 export { MockModeBanner } from '@/components/app/mock-mode-banner'
 export { MultiChoice } from '@/components/app/multi-choice'
 export { MultiReference } from '@/components/app/multi-reference'

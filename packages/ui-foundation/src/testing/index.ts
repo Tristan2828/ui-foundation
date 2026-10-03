@@ -80,6 +80,12 @@ export type A11ySuiteOptions = {
    * plus an edit route when the form shows something only existing data has.
    */
   formRoutes: readonly string[]
+  /**
+   * Record views (`/<entity>/:id`, built on EntityView), which aren't in
+   * the sidebar either: each entity's view of a full record, plus its
+   * sparse one, so both filled values and "not set" labels are checked.
+   */
+  viewRoutes?: readonly string[]
   /** Screens outside the app shell, e.g. '/login' (and '/register' if the app has it). */
   loggedOutRoutes: readonly string[]
 }
@@ -92,7 +98,7 @@ export type A11ySuiteOptions = {
  * dark-mode tokens readable. The theme follows the OS setting, so
  * emulateMedia switches it.
  */
-export function defineA11ySuite({ formRoutes, loggedOutRoutes }: A11ySuiteOptions): void {
+export function defineA11ySuite({ formRoutes, viewRoutes = [], loggedOutRoutes }: A11ySuiteOptions): void {
   for (const colorScheme of ['light', 'dark'] as const) {
     test.describe(`accessibility (${colorScheme})`, () => {
       test.beforeEach(async ({ page }) => {
@@ -113,6 +119,15 @@ export function defineA11ySuite({ formRoutes, loggedOutRoutes }: A11ySuiteOption
         test(`${route} has zero axe violations`, async ({ page }) => {
           await page.goto(route)
           await expect(page.locator('form')).toBeVisible()
+          await expectNoAxeViolations(page)
+        })
+      }
+
+      for (const route of viewRoutes) {
+        test(`${route} has zero axe violations`, async ({ page }) => {
+          await page.goto(route)
+          // EntityView's loaded state, not its skeleton or an error.
+          await expect(page.locator('[data-state="success"]')).toBeVisible()
           await expectNoAxeViolations(page)
         })
       }

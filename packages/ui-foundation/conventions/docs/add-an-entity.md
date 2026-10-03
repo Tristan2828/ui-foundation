@@ -1,7 +1,7 @@
 # Add an Entity
 
 The most-repeated task in this system: add a full CRUD entity — spec, mocks,
-gateway, tests, table, form, routes — following the patterns in
+gateway, tests, table, view, form, routes — following the patterns in
 `src/routes/widgets/`. This file is the only copy of the steps, written for
 **any AI coding tool or a person**: follow it directly ("add a Game entity
 following docs/foundation/add-an-entity.md"). In Claude Code,
@@ -56,6 +56,11 @@ is a filled-in example while the Widgets demo is still here).
   unresolved item under "Open questions", or needs a field type or screen
   shape the foundation doesn't support yet (the supported list is in the
   template). Write the case in `docs/BLOCKERS.md`.
+- **The plan's "Screens" line names a view** (`list, view, create, edit,
+  delete`), and its "View screen" section says what the view shows. A plan
+  written before the view existed has neither: ask the developer whether
+  to add them before step 1. The reference files build the table *with* a
+  view, where Edit and Delete live, so the table has no row actions.
 
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete — exactly as the plan specifies: its fields, types, required
@@ -162,18 +167,85 @@ is a filled-in example while the Widgets demo is still here).
      `<Entity>Create`/`<Entity>Update`, plus the form ↔ wire conversion
      functions — see `widgetToFormValues`/`formValuesToWidgetCreate` for
      the shape)
+   - `src/routes/widgets/widget-format.ts` →
+     `src/routes/<entity>/<entity>-format.ts` (the lookups and formatters
+     both the columns and the view render values with: badge variant maps,
+     date and number formatters, the done-count)
    - `src/routes/widgets/widgets-columns.tsx` →
-     `src/routes/<entity>/<entity>-columns.tsx` (column defs; split any
-     row-action dialogs into their own file, as
-     `delete-widget-action.tsx` does — a fast-refresh hazard otherwise)
+     `src/routes/<entity>/<entity>-columns.tsx` (column defs: the plan's
+     title field is a link to the record's view, cell pattern 16, and
+     there is no row-actions column)
    - `src/routes/widgets/widgets-table.tsx` →
      `src/routes/<entity>/<entity>-table.tsx` — thin consumer of the
      foundation's `<DataTable>`. Swap the type, columns, and toolbar
      filters.
+   - `src/routes/widgets/widget-view.tsx` →
+     `src/routes/<entity>/<entity>-view.tsx` — thin consumer of the
+     foundation's `<EntityView>`. Swap the title, badges and sections for
+     the plan's "View screen" (below).
+   - `src/routes/widgets/delete-widget-action.tsx` →
+     `src/routes/<entity>/delete-<entity>-action.tsx` (Delete in the
+     view's header: the confirm dialog, then `onDeleted` leaves for the
+     list; its own file, a fast-refresh hazard otherwise)
    - `src/routes/widgets/widget-form.tsx` →
      `src/routes/<entity>/<entity>-form.tsx` — thin consumer of the
      foundation's `<EntityForm>` (its `danger` slot takes an edit-only
-     delete). Swap the zod schema and fields.
+     delete). Swap the zod schema and fields. Every way out lands on a
+     view (below).
+
+   **The view** is the read-only page for one record, at `/<entity>/:id`.
+   `<EntityView>` owns its loading skeleton, its not-found state (another
+   user's record is the same plain 404, with a way back to the list and
+   no retry) and its error state with retry. The screen supplies what the
+   plan's "View screen" section lists:
+
+   - **Title and badges.** The plan's title field is the page's `<h1>`.
+     Its badge fields sit beside it, each the same `Badge` and variant map
+     as its table cell. Edit (a `Button` rendering a `Link` to
+     `/<entity>/:id/edit`) and the delete action go in `actions`.
+   - **Sections**, one per row of the plan's section table, in order.
+     Fields are label/value rows (`fields`), labelled as on the form. A
+     section that holds one long text or one sub-record list is a block
+     (`content`) with no label of its own, since a label would only repeat
+     the heading.
+   - **Every value renders the way its table cell does**: badges, names
+     of linked records, a done-count, from the shared lookups in
+     `<entity>-format.ts`. Never re-derive one for the view.
+   - **An empty value is passed through as it is** (`null`, `''`, or
+     `list.length > 0 && …`), and `EntityView` shows the field's
+     `emptyLabel`, the plan's "not set" label, never a blank. A yes/no is
+     never empty: it reads Yes or No (cell pattern 12).
+   - **A reference links to the referenced record's view** when that
+     entity has one: the name, from the same lookup by id the table uses,
+     inside `<Link to={`/<other>/${id}`}>`. Without a view, the plain name
+     (Widget's categories have none).
+   - **Sub-records are read-only**: the done-count, then each item in
+     order with its state as a glyph and words, never a checkbox
+     (`ChecklistItems` in `widget-view.tsx`). A list of links: each an
+     `<a target="_blank" rel="noreferrer">` with an `ExternalLinkIcon`
+     and a visually hidden "(opens in a new tab)".
+   - **Long text the plan marks Markdown** renders through the
+     foundation's `<Markdown>`: headings, lists, tables and links, links
+     opening in a new tab; raw HTML shows as the characters typed, never
+     as markup. The app needs no Markdown dependency of its own. Plain
+     long text renders as text (`whitespace-pre-line` keeps its line
+     breaks).
+   - **Quick actions and editing in place aren't in the playbook yet**
+     (flipping a yes/no, changing a status or ticking an item from the
+     view). Don't build them on your own: a row's value can hold a control
+     and `actions` takes any buttons, so they'll slot in once a release
+     adds them.
+
+   **The table opens the view, and the form returns to it.** The title
+   column's link is the way in (a `yes/no` marked `toggle` stays in its
+   row). Saving an edit, or cancelling one, goes back to the record's view;
+   creating opens the new record's view (the id the create returns);
+   cancelling a create goes back to the list. Each navigates with
+   `{ replace: true }`, so Back from the view doesn't reopen the form. The
+   create and update mutations put the saved record into its detail cache
+   (`setQueryData`), so the view shows the save at once, and the delete
+   mutation drops it (`removeQueries`), so the view it leaves never
+   refetches a record that's gone (`use-widgets.ts`).
 
    **`<SelectValue>` shows the value, not the label.** Base UI renders the
    raw *value*, and `placeholder` only applies when the value is `null`.
@@ -239,14 +311,26 @@ is a filled-in example while the Widgets demo is still here).
      them choose. That is how every pattern in the catalogue was picked.
    - Any colour involved: [`design-language.md`](design-language.md). Most
      values should stay grey, and colour is never the only signal.
-7. **Register routes** for `/<entity>`, `/<entity>/new`,
-   `/<entity>/:id/edit` in `src/App.tsx`, and add a nav entry to
-   `src/nav.ts`.
-8. **Add Playwright specs for both screens**, one test per state
+7. **Register routes** for `/<entity>`, `/<entity>/new`, `/<entity>/:id`
+   (the view) and `/<entity>/:id/edit` in `src/App.tsx`, and add a nav
+   entry to `src/nav.ts`.
+8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the
    `window.__msw` handle from `@tristan2828/ui-foundation/testing`, and
-   `e2e/widgets-table.spec.ts`/`e2e/widget-form.spec.ts` for the pattern.
+   `e2e/widgets-table.spec.ts`/`e2e/widget-form.spec.ts`/
+   `e2e/widget-view.spec.ts` for the pattern. The view's states are
+   loading, not found (a 404: "Not found", the way back, no retry), error
+   (a failed load, then Try again recovering) and success (every section,
+   each value as its cell shows it), plus the sparse record showing its
+   "not set" labels and no blank value. Its flows: the table's title link
+   opens it, saving and cancelling the form return to it, creating opens
+   the new record's view, and Delete confirms then lands on the list. If
+   the plan has Markdown long text, a test forces a record whose text has
+   a heading, a list, a table, a link and raw HTML, and asserts the HTML
+   shows as text. Add the view's spec to `playwright.config.ts`'s
+   `mobile-chrome` `testMatch`, with a test that at phone width each
+   label sits above its value and nothing scrolls sideways.
    States forced via a first-load init script (loading, load-time error)
    need `page.addInitScript` before navigation; states forced after the
    page is already up (a mutation's error response) can use a
@@ -258,9 +342,11 @@ is a filled-in example while the Widgets demo is still here).
    which cannot see requests the MSW service worker makes
    (`e2e/msw-contract.spec.ts` has an example).
 9. **Register the nav entry and route names** in `e2e/shell.spec.ts`'s
-   `NAV_ENTRIES` so the shell smoke test covers the new screen, and add
-   `/<entity>/new` to `e2e/a11y.spec.ts`'s `formRoutes` (the table page is
-   picked up from the sidebar automatically; the form isn't in it).
+   `NAV_ENTRIES` so the shell smoke test covers the new screen, add
+   `/<entity>/new` to `e2e/a11y.spec.ts`'s `formRoutes`, and add the view
+   of a full record and of the sparse one to its `viewRoutes` (the table
+   page is picked up from the sidebar automatically; the form and the view
+   aren't in it).
 10. **`npm run verify`.** Fix until it passes. Then stop — do not add
     anything beyond what this list covers; note ideas in the app's
     backlog instead.
@@ -270,8 +356,8 @@ is a filled-in example while the Widgets demo is still here).
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.
-- The composites (`DataTable`, `EntityForm`, `ErrorState`, `AppShell`)
-  are the foundation's and shared by every app. If a new entity needs a
+- The composites (`DataTable`, `EntityForm`, `EntityView`, `Markdown`,
+  `ErrorState`, `AppShell`) are the foundation's and shared by every app. If a new entity needs a
   capability they don't have (a new field-type widget, say), don't copy
   one into `src/` to change it: raise it for the foundation (AGENTS.md
   "Changing the Foundation") and build the screen once the release ships.

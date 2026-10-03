@@ -1,60 +1,32 @@
-// Column definitions for the widgets table. Table and form are the
+// Column definitions for the widgets table. Table, view and form are the
 // copy-this-file reference for the entity playbook
 // (docs/foundation/add-an-entity.md).
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
-import { PencilIcon } from 'lucide-react'
 import { Link } from 'react-router'
 import { Badge } from '@tristan2828/ui-foundation/ui/badge'
-import { Button } from '@tristan2828/ui-foundation/ui/button'
 import type { components } from '@/api/schema'
 import { CategoryName } from './category-names'
-import { DeleteWidgetAction } from './delete-widget-action'
 import { InStockToggle } from './in-stock-toggle'
+import {
+  CHECKLIST_STATE_BADGE_VARIANT,
+  STATUS_BADGE_VARIANT,
+  checklistDoneCount,
+  dateFormatter,
+  priceFormatter,
+} from './widget-format'
 import { CHECKLIST_STATE_LABELS, WIDGET_TAG_LABELS } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
 type WidgetStatus = components['schemas']['WidgetStatus']
 type WidgetChecklistState = components['schemas']['WidgetChecklistState']
 
-// Enum → tone-mapped badge: group the values by what they *mean* (good /
-// neutral / bad) first, then pick one style for the whole column. The
-// grouping is the real decision; the style is mostly consistency with the
-// table's other columns. See docs/foundation/design-language.md.
-//
-// Only `active` earns a tone. `archived` is an end state, not a failure,
-// so it stays neutral — a red badge would tell the reader something is
-// wrong when nothing is.
-//
-// (An earlier comment here said the `destructive` badge fails AA contrast.
-// That was true of the tinted variant shadcn originally shipped; Phase 5
-// replaced it with a solid fill, and white on `--destructive` measures
-// 4.76:1, which passes. The claim outlived the bug.)
-const STATUS_BADGE_VARIANT: Record<WidgetStatus, 'outline' | 'outline-success' | 'secondary'> = {
-  draft: 'outline',
-  active: 'outline-success',
-  archived: 'secondary',
-}
-
-// Computed field (the server works it out): an enum → tone-mapped badge
-// like Status. Only `complete` earns a tone; an empty or unfinished list
-// isn't a problem.
-const CHECKLIST_STATE_BADGE_VARIANT: Record<WidgetChecklistState, 'outline' | 'outline-success' | 'secondary'> = {
-  none: 'secondary',
-  open: 'outline',
-  complete: 'outline-success',
-}
-
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-})
-
-const priceFormatter = new Intl.NumberFormat(undefined, {
-  style: 'currency',
-  currency: 'USD',
-})
+// The record's title, linking to its view (cell pattern 16). The view is
+// where a widget is read, edited and deleted, so the table has no row
+// actions. Bold enough to read as the row's name; the underline appears on
+// hover and keyboard focus.
+const TITLE_LINK_CLASS =
+  'rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline ' +
+  'focus-visible:underline focus-visible:ring-3 focus-visible:ring-ring/50'
 
 // Takes nothing that changes after the first render: rebuilt columns
 // remount every cell (see category-names.tsx). Data that arrives later
@@ -66,6 +38,11 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
       accessorKey: 'name',
       header: 'Name',
       enableSorting: true,
+      cell: ({ row }) => (
+        <Link to={`/widgets/${row.original.id}`} className={TITLE_LINK_CLASS}>
+          {row.original.name}
+        </Link>
+      ),
     },
     {
       id: 'category',
@@ -107,17 +84,6 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
       header: 'Price',
       enableSorting: true,
       cell: ({ getValue }) => priceFormatter.format(Number(getValue())),
-    },
-    {
-      id: 'description',
-      accessorKey: 'description',
-      header: 'Description',
-      enableSorting: false,
-      cell: ({ getValue }) => (
-        <span className="block max-w-64 truncate" title={getValue() as string}>
-          {getValue() as string}
-        </span>
-      ),
     },
     {
       // Multi choice: one outline badge per selected option; an em dash
@@ -173,12 +139,7 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
       cell: ({ getValue }) => {
         const items = getValue() as Widget['checklist']
         if (items.length === 0) return <span className="text-muted-foreground">—</span>
-        const done = items.filter((item) => item.done).length
-        return (
-          <span className="tabular-nums">
-            {done}/{items.length} done
-          </span>
-        )
+        return <span className="tabular-nums">{checklistDoneCount(items)}</span>
       },
     },
     {
@@ -194,32 +155,14 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
     },
     {
       // Yes/no, flipped straight from the row (cell-patterns.md pattern 15):
-      // a Switch that saves on its own. See in-stock-toggle.tsx.
+      // a Switch that saves on its own. See in-stock-toggle.tsx. The last
+      // column, pinned to the right edge (pinLastColumn): it's the row's one
+      // action, so it stays reachable on a wide table.
       id: 'inStock',
       accessorKey: 'inStock',
       header: 'In Stock',
       enableSorting: false,
       cell: ({ row }) => <InStockToggle widget={row.original} />,
-    },
-    {
-      id: 'actions',
-      // Visually empty, but a <th> with no text is an axe violation.
-      header: () => <span className="sr-only">Actions</span>,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            nativeButton={false}
-            aria-label={`Edit ${row.original.name}`}
-            render={<Link to={`/widgets/${row.original.id}/edit`} />}
-          >
-            <PencilIcon />
-          </Button>
-          <DeleteWidgetAction widget={row.original} />
-        </div>
-      ),
     },
   ]
 }

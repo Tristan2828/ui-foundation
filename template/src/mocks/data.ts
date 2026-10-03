@@ -22,7 +22,13 @@ const initialWidgets: Widget[] = [
     availableFrom: "2026-01-15T00:00:00Z",
     assigneeEmail: "alice@example.com",
     price: "24.99",
-    description: "A basic wireless mouse with a 2.4GHz USB receiver.",
+    // Markdown, as the view renders it (widget-view.tsx): a list, emphasis
+    // and a link. The table doesn't show descriptions.
+    description:
+      "A basic wireless mouse with a **2.4GHz** USB receiver.\n\n" +
+      "- Two buttons and a scroll wheel\n" +
+      "- Runs on one AA battery\n\n" +
+      "See the [setup guide](https://example.com/mouse-setup).",
     tags: ["fragile"],
     inStock: true,
     extraCategoryIds: [3],

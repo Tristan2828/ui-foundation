@@ -19,7 +19,9 @@
     "sonner",
     "next-themes",
     "react-day-picker",
-    "date-fns"
+    "date-fns",
+    "react-markdown",
+    "remark-gfm"
   ],
   "devDependencies": [
     "vite",

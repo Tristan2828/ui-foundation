@@ -1,6 +1,6 @@
 ---
 name: new-entity
-description: This skill should be used when the user asks to "add an entity", "add a new entity", "scaffold a CRUD screen", "add a resource screen", or names a new domain object (e.g. "add Invoice") that needs a spec, gateway, mocks, table, and form built following this repo's widgets reference pattern.
+description: This skill should be used when the user asks to "add an entity", "add a new entity", "scaffold a CRUD screen", "add a resource screen", or names a new domain object (e.g. "add Invoice") that needs a spec, gateway, mocks, table, view and form built following this repo's widgets reference pattern.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent
 ---
 

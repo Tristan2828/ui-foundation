@@ -45,51 +45,7 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
   })
 
-  test('validation: a 422 on delete surfaces the message without breaking the table', async ({
-    page,
-  }) => {
-    await page.goto('/widgets')
-    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
-    await waitForMswReady(page)
-
-    await page.evaluate(() => {
-      const { worker, http, HttpResponse } = window.__msw
-      worker.use(
-        http.delete('*/api/widgets/:id', () =>
-          HttpResponse.json(
-            {
-              detail: [
-                {
-                  loc: ['body', 'id'],
-                  msg: 'cannot delete a widget with active assignments',
-                  type: 'value_error',
-                },
-              ],
-            },
-            { status: 422 },
-          ),
-        ),
-      )
-    })
-
-    await page.getByRole('button', { name: 'Delete Wireless Mouse' }).click()
-    await page.getByRole('button', { name: 'Delete' }).click()
-
-    // toAppError() deliberately gives every 422 the same generic message —
-    // the specifics live in fieldErrors, for a form to bind per-field. This
-    // screen has no field to bind to, so the toast shows that generic text,
-    // not the server's specific "active assignments" reason.
-    await expect(page.getByText('Validation failed')).toBeVisible()
-
-    // The confirmation dialog deliberately stays open on error (only
-    // onSuccess closes it) — Base UI correctly makes the page behind an
-    // open modal inert, so the table row is unreachable until it's closed.
-    await page.getByRole('button', { name: 'Cancel' }).click()
-    // The AppError translation didn't crash the screen — the row is still there.
-    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
-  })
-
-  test('sort and filters live in the URL and survive the edit round trip', async ({ page }) => {
+  test('sort and filters live in the URL and survive the round trip to a view', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
 
@@ -100,8 +56,8 @@ test.describe('widgets table', () => {
     await expect(page).toHaveURL(/[?&]sort=name%3Aasc|[?&]sort=name:asc/)
     await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
 
-    await page.getByRole('button', { name: 'Edit Wireless Mouse' }).click()
-    await expect(page).toHaveURL('/widgets/1/edit')
+    await page.getByRole('link', { name: 'Wireless Mouse' }).click()
+    await expect(page).toHaveURL('/widgets/1')
     await page.goBack()
 
     await expect(page.getByLabel('Search widgets')).toHaveValue('mouse')
@@ -288,14 +244,12 @@ test.describe('widgets table', () => {
     await expect(pen).toBeChecked()
     await expect(page).toHaveURL(/\/widgets$/)
 
-    // Saved on the server (the mocks), not just on screen: the form agrees.
-    // Wait for the form itself: until it opens, the table (whose switches
-    // are named "In stock: …") is still on screen. And match exactly, or
-    // "In Stock" also matches every one of those.
-    await page.getByRole('button', { name: 'Edit Fountain Pen' }).click()
-    await expect(page).toHaveURL('/widgets/3/edit')
-    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
-    await expect(page.getByRole('switch', { name: 'In Stock', exact: true })).toBeChecked()
+    // Saved on the server (the mocks), not just on screen: the view agrees.
+    await page.getByRole('link', { name: 'Fountain Pen' }).click()
+    await expect(page).toHaveURL('/widgets/3')
+    await expect(
+      page.locator('dl > div').filter({ hasText: /^In Stock/ }).locator('dd'),
+    ).toHaveText('Yes')
   })
 
   test('yes/no row toggle: works from the keyboard', async ({ page }) => {
@@ -365,22 +319,24 @@ test.describe('widgets table', () => {
     expect(tableOverflows).toBe(true)
   })
 
-  test('the actions column stays pinned to the right edge, opaque, when scrolled', async ({ page }) => {
+  test('the last column (the In Stock switch) stays pinned to the right edge, opaque, when scrolled', async ({
+    page,
+  }) => {
     // The mirror of the test above. At the left edge, before scrolling, a
     // right-pinned column already sits at the viewport's right edge rather
     // than off-screen — so it must also not move once scrolled fully right.
     await page.setViewportSize({ width: 800, height: 720 })
     await page.goto('/widgets')
-    const editButton = page.getByRole('button', { name: 'Edit Wireless Mouse' })
-    await expect(editButton).toBeInViewport()
+    const toggle = page.getByRole('switch', { name: 'In stock: Wireless Mouse' })
+    await expect(toggle).toBeInViewport()
 
     const container = page.locator('[data-slot="table-container"]')
-    const before = await editButton.boundingBox()
+    const before = await toggle.boundingBox()
     const scrollLeft = await container.evaluate((el) => {
       el.scrollLeft = el.scrollWidth
       return el.scrollLeft
     })
-    const after = await editButton.boundingBox()
+    const after = await toggle.boundingBox()
 
     expect(scrollLeft).toBeGreaterThan(0)
     expect(before).not.toBeNull()
@@ -423,7 +379,7 @@ test.describe('widgets table', () => {
       const row = page.locator('tbody tr').nth(rowIndex)
       const nameCell = row.locator('td').first()
       const idle = await nameCell.evaluate((el) => getComputedStyle(el).backgroundColor)
-      await row.getByRole('button', { name: /^Edit / }).hover()
+      await row.getByRole('switch').hover()
       const hovered = await nameCell.evaluate((el) => ({
         background: getComputedStyle(el).backgroundColor,
         boxShadow: getComputedStyle(el).boxShadow,
