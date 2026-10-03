@@ -120,6 +120,14 @@ is a filled-in example while the Widgets demo is still here).
    table flickers when, say, reference names arrive after the rows. Data
    that arrives later reaches the cells through context, as
    `category-names.tsx` does for category names.
+
+   **A `yes/no` marked `toggle`** copies In Stock's cell
+   (`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
+   component that PATCHes the one field through an optimistic mutation
+   (`useToggleWidgetInStockMutation`: every cached list page updates at
+   once and is restored if the save fails, with a toast naming the row),
+   then refetches the lists. Its specs cover a flip that saves, the
+   keyboard, and a failed save putting the switch back.
    - `src/routes/widgets/use-widgets.ts`, `use-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)

@@ -266,14 +266,58 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('row').nth(1)).toContainText('Wireless Mouse')
   })
 
-  test('yes/no cell: the word carries the value, never a checkbox', async ({ page }) => {
+  test('yes/no row toggle: the word and the switch show the value, one switch per row', async ({ page }) => {
     await page.goto('/widgets')
     const mouse = page.getByRole('row').filter({ hasText: 'Wireless Mouse' })
     const pen = page.getByRole('row').filter({ hasText: 'Fountain Pen' })
-    await expect(mouse.getByRole('cell', { name: 'Yes', exact: true })).toBeVisible()
-    await expect(pen.getByRole('cell', { name: 'No', exact: true })).toBeVisible()
+    await expect(mouse.getByRole('switch', { name: 'In stock: Wireless Mouse' })).toBeChecked()
+    await expect(mouse.getByText('Yes', { exact: true })).toBeVisible()
+    await expect(pen.getByRole('switch', { name: 'In stock: Fountain Pen' })).not.toBeChecked()
+    await expect(pen.getByText('No', { exact: true })).toBeVisible()
+    // A switch acts at once; a checkbox would read as "select this row".
     await expect(page.getByRole('table').getByRole('checkbox')).toHaveCount(0)
-    await expect(page.getByRole('table').getByRole('switch')).toHaveCount(0)
+    await expect(page.getByRole('table').getByRole('switch')).toHaveCount(4)
+  })
+
+  test('yes/no row toggle: flipping saves without opening the form', async ({ page }) => {
+    await page.goto('/widgets')
+    const pen = page.getByRole('switch', { name: 'In stock: Fountain Pen' })
+    await expect(pen).not.toBeChecked()
+    await pen.click()
+    await expect(pen).toBeChecked()
+    await expect(page).toHaveURL(/\/widgets$/)
+
+    // Saved on the server (the mocks), not just on screen: the form agrees.
+    // Wait for the form itself: until it opens, the table (whose switches
+    // are named "In stock: …") is still on screen. And match exactly, or
+    // "In Stock" also matches every one of those.
+    await page.getByRole('button', { name: 'Edit Fountain Pen' }).click()
+    await expect(page).toHaveURL('/widgets/3/edit')
+    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
+    await expect(page.getByRole('switch', { name: 'In Stock', exact: true })).toBeChecked()
+  })
+
+  test('yes/no row toggle: works from the keyboard', async ({ page }) => {
+    await page.goto('/widgets')
+    const pen = page.getByRole('switch', { name: 'In stock: Fountain Pen' })
+    await pen.focus()
+    await page.keyboard.press('Space')
+    await expect(pen).toBeChecked()
+  })
+
+  test('yes/no row toggle: a failed save puts the switch back and says so', async ({ page }) => {
+    await page.goto('/widgets')
+    const pen = page.getByRole('switch', { name: 'In stock: Fountain Pen' })
+    await expect(pen).not.toBeChecked()
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const { worker, http, HttpResponse } = window.__msw
+      worker.use(http.patch('*/api/widgets/3', () => HttpResponse.json({ detail: 'Database is down' }, { status: 500 })))
+    })
+    await pen.click()
+
+    await expect(page.getByText("Couldn't update Fountain Pen: Database is down")).toBeVisible()
+    await expect(pen).not.toBeChecked()
   })
 
   test('the first column stays pinned when the table scrolls horizontally', async ({ page }) => {

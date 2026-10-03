@@ -36,7 +36,7 @@ One or two sentences: what one record is, and who uses the screens.
     the other entity's list endpoint must also accept `ids`),
     `computed` (read-only: the server works it out from other data on
     every read and never stores it — give its rule, and if it's a choice,
-    its values in sort order; a read-only column, a filter and a sort the
+    its values in sort order with a label for each; a read-only column, a filter and a sort the
     server evaluates, never on the form). A count of related records is a
     `computed` integer.
   - *Close variants* (built by a small, stated change to the nearest
@@ -55,7 +55,8 @@ One or two sentences: what one record is, and who uses the screens.
   a screen — a Base UI `Select` can't take `""` as an item value, so the
   pattern needs a sentinel and gets the display wrong without one.
 - **List**: `column` if it shows in the table, and `sortable` if you can
-  sort by it; blank if it's form-only.
+  sort by it; blank if it's form-only. A `yes/no` can also say `toggle`:
+  flipped straight from its row, saved on its own (cell pattern 15).
 - **Filter**: `search` (the text search box), `yes` (a filter control), or
   blank.
 
