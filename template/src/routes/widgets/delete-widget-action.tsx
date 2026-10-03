@@ -1,6 +1,6 @@
-// Split out of widgets-columns.tsx: eslint-plugin-react-refresh flags a file
-// that exports both a component and a non-component (buildWidgetsColumns) —
-// a fast-refresh hazard.
+// Delete, in the widget view's header: a confirm dialog, then the caller
+// leaves the page (onDeleted), since the record it shows is gone. The
+// dialog stays open on a failed delete, with a toast saying why.
 import { TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -21,14 +21,15 @@ import { useDeleteWidgetMutation } from './use-widgets'
 
 type Widget = components['schemas']['Widget']
 
-export function DeleteWidgetAction({ widget }: { widget: Widget }) {
+export function DeleteWidgetAction({ widget, onDeleted }: { widget: Widget; onDeleted: () => void }) {
   const [open, setOpen] = useState(false)
   const deleteWidget = useDeleteWidgetMutation()
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Delete ${widget.name}`} />}>
+      <DialogTrigger render={<Button variant="outline" />}>
         <TrashIcon className="text-destructive" />
+        Delete
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -45,6 +46,7 @@ export function DeleteWidgetAction({ widget }: { widget: Widget }) {
                 onSuccess: () => {
                   toast.success(`${widget.name} deleted`)
                   setOpen(false)
+                  onDeleted()
                 },
                 onError: (error) => {
                   toast.error(error.message)

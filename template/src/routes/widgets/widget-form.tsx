@@ -1,7 +1,13 @@
 // The widget form. Handles both create (/widgets/new) and edit
-// (/widgets/:id/edit) — a thin consumer of the EntityForm composite. Table
-// and form are the copy-this-file reference for the entity playbook
+// (/widgets/:id/edit) — a thin consumer of the EntityForm composite. Table,
+// view and form are the copy-this-file reference for the entity playbook
 // (docs/foundation/add-an-entity.md).
+//
+// Every way out lands on a view: saving an edit, or cancelling one, goes
+// back to the widget's view, and creating opens the new widget's view.
+// Cancelling a create, with no widget to show, goes back to the list. Each
+// replaces the form's history entry, so Back from the view returns to
+// where the user came from, not to the form they just left.
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -40,6 +46,7 @@ import {
 import { Skeleton } from '@tristan2828/ui-foundation/ui/skeleton'
 import { Switch } from '@tristan2828/ui-foundation/ui/switch'
 import { Textarea } from '@tristan2828/ui-foundation/ui/textarea'
+import type { components } from '@/api/schema'
 import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
 import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from './use-widgets'
 import {
@@ -53,6 +60,8 @@ import {
   widgetToFormValues,
   type WidgetFormValues,
 } from './widget-schema'
+
+type Widget = components['schemas']['Widget']
 
 const pickerDateFormatter = new Intl.DateTimeFormat(undefined, {
   year: 'numeric',
@@ -128,9 +137,9 @@ export function WidgetFormRoute() {
   const onSubmit = form.handleSubmit((values) => {
     setSubmitError(null)
 
-    const onSuccess = () => {
+    const onSuccess = (widget: Widget) => {
       toast.success(isEdit ? 'Widget updated' : 'Widget created')
-      navigate('/widgets')
+      navigate(`/widgets/${widget.id}`, { replace: true })
     }
     const onError = (error: AppError) => {
       if (error.kind === 'validation' && error.fieldErrors) {
@@ -156,7 +165,7 @@ export function WidgetFormRoute() {
       isSubmitting={isSubmitting}
       submitError={submitError}
       submitLabel={isEdit ? 'Save changes' : 'Create widget'}
-      onCancel={() => navigate('/widgets')}
+      onCancel={() => navigate(isEdit ? `/widgets/${widgetId}` : '/widgets', { replace: true })}
     >
       <Field data-invalid={!!form.formState.errors.name}>
         <FieldLabel htmlFor="widget-name">Name</FieldLabel>

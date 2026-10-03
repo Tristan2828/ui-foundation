@@ -19,7 +19,7 @@ foundation supports has a working, tested reference.
 | availableFrom | Available From | date-time | yes | picked with a calendar; shown as a date | column, sortable | |
 | assigneeEmail | Assignee Email | email | no | empty means unassigned | column | |
 | price | Price | decimal | yes | 2 places, e.g. 19.99 | column, sortable | |
-| description | Description | long text | yes | up to 2000 chars | column | |
+| description | Description | long text, Markdown | yes | up to 2000 chars | | |
 | tags | Tags | multi choice | no | fragile (Fragile), bulky (Bulky), seasonal (Seasonal), featured (Featured); any number, no repeats; none means untagged | column | yes (any of) |
 | extraCategoryIds | Extra Categories | multi reference → WidgetCategory | no | any number, no repeats; picked from a searchable list; none means no extra categories | column | yes (any of) |
 | checklistState | Progress | computed | — | from the checklist: none (no items), open (any item not done), complete (all done); sorts in that order | column, sortable | yes |
@@ -31,6 +31,7 @@ foundation supports has a working, tested reference.
 
 - Most items: 50.
 - In the table: a done-count (`1/2 done`); an em dash when empty.
+- On the view: the done-count, then each item, read-only.
 
 | Field | Label | Type | Required | Options / rules |
 |---|---|---|---|---|
@@ -41,11 +42,25 @@ foundation supports has a working, tested reference.
 
 - Default sort: none (server order).
 - Page size: 10.
-- Row actions: edit, delete (with confirmation).
+
+## View screen
+
+- Title: `name`.
+- Badges beside the title: `status`, `checklistState`.
+- Sections, in order:
+
+| Section | Fields |
+|---|---|
+| Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail, inStock |
+| Description | description |
+| Checklist | checklist |
+
+- "Not set" labels: `extraCategoryIds`: No extra categories; `tags`:
+  Untagged; `assigneeEmail`: Unassigned; `checklist`: No items.
 
 ## Screens and access
 
-- Screens: list, create, edit, delete.
+- Screens: list, view, create, edit, delete.
 - Ownership: **per-user** — each user sees only the widgets they created.
   Widget categories are **shared** and read-only (seeded).
 

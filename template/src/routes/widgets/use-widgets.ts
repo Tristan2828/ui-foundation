@@ -43,11 +43,15 @@ export function useWidgetQuery(id: number, options?: { enabled?: boolean }) {
   })
 }
 
+// Create and update both land on the widget's view, so the saved widget
+// goes straight into its detail cache: the view shows what was saved at
+// once, rather than the copy from before the edit until a refetch lands.
 export function useCreateWidgetMutation() {
   const queryClient = useQueryClient()
   return useMutation<Widget, AppError, WidgetCreate>({
     mutationFn: (input) => createWidget(input),
-    onSuccess: () => {
+    onSuccess: (widget) => {
+      queryClient.setQueryData(widgetsKeys.detail(widget.id), widget)
       queryClient.invalidateQueries({ queryKey: widgetsKeys.all })
     },
   })
@@ -57,7 +61,8 @@ export function useUpdateWidgetMutation(id: number) {
   const queryClient = useQueryClient()
   return useMutation<Widget, AppError, WidgetUpdate>({
     mutationFn: (input) => updateWidget(id, input),
-    onSuccess: () => {
+    onSuccess: (widget) => {
+      queryClient.setQueryData(widgetsKeys.detail(id), widget)
       queryClient.invalidateQueries({ queryKey: widgetsKeys.all })
     },
   })
@@ -67,7 +72,10 @@ export function useDeleteWidgetMutation() {
   const queryClient = useQueryClient()
   return useMutation<void, AppError, number>({
     mutationFn: (id) => deleteWidget(id),
-    onSuccess: () => {
+    onSuccess: (_result, id) => {
+      // Dropped, not refetched: the view still on screen would otherwise
+      // fetch the deleted widget and flash "Not found" while it leaves.
+      queryClient.removeQueries({ queryKey: widgetsKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: widgetsKeys.all })
     },
   })

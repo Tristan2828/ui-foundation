@@ -86,7 +86,9 @@ openapi.yaml ──gen:api──▶ src/api/schema.d.ts         generated types 
 src/api/gateway/<entity>.ts            anti-corruption layer: wire → Page<T> / AppError
      └ safeFetch, toAppError           ← package (/gateway): the only fetch path
 src/routes/<entity>/use-*.ts           TanStack Query hooks over the gateway
-src/routes/<entity>/*-table, *-form    thin consumers of DataTable / EntityForm   ← package
+src/routes/<entity>/*-table            thin consumer of DataTable                 ← package
+src/routes/<entity>/*-view             thin consumer of EntityView (+ Markdown)   ← package
+src/routes/<entity>/*-form             thin consumer of EntityForm                ← package
 src/App.tsx, src/nav.ts                routes; AppShell, LoginRoute, RegisterRoute ← package
 src/main.tsx                           FoundationProviders (theme, query client, auth) ← package
 ```

@@ -3,6 +3,7 @@ import { AppShell, LoginRoute, RegisterRoute, RouteErrorBoundary } from '@trista
 import { NAV_ITEMS } from '@/nav'
 import { HomeRoute } from '@/routes/home'
 import { WidgetFormRoute } from '@/routes/widgets/widget-form'
+import { WidgetViewRoute } from '@/routes/widgets/widget-view'
 import { WidgetsTableRoute } from '@/routes/widgets/widgets-table'
 
 const router = createBrowserRouter([
@@ -25,6 +26,11 @@ const router = createBrowserRouter([
       {
         path: 'widgets/new',
         element: <WidgetFormRoute />,
+        errorElement: <RouteErrorBoundary />,
+      },
+      {
+        path: 'widgets/:id',
+        element: <WidgetViewRoute />,
         errorElement: <RouteErrorBoundary />,
       },
       {

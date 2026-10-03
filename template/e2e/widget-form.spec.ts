@@ -18,6 +18,15 @@ async function waitForMswReady(page: Page) {
   await page.waitForFunction(() => window.__msw !== undefined)
 }
 
+// A value on the widget's view, where every save lands: the <dd> beside
+// its exact label.
+function fieldValue(page: Page, label: string) {
+  return page
+    .locator('dl > div')
+    .filter({ has: page.locator('dt').getByText(label, { exact: true }) })
+    .locator('dd')
+}
+
 async function pickCategory(page: Page, name: string) {
   await page.locator('#widget-category').click()
   await page.getByRole('option', { name }).click()
@@ -116,7 +125,7 @@ test.describe('widget form', () => {
     await expect(page.getByRole('heading', { name: 'New Widget' })).toBeVisible()
   })
 
-  test('success: a valid submission creates the widget and returns to the table', async ({
+  test('success: a valid submission creates the widget and opens its view', async ({
     page,
   }) => {
     await page.goto('/widgets/new')
@@ -130,11 +139,22 @@ test.describe('widget form', () => {
     await pickTag(page, 'Seasonal')
     await page.getByRole('button', { name: 'Create widget' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Playwright Success Widget/ })
-    await expect(row).toBeVisible()
-    await expect(row.getByText('Bulky', { exact: true })).toBeVisible()
-    await expect(row.getByText('Seasonal', { exact: true })).toBeVisible()
+    // The new widget's own view (the four seeded widgets are ids 1–4).
+    await expect(page).toHaveURL('/widgets/5')
+    await expect(page.getByRole('heading', { level: 1, name: 'Playwright Success Widget' })).toBeVisible()
+    await expect(fieldValue(page, 'Tags')).toHaveText('BulkySeasonal')
+
+    // And it's in the table.
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await expect(page.getByRole('cell', { name: 'Playwright Success Widget', exact: true })).toBeVisible()
+  })
+
+  test('cancel: leaving a new widget unsaved goes back to the list', async ({ page }) => {
+    await page.goto('/widgets/new')
+    await page.locator('#widget-name').fill('Never Saved')
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    await expect(page).toHaveURL('/widgets')
+    await expect(page.getByRole('cell', { name: 'Never Saved', exact: true })).toHaveCount(0)
   })
 
   test('multi choice: existing tags are removable chips, and the edited set is what saves', async ({
@@ -147,10 +167,8 @@ test.describe('widget form', () => {
     await pickTag(page, 'Featured')
     await page.getByRole('button', { name: 'Save changes' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Wireless Mouse/ })
-    await expect(row.getByText('Featured', { exact: true })).toBeVisible()
-    await expect(row.getByText('Fragile', { exact: true })).toHaveCount(0)
+    await expect(page).toHaveURL('/widgets/1')
+    await expect(fieldValue(page, 'Tags')).toHaveText('Featured')
   })
 
   test('multi reference: picks found by searching save, and show by name in the table', async ({ page }) => {
@@ -166,10 +184,9 @@ test.describe('widget form', () => {
     await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
     await page.getByRole('button', { name: 'Create widget' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Linked Widget/ })
-    await expect(row.getByText('Furniture', { exact: true })).toBeVisible()
-    await expect(row.getByText('Stationery', { exact: true })).toBeVisible()
+    await expect(page).toHaveURL(/\/widgets\/\d+$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Linked Widget' })).toBeVisible()
+    await expect(fieldValue(page, 'Extra Categories')).toHaveText('FurnitureStationery')
   })
 
   test('multi reference: saved picks keep their names while a search shows other records', async ({ page }) => {
@@ -193,10 +210,8 @@ test.describe('widget form', () => {
     await page.getByRole('button', { name: 'Remove Electronics' }).click()
     await page.getByRole('button', { name: 'Save changes' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Standing Desk/ })
-    await expect(row.getByText('Stationery', { exact: true })).toBeVisible()
-    await expect(row.getByText('Electronics', { exact: true })).toHaveCount(0)
+    await expect(page).toHaveURL('/widgets/2')
+    await expect(fieldValue(page, 'Extra Categories')).toHaveText('Stationery')
   })
 
   test('multi reference: a 422 on the field binds to it', async ({ page }) => {
@@ -243,13 +258,15 @@ test.describe('widget form', () => {
     await expect(page.getByLabel('Item 1 text')).toHaveValue('Test the scroll wheel')
     await page.getByRole('button', { name: 'Save changes' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Wireless Mouse/ })
-    await expect(row.getByRole('cell', { name: '1/2 done', exact: true })).toBeVisible()
+    // The view shows the saved list, read-only, in its new order.
+    await expect(page).toHaveURL('/widgets/1')
+    const checklist = page.getByRole('region', { name: 'Checklist' })
+    await expect(checklist.getByText('1/2 done', { exact: true })).toBeVisible()
+    await expect(checklist.getByRole('listitem')).toHaveText(['Test the scroll wheel', 'Pair the receiver'])
 
-    // Reopening shows the saved order. Through the row's Edit link, not
+    // Reopening shows the saved order. Through the view's Edit button, not
     // page.goto: a full load restarts the mocks with their seed data.
-    await page.getByRole('button', { name: 'Edit Wireless Mouse' }).click()
+    await page.getByRole('button', { name: 'Edit' }).click()
     await expect(page.getByLabel('Item 1 text')).toHaveValue('Test the scroll wheel')
     await expect(page.getByLabel('Item 1 done')).toBeChecked()
     await expect(page.getByLabel('Item 2 text')).toHaveValue('Pair the receiver')
@@ -263,9 +280,9 @@ test.describe('widget form', () => {
     await page.getByLabel('Item 2 done').click()
     await page.getByRole('button', { name: 'Save changes' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Wireless Mouse/ })
-    await expect(row.getByText('Complete', { exact: true })).toBeVisible()
+    await expect(page).toHaveURL('/widgets/1')
+    const header = page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) })
+    await expect(header.getByText('Complete', { exact: true })).toBeVisible()
   })
 
   test('sub-records: an empty list says so, and a blank item is caught on its own row', async ({ page }) => {
@@ -318,9 +335,10 @@ test.describe('widget form', () => {
     await page.locator('#widget-description').fill('Saved with the switch off.')
     await page.getByRole('button', { name: 'Create widget' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Out Of Stock Widget/ })
-    await expect(row.getByRole('switch', { name: 'In stock: Out Of Stock Widget' })).not.toBeChecked()
+    await expect(page).toHaveURL(/\/widgets\/\d+$/)
+    await expect(fieldValue(page, 'In Stock')).toHaveText('No')
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await expect(page.getByRole('switch', { name: 'In stock: Out Of Stock Widget' })).not.toBeChecked()
   })
 
   test('yes/no: editing shows the stored value, and turning it on saves', async ({ page }) => {
@@ -333,8 +351,7 @@ test.describe('widget form', () => {
     await expect(inStock).toBeChecked()
     await page.getByRole('button', { name: 'Save changes' }).click()
 
-    await expect(page).toHaveURL(/\/widgets$/)
-    const row = page.getByRole('row', { name: /Fountain Pen/ })
-    await expect(row.getByRole('switch', { name: 'In stock: Fountain Pen' })).toBeChecked()
+    await expect(page).toHaveURL('/widgets/3')
+    await expect(fieldValue(page, 'In Stock')).toHaveText('Yes')
   })
 })

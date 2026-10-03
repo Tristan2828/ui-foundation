@@ -5,8 +5,8 @@
 ## Stack
 Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui (Base UI primitives),
 React Router v7, TanStack Query. The shared layer — primitives, the
-`DataTable`/`EntityForm` composites, the app shell, auth, the gateway error
-seam, design tokens, lint rules — is the npm package
+`DataTable`/`EntityView`/`EntityForm` composites, the app shell, auth,
+the gateway error seam, design tokens, lint rules — is the npm package
 `@tristan2828/ui-foundation`, updated by bumping its version. Everything in
 `src/` is this app's own.
 
@@ -77,7 +77,8 @@ is right. Do not disable, skip, or work around it.
 
 ## Required States
 Every data view handles: loading, empty, error, and success. Use
-`<Skeleton>`, `<Empty>`, and the error boundary — `DataTable` already does.
+`<Skeleton>`, `<Empty>`, and the error boundary — `DataTable` already does,
+and `EntityView` (one record) adds not found: a plain 404, never a retry.
 Every screen has one Playwright test per state, forced via MSW overrides
 (`@tristan2828/ui-foundation/testing`).
 
@@ -190,16 +191,18 @@ uses the pattern (the playbook then stops and asks).
 | Query hooks, mutations, optimistic update | `src/routes/widgets/use-widgets.ts` |
 | Form schema, form ↔ wire conversion | `src/routes/widgets/widget-schema.ts` |
 | Table, toolbar filters, URL state | `src/routes/widgets/widgets-table.tsx` |
-| Columns, stable column definitions | `src/routes/widgets/widgets-columns.tsx`, `category-names.tsx` |
-| Row action with a confirm dialog | `src/routes/widgets/delete-widget-action.tsx` |
-| Form | `src/routes/widgets/widget-form.tsx` |
+| Columns, stable column definitions, title linking to the view | `src/routes/widgets/widgets-columns.tsx`, `category-names.tsx` |
+| Values shared by table and view (badge maps, formatters) | `src/routes/widgets/widget-format.ts` |
+| View: sections, not-set labels, Markdown, read-only sub-records | `src/routes/widgets/widget-view.tsx` |
+| Delete with a confirm dialog, in the view's header | `src/routes/widgets/delete-widget-action.tsx` |
+| Form, returning to the view | `src/routes/widgets/widget-form.tsx` |
 | `reference` (searchable combobox) | Category in `widget-form.tsx`, over `src/routes/widgets/use-widget-categories.ts` |
 | `multi reference`, lookup by ids | Extra Categories in `widget-form.tsx` and `widgets-table.tsx`; `src/api/gateway/widget-categories.ts` (`getWidgetCategoriesByIds`) |
 | `single choice` | Status in `widget-form.tsx` and `widgets-table.tsx` |
 | `multi choice`, option labels | Tags in `widget-form.tsx`, `widgets-table.tsx`, `widgets-columns.tsx`; `WIDGET_TAG_LABELS` in `widget-schema.ts` |
 | `yes/no` marked `toggle` | `src/routes/widgets/in-stock-toggle.tsx` |
 | `computed` | Progress (`checklistState`): `widget-schema.ts`, `widgets-columns.tsx`, the backend's `routers/widgets.py` |
-| Sub-records | Checklist in `widget-form.tsx` |
+| Sub-records | Checklist in `widget-form.tsx` (edited) and `widget-view.tsx` (read-only) |
 | Mocks | `src/mocks/data.ts`, `src/mocks/handlers.ts` |
-| Screen states and specs | `e2e/widgets-table.spec.ts`, `e2e/widget-form.spec.ts` |
+| Screen states and specs | `e2e/widgets-table.spec.ts`, `e2e/widget-view.spec.ts`, `e2e/widget-form.spec.ts` |
 | Backend router, model, migration | `backend/app/routers/widgets.py`, `backend/app/models.py`, `backend/migrations/versions/` |

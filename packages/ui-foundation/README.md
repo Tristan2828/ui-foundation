@@ -4,8 +4,8 @@
 [![release](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml/badge.svg)](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml)
 
 The shared layer of a family of small, contract-first, database-backed React
-apps: shadcn primitives, the `DataTable`/`EntityForm` composites, an app
-shell with session-cookie auth, the gateway's error seam, design tokens,
+apps: shadcn primitives, the `DataTable`/`EntityView`/`EntityForm`
+composites, an app shell with session-cookie auth, the gateway's error seam, design tokens,
 lint rules, Playwright suites, and the conventions an AI agent follows to
 build on it. Apps upgrade by bumping the version.
 
@@ -18,7 +18,7 @@ than installing this by hand:
 
 | Import | What |
 |---|---|
-| `@tristan2828/ui-foundation` | `AppShell`, `DataTable`, `EntityForm`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `PasswordInput`, `RouteErrorBoundary`, `FoundationProviders`, `LoginRoute`, `RegisterRoute`, `useAuth`, `useTableUrlState`, `useDebouncedValue`, `createQueryClient`, `cn`; types `Page`, `AppError`, `QuerySpec` |
+| `@tristan2828/ui-foundation` | `AppShell`, `DataTable`, `EntityView`, `EntityForm`, `Markdown`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `PasswordInput`, `RouteErrorBoundary`, `FoundationProviders`, `LoginRoute`, `RegisterRoute`, `useAuth`, `useTableUrlState`, `useDebouncedValue`, `createQueryClient`, `cn`; types `Page`, `AppError`, `QuerySpec` |
 | `@tristan2828/ui-foundation/ui/<name>` | shadcn primitives: badge, button, calendar, card, checkbox, combobox, dialog, empty, field, input, input-group, label, popover, select, separator, sheet, sidebar, skeleton, sonner, spinner, switch, table, textarea, tooltip |
 | `@tristan2828/ui-foundation/gateway` | `safeFetch`, `toAppError`, `networkError` — for an app's `src/api/gateway/` only |
 | `@tristan2828/ui-foundation/mocks` | MSW: `authHandlers`, `resetMockAuth`, `getMockCurrentUser`, `MOCK_USER`, `exposeMswForE2E` |

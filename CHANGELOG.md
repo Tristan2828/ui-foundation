@@ -5,6 +5,79 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.10.0 — a read-only view of one record
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook, plan template, cell patterns and `AGENTS.md` block. Nothing
+existing changes: an app adds a view entity by entity, when it wants one.
+
+- **New composite: `EntityView`,** the read-side partner of `EntityForm`.
+  A title with `badges` beside it, an `actions` slot, and `sections` of
+  label/value rows (`fields`) or of one block each (`content`, for long
+  text or a sub-record list). It owns the loading skeleton, a not-found
+  state (a 404, another user's record included: "Not found", a way back
+  to the list, no retry) and the error state with retry. An empty value
+  (`null`, `''`, `false`, `[]`) shows the field's `emptyLabel`, the plan's
+  "not set" label, never a blank.
+- **New component: `Markdown`.** Long text written as Markdown, rendered
+  in the design language's type roles and tokens: headings (starting at
+  `<h3>`, under the page's own), lists, task lists, GitHub tables (on the
+  package's `Table`), links (opening in a new tab), code and quotes. Raw
+  HTML is never rendered: it shows as the characters typed. The package
+  owns `react-markdown` and `remark-gfm` (new dependencies of the
+  package, not of apps). Its Storybook story is axe- and token-checked in
+  both themes.
+- **`defineA11ySuite` takes `viewRoutes`** (optional): each entity's
+  view, checked in both themes once `EntityView` has loaded.
+- **The template's Widgets demo has a view** (`/widgets/:id`,
+  `src/routes/widgets/widget-view.tsx`, `e2e/widget-view.spec.ts`), and
+  the demo now has the shape the playbook builds: the Name column links to
+  the view (new cell pattern 16), the row actions are gone (Edit and
+  Delete live in the view's header), saving or cancelling the form returns
+  to the view, and creating opens the new widget's view. Description is
+  Markdown, shown on the view and no longer a table column. Values shared
+  by the table and the view live in `widget-format.ts`.
+
+### How an app adds a view to an entity
+
+1. **Plan it.** Add a `## View screen` section to
+   `docs/entities/<entity>.md` (the format is in
+   `docs/foundation/entity-plan-template.md`): the title field, the badge
+   fields, the sections and their fields in order, and a "not set" label
+   for each optional field. Add `view` to its `Screens` line, and mark any
+   long text that is Markdown.
+2. **Share the cell rendering.** Move the badge variant maps and
+   formatters from `<entity>-columns.tsx` into `<entity>-format.ts`, so
+   the table and the view render each value the same way (the template's
+   `widget-format.ts`).
+3. **Build `<entity>-view.tsx` on `EntityView`,** copying
+   `widget-view.tsx`: the record from your detail query, names for its
+   references from the same lookup by id the table uses (a reference whose
+   entity has a view links to it), sub-records read-only, `<Markdown>` for
+   Markdown long text, and `Edit` plus your delete action in `actions`.
+   Route it at `/<entity>/:id` in `src/App.tsx`.
+4. **Point the table at it.** The title column becomes a link to the view
+   (cell pattern 16) and the row-actions column goes; move the delete
+   dialog into the view's header with an `onDeleted` that navigates to the
+   list.
+5. **Return the form to it.** Save and Cancel on an edit go to
+   `/<entity>/:id`, creating goes to the new record's view, each with
+   `{ replace: true }`. Put the saved record in the detail cache on create
+   and update (`setQueryData`), and drop it on delete (`removeQueries`), as
+   `use-widgets.ts` does.
+6. **Specs.** A view spec with its states (loading, not found, error and
+   retry, success, the sparse record's "not set" labels) and flows (title
+   link, Edit, Cancel, save, create, delete), copied from
+   `e2e/widget-view.spec.ts` and added to the `mobile-chrome` project.
+   Add the full and sparse records' views to `e2e/a11y.spec.ts`'s
+   `viewRoutes`. Specs that opened the form from a row's Edit button, or
+   expected a save to land on the list, now go through the view.
+7. **Reference files.** Add rows for the view and for the shared values
+   to your `AGENTS.md`'s `### Reference files`, as the template's has.
+
+New entities get all of this from the playbook (`/new-entity`), which now
+builds list, view, create, edit and delete.
+
 ## 3.9.0 — labelled multi choices; a demo that can't collide
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

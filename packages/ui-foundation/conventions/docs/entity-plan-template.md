@@ -23,7 +23,9 @@ One or two sentences: what one record is, and who uses the screens.
 - **Field**: camelCase, as it appears in the API (`releaseDate`).
 - **Type** — what the foundation supports today:
   - *Demonstrated by the Widget reference* (copied directly): `text` (one
-    line), `long text`, `decimal` (fixed places — say how many),
+    line), `long text` (say `Markdown` when it's written in Markdown, like
+    notes or a write-up: the view renders its headings, lists, tables and
+    links, and it's never a table column), `decimal` (fixed places — say how many),
     `date-time`, `email`, `yes/no` (a boolean that is always yes or no:
     say its default and the filter's three labels, e.g. Any stock /
     In stock / Out of stock), `single choice` (list the options, in display
@@ -56,7 +58,8 @@ One or two sentences: what one record is, and who uses the screens.
   a screen — a Base UI `Select` can't take `""` as an item value, so the
   pattern needs a sentinel and gets the display wrong without one.
 - **List**: `column` if it shows in the table, and `sortable` if you can
-  sort by it; blank if it's form-only. A `yes/no` can also say `toggle`:
+  sort by it; blank if it's only on the form and the view. The title
+  field's column links to the record's view. A `yes/no` can also say `toggle`:
   flipped straight from its row, saved on its own (cell pattern 15).
 - **Filter**: `search` (the text search box), `yes` (a filter control), or
   blank.
@@ -72,6 +75,8 @@ per list; delete the section if there are none.
 - Most items: 50.
 - In the table: a done-count (`2/6 done`), or blank if the list isn't
   shown.
+- On the view: always shown, read-only: the done-count, then each item in
+  order (a `url` item field opens in a new tab).
 
 | Field | Label | Type | Required | Options / rules |
 |---|---|---|---|---|
@@ -89,10 +94,34 @@ per list; delete the section if there are none.
 - Page size: 10 unless there's a reason.
 - Anything else the table must show or do:
 
+## View screen
+
+The read-only page for one record (`/<entity>/:id`), opened by clicking
+its title in the table. Edit and Delete live in its header, so the table
+has no row actions. Every field it shows renders as its table cell does.
+
+- Title: the field that names a record, shown as the page heading and
+  linked from the table: `title`.
+- Badges beside the title: a few status-like fields, as badges: `status`,
+  `priority`.
+- Sections, in order. Each lists its fields in the order they show. A
+  section holding a single long text or a single sub-records list shows
+  it under the section's heading, with no label of its own.
+
+| Section | Fields |
+|---|---|
+| Details | dueDate, project, tags |
+| Checklist | checklist |
+| Notes | notes |
+
+- "Not set" labels: what an empty optional field reads as on the view
+  (`dueDate`: No due date; `checklist`: No items). A field not listed here
+  reads "Not set". A `yes/no` is never empty: it reads Yes or No.
+
 ## Screens and access
 
-- Screens: list, create, edit, delete (the only shape the playbook builds
-  today).
+- Screens: list, view, create, edit, delete (the shape the playbook
+  builds).
 - Ownership: **shared** (every signed-in user sees every record) or
   **per-user** (each user sees only their own).
 
