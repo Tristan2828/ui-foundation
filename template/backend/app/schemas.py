@@ -34,7 +34,7 @@ class Page(CamelModel, Generic[T]):
     total: int = Field(ge=0)
 
 
-class CategoryOut(CamelModel):
+class WidgetCategoryOut(CamelModel):
     id: int
     name: str
 

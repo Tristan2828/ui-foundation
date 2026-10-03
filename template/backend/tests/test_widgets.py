@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
 from app.main import app
-from app.models import Category, User, Widget
+from app.models import User, Widget, WidgetCategory
 from app.routers.auth import get_current_user
 
 
@@ -226,8 +226,8 @@ async def test_null_or_non_boolean_in_stock_is_a_field_error(client: AsyncClient
 
 
 async def _add_categories(session: AsyncSession) -> None:
-    session.add(Category(id=2, name="Furniture"))
-    session.add(Category(id=3, name="Stationery"))
+    session.add(WidgetCategory(id=2, name="Furniture"))
+    session.add(WidgetCategory(id=3, name="Stationery"))
     await session.commit()
 
 
@@ -289,7 +289,7 @@ async def test_categories_by_ids_returns_exactly_those_ignoring_unknown(
     client: AsyncClient, session: AsyncSession
 ) -> None:
     await _add_categories(session)
-    res = await client.get("/api/categories", params=[("ids", "3"), ("ids", "1"), ("ids", "99")])
+    res = await client.get("/api/widget-categories", params=[("ids", "3"), ("ids", "1"), ("ids", "99")])
     assert res.status_code == 200
     assert sorted(c["id"] for c in res.json()) == [1, 3]
 

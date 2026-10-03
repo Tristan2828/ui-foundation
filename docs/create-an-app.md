@@ -42,8 +42,10 @@ and ending your turn while one is still running leaves a half-built app.
    rm create-app.sh
    ```
    It copies `template/` at that tag into `./<app-name>`, names the app,
-   pins the package at that version, runs `npm install`, confirms the
-   synced conventions match the package, and makes the first commit. It
+   pins the package at that version, runs `npm install`, proves the new
+   `package-lock.json` passes `npm ci` (repairing it with one more
+   `npm install` if not), confirms the synced conventions match the
+   package, and makes the first commit. It
    stops at the first error. Report that error rather than working around
    it.
 3. **Prove it works:** `cd <app-name> && npm run verify`. It must pass:

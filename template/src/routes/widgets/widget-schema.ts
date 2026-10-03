@@ -18,6 +18,16 @@ export const WIDGET_STATUSES = ['draft', 'active', 'archived'] as const satisfie
 // Multi-choice options, in display order. `satisfies` makes tsc fail if
 // this ever lists a value openapi.yaml's WidgetTag enum doesn't have.
 export const WIDGET_TAGS = ['fragile', 'bulky', 'seasonal', 'featured'] as const satisfies readonly WidgetTag[]
+// What each tag shows as: the wire value is an identifier (`quick_win`
+// style), not display text. MultiChoice's `getLabel` and the table's badges
+// both read this, so a tag reads the same everywhere. A Record, so tsc
+// fails when openapi.yaml gains a value without a label.
+export const WIDGET_TAG_LABELS: Record<WidgetTag, string> = {
+  fragile: 'Fragile',
+  bulky: 'Bulky',
+  seasonal: 'Seasonal',
+  featured: 'Featured',
+}
 // Computed, read-only: shown and filtered in the table, never on the form
 // and never in widgetFormSchema (the server works it out). Labels typed as
 // a Record so tsc fails when openapi.yaml gains a value.

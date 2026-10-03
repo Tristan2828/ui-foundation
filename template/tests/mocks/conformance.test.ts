@@ -114,9 +114,9 @@ describe("MSW mock conformance", () => {
     await validate("/auth/me", "get", meRes);
   });
 
-  it("GET /categories matches its 200 schema", async () => {
-    const res = await fetch("http://localhost/api/categories");
-    await validate("/categories", "get", res);
+  it("GET /widget-categories matches its 200 schema", async () => {
+    const res = await fetch("http://localhost/api/widget-categories");
+    await validate("/widget-categories", "get", res);
   });
 
   it("GET /widgets matches its 200 schema", async () => {

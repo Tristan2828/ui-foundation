@@ -68,6 +68,18 @@ sed -i "s#<title>UI Foundation</title>#<title>$APP_NAME</title>#" index.html
 echo "create-app: npm install ($PACKAGE $SPEC)"
 npm install --no-audit --no-fund
 
+# The app's CI and deploys install with `npm ci`, so the lockfile just
+# written must be one it accepts. It isn't always: npm 11.7.0 once wrote a
+# lock whose nested ajv packages (under @modelcontextprotocol/sdk and
+# @redocly/ajv) `npm ci` rejected, and a second `npm install` rewrote it
+# into one that passes. So: prove it, repair once, else stop.
+echo "create-app: npm ci (the new package-lock.json must install as written)"
+if ! npm ci --no-audit --no-fund; then
+  echo "create-app: npm ci rejected the new package-lock.json; running npm install once more" >&2
+  npm install --no-audit --no-fund
+  npm ci --no-audit --no-fund || fail "npm ci still rejects package-lock.json after a second npm install"
+fi
+
 # The template's synced files came from the same release as the package,
 # so this only confirms it; a mismatch means the release itself is broken.
 npx ui-foundation sync --check

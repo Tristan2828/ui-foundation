@@ -169,7 +169,8 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
 
     await page.getByLabel('Filter by tags').click()
-    await page.getByRole('option', { name: 'bulky', exact: true }).click()
+    // The option shows the tag's label; the URL and the wire carry its value.
+    await page.getByRole('option', { name: 'Bulky', exact: true }).click()
     await page.keyboard.press('Escape')
 
     await expect(page).toHaveURL(/[?&]tags=bulky/)
@@ -178,7 +179,7 @@ test.describe('widgets table', () => {
 
     // A shared or reloaded link restores the same filter.
     await page.reload()
-    await expect(page.getByRole('button', { name: 'Remove bulky' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Bulky' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
   })
 

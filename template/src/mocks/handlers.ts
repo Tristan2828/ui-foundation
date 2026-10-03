@@ -2,7 +2,7 @@
 // store in ./data. This is what lets the whole UI run with no backend at all.
 import { http, HttpResponse } from "msw";
 import { authHandlers } from "@tristan2828/ui-foundation/mocks";
-import { categories, nextWidgetId, widgets } from "./data";
+import { nextWidgetId, widgetCategories, widgets } from "./data";
 import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
@@ -69,7 +69,7 @@ function validateWidgetInput(
       issues.push({ loc: ["body", "extraCategoryIds"], msg: "value is not a valid list of ids", type: "type_error.list" });
     } else if (new Set(ids).size !== ids.length) {
       issues.push({ loc: ["body", "extraCategoryIds"], msg: "extraCategoryIds must be unique", type: "value_error.list.unique_items" });
-    } else if (!ids.every((id) => categories.some((c) => c.id === id))) {
+    } else if (!ids.every((id) => widgetCategories.some((c) => c.id === id))) {
       issues.push({ loc: ["body", "extraCategoryIds"], msg: "unknown category ids", type: "value_error.foreign_key" });
     }
   }
@@ -93,7 +93,7 @@ function validateWidgetInput(
       });
     }
   }
-  if (input.categoryId !== undefined && !categories.some((c) => c.id === input.categoryId)) {
+  if (input.categoryId !== undefined && !widgetCategories.some((c) => c.id === input.categoryId)) {
     issues.push({ loc: ["body", "categoryId"], msg: "category not found", type: "value_error.foreign_key" });
   }
 
@@ -131,13 +131,13 @@ export const handlers = [
   // /auth/* — the foundation's contract, mocked by the foundation.
   ...authHandlers,
 
-  http.get("*/api/categories", ({ request }) => {
+  http.get("*/api/widget-categories", ({ request }) => {
     const url = new URL(request.url);
     const search = url.searchParams.get("search")?.toLowerCase();
     const limit = Number(url.searchParams.get("limit") ?? 20);
     // Repeated ids=1&ids=3: exactly those, unknown ones left out (openapi.yaml).
     const ids = url.searchParams.getAll("ids").map(Number);
-    let result = search ? categories.filter((c) => c.name.toLowerCase().includes(search)) : categories;
+    let result = search ? widgetCategories.filter((c) => c.name.toLowerCase().includes(search)) : widgetCategories;
     if (ids.length > 0) result = result.filter((c) => ids.includes(c.id));
     return HttpResponse.json(result.slice(0, limit));
   }),

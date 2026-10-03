@@ -78,7 +78,7 @@ class WidgetExtraCategoryLink(SQLModel, table=True):
     __tablename__ = "widget_extra_categories"
 
     widget_id: int = Field(foreign_key="widgets.id", primary_key=True, ondelete="CASCADE")
-    category_id: int = Field(foreign_key="categories.id", primary_key=True, ondelete="CASCADE")
+    category_id: int = Field(foreign_key="widget_categories.id", primary_key=True, ondelete="CASCADE")
 
 
 class WidgetChecklistItem(SQLModel, table=True):
@@ -96,8 +96,13 @@ class WidgetChecklistItem(SQLModel, table=True):
     done: bool = Field(default=False)
 
 
-class Category(SQLModel, table=True):
-    __tablename__ = "categories"
+class WidgetCategory(SQLModel, table=True):
+    """The widget's reference entity (Widget.category_id, and the
+    extraCategoryIds links). Named for its widget, not plain Category, so an
+    app whose own entity is a Category doesn't collide with the demo
+    (migration 0009)."""
+
+    __tablename__ = "widget_categories"
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=100)
@@ -108,7 +113,7 @@ class Widget(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=200)
-    category_id: int = Field(foreign_key="categories.id", index=True)
+    category_id: int = Field(foreign_key="widget_categories.id", index=True)
     status: WidgetStatus = Field(default=WidgetStatus.draft, index=True)
     # Explicitly tz-aware, same as Session.expires_at above: the bare
     # `datetime` annotation mapped tz-naive at the ORM level, so every

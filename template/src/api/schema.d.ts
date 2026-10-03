@@ -72,15 +72,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/categories": {
+    "/widget-categories": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Search categories for the widget-form combobox */
-        get: operations["listCategories"];
+        /** Search widget categories for the widget-form combobox */
+        get: operations["listWidgetCategories"];
         put?: never;
         post?: never;
         delete?: never;
@@ -148,7 +148,8 @@ export interface components {
             name: components["schemas"]["User"]["name"];
             password: components["schemas"]["LoginRequest"]["password"];
         };
-        Category: {
+        /** @description The widget's reference entity: what categoryId and extraCategoryIds point at. Named for the widget, so an app's own Category entity never collides with the demo's. */
+        WidgetCategory: {
             readonly id: number;
             name: string;
         };
@@ -167,7 +168,7 @@ export interface components {
             readonly id: number;
             /** @description Display label. Not one of the six forcing field types. */
             name: string;
-            /** @description Foreign key to Category.id — forces a combobox with async search (Phase 4). Required: every widget belongs to a category. */
+            /** @description Foreign key to WidgetCategory.id — forces a combobox with async search (Phase 4). Required: every widget belongs to a category. */
             categoryId: number;
             /** @default draft */
             status: components["schemas"]["WidgetStatus"];
@@ -192,7 +193,7 @@ export interface components {
              * @default true
              */
             inStock: boolean;
-            /** @description Multi-reference field — links to any number of Category records by id. Forces a multi-select combobox with async search and chips on the form (names fetched with GET /categories?ids=...), names as badges in the table, and an any-of list filter. Always present on read, in ascending id order; empty when none. An id that isn't a category is a 422 field error. */
+            /** @description Multi-reference field — links to any number of WidgetCategory records by id. Forces a multi-select combobox with async search and chips on the form (names fetched with GET /widget-categories?ids=...), names as badges in the table, and an any-of list filter. Always present on read, in ascending id order; empty when none. An id that isn't a category is a 422 field error. */
             extraCategoryIds: number[];
             /** @description Sub-records — an ordered list of items that belong to this widget alone, edited on its form and saved with it. Forces a list editor (add, remove, move up/down) on the form and a done-count in the table. Always present on read, in the order saved; empty when none. A field error inside an item is keyed by its path, e.g. loc ["body", "checklist", 2, "text"]. */
             checklist: components["schemas"]["ChecklistItem"][];
@@ -396,7 +397,7 @@ export interface operations {
             500: components["responses"]["ServerError"];
         };
     };
-    listCategories: {
+    listWidgetCategories: {
         parameters: {
             query?: {
                 /** @description Case-insensitive substring match on name. */
@@ -417,7 +418,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Category"][];
+                    "application/json": components["schemas"]["WidgetCategory"][];
                 };
             };
             401: components["responses"]["UnauthorizedError"];

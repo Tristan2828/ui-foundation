@@ -14,7 +14,7 @@ from app.config import APP_ENV, COOKIE_SECURE, STATIC_DIR
 from app.db import engine
 from app.deploy_checks import production_problems
 from app.errors import register_error_handlers
-from app.routers import auth, categories, widgets
+from app.routers import auth, widget_categories, widgets
 from app.spa import SPAStaticFiles
 
 
@@ -35,7 +35,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="UI Foundation Demo API — Widgets", version="1.0.0", lifespan=lifespan)
 register_error_handlers(app)
 app.include_router(auth.router, prefix="/api")
-app.include_router(categories.router, prefix="/api")
+app.include_router(widget_categories.router, prefix="/api")
 app.include_router(widgets.router, prefix="/api")
 
 if os.path.isdir(STATIC_DIR):

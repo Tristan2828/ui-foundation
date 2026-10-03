@@ -12,6 +12,30 @@ Do not skip steps or reorder them. Replace `<Entity>` with the PascalCase
 entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
 (`invoice`) throughout.
 
+## The reference files
+
+The steps name the template's Widgets demo as the code to copy:
+`src/routes/widgets/`, `src/api/gateway/widgets.ts` and
+`widget-categories.ts`, their mocks and tests. An app deletes the demo
+once its own entity works, and from then on those names point at nothing.
+So the app's `AGENTS.md`, below the foundation block, has a
+**`### Reference files`** section: for each pattern (a table, a form, a
+reference field, a multi choice and the rest), the app's own file to copy.
+
+- **That section exists:** it wins. Wherever a step below names a demo
+  file, copy the file the section names for that pattern instead. A
+  pattern it doesn't list, and the demo is gone: stop and ask which file
+  to copy. Never rebuild a pattern from this file's prose alone.
+- **It doesn't, and the demo is still here:** copy the demo, as written.
+- **When the app removes the demo:** write the section first, naming the
+  file that now holds each pattern the demo showed. The template's own
+  `AGENTS.md` has the section, filled in for the demo, as the shape.
+
+The demo's referenced entity is `WidgetCategory` (`/widget-categories`,
+the `widget_categories` table), named for its widget so it never collides
+with an app's own entity. An app whose entity is a Category builds it
+alongside the demo with no rename.
+
 ## Before anything: the entity plan
 
 **Never guess what an entity is.** Every field, type, option list and rule
@@ -64,14 +88,14 @@ is a filled-in example while the Widgets demo is still here).
    a raw sentinel instead of a "not set" label, passes `verify` unnoticed.
    One row costs nothing and step 8 asserts it. Extend `tests/mocks/conformance.test.ts` so the
    new handlers are validated against `openapi.yaml`, the same way
-   `widgets`/`categories` already are.
+   `widgets`/`widget-categories` already are.
 5. **Add a gateway module in `src/api/gateway/<entity>.ts`** until step 3's
    tests pass, built on `safeFetch`/`toAppError` from
    `@tristan2828/ui-foundation/gateway` (see `src/api/gateway/widgets.ts`).
    Wire → `Page<T>` / `AppError` translation only; no hand-written types
    (everything comes from `schema.d.ts`).
-6. **Copy the widgets reference files, one for one, not just the two
-   screens** — shaped by the plan: table columns and sortable columns from
+6. **Copy the reference files, one for one, not just the two screens**
+   (the Widgets demo's, or the ones the app's `### Reference files` names) — shaped by the plan: table columns and sortable columns from
    its "List" column, toolbar filters from its "Filter" column, form fields
    and labels from its field table, and field types by pattern (a
    `reference` field copies Category's searchable combobox, a
@@ -85,12 +109,14 @@ is a filled-in example while the Widgets demo is still here).
    `<MultiChoice>` control from the foundation on the
    form and as a toolbar filter via `useTableUrlState`'s multi filters,
    badges in the table, and a `filters` array the gateway sends as a
-   repeated parameter — and a `multi reference` copies Extra Categories:
+   repeated parameter; each option shows its label, never its wire value
+   (`quick_win` reads "Quick win"): one `Record<value, label>`
+   (`WIDGET_TAG_LABELS`) feeds `MultiChoice`'s `getLabel` and the badges — and a `multi reference` copies Extra Categories:
    the `<MultiReference>` control on the form and as a toolbar filter, an
    array of ids on the wire, a repeated any-of list filter, and names from
    a **lookup by id** on the referenced entity
-   (`GET /categories?ids=1&ids=3`, `getCategoriesByIds`,
-   `useCategoriesByIdsQuery`). Add that `ids` parameter to the referenced
+   (`GET /widget-categories?ids=1&ids=3`, `getWidgetCategoriesByIds`,
+   `useWidgetCategoriesByIdsQuery`). Add that `ids` parameter to the referenced
    entity's list endpoint if it lacks one. Never name a picked id from
    search results alone: a saved pick the current search doesn't return
    would show without a name. The table looks up every id on its page in
@@ -128,7 +154,7 @@ is a filled-in example while the Widgets demo is still here).
    once and is restored if the save fails, with a toast naming the row),
    then refetches the lists. Its specs cover a flip that saves, the
    keyboard, and a failed save putting the switch back.
-   - `src/routes/widgets/use-widgets.ts`, `use-categories.ts` →
+   - `src/routes/widgets/use-widgets.ts`, `use-widget-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)
    - `src/routes/widgets/widget-schema.ts` →

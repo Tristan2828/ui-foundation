@@ -15,9 +15,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
 from app.models import (
-    Category,
     User,
     Widget,
+    WidgetCategory,
     WidgetChecklistItem,
     WidgetChecklistState,
     WidgetExtraCategoryLink,
@@ -75,7 +75,7 @@ async def _check_categories_exist(ids: list[int], session: AsyncSession) -> None
     # shape as any other (openapi.yaml), never a foreign-key 500 at commit.
     if not ids:
         return
-    found = set((await session.exec(select(Category.id).where(col(Category.id).in_(ids)))).all())
+    found = set((await session.exec(select(WidgetCategory.id).where(col(WidgetCategory.id).in_(ids)))).all())
     if missing := [i for i in ids if i not in found]:
         raise RequestValidationError(
             [{"loc": ("body", "extraCategoryIds"), "msg": f"unknown category ids: {missing}", "type": "value_error.foreign_key"}]

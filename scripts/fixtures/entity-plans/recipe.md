@@ -15,7 +15,7 @@ A recipe I might cook, with what it needs and whether I have it.
 |---|---|---|---|---|---|---|
 | title | Title | text | yes | 1–200 chars | column, sortable | search |
 | favorite | Favorite | yes/no | yes | default no; filter labels Any, Favorites, Others | column, toggle | yes |
-| categoryIds | Categories | multi reference → Category | no | any number, no repeats; picked from a searchable list; none means uncategorised | column | yes (any of) |
+| categoryIds | Categories | multi reference → WidgetCategory | no | any number, no repeats; picked from a searchable list; none means uncategorised | column | yes (any of) |
 | notes | Notes | long text | no | up to 2000 chars | | |
 | pantryState | Can Cook | computed | — | from the ingredients: none (no ingredients), missing (any ingredient not on hand), ready (all on hand), labelled No ingredients, Missing items, Ready to cook; sorts in that order | column, sortable | yes |
 

@@ -5,6 +5,40 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.9.0 — labelled multi choices; a demo that can't collide
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook, plan template and `AGENTS.md` block.
+
+- **`MultiChoice` takes `getLabel`.** `getLabel?: (value: T) => string`,
+  the same shape as `MultiReference`'s, names each option on its chip, in
+  the dropdown and for typed-text matching, while `onValueChange` still
+  emits wire values. It defaults to the value itself, so existing uses
+  are unchanged. The template's Tags are the reference: one
+  `WIDGET_TAG_LABELS` record feeds `getLabel` and the table's badges.
+  **If your app shows an enum through `MultiReference` or a custom picker
+  only to get labels** (static options, a local search), switch it back
+  to `MultiChoice` with `getLabel`.
+- **The playbook can outlive the demo.** `add-an-entity.md` now defers to
+  a `### Reference files` section in the app's `AGENTS.md` (below the
+  foundation block) that names the app's own file for each pattern. The
+  template's `AGENTS.md` has it filled in for the Widgets demo. **Before
+  your app deletes the demo** (or now, if it already has), write that
+  section with your own files.
+- **The demo's referenced entity is `WidgetCategory`,** not `Category`:
+  schema `WidgetCategory`, path `/widget-categories`, table
+  `widget_categories` (migration 0009), gateway
+  `src/api/gateway/widget-categories.ts`, hooks `use-widget-categories.ts`.
+  An app whose own entity is a Category no longer collides with the demo.
+  Template only: an existing app's copy is its own, and nothing changes
+  unless you want it to.
+- **`create-app.sh` proves the new lockfile passes `npm ci`.** After its
+  `npm install` it runs `npm ci`, and if npm rejects the lock it just
+  wrote, runs `npm install` once more and checks again (npm 11.7.0 wrote
+  one `npm ci` rejected). **If your app's CI or deploy fails `npm ci`**
+  on a lock you never edited, run `npm install` once and commit the
+  rewritten `package-lock.json`.
+
 ## 3.8.0 — flip a yes/no from the table row
 
 Docs and template only; no package code changed. Run

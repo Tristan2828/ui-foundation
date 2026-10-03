@@ -132,7 +132,9 @@ net.
 Follow `docs/foundation/add-an-entity.md` (in Claude Code, `/new-entity
 <Name>` is a shortcut to it). It builds from the entity's plan,
 `docs/entities/<entity>.md`; if there's no plan, work one out with the
-developer first. Never guess the fields.
+developer first. Never guess the fields. The files it copies are the
+Widgets demo's until the app removes it; after that, the `### Reference
+files` section below names the app's own.
 
 ## Upgrading the Foundation
 ```bash

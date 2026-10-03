@@ -89,11 +89,11 @@ paths:
         "401": { $ref: "#/components/responses/UnauthorizedError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
-  /categories:
+  /widget-categories:
     get:
-      operationId: listCategories
-      summary: Search categories for the widget-form combobox
-      tags: [categories]
+      operationId: listWidgetCategories
+      summary: Search widget categories for the widget-form combobox
+      tags: [widget-categories]
       parameters:
         - name: search
           in: query
@@ -121,7 +121,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/Category" }
+                items: { $ref: "#/components/schemas/WidgetCategory" }
         "401": { $ref: "#/components/responses/UnauthorizedError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
@@ -285,7 +285,11 @@ components:
         name: { $ref: "#/components/schemas/User/properties/name" }
         password: { $ref: "#/components/schemas/LoginRequest/properties/password" }
 
-    Category:
+    WidgetCategory:
+      description: >
+        The widget's reference entity: what categoryId and extraCategoryIds
+        point at. Named for the widget, so an app's own Category entity
+        never collides with the demo's.
       type: object
       required: [id, name]
       properties:
@@ -335,7 +339,7 @@ components:
         categoryId:
           type: integer
           description: >
-            Foreign key to Category.id — forces a combobox with async search
+            Foreign key to WidgetCategory.id — forces a combobox with async search
             (Phase 4). Required: every widget belongs to a category.
         status:
           allOf: [{ $ref: "#/components/schemas/WidgetStatus" }]
@@ -386,9 +390,9 @@ components:
           items: { type: integer }
           uniqueItems: true
           description: >
-            Multi-reference field — links to any number of Category records
+            Multi-reference field — links to any number of WidgetCategory records
             by id. Forces a multi-select combobox with async search and
-            chips on the form (names fetched with GET /categories?ids=...),
+            chips on the form (names fetched with GET /widget-categories?ids=...),
             names as badges in the table, and an any-of list filter.
             Always present on read, in ascending id order; empty when none.
             An id that isn't a category is a 422 field error.

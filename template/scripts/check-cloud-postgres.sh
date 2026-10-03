@@ -57,7 +57,7 @@ for i in $(seq 1 30); do
   # 401 still proves the app is up and enforcing the contract (same reason
   # check-backend-postgres.sh accepts it) — `curl -f` alone would treat that as
   # "not ready" and this loop would never break.
-  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8001/api/categories 2>/dev/null || echo "000")
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8001/api/widget-categories 2>/dev/null || echo "000")
   { [ "$status" = "200" ] || [ "$status" = "401" ]; } && break
   [ "$i" -eq 30 ] && fail "backend did not respond on :8001 within 30s against CLOUD_DATABASE_URL — see logs/cloud-postgres-uvicorn.log"
   sleep 1

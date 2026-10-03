@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlmodel import SQLModel
 
 from app.config import DATABASE_URL, database_connect_args
-from app.models import Category, Widget  # noqa: F401 — registers tables on SQLModel.metadata
+from app.models import Widget, WidgetCategory  # noqa: F401 — registers tables on SQLModel.metadata
 
 config = context.config
 if config.config_file_name is not None:
