@@ -5,9 +5,9 @@ import { resetMockAuth } from "@tristan2828/ui-foundation/mocks";
 import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
-type Category = components["schemas"]["Category"];
+type WidgetCategory = components["schemas"]["WidgetCategory"];
 
-const initialCategories: Category[] = [
+const initialWidgetCategories: WidgetCategory[] = [
   { id: 1, name: "Electronics" },
   { id: 2, name: "Furniture" },
   { id: 3, name: "Stationery" },
@@ -86,12 +86,12 @@ const initialWidgets: Widget[] = [
   },
 ];
 
-export let categories: Category[] = structuredClone(initialCategories);
+export let widgetCategories: WidgetCategory[] = structuredClone(initialWidgetCategories);
 export let widgets: Widget[] = structuredClone(initialWidgets);
 let nextId = widgets.length + 1;
 
 export function resetMockData(): void {
-  categories = structuredClone(initialCategories);
+  widgetCategories = structuredClone(initialWidgetCategories);
   widgets = structuredClone(initialWidgets);
   nextId = widgets.length + 1;
   resetMockAuth();

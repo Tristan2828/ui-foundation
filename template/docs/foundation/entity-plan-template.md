@@ -28,7 +28,8 @@ One or two sentences: what one record is, and who uses the screens.
     say its default and the filter's three labels, e.g. Any stock /
     In stock / Out of stock), `single choice` (list the options, in display
     order; see the note below if it is *optional*), `multi choice` (list
-    the options; any number can be picked —
+    the options, with a label for any whose wire value isn't fit to show,
+    e.g. `quick_win` (Quick win); any number can be picked —
     chips on the form, badges in the table, an any-of filter), `reference`
     (to another entity — name it; a searchable combobox), `multi reference`
     (to any number of records of another entity — name it; chips with a

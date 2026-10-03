@@ -16,9 +16,11 @@ a data source. For the design behind it, see
 3. **Build it** by having any AI tool follow
    `docs/foundation/add-an-entity.md` (in Claude Code, `/new-entity <Name>`).
    Delete the Widgets demo once your own entity works: `src/routes/widgets/`,
-   `src/api/gateway/{widgets,categories}.ts`, their mocks, tests, specs and
-   plan, the nav entry, and the backend's widget router and migrations if
-   you're keeping the backend.
+   `src/api/gateway/{widgets,widget-categories}.ts`, their mocks, tests,
+   specs and plan, the nav entry, and the backend's widget routers and
+   migrations if you're keeping the backend. First rewrite the
+   `### Reference files` section of `AGENTS.md` to name your own files for
+   each pattern: the playbook copies from there once the demo is gone.
 4. **Choose a data source** (below) before you need real data. The UI runs
    on MSW mocks until then.
 

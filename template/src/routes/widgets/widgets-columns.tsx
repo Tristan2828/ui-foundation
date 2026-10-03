@@ -10,7 +10,7 @@ import type { components } from '@/api/schema'
 import { CategoryName } from './category-names'
 import { DeleteWidgetAction } from './delete-widget-action'
 import { InStockToggle } from './in-stock-toggle'
-import { CHECKLIST_STATE_LABELS } from './widget-schema'
+import { CHECKLIST_STATE_LABELS, WIDGET_TAG_LABELS } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
 type WidgetStatus = components['schemas']['WidgetStatus']
@@ -133,7 +133,7 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
           <div className="flex flex-wrap gap-1">
             {tags.map((tag) => (
               <Badge key={tag} variant="outline">
-                {tag}
+                {WIDGET_TAG_LABELS[tag]}
               </Badge>
             ))}
           </div>

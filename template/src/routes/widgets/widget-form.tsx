@@ -40,12 +40,13 @@ import {
 import { Skeleton } from '@tristan2828/ui-foundation/ui/skeleton'
 import { Switch } from '@tristan2828/ui-foundation/ui/switch'
 import { Textarea } from '@tristan2828/ui-foundation/ui/textarea'
-import { categoryNames, useCategoriesByIdsQuery, useCategoriesQuery } from './use-categories'
+import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
 import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from './use-widgets'
 import {
   WIDGET_FORM_DEFAULTS,
   WIDGET_STATUSES,
   WIDGET_TAGS,
+  WIDGET_TAG_LABELS,
   formValuesToWidgetCreate,
   formValuesToWidgetUpdate,
   widgetFormSchema,
@@ -82,7 +83,7 @@ export function WidgetFormRoute() {
   const updateWidget = useUpdateWidgetMutation(widgetId)
 
   const [categorySearch, setCategorySearch] = useState('')
-  const categoriesQuery = useCategoriesQuery(categorySearch)
+  const categoriesQuery = useWidgetCategoriesQuery(categorySearch)
   const categoriesById = useMemo(() => {
     const entries = (categoriesQuery.data ?? []).map((c) => [c.id, c.name] as const)
     return Object.fromEntries(entries) as Record<number, string>
@@ -91,7 +92,7 @@ export function WidgetFormRoute() {
   // Multi reference: its own search (independent of the Category combobox
   // above) for the dropdown, and a lookup by id for the picked chips' names.
   const [extraCategorySearch, setExtraCategorySearch] = useState('')
-  const extraCategoryOptionsQuery = useCategoriesQuery(extraCategorySearch)
+  const extraCategoryOptionsQuery = useWidgetCategoriesQuery(extraCategorySearch)
 
   const [submitError, setSubmitError] = useState<AppError | null>(null)
 
@@ -111,8 +112,8 @@ export function WidgetFormRoute() {
   // Hooks above any early return. The watched value is the form's current
   // pick, so a chip added from search is named by the same lookup.
   const pickedExtraCategoryIds = useWatch({ control: form.control, name: 'extraCategoryIds' })
-  const pickedExtraCategoriesQuery = useCategoriesByIdsQuery(pickedExtraCategoryIds ?? [])
-  const extraCategoryNames = categoryNames(extraCategoryOptionsQuery.data, pickedExtraCategoriesQuery.data)
+  const pickedExtraCategoriesQuery = useWidgetCategoriesByIdsQuery(pickedExtraCategoryIds ?? [])
+  const extraCategoryNames = widgetCategoryNames(extraCategoryOptionsQuery.data, pickedExtraCategoriesQuery.data)
 
   if (isEdit && widgetQuery.isLoading) {
     return <WidgetFormSkeleton />
@@ -319,6 +320,7 @@ export function WidgetFormRoute() {
             <MultiChoice
               id="widget-tags"
               options={WIDGET_TAGS}
+              getLabel={(tag) => WIDGET_TAG_LABELS[tag]}
               value={field.value}
               onValueChange={field.onChange}
               placeholder="Add tags"

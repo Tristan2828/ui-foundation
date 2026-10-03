@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.db import get_session
 from app.main import app
-from app.models import Category, User, Widget, WidgetStatus
+from app.models import User, Widget, WidgetCategory, WidgetStatus
 from app.routers.auth import get_current_user
 
 
@@ -33,7 +33,7 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
         # Owner of the seeded widget, and the same id the `client` fixture's
         # stand-in user has — widgets are scoped per user (migration 0003).
         session.add(User(id=1, email="test@example.com", name="Test User", password_hash="unused"))
-        session.add(Category(id=1, name="Electronics"))
+        session.add(WidgetCategory(id=1, name="Electronics"))
         session.add(
             Widget(
                 id=1,
@@ -57,7 +57,7 @@ async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
-    # widgets/categories require auth —
+    # widgets/widget-categories require auth —
     # this fixture is shared by test_widgets.py, which tests the widgets
     # domain, not login, so it stands in a fixed authenticated user rather
     # than making every test log in first. test_auth.py exercises the real

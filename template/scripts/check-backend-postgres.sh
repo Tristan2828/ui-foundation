@@ -73,10 +73,10 @@ mkdir -p logs # gitignored, so absent in a fresh clone
 (cd backend && exec "../$PY" -m uvicorn app.main:app --port 8000 >"$REPO_ROOT/logs/backend-postgres-uvicorn.log" 2>&1) &
 UVICORN_PID=$!
 for i in $(seq 1 30); do
-  # /api/categories now requires auth (Phase 10) — 401 still proves uvicorn
+  # /api/widget-categories now requires auth (Phase 10) — 401 still proves uvicorn
   # is up and enforcing the contract; `curl -f` alone would treat that 401
   # as "not ready yet" and this loop would never break.
-  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/categories 2>/dev/null || echo "000")
+  status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/widget-categories 2>/dev/null || echo "000")
   { [ "$status" = "200" ] || [ "$status" = "401" ]; } && break
   [ "$i" -eq 30 ] && fail "backend did not respond on :8000 within 30s — see logs/backend-postgres-uvicorn.log"
   sleep 1
@@ -160,8 +160,8 @@ grep -q '"total":0' "$WIDGET_BODY" || fail "inStock=true should match nothing fo
 
 # extraCategoryIds (3.5.0): a join table with two foreign keys (migration
 # 0007), the any-of filter, an unknown id as a 422 rather than a
-# foreign-key 500, and GET /categories?ids=... for naming them.
-echo "check-backend-postgres: extraCategoryIds links, filter, unknown id and categories?ids against real Postgres (3.5.0)"
+# foreign-key 500, and GET /widget-categories?ids=... for naming them.
+echo "check-backend-postgres: extraCategoryIds links, filter, unknown id and widget-categories?ids against real Postgres (3.5.0)"
 links_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"extraCategoryIds":[3,2]}')
 [ "$links_status" = "200" ] || fail "PATCH extraCategoryIds returned $links_status — got: $(cat "$WIDGET_BODY")"
 grep -q '"extraCategoryIds":\[2,3\]' "$WIDGET_BODY" || fail "PATCH didn't store extraCategoryIds [2,3] (ascending): $(cat "$WIDGET_BODY")"
@@ -169,8 +169,8 @@ curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widgets?ex
 grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "extraCategoryIds=3 filter didn't return widget $widget_id: $(cat "$WIDGET_BODY")"
 unknown_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"extraCategoryIds":[9999]}')
 [ "$unknown_status" = "422" ] || fail "an unknown extraCategoryIds id returned $unknown_status, expected 422: $(cat "$WIDGET_BODY")"
-curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/categories?ids=3&ids=9999"
-grep -q '"id":3' "$WIDGET_BODY" && ! grep -q '"id":1,' "$WIDGET_BODY" || fail "categories?ids=3 should return only category 3: $(cat "$WIDGET_BODY")"
+curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widget-categories?ids=3&ids=9999"
+grep -q '"id":3' "$WIDGET_BODY" && ! grep -q '"id":1,' "$WIDGET_BODY" || fail "widget-categories?ids=3 should return only category 3: $(cat "$WIDGET_BODY")"
 
 # checklist (3.6.0): a child table with a position column (migration 0008),
 # order kept across a replace, and a blank item as a 422 on its own path.

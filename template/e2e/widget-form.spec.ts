@@ -33,13 +33,15 @@ async function pickAvailableFromDate(page: Page) {
 // Multi choice: open the chips input and pick an option; Escape closes the
 // list, which stays open between picks in multiple mode.
 // Multi reference: type to search the server, pick the match, close the
-// list. The search is the server's (GET /categories?search=...).
+// list. The search is the server's (GET /widget-categories?search=...).
 async function pickExtraCategory(page: Page, search: string, name: string) {
   await page.locator('#widget-extra-categories').fill(search)
   await page.getByRole('option', { name, exact: true }).click()
   await page.keyboard.press('Escape')
 }
 
+// Multi choice: options and chips show each tag's label (WIDGET_TAG_LABELS),
+// never its wire value.
 async function pickTag(page: Page, name: string) {
   await page.locator('#widget-tags').click()
   await page.getByRole('option', { name, exact: true }).click()
@@ -124,31 +126,31 @@ test.describe('widget form', () => {
     await pickAvailableFromDate(page)
     await page.locator('#widget-price').fill('9.99')
     await page.locator('#widget-description').fill('Created by the success e2e test.')
-    await pickTag(page, 'bulky')
-    await pickTag(page, 'seasonal')
+    await pickTag(page, 'Bulky')
+    await pickTag(page, 'Seasonal')
     await page.getByRole('button', { name: 'Create widget' }).click()
 
     await expect(page).toHaveURL(/\/widgets$/)
     const row = page.getByRole('row', { name: /Playwright Success Widget/ })
     await expect(row).toBeVisible()
-    await expect(row.getByText('bulky', { exact: true })).toBeVisible()
-    await expect(row.getByText('seasonal', { exact: true })).toBeVisible()
+    await expect(row.getByText('Bulky', { exact: true })).toBeVisible()
+    await expect(row.getByText('Seasonal', { exact: true })).toBeVisible()
   })
 
   test('multi choice: existing tags are removable chips, and the edited set is what saves', async ({
     page,
   }) => {
     await page.goto('/widgets/1/edit')
-    await expect(page.getByRole('button', { name: 'Remove fragile' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Fragile' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Remove fragile' }).click()
-    await pickTag(page, 'featured')
+    await page.getByRole('button', { name: 'Remove Fragile' }).click()
+    await pickTag(page, 'Featured')
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page).toHaveURL(/\/widgets$/)
     const row = page.getByRole('row', { name: /Wireless Mouse/ })
-    await expect(row.getByText('featured', { exact: true })).toBeVisible()
-    await expect(row.getByText('fragile', { exact: true })).toHaveCount(0)
+    await expect(row.getByText('Featured', { exact: true })).toBeVisible()
+    await expect(row.getByText('Fragile', { exact: true })).toHaveCount(0)
   })
 
   test('multi reference: picks found by searching save, and show by name in the table', async ({ page }) => {

@@ -134,7 +134,9 @@ net.
 Follow `docs/foundation/add-an-entity.md` (in Claude Code, `/new-entity
 <Name>` is a shortcut to it). It builds from the entity's plan,
 `docs/entities/<entity>.md`; if there's no plan, work one out with the
-developer first. Never guess the fields.
+developer first. Never guess the fields. The files it copies are the
+Widgets demo's until the app removes it; after that, the `### Reference
+files` section below names the app's own.
 
 ## Upgrading the Foundation
 ```bash
@@ -174,3 +176,30 @@ and anything an agent needs that the rules above don't cover.
 - Backend: `backend/`, a reference implementation of `openapi.yaml`
   (`npm run verify:backend`; `scripts/check-backend-postgres.sh` against
   real Postgres).
+
+### Reference files
+
+What `docs/foundation/add-an-entity.md` copies for each pattern. Here, the
+Widgets demo. Before deleting the demo, rewrite each row to name this
+app's own file for that pattern, and drop a row only if no entity here
+uses the pattern (the playbook then stops and asks).
+
+| Pattern | Copy |
+|---|---|
+| Gateway module and its contract tests | `src/api/gateway/widgets.ts`, `tests/gateway/widgets.test.ts` |
+| Query hooks, mutations, optimistic update | `src/routes/widgets/use-widgets.ts` |
+| Form schema, form ↔ wire conversion | `src/routes/widgets/widget-schema.ts` |
+| Table, toolbar filters, URL state | `src/routes/widgets/widgets-table.tsx` |
+| Columns, stable column definitions | `src/routes/widgets/widgets-columns.tsx`, `category-names.tsx` |
+| Row action with a confirm dialog | `src/routes/widgets/delete-widget-action.tsx` |
+| Form | `src/routes/widgets/widget-form.tsx` |
+| `reference` (searchable combobox) | Category in `widget-form.tsx`, over `src/routes/widgets/use-widget-categories.ts` |
+| `multi reference`, lookup by ids | Extra Categories in `widget-form.tsx` and `widgets-table.tsx`; `src/api/gateway/widget-categories.ts` (`getWidgetCategoriesByIds`) |
+| `single choice` | Status in `widget-form.tsx` and `widgets-table.tsx` |
+| `multi choice`, option labels | Tags in `widget-form.tsx`, `widgets-table.tsx`, `widgets-columns.tsx`; `WIDGET_TAG_LABELS` in `widget-schema.ts` |
+| `yes/no` marked `toggle` | `src/routes/widgets/in-stock-toggle.tsx` |
+| `computed` | Progress (`checklistState`): `widget-schema.ts`, `widgets-columns.tsx`, the backend's `routers/widgets.py` |
+| Sub-records | Checklist in `widget-form.tsx` |
+| Mocks | `src/mocks/data.ts`, `src/mocks/handlers.ts` |
+| Screen states and specs | `e2e/widgets-table.spec.ts`, `e2e/widget-form.spec.ts` |
+| Backend router, model, migration | `backend/app/routers/widgets.py`, `backend/app/models.py`, `backend/migrations/versions/` |

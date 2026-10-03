@@ -1,17 +1,17 @@
-// Gateway contract tests for src/api/gateway/categories.ts — written
+// Gateway contract tests for src/api/gateway/widget-categories.ts — written
 // TDD-style, ahead of the implementation. Derived only from openapi.yaml,
 // src/api/contracts.ts and src/api/schema.d.ts. Do NOT make these pass by
 // reading the (nonexistent) gateway implementation.
 //
 // These tests are EXPECTED to fail right now with a "cannot find module"
-// style error, because src/api/gateway/categories.ts does not exist yet.
+// style error, because src/api/gateway/widget-categories.ts does not exist yet.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCategoriesByIds, listCategories } from "../../src/api/gateway/categories";
+import { getWidgetCategoriesByIds, listWidgetCategories } from "../../src/api/gateway/widget-categories";
 import type { AppError } from "@tristan2828/ui-foundation";
 import type { components } from "../../src/api/schema";
 
-type Category = components["schemas"]["Category"];
+type WidgetCategory = components["schemas"]["WidgetCategory"];
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -41,28 +41,28 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("listCategories", () => {
-  it("passes the search param through and resolves with a plain Category[] (no pagination wrapper)", async () => {
-    const categories: Category[] = [
+describe("listWidgetCategories", () => {
+  it("passes the search param through and resolves with a plain WidgetCategory[] (no pagination wrapper)", async () => {
+    const widgetCategories: WidgetCategory[] = [
       { id: 1, name: "Alpha" },
       { id: 2, name: "Beta" },
     ];
-    const fetchMock = stubFetch(jsonResponse(categories, 200));
+    const fetchMock = stubFetch(jsonResponse(widgetCategories, 200));
 
-    const result = await listCategories("al");
+    const result = await listWidgetCategories("al");
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const url = calledUrl(fetchMock);
-    expect(url.pathname).toBe("/api/categories");
+    expect(url.pathname).toBe("/api/widget-categories");
     expect(url.searchParams.get("search")).toBe("al");
     expect(Array.isArray(result)).toBe(true);
-    expect(result).toEqual(categories);
+    expect(result).toEqual(widgetCategories);
   });
 
   it("omits the search param when called with no argument", async () => {
     const fetchMock = stubFetch(jsonResponse([], 200));
 
-    await listCategories();
+    await listWidgetCategories();
 
     const url = calledUrl(fetchMock);
     expect(url.searchParams.has("search")).toBe(false);
@@ -71,7 +71,7 @@ describe("listCategories", () => {
   it("throws AppError{kind:'server'} on 500", async () => {
     stubFetch(jsonResponse({ detail: "Internal Server Error" }, 500));
 
-    await expect(listCategories()).rejects.toMatchObject({
+    await expect(listWidgetCategories()).rejects.toMatchObject({
       kind: "server",
     } satisfies Partial<AppError>);
   });
@@ -79,35 +79,35 @@ describe("listCategories", () => {
   it("throws AppError{kind:'network'} on a network-level failure, never resolving", async () => {
     stubFetchRejecting(new TypeError("Failed to fetch"));
 
-    await expect(listCategories("x")).rejects.toMatchObject({
+    await expect(listWidgetCategories("x")).rejects.toMatchObject({
       kind: "network",
     } satisfies Partial<AppError>);
   });
 });
 
-// openapi.yaml: GET /categories?ids=1&ids=3 — "how a form or table gets the
+// openapi.yaml: GET /widget-categories?ids=1&ids=3 — "how a form or table gets the
 // names of references it already holds". Repeated (exploded) parameter.
-describe("getCategoriesByIds", () => {
-  it("sends each id as a repeated ids parameter, with no search, and resolves with Category[]", async () => {
-    const categories: Category[] = [
+describe("getWidgetCategoriesByIds", () => {
+  it("sends each id as a repeated ids parameter, with no search, and resolves with WidgetCategory[]", async () => {
+    const widgetCategories: WidgetCategory[] = [
       { id: 1, name: "Alpha" },
       { id: 3, name: "Gamma" },
     ];
-    const fetchMock = stubFetch(jsonResponse(categories, 200));
+    const fetchMock = stubFetch(jsonResponse(widgetCategories, 200));
 
-    const result = await getCategoriesByIds([1, 3]);
+    const result = await getWidgetCategoriesByIds([1, 3]);
 
     const url = calledUrl(fetchMock);
-    expect(url.pathname).toBe("/api/categories");
+    expect(url.pathname).toBe("/api/widget-categories");
     expect(url.searchParams.getAll("ids")).toEqual(["1", "3"]);
     expect(url.searchParams.has("search")).toBe(false);
-    expect(result).toEqual(categories);
+    expect(result).toEqual(widgetCategories);
   });
 
   it("resolves with [] for no ids without making a request (no ids would mean every category)", async () => {
     const fetchMock = stubFetch(jsonResponse([{ id: 1, name: "Alpha" }], 200));
 
-    const result = await getCategoriesByIds([]);
+    const result = await getWidgetCategoriesByIds([]);
 
     expect(result).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -116,7 +116,7 @@ describe("getCategoriesByIds", () => {
   it("throws AppError{kind:'server'} on 500", async () => {
     stubFetch(jsonResponse({ detail: "Internal Server Error" }, 500));
 
-    await expect(getCategoriesByIds([1])).rejects.toMatchObject({
+    await expect(getWidgetCategoriesByIds([1])).rejects.toMatchObject({
       kind: "server",
     } satisfies Partial<AppError>);
   });

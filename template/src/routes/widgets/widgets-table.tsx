@@ -21,10 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@tristan2828/ui-foundation/ui/select'
-import { CHECKLIST_STATE_LABELS, CHECKLIST_STATES, WIDGET_STATUSES, WIDGET_TAGS } from './widget-schema'
+import { CHECKLIST_STATE_LABELS, CHECKLIST_STATES, WIDGET_STATUSES, WIDGET_TAG_LABELS, WIDGET_TAGS } from './widget-schema'
 import { CategoryNamesContext } from './category-names-context'
 import { buildWidgetsColumns } from './widgets-columns'
-import { categoryNames, useCategoriesByIdsQuery, useCategoriesQuery } from './use-categories'
+import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
 import { useWidgetsQuery } from './use-widgets'
 
 // A visual-only caption above each toolbar filter, so the field stays
@@ -101,7 +101,7 @@ export function WidgetsTableRoute() {
     [extraCategoryParam],
   )
   const [extraCategorySearch, setExtraCategorySearch] = useState('')
-  const extraCategoryOptionsQuery = useCategoriesQuery(extraCategorySearch)
+  const extraCategoryOptionsQuery = useWidgetCategoriesQuery(extraCategorySearch)
   // The input shows `search` live; the request waits for typing to pause.
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
@@ -134,9 +134,9 @@ export function WidgetsTableRoute() {
     ],
     [items, extraCategoryFilter],
   )
-  const referencedCategoriesQuery = useCategoriesByIdsQuery(referencedCategoryIds)
+  const referencedCategoriesQuery = useWidgetCategoriesByIdsQuery(referencedCategoryIds)
   const names = useMemo(
-    () => categoryNames(extraCategoryOptionsQuery.data, referencedCategoriesQuery.data),
+    () => widgetCategoryNames(extraCategoryOptionsQuery.data, referencedCategoriesQuery.data),
     [extraCategoryOptionsQuery.data, referencedCategoriesQuery.data],
   )
 
@@ -225,6 +225,7 @@ export function WidgetsTableRoute() {
                 <FilterLabel>Tags</FilterLabel>
                 <MultiChoice
                   options={WIDGET_TAGS}
+                  getLabel={(tag) => WIDGET_TAG_LABELS[tag]}
                   value={tagsFilter}
                   onValueChange={(tags) => setMultiFilter('tags', tags)}
                   placeholder="Any tag"
