@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import {
   type QuerySpec,
+  type TableView,
   DataTable,
   MultiChoice,
   MultiReference,
@@ -71,12 +72,37 @@ const PROGRESS_FILTER_ALL_LABEL = 'Any progress'
 const FILTERS = ['search', 'status', 'inStock', 'checklistState'] as const
 const MULTI_FILTERS = ['tags', 'extraCategoryIds'] as const
 const SEARCH_DEBOUNCE_MS = 300
+// Saved views: one press sets every filter and the sort at once, clearing
+// the filters a view doesn't name (applyView). A view can also name the
+// columns it shows; they last while it's active, i.e. until any filter
+// changes, then the table goes back to every column (useTableUrlState's
+// activeView). Restock is for working through what's out of stock: the
+// In Stock switch stays, so a restocked widget is flipped from its row.
+const VIEWS: Record<'all' | 'restock', TableView<(typeof FILTERS)[number], (typeof MULTI_FILTERS)[number]>> = {
+  all: {},
+  restock: {
+    filters: { inStock: 'false' },
+    sort: [{ id: 'name', desc: false }],
+    columns: ['name', 'category', 'assigneeEmail', 'price', 'inStock'],
+  },
+}
+const VIEW_LABELS: Record<keyof typeof VIEWS, string> = { all: 'All widgets', restock: 'Restock' }
 
 export function WidgetsTableRoute() {
   // Page, sort and filters live in the URL (?page=2&sort=name:asc&...), so
   // they survive the round trip to the edit form — see the hook.
-  const { page, setPage, sorting, setSorting, filters, setFilter, multiFilters, setMultiFilter } =
-    useTableUrlState(FILTERS, MULTI_FILTERS)
+  const {
+    page,
+    setPage,
+    sorting,
+    setSorting,
+    filters,
+    setFilter,
+    multiFilters,
+    setMultiFilter,
+    activeView,
+    applyView,
+  } = useTableUrlState(FILTERS, MULTI_FILTERS, VIEWS)
   const search = filters.search
   const statusFilter = filters.status || STATUS_FILTER_ALL
   const progressFilter = (CHECKLIST_STATES as readonly string[]).includes(filters.checklistState)
@@ -187,6 +213,22 @@ export function WidgetsTableRoute() {
             )
           }
           toolbar={
+            <>
+            {/* aria-pressed marks the active view; none is pressed once a
+                filter moves the table off every view. */}
+            <div role="group" aria-label="Saved views" className="flex flex-wrap gap-2">
+              {(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((id) => (
+                <Button
+                  key={id}
+                  size="sm"
+                  variant={activeView === id ? 'secondary' : 'outline'}
+                  aria-pressed={activeView === id}
+                  onClick={() => applyView(VIEWS[id])}
+                >
+                  {VIEW_LABELS[id]}
+                </Button>
+              ))}
+            </div>
             <div className="flex flex-wrap items-end gap-2">
               <div className="flex flex-col gap-1">
                 <FilterLabel>Search</FilterLabel>
@@ -300,7 +342,9 @@ export function WidgetsTableRoute() {
                 </Select>
               </div>
             </div>
+            </>
           }
+          visibleColumns={activeView ? VIEWS[activeView].columns : undefined}
           getRowId={(widget) => String(widget.id)}
           pinFirstColumn
           pinLastColumn

@@ -66,6 +66,44 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
   })
 
+  test('a saved view sets its filters and shows its own columns until a filter changes', async ({ page }) => {
+    await page.goto('/widgets')
+    const views = page.getByRole('group', { name: 'Saved views' })
+    const restock = views.getByRole('button', { name: 'Restock' })
+    const restockColumns = ['Name', 'Category', 'Assignee', 'Price', 'In Stock']
+    // No filters is the All widgets view, and it shows every column.
+    await expect(views.getByRole('button', { name: 'All widgets' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('columnheader', { name: 'Tags' })).toBeVisible()
+
+    await restock.click()
+    await expect(restock).toHaveAttribute('aria-pressed', 'true')
+    await expect(page).toHaveURL(/[?&]inStock=false/)
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('columnheader')).toHaveText(restockColumns)
+
+    // The view is its filters, so a refresh (or a shared link) keeps it, and
+    // a sort doesn't leave it.
+    await page.reload()
+    await page.getByRole('button', { name: 'Price' }).click()
+    await expect(page).toHaveURL(/[?&]sort=price/)
+    await expect(restock).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('columnheader')).toHaveText(restockColumns)
+
+    // Any other filter leaves the view: no view is pressed and every column
+    // is back, because the view's columns were chosen for its records only.
+    await page.getByLabel('Search widgets').fill('pen')
+    await expect(restock).toHaveAttribute('aria-pressed', 'false')
+    await expect(views.getByRole('button', { name: 'All widgets' })).toHaveAttribute('aria-pressed', 'false')
+    await expect(page.getByRole('columnheader', { name: 'Tags' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
+
+    // All widgets clears every filter and the sort.
+    await views.getByRole('button', { name: 'All widgets' }).click()
+    await expect(page).toHaveURL('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+  })
+
   test('an unset filter shows its label, not the sentinel value', async ({ page }) => {
     // Regression: the Status trigger read the literal "all". Base UI's
     // <SelectValue> renders the raw value, and STATUS_FILTER_ALL is a real

@@ -11,6 +11,12 @@ export type TableView<F extends string, M extends string> = {
   filters?: Partial<Record<F, string>>
   multiFilters?: Partial<Record<M, string[]>>
   sort?: Sort
+  /**
+   * The ids of the columns this view shows, for DataTable's
+   * `visibleColumns`. Leave it out to show the table's default columns.
+   * Applies only while the view is active (see activeViewOf).
+   */
+  columns?: readonly string[]
 }
 
 export function serializeSort(next: Sort) {
@@ -45,4 +51,25 @@ export function viewToUrlChanges<F extends string, M extends string>(
     sort: view.sort ? serializeSort(view.sort) : null,
     page: null,
   }
+}
+
+// Which of `views` the current filters are: the first whose filters and
+// multi filters equal the URL's exactly (multi filters in any order), or
+// null. A view is active only while it is still "this combination and
+// nothing else", so adding or changing any filter returns the table to its
+// default columns: a view's columns are chosen for the records its filters
+// select, and would hide a field those other records fill. Sort and page
+// don't change which records are shown, so they don't count. Decided with
+// the developer on 2026-10-05.
+export function activeViewOf<F extends string, M extends string, V extends string>(
+  views: Readonly<Record<V, TableView<F, M>>>,
+  filters: Readonly<Record<F, string>>,
+  multiFilters: Readonly<Record<M, readonly string[]>>,
+): V | null {
+  const sameItems = (a: readonly string[], b: readonly string[]) =>
+    a.length === b.length && [...a].sort().every((item, index) => item === [...b].sort()[index])
+  const matches = (view: TableView<F, M>) =>
+    (Object.keys(filters) as F[]).every((name) => filters[name] === (view.filters?.[name] ?? '')) &&
+    (Object.keys(multiFilters) as M[]).every((name) => sameItems(multiFilters[name], view.multiFilters?.[name] ?? []))
+  return (Object.keys(views) as V[]).find((id) => matches(views[id])) ?? null
 }

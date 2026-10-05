@@ -92,6 +92,19 @@ per list; delete the section if there are none.
 
 - Default sort:
 - Page size: 10 unless there's a reason.
+- Saved views (optional; delete if none): one row per view, a button
+  above the filters that sets every filter and the sort in one press.
+  Columns: blank for the table's usual columns, or the exact columns the
+  view shows, for a view of one kind of record that shows a field only
+  that kind uses. The columns last while the view's filters do; any other
+  filter puts the usual columns back. If the usual columns should leave
+  out a field only a view shows, say so here.
+
+| View | Filters | Sort | Columns |
+|---|---|---|---|
+| All tasks | none | dueDate asc | |
+| Bugs | kind = bug | dueDate asc | title, severity, assignee, dueDate |
+
 - Anything else the table must show or do:
 
 ## View screen
