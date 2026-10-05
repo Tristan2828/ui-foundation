@@ -94,6 +94,29 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * unaffected. See conventions/docs/entity-plan-template.md "Default sort".
    */
   enableSortingRemoval?: boolean
+  /**
+   * The ids of the columns to show; the rest are hidden. They keep their
+   * order in `columns`. Leave undefined to show every column. A table
+   * with saved views passes the active view's `columns`
+   * (useTableUrlState's `activeView`), or its own default list when no
+   * view is active, which can leave out a column only one view shows.
+   */
+  visibleColumns?: readonly string[]
+}
+
+// A column def's id as TanStack resolves it (constructColumn): `id`, then
+// `accessorKey` with dots as underscores, then a string header. Group
+// columns are looked through to their leaves, which visibility is keyed by.
+function leafColumnIds<TData extends Record<string, unknown>>(columns: readonly LegacyColumnDef<TData, unknown>[]): string[] {
+  return columns.flatMap((column) => {
+    if ('columns' in column && column.columns) return leafColumnIds(column.columns)
+    const accessorKey = 'accessorKey' in column ? column.accessorKey : undefined
+    const id =
+      column.id ??
+      (accessorKey === undefined ? undefined : String(accessorKey).replaceAll('.', '_')) ??
+      (typeof column.header === 'string' ? column.header : undefined)
+    return id === undefined ? [] : [id]
+  })
 }
 
 function TableSkeleton({ columnCount }: { columnCount: number }) {
@@ -226,8 +249,14 @@ export function DataTable<TData extends Record<string, unknown>>({
   pinFirstColumn,
   pinLastColumn,
   enableSortingRemoval,
+  visibleColumns,
 }: DataTableProps<TData>) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
+  // TanStack treats a column missing from this map as visible, so every
+  // column gets an entry once a list is given.
+  const columnVisibility = visibleColumns
+    ? Object.fromEntries(leafColumnIds(columns).map((id) => [id, visibleColumns.includes(id)]))
+    : {}
 
   const table = useLegacyTable({
     data,
@@ -236,6 +265,7 @@ export function DataTable<TData extends Record<string, unknown>>({
     state: {
       sorting,
       pagination: { pageIndex: page - 1, pageSize },
+      columnVisibility,
     },
     manualSorting: true,
     ...(enableSortingRemoval === undefined ? {} : { enableSortingRemoval }),
@@ -276,7 +306,7 @@ export function DataTable<TData extends Record<string, unknown>>({
       {error ? (
         <ErrorState error={error} onRetry={onRetry} />
       ) : isLoading || isPastLastPage ? (
-        <TableSkeleton columnCount={columns.length} />
+        <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
       ) : isEmpty ? (
         <Empty data-state="empty">
           <EmptyHeader>

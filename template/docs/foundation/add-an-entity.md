@@ -353,6 +353,12 @@ is a filled-in example while the Widgets demo is still here).
 
 ## What not to copy
 
+- The saved-views row in `widgets-table.tsx` (`VIEWS`, the "Saved views"
+  button group and `visibleColumns`) unless the plan's List screen lists
+  saved views. When it does, copy it: `useTableUrlState`'s third argument
+  takes the views, `activeView` says which one the filters are, and that
+  view's `columns` go to `DataTable`'s `visibleColumns` (the table's own
+  default list when no view is active, or `undefined` for every column).
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.

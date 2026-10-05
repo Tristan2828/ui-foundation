@@ -5,6 +5,40 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.11.0 — columns per saved view
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook and plan template. A table with no saved views, or whose views
+name no columns, is unchanged.
+
+- **A saved view can name the columns it shows.** `TableView` takes
+  `columns` (column ids). A view of one kind of record can then show the
+  field only that kind uses, in place of a column it never fills.
+- **`useTableUrlState` reports the active view.** Its optional third
+  argument is the table's views by id (`{ all: {...}, bugs: {...} }`), and
+  it returns `activeView`: the id of the view whose filters the URL has
+  exactly (multi filters in any order), or `null`. Sort and page don't
+  count. Adding or changing any filter leaves the view, so its columns go
+  with it: they were chosen for that view's records only. Nothing new
+  goes in the URL; a refresh or a shared link brings the view back from
+  its filters.
+- **`DataTable` takes `visibleColumns`** (optional): the ids of the
+  columns to show, in their `columns` order. Undefined shows every column.
+  Pinning, the loading skeleton and the header follow the visible ones.
+- **The template's Widgets table has saved views** ("All widgets" and
+  "Restock", a pressed button group above the filters, `aria-pressed` on
+  the active one), with an e2e test for the columns coming and going.
+
+### How an app gives a saved view its own columns
+
+1. Pass the views to the hook: `useTableUrlState(FILTERS, MULTI_FILTERS, VIEWS)`,
+   with `VIEWS` typed as `Record<'all' | 'bugs', TableView<Filter, MultiFilter>>`.
+2. Give a view `columns: ['title', 'severity', ...]`, using the column
+   defs' ids.
+3. Pass `visibleColumns={activeView ? VIEWS[activeView].columns : DEFAULT_COLUMNS}`
+   to `DataTable`, where `DEFAULT_COLUMNS` is `undefined` (every column) or
+   a list that leaves out a field only a view shows.
+
 ## 3.10.0 — a read-only view of one record
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

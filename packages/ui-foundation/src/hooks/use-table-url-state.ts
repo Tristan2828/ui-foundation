@@ -1,6 +1,13 @@
 import { useSearchParams } from 'react-router'
 import type { SortingState } from '@/components/app/data-table'
-import { applyUrlChanges, serializeSort, viewToUrlChanges, type TableView, type UrlChanges } from './table-url-changes'
+import {
+  activeViewOf,
+  applyUrlChanges,
+  serializeSort,
+  viewToUrlChanges,
+  type TableView,
+  type UrlChanges,
+} from './table-url-changes'
 
 // A table's page, sort and filters, kept in the URL query string
 // (`?page=2&sort=name:asc&search=mouse&tags=fragile&tags=bulky`) instead of
@@ -12,10 +19,16 @@ import { applyUrlChanges, serializeSort, viewToUrlChanges, type TableView, type 
 // (multi-choice fields) are string arrays, repeated in the URL the same way
 // the API takes them. Changing the sort or any filter returns to page 1.
 //
+// `views` are the table's saved views, by id. `activeView` is the id of the
+// one the current filters are, or null (activeViewOf() says when a view
+// counts as active); pass that view's `columns` to DataTable. A view is
+// pressed with applyView().
+//
 // Every setter is one update(), and must stay one: see setFilters.
-export function useTableUrlState<F extends string, M extends string = never>(
+export function useTableUrlState<F extends string, M extends string = never, V extends string = never>(
   filterNames: readonly F[],
   multiFilterNames: readonly M[] = [],
+  views: Readonly<Record<V, TableView<NoInfer<F>, NoInfer<M>>>> = {} as Record<V, TableView<F, M>>,
 ) {
   const [params, setParams] = useSearchParams()
 
@@ -33,6 +46,8 @@ export function useTableUrlState<F extends string, M extends string = never>(
     string[]
   >
 
+  const activeView = activeViewOf(views, filters, multiFilters)
+
   function update(changes: UrlChanges) {
     setParams((previous) => applyUrlChanges(previous, changes), { replace: true })
   }
@@ -42,6 +57,7 @@ export function useTableUrlState<F extends string, M extends string = never>(
     sorting,
     filters,
     multiFilters,
+    activeView,
     setPage: (next: number) => update({ page: next > 1 ? String(next) : null }),
     setSorting: (next: SortingState) => update({ sort: serializeSort(next), page: null }),
     setFilter: (name: F, value: string) => update({ [name]: value, page: null }),

@@ -111,7 +111,10 @@ src/main.tsx                           FoundationProviders (theme, query client,
   session change, and tells "logged out" apart from "backend down". Apps
   read it only through `useAuth()`, the only auth export.
 - **Tables** keep page, sort and filters in the URL (`useTableUrlState`,
-  including `setFilters`/`applyView` for saved views).
+  including `setFilters`/`applyView` for saved views). A saved view can
+  name its columns (`DataTable`'s `visibleColumns`); they apply while the
+  filters are still that view's (`activeView`), so they add nothing to
+  the URL.
 
 Every boundary is enforced mechanically: see the Hard Rules in
 [`conventions/AGENTS.md`](../packages/ui-foundation/conventions/AGENTS.md),

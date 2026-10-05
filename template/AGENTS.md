@@ -191,6 +191,7 @@ uses the pattern (the playbook then stops and asks).
 | Query hooks, mutations, optimistic update | `src/routes/widgets/use-widgets.ts` |
 | Form schema, form ↔ wire conversion | `src/routes/widgets/widget-schema.ts` |
 | Table, toolbar filters, URL state | `src/routes/widgets/widgets-table.tsx` |
+| Saved views, columns per view | `VIEWS` and the "Saved views" group in `widgets-table.tsx` |
 | Columns, stable column definitions, title linking to the view | `src/routes/widgets/widgets-columns.tsx`, `category-names.tsx` |
 | Values shared by table and view (badge maps, formatters) | `src/routes/widgets/widget-format.ts` |
 | View: sections, not-set labels, Markdown, read-only sub-records | `src/routes/widgets/widget-view.tsx` |
