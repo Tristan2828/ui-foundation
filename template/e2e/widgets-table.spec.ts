@@ -285,7 +285,9 @@ test.describe('widgets table', () => {
     // Saved on the server (the mocks), not just on screen: the view agrees.
     await page.getByRole('link', { name: 'Fountain Pen' }).click()
     await expect(page).toHaveURL('/widgets/3')
-    await expect(page.getByRole('switch', { name: 'In stock' })).toBeChecked()
+    // Exact: for a moment after the URL changes, the table's own switches
+    // ("In stock: <row>") can still be on screen.
+    await expect(page.getByRole('switch', { name: 'In stock', exact: true })).toBeChecked()
   })
 
   test('yes/no row toggle: works from the keyboard', async ({ page }) => {

@@ -341,8 +341,8 @@ export default function MilkdownEditor({
                 openLink(view)
                 return true
               }
-              // Kept from the field: Ctrl/Cmd+Enter (shifted or not) saves
-              // everywhere else.
+              // Ctrl/Cmd+Shift+Enter in a task item ticks it, and goes no
+              // further. Anywhere else it reaches the field, which saves.
               if (mod && event.shiftKey && event.key === 'Enter' && view.editable && toggleTaskItem(view)) {
                 event.preventDefault()
                 event.stopPropagation()
@@ -470,7 +470,7 @@ export default function MilkdownEditor({
               editor?.action((ctx) => applyLink(ctx.get(editorViewCtx), linkBox, href))
               closeLink()
             }}
-            />
+          />
         )}
       </Popover>
     </>
