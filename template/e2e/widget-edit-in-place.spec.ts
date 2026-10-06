@@ -312,6 +312,52 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
+  test('long text: the toolbar is part of the field; moving to it saves nothing', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    // "basic", in the first paragraph (in a list item, Shift+Tab would
+    // outdent the item instead of leaving the text).
+    await editor.locator('p').first().click()
+    await page.waitForTimeout(100)
+    // The document's start: at phone width the line wraps, and Home goes
+    // to the start of the line on screen.
+    await page.keyboard.press('ControlOrMeta+Home')
+    for (let i = 0; i < 'A '.length; i++) await page.keyboard.press('ArrowRight')
+    for (let i = 0; i < 'basic'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    await page.waitForTimeout(100)
+
+    // Shift+Tab into the toolbar: still open, nothing sent.
+    await page.keyboard.press('Shift+Tab')
+    const toolbar = description.getByRole('toolbar', { name: 'Formatting' })
+    await expect(toolbar.getByRole('button', { name: 'Bold', exact: true })).toBeFocused()
+    await page.waitForTimeout(100)
+    await expect(editor).toBeVisible()
+    expect(bodies).toEqual([])
+
+    // Enter formats, and focus goes back to the text; a click formats too.
+    await page.keyboard.press('Enter')
+    await expect(editor).toBeFocused()
+    await toolbar.getByRole('button', { name: 'Italic', exact: true }).click()
+    await expect(editor).toBeFocused()
+    expect(bodies).toEqual([])
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(editor).toHaveCount(0)
+    expect(bodies).toEqual([
+      {
+        description:
+          'A ***basic*** wireless mouse with a **2.4GHz** USB receiver.\n\n' +
+          '- Two buttons and a scroll wheel\n' +
+          '- Runs on one AA battery\n\n' +
+          'See the [setup guide](https://example.com/mouse-setup).',
+      },
+    ])
+  })
+
   test('a link inside a value still navigates; a click anywhere else edits', async ({ page, context }) => {
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })

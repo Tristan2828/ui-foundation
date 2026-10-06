@@ -41,6 +41,12 @@ export type RichTextEditorProps = {
    * Typing isn't stopped: the form's schema still refuses a save over it.
    */
   maxLength?: number
+  /**
+   * The formatting toolbar above the text (bold, headings, lists, link, …),
+   * each button with its shortcut. On by default; `false` leaves the text
+   * alone, its shortcuts still working.
+   */
+  toolbar?: boolean
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string
@@ -56,10 +62,14 @@ export function RichTextEditor(props: RichTextEditorProps) {
         <div
           data-slot="rich-text-editor"
           data-state="loading"
-          className={cn('flex min-h-24 w-full flex-col gap-2 rounded-lg border border-input px-2.5 py-2', props.className)}
+          className={cn('flex w-full flex-col rounded-lg border border-input', props.className)}
         >
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+          {/* The toolbar's height, so nothing moves when it arrives. */}
+          {props.toolbar !== false && <div className="h-9 border-b border-input" />}
+          <div className="flex min-h-24 flex-col gap-2 px-2.5 py-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
         </div>
       }
     >
