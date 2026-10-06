@@ -22,6 +22,53 @@ test.describe('a11y', () => {
   })
 })
 
+// The rich-text editor arrives in a chunk of its own, after the form. The
+// form is checked while that chunk is held back (its placeholder showing)
+// and again once the editor is in. Between the two, the editor is made a
+// few moments after its field shows, too briefly for a scan to land in, so
+// every change to the page is watched for an aria-controls naming an
+// element that isn't there.
+declare global {
+  interface Window {
+    __missingControls: string[]
+  }
+}
+
+test.describe('a11y: the rich-text editor while it loads', () => {
+  for (const colorScheme of ['light', 'dark'] as const) {
+    test(colorScheme, async ({ page }) => {
+      await page.emulateMedia({ colorScheme })
+      await page.addInitScript(() => {
+        window.__missingControls = []
+        new MutationObserver(() => {
+          for (const element of document.querySelectorAll('[aria-controls]')) {
+            for (const id of element.getAttribute('aria-controls')!.split(/\s+/)) {
+              if (id && !document.getElementById(id)) window.__missingControls.push(id)
+            }
+          }
+        }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-controls', 'id'] })
+      })
+      let release = () => {}
+      const held = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      await page.route('**/milkdown-editor-*.js', async (route) => {
+        await held
+        await route.continue()
+      })
+      await page.goto('/widgets/new')
+      await expect(page.locator('form')).toBeVisible()
+      await expect(page.locator('[data-slot="rich-text-editor"]')).toHaveAttribute('data-state', 'loading')
+      await test.step('editor loading', () => expectNoAxeViolations(page))
+
+      release()
+      await expect(page.locator('#widget-description')).toBeVisible()
+      await test.step('editor loaded', () => expectNoAxeViolations(page))
+      expect(await page.evaluate(() => window.__missingControls)).toEqual([])
+    })
+  }
+})
+
 // Editing in place (cell pattern 18) changes the view while you work, so
 // each state it can be in is checked on its own, in both themes: a field
 // open, saving, refused, the rich-text editor, a choice's list, a

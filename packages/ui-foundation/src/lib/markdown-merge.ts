@@ -17,7 +17,11 @@
 //   original's own source; only a changed or new block is written by the
 //   editor (in the document's own bullet and rule marks, `markdownStyle`).
 // - Blocks the editor can't show (a link reference's definition) are kept
-//   where they were.
+//   where they were. A block the editor shows its own way (a table it
+//   padded, marks it nested differently) and that `meaning` still misses is
+//   written as the editor shows it, as long as nothing in it is lost
+//   (`content`): no text, address or image. A block the editor drops part
+//   of (it doesn't show images) is kept as written, and the guard refuses.
 // - Guard: the result must mean exactly what the editor shows. If it
 //   wouldn't (two blocks fusing, say), the merge throws instead of saving
 //   something else; the draft stays on screen.
@@ -32,7 +36,7 @@ type MdNode = {
   [key: string]: unknown
 }
 
-type Block = { type: string; start: number; end: number; source: string; key: string }
+type Block = { type: string; start: number; end: number; source: string; key: string; content: string }
 
 const processor = unified().use(remarkParse).use(remarkGfm)
 
@@ -43,33 +47,92 @@ function parse(markdown: string): MdNode {
 // Fields that are about how a node was written, not what it means.
 const STYLE_ONLY = new Set(['position', 'data', 'spread', 'label', 'referenceType'])
 
+// Nodes whose children are inline text: compared as runs of marked text.
+const INLINE_PARENTS = new Set(['paragraph', 'heading', 'tableCell'])
+
+// A reference link (or image) as the link it stands for, when its
+// definition is in the document.
+function resolved(node: MdNode, definitions: Map<string, MdNode>): MdNode {
+  if (node.type !== 'linkReference' && node.type !== 'imageReference') return node
+  const definition = definitions.get(String(node.identifier))
+  if (!definition) return node
+  return {
+    type: node.type === 'linkReference' ? 'link' : 'image',
+    url: definition.url,
+    title: definition.title ?? null,
+    alt: node.alt,
+    children: node.children,
+  }
+}
+
+// The mark an inline node puts on its text, or undefined for text itself.
+function markOf(node: MdNode): string | undefined {
+  if (node.type === 'strong' || node.type === 'emphasis' || node.type === 'delete') return node.type
+  if (node.type === 'link') return `link ${JSON.stringify([node.url, node.title ?? null])}`
+  return undefined
+}
+
+// Inline content as what a reader sees: each piece of text (or code, an
+// image, a break) with the set of marks on it, whichever way they were
+// nested. `**[a](u)**` and `[**a**](u)` are the same bold link; a link with
+// no text shows nothing.
+function runs(nodes: MdNode[], definitions: Map<string, MdNode>, marks: string[] = [], out: Record<string, unknown>[] = []) {
+  for (const child of nodes) {
+    const node = resolved(child, definitions)
+    const mark = markOf(node)
+    if (mark) {
+      runs(node.children ?? [], definitions, [...marks, mark], out)
+      continue
+    }
+    const set = [...new Set(marks)].sort()
+    const last = out.at(-1)
+    if (node.type === 'text' && last?.type === 'text' && JSON.stringify(last.marks) === JSON.stringify(set)) {
+      last.value = String(last.value) + String(node.value)
+    } else {
+      out.push({ ...(meaning(node, definitions) as Record<string, unknown>), marks: set })
+    }
+  }
+  return out
+}
+
 // A block's meaning as a comparable string: positions and source style
-// dropped, and a reference link resolved to the link it stands for.
+// dropped, a reference link resolved to the link it stands for, inline
+// marks compared as a set, and a table's rows all as wide as its widest
+// (GFM allows short rows; the editor pads them with empty cells).
 function meaning(node: unknown, definitions: Map<string, MdNode>): unknown {
   if (Array.isArray(node)) return node.map((child) => meaning(child, definitions))
   if (!node || typeof node !== 'object') return node
-  const md = node as MdNode
-  if (md.type === 'linkReference' || md.type === 'imageReference') {
-    const definition = definitions.get(String(md.identifier))
-    if (definition) {
-      return meaning(
-        {
-          type: md.type === 'linkReference' ? 'link' : 'image',
-          url: definition.url,
-          title: definition.title ?? null,
-          alt: md.alt,
-          children: md.children,
-        },
-        definitions,
-      )
-    }
-  }
+  const md = resolved(node as MdNode, definitions)
   const out: Record<string, unknown> = {}
   for (const key of Object.keys(md).sort()) {
     if (STYLE_ONLY.has(key)) continue
-    out[key] = meaning(md[key], definitions)
+    out[key] = key === 'children' && INLINE_PARENTS.has(md.type) ? runs(md.children ?? [], definitions) : meaning(md[key], definitions)
   }
   if ((md.type === 'link' || md.type === 'image') && out.title === undefined) out.title = null
+  if (md.type === 'table') {
+    const rows = out.children as { children: unknown[] }[]
+    const width = Math.max(0, ...rows.map((row) => row.children.length))
+    for (const row of rows) {
+      while (row.children.length < width) row.children.push({ children: [], type: 'tableCell' })
+    }
+    const align = (out.align as unknown[] | undefined) ?? []
+    out.align = Array.from({ length: width }, (_value, index) => align[index] ?? null)
+  }
+  return out
+}
+
+// Everything in a block a reader could lose: its text (spacing aside),
+// code, raw HTML, link and image addresses, image alt text, rules and
+// task boxes. Not how any of it is marked or laid out.
+function content(node: MdNode, definitions: Map<string, MdNode>): string {
+  const md = resolved(node, definitions)
+  let out = ''
+  if (typeof md.value === 'string') out += md.value.replace(/\s+/g, '')
+  if (md.type === 'link' || md.type === 'image') out += `<${String(md.url)}>`
+  if (md.type === 'image' || md.type === 'imageReference') out += `![${String(md.alt ?? '')}]`
+  if (md.type === 'thematicBreak') out += '<hr>'
+  if (md.type === 'listItem' && typeof md.checked === 'boolean') out += md.checked ? '[x]' : '[ ]'
+  for (const child of md.children ?? []) out += content(child, definitions)
   return out
 }
 
@@ -87,6 +150,7 @@ function blocks(markdown: string): Block[] {
       end,
       source: markdown.slice(start, end),
       key: JSON.stringify(meaning(child, definitions)),
+      content: content(child, definitions),
     }
   })
 }
@@ -112,6 +176,31 @@ function match(from: Block[], to: Block[]): Map<number, number> {
     else j++
   }
   return pairs
+}
+
+// The original blocks the editor shows: each matched one, and each run of
+// unmatched ones between two matches that the editor shows its own way,
+// with nothing lost, as the unmatched blocks it has between the same two.
+// Those are written as the editor has them; a definition never is.
+function shownOwnWay(originals: Block[], loaded: Block[], loadedToOriginal: Map<number, number>): Set<number> {
+  const shown = new Set(loadedToOriginal.values())
+  const anchors = [[-1, -1], ...[...loadedToOriginal].map(([to, from]) => [from, to]), [originals.length, loaded.length]]
+  for (let k = 1; k < anchors.length; k++) {
+    const [fromStart, toStart] = anchors[k - 1]
+    const [fromEnd, toEnd] = anchors[k]
+    const unmatched = originals
+      .map((_block, index) => index)
+      .slice(fromStart + 1, fromEnd)
+      .filter((index) => originals[index].type !== 'definition')
+    if (unmatched.length === 0) continue
+    const before = unmatched.map((index) => originals[index].content).join('')
+    const after = loaded
+      .slice(toStart + 1, toEnd)
+      .map((block) => block.content)
+      .join('')
+    if (before === after) for (const index of unmatched) shown.add(index)
+  }
+  return shown
 }
 
 export class MarkdownMergeError extends Error {
@@ -156,9 +245,9 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
     return { written: block, at: (before + after) / 2 }
   })
 
-  // Blocks the editor never showed (definitions): after whatever came
-  // before them in the original.
-  const shown = new Set(loadedToOriginal.values())
+  // Blocks the editor never showed (definitions, and any block it dropped
+  // part of): after whatever came before them in the original.
+  const shown = shownOwnWay(originals, loaded, loadedToOriginal)
   originals.forEach((_block, index) => {
     if (shown.has(index)) return
     let position = 0

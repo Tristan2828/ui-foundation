@@ -52,6 +52,18 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "Line one  \nLine two\\\nLine three\n\nAnother paragraph.\n",
     editorWrites: "Line one\\\nLine two\\\nLine three\n\nAnother paragraph.\n",
   },
+  shortTableRow: {
+    markdown: "Intro line.\n\n| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n| only one cell |\n\nOutro.\n",
+    editorWrites: "Intro line.\n\n| a             | b | c |\n| ------------- | - | - |\n| 1             | 2 | 3 |\n| only one cell |   |   |\n\nOutro.\n",
+  },
+  boldLink: {
+    markdown: "Intro line.\n\n- [**Example**](https://example.com) is a site\n- second item\n\nOutro.\n",
+    editorWrites: "Intro line.\n\n- **[Example](https://example.com)** is a site\n- second item\n\nOutro.\n",
+  },
+  nestedMarks: {
+    markdown: "Intro.\n\n[*__z__*](https://example.com/z) and ~~[**s**](https://example.com/s)~~ and **a *b* c**\n\nOutro.\n",
+    editorWrites: "Intro.\n\n*__[z](https://example.com/z)__* and **[~~s~~](https://example.com/s)** and **a *b* c**\n\nOutro.\n",
+  },
   mixed: {
     markdown: "# Plan\n\nIntro with a [link](https://example.com).\n\n- [ ] Task one\n- [x] Task two\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n1. Step\n   - sub\n",
     editorWrites: "# Plan\n\nIntro with a [link](https://example.com).\n\n- [ ] Task one\n- [x] Task two\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n1. Step\n   - sub\n",

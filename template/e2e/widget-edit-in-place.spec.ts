@@ -266,6 +266,45 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
+  test('long text: a table the editor pads (a short row) is kept as written when another block is edited', async ({ page }) => {
+    // GFM allows a row with fewer cells than the header; the editor shows
+    // it padded with empty cells. The table still saves as written.
+    const table = '| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |\n| only one cell |'
+    await forceMswOverride(page, {
+      method: 'get',
+      path: '*/api/widgets/2',
+      body: {
+        id: 2,
+        name: 'Standing Desk',
+        categoryId: 2,
+        status: 'draft',
+        availableFrom: '2026-03-01T00:00:00Z',
+        assigneeEmail: null,
+        price: '349.00',
+        description: `Intro line.\n\n${table}\n\nOutro.`,
+        tags: ['bulky', 'featured'],
+        inStock: true,
+        extraCategoryIds: [1, 3],
+        checklist: [],
+        checklistState: 'none',
+      },
+    })
+    const bodies = patchBodies(page)
+    await openWidget(page, 2)
+    await page.getByRole('region', { name: 'Description' }).getByText('Intro line.').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    await editor.getByText('Intro line.').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' Edited.')
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(editor).toHaveCount(0)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    expect(bodies).toEqual([{ description: `Intro line. Edited.\n\n${table}\n\nOutro.` }])
+  })
+
   test('long text: Ctrl/Cmd+K links words in place; Enter in the link box applies it, Esc closes it', async ({ page }) => {
     const bodies = patchBodies(page)
     await openWidget(page)

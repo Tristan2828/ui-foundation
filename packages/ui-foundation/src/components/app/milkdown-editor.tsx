@@ -289,6 +289,7 @@ export default function MilkdownEditor({
         new Plugin({
           view: () => ({
             update: (view, previous) => {
+              if (cancelled) return
               setEditorState(view.state)
               if (!view.state.doc.eq(previous.doc)) emit()
             },
@@ -410,6 +411,7 @@ export default function MilkdownEditor({
 
     return () => {
       cancelled = true
+      setEditorState(null)
       const editor = editorRef.current
       editorRef.current = null
       if (editor) void editor.destroy()
@@ -461,7 +463,14 @@ export default function MilkdownEditor({
         )}
       >
         {toolbar && (
-          <RichTextToolbar state={editorState} readOnly={readOnly} controls={editableId} onFormat={runFormat} />
+          <RichTextToolbar
+            state={editorState}
+            readOnly={readOnly}
+            // Only once the editor is made: until then the editable element,
+            // and its id, aren't in the page (axe: aria-valid-attr-value).
+            controls={editorState ? editableId : undefined}
+            onFormat={runFormat}
+          />
         )}
         <div
           ref={rootRef}
@@ -472,6 +481,9 @@ export default function MilkdownEditor({
             // The same type roles <Markdown> uses, so text reads the same
             // being edited as being read.
             '[&_.ProseMirror]:flex [&_.ProseMirror]:min-h-20 [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
+            // ProseMirror's own required style (prosemirror-view's CSS): spaces
+            // as typed, so one at the end of a line isn't kept as &nbsp;.
+            '[&_.ProseMirror]:whitespace-pre-wrap [&_.ProseMirror]:break-words',
             '[&_h3]:type-section-title [&_h4]:type-section-title [&_h5]:type-label [&_h6]:type-label',
             '[&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1 [&_ul]:pl-6',
             '[&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1 [&_ol]:pl-6',
