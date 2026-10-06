@@ -11,9 +11,12 @@
 // is that an empty value reads as the plan's "not set" label, never a
 // blank.
 //
-// A value can be any markup, a control included, and `actions` takes any
-// buttons: that's the room left for quick actions on this page (a toggle,
-// a status change, ticking a checklist item) without the form.
+// A value can be any markup, a control included, and so can `badges`:
+// that's where quick actions go (cell pattern 17), a value the plan marks
+// as changed straight from this page and saved on its own through
+// `useRecordUpdate`: a status picked in the header, a yes/no switch,
+// checklist items ticked in place. Everything else stays read-only, and
+// every change of more than that goes through Edit, in `actions`.
 import { useId, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowLeftIcon, SearchXIcon } from 'lucide-react'
@@ -65,7 +68,11 @@ export type EntityViewSection =
 export type EntityViewProps = {
   /** The record's name or title, the page's <h1>. */
   title?: string
-  /** A few status-like values beside the title, as `<Badge>`s. */
+  /**
+   * A few status-like values beside the title, as `<Badge>`s, or as the
+   * control that changes one when the plan makes it a quick action (a
+   * status `Select`, a yes/no `Switch`).
+   */
   badges?: ReactNode
   /** The header's actions: an Edit button, a Delete with its confirm dialog. */
   actions?: ReactNode

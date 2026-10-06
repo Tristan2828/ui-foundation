@@ -19,7 +19,12 @@ export async function safeFetch(path: string, init?: RequestInit): Promise<ApiRe
 
 export function toAppError(status: number, body: unknown): AppError {
   if (status === 422) {
-    const detail = (body as ValidationErrorBody | undefined)?.detail ?? [];
+    // A rule the server enforces (a cap, a status the change needs) is
+    // often refused with FastAPI's HTTPException shape: a sentence, not a
+    // list of field issues. That sentence is the message to show.
+    const raw = (body as ValidationErrorBody | HTTPErrorBody | undefined)?.detail;
+    if (typeof raw === "string") return { kind: "validation", message: raw, fieldErrors: {} };
+    const detail = raw ?? [];
     const fieldErrors: Record<string, string[]> = {};
     for (const issue of detail) {
       const field = fieldKey(issue.loc);

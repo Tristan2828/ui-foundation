@@ -258,11 +258,11 @@ test.describe('widget form', () => {
     await expect(page.getByLabel('Item 1 text')).toHaveValue('Test the scroll wheel')
     await page.getByRole('button', { name: 'Save changes' }).click()
 
-    // The view shows the saved list, read-only, in its new order.
+    // The view shows the saved list in its new order.
     await expect(page).toHaveURL('/widgets/1')
     const checklist = page.getByRole('region', { name: 'Checklist' })
     await expect(checklist.getByText('1/2 done', { exact: true })).toBeVisible()
-    await expect(checklist.getByRole('listitem')).toHaveText(['Test the scroll wheel', 'Pair the receiver'])
+    await expect(checklist.getByRole('listitem')).toHaveText(['Done: Test the scroll wheel', 'Done: Pair the receiver'])
 
     // Reopening shows the saved order. Through the view's Edit button, not
     // page.goto: a full load restarts the mocks with their seed data.
@@ -336,7 +336,7 @@ test.describe('widget form', () => {
     await page.getByRole('button', { name: 'Create widget' }).click()
 
     await expect(page).toHaveURL(/\/widgets\/\d+$/)
-    await expect(fieldValue(page, 'In Stock')).toHaveText('No')
+    await expect(page.getByRole('switch', { name: 'In stock' })).not.toBeChecked()
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
     await expect(page.getByRole('switch', { name: 'In stock: Out Of Stock Widget' })).not.toBeChecked()
   })
@@ -352,6 +352,6 @@ test.describe('widget form', () => {
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page).toHaveURL('/widgets/3')
-    await expect(fieldValue(page, 'In Stock')).toHaveText('Yes')
+    await expect(page.getByRole('switch', { name: 'In stock' })).toBeChecked()
   })
 })

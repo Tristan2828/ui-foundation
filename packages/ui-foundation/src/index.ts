@@ -41,6 +41,11 @@ export { createQueryClient } from '@/api/query-client'
 export { useTableUrlState } from '@/hooks/use-table-url-state'
 export type { TableView, UrlChanges } from '@/hooks/table-url-changes'
 export { useDebouncedValue } from '@/hooks/use-debounced-value'
+export {
+  useRecordUpdate,
+  type RecordChange,
+  type RecordUpdateOptions,
+} from '@/hooks/use-record-update'
 export { useIsMobile } from '@/hooks/use-mobile'
 
 // Utilities

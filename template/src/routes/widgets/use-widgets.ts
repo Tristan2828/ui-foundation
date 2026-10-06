@@ -3,7 +3,7 @@
 // See AGENTS.md's "NEVER fetch in useEffect" rule (this is the TanStack
 // Query alternative).
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { AppError, Page, QuerySpec } from '@tristan2828/ui-foundation'
+import { useRecordUpdate, type AppError, type Page, type QuerySpec } from '@tristan2828/ui-foundation'
 import {
   createWidget,
   deleteWidget,
@@ -81,33 +81,19 @@ export function useDeleteWidgetMutation() {
   })
 }
 
-// A yes/no flipped straight from a table row: saves on its own (a PATCH of
-// that one field) instead of through the form. Optimistic: every cached
-// list page shows the new value at once, and goes back if the save fails.
-// Afterwards the lists refetch, so a filter on the field (In stock only)
-// drops the row once the server agrees.
-export function useToggleWidgetInStockMutation() {
-  const queryClient = useQueryClient()
-  type Snapshot = [readonly unknown[], Page<Widget> | undefined][]
-  return useMutation<Widget, AppError, { id: number; inStock: boolean }, { snapshot: Snapshot }>({
-    mutationFn: ({ id, inStock }) => updateWidget(id, { inStock }),
-    onMutate: async ({ id, inStock }) => {
-      const lists = { queryKey: [...widgetsKeys.all, 'list'] }
-      await queryClient.cancelQueries(lists)
-      const snapshot = queryClient.getQueriesData<Page<Widget>>(lists)
-      queryClient.setQueriesData<Page<Widget>>(lists, (page) =>
-        page && {
-          ...page,
-          items: page.items.map((widget) => (widget.id === id ? { ...widget, inStock } : widget)),
-        },
-      )
-      return { snapshot }
-    },
-    onError: (_error, _input, context) => {
-      for (const [queryKey, page] of context?.snapshot ?? []) queryClient.setQueryData(queryKey, page)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: widgetsKeys.all })
-    },
+// One widget's fields saved on their own, without the form: the table
+// row's In Stock switch and the view's quick actions (status, In Stock,
+// ticking checklist items). Optimistic in the detail and every list page,
+// replaced by the widget the server returns, rolled back with a toast if
+// it's refused; saves of one widget run in order, so quick changes don't
+// lose each other (the foundation's useRecordUpdate). Call it once per
+// control: `isPending` is that control's own save.
+export function useSaveWidgetField(id: number) {
+  return useRecordUpdate<Widget, WidgetUpdate>({
+    id,
+    detailKey: widgetsKeys.detail(id),
+    listsKey: [...widgetsKeys.all, 'list'],
+    update: updateWidget,
+    name: (widget) => widget.name,
   })
 }

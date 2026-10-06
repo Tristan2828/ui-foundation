@@ -35,6 +35,29 @@ function fieldValue(page: Page, label: string) {
     .locator('dd')
 }
 
+// The body of every PATCH the page sends, in order.
+function patchBodies(page: Page) {
+  const bodies: unknown[] = []
+  page.on('request', (request) => {
+    if (request.method() === 'PATCH') bodies.push(request.postDataJSON())
+  })
+  return bodies
+}
+
+// Holds every PATCH for `ms`, then lets the normal mocks answer it.
+async function delayPatches(page: Page, ms: number) {
+  await waitForMswReady(page)
+  await page.evaluate((ms) => {
+    const { worker, http } = window.__msw
+    worker.use(http.patch('*/api/widgets/:id', () => new Promise<undefined>((resolve) => setTimeout(resolve, ms))))
+  }, ms)
+}
+
+// The widget as the mocks hold it now: what the server saved.
+function serverWidget(page: Page, id: number) {
+  return page.evaluate((id) => fetch(`/api/widgets/${id}`).then((response) => response.json()), id)
+}
+
 test.describe('widget view', () => {
   test('loading: a skeleton shows until the widget arrives', async ({ page }) => {
     await forceMswOverride(page, { method: 'get', path: '*/api/widgets/1', delayMs: 1000, body: WIRELESS_MOUSE })
@@ -82,10 +105,13 @@ test.describe('widget view', () => {
     await page.goto('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
 
-    // Header: status-like values as badges, and the actions.
+    // Header: status-like values, two of them quick actions (Status picks
+    // another value, In Stock flips), and the actions.
     const header = page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) })
-    await expect(header.getByText('active', { exact: true })).toBeVisible()
+    await expect(header.getByRole('combobox', { name: 'Status' })).toContainText('active')
     await expect(header.getByText('In progress', { exact: true })).toBeVisible()
+    await expect(header.getByRole('switch', { name: 'In stock' })).toBeChecked()
+    await expect(header.getByText('In stock', { exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Edit' })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Delete' })).toBeVisible()
 
@@ -96,17 +122,18 @@ test.describe('widget view', () => {
     await expect(fieldValue(page, 'Available From')).toHaveText('Jan 15, 2026')
     await expect(fieldValue(page, 'Price')).toHaveText('$24.99')
     await expect(fieldValue(page, 'Assignee Email')).toHaveText('alice@example.com')
-    await expect(fieldValue(page, 'In Stock')).toHaveText('Yes')
+    // Every other value is read-only: no control in a field row.
+    await expect(page.locator('dd').locator('input, button, [role="switch"], [role="checkbox"]')).toHaveCount(0)
 
-    // Sub-records, read-only: the done-count, then the items in order,
-    // each with its state in words, and nothing to tick.
+    // Sub-records, a quick action: the done-count, then the items in order
+    // as one group of checkboxes, each named for what it changes.
     const checklist = page.getByRole('region', { name: 'Checklist' })
     await expect(checklist.getByText('1/2 done', { exact: true })).toBeVisible()
-    const items = checklist.getByRole('listitem')
-    await expect(items).toHaveText(['Charge the battery', 'Pair the receiver'])
-    await expect(items.nth(0).getByRole('img', { name: 'Done', exact: true })).toBeVisible()
-    await expect(items.nth(1).getByRole('img', { name: 'Not done' })).toBeVisible()
-    await expect(page.getByRole('checkbox')).toHaveCount(0)
+    const group = checklist.getByRole('group', { name: 'Checklist items' })
+    await expect(group).toHaveAccessibleDescription('1/2 done')
+    await expect(group.getByRole('listitem')).toHaveText(['Done: Charge the battery', 'Done: Pair the receiver'])
+    await expect(group.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeChecked()
+    await expect(group.getByRole('checkbox', { name: 'Done: Pair the receiver' })).not.toBeChecked()
 
     // Long text, as Markdown: emphasis, a list, a link that opens a new tab.
     const description = page.getByRole('region', { name: 'Description' })
@@ -125,7 +152,8 @@ test.describe('widget view', () => {
     await expect(fieldValue(page, 'Assignee Email')).toHaveText('Unassigned')
     await expect(fieldValue(page, 'Tags')).toHaveText('Untagged')
     await expect(fieldValue(page, 'Extra Categories')).toHaveText('No extra categories')
-    await expect(fieldValue(page, 'In Stock')).toHaveText('No')
+    await expect(page.getByRole('switch', { name: 'In stock' })).not.toBeChecked()
+    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
     await expect(page.getByRole('region', { name: 'Checklist' })).toContainText('No items')
 
     // No value anywhere on the page is blank.
@@ -245,6 +273,138 @@ test.describe('widget view', () => {
     await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
+  })
+
+  test('quick action: ticking an item saves the list at once, and the server\'s progress follows', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await page.goto('/widgets/1')
+    const checklist = page.getByRole('region', { name: 'Checklist' })
+    const pair = checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })
+    await pair.click()
+
+    await expect(pair).toBeChecked()
+    await expect(checklist.getByText('2/2 done', { exact: true })).toBeVisible()
+    // Progress is computed by the server: it changes once the save answers,
+    // because the view shows the widget the server returns.
+    await expect(page.locator('header').getByText('Complete', { exact: true })).toBeVisible()
+    // A plain PATCH, and a list is sent whole.
+    expect(bodies).toEqual([
+      {
+        checklist: [
+          { text: 'Charge the battery', done: true },
+          { text: 'Pair the receiver', done: true },
+        ],
+      },
+    ])
+    await expect(page).toHaveURL('/widgets/1')
+
+    // The item's text ticks it too, and so does the keyboard.
+    await checklist.getByText('Pair the receiver', { exact: true }).click()
+    await expect(pair).not.toBeChecked()
+    await pair.focus()
+    await page.keyboard.press('Space')
+    await expect(pair).toBeChecked()
+    await expect(page.locator('header').getByText('Complete', { exact: true })).toBeVisible()
+
+    // Saved, not just shown: the table agrees.
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await expect(page.getByRole('row').filter({ hasText: 'Wireless Mouse' })).toContainText('2/2 done')
+  })
+
+  test('quick action: Status picks another value and saves it', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await page.goto('/widgets/1')
+    const status = page.getByRole('combobox', { name: 'Status' })
+    await status.click()
+    await page.getByRole('option', { name: 'archived' }).click()
+
+    await expect(status).toContainText('archived')
+    await expect.poll(() => bodies).toEqual([{ status: 'archived' }])
+    expect((await serverWidget(page, 1)).status).toBe('archived')
+  })
+
+  test('quick action: In stock flips on the page and saves', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await page.goto('/widgets/1')
+    const inStock = page.getByRole('switch', { name: 'In stock' })
+    await inStock.click()
+
+    await expect(inStock).not.toBeChecked()
+    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect.poll(() => bodies).toEqual([{ inStock: false }])
+    expect((await serverWidget(page, 1)).inStock).toBe(false)
+
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await expect(page.getByRole('switch', { name: 'In stock: Wireless Mouse' })).not.toBeChecked()
+  })
+
+  test('quick action: a refused change goes back and the server\'s reason shows', async ({ page }) => {
+    // A rule only the server knows (a cap on how many can be in stock):
+    // it answers 422 with the reason on the field.
+    await page.goto('/widgets/3')
+    const inStock = page.getByRole('switch', { name: 'In stock' })
+    await expect(inStock).not.toBeChecked()
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const { worker, http, HttpResponse } = window.__msw
+      worker.use(
+        http.patch('*/api/widgets/3', () =>
+          HttpResponse.json(
+            { detail: [{ loc: ['body', 'inStock'], msg: 'Only 3 widgets can be in stock at once', type: 'value_error' }] },
+            { status: 422 },
+          ),
+        ),
+      )
+    })
+    await inStock.click()
+
+    await expect(page.getByText("Couldn't update Fountain Pen: Only 3 widgets can be in stock at once")).toBeVisible()
+    await expect(inStock).not.toBeChecked()
+    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    expect((await serverWidget(page, 3)).inStock).toBe(false)
+  })
+
+  test('quick action: saving shows beside the control and blocks nothing else', async ({ page }) => {
+    await page.goto('/widgets/1')
+    await delayPatches(page, 1500)
+    const checklist = page.getByRole('region', { name: 'Checklist' })
+    await checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' }).click()
+
+    await expect(checklist.getByRole('status', { name: 'Saving' })).toBeVisible()
+    await expect(page.locator('header').getByRole('status', { name: 'Saving' })).toHaveCount(0)
+    // Nothing is disabled: not the other controls, not this one, not Edit.
+    await expect(checklist.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeEnabled()
+    await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeEnabled()
+    await expect(page.getByRole('combobox', { name: 'Status' })).toBeEnabled()
+    await expect(page.getByRole('switch', { name: 'In stock' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: 'Edit' })).toBeEnabled()
+
+    await expect(checklist.getByRole('status', { name: 'Saving' })).toHaveCount(0)
+    await expect(checklist.getByText('2/2 done', { exact: true })).toBeVisible()
+  })
+
+  test('quick action: two quick ticks both land, the second built on the first', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await page.goto('/widgets/1')
+    // Slow saves, so the second tick happens while the first is in flight.
+    await delayPatches(page, 800)
+    const checklist = page.getByRole('region', { name: 'Checklist' })
+    await checklist.getByRole('checkbox', { name: 'Done: Charge the battery' }).click()
+    await checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' }).click()
+
+    await expect(checklist.getByRole('checkbox', { name: 'Done: Charge the battery' })).not.toBeChecked()
+    await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeChecked()
+    await expect.poll(() => bodies.length).toBe(2)
+    await expect(checklist.getByRole('status', { name: 'Saving' })).toHaveCount(0)
+
+    const both = [
+      { text: 'Charge the battery', done: false },
+      { text: 'Pair the receiver', done: true },
+    ]
+    expect(bodies[1]).toEqual({ checklist: both })
+    expect((await serverWidget(page, 1)).checklist).toEqual(both)
+    await expect(checklist.getByRole('checkbox', { name: 'Done: Charge the battery' })).not.toBeChecked()
+    await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeChecked()
   })
 
   test('wide screens put each label beside its value', async ({ page, isMobile }) => {

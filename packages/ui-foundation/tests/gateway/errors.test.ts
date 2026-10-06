@@ -39,3 +39,13 @@ describe("toAppError 422 field keys", () => {
     expect(fieldErrorsFor([["body", "checklist"]])).toEqual({ checklist: ["bad body.checklist"] });
   });
 });
+
+describe("toAppError 422 with a plain message", () => {
+  it("keeps the server's sentence as the message when detail is a string (HTTPException's shape)", () => {
+    expect(toAppError(422, { detail: "Only 3 widgets can be in stock at once" })).toEqual({
+      kind: "validation",
+      message: "Only 3 widgets can be in stock at once",
+      fieldErrors: {},
+    });
+  });
+});

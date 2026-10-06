@@ -9,7 +9,12 @@
 // lookups are in widget-format.ts), and every optional one passes its
 // empty value through as it is: EntityView shows the plan's "not set"
 // label for it, never a blank.
-import { CircleCheckIcon, CircleIcon, PencilIcon } from 'lucide-react'
+//
+// Read-only, except the plan's quick actions (widget-quick-actions.tsx,
+// cell pattern 17): Status and In Stock change from the header, and
+// checklist items tick in place, each saved on its own. Anything else
+// goes through Edit.
+import { PencilIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { EntityView, Markdown, type EntityViewSection } from '@tristan2828/ui-foundation'
@@ -21,38 +26,11 @@ import { CategoryNamesContext } from './category-names-context'
 import { DeleteWidgetAction } from './delete-widget-action'
 import { useWidgetCategoriesByIdsQuery, widgetCategoryNames } from './use-widget-categories'
 import { useWidgetQuery } from './use-widgets'
-import {
-  CHECKLIST_STATE_BADGE_VARIANT,
-  STATUS_BADGE_VARIANT,
-  checklistDoneCount,
-  dateFormatter,
-  priceFormatter,
-} from './widget-format'
+import { CHECKLIST_STATE_BADGE_VARIANT, dateFormatter, priceFormatter } from './widget-format'
+import { ChecklistItems, WidgetInStockSwitch, WidgetStatusSelect } from './widget-quick-actions'
 import { CHECKLIST_STATE_LABELS, WIDGET_TAG_LABELS } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
-
-// Sub-records, read-only: the done-count, then each item in order. A glyph
-// with its state in words, not a checkbox: nothing here can be ticked yet.
-function ChecklistItems({ items }: { items: Widget['checklist'] }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="type-caption tabular-nums text-muted-foreground">{checklistDoneCount(items)}</p>
-      <ul aria-label="Checklist items" className="flex flex-col gap-1.5">
-        {items.map((item, index) => (
-          <li key={index} className="flex items-start gap-2">
-            {item.done ? (
-              <CircleCheckIcon role="img" aria-label="Done" className="mt-0.5 size-4 shrink-0 text-success-text" />
-            ) : (
-              <CircleIcon role="img" aria-label="Not done" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            )}
-            <span className={item.done ? 'text-muted-foreground' : undefined}>{item.text}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
 
 // The plan's "View screen" section, in order. Labels match the form's.
 function widgetSections(widget: Widget): EntityViewSection[] {
@@ -96,9 +74,6 @@ function widgetSections(widget: Widget): EntityViewSection[] {
           value: <span className="tabular-nums">{priceFormatter.format(Number(widget.price))}</span>,
         },
         { label: 'Assignee Email', emptyLabel: 'Unassigned', value: widget.assigneeEmail },
-        // Yes/no: the word (cell pattern 12), read-only here. The table's row
-        // switch is where it flips without the form.
-        { label: 'In Stock', value: widget.inStock ? 'Yes' : 'No' },
       ],
     },
     {
@@ -109,7 +84,8 @@ function widgetSections(widget: Widget): EntityViewSection[] {
     {
       title: 'Checklist',
       emptyLabel: 'No items',
-      content: widget.checklist.length > 0 && <ChecklistItems items={widget.checklist} />,
+      // A quick action: each item ticks in place (the done-count follows).
+      content: widget.checklist.length > 0 && <ChecklistItems widget={widget} />,
     },
   ]
 }
@@ -137,10 +113,13 @@ export function WidgetViewRoute() {
         badges={
           widget && (
             <>
-              <Badge variant={STATUS_BADGE_VARIANT[widget.status]}>{widget.status}</Badge>
+              {/* Quick actions: Status picks another value, In Stock flips. */}
+              <WidgetStatusSelect widget={widget} />
+              {/* Computed by the server, so it follows a tick once the save answers. */}
               <Badge variant={CHECKLIST_STATE_BADGE_VARIANT[widget.checklistState]}>
                 {CHECKLIST_STATE_LABELS[widget.checklistState]}
               </Badge>
+              <WidgetInStockSwitch widget={widget} />
             </>
           )
         }

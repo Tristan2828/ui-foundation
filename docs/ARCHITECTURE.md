@@ -86,6 +86,7 @@ openapi.yaml ──gen:api──▶ src/api/schema.d.ts         generated types 
 src/api/gateway/<entity>.ts            anti-corruption layer: wire → Page<T> / AppError
      └ safeFetch, toAppError           ← package (/gateway): the only fetch path
 src/routes/<entity>/use-*.ts           TanStack Query hooks over the gateway
+     └ useRecordUpdate                 ← package: one record's fields saved without the form
 src/routes/<entity>/*-table            thin consumer of DataTable                 ← package
 src/routes/<entity>/*-view             thin consumer of EntityView (+ Markdown)   ← package
 src/routes/<entity>/*-form             thin consumer of EntityForm                ← package
@@ -115,6 +116,14 @@ src/main.tsx                           FoundationProviders (theme, query client,
   name its columns (`DataTable`'s `visibleColumns`); they apply while the
   filters are still that view's (`activeView`), so they add nothing to
   the URL.
+- **Saving without the form** (a row's switch, a quick action on the view)
+  goes through `useRecordUpdate`: a PATCH that is optimistic in the
+  record's detail query and every list page holding it, replaced by the
+  record the server returns, and rolled back with a toast on a refusal.
+  Saves of one record run in order (a TanStack mutation scope per record)
+  and each request is built from the server's latest record when it's
+  sent, so quick changes never lose each other. It is the single-field
+  save that editing in place will build on.
 
 Every boundary is enforced mechanically: see the Hard Rules in
 [`conventions/AGENTS.md`](../packages/ui-foundation/conventions/AGENTS.md),

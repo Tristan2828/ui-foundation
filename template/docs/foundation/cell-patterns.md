@@ -7,8 +7,9 @@ per-entity, and only the shape is reusable. Copy the markup into your
 
 Patterns 1–10 were each chosen for a real column, from a page of
 alternatives ([`column-options.md`](column-options.md)), not designed in the abstract.
-Patterns 12 (boolean) and 16 (title linking to its view) are the
-template's own references: Widget's In Stock and Name columns render them
+Patterns 12 (boolean), 15 (yes/no flipped in the row), 16 (title linking
+to its view) and 17 (quick action on the view) are the template's own
+references: Widget's In Stock and Name columns and its view render them,
 and their specs pin them. The other patterns from 11 on are
 marked **Unproven**: written ahead of a real
 column, so no app has tested them on real data yet. Prefer a proven
@@ -339,9 +340,14 @@ now", "happened"). Widget's In Stock column is the reference
 
 - **A `Switch`, never a checkbox.** It acts at once; a checkbox in a row
   reads as "select this row".
-- **It saves on its own:** a PATCH of that one field, not the form. Show
-  the new value at once (optimistic) and put it back, with a toast naming
-  the row, if the save fails (`useToggleWidgetInStockMutation`).
+- **It saves on its own:** a PATCH of that one field, not the form,
+  through the foundation's `useRecordUpdate` (Widget's
+  `useSaveWidgetField`). The new value shows at once, in the table and on
+  the record's view, and goes back, with a toast naming the row and the
+  server's reason, if the save is refused.
+- **Saving blocks nothing.** The switch stays usable (a second flip waits
+  for the first and builds on it), and a "Saving" spinner shows beside it
+  in a slot that's always there, so the cell never changes width.
 - **Keep the word beside it** (pattern 12), `aria-hidden` since the switch
   announces its own state. Give the switch a row-specific name
   (`In stock: ${row.original.name}`).
@@ -388,3 +394,70 @@ cell: ({ row }) => (
 - **Cost:** none to speak of. Specs that match the title as a cell still
   work (`getByRole('cell', { name })` reads the link's text); ones that
   opened the form from a row button go through the view's Edit instead.
+
+## 17. Quick action on the view
+
+A value on the record's view that changes right where it's shown, saved on
+its own the moment it changes, without the form: a status picked from the
+header, a yes/no flipped, a sub-record item ticked. Widget's view is the
+reference (`src/routes/widgets/widget-quick-actions.tsx`): Status and In
+Stock in the header, Checklist items ticked in place.
+
+**Read-only is the default.** A value on the view is a control only when
+the plan's "View screen" names it under `Quick actions`; everything else
+renders as its table cell does, and changes through Edit. A quick action
+is for a value people change often and can change back as easily: never
+anything destructive, never text (that's editing in place, not built
+yet).
+
+| The plan's field | The control | Accessible name |
+|---|---|---|
+| `single choice`, in the header | A `Select` (`size="sm"`) whose value and options render as the field's tone-mapped `Badge` (pattern 5), in place of the badge | The field's label: `Status` |
+| `yes/no`, in the header or a field row | A `Switch` (`size="sm"`) with the value in words beside it, `aria-hidden` (pattern 15) | The field's label: `In stock` |
+| A sub-record list's `yes/no` item field | Each item a `Checkbox` inside a `<label>` with the item's text, so the text ticks it too; the list in one `role="group"` named for the list, described by the done-count | `Done: <item text>` (a visually hidden `Done: ` inside the label) |
+
+```tsx
+const save = useSaveWidgetField(widget.id) // one per control
+
+// A value: send the field.
+<Switch size="sm" checked={widget.inStock} aria-label="In stock"
+  onCheckedChange={(inStock) => save.mutate({ inStock })} />
+
+// A list item: send the whole list, built from the latest record.
+<Checkbox checked={item.done} onCheckedChange={(done) =>
+  save.mutate((current) => ({
+    checklist: current.checklist.map((other, i) => (i === index ? { ...other, done } : other)),
+  }))} />
+
+// Beside every control: the "Saving" slot, always there.
+<span className="inline-flex size-3.5 shrink-0">
+  {save.isPending && <Spinner aria-label="Saving" className="size-3.5 text-muted-foreground" />}
+</span>
+```
+
+- **Every save goes through `useRecordUpdate`** (the entity's
+  `useSave<Entity>Field(id)` in `use-<entity>.ts`), called once per
+  control. The change shows at once on the view and in every cached list
+  page. When the save answers, the view takes the record the server
+  returned, so a server-side effect shows (a computed field, a flag the
+  change cleared). Never write a quick action's mutation by hand.
+- **A list is sent whole, built from the latest record**: pass a function
+  of the record (`(current) => ({ checklist: ... })`), not a list read from
+  props. Saves of one record run one at a time and each request is built
+  when it's sent, so two quick ticks both land.
+- **A refusal puts the value back** and toasts "Couldn't update <name>:
+  <reason>", the reason being the server's: the 422's message on the
+  field, or the error's message. That's built into the hook; don't add a
+  second toast.
+- **Saving shows, and blocks nothing.** Each control keeps its own
+  "Saving" spinner in a slot that's always there (nothing moves), and
+  nothing is disabled: not the other controls, not this one, not Edit.
+- **Keep the value's look.** The status keeps its tone-mapped badge
+  inside the picker; the yes/no keeps its words; a ticked item keeps the
+  muted text a done item had. The control only adds the affordance.
+- **One component per control, in its own file** (`<entity>-quick-actions.tsx`),
+  so each hook lives in a component and the view's sections stay plain
+  data.
+- **Cost:** one click changes data, with no confirmation, and the server
+  may still say no. Keep the list short: a view where every value is a
+  control reads as a form.

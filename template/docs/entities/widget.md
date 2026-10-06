@@ -46,17 +46,20 @@ foundation supports has a working, tested reference.
 ## View screen
 
 - Title: `name`.
-- Badges beside the title: `status`, `checklistState`.
+- Badges beside the title: `status`, `checklistState`, `inStock`.
 - Sections, in order:
 
 | Section | Fields |
 |---|---|
-| Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail, inStock |
+| Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail |
 | Description | description |
 | Checklist | checklist |
 
 - "Not set" labels: `extraCategoryIds`: No extra categories; `tags`:
   Untagged; `assigneeEmail`: Unassigned; `checklist`: No items.
+- Quick actions: `status`, `inStock`, `checklist`. Ticking an item can
+  change `checklistState` (the server works it out), so the header's
+  progress badge follows the tick once the save answers.
 
 ## Screens and access
 

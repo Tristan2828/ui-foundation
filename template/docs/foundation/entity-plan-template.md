@@ -75,8 +75,10 @@ per list; delete the section if there are none.
 - Most items: 50.
 - In the table: a done-count (`2/6 done`), or blank if the list isn't
   shown.
-- On the view: always shown, read-only: the done-count, then each item in
-  order (a `url` item field opens in a new tab).
+- On the view: always shown: the done-count, then each item in order (a
+  `url` item field opens in a new tab). Read-only, unless the View
+  screen's `Quick actions` names the list: then its yes/no item field is a
+  checkbox on each item, ticked in place.
 
 | Field | Label | Type | Required | Options / rules |
 |---|---|---|---|---|
@@ -111,7 +113,8 @@ per list; delete the section if there are none.
 
 The read-only page for one record (`/<entity>/:id`), opened by clicking
 its title in the table. Edit and Delete live in its header, so the table
-has no row actions. Every field it shows renders as its table cell does.
+has no row actions. Every field it shows renders as its table cell does,
+except the quick actions, if any.
 
 - Title: the field that names a record, shown as the page heading and
   linked from the table: `title`.
@@ -130,6 +133,18 @@ has no row actions. Every field it shows renders as its table cell does.
 - "Not set" labels: what an empty optional field reads as on the view
   (`dueDate`: No due date; `checklist`: No items). A field not listed here
   reads "Not set". A `yes/no` is never empty: it reads Yes or No.
+- Quick actions (optional; delete if none): the fields the view changes
+  right where they show, each saved on its own the moment it changes,
+  without the form. Every other value stays read-only. Each one is a
+  `single choice` (picked from a list, usually a badge field), a `yes/no`
+  (a switch), or a sub-records list (its yes/no item field ticked on each
+  item). Only values people change often and can change back as easily.
+  Say any rule the server enforces on one (it can refuse the change) and
+  any side effect (another field the server changes with it), so each
+  gets a test; the view always shows the record the server returns.
+
+  Quick actions: status (the server refuses Finished while the checklist
+  has open items), checklist
 
 ## Screens and access
 
