@@ -168,7 +168,10 @@ is a filled-in example while the Widgets demo is still here).
      `src/routes/<entity>/<entity>-schema.ts` (zod schema mirroring
      `<Entity>Create`/`<Entity>Update`, plus the form ↔ wire conversion
      functions — see `widgetToFormValues`/`formValuesToWidgetCreate` for
-     the shape)
+     the shape. A Markdown long text is checked with `refine`, never
+     trimmed, like Widget's `description`: a trim rewrites text nobody
+     touched, a leading indent that makes a code block or the text's
+     own ending)
    - `src/routes/widgets/widget-format.ts` →
      `src/routes/<entity>/<entity>-format.ts` (the lookups and formatters
      both the columns and the view render values with: badge variant maps,

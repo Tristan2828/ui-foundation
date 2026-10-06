@@ -161,7 +161,7 @@ the app:
 | Gate | Runs | Covers |
 |---|---|---|
 | `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
-| `npm run verify` (root) | before any PR; CI (`verify`) | + the package's Storybook checks on every primitive (axe in both themes; every colour it paints resolves to a token), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
+| `npm run verify` (root) | before any PR; CI (`verify`) | + the package's Storybook checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language stories clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
 | `npm run verify:backend` | backend changes; CI (`verify-backend`) | the template backend's mypy strict, pytest (SQLite), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |

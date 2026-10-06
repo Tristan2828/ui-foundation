@@ -84,6 +84,28 @@ describe('mergeMarkdown', () => {
     expect(mergeMarkdown(markdown, editorWrites, current)).toBe(`New first line.\n\n${markdown}`)
   })
 
+  // A save changes only what was typed: editing the last block keeps the
+  // document's own ending, with or without a final newline.
+  it('edits the last block of a value with no final newline and adds none', () => {
+    const original = 'First line.'
+    const baseline = 'First line.\n'
+    expect(mergeMarkdown(original, baseline, 'First line. More.\n')).toBe('First line. More.')
+  })
+
+  for (const ending of ['\n', '\n\n']) {
+    it(`edits the last block of a value ending in ${JSON.stringify(ending)} and keeps it`, () => {
+      const original = `Intro.\n\n- one\n- two\n\nLast line.${ending}`
+      const baseline = 'Intro.\n\n* one\n* two\n\nLast line.\n'
+      expect(mergeMarkdown(original, baseline, baseline.replace('Last line.', 'Last line, edited.'))).toBe(
+        `Intro.\n\n- one\n- two\n\nLast line, edited.${ending}`,
+      )
+    })
+  }
+
+  it('keeps the ending when a new block is added after the last', () => {
+    expect(mergeMarkdown('One.', 'One.\n', 'One.\n\nTwo.\n')).toBe('One.\n\nTwo.')
+  })
+
   it('writes from scratch when there was nothing before', () => {
     expect(mergeMarkdown('', '', '# New\n\nText.\n')).toBe('# New\n\nText.\n')
   })

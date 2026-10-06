@@ -197,6 +197,32 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
+  test('long text: an edit to the last block saves no newline that was not typed', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    await editor.locator('p').last().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.type(' Two pages.')
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(description.getByText('Two pages.')).toBeVisible()
+    // The stored text ends without a newline, and so does the save.
+    expect(bodies).toEqual([
+      {
+        description:
+          'A basic wireless mouse with a **2.4GHz** USB receiver.\n\n' +
+          '- Two buttons and a scroll wheel\n' +
+          '- Runs on one AA battery\n\n' +
+          'See the [setup guide](https://example.com/mouse-setup). Two pages.',
+      },
+    ])
+  })
+
   test('a link inside a value still navigates; a click anywhere else edits', async ({ page, context }) => {
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })

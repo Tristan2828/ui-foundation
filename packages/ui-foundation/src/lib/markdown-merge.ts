@@ -183,12 +183,14 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
     }
     out += 'original' in item ? originals[item.original].source : item.written.source
   })
-  const last = items[items.length - 1]
-  if (last && 'original' in last && last.original === originals.length - 1) {
-    out += original.slice(originals[originals.length - 1].end)
-  } else if (items.length > 0) {
-    out += '\n'
-  }
+  // The document ends the way the original ended, whichever block is last
+  // now: an edit to the last block adds no newline the person didn't type.
+  // Text written from nothing ends the way the editor ends it.
+  const ending =
+    originals.length > 0
+      ? original.slice(originals[originals.length - 1].end)
+      : current.slice(edited.at(-1)?.end ?? current.length)
+  if (items.length > 0) out += ending
 
   const saved = blocks(out)
     .filter((block) => block.type !== 'definition')

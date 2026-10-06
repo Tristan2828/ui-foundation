@@ -5,6 +5,104 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.14.0 — stage circles, pressed icons, icon groups, and a rich-text fix
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+cell patterns, design language and playbook. Nothing in an app looks
+different until it adopts a pattern; the fix applies on the bump.
+
+Raised by a real app that built five of these for itself; each is now
+generic, here for every app, with its accessibility and contrast checked
+in both themes.
+
+- **Fixed: the rich-text editor added a trailing newline.** Editing the
+  *last* block of a Markdown value saved it with a `\n` on the end
+  (`"First line."` edited to `"First line. More."` saved as
+  `"First line. More.\n"`). A save now ends the way the original ended,
+  whichever block was edited, so it changes only what was typed
+  (`mergeMarkdown` in `src/lib/markdown-merge.ts`).
+- **The template's Markdown long text is checked, not trimmed.** Widget's
+  `description` schema used `.trim()`, which rewrote what nobody touched
+  (a leading indent that makes a code block, the text's own ending), and
+  had been hiding the bug above on Widget. It's now
+  `.refine((value) => value.trim() !== '', ...)`, and the playbook says to
+  write a Markdown long text that way.
+- **New component: `StageCircle`** (new cell pattern 19). An ordered
+  status as a small circle beside the word that fills as the record moves
+  on: `stage={0}` dashed, `1`–`3` a quarter to three quarters filled,
+  `'complete'` solid with a tick, `'exit'` struck through. `tone` is
+  `muted` (the default), `info`, `success`, `warning` or `destructive`,
+  always the `*-text` shade. Pattern 19 says when to use it (an ordered
+  lifecycle toward *done*) and when pattern 5's tone badge is still right
+  (no order, or an end that isn't *done*: Widget's Status keeps its badge,
+  and the pattern says why).
+- **New primitive: `@tristan2828/ui-foundation/ui/toggle`** (shadcn's, on
+  Base UI), with `icon-xs` (24px) and `icon-sm` sizes added, matching
+  `Button`'s.
+- **Cell pattern 15 gains a variant: a pressed icon inside another
+  value's cell** (a "focus" flag that exists only while the status is
+  "doing"). An `aria-pressed` `Toggle`, named for its row, faint when off
+  and filled in `destructive-text` when on (the pattern says why that tone
+  means "flagged", not "error"), saved through `useRecordUpdate` with the
+  "Saving" slot beside it, rendered only while the owning value allows it.
+  Also a quick action on the view (pattern 17's table).
+- **Cell pattern 10 gains a second example: a dependency list.** A
+  computed summary in the cell ("Ready", "2 holds"), every related record
+  in the popover grouped by kind, held in `foreground` with its reason and
+  clear in `muted`, each kind with its glyph; a row that links nothing
+  renders plain text, not a button; the popup needs an `aria-label`
+  (axe fails an unnamed dialog).
+- **Cell pattern 4 gains a multi-value variant: several values as icons,
+  every name in one tooltip** on a focusable `role="img"` group, "…" for
+  a value still loading, each icon beside its name where there's room.
+  Plus a testing note: read the open tooltip with
+  `[data-slot=tooltip-content][data-open]`, since a closing one stays in
+  the DOM for a moment. And pattern 4's trigger now gets a focus ring.
+- **A glyph contrast check.** axe measures text only, so the package's
+  Storybook now measures every icon in its design-language stories
+  against what's behind it, failing below WCAG's 3:1 non-text minimum in
+  either theme. It covers the stage circle in every tone, the pressed
+  icon's faint off state (`text-muted-foreground/80` is the faintest that
+  passes, 3.2:1 in light mode; `/70` fails at 2.7:1) and all eight
+  category slots, which no gate measured before. `design-language.md`
+  has a new "Glyphs and icons: 3:1" section.
+- **Not built: an "icon from a fixed set" field type.** It's structure,
+  and one app needs it so far; it's in `docs/DEFERRED.md` with its
+  trigger (a second app plans an icon field).
+
+### How an app adopts each
+
+1. **The newline fix:** nothing beyond the bump. If the app trimmed a
+   Markdown long text's value to work around it, or trims one in its form
+   schema, replace the `.trim().min(1, ...)` with
+   `.refine((value) => value.trim() !== '', ...)` (Widget's `description`
+   in `widget-schema.ts`).
+2. **The stage circle:** import `StageCircle` from the package, map the
+   status in `<entity>-format.ts` as
+   `Record<Status, { stage: StageCircleStage; tone?: StageCircleTone }>`,
+   and render `<StageCircle {...STATUS_STAGE[status]} />` beside the word
+   (pattern 19). Delete the app's own SVG stage-circle component and its
+   path data.
+3. **The pressed icon in a cell:** replace the app's own pressed icon
+   button with the package's `Toggle` at `size="icon-xs"`, copying
+   pattern 15's variant (its class string and the
+   `group-aria-pressed/toggle:fill-current` icon). Keep its save
+   (`useRecordUpdate`) and "Saving" slot. If its off state was fainter
+   than `text-muted-foreground/80`, it was below 3:1: take the pattern's.
+   An app that installed shadcn's `toggle` into `src/components/ui/` gets
+   a lint error after the bump: delete that copy and import
+   `@tristan2828/ui-foundation/ui/toggle`.
+4. **The dependency list:** nothing to replace; pattern 10's second
+   example is the reference for an app's own. Name its popover
+   (`aria-label` on `PopoverContent`) if it doesn't yet.
+5. **Icons with one tooltip:** check an app's own icon group against
+   pattern 4's variant (one tooltip, a `role="img"` trigger with a focus
+   ring, "…" while loading), and change any spec reading
+   `[data-slot=tooltip-content]` to add `[data-open]`. The group stays the
+   app's own component: its icon and colour maps are its data.
+6. **The icon field type:** nothing yet. An app that built one keeps it;
+   it's the reference when a second app needs one.
+
 ## 3.13.0 — editing in place on the view
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated
