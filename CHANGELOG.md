@@ -5,6 +5,53 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.15.0 — the rich-text editor: links, Markdown paste, keyboard tasks, placeholder, count
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook and cell patterns. An app's editors gain the new keys and paste
+on the bump; the placeholder and the count appear once it passes them.
+
+- **Links: Ctrl/Cmd+K.** On selected words it opens a small box at the
+  caret for the address; Enter applies. On an existing link it edits it,
+  with Remove link. With nothing selected the address goes in as its
+  own text. Web and email addresses only (`example.com` becomes
+  `https://example.com`, `name@example.com` a `mailto:`; a path or
+  `#heading` is kept); `javascript:`, `data:` and any other scheme are
+  refused with a message. Until now the editor had no way to add a link
+  short of pasting one from a web page.
+- **Markdown pasted as plain text arrives formatted** (`## Notes`,
+  `**bold**`, lists, tables), and raw HTML in it still arrives as text.
+  Plain text with no Markdown in it goes in exactly as typed (a paste's
+  leading space used to be dropped). A paste from a web page is
+  unchanged. A copy out of the editor is Markdown.
+- **Ctrl/Cmd+Shift+Enter ticks the task item the caret is in** (its
+  checkbox was mouse-only). Ctrl/Cmd+Enter stays the save.
+- **`RichTextEditor` takes `placeholder`** (shown while the document is
+  empty, `aria-placeholder` for screen readers) **and `maxLength`**: from
+  80% of it, "1,650 of 2,000 characters" shows under the editor and
+  describes it, turning to "12 characters over the limit of 2,000" in the
+  destructive text tone. Typing isn't stopped; the schema still refuses
+  the save.
+- **`PopoverContent` takes `anchor`**, Base UI's: a popover with no
+  trigger of its own, placed at an element or a point.
+- **Checked, no change: Ctrl/Cmd+Enter inside a table.** The table also
+  binds it ("leave the table"); a new spec confirms it saves the field
+  once, adding nothing.
+- **The template's Widget description** has the placeholder ("Describe
+  the widget") and the count, against `DESCRIPTION_MAX_LENGTH`, one
+  constant the schema and the editor both read.
+- Queued in `docs/DEFERRED.md`: the fixed toolbar (next, 3.16), a
+  floating toolbar and a slash menu after it, and images.
+
+### How an app adopts it
+
+1. **Links, paste, the task key:** nothing beyond the bump. Specs that
+   paste plain text into an editor now get formatted Markdown.
+2. **Placeholder and count:** pass `placeholder` and `maxLength` to each
+   `RichTextEditor`, the limit from one constant the zod schema also uses
+   (Widget's `DESCRIPTION_MAX_LENGTH` in `widget-schema.ts`). Delete any
+   counter the app built beside the editor.
+
 ## 3.14.0 — stage circles, pressed icons, icon groups, and a rich-text fix
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

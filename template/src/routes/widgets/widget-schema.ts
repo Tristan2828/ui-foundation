@@ -45,6 +45,9 @@ const PRICE_PATTERN = /^\d+\.\d{2}$/
 const requiredError = (message: string) => (issue: { input: unknown }) =>
   issue.input === undefined ? message : undefined
 
+// The description's limit, shared by the schema and the editor's count.
+export const DESCRIPTION_MAX_LENGTH = 2000
+
 export const widgetFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(200, 'Name must be 200 characters or fewer'),
   categoryId: z.number({ error: requiredError('Category is required') }),
@@ -63,7 +66,7 @@ export const widgetFormSchema = z.object({
   // goes), and the rich-text editor saves only what was typed.
   description: z
     .string()
-    .max(2000, 'Description must be 2000 characters or fewer')
+    .max(DESCRIPTION_MAX_LENGTH, `Description must be ${DESCRIPTION_MAX_LENGTH} characters or fewer`)
     .refine((value) => value.trim() !== '', 'Description is required'),
   // Multi choice: any number of options, none required, no repeats (the
   // combobox can't produce a repeat, but the wire contract forbids one).

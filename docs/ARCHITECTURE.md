@@ -239,6 +239,18 @@ Meaning is never lost; formatting inside the edited block may be.
 **No HTML gets in:** raw HTML already in the text shows as its characters
 (an uneditable chip), HTML pasted as such a chip becomes escaped text,
 and Milkdown's empty-line plugin, which writes `<br />`, is left out.
+Markdown pasted as plain text (3.15) is parsed by our own paste handler,
+not Milkdown's clipboard plugin: that plugin inserts the parsed document
+directly, past the guard, so raw HTML in pasted text would have been
+saved as HTML. Ours runs the same guard. Plain text with no Markdown in
+it goes in exactly as typed.
+
+**Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
+(a `Popover` with no trigger, placed through the `anchor` the package's
+`PopoverContent` takes). Only web and email addresses, a path on the site
+or a heading are accepted (`src/lib/link-href.ts`): another scheme
+(`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
+code.
 
 **Considered:** Tiptap 3 with `@tiptap/markdown` (maintained, React 19;
 parses with marked, so what's edited could differ from what `<Markdown>`

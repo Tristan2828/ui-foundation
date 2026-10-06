@@ -33,6 +33,14 @@ export type RichTextEditorProps = {
   /** Shown but not editable (while a save is in flight). */
   readOnly?: boolean
   autoFocus?: boolean
+  /** Shown while the document is empty (and given to screen readers as `aria-placeholder`). */
+  placeholder?: string
+  /**
+   * The field's limit on the saved Markdown's length. From 80% of it, a
+   * count shows under the editor, in the destructive text tone once over.
+   * Typing isn't stopped: the form's schema still refuses a save over it.
+   */
+  maxLength?: number
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string

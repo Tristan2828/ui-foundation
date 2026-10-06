@@ -44,7 +44,17 @@ const meta: Meta<typeof RichTextEditor> = {
 
 export default meta
 
-function Labelled({ label, markdown }: { label: string; markdown: string }) {
+function Labelled({
+  label,
+  markdown,
+  placeholder,
+  maxLength,
+}: {
+  label: string
+  markdown: string
+  placeholder?: string
+  maxLength?: number
+}) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
   const [problem, setProblem] = useState<string | null>(null)
@@ -53,7 +63,14 @@ function Labelled({ label, markdown }: { label: string; markdown: string }) {
       <span id={labelId} className="type-label text-foreground">
         {label}
       </span>
-      <RichTextEditor aria-labelledby={labelId} defaultValue={markdown} onChange={setSaved} onProblem={setProblem} />
+      <RichTextEditor
+        aria-labelledby={labelId}
+        defaultValue={markdown}
+        onChange={setSaved}
+        onProblem={setProblem}
+        placeholder={placeholder}
+        maxLength={maxLength}
+      />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
         {saved}
@@ -79,6 +96,23 @@ export const RoundTrip: StoryObj<typeof RichTextEditor> = {
       {Object.entries(MARKDOWN_FIXTURES).map(([name, { markdown }]) => (
         <Labelled key={name} label={name} markdown={markdown} />
       ))}
+    </div>
+  ),
+}
+
+// The editing features beyond formatting, each in its own editor: the
+// placeholder, the length count near and over a limit, a link to edit and
+// a task list to tick (e2e/rich-text-editor.spec.ts "editing features").
+// Also contrast-checked in both themes, the count's over-the-limit tone
+// included.
+export const Features: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-6">
+      <Labelled label="empty" markdown="" placeholder="Write a description" />
+      <Labelled label="nearLimit" markdown={'Fifty characters of notes, give or take a few.\n'} maxLength={55} />
+      <Labelled label="overLimit" markdown={'Thirty characters, and more.\n'} maxLength={20} />
+      <Labelled label="links" markdown={'See the [setup guide](https://example.com/setup) for details.\n\nPlain words here.\n'} />
+      <Labelled label="tasks" markdown={'- [ ] Open item\n- [x] Done item\n'} />
     </div>
   ),
 }

@@ -197,7 +197,9 @@ is a filled-in example while the Widgets demo is still here).
      the plan edits in place** (`Edit in place`), shared by the form
      (through a `Controller`) and the view (through `editInPlace`), and
      the Markdown long text's `RichTextEditor` (on the form whether or
-     not it edits in place). Every other field's control stays inline in
+     not it edits in place), given a `placeholder` and `maxLength` (the
+     schema's limit, one constant both read, like Widget's
+     `DESCRIPTION_MAX_LENGTH`). Every other field's control stays inline in
      the form, as `widget-form.tsx`'s Category, Tags and Available From
      do. No `Edit in place` line and no Markdown long text: no fields
      file.

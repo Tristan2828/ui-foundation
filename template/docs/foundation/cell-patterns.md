@@ -736,7 +736,12 @@ const price = editInPlace({
 - **Long text written as Markdown edits as rich text** (`RichTextEditor`):
   formatted where it's read, saved as Markdown with every block the person
   didn't touch kept exactly as written. On the form too, so it's one
-  control.
+  control. Give it a `placeholder` and the schema's limit as `maxLength`
+  (a count shows from 80% of it, in the destructive text tone once over).
+  Its keys: Ctrl/Cmd+K adds or edits a link (web and email addresses
+  only), Ctrl/Cmd+Shift+Enter ticks the task item the caret is in, and
+  Markdown pasted as plain text arrives formatted. Ctrl/Cmd+Enter stays
+  the save.
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
   `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.
