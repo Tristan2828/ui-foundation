@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { waitForMswReady } from '@tristan2828/ui-foundation/testing'
+import { forceMswOverride, waitForMswReady } from '@tristan2828/ui-foundation/testing'
 
 // Editing in place on the widget view (cell pattern 18): Name, Status,
 // Price, Description and Extra Categories turn into the form's own control
@@ -219,6 +219,95 @@ test.describe('widget view: editing in place', () => {
           '- Two buttons and a scroll wheel\n' +
           '- Runs on one AA battery\n\n' +
           'See the [setup guide](https://example.com/mouse-setup). Two pages.',
+      },
+    ])
+  })
+
+  test('long text: Ctrl/Cmd+Enter inside a table saves, and adds nothing', async ({ page }) => {
+    const description = 'Sizes:\n\n| Part | Size |\n| --- | --- |\n| Top | 120x60cm |'
+    await forceMswOverride(page, {
+      method: 'get',
+      path: '*/api/widgets/2',
+      body: {
+        id: 2,
+        name: 'Standing Desk',
+        categoryId: 2,
+        status: 'draft',
+        availableFrom: '2026-03-01T00:00:00Z',
+        assigneeEmail: null,
+        price: '349.00',
+        description,
+        tags: ['bulky', 'featured'],
+        inStock: true,
+        extraCategoryIds: [1, 3],
+        checklist: [],
+        checklistState: 'none',
+      },
+    })
+    const bodies = patchBodies(page)
+    await openWidget(page, 2)
+    const region = page.getByRole('region', { name: 'Description' })
+    await region.getByText('Sizes:').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    await editor.getByRole('cell', { name: '120x60cm' }).click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' top')
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(editor).toHaveCount(0)
+    // Inside a table, Ctrl/Cmd+Enter is also the table's "leave the table"
+    // key; it saves all the same, with no paragraph added after the table.
+    // The edited table is written in the editor's own style (padded cells,
+    // docs/DEFERRED.md); the paragraph before it is kept as written.
+    expect(bodies).toEqual([
+      { description: 'Sizes:\n\n| Part | Size         |\n| ---- | ------------ |\n| Top  | 120x60cm top |' },
+    ])
+  })
+
+  test('long text: Ctrl/Cmd+K links words in place; Enter in the link box applies it, Esc closes it', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    // "Two buttons": the first two words of the first list item.
+    await editor.locator('li').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Home')
+    for (let i = 0; i < 'Two buttons'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    await page.waitForTimeout(100)
+
+    // Esc closes the box only: the field stays open, nothing saved.
+    await page.keyboard.press('ControlOrMeta+k')
+    const box = page.getByRole('dialog', { name: 'Add link' })
+    await expect(box.getByRole('textbox', { name: 'Link address' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(box).toHaveCount(0)
+    await expect(editor).toBeFocused()
+
+    // Enter, and Ctrl/Cmd+Enter too, applies the link only: the field
+    // stays open until it's saved.
+    await page.keyboard.press('ControlOrMeta+k')
+    await box.getByRole('textbox', { name: 'Link address' }).fill('example.com/buttons')
+    await page.keyboard.press('ControlOrMeta+Enter')
+    await expect(box).toHaveCount(0)
+    await expect(editor).toBeFocused()
+    await expect(editor.getByRole('link', { name: 'Two buttons', exact: true })).toBeVisible()
+    expect(bodies).toEqual([])
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(editor).toHaveCount(0)
+    await expect(description.getByRole('link', { name: /Two buttons/ })).toHaveAttribute('href', 'https://example.com/buttons')
+    expect(bodies).toEqual([
+      {
+        description:
+          'A basic wireless mouse with a **2.4GHz** USB receiver.\n\n' +
+          '- [Two buttons](https://example.com/buttons) and a scroll wheel\n' +
+          '- Runs on one AA battery\n\n' +
+          'See the [setup guide](https://example.com/mouse-setup).',
       },
     ])
   })

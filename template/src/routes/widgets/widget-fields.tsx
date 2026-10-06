@@ -12,7 +12,7 @@ import { Input } from '@tristan2828/ui-foundation/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tristan2828/ui-foundation/ui/select'
 import type { components } from '@/api/schema'
 import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
-import { WIDGET_STATUSES } from './widget-schema'
+import { DESCRIPTION_MAX_LENGTH, WIDGET_STATUSES } from './widget-schema'
 
 type WidgetStatus = components['schemas']['WidgetStatus']
 
@@ -85,7 +85,9 @@ export function WidgetStatusSelect({
 
 // Long text written as Markdown: edited as formatted text (the package's
 // RichTextEditor), saved as Markdown with untouched blocks as written.
-// Uncontrolled: it opens with `value` and reports every edit.
+// Uncontrolled: it opens with `value` and reports every edit. A
+// placeholder while it's empty, and a count as it nears the schema's
+// limit (the schema still refuses a save over it).
 export function WidgetDescriptionEditor({
   value,
   onChange,
@@ -107,6 +109,8 @@ export function WidgetDescriptionEditor({
       onProblem={onProblem}
       readOnly={readOnly}
       autoFocus={autoFocus}
+      placeholder="Describe the widget"
+      maxLength={DESCRIPTION_MAX_LENGTH}
       aria-invalid={invalid}
     />
   )

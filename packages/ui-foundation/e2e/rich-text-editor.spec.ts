@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
@@ -117,4 +118,153 @@ test.describe('rich-text round trip', () => {
     await expect(editor(page, 'headings').locator('ul li')).toHaveText('first item')
     await expect(saved(page, 'headings')).toContainText('\n\n- first item\n')
   })
+})
+
+// What the editor does beyond formatting, on the Features story: paste
+// and copy as Markdown, links, ticking a task from the keyboard, the
+// placeholder and the length count.
+const FEATURES = 'http://localhost:6006/iframe.html?id=app-richtexteditor--features&viewMode=story'
+
+async function paste(page: Page, name: string, data: Record<string, string>) {
+  await editor(page, name).evaluate((element, entries) => {
+    const transfer = new DataTransfer()
+    for (const [type, value] of Object.entries(entries)) transfer.setData(type, value)
+    element.dispatchEvent(new ClipboardEvent('paste', { clipboardData: transfer, bubbles: true, cancelable: true }))
+  }, data)
+}
+
+// Selects the first word of the last line ("Plain"), from the keyboard.
+async function selectFirstWord(page: Page, name: string) {
+  await caretAtEnd(page, name)
+  await page.keyboard.press('Home')
+  for (let i = 0; i < 'Plain'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+  // ProseMirror reads a keyboard selection on the browser's next
+  // selectionchange; a key pressed inside that moment sees the old one.
+  await page.waitForTimeout(100)
+}
+
+test.describe('editing features', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'links')).toBeVisible()
+  })
+
+  test('Markdown pasted as plain text arrives formatted, and still adds no HTML', async ({ page }) => {
+    await caretAtEnd(page, 'links')
+    await page.keyboard.press('Enter')
+    await paste(page, 'links', { 'text/plain': '## Pasted\n\n**bold** and <b>tag</b>\n\n- one\n- two' })
+    const box = editor(page, 'links')
+    await expect(box.locator('h4')).toHaveText('Pasted')
+    await expect(box.locator('strong')).toHaveText('bold')
+    await expect(box.locator('ul li')).toHaveCount(2)
+    await expect(box.locator('b')).toHaveCount(0)
+    const text = (await saved(page, 'links').textContent())!
+    expect(text).toContain('## Pasted\n\n**bold** and')
+    expect(text).toContain('- one\n- two')
+    expect(text).not.toMatch(/(^|[^\\])<b>/)
+  })
+
+  test('plain text with no Markdown in it pastes as typed, its spaces kept', async ({ page }) => {
+    await caretAtEnd(page, 'links')
+    await paste(page, 'links', { 'text/plain': ' and more' })
+    await expect(saved(page, 'links')).toContainText('Plain words here. and more')
+  })
+
+  test('a copy is Markdown', async ({ page }) => {
+    await editor(page, 'links').click()
+    await page.keyboard.press('ControlOrMeta+a')
+    const copied = await editor(page, 'links').evaluate((element) => {
+      const transfer = new DataTransfer()
+      element.dispatchEvent(new ClipboardEvent('copy', { clipboardData: transfer, bubbles: true, cancelable: true }))
+      return transfer.getData('text/plain')
+    })
+    expect(copied).toContain('See the [setup guide](https://example.com/setup) for details.')
+  })
+
+  test('Ctrl/Cmd+K links the selected words: Enter applies, focus comes back', async ({ page }) => {
+    await selectFirstWord(page, 'links')
+    await page.keyboard.press('ControlOrMeta+k')
+    const box = page.getByRole('dialog', { name: 'Add link' })
+    const address = box.getByRole('textbox', { name: 'Link address' })
+    await expect(address).toBeFocused()
+    await address.fill('example.com/plain')
+    await page.keyboard.press('Enter')
+    await expect(box).toHaveCount(0)
+    await expect(editor(page, 'links')).toBeFocused()
+    await expect(editor(page, 'links').getByRole('link', { name: 'Plain', exact: true })).toHaveAttribute('href', 'https://example.com/plain')
+    await expect(saved(page, 'links')).toContainText('[Plain](https://example.com/plain) words here.')
+  })
+
+  test('on a link, Ctrl/Cmd+K edits it, and Remove link takes it off', async ({ page }) => {
+    await editor(page, 'links').getByText('setup guide').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ArrowLeft')
+    await page.keyboard.press('ControlOrMeta+k')
+    const box = page.getByRole('dialog', { name: 'Edit link' })
+    await expect(box.getByRole('textbox', { name: 'Link address' })).toHaveValue('https://example.com/setup')
+    await box.getByRole('button', { name: 'Remove link' }).click()
+    await expect(box).toHaveCount(0)
+    await expect(saved(page, 'links')).toContainText('See the setup guide for details.')
+  })
+
+  test('an address that could run code is refused; Esc closes the box', async ({ page }) => {
+    const before = await saved(page, 'links').textContent()
+    await selectFirstWord(page, 'links')
+    await page.keyboard.press('ControlOrMeta+k')
+    const box = page.getByRole('dialog', { name: 'Add link' })
+    await box.getByRole('textbox', { name: 'Link address' }).fill('javascript:alert(1)')
+    await page.keyboard.press('Enter')
+    await expect(box.getByRole('alert')).toHaveText('Enter a web or email address, like https://example.com.')
+    await expect(box.getByRole('textbox', { name: 'Link address' })).toHaveAccessibleDescription(
+      'Enter a web or email address, like https://example.com.',
+    )
+    await page.keyboard.press('Escape')
+    await expect(box).toHaveCount(0)
+    await expect(editor(page, 'links')).toBeFocused()
+    expect(await saved(page, 'links').textContent()).toBe(before)
+  })
+
+  test('Ctrl/Cmd+Shift+Enter ticks the task item the caret is in', async ({ page }) => {
+    await editor(page, 'tasks').getByText('Open item').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+Shift+Enter')
+    await expect(saved(page, 'tasks')).toContainText('- [x] Open item')
+    await expect(page.locator('[data-fixture="tasks"]').getByRole('checkbox', { name: 'Done' }).first()).toBeChecked()
+    await page.keyboard.press('ControlOrMeta+Shift+Enter')
+    await expect(saved(page, 'tasks')).toContainText('- [ ] Open item')
+  })
+
+  test('the placeholder shows while the document is empty', async ({ page }) => {
+    const box = editor(page, 'empty')
+    await expect(box).toHaveAttribute('aria-placeholder', 'Write a description')
+    await expect(box.locator('p[data-placeholder="Write a description"]')).toHaveCount(1)
+    await box.click()
+    await page.keyboard.type('Now it has words.')
+    await expect(box.locator('p[data-placeholder]')).toHaveCount(0)
+  })
+
+  test('the count shows near the limit, describes the editor, and says when it is over', async ({ page }) => {
+    await expect(editor(page, 'nearLimit')).toHaveAccessibleDescription('47 of 55 characters')
+    await expect(editor(page, 'overLimit')).toHaveAccessibleDescription('9 characters over the limit of 20')
+    // Below 80% of the limit there's no count.
+    await caretAtEnd(page, 'nearLimit')
+    for (let i = 0; i < 5; i++) await page.keyboard.press('Backspace')
+    await expect(page.locator('[data-fixture="nearLimit"] [data-slot=rich-text-editor-count]')).toHaveCount(0)
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`the link box has zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await selectFirstWord(page, 'links')
+      await page.keyboard.press('ControlOrMeta+k')
+      const box = page.getByRole('dialog', { name: 'Add link' })
+      await box.getByRole('textbox', { name: 'Link address' }).fill('javascript:x')
+      await page.keyboard.press('Enter')
+      await expect(box.getByRole('alert')).toBeVisible()
+      const results = await new AxeBuilder({ page })
+        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
+        .analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
 })

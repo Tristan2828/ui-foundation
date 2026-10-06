@@ -14,14 +14,24 @@
 // - Headings render from <h3>, like <Markdown>: the page owns <h1> and
 //   <h2>. A task-list item renders a real checkbox that toggles it.
 // - Edited blocks are written in the document's own bullet and rule marks.
-import { useEffect, useRef } from 'react'
+// - Markdown pasted as plain text arrives formatted (still no HTML), and a
+//   copy out of the editor is Markdown.
+// - Ctrl/Cmd+K adds or edits a link (a box at the caret: web and email
+//   addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
+//   in. Ctrl/Cmd+Enter stays the field's save.
+// - A placeholder in an empty document, and a count of the Markdown's
+//   length as it nears `maxLength`.
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import {
   defaultValueCtx,
   Editor,
   editorViewCtx,
   editorViewOptionsCtx,
+  parserCtx,
   remarkStringifyOptionsCtx,
   rootCtx,
+  schemaCtx,
+  serializerCtx,
 } from '@milkdown/kit/core'
 import type { MilkdownPlugin } from '@milkdown/kit/ctx'
 import { history } from '@milkdown/kit/plugin/history'
@@ -36,10 +46,15 @@ import {
 } from '@milkdown/kit/preset/commonmark'
 import { gfm } from '@milkdown/kit/preset/gfm'
 import { Fragment, Slice, type Node as ProseNode } from '@milkdown/kit/prose/model'
-import { Plugin } from '@milkdown/kit/prose/state'
-import type { EditorView, NodeView } from '@milkdown/kit/prose/view'
+import { Plugin, type EditorState } from '@milkdown/kit/prose/state'
+import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
 import { $prose, getMarkdown } from '@milkdown/kit/utils'
 import { cn } from 'cn'
+import { Button } from '@/components/ui/button'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent } from '@/components/ui/popover'
+import { linkHref } from '@/lib/link-href'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
 import type { RichTextEditorProps } from './rich-text-editor'
 
@@ -121,6 +136,74 @@ function taskItemView(node: ProseNode, view: EditorView, getPos: () => number | 
   }
 }
 
+// The task-list item the caret is in, ticked or unticked. False when the
+// caret isn't in one.
+function toggleTaskItem(view: EditorView): boolean {
+  const { $from } = view.state.selection
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth)
+    if (node.type.name === 'list_item' && node.attrs.checked != null) {
+      view.dispatch(view.state.tr.setNodeMarkup($from.before(depth), undefined, { ...node.attrs, checked: !node.attrs.checked }))
+      return true
+    }
+  }
+  return false
+}
+
+// What a link edit applies to: the selection, or with nothing selected
+// the whole link the caret is in (else just the caret), and the address it
+// has now (`''` when none).
+type LinkTarget = { from: number; to: number; href: string }
+
+function linkTarget(state: EditorState): LinkTarget {
+  const link = state.schema.marks.link
+  const { from, to, empty, $from } = state.selection
+  if (!empty) {
+    let href = ''
+    state.doc.nodesBetween(from, to, (node) => {
+      const mark = link.isInSet(node.marks)
+      if (mark && !href) href = String(mark.attrs.href)
+    })
+    return { from, to, href }
+  }
+  const mark = link.isInSet($from.marks())
+  if (!mark) return { from, to, href: '' }
+  const start = $from.start()
+  let target: LinkTarget = { from, to, href: String(mark.attrs.href) }
+  let runFrom = -1
+  $from.parent.forEach((child, offset) => {
+    const childFrom = start + offset
+    const childTo = childFrom + child.nodeSize
+    if (!mark.isInSet(child.marks)) {
+      runFrom = -1
+      return
+    }
+    if (runFrom < 0) runFrom = childFrom
+    if (runFrom <= from && from <= childTo) target = { from: runFrom, to: childTo, href: target.href }
+  })
+  return target
+}
+
+// Sets (or, with `href` empty, removes) the link on the target. With
+// nothing selected and no link there, the address goes in as the link's
+// own text.
+function applyLink(view: EditorView, target: LinkTarget, href: string) {
+  const link = view.state.schema.marks.link
+  const tr = view.state.tr
+  if (target.from === target.to) {
+    if (!href) return
+    tr.insertText(href, target.from).addMark(target.from, target.from + href.length, link.create({ href }))
+  } else {
+    tr.removeMark(target.from, target.to, link)
+    if (href) tr.addMark(target.from, target.to, link.create({ href }))
+  }
+  view.dispatch(tr.scrollIntoView())
+}
+
+type LinkBox = LinkTarget & {
+  anchor: { getBoundingClientRect: () => DOMRect; contextElement: Element }
+}
+
 export default function MilkdownEditor({
   id,
   defaultValue,
@@ -128,6 +211,8 @@ export default function MilkdownEditor({
   onProblem,
   readOnly = false,
   autoFocus = false,
+  placeholder,
+  maxLength,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -136,11 +221,19 @@ export default function MilkdownEditor({
 }: RichTextEditorProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<Editor | null>(null)
+  const [linkBox, setLinkBox] = useState<LinkBox | null>(null)
+  const [length, setLength] = useState(defaultValue.length)
   // The latest props, for the editor's callbacks, which are set up once.
-  const latest = useRef({ onChange, onProblem, readOnly })
+  const latest = useRef({ onChange, onProblem, readOnly, placeholder })
   useEffect(() => {
-    latest.current = { onChange, onProblem, readOnly }
+    latest.current = { onChange, onProblem, readOnly, placeholder }
   })
+
+  const ids = useId()
+  const counterId = `${ids}-count`
+  // The count shows from 80% of the limit: below that it's noise.
+  const showCount = maxLength !== undefined && length >= maxLength * 0.8
+  const describedBy = [ariaDescribedBy, showCount ? counterId : undefined].filter(Boolean).join(' ')
 
   const attributes: Record<string, string> = {
     'aria-multiline': 'true',
@@ -150,9 +243,11 @@ export default function MilkdownEditor({
   if (id) attributes.id = id
   if (ariaLabel) attributes['aria-label'] = ariaLabel
   if (ariaLabelledBy) attributes['aria-labelledby'] = ariaLabelledBy
-  if (ariaDescribedBy) attributes['aria-describedby'] = ariaDescribedBy
+  if (describedBy) attributes['aria-describedby'] = describedBy
   if (ariaInvalid) attributes['aria-invalid'] = 'true'
+  if (placeholder) attributes['aria-placeholder'] = placeholder
   const attributesKey = JSON.stringify(attributes)
+
 
   // The editor is made once, from the Markdown it opened with.
   useEffect(() => {
@@ -170,6 +265,7 @@ export default function MilkdownEditor({
         const merged = mergeMarkdown(original, baseline, current)
         latest.current.onProblem?.(null)
         latest.current.onChange(merged)
+        setLength(merged.length)
       } catch (error) {
         if (!(error instanceof MarkdownMergeError)) throw error
         latest.current.onProblem?.(error.message)
@@ -186,6 +282,80 @@ export default function MilkdownEditor({
           }),
           props: {
             transformPasted: (slice) => new Slice(htmlToText(slice.content), slice.openStart, slice.openEnd),
+          },
+        }),
+    )
+
+    // Opens the link box at the start of what the link applies to.
+    const openLink = (view: EditorView) => {
+      if (!view.editable) return
+      const target = linkTarget(view.state)
+      const point = view.coordsAtPos(target.from)
+      setLinkBox({
+        ...target,
+        anchor: {
+          getBoundingClientRect: () => new DOMRect(point.left, point.top, 0, point.bottom - point.top),
+          contextElement: view.dom,
+        },
+      })
+    }
+
+    // Paste, copy, the editor's own keys and the placeholder.
+    const input = $prose(
+      (ctx) =>
+        new Plugin({
+          props: {
+            // Plain text is read as Markdown, so `## Notes` or `**bold**`
+            // copied from another app arrives formatted; raw HTML in it
+            // still arrives as text. A paste with HTML of its own (from a
+            // web page) is ProseMirror's, through transformPasted above.
+            handlePaste: (view, event) => {
+              const data = event.clipboardData
+              if (!data || !view.editable || data.getData('text/html')) return false
+              const text = data.getData('text/plain')
+              if (!text || view.state.selection.$from.parent.type.spec.code) return false
+              const parsed = ctx.get(parserCtx)(text)
+              if (!parsed || typeof parsed === 'string') return false
+              // Text with no Markdown in it (one plain paragraph) goes in
+              // exactly as typed, spaces at its ends kept.
+              const only = parsed.childCount === 1 ? parsed.firstChild : null
+              if (only?.type.name === 'paragraph' && only.childCount === 1 && only.textContent === text.trim()) {
+                view.dispatch(view.state.tr.insertText(text).scrollIntoView())
+                return true
+              }
+              view.dispatch(view.state.tr.replaceSelection(Slice.maxOpen(htmlToText(parsed.content))).scrollIntoView())
+              return true
+            },
+            // A copy is Markdown, so it pastes into a plain text field
+            // (or another Markdown editor) as written.
+            clipboardTextSerializer: (slice) => {
+              const doc = slice.content.firstChild?.isBlock
+                ? ctx.get(schemaCtx).topNodeType.createAndFill(undefined, slice.content)
+                : null
+              return doc ? ctx.get(serializerCtx)(doc) : slice.content.textBetween(0, slice.content.size, '\n\n')
+            },
+            handleKeyDown: (view, event) => {
+              const mod = event.metaKey || event.ctrlKey
+              if (mod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'k') {
+                event.preventDefault()
+                openLink(view)
+                return true
+              }
+              // Kept from the field: Ctrl/Cmd+Enter (shifted or not) saves
+              // everywhere else.
+              if (mod && event.shiftKey && event.key === 'Enter' && view.editable && toggleTaskItem(view)) {
+                event.preventDefault()
+                event.stopPropagation()
+                return true
+              }
+              return false
+            },
+            decorations: (state) => {
+              const text = latest.current.placeholder
+              const only = state.doc.childCount === 1 ? state.doc.firstChild : null
+              if (!text || !only || only.type.name !== 'paragraph' || only.content.size > 0) return null
+              return DecorationSet.create(state.doc, [Decoration.node(0, only.nodeSize, { 'data-placeholder': text })])
+            },
           },
         }),
     )
@@ -210,6 +380,7 @@ export default function MilkdownEditor({
       .use(gfm)
       .use(history)
       .use(changes)
+      .use(input)
 
     void make.create().then((editor) => {
       if (cancelled) {
@@ -243,33 +414,134 @@ export default function MilkdownEditor({
     })
   }, [readOnly, attributesKey])
 
+  const closeLink = () => {
+    setLinkBox(null)
+    editorRef.current?.action((ctx) => ctx.get(editorViewCtx).focus())
+  }
+
   return (
-    <div
-      ref={rootRef}
-      data-slot="rich-text-editor"
-      className={cn(
-        'min-h-24 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 type-body text-foreground break-words transition-colors',
-        'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30',
-        'has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20',
-        'has-[[aria-readonly=true]]:text-muted-foreground',
-        // The same type roles <Markdown> uses, so text reads the same
-        // being edited as being read.
-        '[&_.ProseMirror]:flex [&_.ProseMirror]:min-h-20 [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
-        '[&_h3]:type-section-title [&_h4]:type-section-title [&_h5]:type-label [&_h6]:type-label',
-        '[&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1 [&_ul]:pl-6',
-        '[&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1 [&_ol]:pl-6',
-        '[&_li[data-item-type=task]]:-ml-6 [&_li[data-item-type=task]]:flex [&_li[data-item-type=task]]:list-none [&_li[data-item-type=task]]:items-start [&_li[data-item-type=task]]:gap-2',
-        '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
-        '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4',
-        '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground',
-        '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:font-mono',
-        '[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:font-mono',
-        '[&_hr]:border-border',
-        '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:type-label',
-        // Raw HTML from the text: shown as its characters, never as markup.
-        '[&_span[data-type=html]]:rounded [&_span[data-type=html]]:bg-muted [&_span[data-type=html]]:px-1 [&_span[data-type=html]]:font-mono [&_span[data-type=html]]:text-foreground',
-        className,
+    <>
+      <div
+        ref={rootRef}
+        data-slot="rich-text-editor"
+        className={cn(
+          'min-h-24 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 type-body text-foreground break-words transition-colors',
+          'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30',
+          'has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20',
+          'has-[[aria-readonly=true]]:text-muted-foreground',
+          // The same type roles <Markdown> uses, so text reads the same
+          // being edited as being read.
+          '[&_.ProseMirror]:flex [&_.ProseMirror]:min-h-20 [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
+          '[&_h3]:type-section-title [&_h4]:type-section-title [&_h5]:type-label [&_h6]:type-label',
+          '[&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1 [&_ul]:pl-6',
+          '[&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1 [&_ol]:pl-6',
+          '[&_li[data-item-type=task]]:-ml-6 [&_li[data-item-type=task]]:flex [&_li[data-item-type=task]]:list-none [&_li[data-item-type=task]]:items-start [&_li[data-item-type=task]]:gap-2',
+          '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
+          '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4',
+          '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground',
+          '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:font-mono',
+          '[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:font-mono',
+          '[&_hr]:border-border',
+          '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:type-label',
+          // Raw HTML from the text: shown as its characters, never as markup.
+          '[&_span[data-type=html]]:rounded [&_span[data-type=html]]:bg-muted [&_span[data-type=html]]:px-1 [&_span[data-type=html]]:font-mono [&_span[data-type=html]]:text-foreground',
+          // The placeholder, in an empty document only (a decoration).
+          '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
+          className,
+        )}
+      />
+      {showCount && (
+        <p
+          id={counterId}
+          data-slot="rich-text-editor-count"
+          className={cn('text-right type-caption tabular-nums', length > maxLength ? 'text-destructive-text' : 'text-muted-foreground')}
+        >
+          {length > maxLength
+            ? `${(length - maxLength).toLocaleString()} characters over the limit of ${maxLength.toLocaleString()}`
+            : `${length.toLocaleString()} of ${maxLength.toLocaleString()} characters`}
+        </p>
       )}
-    />
+      <Popover open={linkBox !== null} onOpenChange={(open) => !open && closeLink()}>
+        {linkBox && (
+          <LinkForm
+            box={linkBox}
+            onApply={(href) => {
+              const editor = editorRef.current
+              editor?.action((ctx) => applyLink(ctx.get(editorViewCtx), linkBox, href))
+              closeLink()
+            }}
+            />
+        )}
+      </Popover>
+    </>
+  )
+}
+
+// The link box: the address, Apply, and Remove link for an existing one.
+// Enter (Ctrl/Cmd+Enter too) applies the link and stays its own: editing
+// in place listens for Ctrl/Cmd+Enter through the portal, and would save
+// the field without it. Esc is the popover's: it closes the box only.
+function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => void }) {
+  const [typed, setTyped] = useState(box.href)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = useId()
+  const errorId = `${inputId}-error`
+
+  const apply = () => {
+    const href = linkHref(typed)
+    if (href === null) {
+      setError('Enter a web or email address, like https://example.com.')
+      return
+    }
+    onApply(href)
+  }
+
+  const onKeyDown = (event: ReactKeyboardEvent) => {
+    if (event.key === 'Enter' && event.target === inputRef.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      apply()
+    }
+  }
+
+  return (
+    <PopoverContent
+      anchor={box.anchor}
+      align="start"
+      aria-label={box.href ? 'Edit link' : 'Add link'}
+      initialFocus={inputRef}
+      finalFocus={false}
+      className="w-80"
+      onKeyDown={onKeyDown}
+    >
+      <Field data-invalid={error ? true : undefined}>
+        <FieldLabel htmlFor={inputId}>Link address</FieldLabel>
+        <Input
+          ref={inputRef}
+          id={inputId}
+          value={typed}
+          placeholder="https://"
+          autoComplete="off"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          onChange={(event) => {
+            setTyped(event.target.value)
+            setError(null)
+          }}
+        />
+        {error && <FieldError id={errorId}>{error}</FieldError>}
+      </Field>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={apply}>
+          Apply
+        </Button>
+        {box.href && (
+          <Button size="sm" variant="outline" onClick={() => onApply('')}>
+            Remove link
+          </Button>
+        )}
+      </div>
+    </PopoverContent>
   )
 }

@@ -44,6 +44,7 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
+  { id: 'app-richtexteditor--features', mustShow: 'characters over the limit' },
   { id: 'app-stagecircle--default', mustShow: 'In progress' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell', mustShow: 'Bookshelf' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },

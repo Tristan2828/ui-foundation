@@ -10,21 +10,27 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
+// `anchor` is this repo's patch to the upstream primitive: a popover with
+// no trigger of its own, placed at a point (the rich-text editor's link
+// box, at the caret). A local patch: re-running `shadcn add popover` here
+// would overwrite it. Diff against upstream before taking a new version.
 function PopoverContent({
   className,
   align = "center",
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
+  anchor,
   ...props
 }: PopoverPrimitive.Popup.Props &
   Pick<
     PopoverPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
+    "align" | "alignOffset" | "side" | "sideOffset" | "anchor"
   >) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Positioner
+        anchor={anchor}
         align={align}
         alignOffset={alignOffset}
         side={side}
