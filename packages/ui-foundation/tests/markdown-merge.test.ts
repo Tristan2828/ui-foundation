@@ -49,6 +49,42 @@ describe('mergeMarkdown', () => {
     expect(merged).toBe('| Part | Count | Note |\n| :--- | ---: | :---: |\n| Receiver | 1 | small |\n| Battery | 2 | AA |\n\nAfter the tableEdited.\n')
   })
 
+  // Blocks the editor writes its own way on load (a short table row padded,
+  // marks nested its way) still match their original, so an edit elsewhere
+  // keeps them byte for byte.
+  for (const name of ['shortTableRow', 'boldLink', 'nestedMarks']) {
+    it(`${name}: editing the intro keeps the block the editor normalized as written`, () => {
+      const { markdown, editorWrites } = MARKDOWN_FIXTURES[name]
+      expect(editorWrites).not.toBe(markdown)
+      const firstLine = editorWrites.slice(0, editorWrites.indexOf('\n'))
+      const merged = mergeMarkdown(markdown, editorWrites, editorWrites.replace(firstLine, `${firstLine} Edited.`))
+      expect(merged).toBe(markdown.replace(firstLine, `${firstLine} Edited.`))
+    })
+  }
+
+  it('deletes an untouched table the editor padded, without bringing it back', () => {
+    const { markdown, editorWrites } = MARKDOWN_FIXTURES.shortTableRow
+    const current = editorWrites.slice(0, editorWrites.indexOf('| a')) + editorWrites.slice(editorWrites.indexOf('Outro.'))
+    expect(mergeMarkdown(markdown, editorWrites, current)).toBe('Intro line.\n\nOutro.\n')
+  })
+
+  it("writes a block the editor shows its own way, nothing lost, as the editor does when it can't match it", () => {
+    // A rewrite on load that `meaning` doesn't know (here, made up) still
+    // saves: the block is written the editor's way, never twice.
+    const original = 'Intro.\n\nSome   text,\n*kept*.\n\nOutro.\n'
+    const baseline = 'Intro.\n\n**Some text, kept.**\n\nOutro.\n'
+    const current = baseline.replace('Intro.', 'Intro, edited.')
+    expect(mergeMarkdown(original, baseline, current)).toBe('Intro, edited.\n\n**Some text, kept.**\n\nOutro.\n')
+  })
+
+  it('refuses, rather than save a block the editor dropped part of (an image)', () => {
+    // The editor doesn't show images: writing its version would delete them.
+    const original = 'Intro.\n\nText ![a chart](chart.png) more.\n\nOutro.\n'
+    const baseline = 'Intro.\n\nText  more.\n\nOutro.\n'
+    const current = baseline.replace('Intro.', 'Intro, edited.')
+    expect(() => mergeMarkdown(original, baseline, current)).toThrow(MarkdownMergeError)
+  })
+
   it("keeps a reference link and its definition when another block is edited", () => {
     const { markdown, editorWrites } = MARKDOWN_FIXTURES.referenceLinks
     const merged = mergeMarkdown(markdown, editorWrites, editLastBlock(editorWrites))

@@ -5,6 +5,30 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.16.2 — two rich-text fixes
+
+Fixes only. **Apps need nothing beyond the bump** (no `sync`, no code).
+
+- **Documents the editor tidies on load save again.** A table with a row
+  shorter than its header, or marks nested another way (bold inside a
+  link: `[**a**](u)`), made *every* edit to that document refuse to save
+  ("This text can't be saved without changing parts you didn't edit").
+  The editor shows such a block its own way (padded cells,
+  `**[a](u)**`), and the save didn't recognise it as the same block. Now
+  it does: an edit elsewhere keeps the block exactly as written. A block
+  the editor shows some other way it isn't recognised in is written as
+  the editor shows it, rather than refusing, as long as nothing in it is
+  lost. If something would be (the editor doesn't show images), the save
+  still refuses, so an image is never deleted.
+- **The toolbar's `aria-controls` no longer names a missing element.**
+  It pointed at the editable element from its first paint, a moment
+  before the editor made that element, which axe flags as a critical
+  `aria-valid-attr-value` (intermittently, on timing). It's set once the
+  editor exists.
+- **The editable text has ProseMirror's required `white-space: pre-wrap`**,
+  so a space typed at the end of a line is a space, not `&nbsp;`, and the
+  console warning is gone.
+
 ## 3.16.1 — labelled single choices in the template
 
 Template and docs only; no package code changed. Run

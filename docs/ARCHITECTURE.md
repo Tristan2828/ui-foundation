@@ -236,7 +236,15 @@ stop and say so rather than ship a lossy one.
 An untouched document saves back byte for byte (nothing changed → no
 request at all). An edited one keeps every top-level block the person
 didn't change exactly as it was written; only a changed or new block is
-written by the editor, in the document's own bullet and rule marks. A
+written by the editor, in the document's own bullet and rule marks.
+Blocks are matched by what a reader sees, not how the tree is nested:
+inline text as runs with their set of marks (so `[**a**](u)` is
+`**[a](u)**`), a table's rows padded to its widest (3.16.2: the editor
+pads short rows, and both had made every edit refuse). A block the editor
+shows some other way the matching misses is written as the editor shows
+it, but only if nothing in it is lost (no text, address or image). If
+something would be, it's kept as written and the guard refuses: the
+editor drops images on load. A
 guard re-parses the result and refuses to save if it would mean anything
 other than what's on screen (the draft stays, with a message). Tested in
 node over the editor's real output (`tests/markdown-merge.test.ts`) and
