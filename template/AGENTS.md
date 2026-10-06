@@ -188,23 +188,25 @@ uses the pattern (the playbook then stops and asks).
 | Pattern | Copy |
 |---|---|
 | Gateway module and its contract tests | `src/api/gateway/widgets.ts`, `tests/gateway/widgets.test.ts` |
-| Query hooks, mutations, saving one field (`useSaveWidgetField`) | `src/routes/widgets/use-widgets.ts` |
+| Query hooks, mutations, saving one field (`useSaveWidgetField` for quick actions, `useEditWidgetField` for editing in place) | `src/routes/widgets/use-widgets.ts` |
 | Form schema, form ↔ wire conversion | `src/routes/widgets/widget-schema.ts` |
 | Table, toolbar filters, URL state | `src/routes/widgets/widgets-table.tsx` |
 | Saved views, columns per view | `VIEWS` and the "Saved views" group in `widgets-table.tsx` |
 | Columns, stable column definitions, title linking to the view | `src/routes/widgets/widgets-columns.tsx`, `category-names.tsx` |
 | Values shared by table and view (badge maps, formatters) | `src/routes/widgets/widget-format.ts` |
 | View: sections, not-set labels, Markdown | `src/routes/widgets/widget-view.tsx` |
-| Quick actions on the view (status picker, yes/no switch, ticking sub-record items) | `src/routes/widgets/widget-quick-actions.tsx` |
+| Quick actions on the view (yes/no switch, ticking sub-record items) | `src/routes/widgets/widget-quick-actions.tsx` |
+| Editing in place on the view (title, badge, field rows, rich-text Markdown) | `widgetEdits` in `src/routes/widgets/widget-view.tsx`; `e2e/widget-edit-in-place.spec.ts` |
+| One control per field, shared by form and view; Markdown as rich text | `src/routes/widgets/widget-fields.tsx` |
 | Delete with a confirm dialog, in the view's header | `src/routes/widgets/delete-widget-action.tsx` |
 | Form, returning to the view | `src/routes/widgets/widget-form.tsx` |
 | `reference` (searchable combobox) | Category in `widget-form.tsx`, over `src/routes/widgets/use-widget-categories.ts` |
-| `multi reference`, lookup by ids | Extra Categories in `widget-form.tsx` and `widgets-table.tsx`; `src/api/gateway/widget-categories.ts` (`getWidgetCategoriesByIds`) |
-| `single choice` | Status in `widget-form.tsx` and `widgets-table.tsx` |
+| `multi reference`, lookup by ids | Extra Categories in `widget-fields.tsx` (`WidgetExtraCategoriesPicker`) and `widgets-table.tsx`; `src/api/gateway/widget-categories.ts` (`getWidgetCategoriesByIds`) |
+| `single choice` | Status in `widget-fields.tsx` (`WidgetStatusSelect`) and `widgets-table.tsx` |
 | `multi choice`, option labels | Tags in `widget-form.tsx`, `widgets-table.tsx`, `widgets-columns.tsx`; `WIDGET_TAG_LABELS` in `widget-schema.ts` |
 | `yes/no` marked `toggle` | `src/routes/widgets/in-stock-toggle.tsx` |
 | `computed` | Progress (`checklistState`): `widget-schema.ts`, `widgets-columns.tsx`, the backend's `routers/widgets.py` |
 | Sub-records | Checklist in `widget-form.tsx` (edited) and `widget-quick-actions.tsx` (ticked on the view; the read-only markup is in `docs/foundation/add-an-entity.md`) |
 | Mocks | `src/mocks/data.ts`, `src/mocks/handlers.ts` |
-| Screen states and specs | `e2e/widgets-table.spec.ts`, `e2e/widget-view.spec.ts`, `e2e/widget-form.spec.ts` |
+| Screen states and specs | `e2e/widgets-table.spec.ts`, `e2e/widget-view.spec.ts`, `e2e/widget-form.spec.ts`, `e2e/widget-edit-in-place.spec.ts` |
 | Backend router, model, migration | `backend/app/routers/widgets.py`, `backend/app/models.py`, `backend/migrations/versions/` |

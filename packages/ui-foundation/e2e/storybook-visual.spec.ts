@@ -37,7 +37,11 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // it answers for its contrast and its colours the way a primitive does.
 // Each id comes with text the story must show, so an iframe that rendered
 // nothing can't pass every rule trivially.
-const COMPOSITE_STORIES = [{ id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' }]
+// <RichTextEditor> is the same text being edited, so it answers the same way.
+const COMPOSITE_STORIES = [
+  { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
+  { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
+]
 
 function storyUrlById(id: string, theme: 'light' | 'dark') {
   return `${STORYBOOK_URL}/iframe.html?id=${id}&viewMode=story&globals=theme:${theme}`

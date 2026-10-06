@@ -87,6 +87,7 @@ src/api/gateway/<entity>.ts            anti-corruption layer: wire → Page<T> /
      └ safeFetch, toAppError           ← package (/gateway): the only fetch path
 src/routes/<entity>/use-*.ts           TanStack Query hooks over the gateway
      └ useRecordUpdate                 ← package: one record's fields saved without the form
+src/routes/<entity>/*-fields          one control per field, shared by form and view (+ RichTextEditor) ← package
 src/routes/<entity>/*-table            thin consumer of DataTable                 ← package
 src/routes/<entity>/*-view             thin consumer of EntityView (+ Markdown)   ← package
 src/routes/<entity>/*-form             thin consumer of EntityForm                ← package
@@ -122,8 +123,15 @@ src/main.tsx                           FoundationProviders (theme, query client,
   record the server returns, and rolled back with a toast on a refusal.
   Saves of one record run in order (a TanStack mutation scope per record)
   and each request is built from the server's latest record when it's
-  sent, so quick changes never lose each other. It is the single-field
-  save that editing in place will build on.
+  sent, so quick changes never lose each other.
+- **Editing in place** (3.13) is that same save, not optimistic and with
+  no toast: a field marked `edit` on `EntityView` turns into the form's
+  own control where it's shown and saves when you leave it. The rules
+  (one field at a time, a failed save keeps the draft, the leave-page
+  prompt) live in one React-free store, `edit-in-place-store.ts`, unit
+  tested on their own. The leave prompt is React Router's `useBlocker`,
+  so apps need a data router (`createBrowserRouter`), as the template
+  has.
 
 Every boundary is enforced mechanically: see the Hard Rules in
 [`conventions/AGENTS.md`](../packages/ui-foundation/conventions/AGENTS.md),
@@ -153,7 +161,7 @@ the app:
 | Gate | Runs | Covers |
 |---|---|---|
 | `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
-| `npm run verify` (root) | before any PR; CI (`verify`) | + the package's Storybook checks on every primitive (axe in both themes; every colour it paints resolves to a token) and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
+| `npm run verify` (root) | before any PR; CI (`verify`) | + the package's Storybook checks on every primitive (axe in both themes; every colour it paints resolves to a token), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
 | `npm run verify:backend` | backend changes; CI (`verify-backend`) | the template backend's mypy strict, pytest (SQLite), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
@@ -190,6 +198,56 @@ Rules learned the hard way (each cost a phase to find):
 | Every rule has a mechanical enforcer | Agents route around rules they don't see the point of; a rule only in AGENTS.md is a wish |
 | Exact tool versions, never `@latest` | Many fresh sessions over weeks must run the same tools |
 | Shared package + template (3.0) | See "Why shared code" above |
+| Milkdown for rich-text Markdown (3.13) | Its Markdown goes in and out through remark, the parser `<Markdown>` already renders with. See "The rich-text editor" below |
+
+## The rich-text editor (3.13)
+
+Long text written as Markdown edits as formatted text (Notion-style), on
+the form and in place, through the package's `RichTextEditor`. It needed
+a new dependency, so this is its case, the one the developer asked for
+before it went on the allowlist (`packages/ui-foundation/deps-allowlist.json`:
+`@milkdown/kit`, plus `unified` and `remark-parse`, already in the tree
+through `react-markdown` and now imported directly).
+
+**The bar:** notes are stored as Markdown, and saving must never rewrite
+what the person didn't change. If no editor met that, the plan was to
+stop and say so rather than ship a lossy one.
+
+| Criterion | Milkdown 7.22 (`@milkdown/kit`) |
+|---|---|
+| Maintained | Releases through 2026 (7.22.2 on 2026-09-23); ProseMirror underneath, itself long-lived |
+| React 19 | Framework-agnostic core, mounted by our own component; no React peer |
+| Markdown round trip | remark in and out: the same parser and GFM extension `<Markdown>` renders with, so what's edited is what's shown. Faithful to meaning on every fixture (headings, nested lists, tables, links, task lists, raw HTML), but it writes its own style: `*` bullets, padded tables, `***` rules, `\` hard breaks, inline links for reference links. Hence the merge below |
+| Accessible | A `role="textbox"` contenteditable with `aria-multiline`, named by `aria-label`/`aria-labelledby`; axe-clean in both themes (its Storybook story); keyboard throughout |
+| Bundle | ~106 KB gzipped in the app's build, about 47 KB of it remark/micromark that `react-markdown` already ships. Loaded on first use (`React.lazy`): the view's own chunk doesn't grow |
+
+**What closes the gap: block-by-block saving** (`src/lib/markdown-merge.ts`).
+An untouched document saves back byte for byte (nothing changed → no
+request at all). An edited one keeps every top-level block the person
+didn't change exactly as it was written; only a changed or new block is
+written by the editor, in the document's own bullet and rule marks. A
+guard re-parses the result and refuses to save if it would mean anything
+other than what's on screen (the draft stays, with a message). Tested in
+node over the editor's real output (`tests/markdown-merge.test.ts`) and
+in a browser on the real editor (`e2e/rich-text-editor.spec.ts`).
+
+**What's left of the gap:** inside a block the person edited, the
+editor's style applies: a table edited gets padded cells, a reference
+link in an edited paragraph becomes inline (its definition is kept).
+Meaning is never lost; formatting inside the edited block may be.
+
+**No HTML gets in:** raw HTML already in the text shows as its characters
+(an uneditable chip), HTML pasted as such a chip becomes escaped text,
+and Milkdown's empty-line plugin, which writes `<br />`, is left out.
+
+**Considered:** Tiptap 3 with `@tiptap/markdown` (maintained, React 19;
+parses with marked, so what's edited could differ from what `<Markdown>`
+renders), Lexical with `@lexical/markdown` (its own transformers, not
+remark; tables need a transformer of your own), MDXEditor (Lexical plus
+mdast, with a full editing UI of its own), BlockNote (its Markdown export
+is named `blocksToMarkdownLossy`). Only Milkdown was built and measured;
+the others were ruled out on how they parse or serialize Markdown, not
+by measurement.
 
 ## Releasing
 

@@ -97,3 +97,20 @@ export function useSaveWidgetField(id: number) {
     name: (widget) => widget.name,
   })
 }
+
+// One widget field edited in place on the view: the same save as the quick
+// actions, but not optimistic (the field shows "Saving…" and the value
+// changes only once the server agrees) and with no toast (a refusal comes
+// back to the field, which shows the reason under it). `mutateAsync`
+// resolves once the view holds the widget the server returned.
+export function useEditWidgetField(id: number) {
+  return useRecordUpdate<Widget, WidgetUpdate>({
+    id,
+    detailKey: widgetsKeys.detail(id),
+    listsKey: [...widgetsKeys.all, 'list'],
+    update: updateWidget,
+    name: (widget) => widget.name,
+    optimistic: false,
+    toastOnError: false,
+  })
+}

@@ -8,9 +8,9 @@ per-entity, and only the shape is reusable. Copy the markup into your
 Patterns 1–10 were each chosen for a real column, from a page of
 alternatives ([`column-options.md`](column-options.md)), not designed in the abstract.
 Patterns 12 (boolean), 15 (yes/no flipped in the row), 16 (title linking
-to its view) and 17 (quick action on the view) are the template's own
-references: Widget's In Stock and Name columns and its view render them,
-and their specs pin them. The other patterns from 11 on are
+to its view), 17 (quick action on the view) and 18 (editable value) are
+the template's own references: Widget's In Stock and Name columns and its
+view render them, and their specs pin them. The other patterns from 11 on are
 marked **Unproven**: written ahead of a real
 column, so no app has tested them on real data yet. Prefer a proven
 pattern when one fits. When you use an unproven one, say so in the
@@ -397,22 +397,23 @@ cell: ({ row }) => (
 
 ## 17. Quick action on the view
 
-A value on the record's view that changes right where it's shown, saved on
-its own the moment it changes, without the form: a status picked from the
-header, a yes/no flipped, a sub-record item ticked. Widget's view is the
-reference (`src/routes/widgets/widget-quick-actions.tsx`): Status and In
-Stock in the header, Checklist items ticked in place.
+A value on the record's view that changes right where it's shown, with one
+click, saved on its own the moment it changes, without the form: a yes/no
+flipped, a sub-record item ticked. Widget's view is the reference
+(`src/routes/widgets/widget-quick-actions.tsx`): In Stock in the header,
+Checklist items ticked in place.
 
 **Read-only is the default.** A value on the view is a control only when
-the plan's "View screen" names it under `Quick actions`; everything else
-renders as its table cell does, and changes through Edit. A quick action
-is for a value people change often and can change back as easily: never
-anything destructive, never text (that's editing in place, not built
-yet).
+the plan's "View screen" names it under `Quick actions` (or `Edit in
+place`, pattern 18); everything else renders as its table cell does, and
+changes through Edit. A quick action is for a value people change often
+and can change back as easily: never anything destructive. Anything you
+type or pick from a list (text, a status) edits in place instead
+(pattern 18); a status was a quick action in 3.12, and moved there in
+3.13.
 
 | The plan's field | The control | Accessible name |
 |---|---|---|
-| `single choice`, in the header | A `Select` (`size="sm"`) whose value and options render as the field's tone-mapped `Badge` (pattern 5), in place of the badge | The field's label: `Status` |
 | `yes/no`, in the header or a field row | A `Switch` (`size="sm"`) with the value in words beside it, `aria-hidden` (pattern 15) | The field's label: `In stock` |
 | A sub-record list's `yes/no` item field | Each item a `Checkbox` inside a `<label>` with the item's text, so the text ticks it too; the list in one `role="group"` named for the list, described by the done-count | `Done: <item text>` (a visually hidden `Done: ` inside the label) |
 
@@ -452,12 +453,108 @@ const save = useSaveWidgetField(widget.id) // one per control
 - **Saving shows, and blocks nothing.** Each control keeps its own
   "Saving" spinner in a slot that's always there (nothing moves), and
   nothing is disabled: not the other controls, not this one, not Edit.
-- **Keep the value's look.** The status keeps its tone-mapped badge
-  inside the picker; the yes/no keeps its words; a ticked item keeps the
-  muted text a done item had. The control only adds the affordance.
+- **Keep the value's look.** The yes/no keeps its words; a ticked item
+  keeps the muted text a done item had. The control only adds the
+  affordance.
 - **One component per control, in its own file** (`<entity>-quick-actions.tsx`),
   so each hook lives in a component and the view's sections stay plain
   data.
 - **Cost:** one click changes data, with no confirmation, and the server
   may still say no. Keep the list short: a view where every value is a
   control reads as a form.
+
+## 18. Editable value
+
+A value on the record's view that turns into **the form's own control**
+where it's shown, and saves when you leave it: a title, a status, a
+price, notes, a list of linked records. Widget's view is the reference
+(`src/routes/widgets/widget-view.tsx`): Name (the title), Status (its
+header badge), Price, Description (rich text) and Extra Categories, with
+the controls in `widget-fields.tsx`, the same ones the form uses.
+
+The rule behind every part of it: **nothing typed is ever lost.**
+
+**Which values.** Only those the plan's "View screen" names under `Edit
+in place`; read-only is the default, and a value not named renders
+exactly as it did. Single values only: text, long text, a single choice
+(optional ones with their "not set" option), an integer or a rating, a
+yes/no, a single or multi reference. Never a computed field, and never a
+sub-record list (adding, removing and reordering items stays on the
+form). The view's Edit button and the form stay.
+
+**At rest: says it's editable without shouting.** The value reads as it
+always did. Hover tints it (`bg-muted`) and shows a pencil; the pencil is
+a real button ("Edit <label>"), so Tab reaches it and Enter opens the
+field, and its focus ring tints the value too. On a touch screen the
+pencil always shows. A click anywhere on the value opens it, except on a
+link inside it (a reference to a record with a view, a link in the
+notes), which still navigates.
+
+**Open: the form's control, nothing else.** The same labels, choices and
+pickers as `EntityForm`; the field's label is its accessible name. No
+Save button, no Undo:
+
+| Kind (`editInPlace({ kind })`) | Saves on | Esc |
+|---|---|---|
+| `text`: one line | Enter, or leaving it | puts the saved value back |
+| `long-text`: notes, rich text for Markdown | Ctrl/Cmd+Enter, or leaving it (Enter is a new line) | the same |
+| `choice`: a select, a switch, a single reference | the pick (its list opens with the field, non-modal) | closes the list with nothing picked: gives up |
+| `multi`: a multi reference | leaving it, or Ctrl/Cmd+Enter (Enter picks) | closes the list first; Esc again gives up |
+
+Leaving means clicking or tabbing anywhere else. Unchanged closes with no
+request; a value the form's schema refuses never leaves the browser and
+shows the schema's message. Opening another value saves the open one
+first; if that save fails, the open one stays and the other doesn't
+open.
+
+**Saving: still open, read-only, and says so.** Under the control,
+"Saving…" with a spinner (`role="status"`) until the server agrees, then
+it closes on the saved value. **Not optimistic**: the value only shows as
+saved once it is, and the view shows the record the server returned (a
+side effect included). The rest of the page stays usable.
+
+**Refused: still open, with exactly what was typed and why.** The reason
+under the control in the destructive text tone (`FieldError`), word for
+word: a 422's field error as `EntityForm` shows it, or the error's
+message (a 500, no answer). The control is `aria-invalid` and described
+by the reason. Nothing reverts on its own, and there's no toast. Leaving
+again retries; Esc gives up.
+
+**Leaving the page** (a link, Back) while a value holds unsaved text asks
+"Discard your changes?" first (Keep editing / Discard); closing the tab
+asks through the browser. A link press doesn't save the field on its
+way out: the prompt decides.
+
+```tsx
+const editField = useEditWidgetField(widget.id) // optimistic: false, toastOnError: false
+const price = editInPlace({
+  kind: 'text',
+  value: widget.price,                         // as the form's control holds it
+  schema: widgetFormSchema.shape.price,        // the form's own rule
+  save: (price) => editField.mutateAsync({ price }),
+  control: (props) => (
+    <WidgetPriceInput id={props.id} value={props.value} onChange={props.onChange}
+      invalid={props.invalid} readOnly={props.disabled}
+      aria-label={props.label} aria-describedby={props.describedBy} />
+  ),
+})
+// A field: { label: 'Price', value: <…as the table shows it…>, edit: price }
+// The title: <EntityView titleEdit={{ label: 'Name', ...name }} />
+// A badge: <EditableValue label="Status" edit={status} layout="inline"><Badge>…</Badge></EditableValue>
+```
+
+- **One control per field, shared with the form** (`<entity>-fields.tsx`):
+  each takes `value`/`onChange` and `readOnly`, and the form wraps it in a
+  `Controller`. Never a second, in-place-only control.
+- **Long text written as Markdown edits as rich text** (`RichTextEditor`):
+  formatted where it's read, saved as Markdown with every block the person
+  didn't touch kept exactly as written. On the form too, so it's one
+  control.
+- **The save is the single-field save** (`useRecordUpdate` with
+  `optimistic: false, toastOnError: false`, the entity's
+  `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.
+- **Keep the value's look at rest**: the badge stays a badge, the price
+  stays formatted. Only the open state looks like a form.
+- **Cost:** a value that looks like text but edits on click can surprise.
+  Keep it to the fields the plan names, and leave the form for everything
+  else.

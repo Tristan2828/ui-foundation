@@ -1,0 +1,363 @@
+import { expect, test, type Page } from '@playwright/test'
+import { waitForMswReady } from '@tristan2828/ui-foundation/testing'
+
+// Editing in place on the widget view (cell pattern 18): Name, Status,
+// Price, Description and Extra Categories turn into the form's own control
+// where they're shown and save when you leave them. Nothing typed is ever
+// lost: a refused save stays open with what was typed and the reason.
+
+// The body of every PATCH the page sends, in order.
+function patchBodies(page: Page) {
+  const bodies: unknown[] = []
+  page.on('request', (request) => {
+    if (request.method() === 'PATCH') bodies.push(request.postDataJSON())
+  })
+  return bodies
+}
+
+// Answers every widget PATCH with `status` and `body` from now on.
+type ErrorBody = { detail: string | { loc: (string | number)[]; msg: string; type: string }[] }
+
+async function refusePatches(page: Page, status: number, body: ErrorBody) {
+  await waitForMswReady(page)
+  await page.evaluate(
+    ([status, body]) => {
+      const { worker, http, HttpResponse } = window.__msw
+      worker.use(http.patch('*/api/widgets/:id', () => HttpResponse.json(body, { status: status as number })))
+    },
+    [status, body] as const,
+  )
+}
+
+// Holds every PATCH for `ms`, then lets the normal mocks answer it.
+async function delayPatches(page: Page, ms: number) {
+  await waitForMswReady(page)
+  await page.evaluate((ms) => {
+    const { worker, http } = window.__msw
+    worker.use(http.patch('*/api/widgets/:id', () => new Promise<undefined>((resolve) => setTimeout(resolve, ms))))
+  }, ms)
+}
+
+async function resetMswOverrides(page: Page) {
+  await page.evaluate(() => window.__msw.worker.resetHandlers())
+}
+
+function fieldValue(page: Page, label: string) {
+  return page
+    .locator('dl > div')
+    .filter({ has: page.locator('dt').getByText(label, { exact: true }) })
+    .locator('dd')
+}
+
+const title = (page: Page) => page.getByRole('heading', { level: 1 })
+
+async function openWidget(page: Page, id = 1) {
+  await page.goto(`/widgets/${id}`)
+  await expect(title(page)).toBeVisible()
+  await expect(page.locator('[data-state="success"]')).toBeVisible()
+}
+
+test.describe('widget view: editing in place', () => {
+  test('only the plan\'s fields offer it; the rest stay read-only', async ({ page }) => {
+    await openWidget(page)
+    for (const label of ['Name', 'Status', 'Price', 'Description', 'Extra Categories']) {
+      await expect(page.getByRole('button', { name: `Edit ${label}`, exact: true })).toHaveCount(1)
+    }
+    for (const label of ['Category', 'Tags', 'Available From', 'Assignee Email', 'Checklist']) {
+      await expect(page.getByRole('button', { name: `Edit ${label}`, exact: true })).toHaveCount(0)
+    }
+    // The view's own Edit button and form stay.
+    await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
+  })
+
+  test('text: click the title, type, Enter saves; shown as saved only once it is', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await delayPatches(page, 800)
+    await title(page).getByText('Wireless Mouse').click()
+    const name = page.getByRole('textbox', { name: 'Name' })
+    await expect(name).toBeFocused()
+    await expect(name).toHaveValue('Wireless Mouse')
+    await name.fill('Wireless Mouse Pro')
+    await page.keyboard.press('Enter')
+
+    // Saving: still open, read-only, says so; the rest of the page works.
+    await expect(page.getByRole('status').filter({ hasText: 'Saving…' })).toBeVisible()
+    await expect(name).toHaveAttribute('readonly', '')
+    await expect(name).toHaveValue('Wireless Mouse Pro')
+    await expect(page.getByRole('button', { name: 'Edit Price' })).toBeEnabled()
+
+    await expect(title(page)).toHaveText('Wireless Mouse Pro')
+    await expect(name).toHaveCount(0)
+    expect(bodies).toEqual([{ name: 'Wireless Mouse Pro' }])
+    // A keyboard save hands the caret back to the value's edit button.
+    await expect(page.getByRole('button', { name: 'Edit Name' })).toBeFocused()
+  })
+
+  test('an unchanged value closes with no request', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await title(page).getByText('Wireless Mouse').click()
+    await page.getByRole('textbox', { name: 'Name' }).press('Enter')
+    await expect(page.getByRole('textbox', { name: 'Name' })).toHaveCount(0)
+    await expect(title(page)).toHaveText('Wireless Mouse')
+    expect(bodies).toEqual([])
+  })
+
+  test('Esc gives up: the saved value comes back, nothing is sent', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await title(page).getByText('Wireless Mouse').click()
+    await page.getByRole('textbox', { name: 'Name' }).fill('Not kept')
+    await page.keyboard.press('Escape')
+    await expect(title(page)).toHaveText('Wireless Mouse')
+    await expect(page.getByRole('button', { name: 'Edit Name' })).toBeFocused()
+    expect(bodies).toEqual([])
+  })
+
+  test('from the keyboard: tab to the value, Enter edits, tabbing away saves', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await page.getByRole('button', { name: 'Edit Price' }).focus()
+    await page.keyboard.press('Enter')
+    const price = page.getByRole('textbox', { name: 'Price' })
+    await expect(price).toBeFocused()
+    await price.fill('30.00')
+    await page.keyboard.press('Tab')
+    await expect(fieldValue(page, 'Price')).toHaveText('$30.00')
+    expect(bodies).toEqual([{ price: '30.00' }])
+  })
+
+  test("a value the form's rules refuse is never sent, and says why", async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await fieldValue(page, 'Price').click()
+    await page.getByRole('textbox', { name: 'Price' }).fill('cheap')
+    await page.keyboard.press('Enter')
+    const price = page.getByRole('textbox', { name: 'Price' })
+    await expect(price).toHaveValue('cheap')
+    await expect(price).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByRole('alert')).toHaveText('Enter a price with exactly two decimal places, e.g. 19.99')
+    expect(bodies).toEqual([])
+  })
+
+  test('choice: the Status badge opens its list, and a pick saves', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await page.locator('header').last().getByText('active', { exact: true }).click()
+    await page.getByRole('option', { name: 'archived' }).click()
+    await expect(page.locator('header').last().getByText('archived', { exact: true })).toBeVisible()
+    await expect(page.getByRole('combobox', { name: 'Status' })).toHaveCount(0)
+    expect(bodies).toEqual([{ status: 'archived' }])
+    // The keyboard keeps its place: back on the value's edit button.
+    await expect(page.getByRole('button', { name: 'Edit Status' })).toBeFocused()
+  })
+
+  test('choice: closing the list with nothing picked gives up', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await page.getByRole('button', { name: 'Edit Status' }).click()
+    await expect(page.getByRole('option', { name: 'draft' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('combobox', { name: 'Status' })).toHaveCount(0)
+    await expect(page.locator('header').last().getByText('active', { exact: true })).toBeVisible()
+    expect(bodies).toEqual([])
+  })
+
+  test('long text: edited as rich text, Ctrl/Cmd+Enter saves, untouched parts saved as written', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    // Formatted, not Markdown syntax: the bold is bold, the list a list.
+    await expect(editor.locator('strong')).toHaveText('2.4GHz')
+    await expect(editor.locator('li')).toHaveCount(2)
+    await editor.locator('p').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' Quiet clicks.')
+    // Enter is a new line in long text, not a save.
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Backspace')
+    await expect(editor).toBeVisible()
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(description.getByText('Quiet clicks.')).toBeVisible()
+    await expect(editor).toHaveCount(0)
+    expect(bodies).toEqual([
+      {
+        description:
+          'A basic wireless mouse with a **2.4GHz** USB receiver. Quiet clicks.\n\n' +
+          '- Two buttons and a scroll wheel\n' +
+          '- Runs on one AA battery\n\n' +
+          'See the [setup guide](https://example.com/mouse-setup).',
+      },
+    ])
+  })
+
+  test('a link inside a value still navigates; a click anywhere else edits', async ({ page, context }) => {
+    await openWidget(page)
+    const description = page.getByRole('region', { name: 'Description' })
+    const opened = context.waitForEvent('page')
+    await description.getByRole('link', { name: /setup guide/ }).click()
+    await (await opened).close()
+    await expect(page.getByRole('textbox', { name: 'Description' })).toHaveCount(0)
+  })
+
+  test('multi reference: Enter picks, Esc closes the list only, leaving saves', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await fieldValue(page, 'Extra Categories').click()
+    const picker = page.getByRole('combobox', { name: 'Extra Categories' })
+    await expect(picker).toBeFocused()
+    await picker.fill('Furn')
+    const furniture = page.getByRole('option', { name: 'Furniture' })
+    await expect(furniture).toBeVisible()
+    // Enter picks the highlighted option (it doesn't save): the field
+    // stays open with both picks.
+    await furniture.hover()
+    await expect(furniture).toHaveAttribute('data-highlighted', '')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: 'Remove Furniture' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
+
+    // Esc with the list open closes the list, not the field.
+    await picker.press('ArrowDown')
+    await expect(picker).toHaveAttribute('aria-expanded', 'true')
+    await page.keyboard.press('Escape')
+    await expect(picker).toHaveAttribute('aria-expanded', 'false')
+    await expect(picker).toBeVisible()
+    expect(bodies).toEqual([])
+
+    await page.getByRole('heading', { level: 2, name: 'Details' }).click()
+    await expect(picker).toHaveCount(0)
+    await expect(fieldValue(page, 'Extra Categories')).toHaveText('FurnitureStationery')
+    expect(bodies).toEqual([{ extraCategoryIds: [3, 2] }])
+  })
+
+  test('a 422 stays open with exactly what was typed and the field error word for word', async ({ page }) => {
+    await openWidget(page)
+    await refusePatches(page, 422, {
+      detail: [{ loc: ['body', 'name'], msg: 'A widget with this name already exists', type: 'value_error' }],
+    })
+    await title(page).getByText('Wireless Mouse').click()
+    const name = page.getByRole('textbox', { name: 'Name' })
+    await name.fill('Standing Desk')
+    await page.keyboard.press('Enter')
+
+    await expect(page.getByRole('alert')).toHaveText('A widget with this name already exists')
+    await expect(name).toHaveValue('Standing Desk')
+    await expect(name).toHaveAttribute('aria-invalid', 'true')
+    await expect(name).toHaveAccessibleDescription('A widget with this name already exists')
+    // No toast, nothing reverted.
+    await expect(page.locator('[data-sonner-toast]')).toHaveCount(0)
+
+    // Esc gives up.
+    await page.keyboard.press('Escape')
+    await expect(title(page)).toHaveText('Wireless Mouse')
+  })
+
+  test('a 500 stays open the same way, and leaving again retries', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await refusePatches(page, 500, { detail: 'Database is down' })
+    await fieldValue(page, 'Price').click()
+    const price = page.getByRole('textbox', { name: 'Price' })
+    await price.fill('31.00')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('alert')).toHaveText('Database is down')
+    await expect(price).toHaveValue('31.00')
+
+    await resetMswOverrides(page)
+    await price.focus()
+    await page.getByRole('heading', { level: 2, name: 'Details' }).click()
+    await expect(fieldValue(page, 'Price')).toHaveText('$31.00')
+    expect(bodies).toEqual([{ price: '31.00' }, { price: '31.00' }])
+  })
+
+  test('no answer at all (offline) stays open with the reason', async ({ page }) => {
+    await openWidget(page)
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const { worker, http, HttpResponse } = window.__msw
+      worker.use(http.patch('*/api/widgets/:id', () => HttpResponse.error()))
+    })
+    await fieldValue(page, 'Price').click()
+    await page.getByRole('textbox', { name: 'Price' }).fill('32.00')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('alert')).toContainText('Network error')
+    await expect(page.getByRole('textbox', { name: 'Price' })).toHaveValue('32.00')
+  })
+
+  test('one field at a time: opening another saves the open one first', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await title(page).getByText('Wireless Mouse').click()
+    await page.getByRole('textbox', { name: 'Name' }).fill('Wireless Mouse Pro')
+    await fieldValue(page, 'Price').click()
+    await expect(page.getByRole('textbox', { name: 'Price' })).toBeFocused()
+    await expect(title(page)).toHaveText('Wireless Mouse Pro')
+    expect(bodies).toEqual([{ name: 'Wireless Mouse Pro' }])
+  })
+
+  test('one field at a time: if the open one can\'t save, it stays and the other doesn\'t open', async ({ page }) => {
+    await openWidget(page)
+    await refusePatches(page, 422, {
+      detail: [{ loc: ['body', 'name'], msg: 'A widget with this name already exists', type: 'value_error' }],
+    })
+    await title(page).getByText('Wireless Mouse').click()
+    await page.getByRole('textbox', { name: 'Name' }).fill('Standing Desk')
+    await fieldValue(page, 'Price').click()
+    await expect(page.getByRole('alert')).toHaveText('A widget with this name already exists')
+    await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Standing Desk')
+    await expect(page.getByRole('textbox', { name: 'Price' })).toHaveCount(0)
+  })
+
+  test('leaving the page with unsaved text asks first', async ({ page }) => {
+    await openWidget(page)
+    await title(page).getByText('Wireless Mouse').click()
+    await page.getByRole('textbox', { name: 'Name' }).fill('Half typed')
+    const back = page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true })
+
+    await back.click()
+    const dialog = page.getByRole('dialog', { name: 'Discard your changes?' })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Keep editing' }).click()
+    await expect(page).toHaveURL('/widgets/1')
+    await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Half typed')
+
+    await back.click()
+    await page.getByRole('dialog', { name: 'Discard your changes?' }).getByRole('button', { name: 'Discard' }).click()
+    await expect(page).toHaveURL('/widgets')
+  })
+
+  test('Back with unsaved text asks too; with nothing typed it just goes', async ({ page }) => {
+    await page.goto('/widgets')
+    await page.getByRole('link', { name: 'Wireless Mouse' }).click()
+    await expect(title(page)).toHaveText('Wireless Mouse')
+    await fieldValue(page, 'Price').click()
+    await page.goBack()
+    await expect(page).toHaveURL('/widgets')
+
+    await page.getByRole('link', { name: 'Wireless Mouse' }).click()
+    await fieldValue(page, 'Price').click()
+    await page.getByRole('textbox', { name: 'Price' }).fill('99.00')
+    await page.goBack()
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toBeVisible()
+    await expect(page).toHaveURL('/widgets/1')
+  })
+
+  test('closing the tab with unsaved text asks the browser to confirm', async ({ page }) => {
+    await openWidget(page)
+    await title(page).getByText('Wireless Mouse').click()
+    await page.getByRole('textbox', { name: 'Name' }).fill('Half typed')
+    const asked = new Promise<string>((resolve) => page.once('dialog', (dialog) => {
+      resolve(dialog.type())
+      void dialog.dismiss()
+    }))
+    await page.close({ runBeforeUnload: true })
+    expect(await asked).toBe('beforeunload')
+  })
+})

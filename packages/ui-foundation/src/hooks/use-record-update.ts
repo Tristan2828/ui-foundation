@@ -21,6 +21,11 @@
 //   or the AppError's).
 // - **The lists refetch once the last save settles**, so a filter on the
 //   field drops the row once the server agrees.
+//
+// Editing in place uses the same save with `optimistic: false` and
+// `toastOnError: false`: nothing changes on screen until the server
+// agrees, and a refusal comes back to the field (`mutateAsync` rejects)
+// instead of a toast.
 import {
   hashKey,
   useMutation,
@@ -55,9 +60,22 @@ export type RecordUpdateOptions<TRecord extends { id: RecordId }, TUpdate extend
   update: (id: TRecord['id'], update: TUpdate) => Promise<TRecord>
   /** What a refusal's toast calls the record: "Couldn't update <name>: <reason>". */
   name: (record: TRecord) => string
+  /**
+   * Show the change before the server answers (default `true`, a quick
+   * action). `false` for editing in place: the value shows as saved only
+   * once it is, and until then the field holds it.
+   */
+  optimistic?: boolean
+  /**
+   * Toast a refusal (default `true`). `false` when the control shows the
+   * reason itself (editing in place): `mutateAsync` rejects with the
+   * `AppError`, and `refusalReason` words it.
+   */
+  toastOnError?: boolean
 }
 
-type Entry<TRecord, TUpdate> = { change: RecordChange<TRecord, TUpdate> }
+// Not optimistic: waits its turn and is sent the same way, but isn't shown.
+type Entry<TRecord, TUpdate> = { change: RecordChange<TRecord, TUpdate>; optimistic: boolean }
 
 // Per record (by detail key) while any of its saves is in flight: the
 // server's latest record, and the changes not yet answered, oldest first.
@@ -94,7 +112,7 @@ export function refusalReason(error: AppError, sent?: object): string {
  */
 export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TUpdate extends Partial<TRecord>>(
   queryClient: QueryClient,
-  { id, detailKey, listsKey, update, name }: RecordUpdateOptions<TRecord, TUpdate>,
+  { id, detailKey, listsKey, update, name, optimistic = true, toastOnError = true }: RecordUpdateOptions<TRecord, TUpdate>,
 ): MutationOptions<TRecord, AppError, RecordChange<TRecord, TUpdate>, { entry: Entry<TRecord, TUpdate> }> {
   const key = hashKey(detailKey)
   const lists = { queryKey: listsKey }
@@ -116,7 +134,7 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
   function render(state: RecordState<TRecord, TUpdate>) {
     if (!state.confirmed) return
     const shown = state.pending.reduce<TRecord>(
-      (record, entry) => ({ ...record, ...resolve(entry.change, record) }),
+      (record, entry) => (entry.optimistic ? { ...record, ...resolve(entry.change, record) } : record),
       state.confirmed,
     )
     queryClient.setQueryData<TRecord>(detailKey, (detail) => detail && shown)
@@ -148,7 +166,7 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
     onMutate: async (change) => {
       let state = map.get(key)
       if (!state) map.set(key, (state = { confirmed: undefined, pending: [] }))
-      const entry: Entry<TRecord, TUpdate> = { change }
+      const entry: Entry<TRecord, TUpdate> = { change, optimistic }
       state.pending.push(entry)
       // A refetch landing now would overwrite the change on screen.
       await Promise.all([
@@ -167,7 +185,7 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
       const record = state.confirmed
       const sent = record && resolve(context.entry.change, record)
       settle(state, context.entry)
-      toast.error(`Couldn't update ${record ? name(record) : 'this record'}: ${refusalReason(error, sent)}`)
+      if (toastOnError) toast.error(`Couldn't update ${record ? name(record) : 'this record'}: ${refusalReason(error, sent)}`)
     },
     onSuccess: (saved, _change, context) => {
       const state = map.get(key)

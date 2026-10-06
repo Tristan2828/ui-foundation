@@ -11,17 +11,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form'
+import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
-import {
-  type AppError,
-  EntityForm,
-  ErrorState,
-  ListEditor,
-  MultiChoice,
-  MultiReference,
-} from '@tristan2828/ui-foundation'
+import { type AppError, EntityForm, ErrorState, ListEditor, MultiChoice } from '@tristan2828/ui-foundation'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import { Calendar } from '@tristan2828/ui-foundation/ui/calendar'
 import { Checkbox } from '@tristan2828/ui-foundation/ui/checkbox'
@@ -36,22 +29,20 @@ import {
 import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@tristan2828/ui-foundation/ui/field'
 import { Input } from '@tristan2828/ui-foundation/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@tristan2828/ui-foundation/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@tristan2828/ui-foundation/ui/select'
 import { Skeleton } from '@tristan2828/ui-foundation/ui/skeleton'
 import { Switch } from '@tristan2828/ui-foundation/ui/switch'
-import { Textarea } from '@tristan2828/ui-foundation/ui/textarea'
 import type { components } from '@/api/schema'
-import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
+import { useWidgetCategoriesQuery } from './use-widget-categories'
 import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from './use-widgets'
 import {
+  WidgetDescriptionEditor,
+  WidgetExtraCategoriesPicker,
+  WidgetNameInput,
+  WidgetPriceInput,
+  WidgetStatusSelect,
+} from './widget-fields'
+import {
   WIDGET_FORM_DEFAULTS,
-  WIDGET_STATUSES,
   WIDGET_TAGS,
   WIDGET_TAG_LABELS,
   formValuesToWidgetCreate,
@@ -98,11 +89,6 @@ export function WidgetFormRoute() {
     return Object.fromEntries(entries) as Record<number, string>
   }, [categoriesQuery.data])
 
-  // Multi reference: its own search (independent of the Category combobox
-  // above) for the dropdown, and a lookup by id for the picked chips' names.
-  const [extraCategorySearch, setExtraCategorySearch] = useState('')
-  const extraCategoryOptionsQuery = useWidgetCategoriesQuery(extraCategorySearch)
-
   const [submitError, setSubmitError] = useState<AppError | null>(null)
 
   const form = useForm<WidgetFormValues>({
@@ -117,12 +103,6 @@ export function WidgetFormRoute() {
   // Sub-records: the items live in the form's own state and save with the
   // widget. useFieldArray's `fields` carry the stable keys ListEditor needs.
   const checklist = useFieldArray({ control: form.control, name: 'checklist' })
-
-  // Hooks above any early return. The watched value is the form's current
-  // pick, so a chip added from search is named by the same lookup.
-  const pickedExtraCategoryIds = useWatch({ control: form.control, name: 'extraCategoryIds' })
-  const pickedExtraCategoriesQuery = useWidgetCategoriesByIdsQuery(pickedExtraCategoryIds ?? [])
-  const extraCategoryNames = widgetCategoryNames(extraCategoryOptionsQuery.data, pickedExtraCategoriesQuery.data)
 
   if (isEdit && widgetQuery.isLoading) {
     return <WidgetFormSkeleton />
@@ -167,9 +147,23 @@ export function WidgetFormRoute() {
       submitLabel={isEdit ? 'Save changes' : 'Create widget'}
       onCancel={() => navigate(isEdit ? `/widgets/${widgetId}` : '/widgets', { replace: true })}
     >
+      {/* Name, Status, Price, Description and Extra Categories use the
+          controls in widget-fields.tsx, the same ones the view edits in
+          place with. */}
       <Field data-invalid={!!form.formState.errors.name}>
         <FieldLabel htmlFor="widget-name">Name</FieldLabel>
-        <Input id="widget-name" aria-invalid={!!form.formState.errors.name} {...form.register('name')} />
+        <Controller
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <WidgetNameInput
+              id="widget-name"
+              value={field.value}
+              onChange={field.onChange}
+              invalid={!!form.formState.errors.name}
+            />
+          )}
+        />
         <FieldError errors={[form.formState.errors.name]} />
       </Field>
 
@@ -240,18 +234,12 @@ export function WidgetFormRoute() {
           control={form.control}
           name="status"
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="widget-status" aria-invalid={!!form.formState.errors.status}>
-                <SelectValue placeholder="Select a status" />
-              </SelectTrigger>
-              <SelectContent>
-                {WIDGET_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <WidgetStatusSelect
+              id="widget-status"
+              value={field.value}
+              onChange={field.onChange}
+              invalid={!!form.formState.errors.status}
+            />
           )}
         />
         <FieldError errors={[form.formState.errors.status]} />
@@ -300,22 +288,38 @@ export function WidgetFormRoute() {
 
       <Field data-invalid={!!form.formState.errors.price}>
         <FieldLabel htmlFor="widget-price">Price</FieldLabel>
-        <Input
-          id="widget-price"
-          inputMode="decimal"
-          placeholder="19.99"
-          aria-invalid={!!form.formState.errors.price}
-          {...form.register('price')}
+        <Controller
+          control={form.control}
+          name="price"
+          render={({ field }) => (
+            <WidgetPriceInput
+              id="widget-price"
+              value={field.value}
+              onChange={field.onChange}
+              invalid={!!form.formState.errors.price}
+            />
+          )}
         />
         <FieldError errors={[form.formState.errors.price]} />
       </Field>
 
       <Field data-invalid={!!form.formState.errors.description}>
-        <FieldLabel htmlFor="widget-description">Description</FieldLabel>
-        <Textarea
-          id="widget-description"
-          aria-invalid={!!form.formState.errors.description}
-          {...form.register('description')}
+        {/* A rich-text area is no <input>: the label names it by id. */}
+        <FieldLabel id="widget-description-label" htmlFor="widget-description">
+          Description
+        </FieldLabel>
+        <Controller
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <WidgetDescriptionEditor
+              id="widget-description"
+              aria-labelledby="widget-description-label"
+              value={field.value}
+              onChange={field.onChange}
+              invalid={!!form.formState.errors.description}
+            />
+          )}
         />
         <FieldError errors={[form.formState.errors.description]} />
       </Field>
@@ -346,19 +350,11 @@ export function WidgetFormRoute() {
           control={form.control}
           name="extraCategoryIds"
           render={({ field }) => (
-            <MultiReference
+            <WidgetExtraCategoriesPicker
               id="widget-extra-categories"
-              options={(extraCategoryOptionsQuery.data ?? []).map((category) => ({
-                id: category.id,
-                label: category.name,
-              }))}
               value={field.value}
-              onValueChange={field.onChange}
-              getLabel={(id) => extraCategoryNames.get(id)}
-              onSearchChange={setExtraCategorySearch}
-              placeholder="Search categories"
-              emptyText="No categories found."
-              aria-invalid={!!form.formState.errors.extraCategoryIds}
+              onChange={field.onChange}
+              invalid={!!form.formState.errors.extraCategoryIds}
             />
           )}
         />

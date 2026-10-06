@@ -40,6 +40,8 @@ export function MultiReference<Id extends string | number>({
   emptyText = 'No matches.',
   'aria-label': ariaLabel,
   'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy,
+  readOnly = false,
   className,
 }: {
   /** The records the current search returned, in display order. */
@@ -62,6 +64,10 @@ export function MultiReference<Id extends string | number>({
   /** For use without a visible label (e.g. a table toolbar filter). */
   'aria-label'?: string
   'aria-invalid'?: boolean
+  /** The id of a line under the control (an error, a saving status). */
+  'aria-describedby'?: string
+  /** Shown, not changeable: editing in place, while the save is in flight. */
+  readOnly?: boolean
   className?: string
 }) {
   const anchor = useComboboxAnchor()
@@ -79,6 +85,7 @@ export function MultiReference<Id extends string | number>({
       onInputValueChange={onSearchChange}
       itemToStringLabel={label}
       filter={null}
+      readOnly={readOnly}
     >
       <ComboboxChips ref={anchor} className={className}>
         <ComboboxValue>
@@ -93,6 +100,7 @@ export function MultiReference<Id extends string | number>({
                 id={id}
                 aria-label={ariaLabel}
                 aria-invalid={ariaInvalid}
+                aria-describedby={ariaDescribedBy}
                 placeholder={selected.length === 0 ? placeholder : undefined}
               />
             </React.Fragment>

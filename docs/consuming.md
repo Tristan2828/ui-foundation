@@ -28,7 +28,7 @@ a data source. For the design behind it, see
 
 | The app's (in its repo) | The package's (`@tristan2828/ui-foundation`) |
 |---|---|
-| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/`, `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell`, `DataTable`, `EntityView`, `EntityForm`, `Markdown`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
+| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/`, `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell`, `DataTable`, `EntityView` and editing in place, `EntityForm`, `Markdown`, `RichTextEditor`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
 
 The app's column changes whenever the app wants. The package's column
 changes only through a release, which reaches every app.

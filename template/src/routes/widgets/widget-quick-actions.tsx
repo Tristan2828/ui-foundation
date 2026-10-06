@@ -1,8 +1,8 @@
 // The widget view's quick actions (cell pattern 17): the values the plan
 // lets you change straight from the view, each saved on its own the moment
-// it changes, without the form. Status (picked in the header), In Stock (a
-// switch in the header) and the checklist (items ticked in place). Every
-// other value on the view stays read-only.
+// it changes, without the form. In Stock (a switch in the header) and the
+// checklist (items ticked in place). Status, Name, Price, Description and
+// Extra Categories edit in place instead (cell pattern 18, widget-view.tsx).
 //
 // Each control calls useSaveWidgetField itself, so `isPending` is its own
 // save: a spinner shows beside it in a slot that's always there (nothing
@@ -10,53 +10,19 @@
 // change while one saves waits for it and builds on it. A refusal puts the
 // value back and the server's reason shows in a toast.
 import { useId } from 'react'
-import { Badge } from '@tristan2828/ui-foundation/ui/badge'
 import { Checkbox } from '@tristan2828/ui-foundation/ui/checkbox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tristan2828/ui-foundation/ui/select'
 import { Spinner } from '@tristan2828/ui-foundation/ui/spinner'
 import { Switch } from '@tristan2828/ui-foundation/ui/switch'
 import type { components } from '@/api/schema'
 import { useSaveWidgetField } from './use-widgets'
-import { STATUS_BADGE_VARIANT, checklistDoneCount } from './widget-format'
-import { WIDGET_STATUSES } from './widget-schema'
+import { checklistDoneCount } from './widget-format'
 
 type Widget = components['schemas']['Widget']
-type WidgetStatus = components['schemas']['WidgetStatus']
 
 function Saving({ pending }: { pending: boolean }) {
   return (
     <span className="inline-flex size-3.5 shrink-0">
       {pending && <Spinner aria-label="Saving" className="size-3.5 text-muted-foreground" />}
-    </span>
-  )
-}
-
-// Status, in the header where its badge was: the same tone-mapped badge
-// (cell pattern 5), now inside a picker. Options in the plan's order.
-export function WidgetStatusSelect({ widget }: { widget: Widget }) {
-  const save = useSaveWidgetField(widget.id)
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <Select
-        value={widget.status}
-        onValueChange={(status) => {
-          if (status && status !== widget.status) save.mutate({ status })
-        }}
-      >
-        <SelectTrigger size="sm" aria-label="Status">
-          <SelectValue>
-            {(status: WidgetStatus) => <Badge variant={STATUS_BADGE_VARIANT[status]}>{status}</Badge>}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {WIDGET_STATUSES.map((status) => (
-            <SelectItem key={status} value={status}>
-              <Badge variant={STATUS_BADGE_VARIANT[status]}>{status}</Badge>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Saving pending={save.isPending} />
     </span>
   )
 }

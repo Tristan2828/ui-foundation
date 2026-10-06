@@ -21,7 +21,10 @@
     "react-day-picker",
     "date-fns",
     "react-markdown",
-    "remark-gfm"
+    "remark-gfm",
+    "@milkdown/kit",
+    "unified",
+    "remark-parse"
   ],
   "devDependencies": [
     "vite",

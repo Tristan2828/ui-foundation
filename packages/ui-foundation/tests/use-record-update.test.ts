@@ -75,7 +75,7 @@ const TASK: Task = {
 }
 const OTHER: Task = { ...TASK, id: 2, name: 'Another task', checklist: [], progress: 'none' }
 
-function setup() {
+function setup(extra: { optimistic?: boolean; toastOnError?: boolean } = {}) {
   const client = new QueryClient()
   const server = fakeServer(TASK)
   client.setQueryData(detailKey, structuredClone(TASK))
@@ -91,6 +91,7 @@ function setup() {
     listsKey,
     update: server.update,
     name: (task) => task.name,
+    ...extra,
   })
   // One control's save, the way a component's useMutation runs it.
   const save = (change: RecordChange<Task, TaskUpdate>) =>
@@ -230,6 +231,41 @@ describe('useRecordUpdate', () => {
     await saved
     expect(listed()).toEqual(server.record)
     expect(client.getQueryData(detailKey)).toBeUndefined()
+  })
+})
+
+describe('useRecordUpdate for editing in place (optimistic: false, toastOnError: false)', () => {
+  it('shows nothing until the server answers, then the server record', async () => {
+    const { server, save, detail, listed } = setup({ optimistic: false, toastOnError: false })
+    const saved = save({ status: 'todo' })
+    await vi.waitFor(() => expect(server.requests).toHaveLength(1))
+    expect(detail()?.status).toBe('doing')
+    expect(listed()?.status).toBe('doing')
+
+    server.requests[0].answer()
+    await saved
+    expect(detail()).toEqual(server.record)
+    expect(detail()?.status).toBe('todo')
+  })
+
+  it('hands a refusal back to the caller, with no toast and nothing to roll back', async () => {
+    const { client, server, detail } = setup({ optimistic: false, toastOnError: false })
+    const options = recordUpdateMutationOptions<Task, TaskUpdate>(client, {
+      id: 1,
+      detailKey,
+      listsKey,
+      update: server.update,
+      name: (task) => task.name,
+      optimistic: false,
+      toastOnError: false,
+    })
+    const refusal: AppError = { kind: 'validation', message: 'Validation failed', fieldErrors: { status: ['Not now'] } }
+    const result = new MutationObserver(client, options).mutate({ status: 'done' })
+    await vi.waitFor(() => expect(server.requests).toHaveLength(1))
+    server.requests[0].refuse(refusal)
+    await expect(result).rejects.toEqual(refusal)
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(detail()?.status).toBe('doing')
   })
 })
 

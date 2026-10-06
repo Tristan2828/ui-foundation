@@ -189,6 +189,15 @@ is a filled-in example while the Widgets demo is still here).
      `src/routes/<entity>/<entity>-quick-actions.tsx`, **only when the
      plan's "View screen" lists `Quick actions`**: one component per
      control the plan names (below).
+   - `src/routes/widgets/widget-fields.tsx` →
+     `src/routes/<entity>/<entity>-fields.tsx`: **one control per field
+     the plan edits in place** (`Edit in place`), shared by the form
+     (through a `Controller`) and the view (through `editInPlace`), and
+     the Markdown long text's `RichTextEditor` (on the form whether or
+     not it edits in place). Every other field's control stays inline in
+     the form, as `widget-form.tsx`'s Category, Tags and Available From
+     do. No `Edit in place` line and no Markdown long text: no fields
+     file.
    - `src/routes/widgets/delete-widget-action.tsx` →
      `src/routes/<entity>/delete-<entity>-action.tsx` (Delete in the
      view's header: the confirm dialog, then `onDeleted` leaves for the
@@ -200,7 +209,8 @@ is a filled-in example while the Widgets demo is still here).
      view (below).
 
    **The view** is the read-only page for one record, at `/<entity>/:id`
-   (apart from the plan's quick actions, if it lists any).
+   (apart from the plan's quick actions and fields edited in place, if it
+   lists any).
    `<EntityView>` owns its loading skeleton, its not-found state (another
    user's record is the same plain 404, with a way back to the list and
    no retry) and its error state with retry. The screen supplies what the
@@ -261,8 +271,7 @@ is a filled-in example while the Widgets demo is still here).
      breaks).
    - **Quick actions: only the fields the plan's `Quick actions` line
      names**, each a control that saves on its own (cell pattern 17,
-     `widget-quick-actions.tsx`). A `single choice` in the header is a
-     `Select` showing its badge (`WidgetStatusSelect`); a `yes/no` is a
+     `widget-quick-actions.tsx`). A `yes/no` is a
      `Switch` with its words (`WidgetInStockSwitch`); a sub-record list's
      yes/no item field is a checkbox per item in a named group
      (`ChecklistItems`), whose change is a function of the record
@@ -273,9 +282,29 @@ is a filled-in example while the Widgets demo is still here).
      `content`): `EntityView` needs nothing new. **With no `Quick actions`
      line, every value is read-only** and there is no quick-actions file:
      the view is exactly the read-only one above.
-   - **Editing in place isn't in the playbook yet** (a text or date field
-     turning into its form control on the view). Don't build it: every
-     other change goes through Edit.
+   - **Edit in place: only the fields the plan's `Edit in place` line
+     names** (cell pattern 18). Each becomes `editInPlace({ kind, value,
+     control, schema, save })` (`widgetEdits` in `widget-view.tsx`):
+     `value` is what the form's control starts from, `control` is the
+     shared control from `<entity>-fields.tsx` given the props it's
+     handed (`readOnly={props.disabled}`, `aria-label={props.label}`,
+     `aria-describedby={props.describedBy}`), `schema` is the form's own
+     rule (`<entity>FormSchema.shape.<field>`), and `save` is
+     `useEdit<Entity>Field(id).mutateAsync({ <field>: value })` (copy
+     `useEditWidgetField`: the single-field save with `optimistic: false,
+     toastOnError: false`). `kind` follows the control: `text` (one line;
+     a number or integer too), `long-text` (Markdown, `RichTextEditor`
+     with `autoFocus` and `onProblem={props.onProblem}`), `choice` (a
+     select or a single reference: its list opens with the field,
+     `defaultOpen`, non-modal, `onChange={(v) => props.commit(v)}`,
+     `onOpenChange={(open) => !open && props.cancel()}`; a yes/no switch
+     commits on change), `multi` (a multi reference; `isEqual` comparing
+     ids as a set). A field gets `edit`, a `content` section gets `edit`,
+     the title gets `titleEdit={{ label, ...edit }}`, and a header badge
+     wraps itself in `<EditableValue label edit layout="inline">`. The
+     shown value stays exactly as before. **With no `Edit in place` line,
+     nothing is editable in place** and none of this is copied. Never a
+     computed field or a sub-record list.
 
    **The table opens the view, and the form returns to it.** The title
    column's link is the way in (a `yes/no` marked `toggle` stays in its
@@ -373,7 +402,15 @@ is a filled-in example while the Widgets demo is still here).
    save answers if the plan has one, a refused save (an MSW override
    answering 422 with the reason on the field) goes back with the toast,
    the "Saving" spinner shows while nothing is disabled, and, for a
-   list, two quick changes both land. If
+   list, two quick changes both land. Fields edited in place get their
+   own spec (copy `e2e/widget-edit-in-place.spec.ts`): only the plan's
+   fields offer it; each kind saves (Enter, a pick, Ctrl/Cmd+Enter,
+   leaving) with the PATCH it should send and "Saving…" while it waits;
+   unchanged sends nothing; Esc restores; the schema's refusal is never
+   sent; a 422 (an MSW override, the reason on the field) and a 500 stay
+   open with the draft and the reason; opening a second field saves the
+   first, or doesn't open if that fails; and leaving the page with
+   unsaved text asks first. Add it to `mobile-chrome`'s `testMatch`. If
    the plan has Markdown long text, a test forces a record whose text has
    a heading, a list, a table, a link and raw HTML, and asserts the HTML
    shows as text. Add the view's spec to `playwright.config.ts`'s
@@ -394,7 +431,10 @@ is a filled-in example while the Widgets demo is still here).
    `/<entity>/new` to `e2e/a11y.spec.ts`'s `formRoutes`, and add the view
    of a full record and of the sparse one to its `viewRoutes` (the table
    page is picked up from the sidebar automatically; the form and the view
-   aren't in it).
+   aren't in it). With fields edited in place, copy `e2e/a11y.spec.ts`'s
+   "editing in place" block for them: a field open, saving and refused,
+   the rich-text editor, an open list, and the leave prompt, in both
+   themes.
 10. **`npm run verify`.** Fix until it passes. Then stop — do not add
     anything beyond what this list covers; note ideas in the app's
     backlog instead.
@@ -404,9 +444,11 @@ is a filled-in example while the Widgets demo is still here).
 - `widget-quick-actions.tsx`, its `quick action: …` specs and
   `useSaveWidgetField` unless the plan has a `Quick actions` line (or,
   for the hook, a `yes/no` marked `toggle`). Copy only the controls for
-  the fields the line names: a plan naming only its status gets the
-  status picker, and the In Stock switch and the checklist's checkboxes
-  are left out.
+  the fields the line names: a plan naming only its yes/no gets the
+  switch, and the checklist's checkboxes are left out.
+- `widgetEdits`, `useEditWidgetField`, `widget-edit-in-place.spec.ts` and
+  the in-place a11y block unless the plan has an `Edit in place` line,
+  and then only for the fields it names.
 
 - The saved-views row in `widgets-table.tsx` (`VIEWS`, the "Saved views"
   button group and `visibleColumns`) unless the plan's List screen lists

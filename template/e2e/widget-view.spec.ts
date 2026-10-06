@@ -105,14 +105,15 @@ test.describe('widget view', () => {
     await page.goto('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
 
-    // Header: status-like values, two of them quick actions (Status picks
-    // another value, In Stock flips), and the actions.
+    // Header: status-like values (Status edits in place, In Stock is a
+    // quick action that flips), and the actions.
     const header = page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) })
-    await expect(header.getByRole('combobox', { name: 'Status' })).toContainText('active')
+    await expect(header.getByText('active', { exact: true })).toBeVisible()
+    await expect(header.getByRole('button', { name: 'Edit Status' })).toBeAttached()
     await expect(header.getByText('In progress', { exact: true })).toBeVisible()
     await expect(header.getByRole('switch', { name: 'In stock' })).toBeChecked()
     await expect(header.getByText('In stock', { exact: true })).toBeVisible()
-    await expect(header.getByRole('button', { name: 'Edit' })).toBeVisible()
+    await expect(header.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Delete' })).toBeVisible()
 
     // Details: names, never ids, for references; labels, never wire values.
@@ -122,8 +123,11 @@ test.describe('widget view', () => {
     await expect(fieldValue(page, 'Available From')).toHaveText('Jan 15, 2026')
     await expect(fieldValue(page, 'Price')).toHaveText('$24.99')
     await expect(fieldValue(page, 'Assignee Email')).toHaveText('alice@example.com')
-    // Every other value is read-only: no control in a field row.
-    await expect(page.locator('dd').locator('input, button, [role="switch"], [role="checkbox"]')).toHaveCount(0)
+    // No control in a field row, only the edit-in-place buttons of the
+    // fields the plan makes editable (e2e/widget-edit-in-place.spec.ts).
+    await expect(
+      page.locator('dd').locator('input, button:not([data-edit]), [role="switch"], [role="checkbox"]'),
+    ).toHaveCount(0)
 
     // Sub-records, a quick action: the done-count, then the items in order
     // as one group of checkboxes, each named for what it changes.
@@ -216,7 +220,7 @@ test.describe('widget view', () => {
 
   test('edit: saving returns to the view, showing the change', async ({ page }) => {
     await page.goto('/widgets/1')
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'Edit', exact: true }).click()
     await expect(page).toHaveURL('/widgets/1/edit')
     await page.locator('#widget-name').fill('Wireless Mouse Pro')
     await page.getByRole('button', { name: 'Save changes' }).click()
@@ -227,7 +231,7 @@ test.describe('widget view', () => {
 
   test('edit: Cancel returns to the view, unchanged', async ({ page }) => {
     await page.goto('/widgets/1')
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'Edit', exact: true }).click()
     await page.locator('#widget-name').fill('Not Saved')
     await page.getByRole('button', { name: 'Cancel' }).click()
 
@@ -311,18 +315,6 @@ test.describe('widget view', () => {
     await expect(page.getByRole('row').filter({ hasText: 'Wireless Mouse' })).toContainText('2/2 done')
   })
 
-  test('quick action: Status picks another value and saves it', async ({ page }) => {
-    const bodies = patchBodies(page)
-    await page.goto('/widgets/1')
-    const status = page.getByRole('combobox', { name: 'Status' })
-    await status.click()
-    await page.getByRole('option', { name: 'archived' }).click()
-
-    await expect(status).toContainText('archived')
-    await expect.poll(() => bodies).toEqual([{ status: 'archived' }])
-    expect((await serverWidget(page, 1)).status).toBe('archived')
-  })
-
   test('quick action: In stock flips on the page and saves', async ({ page }) => {
     const bodies = patchBodies(page)
     await page.goto('/widgets/1')
@@ -375,9 +367,9 @@ test.describe('widget view', () => {
     // Nothing is disabled: not the other controls, not this one, not Edit.
     await expect(checklist.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeEnabled()
     await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeEnabled()
-    await expect(page.getByRole('combobox', { name: 'Status' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: 'Edit Status' })).toBeEnabled()
     await expect(page.getByRole('switch', { name: 'In stock' })).toBeEnabled()
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeEnabled()
 
     await expect(checklist.getByRole('status', { name: 'Saving' })).toHaveCount(0)
     await expect(checklist.getByText('2/2 done', { exact: true })).toBeVisible()
@@ -432,7 +424,7 @@ test.describe('widget view', () => {
     const description = await page.getByRole('region', { name: 'Description' }).boundingBox()
     expect(description!.y).toBeGreaterThanOrEqual(details!.y + details!.height)
 
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeInViewport()
+    await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeInViewport()
     await expect(page.getByRole('button', { name: 'Delete' })).toBeInViewport()
     const pageOverflows = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
     expect(pageOverflows).toBe(false)
