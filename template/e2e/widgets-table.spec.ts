@@ -285,9 +285,7 @@ test.describe('widgets table', () => {
     // Saved on the server (the mocks), not just on screen: the view agrees.
     await page.getByRole('link', { name: 'Fountain Pen' }).click()
     await expect(page).toHaveURL('/widgets/3')
-    await expect(
-      page.locator('dl > div').filter({ hasText: /^In Stock/ }).locator('dd'),
-    ).toHaveText('Yes')
+    await expect(page.getByRole('switch', { name: 'In stock' })).toBeChecked()
   })
 
   test('yes/no row toggle: works from the keyboard', async ({ page }) => {

@@ -5,6 +5,71 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.12.0 — quick actions on the view
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook, plan template and cell patterns. A view whose plan lists no
+quick actions is unchanged: every value stays read-only, as in 3.10.
+
+- **New hook: `useRecordUpdate`,** one record's fields saved on their own,
+  without the form. A PATCH that shows at once everywhere the record is
+  cached (its detail query, which the view shows, and every list page
+  holding it), then takes the record the server returns, so a server-side
+  effect (a computed field, a flag the change cleared) shows at once. A
+  refusal rolls back and toasts "Couldn't update <name>: <reason>", the
+  reason being the server's (the 422's message on the field sent, else
+  `AppError.message`). Saves of one record run one at a time, and each
+  request is built from the server's latest record when it's sent, so
+  a change can be a function of the record (`(task) => ({ checklist:
+  ... })`) and two quick ticks of a whole-list field both land. The lists
+  refetch once the last save settles. It's the save editing in place
+  will build on.
+- **New cell pattern 17, "Quick action on the view":** read-only is the
+  default, and only the fields the plan names become controls: a
+  `single choice` as a `Select` showing its tone badge, a `yes/no` as a
+  `Switch` with its words, a sub-record list's yes/no as a checkbox per
+  item in a named group (`Done: <item text>`). Each control shows its own
+  "Saving" spinner and disables nothing. `EntityView` needs no new prop:
+  controls go in `badges`, a field's `value` or a section's `content`.
+- **The plan template's "View screen" takes a `Quick actions:` line**,
+  and the playbook copies the quick-action controls only when a plan has
+  one.
+- **`toAppError` keeps a 422 whose `detail` is a sentence** (FastAPI's
+  `HTTPException(422, "...")`, the natural way to refuse a rule like a
+  cap) as the error's message. It used to throw a `TypeError` reading it.
+- **The template's Widget view has quick actions:** Status picked in the
+  header, In Stock flipped in the header (no longer a Details row), and
+  Checklist items ticked in place, whose done-count and the
+  server-computed Progress badge follow
+  (`src/routes/widgets/widget-quick-actions.tsx`). The table's In Stock
+  switch uses the same save (`useSaveWidgetField`, replacing
+  `useToggleWidgetInStockMutation`): it now updates the widget's view too,
+  shows "Saving" instead of disabling itself, and its refusal toast gives
+  the field's 422 message.
+
+### How an app adds quick actions to a view
+
+1. **Plan them.** In `docs/entities/<entity>.md`'s "View screen", add
+   `- Quick actions: status, flagged, checklist` naming the fields, plus
+   any rule the server enforces on one and any side effect it has.
+2. **Wrap the hook** in `src/routes/<entity>/use-<entity>.ts`, copying
+   Widget's `useSaveWidgetField`:
+   `useRecordUpdate<Entity, EntityUpdate>({ id, detailKey, listsKey, update, name })`
+   with the entity's detail key, its list key prefix, the gateway's PATCH
+   and the record's name for the toast.
+3. **Build one component per control** in
+   `src/routes/<entity>/<entity>-quick-actions.tsx`, copying the matching
+   one from Widget's (`WidgetStatusSelect`, `WidgetInStockSwitch`,
+   `ChecklistItems`), and put it where the value shows on the view.
+4. **Test each one** like `quick action: …` in
+   `e2e/widget-view.spec.ts`: it saves, a refused save goes back with the
+   server's reason, "Saving" shows while nothing is disabled, and two
+   quick changes to a list both land.
+
+An app with a hand-written row toggle (pattern 15 before 3.12) can move
+it onto the same hook, so its record's view stays current too; nothing
+breaks if it doesn't.
+
 ## 3.11.0 — columns per saved view
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

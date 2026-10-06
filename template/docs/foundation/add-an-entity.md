@@ -154,11 +154,13 @@ is a filled-in example while the Widgets demo is still here).
 
    **A `yes/no` marked `toggle`** copies In Stock's cell
    (`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
-   component that PATCHes the one field through an optimistic mutation
-   (`useToggleWidgetInStockMutation`: every cached list page updates at
-   once and is restored if the save fails, with a toast naming the row),
-   then refetches the lists. Its specs cover a flip that saves, the
-   keyboard, and a failed save putting the switch back.
+   component that PATCHes the one field through `useSaveWidgetField`, the
+   entity's wrapper of the foundation's `useRecordUpdate` (the row and the
+   record's view update at once and go back if the save is refused, with
+   a toast naming the row and the server's reason; the lists refetch
+   after). Its specs cover a flip that saves, the keyboard, and a failed
+   save putting the switch back. Copy `useSaveWidgetField` whenever the
+   plan has a `toggle` or any quick action, and only then.
    - `src/routes/widgets/use-widgets.ts`, `use-widget-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)
@@ -183,6 +185,10 @@ is a filled-in example while the Widgets demo is still here).
      `src/routes/<entity>/<entity>-view.tsx` — thin consumer of the
      foundation's `<EntityView>`. Swap the title, badges and sections for
      the plan's "View screen" (below).
+   - `src/routes/widgets/widget-quick-actions.tsx` →
+     `src/routes/<entity>/<entity>-quick-actions.tsx`, **only when the
+     plan's "View screen" lists `Quick actions`**: one component per
+     control the plan names (below).
    - `src/routes/widgets/delete-widget-action.tsx` →
      `src/routes/<entity>/delete-<entity>-action.tsx` (Delete in the
      view's header: the confirm dialog, then `onDeleted` leaves for the
@@ -193,7 +199,8 @@ is a filled-in example while the Widgets demo is still here).
      delete). Swap the zod schema and fields. Every way out lands on a
      view (below).
 
-   **The view** is the read-only page for one record, at `/<entity>/:id`.
+   **The view** is the read-only page for one record, at `/<entity>/:id`
+   (apart from the plan's quick actions, if it lists any).
    `<EntityView>` owns its loading skeleton, its not-found state (another
    user's record is the same plain 404, with a way back to the list and
    no retry) and its error state with retry. The screen supplies what the
@@ -219,9 +226,31 @@ is a filled-in example while the Widgets demo is still here).
      entity has one: the name, from the same lookup by id the table uses,
      inside `<Link to={`/<other>/${id}`}>`. Without a view, the plain name
      (Widget's categories have none).
-   - **Sub-records are read-only**: the done-count, then each item in
-     order with its state as a glyph and words, never a checkbox
-     (`ChecklistItems` in `widget-view.tsx`). A list of links: each an
+   - **Sub-records are read-only** unless the plan's `Quick actions`
+     names the list: the done-count, then each item in order with its
+     state as a glyph and words, never a checkbox. Widget's checklist is
+     a quick action, so this is the markup to use (the shape Widget's
+     view had before it was):
+
+     ```tsx
+     <div className="flex flex-col gap-2">
+       <p className="type-caption tabular-nums text-muted-foreground">{checklistDoneCount(items)}</p>
+       <ul aria-label="Checklist items" className="flex flex-col gap-1.5">
+         {items.map((item, index) => (
+           <li key={index} className="flex items-start gap-2">
+             {item.done ? (
+               <CircleCheckIcon role="img" aria-label="Done" className="mt-0.5 size-4 shrink-0 text-success-text" />
+             ) : (
+               <CircleIcon role="img" aria-label="Not done" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+             )}
+             <span className={item.done ? 'text-muted-foreground' : undefined}>{item.text}</span>
+           </li>
+         ))}
+       </ul>
+     </div>
+     ```
+
+     A list of links: each an
      `<a target="_blank" rel="noreferrer">` with an `ExternalLinkIcon`
      and a visually hidden "(opens in a new tab)".
    - **Long text the plan marks Markdown** renders through the
@@ -230,11 +259,23 @@ is a filled-in example while the Widgets demo is still here).
      as markup. The app needs no Markdown dependency of its own. Plain
      long text renders as text (`whitespace-pre-line` keeps its line
      breaks).
-   - **Quick actions and editing in place aren't in the playbook yet**
-     (flipping a yes/no, changing a status or ticking an item from the
-     view). Don't build them on your own: a row's value can hold a control
-     and `actions` takes any buttons, so they'll slot in once a release
-     adds them.
+   - **Quick actions: only the fields the plan's `Quick actions` line
+     names**, each a control that saves on its own (cell pattern 17,
+     `widget-quick-actions.tsx`). A `single choice` in the header is a
+     `Select` showing its badge (`WidgetStatusSelect`); a `yes/no` is a
+     `Switch` with its words (`WidgetInStockSwitch`); a sub-record list's
+     yes/no item field is a checkbox per item in a named group
+     (`ChecklistItems`), whose change is a function of the record
+     (`(current) => ({ checklist: ... })`) so quick ticks build on each
+     other. Each control calls `useSave<Entity>Field(id)` itself and shows
+     its own "Saving" spinner; nothing is disabled. A control goes where
+     the field already shows (`badges`, a field's `value`, a section's
+     `content`): `EntityView` needs nothing new. **With no `Quick actions`
+     line, every value is read-only** and there is no quick-actions file:
+     the view is exactly the read-only one above.
+   - **Editing in place isn't in the playbook yet** (a text or date field
+     turning into its form control on the view). Don't build it: every
+     other change goes through Edit.
 
    **The table opens the view, and the form returns to it.** The title
    column's link is the way in (a `yes/no` marked `toggle` stays in its
@@ -325,7 +366,14 @@ is a filled-in example while the Widgets demo is still here).
    each value as its cell shows it), plus the sparse record showing its
    "not set" labels and no blank value. Its flows: the table's title link
    opens it, saving and cancelling the form return to it, creating opens
-   the new record's view, and Delete confirms then lands on the list. If
+   the new record's view, and Delete confirms then lands on the list.
+   Each quick action gets its own tests (copy `quick action: …` in
+   `e2e/widget-view.spec.ts`): the change shows and the PATCH carries it
+   (a list item sends the whole list), a server-side effect shows once the
+   save answers if the plan has one, a refused save (an MSW override
+   answering 422 with the reason on the field) goes back with the toast,
+   the "Saving" spinner shows while nothing is disabled, and, for a
+   list, two quick changes both land. If
    the plan has Markdown long text, a test forces a record whose text has
    a heading, a list, a table, a link and raw HTML, and asserts the HTML
    shows as text. Add the view's spec to `playwright.config.ts`'s
@@ -352,6 +400,13 @@ is a filled-in example while the Widgets demo is still here).
     backlog instead.
 
 ## What not to copy
+
+- `widget-quick-actions.tsx`, its `quick action: …` specs and
+  `useSaveWidgetField` unless the plan has a `Quick actions` line (or,
+  for the hook, a `yes/no` marked `toggle`). Copy only the controls for
+  the fields the line names: a plan naming only its status gets the
+  status picker, and the In Stock switch and the checklist's checkboxes
+  are left out.
 
 - The saved-views row in `widgets-table.tsx` (`VIEWS`, the "Saved views"
   button group and `visibleColumns`) unless the plan's List screen lists
