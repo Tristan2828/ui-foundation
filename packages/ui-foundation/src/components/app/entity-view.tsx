@@ -15,9 +15,15 @@
 // that's where quick actions go (cell pattern 17), a value the plan marks
 // as changed straight from this page and saved on its own through
 // `useRecordUpdate`: a status picked in the header, a yes/no switch,
-// checklist items ticked in place. Everything else stays read-only, and
-// every change of more than that goes through Edit, in `actions`.
-import { useId, type ReactNode } from 'react'
+// checklist items ticked in place.
+//
+// Editing in place (cell pattern 18): a field, a `content` section or the
+// title marked `edit` turns into its form control where it's shown, and
+// saves when you leave it. This component runs it (one field open at a
+// time, the leave-page prompt); EditableValue is each value's side, and a
+// header badge uses it directly. A field not marked renders exactly as
+// before. Edit, in `actions`, stays for everything else.
+import { useId, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowLeftIcon, SearchXIcon } from 'lucide-react'
 import type { AppError } from '@/api/contracts'
@@ -33,6 +39,9 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EditInPlaceContext, type EditInPlace } from './edit-in-place'
+import { EditInPlaceStore } from './edit-in-place-store'
+import { EditableValue, LeaveGuard } from './editable-value'
 
 export type EntityViewField = {
   label: string
@@ -44,6 +53,8 @@ export type EntityViewField = {
   value: ReactNode
   /** What an empty value reads as: the plan's "not set" label. Defaults to "Not set". */
   emptyLabel?: string
+  /** Editable in place: `editInPlace({...})`. Unmarked, the value is read-only. */
+  edit?: EditInPlace
 }
 
 /**
@@ -63,11 +74,15 @@ export type EntityViewSection =
       title: string
       content: ReactNode
       emptyLabel?: string
+      /** The block is editable in place (long text), named by the section's title. */
+      edit?: EditInPlace
     }
 
 export type EntityViewProps = {
   /** The record's name or title, the page's <h1>. */
   title?: string
+  /** The title is editable in place; `label` is the field's ("Name"). */
+  titleEdit?: EditInPlace & { label: string }
   /**
    * A few status-like values beside the title, as `<Badge>`s, or as the
    * control that changes one when the plan makes it a quick action (a
@@ -123,7 +138,15 @@ function FieldRow({ field }: { field: EntityViewField }) {
   return (
     <div className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:grid sm:grid-cols-[minmax(8rem,12rem)_1fr] sm:gap-6">
       <dt className="type-label text-muted-foreground">{field.label}</dt>
-      <dd className="min-w-0 type-body break-words text-foreground">{orEmptyLabel(field.value, field.emptyLabel)}</dd>
+      <dd className="min-w-0 type-body break-words text-foreground">
+        {field.edit ? (
+          <EditableValue label={field.label} edit={field.edit}>
+            {orEmptyLabel(field.value, field.emptyLabel)}
+          </EditableValue>
+        ) : (
+          orEmptyLabel(field.value, field.emptyLabel)
+        )}
+      </dd>
     </div>
   )
 }
@@ -147,7 +170,13 @@ function ViewSection({ section }: { section: EntityViewSection }) {
             </dl>
           ) : (
             <div className="min-w-0 type-body break-words text-foreground">
-              {orEmptyLabel(section.content, section.emptyLabel)}
+              {section.edit ? (
+                <EditableValue label={section.title} edit={section.edit}>
+                  {orEmptyLabel(section.content, section.emptyLabel)}
+                </EditableValue>
+              ) : (
+                orEmptyLabel(section.content, section.emptyLabel)
+              )}
             </div>
           )}
         </CardContent>
@@ -185,6 +214,7 @@ function EntityViewSkeleton() {
 
 export function EntityView({
   title,
+  titleEdit,
   badges,
   actions,
   sections,
@@ -193,6 +223,15 @@ export function EntityView({
   onRetry,
   back,
 }: EntityViewProps) {
+  // Editing in place: one store per view, and the leave-page prompt only
+  // while a field is open.
+  const [store] = useState(() => new EditInPlaceStore())
+  const openField = useSyncExternalStore(
+    store.subscribe,
+    () => store.open,
+    () => store.open,
+  )
+
   if (error?.kind === 'notfound') {
     // A record that doesn't exist and one that belongs to another user are
     // the same plain 404, so this never says which. Retrying can't help.
@@ -219,12 +258,22 @@ export function EntityView({
   if (isLoading) return <EntityViewSkeleton />
 
   return (
+    <EditInPlaceContext.Provider value={store}>
     <div className="flex max-w-4xl flex-col gap-6" data-state="success">
+      {openField !== null && <LeaveGuard store={store} />}
       <BackLink back={back} />
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 flex-col gap-2">
-          <h1 className="type-page-title break-words text-foreground">{title}</h1>
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <h1 className="type-page-title break-words text-foreground">
+            {titleEdit ? (
+              <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline" className="w-full">
+                {title}
+              </EditableValue>
+            ) : (
+              title
+            )}
+          </h1>
           {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
         </div>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
@@ -234,5 +283,6 @@ export function EntityView({
         <ViewSection key={section.title} section={section} />
       ))}
     </div>
+    </EditInPlaceContext.Provider>
   )
 }

@@ -13,6 +13,14 @@ export {
   type EntityViewProps,
   type EntityViewSection,
 } from '@/components/app/entity-view'
+export {
+  editInPlace,
+  type EditControlProps,
+  type EditInPlace,
+  type EditInPlaceOptions,
+  type EditKind,
+} from '@/components/app/edit-in-place'
+export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
 export { ErrorState } from '@/components/app/error-state'
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
@@ -21,6 +29,7 @@ export { MultiChoice } from '@/components/app/multi-choice'
 export { MultiReference } from '@/components/app/multi-reference'
 export { ListEditor } from '@/components/app/list-editor'
 export { PasswordInput } from '@/components/app/password-input'
+export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-text-editor'
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 export { ThemeProvider } from '@/components/theme-provider'
 

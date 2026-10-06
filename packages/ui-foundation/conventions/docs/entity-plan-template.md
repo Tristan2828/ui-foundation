@@ -25,7 +25,8 @@ One or two sentences: what one record is, and who uses the screens.
   - *Demonstrated by the Widget reference* (copied directly): `text` (one
     line), `long text` (say `Markdown` when it's written in Markdown, like
     notes or a write-up: the view renders its headings, lists, tables and
-    links, and it's never a table column), `decimal` (fixed places — say how many),
+    links, the form and editing in place edit it as formatted text, and
+    it's never a table column), `decimal` (fixed places — say how many),
     `date-time`, `email`, `yes/no` (a boolean that is always yes or no:
     say its default and the filter's three labels, e.g. Any stock /
     In stock / Out of stock), `single choice` (list the options, in display
@@ -133,18 +134,29 @@ except the quick actions, if any.
 - "Not set" labels: what an empty optional field reads as on the view
   (`dueDate`: No due date; `checklist`: No items). A field not listed here
   reads "Not set". A `yes/no` is never empty: it reads Yes or No.
-- Quick actions (optional; delete if none): the fields the view changes
-  right where they show, each saved on its own the moment it changes,
-  without the form. Every other value stays read-only. Each one is a
-  `single choice` (picked from a list, usually a badge field), a `yes/no`
-  (a switch), or a sub-records list (its yes/no item field ticked on each
-  item). Only values people change often and can change back as easily.
+- Quick actions (optional; delete if none): the values the view changes
+  with one click, each saved on its own the moment it changes, without
+  the form: a `yes/no` (a switch), or a sub-records list (its yes/no item
+  field ticked on each item). Only values people change often and can
+  change back as easily.
   Say any rule the server enforces on one (it can refuse the change) and
   any side effect (another field the server changes with it), so each
   gets a test; the view always shows the record the server returns.
 
-  Quick actions: status (the server refuses Finished while the checklist
-  has open items), checklist
+  Quick actions: checklist
+
+- Edit in place (optional; delete if none): the fields that turn into
+  their form control where the view shows them and save when you leave
+  them (cell pattern 18): the title, a badge field, a field row, a long
+  text. Single values only: text, long text, a single choice, an integer
+  or a rating, a yes/no, a single or multi reference. Never a computed
+  field or a sub-records list (those stay on the form). Every value not
+  named here, or under Quick actions, stays read-only. Say any rule the
+  server enforces on one (its refusal shows under the field) and any
+  side effect:
+
+  Edit in place: title, status (the server refuses Finished while the
+  checklist has open items), dueDate, notes
 
 ## Screens and access
 

@@ -5,6 +5,94 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.13.0 — editing in place on the view
+
+Additive. Run `npx ui-foundation sync` after the bump for the updated
+playbook, plan template and cell patterns. A view whose plan names no
+fields to edit in place is unchanged: every value stays read-only, and
+quick actions work as in 3.12.
+
+The rule behind every part of it: nothing typed is ever lost.
+
+- **A value on the view can turn into its form control and save when you
+  leave it** (new cell pattern 18, "Editable value"). `EntityView` takes
+  `edit` on a field or a `content` section and `titleEdit` for the title;
+  a header badge wraps itself in the new `<EditableValue>`. Make each with
+  `editInPlace({ kind, value, control, schema, save })`:
+  - **Start:** click the value (a link inside it still navigates), or
+    tab to its pencil ("Edit <label>") and press Enter. Hover and focus
+    show it's editable.
+  - **Save:** leave it (click or tab elsewhere), Enter (one line),
+    Ctrl/Cmd+Enter (long text, or any kind), or pick a choice. Esc puts
+    the saved value back. Unchanged closes with no request; a value the
+    form's schema refuses never leaves the browser.
+  - **Saving:** the control stays, read-only, with "Saving…" under it,
+    until the server agrees. Not optimistic: the view shows the record
+    the server returned, side effects included.
+  - **Refused** (a 422, any other `AppError`, no answer): it stays open
+    with exactly what was typed and the reason under it, a 422's field
+    error word for word. No toast, nothing reverts; leaving again
+    retries, Esc gives up.
+  - **One field at a time:** opening another saves the open one first;
+    if that fails, the open one stays and the other doesn't open.
+  - **Leaving the page** with unsaved text asks "Discard your changes?"
+    (React Router's `useBlocker`: the app needs a data router, as the
+    template has); closing the tab asks through `beforeunload`.
+- **New component: `RichTextEditor`.** Long text written as Markdown,
+  edited as formatted text (Notion-style) and saved as Markdown: an
+  untouched document comes back byte for byte, and an edited one keeps
+  every block the person didn't change exactly as written. Raw HTML
+  shows as text and nothing pasted adds markup. It loads on first use
+  (~106 KB gzipped, its own chunk). New package dependencies:
+  `@milkdown/kit`, and `unified`/`remark-parse`, already installed
+  through `react-markdown`. The case for the editor is in
+  `docs/ARCHITECTURE.md` "The rich-text editor".
+- **`useRecordUpdate` takes `optimistic` and `toastOnError`** (both
+  default `true`). Editing in place uses `false` for both: the value
+  shows once saved, and a refusal comes back through `mutateAsync`.
+- **`MultiReference` takes `readOnly` and `aria-describedby`.**
+- **`expectNoAxeViolations` takes `{ disableRules, exclude }`**, and
+  `/testing` exports `POPUP_FOCUS_GUARDS`, for checking a page with a
+  list open (`e2e/a11y.spec.ts` shows when each applies).
+- **Fixed: form errors in dark mode were below AA contrast.** `FieldError`
+  and an invalid `Field`'s label painted the destructive fill colour
+  (4.15:1 on the dark page); they now use `--destructive-text`, the
+  tone's text shade, like every other tone used as text. No app change.
+- **Quick actions are for one click now.** A status picked from a list
+  edits in place (pattern 18) instead of being a quick action (pattern
+  17 no longer lists it). A 3.12 status quick action keeps working; move
+  it when convenient.
+- **The template's Widget view edits Name, Status, Price, Description
+  (rich text) and Extra Categories in place**, with each control in
+  `widget-fields.tsx`, shared with the form (whose Description is now
+  the rich-text editor too). `useEditWidgetField` is the save;
+  `e2e/widget-edit-in-place.spec.ts` covers each kind, a 422, a 500, no
+  answer, one-at-a-time and the leave prompt; `e2e/a11y.spec.ts` checks
+  a field open, saving, refused, the editor, an open list and the leave
+  prompt in both themes.
+
+### How an app edits fields in place
+
+1. **Plan it.** In `docs/entities/<entity>.md`'s "View screen", add
+   `- Edit in place: title, status, notes` naming the fields, with any
+   rule the server enforces on one and any side effect.
+2. **Share each field's control** between the form and the view, in
+   `src/routes/<entity>/<entity>-fields.tsx` (copy the matching one from
+   Widget's `widget-fields.tsx`; a Markdown long text uses
+   `RichTextEditor`), and switch the form to it through a `Controller`.
+3. **Add the save**: copy `useEditWidgetField` into `use-<entity>.ts`
+   (`useRecordUpdate` with `optimistic: false, toastOnError: false`).
+4. **Mark the fields** on the view, copying `widgetEdits` in
+   `widget-view.tsx`: `editInPlace({ kind, value, control, schema:
+   <entity>FormSchema.shape.<field>, save: (v) => edit.mutateAsync({ <field>: v }) })`
+   on the field (`edit`), the section (`edit`), the title (`titleEdit`)
+   or a badge (`<EditableValue>`).
+5. **Test it** like `e2e/widget-edit-in-place.spec.ts`, and add the
+   in-place block of `e2e/a11y.spec.ts`. Specs that find the view's Edit
+   button by name need `exact: true` now: `getByRole('button', { name:
+   'Edit', exact: true })`, since each editable value has an "Edit
+   <label>" button.
+
 ## 3.12.0 — quick actions on the view
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

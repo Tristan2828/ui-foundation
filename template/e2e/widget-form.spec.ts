@@ -266,7 +266,7 @@ test.describe('widget form', () => {
 
     // Reopening shows the saved order. Through the view's Edit button, not
     // page.goto: a full load restarts the mocks with their seed data.
-    await page.getByRole('button', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'Edit', exact: true }).click()
     await expect(page.getByLabel('Item 1 text')).toHaveValue('Test the scroll wheel')
     await expect(page.getByLabel('Item 1 done')).toBeChecked()
     await expect(page.getByLabel('Item 2 text')).toHaveValue('Pair the receiver')

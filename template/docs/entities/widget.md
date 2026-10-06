@@ -57,9 +57,11 @@ foundation supports has a working, tested reference.
 
 - "Not set" labels: `extraCategoryIds`: No extra categories; `tags`:
   Untagged; `assigneeEmail`: Unassigned; `checklist`: No items.
-- Quick actions: `status`, `inStock`, `checklist`. Ticking an item can
-  change `checklistState` (the server works it out), so the header's
-  progress badge follows the tick once the save answers.
+- Quick actions: `inStock`, `checklist`. Ticking an item can change
+  `checklistState` (the server works it out), so the header's progress
+  badge follows the tick once the save answers.
+- Edit in place: `name` (the title), `status` (its header badge), `price`,
+  `description` (Markdown, as rich text), `extraCategoryIds`.
 
 ## Screens and access
 

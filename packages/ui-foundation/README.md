@@ -18,7 +18,7 @@ than installing this by hand:
 
 | Import | What |
 |---|---|
-| `@tristan2828/ui-foundation` | `AppShell`, `DataTable`, `EntityView`, `EntityForm`, `Markdown`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `PasswordInput`, `RouteErrorBoundary`, `FoundationProviders`, `LoginRoute`, `RegisterRoute`, `useAuth`, `useTableUrlState`, `useDebouncedValue`, `createQueryClient`, `cn`; types `Page`, `AppError`, `QuerySpec` |
+| `@tristan2828/ui-foundation` | `AppShell`, `DataTable`, `EntityView` (with `EditableValue`, `editInPlace`), `EntityForm`, `Markdown`, `RichTextEditor`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `PasswordInput`, `RouteErrorBoundary`, `FoundationProviders`, `LoginRoute`, `RegisterRoute`, `useAuth`, `useTableUrlState`, `useRecordUpdate`, `useDebouncedValue`, `createQueryClient`, `cn`; types `Page`, `AppError`, `QuerySpec` |
 | `@tristan2828/ui-foundation/ui/<name>` | shadcn primitives: badge, button, calendar, card, checkbox, combobox, dialog, empty, field, input, input-group, label, popover, select, separator, sheet, sidebar, skeleton, sonner, spinner, switch, table, textarea, tooltip |
 | `@tristan2828/ui-foundation/gateway` | `safeFetch`, `toAppError`, `networkError` — for an app's `src/api/gateway/` only |
 | `@tristan2828/ui-foundation/mocks` | MSW: `authHandlers`, `resetMockAuth`, `getMockCurrentUser`, `MOCK_USER`, `exposeMswForE2E` |

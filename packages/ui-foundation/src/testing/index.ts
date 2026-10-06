@@ -47,8 +47,29 @@ export function forceLoggedOut(page: Page): Promise<void> {
   })
 }
 
-export async function expectNoAxeViolations(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page }).analyze()
+/**
+ * Leaves an open popup's own scaffolding out of an axe run: Base UI's
+ * focus guards, invisible `aria-hidden` sentinels that hand focus back
+ * when you tab past a non-modal list. Hidden yet focusable is their job;
+ * they're never read out.
+ */
+export const POPUP_FOCUS_GUARDS = '[data-base-ui-focus-guard]'
+
+/**
+ * axe on the page as it is now. The options are for a state whose
+ * structure a rule doesn't fit, said where they're used: a list open in a
+ * portal sits outside the page's landmarks by design (`disableRules:
+ * ['region']`) and brings focus guards (`exclude: [POPUP_FOCUS_GUARDS]`),
+ * while every other rule, contrast included, still checks the list.
+ */
+export async function expectNoAxeViolations(
+  page: Page,
+  options: { disableRules?: string[]; exclude?: string[] } = {},
+): Promise<void> {
+  const builder = new AxeBuilder({ page })
+  if (options.disableRules?.length) builder.disableRules(options.disableRules)
+  for (const selector of options.exclude ?? []) builder.exclude(selector)
+  const results = await builder.analyze()
   expect(results.violations).toEqual([])
 }
 

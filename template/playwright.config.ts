@@ -31,7 +31,7 @@ export default defineConfig({
       // expand/collapse cookie, which below the mobile breakpoint is an
       // off-canvas sheet instead — a different component, not a narrower
       // one. mobile-sidebar.spec.ts covers that sheet.
-      testMatch: ['widgets-table.spec.ts', 'widget-view.spec.ts', 'a11y.spec.ts', 'mobile-sidebar.spec.ts'],
+      testMatch: ['widgets-table.spec.ts', 'widget-view.spec.ts', 'widget-edit-in-place.spec.ts', 'a11y.spec.ts', 'mobile-sidebar.spec.ts'],
     },
   ],
   webServer: {

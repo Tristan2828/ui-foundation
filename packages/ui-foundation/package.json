@@ -1,6 +1,6 @@
 {
   "name": "@tristan2828/ui-foundation",
-  "version": "3.12.0",
+  "version": "3.13.0",
   "description": "Shared UI foundation for contract-first, database-backed React apps: shadcn primitives, DataTable/EntityForm composites, auth, the gateway error seam, design tokens, lint rules and the AI playbook.",
   "license": "MIT",
   "repository": {
@@ -91,21 +91,44 @@
     "zod": "^4.6.5"
   },
   "peerDependenciesMeta": {
-    "@axe-core/playwright": { "optional": true },
-    "@eslint/js": { "optional": true },
-    "@playwright/test": { "optional": true },
-    "@tanstack/eslint-plugin-query": { "optional": true },
-    "eslint": { "optional": true },
-    "eslint-plugin-check-file": { "optional": true },
-    "eslint-plugin-react-hooks": { "optional": true },
-    "eslint-plugin-react-refresh": { "optional": true },
-    "globals": { "optional": true },
-    "msw": { "optional": true },
-    "typescript-eslint": { "optional": true }
+    "@axe-core/playwright": {
+      "optional": true
+    },
+    "@eslint/js": {
+      "optional": true
+    },
+    "@playwright/test": {
+      "optional": true
+    },
+    "@tanstack/eslint-plugin-query": {
+      "optional": true
+    },
+    "eslint": {
+      "optional": true
+    },
+    "eslint-plugin-check-file": {
+      "optional": true
+    },
+    "eslint-plugin-react-hooks": {
+      "optional": true
+    },
+    "eslint-plugin-react-refresh": {
+      "optional": true
+    },
+    "globals": {
+      "optional": true
+    },
+    "msw": {
+      "optional": true
+    },
+    "typescript-eslint": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
     "@hookform/resolvers": "^5.9.1",
+    "@milkdown/kit": "^7.22.2",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
     "date-fns": "^4.4.0",
@@ -114,8 +137,10 @@
     "react-day-picker": "^10.0.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
     "shadcn": "^4.21.0",
-    "tw-animate-css": "^1.4.0"
+    "tw-animate-css": "^1.4.0",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
