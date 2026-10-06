@@ -742,9 +742,12 @@ const price = editInPlace({
   only), Ctrl/Cmd+Shift+Enter ticks the task item the caret is in, and
   Markdown pasted as plain text arrives formatted. Ctrl/Cmd+Enter stays
   the save. A formatting toolbar sits above the text (bold to link, each
-  button naming its shortcut); it's part of the field, so moving to it
-  doesn't save. `toolbar={false}` leaves it out where a value is short
-  and the shortcuts are enough.
+  button naming its shortcut), and a smaller one floats over selected
+  words (bold, italic, strikethrough, code, link); Alt+F10 reaches the
+  floating one, else the fixed one. Both are part of the field, so moving
+  to them doesn't save, and Esc hides the floating one before it gives up
+  the edit. `toolbar={false}` leaves both out where a value is short and
+  the shortcuts are enough.
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
   `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.

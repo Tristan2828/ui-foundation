@@ -397,6 +397,55 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
+  test('long text: the floating toolbar is part of the field; Esc hides it before giving up', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    // "basic", in the first paragraph.
+    await editor.locator('p').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+Home')
+    for (let i = 0; i < 'A '.length; i++) await page.keyboard.press('ArrowRight')
+    for (let i = 0; i < 'basic'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    await page.waitForTimeout(100)
+
+    // Alt+F10 into it: still open, nothing sent.
+    const floating = description.getByRole('toolbar', { name: 'Format selection' })
+    await expect(floating).toBeVisible()
+    await page.keyboard.press('Alt+F10')
+    await expect(floating.getByRole('button', { name: 'Bold', exact: true })).toBeFocused()
+    await page.waitForTimeout(100)
+    await expect(editor).toBeVisible()
+    expect(bodies).toEqual([])
+
+    // Enter formats, and focus goes back to the text; a click formats too.
+    await page.keyboard.press('Enter')
+    await expect(editor).toBeFocused()
+    await floating.getByRole('button', { name: 'Italic', exact: true }).click()
+    await expect(editor).toBeFocused()
+
+    // Esc hides the floating toolbar only: the field stays open.
+    await page.keyboard.press('Escape')
+    await expect(floating).toHaveCount(0)
+    await expect(editor).toBeFocused()
+    expect(bodies).toEqual([])
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(editor).toHaveCount(0)
+    expect(bodies).toEqual([
+      {
+        description:
+          'A ***basic*** wireless mouse with a **2.4GHz** USB receiver.\n\n' +
+          '- Two buttons and a scroll wheel\n' +
+          '- Runs on one AA battery\n\n' +
+          'See the [setup guide](https://example.com/mouse-setup).',
+      },
+    ])
+  })
+
   test('a link inside a value still navigates; a click anywhere else edits', async ({ page, context }) => {
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })
