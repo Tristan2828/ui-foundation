@@ -15,6 +15,15 @@ type WidgetTag = components['schemas']['WidgetTag']
 type WidgetChecklistState = components['schemas']['WidgetChecklistState']
 
 export const WIDGET_STATUSES = ['draft', 'active', 'archived'] as const satisfies readonly WidgetStatus[]
+// What each status shows as, everywhere: the form's select (options and
+// trigger), the toolbar filter, the column's badge and the view's. The wire
+// value is an identifier, never display text. A Record, so tsc fails when
+// openapi.yaml gains a value without a label.
+export const WIDGET_STATUS_LABELS: Record<WidgetStatus, string> = {
+  draft: 'Draft',
+  active: 'Active',
+  archived: 'Archived',
+}
 // Multi-choice options, in display order. `satisfies` makes tsc fail if
 // this ever lists a value openapi.yaml's WidgetTag enum doesn't have.
 export const WIDGET_TAGS = ['fragile', 'bulky', 'seasonal', 'featured'] as const satisfies readonly WidgetTag[]

@@ -144,9 +144,9 @@ test.describe('widget view: editing in place', () => {
   test('choice: the Status badge opens its list, and a pick saves', async ({ page }) => {
     const bodies = patchBodies(page)
     await openWidget(page)
-    await page.locator('header').last().getByText('active', { exact: true }).click()
-    await page.getByRole('option', { name: 'archived' }).click()
-    await expect(page.locator('header').last().getByText('archived', { exact: true })).toBeVisible()
+    await page.locator('header').last().getByText('Active', { exact: true }).click()
+    await page.getByRole('option', { name: 'Archived' }).click()
+    await expect(page.locator('header').last().getByText('Archived', { exact: true })).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Status' })).toHaveCount(0)
     expect(bodies).toEqual([{ status: 'archived' }])
     // The keyboard keeps its place: back on the value's edit button.
@@ -157,10 +157,10 @@ test.describe('widget view: editing in place', () => {
     const bodies = patchBodies(page)
     await openWidget(page)
     await page.getByRole('button', { name: 'Edit Status' }).click()
-    await expect(page.getByRole('option', { name: 'draft' })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'Draft' })).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.getByRole('combobox', { name: 'Status' })).toHaveCount(0)
-    await expect(page.locator('header').last().getByText('active', { exact: true })).toBeVisible()
+    await expect(page.locator('header').last().getByText('Active', { exact: true })).toBeVisible()
     expect(bodies).toEqual([])
   })
 

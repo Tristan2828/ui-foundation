@@ -5,6 +5,22 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.16.1 — labelled single choices in the template
+
+Template and docs only; no package code changed. Run
+`npx ui-foundation sync` after the bump for the updated playbook and plan
+template.
+
+- **The template's Status shows labels** (Draft, Active, Archived), not
+  wire values, on the form's select (options and trigger), the toolbar
+  filter, the column's badge and the view's. One `WIDGET_STATUS_LABELS`
+  record feeds them all, the way `WIDGET_TAG_LABELS` does for Tags. **If
+  your app copied Status** for values that aren't fit to show
+  (`quick_win`), do the same. A `<SelectValue>` needs a children function
+  for the trigger, or it shows the raw value.
+- **Plans give a label per single-choice option** whose wire value isn't
+  fit to show, as for a multi choice.
+
 ## 3.16.0 — the rich-text editor's toolbar
 
 Additive, but visible: **every `RichTextEditor` gains a formatting

@@ -202,7 +202,7 @@ uses the pattern (the playbook then stops and asks).
 | Form, returning to the view | `src/routes/widgets/widget-form.tsx` |
 | `reference` (searchable combobox) | Category in `widget-form.tsx`, over `src/routes/widgets/use-widget-categories.ts` |
 | `multi reference`, lookup by ids | Extra Categories in `widget-fields.tsx` (`WidgetExtraCategoriesPicker`) and `widgets-table.tsx`; `src/api/gateway/widget-categories.ts` (`getWidgetCategoriesByIds`) |
-| `single choice` | Status in `widget-fields.tsx` (`WidgetStatusSelect`) and `widgets-table.tsx` |
+| `single choice`, option labels | Status in `widget-fields.tsx` (`WidgetStatusSelect`) and `widgets-table.tsx`; `WIDGET_STATUS_LABELS` in `widget-schema.ts` |
 | `multi choice`, option labels | Tags in `widget-form.tsx`, `widgets-table.tsx`, `widgets-columns.tsx`; `WIDGET_TAG_LABELS` in `widget-schema.ts` |
 | `yes/no` marked `toggle` | `src/routes/widgets/in-stock-toggle.tsx` |
 | `computed` | Progress (`checklistState`): `widget-schema.ts`, `widgets-columns.tsx`, the backend's `routers/widgets.py` |

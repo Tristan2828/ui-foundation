@@ -79,7 +79,7 @@ test.describe('a11y: editing in place on the view', () => {
       test("a choice's list and a picker's list", async ({ page }) => {
         await page.goto('/widgets/1')
         await page.getByRole('button', { name: 'Edit Status' }).click()
-        await expect(page.getByRole('option', { name: 'archived' })).toBeVisible()
+        await expect(page.getByRole('option', { name: 'Archived' })).toBeVisible()
         // An open list is portaled to <body>, outside the landmarks by
         // design, with focus guards of its own; contrast and every other
         // rule still check it.

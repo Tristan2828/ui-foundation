@@ -47,7 +47,7 @@ import {
 } from './widget-fields'
 import { CHECKLIST_STATE_BADGE_VARIANT, STATUS_BADGE_VARIANT, dateFormatter, priceFormatter } from './widget-format'
 import { ChecklistItems, WidgetInStockSwitch } from './widget-quick-actions'
-import { CHECKLIST_STATE_LABELS, WIDGET_TAG_LABELS, widgetFormSchema } from './widget-schema'
+import { CHECKLIST_STATE_LABELS, WIDGET_STATUS_LABELS, WIDGET_TAG_LABELS, widgetFormSchema } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
 type WidgetUpdate = components['schemas']['WidgetUpdate']
@@ -254,7 +254,7 @@ export function WidgetViewRoute() {
             <>
               {/* Edited in place: the badge turns into the form's Status picker. */}
               <EditableValue label="Status" edit={edits.status} layout="inline">
-                <Badge variant={STATUS_BADGE_VARIANT[widget.status]}>{widget.status}</Badge>
+                <Badge variant={STATUS_BADGE_VARIANT[widget.status]}>{WIDGET_STATUS_LABELS[widget.status]}</Badge>
               </EditableValue>
               {/* Computed by the server, so it follows a tick once the save answers. */}
               <Badge variant={CHECKLIST_STATE_BADGE_VARIANT[widget.checklistState]}>

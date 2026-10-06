@@ -14,7 +14,7 @@ import {
   dateFormatter,
   priceFormatter,
 } from './widget-format'
-import { CHECKLIST_STATE_LABELS, WIDGET_TAG_LABELS } from './widget-schema'
+import { CHECKLIST_STATE_LABELS, WIDGET_STATUS_LABELS, WIDGET_TAG_LABELS } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
 type WidgetStatus = components['schemas']['WidgetStatus']
@@ -58,7 +58,7 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
       enableSorting: true,
       cell: ({ getValue }) => {
         const status = getValue() as WidgetStatus
-        return <Badge variant={STATUS_BADGE_VARIANT[status]}>{status}</Badge>
+        return <Badge variant={STATUS_BADGE_VARIANT[status]}>{WIDGET_STATUS_LABELS[status]}</Badge>
       },
     },
     {
