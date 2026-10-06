@@ -5,6 +5,52 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.16.0 — the rich-text editor's toolbar
+
+Additive, but visible: **every `RichTextEditor` gains a formatting
+toolbar on the bump.** Pass `toolbar={false}` to keep one without it.
+Run `npx ui-foundation sync` for the updated cell patterns.
+
+- **A fixed toolbar above the text**, in five groups: Bold, Italic,
+  Strikethrough, Code · Heading, Subheading · Bulleted list, Numbered
+  list, Task list · Quote, Code block · Link (the 3.15 link box).
+  - Each button is pressed while its format is on where the caret is,
+    and a press turns it off again. Lists switch type in place
+    (bulleted ↔ numbered ↔ tasks).
+  - Each names its shortcut in a tooltip (⌘B on Apple, Ctrl+B elsewhere)
+    and in `aria-keyshortcuts`.
+  - **Keyboard:** one tab stop (Shift+Tab from the text), the arrow keys,
+    Home and End along the row; Enter or Space formats and gives focus
+    back to the text.
+  - **Mouse:** a press never takes focus from the text, so the selection
+    stays and a phone's keyboard doesn't close.
+  - **Read-only** (while a save is in flight), every button is disabled.
+  - **Editing in place:** the toolbar is part of the field, so moving to
+    it doesn't save; Ctrl/Cmd+Enter and Esc work from it as from the text.
+  - axe-clean and token-only in both themes; its icons clear 3:1 (the
+    glyph check).
+- **The editor always has an id** (the app's, or its own), so the toolbar
+  can name what it controls (`aria-controls`).
+- **Read-only text is muted; the toolbar isn't** (its disabled buttons
+  say so). The field's border and ring still animate; its text colour no
+  longer does.
+- **The template's Widget description** has the toolbar, on the form and
+  in place. A new spec covers formatting in place without saving early.
+- Queued in `docs/DEFERRED.md`: a floating toolbar and a slash menu (the
+  developer wants both after this one), images, and one finding: inside a
+  list item, Tab and Shift+Tab indent and outdent the item (Milkdown's
+  list keys) rather than leave the text.
+
+### How an app adopts it
+
+1. **Nothing to add:** the toolbar appears on every editor. Where a value
+   is short enough that it's noise, pass `toolbar={false}`.
+2. **Specs** that Tab through a form now meet one more stop before the
+   editor (the toolbar), and specs that count a screen's buttons count
+   twelve more per open editor. Find toolbar buttons by name
+   (`getByRole('toolbar', { name: 'Formatting' }).getByRole('button', { name: 'Bold', exact: true })`).
+3. **Delete any toolbar** the app built over the editor.
+
 ## 3.15.0 — the rich-text editor: links, Markdown paste, keyboard tasks, placeholder, count
 
 Additive. Run `npx ui-foundation sync` after the bump for the updated

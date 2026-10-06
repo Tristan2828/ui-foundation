@@ -65,6 +65,9 @@ const GLYPH_STORIES: { id: string; open?: (page: import('@playwright/test').Page
     open: (page) => page.getByRole('button', { name: /^2 holds/ }).click(),
   },
   { id: 'ui-toggle--default' },
+  // The rich-text toolbar's icons (the read-only editor's are disabled:
+  // a disabled control is exempt, and its opacity isn't measured here).
+  { id: 'app-richtexteditor--features' },
 ]
 
 function storyUrlById(id: string, theme: 'light' | 'dark') {

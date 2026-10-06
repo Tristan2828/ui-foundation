@@ -21,6 +21,8 @@
 //   in. Ctrl/Cmd+Enter stays the field's save.
 // - A placeholder in an empty document, and a count of the Markdown's
 //   length as it nears `maxLength`.
+// - A fixed toolbar above the text (rich-text-toolbar.tsx), unless
+//   `toolbar={false}`.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import {
   defaultValueCtx,
@@ -57,6 +59,8 @@ import { Popover, PopoverContent } from '@/components/ui/popover'
 import { linkHref } from '@/lib/link-href'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
 import type { RichTextEditorProps } from './rich-text-editor'
+import { toggleFormat, type FormatId } from './rich-text-formats'
+import { RichTextToolbar } from './rich-text-toolbar'
 
 // The commonmark preset, minus the plugin that writes `<br />`. A $remark
 // plugin is a pair (its options and the plugin), spread into `plugins`.
@@ -213,6 +217,7 @@ export default function MilkdownEditor({
   autoFocus = false,
   placeholder,
   maxLength,
+  toolbar = true,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -223,6 +228,10 @@ export default function MilkdownEditor({
   const editorRef = useRef<Editor | null>(null)
   const [linkBox, setLinkBox] = useState<LinkBox | null>(null)
   const [length, setLength] = useState(defaultValue.length)
+  // The editor's state after each change, for the toolbar's pressed buttons.
+  const [editorState, setEditorState] = useState<EditorState | null>(null)
+  // Opens the link box: made with the editor, used by the toolbar's Link.
+  const openLinkRef = useRef<(view: EditorView) => void>(() => {})
   // The latest props, for the editor's callbacks, which are set up once.
   const latest = useRef({ onChange, onProblem, readOnly, placeholder })
   useEffect(() => {
@@ -231,6 +240,9 @@ export default function MilkdownEditor({
 
   const ids = useId()
   const counterId = `${ids}-count`
+  // The editable element's id: the app's, or one of its own, so the
+  // toolbar can name what it controls.
+  const editableId = id ?? `${ids}-text`
   // The count shows from 80% of the limit: below that it's noise.
   const showCount = maxLength !== undefined && length >= maxLength * 0.8
   const describedBy = [ariaDescribedBy, showCount ? counterId : undefined].filter(Boolean).join(' ')
@@ -240,7 +252,7 @@ export default function MilkdownEditor({
     'aria-readonly': String(readOnly),
     class: 'outline-none',
   }
-  if (id) attributes.id = id
+  attributes.id = editableId
   if (ariaLabel) attributes['aria-label'] = ariaLabel
   if (ariaLabelledBy) attributes['aria-labelledby'] = ariaLabelledBy
   if (describedBy) attributes['aria-describedby'] = describedBy
@@ -277,6 +289,7 @@ export default function MilkdownEditor({
         new Plugin({
           view: () => ({
             update: (view, previous) => {
+              setEditorState(view.state)
               if (!view.state.doc.eq(previous.doc)) emit()
             },
           }),
@@ -299,6 +312,8 @@ export default function MilkdownEditor({
         },
       })
     }
+
+    openLinkRef.current = openLink
 
     // Paste, copy, the editor's own keys and the placeholder.
     const input = $prose(
@@ -389,6 +404,7 @@ export default function MilkdownEditor({
       }
       editorRef.current = editor
       baseline = editor.action(getMarkdown())
+      setEditorState(editor.action((ctx) => ctx.get(editorViewCtx).state))
       if (autoFocus) editor.action((ctx) => ctx.get(editorViewCtx).focus())
     })
 
@@ -414,6 +430,20 @@ export default function MilkdownEditor({
     })
   }, [readOnly, attributesKey])
 
+  // A toolbar button: its format on the selection, then focus back in the
+  // text (Link opens the link box instead, which gives it back on close).
+  const runFormat = (format: FormatId) => {
+    editorRef.current?.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      if (format === 'link') {
+        openLinkRef.current(view)
+        return
+      }
+      toggleFormat(view.state, view.dispatch, format)
+      view.focus()
+    })
+  }
+
   const closeLink = () => {
     setLinkBox(null)
     editorRef.current?.action((ctx) => ctx.get(editorViewCtx).focus())
@@ -422,34 +452,44 @@ export default function MilkdownEditor({
   return (
     <>
       <div
-        ref={rootRef}
         data-slot="rich-text-editor"
         className={cn(
-          'min-h-24 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 type-body text-foreground break-words transition-colors',
+          'flex w-full min-w-0 flex-col rounded-lg border border-input bg-transparent type-body text-foreground break-words transition-[border-color,box-shadow]',
           'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30',
           'has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20',
-          'has-[[aria-readonly=true]]:text-muted-foreground',
-          // The same type roles <Markdown> uses, so text reads the same
-          // being edited as being read.
-          '[&_.ProseMirror]:flex [&_.ProseMirror]:min-h-20 [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
-          '[&_h3]:type-section-title [&_h4]:type-section-title [&_h5]:type-label [&_h6]:type-label',
-          '[&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1 [&_ul]:pl-6',
-          '[&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1 [&_ol]:pl-6',
-          '[&_li[data-item-type=task]]:-ml-6 [&_li[data-item-type=task]]:flex [&_li[data-item-type=task]]:list-none [&_li[data-item-type=task]]:items-start [&_li[data-item-type=task]]:gap-2',
-          '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
-          '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4',
-          '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground',
-          '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:font-mono',
-          '[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:font-mono',
-          '[&_hr]:border-border',
-          '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:type-label',
-          // Raw HTML from the text: shown as its characters, never as markup.
-          '[&_span[data-type=html]]:rounded [&_span[data-type=html]]:bg-muted [&_span[data-type=html]]:px-1 [&_span[data-type=html]]:font-mono [&_span[data-type=html]]:text-foreground',
-          // The placeholder, in an empty document only (a decoration).
-          '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
           className,
         )}
-      />
+      >
+        {toolbar && (
+          <RichTextToolbar state={editorState} readOnly={readOnly} controls={editableId} onFormat={runFormat} />
+        )}
+        <div
+          ref={rootRef}
+          className={cn(
+            'min-h-24 px-2.5 py-2',
+            // Read-only text is muted; the toolbar's buttons say so by being disabled.
+            'has-[[aria-readonly=true]]:text-muted-foreground',
+            // The same type roles <Markdown> uses, so text reads the same
+            // being edited as being read.
+            '[&_.ProseMirror]:flex [&_.ProseMirror]:min-h-20 [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
+            '[&_h3]:type-section-title [&_h4]:type-section-title [&_h5]:type-label [&_h6]:type-label',
+            '[&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1 [&_ul]:pl-6',
+            '[&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1 [&_ol]:pl-6',
+            '[&_li[data-item-type=task]]:-ml-6 [&_li[data-item-type=task]]:flex [&_li[data-item-type=task]]:list-none [&_li[data-item-type=task]]:items-start [&_li[data-item-type=task]]:gap-2',
+            '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
+            '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4',
+            '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground',
+            '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:font-mono',
+            '[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:font-mono',
+            '[&_hr]:border-border',
+            '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:type-label',
+            // Raw HTML from the text: shown as its characters, never as markup.
+            '[&_span[data-type=html]]:rounded [&_span[data-type=html]]:bg-muted [&_span[data-type=html]]:px-1 [&_span[data-type=html]]:font-mono [&_span[data-type=html]]:text-foreground',
+            // The placeholder, in an empty document only (a decoration).
+            '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
+          )}
+        />
+      </div>
       {showCount && (
         <p
           id={counterId}

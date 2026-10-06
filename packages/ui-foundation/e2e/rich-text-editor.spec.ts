@@ -268,3 +268,158 @@ test.describe('editing features', () => {
     })
   }
 })
+
+// The fixed toolbar, on the Features story's "formats" editor.
+test.describe('toolbar', () => {
+  const toolbar = (page: Page, name: string) =>
+    page.locator(`[data-fixture="${name}"]`).getByRole('toolbar', { name: 'Formatting' })
+
+  // Selects the first word of the first line ("Format"), from the keyboard.
+  async function selectFormat(page: Page) {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Home')
+    for (let i = 0; i < 'Format'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    await page.waitForTimeout(100)
+  }
+
+  // The caret in the first line, for a block format.
+  async function caretInFirstLine(page: Page) {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+  }
+
+  const button = (page: Page, label: string) => toolbar(page, 'formats').getByRole('button', { name: label, exact: true })
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'formats')).toBeVisible()
+  })
+
+  test('one row of named buttons, each with its shortcut, one tab stop', async ({ page }) => {
+    const bar = toolbar(page, 'formats')
+    const labels = [
+      'Bold', 'Italic', 'Strikethrough', 'Code', 'Heading', 'Subheading',
+      'Bulleted list', 'Numbered list', 'Task list', 'Quote', 'Code block', 'Link',
+    ]
+    await expect(bar.getByRole('button')).toHaveCount(labels.length)
+    for (const label of labels) await expect(bar.getByRole('button', { name: label, exact: true })).toBeVisible()
+    await expect(button(page, 'Bold')).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+B$/)
+    await expect(bar.locator('[tabindex="0"]')).toHaveCount(1)
+    await expect(bar).toHaveAttribute('aria-controls', /.+/)
+  })
+
+  test('the arrow keys, Home and End move along it; Shift+Tab from the text reaches it', async ({ page }) => {
+    await caretInFirstLine(page)
+    await page.keyboard.press('Shift+Tab')
+    await expect(button(page, 'Bold')).toBeFocused()
+    await page.keyboard.press('ArrowRight')
+    await expect(button(page, 'Italic')).toBeFocused()
+    await page.keyboard.press('End')
+    await expect(button(page, 'Link')).toBeFocused()
+    await page.keyboard.press('ArrowRight')
+    await expect(button(page, 'Bold')).toBeFocused()
+    await page.keyboard.press('ArrowLeft')
+    await expect(button(page, 'Link')).toBeFocused()
+    await page.keyboard.press('Home')
+    await expect(button(page, 'Bold')).toBeFocused()
+  })
+
+  test('a mark: on the selection, pressed while on, off again; the text keeps focus', async ({ page }) => {
+    await selectFormat(page)
+    // The text never loses focus during a press (on a phone, losing it
+    // closes the keyboard and opens it again).
+    await editor(page, 'formats').evaluate((element) => {
+      ;(window as unknown as { blurs: number }).blurs = 0
+      element.addEventListener('blur', () => (window as unknown as { blurs: number }).blurs++)
+    })
+    await button(page, 'Bold').click()
+    await expect(editor(page, 'formats')).toBeFocused()
+    expect(await page.evaluate(() => (window as unknown as { blurs: number }).blurs)).toBe(0)
+    await expect(saved(page, 'formats')).toContainText('**Format** me here.')
+    await expect(button(page, 'Bold')).toHaveAttribute('aria-pressed', 'true')
+    await expect(button(page, 'Italic')).toHaveAttribute('aria-pressed', 'false')
+    await button(page, 'Bold').click()
+    await expect(saved(page, 'formats')).toContainText('Format me here.')
+    await expect(saved(page, 'formats')).not.toContainText('**')
+    await button(page, 'Strikethrough').click()
+    await expect(saved(page, 'formats')).toContainText('~~Format~~ me here.')
+  })
+
+  test('from the keyboard: Enter on a button formats, and focus goes back to the text', async ({ page }) => {
+    await selectFormat(page)
+    await page.keyboard.press('Shift+Tab')
+    await page.keyboard.press('ArrowRight')
+    await expect(button(page, 'Italic')).toBeFocused()
+    await page.keyboard.press('Enter')
+    await expect(editor(page, 'formats')).toBeFocused()
+    await expect(saved(page, 'formats')).toContainText('*Format* me here.')
+  })
+
+  test('headings, a quote and a code block turn the line into one, and back', async ({ page }) => {
+    const first = () => saved(page, 'formats')
+    await caretInFirstLine(page)
+    await button(page, 'Heading').click()
+    await expect(first()).toContainText('# Format me here.')
+    await expect(button(page, 'Heading')).toHaveAttribute('aria-pressed', 'true')
+    await button(page, 'Subheading').click()
+    await expect(first()).toContainText('## Format me here.')
+    await button(page, 'Subheading').click()
+    await expect(first()).not.toContainText('#')
+    await button(page, 'Quote').click()
+    await expect(first()).toContainText('> Format me here.')
+    await button(page, 'Quote').click()
+    await expect(first()).not.toContainText('>')
+    await button(page, 'Code block').click()
+    await expect(first()).toContainText('```\nFormat me here.\n```')
+    await button(page, 'Code block').click()
+    await expect(first()).not.toContainText('```')
+  })
+
+  test('lists: bulleted, then numbered, then tasks, then plain again', async ({ page }) => {
+    const text = () => saved(page, 'formats')
+    await caretInFirstLine(page)
+    await button(page, 'Bulleted list').click()
+    await expect(text()).toContainText('- Format me here.')
+    await expect(button(page, 'Bulleted list')).toHaveAttribute('aria-pressed', 'true')
+    await button(page, 'Numbered list').click()
+    await expect(text()).toContainText('1. Format me here.')
+    await expect(button(page, 'Bulleted list')).toHaveAttribute('aria-pressed', 'false')
+    await button(page, 'Task list').click()
+    await expect(text()).toContainText('- [ ] Format me here.')
+    await expect(button(page, 'Task list')).toHaveAttribute('aria-pressed', 'true')
+    await button(page, 'Task list').click()
+    await expect(text()).toContainText('Format me here.\n\nSecond line.')
+    await expect(text()).not.toContainText('- ')
+  })
+
+  test('Link opens the link box for the selection', async ({ page }) => {
+    await selectFormat(page)
+    await button(page, 'Link').click()
+    const box = page.getByRole('dialog', { name: 'Add link' })
+    await box.getByRole('textbox', { name: 'Link address' }).fill('example.com')
+    await page.keyboard.press('Enter')
+    await expect(saved(page, 'formats')).toContainText('[Format](https://example.com) me here.')
+    await expect(button(page, 'Link')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('read-only, every button is disabled', async ({ page }) => {
+    const buttons = toolbar(page, 'readOnly').getByRole('button')
+    await expect(buttons).toHaveCount(12)
+    for (const one of await buttons.all()) await expect(one).toBeDisabled()
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`pressed, focused and with its tooltip open, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await selectFormat(page)
+      await button(page, 'Bold').click()
+      await button(page, 'Italic').hover()
+      await expect(page.locator('[data-slot=tooltip-content][data-open]')).toHaveText(/^Italic \((⌘I|Ctrl\+I)\)$/)
+      const results = await new AxeBuilder({ page })
+        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
+        .analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
+})

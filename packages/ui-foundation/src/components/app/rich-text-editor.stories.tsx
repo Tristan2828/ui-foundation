@@ -49,11 +49,13 @@ function Labelled({
   markdown,
   placeholder,
   maxLength,
+  readOnly,
 }: {
   label: string
   markdown: string
   placeholder?: string
   maxLength?: number
+  readOnly?: boolean
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
@@ -70,6 +72,7 @@ function Labelled({
         onProblem={setProblem}
         placeholder={placeholder}
         maxLength={maxLength}
+        readOnly={readOnly}
       />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
@@ -100,9 +103,10 @@ export const RoundTrip: StoryObj<typeof RichTextEditor> = {
   ),
 }
 
-// The editing features beyond formatting, each in its own editor: the
-// placeholder, the length count near and over a limit, a link to edit and
-// a task list to tick (e2e/rich-text-editor.spec.ts "editing features").
+// The editing features, each in its own editor: the placeholder, the
+// length count near and over a limit, a link to edit, a task list to
+// tick, a paragraph for the toolbar to format, and a read-only editor
+// (e2e/rich-text-editor.spec.ts "editing features", "toolbar").
 // Also contrast-checked in both themes, the count's over-the-limit tone
 // included.
 export const Features: StoryObj<typeof RichTextEditor> = {
@@ -113,6 +117,8 @@ export const Features: StoryObj<typeof RichTextEditor> = {
       <Labelled label="overLimit" markdown={'Thirty characters, and more.\n'} maxLength={20} />
       <Labelled label="links" markdown={'See the [setup guide](https://example.com/setup) for details.\n\nPlain words here.\n'} />
       <Labelled label="tasks" markdown={'- [ ] Open item\n- [x] Done item\n'} />
+      <Labelled label="formats" markdown={'Format me here.\n\nSecond line.\n'} />
+      <Labelled label="readOnly" markdown={'Saving, so nothing can change.\n'} readOnly />
     </div>
   ),
 }

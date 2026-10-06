@@ -741,7 +741,10 @@ const price = editInPlace({
   Its keys: Ctrl/Cmd+K adds or edits a link (web and email addresses
   only), Ctrl/Cmd+Shift+Enter ticks the task item the caret is in, and
   Markdown pasted as plain text arrives formatted. Ctrl/Cmd+Enter stays
-  the save.
+  the save. A formatting toolbar sits above the text (bold to link, each
+  button naming its shortcut); it's part of the field, so moving to it
+  doesn't save. `toolbar={false}` leaves it out where a value is short
+  and the shortcuts are enough.
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
   `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.

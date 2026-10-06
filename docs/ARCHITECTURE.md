@@ -245,6 +245,15 @@ directly, past the guard, so raw HTML in pasted text would have been
 saved as HTML. Ours runs the same guard. Plain text with no Markdown in
 it goes in exactly as typed.
 
+**The toolbar (3.16)** (`rich-text-toolbar.tsx`) is ARIA's toolbar
+pattern: one tab stop, the arrow keys along the row, each button
+`aria-pressed` for whether its format is on where the caret is, with its
+shortcut in `aria-keyshortcuts` and its tooltip. A press runs a plain
+ProseMirror command (`rich-text-formats.ts`), one undo step like its
+shortcut, and a mouse press never takes focus from the text. It sits
+inside the field's wrapper, so editing in place counts moving to it as
+staying.
+
 **Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
 (a `Popover` with no trigger, placed through the `anchor` the package's
 `PopoverContent` takes). Only web and email addresses, a path on the site
