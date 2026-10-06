@@ -108,7 +108,7 @@ test.describe('widget view', () => {
     // Header: status-like values (Status edits in place, In Stock is a
     // quick action that flips), and the actions.
     const header = page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) })
-    await expect(header.getByText('active', { exact: true })).toBeVisible()
+    await expect(header.getByText('Active', { exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Edit Status' })).toBeAttached()
     await expect(header.getByText('In progress', { exact: true })).toBeVisible()
     await expect(header.getByRole('switch', { name: 'In stock' })).toBeChecked()

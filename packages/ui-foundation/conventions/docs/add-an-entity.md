@@ -104,7 +104,11 @@ is a filled-in example while the Widgets demo is still here).
    its "List" column, toolbar filters from its "Filter" column, form fields
    and labels from its field table, and field types by pattern (a
    `reference` field copies Category's searchable combobox, a
-   `single choice` copies Status's select, a `date-time` copies
+   `single choice` copies Status's select — each option shows its label,
+   never its wire value, from one `Record<value, label>`
+   (`WIDGET_STATUS_LABELS`) read by the options, the trigger (through
+   `<SelectValue>`'s children, which otherwise shows the raw value), the
+   toolbar filter and every badge — a `date-time` copies
    Available From's date picker, a `yes/no` copies In Stock — a `Switch`
    (`@tristan2828/ui-foundation/ui/switch`) in a horizontal `Field` with
    its label beside it on the form, cell pattern 12 (the word Yes/No) in

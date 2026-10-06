@@ -15,7 +15,7 @@ foundation supports has a working, tested reference.
 |---|---|---|---|---|---|---|
 | name | Name | text | yes | 1–200 chars | column, sortable | search |
 | categoryId | Category | reference → WidgetCategory | yes | picked from a searchable list | column | |
-| status | Status | single choice | yes | draft, active, archived; default draft | column, sortable | yes |
+| status | Status | single choice | yes | draft (Draft), active (Active), archived (Archived); default draft | column, sortable | yes |
 | availableFrom | Available From | date-time | yes | picked with a calendar; shown as a date | column, sortable | |
 | assigneeEmail | Assignee Email | email | no | empty means unassigned | column | |
 | price | Price | decimal | yes | 2 places, e.g. 19.99 | column, sortable | |

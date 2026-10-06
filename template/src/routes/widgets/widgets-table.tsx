@@ -22,7 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@tristan2828/ui-foundation/ui/select'
-import { CHECKLIST_STATE_LABELS, CHECKLIST_STATES, WIDGET_STATUSES, WIDGET_TAG_LABELS, WIDGET_TAGS } from './widget-schema'
+import {
+  CHECKLIST_STATE_LABELS,
+  CHECKLIST_STATES,
+  WIDGET_STATUS_LABELS,
+  WIDGET_STATUSES,
+  WIDGET_TAG_LABELS,
+  WIDGET_TAGS,
+} from './widget-schema'
 import { CategoryNamesContext } from './category-names-context'
 import { buildWidgetsColumns } from './widgets-columns'
 import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
@@ -250,14 +257,18 @@ export function WidgetsTableRoute() {
               >
                 <SelectTrigger aria-label="Filter by status" className="w-36">
                   <SelectValue>
-                    {(value) => (value === STATUS_FILTER_ALL ? STATUS_FILTER_ALL_LABEL : value)}
+                    {(value) =>
+                      value === STATUS_FILTER_ALL
+                        ? STATUS_FILTER_ALL_LABEL
+                        : WIDGET_STATUS_LABELS[value as (typeof WIDGET_STATUSES)[number]]
+                    }
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={STATUS_FILTER_ALL}>{STATUS_FILTER_ALL_LABEL}</SelectItem>
                   {WIDGET_STATUSES.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status}
+                      {WIDGET_STATUS_LABELS[status]}
                     </SelectItem>
                   ))}
                 </SelectContent>

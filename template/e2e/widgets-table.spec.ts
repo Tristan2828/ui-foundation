@@ -121,8 +121,10 @@ test.describe('widgets table', () => {
     // A picked value still shows itself, and clearing returns to the
     // label rather than falling back to the sentinel.
     await page.getByLabel('Filter by status').click()
-    await page.getByRole('option', { name: 'active', exact: true }).click()
-    await expect(page.getByLabel('Filter by status')).toContainText('active')
+    // Options and the trigger show the label; the URL carries the wire value.
+    await page.getByRole('option', { name: 'Active', exact: true }).click()
+    await expect(page.getByLabel('Filter by status')).toContainText('Active')
+    await expect(page).toHaveURL(/[?&]status=active(&|$)/)
 
     await page.getByLabel('Filter by status').click()
     await page.getByRole('option', { name: 'All statuses' }).click()

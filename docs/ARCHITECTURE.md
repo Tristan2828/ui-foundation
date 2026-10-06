@@ -183,6 +183,17 @@ Rules learned the hard way (each cost a phase to find):
 - **Test a commit, not a branch.** Scripts and workflows take a SHA or a
   tag, so every result belongs to one immutable tree.
 
+**Claude Code cloud sessions** run `.claude/hooks/session-start.sh` on
+start (registered in `.claude/settings.json`; it does nothing anywhere
+else). It runs `npm install`, makes `template/backend/.venv`, and handles
+a cloud image whose Playwright browsers are an older revision than the
+pinned `@playwright/test`: it maps the pinned revision onto the installed
+binaries in `~/.cache/ui-foundation-pw` and sets `PLAYWRIGHT_BROWSERS_PATH`
+for the session, since `playwright install` isn't available there. With
+the pinned revision installed, it maps nothing. Docker isn't available in
+those sessions, so `check-backend-postgres.sh` can't run there
+([`DEFERRED.md`](DEFERRED.md)).
+
 ## Decisions that still hold
 
 | Decision | Why |

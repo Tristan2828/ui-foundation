@@ -12,7 +12,7 @@ import { Input } from '@tristan2828/ui-foundation/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tristan2828/ui-foundation/ui/select'
 import type { components } from '@/api/schema'
 import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
-import { DESCRIPTION_MAX_LENGTH, WIDGET_STATUSES } from './widget-schema'
+import { DESCRIPTION_MAX_LENGTH, WIDGET_STATUS_LABELS, WIDGET_STATUSES } from './widget-schema'
 
 type WidgetStatus = components['schemas']['WidgetStatus']
 
@@ -70,12 +70,15 @@ export function WidgetStatusSelect({
       modal={modal}
     >
       <SelectTrigger id={id} aria-invalid={invalid} aria-label={ariaLabel} aria-describedby={ariaDescribedBy}>
-        <SelectValue placeholder="Select a status" />
+        {/* Base UI's trigger shows the raw value unless told otherwise. */}
+        <SelectValue placeholder="Select a status">
+          {(status: WidgetStatus | null) => (status ? WIDGET_STATUS_LABELS[status] : 'Select a status')}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {WIDGET_STATUSES.map((status) => (
           <SelectItem key={status} value={status}>
-            {status}
+            {WIDGET_STATUS_LABELS[status]}
           </SelectItem>
         ))}
       </SelectContent>
