@@ -22,6 +22,7 @@ const PRIMITIVES = [
   'switch',
   'table',
   'toast',
+  'toggle',
   'tooltip',
   'typography',
 ]
@@ -38,9 +39,31 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // Each id comes with text the story must show, so an iframe that rendered
 // nothing can't pass every rule trivially.
 // <RichTextEditor> is the same text being edited, so it answers the same way.
+// <StageCircle> and the cell patterns' markup (patterns/CellPatterns) are
+// design language too: each also has its glyphs measured below.
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
+  { id: 'app-stagecircle--default', mustShow: 'In progress' },
+  { id: 'patterns-cellpatterns--pressed-icon-in-a-cell', mustShow: 'Bookshelf' },
+  { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
+  { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
+]
+
+// Stories whose glyphs carry meaning on their own: every <svg> in them must
+// clear WCAG's 3:1 non-text minimum against the background behind it.
+// axe measures text only, so without this an icon could fade below it
+// unnoticed (a faint "off" state, a category slot in dark mode).
+// A story whose glyphs are in a popup opens it first.
+const GLYPH_STORIES: { id: string; open?: (page: import('@playwright/test').Page) => Promise<void> }[] = [
+  { id: 'app-stagecircle--default' },
+  { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },
+  { id: 'patterns-cellpatterns--icons-with-one-tooltip' },
+  {
+    id: 'patterns-cellpatterns--dependency-list',
+    open: (page) => page.getByRole('button', { name: /^2 holds/ }).click(),
+  },
+  { id: 'ui-toggle--default' },
 ]
 
 function storyUrlById(id: string, theme: 'light' | 'dark') {
@@ -332,5 +355,196 @@ test('typography roles resolve to their tokens', async ({ page }) => {
       }, role)
     expect(size, `type-${role} font-size`).toBe(expected)
     expect(weight, `type-${role} font-weight`).toBe(expectedWeight)
+  }
+})
+
+// Each <svg>'s ink (its `color`, which strokes and fills use through
+// currentColor) against the first opaque background behind it, as a WCAG
+// contrast ratio. Colours go through the same canvas as the token check,
+// so any colour space resolves; a translucent ink (an opacity modifier) is
+// painted over its background first, so the ratio is of what's on screen.
+async function glyphContrasts(page: import('@playwright/test').Page) {
+  return page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1
+    canvas.height = 1
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+    const paint = (...colours: string[]) => {
+      ctx.clearRect(0, 0, 1, 1)
+      for (const colour of colours) {
+        ctx.fillStyle = '#000000'
+        ctx.fillStyle = colour
+        ctx.fillRect(0, 0, 1, 1)
+      }
+      return Array.from(ctx.getImageData(0, 0, 1, 1).data.slice(0, 3))
+    }
+    const luminance = (rgb: number[]) => {
+      const [r, g, b] = rgb.map((v) => {
+        const c = v / 255
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const alpha = (colour: string) => {
+      ctx.clearRect(0, 0, 1, 1)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0)'
+      ctx.fillStyle = colour
+      ctx.fillRect(0, 0, 1, 1)
+      return ctx.getImageData(0, 0, 1, 1).data[3]
+    }
+    // Every background behind the element, outermost first, from the first
+    // opaque one: painted in that order, they're what the glyph sits on.
+    const backgroundsBehind = (element: Element) => {
+      const layers: string[] = []
+      for (let node: Element | null = element; node; node = node.parentElement) {
+        const colour = getComputedStyle(node).backgroundColor
+        const a = alpha(colour)
+        if (a === 0) continue
+        layers.unshift(colour)
+        if (a === 255) return layers
+      }
+      return ['rgb(255, 255, 255)', ...layers]
+    }
+    // The page, not only the story's root: a popup is portaled to <body>.
+    const visible = Array.from(document.body.querySelectorAll('svg')).filter((svg) => svg.checkVisibility())
+    return visible.map((svg) => {
+      const backgrounds = backgroundsBehind(svg)
+      const ink = getComputedStyle(svg).color
+      const [a, b] = [luminance(paint(...backgrounds, ink)), luminance(paint(...backgrounds))]
+      const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+      const where = svg.closest('[aria-label]')?.getAttribute('aria-label') ?? svg.closest('li, td, th')?.textContent
+      return { glyph: `${svg.getAttribute('class')} in "${where}"`, ratio: Math.round(ratio * 100) / 100 }
+    })
+  })
+}
+
+test.describe('glyphs clear the 3:1 non-text minimum in both themes', () => {
+  for (const { id, open } of GLYPH_STORIES) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${id} (${theme})`, async ({ page }) => {
+        await page.goto(storyUrlById(id, theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        await open?.(page)
+        await expect(page.locator(open ? '[data-open] svg' : '#storybook-root svg').first()).toBeVisible()
+        const glyphs = await glyphContrasts(page)
+        if (process.env.PRINT_GLYPHS) console.log(id, theme, JSON.stringify(glyphs))
+        expect(glyphs.length).toBeGreaterThan(0)
+        expect(glyphs.filter(({ ratio }) => ratio < 3)).toEqual([])
+      })
+    }
+  }
+})
+
+// Cell pattern 15's variant: a pressed icon inside another value's cell.
+test.describe('pressed icon in a cell', () => {
+  const STORY = 'patterns-cellpatterns--pressed-icon-in-a-cell'
+
+  test('is aria-pressed, named for its row, and only there while the value allows it', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    const on = page.getByRole('button', { name: 'Focus: Desk lamp' })
+    const off = page.getByRole('button', { name: 'Focus: Bookshelf' })
+    await expect(on).toHaveAttribute('aria-pressed', 'true')
+    await expect(off).toHaveAttribute('aria-pressed', 'false')
+    await expect(page.getByRole('button', { name: 'Focus: Office chair' })).toHaveCount(0)
+    // Pressed is toned and filled; not pressed is neither.
+    const fill = (button: typeof on) => button.locator('svg').evaluate((svg) => getComputedStyle(svg).fill)
+    expect(await fill(on)).not.toBe('none')
+    expect(await fill(off)).toBe('none')
+    // Hovered, pressed keeps its tone (the primitive's hover is foreground).
+    const colour = (button: typeof on) => button.evaluate((element) => getComputedStyle(element).color)
+    const toned = await colour(on)
+    await on.hover()
+    expect(await colour(on)).toBe(toned)
+  })
+
+  test('flips from the keyboard, with "Saving" beside it', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    const off = page.getByRole('button', { name: 'Focus: Bookshelf' })
+    await off.focus()
+    await page.keyboard.press('Space')
+    await expect(off).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('status', { name: 'Saving' })).toBeVisible()
+    await expect(page.getByRole('status', { name: 'Saving' })).toHaveCount(0)
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`pressed and not, focused and hovered, have zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(storyUrlById(STORY, theme))
+      await page.getByRole('button', { name: 'Focus: Bookshelf' }).hover()
+      await page.getByRole('button', { name: 'Focus: Desk lamp' }).focus()
+      const results = await analyzeStory(page)
+      expect(results.violations).toEqual([])
+    })
+  }
+})
+
+// Cell pattern 4 for a multi value: the icons side by side, every name in
+// one tooltip on the whole group.
+test.describe('icons with one tooltip', () => {
+  const STORY = 'patterns-cellpatterns--icons-with-one-tooltip'
+
+  test('the group is one focusable image named by every value, "…" while one loads', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    await expect(page.getByRole('img', { name: 'Home, Finance', exact: true })).toBeVisible()
+    await expect(page.getByRole('img', { name: 'Repairs, …', exact: true })).toBeVisible()
+    await expect(page.getByRole('row', { name: /Standing mat/ })).toContainText('—')
+    // Read-only: no button in the cell.
+    await expect(page.getByRole('table').getByRole('button')).toHaveCount(0)
+  })
+
+  // With several tooltips on a page, one that's closing stays in the DOM
+  // for a moment: the open one is the one with [data-open].
+  test('focus opens the tooltip; the open one is read by [data-open]', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    const open = page.locator('[data-slot=tooltip-content][data-open]')
+    await page.getByRole('img', { name: 'Home, Finance', exact: true }).focus()
+    await expect(open).toHaveText('Home, Finance')
+    await page.keyboard.press('Tab')
+    await expect(open).toHaveText('Repairs, Home, Finance')
+    await expect(open).toHaveCount(1)
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`with the tooltip open, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(storyUrlById(STORY, theme))
+      await page.getByRole('img', { name: 'Home, Finance', exact: true }).focus()
+      await expect(page.locator('[data-slot=tooltip-content][data-open]')).toBeVisible()
+      const results = await analyzeStory(page)
+      expect(results.violations).toEqual([])
+    })
+  }
+})
+
+// Cell pattern 10 for a dependency list: a summary in the cell, every
+// related record in a popover, grouped by kind.
+test.describe('dependency list', () => {
+  const STORY = 'patterns-cellpatterns--dependency-list'
+
+  test('opens on a tap, grouped by kind, held with its reason; nothing linked is plain text', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    await page.getByRole('button', { name: /^2 holds/ }).click()
+    const popup = page.getByRole('dialog')
+    await expect(popup.getByRole('region', { name: 'Parts' })).toContainText('Bulb: unavailable')
+    await expect(popup.getByRole('region', { name: 'Dates' })).toContainText("Delivery day: hasn't happened")
+    await expect(popup.getByRole('region', { name: 'Links' })).toContainText('Bookshelf: clear')
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('row', { name: /Office chair/ })).toContainText('Ready')
+    await expect(page.getByRole('row', { name: /Office chair/ }).getByRole('button')).toHaveCount(0)
+  })
+
+  test('opens on hover too', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    await page.getByRole('button', { name: /^Ready/ }).hover()
+    await expect(page.getByRole('dialog')).toContainText('Screws')
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`with the popover open, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(storyUrlById(STORY, theme))
+      await page.getByRole('button', { name: /^2 holds/ }).click()
+      await expect(page.getByRole('dialog')).toBeVisible()
+      const results = await analyzeStory(page)
+      expect(results.violations).toEqual([])
+    })
   }
 })

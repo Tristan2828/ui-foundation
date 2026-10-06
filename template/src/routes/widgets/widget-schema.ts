@@ -58,11 +58,13 @@ export const widgetFormSchema = z.object({
     .string()
     .trim()
     .regex(PRICE_PATTERN, 'Enter a price with exactly two decimal places, e.g. 19.99'),
+  // Markdown: checked, never trimmed. A trim would rewrite what nobody
+  // touched (a leading indent is a code block, and the text's own ending
+  // goes), and the rich-text editor saves only what was typed.
   description: z
     .string()
-    .trim()
-    .min(1, 'Description is required')
-    .max(2000, 'Description must be 2000 characters or fewer'),
+    .max(2000, 'Description must be 2000 characters or fewer')
+    .refine((value) => value.trim() !== '', 'Description is required'),
   // Multi choice: any number of options, none required, no repeats (the
   // combobox can't produce a repeat, but the wire contract forbids one).
   tags: z

@@ -31,6 +31,12 @@ export { ListEditor } from '@/components/app/list-editor'
 export { PasswordInput } from '@/components/app/password-input'
 export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-text-editor'
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
+export {
+  StageCircle,
+  type StageCircleProps,
+  type StageCircleStage,
+  type StageCircleTone,
+} from '@/components/app/stage-circle'
 export { ThemeProvider } from '@/components/theme-provider'
 
 // Screens outside the app shell

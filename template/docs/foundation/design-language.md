@@ -82,6 +82,24 @@ Two rules that keep this honest:
   greyscale screenshot and a printed page all lose it. The label text
   usually carries the meaning already; where a cell is a glyph rather than
   a word, vary the *shape* (filled / half / slashed) too, not just the hue.
+  The package's `StageCircle` does this for an ordered status: dashed,
+  filling, solid with a tick, struck through
+  ([`cell-patterns.md`](cell-patterns.md) pattern 19).
+
+## Glyphs and icons: 3:1
+
+An icon that carries meaning on its own (a stage circle, a category's
+icon, a pressed flag) must clear WCAG's **3:1 non-text minimum** against
+the background behind it, in both themes. axe measures text only, so the
+package's Storybook has a glyph check of its own: every `<svg>` in its
+design-language stories, its ink (with any opacity modifier painted over
+its background) against what's behind it. Every `*-text` tone, every
+category slot and `muted-foreground` clear it as they are. An opacity
+modifier is where it goes wrong: `text-muted-foreground/80` is the
+faintest step that still clears it in light mode (3.2:1), and `/70`
+doesn't (2.7:1). A deliberately faint icon that carries nothing on its
+own (an "empty" star beside a rating's filled ones, pattern 9) may go
+lower; say so in a comment.
 
 ## Categorical colour
 
@@ -119,10 +137,11 @@ Four things about them:
   `text-foreground`, so readability never depends on the hue. A slot used
   as a background needs its own contrast check, which nothing here does
   for you.
-- **Nothing re-measures them automatically.** All eight clear the 3:1
-  non-text minimum in both themes (measured, recorded in `theme.css`), but
-  axe checks text contrast, not icon contrast — so a change to these
-  values is not caught by any gate.
+- **The glyph check re-measures them.** All eight clear the 3:1
+  non-text minimum in both themes (recorded in `theme.css`). axe checks
+  text contrast, not icon contrast, so the package's Storybook glyph check
+  draws an icon in each slot (`patterns/CellPatterns`, "Icons with one
+  tooltip") and fails a change that takes one below 3:1.
 
 If you find yourself wanting a ninth, that is usually a sign the column
 should be showing a shape or a label rather than more colours.

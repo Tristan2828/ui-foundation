@@ -10,7 +10,12 @@ alternatives ([`column-options.md`](column-options.md)), not designed in the abs
 Patterns 12 (boolean), 15 (yes/no flipped in the row), 16 (title linking
 to its view), 17 (quick action on the view) and 18 (editable value) are
 the template's own references: Widget's In Stock and Name columns and its
-view render them, and their specs pin them. The other patterns from 11 on are
+view render them, and their specs pin them. Pattern 19 (stage circle)
+and the multi-value variant of 4, the dependency list in 10 and the
+pressed icon in 15 were each built for a real app's screen first; the
+package's Storybook renders them (`app/StageCircle`,
+`patterns/CellPatterns`), and its checks pin their accessibility and
+contrast in both themes. The other patterns from 11 on are
 marked **Unproven**: written ahead of a real
 column, so no app has tested them on real data yet. Prefer a proven
 pattern when one fits. When you use an unproven one, say so in the
@@ -109,12 +114,74 @@ narrow.
   cell, absent in an isolated Storybook story.
 - Encode the value in the glyph's **shape** (solid / half / slashed /
   dashed), not its colour.
+- **Give the trigger a focus ring**
+  (`rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50`):
+  it's focusable, and a span has none of its own.
+
+### Several values: the icons side by side, every name in one tooltip
+
+A multi value (several categories on one record) where each value has
+its own icon and colour slot, and the column is narrow. The package's
+Storybook renders it (`patterns/CellPatterns`, "Icons with one tooltip").
+
+```tsx
+// values: the row's categories, `undefined` for one still loading.
+const names = values.map((value) => value?.name ?? '…').join(', ')
+if (values.length === 0) return emptyCell
+
+<Tooltip>
+  <TooltipTrigger
+    render={
+      <span role="img" aria-label={names} tabIndex={0}
+        className="inline-flex items-center gap-1 rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50" />
+    }
+  >
+    {values.map((value, index) => {
+      if (!value) return <span key={index} className="text-muted-foreground">…</span>
+      const Icon = CATEGORY_ICON[value.icon]
+      return <Icon key={value.id} className={`size-4 shrink-0 ${CATEGORY_COLOR[value.color]}`} />
+    })}
+  </TooltipTrigger>
+  <TooltipContent>{names}</TooltipContent>
+</Tooltip>
+```
+
+- **One tooltip on the whole group**, listing every name in the record's
+  order ("Home, Finance"), not one per icon: one tab stop per cell, and
+  the names read as one value.
+- **The trigger is the `role="img"` span**, named by that same list. The
+  icons inside are presentational (children of an `img`), so they need no
+  `aria-hidden` of their own. Read-only: never a button.
+- **Each icon tinted with its value's colour slot**
+  ([`design-language.md`](design-language.md) "Categorical colour"), the
+  icon's shape telling values apart in greyscale.
+- **A value still loading shows "…"**, in the cell and in the names,
+  never a bare id.
+- **Where there's room** (the record's view), each icon sits beside its
+  name instead (pattern 2 per value, in a `flex flex-wrap gap-x-3 gap-y-1`
+  list), with no tooltip.
+
+**Testing note.** With several tooltips on a page, one that's closing
+stays in the DOM for a moment beside the one opening. A spec that reads
+the open tooltip must select `[data-slot=tooltip-content][data-open]`;
+the bare `[data-slot=tooltip-content]` can match the closing one, and
+reads the wrong text:
+
+```ts
+await page.getByRole('img', { name: 'Home, Finance', exact: true }).focus()
+await expect(page.locator('[data-slot=tooltip-content][data-open]')).toHaveText('Home, Finance')
+```
 
 ## 5. Enum → tone-mapped badge
 
 A many-valued enum that collapses to good / neutral / bad. **The grouping
 is the decision, not the style** — see
 [`design-language.md`](design-language.md#mapping-an-enum-to-tones).
+
+An **ordered** status (a lifecycle every record moves through toward
+*done*) reads better as a stage circle beside the word (pattern 19);
+the tone badge stays right for a status with no order, or one whose end
+isn't *done*.
 
 Keep a separate short-label map when the API strings are full sentences
 (`"Yes – Full Crossplay"` → `Full`): read once in a dropdown they're right,
@@ -231,6 +298,40 @@ A one-to-many value (`★ 4.7 (3)` opening a per-person breakdown).
 - **Cost:** the detail can't be scanned down the column, and an average
   can't be sorted server-side without a backend change
   (`enableSorting: false`).
+
+### A second example: what a row depends on
+
+The records a row waits on (parts it needs, a date that has to pass,
+other records that have to finish), summarised in the cell, listed in
+the popover. The package's Storybook renders it
+(`patterns/CellPatterns`, "Dependency list").
+
+- **The cell: a computed summary.** "Ready" when nothing holds the row,
+  else the count of what does ("1 hold", "2 holds"). Compute it where the
+  data is: the backend, when the column sorts or filters on it.
+- **The popover: every related record, grouped by kind**, each kind
+  under a small heading (`type-caption text-muted-foreground`) in its own
+  labelled group, in a fixed order. Each record keeps its kind's glyph
+  (`aria-hidden`, beside the name), so the kinds stay apart in
+  greyscale.
+- **Held reads dark, with its reason; clear reads muted.** A held record
+  is `text-foreground` with why after its name ("Bulb: unavailable",
+  "Delivery day: hasn't happened", or the blocking record's status);
+  a clear one is `text-muted-foreground` with a visually hidden ": clear",
+  so a screen reader hears the state the colour shows. No tone: a hold
+  is the normal state of waiting, not an error, and the count already
+  says how many.
+- **Name the popup**: `<PopoverContent aria-label={`What ${name} depends on`}>`.
+  It's a `dialog`, and axe fails one with no name.
+- **A row that links nothing has nothing to open**: render the summary as
+  plain text (`<span>Ready</span>`), not a button. A button that opens an
+  empty popover is a dead end.
+- **The trigger reads as the value**, with a dotted underline
+  (`underline decoration-dotted underline-offset-4`) and a focus ring,
+  so it looks openable without becoming a column of buttons.
+- The trigger's name starts with the summary it shows
+  (`aria-label={`${summary}: what ${name} depends on`}`), so it's still
+  found by its visible text, and says which row.
 
 ## 11. Number or currency — *Unproven*
 
@@ -358,6 +459,91 @@ now", "happened"). Widget's In Stock column is the reference
 - **Cost:** one click changes data, with no confirmation. Only for values
   that are cheap to flip back; never for anything destructive.
 
+### A variant: a pressed icon inside another value's cell
+
+A yes/no that belongs to another value rather than having a column of
+its own: a "focus" flag that only exists while the status is "doing", a
+"pinned" mark on an open item. It's a small icon button inside the owning
+value's cell, beside its word. The package's Storybook renders it
+(`patterns/CellPatterns`, "Pressed icon in a cell").
+
+**Pick it over the Switch** when the yes/no only means something while
+another value allows it, or when a Switch and its words would crowd that
+value's cell. A yes/no that stands on its own keeps its own column and
+the Switch.
+
+```tsx
+// Off: faint. On: the destructive text tone, filled. The primitive's
+// pressed background is dropped: the icon carries the value.
+const FLAG_TOGGLE_CLASS =
+  'text-muted-foreground/80 hover:text-muted-foreground aria-pressed:bg-transparent ' +
+  'aria-pressed:text-destructive-text'
+
+// <entity>-focus-toggle.tsx, rendered inside the status cell
+export function FocusToggle({ item }: { item: Item }) {
+  const save = useSaveItemField(item.id) // useRecordUpdate, like Widget's useSaveWidgetField
+  return (
+    <>
+      <Toggle size="icon-xs" pressed={item.focus} aria-label={`Focus: ${item.name}`}
+        className={FLAG_TOGGLE_CLASS} onPressedChange={(focus) => save.mutate({ focus })}>
+        <FlagIcon className="group-aria-pressed/toggle:fill-current" />
+      </Toggle>
+      <span className="inline-flex size-3.5 shrink-0">
+        {save.isPending && <Spinner aria-label="Saving" className="size-3.5 text-muted-foreground" />}
+      </span>
+    </>
+  )
+}
+
+// The status cell: the word stays, the toggle only while the status allows it.
+<span className="inline-flex items-center gap-1.5">
+  <StageCircle {...STATUS_STAGE[item.status]} />
+  {STATUS_LABEL[item.status]}
+  {item.status === 'doing' && <FocusToggle item={item} />}
+</span>
+```
+
+- **`Toggle` from the package** (`/ui/toggle`, shadcn's, on Base UI), at
+  `size="icon-xs"`: a 24px target, the smallest WCAG 2.2 allows, which
+  keeps the row's height. It's `aria-pressed` by itself.
+- **Named for the row, not the state**: `Focus: <record name>`. The
+  pressed state is announced on its own; a name that changes with it
+  ("Unfocus") reads twice.
+- **The icon carries the value.** Filled when on
+  (`group-aria-pressed/toggle:fill-current`), outline when off, so it
+  reads in greyscale. Pick a glyph with an area to fill (`FlagIcon`,
+  `StarIcon`, `PinIcon`), not a line.
+- **Faint, but never below 3:1.** Off is `text-muted-foreground/80`, the
+  faintest step that still clears WCAG's 3:1 non-text minimum in light
+  mode (3.2:1; dark is 5.2:1). `/70` measures 2.7:1, and a control a
+  reader can't see fails them. Hover lifts it to full
+  `muted-foreground`. axe doesn't measure icons, so the package's
+  Storybook glyph check does.
+- **Tone: `destructive-text`, read as "flagged", not "error".** A flag
+  claims attention ahead of the rest of the row, and the destructive
+  tone is the one with that pull. The other tones are taken where it
+  sits: `info` is the in-progress status it belongs to (an info flag
+  beside an info stage disappears), `success` reads as done, and
+  `warning` says something may be wrong. It stays honest because it's
+  rare (a flag nearly every row carries is the "about a third" limit
+  broken) and because no word beside it says error. If a flag is common,
+  or does mean "something's wrong", it's an enum with a verdict
+  (pattern 5) instead.
+- **It saves on its own, through `useRecordUpdate`**, like the Switch: the
+  new value shows at once, and a refusal (a cap the server enforces)
+  puts it back with the toast giving the server's reason. The hook does
+  both; add nothing.
+- **The "Saving" slot is always there**, after the toggle, so nothing
+  moves while it saves, and nothing is disabled.
+- **Only rendered while the owning value allows it.** When the status
+  moves on, the toggle goes; what the server does with the flag then (it
+  clears it, or keeps it for next time) is the plan's rule, and shows
+  through the record it returns.
+- **On the record's view** it's the same component beside the owning
+  value in the header, as a quick action (pattern 17): the plan names it
+  under `Quick actions`. There its name is the field's label alone
+  (`Focus`), like the view's other controls.
+
 ## 16. Title linking to the record's view
 
 The column that names a record (its name or title), when the entity has a
@@ -415,6 +601,7 @@ type or pick from a list (text, a status) edits in place instead
 | The plan's field | The control | Accessible name |
 |---|---|---|
 | `yes/no`, in the header or a field row | A `Switch` (`size="sm"`) with the value in words beside it, `aria-hidden` (pattern 15) | The field's label: `In stock` |
+| A `yes/no` that belongs to another value (pattern 15's variant), beside that value in the header | The same pressed icon `Toggle` as in the table's cell | The field's label: `Focus` |
 | A sub-record list's `yes/no` item field | Each item a `Checkbox` inside a `<label>` with the item's text, so the text ticks it too; the list in one `role="group"` named for the list, described by the done-count | `Done: <item text>` (a visually hidden `Done: ` inside the label) |
 
 ```tsx
@@ -558,3 +745,71 @@ const price = editInPlace({
 - **Cost:** a value that looks like text but edits on click can surprise.
   Keep it to the fields the plan names, and leave the form for everything
   else.
+
+## 19. Stage circle for an ordered status
+
+A status that's an ordered lifecycle (each record moves through the same
+stages, in the same order, toward one that means *done*), with one or
+more exit states off the side. A small circle beside the word fills as
+the record moves on. The package ships it: `StageCircle`, rendered with
+every stage and tone in its Storybook (`app/StageCircle`).
+
+| Stage (`stage`) | Drawn as | Say it for |
+|---|---|---|
+| `0` | a dashed outline | the first stage: not started |
+| `1`, `2`, `3` | the outline with a quarter, a half, three quarters filled | a stage under way, in order |
+| `'complete'` | a solid circle with a tick | the final stage: done |
+| `'exit'` | the outline, struck through | off the lifecycle: dropped, cancelled |
+
+```tsx
+import { StageCircle, type StageCircleStage, type StageCircleTone } from '@tristan2828/ui-foundation'
+
+// <entity>-format.ts: typed by the enum, so a new value can't go unmapped.
+const STATUS_STAGE: Record<ItemStatus, { stage: StageCircleStage; tone?: StageCircleTone }> = {
+  idea: { stage: 0 },
+  considering: { stage: 1 },
+  doing: { stage: 2, tone: 'info' },
+  done: { stage: 'complete', tone: 'success' },
+  dropped: { stage: 'exit' },
+}
+
+cell: ({ getValue }) => {
+  const status = getValue() as ItemStatus
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <StageCircle {...STATUS_STAGE[status]} />
+      {STATUS_LABEL[status]}
+    </span>
+  )
+}
+```
+
+- **The word stays**, in plain `text-foreground`. The circle is
+  `aria-hidden`; the word is what's read, and what a reader who doesn't
+  know the shapes yet goes by.
+- **The shape carries the stage, in greyscale.** Dashed, filling, solid,
+  struck through: the stage reads from the shape alone, and the tone only
+  reinforces it.
+- **Tone it like pattern 5:** the stage in progress is `info` ("notice
+  this"), complete is `success`, and the rest stay `muted` (the default).
+  The tones are the `*-text` shades, so the circle clears 3:1 on the page
+  in both themes, measured by the package's glyph check. An exit is
+  muted: dropped is an end, not a failure. Give it `destructive` only if
+  the exit really is bad news (failed, rejected).
+- **Map the stages in order**, the first `0`, the final `'complete'`, the
+  ones between `1`–`3` in order. Two middle stages fill a quarter and a
+  half; three, up to three quarters. More than three stages between
+  first and done is more than a fill can tell apart: use the tone badge.
+- **Stage circle or tone badge (pattern 5)?** The circle is for an
+  *ordered* status: every record goes the same way, and "how far along
+  toward done" is the question. A status with no order (`active` /
+  `paused` / `blocked`), or one whose end isn't *done*, keeps pattern 5.
+  Widget's Status is the second kind: `draft` → `active` → `archived` is
+  an order in time, but `archived` is retirement, not completion, and its
+  good state is the middle one. A tick on `archived` would say "done"
+  where nothing was finished, so it stays a tone badge.
+- **On the record's view** it's the same markup in the header, beside the
+  title; editing the status in place (pattern 18) wraps it in
+  `<EditableValue>` like a badge.
+- **Cost:** a reader learns the shapes once. Until then the word does the
+  work, which is why it stays.
