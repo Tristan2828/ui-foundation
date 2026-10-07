@@ -47,7 +47,7 @@ npm run verify
 ```bash
 npm install                             # workspaces; builds the package
 npx playwright install --with-deps chromium
-npm run dev                             # the template on http://localhost:5173, mock API
+npm run dev                             # the template on http://localhost:5180, mock API
 npm run verify                          # the full gate — what CI runs
 ```
 

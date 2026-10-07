@@ -52,7 +52,7 @@ and ending your turn while one is still running leaves a half-built app.
    codegen, conventions, contract, types, lint, unit tests and every
    Playwright test, run against the included Widgets demo. If Playwright
    reports missing browsers, run `npx playwright install chromium` once and
-   retry. Also make sure nothing else is serving on port 4173, or
+   retry. Also make sure nothing else is serving on port 4180, or
    Playwright tests that instead.
 4. **Stop and report:** the app's path, the tag, and that `verify` passed.
    `npm run dev` shows the Widgets demo on mock data.
