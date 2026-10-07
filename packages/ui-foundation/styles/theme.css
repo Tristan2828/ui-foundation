@@ -198,6 +198,11 @@
   --category-6: var(--category-6-700);
   --category-7: var(--category-7-700);
   --category-8: var(--category-8-700);
+  /* The zebra stripe (table.tsx: bg-muted/40 on even rows) mixed onto the
+     page, opaque: what a pinned table cell paints on an even row, so it
+     matches the row without letting scrolled columns show through. Mixed
+     in sRGB, as the browser composites the translucent stripe. */
+  --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
   --border: var(--gray-200);
   --input: var(--gray-200);
   --ring: var(--gray-400);
@@ -269,6 +274,7 @@
   --category-6: var(--category-6-400);
   --category-7: var(--category-7-400);
   --category-8: var(--category-8-400);
+  --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
   --border: var(--white-a10);
   --input: var(--white-a15);
   --ring: var(--gray-500);

@@ -32,6 +32,7 @@ export { ListEditor } from '@/components/app/list-editor'
 export { PasswordInput } from '@/components/app/password-input'
 export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-text-editor'
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
+export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
 export {
   StageCircle,
   type StageCircleProps,

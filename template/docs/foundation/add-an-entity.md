@@ -189,7 +189,12 @@ is a filled-in example while the Widgets demo is still here).
    - `src/routes/widgets/widgets-table.tsx` →
      `src/routes/<entity>/<entity>-table.tsx` — thin consumer of the
      foundation's `<DataTable>`. Swap the type, columns, and toolbar
-     filters.
+     filters. More than three filters (search, saved views aside): keep
+     the most used in the toolbar and put the rest inside
+     `<SecondaryFilters>`, as the template does with Extra Categories,
+     Progress and In Stock. Pass it each filter that's on as an
+     `ActiveFilter` (its chip text and how to take it off) and an
+     `onClear` that clears them all in one `setFilters` call.
    - `src/routes/widgets/widget-view.tsx` →
      `src/routes/<entity>/<entity>-view.tsx` — thin consumer of the
      foundation's `<EntityView>`. Swap the title, badges and sections for

@@ -5,11 +5,13 @@ import { PlusIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import {
+  type ActiveFilter,
   type QuerySpec,
   type TableView,
   DataTable,
   MultiChoice,
   MultiReference,
+  SecondaryFilters,
   useDebouncedValue,
   useTableUrlState,
 } from '@tristan2828/ui-foundation'
@@ -105,6 +107,7 @@ export function WidgetsTableRoute() {
     setSorting,
     filters,
     setFilter,
+    setFilters,
     multiFilters,
     setMultiFilter,
     activeView,
@@ -176,6 +179,33 @@ export function WidgetsTableRoute() {
   // Built once: names reach the cells through CategoryNamesContext, so a
   // name arriving never rebuilds (and so remounts) the table's cells.
   const columns = useMemo(() => buildWidgetsColumns(), [])
+
+  // The filters behind the toolbar's Filters button that are on, each a
+  // chip beside it (SecondaryFilters): search, status and tags, used most,
+  // stay in the toolbar itself.
+  const activeSecondaryFilters: ActiveFilter[] = [
+    ...(extraCategoryFilter.length > 0
+      ? [
+          {
+            id: 'extraCategoryIds',
+            label: `Extra categories: ${extraCategoryFilter.map((id) => names.get(id) ?? '…').join(', ')}`,
+            onRemove: () => setMultiFilter('extraCategoryIds', []),
+          },
+        ]
+      : []),
+    ...(progressFilter !== PROGRESS_FILTER_ALL
+      ? [
+          {
+            id: 'checklistState',
+            label: `Progress: ${CHECKLIST_STATE_LABELS[progressFilter as keyof typeof CHECKLIST_STATE_LABELS]}`,
+            onRemove: () => setFilter('checklistState', ''),
+          },
+        ]
+      : []),
+    ...(inStockFilter !== IN_STOCK_FILTER_ALL
+      ? [{ id: 'inStock', label: IN_STOCK_FILTER_LABELS[inStockFilter], onRemove: () => setFilter('inStock', '') }]
+      : []),
+  ]
 
   const hasActiveFilters =
     search !== '' ||
@@ -286,73 +316,78 @@ export function WidgetsTableRoute() {
                   className="w-56"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <FilterLabel>Extra Categories</FilterLabel>
-                <MultiReference
-                  options={(extraCategoryOptionsQuery.data ?? []).map((category) => ({
-                    id: category.id,
-                    label: category.name,
-                  }))}
-                  value={extraCategoryFilter}
-                  onValueChange={(ids) => setMultiFilter('extraCategoryIds', ids.map(String))}
-                  getLabel={(id) => names.get(id)}
-                  onSearchChange={setExtraCategorySearch}
-                  searching={extraCategoryOptionsQuery.isPlaceholderData}
-                  placeholder="Any category"
-                  emptyText="No categories found."
-                  aria-label="Filter by extra categories"
-                  className="w-56"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <FilterLabel>Progress</FilterLabel>
-                <Select
-                  value={progressFilter}
-                  onValueChange={(value) =>
-                    setFilter('checklistState', value === PROGRESS_FILTER_ALL ? '' : (value as string))
-                  }
-                >
-                  <SelectTrigger aria-label="Filter by progress" className="w-36">
-                    <SelectValue>
-                      {(value) =>
-                        value === PROGRESS_FILTER_ALL
-                          ? PROGRESS_FILTER_ALL_LABEL
-                          : CHECKLIST_STATE_LABELS[value as keyof typeof CHECKLIST_STATE_LABELS]
-                      }
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={PROGRESS_FILTER_ALL}>{PROGRESS_FILTER_ALL_LABEL}</SelectItem>
-                    {CHECKLIST_STATES.map((state) => (
-                      <SelectItem key={state} value={state}>
-                        {CHECKLIST_STATE_LABELS[state]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <FilterLabel>In Stock</FilterLabel>
-                <Select
-                  value={inStockFilter}
-                  onValueChange={(value) =>
-                    setFilter('inStock', value === IN_STOCK_FILTER_ALL ? '' : (value as string))
-                  }
-                >
-                  <SelectTrigger aria-label="Filter by stock" className="w-36">
-                    {/* Same reason as Status: without the children function the
-                        trigger shows the raw value ('all', 'true'). */}
-                    <SelectValue>{(value) => IN_STOCK_FILTER_LABELS[value as string] ?? value}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[IN_STOCK_FILTER_ALL, 'true', 'false'].map((value) => (
-                      <SelectItem key={value} value={value}>
-                        {IN_STOCK_FILTER_LABELS[value]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <SecondaryFilters
+                active={activeSecondaryFilters}
+                onClear={() => setFilters({ checklistState: '', inStock: '', extraCategoryIds: [] })}
+              >
+                <div className="flex flex-col gap-1">
+                  <FilterLabel>Extra Categories</FilterLabel>
+                  <MultiReference
+                    options={(extraCategoryOptionsQuery.data ?? []).map((category) => ({
+                      id: category.id,
+                      label: category.name,
+                    }))}
+                    value={extraCategoryFilter}
+                    onValueChange={(ids) => setMultiFilter('extraCategoryIds', ids.map(String))}
+                    getLabel={(id) => names.get(id)}
+                    onSearchChange={setExtraCategorySearch}
+                    searching={extraCategoryOptionsQuery.isPlaceholderData}
+                    placeholder="Any category"
+                    emptyText="No categories found."
+                    aria-label="Filter by extra categories"
+                    className="w-56"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <FilterLabel>Progress</FilterLabel>
+                  <Select
+                    value={progressFilter}
+                    onValueChange={(value) =>
+                      setFilter('checklistState', value === PROGRESS_FILTER_ALL ? '' : (value as string))
+                    }
+                  >
+                    <SelectTrigger aria-label="Filter by progress" className="w-36">
+                      <SelectValue>
+                        {(value) =>
+                          value === PROGRESS_FILTER_ALL
+                            ? PROGRESS_FILTER_ALL_LABEL
+                            : CHECKLIST_STATE_LABELS[value as keyof typeof CHECKLIST_STATE_LABELS]
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={PROGRESS_FILTER_ALL}>{PROGRESS_FILTER_ALL_LABEL}</SelectItem>
+                      {CHECKLIST_STATES.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {CHECKLIST_STATE_LABELS[state]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <FilterLabel>In Stock</FilterLabel>
+                  <Select
+                    value={inStockFilter}
+                    onValueChange={(value) =>
+                      setFilter('inStock', value === IN_STOCK_FILTER_ALL ? '' : (value as string))
+                    }
+                  >
+                    <SelectTrigger aria-label="Filter by stock" className="w-36">
+                      {/* Same reason as Status: without the children function the
+                          trigger shows the raw value ('all', 'true'). */}
+                      <SelectValue>{(value) => IN_STOCK_FILTER_LABELS[value as string] ?? value}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[IN_STOCK_FILTER_ALL, 'true', 'false'].map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {IN_STOCK_FILTER_LABELS[value]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </SecondaryFilters>
             </div>
             </>
           }

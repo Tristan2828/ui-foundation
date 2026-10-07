@@ -61,12 +61,14 @@ export function useTableUrlState<F extends string, M extends string = never, V e
     setPage: (next: number) => update({ page: next > 1 ? String(next) : null }),
     setSorting: (next: SortingState) => update({ sort: serializeSort(next), page: null }),
     setFilter: (name: F, value: string) => update({ [name]: value, page: null }),
-    // Several single-value filters in one call — for any user action that
-    // changes more than one (both ends of a date range, "clear all"). Two
-    // setFilter()s in the same tick lose all but the last: react-router
-    // hands each setSearchParams updater the params from the last render,
-    // not the ones the previous updater produced.
-    setFilters: (changes: Partial<Record<F, string>>) => update({ ...changes, page: null }),
+    // Several filters in one call — for any user action that changes more
+    // than one (both ends of a date range, "clear filters"). Two setters in
+    // the same tick lose all but the last: react-router hands each
+    // setSearchParams updater the params from the last render, not the
+    // ones the previous updater produced. Single-value filters take a
+    // string ('' clears), multi-value ones a list ([] clears).
+    setFilters: (changes: Partial<Record<F, string>> & Partial<Record<M, string[]>>) =>
+      update({ ...changes, page: null }),
     setMultiFilter: (name: M, values: string[]) => update({ [name]: values, page: null }),
     // Replaces the whole filter + sort state at once — a saved view. See
     // viewToUrlChanges() for why anything the view doesn't set is cleared.

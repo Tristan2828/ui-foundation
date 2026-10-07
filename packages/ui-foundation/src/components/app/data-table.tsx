@@ -133,23 +133,33 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
   )
 }
 
-// The pinned cell gets a flat `bg-background`, not `bg-inherit`: the zebra
+// The pinned cell gets an opaque background, not `bg-inherit`: the zebra
 // stripe (table.tsx) is a *translucent* color, so inheriting it would let
 // the columns scrolling behind show through at 40% opacity — exactly the
-// bleed-through a solid background avoids. That also means the pinned
-// column shows no stripe, which is why it is the thing that carries the
-// hover highlight. --accent is only ~3% off the page background, so a
-// solid left edge marker carries the signal; an inset shadow rather than a
-// border, so nothing reflows.
+// bleed-through a solid background avoids. On an even row it's the stripe
+// pre-mixed onto the page (--table-stripe), so the stripe runs the whole
+// row's width (issue #92); `:where()` keeps that rule's specificity at the
+// background's, so the hover below still wins on every row. The pinned
+// cell carries the hover highlight. --accent is only ~3% off the page
+// background, so a solid left edge marker carries the signal; an inset
+// shadow rather than a border, so nothing reflows.
+const PINNED_CELL_CLASS =
+  'z-10 bg-background [:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe) group-hover/row:bg-accent'
+
 const PINNED_COLUMN_CLASS =
-  'sticky left-0 z-10 border-r bg-background group-hover/row:bg-accent ' +
-  'group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]'
+  `sticky left-0 border-r ${PINNED_CELL_CLASS} group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]`
 
 // The right-edge mirror, opaque for the same reason. Its edge marker points
 // inward from the right, so the two pinned columns bracket the row.
 const PINNED_LAST_COLUMN_CLASS =
-  'sticky right-0 z-10 border-l bg-background group-hover/row:bg-accent ' +
-  'group-hover/row:shadow-[inset_-3px_0_0_0_var(--primary)]'
+  `sticky right-0 border-l ${PINNED_CELL_CLASS} group-hover/row:shadow-[inset_-3px_0_0_0_var(--primary)]`
+
+// A pinned first column's content, capped below md at 45% of the table's
+// scroll area (`cqw`: the container is an inline-size query container)
+// and wrapping, so a long title can't widen the column past the screen
+// and leave every other column scrolling underneath it (issue #91).
+// Wider screens are unchanged: the column sizes to its content.
+const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-normal max-md:break-words'
 
 // Hover highlights the pinned cell, not the whole row. A row-level hover
 // cannot be made consistent against the zebra stripe: `tr:nth-child(even)`
@@ -326,7 +336,7 @@ export function DataTable<TData extends Record<string, unknown>>({
             // just no longer draws a bar directly under the last row.
             containerClassName={cn(
               pinFirstColumn &&
-                '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+                '@container [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
             )}
           >
             <TableHeader>
@@ -335,6 +345,27 @@ export function DataTable<TData extends Record<string, unknown>>({
                   {headerGroup.headers.map((header, index) => {
                     const canSort = header.column.getCanSort()
                     const sortDirection = header.column.getIsSorted()
+                    const content = header.isPlaceholder ? null : canSort ? (
+                      <button
+                        type="button"
+                        className={cn(
+                          'flex items-center gap-1 text-foreground',
+                          header.column.columnDef.meta?.align === 'center' && 'w-full justify-center',
+                        )}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {sortDirection === 'asc' ? (
+                          <ArrowUpIcon className="size-3.5 text-muted-foreground" />
+                        ) : sortDirection === 'desc' ? (
+                          <ArrowDownIcon className="size-3.5 text-muted-foreground" />
+                        ) : (
+                          <ArrowUpDownIcon className="size-3.5 text-muted-foreground/50" />
+                        )}
+                      </button>
+                    ) : (
+                      flexRender(header.column.columnDef.header, header.getContext())
+                    )
                     return (
                       <TableHead
                         key={header.id}
@@ -355,26 +386,10 @@ export function DataTable<TData extends Record<string, unknown>>({
                                 : 'none'
                         }
                       >
-                        {header.isPlaceholder ? null : canSort ? (
-                          <button
-                            type="button"
-                            className={cn(
-                              'flex items-center gap-1 text-foreground',
-                              header.column.columnDef.meta?.align === 'center' && 'w-full justify-center',
-                            )}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {sortDirection === 'asc' ? (
-                              <ArrowUpIcon className="size-3.5 text-muted-foreground" />
-                            ) : sortDirection === 'desc' ? (
-                              <ArrowDownIcon className="size-3.5 text-muted-foreground" />
-                            ) : (
-                              <ArrowUpDownIcon className="size-3.5 text-muted-foreground/50" />
-                            )}
-                          </button>
+                        {pinFirstColumn && index === 0 ? (
+                          <div className={PINNED_FIRST_CONTENT_CLASS}>{content}</div>
                         ) : (
-                          flexRender(header.column.columnDef.header, header.getContext())
+                          content
                         )}
                       </TableHead>
                     )
@@ -396,7 +411,13 @@ export function DataTable<TData extends Record<string, unknown>>({
                         cell.column.columnDef.meta?.align === 'center' && 'text-center',
                       )}
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {pinFirstColumn && index === 0 ? (
+                        <div className={PINNED_FIRST_CONTENT_CLASS}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
+                      ) : (
+                        flexRender(cell.column.columnDef.cell, cell.getContext())
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
