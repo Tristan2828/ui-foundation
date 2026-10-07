@@ -5,6 +5,7 @@
 
 // Composites
 export { AppShell, type AppShellProps, type NavItem } from '@/components/app/app-shell'
+export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export { DataTable, type DataTableProps, type SortingState } from '@/components/app/data-table'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
 export {

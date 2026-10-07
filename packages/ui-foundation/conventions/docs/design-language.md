@@ -194,6 +194,10 @@ shade: note `info`, tip `success`, important category slot 2, warning
 `warning`, caution `destructive`. The package draws all of it; an app
 only renders `<Markdown>` or the editor.
 
+`--link` is for written text only. A link in a table cell is
+`text-foreground` and underlined, never blue: a column of coloured text
+pulls the eye from every other column (cell patterns 16 and 20).
+
 ## Density
 
 Tables have three densities, set with `data-density` on **any ancestor**

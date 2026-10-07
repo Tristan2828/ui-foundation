@@ -43,6 +43,7 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // safety cues on every screen, so their solid fills answer too.
 // <StageCircle> and the cell patterns' markup (patterns/CellPatterns) are
 // design language too: each also has its glyphs measured below.
+// <CountLink> is a link style every parent table's counts share.
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
@@ -52,6 +53,7 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell', mustShow: 'Bookshelf' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
+  { id: 'app-countlink--default', mustShow: 'Move house' },
 ]
 
 // Stories whose glyphs carry meaning on their own: every <svg> in them must
@@ -599,6 +601,57 @@ test.describe('dependency list', () => {
       await page.goto(storyUrlById(STORY, theme))
       await page.getByRole('button', { name: /^2 holds/ }).click()
       await expect(page.getByRole('dialog')).toBeVisible()
+      const results = await analyzeStory(page)
+      expect(results.violations).toEqual([])
+    })
+  }
+})
+
+// <CountLink>, cell pattern 20: a count linking to the other table,
+// filtered to this row.
+test.describe('count link', () => {
+  const STORY = 'app-countlink--default'
+
+  test('each count is a link named for its row, to the filtered list; zero is plain text', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    const three = page.getByRole('link', { name: '3 open tasks in Kitchen remodel', exact: true })
+    await expect(three).toHaveText('3')
+    await expect(three).toHaveAttribute('href', '/tasks?project=1')
+    // Singular for one.
+    await expect(page.getByRole('link', { name: '1 open task in Garden', exact: true })).toHaveText('1')
+    // Found by what it shows, as speech input would.
+    await expect(page.getByRole('link', { name: /^12 / })).toHaveAttribute('href', '/tasks?project=4')
+    // Zero is a value, not a link.
+    await expect(page.getByRole('row', { name: /Taxes/ })).toContainText('0')
+    await expect(page.getByRole('row', { name: /Taxes/ }).getByRole('link')).toHaveCount(0)
+    await expect(page.getByRole('link')).toHaveCount(3)
+    // Underlined at rest, not only on hover.
+    const line = await three.evaluate((element) => getComputedStyle(element).textDecorationLine)
+    expect(line).toContain('underline')
+  })
+
+  test('reachable from the keyboard, in row order', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    await page.getByRole('link', { name: '3 open tasks in Kitchen remodel' }).focus()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('link', { name: '1 open task in Garden' })).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('link', { name: '12 open tasks in Move house' })).toBeFocused()
+  })
+
+  test('Enter goes to the list filtered to that row', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    await page.getByRole('link', { name: '1 open task in Garden' }).focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Tasks' })).toBeVisible()
+    await expect(page.getByText('Filtered to Garden.')).toBeVisible()
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`focused and hovered, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(storyUrlById(STORY, theme))
+      await page.getByRole('link', { name: /^1 open task/ }).hover()
+      await page.getByRole('link', { name: /^3 open tasks/ }).focus()
       const results = await analyzeStory(page)
       expect(results.violations).toEqual([])
     })

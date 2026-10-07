@@ -10,14 +10,14 @@ alternatives ([`column-options.md`](column-options.md)), not designed in the abs
 Patterns 12 (boolean), 15 (yes/no flipped in the row), 16 (title linking
 to its view), 17 (quick action on the view) and 18 (editable value) are
 the template's own references: Widget's In Stock and Name columns and its
-view render them, and their specs pin them. Pattern 19 (stage circle)
-and the multi-value variant of 4, the dependency list in 10 and the
-pressed icon in 15 were each built for a real app's screen first; the
-package's Storybook renders them (`app/StageCircle`,
-`patterns/CellPatterns`), and its checks pin their accessibility and
-contrast in both themes. The other patterns from 11 on are
-marked **Unproven**: written ahead of a real
-column, so no app has tested them on real data yet. Prefer a proven
+view render them, and their specs pin them. Patterns 19 (stage circle)
+and 20 (count linking to the related records), the multi-value variant
+of 4, the dependency list in 10 and the pressed icon in 15 were each
+built for a real app's screen first; the package's Storybook renders
+them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`), and
+its checks pin their accessibility and contrast in both themes. The
+other patterns from 11 on are marked **Unproven**: written ahead of a
+real column, so no app has tested them on real data yet. Prefer a proven
 pattern when one fits. When you use an unproven one, say so in the
 entity's plan, and raise what you learned for the foundation, so the
 entry can lose its label. A pattern that proves generic is worth raising
@@ -836,3 +836,69 @@ cell: ({ getValue }) => {
   `<EditableValue>` like a badge.
 - **Cost:** a reader learns the shapes once. Until then the word does the
   work, which is why it stays.
+
+## 20. Count linking to the related records
+
+A count of the records in another table that point at this row (open
+Tasks per Project, items per Tag), which opens that table already filtered
+to them. The count is a `computed` integer (the entity plan's type).
+The package ships it: `CountLink`, rendered in its Storybook
+(`app/CountLink`).
+
+```tsx
+import { CountLink } from '@tristan2828/ui-foundation'
+
+cell: ({ row }) => {
+  const { id, name, openTaskCount: count } = row.original
+  return (
+    <CountLink
+      count={count}
+      to={`/tasks?project=${id}`}
+      label={`open ${count === 1 ? 'task' : 'tasks'} in ${name}`}
+    />
+  )
+}
+```
+
+What the component decides, so a cell doesn't have to:
+
+- **Underlined at rest**, not only on hover as in pattern 16. A title
+  reads as a name to open; a bare number doesn't look like it goes
+  anywhere until it's underlined. Hover thickens the line. Foreground,
+  not `text-link`: `--link` is for links in written text, and a column of
+  blue numbers pulls the eye from every other column.
+- **Zero is a plain `0`**, not a link (a link to an empty list is a dead
+  end) and not an em dash: zero is a value (pattern 11). Same
+  `tabular-nums`, so it lines up with the links.
+- **The accessible name is the count, then `label`**: `3 open tasks in
+  Kitchen remodel`. Every row's link text is just a number, so `3` alone
+  isn't distinct, and starting with it keeps the link findable by what
+  it shows (speech input, `getByRole('link', { name: /^3 / })`).
+
+What the cell decides:
+
+- **`label` says what's counted and which row**, singular for one
+  (`open task in Garden`).
+- **The target is the other entity's list, filtered by the URL**:
+  `/<other>?<filterName>=<id>`, the same query string `useTableUrlState`
+  reads (a multi-value filter takes the id the same way). Back, forward,
+  a refresh and saved views keep working, and the other list needs a
+  filter by this reference (`Filter: yes` in its plan).
+- **The count and the list it opens must agree.** If the target list
+  narrows by default (hides finished records unless asked), the count
+  applies the same condition, and the word in the name says so (`open`
+  tasks). Where the list has a filter for that condition, prefer putting
+  it in the link too (`?project=7&status=open`), so the list shows what
+  was counted even if its default changes. Say the rule in the field's
+  `description` in `openapi.yaml` (`Tasks in this project that aren't
+  done; what /tasks?project=<id> lists`), so the backend, the mocks and
+  the next agent count the same thing.
+- **Sorted on the server, as a number**, like any computed field: the
+  scalar subquery is the sort expression, with a stable tiebreak (the
+  name, then the id) so rows with the same count don't change places
+  between pages.
+- **Cost:** one correlated subquery per row read. Fine at an app's scale;
+  give the other table's foreign key column an index, since every row's
+  count reads it.
+- **On the record's view**, the same `CountLink` beside its label (`Open
+  tasks: 3`), with the record's name in `label` like the table's.
