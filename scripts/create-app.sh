@@ -49,10 +49,15 @@ cd "$APP_NAME"
 
 # The app's own name, and the package at exactly the release the template
 # came from (a caret range, so patch releases arrive with `npm update`).
+# Installed as exactly that version (INSTALL), saved as the caret range:
+# a bare `npm install` of the range would take the newest 3.x instead,
+# whose synced conventions aren't this template's (sync --check below).
 if [ -n "${FOUNDATION_TARBALL:-}" ]; then
   SPEC="file:$FOUNDATION_TARBALL"
+  INSTALL=()
 elif [[ "$REF" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
   SPEC="^${BASH_REMATCH[1]}"
+  INSTALL=("$PACKAGE@${BASH_REMATCH[1]}")
 else
   fail "'$REF' isn't a release tag (vX.Y.Z); to test a commit, set FOUNDATION_REPO_DIR and FOUNDATION_TARBALL (scripts/consume-test.sh does)"
 fi
@@ -65,8 +70,8 @@ fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n')
 "
 sed -i "s#<title>UI Foundation</title>#<title>$APP_NAME</title>#" index.html
 
-echo "create-app: npm install ($PACKAGE $SPEC)"
-npm install --no-audit --no-fund
+echo "create-app: npm install ($PACKAGE $SPEC${INSTALL[0]:+, installing ${INSTALL[0]}})"
+npm install --no-audit --no-fund ${INSTALL[@]+"${INSTALL[@]}"}
 
 # The app's CI and deploys install with `npm ci`, so the lockfile just
 # written must be one it accepts. It isn't always: npm 11.7.0 once wrote a
