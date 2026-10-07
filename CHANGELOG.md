@@ -5,6 +5,43 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.17.0 — a floating toolbar over selected words
+
+Additive, but visible: **every `RichTextEditor` with a toolbar gains the
+floating one on the bump.** `toolbar={false}` leaves out both. Run
+`npx ui-foundation sync` for the updated cell patterns.
+
+- **A floating toolbar over selected words**: Bold, Italic,
+  Strikethrough, Code · Link, the same buttons as the fixed toolbar
+  (pressed while on, each naming its shortcut). The fixed toolbar stays.
+  - Shows once words are selected and the mouse is up (not while a drag
+    is still choosing them). Not in a code block, read-only, or while the
+    link box is open.
+  - Above the words, or below them when there's no room inside the text
+    (the first line), so it never covers the fixed toolbar. It sits
+    inside the field, not in a portal, and scrolls with the text.
+  - **Keyboard:** Alt+F10 in the text reaches it (the fixed toolbar when
+    it isn't showing; the editor names the key in `aria-keyshortcuts`).
+    The arrow keys, Home and End move along it; Enter formats and gives
+    focus back. Esc or Tab goes back to the text with the words still
+    selected (a button's open tooltip takes the first Esc).
+  - **Mouse:** a press never takes focus from the text.
+  - **Editing in place:** it's part of the field, so moving to it doesn't
+    save. **Esc with words selected now hides the floating toolbar
+    first; the next Esc gives up the edit**, as an open list does.
+  - axe-clean in both themes, and its icons clear 3:1 on the popover
+    surface (the glyph check).
+
+### How an app adopts it
+
+1. **Nothing to add.** Where `toolbar={false}` was passed, neither
+   toolbar shows.
+2. **Specs** that select words and then press Esc to give up an edit in
+   place need a second Esc. Specs that select words and then click just
+   below or above them may now hit the floating toolbar. Find its
+   buttons by name
+   (`getByRole('toolbar', { name: 'Format selection' }).getByRole('button', { name: 'Bold', exact: true })`).
+
 ## 3.16.2 — two rich-text fixes
 
 Fixes only. **Apps need nothing beyond the bump** (no `sync`, no code).

@@ -21,8 +21,10 @@
 //   in. Ctrl/Cmd+Enter stays the field's save.
 // - A placeholder in an empty document, and a count of the Markdown's
 //   length as it nears `maxLength`.
-// - A fixed toolbar above the text (rich-text-toolbar.tsx), unless
-//   `toolbar={false}`.
+// - A fixed toolbar above the text (rich-text-toolbar.tsx), and a
+//   floating one over selected words (rich-text-floating-toolbar.tsx),
+//   unless `toolbar={false}`. Alt+F10 reaches the floating one when it
+//   shows, else the fixed one.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import {
   defaultValueCtx,
@@ -48,7 +50,7 @@ import {
 } from '@milkdown/kit/preset/commonmark'
 import { gfm } from '@milkdown/kit/preset/gfm'
 import { Fragment, Slice, type Node as ProseNode } from '@milkdown/kit/prose/model'
-import { Plugin, type EditorState } from '@milkdown/kit/prose/state'
+import { NodeSelection, Plugin, type EditorState } from '@milkdown/kit/prose/state'
 import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
 import { $prose, getMarkdown } from '@milkdown/kit/utils'
 import { cn } from 'cn'
@@ -59,6 +61,7 @@ import { Popover, PopoverContent } from '@/components/ui/popover'
 import { linkHref } from '@/lib/link-href'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
 import type { RichTextEditorProps } from './rich-text-editor'
+import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
 import { toggleFormat, type FormatId } from './rich-text-formats'
 import { RichTextToolbar } from './rich-text-toolbar'
 
@@ -230,6 +233,19 @@ export default function MilkdownEditor({
   const [length, setLength] = useState(defaultValue.length)
   // The editor's state after each change, for the toolbar's pressed buttons.
   const [editorState, setEditorState] = useState<EditorState | null>(null)
+  const [editorView, setEditorView] = useState<EditorView | null>(null)
+  // For the floating toolbar: focus is in the text (or on the floating
+  // toolbar), the mouse is down choosing words, and the selection Esc hid
+  // it for.
+  const [focused, setFocused] = useState(false)
+  const [selecting, setSelecting] = useState(false)
+  const [dismissed, setDismissed] = useState<{ from: number; to: number } | null>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const floatingRef = useRef<HTMLDivElement>(null)
+  // The field's element, which the floating toolbar is placed against.
+  const [field, setField] = useState<HTMLDivElement | null>(null)
+  // Whether the floating toolbar shows, for the editor's keys (set up once).
+  const floatingOpenRef = useRef(false)
   // Opens the link box: made with the editor, used by the toolbar's Link.
   const openLinkRef = useRef<(view: EditorView) => void>(() => {})
   // The latest props, for the editor's callbacks, which are set up once.
@@ -258,6 +274,7 @@ export default function MilkdownEditor({
   if (describedBy) attributes['aria-describedby'] = describedBy
   if (ariaInvalid) attributes['aria-invalid'] = 'true'
   if (placeholder) attributes['aria-placeholder'] = placeholder
+  if (toolbar) attributes['aria-keyshortcuts'] = 'Alt+F10'
   const attributesKey = JSON.stringify(attributes)
 
 
@@ -291,6 +308,8 @@ export default function MilkdownEditor({
             update: (view, previous) => {
               if (cancelled) return
               setEditorState(view.state)
+              // Esc hides the floating toolbar for one selection only.
+              if (view.state.selection.empty) setDismissed(null)
               if (!view.state.doc.eq(previous.doc)) emit()
             },
           }),
@@ -350,7 +369,46 @@ export default function MilkdownEditor({
                 : null
               return doc ? ctx.get(serializerCtx)(doc) : slice.content.textBetween(0, slice.content.size, '\n\n')
             },
+            handleDOMEvents: {
+              focus: () => {
+                setFocused(true)
+                return false
+              },
+              // Moving to the floating toolbar keeps it showing.
+              blur: (_view, event) => {
+                if (!floatingRef.current?.contains(event.relatedTarget as Node | null)) setFocused(false)
+                return false
+              },
+              // The floating toolbar waits for the mouse to be up: a drag
+              // is still choosing the words.
+              mousedown: (_view, event) => {
+                if (event.button !== 0) return false
+                setDismissed(null)
+                setSelecting(true)
+                window.addEventListener('mouseup', () => setSelecting(false), { once: true })
+                return false
+              },
+            },
             handleKeyDown: (view, event) => {
+              setSelecting(false)
+              // Alt+F10: to the floating toolbar when it shows, else the
+              // fixed one (the convention editors share).
+              if (event.altKey && event.key === 'F10') {
+                const bar = floatingOpenRef.current ? floatingRef.current : toolbarRef.current
+                const button = bar?.querySelector<HTMLElement>('button[tabindex="0"]')
+                if (!button) return false
+                event.preventDefault()
+                button.focus()
+                return true
+              }
+              // Esc hides the floating toolbar first; only the next one
+              // reaches the field (editing in place gives up on it).
+              if (event.key === 'Escape' && floatingOpenRef.current) {
+                event.preventDefault()
+                const { from, to } = view.state.selection
+                setDismissed({ from, to })
+                return true
+              }
               const mod = event.metaKey || event.ctrlKey
               if (mod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'k') {
                 event.preventDefault()
@@ -405,13 +463,16 @@ export default function MilkdownEditor({
       }
       editorRef.current = editor
       baseline = editor.action(getMarkdown())
-      setEditorState(editor.action((ctx) => ctx.get(editorViewCtx).state))
+      const view = editor.action((ctx) => ctx.get(editorViewCtx))
+      setEditorView(view)
+      setEditorState(view.state)
       if (autoFocus) editor.action((ctx) => ctx.get(editorViewCtx).focus())
     })
 
     return () => {
       cancelled = true
       setEditorState(null)
+      setEditorView(null)
       const editor = editorRef.current
       editorRef.current = null
       if (editor) void editor.destroy()
@@ -446,6 +507,27 @@ export default function MilkdownEditor({
     })
   }
 
+  // The floating toolbar: words selected, focus in the field, the mouse up,
+  // and nothing else open over the text.
+  const selection = editorState?.selection
+  const floatingOpen = Boolean(
+    toolbar &&
+      !readOnly &&
+      editorView &&
+      focused &&
+      !selecting &&
+      linkBox === null &&
+      selection &&
+      !selection.empty &&
+      !(selection instanceof NodeSelection) &&
+      !selection.$from.parent.type.spec.code &&
+      !(dismissed && dismissed.from === selection.from && dismissed.to === selection.to),
+  )
+  useEffect(() => {
+    floatingOpenRef.current = floatingOpen
+  })
+  const returnToText = () => editorView?.focus()
+
   const closeLink = () => {
     setLinkBox(null)
     editorRef.current?.action((ctx) => ctx.get(editorViewCtx).focus())
@@ -454,9 +536,10 @@ export default function MilkdownEditor({
   return (
     <>
       <div
+        ref={setField}
         data-slot="rich-text-editor"
         className={cn(
-          'flex w-full min-w-0 flex-col rounded-lg border border-input bg-transparent type-body text-foreground break-words transition-[border-color,box-shadow]',
+          'relative flex w-full min-w-0 flex-col rounded-lg border border-input bg-transparent type-body text-foreground break-words transition-[border-color,box-shadow]',
           'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30',
           'has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20',
           className,
@@ -464,6 +547,7 @@ export default function MilkdownEditor({
       >
         {toolbar && (
           <RichTextToolbar
+            ref={toolbarRef}
             state={editorState}
             readOnly={readOnly}
             // Only once the editor is made: until then the editable element,
@@ -501,6 +585,22 @@ export default function MilkdownEditor({
             '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
           )}
         />
+        {floatingOpen && editorView && editorState && (
+          <RichTextFloatingToolbar
+            ref={floatingRef}
+            view={editorView}
+            state={editorState}
+            field={field}
+            controls={editableId}
+            onFormat={runFormat}
+            onDismiss={() => setDismissed({ from: editorState.selection.from, to: editorState.selection.to })}
+            onReturn={returnToText}
+            onBlur={(event) => {
+              const next = event.relatedTarget as Node | null
+              if (!editorView.dom.contains(next) && !floatingRef.current?.contains(next)) setFocused(false)
+            }}
+          />
+        )}
       </div>
       {showCount && (
         <p

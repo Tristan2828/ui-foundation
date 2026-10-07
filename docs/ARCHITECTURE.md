@@ -273,6 +273,17 @@ shortcut, and a mouse press never takes focus from the text. It sits
 inside the field's wrapper, so editing in place counts moving to it as
 staying.
 
+**The floating toolbar (3.17)** (`rich-text-floating-toolbar.tsx`) is the
+same buttons for selected words only (Bold, Italic, Strikethrough, Code ·
+Link), over the selection once the mouse is up. Alt+F10 reaches it (the
+fixed one when it isn't showing); Esc or Tab goes back to the text, the
+selection kept, and Esc hides it until the selection changes, before the
+field's own Esc. It's placed against the field's element, not portaled:
+above the words, below them when there's no room inside the text, so it
+never covers the fixed toolbar. Base UI's Popover was tried first, and
+its focus guards (tabbable `aria-hidden` spans while focus is outside
+the popup, which for this toolbar is always) fail axe.
+
 **Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
 (a `Popover` with no trigger, placed through the `anchor` the package's
 `PopoverContent` takes). Only web and email addresses, a path on the site

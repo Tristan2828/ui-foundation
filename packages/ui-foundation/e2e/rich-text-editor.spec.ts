@@ -423,3 +423,184 @@ test.describe('toolbar', () => {
     })
   }
 })
+
+// The floating toolbar over selected words, on the Features story's
+// "formats" editor ("Format me here.", "Second line.", "Third line.").
+test.describe('floating toolbar', () => {
+  const floating = (page: Page) => page.getByRole('toolbar', { name: 'Format selection' })
+  const floatingButton = (page: Page, label: string) => floating(page).getByRole('button', { name: label, exact: true })
+  const fixed = (page: Page) => page.locator('[data-fixture="formats"]').getByRole('toolbar', { name: 'Formatting' })
+
+  // Selects the first word of a line with the mouse: a double click on it
+  // (a line's box is the text's full width, so not at its middle).
+  async function pickWord(page: Page, line: number) {
+    await editor(page, 'formats').locator('p').nth(line).dblclick({ position: { x: 8, y: 8 } })
+    await page.waitForTimeout(100)
+  }
+
+  // Selects the first word of the first line ("Format"), from the keyboard.
+  async function selectFormat(page: Page) {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Home')
+    for (let i = 0; i < 'Format'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    await page.waitForTimeout(100)
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'formats')).toBeVisible()
+  })
+
+  test('shows over selected words with the formats for words, and goes when the selection does', async ({ page }) => {
+    await expect(floating(page)).toHaveCount(0)
+    await pickWord(page, 1)
+    await expect(floating(page)).toBeVisible()
+    const labels = ['Bold', 'Italic', 'Strikethrough', 'Code', 'Link']
+    await expect(floating(page).getByRole('button')).toHaveCount(labels.length)
+    for (const label of labels) await expect(floatingButton(page, label)).toBeVisible()
+    await expect(floating(page).locator('[tabindex="0"]')).toHaveCount(1)
+    await expect(floating(page)).toHaveAttribute('aria-controls', /.+/)
+    await expect(editor(page, 'formats')).toHaveAttribute('aria-keyshortcuts', 'Alt+F10')
+    await page.keyboard.press('ArrowRight')
+    await expect(floating(page)).toHaveCount(0)
+  })
+
+  test('above the words when there is room in the text, centred on them', async ({ page }) => {
+    await pickWord(page, 2)
+    const words = (await editor(page, 'formats').locator('p').nth(2).boundingBox())!
+    const bar = (await floating(page).boundingBox())!
+    expect(bar.y + bar.height).toBeLessThanOrEqual(words.y)
+    await expect(floating(page)).toHaveAttribute('data-side', 'top')
+  })
+
+  test('on the first line it shows below the words, never over the fixed toolbar', async ({ page }) => {
+    await pickWord(page, 0)
+    const bar = (await floating(page).boundingBox())!
+    const top = (await fixed(page).boundingBox())!
+    const words = (await editor(page, 'formats').locator('p').first().boundingBox())!
+    expect(bar.y).toBeGreaterThan(words.y)
+    expect(bar.y).toBeGreaterThanOrEqual(top.y + top.height)
+    await expect(floating(page)).toHaveAttribute('data-side', 'bottom')
+  })
+
+  test('waits for the mouse to be up before showing', async ({ page }) => {
+    await editor(page, 'formats').scrollIntoViewIfNeeded()
+    const line = (await editor(page, 'formats').locator('p').nth(1).boundingBox())!
+    await page.mouse.move(line.x + 2, line.y + line.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(line.x + 60, line.y + line.height / 2, { steps: 5 })
+    await page.waitForTimeout(100)
+    await expect(floating(page)).toHaveCount(0)
+    await page.mouse.up()
+    await expect(floating(page)).toBeVisible()
+  })
+
+  test('a press formats the words, shows it pressed, and keeps focus in the text', async ({ page }) => {
+    await pickWord(page, 0)
+    await editor(page, 'formats').evaluate((element) => {
+      ;(window as unknown as { blurs: number }).blurs = 0
+      element.addEventListener('blur', () => (window as unknown as { blurs: number }).blurs++)
+    })
+    await floatingButton(page, 'Bold').click()
+    await expect(editor(page, 'formats')).toBeFocused()
+    expect(await page.evaluate(() => (window as unknown as { blurs: number }).blurs)).toBe(0)
+    await expect(saved(page, 'formats')).toContainText('**Format** me here.')
+    await expect(floatingButton(page, 'Bold')).toHaveAttribute('aria-pressed', 'true')
+    await floatingButton(page, 'Code').click()
+    await expect(saved(page, 'formats')).toContainText('**`Format`**')
+  })
+
+  test('Alt+F10 reaches it; arrows move along it; Enter formats and goes back to the text', async ({ page }) => {
+    await selectFormat(page)
+    await page.keyboard.press('Alt+F10')
+    await expect(floatingButton(page, 'Bold')).toBeFocused()
+    await page.keyboard.press('ArrowRight')
+    await expect(floatingButton(page, 'Italic')).toBeFocused()
+    await page.keyboard.press('End')
+    await expect(floatingButton(page, 'Link')).toBeFocused()
+    await page.keyboard.press('Home')
+    await page.keyboard.press('ArrowRight')
+    await page.keyboard.press('Enter')
+    await expect(editor(page, 'formats')).toBeFocused()
+    await expect(saved(page, 'formats')).toContainText('*Format* me here.')
+    // Still selected, so it's still there.
+    await expect(floating(page)).toBeVisible()
+  })
+
+  test('Esc or Tab on it goes back to the text, the words still selected', async ({ page }) => {
+    await selectFormat(page)
+    await page.keyboard.press('Alt+F10')
+    await page.keyboard.press('Tab')
+    await expect(editor(page, 'formats')).toBeFocused()
+    await expect(floating(page)).toBeVisible()
+    await page.keyboard.press('Alt+F10')
+    // The focused button's tooltip is open: the first Esc closes it (as on
+    // the fixed toolbar), the next one leaves.
+    await expect(page.locator('[data-slot=tooltip-content][data-open]')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('[data-slot=tooltip-content][data-open]')).toHaveCount(0)
+    await expect(floatingButton(page, 'Bold')).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(editor(page, 'formats')).toBeFocused()
+    await expect(floating(page)).toHaveCount(0)
+    // The words are still selected: a shortcut formats them.
+    await page.keyboard.press('ControlOrMeta+b')
+    await expect(saved(page, 'formats')).toContainText('**Format** me here.')
+  })
+
+  test('Esc in the text hides it until the selection changes', async ({ page }) => {
+    await selectFormat(page)
+    await expect(floating(page)).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(floating(page)).toHaveCount(0)
+    await page.keyboard.press('Shift+ArrowRight')
+    await expect(floating(page)).toBeVisible()
+  })
+
+  test('Alt+F10 with nothing selected reaches the fixed toolbar', async ({ page }) => {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Alt+F10')
+    await expect(fixed(page).getByRole('button', { name: 'Bold', exact: true })).toBeFocused()
+  })
+
+  test('Link opens the link box for the words, and it steps aside while the box is open', async ({ page }) => {
+    await pickWord(page, 1)
+    await floatingButton(page, 'Link').click()
+    const box = page.getByRole('dialog', { name: 'Add link' })
+    await expect(box).toBeVisible()
+    await expect(floating(page)).toHaveCount(0)
+    await box.getByRole('textbox', { name: 'Link address' }).fill('example.com')
+    await page.keyboard.press('Enter')
+    await expect(saved(page, 'formats')).toContainText('[Second](https://example.com) line.')
+  })
+
+  test('not in a code block, and not read-only', async ({ page }) => {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+    await fixed(page).getByRole('button', { name: 'Code block', exact: true }).click()
+    await editor(page, 'formats').locator('pre').dblclick({ position: { x: 16, y: 16 } })
+    await page.waitForTimeout(100)
+    await expect(floating(page)).toHaveCount(0)
+    await editor(page, 'readOnly').locator('p').dblclick({ position: { x: 8, y: 8 } })
+    await page.waitForTimeout(100)
+    await expect(floating(page)).toHaveCount(0)
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`pressed, focused and with its tooltip open, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await pickWord(page, 1)
+      await floatingButton(page, 'Bold').click()
+      await page.keyboard.press('Alt+F10')
+      await expect(floatingButton(page, 'Bold')).toBeFocused()
+      await floatingButton(page, 'Italic').hover()
+      await expect(page.locator('[data-slot=tooltip-content][data-open]')).toHaveText(/^Italic \((⌘I|Ctrl\+I)\)$/)
+      const results = await new AxeBuilder({ page })
+        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
+        .analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
+})

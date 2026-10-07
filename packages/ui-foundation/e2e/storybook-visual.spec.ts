@@ -55,8 +55,14 @@ const COMPOSITE_STORIES = [
 // clear WCAG's 3:1 non-text minimum against the background behind it.
 // axe measures text only, so without this an icon could fade below it
 // unnoticed (a faint "off" state, a category slot in dark mode).
-// A story whose glyphs are in a popup opens it first.
-const GLYPH_STORIES: { id: string; open?: (page: import('@playwright/test').Page) => Promise<void> }[] = [
+// A story whose glyphs are in a popup opens it first, and names what it
+// opened (`shows`: a selector for it, `[data-open]` by default).
+const GLYPH_STORIES: {
+  id: string
+  open?: (page: import('@playwright/test').Page) => Promise<void>
+  shows?: string
+  name?: string
+}[] = [
   { id: 'app-stagecircle--default' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip' },
@@ -68,6 +74,14 @@ const GLYPH_STORIES: { id: string; open?: (page: import('@playwright/test').Page
   // The rich-text toolbar's icons (the read-only editor's are disabled:
   // a disabled control is exempt, and its opacity isn't measured here).
   { id: 'app-richtexteditor--features' },
+  // The floating toolbar's, over selected words, on the popover surface.
+  {
+    id: 'app-richtexteditor--features',
+    name: 'floating toolbar',
+    open: (page) =>
+      page.getByRole('textbox', { name: 'formats', exact: true }).locator('p').first().dblclick({ position: { x: 8, y: 8 } }),
+    shows: '[data-slot=rich-text-floating-toolbar]',
+  },
 ]
 
 function storyUrlById(id: string, theme: 'light' | 'dark') {
@@ -423,13 +437,13 @@ async function glyphContrasts(page: import('@playwright/test').Page) {
 }
 
 test.describe('glyphs clear the 3:1 non-text minimum in both themes', () => {
-  for (const { id, open } of GLYPH_STORIES) {
+  for (const { id, open, shows = '[data-open]', name } of GLYPH_STORIES) {
     for (const theme of ['light', 'dark'] as const) {
-      test(`${id} (${theme})`, async ({ page }) => {
+      test(`${id}${name ? ` ${name}` : ''} (${theme})`, async ({ page }) => {
         await page.goto(storyUrlById(id, theme))
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
         await open?.(page)
-        await expect(page.locator(open ? '[data-open] svg' : '#storybook-root svg').first()).toBeVisible()
+        await expect(page.locator(open ? `${shows} svg` : '#storybook-root svg').first()).toBeVisible()
         const glyphs = await glyphContrasts(page)
         if (process.env.PRINT_GLYPHS) console.log(id, theme, JSON.stringify(glyphs))
         expect(glyphs.length).toBeGreaterThan(0)

@@ -42,9 +42,10 @@ export type RichTextEditorProps = {
    */
   maxLength?: number
   /**
-   * The formatting toolbar above the text (bold, headings, lists, link, …),
-   * each button with its shortcut. On by default; `false` leaves the text
-   * alone, its shortcuts still working.
+   * The formatting toolbars: one fixed above the text (bold, headings,
+   * lists, link, …), each button with its shortcut, and one floating over
+   * selected words (bold to link). Alt+F10 reaches them from the text. On
+   * by default; `false` leaves the text alone, its shortcuts still working.
    */
   toolbar?: boolean
   className?: string
