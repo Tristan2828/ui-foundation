@@ -9,6 +9,8 @@ import { ThemeProvider } from '@/components/theme-provider'
 // works: the theme outermost, the mock-mode banner above the router so it
 // shows on every route (/login included), and AuthProvider inside
 // QueryClientProvider because it queries /auth/me through TanStack Query.
+// An app's DataEnvironmentBanner goes first among the children, before its
+// router: it queries too, and shows on every route like the mock banner.
 export function FoundationProviders({
   mockMode,
   queryClient,

@@ -10,11 +10,13 @@
 # asyncpg parameter binding) — every bug of that class this repo has had
 # was only caught here. Run it for any backend change.
 #
-# Only shell.spec, smoke.spec and the mock-mode banner suite run against
-# the real backend: the other specs force loading/empty/error states through MSW
+# Only shell.spec, smoke.spec and the two banner suites run against the
+# real backend: the other specs force loading/empty/error states through MSW
 # overrides that don't exist with VITE_API=real (a deliberate scope
-# decision). The banner suite flips there: it asserts no banner, which is
-# what catches a mock bundle shipped as the real one.
+# decision). The mock-mode banner suite flips there: it asserts no banner,
+# which is what catches a mock bundle shipped as the real one. The
+# data-environment suite follows DATA_LABEL, exported below for the backend
+# and Playwright alike.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO_ROOT="$(pwd)"
@@ -28,6 +30,10 @@ fail() { echo "check-backend-postgres: $1" >&2; exit 1; }
 export DATABASE_URL="postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation"
 export DATABASE_SSL=false
 unset DATABASE_SSL_CA_FILE
+# The docker-compose database is local data, whatever backend/.env says.
+# Exported, so uvicorn serves it and the data-environment banner suite
+# expects it.
+export DATA_LABEL=local
 
 echo "check-backend-postgres: npm run verify"
 npm run verify || fail "npm run verify failed"
@@ -81,6 +87,10 @@ for i in $(seq 1 30); do
   [ "$i" -eq 30 ] && fail "backend did not respond on :8000 within 30s — see logs/backend-postgres-uvicorn.log"
   sleep 1
 done
+
+echo "check-backend-postgres: GET /api/environment serves DATA_LABEL with no session"
+env_body=$(curl -s http://localhost:8000/api/environment)
+[ "$env_body" = '{"dataLabel":"local"}' ] || fail "GET /api/environment returned $env_body, expected {\"dataLabel\":\"local\"}"
 
 echo "check-backend-postgres: unauthenticated request is rejected (Phase 10)"
 unauth_status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/widgets)
@@ -184,7 +194,7 @@ grep -q '"loc":\["body","checklist",0,"text"\]' "$WIDGET_BODY" || fail "a blank 
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"
-VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts e2e/mock-mode-banner.spec.ts ||
+VITE_API=real npx playwright test e2e/shell.spec.ts e2e/smoke.spec.ts e2e/mock-mode-banner.spec.ts e2e/data-environment-banner.spec.ts ||
   fail "Playwright failed against the real backend"
 
 echo "check-backend-postgres: PASS"

@@ -14,9 +14,20 @@ from app.models import User
 from app.security import verify_password
 
 
-async def production_problems(session: AsyncSession, *, cookie_secure: bool) -> list[str]:
+async def production_problems(
+    session: AsyncSession, *, cookie_secure: bool, data_label: str | None = None
+) -> list[str]:
     """Everything that makes this deployment unsafe to serve; empty if none."""
     problems: list[str] = []
+
+    # A label says the data isn't production's, and the app shows it on
+    # every screen. Production serves production data, so a label here is
+    # a dev backend/.env deployed by mistake.
+    if data_label is not None:
+        problems.append(
+            f"DATA_LABEL is set ({data_label!r}); production data has no label, and every "
+            "screen would say it isn't production's. Unset it."
+        )
 
     if not cookie_secure:
         problems.append(

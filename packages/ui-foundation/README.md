@@ -18,14 +18,14 @@ than installing this by hand:
 
 | Import | What |
 |---|---|
-| `@tristan2828/ui-foundation` | `AppShell`, `DataTable`, `EntityView` (with `EditableValue`, `editInPlace`), `EntityForm`, `Markdown`, `RichTextEditor`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `PasswordInput`, `RouteErrorBoundary`, `FoundationProviders`, `LoginRoute`, `RegisterRoute`, `useAuth`, `useTableUrlState`, `useRecordUpdate`, `useDebouncedValue`, `createQueryClient`, `cn`; types `Page`, `AppError`, `QuerySpec` |
+| `@tristan2828/ui-foundation` | `AppShell`, `DataTable`, `EntityView` (with `EditableValue`, `editInPlace`), `EntityForm`, `Markdown`, `RichTextEditor`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `PasswordInput`, `RouteErrorBoundary`, `FoundationProviders`, `DataEnvironmentBanner`, `LoginRoute`, `RegisterRoute`, `useAuth`, `useTableUrlState`, `useRecordUpdate`, `useDebouncedValue`, `createQueryClient`, `cn`; types `Page`, `AppError`, `QuerySpec` |
 | `@tristan2828/ui-foundation/ui/<name>` | shadcn primitives: badge, button, calendar, card, checkbox, combobox, dialog, empty, field, input, input-group, label, popover, select, separator, sheet, sidebar, skeleton, sonner, spinner, switch, table, textarea, tooltip |
 | `@tristan2828/ui-foundation/gateway` | `safeFetch`, `toAppError`, `networkError` — for an app's `src/api/gateway/` only |
-| `@tristan2828/ui-foundation/mocks` | MSW: `authHandlers`, `resetMockAuth`, `getMockCurrentUser`, `MOCK_USER`, `exposeMswForE2E` |
-| `@tristan2828/ui-foundation/testing` | Playwright: `defineA11ySuite`, `defineMockModeBannerSuite`, `forceMswOverride`, `forceLoggedOut`, `waitForMswReady` |
+| `@tristan2828/ui-foundation/mocks` | MSW: `authHandlers`, `environmentHandlers`, `resetMockAuth`, `getMockCurrentUser`, `MOCK_USER`, `exposeMswForE2E` |
+| `@tristan2828/ui-foundation/testing` | Playwright: `defineA11ySuite`, `defineMockModeBannerSuite`, `defineDataEnvironmentBannerSuite`, `forceMswOverride`, `forceLoggedOut`, `waitForMswReady` |
 | `@tristan2828/ui-foundation/eslint` | the lint rules, as a flat config: `export default [...uiFoundation()]` |
 | `@tristan2828/ui-foundation/styles.css` | tokens and base styles, after `@import "tailwindcss";` |
-| `@tristan2828/ui-foundation/openapi.yaml` | the part of an app's API contract the package calls: `/auth/*` and the error bodies |
+| `@tristan2828/ui-foundation/openapi.yaml` | the part of an app's API contract the package calls: `/auth/*`, `/environment` (optional) and the error bodies |
 
 ## The `ui-foundation` command
 
