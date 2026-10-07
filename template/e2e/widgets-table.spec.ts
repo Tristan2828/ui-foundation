@@ -367,6 +367,58 @@ test.describe('widgets table', () => {
     expect(after!.x).toBeCloseTo(before!.x, 0)
   })
 
+  // Issue #91: a pinned first column sized to a long title was wider than
+  // a phone's scroll area, so every other column scrolled underneath it
+  // and none could ever be seen.
+  test('on a phone a long pinned first column leaves room to scroll the others into view', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await forceWidgetsListOverride(page, {
+      body: {
+        items: [
+          {
+            id: 1,
+            name: 'An adjustable standing desk with a solid oak top and twin motors',
+            categoryId: 1,
+            status: 'active',
+            availableFrom: '2026-01-15T00:00:00Z',
+            assigneeEmail: 'alice@example.com',
+            price: '24.99',
+            description: '',
+            tags: ['fragile'],
+            inStock: true,
+            extraCategoryIds: [],
+            checklist: [],
+            checklistState: 'none',
+          },
+        ],
+        total: 1,
+      },
+    })
+    await page.goto('/widgets')
+    const container = page.locator('[data-slot="table-container"]')
+    const pinned = page.locator('thead th').first()
+    const status = page.getByRole('columnheader', { name: 'Status' })
+    await expect(status).toBeAttached()
+
+    const area = (await container.boundingBox())!
+    expect((await pinned.boundingBox())!.width).toBeLessThanOrEqual(area.width / 2)
+
+    // Scroll Status to just right of the pinned column: its centre is then
+    // in sight, not under the pinned cell (nor the pinned last column).
+    await container.evaluate((element, width) => {
+      const header = [...element.querySelectorAll('th')].find((th) => th.textContent?.trim() === 'Status')!
+      element.scrollLeft = header.offsetLeft - width
+    }, (await pinned.boundingBox())!.width)
+    const [first, last, target] = [
+      (await pinned.boundingBox())!,
+      (await page.locator('thead th').last().boundingBox())!,
+      (await status.boundingBox())!,
+    ]
+    const centre = target.x + target.width / 2
+    expect(centre).toBeGreaterThan(first.x + first.width)
+    expect(centre).toBeLessThan(last.x)
+  })
+
   test('a narrow window scrolls the table, not the whole page', async ({ page }) => {
     // Without min-w-0 on <SidebarInset> (app-shell.tsx) the page grows to
     // the table's width: the table's own scroll container never overflows,
