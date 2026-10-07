@@ -29,6 +29,21 @@ Notes with **bold**, *emphasis*, ~~struck~~ and \`inline code\`, and a
 
 > Measure twice, cut once.
 
+> [!NOTE]
+> The frame ships in two boxes.
+
+> [!TIP]
+> Assemble it where it will stand.
+
+> [!IMPORTANT]
+> Keep the receipt for the warranty.
+
+> [!WARNING]
+> Two people to lift the top.
+
+> [!CAUTION]
+> Unplug the motor before cleaning.
+
 \`\`\`
 height = 72cm
 \`\`\`

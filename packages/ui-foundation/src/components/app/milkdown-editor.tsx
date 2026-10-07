@@ -12,13 +12,22 @@
 //   in the text shows as its characters (an uneditable chip, Milkdown's
 //   html node), and HTML pasted as such a chip becomes plain text.
 // - Headings render from <h3>, like <Markdown>: the page owns <h1> and
-//   <h2>. A task-list item renders a real checkbox that toggles it.
+//   <h2>; they look like <Markdown>'s (prose-look.ts). A task-list item
+//   renders a real checkbox that toggles it.
+// - Callouts (`> [!NOTE]`, src/lib/markdown-callout.ts): a node of their
+//   own, drawn as <Markdown> draws them, the icon a menu of kinds.
+// - Tables in a box that scrolls sideways, with Notion's "add a row" and
+//   "add a column" bars, Tab in the last cell adding a row and Enter going
+//   down a column (rich-text-table.ts); the toolbar's Table menu does the
+//   rest.
 // - Edited blocks are written in the document's own bullet and rule marks.
 // - Markdown pasted as plain text arrives formatted (still no HTML), and a
 //   copy out of the editor is Markdown.
 // - Ctrl/Cmd+K adds or edits a link (a box at the caret: web and email
 //   addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
-//   in. Ctrl/Cmd+Enter stays the field's save.
+//   in. Ctrl/Cmd+Enter stays the field's save, in a table too. Notion's
+//   block keys (Ctrl+Shift+1 for a heading, +5 for bullets, …:
+//   rich-text-shortcuts.ts).
 // - A placeholder in an empty document, and a count of the Markdown's
 //   length as it nears `maxLength`.
 // - A fixed toolbar above the text (rich-text-toolbar.tsx), and a
@@ -29,6 +38,7 @@
 //   line's start lists the blocks it can become, also unless
 //   `toolbar={false}`.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+import { createPortal } from 'react-dom'
 import {
   defaultValueCtx,
   Editor,
@@ -53,19 +63,25 @@ import {
 } from '@milkdown/kit/preset/commonmark'
 import { gfm } from '@milkdown/kit/preset/gfm'
 import { Fragment, Slice, type Node as ProseNode } from '@milkdown/kit/prose/model'
-import { NodeSelection, Plugin, type EditorState } from '@milkdown/kit/prose/state'
+import { NodeSelection, Plugin, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
+import { isInTable, TableMap } from '@milkdown/kit/prose/tables'
 import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
-import { $prose, getMarkdown } from '@milkdown/kit/utils'
+import { $nodeSchema, $prose, $remark, getMarkdown } from '@milkdown/kit/utils'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent } from '@/components/ui/popover'
 import { linkHref } from '@/lib/link-href'
+import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
+import { headingClass } from './prose-look'
 import type { RichTextEditorProps } from './rich-text-editor'
 import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
-import { toggleFormat, type FormatId } from './rich-text-formats'
+import { tableAt, toggleFormat, type FormatId } from './rich-text-formats'
+import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry } from './rich-text-node-views'
+import { handleShortcut } from './rich-text-shortcuts'
+import { addRowAtEnd, handleTableKey, runTableAction, type TableAction } from './rich-text-table'
 import type { FormatItem } from './rich-text-format-items'
 import {
   applySlash,
@@ -78,6 +94,7 @@ import {
 } from './rich-text-slash'
 import { RichTextSlashMenu } from './rich-text-slash-menu'
 import { RichTextToolbar } from './rich-text-toolbar'
+import { CalloutKindMenu, TableBar } from './rich-text-widgets'
 
 // The commonmark preset, minus the plugin that writes `<br />`. A $remark
 // plugin is a pair (its options and the plugin), spread into `plugins`.
@@ -90,6 +107,35 @@ const COMMONMARK: MilkdownPlugin[] = [
   ...keymap,
   ...plugins.filter((plugin) => !LEFT_OUT.includes(plugin)),
 ]
+
+// Callouts: a node of their own, read from the quote remarkCalloutNodes
+// marks and written back as one with its marker (calloutHandler).
+const calloutRemark = $remark('remarkCalloutNodes', () => remarkCalloutNodes)
+const calloutSchema = $nodeSchema('callout', () => ({
+  content: 'block+',
+  group: 'block',
+  defining: true,
+  attrs: { kind: { default: 'note' }, marker: { default: null } },
+  parseDOM: [
+    {
+      tag: 'div[data-callout]',
+      getAttrs: (dom) => ({ kind: calloutKind((dom as HTMLElement).dataset.callout) }),
+    },
+  ],
+  toDOM: (node) => ['div', { 'data-callout': String(node.attrs.kind) }, 0],
+  parseMarkdown: {
+    match: (node) => node.type === 'callout',
+    runner: (state, node, type) => {
+      state.openNode(type, { kind: calloutKind(node.kind), marker: node.marker ?? null }).next(node.children).closeNode()
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'callout',
+    runner: (state, node) => {
+      state.openNode('callout', undefined, { kind: node.attrs.kind, marker: node.attrs.marker }).next(node.content).closeNode()
+    },
+  },
+}))
 
 // Raw HTML pasted in as Milkdown's html chip becomes the plain text it
 // shows, so a paste can never add markup to the Markdown.
@@ -107,7 +153,9 @@ function htmlToText(fragment: Fragment): Fragment {
 }
 
 function headingView(node: ProseNode): NodeView {
-  const dom = document.createElement(`h${Math.min(Number(node.attrs.level) + 2, 6)}`)
+  const level = Number(node.attrs.level)
+  const dom = document.createElement(`h${Math.min(level + 2, 6)}`)
+  dom.className = headingClass(level)
   return {
     dom,
     contentDOM: dom,
@@ -267,6 +315,9 @@ export default function MilkdownEditor({
   const slashMenuRef = useRef<{ key: string; span: SlashQuery; items: FormatItem[]; index: number } | null>(null)
   // Opens the link box: made with the editor, used by the toolbar's Link.
   const openLinkRef = useRef<(view: EditorView) => void>(() => {})
+  // The node views' slots (a callout's icon, a table's bars), each
+  // rendered into through a portal.
+  const [widgets, setWidgets] = useState<Widget[]>([])
   // The latest props, for the editor's callbacks, which are set up once.
   const latest = useRef({ onChange, onProblem, readOnly, placeholder })
   useEffect(() => {
@@ -353,6 +404,30 @@ export default function MilkdownEditor({
           },
         }),
     )
+
+    // The node views' slots, by slot; React hears of a change once per
+    // task, however many node views changed in it.
+    const slots = new Map<HTMLElement, Widget>()
+    let syncQueued = false
+    const sync = () => {
+      if (syncQueued) return
+      syncQueued = true
+      queueMicrotask(() => {
+        syncQueued = false
+        if (!cancelled) setWidgets([...slots.values()])
+      })
+    }
+    const registry: WidgetRegistry = {
+      set: (widget) => {
+        const before = slots.get(widget.slot)
+        if (before && before.type === widget.type && (before.type !== 'callout' || before.kind === (widget as typeof before).kind)) return
+        slots.set(widget.slot, widget)
+        sync()
+      },
+      remove: (slot) => {
+        if (slots.delete(slot)) sync()
+      },
+    }
 
     // Opens the link box at the start of what the link applies to.
     const openLink = (view: EditorView) => {
@@ -475,40 +550,55 @@ export default function MilkdownEditor({
       .config((ctx) => {
         ctx.set(rootCtx, root)
         ctx.set(defaultValueCtx, original)
-        ctx.update(remarkStringifyOptionsCtx, (options) => ({ ...options, ...markdownStyle(original) }))
+        ctx.update(remarkStringifyOptionsCtx, (options) => ({
+          ...options,
+          ...markdownStyle(original),
+          handlers: { ...options.handlers, callout: calloutHandler as never },
+        }))
         ctx.update(editorViewOptionsCtx, (options) => ({
           ...options,
           editable: () => !latest.current.readOnly,
           attributes,
-          // The slash menu's keys, as view props: before Milkdown's own
-          // keymap, whose Enter would split the line.
+          // The slash menu's keys, the editor's own shortcuts and its table
+          // keys, as view props: before Milkdown's own keymap, whose Enter
+          // would split the line (or leave a table).
           handleKeyDown: (view, event) => {
             const menu = slashMenuRef.current
-            if (!menu) return false
-            const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0
             const plain = !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey
-            if (step && plain) {
-              event.preventDefault()
-              const count = menu.items.length
-              setSlashActive({ key: menu.key, index: (menu.index + step + count) % count })
-              return true
+            if (menu) {
+              const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0
+              if (step && plain) {
+                event.preventDefault()
+                const count = menu.items.length
+                setSlashActive({ key: menu.key, index: (menu.index + step + count) % count })
+                return true
+              }
+              if ((event.key === 'Enter' || event.key === 'Tab') && plain) {
+                event.preventDefault()
+                applySlash(view, menu.span, menu.items[menu.index].id)
+                return true
+              }
+              // Esc closes the menu only: the field's own Esc (editing in
+              // place gives up the edit) waits for the next one.
+              if (event.key === 'Escape') {
+                event.preventDefault()
+                view.dispatch(closeSlash(view.state))
+                return true
+              }
             }
-            if ((event.key === 'Enter' || event.key === 'Tab') && plain) {
-              event.preventDefault()
-              applySlash(view, menu.span, menu.items[menu.index].id)
-              return true
-            }
-            // Esc closes the menu only: the field's own Esc (editing in
-            // place gives up the edit) waits for the next one.
-            if (event.key === 'Escape') {
-              event.preventDefault()
-              view.dispatch(closeSlash(view.state))
-              return true
-            }
-            return false
+            if (!view.editable) return false
+            if (handleShortcut(view.state, view.dispatch, event)) return true
+            if (handleTableKey(view.state, view.dispatch, event)) return true
+            // Ctrl/Cmd+Enter in a table is the field's (a save), not
+            // Milkdown's "leave the table": taken here, so its keymap never
+            // sees it, and left to reach the field.
+            const mod = event.metaKey || event.ctrlKey
+            return mod && !event.shiftKey && !event.altKey && event.key === 'Enter' && isInTable(view.state)
           },
           nodeViews: {
             heading: headingView,
+            callout: (node, _view, getPos) => calloutView(node, getPos, registry),
+            table: (_node, _view, getPos) => tableView(getPos, registry),
             list_item: (node, view, getPos) =>
               node.attrs.checked == null ? (undefined as unknown as NodeView) : taskItemView(node, view, getPos),
           },
@@ -516,6 +606,8 @@ export default function MilkdownEditor({
       })
       .use(COMMONMARK)
       .use(gfm)
+      .use(calloutRemark)
+      .use(calloutSchema)
       .use(history)
       .use(changes)
       .use(slashing)
@@ -572,6 +664,49 @@ export default function MilkdownEditor({
     })
   }
 
+  // The editable element: where a menu over the text gives focus back
+  // (ProseMirror puts the caret back where it was as it takes it).
+  const textElement = () => editorView?.dom ?? null
+
+  // A Table menu item, on the caret's table (the menu gives focus back).
+  const runTable = (action: TableAction) => {
+    if (editorView) runTableAction(editorView.state, editorView.dispatch, action)
+  }
+
+  // A callout's menu: its kind changed, or the callout taken away (its
+  // blocks kept). The menu gives focus back to the text.
+  const changeCallout = (getPos: () => number | undefined, kind: CalloutKind | null) => {
+    if (!editorView) return
+    const pos = getPos()
+    const node = pos === undefined ? null : editorView.state.doc.nodeAt(pos)
+    if (pos === undefined || node?.type.name !== 'callout') return
+    const tr = editorView.state.tr
+    if (kind) tr.setNodeMarkup(pos, undefined, { ...node.attrs, kind })
+    else tr.replaceWith(pos, pos + node.nodeSize, node.content).setSelection(TextSelection.near(tr.doc.resolve(pos + 1)))
+    editorView.dispatch(tr)
+  }
+
+  // A table's bar: the caret into its last cell, then a row at its end
+  // (the caret into its first cell) or a column at its right (the caret
+  // into its header).
+  const addToTable = (getPos: () => number | undefined, side: 'row' | 'column') => {
+    if (!editorView) return
+    const pos = getPos()
+    const table = pos === undefined ? null : editorView.state.doc.nodeAt(pos)
+    if (pos === undefined || table?.type.name !== 'table') return
+    const last = TextSelection.near(editorView.state.doc.resolve(pos + table.nodeSize - 1), -1)
+    editorView.dispatch(editorView.state.tr.setSelection(last))
+    if (side === 'row') addRowAtEnd(editorView.state, editorView.dispatch)
+    else if (runTableAction(editorView.state, editorView.dispatch, 'columnRight')) {
+      const added = editorView.state.doc.nodeAt(pos)!
+      const map = TableMap.get(added)
+      const header = TextSelection.near(editorView.state.doc.resolve(pos + 1 + map.map[map.width - 1] + 1))
+      editorView.dispatch(editorView.state.tr.setSelection(header).scrollIntoView())
+    }
+    editorView.focus()
+  }
+  const caretTable = editorState ? tableAt(editorState)?.pos : undefined
+
   // The floating toolbar: words selected, focus in the field, the mouse up,
   // and nothing else open over the text.
   const selection = editorState?.selection
@@ -623,6 +758,8 @@ export default function MilkdownEditor({
             // and its id, aren't in the page (axe: aria-valid-attr-value).
             controls={editorState ? editableId : undefined}
             onFormat={runFormat}
+            onTable={runTable}
+            text={textElement}
           />
         )}
         <div
@@ -637,23 +774,59 @@ export default function MilkdownEditor({
             // ProseMirror's own required style (prosemirror-view's CSS): spaces
             // as typed, so one at the end of a line isn't kept as &nbsp;.
             '[&_.ProseMirror]:whitespace-pre-wrap [&_.ProseMirror]:break-words',
-            '[&_h3]:type-section-title [&_h4]:type-section-title [&_h5]:type-label [&_h6]:type-label',
             '[&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1 [&_ul]:pl-6',
             '[&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1 [&_ol]:pl-6',
             '[&_li[data-item-type=task]]:-ml-6 [&_li[data-item-type=task]]:flex [&_li[data-item-type=task]]:list-none [&_li[data-item-type=task]]:items-start [&_li[data-item-type=task]]:gap-2',
             '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
-            '[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4',
+            // Headings, callouts and tables are drawn by their node views;
+            // these are the elements Milkdown draws itself.
+            '[&_a]:text-link [&_a]:underline [&_a]:decoration-link/40 [&_a]:underline-offset-4',
             '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground',
             '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:font-mono',
             '[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:font-mono',
-            '[&_hr]:border-border',
-            '[&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:type-label',
+            '[&_hr]:my-2 [&_hr]:h-0.5 [&_hr]:rounded-full [&_hr]:border-0 [&_hr]:bg-rule',
+            '[&_hr.ProseMirror-selectednode]:outline-2 [&_hr.ProseMirror-selectednode]:outline-offset-4 [&_hr.ProseMirror-selectednode]:outline-ring',
+            // A table: a header row on the muted fill, a line between every
+            // cell, cells that wrap and never shrink to nothing; selected
+            // cells (a drag across them) tinted.
+            '[&_table]:w-full [&_table]:border-collapse',
+            '[&_:is(td,th)]:min-w-28 [&_:is(td,th)]:border-r [&_:is(td,th)]:border-b [&_:is(td,th)]:border-border [&_:is(td,th)]:px-(--table-cell-px) [&_:is(td,th)]:py-(--table-cell-py) [&_:is(td,th)]:align-top',
+            '[&_:is(td,th):last-child]:border-r-0 [&_tr:last-child>td]:border-b-0',
+            '[&_th]:bg-muted [&_th]:text-left [&_th]:type-label',
+            '[&_.selectedCell]:bg-info/15',
             // Raw HTML from the text: shown as its characters, never as markup.
             '[&_span[data-type=html]]:rounded [&_span[data-type=html]]:bg-muted [&_span[data-type=html]]:px-1 [&_span[data-type=html]]:font-mono [&_span[data-type=html]]:text-foreground',
             // The placeholder, in an empty document only (a decoration).
             '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
           )}
         />
+        {widgets.map((widget) => {
+          if (widget.type === 'callout')
+            return createPortal(
+              <CalloutKindMenu
+                kind={widget.kind}
+                readOnly={readOnly}
+                onPick={(kind) => changeCallout(widget.getPos, kind)}
+                onRemove={() => changeCallout(widget.getPos, null)}
+                text={textElement}
+              />,
+              widget.slot,
+              widget.key,
+            )
+          const active = caretTable !== undefined && caretTable === widget.getPos()
+          return [
+            createPortal(
+              <TableBar side="row" active={active} readOnly={readOnly} onAdd={() => addToTable(widget.getPos, 'row')} />,
+              widget.slot,
+              `${widget.key}-row`,
+            ),
+            createPortal(
+              <TableBar side="column" active={active} readOnly={readOnly} onAdd={() => addToTable(widget.getPos, 'column')} />,
+              widget.column,
+              `${widget.key}-column`,
+            ),
+          ]
+        })}
         {slashOpen && slash && editorView && (
           <RichTextSlashMenu
             id={slashListId}

@@ -123,6 +123,22 @@
   --type-caption-size: 0.75rem; /* counts, metadata, helper text */
   --type-caption-leading: 1rem;
   --type-caption-weight: 400;
+  /*
+   * Headings inside written text (a record's notes: <Markdown> and the
+   * rich-text editor), not the screen's own outline. Three clear steps
+   * over the 14px body, roughly Notion's proportions, so `#`, `##` and
+   * `###` never look alike. Heading 1 also gets a rule under it (where
+   * the roles are used), so it reads as the top of the outline.
+   */
+  --type-heading-1-size: 1.625rem;
+  --type-heading-1-leading: 2rem;
+  --type-heading-1-weight: 700;
+  --type-heading-2-size: 1.25rem;
+  --type-heading-2-leading: 1.75rem;
+  --type-heading-2-weight: 600;
+  --type-heading-3-size: 1.0625rem;
+  --type-heading-3-leading: 1.5rem;
+  --type-heading-3-weight: 600;
 
   /*
    * Table density (design-language.md "Density"). The table primitive's
@@ -167,6 +183,12 @@
   --success-text: var(--green-800);
   --warning-text: var(--amber-800);
   --info-text: var(--blue-800);
+  /* A link in written text: coloured as well as underlined, so it reads
+     as a link at a glance (on white: 5.59). */
+  --link: var(--blue-700);
+  /* A thematic break (`---`) in written text: a 2px line meant to be
+     seen, stronger than --border's hairline (on white: 2.59). */
+  --rule: var(--gray-400);
   /* Categorical slots — a glyph tint, never a fill behind text. */
   --category-1: var(--category-1-700);
   --category-2: var(--category-2-700);
@@ -236,6 +258,8 @@
   --success-text: var(--green-400);
   --warning-text: var(--amber-400);
   --info-text: var(--blue-400);
+  --link: var(--blue-400); /* on near-black: 8.90 */
+  --rule: var(--gray-600); /* on near-black: 2.54 */
   /* Categorical slots — lighter shades to read against the dark page. */
   --category-1: var(--category-1-400);
   --category-2: var(--category-2-400);

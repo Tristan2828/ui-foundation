@@ -740,15 +740,24 @@ const price = editInPlace({
   (a count shows from 80% of it, in the destructive text tone once over).
   Its keys: Ctrl/Cmd+K adds or edits a link (web and email addresses
   only), Ctrl/Cmd+Shift+Enter ticks the task item the caret is in, and
-  Markdown pasted as plain text arrives formatted. Ctrl/Cmd+Enter stays
-  the save. A formatting toolbar sits above the text (bold to link, each
+  Markdown pasted as plain text arrives formatted. Notion's block keys
+  work: Ctrl+Shift+1 to 3 for headings, +4 tasks, +5 bullets, +6 numbers,
+  +8 a code block, +0 back to text (Cmd+Option on a Mac), and
+  Ctrl/Cmd+Shift+S strikes through. Ctrl/Cmd+Enter stays the save, in a
+  table too. A formatting toolbar sits above the text (bold to link, each
   button naming its shortcut), and a smaller one floats over selected
   words (bold, italic, strikethrough, code, link); Alt+F10 reaches the
   floating one, else the fixed one. Both are part of the field, so moving
   to them doesn't save, and Esc hides the floating one before it gives up
   the edit. "/" typed at a line's start lists the blocks the line can
-  become (headings, lists, quote, code block); typing filters, Enter or
-  Tab picks, and Esc closes the list before it gives up the edit.
+  become (three headings, lists, quote, callout, code block, divider,
+  table); typing filters ("/warn" finds a warning callout), Enter or Tab
+  picks, and Esc closes the list before it gives up the edit. A callout
+  is GitHub's `> [!NOTE]` (note, tip, important, warning, caution), its
+  icon a menu of kinds. In a table, Tab in the last cell adds a row,
+  Enter goes down a column (and out from the last row), bars under and
+  beside it add a row or a column, and the toolbar's Table menu inserts
+  rows and columns, aligns a column and deletes.
   `toolbar={false}` leaves out the toolbars and the slash menu where a
   value is short and the shortcuts are enough.
 - **The save is the single-field save** (`useRecordUpdate` with

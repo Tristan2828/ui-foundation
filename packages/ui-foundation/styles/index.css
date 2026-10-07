@@ -47,6 +47,8 @@
     --color-info: var(--info);
     --color-info-foreground: var(--info-foreground);
     --color-info-text: var(--info-text);
+    --color-link: var(--link);
+    --color-rule: var(--rule);
     --color-category-1: var(--category-1);
     --color-category-2: var(--category-2);
     --color-category-3: var(--category-3);
@@ -104,6 +106,21 @@
   font-size: var(--type-caption-size);
   line-height: var(--type-caption-leading);
   font-weight: var(--type-caption-weight);
+}
+@utility type-heading-1 {
+  font-size: var(--type-heading-1-size);
+  line-height: var(--type-heading-1-leading);
+  font-weight: var(--type-heading-1-weight);
+}
+@utility type-heading-2 {
+  font-size: var(--type-heading-2-size);
+  line-height: var(--type-heading-2-leading);
+  font-weight: var(--type-heading-2-weight);
+}
+@utility type-heading-3 {
+  font-size: var(--type-heading-3-size);
+  line-height: var(--type-heading-3-leading);
+  font-weight: var(--type-heading-3-weight);
 }
 
 @layer base {

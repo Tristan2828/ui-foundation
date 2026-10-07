@@ -73,9 +73,13 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
       aria-label="Blocks"
       data-slot="rich-text-slash-menu"
       data-side={placement?.side}
+      // Tall enough for every block, but a filtered list can still scroll:
+      // focusable for axe (scrollable-region-focusable), never by a press.
+      tabIndex={-1}
+      onMouseDown={(event) => event.preventDefault()}
       style={placement ? { top: placement.top, left: placement.left } : undefined}
       className={cn(
-        'absolute z-50 flex max-h-72 w-56 flex-col gap-0.5 overflow-y-auto rounded-lg bg-popover p-1 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10',
+        'absolute z-50 flex max-h-96 w-56 flex-col gap-0.5 overflow-y-auto rounded-lg bg-popover p-1 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10',
         'animate-in fade-in-0 zoom-in-95 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2',
         // Measured before it's seen, so it never shows in the wrong place.
         !placement && 'invisible',

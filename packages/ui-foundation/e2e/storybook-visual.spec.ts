@@ -86,6 +86,27 @@ const GLYPH_STORIES: {
       page.getByRole('textbox', { name: 'formats', exact: true }).locator('p').first().dblclick({ position: { x: 8, y: 8 } }),
     shows: '[data-slot=rich-text-floating-toolbar]',
   },
+  // Written text's: callout icons on their washes, task boxes, the
+  // external-link mark (<Markdown>), and the callout kind buttons (the
+  // editor), then the callout menu's kind icons on the popover surface.
+  { id: 'app-markdown--default' },
+  { id: 'app-richtexteditor--default' },
+  {
+    id: 'app-richtexteditor--features',
+    name: 'callout menu',
+    open: (page) => page.getByRole('button', { name: 'Note callout: change its kind' }).click(),
+    shows: '[data-slot=dropdown-menu-content]',
+  },
+  // The Table menu's, on the popover surface.
+  {
+    id: 'app-richtexteditor--features',
+    name: 'table menu',
+    open: async (page) => {
+      await page.locator('[data-fixture="table"] td').first().click()
+      await page.locator('[data-fixture="table"]').getByRole('button', { name: 'Table', exact: true }).click()
+    },
+    shows: '[data-slot=dropdown-menu-content]',
+  },
   // The slash menu's, on the popover surface, one item highlighted.
   {
     id: 'app-richtexteditor--features',
@@ -373,7 +394,7 @@ test('table density tokens change row height: compact < default < comfortable', 
 // size must equal its token, so an unbuilt or misnamed role fails here.
 test('typography roles resolve to their tokens', async ({ page }) => {
   await page.goto(storyUrlById('ui-typography--default', 'light'))
-  const roles = ['page-title', 'section-title', 'body', 'label', 'caption']
+  const roles = ['page-title', 'section-title', 'body', 'label', 'caption', 'heading-1', 'heading-2', 'heading-3']
   for (const role of roles) {
     const { size, expected, weight, expectedWeight } = await page
       .locator(`[data-role="type-${role}"]`)

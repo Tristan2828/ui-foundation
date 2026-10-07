@@ -64,6 +64,10 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "Intro.\n\n[*__z__*](https://example.com/z) and ~~[**s**](https://example.com/s)~~ and **a *b* c**\n\nOutro.\n",
     editorWrites: "Intro.\n\n*__[z](https://example.com/z)__* and **[~~s~~](https://example.com/s)** and **a *b* c**\n\nOutro.\n",
   },
+  callouts: {
+    markdown: "> [!NOTE]\n> Measure twice.\n\n> [!warning]\n> Lower-case marker, kept.\n\n> [!TIP]\n>\n> - a list first\n> - two items\n\n> A plain quote.\n\nAfter the callouts.\n",
+    editorWrites: "> [!NOTE]\n> Measure twice.\n\n> [!warning]\n> Lower-case marker, kept.\n\n> [!TIP]\n>\n> - a list first\n> - two items\n\n> A plain quote.\n\nAfter the callouts.\n",
+  },
   mixed: {
     markdown: "# Plan\n\nIntro with a [link](https://example.com).\n\n- [ ] Task one\n- [x] Task two\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n1. Step\n   - sub\n",
     editorWrites: "# Plan\n\nIntro with a [link](https://example.com).\n\n- [ ] Task one\n- [x] Task two\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n1. Step\n   - sub\n",

@@ -172,6 +172,28 @@ height and weight together, from tokens in the package's `styles/theme.css`:
 - A shadcn primitive keeps its own sizes (`CardTitle`, `Button`). Don't put
   a role on one: its built-in size classes would then compete with the role.
 
+### Written text (notes)
+
+Long text written as Markdown (`<Markdown>` and `RichTextEditor`) has its
+own three heading roles, so `#`, `##` and `###` in a note never look
+alike. They're for headings inside the text only, never a screen's own
+outline (that stays `type-page-title` and `type-section-title`):
+
+| Class | For | Size / weight |
+|---|---|---|
+| `type-heading-1` | `#` in a note, with a rule under it | 26px / 700 |
+| `type-heading-2` | `##` | 20px / 600 |
+| `type-heading-3` | `###` | 17px / 600 |
+
+The same text has two colour tokens of its own: `--link` (`text-link`), a
+link's colour, blue as well as underlined (5.59:1 on white, 8.90:1 on the
+dark page), and `--rule` (`bg-rule`), the 2px line a `---` divider draws,
+stronger than `--border`'s hairline. A callout (`> [!NOTE]`) is a 10% wash
+of its kind's tone behind ordinary text, with the icon in the tone's text
+shade: note `info`, tip `success`, important category slot 2, warning
+`warning`, caution `destructive`. The package draws all of it; an app
+only renders `<Markdown>` or the editor.
+
 ## Density
 
 Tables have three densities, set with `data-density` on **any ancestor**
