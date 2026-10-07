@@ -40,10 +40,17 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
         run: |
-          # Right after publishing, the registry can take a moment to serve it.
-          for attempt in $(seq 1 10); do
-            npm view "@tristan2828/ui-foundation@${TAG#v}" version && exit 0
-            echo "Not visible on npm yet (attempt $attempt); retrying in 30s."
+          # Right after publishing, the registry can take a moment to serve
+          # it, and the version's listing comes before its tarball: 3.17.0,
+          # 3.18.0 and 3.20.0 each failed here with `npm view` answering and
+          # the install's tarball GET still a 404. So wait for the tarball.
+          for attempt in $(seq 1 20); do
+            url=$(npm view "@tristan2828/ui-foundation@${TAG#v}" dist.tarball 2>/dev/null || true)
+            if [ -n "$url" ] && curl -fsSL -o /dev/null "$url"; then
+              echo "${TAG#v} is live: $url"
+              exit 0
+            fi
+            echo "Not downloadable from npm yet (attempt $attempt); retrying in 30s."
             sleep 30
           done
           echo "${TAG#v} isn't live on npm."
