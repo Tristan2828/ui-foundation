@@ -179,6 +179,31 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
   })
 
+  // Issue #94: chips that fit on one line keep the control one line high,
+  // level with the Selects beside it; its text box no longer wraps onto an
+  // empty line of its own.
+  test('multi choice filter: chips that fit keep it as tall as the selects beside it', async ({ page }, testInfo) => {
+    await page.goto('/widgets')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await page.getByLabel('Filter by tags').click()
+    // Two chips that fit the 14rem control with under 4rem to spare: the
+    // input's old minimum pushed it onto a second line.
+    for (const name of ['Fragile', 'Featured']) await page.getByRole('option', { name, exact: true }).click()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('button', { name: 'Remove Featured' })).toBeVisible()
+    // At rest: focus elsewhere, as a toolbar is mostly seen.
+    await page.getByLabel('Search widgets').focus()
+    const chips = page.locator('[data-slot=combobox-chips]').filter({ has: page.getByLabel('Filter by tags') })
+    const status = page.getByLabel('Filter by status')
+    const [chipsBox, statusBox] = [(await chips.boundingBox())!, (await status.boundingBox())!]
+    expect(chipsBox.height).toBe(statusBox.height)
+    // Side by side (a phone stacks the filters), the two line up.
+    if (testInfo.project.name !== 'mobile-chrome') expect(chipsBox.y).toBe(statusBox.y)
+    // Focused, it still takes typing (wrapping if it must) and filters.
+    await page.getByLabel('Filter by tags').fill('x')
+    await expect(page.getByLabel('Filter by tags')).toHaveValue('x')
+  })
+
   test('yes/no filter: either by default, then in or out of stock, via the URL', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()

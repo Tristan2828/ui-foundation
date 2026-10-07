@@ -269,6 +269,12 @@ function ComboboxChip({
   )
 }
 
+// Patched (ui-foundation, issue #94): upstream's input always keeps 4rem,
+// so chips that fit on one line still pushed it onto an empty second one
+// and the control stood twice as tall as a Select beside it. With chips
+// in and no focus it takes only what's left of the chips' line (none, if
+// they fill it); focused, it gets its 4rem back to type in, wrapping then
+// if the line is full.
 function ComboboxChipsInput({
   className,
   ...props
@@ -276,7 +282,10 @@ function ComboboxChipsInput({
   return (
     <ComboboxPrimitive.Input
       data-slot="combobox-chip-input"
-      className={cn("min-w-16 flex-1 outline-none", className)}
+      className={cn(
+        "min-w-16 flex-1 outline-none [[data-slot=combobox-chips]:has([data-slot=combobox-chip])_&:not(:focus)]:min-w-0",
+        className
+      )}
       {...props}
     />
   )
