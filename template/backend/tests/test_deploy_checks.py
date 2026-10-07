@@ -36,3 +36,9 @@ async def test_seed_account_with_a_changed_password_is_fine(session: AsyncSessio
     await session.commit()
 
     assert await production_problems(session, cookie_secure=True) == []
+
+
+async def test_a_data_label_is_a_problem(session: AsyncSession) -> None:
+    problems = await production_problems(session, cookie_secure=True, data_label="dev")
+    assert len(problems) == 1
+    assert "DATA_LABEL" in problems[0]

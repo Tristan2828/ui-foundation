@@ -104,7 +104,25 @@ A provider whose Postgres cert already chains to a public CA (some
 managed providers do) needs `DATABASE_SSL=true` alone — leave
 `DATABASE_SSL_CA_FILE` unset in that case.
 
-## 4. Verify
+## 4. Label the data that isn't production's
+
+With the deployed app on a hosted database, local development usually
+points at a disposable copy of it: a `dev` branch, reset now and then.
+Locally the app then looks exactly like production (same data, same
+login), so say which one it is in the local `backend/.env`:
+
+```
+DATA_LABEL=dev
+```
+
+Every screen, `/login` included, then shows "Dev data: changes here don't
+reach production" (`DataEnvironmentBanner`, fed by `GET /api/environment`).
+`backend/.env.example` starts at `DATA_LABEL=local`, for the
+docker-compose database. The deployed app leaves it unset: no label means
+production data and no banner, and `APP_ENV=production` refuses to start
+with one set ([`deploy.md`](deploy.md)).
+
+## 5. Verify
 
 `scripts/check-cloud-postgres.sh` automates all of the above: it requires
 `CLOUD_DATABASE_URL` (and optionally `CLOUD_DATABASE_SSL_CA_FILE`) to

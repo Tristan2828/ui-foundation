@@ -7,6 +7,7 @@ import {
   logout as logoutRequest,
   register as registerRequest,
 } from '@/api/gateway/auth'
+import { DATA_LABEL_QUERY_KEY } from '@/hooks/use-data-label'
 import { AuthContext, type AuthStatus, type AuthUser } from './auth-context'
 
 // TanStack Query, not useEffect — AGENTS.md's "NEVER fetch in useEffect"
@@ -19,14 +20,18 @@ function isAuthError(error: unknown): boolean {
   return (error as AppError | null)?.kind === 'auth'
 }
 
-// Every cached query except the session itself belongs to whoever was
-// logged in when it ran. Dropped on every session change so the next user
-// never sees the previous user's rows — widgets are per-user on the
-// backend. `removeQueries` with a predicate, not `clear()`: clear() would
-// also drop the auth query this provider's own useQuery observes, and that
-// observer wouldn't pick up the replacement setQueryData creates.
+// Every cached query except these belongs to whoever was logged in when it
+// ran: the session itself, and which data the backend serves
+// (DataEnvironmentBanner's, the same for everyone).
+const SESSION_INDEPENDENT_KEYS: ReadonlySet<unknown> = new Set([AUTH_QUERY_KEY[0], DATA_LABEL_QUERY_KEY[0]])
+
+// Dropped on every session change so the next user never sees the
+// previous user's rows — widgets are per-user on the backend.
+// `removeQueries` with a predicate, not `clear()`: clear() would also drop
+// the auth query this provider's own useQuery observes, and that observer
+// wouldn't pick up the replacement setQueryData creates.
 function removeUserScopedQueries(queryClient: QueryClient) {
-  queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== AUTH_QUERY_KEY[0] })
+  queryClient.removeQueries({ predicate: (query) => !SESSION_INDEPENDENT_KEYS.has(query.queryKey[0]) })
 }
 
 function startSession(queryClient: QueryClient, user: AuthUser) {

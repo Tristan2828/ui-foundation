@@ -8,19 +8,20 @@ info:
     and the backend's spec-conformance check both fail until mocks and
     backend match it.
 
-    /auth/* and the error bodies (ValidationErrorBody, HTTPErrorBody and the
-    four error responses) are the foundation's part of the contract: the
-    @tristan2828/ui-foundation package calls exactly these shapes, and
-    `ui-foundation check-contract` fails verify if they drift. Everything
-    else is this app's.
+    /auth/*, /environment and the error bodies (ValidationErrorBody,
+    HTTPErrorBody and the four error responses) are the foundation's part
+    of the contract: the @tristan2828/ui-foundation package calls exactly
+    these shapes, and `ui-foundation check-contract` fails verify if they
+    drift. Everything else is this app's.
 
     Wire pagination deliberately does not match the UI's Page<T> (offset/limit
     and {items,total} here, {items,total,page,pageSize} in the UI), so the
     gateway's translation is a real seam, not a passthrough. Validation
     errors follow FastAPI's default shape ({"detail": [...]}), other errors
     FastAPI's HTTPException body ({"detail": string}). Every path except
-    /auth/login and /auth/register requires a session (401 otherwise). A
-    duplicate email on register is a 422 field error, not a 409.
+    /auth/login, /auth/register and /environment requires a session (401
+    otherwise). A duplicate email on register is a 422 field error, not a
+    409.
 
 servers:
   - url: /api
@@ -87,6 +88,23 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
         "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /environment:
+    x-optional: true
+    get:
+      operationId: getDataEnvironment
+      summary: Which data the backend is serving, for DataEnvironmentBanner
+      description: >
+        Needs no session: the banner shows on /login too. A null dataLabel
+        means production data, and no banner. The backend's DATA_LABEL.
+      tags: [environment]
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvironment" }
         "500": { $ref: "#/components/responses/ServerError" }
 
   /widget-categories:
@@ -262,6 +280,17 @@ paths:
 
 components:
   schemas:
+    DataEnvironment:
+      type: object
+      required: [dataLabel]
+      properties:
+        dataLabel:
+          type: ["string", "null"]
+          minLength: 1
+          description: >
+            What the data is, as the banner names it ("dev" shows "Dev
+            data"). null when the backend serves production data.
+
     User:
       type: object
       required: [id, email, name]

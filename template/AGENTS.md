@@ -39,8 +39,8 @@ is right. Do not disable, skip, or work around it.
 - NEVER hand-write an API type. All types come from `src/api/schema.d.ts`,
   generated from `openapi.yaml`. If a type is missing, run `npm run gen:api`.
   (Enforced: codegen diff in verify.)
-- NEVER change the foundation's part of `openapi.yaml` — the `/auth/*` paths
-  and the error envelopes. The package's code calls exactly those shapes.
+- NEVER change the foundation's part of `openapi.yaml` — the `/auth/*` and
+  `/environment` paths and the error envelopes. The package's code calls exactly those shapes.
   (Enforced: `ui-foundation check-contract` in verify.)
 - NEVER use a raw hex value or a Tailwind palette color (`bg-blue-500`).
   Semantic tokens only: `bg-primary`, `text-muted-foreground`. (Enforced:

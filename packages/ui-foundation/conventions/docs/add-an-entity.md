@@ -68,7 +68,7 @@ is a filled-in example while the Widgets demo is still here).
    query parameter for each field the plan marks as a filter. Reuse the
    `Page` and error components already in the spec; do not redefine
    pagination or error shapes per entity, and leave the foundation's part
-   of the spec (`/auth/*`, the error bodies) alone — `ui-foundation
+   of the spec (`/auth/*`, `/environment`, the error bodies) alone — `ui-foundation
    check-contract` fails verify if it changes.
 2. **`npm run gen:api`** to regenerate `src/api/schema.d.ts`. Never
    hand-edit it.

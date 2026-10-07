@@ -12,8 +12,9 @@ info:
     may not.
 
     A path marked `x-optional: true` may be left out of an app's spec (an
-    app without self-service sign-up omits /auth/register), but if present
-    it must match.
+    app without self-service sign-up omits /auth/register, an app that
+    doesn't render DataEnvironmentBanner omits /environment), but if
+    present it must match.
 
 servers:
   - url: /api
@@ -83,8 +84,36 @@ paths:
         "401": { $ref: "#/components/responses/UnauthorizedError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
+  /environment:
+    x-optional: true
+    get:
+      operationId: getDataEnvironment
+      summary: Which data the backend is serving, for DataEnvironmentBanner
+      description: >
+        Needs no session: the banner shows on /login too. A null dataLabel
+        means production data, and no banner.
+      tags: [environment]
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvironment" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
 components:
   schemas:
+    DataEnvironment:
+      type: object
+      required: [dataLabel]
+      properties:
+        dataLabel:
+          type: ["string", "null"]
+          minLength: 1
+          description: >
+            What the data is, as the banner names it ("dev" shows "Dev
+            data"). null when the backend serves production data.
+
     User:
       type: object
       required: [id, email, name]

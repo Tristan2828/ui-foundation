@@ -20,6 +20,7 @@ export {
   type EditInPlaceOptions,
   type EditKind,
 } from '@/components/app/edit-in-place'
+export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
 export { ErrorState } from '@/components/app/error-state'
 export { FoundationProviders } from '@/components/app/foundation-providers'

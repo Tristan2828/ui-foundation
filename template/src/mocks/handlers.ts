@@ -1,7 +1,7 @@
 // MSW request handlers implementing openapi.yaml against the in-memory
 // store in ./data. This is what lets the whole UI run with no backend at all.
 import { http, HttpResponse } from "msw";
-import { authHandlers } from "@tristan2828/ui-foundation/mocks";
+import { authHandlers, environmentHandlers } from "@tristan2828/ui-foundation/mocks";
 import { nextWidgetId, widgetCategories, widgets } from "./data";
 import type { components } from "../api/schema";
 
@@ -128,8 +128,10 @@ function sortWidgets(list: Widget[], sort: string | null): Widget[] {
 }
 
 export const handlers = [
-  // /auth/* — the foundation's contract, mocked by the foundation.
+  // /auth/* and /environment — the foundation's contract, mocked by the
+  // foundation (/environment answers null: mock data is MockModeBanner's).
   ...authHandlers,
+  ...environmentHandlers,
 
   http.get("*/api/widget-categories", ({ request }) => {
     const url = new URL(request.url);

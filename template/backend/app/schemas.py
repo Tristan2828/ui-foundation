@@ -34,6 +34,12 @@ class Page(CamelModel, Generic[T]):
     total: int = Field(ge=0)
 
 
+class DataEnvironmentOut(CamelModel):
+    """DataEnvironment in openapi.yaml: config.DATA_LABEL, null for production data."""
+
+    data_label: str | None
+
+
 class WidgetCategoryOut(CamelModel):
     id: int
     name: str
