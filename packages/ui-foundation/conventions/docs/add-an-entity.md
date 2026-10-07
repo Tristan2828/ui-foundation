@@ -125,7 +125,9 @@ is a filled-in example while the Widgets demo is still here).
    array of ids on the wire, a repeated any-of list filter, and names from
    a **lookup by id** on the referenced entity
    (`GET /widget-categories?ids=1&ids=3`, `getWidgetCategoriesByIds`,
-   `useWidgetCategoriesByIdsQuery`). Add that `ids` parameter to the referenced
+   `useWidgetCategoriesByIdsQuery`), and `searching` from the search
+   query's `isPlaceholderData` so Enter waits for the results that match
+   what was typed. Add that `ids` parameter to the referenced
    entity's list endpoint if it lacks one. Never name a picked id from
    search results alone: a saved pick the current search doesn't return
    would show without a name. The table looks up every id on its page in

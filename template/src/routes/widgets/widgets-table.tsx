@@ -297,6 +297,7 @@ export function WidgetsTableRoute() {
                   onValueChange={(ids) => setMultiFilter('extraCategoryIds', ids.map(String))}
                   getLabel={(id) => names.get(id)}
                   onSearchChange={setExtraCategorySearch}
+                  searching={extraCategoryOptionsQuery.isPlaceholderData}
                   placeholder="Any category"
                   emptyText="No categories found."
                   aria-label="Filter by extra categories"

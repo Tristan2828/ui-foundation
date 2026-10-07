@@ -5,6 +5,30 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.20.0 — `MultiReference` waits for its search
+
+A fix that needs one prop from the app. Run `npx ui-foundation sync` for
+the updated playbook.
+
+- **Enter in a `MultiReference` no longer acts on the last search's
+  results.** Until the app's search for what was typed answers, the list
+  still shows the previous results, the first one highlighted. Enter
+  picked that one, and if it was already picked (the list opens on every
+  record, picked ones included), **Enter removed it**: type fast, press
+  Enter, and a saved pick could be gone. Queued in DEFERRED as "Enter
+  picks nothing"; reproducing it showed the removal.
+- **New optional prop `searching`**: true while the options don't answer
+  what's typed yet. Enter does nothing meanwhile (a click still picks,
+  and the arrow keys still move), the list is `aria-busy`, and once the
+  results arrive their first is highlighted and Enter picks it.
+
+### How an app adopts it
+
+1. **Pass `searching` to every `MultiReference`**, from its search query:
+   `searching={optionsQuery.isPlaceholderData}` (with the playbook's
+   `placeholderData: (previous) => previous`). Without it the old
+   behaviour stays, the removal included. The template does it on the
+   Extra Categories field and its table filter.
 ## 3.19.0 — a banner for data that isn't production's
 
 Additive: nothing changes until an app renders the banner. Apps already
