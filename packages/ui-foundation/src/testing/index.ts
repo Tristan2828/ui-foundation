@@ -205,3 +205,110 @@ export function defineMockModeBannerSuite({
     }
   })
 }
+
+export type DataEnvironmentBannerSuiteOptions = {
+  /** Screens to check, logged-out ones included (e.g. '/login'). */
+  routes: readonly string[]
+  /** Whether this run's app is MSW-backed. Defaults to `process.env.VITE_API !== 'real'`, as for the mock-mode banner. */
+  mockMode?: boolean
+  /**
+   * Against the real backend only: the DATA_LABEL it was started with.
+   * Defaults to `process.env.DATA_LABEL`, null when that's unset or empty
+   * (production data, so no banner).
+   */
+  dataLabel?: string | null
+}
+
+// The banner names the label as data: "dev" → "Dev data".
+const dataName = (label: string) => `${label.charAt(0).toUpperCase()}${label.slice(1)} data`
+
+/**
+ * Opens a route and waits for the app's own GET /environment to answer,
+ * so "no banner" is checked after the backend has spoken, not before.
+ */
+async function gotoWithDataLabel(page: Page, route: string): Promise<void> {
+  const answered = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/environment')
+  await page.goto(route)
+  await answered
+  // The banner renders beside the router: once a screen's <main> is on
+  // the page, the banner would be too.
+  await expect(page.getByRole('main')).toBeVisible()
+}
+
+/**
+ * DataEnvironmentBanner: shown on every route, logged-out ones included,
+ * whenever the backend says its data isn't production's, and nowhere when
+ * it says it is.
+ *
+ * Mock mode: the mock handler answers null, so no banner (MockModeBanner
+ * covers mock data). A label forced through MSW shows on every route, in
+ * a tone apart from the mock banner, and passes axe in light and dark.
+ *
+ * Real backend (`VITE_API=real`): the banner names `dataLabel` on every
+ * route, or is absent when it's null, which is how a production deploy
+ * runs.
+ */
+export function defineDataEnvironmentBannerSuite({
+  routes,
+  mockMode = process.env.VITE_API !== 'real',
+  dataLabel = process.env.DATA_LABEL?.trim() || null,
+}: DataEnvironmentBannerSuiteOptions): void {
+  const banner = (page: Page) => page.getByRole('status').filter({ hasText: "changes here don't reach production" })
+
+  const expectAbsentEverywhere = async (page: Page) => {
+    for (const route of routes) {
+      await gotoWithDataLabel(page, route)
+      await test.step(route, () => expect(banner(page)).toHaveCount(0))
+    }
+  }
+
+  const expectNamedEverywhere = async (page: Page, label: string) => {
+    for (const route of routes) {
+      await gotoWithDataLabel(page, route)
+      await test.step(route, () => expect(banner(page)).toContainText(`${dataName(label)}:`))
+    }
+  }
+
+  if (!mockMode) {
+    if (dataLabel === null) {
+      test('no data-environment banner on production data', async ({ page }) => {
+        await expectAbsentEverywhere(page)
+      })
+    } else {
+      test(`"${dataName(dataLabel)}" is announced on every route, including logged-out ones`, async ({ page }) => {
+        await expectNamedEverywhere(page, dataLabel)
+      })
+    }
+    return
+  }
+
+  const forceLabel = (page: Page) =>
+    forceMswOverride(page, { method: 'get', path: '*/api/environment', body: { dataLabel: 'dev' } })
+
+  test('no data-environment banner in mock mode, where the mock banner says it', async ({ page }) => {
+    await expectAbsentEverywhere(page)
+  })
+
+  test('a data label from the backend is announced on every route, including logged-out ones', async ({ page }) => {
+    await forceLabel(page)
+    await expectNamedEverywhere(page, 'dev')
+    // Both banners at once, and never the same one.
+    await expect(page.getByRole('status').filter({ hasText: 'Mock data' })).toBeVisible()
+    const fill = (locator: ReturnType<typeof banner>) => locator.evaluate((element) => getComputedStyle(element).backgroundColor)
+    expect(await fill(banner(page))).not.toBe(await fill(page.getByRole('status').filter({ hasText: 'Mock data' })))
+  })
+
+  for (const colorScheme of ['light', 'dark'] as const) {
+    test(`the data-environment banner has zero axe violations (${colorScheme})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme })
+      await forceLabel(page)
+      for (const route of routes) {
+        await gotoWithDataLabel(page, route)
+        await expect(page.locator('html')).toHaveClass(colorScheme)
+        await expect(banner(page)).toBeVisible()
+        await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
+        await test.step(route, () => expectNoAxeViolations(page))
+      }
+    })
+  }
+}

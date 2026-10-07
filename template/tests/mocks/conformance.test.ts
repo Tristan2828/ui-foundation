@@ -114,6 +114,13 @@ describe("MSW mock conformance", () => {
     await validate("/auth/me", "get", meRes);
   });
 
+  it("GET /environment matches its 200 schema, with no data label in mock mode", async () => {
+    const res = await fetch("http://localhost/api/environment");
+    expect(res.status).toBe(200);
+    expect(await res.clone().json()).toEqual({ dataLabel: null });
+    await validate("/environment", "get", res);
+  });
+
   it("GET /widget-categories matches its 200 schema", async () => {
     const res = await fetch("http://localhost/api/widget-categories");
     await validate("/widget-categories", "get", res);

@@ -7,7 +7,7 @@ is in [`cloud-postgres.md`](cloud-postgres.md).
 
 ## Checklist
 
-Do these in order. Steps 3–4 are enforced: with `APP_ENV=production` the
+Do these in order. Steps 3–5 are enforced: with `APP_ENV=production` the
 backend refuses to start until they're done (`backend/app/deploy_checks.py`).
 
 1. **Build the frontend with `npm run build:real`** — never plain
@@ -27,7 +27,10 @@ backend refuses to start until they're done (`backend/app/deploy_checks.py`).
    account's sessions.
 4. **Serve over HTTPS and set `COOKIE_SECURE=true`**, so the session cookie
    is never sent over plain HTTP.
-5. **Set `APP_ENV=production`.** Start the app; if it refuses, the error
+5. **Leave `DATA_LABEL` unset.** It names data that isn't production's
+   (`dev`, `local`), and the app shows it in a banner on every screen. A
+   `backend/.env` copied from local development carries one.
+6. **Set `APP_ENV=production`.** Start the app; if it refuses, the error
    lists exactly what's left.
 
 ## Known gaps before exposing it publicly

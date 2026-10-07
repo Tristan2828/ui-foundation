@@ -5,6 +5,64 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.19.0 — a banner for data that isn't production's
+
+Additive: nothing changes until an app renders the banner. Apps already
+made don't have the backend half (`template/backend/` is copy-in); the
+steps below add it.
+
+- **`DataEnvironmentBanner`**, above the router like `MockModeBanner`, on
+  every route including `/login`: "**Dev data:** changes here don't reach
+  production", whenever the backend says its data isn't production's.
+  Locally, an app on a `dev` branch of its hosted database looks exactly
+  like the deployed one; this says which one you're in.
+  - The label is the backend's: `DATA_LABEL` in `backend/.env`, served
+    unauthenticated at `GET /api/environment` as `{ "dataLabel": "dev" }`
+    (`null` when unset). `dev` shows "Dev data", `local` "Local data".
+  - Nothing for `null`, nothing while it loads, nothing if the request
+    fails or the backend doesn't serve the path. In mock mode the mock
+    handler answers `null`, so only the mock banner shows.
+  - One request per page load, never refetched, kept across log in and
+    out. Nothing on screen hides it.
+  - The info fill, apart from the mock banner's warning fill. axe-clean in
+    both themes, on its own (Storybook) and on the template's screens with
+    both banners showing.
+- **Contract:** `/environment` and its `DataEnvironment` schema are in
+  `openapi/foundation.yaml`, marked `x-optional`: `check-contract` passes
+  an app without them, and checks the shape of an app with them.
+- **`environmentHandlers`** (`/mocks`): the mock, answering `null`.
+- **`defineDataEnvironmentBannerSuite({ routes })`** (`/testing`): absent
+  in mock mode; a label forced through MSW shows on every route, apart
+  from the mock banner, axe-clean in light and dark. Under
+  `VITE_API=real` it expects `process.env.DATA_LABEL` (the banner, or
+  none when unset).
+- **The template's backend:** `DATA_LABEL` in `app/config.py` and
+  `.env.example` (`local`, for the docker-compose database), the
+  `/environment` router, and `APP_ENV=production` refusing to start with a
+  label set. `check-backend-postgres.sh` runs with `DATA_LABEL=local` and
+  checks the banner against the real backend.
+
+### How an app adopts it
+
+1. **Contract.** Copy `/environment` and `components.schemas.DataEnvironment`
+   from the template's `openapi.yaml` into the app's, then `npm run gen:api`.
+2. **Backend.** Copy from the template's `backend/`: the `DATA_LABEL`
+   lines of `app/config.py`, `DataEnvironmentOut` in `app/schemas.py`,
+   `app/routers/environment.py` (and its `include_router` in
+   `app/main.py`), and `tests/test_environment.py`. Optionally the
+   `data_label` check in `app/deploy_checks.py` with its test, passing
+   `data_label=DATA_LABEL` from `main.py`'s lifespan.
+3. **Mocks.** Spread `environmentHandlers` from
+   `@tristan2828/ui-foundation/mocks` into `src/mocks/handlers.ts`, beside
+   `authHandlers`.
+4. **Render it.** In `src/main.tsx`, `<DataEnvironmentBanner />` as the
+   first child of `<FoundationProviders>`, before `<App />`.
+5. **Spec.** `e2e/data-environment-banner.spec.ts` from the template: the
+   suite with the same routes as the mock-mode banner's.
+6. **Set it where the data is disposable.** `DATA_LABEL=dev` in the local
+   `backend/.env` when it points at a dev branch (`DATA_LABEL=local` for
+   the docker-compose database). Leave it unset in production.
+
 ## 3.18.1 — the template's dev and test ports
 
 Template and docs only; no package code changed. Apps already made keep

@@ -39,6 +39,8 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // Each id comes with text the story must show, so an iframe that rendered
 // nothing can't pass every rule trivially.
 // <RichTextEditor> is the same text being edited, so it answers the same way.
+// The banners above the router (MockModeBanner, DataEnvironmentBanner) are
+// safety cues on every screen, so their solid fills answer too.
 // <StageCircle> and the cell patterns' markup (patterns/CellPatterns) are
 // design language too: each also has its glyphs measured below.
 const COMPOSITE_STORIES = [
@@ -46,6 +48,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--features', mustShow: 'characters over the limit' },
   { id: 'app-stagecircle--default', mustShow: 'In progress' },
+  { id: 'app-banners--default', mustShow: 'Dev data:' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell', mustShow: 'Bookshelf' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
@@ -64,6 +67,7 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  { id: 'app-banners--default' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip' },
   {

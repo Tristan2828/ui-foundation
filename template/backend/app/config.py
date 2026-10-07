@@ -46,6 +46,14 @@ STATIC_DIR: str = os.environ.get(
 # else (the default) is development, with no startup checks.
 APP_ENV: str = os.environ.get("APP_ENV", "development")
 
+# Which data this backend serves when it isn't production's: "dev" for a
+# dev branch of the hosted database, "local" for the docker-compose one.
+# Served unauthenticated at GET /api/environment, and the app names it in
+# a banner on every screen (DataEnvironmentBanner: "Dev data: changes here
+# don't reach production"). Unset, the default, means production data and
+# no banner; APP_ENV=production refuses to start with it set.
+DATA_LABEL: str | None = os.environ.get("DATA_LABEL", "").strip() or None
+
 # Session cookie. Local dev is plain
 # HTTP, so the Secure flag defaults off; a real deployment sets it.
 COOKIE_SECURE: bool = os.environ.get("COOKIE_SECURE", "false").lower() == "true"

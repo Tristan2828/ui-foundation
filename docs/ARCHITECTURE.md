@@ -92,7 +92,7 @@ src/routes/<entity>/*-table            thin consumer of DataTable               
 src/routes/<entity>/*-view             thin consumer of EntityView (+ Markdown)   ← package
 src/routes/<entity>/*-form             thin consumer of EntityForm                ← package
 src/App.tsx, src/nav.ts                routes; AppShell, LoginRoute, RegisterRoute ← package
-src/main.tsx                           FoundationProviders (theme, query client, auth) ← package
+src/main.tsx                           FoundationProviders (theme, query client, auth), DataEnvironmentBanner ← package
 ```
 
 - **Contract-first.** `openapi.yaml` is the source of truth. The mocks are
@@ -103,11 +103,18 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `AppError` and `QuerySpec`. Entity types pass through from the generated
   schema, with no hand-written domain types or mappers. A backend swap
   changes the gateway and nothing above it.
-- **The contract is split.** `/auth/*` and the error envelopes are the
-  foundation's (`openapi/foundation.yaml`), because the package's own code
-  calls them. An app's spec must contain them unchanged; wording may differ,
-  shapes may not (`ui-foundation check-contract`). Everything else in the
-  spec is the app's.
+- **The contract is split.** `/auth/*`, `/environment` and the error
+  envelopes are the foundation's (`openapi/foundation.yaml`), because the
+  package's own code calls them. An app's spec must contain them unchanged;
+  wording may differ, shapes may not (`ui-foundation check-contract`). A
+  path marked `x-optional` (`/auth/register`, `/environment`) may be left
+  out, with whatever only it uses. Everything else in the spec is the app's.
+- **Which data the app is on** (3.19). Above the router sit two banners:
+  `MockModeBanner` (MSW, from the app's build flag) and
+  `DataEnvironmentBanner` (the real backend on data that isn't
+  production's, from its `DATA_LABEL` via `GET /environment`). The second
+  is a query like any other server read, kept across session changes
+  because it's the same for every user.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps

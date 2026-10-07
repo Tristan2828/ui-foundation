@@ -10,5 +10,6 @@ export {
   resetMockAuth,
   setMockAuthenticated,
 } from './auth'
+export { environmentHandlers } from './environment'
 export { exposeMswForE2E } from './e2e-hooks'
 export type { MswHandle, MswOverride } from './override'

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { FoundationProviders } from '@tristan2828/ui-foundation'
+import { DataEnvironmentBanner, FoundationProviders } from '@tristan2828/ui-foundation'
 import { IS_MOCK_MODE } from '@/lib/mock-mode'
 import './index.css'
 import App from './App.tsx'
@@ -31,6 +31,9 @@ enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <FoundationProviders mockMode={IS_MOCK_MODE}>
+        {/* Above the router, so it shows on every route: the backend's
+            DATA_LABEL when its data isn't production's (backend/.env). */}
+        <DataEnvironmentBanner />
         <App />
       </FoundationProviders>
     </StrictMode>,
