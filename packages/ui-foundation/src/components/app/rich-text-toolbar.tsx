@@ -11,60 +11,13 @@
 // - Read-only (while a save is in flight), every button is disabled.
 // - Alt+F10 in the text reaches it (the floating toolbar first, when it's
 //   showing: rich-text-floating-toolbar.tsx).
-import {
-  BoldIcon,
-  CodeIcon,
-  Heading1Icon,
-  Heading2Icon,
-  ItalicIcon,
-  LinkIcon,
-  ListChecksIcon,
-  ListIcon,
-  ListOrderedIcon,
-  SquareCodeIcon,
-  StrikethroughIcon,
-  TextQuoteIcon,
-  type LucideIcon,
-} from 'lucide-react'
 import { Fragment, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import type { EditorState } from '@milkdown/kit/prose/state'
 import { Separator } from '@/components/ui/separator'
 import { Toggle } from '@/components/ui/toggle'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { FORMAT_GROUPS, type FormatItem } from './rich-text-format-items'
 import { formatOn, type FormatId } from './rich-text-formats'
-
-type FormatItem = {
-  id: FormatId
-  label: string
-  icon: LucideIcon
-  /** Milkdown's own shortcut, as `aria-keyshortcuts` writes it with Mod for Ctrl/Cmd. */
-  keys?: string
-  /** More for the tooltip than the shortcut. */
-  hint?: string
-}
-
-const GROUPS: FormatItem[][] = [
-  [
-    { id: 'bold', label: 'Bold', icon: BoldIcon, keys: 'Mod+B' },
-    { id: 'italic', label: 'Italic', icon: ItalicIcon, keys: 'Mod+I' },
-    { id: 'strike', label: 'Strikethrough', icon: StrikethroughIcon, keys: 'Mod+Alt+X' },
-    { id: 'code', label: 'Code', icon: CodeIcon, keys: 'Mod+E' },
-  ],
-  [
-    { id: 'heading', label: 'Heading', icon: Heading1Icon, keys: 'Mod+Alt+1' },
-    { id: 'subheading', label: 'Subheading', icon: Heading2Icon, keys: 'Mod+Alt+2' },
-  ],
-  [
-    { id: 'bullets', label: 'Bulleted list', icon: ListIcon, keys: 'Mod+Alt+8' },
-    { id: 'numbers', label: 'Numbered list', icon: ListOrderedIcon, keys: 'Mod+Alt+7' },
-    { id: 'tasks', label: 'Task list', icon: ListChecksIcon, hint: 'tick an item: Mod+Shift+Enter' },
-  ],
-  [
-    { id: 'quote', label: 'Quote', icon: TextQuoteIcon, keys: 'Mod+Shift+B' },
-    { id: 'codeBlock', label: 'Code block', icon: SquareCodeIcon, keys: 'Mod+Alt+C' },
-  ],
-  [{ id: 'link', label: 'Link', icon: LinkIcon, keys: 'Mod+K' }],
-]
 
 function isApple(): boolean {
   return typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
@@ -88,8 +41,8 @@ function shownKeys(keys: string, apple: boolean): string {
 // Which buttons a toolbar has: every format (the fixed one), or the ones
 // that apply to selected words (the floating one).
 const SETS = {
-  all: GROUPS,
-  selection: [GROUPS[0], GROUPS[4]],
+  all: FORMAT_GROUPS,
+  selection: [FORMAT_GROUPS[0], FORMAT_GROUPS[4]],
 } satisfies Record<string, FormatItem[][]>
 
 export type FormatButtonsProps = {

@@ -284,6 +284,20 @@ never covers the fixed toolbar. Base UI's Popover was tried first, and
 its focus guards (tabbable `aria-hidden` spans while focus is outside
 the popup, which for this toolbar is always) fail axe.
 
+**The slash menu (3.18)** (`rich-text-slash.ts`, `rich-text-slash-menu.tsx`)
+lists the blocks a line can become (Heading to Code block) after a "/"
+typed at the start of a top-level paragraph; what follows the "/"
+filters it (names and keywords: `/h2`, `/todo`). Only a typed "/" opens
+it (a plugin records where; one already in the text never does), and it
+closes for good once the span stops qualifying (the caret leaves it, a
+space first, no match keeps it hidden). It's ARIA's combobox pattern
+with the text as the input: focus never leaves the text, which names the
+list (`aria-controls`) and the highlighted item (`aria-activedescendant`)
+while it's open. Its keys are view props, ahead of Milkdown's keymap,
+whose Enter would split the line. A pick is one transaction (one undo
+brings the "/…" back). Placed against the field like the floating
+toolbar, for the same reason.
+
 **Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
 (a `Popover` with no trigger, placed through the `anchor` the package's
 `PopoverContent` takes). Only web and email addresses, a path on the site

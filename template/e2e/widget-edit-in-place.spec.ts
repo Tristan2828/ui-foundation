@@ -446,6 +446,51 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
+  test('long text: the slash menu in place: Enter picks and Esc closes it, neither saves nor gives up', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    // A new line at the end, after "See the setup guide."
+    await editor.locator('p').last().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.press('Enter')
+
+    const menu = description.getByRole('listbox', { name: 'Blocks' })
+    // Esc closes the menu only: the field stays open, nothing sent.
+    await page.keyboard.type('/qu')
+    await expect(menu).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(menu).toHaveCount(0)
+    await expect(editor).toBeFocused()
+    for (let i = 0; i < '/qu'.length; i++) await page.keyboard.press('Backspace')
+
+    // Enter picks: still open, nothing sent until it's saved.
+    await page.keyboard.type('/sub')
+    await page.keyboard.press('Enter')
+    await expect(menu).toHaveCount(0)
+    await expect(editor).toBeFocused()
+    await page.keyboard.type('Care')
+    await page.waitForTimeout(100)
+    expect(bodies).toEqual([])
+    await page.keyboard.press('ControlOrMeta+Enter')
+
+    await expect(editor).toHaveCount(0)
+    expect(bodies).toEqual([
+      {
+        description:
+          'A basic wireless mouse with a **2.4GHz** USB receiver.\n\n' +
+          '- Two buttons and a scroll wheel\n' +
+          '- Runs on one AA battery\n\n' +
+          'See the [setup guide](https://example.com/mouse-setup).\n\n' +
+          '## Care',
+      },
+    ])
+  })
+
   test('a link inside a value still navigates; a click anywhere else edits', async ({ page, context }) => {
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })

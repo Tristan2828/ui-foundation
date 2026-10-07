@@ -82,6 +82,19 @@ const GLYPH_STORIES: {
       page.getByRole('textbox', { name: 'formats', exact: true }).locator('p').first().dblclick({ position: { x: 8, y: 8 } }),
     shows: '[data-slot=rich-text-floating-toolbar]',
   },
+  // The slash menu's, on the popover surface, one item highlighted.
+  {
+    id: 'app-richtexteditor--features',
+    name: 'slash menu',
+    open: async (page) => {
+      await page.getByRole('textbox', { name: 'formats', exact: true }).locator('p').last().click()
+      await page.waitForTimeout(100)
+      await page.keyboard.press('ControlOrMeta+End')
+      await page.keyboard.press('Enter')
+      await page.keyboard.type('/')
+    },
+    shows: '[data-slot=rich-text-slash-menu]',
+  },
 ]
 
 function storyUrlById(id: string, theme: 'light' | 'dark') {
