@@ -142,6 +142,8 @@ export function WidgetExtraCategoriesPicker({
       onValueChange={onChange}
       getLabel={(categoryId) => names.get(categoryId)}
       onSearchChange={setSearch}
+      // Still showing the last search's results: Enter waits for these.
+      searching={optionsQuery.isPlaceholderData}
       placeholder="Search categories"
       emptyText="No categories found."
       aria-label={ariaLabel}

@@ -12,6 +12,10 @@
 // - Matching happens on the server: `onSearchChange` reports what was typed
 //   and `options` is whatever the app's search query returned, so nothing
 //   is filtered here (filter={null}).
+// - Until that search answers, the list still holds the last one's
+//   results, its first still highlighted. `searching` says so: Enter
+//   waits rather than picking from the old list (where it could even
+//   remove a pick: the highlighted item may be one already picked).
 import * as React from 'react'
 import {
   Combobox,
@@ -42,6 +46,7 @@ export function MultiReference<Id extends string | number>({
   'aria-invalid': ariaInvalid,
   'aria-describedby': ariaDescribedBy,
   readOnly = false,
+  searching = false,
   className,
 }: {
   /** The records the current search returned, in display order. */
@@ -68,6 +73,14 @@ export function MultiReference<Id extends string | number>({
   'aria-describedby'?: string
   /** Shown, not changeable: editing in place, while the save is in flight. */
   readOnly?: boolean
+  /**
+   * The options don't answer what's typed yet: the app's search for it is
+   * in flight and the list still shows the last one's results (TanStack
+   * Query with `placeholderData: (previous) => previous`:
+   * `isPlaceholderData`). Enter does nothing until it answers; a click
+   * still picks. The list is `aria-busy` meanwhile.
+   */
+  searching?: boolean
   className?: string
 }) {
   const anchor = useComboboxAnchor()
@@ -98,6 +111,12 @@ export function MultiReference<Id extends string | number>({
               ))}
               <ComboboxChipsInput
                 id={id}
+                onKeyDown={(event) => {
+                  if (searching && event.key === 'Enter') {
+                    event.preventDefault()
+                    event.preventBaseUIHandler()
+                  }
+                }}
                 aria-label={ariaLabel}
                 aria-invalid={ariaInvalid}
                 aria-describedby={ariaDescribedBy}
@@ -109,7 +128,7 @@ export function MultiReference<Id extends string | number>({
       </ComboboxChips>
       <ComboboxContent anchor={anchor}>
         <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-        <ComboboxList>
+        <ComboboxList aria-busy={searching || undefined}>
           {(option: Id) => (
             <ComboboxItem key={option} value={option}>
               {label(option)}

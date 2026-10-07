@@ -214,6 +214,45 @@ test.describe('widget form', () => {
     await expect(fieldValue(page, 'Extra Categories')).toHaveText('Stationery')
   })
 
+  test('multi reference: Enter before the search answers waits, and never removes a pick', async ({ page }) => {
+    // Standing Desk (id 2) has Electronics and Stationery. The list opens
+    // on every category, Electronics (already picked) highlighted. Typing
+    // "furn" starts a slow search: until it answers, the list still shows
+    // that old list, and Enter there used to unpick Electronics.
+    await page.goto('/widgets/2/edit')
+    await expect(page.getByRole('button', { name: 'Remove Electronics' })).toBeVisible()
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const { worker, http, delay } = window.__msw
+      worker.use(
+        http.get('*/api/widget-categories', async ({ request }) => {
+          if (new URL(request.url).searchParams.get('search')) await delay(800)
+        }),
+      )
+    })
+    await page.locator('#widget-extra-categories').click()
+    await expect(page.getByRole('option')).toHaveCount(3)
+    await page.keyboard.type('furn')
+    await expect(page.getByRole('listbox')).toHaveAttribute('aria-busy', 'true')
+    await page.keyboard.press('Enter')
+    // Nothing picked or unpicked while it searched (chips by text: the open
+    // list makes the rest of the form inert).
+    const chips = page.locator('[data-slot="combobox-chip"]')
+    await expect(chips.filter({ hasText: /^Electronics$/ })).toBeVisible()
+    await expect(chips.filter({ hasText: /^Furniture$/ })).toHaveCount(0)
+
+    // Once it answers, its first match is highlighted and Enter picks it.
+    const furniture = page.getByRole('option', { name: 'Furniture', exact: true })
+    await expect(page.getByRole('option')).toHaveCount(1)
+    await expect(furniture).toHaveAttribute('data-highlighted', '')
+    await expect(page.getByRole('listbox')).not.toHaveAttribute('aria-busy', 'true')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('button', { name: 'Remove Furniture' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Electronics' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
+  })
+
   test('multi reference: a 422 on the field binds to it', async ({ page }) => {
     await page.goto('/widgets/1/edit')
     await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
