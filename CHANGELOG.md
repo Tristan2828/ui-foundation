@@ -5,6 +5,52 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.22.0 — tables with many filters, and three table fixes
+
+One new composite and three fixes, from the reporting app's tables.
+Nothing changes until an app adopts `SecondaryFilters`; the fixes apply
+on upgrade. Run `npx ui-foundation sync` for the updated playbook.
+
+- **`SecondaryFilters`: less-used filters behind a "Filters" button**
+  (issue #93). A table with many filters wrapped its toolbar to several
+  rows and started a third of the way down a laptop screen (past a whole
+  phone screen). Keep the most-used filters in the toolbar and put the
+  rest inside `<SecondaryFilters active={…} onClear={…}>`: a button with
+  the count of those that are on, opening them in a popover (a bottom
+  sheet on a phone), and a chip beside it for each one that's on, with a
+  remove button, plus "Clear filters". It holds no state: `active`
+  (`ActiveFilter[]`: `{ id, label, onRemove }`) comes from the URL like
+  every filter, so the count and chips follow reloads, saved views and
+  shared links.
+- **`useTableUrlState`'s `setFilters` takes multi-value filters too** (a
+  list, `[]` clears), so "clear filters" is one URL update. Additive.
+- **Fixed: on a phone, a pinned first column covered every other
+  column** (#91). It sized to its longest value, wider than the screen,
+  and the rest scrolled underneath it. Below `md` its content is now
+  capped at 45% of the table's width and wraps. Wide screens are
+  unchanged.
+- **Fixed: the zebra stripe stopped at pinned columns** (#92). Even rows'
+  pinned cells now paint the stripe pre-mixed onto the page (new token
+  `--table-stripe`), still opaque so scrolled columns can't show through.
+- **Fixed: `MultiChoice` and `MultiReference` stood twice as tall as
+  their neighbours** when their chips fit on one line with little room
+  to spare (#94): the empty text box wrapped onto a line of its own. With
+  chips in, it now takes only what's left of their line until it has
+  focus.
+
+### How an app adopts `SecondaryFilters`
+
+1. In `<entity>-table.tsx`, wrap the less-used filters (each still with
+   its own label) in `<SecondaryFilters>`, placed in the toolbar's filter
+   row after the ones that stay.
+2. Build `active` from the same filter values the query uses: one
+   `ActiveFilter` per filter that's on, its `label` what the chip says
+   ("Out of stock", "Progress: In progress") and `onRemove` clearing it.
+3. `onClear`: one `setFilters({ … })` setting each of them to `''` (or
+   `[]` for a multi-value one).
+
+The template's `widgets-table.tsx` is the worked example.
+
 ## 3.21.0 — rich text: headings, callouts, tables, Notion's keys
 
 Additive: no prop or export changes, nothing for an app to do but bump
