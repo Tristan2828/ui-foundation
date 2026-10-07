@@ -43,7 +43,8 @@ One or two sentences: what one record is, and who uses the screens.
     every read and never stores it — give its rule, and if it's a choice,
     its values in sort order with a label for each; a read-only column, a filter and a sort the
     server evaluates, never on the form). A count of related records is a
-    `computed` integer.
+    `computed` integer; say whether its column links to those records
+    (cell pattern 20) and which of them it counts (`open tasks`).
   - *Close variants* (built by a small, stated change to the nearest
     pattern): `integer` (from decimal), `url` (from email — a format
     check), `date` (from date-time — no time part).

@@ -20,7 +20,7 @@ import { Toggle } from '@/components/ui/toggle'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StageCircle } from './stage-circle'
 
-// Not components: the markup of three cell patterns
+// Not components: the markup of four cell patterns
 // (conventions/docs/cell-patterns.md), on screen so axe, the token check
 // and the glyph contrast check measure them in both themes
 // (e2e/storybook-visual.spec.ts). An app copies the markup into its own
@@ -312,6 +312,62 @@ export const DependencyList: StoryObj = {
             <DependencySummary name="Office chair" dependencies={[]} />
           </td>
         </tr>
+      </tbody>
+    </table>
+  ),
+}
+
+// --- Pattern 20, a count linking to the related records -----------------
+
+// Underlined at rest: a bare number doesn't look like it goes anywhere.
+const COUNT_LINK_CLASS =
+  'rounded-sm tabular-nums text-foreground underline underline-offset-4 outline-none ' +
+  'hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50'
+
+type Project = { id: number; name: string; openTaskCount: number }
+
+// In an app it's react-router's <Link>; here the click is kept from
+// leaving the story.
+function CountLink({ project }: { project: Project }) {
+  const { id, name, openTaskCount: count } = project
+  if (count === 0) return <span className="tabular-nums">0</span>
+  return (
+    <a
+      href={`/tasks?project=${id}`}
+      aria-label={`${count} open ${count === 1 ? 'task' : 'tasks'} in ${name}`}
+      className={COUNT_LINK_CLASS}
+      onClick={(event) => event.preventDefault()}
+    >
+      {count}
+    </a>
+  )
+}
+
+const PROJECTS: Project[] = [
+  { id: 1, name: 'Kitchen remodel', openTaskCount: 3 },
+  { id: 2, name: 'Garden', openTaskCount: 1 },
+  { id: 3, name: 'Taxes', openTaskCount: 0 },
+  { id: 4, name: 'Move house', openTaskCount: 12 },
+]
+
+export const CountLinkingToRecords: StoryObj = {
+  render: () => (
+    <table aria-label="Count linking to the related records" className="type-body">
+      <thead>
+        <tr>
+          <th className="pr-6 text-left type-label">Name</th>
+          <th className="text-left type-label">Open tasks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {PROJECTS.map((project) => (
+          <tr key={project.id}>
+            <td className="py-1 pr-6">{project.name}</td>
+            <td className="py-1">
+              <CountLink project={project} />
+            </td>
+          </tr>
+        ))}
       </tbody>
     </table>
   ),
