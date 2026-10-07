@@ -7,32 +7,34 @@ npm, with its `release-smoke` result in the notes; those are listed on the
 
 ## 3.23.0 — a count that links to the related records
 
-Design language only: no prop or export changes. Run
+Additive: one new component, no existing prop or export changes. Run
 `npx ui-foundation sync` for the updated cell patterns, design language
 and plan template.
 
-- **New cell pattern 20: a count linking to the related records** (issue
-  #97). A parent's table showing how many records of another entity point
-  at each row (open Tasks per Project), each count a link to that list
-  filtered to the row (`/tasks?project=<id>`, the query string
-  `useTableUrlState` reads). The pattern settles what one app had to
-  decide alone: the link underlined at rest in `text-foreground`, a plain
-  `0` that isn't a link, an accessible name that starts with the count
-  and names the row (`3 open tasks in Kitchen remodel`), the count
-  applying the same default filters as the list it opens (said in the
-  field's `description` in `openapi.yaml`), a server-side numeric sort
-  with a stable tiebreak, and an index on the foreign key it counts. The
-  package's Storybook renders it (`patterns/CellPatterns`), with axe in
-  both themes and its names and keyboard order pinned.
+- **New component `CountLink`, cell pattern 20: a count linking to the
+  related records** (issue #97). A parent's table showing how many
+  records of another entity point at each row (open Tasks per Project),
+  each count a link to that list filtered to the row (`count`, `to`,
+  `label`; `to` is `/tasks?project=<id>`, the query string
+  `useTableUrlState` reads). The component
+  settles what one app had to decide alone: the link underlined at rest
+  in `text-foreground`, a plain `0` that isn't a link, and an accessible
+  name that's the count, then `label` (`3 open tasks in Kitchen
+  remodel`). The pattern adds what stays the app's: the count applying
+  the same default filters as the list it opens (said in the field's
+  `description` in `openapi.yaml`), a server-side numeric sort with a
+  stable tiebreak, and an index on the foreign key it counts. Storybook
+  renders it (`app/CountLink`), with axe in both themes and its names,
+  keyboard order and navigation pinned.
 - **Design language: a link in a table cell is never `text-link`.**
   `--link` is for written text; a cell's link is foreground and
   underlined (patterns 16 and 20).
 - **The plan template**: a `computed` count says whether its column links
   to the records it counts, and which of them it counts.
 
-An app that already built this cell: compare it with pattern 20 and
-take its rules where they differ (most often: the underline at rest, the
-plain `0`, and a name that starts with the count).
+An app that already built this cell: replace its own link with
+`CountLink`, passing what its `aria-label` said after the count as
+`label`, and delete its link class.
 
 ## 3.22.0 — tables with many filters, and three table fixes
 

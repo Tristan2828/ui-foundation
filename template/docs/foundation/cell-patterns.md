@@ -14,10 +14,10 @@ view render them, and their specs pin them. Patterns 19 (stage circle)
 and 20 (count linking to the related records), the multi-value variant
 of 4, the dependency list in 10 and the pressed icon in 15 were each
 built for a real app's screen first; the package's Storybook renders
-them (`app/StageCircle`, `patterns/CellPatterns`), and its checks pin
-their accessibility and contrast in both themes. The other patterns from
-11 on are marked **Unproven**: written ahead of a real column, so no app
-has tested them on real data yet. Prefer a proven
+them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`), and
+its checks pin their accessibility and contrast in both themes. The
+other patterns from 11 on are marked **Unproven**: written ahead of a
+real column, so no app has tested them on real data yet. Prefer a proven
 pattern when one fits. When you use an unproven one, say so in the
 entity's plan, and raise what you learned for the foundation, so the
 entry can lose its label. A pattern that proves generic is worth raising
@@ -841,28 +841,26 @@ cell: ({ getValue }) => {
 
 A count of the records in another table that point at this row (open
 Tasks per Project, items per Tag), which opens that table already filtered
-to them. The count is a `computed` integer (the entity plan's type);
-the package's Storybook renders the cell (`patterns/CellPatterns`).
+to them. The count is a `computed` integer (the entity plan's type).
+The package ships it: `CountLink`, rendered in its Storybook
+(`app/CountLink`).
 
 ```tsx
-const COUNT_LINK_CLASS =
-  'rounded-sm tabular-nums text-foreground underline underline-offset-4 outline-none ' +
-  'hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50'
+import { CountLink } from '@tristan2828/ui-foundation'
 
 cell: ({ row }) => {
   const { id, name, openTaskCount: count } = row.original
-  if (count === 0) return <span className="tabular-nums">0</span>
   return (
-    <Link
+    <CountLink
+      count={count}
       to={`/tasks?project=${id}`}
-      aria-label={`${count} open ${count === 1 ? 'task' : 'tasks'} in ${name}`}
-      className={COUNT_LINK_CLASS}
-    >
-      {count}
-    </Link>
+      label={`open ${count === 1 ? 'task' : 'tasks'} in ${name}`}
+    />
   )
 }
 ```
+
+What the component decides, so a cell doesn't have to:
 
 - **Underlined at rest**, not only on hover as in pattern 16. A title
   reads as a name to open; a bare number doesn't look like it goes
@@ -872,11 +870,15 @@ cell: ({ row }) => {
 - **Zero is a plain `0`**, not a link (a link to an empty list is a dead
   end) and not an em dash: zero is a value (pattern 11). Same
   `tabular-nums`, so it lines up with the links.
-- **The accessible name starts with the visible count**, then says what's
-  counted and which row: `3 open tasks in Kitchen remodel`, singular for
-  one. Every row's link text is just a number, so `3` alone isn't
-  distinct, and starting with it keeps the link findable by what it shows
-  (speech input, `getByRole('link', { name: /^3 / })`).
+- **The accessible name is the count, then `label`**: `3 open tasks in
+  Kitchen remodel`. Every row's link text is just a number, so `3` alone
+  isn't distinct, and starting with it keeps the link findable by what
+  it shows (speech input, `getByRole('link', { name: /^3 / })`).
+
+What the cell decides:
+
+- **`label` says what's counted and which row**, singular for one
+  (`open task in Garden`).
 - **The target is the other entity's list, filtered by the URL**:
   `/<other>?<filterName>=<id>`, the same query string `useTableUrlState`
   reads (a multi-value filter takes the id the same way). Back, forward,
@@ -897,5 +899,6 @@ cell: ({ row }) => {
   between pages.
 - **Cost:** one correlated subquery per row read. Fine at an app's scale;
   give the other table's foreign key column an index, since every row's
-  count reads it. If a second app builds this cell, raise it: it's small
-  enough to ship as a component.
+  count reads it.
+- **On the record's view**, the same `CountLink` beside its label (`Open
+  tasks: 3`), with the record's name in `label` like the table's.

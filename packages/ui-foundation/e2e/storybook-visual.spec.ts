@@ -43,6 +43,7 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // safety cues on every screen, so their solid fills answer too.
 // <StageCircle> and the cell patterns' markup (patterns/CellPatterns) are
 // design language too: each also has its glyphs measured below.
+// <CountLink> is a link style every parent table's counts share.
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
@@ -52,7 +53,7 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell', mustShow: 'Bookshelf' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
-  { id: 'patterns-cellpatterns--count-linking-to-records', mustShow: 'Move house' },
+  { id: 'app-countlink--default', mustShow: 'Move house' },
 ]
 
 // Stories whose glyphs carry meaning on their own: every <svg> in them must
@@ -606,9 +607,10 @@ test.describe('dependency list', () => {
   }
 })
 
-// Cell pattern 20: a count linking to the other table, filtered to this row.
-test.describe('count linking to the related records', () => {
-  const STORY = 'patterns-cellpatterns--count-linking-to-records'
+// <CountLink>, cell pattern 20: a count linking to the other table,
+// filtered to this row.
+test.describe('count link', () => {
+  const STORY = 'app-countlink--default'
 
   test('each count is a link named for its row, to the filtered list; zero is plain text', async ({ page }) => {
     await page.goto(storyUrlById(STORY, 'light'))
@@ -635,6 +637,14 @@ test.describe('count linking to the related records', () => {
     await expect(page.getByRole('link', { name: '1 open task in Garden' })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: '12 open tasks in Move house' })).toBeFocused()
+  })
+
+  test('Enter goes to the list filtered to that row', async ({ page }) => {
+    await page.goto(storyUrlById(STORY, 'light'))
+    await page.getByRole('link', { name: '1 open task in Garden' }).focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Tasks' })).toBeVisible()
+    await expect(page.getByText('Filtered to Garden.')).toBeVisible()
   })
 
   for (const theme of ['light', 'dark'] as const) {
