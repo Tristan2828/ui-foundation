@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
 // Forces the widgets list's *first* request via `page.addInitScript` —
@@ -19,6 +20,25 @@ async function forceWidgetsListOverride(
 // does not wait for.
 async function waitForMswReady(page: Page) {
   await page.waitForFunction(() => window.__msw !== undefined)
+}
+
+// Extra Categories, Progress and In Stock sit behind the toolbar's Filters
+// button (SecondaryFilters): open it to reach them. A popover on a wide
+// screen, a sheet on a phone.
+async function openFilters(page: Page) {
+  await page.getByRole('button', { name: /^Filters/ }).click()
+  await expect(page.getByRole('dialog', { name: 'Filters' })).toBeVisible()
+}
+
+// Opens the Filters panel, picks `option` in the select labelled `label`,
+// and closes the panel with Done, so what's checked next is the table
+// (a phone's sheet is modal: the table is hidden from it while it's open).
+async function pickFilter(page: Page, label: string, option: string) {
+  await openFilters(page)
+  await page.getByLabel(label).click()
+  await page.getByRole('option', { name: option, exact: true }).click()
+  await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Done' }).click()
+  await expect(page.getByRole('dialog', { name: 'Filters' })).toHaveCount(0)
 }
 
 test.describe('widgets table', () => {
@@ -207,33 +227,118 @@ test.describe('widgets table', () => {
   test('yes/no filter: either by default, then in or out of stock, via the URL', async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+    await openFilters(page)
     // The unset state shows its label, not the 'all' sentinel.
     await expect(page.getByLabel('Filter by stock')).toContainText('Any stock')
     await expect(page.getByLabel('Filter by stock')).not.toHaveText(/^all/)
+    await page.keyboard.press('Escape')
 
     // false is a real filter value, not "no filter".
-    await page.getByLabel('Filter by stock').click()
-    await page.getByRole('option', { name: 'Out of stock' }).click()
+    await pickFilter(page, 'Filter by stock', 'Out of stock')
     await expect(page).toHaveURL(/[?&]inStock=false/)
-    await expect(page.getByLabel('Filter by stock')).toContainText('Out of stock')
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
 
-    await page.getByLabel('Filter by stock').click()
-    await page.getByRole('option', { name: 'In stock', exact: true }).click()
+    await pickFilter(page, 'Filter by stock', 'In stock')
     await expect(page).toHaveURL(/[?&]inStock=true/)
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
 
     // A reloaded link restores it.
     await page.reload()
-    await expect(page.getByLabel('Filter by stock')).toContainText('In stock')
+    await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
+    await openFilters(page)
+    await expect(page.getByLabel('Filter by stock')).toContainText('In stock')
+    await page.keyboard.press('Escape')
 
-    await page.getByLabel('Filter by stock').click()
-    await page.getByRole('option', { name: 'Any stock' }).click()
+    await pickFilter(page, 'Filter by stock', 'Any stock')
     await expect(page).not.toHaveURL(/inStock=/)
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
+  })
+
+  // Issue #93: the less-used filters sit behind a Filters button, so the
+  // table starts near the top; what's on still shows, as chips beside it.
+  test.describe('filters behind the Filters button', () => {
+    // With every filter in the toolbar the table started 198px under the
+    // title (378px on a phone); with three behind the button, 138 (258).
+    test('the table starts near the top: one row of filters under the saved views', async ({ page, isMobile }) => {
+      await page.goto('/widgets')
+      await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+      const title = (await page.getByRole('heading', { name: 'Widgets', level: 1 }).boundingBox())!
+      const table = (await page.getByRole('table').boundingBox())!
+      expect(table.y - (title.y + title.height)).toBeLessThanOrEqual(isMobile ? 300 : 160)
+    })
+
+    test('the count and chips follow the URL, saved views and removing one', async ({ page }) => {
+      const button = page.getByRole('button', { name: /^Filters/ })
+      await page.goto('/widgets?inStock=false&checklistState=open')
+      await expect(button).toHaveAccessibleName('Filters, 2 active')
+      await expect(page.getByRole('button', { name: 'Remove filter: Out of stock' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Remove filter: Progress: In progress' })).toBeVisible()
+
+      // A chip's remove takes that filter off, and only it.
+      await page.getByRole('button', { name: 'Remove filter: Progress: In progress' }).click()
+      await expect(page).not.toHaveURL(/checklistState=/)
+      await expect(page).toHaveURL(/[?&]inStock=false/)
+      await expect(button).toHaveAccessibleName('Filters, 1 active')
+
+      // A saved view's filters count too; All widgets clears them.
+      const views = page.getByRole('group', { name: 'Saved views' })
+      await views.getByRole('button', { name: 'All widgets' }).click()
+      await expect(button).toHaveAccessibleName('Filters')
+      await expect(page.locator('[data-slot=secondary-filter-chip]')).toHaveCount(0)
+      await views.getByRole('button', { name: 'Restock' }).click()
+      await expect(button).toHaveAccessibleName('Filters, 1 active')
+      await expect(page.getByRole('button', { name: 'Remove filter: Out of stock' })).toBeVisible()
+
+      // Clear filters (in the panel) takes every one of them off; the
+      // primary filters (search) stay as they are.
+      await page.getByLabel('Search widgets').fill('pen')
+      await openFilters(page)
+      await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Clear filters' }).click()
+      await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Done' }).click()
+      await expect(page).not.toHaveURL(/inStock=/)
+      await expect(page).toHaveURL(/[?&]search=pen/)
+      await expect(button).toHaveAccessibleName('Filters')
+    })
+
+    test('keyboard: the button says it is open; Esc closes an open list first, then the panel, and focus goes back', async ({
+      page,
+      isMobile,
+    }) => {
+      await page.goto('/widgets')
+      const button = page.getByRole('button', { name: /^Filters/ })
+      await expect(button).toHaveAttribute('aria-expanded', 'false')
+      await button.focus()
+      await page.keyboard.press('Enter')
+      const panel = page.getByRole('dialog', { name: 'Filters' })
+      await expect(panel).toBeVisible()
+      // A phone's sheet is modal: the button is hidden from the tree while it's open.
+      if (!isMobile) await expect(button).toHaveAttribute('aria-expanded', 'true')
+
+      const categories = page.getByLabel('Filter by extra categories')
+      await categories.fill('stat')
+      await expect(categories).toHaveAttribute('aria-expanded', 'true')
+      await page.keyboard.press('Escape')
+      await expect(categories).toHaveAttribute('aria-expanded', 'false')
+      await expect(panel).toBeVisible()
+      await page.keyboard.press('Escape')
+      await expect(panel).toHaveCount(0)
+      await expect(button).toBeFocused()
+      await expect(button).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    for (const colorScheme of ['light', 'dark'] as const) {
+      test(`open, with a filter on, zero axe violations (${colorScheme})`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme })
+        await page.goto('/widgets?inStock=false')
+        await expect(page.locator('html')).toHaveClass(colorScheme)
+        await openFilters(page)
+        const results = await new AxeBuilder({ page }).analyze()
+        expect(results.violations).toEqual([])
+      })
+    }
   })
 
   test('multi reference: the column shows names, and the filter matches any pick, via the URL', async ({ page }) => {
@@ -242,17 +347,21 @@ test.describe('widgets table', () => {
     // Names, never ids, in the cell.
     await expect(desk.getByText('Stationery', { exact: true })).toBeVisible()
 
+    await openFilters(page)
     await page.getByLabel('Filter by extra categories').fill('stat')
     await page.getByRole('option', { name: 'Stationery', exact: true }).click()
-    await page.keyboard.press('Escape')
+    await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Done' }).click()
 
     await expect(page).toHaveURL(/[?&]extraCategoryIds=3/)
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
 
-    // A reloaded link names its pick without any search typed.
+    // A reloaded link names its pick without any search typed: on the
+    // chip beside the Filters button, and in the filter itself.
     await page.reload()
+    await expect(page.getByRole('button', { name: 'Remove filter: Extra categories: Stationery' })).toBeVisible()
+    await openFilters(page)
     await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
   })
@@ -270,15 +379,15 @@ test.describe('widgets table', () => {
     await expect(mouse.getByText('In progress', { exact: true })).toBeVisible()
     const desk = page.getByRole('row').filter({ hasText: 'Standing Desk' })
     await expect(desk.getByText('No checklist', { exact: true })).toBeVisible()
+    await openFilters(page)
     await expect(page.getByLabel('Filter by progress')).toContainText('Any progress')
+    await page.keyboard.press('Escape')
 
-    await page.getByLabel('Filter by progress').click()
-    await page.getByRole('option', { name: 'In progress' }).click()
+    await pickFilter(page, 'Filter by progress', 'In progress')
     await expect(page).toHaveURL(/[?&]checklistState=open/)
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Standing Desk', exact: true })).toHaveCount(0)
-    await page.getByLabel('Filter by progress').click()
-    await page.getByRole('option', { name: 'Any progress' }).click()
+    await pickFilter(page, 'Filter by progress', 'Any progress')
 
     // Descending: In progress (open) before the No checklist rows, the
     // enum's order rather than the alphabet's.
