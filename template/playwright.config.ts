@@ -7,7 +7,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:4173',
+    // vite.config.ts's preview port.
+    baseURL: 'http://localhost:4180',
     trace: 'on-first-retry',
   },
   projects: [
@@ -37,8 +38,8 @@ export default defineConfig({
   webServer: {
     // Self-contained: build then preview, so `playwright test` doesn't
     // depend on a build step having already run in the calling shell/CI job.
-    command: 'npm run build && npm run preview -- --port 4173',
-    url: 'http://localhost:4173',
+    command: 'npm run build && npm run preview',
+    url: 'http://localhost:4180',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

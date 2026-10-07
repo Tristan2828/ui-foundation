@@ -8,7 +8,7 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": { "panel": "dedicated", "group": "app" },
-      "detail": "Vite dev server on :5173 — mocked via MSW, no backend needed"
+      "detail": "Vite dev server on :5180 — mocked via MSW, no backend needed"
     },
     {
       "label": "Frontend: dev (real API)",
@@ -18,7 +18,7 @@
       "isBackground": true,
       "problemMatcher": [],
       "presentation": { "panel": "dedicated", "group": "app" },
-      "detail": "Vite dev server on :5173, proxied to the backend on :8000"
+      "detail": "Vite dev server on :5180, proxied to the backend on :8000"
     },
     {
       "label": "Backend: dev",
@@ -47,15 +47,6 @@
       "problemMatcher": [],
       "presentation": { "panel": "dedicated", "group": "app" },
       "detail": "FastAPI on :8000 — same as above but forced to Docker Compose Postgres, for offline work"
-    },
-    {
-      "label": "Storybook",
-      "type": "npm",
-      "script": "storybook",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": { "panel": "dedicated", "group": "app" },
-      "detail": "Storybook on :6006 — stop it before `npm run verify`, or Playwright tests this server instead of a fresh build"
     },
     {
       "label": "Start All: Backend + Frontend (real API)",

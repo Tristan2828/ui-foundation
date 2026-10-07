@@ -10,7 +10,7 @@ with a demo entity, Widgets, to copy from and then delete.
 
 ```bash
 npm install
-npm run dev            # http://localhost:5173, on mock data (MSW) — no backend needed
+npm run dev            # http://localhost:5180, on mock data (MSW) — no backend needed
 npm run verify         # the full gate: codegen, conventions, types, lint, unit tests, Playwright
 npm run verify:fast    # the inner loop, no Playwright
 ```

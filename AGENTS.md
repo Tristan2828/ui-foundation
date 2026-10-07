@@ -79,7 +79,8 @@ know goes where it will be read:
 
 ```bash
 npm install                 # installs every workspace and builds the package
-npm run dev                 # builds the package, then the template on :5173 (mock API)
+npm run dev                 # builds the package, then the template on :5180 (mock API)
+npm run storybook           # the package's Storybook on :6006
 npm run verify:fast         # package + template gates, no browsers
 npm run verify              # everything, including Storybook and Playwright
 npm run sync                # rebuild the package and re-sync conventions into template/

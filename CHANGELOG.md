@@ -5,6 +5,28 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.18.1 — the template's dev and test ports
+
+Template and docs only; no package code changed. Apps already made keep
+their ports (their `vite.config.ts` is their own); nothing to do on the
+bump.
+
+- **New apps serve on :5180 (`npm run dev`) and test on :4180**, not
+  Vite's defaults (5173, 4173), with `strictPort`: another Vite app on
+  the same machine is likely on the defaults, and Playwright reuses
+  whatever answers on the test port, so `verify` could test the wrong
+  app. A busy port is now an error, not a silent move to the next one.
+  For one run elsewhere: `npm run dev -- --port 5181`.
+  - **To do the same in an existing app** (optional): copy the
+    `DEV_PORT`/`PREVIEW_PORT` lines and the `port`/`strictPort` settings
+    from the template's `vite.config.ts`, and the port in
+    `playwright.config.ts` (`baseURL`, `webServer`).
+- **The template's VS Code "Storybook" task is gone.** It ran a
+  `storybook` script the template hasn't had since Storybook moved into
+  the package (3.0). Delete it from an app's `.vscode/tasks.json` too.
+- **This repo: `npm run storybook`** at the root starts the package's
+  Storybook on :6006.
+
 ## 3.18.0 — the slash menu
 
 Additive, but visible: **every `RichTextEditor` with toolbars gains the
