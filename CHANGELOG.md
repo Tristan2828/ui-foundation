@@ -5,6 +5,24 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.20.1 — `create-app.sh` installs the tag's own version
+
+Script and CI only; no package code changed. Apps already made need
+nothing.
+
+- **`create-app.sh <name> <tag>` now installs the package at exactly
+  that tag's version** (still saved as `^X.Y.Z`, so patches arrive with
+  `npm update`). It used to install the caret range as-is, which npm
+  resolves to the newest release: an app made from any tag but the
+  latest got a newer package than its template, and `sync --check`
+  failed (`differs: AGENTS.md`). Only the latest tag worked.
+- **release-smoke waits for the release's tarball**, not just its
+  listing on npm. 3.17.0, 3.18.0 and 3.20.0 were marked "Don't upgrade
+  apps onto it" because the smoke's `npm install` got a 404 on the
+  tarball moments after publishing; their code wasn't at fault (3.20.0's
+  re-run passed). Re-run on 3.17.0 and 3.18.0, they then hit the
+  `create-app.sh` bug above, fixed here.
+
 ## 3.20.0 — `MultiReference` waits for its search
 
 A fix that needs one prop from the app. Run `npx ui-foundation sync` for
