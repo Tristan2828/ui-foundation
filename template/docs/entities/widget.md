@@ -47,13 +47,14 @@ foundation supports has a working, tested reference.
 
 - Title: `name`.
 - Badges beside the title: `status`, `checklistState`, `inStock`.
+- Layout: rail.
 - Sections, in order:
 
-| Section | Fields |
-|---|---|
-| Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail |
-| Description | description |
-| Checklist | checklist |
+| Section | Fields | Placement |
+|---|---|---|
+| Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail | rail |
+| Description | description | main |
+| Checklist | checklist | main |
 
 - "Not set" labels: `extraCategoryIds`: No extra categories; `tags`:
   Untagged; `assigneeEmail`: Unassigned; `checklist`: No items.

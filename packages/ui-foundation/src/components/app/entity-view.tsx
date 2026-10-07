@@ -23,9 +23,18 @@
 // time, the leave-page prompt); EditableValue is each value's side, and a
 // header badge uses it directly. A field not marked renders exactly as
 // before. Edit, in `actions`, stays for everything else.
-import { useId, useState, useSyncExternalStore, type ReactNode } from 'react'
+//
+// Two layouts. `column` (the default): every section in one column capped
+// at max-w-4xl. `rail`, for a record with long content: the page takes the
+// content area's whole width, sections placed `rail` go in a narrow column
+// on the right that stays in view while the main column scrolls (an issue
+// tracker's shape), and the rest fill the main column. Below the width two
+// columns need, one column: header, rail, main. The DOM is in that order at
+// every width, so reading and tab order match the screen.
+import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowLeftIcon, SearchXIcon } from 'lucide-react'
+import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
 import { Button } from '@/components/ui/button'
@@ -64,7 +73,7 @@ export type EntityViewField = {
  * only repeat the heading. A block that's empty shows `emptyLabel`, the
  * same rule as a field.
  */
-export type EntityViewSection =
+export type EntityViewSection = (
   | {
       /** The section's heading (an <h2>). Unique on the page. */
       title: string
@@ -77,6 +86,23 @@ export type EntityViewSection =
       /** The block is editable in place (long text), named by the section's title. */
       edit?: EditInPlace
     }
+) & {
+  /**
+   * Where the section goes in the `rail` layout: `rail` for the short ones
+   * (a summary, label/value fields, a few links), `main` (the default) for
+   * long text and long lists. The `column` layout ignores it.
+   */
+  placement?: EntityViewPlacement
+}
+
+export type EntityViewPlacement = 'main' | 'rail'
+
+/**
+ * `column` (the default): one column, at most max-w-4xl wide. `rail`: the
+ * content area's whole width, with the sections placed `rail` in a narrow
+ * column on the right (one column on a narrow screen, rail first).
+ */
+export type EntityViewLayout = 'column' | 'rail'
 
 export type EntityViewProps = {
   /** The record's name or title, the page's <h1>. */
@@ -92,6 +118,10 @@ export type EntityViewProps = {
   /** The header's actions: an Edit button, a Delete with its confirm dialog. */
   actions?: ReactNode
   sections: EntityViewSection[]
+  /** `rail` puts the sections placed `rail` in a column on the right. Defaults to `column`. */
+  layout?: EntityViewLayout
+  /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
+  railLabel?: string
   isLoading: boolean
   /** A `notfound` error (including another user's record) shows "Not found" and a way back, never a retry. */
   error?: AppError | null
@@ -133,10 +163,18 @@ function orEmptyLabel(value: ReactNode, emptyLabel: string | undefined) {
 }
 
 // Label beside value from `sm` up; below it (a phone) the label sits
-// above its value, so nothing is squeezed into a narrow second column.
-function FieldRow({ field }: { field: EntityViewField }) {
+// above its value, so nothing is squeezed into a narrow second column. In
+// the rail the list's own width decides instead (a container query on the
+// <dl>): label above value in the narrow rail, beside it once the rail's
+// sections stack full width under the header.
+const FIELD_ROW = {
+  page: 'sm:grid sm:grid-cols-[minmax(8rem,12rem)_1fr] sm:gap-6',
+  rail: '@lg/fields:grid @lg/fields:grid-cols-[minmax(8rem,12rem)_1fr] @lg/fields:gap-6',
+}
+
+function FieldRow({ field, inRail }: { field: EntityViewField; inRail: boolean }) {
   return (
-    <div className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:grid sm:grid-cols-[minmax(8rem,12rem)_1fr] sm:gap-6">
+    <div className={cn('flex flex-col gap-1 py-3 first:pt-0 last:pb-0', FIELD_ROW[inRail ? 'rail' : 'page'])}>
       <dt className="type-label text-muted-foreground">{field.label}</dt>
       <dd className="min-w-0 type-body break-words text-foreground">
         {field.edit ? (
@@ -151,7 +189,7 @@ function FieldRow({ field }: { field: EntityViewField }) {
   )
 }
 
-function ViewSection({ section }: { section: EntityViewSection }) {
+function ViewSection({ section, inRail = false }: { section: EntityViewSection; inRail?: boolean }) {
   const headingId = useId()
   return (
     <section aria-labelledby={headingId}>
@@ -163,9 +201,9 @@ function ViewSection({ section }: { section: EntityViewSection }) {
         </CardHeader>
         <CardContent>
           {'fields' in section ? (
-            <dl className="flex flex-col divide-y divide-border">
+            <dl className={cn('flex flex-col divide-y divide-border', inRail && '@container/fields')}>
               {section.fields.map((field) => (
-                <FieldRow key={field.label} field={field} />
+                <FieldRow key={field.label} field={field} inRail={inRail} />
               ))}
             </dl>
           ) : (
@@ -185,30 +223,117 @@ function ViewSection({ section }: { section: EntityViewSection }) {
   )
 }
 
-function EntityViewSkeleton() {
+// The rail layout's columns. The view is a container, so the switch to
+// two columns follows the width the page actually has (the sidebar open
+// or not), not the window's: two from 56rem (896px), where the main
+// column still gets ~32rem beside a 22rem rail. Below that, one column in
+// DOM order (header, rail, main); from it, the grid puts the rail on the
+// right of row 1 and main on its left, both starting under the header.
+const RAIL_LAYOUT = {
+  page: '@container/view flex min-w-0 flex-col gap-6',
+  columns: 'flex flex-col gap-6 @4xl/view:grid @4xl/view:grid-cols-[minmax(0,1fr)_22rem] @4xl/view:items-start',
+  rail: '@4xl/view:col-start-2 @4xl/view:row-start-1',
+  main: 'flex min-w-0 flex-col gap-6 @4xl/view:col-start-1 @4xl/view:row-start-1',
+  // Main alone (no rail sections): the whole row.
+  mainAlone: '@4xl/view:col-span-2',
+  // Sticky only beside main, and only while the whole rail fits on screen
+  // (`data-fits`, measured): a taller one scrolls with the page, so its end
+  // is never stuck below the fold.
+  sticky: '@4xl/view:data-[fits]:sticky @4xl/view:data-[fits]:top-6',
+}
+
+function SkeletonCard({ rows, stacked }: { rows: number; stacked: boolean }) {
   return (
-    <div className="flex max-w-4xl flex-col gap-6" data-state="loading">
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-32" />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {Array.from({ length: rows }, (_, row) => (
+          <div key={row} className={cn('flex flex-col gap-1', !stacked && 'sm:flex-row sm:gap-6')}>
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className={cn('h-5', stacked ? 'w-full' : 'flex-1')} />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+// The page's shape before the record arrives, in the layout it will have,
+// so nothing jumps when it loads.
+function EntityViewSkeleton({ layout }: { layout: EntityViewLayout }) {
+  const header = (
+    <>
       <Skeleton className="h-5 w-24" />
       <div className="flex flex-col gap-2">
         <Skeleton className="h-7 w-64 max-w-full" />
         <Skeleton className="h-5 w-40" />
       </div>
+    </>
+  )
+  if (layout === 'rail') {
+    return (
+      <div className={RAIL_LAYOUT.page} data-state="loading" data-layout="rail">
+        {header}
+        <div className={RAIL_LAYOUT.columns}>
+          <div className={cn(RAIL_LAYOUT.rail, 'flex flex-col gap-6')}>
+            <SkeletonCard rows={4} stacked />
+          </div>
+          <div className={RAIL_LAYOUT.main}>
+            <SkeletonCard rows={6} stacked={false} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="flex max-w-4xl flex-col gap-6" data-state="loading">
+      {header}
       {Array.from({ length: 2 }, (_, section) => (
-        <Card key={section}>
-          <CardHeader>
-            <Skeleton className="h-5 w-32" />
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {Array.from({ length: 4 }, (_, row) => (
-              <div key={row} className="flex flex-col gap-1 sm:flex-row sm:gap-6">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-5 flex-1" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <SkeletonCard key={section} rows={4} stacked={false} />
       ))}
     </div>
+  )
+}
+
+// The rail's top offset (top-6) plus as much again below it.
+const RAIL_MARGIN_PX = 48
+
+// Whether `element` fits in the window with room around it, re-measured
+// whenever it or the window changes size (a field opening in place, a
+// rotated phone).
+function useFitsWindow() {
+  const [element, setElement] = useState<HTMLElement | null>(null)
+  const [fits, setFits] = useState(false)
+  useEffect(() => {
+    if (!element) return
+    const measure = () => setFits(element.offsetHeight + RAIL_MARGIN_PX <= window.innerHeight)
+    // A ResizeObserver reports once as soon as it observes: the first measure.
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    window.addEventListener('resize', measure)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [element])
+  return [setElement, fits] as const
+}
+
+function Rail({ label, sections }: { label: string; sections: EntityViewSection[] }) {
+  const [ref, fits] = useFitsWindow()
+  return (
+    <aside
+      ref={ref}
+      aria-label={label}
+      data-fits={fits ? '' : undefined}
+      className={cn(RAIL_LAYOUT.rail, RAIL_LAYOUT.sticky, 'flex min-w-0 flex-col gap-6')}
+    >
+      {sections.map((section) => (
+        <ViewSection key={section.title} section={section} inRail />
+      ))}
+    </aside>
   )
 }
 
@@ -218,6 +343,8 @@ export function EntityView({
   badges,
   actions,
   sections,
+  layout = 'column',
+  railLabel,
   isLoading,
   error,
   onRetry,
@@ -255,11 +382,18 @@ export function EntityView({
 
   if (error) return <ErrorState error={error} onRetry={onRetry} />
 
-  if (isLoading) return <EntityViewSkeleton />
+  if (isLoading) return <EntityViewSkeleton layout={layout} />
+
+  const railSections = sections.filter((section) => section.placement === 'rail')
+  const mainSections = sections.filter((section) => section.placement !== 'rail')
 
   return (
     <EditInPlaceContext.Provider value={store}>
-    <div className="flex max-w-4xl flex-col gap-6" data-state="success">
+    <div
+      className={layout === 'rail' ? RAIL_LAYOUT.page : 'flex max-w-4xl flex-col gap-6'}
+      data-state="success"
+      data-layout={layout}
+    >
       {openField !== null && <LeaveGuard store={store} />}
       <BackLink back={back} />
 
@@ -279,9 +413,20 @@ export function EntityView({
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </header>
 
-      {sections.map((section) => (
-        <ViewSection key={section.title} section={section} />
-      ))}
+      {layout === 'rail' ? (
+        <div className={RAIL_LAYOUT.columns}>
+          {railSections.length > 0 && (
+            <Rail label={railLabel ?? `${title ?? 'Record'} details`} sections={railSections} />
+          )}
+          <div className={cn(RAIL_LAYOUT.main, railSections.length === 0 && RAIL_LAYOUT.mainAlone)}>
+            {mainSections.map((section) => (
+              <ViewSection key={section.title} section={section} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        sections.map((section) => <ViewSection key={section.title} section={section} />)
+      )}
     </div>
     </EditInPlaceContext.Provider>
   )

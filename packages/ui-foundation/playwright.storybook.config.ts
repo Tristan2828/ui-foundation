@@ -1,12 +1,13 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// This repo's own Storybook tests (e2e/storybook-visual.spec.ts, and the
-// rich-text round trip in e2e/rich-text-editor.spec.ts) —
+// This repo's own Storybook tests (e2e/storybook-visual.spec.ts, the
+// rich-text round trip in e2e/rich-text-editor.spec.ts, EntityView's
+// layouts in e2e/entity-view.spec.ts) —
 // kept out of the shipped playwright.config.ts so consuming apps don't
 // need Storybook. `npm run verify` runs both configs.
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts'],
+  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

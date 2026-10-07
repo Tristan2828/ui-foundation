@@ -241,6 +241,13 @@ is a filled-in example while the Widgets demo is still here).
      section that holds one long text or one sub-record list is a block
      (`content`) with no label of its own, since a label would only repeat
      the heading.
+   - **Layout.** With the plan's `Layout: rail`, pass `layout="rail"` and
+     give each section its Placement (`placement: 'rail'`; `main` is the
+     default and needs nothing). Without a `Layout` line, drop `layout`
+     and every `placement` from the copied view (one column). Widget's
+     view is `rail`, with Details in the rail. The rail's sections come
+     first in the page (header, rail, main) at every width, so the
+     view's specs find them first too.
    - **Every value renders the way its table cell does**: badges, names
      of linked records, a done-count, from the shared lookups in
      `<entity>-format.ts`. Never re-derive one for the view.
@@ -431,7 +438,11 @@ is a filled-in example while the Widgets demo is still here).
    a heading, a list, a table, a link and raw HTML, and asserts the HTML
    shows as text. Add the view's spec to `playwright.config.ts`'s
    `mobile-chrome` `testMatch`, with a test that at phone width each
-   label sits above its value and nothing scrolls sideways.
+   label sits above its value and nothing scrolls sideways. With
+   `Layout: rail`, that test also checks the rail's sections come before
+   the main ones, and another that on a wide screen the main column
+   starts beside the rail (copy `wide screens: …` in
+   `e2e/widget-view.spec.ts`).
    States forced via a first-load init script (loading, load-time error)
    need `page.addInitScript` before navigation; states forced after the
    page is already up (a mutation's error response) can use a

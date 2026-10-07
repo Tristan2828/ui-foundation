@@ -10,6 +10,11 @@
 // empty value through as it is: EntityView shows the plan's "not set"
 // label for it, never a blank.
 //
+// The plan's layout is `rail`: Details, the short label/value section, sits
+// in a column on the right that stays in view; Description and Checklist,
+// the long ones, fill the main column. An entity whose plan names no
+// layout drops `layout` and every `placement` (one column).
+//
 // Read-only, except what the plan names:
 // - Editing in place (cell pattern 18): Name (the title), Status (its
 //   header badge), Price, Description (rich text) and Extra Categories
@@ -167,6 +172,7 @@ function widgetSections(widget: Widget, edits: WidgetEdits): EntityViewSection[]
   return [
     {
       title: 'Details',
+      placement: 'rail',
       fields: [
         // A reference shows the linked record's name. WidgetCategory has no
         // view of its own, so it's plain text; a referenced entity that has
@@ -242,6 +248,7 @@ export function WidgetViewRoute() {
   return (
     <CategoryNamesContext.Provider value={names}>
       <EntityView
+        layout="rail"
         isLoading={widgetQuery.isLoading}
         error={widgetQuery.error}
         onRetry={() => widgetQuery.refetch()}

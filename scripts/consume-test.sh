@@ -100,6 +100,17 @@ cd "$APP"
 # Installed, not linked: a symlink here would mean the workspace leaked in.
 [ ! -L node_modules/@tristan2828/ui-foundation ] || fail "the package is a symlink — expected an install from the tarball"
 
+# The app's own browsers. A fresh app resolves the template's
+# @playwright/test range to the newest release, which can be newer than
+# this repo's lock (1.64.0 shipped mid-PR and every test failed with
+# "Executable doesn't exist"), so browsers installed for the repo's copy
+# don't fit. In CI only, as release-smoke.yml does: elsewhere a developer's
+# machine already has them, or can't download (cloud sessions).
+if [ -n "${CI:-}" ]; then
+  echo "consume-test: npx playwright install --with-deps chromium (the app's Playwright, $(npx playwright --version))"
+  npx playwright install --with-deps chromium
+fi
+
 echo "consume-test: npm run verify in the new app"
 npm run verify
 
