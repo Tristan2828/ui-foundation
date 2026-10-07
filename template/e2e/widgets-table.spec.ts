@@ -467,8 +467,51 @@ test.describe('widgets table', () => {
     // The regression itself: the highlight must not depend on which side of
     // the zebra stripe a row falls on.
     expect(evenRow.hovered.background).toBe(oddRow.hovered.background)
-    expect(oddRow.idle).toBe(evenRow.idle)
   })
+
+  // Issue #92: the stripe used to stop at the pinned cells, which stayed
+  // the page's colour on every row. On an even row they now paint the
+  // stripe pre-mixed onto the page, opaque, so the row reads as one band.
+  for (const colorScheme of ['light', 'dark'] as const) {
+    test(`the zebra stripe runs through the pinned columns (${colorScheme})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme })
+      await page.setViewportSize({ width: 800, height: 720 })
+      await page.goto('/widgets')
+      await expect(page.locator('html')).toHaveClass(colorScheme)
+      await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
+
+      // Each cell as seen: its background over its row's, over the page's,
+      // flattened to sRGB through a canvas (the browser's own compositing).
+      const seen = (rowIndex: number) =>
+        page.locator('tbody tr').nth(rowIndex).locator('td').evaluateAll((cells) => {
+          const canvas = document.createElement('canvas')
+          canvas.width = canvas.height = 1
+          const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+          const page = getComputedStyle(document.body).backgroundColor
+          return cells.map((cell) => {
+            ctx.clearRect(0, 0, 1, 1)
+            for (const colour of [page, getComputedStyle(cell.parentElement!).backgroundColor, getComputedStyle(cell).backgroundColor]) {
+              ctx.fillStyle = colour
+              ctx.fillRect(0, 0, 1, 1)
+            }
+            return Array.from(ctx.getImageData(0, 0, 1, 1).data.slice(0, 3))
+          })
+        })
+      const close = (a: number[], b: number[]) => a.every((value, index) => Math.abs(value - b[index]) <= 1)
+
+      for (const rowIndex of [0, 1]) {
+        const cells = await seen(rowIndex)
+        const [first, middle, last] = [cells[0], cells[1], cells.at(-1)!]
+        expect(close(first, middle), `row ${rowIndex}: pinned first ${first} vs ${middle}`).toBe(true)
+        expect(close(last, middle), `row ${rowIndex}: pinned last ${last} vs ${middle}`).toBe(true)
+      }
+      // And the even row really is striped, apart from the odd one.
+      expect(close((await seen(0))[1], (await seen(1))[1])).toBe(false)
+      // Still opaque, so scrolled columns can't show through.
+      const pinned = await page.locator('tbody tr').nth(1).locator('td').first().evaluate((el) => getComputedStyle(el).backgroundColor)
+      expect(pinned).not.toMatch(/\/\s*[\d.]+\s*\)$|^rgba\(.*,\s*0\)$/)
+    })
+  }
 
   test('a bottom scrollbar stays reachable without scrolling past every row, and mirrors the real one', async ({
     page,

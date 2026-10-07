@@ -133,23 +133,26 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
   )
 }
 
-// The pinned cell gets a flat `bg-background`, not `bg-inherit`: the zebra
+// The pinned cell gets an opaque background, not `bg-inherit`: the zebra
 // stripe (table.tsx) is a *translucent* color, so inheriting it would let
 // the columns scrolling behind show through at 40% opacity — exactly the
-// bleed-through a solid background avoids. That also means the pinned
-// column shows no stripe, which is why it is the thing that carries the
-// hover highlight. --accent is only ~3% off the page background, so a
-// solid left edge marker carries the signal; an inset shadow rather than a
-// border, so nothing reflows.
+// bleed-through a solid background avoids. On an even row it's the stripe
+// pre-mixed onto the page (--table-stripe), so the stripe runs the whole
+// row's width (issue #92); `:where()` keeps that rule's specificity at the
+// background's, so the hover below still wins on every row. The pinned
+// cell carries the hover highlight. --accent is only ~3% off the page
+// background, so a solid left edge marker carries the signal; an inset
+// shadow rather than a border, so nothing reflows.
+const PINNED_CELL_CLASS =
+  'z-10 bg-background [:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe) group-hover/row:bg-accent'
+
 const PINNED_COLUMN_CLASS =
-  'sticky left-0 z-10 border-r bg-background group-hover/row:bg-accent ' +
-  'group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]'
+  `sticky left-0 border-r ${PINNED_CELL_CLASS} group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]`
 
 // The right-edge mirror, opaque for the same reason. Its edge marker points
 // inward from the right, so the two pinned columns bracket the row.
 const PINNED_LAST_COLUMN_CLASS =
-  'sticky right-0 z-10 border-l bg-background group-hover/row:bg-accent ' +
-  'group-hover/row:shadow-[inset_-3px_0_0_0_var(--primary)]'
+  `sticky right-0 border-l ${PINNED_CELL_CLASS} group-hover/row:shadow-[inset_-3px_0_0_0_var(--primary)]`
 
 // Hover highlights the pinned cell, not the whole row. A row-level hover
 // cannot be made consistent against the zebra stripe: `tr:nth-child(even)`
