@@ -5,6 +5,40 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.18.0 — the slash menu
+
+Additive, but visible: **every `RichTextEditor` with toolbars gains the
+slash menu on the bump.** `toolbar={false}` leaves it out with them. Run
+`npx ui-foundation sync` for the updated cell patterns.
+
+- **"/" at a line's start lists the blocks the line can become**:
+  Heading, Subheading, Bulleted list, Numbered list, Task list, Quote,
+  Code block (the toolbar's block formats, with their icons).
+  - Typing filters by name or keyword (`/num`, `/h2`, `/todo`); with no
+    match the list hides and the text is just text. Enter or Tab picks:
+    the "/…" goes and the line becomes the block, in one undo step.
+  - Only a "/" *typed* at the start of a top-level paragraph opens it:
+    not mid-line, not in a list, quote or code block, and never a "/"
+    already in the text (a path like `/usr/bin`).
+  - **Keyboard and screen readers:** ARIA's combobox pattern with the
+    text as the input. Focus never leaves the text; while the list is
+    open the text names it (`aria-controls`, `aria-autocomplete="list"`)
+    and the highlighted item (`aria-activedescendant`). The arrow keys
+    move the highlight, round the ends.
+  - **Mouse:** a click picks; it never takes focus from the text.
+  - **Editing in place:** Enter in the list picks rather than saving; Esc
+    closes the list and keeps what was typed, and the next Esc gives up
+    the edit. Ctrl/Cmd+Enter still saves.
+  - axe-clean in both themes, and its icons clear 3:1 (the glyph check).
+
+### How an app adopts it
+
+1. **Nothing to add.** Where `toolbar={false}` was passed, there's no
+   slash menu.
+2. **Specs** that type a line starting with "/" and then press Enter (a
+   path, say) get a block instead of a new line when what follows the
+   "/" matches a block's name (`/quote`); press Esc first.
+
 ## 3.17.0 — a floating toolbar over selected words
 
 Additive, but visible: **every `RichTextEditor` with a toolbar gains the

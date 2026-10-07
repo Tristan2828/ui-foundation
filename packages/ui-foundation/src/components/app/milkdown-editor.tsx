@@ -25,6 +25,9 @@
 //   floating one over selected words (rich-text-floating-toolbar.tsx),
 //   unless `toolbar={false}`. Alt+F10 reaches the floating one when it
 //   shows, else the fixed one.
+// - A slash menu (rich-text-slash.ts, rich-text-slash-menu.tsx): "/" at a
+//   line's start lists the blocks it can become, also unless
+//   `toolbar={false}`.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import {
   defaultValueCtx,
@@ -63,6 +66,17 @@ import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown
 import type { RichTextEditorProps } from './rich-text-editor'
 import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
 import { toggleFormat, type FormatId } from './rich-text-formats'
+import type { FormatItem } from './rich-text-format-items'
+import {
+  applySlash,
+  closeSlash,
+  slashItems,
+  slashOptionId,
+  slashPlugin,
+  slashQuery,
+  type SlashQuery,
+} from './rich-text-slash'
+import { RichTextSlashMenu } from './rich-text-slash-menu'
 import { RichTextToolbar } from './rich-text-toolbar'
 
 // The commonmark preset, minus the plugin that writes `<br />`. A $remark
@@ -246,6 +260,11 @@ export default function MilkdownEditor({
   const [field, setField] = useState<HTMLDivElement | null>(null)
   // Whether the floating toolbar shows, for the editor's keys (set up once).
   const floatingOpenRef = useRef(false)
+  // The slash menu's highlighted item, for the query it was moved on (a
+  // new query starts again from the first).
+  const [slashActive, setSlashActive] = useState({ key: '', index: 0 })
+  // The open slash menu, for the editor's keys (set up once).
+  const slashMenuRef = useRef<{ key: string; span: SlashQuery; items: FormatItem[]; index: number } | null>(null)
   // Opens the link box: made with the editor, used by the toolbar's Link.
   const openLinkRef = useRef<(view: EditorView) => void>(() => {})
   // The latest props, for the editor's callbacks, which are set up once.
@@ -275,6 +294,22 @@ export default function MilkdownEditor({
   if (ariaInvalid) attributes['aria-invalid'] = 'true'
   if (placeholder) attributes['aria-placeholder'] = placeholder
   if (toolbar) attributes['aria-keyshortcuts'] = 'Alt+F10'
+
+  // The slash menu: open while a "/" typed at a line's start is followed
+  // by something some block answers to, and the field has focus.
+  const slash = toolbar && !readOnly && focused && editorState ? slashQuery(editorState) : null
+  const slashMatches = slash ? slashItems(slash.query) : []
+  const slashOpen = slash !== null && slashMatches.length > 0
+  const slashMenuKey = slash ? `${slash.from}:${slash.query}` : ''
+  const slashIndex = slashActive.key === slashMenuKey ? Math.min(slashActive.index, slashMatches.length - 1) : 0
+  const slashListId = `${ids}-blocks`
+  // The text is the combobox's input: it names the list and the
+  // highlighted item, and focus stays in it.
+  if (slashOpen) {
+    attributes['aria-autocomplete'] = 'list'
+    attributes['aria-controls'] = slashListId
+    attributes['aria-activedescendant'] = slashOptionId(slashListId, slashIndex)
+  }
   const attributesKey = JSON.stringify(attributes)
 
 
@@ -336,6 +371,8 @@ export default function MilkdownEditor({
     openLinkRef.current = openLink
 
     // Paste, copy, the editor's own keys and the placeholder.
+    const slashing = $prose(() => slashPlugin())
+
     const input = $prose(
       (ctx) =>
         new Plugin({
@@ -443,6 +480,33 @@ export default function MilkdownEditor({
           ...options,
           editable: () => !latest.current.readOnly,
           attributes,
+          // The slash menu's keys, as view props: before Milkdown's own
+          // keymap, whose Enter would split the line.
+          handleKeyDown: (view, event) => {
+            const menu = slashMenuRef.current
+            if (!menu) return false
+            const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0
+            const plain = !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey
+            if (step && plain) {
+              event.preventDefault()
+              const count = menu.items.length
+              setSlashActive({ key: menu.key, index: (menu.index + step + count) % count })
+              return true
+            }
+            if ((event.key === 'Enter' || event.key === 'Tab') && plain) {
+              event.preventDefault()
+              applySlash(view, menu.span, menu.items[menu.index].id)
+              return true
+            }
+            // Esc closes the menu only: the field's own Esc (editing in
+            // place gives up the edit) waits for the next one.
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              view.dispatch(closeSlash(view.state))
+              return true
+            }
+            return false
+          },
           nodeViews: {
             heading: headingView,
             list_item: (node, view, getPos) =>
@@ -454,6 +518,7 @@ export default function MilkdownEditor({
       .use(gfm)
       .use(history)
       .use(changes)
+      .use(slashing)
       .use(input)
 
     void make.create().then((editor) => {
@@ -528,6 +593,10 @@ export default function MilkdownEditor({
   })
   const returnToText = () => editorView?.focus()
 
+  useEffect(() => {
+    slashMenuRef.current = slashOpen && slash ? { key: slashMenuKey, span: slash, items: slashMatches, index: slashIndex } : null
+  })
+
   const closeLink = () => {
     setLinkBox(null)
     editorRef.current?.action((ctx) => ctx.get(editorViewCtx).focus())
@@ -585,6 +654,18 @@ export default function MilkdownEditor({
             '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
           )}
         />
+        {slashOpen && slash && editorView && (
+          <RichTextSlashMenu
+            id={slashListId}
+            view={editorView}
+            at={slash.to}
+            field={field}
+            items={slashMatches}
+            active={slashIndex}
+            onHighlight={(index) => setSlashActive({ key: slashMenuKey, index })}
+            onPick={(format) => applySlash(editorView, slash, format)}
+          />
+        )}
         {floatingOpen && editorView && editorState && (
           <RichTextFloatingToolbar
             ref={floatingRef}

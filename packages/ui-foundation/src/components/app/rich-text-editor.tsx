@@ -44,8 +44,10 @@ export type RichTextEditorProps = {
   /**
    * The formatting toolbars: one fixed above the text (bold, headings,
    * lists, link, …), each button with its shortcut, and one floating over
-   * selected words (bold to link). Alt+F10 reaches them from the text. On
-   * by default; `false` leaves the text alone, its shortcuts still working.
+   * selected words (bold to link). Alt+F10 reaches them from the text.
+   * With them, "/" at a line's start lists the blocks the line can become
+   * (the slash menu). On by default; `false` leaves the text alone, its
+   * shortcuts still working.
    */
   toolbar?: boolean
   className?: string

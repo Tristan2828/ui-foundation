@@ -604,3 +604,152 @@ test.describe('floating toolbar', () => {
     })
   }
 })
+
+// The slash menu, on the Features story's "formats" editor: a "/" typed
+// at the start of a new line after "Third line.".
+test.describe('slash menu', () => {
+  const menu = (page: Page) => page.getByRole('listbox', { name: 'Blocks' })
+  const option = (page: Page, name: string) => menu(page).getByRole('option', { name, exact: true })
+  const BLOCKS = ['Heading', 'Subheading', 'Bulleted list', 'Numbered list', 'Task list', 'Quote', 'Code block']
+
+  // A new empty line at the end, the caret on it.
+  async function newLine(page: Page) {
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'formats')).toBeVisible()
+  })
+
+  test('"/" at a line\'s start lists the blocks; the text keeps focus and names the highlighted one', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/')
+    await expect(menu(page)).toBeVisible()
+    await expect(menu(page).getByRole('option')).toHaveCount(BLOCKS.length)
+    for (const name of BLOCKS) await expect(option(page, name)).toBeVisible()
+    const text = editor(page, 'formats')
+    await expect(text).toBeFocused()
+    await expect(text).toHaveAttribute('aria-autocomplete', 'list')
+    await expect(text).toHaveAttribute('aria-controls', (await menu(page).getAttribute('id'))!)
+    await expect(option(page, 'Heading')).toHaveAttribute('aria-selected', 'true')
+    await expect(text).toHaveAttribute('aria-activedescendant', (await option(page, 'Heading').getAttribute('id'))!)
+  })
+
+  test('typing filters it; Enter turns the line into the block, the "/…" gone', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/num')
+    await expect(menu(page).getByRole('option')).toHaveCount(1)
+    await expect(option(page, 'Numbered list')).toHaveAttribute('aria-selected', 'true')
+    await page.keyboard.press('Enter')
+    await expect(menu(page)).toHaveCount(0)
+    await page.keyboard.type('Step one')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n1. Step one')
+    await expect(saved(page, 'formats')).not.toContainText('/num')
+  })
+
+  test('keywords match too: "/h2" is Subheading, "/todo" a task list', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/h2')
+    await expect(menu(page).getByRole('option')).toHaveCount(1)
+    await expect(option(page, 'Subheading')).toBeVisible()
+    await page.keyboard.press('Backspace')
+    await page.keyboard.press('Backspace')
+    await page.keyboard.type('todo')
+    await expect(menu(page).getByRole('option')).toHaveCount(1)
+    await expect(option(page, 'Task list')).toBeVisible()
+  })
+
+  test('the arrow keys move the highlight, round the ends; Tab picks too', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/')
+    await page.keyboard.press('ArrowUp')
+    await expect(option(page, 'Code block')).toHaveAttribute('aria-selected', 'true')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await expect(option(page, 'Subheading')).toHaveAttribute('aria-selected', 'true')
+    await expect(editor(page, 'formats')).toHaveAttribute('aria-activedescendant', (await option(page, 'Subheading').getAttribute('id'))!)
+    await page.keyboard.press('Tab')
+    await expect(editor(page, 'formats')).toBeFocused()
+    await page.keyboard.type('Notes')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n## Notes')
+  })
+
+  test('a click picks, and never takes focus from the text', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/')
+    await option(page, 'Quote').click()
+    await expect(editor(page, 'formats')).toBeFocused()
+    await page.keyboard.type('Wise words')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n> Wise words')
+  })
+
+  test('Esc closes it and keeps what was typed; it stays closed', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/qu')
+    await page.keyboard.press('Escape')
+    await expect(menu(page)).toHaveCount(0)
+    await expect(editor(page, 'formats')).toBeFocused()
+    await expect(editor(page, 'formats')).not.toHaveAttribute('aria-activedescendant', /.*/)
+    await page.keyboard.type('o')
+    await expect(menu(page)).toHaveCount(0)
+    await page.keyboard.press('Enter')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n/quo')
+  })
+
+  test('no match hides it, and Enter is a new line again', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/usr')
+    await expect(menu(page)).toHaveCount(0)
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('next')
+    await expect(saved(page, 'formats')).toContainText('/usr\n\nnext')
+  })
+
+  test('only at a line\'s start, and only when typed', async ({ page }) => {
+    // Mid-line.
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.type(' /')
+    await expect(menu(page)).toHaveCount(0)
+    // In a list item.
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('- item')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/')
+    await expect(menu(page)).toHaveCount(0)
+    // A "/" already at a line's start: the caret coming to it doesn't open it.
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/q')
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('ArrowLeft')
+    await page.keyboard.press('ArrowRight')
+    await expect(menu(page)).toHaveCount(0)
+  })
+
+  test('Ctrl/Cmd+Z after a pick brings the "/…" back', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/quo')
+    await page.waitForTimeout(600)
+    await page.keyboard.press('Enter')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n>')
+    await page.keyboard.press('ControlOrMeta+z')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n/quo')
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`open, highlighted and hovered, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await newLine(page)
+      await page.keyboard.type('/')
+      await page.keyboard.press('ArrowDown')
+      await option(page, 'Task list').hover()
+      await expect(option(page, 'Task list')).toHaveAttribute('aria-selected', 'true')
+      const results = await new AxeBuilder({ page })
+        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
+        .analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
+})

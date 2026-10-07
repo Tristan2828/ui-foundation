@@ -746,8 +746,11 @@ const price = editInPlace({
   words (bold, italic, strikethrough, code, link); Alt+F10 reaches the
   floating one, else the fixed one. Both are part of the field, so moving
   to them doesn't save, and Esc hides the floating one before it gives up
-  the edit. `toolbar={false}` leaves both out where a value is short and
-  the shortcuts are enough.
+  the edit. "/" typed at a line's start lists the blocks the line can
+  become (headings, lists, quote, code block); typing filters, Enter or
+  Tab picks, and Esc closes the list before it gives up the edit.
+  `toolbar={false}` leaves out the toolbars and the slash menu where a
+  value is short and the shortcuts are enough.
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
   `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.
