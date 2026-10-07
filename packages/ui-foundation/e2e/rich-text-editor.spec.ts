@@ -299,12 +299,15 @@ test.describe('toolbar', () => {
   test('one row of named buttons, each with its shortcut, one tab stop', async ({ page }) => {
     const bar = toolbar(page, 'formats')
     const labels = [
-      'Bold', 'Italic', 'Strikethrough', 'Code', 'Heading', 'Subheading',
-      'Bulleted list', 'Numbered list', 'Task list', 'Quote', 'Code block', 'Link',
+      'Bold', 'Italic', 'Strikethrough', 'Code', 'Heading 1', 'Heading 2', 'Heading 3',
+      'Task list', 'Bulleted list', 'Numbered list', 'Quote', 'Callout', 'Code block', 'Divider', 'Table', 'Link',
     ]
     await expect(bar.getByRole('button')).toHaveCount(labels.length)
     for (const label of labels) await expect(bar.getByRole('button', { name: label, exact: true })).toBeVisible()
     await expect(button(page, 'Bold')).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+B$/)
+    // Notion's block keys: Ctrl+Shift and a digit, Cmd+Option on a Mac.
+    await expect(button(page, 'Bulleted list')).toHaveAttribute('aria-keyshortcuts', /^(Control\+Shift|Meta\+Alt)\+5$/)
+    await expect(button(page, 'Strikethrough')).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+Shift\+S$/)
     await expect(bar.locator('[tabindex="0"]')).toHaveCount(1)
     await expect(bar).toHaveAttribute('aria-controls', /.+/)
   })
@@ -359,12 +362,15 @@ test.describe('toolbar', () => {
   test('headings, a quote and a code block turn the line into one, and back', async ({ page }) => {
     const first = () => saved(page, 'formats')
     await caretInFirstLine(page)
-    await button(page, 'Heading').click()
+    await button(page, 'Heading 1').click()
     await expect(first()).toContainText('# Format me here.')
-    await expect(button(page, 'Heading')).toHaveAttribute('aria-pressed', 'true')
-    await button(page, 'Subheading').click()
+    await expect(button(page, 'Heading 1')).toHaveAttribute('aria-pressed', 'true')
+    await button(page, 'Heading 2').click()
     await expect(first()).toContainText('## Format me here.')
-    await button(page, 'Subheading').click()
+    await button(page, 'Heading 3').click()
+    await expect(first()).toContainText('### Format me here.')
+    await expect(button(page, 'Heading 2')).toHaveAttribute('aria-pressed', 'false')
+    await button(page, 'Heading 3').click()
     await expect(first()).not.toContainText('#')
     await button(page, 'Quote').click()
     await expect(first()).toContainText('> Format me here.')
@@ -405,7 +411,7 @@ test.describe('toolbar', () => {
 
   test('read-only, every button is disabled', async ({ page }) => {
     const buttons = toolbar(page, 'readOnly').getByRole('button')
-    await expect(buttons).toHaveCount(12)
+    await expect(buttons).toHaveCount(16)
     for (const one of await buttons.all()) await expect(one).toBeDisabled()
   })
 
@@ -610,7 +616,10 @@ test.describe('floating toolbar', () => {
 test.describe('slash menu', () => {
   const menu = (page: Page) => page.getByRole('listbox', { name: 'Blocks' })
   const option = (page: Page, name: string) => menu(page).getByRole('option', { name, exact: true })
-  const BLOCKS = ['Heading', 'Subheading', 'Bulleted list', 'Numbered list', 'Task list', 'Quote', 'Code block']
+  const BLOCKS = [
+    'Heading 1', 'Heading 2', 'Heading 3', 'Task list', 'Bulleted list', 'Numbered list',
+    'Quote', 'Callout', 'Code block', 'Divider', 'Table',
+  ]
 
   // A new empty line at the end, the caret on it.
   async function newLine(page: Page) {
@@ -633,8 +642,8 @@ test.describe('slash menu', () => {
     await expect(text).toBeFocused()
     await expect(text).toHaveAttribute('aria-autocomplete', 'list')
     await expect(text).toHaveAttribute('aria-controls', (await menu(page).getAttribute('id'))!)
-    await expect(option(page, 'Heading')).toHaveAttribute('aria-selected', 'true')
-    await expect(text).toHaveAttribute('aria-activedescendant', (await option(page, 'Heading').getAttribute('id'))!)
+    await expect(option(page, 'Heading 1')).toHaveAttribute('aria-selected', 'true')
+    await expect(text).toHaveAttribute('aria-activedescendant', (await option(page, 'Heading 1').getAttribute('id'))!)
   })
 
   test('typing filters it; Enter turns the line into the block, the "/…" gone', async ({ page }) => {
@@ -649,11 +658,11 @@ test.describe('slash menu', () => {
     await expect(saved(page, 'formats')).not.toContainText('/num')
   })
 
-  test('keywords match too: "/h2" is Subheading, "/todo" a task list', async ({ page }) => {
+  test('keywords match too: "/h2" is Heading 2, "/todo" a task list', async ({ page }) => {
     await newLine(page)
     await page.keyboard.type('/h2')
     await expect(menu(page).getByRole('option')).toHaveCount(1)
-    await expect(option(page, 'Subheading')).toBeVisible()
+    await expect(option(page, 'Heading 2')).toBeVisible()
     await page.keyboard.press('Backspace')
     await page.keyboard.press('Backspace')
     await page.keyboard.type('todo')
@@ -665,11 +674,11 @@ test.describe('slash menu', () => {
     await newLine(page)
     await page.keyboard.type('/')
     await page.keyboard.press('ArrowUp')
-    await expect(option(page, 'Code block')).toHaveAttribute('aria-selected', 'true')
+    await expect(option(page, 'Table')).toHaveAttribute('aria-selected', 'true')
     await page.keyboard.press('ArrowDown')
     await page.keyboard.press('ArrowDown')
-    await expect(option(page, 'Subheading')).toHaveAttribute('aria-selected', 'true')
-    await expect(editor(page, 'formats')).toHaveAttribute('aria-activedescendant', (await option(page, 'Subheading').getAttribute('id'))!)
+    await expect(option(page, 'Heading 2')).toHaveAttribute('aria-selected', 'true')
+    await expect(editor(page, 'formats')).toHaveAttribute('aria-activedescendant', (await option(page, 'Heading 2').getAttribute('id'))!)
     await page.keyboard.press('Tab')
     await expect(editor(page, 'formats')).toBeFocused()
     await page.keyboard.type('Notes')
@@ -752,4 +761,276 @@ test.describe('slash menu', () => {
       expect(results.violations).toEqual([])
     })
   }
+})
+
+// How written text looks, in the editor and in <Markdown>: three heading
+// sizes a reader can tell apart (Heading 1 and 2 used to look alike),
+// Heading 1 with a rule under it, links in their own colour.
+test.describe('how written text looks', () => {
+  async function sizes(scope: import('@playwright/test').Locator) {
+    const size = (selector: string) =>
+      scope.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).fontSize))
+    return { h1: await size('h3'), h2: await size('h4'), h3: await size('h5'), body: await size('p') }
+  }
+
+  for (const [where, url] of [
+    ['the editor', 'http://localhost:6006/iframe.html?id=app-richtexteditor--default&viewMode=story'],
+    ['<Markdown>', 'http://localhost:6006/iframe.html?id=app-markdown--default&viewMode=story'],
+  ] as const) {
+    test(`${where}: each heading level smaller than the last, Heading 1 ruled; links coloured`, async ({ page }) => {
+      await page.goto(url)
+      const scope = page.locator(where === 'the editor' ? '.ProseMirror' : '[data-slot=markdown]')
+      await expect(scope.locator('h3').first()).toBeVisible()
+      const { h1, h2, h3, body } = await sizes(scope)
+      expect(h1).toBeGreaterThan(h2)
+      expect(h2).toBeGreaterThan(h3)
+      expect(h3).toBeGreaterThan(body)
+      expect(await scope.locator('h3').first().evaluate((element) => getComputedStyle(element).borderBottomWidth)).not.toBe('0px')
+      const color = (selector: string) => scope.locator(selector).first().evaluate((element) => getComputedStyle(element).color)
+      expect(await color('a')).not.toBe(await color('p'))
+      // The divider is a 2px line, not a hairline.
+      expect(await scope.locator('hr').evaluate((element) => element.getBoundingClientRect().height)).toBe(2)
+    })
+  }
+})
+
+// Notion's keys, on the Features story's "formats" editor.
+test.describe('Notion shortcuts', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'formats')).toBeVisible()
+  })
+
+  test('Ctrl+Shift and a digit turns the line into a block; 0 makes it text again', async ({ page }) => {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+    const text = () => saved(page, 'formats')
+    const steps: [string, string][] = [
+      ['1', '# Format me here.'],
+      ['0', 'Format me here.'],
+      ['2', '## Format me here.'],
+      ['0', 'Format me here.'],
+      ['3', '### Format me here.'],
+      ['0', 'Format me here.'],
+      ['4', '- [ ] Format me here.'],
+      ['5', '- Format me here.'],
+      ['6', '1. Format me here.'],
+      ['0', 'Format me here.'],
+      ['8', '```\nFormat me here.\n```'],
+      ['0', 'Format me here.'],
+    ]
+    for (const [digit, starts] of steps) {
+      await page.keyboard.press(`Control+Shift+Digit${digit}`)
+      await expect.poll(async () => (await text().textContent())!.startsWith(`${starts}\n`), { message: `after ${digit}` }).toBe(true)
+    }
+    await expect(editor(page, 'formats')).toBeFocused()
+  })
+
+  test('Ctrl/Cmd+Shift+S strikes the selected words through', async ({ page }) => {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Home')
+    for (let i = 0; i < 'Format'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    // ProseMirror reads a keyboard selection a moment after it changes.
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+Shift+S')
+    await expect(saved(page, 'formats')).toContainText('~~Format~~ me here.')
+  })
+})
+
+// Callouts (`> [!NOTE]`), on the Features story's "callout" editor and,
+// for making one, its "formats" editor.
+test.describe('callouts', () => {
+  const kindButton = (page: Page, kind: string) =>
+    page.locator('[data-fixture="callout"]').getByRole('button', { name: `${kind} callout: change its kind` })
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'callout').locator('[data-callout=note]')).toBeVisible()
+  })
+
+  test('drawn as its kind; typing in one writes it back as a callout', async ({ page }) => {
+    await editor(page, 'callout').getByText('Measure twice.').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' Then cut.')
+    await expect(saved(page, 'callout')).toContainText('> [!NOTE]\n> Measure twice. Then cut.\n\nAfter the callout.')
+  })
+
+  test('"/callout" makes one; "/" at a line\'s start in one changes its kind', async ({ page }) => {
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/callout')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Heads up')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n> [!NOTE]\n> Heads up')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/warn')
+    await expect(page.getByRole('option', { name: 'Warning callout', exact: true })).toBeVisible()
+    await page.keyboard.press('Enter')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n> [!WARNING]\n> Heads up')
+  })
+
+  test('its icon is a menu of kinds, and Remove callout keeps the text', async ({ page }) => {
+    await kindButton(page, 'Note').click()
+    await page.getByRole('menuitemradio', { name: 'Tip' }).click()
+    await expect(saved(page, 'callout')).toContainText('> [!TIP]\n> Measure twice.')
+    await expect(editor(page, 'callout')).toBeFocused()
+    await kindButton(page, 'Tip').click()
+    await page.getByRole('menuitem', { name: 'Remove callout' }).click()
+    await expect(saved(page, 'callout')).toContainText('Measure twice.\n\nAfter the callout.')
+    await expect(saved(page, 'callout')).not.toContainText('[!')
+  })
+
+  test("the toolbar's Callout puts the line in one, and takes it out again", async ({ page }) => {
+    await editor(page, 'formats').locator('p').first().click()
+    await page.waitForTimeout(100)
+    const button = page.locator('[data-fixture="formats"]').getByRole('button', { name: 'Callout', exact: true })
+    await button.click()
+    await expect(saved(page, 'formats')).toContainText('> [!NOTE]\n> Format me here.')
+    await expect(button).toHaveAttribute('aria-pressed', 'true')
+    await button.click()
+    await expect(saved(page, 'formats')).not.toContainText('[!NOTE]')
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`its menu open, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await kindButton(page, 'Note').click()
+      await expect(page.getByRole('menu')).toBeVisible()
+      const results = await new AxeBuilder({ page })
+        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
+        .analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
+})
+
+// Tables, on the Features story's "table" editor (Part/Count, Top 1,
+// Leg 4) and, for making one, its "formats" editor.
+test.describe('tables', () => {
+  const table = (page: Page) => editor(page, 'table').locator('table')
+  const rows = (page: Page) => table(page).locator('tr')
+  const cell = (page: Page, row: number, column: number) => rows(page).nth(row).locator('th, td').nth(column)
+  const menuButton = (page: Page) =>
+    page.locator('[data-fixture="table"]').getByRole('toolbar', { name: 'Formatting' }).getByRole('button', { name: 'Table', exact: true })
+  const pick = async (page: Page, name: string) => {
+    await menuButton(page).click()
+    await page.getByRole('menu').getByRole(/^(Left|Center|Right)$/.test(name) ? 'menuitemradio' : 'menuitem', { name, exact: true }).click()
+  }
+
+  async function caretIn(page: Page, row: number, column: number) {
+    await cell(page, row, column).click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(table(page)).toBeVisible()
+  })
+
+  test('"/table" puts one in, the caret in its first cell; Tab moves along, and adds a row from the last cell', async ({ page }) => {
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/table')
+    await page.keyboard.press('Enter')
+    const made = editor(page, 'formats').locator('table')
+    await expect(made.locator('tr')).toHaveCount(3)
+    for (const [index, word] of ['A', 'B', 'C', 'a1', 'b1', 'c1', 'a2', 'b2', 'c2'].entries()) {
+      if (index > 0) await page.keyboard.press('Tab')
+      await page.keyboard.type(word)
+    }
+    await page.keyboard.press('Tab')
+    await expect(made.locator('tr')).toHaveCount(4)
+    await page.keyboard.type('a3')
+    await expect(saved(page, 'formats')).toContainText(/\| A +\| B +\| C +\|\n\| -+ \| -+ \| -+ \|\n\| a1 +\| b1 +\| c1 +\|/)
+    await expect(saved(page, 'formats')).toContainText(/\| a3 +\| +\| +\|/)
+  })
+
+  test('Enter goes down the column, and out of the table from its last row; Shift+Enter adds nothing', async ({ page }) => {
+    await caretIn(page, 1, 0)
+    await page.keyboard.press('Shift+Enter')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('X')
+    await expect(saved(page, 'table')).toContainText(/\| XLeg +\| 4/)
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Y')
+    await expect(saved(page, 'table')).toContainText('YAfter the table.')
+    await expect(saved(page, 'table')).toContainText(/\| Top +\| 1/)
+  })
+
+  test('the Table menu adds rows and columns, aligns a column, and deletes', async ({ page }) => {
+    await caretIn(page, 1, 0)
+    await pick(page, 'Insert row below')
+    await expect(rows(page)).toHaveCount(4)
+    await expect(editor(page, 'table')).toBeFocused()
+    await pick(page, 'Insert column right')
+    await expect(rows(page).first().locator('th')).toHaveCount(3)
+    await pick(page, 'Center')
+    await expect(saved(page, 'table')).toContainText(/\n\| :-+: \| -+ \| -+ \|\n/)
+    await pick(page, 'Delete column')
+    await expect(rows(page).first().locator('th')).toHaveCount(2)
+    await pick(page, 'Delete row')
+    await expect(rows(page)).toHaveCount(3)
+    await pick(page, 'Delete table')
+    await expect(table(page)).toHaveCount(0)
+    await expect(saved(page, 'table')).not.toContainText('|')
+  })
+
+  test('in the header row, the row can\'t be deleted or have one put above it; outside a table, only Insert table', async ({ page }) => {
+    await caretIn(page, 0, 0)
+    await menuButton(page).click()
+    const menu = page.getByRole('menu')
+    await expect(menu.getByRole('menuitem', { name: 'Delete row' })).toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Insert row above' })).toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Insert row below' })).not.toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Insert table' })).toHaveAttribute('aria-disabled', 'true')
+    await page.keyboard.press('Escape')
+    await expect(menu).toHaveCount(0)
+    await expect(menuButton(page)).toBeFocused()
+    await editor(page, 'table').getByText('After the table.').click()
+    await page.waitForTimeout(100)
+    await menuButton(page).click()
+    await expect(menu.getByRole('menuitem', { name: 'Insert table' })).not.toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Delete table' })).toHaveAttribute('aria-disabled', 'true')
+    await menu.getByRole('menuitem', { name: 'Insert table' }).click()
+    await expect(editor(page, 'table').locator('table')).toHaveCount(2)
+  })
+
+  test('the bars add a row at the end and a column at the right', async ({ page }) => {
+    const fixture = page.locator('[data-fixture="table"]')
+    await table(page).hover()
+    await fixture.getByRole('button', { name: 'Add a row' }).click()
+    await expect(rows(page)).toHaveCount(4)
+    await page.keyboard.type('Foot')
+    await expect(saved(page, 'table')).toContainText(/\| Foot +\| +\|/)
+    await fixture.getByRole('button', { name: 'Add a column' }).click()
+    await expect(rows(page).first().locator('th')).toHaveCount(3)
+    await page.keyboard.type('Note')
+    await expect(saved(page, 'table')).toContainText(/\| Part +\| Count +\| Note +\|/)
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`the caret in a table and its menu open, zero axe violations (${theme})`, async ({ page }) => {
+      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await caretIn(page, 1, 0)
+      await menuButton(page).click()
+      await expect(page.getByRole('menu')).toBeVisible()
+      const results = await new AxeBuilder({ page })
+        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
+        .analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
+})
+
+test('"/divider" puts in a divider and a line under it', async ({ page }) => {
+  await page.goto(FEATURES)
+  await caretAtEnd(page, 'formats')
+  await page.keyboard.press('Enter')
+  await page.keyboard.type('/divider')
+  await page.keyboard.press('Enter')
+  await page.keyboard.type('Below')
+  await expect(saved(page, 'formats')).toContainText('Third line.\n\n---\n\nBelow')
 })

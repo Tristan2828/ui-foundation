@@ -275,9 +275,9 @@ is a filled-in example while the Widgets demo is still here).
      `<a target="_blank" rel="noreferrer">` with an `ExternalLinkIcon`
      and a visually hidden "(opens in a new tab)".
    - **Long text the plan marks Markdown** renders through the
-     foundation's `<Markdown>`: headings, lists, tables and links, links
-     opening in a new tab; raw HTML shows as the characters typed, never
-     as markup. The app needs no Markdown dependency of its own. Plain
+     foundation's `<Markdown>`: headings, lists, tables, callouts
+     (`> [!NOTE]`) and links, links opening in a new tab; raw HTML shows
+     as the characters typed, never as markup. The app needs no Markdown dependency of its own. Plain
      long text renders as text (`whitespace-pre-line` keeps its line
      breaks).
    - **Quick actions: only the fields the plan's `Quick actions` line

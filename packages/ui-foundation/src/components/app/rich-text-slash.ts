@@ -1,14 +1,15 @@
 // The slash menu's logic: "/" typed at the start of a top-level paragraph
-// opens it, what's typed after the "/" filters it, and picking an item
-// turns the paragraph into that block, the "/…" gone. The menu itself:
-// rich-text-slash-menu.tsx; its keys and ARIA: milkdown-editor.tsx.
+// (or one in a callout) opens it, what's typed after the "/" filters it,
+// and picking an item turns the paragraph into that block, the "/…" gone.
+// The menu itself: rich-text-slash-menu.tsx; its keys and ARIA:
+// milkdown-editor.tsx.
 //
 // Only a "/" typed there opens it: one already in the text (a path,
 // `/usr/bin`) never does, and neither does a "/" mid-line or inside a
 // list, a quote or a code block.
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
-import { FORMAT_GROUPS, type FormatItem } from './rich-text-format-items'
+import { CALLOUT_VARIANTS, FORMAT_GROUPS, type FormatItem } from './rich-text-format-items'
 import { toggleFormat, type FormatId } from './rich-text-formats'
 
 /** Where the "/" that opened the menu is, while it's open. */
@@ -22,10 +23,12 @@ export type SlashQuery = { from: number; to: number; query: string }
 // Longer than any item's name: past it, the person is writing, not picking.
 const MAX_QUERY = 24
 
-// A top-level paragraph's start: where a "/" opens the menu.
+// A top-level paragraph's start, or one's in a callout (where picking a
+// kind of callout changes the callout's): where a "/" opens the menu.
 function atParagraphStart(state: EditorState, pos: number): boolean {
   const $pos = state.doc.resolve(pos)
-  return $pos.depth === 1 && $pos.parent.type.name === 'paragraph' && $pos.parentOffset === 0
+  const placed = $pos.depth === 1 || ($pos.depth === 2 && $pos.node(1).type.name === 'callout')
+  return placed && $pos.parent.type.name === 'paragraph' && $pos.parentOffset === 0
 }
 
 // The menu's span, if the "/" at `from` still opens it: the caret after it
@@ -86,23 +89,36 @@ export function slashPlugin(): Plugin<SlashState> {
 
 // What each block answers to besides its name.
 const KEYWORDS: Partial<Record<FormatId, string[]>> = {
-  heading: ['h1', 'title'],
-  subheading: ['h2'],
+  heading1: ['h1', 'title', 'heading'],
+  heading2: ['h2', 'subheading', 'heading'],
+  heading3: ['h3', 'heading'],
   bullets: ['ul', 'unordered', 'bullet'],
   numbers: ['ol', 'ordered', 'number'],
   tasks: ['todo', 'checkbox', 'checklist'],
   quote: ['blockquote'],
+  callout: ['note', 'info', 'alert', 'box'],
+  'callout-tip': ['callout', 'hint', 'idea', 'alert'],
+  'callout-important': ['callout', 'alert'],
+  'callout-warning': ['callout', 'alert', 'warn'],
+  'callout-caution': ['callout', 'alert', 'danger'],
   codeBlock: ['pre'],
+  divider: ['hr', 'rule', 'line', 'separator', '---'],
+  table: ['grid', 'columns'],
 }
 
-// The menu's items: the blocks, in the toolbar's order.
+// The menu's items: the blocks, in the toolbar's order. The kinds of
+// callout past the default only once something's typed ("/warn"), so
+// the list "/" opens with stays short.
 const BLOCKS = FORMAT_GROUPS.flat().filter((item) => KEYWORDS[item.id])
+const TYPED_ONLY = CALLOUT_VARIANTS
 
 /** The blocks matching what's typed after the "/": in the name, or the start of a keyword. */
 export function slashItems(query: string): FormatItem[] {
   const typed = query.trim().toLowerCase()
   if (!typed) return BLOCKS
-  return BLOCKS.filter(
+  const blocks = [...BLOCKS]
+  blocks.splice(BLOCKS.findIndex((item) => item.id === 'callout') + 1, 0, ...TYPED_ONLY)
+  return blocks.filter(
     (item) => item.label.toLowerCase().includes(typed) || KEYWORDS[item.id]!.some((word) => word.startsWith(typed)),
   )
 }

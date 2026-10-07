@@ -312,6 +312,46 @@ or a heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
 code.
 
+**Written text's look (3.21)** (`prose-look.ts`), shared by the editor
+and `<Markdown>`: three heading roles (`type-heading-1` to `-3`, 26, 20
+and 17px over the 14px body, Heading 1 ruled), links in `--link` as well
+as underlined, a `---` divider as a 2px line in `--rule`. Headings still
+render from `<h3>`; only how they look changed.
+
+**Callouts (3.21)** (`src/lib/markdown-callout.ts`) are GitHub's alert
+syntax, a quote whose first line is `[!NOTE]` (or tip, important,
+warning, caution), so a note stays plain Markdown that GitHub and
+Obsidian also render as a callout. remark parses one as a quote; a remark
+plugin reads the marker, into a `callout` node for the editor (its own
+schema, written back by a stringify handler) and into a
+`<div data-callout>` for `<Markdown>`. The merge needs neither: to it a
+callout is the quote it's written as. The marker is kept as written
+(`[!note]` stays lower case) unless the kind changes, so an untouched
+callout reads as untouched. In the editor a callout's icon is a menu of
+kinds (a React widget portaled into the node view's slot,
+`rich-text-node-views.ts`, `rich-text-widgets.tsx`); from the keyboard,
+"/" at a line's start inside a callout lists the kinds.
+
+**Tables (3.21)** (`rich-text-table.ts`, `rich-text-table-menu.tsx`): the
+node view puts a table in a box that scrolls sideways, with Notion's
+"add a row" and "add a column" bars (mouse shortcuts, out of the tab
+order). Tab in the last cell adds a row; Enter goes down a column and out
+of the table from its last row (Milkdown's Enter left the table from any
+row); Ctrl/Cmd+Enter is the field's save, not Milkdown's "leave the
+table". The toolbar's Table menu (Base UI's menu, shadcn's
+`dropdown-menu`) inserts a table, rows and columns, aligns a column and
+deletes. What GFM can't store isn't offered: the header row can't be
+deleted or have a row put above it, a table keeps one row and one column,
+there are no column widths and no line breaks inside a cell.
+
+**Shortcuts (3.21)** (`rich-text-shortcuts.ts`) are Notion's where it has
+one: Ctrl+Shift+0 to 6 and 8 turn the line into text, a heading, a list
+or a code block, and Ctrl/Cmd+Shift+S strikes through. On a Mac they're
+Cmd+Option and the digit, as in Notion: Cmd+Shift+3 to 5 are the system's
+screenshots. Read by `event.code`, since Shift+5 types "%". Cmd+Option
+counts on Apple only: Ctrl+Alt on Windows is AltGr, which types
+characters. Milkdown's own (Ctrl+Alt+1, Mod+Alt+X, …) still work.
+
 **Considered:** Tiptap 3 with `@tiptap/markdown` (maintained, React 19;
 parses with marked, so what's edited could differ from what `<Markdown>`
 renders), Lexical with `@lexical/markdown` (its own transformers, not

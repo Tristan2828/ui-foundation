@@ -15,6 +15,8 @@ Notes with **bold**, *emphasis*, ~~struck~~ and \`inline code\`, and a
 1. Measure the desk
 2. Order the frame
 
+### Parts
+
 - Fragile parts
 - Bulky parts
 
@@ -26,6 +28,21 @@ Notes with **bold**, *emphasis*, ~~struck~~ and \`inline code\`, and a
 | Top | 120cm |
 
 > Measure twice, cut once.
+
+> [!NOTE]
+> The frame ships in two boxes.
+
+> [!TIP]
+> Assemble it where it will stand.
+
+> [!IMPORTANT]
+> Keep the receipt for the warranty.
+
+> [!WARNING]
+> Two people to lift the top.
+
+> [!CAUTION]
+> Unplug the motor before cleaning.
 
 \`\`\`
 height = 72cm
@@ -105,7 +122,8 @@ export const RoundTrip: StoryObj<typeof RichTextEditor> = {
 
 // The editing features, each in its own editor: the placeholder, the
 // length count near and over a limit, a link to edit, a task list to
-// tick, three lines for the toolbars to format, and a read-only editor
+// tick, three lines for the toolbars to format, a table, a callout, and a
+// read-only editor
 // (e2e/rich-text-editor.spec.ts "editing features", "toolbar").
 // Also contrast-checked in both themes, the count's over-the-limit tone
 // included.
@@ -118,6 +136,8 @@ export const Features: StoryObj<typeof RichTextEditor> = {
       <Labelled label="links" markdown={'See the [setup guide](https://example.com/setup) for details.\n\nPlain words here.\n'} />
       <Labelled label="tasks" markdown={'- [ ] Open item\n- [x] Done item\n'} />
       <Labelled label="formats" markdown={'Format me here.\n\nSecond line.\n\nThird line.\n'} />
+      <Labelled label="table" markdown={'| Part | Count |\n| --- | --- |\n| Top | 1 |\n| Leg | 4 |\n\nAfter the table.\n'} />
+      <Labelled label="callout" markdown={'> [!NOTE]\n> Measure twice.\n\nAfter the callout.\n'} />
       <Labelled label="readOnly" markdown={'Saving, so nothing can change.\n'} readOnly />
     </div>
   ),

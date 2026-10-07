@@ -5,6 +5,52 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.21.0 — rich text: headings, callouts, tables, Notion's keys
+
+Additive: no prop or export changes, nothing for an app to do but bump
+the version and run `npx ui-foundation sync` (the playbook's rich-text
+lines are updated). Everything below is in `RichTextEditor` and
+`<Markdown>` alike. From a review of the editor in use.
+
+- **Headings a reader can tell apart.** `#`, `##` and `###` are 26, 20
+  and 17px over the 14px body (new type roles `type-heading-1` to `-3`);
+  Heading 1 has a rule under it. Until now `#` and `##` looked the same.
+  The toolbar's buttons are now **Heading 1, Heading 2, Heading 3** (were
+  Heading and Subheading): an app test that finds them by name needs the
+  new names.
+- **Callouts**, Notion's coloured boxes, as GitHub's alert syntax:
+  `> [!NOTE]` (or `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`). Plain
+  Markdown, so a note stays readable anywhere; a quote without the marker
+  is still a quote. In the editor: the toolbar's Callout, "/callout" (and
+  "/warn", "/tip", …), and the callout's icon is a menu of kinds with
+  Remove callout.
+- **Links are blue** as well as underlined (new token `--link`).
+- **The divider (`---`) is a 2px line** in a stronger grey (new token
+  `--rule`), with room around it. "/divider" and the toolbar's Divider put
+  one in.
+- **Tables:** a header row on the muted fill, a line between every cell,
+  wrapping cells, rounded and scrolling sideways when wide. In the editor:
+  "/table" and the toolbar's Table menu insert one; Tab in the last cell
+  adds a row; Enter goes down a column (it used to leave the table from
+  any row); bars under and beside a table add a row or a column; the
+  Table menu inserts rows above or below and columns left or right,
+  aligns a column (written as `:---:`), and deletes a row, a column or the
+  table. Ctrl/Cmd+Enter in a table now saves the field like everywhere
+  else.
+- **Notion's shortcuts:** Ctrl+Shift+1/2/3 headings, +4 task list,
+  +5 bulleted list, +6 numbered list, +8 code block, +0 back to text
+  (Cmd+Option and the digit on a Mac); Ctrl/Cmd+Shift+S strikethrough.
+  Milkdown's own keys still work. Each button's tooltip and
+  `aria-keyshortcuts` name the new keys.
+- **Fixed:** in `<Markdown>`, a bullet list followed by task items (one
+  Markdown list) lost its bullets and put each task's box on a line of
+  its own.
+- **New primitive: `@tristan2828/ui-foundation/ui/dropdown-menu`**
+  (shadcn's, on Base UI), behind the Table and callout menus, axe-checked
+  open in both themes. An app that ran `shadcn add dropdown-menu` itself:
+  lint now flags its copy (the package ships one), so import the package's
+  and delete its own.
+
 ## 3.20.1 — `create-app.sh` installs the tag's own version
 
 Script and CI only; no package code changed. Apps already made need
