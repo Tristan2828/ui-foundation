@@ -11,6 +11,8 @@ export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
 export {
   EntityView,
   type EntityViewField,
+  type EntityViewLayout,
+  type EntityViewPlacement,
   type EntityViewProps,
   type EntityViewSection,
 } from '@/components/app/entity-view'

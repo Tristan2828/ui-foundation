@@ -44,6 +44,8 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // <StageCircle> and the cell patterns' markup (patterns/CellPatterns) are
 // design language too: each also has its glyphs measured below.
 // <CountLink> is a link style every parent table's counts share.
+// <EntityView>'s two layouts are every record's page: the rail's narrow
+// column and its stacked fields answer for their contrast too.
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
@@ -54,6 +56,8 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
   { id: 'app-countlink--default', mustShow: 'Move house' },
+  { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
+  { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
 ]
 
 // Stories whose glyphs carry meaning on their own: every <svg> in them must

@@ -5,6 +5,46 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.24.0 — a record's view with a right rail
+
+Additive: one new optional prop on `EntityView` and on its sections, no
+existing prop or export changes. The default one-column view is
+unchanged. Run `npx ui-foundation sync` for the updated playbook and
+plan template.
+
+- **`EntityView` `layout="rail"`** (issue #99), for a record with long
+  content. The page takes the content area's whole width (no
+  `max-w-4xl`), sections marked `placement: 'rail'` go in a 22rem column
+  on the right, and the rest fill the main column beside it from the
+  top, so long Markdown starts under the header and a wide table gets
+  the room. The rail stays in view while the main column scrolls, but
+  only while it fits the window: a taller one scrolls with the page, so
+  its end is never stuck below the fold. Two columns from a view 56rem
+  (896px) wide, measured on the view itself (a container query), so an
+  open sidebar counts; narrower, one column in the order header → rail →
+  main. That is also the DOM order at every width, so reading and tab
+  order match the screen. The rail is an `<aside>` named "<title>
+  details" (`railLabel` to change it). Its fields stack label above
+  value while the rail is narrow. Editing in place, the leave prompt and
+  the loading skeleton (a main block and a rail block) follow the
+  layout. New types `EntityViewLayout` and `EntityViewPlacement`.
+- **Storybook `app/EntityView`** renders both layouts, with axe and the
+  token check in both themes, and `e2e/entity-view.spec.ts` pins the
+  rail at 1280, 2289 and 393px: beside the main column, a wide Markdown
+  table unsqueezed at 2289px, stickiness only while it fits, tab order,
+  the landmark and editing in place.
+- **The template's Widget view uses the rail** (Details in it; Description
+  and Checklist in the main column), so the playbook's reference shows
+  it and the template's a11y suite checks it in both themes.
+- **The plan template** has an optional `Layout: rail` line and a
+  Placement column for the sections; the playbook says to drop `layout`
+  and `placement` from the copied view when the plan has no `Layout`.
+
+To adopt it in an app: pass `layout="rail"` to the view's `EntityView`,
+mark the short sections `placement: 'rail'` (summary, fields, links),
+and update any spec that relied on section order on a wide screen: the
+rail's sections now come first in the DOM.
+
 ## 3.23.0 — a count that links to the related records
 
 Additive: one new component, no existing prop or export changes. Run
