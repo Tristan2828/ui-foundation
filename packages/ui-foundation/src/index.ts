@@ -6,7 +6,7 @@
 // Composites
 export { AppShell, type AppShellProps, type NavItem } from '@/components/app/app-shell'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
-export { DataTable, type DataTableProps, type SortingState } from '@/components/app/data-table'
+export { DataTable, type DataTableProps, type DataTableWidth, type SortingState } from '@/components/app/data-table'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
 export {
   EntityView,
@@ -29,6 +29,7 @@ export {
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
 export { ErrorState } from '@/components/app/error-state'
+export { InlineCreate, type InlineCreateProps } from '@/components/app/inline-create'
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
 export { MockModeBanner } from '@/components/app/mock-mode-banner'

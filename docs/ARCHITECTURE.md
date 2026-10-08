@@ -119,6 +119,11 @@ src/main.tsx                           FoundationProviders (theme, query client,
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps
   read it only through `useAuth()`, the only auth export.
+- **A small entity** (3.26) edits in its table's rows: `DataTable` runs
+  the same edit-in-place store as a view, so a cell that renders an
+  `EditableValue` edits where it's shown, and `InlineCreate` creates from
+  a name in the toolbar. `width="content"` sizes a table of a few short
+  columns to them on a wide screen.
 - **Tables** keep page, sort and filters in the URL (`useTableUrlState`,
   including `setFilters`/`applyView` for saved views). A saved view can
   name its columns (`DataTable`'s `visibleColumns`); they apply while the

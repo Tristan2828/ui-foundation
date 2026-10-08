@@ -48,6 +48,8 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // <EntityView>'s two layouts are every record's page: the rail's narrow
 // column and its stacked fields answer for their contrast too.
 // Its Lists story is the list edited in place: its rows and buttons.
+// <DataTable>'s opt-ins for a small entity: sized to its columns, and
+// edited in its rows (every cell's pencil, InlineCreate).
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
@@ -62,6 +64,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
+  { id: 'app-datatable--content-width', mustShow: 'Finance' },
+  { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
 ]
 
 // Stories whose glyphs carry meaning on their own: every <svg> in them must

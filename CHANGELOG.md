@@ -5,6 +5,45 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.26.0 — small entities edited in their rows; tables sized to their columns
+
+Additive: a new optional `width` prop on `DataTable`, a new `InlineCreate`
+export, and editing in place inside any `DataTable`. No existing prop or
+export changes, and a table that doesn't opt in looks and behaves as
+before. Run `npx ui-foundation sync` for the updated cell patterns,
+playbook and plan template.
+
+- **Edit a small entity in its rows** (issue #105, option 3 of the
+  options page). `DataTable` now runs the same edit-in-place store as
+  `EntityView`, so a cell that renders an `<EditableValue>` edits where
+  it's shown: one cell at a time, Enter or a pick saves, Esc gives up, a
+  refusal (a 422's field error) stays in the cell with what was typed,
+  focus returns to the cell's pencil, and leaving the page with a cell
+  half typed asks first. No pencil column, no edit route.
+- **`InlineCreate`**: a name box and Add for a table's toolbar. Enter
+  creates the record (the rest at their defaults), the box empties and
+  keeps the caret, a status line says what was added, and a blank or
+  taken name says why under the box.
+- **`DataTable` `width="content"`** (issue #104, option 4): a table of a
+  few short columns takes the width they need, at least 36rem, with its
+  toolbar and pagination, once its area is 80rem wide or more. Narrower
+  (a 1280 screen, a phone) it's the full width as always. Loading, empty
+  and error after a load keep the width it last had, so paging and
+  filtering don't move it; the first load can.
+- **Docs:** cell pattern 18 gains "In a table's rows" and
+  "`width="content"`"; the plan template a `Screens: list, edited in the
+  row` shape and an optional List screen `Width`; the playbook says what
+  that shape builds (no view, no form). The template has no small entity,
+  so the worked example is Storybook `app/DataTable` ("Edit in the rows",
+  "Content width").
+
+**Upgrading:** nothing is required. To move a small entity off its edit
+page: drop its edit route and pencil, make each column's cell an
+`EditableValue` over its field's control and save (stable columns,
+`getRowId`), put `InlineCreate` in the toolbar in place of New, and
+replace the form's specs with the cell's (cell pattern 18, "In a table's
+rows").
+
 ## 3.25.0 — lists edited in place, twelve colour slots, one hover
 
 Additive: a new `kind: 'list'` for `editInPlace`, two optional props on
