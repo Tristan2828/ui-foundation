@@ -149,6 +149,29 @@ test.describe('a11y: editing in place on the view', () => {
         )
       })
 
+      test('the checklist: an item open, one being added, and a refused change', async ({ page }) => {
+        await page.goto('/widgets/1')
+        const checklist = page.getByRole('region', { name: 'Checklist' })
+        await checklist.getByText('Pair the receiver', { exact: true }).click()
+        await expect(page.getByRole('textbox', { name: 'Item 2 text' })).toBeFocused()
+        await test.step('item open', () => expectNoAxeViolations(page))
+        await page.keyboard.press('Escape')
+
+        await checklist.getByRole('button', { name: 'Add item' }).click()
+        await expect(page.getByRole('textbox', { name: 'Item 3 text' })).toBeFocused()
+        await test.step('item being added', () => expectNoAxeViolations(page))
+        await page.keyboard.press('Escape')
+
+        await waitForMswReady(page)
+        await page.evaluate(() => {
+          const { worker, http, HttpResponse } = window.__msw
+          worker.use(http.patch('*/api/widgets/:id', () => HttpResponse.json({ detail: 'Database is down' }, { status: 500 })))
+        })
+        await checklist.getByRole('button', { name: 'Move item 2 up' }).click()
+        await expect(checklist.getByRole('alert')).toBeVisible()
+        await test.step('change refused', () => expectNoAxeViolations(page))
+      })
+
       test('the leave-page prompt', async ({ page }) => {
         await openName(page)
         await nameField(page).fill('Half typed')

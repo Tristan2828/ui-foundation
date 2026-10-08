@@ -6,8 +6,10 @@
 //
 // `readOnly` is editing in place's "saving" state: the value stays on
 // screen, unchangeable, until the server answers.
-import { useState } from 'react'
+import { useState, type ComponentProps, type ReactNode } from 'react'
 import { MultiReference, RichTextEditor } from '@tristan2828/ui-foundation'
+import { Checkbox } from '@tristan2828/ui-foundation/ui/checkbox'
+import { Field } from '@tristan2828/ui-foundation/ui/field'
 import { Input } from '@tristan2828/ui-foundation/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tristan2828/ui-foundation/ui/select'
 import type { components } from '@/api/schema'
@@ -116,6 +118,45 @@ export function WidgetDescriptionEditor({
       maxLength={DESCRIPTION_MAX_LENGTH}
       aria-invalid={invalid}
     />
+  )
+}
+
+// A checklist item's own fields, one row of the list: its done box and its
+// text, named by position ("Item 2 text"), which is also how the list's
+// buttons name it. The form registers the text (`textProps` is
+// `register(...)`) and binds its error (`error`); in place, `textProps`
+// carries the draft's value and its change, and the view shows the error.
+export function WidgetChecklistItemFields({
+  index,
+  done,
+  onDoneChange,
+  invalid,
+  readOnly,
+  textProps,
+  error,
+}: {
+  index: number
+  done: boolean
+  onDoneChange: (done: boolean) => void
+  invalid?: boolean
+  readOnly?: boolean
+  textProps: ComponentProps<'input'>
+  error?: ReactNode
+}) {
+  return (
+    <>
+      <Checkbox
+        className="mt-2.5"
+        checked={done}
+        disabled={readOnly}
+        onCheckedChange={onDoneChange}
+        aria-label={`Item ${index + 1} done`}
+      />
+      <Field data-invalid={invalid} className="min-w-0 flex-1">
+        <Input aria-label={`Item ${index + 1} text`} aria-invalid={invalid} readOnly={readOnly} {...textProps} />
+        {error}
+      </Field>
+    </>
   )
 }
 

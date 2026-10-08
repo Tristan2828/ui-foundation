@@ -301,7 +301,8 @@ test.describe('widget form', () => {
     await expect(page).toHaveURL('/widgets/1')
     const checklist = page.getByRole('region', { name: 'Checklist' })
     await expect(checklist.getByText('1/2 done', { exact: true })).toBeVisible()
-    await expect(checklist.getByRole('listitem')).toHaveText(['Done: Test the scroll wheel', 'Done: Pair the receiver'])
+    await expect(checklist.getByRole('listitem')).toHaveText(['Test the scroll wheel', 'Pair the receiver'])
+    await expect(checklist.getByRole('checkbox', { name: 'Done: Test the scroll wheel' })).toBeChecked()
 
     // Reopening shows the saved order. Through the view's Edit button, not
     // page.goto: a full load restarts the mocks with their seed data.

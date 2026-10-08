@@ -136,7 +136,10 @@ src/main.tsx                           FoundationProviders (theme, query client,
   own control where it's shown and saves when you leave it. The rules
   (one field at a time, a failed save keeps the draft, the leave-page
   prompt) live in one React-free store, `edit-in-place-store.ts`, unit
-  tested on their own. The leave prompt is React Router's `useBlocker`,
+  tested on their own. A sub-item list edits in place too (3.25,
+  `editable-list.tsx`): each item and the row being added are fields in
+  that store, and its saves are changes applied to the record's latest
+  list, so they build on a tick still saving. The leave prompt is React Router's `useBlocker`,
   so apps need a data router (`createBrowserRouter`), as the template
   has.
 

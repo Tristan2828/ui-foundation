@@ -50,7 +50,8 @@ const CLOSED: EditFieldState = { status: 'closed' }
 
 const sameAsJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
-function messageOf(error: unknown): string {
+/** Why a save failed, in words to show beside what was being saved. */
+export function messageOf(error: unknown): string {
   if (error && typeof error === 'object' && 'kind' in error) return refusalReason(error as AppError)
   if (error instanceof Error) return error.message
   return 'The save failed. Try again.'

@@ -8,6 +8,10 @@
 // by `renderItem`), and so is the state: pass react-hook-form's
 // useFieldArray `fields`, `append`, `remove` and `move`, so the items save
 // with the parent's form and their errors bind like any other field.
+//
+// Editing a list in place on a view (editable-list.tsx) is built on it
+// too, so the rows and their buttons match the form's: there, `add` is the
+// in-place Add box, and `disabled` holds the buttons while a change saves.
 import type { ReactNode } from 'react'
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,13 +26,16 @@ export function ListEditor({
   addLabel,
   emptyText = 'Nothing added yet.',
   max,
+  add,
+  disabled = false,
   'aria-label': ariaLabel,
 }: {
   /** One entry per item, with a stable key (useFieldArray's `fields`). */
   items: readonly { id: string }[]
   /** The item's own fields, for the item at this index. */
   renderItem: (index: number) => ReactNode
-  onAdd: () => void
+  /** The Add button's action. Not needed with `add`. */
+  onAdd?: () => void
   onRemove: (index: number) => void
   onMove: (from: number, to: number) => void
   /**
@@ -42,6 +49,10 @@ export function ListEditor({
   emptyText?: string
   /** The most items allowed; Add is disabled once reached. */
   max?: number
+  /** In place of the Add button: what adds an item (editing in place's Add box). */
+  add?: ReactNode
+  /** The row buttons and Add can't be used (a change is saving). */
+  disabled?: boolean
   /** Names the list (e.g. the field's label). */
   'aria-label'?: string
 }) {
@@ -63,7 +74,7 @@ export function ListEditor({
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Move ${name} up`}
-                  disabled={index === 0}
+                  disabled={disabled || index === 0}
                   onClick={() => onMove(index, index - 1)}
                 >
                   <ArrowUpIcon />
@@ -73,7 +84,7 @@ export function ListEditor({
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Move ${name} down`}
-                  disabled={index === items.length - 1}
+                  disabled={disabled || index === items.length - 1}
                   onClick={() => onMove(index, index + 1)}
                 >
                   <ArrowDownIcon />
@@ -83,6 +94,7 @@ export function ListEditor({
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Remove ${name}`}
+                  disabled={disabled}
                   onClick={() => onRemove(index)}
                 >
                   <Trash2Icon />
@@ -92,12 +104,14 @@ export function ListEditor({
           })}
         </ul>
       )}
-      <div>
-        <Button type="button" variant="outline" size="sm" onClick={onAdd} disabled={atMax}>
-          <PlusIcon />
-          {addLabel}
-        </Button>
-      </div>
+      {add ?? (
+        <div>
+          <Button type="button" variant="outline" size="sm" onClick={onAdd} disabled={disabled || atMax}>
+            <PlusIcon />
+            {addLabel}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

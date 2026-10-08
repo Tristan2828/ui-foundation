@@ -129,15 +129,15 @@ test.describe('widget view', () => {
       page.locator('dd').locator('input, button:not([data-edit]), [role="switch"], [role="checkbox"]'),
     ).toHaveCount(0)
 
-    // Sub-records, a quick action: the done-count, then the items in order
-    // as one group of checkboxes, each named for what it changes.
+    // Sub-records, edited in place as a list: the done-count, then the
+    // items in order, each with a box that ticks it (a quick action) named
+    // for what it changes. Editing the list is e2e/widget-edit-in-place.spec.ts.
     const checklist = page.getByRole('region', { name: 'Checklist' })
     await expect(checklist.getByText('1/2 done', { exact: true })).toBeVisible()
-    const group = checklist.getByRole('group', { name: 'Checklist items' })
-    await expect(group).toHaveAccessibleDescription('1/2 done')
-    await expect(group.getByRole('listitem')).toHaveText(['Done: Charge the battery', 'Done: Pair the receiver'])
-    await expect(group.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeChecked()
-    await expect(group.getByRole('checkbox', { name: 'Done: Pair the receiver' })).not.toBeChecked()
+    const list = checklist.getByRole('list', { name: 'Checklist' })
+    await expect(list.getByRole('listitem')).toHaveText(['Charge the battery', 'Pair the receiver'])
+    await expect(list.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeChecked()
+    await expect(list.getByRole('checkbox', { name: 'Done: Pair the receiver' })).not.toBeChecked()
 
     // Long text, as Markdown: emphasis, a list, a link that opens a new tab.
     const description = page.getByRole('region', { name: 'Description' })
@@ -302,10 +302,11 @@ test.describe('widget view', () => {
     ])
     await expect(page).toHaveURL('/widgets/1')
 
-    // The item's text ticks it too, and so does the keyboard.
-    await checklist.getByText('Pair the receiver', { exact: true }).click()
-    await expect(pair).not.toBeChecked()
+    // The keyboard ticks it too. (The item's text doesn't: clicking it
+    // edits the item in place.)
     await pair.focus()
+    await page.keyboard.press('Space')
+    await expect(pair).not.toBeChecked()
     await page.keyboard.press('Space')
     await expect(pair).toBeChecked()
     await expect(page.locator('header').getByText('Complete', { exact: true })).toBeVisible()

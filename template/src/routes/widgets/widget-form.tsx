@@ -17,7 +17,6 @@ import { toast } from 'sonner'
 import { type AppError, EntityForm, ErrorState, ListEditor, MultiChoice } from '@tristan2828/ui-foundation'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import { Calendar } from '@tristan2828/ui-foundation/ui/calendar'
-import { Checkbox } from '@tristan2828/ui-foundation/ui/checkbox'
 import {
   Combobox,
   ComboboxContent,
@@ -35,6 +34,7 @@ import type { components } from '@/api/schema'
 import { useWidgetCategoriesQuery } from './use-widget-categories'
 import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from './use-widgets'
 import {
+  WidgetChecklistItemFields,
   WidgetDescriptionEditor,
   WidgetExtraCategoriesPicker,
   WidgetNameInput,
@@ -379,28 +379,20 @@ export function WidgetFormRoute() {
           renderItem={(index) => {
             const error = form.formState.errors.checklist?.[index]?.text
             return (
-              <>
-                <Controller
-                  control={form.control}
-                  name={`checklist.${index}.done`}
-                  render={({ field }) => (
-                    <Checkbox
-                      className="mt-2.5"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      aria-label={`Item ${index + 1} done`}
-                    />
-                  )}
-                />
-                <Field data-invalid={!!error} className="min-w-0 flex-1">
-                  <Input
-                    aria-label={`Item ${index + 1} text`}
-                    aria-invalid={!!error}
-                    {...form.register(`checklist.${index}.text`)}
+              <Controller
+                control={form.control}
+                name={`checklist.${index}.done`}
+                render={({ field }) => (
+                  <WidgetChecklistItemFields
+                    index={index}
+                    done={field.value}
+                    onDoneChange={field.onChange}
+                    invalid={!!error}
+                    textProps={form.register(`checklist.${index}.text`)}
+                    error={<FieldError errors={[error]} />}
                   />
-                  <FieldError errors={[error]} />
-                </Field>
-              </>
+                )}
+              />
             )
           }}
         />

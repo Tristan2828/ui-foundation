@@ -30,13 +30,16 @@ import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './e
 import type { EditInPlaceStore } from './edit-in-place-store'
 
 // What a click on the shown value must leave alone: links navigate,
-// buttons do their own thing.
-const INTERACTIVE = 'a[href], button, input, select, textarea, [role="button"], [role="link"]'
+// buttons and boxes do their own thing (a list item's done box ticks it).
+const INTERACTIVE =
+  'a[href], button, input, select, textarea, label, [role="button"], [role="link"], [role="checkbox"], [role="switch"]'
 
 // Where the caret goes once the control shows: the first match, in this
-// order (a picker's text box before its chips' remove buttons).
+// order (a picker's text box before its chips' remove buttons). A box's
+// own native input (a checkbox's, hidden and out of the tab order) isn't
+// a place to type: a list item's text box comes first.
 const FOCUS_ORDER = [
-  'input:not([type="hidden"]), textarea, [contenteditable="true"]',
+  'input:not([type="hidden"]):not([tabindex="-1"]):not([aria-hidden="true"]), textarea, [contenteditable="true"]',
   '[role="combobox"], [role="switch"], button, [tabindex]:not([tabindex="-1"])',
 ]
 
@@ -60,13 +63,37 @@ function Control({ render, ...props }: EditControlProps<unknown> & { render: Edi
   return render(props)
 }
 
+/** EditableValue's own props, plus what a list's rows and its Add box need (editable-list.tsx). */
+export type EditableFieldProps = EditableValueProps & {
+  /**
+   * The closed field's own trigger, instead of the value and its pencil:
+   * the list's Add button. Given what opens the field; its button is where
+   * the caret goes back to.
+   */
+  trigger?: (start: () => void) => ReactNode
+  /** Opens again, empty, once a save from the keyboard succeeds: adding one item after another. */
+  reopenAfterKeyboardSave?: boolean
+}
+
 function useStore(): EditInPlaceStore {
   const store = useContext(EditInPlaceContext)
   if (!store) throw new Error('<EditableValue> works inside an <EntityView>, which runs editing in place.')
   return store
 }
 
-export function EditableValue({ label, edit, children, layout = 'block', className }: EditableValueProps) {
+export function EditableValue(props: EditableValueProps) {
+  return <EditableField {...props} />
+}
+
+export function EditableField({
+  label,
+  edit,
+  children,
+  layout = 'block',
+  className,
+  trigger,
+  reopenAfterKeyboardSave = false,
+}: EditableFieldProps) {
   const store = useStore()
   const key = useId()
   const controlId = `${key}-control`
@@ -86,6 +113,8 @@ export function EditableValue({ label, edit, children, layout = 'block', classNa
   )
 
   const editButton = useRef<HTMLButtonElement>(null)
+  // Holds a trigger (the list's Add): its button is the one the caret goes back to.
+  const triggerBox = useRef<HTMLSpanElement>(null)
   const container = useRef<HTMLSpanElement>(null)
   // Set by a keyboard save or Esc: the caret goes back to the edit button.
   const refocus = useRef(false)
@@ -108,7 +137,7 @@ export function EditableValue({ label, edit, children, layout = 'block', classNa
     // from a list), so the keyboard never loses its place.
     if (!isOpen && wasOpen.current && (refocus.current || document.activeElement === document.body)) {
       refocus.current = false
-      editButton.current?.focus()
+      ;(editButton.current ?? triggerBox.current?.querySelector('button'))?.focus()
     }
     wasOpen.current = isOpen
   }, [isOpen])
@@ -138,6 +167,18 @@ export function EditableValue({ label, edit, children, layout = 'block', classNa
     [store, key],
   )
   const cancel = useCallback(() => store.cancel(key), [store, key])
+  // Enter or Ctrl/Cmd+Enter: the caret goes back to the edit button, or
+  // the field opens again for the next one.
+  const commitFromKeyboard = () => {
+    window.clearTimeout(blurTimer.current)
+    refocus.current = true
+    void store.commit(key).then((closed) => {
+      if (!closed || !reopenAfterKeyboardSave) return
+      // The caret stays in (or comes back to) the field opening again.
+      refocus.current = false
+      void store.start(key)
+    })
+  }
 
   const onShownClick = (event: MouseEvent) => {
     if ((event.target as Element).closest(INTERACTIVE)) return
@@ -154,12 +195,10 @@ export function EditableValue({ label, edit, children, layout = 'block', classNa
       cancel()
     } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault()
-      refocus.current = true
-      commit()
+      commitFromKeyboard()
     } else if (event.key === 'Enter' && edit.kind === 'text' && !event.shiftKey && !event.altKey) {
       event.preventDefault()
-      refocus.current = true
-      commit()
+      commitFromKeyboard()
     }
   }
 
@@ -175,6 +214,12 @@ export function EditableValue({ label, edit, children, layout = 'block', classNa
   const onFocus = () => window.clearTimeout(blurTimer.current)
 
   if (state.status === 'closed') {
+    if (trigger)
+      return (
+        <span ref={triggerBox} className="contents">
+          {trigger(start)}
+        </span>
+      )
     return (
       <span
         data-slot="editable-value"

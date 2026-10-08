@@ -189,3 +189,71 @@ test.describe('EntityView, column layout (the default)', () => {
     expect(value.x).toBeGreaterThan(label.x + label.width)
   })
 })
+
+// A list of sub-items edited in place (app/EntityView Lists): a checklist
+// in the main column, links in the rail. The template's
+// e2e/widget-edit-in-place.spec.ts covers it against a real save.
+test.describe('EntityView, a list edited in place', () => {
+  const region = (page: Page, name: string) => page.getByRole('region', { name, exact: true })
+  const items = (page: Page, name: string) => region(page, name).getByRole('list', { name }).getByRole('listitem')
+
+  test('in the main column: add from the keyboard, edit, move, remove; ticking still works', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('lists'))
+    const checklist = region(page, 'Checklist')
+    await expect(items(page, 'Checklist')).toHaveText(['Book the lift', 'Label the boxes', 'Return the keys'])
+
+    await checklist.getByRole('button', { name: 'Add item' }).focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('textbox', { name: 'Item 4 text' })).toBeFocused()
+    await page.keyboard.type('Water the plants')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('textbox', { name: 'Item 5 text' })).toBeFocused()
+    await page.keyboard.type('Hand back the badge')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('textbox', { name: 'Item 6 text' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(items(page, 'Checklist')).toHaveText([
+      'Book the lift',
+      'Label the boxes',
+      'Return the keys',
+      'Water the plants',
+      'Hand back the badge',
+    ])
+
+    await checklist.getByText('Label the boxes', { exact: true }).click()
+    await page.getByRole('textbox', { name: 'Item 2 text' }).fill('Label every box')
+    await page.keyboard.press('Enter')
+    await expect(items(page, 'Checklist').nth(1)).toHaveText('Label every box')
+
+    await checklist.getByRole('button', { name: 'Move item 5 up' }).click()
+    await expect(items(page, 'Checklist').nth(3)).toHaveText('Hand back the badge')
+    await checklist.getByRole('button', { name: 'Remove item 1' }).click()
+    await expect(items(page, 'Checklist')).toHaveCount(4)
+    await expect(checklist.getByText('0/4 done')).toBeVisible()
+
+    await checklist.getByRole('checkbox', { name: 'Done: Return the keys' }).click()
+    await expect(checklist.getByText('1/4 done')).toBeVisible()
+  })
+
+  test('in the rail: a link added and refused, the reason under it', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('lists'))
+    const links = rail(page).getByRole('region', { name: 'Links' })
+    await links.getByRole('button', { name: 'Add link' }).click()
+    const label = page.getByRole('textbox', { name: 'Link 2 label' })
+    await expect(label).toBeFocused()
+    // The control fits the narrow column.
+    const labelBox = (await label.boundingBox())!
+    const card = (await links.boundingBox())!
+    expect(labelBox.x + labelBox.width).toBeLessThanOrEqual(card.x + card.width)
+
+    await label.fill('refuse')
+    await page.keyboard.press('Enter')
+    await expect(links.getByRole('alert')).toHaveText('That one is refused, as a server would.')
+    await expect(label).toHaveValue('refuse')
+    await label.fill('Movers')
+    await page.keyboard.press('Enter')
+    await expect(items(page, 'Links')).toHaveText(['Floor plan', 'Movers'])
+  })
+})
