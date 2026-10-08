@@ -9,7 +9,7 @@
 // pagination tree-shakeable and independently swappable, which buys nothing
 // here: every row model is manual (the server sorts and pages), so this
 // table never uses TanStack's own sorted/paginated row models at all.
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import { flexRender } from '@tanstack/react-table'
 import type { CellData, RowData, TableFeatures } from '@tanstack/react-table'
 import { cn } from 'cn'
@@ -20,6 +20,9 @@ import { ErrorState } from '@/components/app/error-state'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EditInPlaceContext } from './edit-in-place'
+import { EditInPlaceStore } from './edit-in-place-store'
+import { LeaveGuard } from './editable-value'
 import {
   Table,
   TableBody,
@@ -102,7 +105,19 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * view is active, which can leave out a column only one view shows.
    */
   visibleColumns?: readonly string[]
+  /**
+   * `full` (the default): the table, its toolbar and its pagination take
+   * the whole width. `content`, for a table of a few short columns: on a
+   * wide screen (a table area of 80rem or more) they take the width the
+   * columns need, never under 36rem, with the row actions right after the
+   * last column. Below that, as `full`. While loading, empty or failed
+   * after a load, it keeps the width it last had, so paging and filtering
+   * don't move it (only the first load can).
+   */
+  width?: DataTableWidth
 }
+
+export type DataTableWidth = 'full' | 'content'
 
 // A column def's id as TanStack resolves it (constructColumn): `id`, then
 // `accessorKey` with dots as underscores, then a string header. Group
@@ -173,6 +188,14 @@ const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-norma
 // background so it reads identically on striped and unstriped rows, and it
 // stays on screen when the table is scrolled right.
 const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
+
+// `width="content"`: from a table area 80rem wide, as wide as the columns
+// need (`w-fit` over the table's own `w-full`), at least 36rem, or the
+// width it last had loaded while it shows another state
+// (--data-table-last-width), at most the area. Narrower, no change.
+const CONTENT_WIDTH_CLASS =
+  '@7xl/data-table:w-fit @7xl/data-table:max-w-full ' +
+  '@7xl/data-table:min-w-[max(36rem,var(--data-table-last-width,0px))]'
 
 // A second horizontal scrollbar, stuck to the viewport's bottom edge. The
 // real one sits directly under the last row, which on a full page is
@@ -262,7 +285,19 @@ export function DataTable<TData extends Record<string, unknown>>({
   pinLastColumn,
   enableSortingRemoval,
   visibleColumns,
+  width = 'full',
 }: DataTableProps<TData>) {
+  // Editing in place in the rows (cell pattern 18, "In a table's rows"):
+  // a cell that renders an <EditableValue> edits where it's shown, one at
+  // a time, with the leave-page prompt while one is open, the same rules
+  // as a record's view.
+  const [store] = useState(() => new EditInPlaceStore())
+  const openField = useSyncExternalStore(
+    store.subscribe,
+    () => store.open,
+    () => store.open,
+  )
+
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   // TanStack treats a column missing from this map as visible, so every
   // column gets an entry once a list is given.
@@ -305,14 +340,35 @@ export function DataTable<TData extends Record<string, unknown>>({
   const isEmpty = !isLoading && !error && data.length === 0 && !isPastLastPage
   const isSuccessView = !error && !isLoading && !isPastLastPage && !isEmpty
 
+  // `width="content"`: the width the table last had loaded, kept while it
+  // shows another state.
+  const root = useRef<HTMLDivElement>(null)
+  const [lastWidth, setLastWidth] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    const element = root.current
+    if (width !== 'content' || !isSuccessView || !element) return
+    const observer = new ResizeObserver(() => setLastWidth(Math.round(element.getBoundingClientRect().width)))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [width, isSuccessView])
+
   const containerRef = useRef<HTMLDivElement>(null)
   const { barRef, isOverflowing, scrollWidth } = useBottomScrollbar(
     containerRef,
     Boolean(pinFirstColumn) && isSuccessView,
   )
 
-  return (
-    <div className="flex flex-col gap-4">
+  const content = (
+    <div
+      ref={root}
+      className={cn('flex flex-col gap-4', width === 'content' && CONTENT_WIDTH_CLASS)}
+      data-width={width}
+      style={
+        width === 'content' && !isSuccessView && lastWidth !== null
+          ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
+          : undefined
+      }
+    >
       {toolbar}
 
       {error ? (
@@ -339,6 +395,11 @@ export function DataTable<TData extends Record<string, unknown>>({
             containerClassName={cn(
               pinFirstColumn &&
                 '@container [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+              // A size container has no width of its own to give, so
+              // `width="content"` couldn't fit the table. Its query only
+              // serves a phone-width rule, and an 80rem table area never
+              // is one.
+              width === 'content' && '@7xl/data-table:[container-type:normal]',
             )}
           >
             <TableHeader>
@@ -472,5 +533,12 @@ export function DataTable<TData extends Record<string, unknown>>({
         </>
       )}
     </div>
+  )
+
+  return (
+    <EditInPlaceContext.Provider value={store}>
+      {openField !== null && <LeaveGuard store={store} />}
+      {width === 'content' ? <div className="@container/data-table">{content}</div> : content}
+    </EditInPlaceContext.Provider>
   )
 }

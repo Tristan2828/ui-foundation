@@ -111,6 +111,9 @@ per list; delete the section if there are none.
 | All tasks | none | dueDate asc | |
 | Bugs | kind = bug | dueDate asc | title, severity, assignee, dueDate |
 
+- Width (optional): `content` for a table of a few short columns, so on a
+  wide screen it takes the width they need rather than the whole page
+  (cell pattern 18, "`width="content"`"). Leave it out for the full width.
 - Anything else the table must show or do:
 
 ## View screen
@@ -176,7 +179,12 @@ except the quick actions, if any.
 ## Screens and access
 
 - Screens: list, view, create, edit, delete (the shape the playbook
-  builds).
+  builds). Or, for a small entity (a name and a few fields, no page of
+  its own): `list, edited in the row`, with no View screen section. Every
+  field the table shows is edited in its cell, a new record is created
+  from its name in the table's toolbar (say what every other field
+  starts as), and delete is a row action (cell pattern 18, "In a table's
+  rows").
 - Ownership: **shared** (every signed-in user sees every record) or
   **per-user** (each user sees only their own).
 

@@ -819,6 +819,88 @@ The row's fields are one component shared with the form
 (`WidgetChecklistItemFields` in `widget-fields.tsx`), each field named by
 position ("Item 2 text") as the row buttons name the item.
 
+### In a table's rows
+
+For a **small entity edited in its table** (a name and a few fields,
+with no view page and no form: the plan's `Screens: list, edited in the
+row`), every editable cell is an editable value, exactly as on a view.
+`DataTable` runs it: one cell open at a time, the leave-page prompt while
+one is open, "Saving…" and a refusal in the cell. There's no pencil
+column and no edit route.
+
+- **A cell** is `<EditableValue label="<Column> of <name>" layout="inline"
+  edit={editInPlace({ ... })}>`, its shown value the cell as it always
+  was. The label names the column and the row, so its pencil reads "Edit
+  Colour of Work" and its control "Colour of Work". The kinds are the
+  same: `text` (Enter saves), `choice` (the list opens with it, non-modal,
+  a pick saves), `multi`.
+- **A cell is a component** (`<Entity><Field>Cell`) that calls
+  `useEdit<Entity>Field(row.id)` for its save, the view's single-field
+  save. A hook can't be called inside a column definition.
+- **Stable columns and row ids.** Make the column definitions once
+  (at module level, or `useMemo`) and give
+  `DataTable` a `getRowId`: new definitions every render, or rows keyed
+  by position, remount an open cell and lose what's typed.
+- **Create is `InlineCreate`** in the toolbar: the new record's name, Enter
+  or Add. It's created with every other field at its default (say which in
+  the plan) and appears as a row, edited like the others; the box empties
+  and keeps the caret for the next one. The name's rule is the form's
+  (`schema`), and a refusal (a taken name's 422) shows under the box.
+- **Delete** stays a row action: a trash button in a pinned last column
+  (`pinLastColumn`), with its confirm dialog.
+- **Few short columns?** `width="content"` (below) keeps the row's cells
+  and its delete together on a wide screen.
+
+```tsx
+// A cell is its own component, so it can call the record's save hook.
+function CategoryColourCell({ category }: { category: Category }) {
+  const editField = useEditCategoryField(category.id)       // optimistic: false, toastOnError: false
+  return (
+    <EditableValue label={`Colour of ${category.name}`} layout="inline"
+      edit={editInPlace({
+        kind: 'choice',
+        value: category.colour,
+        schema: categoryFormSchema.shape.colour,
+        save: (colour) => editField.mutateAsync({ colour }),
+        control: (props) => (
+          <CategoryColourSelect id={props.id} value={props.value} onChange={(colour) => props.commit(colour)}
+            readOnly={props.disabled} defaultOpen modal={false} onOpenChange={(open) => !open && props.cancel()}
+            aria-label={props.label} aria-describedby={props.describedBy} />
+        ),
+      })}>
+      <ColourSwatch colour={category.colour} />
+    </EditableValue>
+  )
+}
+
+// Made once: the cells read the row they're given.
+const CATEGORY_COLUMNS: LegacyColumnDef<Category, unknown>[] = [
+  { id: 'name', header: 'Name', cell: ({ row }) => <CategoryNameCell category={row.original} /> },
+  { id: 'colour', header: 'Colour', cell: ({ row }) => <CategoryColourCell category={row.original} /> },
+  { id: 'actions', header: () => <span className="sr-only">Actions</span>, cell: ({ row }) => <DeleteCategoryAction category={row.original} /> },
+]
+
+<DataTable columns={CATEGORY_COLUMNS} getRowId={(row) => String(row.id)} width="content" pinFirstColumn pinLastColumn
+  toolbar={<InlineCreate label="New category's name" schema={categoryFormSchema.shape.name}
+    create={(name) => createCategory.mutateAsync({ name, colour: 'blue', icon: 'house' })} />} … />
+```
+
+The worked example is the package's Storybook story `app/DataTable`
+"Edit in the rows" (`data-table.stories.tsx`); the template has no small
+entity yet.
+
+### A table of a few short columns: `width="content"`
+
+On a wide screen a table of three to five short columns (a name, a
+colour, a count, its delete) spreads them across the page, and the
+row's actions end up far from its name. `width="content"` sizes such a
+table to its columns once its area is 80rem or wider, never under 36rem,
+with the toolbar and pagination at the same width. Below 80rem, and on a
+phone, it's the full width as always. While it's loading, empty or
+failed after a load, it keeps the width it last had, so paging and
+filtering don't move it; only the first load can. A table that grows
+wide (many columns) has no reason to opt in.
+
 ## 19. Stage circle for an ordered status
 
 A status that's an ordered lifecycle (each record moves through the same

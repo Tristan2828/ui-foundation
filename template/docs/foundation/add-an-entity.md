@@ -61,6 +61,18 @@ is a filled-in example while the Widgets demo is still here).
   written before the view existed has neither: ask the developer whether
   to add them before step 1. The reference files build the table *with* a
   view, where Edit and Delete live, so the table has no row actions.
+- **`Screens: list, edited in the row`** is a small entity with no view
+  and no form: build the contract, gateway, mocks and table as below, but
+  no view, form or `/new`, `/:id`, `/:id/edit` routes. Its table follows
+  cell pattern 18, "In a table's rows": each field's cell an
+  `EditableValue` over the shared control from `<entity>-fields.tsx` and
+  `useEdit<Entity>Field`, `InlineCreate` in the toolbar for create, a
+  delete row action with its confirm dialog, and `width="content"` if the
+  plan's List screen says so. There's no reference file in the template
+  for this shape; the pattern's code is the reference. Its specs: each
+  cell kind saves, a refusal stays in its cell, one cell at a time, the
+  leave prompt, create (Enter, a blank name, a taken one), delete, and
+  the in-place a11y states for a cell open and refused, in both themes.
 
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete — exactly as the plan specifies: its fields, types, required
@@ -490,6 +502,8 @@ is a filled-in example while the Widgets demo is still here).
   the in-place a11y block unless the plan has an `Edit in place` line,
   and then only for the fields it names.
 
+- `width="content"` on `DataTable` unless the plan's List screen says
+  `Width: content` (the Widgets table is wide and leaves it out).
 - The saved-views row in `widgets-table.tsx` (`VIEWS`, the "Saved views"
   button group and `visibleColumns`) unless the plan's List screen lists
   saved views. When it does, copy it: `useTableUrlState`'s third argument
