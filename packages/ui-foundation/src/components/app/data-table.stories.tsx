@@ -28,10 +28,10 @@ const ICON_LABELS: Record<IconKey, string> = { house: 'House', wallet: 'Wallet',
 // Whole class names: Tailwind only generates the ones written out.
 const COLOURS = {
   blue: { label: 'Blue', className: 'text-category-1' },
-  purple: { label: 'Purple', className: 'text-category-2' },
-  olive: { label: 'Olive', className: 'text-category-3' },
-  teal: { label: 'Teal', className: 'text-category-4' },
-  plum: { label: 'Plum', className: 'text-category-10' },
+  orange: { label: 'Orange', className: 'text-category-2' },
+  green: { label: 'Green', className: 'text-category-3' },
+  purple: { label: 'Purple', className: 'text-category-4' },
+  navy: { label: 'Navy', className: 'text-category-10' },
 } as const
 type ColourKey = keyof typeof COLOURS
 
@@ -39,10 +39,10 @@ type Category = { id: number; name: string; colour: ColourKey; icon: IconKey; wi
 
 const SEED: Category[] = [
   { id: 1, name: 'Home', colour: 'blue', icon: 'house', widgets: 12, notes: 'Everything for the house, the garden shed and the garage loft' },
-  { id: 2, name: 'Finance', colour: 'purple', icon: 'wallet', widgets: 4 },
-  { id: 3, name: 'Work', colour: 'olive', icon: 'briefcase', widgets: 27 },
-  { id: 4, name: 'Health', colour: 'plum', icon: 'heart', widgets: 3 },
-  { id: 5, name: 'Travel', colour: 'teal', icon: 'plane', widgets: 8 },
+  { id: 2, name: 'Finance', colour: 'orange', icon: 'wallet', widgets: 4 },
+  { id: 3, name: 'Work', colour: 'green', icon: 'briefcase', widgets: 27 },
+  { id: 4, name: 'Health', colour: 'navy', icon: 'heart', widgets: 3 },
+  { id: 5, name: 'Travel', colour: 'purple', icon: 'plane', widgets: 8 },
 ]
 
 function Name({ category }: { category: Category }) {
