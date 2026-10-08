@@ -139,20 +139,22 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
 // bleed-through a solid background avoids. On an even row it's the stripe
 // pre-mixed onto the page (--table-stripe), so the stripe runs the whole
 // row's width (issue #92); `:where()` keeps that rule's specificity at the
-// background's, so the hover below still wins on every row. The pinned
-// cell carries the hover highlight. --accent is only ~3% off the page
-// background, so a solid left edge marker carries the signal; an inset
-// shadow rather than a border, so nothing reflows.
+// background's, so the first column's hover below still wins on every row.
 const PINNED_CELL_CLASS =
-  'z-10 bg-background [:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe) group-hover/row:bg-accent'
+  'z-10 bg-background [:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe)'
 
+// The pinned first cell carries the hover highlight. --accent is only ~3%
+// off the page background, so a solid left edge marker carries the signal;
+// an inset shadow rather than a border, so nothing reflows.
 const PINNED_COLUMN_CLASS =
-  `sticky left-0 border-r ${PINNED_CELL_CLASS} group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]`
+  `sticky left-0 border-r ${PINNED_CELL_CLASS} group-hover/row:bg-accent ` +
+  'group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]'
 
-// The right-edge mirror, opaque for the same reason. Its edge marker points
-// inward from the right, so the two pinned columns bracket the row.
-const PINNED_LAST_COLUMN_CLASS =
-  `sticky right-0 border-l ${PINNED_CELL_CLASS} group-hover/row:shadow-[inset_-3px_0_0_0_var(--primary)]`
+// The right-edge mirror, opaque for the same reason, but with no hover
+// highlight (issue #103): it holds the row's actions, which name nothing,
+// so lighting it too read as a second selected thing. Only the first
+// column marks the hovered row.
+const PINNED_LAST_COLUMN_CLASS = `sticky right-0 border-l ${PINNED_CELL_CLASS}`
 
 // A pinned first column's content, capped below md at 45% of the table's
 // scroll area (`cqw`: the container is an inline-size query container)
@@ -399,7 +401,7 @@ export function DataTable<TData extends Record<string, unknown>>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className={cn((pinFirstColumn || pinLastColumn) && ROW_GROUP_CLASS)}>
+                <TableRow key={row.id} className={cn(pinFirstColumn && ROW_GROUP_CLASS)}>
                   {row.getVisibleCells().map((cell, index) => (
                     <TableCell
                       key={cell.id}

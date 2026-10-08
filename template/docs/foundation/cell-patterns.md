@@ -663,11 +663,11 @@ The rule behind every part of it: **nothing typed is ever lost.**
 
 **Which values.** Only those the plan's "View screen" names under `Edit
 in place`; read-only is the default, and a value not named renders
-exactly as it did. Single values only: text, long text, a single choice
-(optional ones with their "not set" option), an integer or a rating, a
-yes/no, a single or multi reference. Never a computed field, and never a
-sub-record list (adding, removing and reordering items stays on the
-form). The view's Edit button and the form stay.
+exactly as it did. Text, long text, a single choice (optional ones with
+their "not set" option), an integer or a rating, a yes/no, a single or
+multi reference, and a sub-record list (its own rules, under "A list of
+sub-items" below). Never a computed field. The view's Edit button and
+the form stay.
 
 **At rest: says it's editable without shouting.** The value reads as it
 always did. Hover tints it (`bg-muted`) and shows a pencil; the pencil is
@@ -768,6 +768,56 @@ const price = editInPlace({
 - **Cost:** a value that looks like text but edits on click can surprise.
   Keep it to the fields the plan names, and leave the form for everything
   else.
+
+### A list of sub-items
+
+A sub-record list (a checklist, a list of links) on a `content` section,
+edited where it's shown: `editInPlace({ kind: 'list', ... })`. Widget's
+Checklist is the reference (`checklist` in `widgetEdits`). It's built on
+`ListEditor`, so the rows and their buttons are the form's.
+
+- **Each item reads as it always did** (`renderShown`), its own controls
+  included: a done box still ticks it on its own, a quick action. A click
+  on the item (not its box, not a link in it) or its pencil ("Edit item
+  2") turns it into the form's row (`renderItem`, the same fields as the
+  form's `ListEditor` row), an editable value like any above: Enter or
+  leaving saves, Esc gives up, one open at a time.
+- **Add at the end.** "Add item" opens a new row; Enter saves it and
+  opens the next, the caret already in it, so a run of items goes in from
+  the keyboard. Esc on an empty one closes it; nothing is sent.
+- **Move and remove** are `ListEditor`'s buttons, with its names ("Move
+  item 2 up", "Remove item 2"). Each saves at once; whatever is open is
+  saved first. While it saves, the buttons wait and "Saving…" shows under
+  the list; the caret follows the item it moved. A refusal leaves the
+  list as it was, with the reason under it.
+- **One save per change, of the whole list**, built on the record's
+  latest list when it's sent: `save` is given a change, not a list, and
+  hands it to the single-field save as a function of the record, so it
+  never undoes a tick or a change still saving.
+- **The form's rules**, the whole list's schema, run on the list each
+  change would make: a message about an item shows under that item, one
+  about the list (too many items) under the row being added.
+- `content` shows above the items (the done-count) and `emptyLabel` in
+  place of them when there are none.
+
+```tsx
+const checklist = editInPlace<ChecklistItem>({
+  kind: 'list',
+  value: widget.checklist,
+  schema: widgetFormSchema.shape.checklist,                 // the whole list's rule
+  save: (change) => editField.mutateAsync((current) => ({ checklist: change(current.checklist) })),
+  newItem: () => ({ text: '', done: false }),
+  itemName: (index) => `item ${index + 1}`,                 // as the form's ListEditor names them
+  addLabel: 'Add item',
+  renderShown: (_item, index) => <ChecklistItem widget={widget} index={index} />, // the quick action
+  renderItem: (props) => <WidgetChecklistItemFields index={props.index} … />,     // the form's row
+})
+// The section: { title: 'Checklist', content: <ChecklistDoneCount …/>, emptyLabel: 'No items', edit: checklist }
+```
+
+The row's fields are one component shared with the form
+(`WidgetChecklistItemFields` in `widget-fields.tsx`), each field named by
+position ("Item 2 text") as the row buttons name the item.
 
 ## 19. Stage circle for an ordered status
 

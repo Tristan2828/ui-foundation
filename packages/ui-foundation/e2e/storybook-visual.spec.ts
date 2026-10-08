@@ -44,8 +44,10 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // <StageCircle> and the cell patterns' markup (patterns/CellPatterns) are
 // design language too: each also has its glyphs measured below.
 // <CountLink> is a link style every parent table's counts share.
+// The categorical slots, every one on the page and on a card.
 // <EntityView>'s two layouts are every record's page: the rail's narrow
 // column and its stacked fields answer for their contrast too.
+// Its Lists story is the list edited in place: its rows and buttons.
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
@@ -56,8 +58,10 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
   { id: 'app-countlink--default', mustShow: 'Move house' },
+  { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
+  { id: 'app-entityview--lists', mustShow: 'Return the keys' },
 ]
 
 // Stories whose glyphs carry meaning on their own: every <svg> in them must
@@ -76,6 +80,8 @@ const GLYPH_STORIES: {
   { id: 'app-banners--default' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip' },
+  // Every categorical slot, against the page and against a card.
+  { id: 'patterns-categoricalcolour--default' },
   {
     id: 'patterns-cellpatterns--dependency-list',
     open: (page) => page.getByRole('button', { name: /^2 holds/ }).click(),
@@ -494,6 +500,28 @@ test.describe('glyphs clear the 3:1 non-text minimum in both themes', () => {
         expect(glyphs.filter(({ ratio }) => ratio < 3)).toEqual([])
       })
     }
+  }
+})
+
+// The categorical slots: each resolves to its own colour on both surfaces,
+// in both themes. A slot whose token is missing (in one theme, or from
+// index.css's Tailwind colours) leaves its glyph the label's colour, which
+// the glyph check above would pass.
+test.describe('categorical slots', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`all twelve are distinct colours on the page and on a card (${theme})`, async ({ page }) => {
+      await page.goto(storyUrlById('patterns-categoricalcolour--default', theme))
+      if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      for (const surface of ['background', 'card']) {
+        const list = page.locator(`[data-surface="${surface}"]`)
+        await expect(list.locator('li')).toHaveCount(12)
+        const colours = await list.locator('li').evaluateAll((items) =>
+          items.map((li) => ({ glyph: getComputedStyle(li.querySelector('svg')!).color, label: getComputedStyle(li).color })),
+        )
+        expect(new Set(colours.map(({ glyph }) => glyph)).size).toBe(12)
+        for (const { glyph, label } of colours) expect(glyph).not.toBe(label)
+      }
+    })
   }
 })
 

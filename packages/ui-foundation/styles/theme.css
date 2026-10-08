@@ -72,12 +72,13 @@
    * later: a table using info keeps its categories off those three. They are ordered by distinctness, not by hue angle, so an app
    * using only the first three gets three obviously different colours.
    * Past about five, hue alone stops separating them and the glyph has to
-   * carry the meaning; see docs/design-language.md.
+   * carry the meaning; see docs/design-language.md. Twelve slots in all.
    *
    * Ratios are against the page, measured (WCAG 2.x, sRGB), and all clear
-   * the 3:1 non-text minimum in both themes with room to spare. Note that
-   * axe does NOT check icon contrast, so unlike the tones nothing
-   * re-measures these automatically.
+   * the 3:1 non-text minimum in both themes with room to spare (4.5:1 at
+   * the least, slots 9-12 on the dark card). axe does NOT check icon
+   * contrast; the Storybook glyph check re-measures every slot on the
+   * page and on a card (design-language/CategoricalColour).
    */
   --category-1-700: oklch(0.5 0.15 240);
   --category-1-400: oklch(0.78 0.12 240);
@@ -95,6 +96,24 @@
   --category-7-400: oklch(0.78 0.12 120);
   --category-8-700: oklch(0.5 0.15 215);
   --category-8-400: oklch(0.78 0.12 215);
+  /*
+   * Slots 9-12 are a second channel, not new hues: the hues left between
+   * the tones' are already spent ~25 degrees apart, so these are deeper
+   * shades of the four that sit furthest from info (teal, plum, olive,
+   * violet), darker than their slot in both themes. Each is at least as
+   * far from its nearest slot (OKLab distance) as slots 1-8 are from each
+   * other; tests/category-slots.test.ts holds every pair to that. A deep
+   * shade of the blues or the yellow-green fell to half that distance, so
+   * twelve is where it stops. Chroma is the most each holds in sRGB.
+   */
+  --category-9-700: oklch(0.36 0.06 190);
+  --category-9-400: oklch(0.62 0.1 190);
+  --category-10-700: oklch(0.36 0.12 330);
+  --category-10-400: oklch(0.62 0.15 330);
+  --category-11-700: oklch(0.36 0.07 95);
+  --category-11-400: oklch(0.62 0.12 95);
+  --category-12-700: oklch(0.36 0.14 300);
+  --category-12-400: oklch(0.62 0.17 300);
   --blue-500: oklch(0.488 0.243 264.376);
 
   --radius-base: 0.625rem;
@@ -198,6 +217,10 @@
   --category-6: var(--category-6-700);
   --category-7: var(--category-7-700);
   --category-8: var(--category-8-700);
+  --category-9: var(--category-9-700);
+  --category-10: var(--category-10-700);
+  --category-11: var(--category-11-700);
+  --category-12: var(--category-12-700);
   /* The zebra stripe (table.tsx: bg-muted/40 on even rows) mixed onto the
      page, opaque: what a pinned table cell paints on an even row, so it
      matches the row without letting scrolled columns show through. Mixed
@@ -274,6 +297,10 @@
   --category-6: var(--category-6-400);
   --category-7: var(--category-7-400);
   --category-8: var(--category-8-400);
+  --category-9: var(--category-9-400);
+  --category-10: var(--category-10-400);
+  --category-11: var(--category-11-400);
+  --category-12: var(--category-12-400);
   --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
   --border: var(--white-a10);
   --input: var(--white-a15);

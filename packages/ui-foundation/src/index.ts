@@ -20,8 +20,11 @@ export {
   editInPlace,
   type EditControlProps,
   type EditInPlace,
+  type EditInPlaceList,
+  type EditInPlaceListOptions,
   type EditInPlaceOptions,
   type EditKind,
+  type EditListItemProps,
 } from '@/components/app/edit-in-place'
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'

@@ -81,7 +81,8 @@ per list; delete the section if there are none.
 - On the view: always shown: the done-count, then each item in order (a
   `url` item field opens in a new tab). Read-only, unless the View
   screen's `Quick actions` names the list: then its yes/no item field is a
-  checkbox on each item, ticked in place.
+  checkbox on each item, ticked in place. If its `Edit in place` names
+  the list, its items are also added, edited, moved and removed there.
 
 | Field | Label | Type | Required | Options / rules |
 |---|---|---|---|---|
@@ -162,12 +163,12 @@ except the quick actions, if any.
 - Edit in place (optional; delete if none): the fields that turn into
   their form control where the view shows them and save when you leave
   them (cell pattern 18): the title, a badge field, a field row, a long
-  text. Single values only: text, long text, a single choice, an integer
-  or a rating, a yes/no, a single or multi reference. Never a computed
-  field or a sub-records list (those stay on the form). Every value not
-  named here, or under Quick actions, stays read-only. Say any rule the
-  server enforces on one (its refusal shows under the field) and any
-  side effect:
+  text, a sub-records list (its items added, edited, moved and removed on
+  the view). Text, long text, a single choice, an integer or a rating, a
+  yes/no, a single or multi reference, a sub-records list. Never a
+  computed field. Every value not named here, or under Quick actions,
+  stays read-only. Say any rule the server enforces on one (its refusal
+  shows under the field) and any side effect:
 
   Edit in place: title, status (the server refuses Finished while the
   checklist has open items), dueDate, notes

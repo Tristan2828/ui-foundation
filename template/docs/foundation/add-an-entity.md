@@ -325,9 +325,16 @@ is a filled-in example while the Widgets demo is still here).
      ids as a set). A field gets `edit`, a `content` section gets `edit`,
      the title gets `titleEdit={{ label, ...edit }}`, and a header badge
      wraps itself in `<EditableValue label edit layout="inline">`. The
-     shown value stays exactly as before. **With no `Edit in place` line,
-     nothing is editable in place** and none of this is copied. Never a
-     computed field or a sub-record list.
+     shown value stays exactly as before. A sub-record list the line
+     names is `editInPlace({ kind: 'list', ... })` on its `content`
+     section (cell pattern 18, "A list of sub-items"; copy `checklist` in
+     `widgetEdits`): the form's row as `renderItem`, from one component
+     shared with the form (`WidgetChecklistItemFields`), the item as the
+     view shows it (its quick action, if any) as `renderShown`, the list's
+     schema, and `save: (change) => edit.mutateAsync((current) => ({
+     <field>: change(current.<field>) }))`. **With no `Edit in place`
+     line, nothing is editable in place** and none of this is copied.
+     Never a computed field.
 
    **The table opens the view, and the form returns to it.** The title
    column's link is the way in (a `yes/no` marked `toggle` stays in its
@@ -433,7 +440,12 @@ is a filled-in example while the Widgets demo is still here).
    sent; a 422 (an MSW override, the reason on the field) and a 500 stay
    open with the draft and the reason; opening a second field saves the
    first, or doesn't open if that fails; and leaving the page with
-   unsaved text asks first. Add it to `mobile-chrome`'s `testMatch`. If
+   unsaved text asks first. A list edited in place gets its own block
+   (copy `the checklist edited in place`): three items added by keyboard
+   alone and still there after leaving and coming back, an item edited
+   (Enter) and given up (Esc), move and remove with the PATCH each sends,
+   a blank item never sent, a refused change, and a tick plus an add both
+   landing. Add it to `mobile-chrome`'s `testMatch`. If
    the plan has Markdown long text, a test forces a record whose text has
    a heading, a list, a table, a link and raw HTML, and asserts the HTML
    shows as text. Add the view's spec to `playwright.config.ts`'s
@@ -460,8 +472,9 @@ is a filled-in example while the Widgets demo is still here).
    page is picked up from the sidebar automatically; the form and the view
    aren't in it). With fields edited in place, copy `e2e/a11y.spec.ts`'s
    "editing in place" block for them: a field open, saving and refused,
-   the rich-text editor, an open list, and the leave prompt, in both
-   themes.
+   the rich-text editor, an open list, a list edited in place (an item
+   open, one being added, a refused change), and the leave prompt, in
+   both themes.
 10. **`npm run verify`.** Fix until it passes. Then stop — do not add
     anything beyond what this list covers; note ideas in the app's
     backlog instead.

@@ -31,7 +31,9 @@ foundation supports has a working, tested reference.
 
 - Most items: 50.
 - In the table: a done-count (`1/2 done`); an em dash when empty.
-- On the view: the done-count, then each item, read-only.
+- On the view: the done-count, then each item. Each ticks in place (a
+  quick action), and the list is edited in place: items added, edited,
+  moved and removed.
 
 | Field | Label | Type | Required | Options / rules |
 |---|---|---|---|---|
@@ -62,7 +64,9 @@ foundation supports has a working, tested reference.
   `checklistState` (the server works it out), so the header's progress
   badge follows the tick once the save answers.
 - Edit in place: `name` (the title), `status` (its header badge), `price`,
-  `description` (Markdown, as rich text), `extraCategoryIds`.
+  `description` (Markdown, as rich text), `extraCategoryIds`, `checklist`
+  (its items added, edited, moved and removed; ticking stays a quick
+  action).
 
 ## Screens and access
 

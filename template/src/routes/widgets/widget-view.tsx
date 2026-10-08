@@ -21,9 +21,13 @@
 //   turn into the form's own control (widget-fields.tsx) where they're
 //   shown, and save when you leave them. Not optimistic: "Saving…" until
 //   the server agrees; a refusal stays open with its reason.
+// - The checklist, a list edited in place (editInPlace's `list` kind): an
+//   item is added at the end (Enter adds the next), its text edited where
+//   it's shown, moved and removed with the form's own buttons. Each change
+//   saves the whole list, built on the latest one.
 // - Quick actions (widget-quick-actions.tsx, cell pattern 17): In Stock
 //   flips from the header and checklist items tick in place.
-// Anything else (and the checklist's items themselves) goes through Edit.
+// Anything else goes through Edit.
 import { PencilIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -33,6 +37,7 @@ import {
   Markdown,
   editInPlace,
   type EditInPlace,
+  type EditInPlaceList,
   type EntityViewSection,
 } from '@tristan2828/ui-foundation'
 import { Badge } from '@tristan2828/ui-foundation/ui/badge'
@@ -44,6 +49,7 @@ import { DeleteWidgetAction } from './delete-widget-action'
 import { useWidgetCategoriesByIdsQuery, widgetCategoryNames } from './use-widget-categories'
 import { useEditWidgetField, useWidgetQuery } from './use-widgets'
 import {
+  WidgetChecklistItemFields,
   WidgetDescriptionEditor,
   WidgetExtraCategoriesPicker,
   WidgetNameInput,
@@ -51,20 +57,28 @@ import {
   WidgetStatusSelect,
 } from './widget-fields'
 import { CHECKLIST_STATE_BADGE_VARIANT, STATUS_BADGE_VARIANT, dateFormatter, priceFormatter } from './widget-format'
-import { ChecklistItems, WidgetInStockSwitch } from './widget-quick-actions'
+import { ChecklistDoneCount, ChecklistItem, WidgetInStockSwitch } from './widget-quick-actions'
 import { CHECKLIST_STATE_LABELS, WIDGET_STATUS_LABELS, WIDGET_TAG_LABELS, widgetFormSchema } from './widget-schema'
 
 type Widget = components['schemas']['Widget']
 type WidgetUpdate = components['schemas']['WidgetUpdate']
 
-type WidgetEdits = Record<'name' | 'status' | 'price' | 'description' | 'extraCategoryIds', EditInPlace>
+type WidgetEdits = Record<'name' | 'status' | 'price' | 'description' | 'extraCategoryIds', EditInPlace> & {
+  checklist: EditInPlaceList
+}
+type ChecklistItemValue = Widget['checklist'][number]
 
 const sameIds = (a: number[], b: number[]) => [...a].sort().join() === [...b].sort().join()
 
 // The plan's "Edit in place" fields: each one's form control
 // (widget-fields.tsx), its rule from the form's schema, and the save, a
-// PATCH of that one field.
-function widgetEdits(widget: Widget, save: (update: WidgetUpdate) => Promise<unknown>): WidgetEdits {
+// PATCH of that one field. A list's save takes a change and applies it to
+// the latest list (`saveChange`), so it builds on a tick still saving.
+function widgetEdits(
+  widget: Widget,
+  save: (update: WidgetUpdate) => Promise<unknown>,
+  saveChange: (change: (widget: Widget) => WidgetUpdate) => Promise<unknown>,
+): WidgetEdits {
   const rules = widgetFormSchema.shape
   return {
     name: editInPlace({
@@ -164,6 +178,33 @@ function widgetEdits(widget: Widget, save: (update: WidgetUpdate) => Promise<unk
         />
       ),
     }),
+    // Sub-records: the form's own row for each item (and the one being
+    // added), the form's rules for the list, ticking still a quick action.
+    checklist: editInPlace<ChecklistItemValue>({
+      kind: 'list',
+      value: widget.checklist,
+      schema: rules.checklist,
+      save: (change) => saveChange((current) => ({ checklist: change(current.checklist) })),
+      newItem: () => ({ text: '', done: false }),
+      itemName: (index) => `item ${index + 1}`,
+      addLabel: 'Add item',
+      renderShown: (_item, index) => <ChecklistItem widget={widget} index={index} />,
+      renderItem: (props) => (
+        <WidgetChecklistItemFields
+          index={props.index}
+          done={props.value.done}
+          onDoneChange={(done) => props.onChange({ ...props.value, done })}
+          invalid={props.invalid}
+          readOnly={props.disabled}
+          textProps={{
+            id: props.id,
+            value: props.value.text,
+            onChange: (event) => props.onChange({ ...props.value, text: event.target.value }),
+            'aria-describedby': props.describedBy,
+          }}
+        />
+      ),
+    }),
   }
 }
 
@@ -224,8 +265,10 @@ function widgetSections(widget: Widget, edits: WidgetEdits): EntityViewSection[]
     {
       title: 'Checklist',
       emptyLabel: 'No items',
-      // A quick action: each item ticks in place (the done-count follows).
-      content: widget.checklist.length > 0 && <ChecklistItems widget={widget} />,
+      // Edited in place as a list; the done-count above it follows every
+      // tick (each item's box, a quick action).
+      content: widget.checklist.length > 0 && <ChecklistDoneCount widget={widget} />,
+      edit: edits.checklist,
     },
   ]
 }
@@ -243,7 +286,13 @@ export function WidgetViewRoute() {
   const names = useMemo(() => widgetCategoryNames(categoriesQuery.data), [categoriesQuery.data])
 
   const editField = useEditWidgetField(widgetId)
-  const edits = widget && widgetEdits(widget, (update) => editField.mutateAsync(update))
+  const edits =
+    widget &&
+    widgetEdits(
+      widget,
+      (update) => editField.mutateAsync(update),
+      (change) => editField.mutateAsync(change),
+    )
 
   return (
     <CategoryNamesContext.Provider value={names}>

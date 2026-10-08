@@ -2,14 +2,15 @@
 // lets you change straight from the view, each saved on its own the moment
 // it changes, without the form. In Stock (a switch in the header) and the
 // checklist (items ticked in place). Status, Name, Price, Description and
-// Extra Categories edit in place instead (cell pattern 18, widget-view.tsx).
+// Extra Categories edit in place instead (cell pattern 18, widget-view.tsx),
+// and so do the checklist's items themselves (their text, adding, moving,
+// removing): ticking is a quick action within that list.
 //
 // Each control calls useSaveWidgetField itself, so `isPending` is its own
 // save: a spinner shows beside it in a slot that's always there (nothing
 // moves), and nothing is disabled, the rest of the page included. A second
 // change while one saves waits for it and builds on it. A refusal puts the
 // value back and the server's reason shows in a toast.
-import { useId } from 'react'
 import { Checkbox } from '@tristan2828/ui-foundation/ui/checkbox'
 import { Spinner } from '@tristan2828/ui-foundation/ui/spinner'
 import { Switch } from '@tristan2828/ui-foundation/ui/switch'
@@ -43,51 +44,35 @@ export function WidgetInStockSwitch({ widget }: { widget: Widget }) {
   )
 }
 
-// One item: ticking it sends the whole list with this item changed, built
-// from the latest list when the request goes out (so two quick ticks both
-// land). The label wraps the box, so the text ticks it too; its hidden
-// "Done:" prefix makes the box's name say what it changes.
-function ChecklistItem({ widget, index }: { widget: Widget; index: number }) {
+// One item as the view shows it: ticking its box sends the whole list with
+// this item changed, built from the latest list when the request goes out
+// (so two quick ticks both land). The box is named for what it changes
+// ("Done: Pair the receiver"). The text beside it isn't part of the box:
+// clicking it edits the item in place (widget-view.tsx).
+export function ChecklistItem({ widget, index }: { widget: Widget; index: number }) {
   const save = useSaveWidgetField(widget.id)
   const item = widget.checklist[index]
   return (
-    <li className="flex items-start gap-2">
-      <label className="flex min-w-0 items-start gap-2">
-        <Checkbox
-          className="mt-0.5"
-          checked={item.done}
-          onCheckedChange={(done) =>
-            save.mutate((current) => ({
-              checklist: current.checklist.map((other, i) => (i === index ? { ...other, done } : other)),
-            }))
-          }
-        />
-        <span className="sr-only">Done: </span>
-        <span className={item.done ? 'text-muted-foreground' : undefined}>{item.text}</span>
-      </label>
+    <span className="flex items-start gap-2">
+      <Checkbox
+        className="mt-0.5"
+        checked={item.done}
+        aria-label={`Done: ${item.text}`}
+        onCheckedChange={(done) =>
+          save.mutate((current) => ({
+            checklist: current.checklist.map((other, i) => (i === index ? { ...other, done } : other)),
+          }))
+        }
+      />
+      <span className={item.done ? 'text-muted-foreground' : undefined}>{item.text}</span>
       <span className="mt-0.5 inline-flex">
         <Saving pending={save.isPending} />
       </span>
-    </li>
+    </span>
   )
 }
 
-// Sub-records ticked in place: the done-count (it follows every tick),
-// then each item in order as a checkbox, in one named group.
-export function ChecklistItems({ widget }: { widget: Widget }) {
-  const countId = useId()
-  return (
-    <div className="flex flex-col gap-2">
-      <p id={countId} className="type-caption tabular-nums text-muted-foreground">
-        {checklistDoneCount(widget.checklist)}
-      </p>
-      <div role="group" aria-label="Checklist items" aria-describedby={countId}>
-        <ul className="flex flex-col gap-1.5">
-          {widget.checklist.map((_item, index) => (
-            <ChecklistItem key={index} widget={widget} index={index} />
-          ))}
-        </ul>
-      </div>
-    </div>
-  )
+// Above the items: the done-count, which follows every tick.
+export function ChecklistDoneCount({ widget }: { widget: Widget }) {
+  return <p className="type-caption tabular-nums text-muted-foreground">{checklistDoneCount(widget.checklist)}</p>
 }

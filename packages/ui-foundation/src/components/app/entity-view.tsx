@@ -22,7 +22,9 @@
 // saves when you leave it. This component runs it (one field open at a
 // time, the leave-page prompt); EditableValue is each value's side, and a
 // header badge uses it directly. A field not marked renders exactly as
-// before. Edit, in `actions`, stays for everything else.
+// before. Edit, in `actions`, stays for everything else. A sub-item list
+// edits in place too (editInPlace's `list` kind, editable-list.tsx): its
+// items added, edited, moved and removed on the page.
 //
 // Two layouts. `column` (the default): every section in one column capped
 // at max-w-4xl. `rail`, for a record with long content: the page takes the
@@ -48,8 +50,9 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
-import { EditInPlaceContext, type EditInPlace } from './edit-in-place'
+import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
+import { EditableList } from './editable-list'
 import { EditableValue, LeaveGuard } from './editable-value'
 
 export type EntityViewField = {
@@ -83,8 +86,14 @@ export type EntityViewSection = (
       title: string
       content: ReactNode
       emptyLabel?: string
-      /** The block is editable in place (long text), named by the section's title. */
-      edit?: EditInPlace
+      /**
+       * The block is editable in place, named by the section's title: long
+       * text (`editInPlace({ kind: 'long-text', ... })`), or a list of
+       * sub-items (`editInPlace({ kind: 'list', ... })`). A list shows its
+       * own items, with `content` above them (a done-count, or nothing),
+       * and `emptyLabel` in place of the items when there are none.
+       */
+      edit?: EditInPlace | EditInPlaceList
     }
 ) & {
   /**
@@ -206,6 +215,11 @@ function ViewSection({ section, inRail = false }: { section: EntityViewSection; 
                 <FieldRow key={field.label} field={field} inRail={inRail} />
               ))}
             </dl>
+          ) : section.edit?.kind === 'list' ? (
+            <div className="flex min-w-0 flex-col gap-2 type-body break-words text-foreground">
+              {!isEmptyValue(section.content) && section.content}
+              <EditableList label={section.title} edit={section.edit} emptyLabel={section.emptyLabel ?? DEFAULT_EMPTY_LABEL} />
+            </div>
           ) : (
             <div className="min-w-0 type-body break-words text-foreground">
               {section.edit ? (

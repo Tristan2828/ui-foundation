@@ -655,3 +655,162 @@ test.describe('widget view: editing in place', () => {
     expect(await asked).toBe('beforeunload')
   })
 })
+
+// The checklist, a list edited in place (editInPlace's `list` kind): items
+// added at the end, edited where they're shown, moved and removed with the
+// form's own buttons. Every change is one PATCH of the whole list.
+test.describe('widget view: the checklist edited in place', () => {
+  const checklist = (page: Page) => page.getByRole('region', { name: 'Checklist' })
+  const items = (page: Page) => checklist(page).getByRole('list', { name: 'Checklist' }).getByRole('listitem')
+  const item = (text: string, done = false) => ({ text, done })
+
+  test('three items added in a row from the keyboard alone; each saves, and they stay', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await checklist(page).getByRole('button', { name: 'Add item' }).focus()
+    await page.keyboard.press('Enter')
+
+    // Enter saves the item and opens the next, the caret already in it.
+    for (const [index, text] of ['Test the scroll wheel', 'Clean the sensor', 'Box it up'].entries()) {
+      const box = page.getByRole('textbox', { name: `Item ${index + 3} text` })
+      await expect(box).toBeFocused()
+      await page.keyboard.type(text)
+      await page.keyboard.press('Enter')
+    }
+    await expect(page.getByRole('textbox', { name: 'Item 6 text' })).toBeFocused()
+    // An empty box closes on Esc, with nothing sent.
+    await page.keyboard.press('Escape')
+    await expect(checklist(page).getByRole('button', { name: 'Add item' })).toBeFocused()
+
+    const saved = [
+      item('Charge the battery', true),
+      item('Pair the receiver'),
+      item('Test the scroll wheel'),
+      item('Clean the sensor'),
+      item('Box it up'),
+    ]
+    expect(bodies).toEqual([
+      { checklist: saved.slice(0, 3) },
+      { checklist: saved.slice(0, 4) },
+      { checklist: saved },
+    ])
+    await expect(items(page)).toHaveText(saved.map(({ text }) => text))
+    await expect(checklist(page).getByText('1/5 done', { exact: true })).toBeVisible()
+
+    // Saved, not just shown: away to the list and back reads it again.
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await page.getByRole('link', { name: 'Wireless Mouse' }).click()
+    await expect(items(page)).toHaveText(saved.map(({ text }) => text))
+  })
+
+  test("an item's text edits where it's shown: Enter saves, Esc gives up", async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await checklist(page).getByText('Pair the receiver', { exact: true }).click()
+    const text = page.getByRole('textbox', { name: 'Item 2 text' })
+    await expect(text).toBeFocused()
+    await expect(text).toHaveValue('Pair the receiver')
+    await text.fill('Pair the USB receiver')
+    await page.keyboard.press('Enter')
+
+    await expect(items(page)).toHaveText(['Charge the battery', 'Pair the USB receiver'])
+    await expect(checklist(page).getByRole('button', { name: 'Edit item 2' })).toBeFocused()
+    expect(bodies).toEqual([{ checklist: [item('Charge the battery', true), item('Pair the USB receiver')] }])
+
+    // From the keyboard: Enter on its pencil, then Esc puts it back.
+    await page.keyboard.press('Enter')
+    await expect(text).toBeFocused()
+    await text.fill('Something else')
+    await page.keyboard.press('Escape')
+    await expect(items(page)).toHaveText(['Charge the battery', 'Pair the USB receiver'])
+    expect(bodies).toHaveLength(1)
+  })
+
+  test("move and remove: the form's buttons, each one save, the caret following the item", async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await checklist(page).getByRole('button', { name: 'Move item 2 up' }).click()
+    await expect(items(page)).toHaveText(['Pair the receiver', 'Charge the battery'])
+    // The moved item is first now, so its Move up is off: the caret is on its Move down.
+    await expect(checklist(page).getByRole('button', { name: 'Move item 1 down' })).toBeFocused()
+
+    await checklist(page).getByRole('button', { name: 'Remove item 1' }).click()
+    await expect(items(page)).toHaveText(['Charge the battery'])
+    await expect(checklist(page).getByRole('button', { name: 'Remove item 1' })).toBeFocused()
+
+    expect(bodies).toEqual([
+      { checklist: [item('Pair the receiver'), item('Charge the battery', true)] },
+      { checklist: [item('Charge the battery', true)] },
+    ])
+  })
+
+  test("a blank item is never sent: the form's rule shows under it", async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('textbox', { name: 'Item 3 text' }).fill('   ')
+    await page.keyboard.press('Enter')
+    await expect(checklist(page).getByRole('alert')).toHaveText('Write something or remove the item')
+    expect(bodies).toEqual([])
+  })
+
+  test("a refused change leaves the list as it was, with the server's reason", async ({ page }) => {
+    await openWidget(page)
+    await refusePatches(page, 422, {
+      detail: [{ loc: ['body', 'checklist', 1, 'text'], msg: 'That item is already on the list', type: 'value_error' }],
+    })
+
+    // A move: the order stays, the reason under the list.
+    await checklist(page).getByRole('button', { name: 'Move item 2 up' }).click()
+    await expect(checklist(page).getByRole('alert')).toHaveText('That item is already on the list')
+    await expect(items(page)).toHaveText(['Charge the battery', 'Pair the receiver'])
+    await expect(page.locator('[data-sonner-toast]')).toHaveCount(0)
+
+    // An item's text: it stays open with what was typed and the reason.
+    await checklist(page).getByText('Pair the receiver', { exact: true }).click()
+    const text = page.getByRole('textbox', { name: 'Item 2 text' })
+    await text.fill('Charge the battery')
+    await page.keyboard.press('Enter')
+    await expect(text).toHaveValue('Charge the battery')
+    await expect(text).toHaveAttribute('aria-invalid', 'true')
+    await expect(text).toHaveAccessibleDescription('That item is already on the list')
+  })
+
+  test('ticking keeps working beside it: a tick and an item added just after both land', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await delayPatches(page, 400)
+    await checklist(page).getByRole('checkbox', { name: 'Done: Pair the receiver' }).click()
+    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('textbox', { name: 'Item 3 text' }).fill('Test the scroll wheel')
+    await page.keyboard.press('Enter')
+
+    await expect(items(page)).toHaveText(['Charge the battery', 'Pair the receiver', 'Test the scroll wheel'])
+    await expect(checklist(page).getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeChecked()
+    // The add was sent after the tick answered, built on the ticked list.
+    expect(bodies).toEqual([
+      { checklist: [item('Charge the battery', true), item('Pair the receiver', true)] },
+      { checklist: [item('Charge the battery', true), item('Pair the receiver', true), item('Test the scroll wheel')] },
+    ])
+  })
+
+  test('an empty list says so, and takes its first item', async ({ page }) => {
+    // Blank Slate (id 4) has no checklist.
+    const bodies = patchBodies(page)
+    await openWidget(page, 4)
+    await expect(checklist(page)).toContainText('No items')
+    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('textbox', { name: 'Item 1 text' }).fill('Unbox it')
+    await page.keyboard.press('Enter')
+    await expect(items(page)).toHaveText(['Unbox it'])
+    expect(bodies).toEqual([{ checklist: [item('Unbox it')] }])
+  })
+
+  test('a half-typed item asks before leaving the page', async ({ page }) => {
+    await openWidget(page)
+    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('textbox', { name: 'Item 3 text' }).fill('Half typed')
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toBeVisible()
+  })
+})

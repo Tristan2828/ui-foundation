@@ -5,6 +5,60 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.25.0 — lists edited in place, twelve colour slots, one hover
+
+Additive: a new `kind: 'list'` for `editInPlace`, two optional props on
+`ListEditor`, four new colour slots. No existing prop or export changes.
+Run `npx ui-foundation sync` for the updated cell patterns, design
+language, playbook and plan template.
+
+- **A sub-item list edits in place on the view** (issue #102):
+  `editInPlace({ kind: 'list', value, schema, save, renderItem,
+  renderShown, newItem, itemName, addLabel })` as a `content` section's
+  `edit`. Each item reads as `renderShown` (a done box still ticks it);
+  clicking it, or its pencil, opens the form's own row (`renderItem`);
+  Enter or leaving saves, Esc gives up. "Add item" at the end opens a new
+  row, and Enter saves it and opens the next, so a run of items goes in
+  from the keyboard. Move and remove are `ListEditor`'s buttons, with
+  its names, each one save; the caret follows the moved item. `save`
+  takes a change, applied to the record's latest list when it's sent, so
+  it builds on a tick still saving. The list's schema checks each change
+  as the list it would make, and a refusal shows under the item (or
+  under the list, for a move or remove) with nothing changed. Works in
+  the rail and the main column. New types `EditInPlaceList`,
+  `EditInPlaceListOptions`, `EditListItemProps`. Storybook
+  `app/EntityView` "Lists" shows a checklist and a links list.
+- **`ListEditor`** takes `add` (a node in place of its Add button) and
+  `disabled` (its buttons wait); `onAdd` is optional with `add`.
+- **Editing in place, small fixes found building the list:** a click on a
+  label, a checkbox or a switch inside a shown value no longer opens it
+  (the box does its own thing), and opening a field no longer puts the
+  caret on a checkbox's hidden native input before the field's text box.
+- **Twelve categorical colour slots** (issue #101): `--category-9` to
+  `--category-12` (`text-category-9` …), deeper shades of four of the
+  first eight's hues (teal, plum, olive, violet) in both themes, since
+  the hues between the tones are spent. None is near info's blue. A unit
+  test holds every pair of slots at least as far apart as the first
+  eight were (`tests/category-slots.test.ts`), and Storybook
+  `patterns/CategoricalColour` shows every slot on the page and on a
+  card, with the glyph check measuring each against both in both themes.
+  `design-language.md` says when past eight is worth it.
+- **`DataTable`: a pinned last column no longer lights up on row hover**
+  (issue #103). It stays pinned, opaque and striped; only the pinned
+  first column marks the hovered row. A table that pins only its last
+  column gets the plain row hover of an unpinned table.
+- **The template:** Widget's Checklist is edited in place (its row shared
+  with the form as `WidgetChecklistItemFields`), and its item text no
+  longer ticks the box (it edits the item; the box is named "Done:
+  <text>" as before).
+
+**Upgrading:** nothing is required. An app whose specs assert the pinned
+last column's hover style, or click a checklist item's text to tick it,
+updates them. To edit a sub-record list in place, follow cell pattern 18,
+"A list of sub-items". To offer the new colours, widen the colour enum
+(contract and CHECK) to `category-12` and add the whole class names to
+the slot → class map.
+
 ## 3.24.0 — a record's view with a right rail
 
 Additive: one new optional prop on `EntityView` and on its sections, no

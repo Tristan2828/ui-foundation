@@ -105,7 +105,7 @@ lower; say so in a comment.
 
 Tones say good, bad or *notice this*. A value that is merely *different* from its
 neighbours — a genre, a team, a category — needs a different mechanism, and
-it is `--category-1` through `--category-8`.
+it is `--category-1` through `--category-12`.
 
 They are **generic slots, not per-value tokens**. An app maps its enum to a
 slot in its own columns file, so a new enum value costs a line there rather
@@ -120,31 +120,49 @@ const GENRE_COLOR: Record<Genre, string> = {
 ```
 
 Tailwind needs whole class names, so map the value to a complete class —
-never build one by interpolation, or the class won't be generated.
+never build one by interpolation, or the class won't be generated. An app
+that lets people pick a colour stores the slot's name (an enum of
+`category-1` … `category-12` in its contract, with a CHECK on the column)
+and maps each to its whole class the same way.
 
-Four things about them:
+| Slots | What they are | Near info's blue |
+|---|---|---|
+| 1–8 | eight hues, about 25° apart | 1, 6, 8 |
+| 9–12 | deeper shades of four of those hues: 9 teal (4's), 10 plum (5's), 11 olive (3's), 12 violet (2's) | none |
+
+Five things about them:
 
 - **The hues avoid red, green and amber**, which the tones already spend. A
   category drawn in red reads as "this one is bad" even when nothing is
   wrong. Info's blue came later, and slots 1, 6 and 8 sit near it: a table
   that shows an info badge keeps its categories off those three, so a blue
-  genre isn't read as "notice this".
+  genre isn't read as "notice this". That still leaves nine.
 - **They are ordered by distinctness, not by hue angle.** An app using
   three categories gets three obviously different colours. Past about five,
   hue alone stops separating them — slots 3 and 7 are both yellow-greens —
   so the glyph has to carry the meaning and the colour only reinforces it.
+- **Past eight, it's lightness, not hue.** The hues left between the tones
+  are spent, so slots 9–12 are darker shades of four of the first eight, in
+  both themes. Each is at least as far from every other slot as the first
+  eight are from each other (a unit test holds every pair to it), but a
+  deep shade beside its own hue is told apart by how dark it is, which
+  reads less readily than a hue. Use them for a set that really has more
+  than eight values, and keep a shade away from its own hue where you can
+  choose (10 isn't 5's neighbour in a list).
 - **Tint the glyph, never fill behind text.** The label stays
   `text-foreground`, so readability never depends on the hue. A slot used
   as a background needs its own contrast check, which nothing here does
   for you.
-- **The glyph check re-measures them.** All eight clear the 3:1
-  non-text minimum in both themes (recorded in `theme.css`). axe checks
-  text contrast, not icon contrast, so the package's Storybook glyph check
-  draws an icon in each slot (`patterns/CellPatterns`, "Icons with one
-  tooltip") and fails a change that takes one below 3:1.
+- **The glyph check re-measures them.** All twelve clear the 3:1
+  non-text minimum in both themes, on the page and on a card (recorded in
+  `theme.css`). axe checks text contrast, not icon contrast, so the
+  package's Storybook glyph check draws an icon in each slot on both
+  surfaces (`patterns/CategoricalColour`, which also shows them side by
+  side) and fails a change that takes one below 3:1.
 
-If you find yourself wanting a ninth, that is usually a sign the column
-should be showing a shape or a label rather than more colours.
+If you find yourself wanting a thirteenth, that is a sign the column should
+be showing a shape or a label rather than more colours: there is no more
+room in hue or lightness that stays readable.
 
 ## Typography
 
