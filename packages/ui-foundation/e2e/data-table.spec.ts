@@ -80,14 +80,14 @@ test.describe('DataTable, editing in its rows', () => {
     await page.keyboard.press('Enter')
     await expect(page.getByText('Saving…')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Edit Name of Workshop' })).toBeFocused()
-    await expect(row(page, 'Workshop')).toContainText('Olive')
+    await expect(row(page, 'Workshop')).toContainText('Green')
   })
 
   test('a choice cell: its list opens with it, and a pick saves', async ({ page }) => {
     await open(page)
     await page.getByRole('button', { name: 'Edit Colour of Home' }).click()
-    await page.getByRole('option', { name: 'Teal' }).click()
-    await expect(row(page, 'Home')).toContainText('Teal')
+    await page.getByRole('option', { name: 'Purple' }).click()
+    await expect(row(page, 'Home')).toContainText('Purple')
   })
 
   test("a refusal stays open in its cell with what was typed and the server's reason; Esc gives up", async ({ page }) => {
@@ -109,7 +109,7 @@ test.describe('DataTable, editing in its rows', () => {
     await page.getByRole('textbox', { name: 'Name of Travel' }).fill('Trips')
     await page.getByRole('button', { name: 'Edit Colour of Home' }).click()
     await expect(page.getByRole('button', { name: 'Edit Name of Trips' })).toBeVisible()
-    await expect(page.getByRole('option', { name: 'Teal' })).toBeVisible()
+    await expect(page.getByRole('option', { name: 'Purple' })).toBeVisible()
   })
 
   test('leaving the page with a cell half typed asks first', async ({ page }) => {

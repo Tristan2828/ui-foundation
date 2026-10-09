@@ -1,6 +1,6 @@
 {
   "name": "@tristan2828/ui-foundation",
-  "version": "3.26.0",
+  "version": "3.27.0",
   "description": "Shared UI foundation for contract-first, database-backed React apps: shadcn primitives, DataTable/EntityForm composites, auth, the gateway error seam, design tokens, lint rules and the AI playbook.",
   "license": "MIT",
   "repository": {

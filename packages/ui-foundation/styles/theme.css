@@ -66,54 +66,50 @@
    * to a slot in its own columns file, so a new enum value costs a line
    * there rather than three tokens here.
    *
-   * Hues avoid the red and green bands that destructive/success already
-   * spend, and the amber that warning does — a category drawn in red reads
-   * as "bad". The blue slots (1, 6, 8) sit near info's hue, which came
-   * later: a table using info keeps its categories off those three. They are ordered by distinctness, not by hue angle, so an app
-   * using only the first three gets three obviously different colours.
-   * Past about five, hue alone stops separating them and the glyph has to
-   * carry the meaning; see docs/design-language.md. Twelve slots in all.
+   * Chosen to be told apart (#108), not spaced by hue: twelve colours a
+   * person names differently, from the whole hue circle, with lightness and
+   * chroma varied per slot as well as hue. Red, orange, brown and green are
+   * in: a category is a tinted glyph beside its name, never a status badge,
+   * so it doesn't read as a tone (design-language.md says where that still
+   * matters). Slot 1 (blue) sits near info's hue; a table using info keeps
+   * its categories off it.
    *
-   * Ratios are against the page, measured (WCAG 2.x, sRGB), and all clear
-   * the 3:1 non-text minimum in both themes with room to spare (4.5:1 at
-   * the least, slots 9-12 on the dark card). axe does NOT check icon
-   * contrast; the Storybook glyph check re-measures every slot on the
-   * page and on a card (design-language/CategoricalColour).
+   * Every pair is at least 17.9 apart in CIEDE2000 ΔE in both themes (the
+   * hue-spaced slots before them got to 8.8); tests/category-slots.test.ts
+   * holds every pair to 15. They are ordered so the first few stay apart
+   * under deuteranopia and protanopia too (the first six are 12 apart);
+   * past that, the glyph has to carry the meaning for those readers.
+   *
+   * Ratios are against the page, measured (WCAG 2.x, sRGB): all clear the
+   * 3:1 non-text minimum in both themes (3.75:1 at the least, orange and
+   * teal on white). axe does NOT check icon contrast; the Storybook glyph
+   * check re-measures every slot on the page and on a card
+   * (patterns/CategoricalColour).
    */
-  --category-1-700: oklch(0.5 0.15 240);
-  --category-1-400: oklch(0.78 0.12 240);
-  --category-2-700: oklch(0.5 0.15 300);
-  --category-2-400: oklch(0.78 0.12 300);
-  --category-3-700: oklch(0.5 0.15 95);
-  --category-3-400: oklch(0.78 0.12 95);
-  --category-4-700: oklch(0.5 0.15 190);
-  --category-4-400: oklch(0.78 0.12 190);
-  --category-5-700: oklch(0.5 0.15 330);
-  --category-5-400: oklch(0.78 0.12 330);
-  --category-6-700: oklch(0.5 0.15 265);
-  --category-6-400: oklch(0.78 0.12 265);
-  --category-7-700: oklch(0.5 0.15 120);
-  --category-7-400: oklch(0.78 0.12 120);
-  --category-8-700: oklch(0.5 0.15 215);
-  --category-8-400: oklch(0.78 0.12 215);
-  /*
-   * Slots 9-12 are a second channel, not new hues: the hues left between
-   * the tones' are already spent ~25 degrees apart, so these are deeper
-   * shades of the four that sit furthest from info (teal, plum, olive,
-   * violet), darker than their slot in both themes. Each is at least as
-   * far from its nearest slot (OKLab distance) as slots 1-8 are from each
-   * other; tests/category-slots.test.ts holds every pair to that. A deep
-   * shade of the blues or the yellow-green fell to half that distance, so
-   * twelve is where it stops. Chroma is the most each holds in sRGB.
-   */
-  --category-9-700: oklch(0.36 0.06 190);
-  --category-9-400: oklch(0.62 0.1 190);
-  --category-10-700: oklch(0.36 0.12 330);
-  --category-10-400: oklch(0.62 0.15 330);
-  --category-11-700: oklch(0.36 0.07 95);
-  --category-11-400: oklch(0.62 0.12 95);
-  --category-12-700: oklch(0.36 0.14 300);
-  --category-12-400: oklch(0.62 0.17 300);
+  --category-1-700: oklch(0.44 0.11 245); /* blue */
+  --category-1-400: oklch(0.626 0.156 245);
+  --category-2-700: oklch(0.627 0.161 52); /* orange */
+  --category-2-400: oklch(0.722 0.16 52);
+  --category-3-700: oklch(0.492 0.105 152); /* green */
+  --category-3-400: oklch(0.763 0.17 152);
+  --category-4-700: oklch(0.55 0.254 305); /* purple */
+  --category-4-400: oklch(0.772 0.116 305);
+  --category-5-700: oklch(0.615 0.144 7); /* pink */
+  --category-5-400: oklch(0.812 0.102 7);
+  --category-6-700: oklch(0.445 0.1 56); /* brown */
+  --category-6-400: oklch(0.602 0.054 56);
+  --category-7-700: oklch(0.599 0.104 183); /* teal */
+  --category-7-400: oklch(0.849 0.139 183);
+  --category-8-700: oklch(0.503 0.176 27); /* red */
+  --category-8-400: oklch(0.646 0.152 27);
+  --category-9-700: oklch(0.573 0.115 84); /* gold */
+  --category-9-400: oklch(0.87 0.136 84);
+  --category-10-700: oklch(0.362 0.203 279); /* navy */
+  --category-10-400: oklch(0.601 0.164 279);
+  --category-11-700: oklch(0.593 0.121 119); /* lime */
+  --category-11-400: oklch(0.823 0.163 119);
+  --category-12-700: oklch(0.423 0.181 337); /* magenta */
+  --category-12-400: oklch(0.648 0.232 337);
   --blue-500: oklch(0.488 0.243 264.376);
 
   --radius-base: 0.625rem;

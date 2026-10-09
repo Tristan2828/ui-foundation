@@ -125,30 +125,38 @@ that lets people pick a colour stores the slot's name (an enum of
 `category-1` … `category-12` in its contract, with a CHECK on the column)
 and maps each to its whole class the same way.
 
-| Slots | What they are | Near info's blue |
-|---|---|---|
-| 1–8 | eight hues, about 25° apart | 1, 6, 8 |
-| 9–12 | deeper shades of four of those hues: 9 teal (4's), 10 plum (5's), 11 olive (3's), 12 violet (2's) | none |
+| Slot | Colour | Slot | Colour |
+|---|---|---|---|
+| 1 | blue (near info) | 7 | teal |
+| 2 | orange | 8 | red |
+| 3 | green | 9 | gold |
+| 4 | purple | 10 | navy |
+| 5 | pink | 11 | lime |
+| 6 | brown | 12 | magenta |
+
+Every slot is a colour with its own name: no two blues, no two teals. So
+in a picker, label each with its name ("Orange"), not its number.
 
 Five things about them:
 
-- **The hues avoid red, green and amber**, which the tones already spend. A
-  category drawn in red reads as "this one is bad" even when nothing is
-  wrong. Info's blue came later, and slots 1, 6 and 8 sit near it: a table
-  that shows an info badge keeps its categories off those three, so a blue
-  genre isn't read as "notice this". That still leaves nine.
-- **They are ordered by distinctness, not by hue angle.** An app using
-  three categories gets three obviously different colours. Past about five,
-  hue alone stops separating them — slots 3 and 7 are both yellow-greens —
-  so the glyph has to carry the meaning and the colour only reinforces it.
-- **Past eight, it's lightness, not hue.** The hues left between the tones
-  are spent, so slots 9–12 are darker shades of four of the first eight, in
-  both themes. Each is at least as far from every other slot as the first
-  eight are from each other (a unit test holds every pair to it), but a
-  deep shade beside its own hue is told apart by how dark it is, which
-  reads less readily than a hue. Use them for a set that really has more
-  than eight values, and keep a shade away from its own hue where you can
-  choose (10 isn't 5's neighbour in a list).
+- **Chosen to be told apart, not spaced by hue.** They use the whole hue
+  circle and vary lightness and chroma as well, so a light lime sits next
+  to a deep navy rather than two mid-tone hues 25° apart. Every pair is at
+  least 17.9 apart in CIEDE2000 ΔE (the perceived difference; 10 and up
+  reads as a different colour), in both themes. A unit test holds every
+  pair to 15.
+- **A category is not a tone.** Red, orange, brown and green are slots
+  because a category is a tinted glyph beside its name, never a status
+  badge, and doesn't read as good or bad there. Where it still could, keep
+  them apart: a column that shows tone badges doesn't tint its categories
+  in the same column, and a table that shows an info badge keeps its
+  categories off slot 1, the one near info's blue.
+- **They are ordered for small sets.** An app using the first few gets the
+  most separable few, for everyone: the first six also stay apart (ΔE 10
+  or more, tested) for readers with deuteranopia or protanopia, the common
+  red-green deficiencies. Past six, some pairs merge for those readers
+  (gold and lime are nearly one colour), so the glyph and the name carry
+  the meaning and the colour only reinforces it.
 - **Tint the glyph, never fill behind text.** The label stays
   `text-foreground`, so readability never depends on the hue. A slot used
   as a background needs its own contrast check, which nothing here does
@@ -157,12 +165,13 @@ Five things about them:
   non-text minimum in both themes, on the page and on a card (recorded in
   `theme.css`). axe checks text contrast, not icon contrast, so the
   package's Storybook glyph check draws an icon in each slot on both
-  surfaces (`patterns/CategoricalColour`, which also shows them side by
-  side) and fails a change that takes one below 3:1.
+  surfaces (`patterns/CategoricalColour`) and fails a change that takes
+  one below 3:1. Its `SideBySide` story shows both themes at once, under
+  normal vision and simulated deuteranopia and protanopia.
 
 If you find yourself wanting a thirteenth, that is a sign the column should
 be showing a shape or a label rather than more colours: there is no more
-room in hue or lightness that stays readable.
+room that stays readable.
 
 ## Typography
 

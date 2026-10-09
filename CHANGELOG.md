@@ -5,6 +5,53 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.27.0 — categorical colours that are easy to tell apart
+
+The twelve `--category-*` slots keep their names and get new colours
+(issue #108). No class, token or export changes, so nothing is required
+beyond the upgrade. Run `npx ui-foundation sync` for the updated design
+language.
+
+The old slots were eight hues 25° apart at one lightness plus deeper
+shades of four of them: about five colours a person would name
+differently, with four blues and teals. The new ones are twelve named
+colours from the whole hue circle, varied in lightness and chroma as well
+as hue, picked from an options page of candidates. The closest pair went
+from ΔE 8.8 to 17.9 (CIEDE2000), and the first six stay apart for readers
+with deuteranopia or protanopia (before, slots 1 and 2 merged for them).
+
+| Slot | Before | Now |
+|---|---|---|
+| 1 | blue | blue |
+| 2 | purple | orange |
+| 3 | olive | green |
+| 4 | teal | purple |
+| 5 | pink | pink |
+| 6 | blue-violet | brown |
+| 7 | yellow-green | teal |
+| 8 | cyan-blue | red |
+| 9 | deep teal | gold |
+| 10 | plum | navy |
+| 11 | deep olive | lime |
+| 12 | deep violet | magenta |
+
+- **Near info** is now slot 1 only (was 1, 6 and 8).
+- **Red, orange, brown and green are slots now.** A category is a tinted
+  glyph beside its name, not a badge; design-language.md says where to keep
+  them apart from tones (not in a column that shows tone badges).
+- **The distinctness test** measures CIEDE2000 instead of OKLab distance,
+  holds every pair to 15, and holds the first six to 10 under simulated
+  deuteranopia and protanopia.
+- **Storybook** `patterns/CategoricalColour` names each slot's colour, and
+  a new `SideBySide` story shows both themes at once, under normal vision
+  and the two simulations.
+
+**Upgrading:** nothing is required. An app whose people chose a colour by
+what it looked like keeps their choice's slot, so it shows the new colour
+in the table above. If the app labels its colours by name ("Teal" for
+`category-4`), relabel them from the "Now" column. One that lists its
+slots for people to pick from may want to reorder the list.
+
 ## 3.26.0 — small entities edited in their rows; tables sized to their columns
 
 Additive: a new optional `width` prop on `DataTable`, a new `InlineCreate`
