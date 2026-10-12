@@ -82,8 +82,23 @@ fi
 # `npm publish` normalises package.json more strictly than `npm pack`, and
 # silently drops what it rejects — once, the `ui-foundation` bin, which
 # every app's verify runs. A dry run needs no login; any correction fails.
+# Run on a copy: the tarball's files with the source package.json, under a
+# throwaway version. The committed version is the last release, always on
+# npm already, and npm 11 refuses even a dry run over a published version.
 echo "consume-test: npm publish --dry-run (no auto-corrections allowed)"
-PUBLISH_OUT=$(npm publish -w @tristan2828/ui-foundation --dry-run --provenance=false 2>&1) ||
+PUBLISH_DIR="$WORKDIR/publish-check"
+mkdir -p "$PUBLISH_DIR"
+tar -xzf "$WORKDIR/$TARBALL_NAME" -C "$PUBLISH_DIR"
+# Rewrites only the version, so whatever npm would correct is still there.
+node -e '
+  const fs = require("fs");
+  const [src, dest] = process.argv.slice(1);
+  const pkg = JSON.parse(fs.readFileSync(src, "utf8"));
+  pkg.version = "0.0.0-consume-test";
+  fs.writeFileSync(dest, JSON.stringify(pkg, null, 2) + "\n");
+' packages/ui-foundation/package.json "$(native "$PUBLISH_DIR/package/package.json")"
+PUBLISH_OUT=$(cd "$PUBLISH_DIR/package" &&
+  npm publish --dry-run --ignore-scripts --provenance=false --tag consume-test 2>&1) ||
   fail "npm publish --dry-run failed: $PUBLISH_OUT"
 if printf '%s' "$PUBLISH_OUT" | grep -q "errors corrected"; then
   printf '%s\n' "$PUBLISH_OUT" | grep -A5 "errors corrected" >&2
@@ -104,11 +119,17 @@ cd "$APP"
 # @playwright/test range to the newest release, which can be newer than
 # this repo's lock (1.64.0 shipped mid-PR and every test failed with
 # "Executable doesn't exist"), so browsers installed for the repo's copy
-# don't fit. In CI only, as release-smoke.yml does: elsewhere a developer's
-# machine already has them, or can't download (cloud sessions).
+# don't fit, on a developer's machine as much as in CI. CI also installs the
+# system libraries, as release-smoke.yml does. Elsewhere a failed download
+# (cloud sessions have no access) only warns: the browsers may already be
+# there, and if not, verify says so.
 if [ -n "${CI:-}" ]; then
   echo "consume-test: npx playwright install --with-deps chromium (the app's Playwright, $(npx playwright --version))"
   npx playwright install --with-deps chromium
+else
+  echo "consume-test: npx playwright install chromium (the app's Playwright, $(npx playwright --version))"
+  npx playwright install chromium ||
+    echo "consume-test: warning: couldn't install the app's Chromium; verify's browser tests need it" >&2
 fi
 
 echo "consume-test: npm run verify in the new app"
