@@ -401,8 +401,13 @@ limits what could publish a bad version:
 - Only the `publish` job can publish, and it runs no third-party code: no
   checkout, no `npm ci`, only `npm publish` of the tarball `build` packed.
   `build` installs the dependency tree without that permission.
-- Third-party actions in `release.yml` and `release-smoke.yml` are pinned
-  to commit SHAs.
+- Third-party actions in every workflow are pinned to commit SHAs, and
+  every workflow starts from read-only (or no) permissions.
+- A version already on npm is only accepted as a re-run if its provenance
+  names this commit. Otherwise `publish` fails rather than letting `tag`
+  pair this commit's template with another commit's package (which happens
+  when `tag` failed after a publish). Tag that commit by hand, then re-run
+  all jobs.
 - No npm token exists. The trusted publisher (GitHub Actions,
   `Tristan2828/ui-foundation`, workflow `release.yml`) is the only thing
   that can publish besides the developer's own passkey-protected account.

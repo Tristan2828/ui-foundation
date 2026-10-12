@@ -61,19 +61,17 @@ Playwright), `verify:backend` end to end, and anything on real Postgres.
 **Kept on purpose, so don't "fix" these:** another user's widget being a
 404 rather than a 403; a duplicate email at register being a 422 that says
 so (which already reveals which emails have accounts); `useRecordUpdate`'s
-per-record mutation scope and its `onMutate` running before the scope's turn (TanStack v5 does this, and the pending
-queue relies on it); the `publish` job having no checkout and no `npm ci`.
+per-record mutation scope and its `onMutate` running before the scope's
+turn (TanStack v5 does this, and the pending queue relies on it); the
+`publish` job having no checkout and no `npm ci`.
 Login rate limiting is already a Deferred row below, not a finding.
 
 | # | Severity | Where | Finding | Fix | Done when |
 |---|---|---|---|---|---|
-| 4 | Medium-low | `.github/workflows/release.yml`, the `publish` job's "already live on npm" branch | If `publish` succeeds and `tag` then fails, nothing tags that version. The next push to `main` computes the same version again, the build packs the new commit, `publish` sees the version on npm and skips, and `tag` tags the new commit with it. The tag's template is then the new commit's while npm holds the old commit's package, and the new commit's package changes are never published | In the skip branch, compare `npm view "@tristan2828/ui-foundation@$VERSION" dist.integrity` with the integrity of `./pack/*.tgz` (`sha512-` plus base64 of its SHA-512) and fail if they differ: a re-run of the same commit still passes. `npm pack` isn't byte-reproducible across npm versions, so test that a re-run really does match before relying on it. If it doesn't, fail unless `github.run_attempt > 1` instead | A failing case is shown to fail (a negative control, per `AGENTS.md`), e.g. the check run locally against a different tarball |
 | 5 | Depends on OS | `scripts/create-app.sh` (`sed -i`, `tar --wildcards`) | Not portable to macOS. `sed -i "s#…#"` with no suffix argument is GNU syntax; BSD sed reads the expression as the backup suffix and the script stops (`set -e`). `tar --wildcards` is GNU tar's; macOS ships bsdtar, which is believed (not checked) to reject it. The script's header lists only Git Bash on Windows | Move the `<title>` replacement into the `node -e` block that already rewrites `package.json`. For the download, extract the archive whole into a temp dir and copy its `template/`, or check whether bsdtar takes the pattern without `--wildcards`. Ask the developer whether macOS matters before spending on it | `consume-test.sh --install-only` still passes; on a Mac if one is available |
-| 11 | Low | `.github/workflows/verify.yml` | Its actions are pinned to tags (`@v4`, `@v5`), not commit SHAs, and it has no `permissions:` block, unlike `release.yml`. It can't publish, so the risk is small | Pin to the same SHAs `release.yml` uses, and add `permissions: contents: read` | CI still passes |
 
-**Suggested order:** 4 and 11 as one workflow PR, and 5 once the
-developer says whether macOS matters. Each PR runs `npm run verify`
-(`AGENTS.md` "Scope and stopping").
+**Waiting on the developer:** row 5, once they say whether macOS
+matters. Its PR runs `npm run verify` (`AGENTS.md` "Scope and stopping").
 
 ## Deferred
 

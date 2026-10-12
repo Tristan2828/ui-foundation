@@ -121,8 +121,27 @@ jobs:
           # Trusted publishing needs npm 11.5.1 or later; Node 22 ships 10.x.
           npm install -g npm@11.20.0
           if npm view "@tristan2828/ui-foundation@$VERSION" version >/dev/null 2>&1; then
-            # A re-run, or a version published by hand (3.0.0 was).
-            echo "$VERSION is already live on npm; nothing to publish."
+            # Already live. Fine on a re-run of this commit (publish worked
+            # and a later job failed). Not from another commit: that happens
+            # when `tag` failed after a publish, so the next push computes
+            # the same version. Tagging it would pair that commit's template
+            # with this version's package, and its package changes would
+            # never publish. The provenance names the commit the live
+            # version was built from (no need for a reproducible tarball).
+            built_from=$(curl -fsS "https://registry.npmjs.org/-/npm/v1/attestations/@tristan2828%2fui-foundation@$VERSION" | node -e '
+              let body = ""
+              process.stdin.on("data", (d) => (body += d)).on("end", () => {
+                for (const { predicateType, bundle } of JSON.parse(body).attestations) {
+                  if (predicateType !== "https://slsa.dev/provenance/v1") continue
+                  const statement = JSON.parse(Buffer.from(bundle.dsseEnvelope.payload, "base64").toString())
+                  console.log(statement.predicate.buildDefinition.resolvedDependencies[0].digest.gitCommit)
+                }
+              })' 2>/dev/null || true)
+            if [ "$built_from" != "$GITHUB_SHA" ]; then
+              echo "::error::$VERSION is already on npm, built from ${built_from:-an unknown commit (no provenance)}, not $GITHUB_SHA. Tag that commit by hand (gh release create v$VERSION --target <commit>), then re-run all jobs here so this commit releases as the next patch."
+              exit 1
+            fi
+            echo "$VERSION is already live on npm, built from this commit (a re-run); nothing to publish."
           else
             # The ./ matters: npm reads `pack/x.tgz` as a GitHub user/repo
             # shorthand and tries to git-clone it.
