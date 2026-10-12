@@ -29,15 +29,24 @@ function validateWidgetInput(
         issues.push({ loc: ["body", field], msg: "field required", type: "value_error.missing" });
       }
     }
+  } else {
+    // PATCH: a field left out keeps its value; null clears only
+    // assigneeEmail. inStock, extraCategoryIds and checklist refuse null
+    // in their own checks below.
+    for (const field of [...REQUIRED_FIELDS, "tags"] as const) {
+      if (input[field] === null) {
+        issues.push({ loc: ["body", field], msg: `${field} can't be null`, type: "value_error" });
+      }
+    }
   }
-  if (input.price !== undefined && !PRICE_RE.test(String(input.price))) {
+  if (input.price != null && !PRICE_RE.test(String(input.price))) {
     issues.push({
       loc: ["body", "price"],
       msg: 'string does not match regex "^\\d+\\.\\d{2}$"',
       type: "value_error.str.regex",
     });
   }
-  if (input.tags !== undefined) {
+  if (input.tags != null) {
     const tags = input.tags as unknown[];
     const valid = Array.isArray(tags) && tags.every((tag) => WIDGET_TAGS.includes(tag as WidgetTag));
     if (!valid) {
@@ -51,7 +60,7 @@ function validateWidgetInput(
   if (input.inStock !== undefined && typeof input.inStock !== "boolean") {
     issues.push({ loc: ["body", "inStock"], msg: "value is not a valid boolean", type: "type_error.bool" });
   }
-  if (input.status !== undefined && !["draft", "active", "archived"].includes(String(input.status))) {
+  if (input.status != null && !["draft", "active", "archived"].includes(String(input.status))) {
     issues.push({ loc: ["body", "status"], msg: "value is not a valid enumeration member", type: "type_error.enum" });
   }
   if (
@@ -93,7 +102,7 @@ function validateWidgetInput(
       });
     }
   }
-  if (input.categoryId !== undefined && !widgetCategories.some((c) => c.id === input.categoryId)) {
+  if (input.categoryId != null && !widgetCategories.some((c) => c.id === input.categoryId)) {
     issues.push({ loc: ["body", "categoryId"], msg: "category not found", type: "value_error.foreign_key" });
   }
 
@@ -115,16 +124,19 @@ function checklistStateOf(checklist: Widget["checklist"]): Widget["checklistStat
 // checklistState sorts in its enum order, not alphabetically.
 const CHECKLIST_STATE_ORDER: Record<Widget["checklistState"], number> = { none: 0, open: 1, complete: 2 };
 
+// Ties (and every row, with no sort) go by ascending id in either
+// direction, as the backend's ORDER BY does, so paging is stable.
 function sortWidgets(list: Widget[], sort: string | null): Widget[] {
-  if (!sort) return list;
+  const byId = (a: Widget, b: Widget) => a.id - b.id;
+  if (!sort) return [...list].sort(byId);
   const [field, dir] = sort.split(":") as [keyof Widget, "asc" | "desc"];
-  const sorted = [...list].sort((a, b) => {
+  const sign = dir === "desc" ? -1 : 1;
+  return [...list].sort((a, b) => {
     const av = field === "checklistState" ? CHECKLIST_STATE_ORDER[a.checklistState] : a[field];
     const bv = field === "checklistState" ? CHECKLIST_STATE_ORDER[b.checklistState] : b[field];
-    if (av == null || bv == null) return 0;
-    return av < bv ? -1 : av > bv ? 1 : 0;
+    const order = av == null || bv == null ? 0 : av < bv ? -1 : av > bv ? 1 : 0;
+    return order * sign || byId(a, b);
   });
-  return dir === "desc" ? sorted.reverse() : sorted;
 }
 
 export const handlers = [

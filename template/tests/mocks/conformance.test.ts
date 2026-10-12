@@ -189,6 +189,43 @@ describe("MSW mock conformance", () => {
     await validate("/widgets/{id}", "patch", res);
   });
 
+  // The backend's rules too (tests/test_widgets.py), so the two agree.
+  it.each(["name", "categoryId", "status", "availableFrom", "price", "description", "tags", "inStock", "extraCategoryIds", "checklist"])(
+    "PATCH /widgets/:id with %s: null is a 422 on that field",
+    async (field) => {
+      const res = await fetch("http://localhost/api/widgets/1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ [field]: null }),
+      });
+      expect(res.status).toBe(422);
+      const body = await res.clone().json();
+      expect(body.detail.map((issue: { loc: unknown }) => issue.loc)).toEqual([["body", field]]);
+      await validate("/widgets/{id}", "patch", res);
+    },
+  );
+
+  it("PATCH /widgets/:id with assigneeEmail: null clears it", async () => {
+    const res = await fetch("http://localhost/api/widgets/1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ assigneeEmail: null }),
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).assigneeEmail).toBeNull();
+  });
+
+  it.each([null, "status:asc", "status:desc"])("GET /widgets sorted by %s orders ties by id", async (sort) => {
+    const res = await fetch(`http://localhost/api/widgets?limit=100${sort ? `&sort=${sort}` : ""}`);
+    const { items } = (await res.json()) as { items: { id: number; status: string }[] };
+    const sign = sort === "status:desc" ? -1 : 1;
+    for (let i = 1; i < items.length; i++) {
+      const [a, b] = [items[i - 1], items[i]];
+      const byStatus = sort ? sign * a.status.localeCompare(b.status) : 0;
+      expect(byStatus < 0 || (byStatus === 0 && a.id < b.id), `${a.id} before ${b.id}`).toBe(true);
+    }
+  });
+
   it("DELETE /widgets/:id returns 204 with no body", async () => {
     const res = await fetch("http://localhost/api/widgets/1", { method: "DELETE" });
     expect(res.status).toBe(204);

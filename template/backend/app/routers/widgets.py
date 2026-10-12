@@ -70,15 +70,15 @@ SORT_COLUMNS: dict[str, Any] = {
 }
 
 
-async def _check_categories_exist(ids: list[int], session: AsyncSession) -> None:
-    # A multi reference to a missing record is a field error, the same 422
-    # shape as any other (openapi.yaml), never a foreign-key 500 at commit.
+async def _check_categories_exist(ids: list[int], field: str, session: AsyncSession) -> None:
+    # A reference to a missing record is a field error, the same 422 shape
+    # as any other (openapi.yaml), never a foreign-key 500 at commit.
     if not ids:
         return
     found = set((await session.exec(select(WidgetCategory.id).where(col(WidgetCategory.id).in_(ids)))).all())
     if missing := [i for i in ids if i not in found]:
         raise RequestValidationError(
-            [{"loc": ("body", "extraCategoryIds"), "msg": f"unknown category ids: {missing}", "type": "value_error.foreign_key"}]
+            [{"loc": ("body", field), "msg": f"unknown category ids: {missing}", "type": "value_error.foreign_key"}]
         )
 
 
@@ -114,7 +114,8 @@ async def list_widgets(
     if categoryId is not None:
         stmt = stmt.where(Widget.category_id == categoryId)
     if search is not None:
-        stmt = stmt.where(func.lower(Widget.name).contains(search.lower()))
+        # autoescape: a search for "%" or "_" matches those characters, not anything.
+        stmt = stmt.where(func.lower(Widget.name).contains(search.lower(), autoescape=True))
     if tags:
         # Any of the given tags (openapi.yaml) — a subquery on the join
         # table, identical on Postgres and SQLite.
@@ -134,6 +135,10 @@ async def list_widgets(
         field, direction = sort.split(":")
         column = SORT_COLUMNS[field]
         stmt = stmt.order_by(column.desc() if direction == "desc" else column.asc())
+    # Always last, in either direction: without a unique tiebreak, rows that
+    # tie (or every row, with no sort) come back in whatever order the
+    # database likes, so paging could show a row twice or skip it.
+    stmt = stmt.order_by(col(Widget.id).asc())
     stmt = stmt.offset(offset).limit(limit)
     items = (await session.exec(stmt)).all()
     return Page(items=list(items), total=total)
@@ -145,7 +150,8 @@ async def create_widget(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Widget:
-    await _check_categories_exist(payload.extra_category_ids, session)
+    await _check_categories_exist([payload.category_id], "categoryId", session)
+    await _check_categories_exist(payload.extra_category_ids, "extraCategoryIds", session)
     widget = Widget(
         **payload.model_dump(exclude={"price", "tags", "extra_category_ids", "checklist"}),
         price=Decimal(payload.price),
@@ -177,13 +183,16 @@ async def update_widget(
     session: AsyncSession = Depends(get_session),
 ) -> Widget:
     widget = await _get_or_404(widget_id, user, session)
+    # Only what was sent. WidgetUpdate has already refused a null it can't store.
     updates = payload.model_dump(exclude_unset=True)
+    if "category_id" in updates:
+        await _check_categories_exist([updates["category_id"]], "categoryId", session)
     if "tags" in updates:
         # Sent → replaces the whole set ([] clears it); omitted → unchanged.
-        widget.set_tags(updates.pop("tags") or [])
+        widget.set_tags(updates.pop("tags"))
     if "extra_category_ids" in updates:
         ids = updates.pop("extra_category_ids")
-        await _check_categories_exist(ids, session)
+        await _check_categories_exist(ids, "extraCategoryIds", session)
         widget.set_extra_category_ids(ids)
     if "checklist" in updates:
         updates.pop("checklist")

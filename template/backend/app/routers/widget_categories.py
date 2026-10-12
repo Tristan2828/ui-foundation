@@ -25,7 +25,7 @@ async def list_widget_categories(
 ) -> list[WidgetCategory]:
     stmt = select(WidgetCategory)
     if search is not None:
-        stmt = stmt.where(func.lower(WidgetCategory.name).contains(search.lower()))
+        stmt = stmt.where(func.lower(WidgetCategory.name).contains(search.lower(), autoescape=True))
     if ids:
         # Exactly these (openapi.yaml): how a form names references it holds.
         stmt = stmt.where(col(WidgetCategory.id).in_(ids))

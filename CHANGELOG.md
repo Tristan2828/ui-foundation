@@ -5,6 +5,69 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.27.1 — reference backend fixes from the first review
+
+Template only: the package doesn't change. Six findings from the first
+whole-project review, all in `template/backend/` and the template's mocks.
+The backend is copied into each app (`ARCHITECTURE.md` "Why shared code"),
+so **an existing app doesn't get these by upgrading**. Apply the ones that
+fit by hand (below). No contract shape changes: each 500 that becomes a
+422 was already declared as a 422 in `openapi.yaml`.
+
+- **PATCH with `null` for a field that can't be empty** (`name`,
+  `categoryId`, `status`, `availableFrom`, `price`, `description`, `tags`)
+  was a 500 (a NOT NULL violation at commit). It's now a 422 on that
+  field. One `field_validator("*", mode="before")` on `WidgetUpdate`
+  refuses `null` for every field not in its `NULLABLE_FIELDS`
+  (`assignee_email`), replacing the three per-field validators, so a new
+  field is covered without remembering to add one. `tags: null` used to
+  clear the tags; send `[]` for that, as `openapi.yaml` says and the mocks
+  already required.
+- **An unknown `categoryId`** saved on SQLite and was a foreign-key 500 on
+  Postgres. It's now a 422 on `categoryId`, on create and on PATCH. The
+  test engine now turns on SQLite's foreign keys, so a missing check like
+  this one fails in pytest rather than only on Postgres.
+- **Paging is stable.** The list always ends its `ORDER BY` with
+  `Widget.id`, so rows that tie on the sort column (or every row, with no
+  sort) can't show on two pages or on none. The mocks sort ties the same
+  way.
+- **Search treats `%` and `_` literally** (`autoescape=True`), in
+  `/widgets` and `/widget-categories`.
+- **Login runs the password hash for an unknown email too**, against a
+  dummy hash, so its response time doesn't say which emails have accounts.
+- **Passwords are at most 1024 characters** on login and register (a
+  422). Not in `openapi.yaml`: `LoginRequest` is the foundation's part of
+  the contract, and `check-contract` would fail every existing app until
+  it copied the new `maxLength`.
+
+**Applying it to an app**, for an entity built from Widgets (substitute
+its names):
+
+1. `backend/app/schemas.py`: in each `<Entity>Update`, delete the
+   per-field not-null validators and add
+   ```python
+   NULLABLE_FIELDS: ClassVar[frozenset[str]] = frozenset({...})  # the model's nullable columns
+
+   @field_validator("*", mode="before")
+   @classmethod
+   def _refuse_null(cls, v: object, info: ValidationInfo) -> object:
+       if v is None and info.field_name not in cls.NULLABLE_FIELDS:
+           raise ValueError(f"{to_camel(info.field_name or '')} can't be null")
+       return v
+   ```
+   Give both password fields `max_length=1024`.
+2. `backend/app/routers/<entity>.py`: check every single `reference`
+   field exists (a 422 on the field) on create and when a PATCH sends it,
+   as `_check_categories_exist` does; end every list query with
+   `.order_by(col(<Entity>.id).asc())`; add `autoescape=True` to every
+   `.contains(search…)`.
+3. `backend/app/routers/auth.py` and `security.py`: copy
+   `DUMMY_PASSWORD_HASH` and the login change.
+4. `backend/tests/conftest.py`: the `PRAGMA foreign_keys=ON` listener, and
+   a `flush()` after seeding the rows other rows point at.
+5. `src/mocks/`: refuse `null` on PATCH and break sort ties by id, as
+   `template/src/mocks/handlers.ts` does.
+
 ## 3.27.0 — categorical colours that are easy to tell apart
 
 The twelve `--category-*` slots keep their names and get new colours
