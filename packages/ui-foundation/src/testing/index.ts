@@ -56,16 +56,37 @@ export function forceLoggedOut(page: Page): Promise<void> {
 export const POPUP_FOCUS_GUARDS = '[data-base-ui-focus-guard]'
 
 /**
- * axe on the page as it is now. The options are for a state whose
- * structure a rule doesn't fit, said where they're used: a list open in a
- * portal sits outside the page's landmarks by design (`disableRules:
- * ['region']`) and brings focus guards (`exclude: [POPUP_FOCUS_GUARDS]`),
- * while every other rule, contrast included, still checks the list.
+ * Resolves once the page's open and close transitions have finished. A
+ * popup fading in is already "visible" to Playwright, and its text is
+ * blended with the page behind: axe measured a sheet's muted labels at
+ * 4.37:1 mid-fade, 4.74:1 once shown, and failed CI on correct colours.
+ * Two frames first, so a transition that starts on the next frame (Base
+ * UI drops `data-starting-style` there) is running by the time it's read.
+ * Endless animations (a spinner, a skeleton's pulse) are left out.
+ */
+async function waitForTransitions(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+    const ending = document
+      .getAnimations()
+      .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+    await Promise.all(ending.map((animation) => animation.finished.catch(() => undefined)))
+  })
+}
+
+/**
+ * axe on the page as it is now, once its transitions have finished. The
+ * options are for a state whose structure a rule doesn't fit, said where
+ * they're used: a list open in a portal sits outside the page's landmarks
+ * by design (`disableRules: ['region']`) and brings focus guards
+ * (`exclude: [POPUP_FOCUS_GUARDS]`), while every other rule, contrast
+ * included, still checks the list.
  */
 export async function expectNoAxeViolations(
   page: Page,
   options: { disableRules?: string[]; exclude?: string[] } = {},
 ): Promise<void> {
+  await waitForTransitions(page)
   const builder = new AxeBuilder({ page })
   if (options.disableRules?.length) builder.disableRules(options.disableRules)
   for (const selector of options.exclude ?? []) builder.exclude(selector)

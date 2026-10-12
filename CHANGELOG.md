@@ -5,6 +5,18 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.27.4 — axe checks wait for a popup to finish opening
+
+Nothing for an existing app to do. `expectNoAxeViolations` (from
+`/testing`) now waits for the page's open and close transitions to finish
+before running axe. A popup fading in is already visible to Playwright,
+and its text is blended with the page behind it: CI failed the
+template's phone Filters sheet at 4.37:1 mid-fade, on colours that measure
+4.74:1 once it's open. Endless animations (spinners, skeletons) aren't
+waited for. An app's own spec that builds `AxeBuilder` itself straight
+after opening a popup has the same race; calling `expectNoAxeViolations`
+instead fixes it.
+
 ## 3.27.3 — `create-app.sh` runs on macOS
 
 Nothing for an existing app to do. `create-app.sh` used two GNU-only

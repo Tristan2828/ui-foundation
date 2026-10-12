@@ -1,5 +1,5 @@
-import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { expectNoAxeViolations } from '@tristan2828/ui-foundation/testing'
 
 // Forces the widgets list's *first* request via `page.addInitScript` —
 // registering the override this way, before any of the page's own scripts
@@ -335,8 +335,7 @@ test.describe('widgets table', () => {
         await page.goto('/widgets?inStock=false')
         await expect(page.locator('html')).toHaveClass(colorScheme)
         await openFilters(page)
-        const results = await new AxeBuilder({ page }).analyze()
-        expect(results.violations).toEqual([])
+        await expectNoAxeViolations(page)
       })
     }
   })
