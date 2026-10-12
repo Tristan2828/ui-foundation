@@ -9,6 +9,11 @@ import './storybook.css'
 const withTheme: Decorator = (Story, context) => {
   const isDark = context.globals.theme === 'dark'
   document.documentElement.classList.toggle('dark', isDark)
+  // On <html>, as an app sets it for the whole screen, so popups portaled
+  // to <body> get it too (styles/theme.css "Large").
+  const density = context.globals.density
+  if (density && density !== 'default') document.documentElement.dataset.density = density
+  else delete document.documentElement.dataset.density
 
   return React.createElement(
     'div',
@@ -31,9 +36,19 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    density: {
+      description: 'data-density on <html>',
+      toolbar: {
+        title: 'Density',
+        icon: 'grow',
+        items: ['default', 'compact', 'comfortable', 'large'],
+        dynamicTitle: true,
+      },
+    },
   },
   initialGlobals: {
     theme: 'light',
+    density: 'default',
   },
   decorators: [withTheme],
   parameters: {

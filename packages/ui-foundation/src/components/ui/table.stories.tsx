@@ -43,14 +43,14 @@ export const Default: Story = {
   render: () => <SampleTable caption="Widgets" />,
 }
 
-// The three densities side by side. Density is a token set, not a prop:
+// The four densities side by side. Density is a token set, not a prop:
 // data-density on any ancestor retunes the cells' padding and the header
-// height (styles/theme.css). e2e/storybook-visual.spec.ts measures that
-// the rows really do differ.
+// height (styles/theme.css); large also grows the text. e2e/storybook-visual.spec.ts
+// measures that the rows really do differ.
 export const Densities: Story = {
   render: () => (
     <div className="flex flex-col gap-6">
-      {(['compact', 'default', 'comfortable'] as const).map((density) => (
+      {(['compact', 'default', 'comfortable', 'large'] as const).map((density) => (
         <section key={density} data-density={density === 'default' ? undefined : density}>
           <p className="type-label mb-2 text-muted-foreground">{density}</p>
           <SampleTable caption={`Widgets (${density})`} />

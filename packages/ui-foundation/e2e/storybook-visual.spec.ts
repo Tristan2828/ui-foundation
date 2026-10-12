@@ -66,6 +66,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
+  // Every density, the primitives and DataTable in each (large is the one
+  // that changes their type and sizes).
+  { id: 'patterns-density--primitives', mustShow: 'data-density="large"' },
+  { id: 'patterns-density--data-tables', mustShow: 'data-density="large"' },
+  { id: 'patterns-density--sidebars', mustShow: 'data-density="large"' },
 ]
 
 // Stories whose glyphs carry meaning on their own: every <svg> in them must
@@ -91,6 +96,8 @@ const GLYPH_STORIES: {
     open: (page) => page.getByRole('button', { name: /^2 holds/ }).click(),
   },
   { id: 'ui-toggle--default' },
+  // Category glyphs in DataTable rows at every density.
+  { id: 'patterns-density--data-tables' },
   // The rich-text toolbar's icons (the read-only editor's are disabled:
   // a disabled control is exempt, and its opacity isn't measured here).
   { id: 'app-richtexteditor--features' },
@@ -138,8 +145,9 @@ const GLYPH_STORIES: {
   },
 ]
 
-function storyUrlById(id: string, theme: 'light' | 'dark') {
-  return `${STORYBOOK_URL}/iframe.html?id=${id}&viewMode=story&globals=theme:${theme}`
+function storyUrlById(id: string, theme: 'light' | 'dark', density?: 'large') {
+  const globals = density ? `theme:${theme};density:${density}` : `theme:${theme}`
+  return `${STORYBOOK_URL}/iframe.html?id=${id}&viewMode=story&globals=${globals}`
 }
 
 function storyUrl(name: string, theme: 'light' | 'dark') {
@@ -206,6 +214,23 @@ test.describe('storybook stories have zero axe violations in dark mode', () => {
       const results = await analyzeStory(page)
       expect(results.violations).toEqual([])
     })
+  }
+})
+
+// The large density changes every primitive's type and size, so each
+// primitive's own story runs again under it (data-density on <html>, the
+// way an app sets it), in both themes.
+test.describe('primitive stories have zero axe violations at the large density', () => {
+  for (const name of PRIMITIVES) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${name} story is accessible at large (${theme})`, async ({ page }) => {
+        await page.goto(storyUrlById(`ui-${name}--default`, theme, 'large'))
+        await expect(page.locator('html')).toHaveAttribute('data-density', 'large')
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        const results = await analyzeStory(page)
+        expect(results.violations).toEqual([])
+      })
+    }
   }
 })
 
@@ -402,7 +427,54 @@ test('table density tokens change row height: compact < default < comfortable', 
     ]
     expect(compact, `${part}: compact vs default`).toBeLessThan(standard)
     expect(standard, `${part}: default vs comfortable`).toBeLessThan(comfortable)
+    expect(comfortable, `${part}: comfortable vs large`).toBeLessThan(await heights('large', part))
   }
+})
+
+// Large reaches past tables through Tailwind's own scale and a few patched
+// primitives (styles/theme.css), so nothing type-checks it either. In the
+// Density stories, every measured part must keep today's size with no
+// data-density (and at compact and comfortable, which only touch tables),
+// and be larger at large. The pixel values are what the primitives had
+// before density reached them: a change to one is a change for every app.
+const TODAY: Record<string, { width?: number; height?: number; fontSize?: number }> = {
+  button: { height: 32 },
+  icon: { width: 16, height: 16 },
+  input: { height: 32 },
+  body: { fontSize: 14 },
+  checkbox: { width: 16, height: 16 },
+  switch: { width: 32, height: 18.4 },
+  badge: { height: 20 },
+}
+
+test('large density grows the primitives; every other density keeps their size', async ({ page }) => {
+  await page.goto(storyUrlById('patterns-density--primitives', 'light'))
+  const measure = (density: string, part: string) =>
+    page
+      .locator(`[data-sample="${density}"] [data-measure="${part}"]`)
+      .evaluate((el) => {
+        const box = el.getBoundingClientRect()
+        return { width: box.width, height: box.height, fontSize: parseFloat(getComputedStyle(el).fontSize) }
+      })
+  for (const [part, today] of Object.entries(TODAY)) {
+    const keys = Object.keys(today) as (keyof typeof today)[]
+    for (const density of ['default', 'compact', 'comfortable']) {
+      const got = await measure(density, part)
+      for (const key of keys) expect(got[key], `${part} ${key} (${density})`).toBeCloseTo(today[key]!, 1)
+    }
+    const large = await measure('large', part)
+    for (const key of keys) expect(large[key], `${part} ${key} (large)`).toBeGreaterThan(today[key]!)
+  }
+})
+
+test('large density widens the sidebar; the default keeps 16rem', async ({ page }) => {
+  await page.goto(storyUrlById('patterns-density--sidebars', 'light'))
+  const width = (density: string) =>
+    page
+      .locator(`[data-sample="${density}"] [data-measure="sidebar"]`)
+      .evaluate((el) => el.getBoundingClientRect().width)
+  expect(await width('default')).toBe(256)
+  expect(await width('large')).toBeGreaterThan(256)
 })
 
 // The type-* roles are @utility rules over --type-* tokens. A typo in

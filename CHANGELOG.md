@@ -5,6 +5,44 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.28.0 — a large density, for a screen read from a distance
+
+`data-density="large"` joins `compact` and `comfortable`: a TV used as the
+desktop monitor, with a mouse and keyboard, read from across the room.
+Unlike the other two it isn't only tables. Everything under it grows by
+about a quarter: body text 14 → 18px, controls 32 → 40px tall, icons
+16 → 20px, the sidebar 256 → 320px, table rows to match. Breakpoints and
+`max-w-*` containers stay put, so a wide screen keeps its wide layout
+(browser zoom would move them).
+
+No new props, components or exports, and **nothing changes for an app
+that doesn't set it**: every token it reads defaults to the value the
+primitive had before, and the Storybook checks hold the default sizes to
+the pixel.
+
+- **How it reaches everything:** Tailwind compiles every spacing, size
+  and icon utility to `calc(var(--spacing) * n)` and every `text-*` to
+  `var(--text-*)`. `large` redefines those (plus `--radius`, the `--type-*`
+  roles and the `--table-*` tokens) in `styles/theme.css`, so the
+  package's components and the app's own Tailwind classes grow together.
+- **Primitives patched** where a size bypassed that scale, each reading a
+  token whose default is today's value: the sidebar's widths (`16rem`,
+  `18rem`, `3rem` → steps of `--spacing`), `Switch` (fixed px), the small
+  `Button` and `Toggle` text and the calendar's weekdays (`0.8rem` →
+  `--control-text-sm`), `DropdownMenu`'s minimum width, `EntityView`'s
+  label column and rail, and `DataTable width="content"`'s minimum.
+- **Storybook:** a Density toolbar (sets `data-density` on `<html>`, as an
+  app would) and `patterns/Density` (the primitives, `DataTable` and the
+  sidebar at each density, made-up data). axe runs on those stories and on
+  every primitive's own story at `large`, in both themes.
+
+**Using it:** set `data-density="large"` on `<html>` (for example from a
+setting the app keeps itself). Set it on `<html>`, not on a wrapper:
+menus, selects, dialogs and tooltips are portaled to `<body>`. Run
+`npx ui-foundation sync` for the updated design language ("Density"). An
+app's own fixed sizes (`h-[18px]`, `w-[240px]`) stay their size at
+`large`; write them as steps of the scale to have them grow.
+
 ## 3.27.4 — axe checks wait for a popup to finish opening
 
 Nothing for an existing app to do. `expectNoAxeViolations` (from

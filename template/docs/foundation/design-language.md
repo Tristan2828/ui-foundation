@@ -227,9 +227,9 @@ pulls the eye from every other column (cell patterns 16 and 20).
 
 ## Density
 
-Tables have three densities, set with `data-density` on **any ancestor**
-(a wrapper `<div>`, a route's layout, or `<html>` for the whole app). It is
-a token set, not a `DataTable` prop:
+Four densities, set with `data-density` on **any ancestor** (a wrapper
+`<div>`, a route's layout, or `<html>` for the whole app). It is a token
+set, not a `DataTable` prop:
 
 ```tsx
 <div data-density="compact">
@@ -237,18 +237,37 @@ a token set, not a `DataTable` prop:
 </div>
 ```
 
-| `data-density` | Cell padding (vertical) | Header height | For |
-|---|---|---|---|
-| `compact` | 4px | 32px | wide tables people scan, many rows per screen |
-| *(unset)* | 8px | 40px | the default |
-| `comfortable` | 12px | 48px | short tables, or rows people read rather than scan |
+| `data-density` | Changes | Table cell padding (vertical) | Header height | For |
+|---|---|---|---|---|
+| `compact` | table rows only | 4px | 32px | wide tables people scan, many rows per screen |
+| *(unset)* | — | 8px | 40px | the default |
+| `comfortable` | table rows only | 12px | 48px | short tables, or rows people read rather than scan |
+| `large` | **everything**: type, spacing, control heights, icons, the sidebar, table rows | 12px | 56px | a screen read from a distance: a TV used as the desktop monitor, with a mouse and keyboard |
 
-- Density changes padding only. Text keeps `type-body`, so compact never
-  drops below a readable size.
+- `compact` and `comfortable` change padding only. Text keeps
+  `type-body`, so compact never drops below a readable size.
+- `large` grows the whole UI by about a quarter: body text 14 → 18px,
+  controls 32 → 40px tall, icons 16 → 20px, the sidebar 256 → 320px.
+  Breakpoints and `max-w-*` containers stay where they are, which is
+  what browser zoom can't do (zoom narrows the viewport in CSS pixels, so
+  a wide screen can fall into the phone layout).
+- For `large`, set it on **`<html>`**. Menus, selects, dialogs and
+  tooltips are portaled to `<body>`, so a wrapper `<div>` doesn't reach
+  them. `compact` and `comfortable` only touch tables, so a wrapper is fine.
 - Pick **one density per screen**. Two tables at different densities side
   by side look like a mistake.
+- Size things the way the package does and `large` reaches them for free:
+  Tailwind's spacing and size utilities (`h-8`, `size-4`, `gap-2`, `w-64`)
+  and `text-*`/`type-*`. A fixed `h-[18px]`, `w-[240px]` or
+  `text-[13px]` stays its size at `large`; write it as a step of the scale
+  (`h-[--spacing(4.5)]`) instead.
 - Under the hood, the table primitive's cells read `--table-cell-px`,
-  `--table-cell-py` and `--table-head-height`, and the `data-density`
-  selectors in `styles/theme.css` set them. The package's Storybook check
-  measures that each step really changes the row height.
-
+  `--table-cell-py` and `--table-head-height`. `large` also redefines
+  Tailwind's own scale (`--spacing`, `--text-*`, `--radius`), the `--type-*`
+  roles and `--control-text-sm` (the small Button and Toggle). Each
+  default is the value it always had, so a screen without `data-density`
+  doesn't change. The selectors are in `styles/theme.css`. Storybook's
+  Density toolbar shows any story at a density, and `patterns/Density`
+  shows the primitives, `DataTable` and the sidebar at each. Its checks
+  measure that every step changes what it should, and that the default
+  keeps today's sizes.

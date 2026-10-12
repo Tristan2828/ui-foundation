@@ -177,8 +177,8 @@ function orEmptyLabel(value: ReactNode, emptyLabel: string | undefined) {
 // <dl>): label above value in the narrow rail, beside it once the rail's
 // sections stack full width under the header.
 const FIELD_ROW = {
-  page: 'sm:grid sm:grid-cols-[minmax(8rem,12rem)_1fr] sm:gap-6',
-  rail: '@lg/fields:grid @lg/fields:grid-cols-[minmax(8rem,12rem)_1fr] @lg/fields:gap-6',
+  page: 'sm:grid sm:grid-cols-[minmax(--spacing(32),--spacing(48))_1fr] sm:gap-6',
+  rail: '@lg/fields:grid @lg/fields:grid-cols-[minmax(--spacing(32),--spacing(48))_1fr] @lg/fields:gap-6',
 }
 
 function FieldRow({ field, inRail }: { field: EntityViewField; inRail: boolean }) {
@@ -245,7 +245,7 @@ function ViewSection({ section, inRail = false }: { section: EntityViewSection; 
 // right of row 1 and main on its left, both starting under the header.
 const RAIL_LAYOUT = {
   page: '@container/view flex min-w-0 flex-col gap-6',
-  columns: 'flex flex-col gap-6 @4xl/view:grid @4xl/view:grid-cols-[minmax(0,1fr)_22rem] @4xl/view:items-start',
+  columns: 'flex flex-col gap-6 @4xl/view:grid @4xl/view:grid-cols-[minmax(0,1fr)_--spacing(88)] @4xl/view:items-start',
   rail: '@4xl/view:col-start-2 @4xl/view:row-start-1',
   main: 'flex min-w-0 flex-col gap-6 @4xl/view:col-start-1 @4xl/view:row-start-1',
   // Main alone (no rail sections): the whole row.
