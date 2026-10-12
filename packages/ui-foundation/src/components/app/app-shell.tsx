@@ -189,7 +189,10 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }
                 <Button variant="ghost" size="icon-sm" aria-label="Log out"
                   onClick={() => {
                     setIsLoggingOut(true)
-                    logout().catch(() => setIsLoggingOut(false))
+                    // A failed request still ends the session on screen
+                    // (AuthProvider), so this stays a deliberate logout: a
+                    // clean /login, never the previous user's page as `from`.
+                    logout().catch(() => {})
                   }}
                 >
                   <LogOutIcon />

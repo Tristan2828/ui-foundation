@@ -5,6 +5,20 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.27.2 — two package fixes from the first review
+
+No export or prop changes; nothing is required beyond the upgrade.
+
+- **A link to `//example.com` is refused** in the rich-text editor's link
+  box, like `javascript:`. It looked like a path on this site but the
+  browser reads it as another site (`/\example.com` too).
+- **Logging out when the server can't be reached still logs out on
+  screen.** `useAuth().logout()` ends the session in the app whatever the
+  request does, and still rejects when the server didn't confirm. The
+  shell's Log out button lands on a clean `/login` either way. An app that
+  calls `logout()` itself and catches the rejection to stay "logged in"
+  now finds the user logged out.
+
 ## 3.27.1 — reference backend fixes from the first review
 
 Template only: the package doesn't change. Six findings from the first

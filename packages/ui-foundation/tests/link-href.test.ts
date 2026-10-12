@@ -28,6 +28,12 @@ describe('linkHref', () => {
     }
   })
 
+  it('refuses a protocol-relative address, which is another site, not a path', () => {
+    for (const typed of ['//evil.com', '//evil.com/widgets', '/\\evil.com', '  //evil.com']) {
+      expect(linkHref(typed)).toBeNull()
+    }
+  })
+
   it('reads empty as "remove the link"', () => {
     expect(linkHref('   ')).toBe('')
   })
