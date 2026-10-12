@@ -21,7 +21,13 @@ from app.models import Session as UserSession
 from app.models import User
 from app.openapi_responses import SERVER_ERROR, UNAUTHORIZED, VALIDATION
 from app.schemas import LoginRequest, RegisterRequest, UserOut
-from app.security import generate_session_token, hash_password, hash_token, verify_password
+from app.security import (
+    DUMMY_PASSWORD_HASH,
+    generate_session_token,
+    hash_password,
+    hash_token,
+    verify_password,
+)
 
 router = APIRouter(tags=["auth"])
 
@@ -133,7 +139,10 @@ async def login(
     stmt = select(User).where(User.email == body.email)
     result = await session.exec(stmt)
     user = result.first()
-    if user is None or not await run_in_threadpool(verify_password, body.password, user.password_hash):
+    # A missing user still runs the hash, against a dummy, so the response
+    # time doesn't reveal whether the email has an account.
+    stored = user.password_hash if user is not None else DUMMY_PASSWORD_HASH
+    if not await run_in_threadpool(verify_password, body.password, stored) or user is None:
         # Deliberately generic — never confirm whether the email exists.
         raise HTTPException(status_code=401, detail="Invalid email or password")
 

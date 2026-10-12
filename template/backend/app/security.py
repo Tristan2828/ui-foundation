@@ -10,6 +10,14 @@ import secrets
 _ALGORITHM = "pbkdf2_sha256"
 _ITERATIONS = 600_000
 
+# A well-formed hash no password matches. Login checks against it when the
+# email has no account, so that answer costs the same full PBKDF2 run as a
+# wrong password and its timing doesn't say which emails exist.
+DUMMY_PASSWORD_HASH = (
+    f"{_ALGORITHM}${_ITERATIONS}$40b42b46be4bb823c7e8bf0414344205$"
+    "45e0d6d8cca1cdf4f76a7b44e2f7b5a27a00dc5457577d21ebb8203df8e5057f"
+)
+
 
 def hash_password(password: str) -> str:
     salt = secrets.token_hex(16)

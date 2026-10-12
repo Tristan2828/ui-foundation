@@ -7,9 +7,9 @@ stays snake_case internally while matching openapi.yaml on the wire.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Generic, TypeVar
+from typing import ClassVar, Generic, TypeVar
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 from pydantic.alias_generators import to_camel
 
 from app.models import WidgetChecklistState, WidgetStatus, WidgetTag
@@ -17,6 +17,9 @@ from app.models import WidgetChecklistState, WidgetStatus, WidgetTag
 T = TypeVar("T")
 
 PRICE_PATTERN = r"^\d+\.\d{2}$"
+# PBKDF2 hashes a long password down first, so length costs little, but a
+# request body still shouldn't be unbounded.
+PASSWORD_MAX_LENGTH = 1024
 
 
 class CamelModel(BaseModel):
@@ -60,23 +63,6 @@ def _unique_ids(v: list[int] | None) -> list[int] | None:
     return v
 
 
-def _not_null_ids(v: list[int] | None) -> list[int] | None:
-    # Leaving extraCategoryIds out of a PATCH keeps the set; [] clears it;
-    # null is a 422 rather than a silent clear.
-    if v is None:
-        raise ValueError("extraCategoryIds can't be null")
-    return _unique_ids(v)
-
-
-def _not_null(v: bool | None) -> bool | None:
-    # openapi.yaml: inStock is a plain boolean. Leaving it out of a PATCH
-    # keeps the stored value; an explicit null is a 422, never a NOT NULL
-    # violation (a 500) at commit.
-    if v is None:
-        raise ValueError("inStock can't be null")
-    return v
-
-
 def _format_price(v: object) -> object:
     return f"{v:.2f}" if isinstance(v, Decimal) else v
 
@@ -89,13 +75,6 @@ class ChecklistItem(CamelModel):
 
     text: str = Field(min_length=1, max_length=300)
     done: bool
-
-
-def _not_null_checklist(v: list[ChecklistItem] | None) -> list[ChecklistItem] | None:
-    # Leaving checklist out of a PATCH keeps it; [] clears it; null is a 422.
-    if v is None:
-        raise ValueError("checklist can't be null")
-    return v
 
 
 class WidgetOut(CamelModel):
@@ -139,6 +118,13 @@ class WidgetCreate(CamelModel):
 
 
 class WidgetUpdate(CamelModel):
+    """PATCH: a field left out keeps its value. Only the fields in
+    NULLABLE_FIELDS may be sent as null (to clear them); null for any other
+    is a 422 on that field, never a NOT NULL violation (a 500) at commit.
+    A new field is refused null unless it's added there."""
+
+    NULLABLE_FIELDS: ClassVar[frozenset[str]] = frozenset({"assignee_email"})
+
     name: str | None = Field(default=None, min_length=1, max_length=200)
     category_id: int | None = None
     status: WidgetStatus | None = None
@@ -152,9 +138,15 @@ class WidgetUpdate(CamelModel):
     checklist: list[ChecklistItem] | None = Field(default=None, max_length=50)
 
     _check_tags = field_validator("tags")(_unique_tags)
-    _check_checklist = field_validator("checklist")(_not_null_checklist)
-    _check_in_stock = field_validator("in_stock")(_not_null)
-    _check_extra_category_ids = field_validator("extra_category_ids")(_not_null_ids)
+    _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _refuse_null(cls, v: object, info: ValidationInfo) -> object:
+        # Runs only for fields the request sent: one left out isn't validated.
+        if v is None and info.field_name not in cls.NULLABLE_FIELDS:
+            raise ValueError(f"{to_camel(info.field_name or '')} can't be null")
+        return v
 
 
 class UserOut(CamelModel):
@@ -172,7 +164,7 @@ def _normalize_email(v: str) -> str:
 
 class LoginRequest(CamelModel):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)
 
     _email_lower = field_validator("email")(_normalize_email)
 
@@ -180,7 +172,7 @@ class LoginRequest(CamelModel):
 class RegisterRequest(CamelModel):
     email: EmailStr
     name: str = Field(min_length=1, max_length=200)
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)
 
     _email_lower = field_validator("email")(_normalize_email)
 

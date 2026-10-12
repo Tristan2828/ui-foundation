@@ -6,6 +6,7 @@ which tests the widgets domain, not auth itself.
 from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta, timezone
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import select
@@ -15,6 +16,9 @@ from app.db import get_session
 from app.main import app
 from app.models import Session as UserSession
 from app.models import User
+from app import security
+from app.routers import auth as auth_router
+from app.schemas import PASSWORD_MAX_LENGTH
 from app.security import generate_session_token, hash_password, hash_token
 
 TEST_EMAIL = "auth-test@example.com"
@@ -193,3 +197,32 @@ async def test_login_prunes_the_users_expired_sessions(auth_client: AsyncClient,
     await auth_client.post("/api/auth/login", json={"email": TEST_EMAIL, "password": TEST_PASSWORD})
     # Only the session login just issued remains.
     assert await _session_count(session) == 1
+
+
+async def test_login_unknown_email_still_runs_the_password_hash(
+    auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Not a timing test: it checks the missing-user path does the same work
+    # (a PBKDF2 verify) as a wrong password, against the dummy hash.
+    calls: list[str] = []
+
+    def spy(password: str, stored: str) -> bool:
+        calls.append(stored)
+        return security.verify_password(password, stored)
+
+    monkeypatch.setattr(auth_router, "verify_password", spy)
+    response = await auth_client.post("/api/auth/login", json={"email": "nobody@example.com", "password": "whatever1"})
+    assert response.status_code == 401
+    assert calls == [security.DUMMY_PASSWORD_HASH]
+
+
+async def test_password_longer_than_the_limit_is_a_422(auth_client: AsyncClient) -> None:
+    too_long = "x" * (PASSWORD_MAX_LENGTH + 1)
+    login = await auth_client.post("/api/auth/login", json={"email": TEST_EMAIL, "password": too_long})
+    assert login.status_code == 422
+    assert [item["loc"] for item in login.json()["detail"]] == [["body", "password"]]
+    register = await auth_client.post(
+        "/api/auth/register", json={"email": "long@example.com", "name": "Long", "password": too_long}
+    )
+    assert register.status_code == 422
+    assert [item["loc"] for item in register.json()["detail"]] == [["body", "password"]]

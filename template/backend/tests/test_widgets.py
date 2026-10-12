@@ -2,10 +2,14 @@
 replacement for the Postgres-backed run in scripts/check-backend-postgres.sh.
 """
 
+import re
 from collections.abc import AsyncGenerator
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.db import get_session
@@ -408,3 +412,77 @@ async def test_sort_by_checklist_state_uses_the_enum_order_not_alphabetical(clie
     assert asc == ["Empty", "Half", "AllDone"]
     desc = [w["name"] for w in (await client.get("/api/widgets", params={"sort": "checklistState:desc", "limit": 100})).json()["items"] if w["name"] in names]
     assert desc == ["AllDone", "Half", "Empty"]
+
+
+# --- PATCH null, unknown references, stable paging, search (2026-10-10 review) ---
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["name", "categoryId", "status", "availableFrom", "price", "description", "tags", "inStock", "extraCategoryIds", "checklist"],
+)
+async def test_null_for_a_field_that_cant_be_empty_is_a_422_on_that_field(client: AsyncClient, field: str) -> None:
+    res = await client.patch("/api/widgets/1", json={field: None})
+    assert res.status_code == 422
+    assert [item["loc"] for item in res.json()["detail"]] == [["body", field]]
+    # Nothing was written.
+    assert (await client.get("/api/widgets/1")).json()["name"] == "Wireless Mouse"
+
+
+async def test_null_assignee_email_clears_it(client: AsyncClient) -> None:
+    res = await client.patch("/api/widgets/1", json={"assigneeEmail": None})
+    assert res.status_code == 200
+    assert res.json()["assigneeEmail"] is None
+
+
+async def test_unknown_category_id_is_a_422_on_create_and_patch(client: AsyncClient) -> None:
+    created = await client.post("/api/widgets", json={**_NEW_WIDGET, "categoryId": 999})
+    assert created.status_code == 422
+    assert [item["loc"] for item in created.json()["detail"]] == [["body", "categoryId"]]
+
+    patched = await client.patch("/api/widgets/1", json={"categoryId": 999})
+    assert patched.status_code == 422
+    assert [item["loc"] for item in patched.json()["detail"]] == [["body", "categoryId"]]
+    assert (await client.get("/api/widgets/1")).json()["categoryId"] == 1
+
+
+@pytest.mark.parametrize("sort", [None, "status:asc", "status:desc", "price:asc", "price:desc", "checklistState:desc"])
+async def test_paging_through_ties_sees_every_widget_exactly_once(
+    client: AsyncClient, session: AsyncSession, sort: str | None
+) -> None:
+    # Six widgets with one status, one price and an empty checklist: every
+    # sort above is all ties, so only the id tiebreak orders them.
+    for n in range(5):
+        res = await client.post("/api/widgets", json={**_NEW_WIDGET, "name": f"Tie {n}", "status": "active", "price": "24.99"})
+        assert res.status_code == 201
+    # SQLite happens to return ties in insertion order even with no
+    # tiebreak, so the ids alone can't catch a missing one (Postgres can
+    # return them in any order). The SQL can.
+    statements: list[str] = []
+    assert session.bind is not None
+    engine = session.bind.sync_engine if isinstance(session.bind, AsyncEngine) else session.bind
+    event.listen(engine, "before_cursor_execute", lambda _c, _cur, statement, *_: statements.append(statement))
+    params = {"limit": 1} | ({"sort": sort} if sort else {})
+    seen = []
+    for offset in range(6):
+        page = (await client.get("/api/widgets", params={**params, "offset": offset})).json()
+        assert page["total"] == 6
+        seen += [item["id"] for item in page["items"]]
+    assert seen == sorted(seen)
+    assert len(set(seen)) == 6
+    listed = [s for s in statements if "LIMIT" in s]
+    assert listed and all(re.search(r"ORDER BY .*widgets\.id ASC\s+LIMIT", s, re.S) for s in listed)
+
+
+async def test_search_matches_like_wildcards_literally(client: AsyncClient, session: AsyncSession) -> None:
+    await client.post("/api/widgets", json={**_NEW_WIDGET, "name": "100% cotton"})
+    await client.post("/api/widgets", json={**_NEW_WIDGET, "name": "snake_case"})
+    percent = (await client.get("/api/widgets", params={"search": "%"})).json()["items"]
+    assert [w["name"] for w in percent] == ["100% cotton"]
+    underscore = (await client.get("/api/widgets", params={"search": "_"})).json()["items"]
+    assert [w["name"] for w in underscore] == ["snake_case"]
+
+    session.add(WidgetCategory(id=2, name="50% off"))
+    await session.commit()
+    categories = (await client.get("/api/widget-categories", params={"search": "%"})).json()
+    assert [c["name"] for c in categories] == ["50% off"]

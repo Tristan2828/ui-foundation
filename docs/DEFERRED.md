@@ -58,55 +58,24 @@ internals (`milkdown-editor.tsx` and its `rich-text-*` modules) and
 Playwright), `verify:backend` end to end, and anything on real Postgres.
 `npm run verify:fast` passed on `dcc1977`.
 
-**How rows 1 and 2 were confirmed:** a throwaway pytest file in
-`template/backend/tests/`, using the existing `client` fixture, deleted
-afterwards. A PATCH of `/api/widgets/1` with `{"name": null}` (and the same
-for `price`, `status`, `categoryId`, `availableFrom`, `description`) raised
-an unhandled `IntegrityError` (a `TypeError` from `Decimal(None)` for
-`price`), which is a 500. A POST with `"categoryId": 999` returned 201.
-Both of these become the regression tests.
-
-**Why the backend rows matter more than their size:** `template/backend/`
-is copied into each app and diverges (the first Deferred row), so these
-bugs are already in every app made from the template, and a fix here
-reaches none of them on its own. Note it in the release's `CHANGELOG.md`
-entry with the patch an existing app should apply by hand. A 500 becoming
-a 422 changes no contract shape (`openapi.yaml` already declares the 422),
-so this is a patch release, not a major one.
-
 **Kept on purpose, so don't "fix" these:** another user's widget being a
 404 rather than a 403; a duplicate email at register being a 422 that says
-so (which already reveals which emails have accounts, and is why row 7 is
-low); `useRecordUpdate`'s per-record mutation scope and its `onMutate`
-running before the scope's turn (TanStack v5 does this, and the pending
+so (which already reveals which emails have accounts); `useRecordUpdate`'s
+per-record mutation scope and its `onMutate` running before the scope's turn (TanStack v5 does this, and the pending
 queue relies on it); the `publish` job having no checkout and no `npm ci`.
 Login rate limiting is already a Deferred row below, not a finding.
 
 | # | Severity | Where | Finding | Fix | Done when |
 |---|---|---|---|---|---|
-| 1 | Medium-high (confirmed) | `template/backend/app/schemas.py` `WidgetUpdate`; `routers/widgets.py` `update_widget` | An explicit `null` for any non-nullable field (`name`, `categoryId`, `status`, `availableFrom`, `price`, `description`) is a 500, not a 422. Only `inStock`, `checklist` and `extraCategoryIds` have a not-null validator (`_not_null`, `_not_null_checklist`, `_not_null_ids`). The UI can't send these (zod refuses first), so it's API hardening | One `model_validator(mode="before")` on `WidgetUpdate` that refuses an explicit `null` for every field that isn't nullable on the model (only `assigneeEmail` is), as a 422 on that field (`loc: ["body", "<camelName>"]`). It replaces the three per-field validators, so a new field is covered without remembering to add one. Mirror it in the mock handler (`template/src/mocks/handlers.ts`) and keep `tests/mocks/conformance.test.ts` passing. Update `add-an-entity.md` if it tells agents to add per-field not-null validators | A parametrized test in `tests/test_widgets.py` sends `null` for each field and gets a 422 naming that field; `null` for `assigneeEmail` still clears it |
-| 2 | Medium-high (201 confirmed on SQLite; the Postgres 500 is inferred from the FK) | `routers/widgets.py` `create_widget` and `update_widget` | `categoryId` isn't checked to exist. SQLite (pytest) doesn't enforce foreign keys, so an unknown id saves (201); on Postgres the FK refuses it at commit: a 500. `extraCategoryIds` already gets a 422 through `_check_categories_exist` | Check `categoryId` the same way, as a 422 on `categoryId`, on create and when a PATCH sends it. Optionally turn on `PRAGMA foreign_keys=ON` in `tests/conftest.py`'s engine (a `connect` event listener) so SQLite catches this class of bug, then fix whatever it turns up | Tests: POST and PATCH with an unknown `categoryId` get a 422 on that field |
-| 3 | Medium | `routers/widgets.py` `list_widgets` (`order_by` / `offset`); mock `sortWidgets` in `template/src/mocks/handlers.ts` | Pagination isn't stable. With no `sort` there's no `ORDER BY` at all, and a sort on a non-unique column (`status`, `checklistState`, `price`) has no tiebreaker, so on Postgres a row can show on two pages or on none. The mock's `desc` reverses the whole sorted list, ties included | Always end with `Widget.id`: `order_by(<column> <dir>, Widget.id)`, and `order_by(Widget.id)` when no sort is given. Give the mock the same tiebreak (sort by `id` within ties in both directions) so the two still agree. Update `add-an-entity.md` if it shows the list query | A test with several widgets of one status, paged with `limit=1`, sees every id exactly once in each direction |
 | 4 | Medium-low | `.github/workflows/release.yml`, the `publish` job's "already live on npm" branch | If `publish` succeeds and `tag` then fails, nothing tags that version. The next push to `main` computes the same version again, the build packs the new commit, `publish` sees the version on npm and skips, and `tag` tags the new commit with it. The tag's template is then the new commit's while npm holds the old commit's package, and the new commit's package changes are never published | In the skip branch, compare `npm view "@tristan2828/ui-foundation@$VERSION" dist.integrity` with the integrity of `./pack/*.tgz` (`sha512-` plus base64 of its SHA-512) and fail if they differ: a re-run of the same commit still passes. `npm pack` isn't byte-reproducible across npm versions, so test that a re-run really does match before relying on it. If it doesn't, fail unless `github.run_attempt > 1` instead | A failing case is shown to fail (a negative control, per `AGENTS.md`), e.g. the check run locally against a different tarball |
 | 5 | Depends on OS | `scripts/create-app.sh` (`sed -i`, `tar --wildcards`) | Not portable to macOS. `sed -i "s#…#"` with no suffix argument is GNU syntax; BSD sed reads the expression as the backup suffix and the script stops (`set -e`). `tar --wildcards` is GNU tar's; macOS ships bsdtar, which is believed (not checked) to reject it. The script's header lists only Git Bash on Windows | Move the `<title>` replacement into the `node -e` block that already rewrites `package.json`. For the download, extract the archive whole into a temp dir and copy its `template/`, or check whether bsdtar takes the pattern without `--wildcards`. Ask the developer whether macOS matters before spending on it | `consume-test.sh --install-only` still passes; on a Mac if one is available |
-| 6 | Low | `routers/widgets.py` (`search`), `routers/widget_categories.py` (`search`) | `.contains(search)` doesn't escape SQL `LIKE` wildcards, so a search for `%` or `_` matches more than it should (`%` matches everything) | `.contains(search.lower(), autoescape=True)` in both | A test: a search for `%` matches only names that contain `%` |
-| 7 | Low | `routers/auth.py` `login` | When the email has no account, login answers without running the password hash, so its response time reveals which emails have accounts. Register already reveals this on purpose (a 422 naming the email) | Run `verify_password` against a fixed dummy hash when the user is missing, so both paths cost the same | A test that a missing user still reaches `verify_password` (mock it), not a timing test |
-| 8 | Low | `template/backend/app/schemas.py` `LoginRequest`, `RegisterRequest` | No maximum password length. PBKDF2 hashes long keys first, so a long password costs little, but there's no limit on request size either | `max_length` (e.g. 1024) on both password fields, in `openapi.yaml` too (the spec conformance check will require it) | The conformance check and a 422 test pass |
 | 9 | Low | `packages/ui-foundation/src/lib/link-href.ts` | `//evil.com` is accepted as "a path on this site" (it starts with `/`), but the browser reads it as a link to another site. It can't run code | Refuse a value starting with `//` (or turn it into `https://evil.com` as a bare domain is). A package change: patch release | A case in the link-href unit tests |
 | 10 | Low | `packages/ui-foundation/src/auth/auth-provider.tsx` `logout` | If the logout request fails (network down), `endSession` never runs, so the app still shows the user as logged in | Run `endSession` in a `finally`, and still rethrow so the caller can say the server didn't confirm. Decide whether a failed logout should say so | A test with a gateway `logout` that rejects: the user is logged out on screen |
 | 11 | Low | `.github/workflows/verify.yml` | Its actions are pinned to tags (`@v4`, `@v5`), not commit SHAs, and it has no `permissions:` block, unlike `release.yml`. It can't publish, so the risk is small | Pin to the same SHAs `release.yml` uses, and add `permissions: contents: read` | CI still passes |
 
-**A test gap behind rows 1 and 2:** the backend tests send `null` only to
-the fields that already had a guard, and run on SQLite with foreign keys
-off (`ARCHITECTURE.md`: "SQLite passing proves nothing about Postgres").
-The tests named in "Done when" close it for these fields.
-
-**Suggested order:** 1, 2 and 3 in one backend PR (they share
-`widgets.py`, its tests and the mock handlers); 6, 7 and 8 can join it.
-Then 9 and 10 as one package patch, 4 and 11 as one workflow PR, and 5
-once the developer says whether macOS matters. Each PR runs
-`npm run verify`, and the backend one also `npm run verify:backend`
-(`AGENTS.md` "Scope and stopping").
+**Suggested order:** 9 and 10 as one package patch, 4 and 11 as one
+workflow PR, and 5 once the developer says whether macOS matters. Each PR
+runs `npm run verify` (`AGENTS.md` "Scope and stopping").
 
 ## Deferred
 
@@ -133,6 +102,7 @@ once the developer says whether macOS matters. Each PR runs
 | **A labelled deployment** (a staging copy that should say "Staging data"). `APP_ENV=production` refuses to start with `DATA_LABEL` set (3.19), so today a label only exists off production settings | An app deploys a second, non-production copy. Then decide between a deploy check that accepts a label when it's an explicit non-production one, and staging running without `APP_ENV=production` |
 | **A tick sent while a move of the same list is saving can tick the neighbour.** A quick-action tick (`ChecklistItem` in the template) changes the item *at its position* in the record's latest list; a move or remove from the list edited in place (3.25) is saved before it, so by then a different item may sit there. The list's own changes find their item by content (`locate` in `editable-list.tsx`); the tick doesn't. The window is the move's round trip, and the move's buttons wait while it saves, but the box doesn't | Someone reports a tick landing on the wrong item. Then have quick-action ticks find the item the way the list does (by its content at the time of the click), in the template and the playbook's copy of it |
 | **The template has no small entity edited in its rows** (3.26). The pattern and its code are in cell pattern 18 ("In a table's rows") and Storybook `app/DataTable`, but the playbook has no reference file to copy for `Screens: list, edited in the row`, and nothing exercises it against a real backend. A WidgetCategories screen would be the natural one, but it needs POST/PATCH/DELETE `/widget-categories` in the contract, mocks and backend | The first app builds a small entity this way, or a playbook run on such a plan goes wrong. Then add the template's own example (contract, backend, table, specs) and a reference-files row |
+| The password limit isn't in the contract. The reference backend refuses a password over 1024 characters (3.27.1), but `LoginRequest` is the foundation's part of `openapi.yaml`, and adding `maxLength` there fails every existing app's `check-contract` until it copies the change: a breaking change for a low finding | The next major release for another reason. Then add `maxLength: 1024` to the password in `openapi/foundation.yaml` and the template's spec, with the upgrade step |
 | Row virtualization | A table exceeds ~5k rows |
 | `AppError` kinds for 403 (`forbidden`) and 409 (`conflict`); both render as the generic `server` error today | A backend actually returns either. None does: another user's widget is a deliberate 404, and a duplicate email is a 422 |
 | Dependency-allowlist enforcement for `backend/pyproject.toml`, mirroring `ui-foundation check-deps` on the npm side | The backend gains a second contributor or session where an unreviewed Python dependency is a real risk |

@@ -8,9 +8,11 @@ column behavior, Alembic migrations).
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
 from decimal import Decimal
+from typing import Any
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -27,6 +29,12 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
     engine = create_async_engine(
         "sqlite+aiosqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
+
+    # SQLite ignores foreign keys unless asked, and Postgres never does: a
+    # reference to a missing row must fail here as it would there.
+    @event.listens_for(engine.sync_engine, "connect")
+    def _foreign_keys_on(dbapi_connection: Any, _record: Any) -> None:
+        dbapi_connection.execute("PRAGMA foreign_keys=ON")
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     async with AsyncSession(engine) as session:
@@ -34,6 +42,9 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
         # stand-in user has — widgets are scoped per user (migration 0003).
         session.add(User(id=1, email="test@example.com", name="Test User", password_hash="unused"))
         session.add(WidgetCategory(id=1, name="Electronics"))
+        # The models declare no relationships, so the unit of work doesn't
+        # order inserts by foreign key: write the rows the widget points at first.
+        await session.flush()
         session.add(
             Widget(
                 id=1,
