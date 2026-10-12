@@ -195,7 +195,7 @@ const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
 // (--data-table-last-width), at most the area. Narrower, no change.
 const CONTENT_WIDTH_CLASS =
   '@7xl/data-table:w-fit @7xl/data-table:max-w-full ' +
-  '@7xl/data-table:min-w-[max(36rem,var(--data-table-last-width,0px))]'
+  '@7xl/data-table:min-w-[max(--spacing(144),var(--data-table-last-width,0px))]'
 
 // A second horizontal scrollbar, stuck to the viewport's bottom edge. The
 // real one sits directly under the last row, which on a full page is
