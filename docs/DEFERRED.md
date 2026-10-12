@@ -40,39 +40,6 @@ history has every removed row).
   hand-rolling, gateway boundaries, the dependency allowlist). Every
   design-language addition ships with axe contrast coverage in both themes.
 
-## Review findings to fix (2026-10-10)
-
-From the first whole-project review, run in a Claude Code session on
-3.27.0 (`dcc1977`). Unlike the Deferred table below, these are not waiting
-on a condition: each is ready to fix now. Remove a row when its fix ships,
-and remove the section once it's empty.
-
-**What the review covered:** every doc in `docs/`; the whole template
-backend (auth, routers, schemas, models, config, deploy checks, SPA
-fallback); the package's transport, gateway, `AuthProvider`,
-`useRecordUpdate`, `edit-in-place-store.ts` and `link-href.ts`; the
-`verify`, `release` and `release-smoke` workflows; `create-app.sh`; and
-`bin/ui-foundation.mjs`. **Only skimmed:** the rich-text editor
-internals (`milkdown-editor.tsx` and its `rich-text-*` modules) and
-`data-table.tsx`. **Not run:** the full `npm run verify` (Storybook,
-Playwright), `verify:backend` end to end, and anything on real Postgres.
-`npm run verify:fast` passed on `dcc1977`.
-
-**Kept on purpose, so don't "fix" these:** another user's widget being a
-404 rather than a 403; a duplicate email at register being a 422 that says
-so (which already reveals which emails have accounts); `useRecordUpdate`'s
-per-record mutation scope and its `onMutate` running before the scope's
-turn (TanStack v5 does this, and the pending queue relies on it); the
-`publish` job having no checkout and no `npm ci`.
-Login rate limiting is already a Deferred row below, not a finding.
-
-| # | Severity | Where | Finding | Fix | Done when |
-|---|---|---|---|---|---|
-| 5 | Depends on OS | `scripts/create-app.sh` (`sed -i`, `tar --wildcards`) | Not portable to macOS. `sed -i "s#…#"` with no suffix argument is GNU syntax; BSD sed reads the expression as the backup suffix and the script stops (`set -e`). `tar --wildcards` is GNU tar's; macOS ships bsdtar, which is believed (not checked) to reject it. The script's header lists only Git Bash on Windows | Move the `<title>` replacement into the `node -e` block that already rewrites `package.json`. For the download, extract the archive whole into a temp dir and copy its `template/`, or check whether bsdtar takes the pattern without `--wildcards`. Ask the developer whether macOS matters before spending on it | `consume-test.sh --install-only` still passes; on a Mac if one is available |
-
-**Waiting on the developer:** row 5, once they say whether macOS
-matters. Its PR runs `npm run verify` (`AGENTS.md` "Scope and stopping").
-
 ## Deferred
 
 | Item | Revisit when |
