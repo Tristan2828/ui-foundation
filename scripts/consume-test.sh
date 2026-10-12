@@ -119,11 +119,17 @@ cd "$APP"
 # @playwright/test range to the newest release, which can be newer than
 # this repo's lock (1.64.0 shipped mid-PR and every test failed with
 # "Executable doesn't exist"), so browsers installed for the repo's copy
-# don't fit. In CI only, as release-smoke.yml does: elsewhere a developer's
-# machine already has them, or can't download (cloud sessions).
+# don't fit, on a developer's machine as much as in CI. CI also installs the
+# system libraries, as release-smoke.yml does. Elsewhere a failed download
+# (cloud sessions have no access) only warns: the browsers may already be
+# there, and if not, verify says so.
 if [ -n "${CI:-}" ]; then
   echo "consume-test: npx playwright install --with-deps chromium (the app's Playwright, $(npx playwright --version))"
   npx playwright install --with-deps chromium
+else
+  echo "consume-test: npx playwright install chromium (the app's Playwright, $(npx playwright --version))"
+  npx playwright install chromium ||
+    echo "consume-test: warning: couldn't install the app's Chromium; verify's browser tests need it" >&2
 fi
 
 echo "consume-test: npm run verify in the new app"
