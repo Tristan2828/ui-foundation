@@ -108,9 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     startSession(queryClient, await loginRequest({ email, password }))
   }
 
+  // Logged out on screen even when the request fails (network down): the
+  // person asked to leave, and a shell that still shows them signed in is
+  // worse. Still rejects, so the caller knows the server didn't confirm.
   async function logout() {
-    await logoutRequest()
-    endSession(queryClient)
+    try {
+      await logoutRequest()
+    } finally {
+      endSession(queryClient)
+    }
   }
 
   async function register(email: string, name: string, password: string) {

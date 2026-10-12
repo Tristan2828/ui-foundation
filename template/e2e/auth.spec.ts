@@ -36,6 +36,20 @@ test.describe('auth', () => {
     await expect(page).toHaveURL('/login')
   })
 
+  test('a logout the server fails to confirm still logs out on screen', async ({ page }) => {
+    await forceMswOverride(page, { method: 'post', path: '*/api/auth/logout', status: 500, body: { detail: 'Internal error' } })
+    await page.goto('/widgets')
+    await page.getByRole('button', { name: 'Log out' }).click()
+    await expect(page).toHaveURL('/login')
+    await expect(page.getByRole('button', { name: 'Log out' })).toHaveCount(0)
+    // Still a deliberate logout: whoever signs in next lands on the home
+    // route, not on the previous user's page.
+    await page.getByLabel('Email').fill('dev@example.com')
+    await page.getByLabel('Password', { exact: true }).fill('dev-password-123')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page).toHaveURL('/')
+  })
+
   test('signing in after a redirect returns to the page that was requested', async ({ page }) => {
     await forceLoggedOut(page)
     await page.goto('/widgets')
