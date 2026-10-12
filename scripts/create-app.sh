@@ -15,8 +15,10 @@
 #   FOUNDATION_TARBALL   install the package from this `npm pack` tarball
 #                        instead of from npm
 #
-# Needs: Node/npm, git, curl and tar (Git Bash on Windows). Stops at the
-# first failure. Doesn't touch anything outside ./<app-name>.
+# Needs: Node/npm, git, curl and tar. Runs in Git Bash on Windows, and on
+# macOS and Linux: no GNU-only flags (BSD sed and bsdtar differ). Stops at
+# the first failure. Doesn't touch anything outside ./<app-name>, apart
+# from a temporary folder for the download.
 set -euo pipefail
 
 REPO="Tristan2828/ui-foundation"
@@ -39,10 +41,16 @@ if [ -n "${FOUNDATION_REPO_DIR:-}" ]; then
 else
   # A tag or SHA, never a branch: those URLs are immutable, so there's no
   # CDN staleness to reason about.
+  # The whole archive, then its template/: picking template/ out with a
+  # pattern needs GNU tar's --wildcards, which macOS's bsdtar lacks.
   echo "create-app: downloading template/ at $REF"
+  DOWNLOAD="$(mktemp -d)"
+  trap 'rm -rf "$DOWNLOAD"' EXIT
   curl -fsSL --retry 4 --retry-delay 2 --retry-all-errors "https://codeload.github.com/$REPO/tar.gz/$REF" |
-    tar -xz --strip-components=2 -C "$APP_NAME" --wildcards '*/template/*' ||
+    tar -xz -C "$DOWNLOAD" ||
     fail "can't download template/ at '$REF' — is it a real tag of $REPO?"
+  cp -R "$DOWNLOAD"/*/template/. "$APP_NAME"/ ||
+    fail "the archive of '$REF' has no template/"
 fi
 cd "$APP_NAME"
 [ -f package.json ] || fail "the template at $REF has no package.json — is $REF older than v3.0.0? Apps before 3.0 were created with the shadcn registry"
@@ -67,8 +75,10 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
 pkg.name = process.env.APP_NAME
 pkg.dependencies[process.env.PACKAGE] = process.env.SPEC
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n')
+// Here rather than sed -i, whose in-place syntax differs on macOS.
+const html = fs.readFileSync('index.html', 'utf8')
+fs.writeFileSync('index.html', html.replace('<title>UI Foundation</title>', '<title>' + process.env.APP_NAME + '</title>'))
 "
-sed -i "s#<title>UI Foundation</title>#<title>$APP_NAME</title>#" index.html
 
 echo "create-app: npm install ($PACKAGE $SPEC${INSTALL[0]:+, installing ${INSTALL[0]}})"
 npm install --no-audit --no-fund ${INSTALL[@]+"${INSTALL[@]}"}

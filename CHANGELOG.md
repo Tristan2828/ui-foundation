@@ -5,6 +5,16 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.27.3 — `create-app.sh` runs on macOS
+
+Nothing for an existing app to do. `create-app.sh` used two GNU-only
+flags: `sed -i` with no suffix (BSD sed reads the expression as the
+suffix) and `tar --wildcards` (macOS's bsdtar rejects it). The `<title>`
+is now set in the script's `node` step, and a downloaded tag is extracted
+whole into a temporary folder before its `template/` is copied. Checked
+against bsdtar 3.8 (the old flag fails, the new extraction gives the same
+128 files as before), not on a Mac itself.
+
 ## 3.27.2 — two package fixes from the first review
 
 No export or prop changes; nothing is required beyond the upgrade.
