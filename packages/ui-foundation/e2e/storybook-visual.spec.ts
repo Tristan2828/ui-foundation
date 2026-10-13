@@ -66,6 +66,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
+  { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
+  { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
   // Every density, the primitives and DataTable in each (large is the one
   // that changes their type and sizes).
   { id: 'patterns-density--primitives', mustShow: 'data-density="large"' },
