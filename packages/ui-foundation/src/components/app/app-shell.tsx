@@ -1,8 +1,9 @@
 import { LogOutIcon, MoonIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
-import { NavLink, Navigate, Outlet, useLocation } from 'react-router'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
+import { activeNavTo, navGroups, type NavEntry } from '@/components/app/app-shell-nav'
 import { ErrorState } from '@/components/app/error-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -25,20 +26,19 @@ import {
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
-export type NavItem = {
-  /** The route this entry links to. */
-  to: string
-  label: string
-  icon: ComponentType
-  /** Active only on an exact match (use for '/'); otherwise on any sub-path too. */
-  end?: boolean
-}
+export type { NavEntry, NavItem, NavSection } from '@/components/app/app-shell-nav'
 
 export type AppShellProps = {
   /** Shown at the top of the sidebar (hidden on the collapsed icon rail). */
   title: string
-  /** The app's primary navigation, in order. */
-  nav: readonly NavItem[]
+  /**
+   * The app's primary navigation, in order: pages, and labelled sections of
+   * pages (`{ label, items }`, one per module, say). A nav with no sections
+   * is the single "Navigation" group. One entry is marked active: the most
+   * specific whose route matches, so '/tasks' and '/tasks/categories' can
+   * both be listed.
+   */
+  nav: readonly NavEntry[]
   /**
    * More sidebar groups under the primary nav — reference links, say. Built
    * from the sidebar primitives (`@tristan2828/ui-foundation/ui/sidebar`).
@@ -137,6 +137,8 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }
     return <Navigate to="/login" replace state={isLoggingOut ? undefined : { from }} />
   }
 
+  const activeTo = activeNavTo(nav, location.pathname)
+
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={storedSidebarOpen(defaultSidebarOpen)}>
@@ -152,30 +154,33 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }
               </span>
             </SidebarHeader>
             <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {nav.map(({ to, label, icon: Icon, end }) => {
-                      const isActive = end
-                        ? location.pathname === to
-                        : location.pathname.startsWith(to)
-                      return (
-                        <SidebarMenuItem key={to}>
-                          <SidebarMenuButton
-                            isActive={isActive}
-                            tooltip={label}
-                            render={<NavLink to={to} end={end} />}
-                          >
-                            <Icon />
-                            <span>{label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+              {navGroups(nav).map((group, groupIndex) => (
+                <SidebarGroup key={`${groupIndex}:${group.label ?? ''}`}>
+                  {group.label !== undefined && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {group.items.map(({ to, label, icon: Icon }) => {
+                        // A plain Link, not NavLink: NavLink marks every
+                        // matching entry current, and only the most specific
+                        // one should be (activeNavTo).
+                        const isActive = to === activeTo
+                        return (
+                          <SidebarMenuItem key={to}>
+                            <SidebarMenuButton
+                              isActive={isActive}
+                              tooltip={label}
+                              render={<Link to={to} aria-current={isActive ? 'page' : undefined} />}
+                            >
+                              <Icon />
+                              <span>{label}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        )
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              ))}
               {sidebarExtra}
             </SidebarContent>
             <SidebarFooter>

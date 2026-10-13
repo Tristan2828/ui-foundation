@@ -5,6 +5,47 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.29.0 — sidebar nav sections
+
+`AppShell`'s `nav` takes labelled sections beside plain entries, for an
+app with more than one module: `{ label, items: NavItem[] }` becomes its
+own sidebar group with that label. Additive: a `NavItem[]` is still a valid
+`nav`, and a nav with no sections renders exactly as before, one
+"Navigation" group.
+
+```ts
+export const NAV: readonly NavEntry[] = [
+  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  {
+    label: 'Projects',
+    items: [
+      { to: '/projects', label: 'Projects', icon: ListIcon },
+      { to: '/projects/categories', label: 'Categories', icon: TagIcon },
+    ],
+  },
+]
+```
+
+- **New exports:** the types `NavSection` and `NavEntry` (`NavItem |
+  NavSection`). `AppShellProps['nav']` is now `readonly NavEntry[]`.
+- **One current entry, the most specific.** An entry used to be active on
+  any path that *started with* its route, so `/projects` and
+  `/projects/categories` were both current on the Categories page, and
+  `/projects` was current on `/projects-archive` too. Now matching is on a
+  path-segment boundary, and only the most specific match is current
+  (`aria-current="page"` and the sidebar's active style). `end: true`
+  still means exact.
+- **The links are plain `Link`s, not `NavLink`s,** so they no longer get
+  NavLink's `active` class; the active style was always the sidebar's own
+  `data-active`, and `aria-current` is still set on the current entry.
+- Checked by `app/AppShell` stories (axe and the token check in both
+  themes) and `e2e/app-shell.spec.ts` (the groups, and one current entry),
+  each with a negative control.
+
+**Using it:** nothing to do on upgrading. To group, write `src/nav.ts` as
+`readonly NavEntry[]` with sections. An app whose CSS targets the nav's
+`a.active` should use `[aria-current="page"]` instead.
+
 ## 3.28.0 — a large density, for a screen read from a distance
 
 `data-density="large"` joins `compact` and `comfortable`: a TV used as the
