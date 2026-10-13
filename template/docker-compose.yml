@@ -1,9 +1,9 @@
-# Offline/test database. Supabase is the dev default (docs/cloud-postgres.md);
-# this is what `backend/scripts/dev.sh --local` and scripts/check-backend-postgres.sh
-# use. The backend itself runs on the host
+# The local database: what `backend/scripts/dev.sh` uses by default and
+# scripts/check-backend-postgres.sh always uses. The backend itself runs on the host
 # (`uvicorn app.main:app --reload` from backend/, after `alembic upgrade
-# head`), not in a container. See docs/cloud-postgres.md for pointing
-# DATABASE_URL at a hosted instance instead.
+# head`), not in a container. For a real database, point DATABASE_URL at a
+# hosted one (docs/cloud-postgres.md) or a self-hosted one
+# (docs/home-lab-postgres.md) instead.
 services:
   postgres:
     image: postgres:18

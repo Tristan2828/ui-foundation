@@ -107,7 +107,8 @@ reach an app on its own.
   (model, migration, router) is written by hand against the spec,
   following `backend/app/routers/widgets.py`. `npm run verify:backend`
   fails until the backend matches `openapi.yaml`.
-- Setup and hosting are in the app's `docs/cloud-postgres.md` and
+- Setup and hosting are in the app's `docs/cloud-postgres.md` (a hosted
+  database), `docs/home-lab-postgres.md` (one on a server you run) and
   `docs/deploy.md`.
 - Not using it (a Notion-backed app, say)? Delete `backend/`,
   `docker-compose.yml` and the `verify:backend` script.

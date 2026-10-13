@@ -1,9 +1,17 @@
 # Cloud Postgres
 
 The backend runs on `docker-compose.yml`'s local Postgres by default —
-`backend/scripts/dev.sh` starts it, with no account or secrets. **Supabase
-is the cloud choice**, for an app that needs real, shared or deployed data;
-this page covers setting that up (`backend/.env.example` has the Supabase
+`backend/scripts/dev.sh` starts it, with no account or secrets. An app that
+needs real, shared or deployed data has two routes:
+
+- **A hosted Postgres** (this page): nothing to run yourself, reachable
+  from anywhere. Optional: choose it when the app has to stay up when your
+  own server doesn't, or you run no server.
+- **A self-hosted Postgres** on a server you run, shared by several apps,
+  with your own nightly encrypted backups and restore drill:
+  [`home-lab-postgres.md`](home-lab-postgres.md).
+
+This page covers the hosted route (`backend/.env.example` has the Supabase
 lines, commented out). Automated checks always use the local database —
 `scripts/check-backend-postgres.sh` forces it, so test runs never register
 throwaway users in your hosted database. The code is

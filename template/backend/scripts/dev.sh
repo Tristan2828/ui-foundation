@@ -5,8 +5,9 @@
 #
 # The database is whatever DATABASE_URL (backend/.env) points at — the local
 # Docker Compose Postgres by default, which this starts for you. Point it at
-# a hosted database (Supabase is the cloud choice, docs/cloud-postgres.md)
-# and Docker is skipped; --local forces the local one regardless of .env.
+# a hosted or self-hosted database (docs/cloud-postgres.md,
+# docs/home-lab-postgres.md) and Docker is skipped; --local forces the local
+# one regardless of .env.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
