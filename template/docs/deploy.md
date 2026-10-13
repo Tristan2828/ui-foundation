@@ -3,7 +3,8 @@
 The shape this foundation is built for: one process. FastAPI serves the API
 under `/api` and the built SPA at `/` (`backend/app/spa.py`), so the app is
 same-origin, needs no CORS, and uses a plain session cookie. Database setup
-is in [`cloud-postgres.md`](cloud-postgres.md).
+is in [`cloud-postgres.md`](cloud-postgres.md) (hosted) or
+[`home-lab-postgres.md`](home-lab-postgres.md) (a server you run).
 
 ## Checklist
 

@@ -25,8 +25,9 @@ VITE_API=real npm run dev               # in another shell: proxies /api to the 
 
 Log in with the seeded dev user, `dev@example.com` / `dev-password-123`.
 Deploying: [`docs/deploy.md`](docs/deploy.md) (with `APP_ENV=production`
-the backend refuses to start while that password still works). A hosted
-database: [`docs/cloud-postgres.md`](docs/cloud-postgres.md). Build for
+the backend refuses to start while that password still works). A real
+database: hosted ([`docs/cloud-postgres.md`](docs/cloud-postgres.md)) or on
+a server you run ([`docs/home-lab-postgres.md`](docs/home-lab-postgres.md)). Build for
 production with `npm run build:real` — a plain `npm run build` bundles the
 mock API.
 
