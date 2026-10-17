@@ -58,6 +58,7 @@ REGISTER_RESPONSES = {**VALIDATION, **SERVER_ERROR}
 
 
 async def get_current_user(
+    request: Request,
     session_id: str | None = Cookie(default=None),
     session: AsyncSession = Depends(get_session),
 ) -> User:
@@ -78,6 +79,8 @@ async def get_current_user(
     user = await session.get(User, user_session.user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="Session expired or invalid")
+    # For error reporting: a 500 later in this request names the user by id.
+    request.state.user_id = user.id
     return user
 
 

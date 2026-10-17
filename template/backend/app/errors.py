@@ -8,6 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.error_reporting import ErrorContext, report_error
+
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
@@ -26,5 +28,19 @@ def register_error_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def unhandled_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        # Every 500 is reported (app/error_reporting.py): only the route's
+        # pattern, the method and the user's id go with it, never anything
+        # else from the request.
+        route = request.scope.get("route")
+        report_error(
+            exc,
+            ErrorContext(
+                source="server",
+                route=getattr(route, "path", None),
+                method=request.method,
+                status=500,
+                user_id=getattr(request.state, "user_id", None),
+            ),
+        )
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})

@@ -168,6 +168,26 @@ export interface paths {
         patch: operations["updateWidget"];
         trace?: never;
     };
+    "/client-errors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A failure in the browser, for the backend to forward to error reporting
+         * @description Sent by the package when an app turns on FoundationProviders' errorReporting. Needs a session, so the public can't post into it. The backend may drop a report (a duplicate, too many) and still answer 204. The user is the session's; the report never carries request or response bodies, cookies, headers, form values or query strings.
+         */
+        post: operations["reportClientError"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -299,6 +319,25 @@ export interface components {
         WidgetListResponse: {
             items: components["schemas"]["Widget"][];
             total: number;
+        };
+        ClientErrorReport: {
+            /**
+             * @description Where the package caught it.
+             * @enum {string}
+             */
+            source: "route" | "window" | "unhandledrejection" | "query" | "mutation";
+            /** @description The error's type (TypeError, ServerError). */
+            type: string;
+            message: string;
+            stack?: string;
+            /** @description The route pattern (/items/:id), never the URL. */
+            route?: string;
+            /** @description The HTTP method of a failed request. */
+            method?: string;
+            /** @description The HTTP status of a failed request. */
+            status?: number;
+            /** @description The frontend build (its commit). */
+            release?: string;
         };
         /** @description FastAPI's default 422 shape (RequestValidationError). */
         ValidationErrorBody: {
@@ -700,6 +739,31 @@ export interface operations {
             };
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
+            422: components["responses"]["ValidationError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    reportClientError: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientErrorReport"];
+            };
+        };
+        responses: {
+            /** @description Received (forwarded, or dropped as a duplicate). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["UnauthorizedError"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["ServerError"];
         };

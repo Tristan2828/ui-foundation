@@ -21,7 +21,22 @@ export async function safeFetch(path: string, init?: RequestInit): Promise<ApiRe
  * Pass the response's `headers` so a 429 carries its Retry-After
  * (`retryAfterSeconds`); without them it's still `rate_limited`.
  */
+// The HTTP status each AppError came from, kept beside it rather than on
+// it, so AppError's shape (and every test comparing one) doesn't change.
+// Error reporting reads it (src/error-reporting/reporter.ts).
+const STATUS = new WeakMap<AppError, number>();
+
+export function httpStatusOf(error: AppError): number | undefined {
+  return STATUS.get(error);
+}
+
 export function toAppError(status: number, body: unknown, headers?: Headers): AppError {
+  const error = translate(status, body, headers);
+  STATUS.set(error, status);
+  return error;
+}
+
+function translate(status: number, body: unknown, headers?: Headers): AppError {
   if (status === 422) {
     // A rule the server enforces (a cap, a status the change needs) is
     // often refused with FastAPI's HTTPException shape: a sentence, not a

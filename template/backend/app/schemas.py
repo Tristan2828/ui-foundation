@@ -187,6 +187,20 @@ class RegisterRequest(CamelModel):
     _email_lower = field_validator("email")(_normalize_email)
 
 
+class ClientErrorReport(CamelModel):
+    """POST /client-errors: a failure the browser saw. Only these fields
+    exist, so nothing else from the page can be sent."""
+
+    source: Literal["route", "window", "unhandledrejection", "query", "mutation"]
+    type: str = Field(min_length=1, max_length=200)
+    message: str = Field(max_length=2000)
+    stack: str | None = Field(default=None, max_length=16000)
+    route: str | None = Field(default=None, max_length=300)
+    method: str | None = Field(default=None, max_length=10)
+    status: int | None = Field(default=None, ge=100, le=599)
+    release: str | None = Field(default=None, max_length=100)
+
+
 class HTTPErrorBody(CamelModel):
     detail: str
 

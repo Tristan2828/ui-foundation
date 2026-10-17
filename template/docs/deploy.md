@@ -102,9 +102,52 @@ before they leave the server (restic, as in
 itself with a key from the environment would need a crypto dependency; it's
 in `DEFERRED.md` as a decision, not a default.
 
-## Known gaps before exposing it publicly
+## Error reporting
 
-Tracked in [`DEFERRED.md`](DEFERRED.md) — fine for a personal or internal
-deployment, not for an open one:
+Every 500 the backend answers, and every failure the browser sees, goes
+through one function, `report_error` (`backend/app/error_reporting.py`).
+It always logs. With **`ERROR_REPORTING_DSN`** set, it also sends the error to
+a Sentry-compatible server, which groups them, counts them and emails you.
+Unset, the default, errors are logged and nothing is sent.
 
-- **No error reporting.** Server errors go to uvicorn's log only.
+- **The DSN** is the project's address from that server's settings:
+  `https://<key>@<host>/<project id>`. Use Sentry itself (hosted), or run
+  your own Sentry-compatible server, such as
+  [GlitchTip](https://glitchtip.com): one container with Postgres and
+  Redis, e.g. beside the database in
+  [`home-lab-postgres.md`](home-lab-postgres.md). Its project settings show
+  the DSN the same way. The backend speaks Sentry's envelope protocol over
+  plain HTTP (a small JSON POST, stdlib only, no SDK), in a background
+  thread, so a failed request never waits on the destination and an
+  unreachable one is only logged.
+- **`RELEASE`** (the backend) and **`VITE_RELEASE`** (at frontend build
+  time) name the build a report came from: set both to the commit.
+- **The browser's reports** come from `FoundationProviders`'
+  `errorReporting` (on in this template's `src/main.tsx`). That covers a
+  crashed screen, an uncaught error or unhandled rejection, and a server
+  failure (kind `server`) of a query or a save. Never a sign-in refused, a
+  missing record, a validation error, too many attempts, or the network.
+  The page posts them to its own backend, `POST /api/client-errors`, which
+  forwards them, so the DSN never ships in the bundle. It needs a session,
+  so nothing is sent from a signed-out page and the public can't post into
+  it. The same error from one session goes through at most once a minute,
+  and a session sends at most `CLIENT_ERRORS_PER_MINUTE` (10) a minute.
+  Both are counted in each worker's memory. It needs a data router
+  (`createBrowserRouter`), as the template has, to know the route.
+
+**What a report holds:** the error's type, message and stack; the route
+**pattern** (`/widgets/:id`, `/api/widgets/{widget_id}`), never the URL; the
+HTTP method and status; the release and `APP_ENV`; the user's **id**, never
+their email.
+
+**What it never holds:** request or response bodies, cookies, headers, form
+values, query strings. The code building a report is never handed the
+request, only those fields. Messages and stacks are scrubbed on top of
+that: a query string or fragment in any URL is cut, and so is a database
+error's SQL and bound parameters (which hold row values). Tests check
+this: `backend/tests/test_error_reporting.py` sends a request with a body,
+a cookie, a header and a query string and looks for each in the envelope.
+An error's own message can still say something about a record ("no widget
+named …"), since it's the message, so keep personal data out of exception
+messages.
+

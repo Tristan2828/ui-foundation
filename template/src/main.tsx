@@ -30,7 +30,11 @@ async function enableMocking() {
 enableMocking().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <FoundationProviders mockMode={IS_MOCK_MODE}>
+      {/* errorReporting: crashes and server failures go to the backend's
+          POST /api/client-errors, which forwards them when
+          ERROR_REPORTING_DSN is set (docs/deploy.md "Error reporting").
+          VITE_RELEASE names the build, e.g. the commit, set at build time. */}
+      <FoundationProviders mockMode={IS_MOCK_MODE} errorReporting={{ release: import.meta.env.VITE_RELEASE }}>
         {/* Above the router, so it shows on every route: the backend's
             DATA_LABEL when its data isn't production's (backend/.env). */}
         <DataEnvironmentBanner />
