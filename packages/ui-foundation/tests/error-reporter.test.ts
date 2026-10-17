@@ -18,7 +18,7 @@ import {
 let uninstall: (() => void) | undefined
 afterEach(() => uninstall?.())
 
-function setUp({ signedIn = true, now = () => 0 } = {}) {
+function setUp({ signedIn = true, now = (): number => 0 }: { signedIn?: boolean; now?: () => number } = {}) {
   const sent: ClientErrorReport[] = []
   const reporter = createErrorReporter({ options: { release: 'abc1234' }, send: (report) => sent.push(report), now })
   reporter.setSignedIn(signedIn)
