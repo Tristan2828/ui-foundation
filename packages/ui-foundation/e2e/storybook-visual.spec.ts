@@ -50,6 +50,8 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // Its Lists story is the list edited in place: its rows and buttons.
 // <DataTable>'s opt-ins for a small entity: sized to its columns, and
 // edited in its rows (every cell's pencil, InlineCreate).
+// <WidgetCard> is every hub page's widget: its header link, a row's tone
+// badge, muted note and switch, and the compact error, in every state.
 const COMPOSITE_STORIES = [
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
@@ -68,6 +70,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
+  { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
+  { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // Every density, the primitives and DataTable in each (large is the one
   // that changes their type and sizes).
   { id: 'patterns-density--primitives', mustShow: 'data-density="large"' },
@@ -98,6 +102,8 @@ const GLYPH_STORIES: {
     open: (page) => page.getByRole('button', { name: /^2 holds/ }).click(),
   },
   { id: 'ui-toggle--default' },
+  // A widget's title icon, external-link mark and compact error icon.
+  { id: 'app-widgetcard--all-states' },
   // Category glyphs in DataTable rows at every density.
   { id: 'patterns-density--data-tables' },
   // The rich-text toolbar's icons (the read-only editor's are disabled:
@@ -229,6 +235,28 @@ test.describe('primitive stories have zero axe violations at the large density',
         await page.goto(storyUrlById(`ui-${name}--default`, theme, 'large'))
         await expect(page.locator('html')).toHaveAttribute('data-density', 'large')
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        const results = await analyzeStory(page)
+        expect(results.violations).toEqual([])
+      })
+    }
+  }
+})
+
+// Composites read on a screen across the room (a hub page on a TV), run
+// again under the large density in both themes.
+const LARGE_COMPOSITE_STORIES = [
+  { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
+  { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
+]
+
+test.describe('composite stories have zero axe violations at the large density', () => {
+  for (const { id, mustShow } of LARGE_COMPOSITE_STORIES) {
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${id} is accessible at large (${theme})`, async ({ page }) => {
+        await page.goto(storyUrlById(id, theme, 'large'))
+        await expect(page.locator('html')).toHaveAttribute('data-density', 'large')
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        await expect(page.getByText(mustShow)).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
       })
@@ -766,4 +794,65 @@ test.describe('count link', () => {
       expect(results.violations).toEqual([])
     })
   }
+})
+
+// WidgetCard (a hub page's widget): what its names and states promise.
+test.describe('widget card', () => {
+  const ALL = 'app-widgetcard--all-states'
+  const inState = (page: import('@playwright/test').Page, state: string) =>
+    page.getByRole('region', { name: `State: ${state}` })
+
+  test('each widget is a region named by its heading, in the page outline', async ({ page }) => {
+    await page.goto(storyUrlById('app-widgetcard--default', 'light'))
+    for (const title of ['Ready to start', 'Waiting on', 'Saved links']) {
+      await expect(page.getByRole('region', { name: title })).toBeVisible()
+      await expect(page.getByRole('heading', { level: 2, name: title })).toBeVisible()
+    }
+  })
+
+  test('a header link is described by its title, so two "All" links stay distinct', async ({ page }) => {
+    await page.goto(storyUrlById('app-widgetcard--default', 'light'))
+    const ready = page.getByRole('region', { name: 'Ready to start' }).getByRole('link', { name: 'All', exact: true })
+    await expect(ready).toHaveAccessibleDescription('Ready to start')
+    const waiting = page.getByRole('region', { name: 'Waiting on' }).getByRole('link', { name: 'All', exact: true })
+    await expect(waiting).toHaveAccessibleDescription('Waiting on')
+  })
+
+  test("a row's switch is named by the row's text", async ({ page }) => {
+    await page.goto(storyUrlById('app-widgetcard--default', 'light'))
+    await expect(page.getByRole('switch', { name: 'Parts arrive' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'Weather clears' })).toBeChecked()
+  })
+
+  test('a long row is cut to one line, with its whole text in the link and its tooltip', async ({ page }) => {
+    await page.goto(storyUrlById('app-widgetcard--default', 'light'))
+    const text = 'Choosing an exterior paint for a timber shed that sees a lot of weather'
+    const link = page.getByRole('link', { name: `${text} (opens in a new tab)` })
+    await expect(link).toHaveAttribute('title', text)
+    await expect(link).toHaveAttribute('target', '_blank')
+    const cut = await link.locator('span').first().evaluate((span) => span.scrollWidth > span.clientWidth)
+    expect(cut).toBe(true)
+  })
+
+  test('every state is in each widget: skeleton, empty line, compact error with retry, rows', async ({ page }) => {
+    await page.goto(storyUrlById(ALL, 'light'))
+    await expect(inState(page, 'loading').locator('[data-slot=widget-card][data-state=loading]')).toHaveCount(3)
+    await expect(inState(page, 'empty').getByText('Nothing waiting')).toBeVisible()
+    const errors = inState(page, 'error')
+    await expect(errors.getByText('Connection problem')).toHaveCount(3)
+    await expect(errors.getByRole('button', { name: 'Try again' })).toHaveCount(3)
+    await expect(errors.locator('[data-state=error][data-size=compact]')).toHaveCount(3)
+    await expect(inState(page, 'success').getByRole('listitem')).toHaveCount(8)
+  })
+
+  // The skeleton holds as many rows as the widget usually does, so a card
+  // keeps its height when its data arrives.
+  test("a loading widget is its loaded height, within a few pixels", async ({ page }) => {
+    await page.goto(storyUrlById(ALL, 'light'))
+    for (const title of ['Ready to start', 'Waiting on', 'Saved links']) {
+      const height = async (state: string) =>
+        (await page.getByRole('region', { name: `${title} (${state})` }).boundingBox())!.height
+      expect(Math.abs((await height('loading')) - (await height('success')))).toBeLessThanOrEqual(4)
+    }
+  })
 })

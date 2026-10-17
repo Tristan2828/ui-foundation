@@ -77,6 +77,8 @@ is right. Do not disable, skip, or work around it.
 Every data view handles: loading, empty, error, and success. Use
 `<Skeleton>`, `<Empty>`, and the error boundary — `DataTable` already does,
 and `EntityView` (one record) adds not found: a plain 404, never a retry.
+A small widget on a hub page is a `WidgetCard`, which holds all four for
+its own data, its error inside the card.
 Every screen has one Playwright test per state, forced via MSW overrides
 (`@tristan2828/ui-foundation/testing`).
 

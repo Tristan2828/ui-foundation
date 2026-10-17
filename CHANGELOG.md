@@ -5,6 +5,40 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.30.0 — a widget card for hub pages
+
+Additive: new components and one new optional prop, nothing existing
+changes. Run `npx ui-foundation sync` for the updated design language and
+AGENTS.md block.
+
+- **New components `WidgetCard`, `WidgetList` and `WidgetListItem`**
+  (issue #121): a hub page's small widget, a titled card holding a short
+  list that loads on its own. It owns the four required states the way
+  `DataTable` does (`isLoading`, `error`, `onRetry`, `isEmpty`,
+  `emptyMessage`): a skeleton of `skeletonRows` rows so the card keeps its
+  height, one quiet empty line, and the error inside the card with a
+  retry, so one failing widget never takes the page down. The header has
+  an optional icon, a real heading (`headingLevel`, h2 by default) that
+  names the card's region, and an optional `link` to the full list,
+  described by the title so several "All" links stay distinct. A row is a
+  route link (`to`), an external link (`href`, a new tab) or plain text,
+  cut to one line with the whole text in its name and tooltip, then an
+  optional muted `note` and a `trailing` badge or control; a control gets
+  the row text's id for its `aria-labelledby`.
+- **`ErrorState` takes `size="compact"`** for a small container: less
+  padding, the icon beside the title. The default is unchanged.
+- **Design language: "Widget cards (hub pages)"**: when to use one, three
+  to six rows, the error staying in the card, the grid they sit in.
+- Checked by Storybook's `app/WidgetCard` stories (three widgets on a
+  page, and each in every state): axe, the token check and the glyph check
+  in both themes, axe again at `large`, and specs for the region names,
+  the header link's description, a switch named by its row, the cut row
+  and the skeleton's height. Each check failed on a negative control.
+
+**Using it:** nothing to do on upgrading. An app that built its own
+widget card can swap it for `WidgetCard` and drop its own skeleton,
+empty and error markup.
+
 ## 3.29.0 — sidebar nav sections
 
 `AppShell`'s `nav` takes labelled sections beside plain entries, for an

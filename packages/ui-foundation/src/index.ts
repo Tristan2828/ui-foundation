@@ -46,6 +46,13 @@ export {
   type StageCircleStage,
   type StageCircleTone,
 } from '@/components/app/stage-circle'
+export {
+  WidgetCard,
+  WidgetList,
+  WidgetListItem,
+  type WidgetCardProps,
+  type WidgetListItemProps,
+} from '@/components/app/widget-card'
 export { ThemeProvider } from '@/components/theme-provider'
 
 // Screens outside the app shell
