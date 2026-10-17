@@ -16,7 +16,7 @@
 // each section its <h2>, so a `# Heading` in the text sits under them
 // instead of competing with the page's own outline. They look like what
 // they are in the text, though: three clear sizes (the type-heading-*
-// roles), the first with a rule under it.
+// roles), each with a bar down its left edge that thins by level.
 //
 // A quote that starts `[!NOTE]` (GitHub's alert syntax) is a callout: a
 // tinted box with its kind's icon (src/lib/markdown-callout.ts).
