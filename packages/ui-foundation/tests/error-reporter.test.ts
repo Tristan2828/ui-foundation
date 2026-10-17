@@ -37,7 +37,7 @@ function rejection(target: EventTarget, reason: unknown) {
 }
 
 async function failQuery(queryClient: QueryClient, error: AppError, key = 'widgets') {
-  await queryClient.fetchQuery({ queryKey: [key], queryFn: () => Promise.reject(error) }).catch(() => {})
+  await queryClient.fetchQuery({ queryKey: [key, error], queryFn: () => Promise.reject(error) }).catch(() => {})
 }
 
 async function failMutation(queryClient: QueryClient, error: AppError) {
