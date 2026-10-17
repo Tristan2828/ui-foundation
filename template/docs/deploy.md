@@ -114,6 +114,70 @@ before they leave the server (restic, as in
 itself with a key from the environment would need a crypto dependency; it's
 in `DEFERRED.md` as a decision, not a default.
 
+## AI chats (MCP)
+
+Off by default. With **`MCP_ENABLED=true`** the backend lets an AI chat
+(Claude on the web, phone, desktop or CLI, or any client that speaks the
+Model Context Protocol) read and write the app's records, the way a
+note-taking tool's own connector does: paste a record's link into the chat
+and it reads it; ask it to change something and it writes back. Off, every
+address below answers 404.
+
+- **Turn it on:** `alembic upgrade head` (migration `0011`), then set
+  `MCP_ENABLED=true` and **`MCP_PUBLIC_URL`** to the app's public https
+  address with no path (`https://app.example.com`). Behind a proxy the app
+  can't know that address, so `APP_ENV=production` refuses to start with MCP
+  on and no https `MCP_PUBLIC_URL`.
+- **Connect a chat:** in Claude, Settings → Connectors → add a custom
+  connector with the address `https://app.example.com/mcp`. The chat
+  registers itself, then opens the app's approval page. **Be signed in to the
+  app in that browser first**; if you aren't, the page says so and links to
+  `/login`, and you connect again afterwards. Approve, and the chat can use
+  the tools. The approval page is behind the app's own sign-in, so its
+  login limits and two-step sign-in apply.
+- **What a chat can do:** `fetch` a record by its address
+  (`/widgets/3`), `search` titles, `list` an entity with its filters, sort
+  and paging, `create` and `update` a record. A chat acts as the user who
+  approved, so it sees exactly that user's records. `create` and `update`
+  run the entity's own router code, so the validation is the API's, and a
+  refused field comes back to the chat as text. **There is no delete tool.**
+  An entity is reachable only if it is listed in
+  `backend/app/mcp_entities.py`; add each new entity there (its router
+  functions, a title field, the fields shown in a list, the fields that
+  point at other entities).
+- **The log:** every create and update is a row in `mcp_audit_log`: the
+  user, the chat, the time, the entity and record, and the changed fields
+  before and after (JSON, as the API names them). Nothing prunes it.
+  `SELECT at, action, entity, record_id, before, after FROM mcp_audit_log
+  ORDER BY at DESC;` It is written right after the change is saved, so a
+  database failing between the two would leave a change unlogged.
+- **Ending a connection:** `DELETE FROM oauth_grants WHERE user_id = …`
+  (or one `client_id`) ends it at once; the chat has to be approved again.
+  A chat can also call `POST /oauth/revoke`. Access tokens last
+  `MCP_ACCESS_TOKEN_TTL_SECONDS` (an hour); the refresh token behind them
+  `MCP_REFRESH_TOKEN_TTL_DAYS` (30) and is replaced at every refresh. A
+  refresh token used twice ends the connection.
+- **Limits:** a chat is refused past `MCP_REQUESTS_PER_MINUTE` (120) on one
+  connection (counted in each worker's memory), at most `MCP_MAX_CLIENTS`
+  (50) chats can be registered at once (ones never approved are dropped
+  after a day), and registration and token requests are limited per client
+  address.
+- **Behind an access proxy** (Cloudflare Access, an identity-aware proxy,
+  a VPN gateway): the AI provider's servers call `/mcp` and the OAuth
+  addresses themselves, not through your browser, so a proxy that demands
+  its own sign-in blocks them. Let these paths through without it (a
+  bypass policy for the path, or the provider's published egress addresses,
+  which its documentation lists and which change):
+  `/mcp`, `/oauth/register`, `/oauth/token`, `/oauth/revoke`,
+  `/.well-known/oauth-authorization-server` and
+  `/.well-known/oauth-protected-resource` (and the same with `/mcp` after
+  it). `/oauth/authorize` and `/login` are opened by *you* in a browser, so
+  the proxy can keep protecting them. Nothing else changes: every request
+  to `/mcp` still needs an access token this app issued.
+- **Redirect addresses:** a chat may register only `https` addresses and
+  `http` on `localhost`, `127.0.0.1` or `[::1]`, matched exactly. `/mcp`
+  also refuses a browser request whose `Origin` isn't the app's own.
+
 ## Error reporting
 
 Every 500 the backend answers, and every failure the browser sees, goes
