@@ -67,6 +67,11 @@ LOGIN_MAX_FAILURES_PER_IP: int = int(os.environ.get("LOGIN_MAX_FAILURES_PER_IP",
 LOGIN_IP_WINDOW_SECONDS: int = int(os.environ.get("LOGIN_IP_WINDOW_SECONDS", str(15 * 60)))
 LOGIN_MAX_FAILURES_PER_ACCOUNT: int = int(os.environ.get("LOGIN_MAX_FAILURES_PER_ACCOUNT", "20"))
 LOGIN_ACCOUNT_WINDOW_SECONDS: int = int(os.environ.get("LOGIN_ACCOUNT_WINDOW_SECONDS", str(60 * 60)))
+# A header a CDN or tunnel always overwrites with the client's address
+# (CF-Connecting-IP, True-Client-IP, Fly-Client-IP), read for the per-IP key
+# instead of X-Forwarded-For, which such proxies append to. Unset: ignored.
+# Safe only if every request reaches the app through that proxy.
+CLIENT_IP_HEADER: str | None = os.environ.get("CLIENT_IP_HEADER", "").strip() or None
 
 # The TOTP second step (app/totp.py): how long a sign-in waits for its code
 # after the password, and how many wrong codes it gets before it ends.

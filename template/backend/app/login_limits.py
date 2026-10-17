@@ -22,6 +22,7 @@ from sqlmodel import col, delete, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import (
+    CLIENT_IP_HEADER,
     LOGIN_ACCOUNT_WINDOW_SECONDS,
     LOGIN_IP_WINDOW_SECONDS,
     LOGIN_MAX_FAILURES_PER_ACCOUNT,
@@ -34,7 +35,13 @@ ACCOUNT = "account"
 
 
 def client_ip(request: Request) -> str:
-    # Right only behind a proxy uvicorn trusts (--proxy-headers,
+    # CLIENT_IP_HEADER, when set, is a header the proxy in front always
+    # overwrites (docs/deploy.md), so a client can't choose its own key.
+    if CLIENT_IP_HEADER:
+        value = request.headers.get(CLIENT_IP_HEADER, "").strip()
+        if value:
+            return value
+    # Otherwise right only behind a proxy uvicorn trusts (--proxy-headers,
     # FORWARDED_ALLOW_IPS), as the template's Dockerfile runs it.
     return request.client.host if request.client is not None else "unknown"
 

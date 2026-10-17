@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
+from fastapi import Request
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -133,3 +134,43 @@ async def test_old_failures_are_pruned_and_never_count(client_for: ClientFor, se
     assert await attempt(client) == 401
     rows = (await session.exec(select(LoginFailure).where(LoginFailure.key == "10.0.0.5"))).all()
     assert len(rows) == 1
+
+
+def with_headers(ip: str, headers: dict[str, str]) -> AsyncClient:
+    return AsyncClient(transport=ASGITransport(app=app, client=(ip, 50000)), base_url="http://test", headers=headers)
+
+
+def request_with(headers: dict[str, str]) -> Request:
+    scope = {"type": "http", "client": ("10.9.9.9", 1), "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()]}
+    return Request(scope)
+
+
+def test_client_ip_ignores_the_header_when_the_setting_is_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(login_limits, "CLIENT_IP_HEADER", None)
+    assert login_limits.client_ip(request_with({"CF-Connecting-IP": "198.51.100.1"})) == "10.9.9.9"
+
+
+def test_client_ip_prefers_the_configured_header_over_x_forwarded_for(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(login_limits, "CLIENT_IP_HEADER", "CF-Connecting-IP")
+    headers = {"CF-Connecting-IP": " 198.51.100.1 ", "X-Forwarded-For": "203.0.113.7"}
+    assert login_limits.client_ip(request_with(headers)) == "198.51.100.1"
+
+
+def test_client_ip_falls_back_when_the_configured_header_is_missing_or_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(login_limits, "CLIENT_IP_HEADER", "CF-Connecting-IP")
+    assert login_limits.client_ip(request_with({})) == "10.9.9.9"
+    assert login_limits.client_ip(request_with({"CF-Connecting-IP": "  "})) == "10.9.9.9"
+
+
+async def test_spoofed_x_forwarded_for_values_share_one_count_with_the_header_set(
+    client_for: ClientFor, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(login_limits, "CLIENT_IP_HEADER", "CF-Connecting-IP")
+    client_for("10.0.9.1")  # sets up the user and database override
+    for n in range(10):
+        client = with_headers(f"10.0.9.{n}", {"CF-Connecting-IP": "198.51.100.9", "X-Forwarded-For": f"203.0.113.{n}"})
+        async with client:
+            assert await attempt(client) == 401
+    client = with_headers("10.0.9.99", {"CF-Connecting-IP": "198.51.100.9", "X-Forwarded-For": "203.0.113.200"})
+    async with client:
+        assert await attempt(client) == 429

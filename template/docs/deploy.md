@@ -61,6 +61,18 @@ the email, never the address.
   `uvicorn app.main:app --proxy-headers --forwarded-allow-ips=<the proxy's IP>`
   (or `FORWARDED_ALLOW_IPS`). Only list the proxy itself: whoever can reach
   uvicorn directly can otherwise send any `X-Forwarded-For` they like.
+- **Behind a CDN or tunnel that appends to `X-Forwarded-For`** (Cloudflare and
+  `cloudflared`, most CDNs), uvicorn takes the left-most address, which the
+  client wrote, so it can pick its own per-IP key and step around that limit
+  (the per-account limit still holds). Set `CLIENT_IP_HEADER` to a header
+  the provider always overwrites with the address it saw, e.g.
+  `CLIENT_IP_HEADER=CF-Connecting-IP` (Cloudflare), `True-Client-IP`,
+  `Fly-Client-IP`. The per-IP key is then that header's value, falling back
+  to the usual address when it's missing. **Set it only if every request
+  reaches the app through that proxy.** If the app can be reached another
+  way (a published port, another proxy, a hostname that skips the CDN), the
+  client can send the header itself and choose its key again, which is worse
+  than the default. Unset, it's ignored.
 - A rate-limit rule at a CDN or proxy in front still helps, but the
   backend doesn't rely on it.
 
