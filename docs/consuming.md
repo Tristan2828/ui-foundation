@@ -113,6 +113,31 @@ reach an app on its own.
 - Not using it (a Notion-backed app, say)? Delete `backend/`,
   `docker-compose.yml` and the `verify:backend` script.
 
+## Adding AI chats (MCP) to a 4.x app
+
+4.2 adds an MCP endpoint to the reference backend. The package and the
+contract don't change, so an app without a backend, or one that doesn't
+want chats reaching its data, does nothing. Otherwise (the backend is
+copied in, so by hand):
+
+1. From the template at the 4.2.0 tag, copy `app/mcp_entities.py`,
+   `app/mcp_tools.py`, `app/rate_window.py`, `app/routers/mcp.py`,
+   `app/routers/oauth.py`, `scripts/check_mcp_live.py` and
+   `tests/test_mcp.py`. Add migration `0011_mcp.py`, renumbered onto the
+   app's own chain.
+2. Apply the changes to `app/models.py` (four tables), `app/config.py`
+   (the `MCP_*` settings), `app/main.py` (the two routers, and the new
+   `production_problems` arguments) and `app/deploy_checks.py`.
+3. Rewrite `ENTITIES` in `app/mcp_entities.py` for the app's own
+   entities: for each, its router functions, `out`, `title`, `summary`,
+   `filters`, `sorts`, `relations` and the create/update schemas. Leave
+   out `create` and `update` for an entity chats should only read. Update
+   `tests/test_mcp.py`'s expectations to match.
+4. Read the template's `docs/deploy.md` "AI chats (MCP)", set
+   `MCP_ENABLED=true` and `MCP_PUBLIC_URL`, and let the MCP paths through
+   any access proxy.
+5. `npm run verify:backend`.
+
 ## Moving a 3.x app to 4.0 (sign-in limits and two-step sign-in)
 
 4.0 changes the foundation's part of the contract (`POST /auth/login`), so

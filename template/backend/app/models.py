@@ -7,7 +7,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, Text
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -80,6 +80,72 @@ class PendingLogin(SQLModel, table=True):
     token_hash: str = Field(max_length=64, unique=True, index=True)
     expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     tries: int = Field(default=0)
+
+
+class OAuthClient(SQLModel, table=True):
+    """An AI chat that registered itself (RFC 7591) to ask for access to the
+    app's records. Public client: no secret, PKCE instead (app/routers/oauth.py)."""
+
+    __tablename__ = "oauth_clients"
+
+    id: int | None = Field(default=None, primary_key=True)
+    client_id: str = Field(max_length=64, unique=True, index=True)
+    client_name: str = Field(max_length=200)
+    # JSON list of the exact addresses it may be sent back to.
+    redirect_uris: str
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+class OAuthCode(SQLModel, table=True):
+    """An authorization code: single use, short-lived, only its hash kept."""
+
+    __tablename__ = "oauth_codes"
+
+    id: int | None = Field(default=None, primary_key=True)
+    code_hash: str = Field(max_length=64, unique=True, index=True)
+    client_id: str = Field(max_length=64, foreign_key="oauth_clients.client_id", ondelete="CASCADE")
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    redirect_uri: str
+    code_challenge: str = Field(max_length=128)
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+class OAuthGrant(SQLModel, table=True):
+    """One approved connection: an access token and its refresh token, both
+    only as hashes. A refresh replaces both and remembers the refresh token
+    it replaced, so a reused one ends the whole connection."""
+
+    __tablename__ = "oauth_grants"
+
+    id: int | None = Field(default=None, primary_key=True)
+    client_id: str = Field(max_length=64, foreign_key="oauth_clients.client_id", ondelete="CASCADE")
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    access_hash: str = Field(max_length=64, unique=True, index=True)
+    refresh_hash: str = Field(max_length=64, unique=True, index=True)
+    previous_refresh_hash: str | None = Field(default=None, max_length=64, index=True)
+    access_expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    refresh_expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+class McpAuditEntry(SQLModel, table=True):
+    """Every record an AI chat created or changed through MCP."""
+
+    __tablename__ = "mcp_audit_log"
+
+    id: int | None = Field(default=None, primary_key=True)
+    # Not a foreign key: the log outlives the account and the connection.
+    user_id: int = Field(index=True)
+    client_id: str = Field(max_length=64)
+    # "create" or "update".
+    action: str = Field(max_length=16)
+    entity: str = Field(max_length=64)
+    record_id: int
+    at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    # JSON objects of the fields that changed, as the API names them; before
+    # is null for a create.
+    before: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    after: str = Field(sa_column=Column(Text, nullable=False))
 
 
 class WidgetStatus(str, Enum):

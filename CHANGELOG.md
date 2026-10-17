@@ -5,6 +5,41 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.2.0 — AI chats read and write an app's records through MCP
+
+Additive, and backend only: nothing in the package or the contract changes.
+The reference backend gains a Model Context Protocol endpoint and the OAuth
+2.1 sign-in that custom connectors require, off until `MCP_ENABLED=true`.
+Issue #132.
+
+- **`/mcp`** (streamable HTTP, stateless JSON-RPC, stdlib only) with five
+  tools: `fetch(url)` (one record by the app's own address,
+  `/<entity>/<id>`, with its fields, labels and the titles of the records
+  it points at), `search(query)`, `list(entity, filters, search, sort,
+  offset, limit)`, `create(entity, fields)` and `update(url, fields)`.
+  **No delete tool.** `create` and `update` call the entity's router
+  functions, so validation, per-user scoping and the 404 for another
+  user's record are the API's; refused fields come back as text.
+- **`app/mcp_entities.py`** is where entities are described once: the name
+  in the address, the out/create/update schemas, the title field, list
+  filters and sorts, which fields point at other entities. The tools are
+  generated from it. The template registers `widgets` (read and write) and
+  `widget-categories` (read only).
+- **Every write is logged** in `mcp_audit_log`: user, chat, time, entity,
+  record, and the changed fields before and after.
+- **OAuth 2.1** (`app/routers/oauth.py`): discovery documents, dynamic
+  client registration (public clients, https or loopback redirects, a cap),
+  an approval page behind the app's own session (so its rate limits and
+  two-step sign-in apply), PKCE S256 required, single-use hashed codes,
+  rotating refresh tokens whose reuse ends the connection, revocation.
+- **Docs:** the template's `docs/deploy.md` "AI chats (MCP)": turning it on,
+  connecting Claude, the log, ending a connection, and which paths to let
+  through an access proxy that would otherwise block the provider's servers.
+- **Checks:** `tests/test_mcp.py` (SQLite) and, against real Postgres,
+  `scripts/check_mcp_live.py` run by `check-backend-postgres.sh`.
+- **How an app adopts it** (the backend is copied in, so by hand): see
+  `docs/consuming.md` "Adding AI chats (MCP) to a 4.x app".
+
 ## 4.1.0 — error reporting
 
 Additive: a new optional `FoundationProviders` prop, a new optional path in
