@@ -58,7 +58,19 @@ export function MultiChoice<T extends string>({
       autoHighlight
       items={options}
       value={value}
-      onValueChange={(next) => onValueChange(next as T[])}
+      onValueChange={(next, details) => {
+        // Base UI empties the value on Escape while the list is closed, so
+        // a second Escape after a pick wiped every chip (issue #123). Escape
+        // never removes picks here: a chip's remove button, Backspace or
+        // unpicking in the list does. Let the key go on, so a dialog or an
+        // edit in place gets its own Escape.
+        if (details.reason === 'escape-key') {
+          details.cancel()
+          details.allowPropagation()
+          return
+        }
+        onValueChange(next as T[])
+      }}
       itemToStringLabel={getLabel}
     >
       <ComboboxChips ref={anchor} className={className}>

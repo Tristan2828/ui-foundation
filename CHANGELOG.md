@@ -5,6 +5,23 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 3.30.1 — Escape never clears a multi picker
+
+A fix; nothing to change. Run `npx ui-foundation sync` for the updated
+cell patterns.
+
+- **Fix: a second Escape no longer empties `MultiChoice` or
+  `MultiReference`** (issue #123). Base UI clears a multiple combobox on
+  Escape while its list is closed, so picking and pressing Escape twice
+  wiped every chip, on a form with nothing saying so. Escape now closes
+  the list when it's open and leaves the value alone when it's closed;
+  the key goes on to whatever holds the picker, so editing in place gives
+  up on the second Escape with the saved picks (before, it emptied the
+  field and waited for a third). Chips still come off by their remove
+  button, Backspace in the empty input, or unpicking in the list. An
+  app's e2e helpers that close a picker with Escape no longer race the
+  list closing.
+
 ## 3.30.0 — a widget card for hub pages
 
 Additive: new components and one new optional prop, nothing existing
