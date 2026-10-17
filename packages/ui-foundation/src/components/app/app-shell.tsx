@@ -5,6 +5,8 @@ import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
 import { activeNavTo, navGroups, type NavEntry } from '@/components/app/app-shell-nav'
 import { ErrorState } from '@/components/app/error-state'
+import { useErrorReporter } from '@/error-reporting/error-reporting-context'
+import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -105,6 +107,7 @@ function AppShellSkeleton() {
 export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }: AppShellProps) {
   const { user, status, error, retry, logout } = useAuth()
   const location = useLocation()
+  const reporter = useErrorReporter()
   // Set before logout starts, so the redirect below knows this was a
   // deliberate logout. It can't be a follow-up navigate() after logout
   // resolves: that runs before React re-renders, and the <Navigate> this
@@ -141,6 +144,7 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }
 
   return (
     <TooltipProvider>
+      {reporter && <ReportRoutePattern reporter={reporter} />}
       <SidebarProvider defaultOpen={storedSidebarOpen(defaultSidebarOpen)}>
         <CloseMobileSidebarOnNavigate />
         <nav aria-label="Primary">

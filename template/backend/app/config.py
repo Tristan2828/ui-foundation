@@ -75,6 +75,16 @@ PENDING_LOGIN_MAX_TRIES: int = int(os.environ.get("PENDING_LOGIN_MAX_TRIES", "5"
 # The name an authenticator app lists the account under.
 TOTP_ISSUER: str = os.environ.get("TOTP_ISSUER", "UI Foundation")
 
+# Error reporting (app/error_reporting.py, docs/deploy.md "Error reporting").
+# A Sentry-compatible DSN (Sentry, or a self-hosted GlitchTip):
+# https://<key>@<host>/<project id>. Unset, the default, errors are only logged.
+ERROR_REPORTING_DSN: str | None = os.environ.get("ERROR_REPORTING_DSN", "").strip() or None
+# The build a report names: the commit, set by the deploy (unset is fine).
+RELEASE: str | None = os.environ.get("RELEASE", "").strip() or None
+# How many reports one session may send per minute from the browser, after
+# duplicates (the same error) are dropped to one a minute.
+CLIENT_ERRORS_PER_MINUTE: int = int(os.environ.get("CLIENT_ERRORS_PER_MINUTE", "10"))
+
 # Seeded dev user (migration 0002). Not a
 # production credential; a real deployment sets its own before going live.
 # The defaults are published in the README, which is why production refuses

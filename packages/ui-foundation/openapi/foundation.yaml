@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: UI Foundation — the contract every app shares
-  version: "4.0.0"
+  version: "4.1.0"
   description: >
     The part of an app's API contract that the foundation package's own code
     calls: session-cookie auth under /auth/*, and the two error envelopes the
@@ -136,6 +136,31 @@ paths:
               schema: { $ref: "#/components/schemas/DataEnvironment" }
         "500": { $ref: "#/components/responses/ServerError" }
 
+  /client-errors:
+    x-optional: true
+    post:
+      operationId: reportClientError
+      summary: A failure in the browser, for the backend to forward to error reporting
+      description: >
+        Sent by the package when an app turns on FoundationProviders'
+        errorReporting. Needs a session, so the public can't post into it.
+        The backend may drop a report (a duplicate, too many) and still
+        answer 204. The user is the session's; the report never carries
+        request or response bodies, cookies, headers, form values or
+        query strings.
+      tags: [errors]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClientErrorReport" }
+      responses:
+        "204":
+          description: Received (forwarded, or dropped as a duplicate).
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
 components:
   schemas:
     DataEnvironment:
@@ -190,6 +215,25 @@ components:
         email: { $ref: "#/components/schemas/User/properties/email" }
         name: { $ref: "#/components/schemas/User/properties/name" }
         password: { $ref: "#/components/schemas/LoginRequest/properties/password" }
+
+    ClientErrorReport:
+      type: object
+      required: [source, type, message]
+      properties:
+        source:
+          type: string
+          enum: [route, window, unhandledrejection, query, mutation]
+          description: Where the package caught it.
+        type: { type: string, minLength: 1, maxLength: 200, description: "The error's type (TypeError, ServerError)." }
+        message: { type: string, maxLength: 2000 }
+        stack: { type: string, maxLength: 16000 }
+        route:
+          type: string
+          maxLength: 300
+          description: The route pattern (/items/:id), never the URL.
+        method: { type: string, maxLength: 10, description: The HTTP method of a failed request. }
+        status: { type: integer, minimum: 100, maximum: 599, description: The HTTP status of a failed request. }
+        release: { type: string, maxLength: 100, description: The frontend build (its commit). }
 
     ValidationErrorBody:
       type: object

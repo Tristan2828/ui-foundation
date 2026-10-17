@@ -13,6 +13,7 @@ export {
   resetMockAuth,
   setMockAuthenticated,
 } from './auth'
+export { clientErrorHandlers, getMockClientErrors, resetMockClientErrors } from './client-errors'
 export { environmentHandlers } from './environment'
 export { exposeMswForE2E } from './e2e-hooks'
 export type { MswHandle, MswOverride } from './override'

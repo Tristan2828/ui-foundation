@@ -132,6 +132,20 @@ describe("MSW mock conformance", () => {
     await validate("/auth/login/totp", "post", gone);
   });
 
+  it("POST /client-errors answers 204 signed in, and its 401 schema signed out", async () => {
+    const send = () =>
+      fetch("http://localhost/api/client-errors", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ source: "window", type: "TypeError", message: "boom", route: "/widgets/:id" }),
+      });
+    expect((await send()).status).toBe(204);
+    await fetch("http://localhost/api/auth/logout", { method: "POST" });
+    const refused = await send();
+    expect(refused.status).toBe(401);
+    await validate("/client-errors", "post", refused);
+  });
+
   it("GET /auth/me matches its 200 schema", async () => {
     const res = await fetch("http://localhost/api/auth/me");
     expect(res.status).toBe(200);

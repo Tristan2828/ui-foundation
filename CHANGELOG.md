@@ -5,6 +5,52 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.1.0 — error reporting
+
+Additive: a new optional `FoundationProviders` prop, a new optional path in
+the contract, new mocks. Nothing changes until an app turns it on. Issue
+#126.
+
+- **A seam, with a Sentry-protocol destination.** The reference backend's
+  `report_error(exc, context)` (`app/error_reporting.py`) runs for every
+  500 and is there for app code. It always logs. With
+  `ERROR_REPORTING_DSN` set, it also sends a Sentry envelope over plain
+  HTTP (stdlib only, no SDK, in the background) to Sentry or a
+  self-hosted Sentry-compatible server such as GlitchTip.
+- **The browser reports too**, when `FoundationProviders` gets
+  `errorReporting` (or `{ release }`). That covers `RouteErrorBoundary`,
+  `window` `error` and `unhandledrejection`, and TanStack Query failures of
+  kind `server` (never `auth`, `notfound`, `validation`, `rate_limited` or
+  `network`), each at most once a minute. Reports go to the app's own
+  `POST /api/client-errors`, signed in only, and the backend forwards them
+  under the session's user. Duplicates are dropped (once a minute per
+  session), and each session is capped at `CLIENT_ERRORS_PER_MINUTE`.
+- **Privacy:** a report holds the error's type, message and stack, the
+  route pattern, the method and status, the release and the user's id.
+  Never bodies, cookies, headers, form values or query strings. Query
+  strings, and a database error's SQL and parameters, are cut from
+  messages and stacks. Tested on both sides.
+- **Contract:** `POST /client-errors` (`x-optional`, `ClientErrorReport`):
+  204, 401, 422, 500.
+- **Mocks:** `clientErrorHandlers`, `getMockClientErrors()`,
+  `resetMockClientErrors()`.
+- **How an app adopts it:**
+  1. Upgrade, then pass `errorReporting={{ release: import.meta.env.VITE_RELEASE }}`
+     to `FoundationProviders`. This needs a data router
+     (`createBrowserRouter`).
+  2. Add `clientErrorHandlers` to the app's MSW handlers and
+     `resetMockClientErrors()` to its reset.
+  3. Copy `/client-errors` and `ClientErrorReport` into `openapi.yaml`, then
+     run `npm run gen:api`.
+  4. Backend, by hand from the template: `app/error_reporting.py`,
+     `app/routers/client_errors.py` (included in `main.py`), the 500
+     handler in `app/errors.py`, `request.state.user_id` in
+     `get_current_user`, `ClientErrorReport` in `app/schemas.py`, the
+     settings in `app/config.py`, and `tests/test_error_reporting.py`.
+  5. Set `ERROR_REPORTING_DSN` (and `RELEASE`, `VITE_RELEASE`). Unset,
+     everything still works and logs as before. See the template's
+     `docs/deploy.md` "Error reporting".
+
 ## 4.0.0 — sign-in limits and two-step sign-in
 
 **Breaking:** the foundation's part of the contract changes (`POST

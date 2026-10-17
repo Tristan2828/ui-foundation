@@ -119,6 +119,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps
   read it only through `useAuth()`, the only auth export.
+- **Error reporting** (4.1) is one seam on each side, off until an app
+  turns it on: the backend's `report_error` (every 500, and app code),
+  which logs and, with a DSN, sends a Sentry envelope; and the package's
+  reporter (`src/error-reporting/`), which posts crashes and `server`
+  failures to the app's own `POST /client-errors` for the backend to
+  forward. A report holds patterns and ids, never request data.
 - **A small entity** (3.26) edits in its table's rows: `DataTable` runs
   the same edit-in-place store as a view, so a cell that renders an
   `EditableValue` edits where it's shown, and `InlineCreate` creates from

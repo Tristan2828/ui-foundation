@@ -66,6 +66,7 @@ export type { AuthContextValue, AuthStatus, AuthUser, SignInResult } from '@/aut
 
 // Data layer contracts
 export type { AppError, Page, QuerySpec } from '@/api/contracts'
+export type { ErrorReportingOptions } from '@/error-reporting/reporter'
 export { createQueryClient } from '@/api/query-client'
 
 // Hooks
