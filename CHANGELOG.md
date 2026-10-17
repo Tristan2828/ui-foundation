@@ -5,6 +5,64 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.0.0 — sign-in limits and two-step sign-in
+
+**Breaking:** the foundation's part of the contract changes (`POST
+/auth/login`), and so do `useAuth().login`'s result, `AppError`'s kinds and
+`ApiResponse`. Upgrade steps: [`docs/consuming.md`](docs/consuming.md)
+"Moving a 3.x app to 4.0". Issues #124 and #125, shipped together so the
+contract changes once.
+
+- **Too many failed sign-ins are refused** (issue #124). The reference
+  backend counts failures in a `login_failures` table, per client IP (10 in
+  15 minutes) and per account (20 in an hour, from any IP), all settings.
+  Over either, `POST /auth/login` answers **429** with `Retry-After`,
+  before the password is checked. A session starting clears that IP's and
+  that account's failures. The account key is a hash of the email, so an
+  unknown email counts like a known one and no address is stored.
+- **Two-step sign-in with TOTP and recovery codes** (issue #125), stdlib
+  only (RFC 6238, checked against its test vectors). For an account with
+  TOTP on, the password answers **202 `{"next": "totp"}`** and no session.
+  A short-lived, single-use pending sign-in (its own `pending_login`
+  cookie, stored hashed) waits for `POST /auth/login/totp` with a code or
+  a recovery code: a 30-second step, one step of drift either way, a used
+  step refused. A wrong code is a 401 and counts toward the limits. Five
+  wrong codes, or five minutes, end the pending sign-in: **410**, start
+  again. Turned on per account with `scripts/enable_totp.py` (it needs one
+  right code first) and off with `scripts/disable_totp.py`.
+- **Contract** (`openapi/foundation.yaml`): `/auth/login` gains `202`
+  (`LoginNextStep`) and `429` (`RateLimitedError`, with `Retry-After`);
+  new optional path `/auth/login/totp` (`TotpLoginRequest`,
+  `SignInExpiredError`); `LoginRequest.password` gains `maxLength: 1024`,
+  which the backend already enforced (from DEFERRED: "the next major
+  release").
+- **Package:**
+  - `AppError` kind `rate_limited`, with `retryAfterSeconds` from
+    `Retry-After`. `toAppError(status, body, headers?)` maps a 429 to it.
+    `ErrorState` titles it "Too many attempts".
+  - `ApiResponse.headers`.
+  - `useAuth().login` resolves to a `SignInResult`, and the context gains
+    `submitTotp`.
+  - `LoginRoute` has the second step: one code field
+    (`autocomplete="one-time-code"`, `inputmode="numeric"`), "Use a
+    recovery code", the error on the field, "Start over", and back to the
+    password with the reason when the pending sign-in has gone. A 429
+    shows on the form and holds the button until `Retry-After` has passed,
+    with no retry offered.
+  - Mocks: a two-step account (`MOCK_TOTP_USER`, `MOCK_TOTP_CODE`,
+    `MOCK_RECOVERY_CODE`) and `/auth/login/totp`. The e2e override takes
+    `headers`, so a spec can force a 429 with its `Retry-After`.
+- **Reference backend (by hand):** migration `0010` (`login_failures`,
+  `users.totp_secret`/`totp_last_step`, `recovery_codes`, `pending_logins`,
+  all commented), `app/login_limits.py`, `app/totp.py`, the two scripts,
+  the routes in `app/routers/auth.py`, and `app/errors.py` keeping an
+  `HTTPException`'s headers. `tests/test_login_limits.py`,
+  `tests/test_totp.py`.
+- **Docs:** the template's `docs/deploy.md` "Sign-in limits" (the
+  settings, the lockout trade-off, uvicorn's `--proxy-headers`) and
+  "Two-step sign-in" (the scripts, recovery, and why database backups must
+  be encrypted: the TOTP secret is stored as is).
+
 ## 3.30.0 — a widget card for hub pages
 
 Additive: new components and one new optional prop, nothing existing

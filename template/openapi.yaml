@@ -43,8 +43,43 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
+        "202":
+          description: >
+            The password is right and the account has a second step. No
+            session yet: sets a short-lived, single-use pending_login cookie
+            for POST /auth/login/totp.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginNextStep" }
         "401": { $ref: "#/components/responses/UnauthorizedError" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimitedError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /auth/login/totp:
+    x-optional: true
+    post:
+      operationId: loginTotp
+      summary: The second step of a sign-in, a code from an authenticator app or a recovery code
+      description: >
+        Needs the pending_login cookie a 202 from POST /auth/login set. A
+        right code starts the session as a 200 from /auth/login does.
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TotpLoginRequest" }
+      responses:
+        "200":
+          description: Authenticated. Sets the session_id cookie.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "410": { $ref: "#/components/responses/SignInExpiredError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429": { $ref: "#/components/responses/RateLimitedError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
   /auth/register:
@@ -304,7 +339,26 @@ components:
       required: [email, password]
       properties:
         email: { type: string, format: email }
-        password: { type: string, minLength: 8 }
+        password: { type: string, minLength: 8, maxLength: 1024 }
+
+    LoginNextStep:
+      type: object
+      required: [next]
+      properties:
+        next:
+          type: string
+          enum: [totp]
+          description: The step the sign-in still needs.
+
+    TotpLoginRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: The 6-digit code from the authenticator app, or a recovery code.
 
     RegisterRequest:
       type: object
@@ -559,6 +613,20 @@ components:
           schema: { $ref: "#/components/schemas/HTTPErrorBody" }
     UnauthorizedError:
       description: Missing or invalid credentials.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    RateLimitedError:
+      description: Too many failed attempts. Try again after Retry-After seconds.
+      headers:
+        Retry-After:
+          description: Seconds until another attempt is allowed.
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    SignInExpiredError:
+      description: The pending sign-in is missing, expired or out of tries. Start again with POST /auth/login.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/HTTPErrorBody" }

@@ -18,6 +18,8 @@ export type MswOverride = {
   // Base64 so a spec can inline a tiny fixture rather than commit a binary.
   bodyBase64?: string
   contentType?: string
+  /** Response headers, e.g. a 429's `Retry-After`. */
+  headers?: Record<string, string>
 }
 
 export type MswHandle = {

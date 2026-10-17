@@ -7,6 +7,8 @@
 export type ApiResponse = {
   status: number;
   body: unknown;
+  /** The response's headers (a 429's Retry-After, for one). */
+  headers: Headers;
 };
 
 const BASE_URL = "/api";
@@ -14,8 +16,8 @@ const BASE_URL = "/api";
 export async function apiFetch(path: string, init?: RequestInit): Promise<ApiResponse> {
   const response = await fetch(`${BASE_URL}${path}`, init);
   if (response.status === 204) {
-    return { status: response.status, body: undefined };
+    return { status: response.status, body: undefined, headers: response.headers };
   }
   const body = await response.json().catch(() => undefined);
-  return { status: response.status, body };
+  return { status: response.status, body, headers: response.headers };
 }

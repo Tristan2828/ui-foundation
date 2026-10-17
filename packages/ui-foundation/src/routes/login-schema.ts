@@ -15,3 +15,15 @@ export const LOGIN_FORM_DEFAULTS: LoginFormValues = {
   email: '',
   password: '',
 }
+
+// The second step, when the account has TOTP: six digits from an
+// authenticator app, or (switched to) one of the account's recovery codes.
+export const totpCodeFormSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code from your authenticator app'),
+})
+
+export const recoveryCodeFormSchema = z.object({
+  code: z.string().trim().min(1, 'Enter a recovery code').max(64, 'That is longer than a recovery code'),
+})
+
+export type CodeFormValues = z.infer<typeof totpCodeFormSchema>

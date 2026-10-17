@@ -17,7 +17,11 @@ export async function safeFetch(path: string, init?: RequestInit): Promise<ApiRe
   }
 }
 
-export function toAppError(status: number, body: unknown): AppError {
+/**
+ * Pass the response's `headers` so a 429 carries its Retry-After
+ * (`retryAfterSeconds`); without them it's still `rate_limited`.
+ */
+export function toAppError(status: number, body: unknown, headers?: Headers): AppError {
   if (status === 422) {
     // A rule the server enforces (a cap, a status the change needs) is
     // often refused with FastAPI's HTTPException shape: a sentence, not a
@@ -36,7 +40,22 @@ export function toAppError(status: number, body: unknown): AppError {
   const message = (body as HTTPErrorBody | undefined)?.detail ?? `Request failed with status ${status}`;
   if (status === 404) return { kind: "notfound", message };
   if (status === 401) return { kind: "auth", message };
+  if (status === 429) {
+    const retryAfterSeconds = parseRetryAfter(headers?.get("retry-after") ?? null);
+    return retryAfterSeconds === undefined
+      ? { kind: "rate_limited", message }
+      : { kind: "rate_limited", message, retryAfterSeconds };
+  }
   return { kind: "server", message };
+}
+
+// Retry-After is either whole seconds or an HTTP date (RFC 9110 10.2.3).
+function parseRetryAfter(value: string | null): number | undefined {
+  if (value === null || value.trim() === "") return undefined;
+  if (/^\d+$/.test(value.trim())) return Number(value.trim());
+  const at = Date.parse(value);
+  if (Number.isNaN(at)) return undefined;
+  return Math.max(0, Math.ceil((at - Date.now()) / 1000));
 }
 
 // The key a form binds a 422 to (react-hook-form's field path):

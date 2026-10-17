@@ -191,6 +191,31 @@ grep -q '"checklist":\[{"text":"Second","done":true},{"text":"First","done":fals
 blank_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"checklist":[{"text":"  ","done":false}]}')
 [ "$blank_status" = "422" ] || fail "a blank checklist item returned $blank_status, expected 422: $(cat "$WIDGET_BODY")"
 grep -q '"loc":\["body","checklist",0,"text"\]' "$WIDGET_BODY" || fail "a blank item's 422 should be keyed to checklist.0.text: $(cat "$WIDGET_BODY")"
+# Sign-in limits and TOTP (4.0.0): login_failures.failed_at and
+# pending_logins.expires_at are timestamp columns written through the ORM,
+# the class of bug SQLite-backed pytest can't see (Phase C).
+echo "check-backend-postgres: a failed sign-in is counted, then a TOTP sign-in completes against real Postgres (4.0.0)"
+wrong_status=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8000/api/auth/login \
+  -H 'Content-Type: application/json' -d "{\"email\":\"$FRESH_EMAIL\",\"password\":\"not-the-password\"}")
+[ "$wrong_status" = "401" ] || fail "a wrong password returned $wrong_status, expected 401 (see logs/backend-postgres-uvicorn.log)"
+TOTP_SECRET="JBSWY3DPEHPK3PXP"
+docker compose exec -T postgres psql -q -U ui_foundation -d ui_foundation \
+  -c "UPDATE users SET totp_secret = '$TOTP_SECRET' WHERE email = '$FRESH_EMAIL'" >/dev/null ||
+  fail "couldn't turn TOTP on for $FRESH_EMAIL"
+TOTP_JAR=$(mktemp)
+step_status=$(curl -s -c "$TOTP_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X POST http://localhost:8000/api/auth/login \
+  -H 'Content-Type: application/json' -d "{\"email\":\"$FRESH_EMAIL\",\"password\":\"a-strong-password\"}")
+[ "$step_status" = "202" ] || fail "the password of a TOTP account returned $step_status, expected 202 — got: $(cat "$WIDGET_BODY")"
+grep -q '"next":"totp"' "$WIDGET_BODY" || fail "the 202 should say next: totp: $(cat "$WIDGET_BODY")"
+grep -q 'pending_login' "$TOTP_JAR" || fail "the 202 set no pending_login cookie"
+grep -q 'session_id' "$TOTP_JAR" && fail "the password alone of a TOTP account started a session"
+TOTP_CODE=$(cd backend && "../$PY" -c "from app import totp; print(totp.hotp(totp._key('$TOTP_SECRET'), totp.current_step()))")
+code_status=$(curl -s -b "$TOTP_JAR" -c "$TOTP_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X POST http://localhost:8000/api/auth/login/totp \
+  -H 'Content-Type: application/json' -d "{\"code\":\"$TOTP_CODE\"}")
+[ "$code_status" = "200" ] || fail "a right TOTP code returned $code_status, expected 200 — got: $(cat "$WIDGET_BODY")"
+me_status=$(curl -s -b "$TOTP_JAR" -o /dev/null -w '%{http_code}' http://localhost:8000/api/auth/me)
+[ "$me_status" = "200" ] || fail "GET /api/auth/me after the TOTP step returned $me_status, expected 200"
+rm -f "$TOTP_JAR"
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"

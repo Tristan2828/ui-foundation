@@ -13,6 +13,21 @@ ResponsesDict = dict[int | str, dict[str, Any]]
 UNAUTHORIZED: ResponsesDict = {401: {"model": HTTPErrorBody, "description": "Missing or invalid credentials."}}
 NOT_FOUND: ResponsesDict = {404: {"model": HTTPErrorBody, "description": "Resource not found."}}
 VALIDATION: ResponsesDict = {422: {"model": ValidationErrorBody, "description": "Validation failed."}}
+RATE_LIMITED: ResponsesDict = {
+    429: {
+        "model": HTTPErrorBody,
+        "description": "Too many failed attempts. Try again after Retry-After seconds.",
+        "headers": {
+            "Retry-After": {
+                "description": "Seconds until another attempt is allowed.",
+                "schema": {"type": "integer", "minimum": 1},
+            }
+        },
+    }
+}
+SIGN_IN_EXPIRED: ResponsesDict = {
+    410: {"model": HTTPErrorBody, "description": "The pending sign-in is missing, expired or out of tries."}
+}
 SERVER_ERROR: ResponsesDict = {500: {"model": HTTPErrorBody, "description": "Unhandled server error."}}
 
 LIST_RESPONSES = {**UNAUTHORIZED, **SERVER_ERROR}

@@ -4,11 +4,12 @@ import type { AppError } from '@/api/contracts'
 import {
   getCurrentUser,
   login as loginRequest,
+  loginTotp as loginTotpRequest,
   logout as logoutRequest,
   register as registerRequest,
 } from '@/api/gateway/auth'
 import { DATA_LABEL_QUERY_KEY } from '@/hooks/use-data-label'
-import { AuthContext, type AuthStatus, type AuthUser } from './auth-context'
+import { AuthContext, type AuthStatus, type AuthUser, type SignInResult } from './auth-context'
 
 // TanStack Query, not useEffect — AGENTS.md's "NEVER fetch in useEffect"
 // rule applies here too. A 401 here just means "not logged in", which the
@@ -104,8 +105,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? 'unavailable'
           : 'unauthenticated'
 
-  async function login(email: string, password: string) {
-    startSession(queryClient, await loginRequest({ email, password }))
+  // With TOTP on, the password alone starts nothing: the server holds a
+  // pending sign-in (its own short-lived cookie) until the code arrives.
+  async function login(email: string, password: string): Promise<SignInResult> {
+    const step = await loginRequest({ email, password })
+    if ('next' in step) return { status: 'totp' }
+    startSession(queryClient, step.user)
+    return { status: 'signed-in' }
+  }
+
+  async function submitTotp(code: string): Promise<SignInResult> {
+    const step = await loginTotpRequest({ code })
+    if ('restart' in step) return { status: 'restart', message: step.restart }
+    startSession(queryClient, step.user)
+    return { status: 'signed-in' }
   }
 
   // Logged out on screen even when the request fails (network down): the
@@ -131,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error: status === 'unavailable' ? error : null,
         retry: () => void refetch(),
         login,
+        submitTotp,
         logout,
         register,
       }}

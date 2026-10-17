@@ -18,7 +18,8 @@ const SIGNED_IN: AuthContextValue = {
   status: 'authenticated',
   error: null,
   retry: () => {},
-  login: async () => {},
+  login: async () => ({ status: 'signed-in' }),
+  submitTotp: async () => ({ status: 'signed-in' }),
   logout: async () => {},
   register: async () => {},
 }
