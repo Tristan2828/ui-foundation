@@ -333,7 +333,8 @@ code.
 
 **Written text's look (3.21)** (`prose-look.ts`), shared by the editor
 and `<Markdown>`: three heading roles (`type-heading-1` to `-3`, 26, 20
-and 17px over the 14px body, Heading 1 ruled), links in `--link` as well
+and 17px over the 14px body, each with a left bar that thins by level:
+5px and 3px in `--heading-bar`, 2px in `--rule`), links in `--link` as well
 as underlined, a `---` divider as a 2px line in `--rule`. Headings still
 render from `<h3>`; only how they look changed.
 
