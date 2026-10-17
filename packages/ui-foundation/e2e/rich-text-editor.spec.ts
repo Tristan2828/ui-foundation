@@ -765,7 +765,8 @@ test.describe('slash menu', () => {
 
 // How written text looks, in the editor and in <Markdown>: three heading
 // sizes a reader can tell apart (Heading 1 and 2 used to look alike),
-// Heading 1 with a rule under it, links in their own colour.
+// each with a bar down its left edge that thins by level, links in their
+// own colour.
 test.describe('how written text looks', () => {
   async function sizes(scope: import('@playwright/test').Locator) {
     const size = (selector: string) =>
@@ -777,7 +778,7 @@ test.describe('how written text looks', () => {
     ['the editor', 'http://localhost:6006/iframe.html?id=app-richtexteditor--default&viewMode=story'],
     ['<Markdown>', 'http://localhost:6006/iframe.html?id=app-markdown--default&viewMode=story'],
   ] as const) {
-    test(`${where}: each heading level smaller than the last, Heading 1 ruled; links coloured`, async ({ page }) => {
+    test(`${where}: each heading level smaller than the last, its bar thinner; links coloured`, async ({ page }) => {
       await page.goto(url)
       const scope = page.locator(where === 'the editor' ? '.ProseMirror' : '[data-slot=markdown]')
       await expect(scope.locator('h3').first()).toBeVisible()
@@ -785,7 +786,12 @@ test.describe('how written text looks', () => {
       expect(h1).toBeGreaterThan(h2)
       expect(h2).toBeGreaterThan(h3)
       expect(h3).toBeGreaterThan(body)
-      expect(await scope.locator('h3').first().evaluate((element) => getComputedStyle(element).borderBottomWidth)).not.toBe('0px')
+      const bar = (selector: string) =>
+        scope.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).borderLeftWidth))
+      const bars = { h1: await bar('h3'), h2: await bar('h4'), h3: await bar('h5') }
+      expect(bars.h1).toBeGreaterThan(bars.h2)
+      expect(bars.h2).toBeGreaterThan(bars.h3)
+      expect(bars.h3).toBeGreaterThan(0)
       const color = (selector: string) => scope.locator(selector).first().evaluate((element) => getComputedStyle(element).color)
       expect(await color('a')).not.toBe(await color('p'))
       // The divider is a 2px line, not a hairline.

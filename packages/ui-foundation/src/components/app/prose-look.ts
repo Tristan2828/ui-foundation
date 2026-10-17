@@ -16,15 +16,20 @@ import {
 import type { CalloutKind } from '@/lib/markdown-callout'
 
 /**
- * Classes for written text's own elements. No colours on the headings:
+ * Classes for written text's own elements. No colours on the heading text:
  * <Markdown> adds the text colour, and the editor's read-only text is
  * muted as a whole.
+ *
+ * Each of the first three heading levels has a bar down its left edge that
+ * thins as the level drops: 5px in the heading-bar tone for `#`, 3px for
+ * `##`, 2px in the rule tone for `###`. A level reads from the bar
+ * as well as from the size.
  */
 export const PROSE = {
-  /** `#`: the largest, with a rule under it, so it reads as the top of the outline. */
-  heading1: 'type-heading-1 mt-4 border-b border-border pb-1.5 first:mt-0',
-  heading2: 'type-heading-2 mt-3 first:mt-0',
-  heading3: 'type-heading-3 mt-1 first:mt-0',
+  /** `#`: the largest, with the widest bar, so it reads as the top of the outline. */
+  heading1: 'type-heading-1 mt-4 border-l-[5px] border-heading-bar pl-3 first:mt-0',
+  heading2: 'type-heading-2 mt-3 border-l-[3px] border-heading-bar pl-3 first:mt-0',
+  heading3: 'type-heading-3 mt-1 border-l-2 border-rule pl-3 first:mt-0',
   /** `####` and deeper: a label, as before. */
   heading4: 'type-label mt-1 first:mt-0',
   /** Coloured as well as underlined. */
