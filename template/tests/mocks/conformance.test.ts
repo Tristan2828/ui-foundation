@@ -99,6 +99,39 @@ describe("MSW mock conformance", () => {
     await validate("/auth/login", "post", res);
   });
 
+  it("POST /auth/login matches its 202 schema for an account with a second step", async () => {
+    const res = await fetch("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "two-step@example.com", password: "dev-password-123" }),
+    });
+    expect(res.status).toBe(202);
+    await validate("/auth/login", "post", res);
+  });
+
+  it("POST /auth/login/totp matches its 401, 200 and 410 schemas", async () => {
+    const totp = (code: string) =>
+      fetch("http://localhost/api/auth/login/totp", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+    await fetch("http://localhost/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "two-step@example.com", password: "dev-password-123" }),
+    });
+    const wrong = await totp("000000");
+    expect(wrong.status).toBe(401);
+    await validate("/auth/login/totp", "post", wrong);
+    const right = await totp("123456");
+    expect(right.status).toBe(200);
+    await validate("/auth/login/totp", "post", right);
+    const gone = await totp("123456");
+    expect(gone.status).toBe(410);
+    await validate("/auth/login/totp", "post", gone);
+  });
+
   it("GET /auth/me matches its 200 schema", async () => {
     const res = await fetch("http://localhost/api/auth/me");
     expect(res.status).toBe(200);

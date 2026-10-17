@@ -26,6 +26,7 @@ const TITLE_BY_KIND: Record<AppError['kind'], string> = {
   server: 'Something went wrong',
   notfound: 'Not found',
   auth: 'Not authorized',
+  rate_limited: 'Too many attempts',
   validation: 'Check the form',
 }
 

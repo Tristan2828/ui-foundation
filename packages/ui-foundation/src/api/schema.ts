@@ -21,6 +21,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/login/totp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The second step of a sign-in, a code from an authenticator app or a recovery code
+         * @description Needs the pending_login cookie a 202 from POST /auth/login set. A right code starts the session as a 200 from /auth/login does.
+         */
+        post: operations["loginTotp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/register": {
         parameters: {
             query?: never;
@@ -111,6 +131,17 @@ export interface components {
             email: string;
             password: string;
         };
+        LoginNextStep: {
+            /**
+             * @description The step the sign-in still needs.
+             * @enum {string}
+             */
+            next: "totp";
+        };
+        TotpLoginRequest: {
+            /** @description The 6-digit code from the authenticator app, or a recovery code. */
+            code: string;
+        };
         RegisterRequest: {
             email: components["schemas"]["User"]["email"];
             name: components["schemas"]["User"]["name"];
@@ -157,6 +188,26 @@ export interface components {
                 "application/json": components["schemas"]["HTTPErrorBody"];
             };
         };
+        /** @description Too many failed attempts. Try again after Retry-After seconds. */
+        RateLimitedError: {
+            headers: {
+                /** @description Seconds until another attempt is allowed. */
+                "Retry-After"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["HTTPErrorBody"];
+            };
+        };
+        /** @description The pending sign-in is missing, expired or out of tries. Start again with POST /auth/login. */
+        SignInExpiredError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["HTTPErrorBody"];
+            };
+        };
         /** @description Unhandled server error. */
         ServerError: {
             headers: {
@@ -196,8 +247,47 @@ export interface operations {
                     "application/json": components["schemas"]["User"];
                 };
             };
+            /** @description The password is right and the account has a second step. No session yet: sets a short-lived, single-use pending_login cookie for POST /auth/login/totp. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginNextStep"];
+                };
+            };
             401: components["responses"]["UnauthorizedError"];
             422: components["responses"]["ValidationError"];
+            429: components["responses"]["RateLimitedError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    loginTotp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TotpLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Authenticated. Sets the session_id cookie. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            410: components["responses"]["SignInExpiredError"];
+            422: components["responses"]["ValidationError"];
+            429: components["responses"]["RateLimitedError"];
             500: components["responses"]["ServerError"];
         };
     };

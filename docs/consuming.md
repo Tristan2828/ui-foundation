@@ -113,6 +113,50 @@ reach an app on its own.
 - Not using it (a Notion-backed app, say)? Delete `backend/`,
   `docker-compose.yml` and the `verify:backend` script.
 
+## Moving a 3.x app to 4.0 (sign-in limits and two-step sign-in)
+
+4.0 changes the foundation's part of the contract (`POST /auth/login`), so
+`check-contract` fails until the app's spec has it. Do it as one change:
+
+1. **Upgrade and sync:** `npm install @tristan2828/ui-foundation@^4.0.0`,
+   then `npx ui-foundation sync`.
+2. **The contract.** From
+   `node_modules/@tristan2828/ui-foundation/openapi/foundation.yaml`, copy
+   into the app's `openapi.yaml`: `/auth/login`'s new `202` and `429`
+   responses, `maxLength: 1024` on `LoginRequest.password`, and the
+   `LoginNextStep` schema and `RateLimitedError` response. For two-step
+   sign-in also copy the `/auth/login/totp` path with `TotpLoginRequest` and
+   `SignInExpiredError` (the path is `x-optional`: an app whose backend has
+   no second step may leave all three out). Then `npm run gen:api`.
+3. **The app's code**, where tsc points:
+   - `useAuth().login` now resolves to a `SignInResult`
+     (`signed-in`, `totp` or `restart`), not `void`, and the context has
+     `submitTotp`. `LoginRoute` handles both steps; an app's own sign-in
+     screen must handle `totp`. A hand-built `AuthContextValue` (a story, a
+     test) needs `login` to return `{ status: 'signed-in' }` and a
+     `submitTotp`.
+   - `AppError` has a new kind, `rate_limited`, with `retryAfterSeconds`. A
+     `Record<AppError['kind'], …>` needs an entry for it.
+   - `ApiResponse` (from `/gateway`) has `headers`. A test fake that builds
+     one needs them. `toAppError` takes them as an optional third argument;
+     pass `res.headers` for a 429's `retryAfterSeconds`.
+4. **The backend** (copied in, so by hand). `verify:backend`'s conformance
+   check fails until the backend documents the 202 and the 429. From the
+   template at the 4.0.0 tag, copy `app/login_limits.py`, `app/totp.py`,
+   `scripts/enable_totp.py` and `scripts/disable_totp.py`. Then apply the
+   changes to `app/routers/auth.py`, `app/models.py`, `app/schemas.py`,
+   `app/config.py`, `app/openapi_responses.py` and `app/errors.py` (which
+   now keeps an `HTTPException`'s headers, so the 429 gets `Retry-After`).
+   Add migration `0010_login_limits_totp.py`, renumbered onto the app's
+   own chain, and the tests `tests/test_login_limits.py` and
+   `tests/test_totp.py`. The changes are in `CHANGELOG.md` 4.0.0.
+5. **Deploy:** `alembic upgrade head`, and read the template's
+   `docs/deploy.md` "Sign-in limits" (uvicorn's `--proxy-headers`, the
+   lockout trade-off) and "Two-step sign-in" (the scripts, recovery, and
+   encrypted backups). Then turn TOTP on per account with
+   `scripts/enable_totp.py`.
+6. `npm run verify` and `npm run verify:backend`.
+
 ## Moving a 2.x app onto the package (3.0)
 
 Apps created before 3.0 installed the shadcn registry and hold their own

@@ -62,7 +62,7 @@ export { returnPath } from '@/routes/return-path'
 
 // Auth — useAuth() is the only way to read it; the provider's internals stay private.
 export { AuthProvider, useAuth } from '@/auth/use-auth'
-export type { AuthContextValue, AuthStatus, AuthUser } from '@/auth/auth-context'
+export type { AuthContextValue, AuthStatus, AuthUser, SignInResult } from '@/auth/auth-context'
 
 // Data layer contracts
 export type { AppError, Page, QuerySpec } from '@/api/contracts'

@@ -10,9 +10,14 @@ export type Page<T> = {
 };
 
 export type AppError = {
-  kind: "validation" | "notfound" | "auth" | "server" | "network";
+  kind: "validation" | "notfound" | "auth" | "rate_limited" | "server" | "network";
   message: string;
   fieldErrors?: Record<string, string[]>;
+  /**
+   * kind "rate_limited" (a 429): seconds until another attempt is allowed,
+   * from the response's Retry-After. Absent when the server didn't say.
+   */
+  retryAfterSeconds?: number;
 };
 
 export type QuerySpec = {

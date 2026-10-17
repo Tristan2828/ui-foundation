@@ -59,6 +59,22 @@ DATA_LABEL: str | None = os.environ.get("DATA_LABEL", "").strip() or None
 COOKIE_SECURE: bool = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 SESSION_TTL_DAYS: int = int(os.environ.get("SESSION_TTL_DAYS", "7"))
 
+# Failed sign-in limits (app/login_limits.py, docs/deploy.md). Over either,
+# POST /auth/login answers 429 before the password is checked. Per IP needs
+# uvicorn's --proxy-headers behind a proxy it trusts, or every request
+# appears to come from the proxy and this becomes one global limit.
+LOGIN_MAX_FAILURES_PER_IP: int = int(os.environ.get("LOGIN_MAX_FAILURES_PER_IP", "10"))
+LOGIN_IP_WINDOW_SECONDS: int = int(os.environ.get("LOGIN_IP_WINDOW_SECONDS", str(15 * 60)))
+LOGIN_MAX_FAILURES_PER_ACCOUNT: int = int(os.environ.get("LOGIN_MAX_FAILURES_PER_ACCOUNT", "20"))
+LOGIN_ACCOUNT_WINDOW_SECONDS: int = int(os.environ.get("LOGIN_ACCOUNT_WINDOW_SECONDS", str(60 * 60)))
+
+# The TOTP second step (app/totp.py): how long a sign-in waits for its code
+# after the password, and how many wrong codes it gets before it ends.
+PENDING_LOGIN_TTL_SECONDS: int = int(os.environ.get("PENDING_LOGIN_TTL_SECONDS", str(5 * 60)))
+PENDING_LOGIN_MAX_TRIES: int = int(os.environ.get("PENDING_LOGIN_MAX_TRIES", "5"))
+# The name an authenticator app lists the account under.
+TOTP_ISSUER: str = os.environ.get("TOTP_ISSUER", "UI Foundation")
+
 # Seeded dev user (migration 0002). Not a
 # production credential; a real deployment sets its own before going live.
 # The defaults are published in the README, which is why production refuses

@@ -413,7 +413,7 @@ limits what could publish a bad version:
   that can publish besides the developer's own passkey-protected account.
 
 What that gives up: a malicious change that passes the checks and gets
-merged reaches every app installing `^3.x`, with no human look at the
+merged reaches every app installing `^4.x`, with no human look at the
 built package. The passkey step cost one manual approval per release;
 the developer chose automation over it.
 

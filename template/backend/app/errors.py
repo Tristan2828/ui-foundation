@@ -20,7 +20,10 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error_handler(_: Request, exc: StarletteHTTPException) -> JSONResponse:
-        return JSONResponse(status_code=exc.status_code, content={"detail": str(exc.detail)})
+        # Headers kept: a 429's Retry-After is part of the contract.
+        return JSONResponse(
+            status_code=exc.status_code, content={"detail": str(exc.detail)}, headers=exc.headers
+        )
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(_: Request, exc: Exception) -> JSONResponse:

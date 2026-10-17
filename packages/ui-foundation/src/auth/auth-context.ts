@@ -12,6 +12,18 @@ export type AuthUser = {
 // outage would send a logged-in user to a form that can't work either.
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'unavailable'
 
+/**
+ * Where a sign-in stands after `login` or `submitTotp`:
+ * - `signed-in`: the session started.
+ * - `totp`: the password was right; the account wants a code next
+ *   (`submitTotp`), and no session exists yet.
+ * - `restart`: the sign-in waiting for its code is gone (it expired, or
+ *   ran out of tries); start again from the password. `message` says why.
+ * Anything else (a wrong password or code, too many attempts, the server
+ * down) rejects with an AppError.
+ */
+export type SignInResult = { status: 'signed-in' } | { status: 'totp' } | { status: 'restart'; message: string }
+
 export type AuthContextValue = {
   user: AuthUser | null
   status: AuthStatus
@@ -19,7 +31,9 @@ export type AuthContextValue = {
   error: AppError | null
   /** Re-runs the session check (the 'unavailable' state's retry). */
   retry: () => void
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<SignInResult>
+  /** The second step, after `login` answered `totp`: an authenticator code or a recovery code. */
+  submitTotp: (code: string) => Promise<SignInResult>
   logout: () => Promise<void>
   register: (email: string, name: string, password: string) => Promise<void>
 }
@@ -31,7 +45,8 @@ export const AuthContext = createContext<AuthContextValue>({
   status: 'loading',
   error: null,
   retry: () => {},
-  login: async () => {},
+  login: async () => ({ status: 'signed-in' }),
+  submitTotp: async () => ({ status: 'signed-in' }),
   logout: async () => {},
   register: async () => {},
 })

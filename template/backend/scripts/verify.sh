@@ -10,7 +10,8 @@ PY=".venv/Scripts/python"
 if [ ! -x "$PY" ]; then PY=".venv/bin/python"; fi
 if [ ! -x "$PY" ]; then PY="$(command -v python)"; fi
 
-"$PY" -m mypy app scripts/check_spec_conformance.py scripts/set_password.py scripts/check_db_comments.py
+"$PY" -m mypy app scripts/check_spec_conformance.py scripts/set_password.py scripts/check_db_comments.py \
+  scripts/enable_totp.py scripts/disable_totp.py
 "$PY" -m pytest -q
 "$PY" scripts/check_spec_conformance.py
 

@@ -7,7 +7,7 @@ stays snake_case internally while matching openapi.yaml on the wire.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import ClassVar, Generic, TypeVar
+from typing import ClassVar, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 from pydantic.alias_generators import to_camel
@@ -167,6 +167,16 @@ class LoginRequest(CamelModel):
     password: str = Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)
 
     _email_lower = field_validator("email")(_normalize_email)
+
+
+class LoginNextStep(CamelModel):
+    """A 202 from POST /auth/login: the password was right, a code is next."""
+
+    next: Literal["totp"]
+
+
+class TotpLoginRequest(CamelModel):
+    code: str = Field(min_length=1, max_length=64)
 
 
 class RegisterRequest(CamelModel):

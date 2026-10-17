@@ -22,10 +22,10 @@ export function exposeMswForE2E(worker: SetupWorker): void {
           const bytes = Uint8Array.from(atob(override.bodyBase64), (character) => character.charCodeAt(0))
           return new HttpResponse(bytes, {
             status: override.status ?? 200,
-            headers: { 'Content-Type': override.contentType ?? 'application/octet-stream' },
+            headers: { 'Content-Type': override.contentType ?? 'application/octet-stream', ...override.headers },
           })
         }
-        return HttpResponse.json(override.body ?? {}, { status: override.status ?? 200 })
+        return HttpResponse.json(override.body ?? {}, { status: override.status ?? 200, headers: override.headers })
       }),
     )
   }
