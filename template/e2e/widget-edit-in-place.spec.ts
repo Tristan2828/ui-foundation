@@ -531,6 +531,34 @@ test.describe('widget view: editing in place', () => {
     expect(bodies).toEqual([{ extraCategoryIds: [3, 2] }])
   })
 
+  test('multi reference: a second Esc gives up with the saved picks, never an empty list (issue #123)', async ({
+    page,
+  }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await fieldValue(page, 'Extra Categories').click()
+    const picker = page.getByRole('combobox', { name: 'Extra Categories' })
+    await picker.fill('Furn')
+    const furniture = page.getByRole('option', { name: 'Furniture' })
+    await furniture.hover()
+    await expect(furniture).toHaveAttribute('data-highlighted', '')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: 'Remove Furniture' })).toBeVisible()
+
+    // The first Esc closes the list, the second gives up: the field shows
+    // what was saved, and nothing was sent.
+    await picker.press('ArrowDown')
+    await expect(picker).toHaveAttribute('aria-expanded', 'true')
+    await page.keyboard.press('Escape')
+    await expect(picker).toHaveAttribute('aria-expanded', 'false')
+    // Gone, not fading out: only a closed list's Escape cleared the value.
+    await expect(page.getByRole('listbox')).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await expect(picker).toHaveCount(0)
+    await expect(fieldValue(page, 'Extra Categories')).toHaveText('Stationery')
+    expect(bodies).toEqual([])
+  })
+
   test('a 422 stays open with exactly what was typed and the field error word for word', async ({ page }) => {
     await openWidget(page)
     await refusePatches(page, 422, {

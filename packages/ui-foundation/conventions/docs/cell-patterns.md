@@ -688,6 +688,12 @@ Save button, no Undo:
 | `choice`: a select, a switch, a single reference | the pick (its list opens with the field, non-modal) | closes the list with nothing picked: gives up |
 | `multi`: a multi reference | leaving it, or Ctrl/Cmd+Enter (Enter picks) | closes the list first; Esc again gives up |
 
+In either multi picker (`MultiChoice`, `MultiReference`), on a form, in
+a toolbar filter or in place, Escape never removes a pick: it closes the
+list when it's open and leaves the value alone when it's closed (Base UI
+would empty it). A pick comes off only by its chip's remove button,
+Backspace in the empty input, or unpicking it in the list.
+
 Leaving means clicking or tabbing anywhere else. Unchanged closes with no
 request; a value the form's schema refuses never leaves the browser and
 shows the schema's message. Opening another value saves the open one

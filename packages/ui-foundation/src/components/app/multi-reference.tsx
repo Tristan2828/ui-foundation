@@ -94,7 +94,19 @@ export function MultiReference<Id extends string | number>({
       // with Object.is, so the items must have the value's own shape.
       items={options.map((option) => option.id)}
       value={value}
-      onValueChange={(next) => onValueChange(next as Id[])}
+      onValueChange={(next, details) => {
+        // Base UI empties the value on Escape while the list is closed, so
+        // a second Escape after a pick wiped every chip (issue #123). Escape
+        // never removes picks here: a chip's remove button, Backspace or
+        // unpicking in the list does. Let the key go on, so a dialog or an
+        // edit in place gets its own Escape.
+        if (details.reason === 'escape-key') {
+          details.cancel()
+          details.allowPropagation()
+          return
+        }
+        onValueChange(next as Id[])
+      }}
       onInputValueChange={onSearchChange}
       itemToStringLabel={label}
       filter={null}

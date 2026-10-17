@@ -214,6 +214,55 @@ test.describe('widget form', () => {
     await expect(fieldValue(page, 'Extra Categories')).toHaveText('Stationery')
   })
 
+  // Issue #123: Base UI empties a multiple combobox on Escape with its list
+  // closed, so a second Escape after a pick used to wipe every chip.
+  test('multi choice: Escape never clears the picks; Backspace removes one', async ({ page }) => {
+    await page.goto('/widgets/1/edit')
+    const tags = page.locator('#widget-tags')
+    await expect(page.getByRole('button', { name: 'Remove Fragile' })).toBeVisible()
+    await tags.click()
+    await page.getByRole('option', { name: 'Featured', exact: true }).click()
+    await page.keyboard.press('Escape')
+    await expect(tags).toHaveAttribute('aria-expanded', 'false')
+    // Gone, not fading out: only a closed list's Escape cleared the value.
+    await expect(page.getByRole('listbox')).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('button', { name: 'Remove Fragile' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove Featured' })).toBeVisible()
+
+    await tags.press('Backspace')
+    await expect(page.getByRole('button', { name: 'Remove Featured' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Remove Fragile' })).toBeVisible()
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL('/widgets/1')
+    await expect(fieldValue(page, 'Tags')).toHaveText('Fragile')
+  })
+
+  test('multi reference: Escape never clears the picks; a chip removes one', async ({ page }) => {
+    // Standing Desk (id 2) links Electronics and Stationery.
+    await page.goto('/widgets/2/edit')
+    const picker = page.locator('#widget-extra-categories')
+    await expect(page.getByRole('button', { name: 'Remove Electronics' })).toBeVisible()
+    // Picks Furniture and presses Escape once, closing the list.
+    await pickExtraCategory(page, 'furn', 'Furniture')
+    await expect(picker).toHaveAttribute('aria-expanded', 'false')
+    await expect(page.getByRole('listbox')).toHaveCount(0)
+    await picker.press('Escape')
+    await picker.press('Escape')
+    for (const name of ['Electronics', 'Stationery', 'Furniture']) {
+      await expect(page.getByRole('button', { name: `Remove ${name}` })).toBeVisible()
+    }
+
+    await page.getByRole('button', { name: 'Remove Electronics' }).click()
+    await expect(page.getByRole('button', { name: 'Remove Electronics' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page).toHaveURL('/widgets/2')
+    await expect(fieldValue(page, 'Extra Categories')).toHaveText('FurnitureStationery')
+  })
+
   test('multi reference: Enter before the search answers waits, and never removes a pick', async ({ page }) => {
     // Standing Desk (id 2) has Electronics and Stationery. The list opens
     // on every category, Electronics (already picked) highlighted. Typing
