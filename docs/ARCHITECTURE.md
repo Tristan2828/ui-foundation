@@ -115,6 +115,11 @@ src/main.tsx                           FoundationProviders (theme, query client,
   production's, from its `DATA_LABEL` via `GET /environment`). The second
   is a query like any other server read, kept across session changes
   because it's the same for every user.
+- **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
+  sign-in in the reference backend (`app/routers/mcp.py`, `oauth.py`). Tools come from
+  one registry of entities (`app/mcp_entities.py`) and call the entities' own router
+  functions, so the API's validation and per-user scoping apply. No delete; every write
+  is logged. Stdlib only, by decision (#132): no MCP SDK.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps
@@ -183,7 +188,7 @@ the app:
 |---|---|---|
 | `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
 | `npm run verify` (root) | before any PR; CI (`verify`) | + the package's Storybook checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language stories clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
-| `npm run verify:backend` | backend changes; CI (`verify-backend`) | the template backend's mypy strict, pytest (SQLite), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
+| `npm run verify:backend` | backend changes; CI (`verify-backend`) | the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
 | `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on every PR (a required check on `main`) | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |

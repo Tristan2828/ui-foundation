@@ -90,6 +90,22 @@ RELEASE: str | None = os.environ.get("RELEASE", "").strip() or None
 # duplicates (the same error) are dropped to one a minute.
 CLIENT_ERRORS_PER_MINUTE: int = int(os.environ.get("CLIENT_ERRORS_PER_MINUTE", "10"))
 
+# AI chats reading and writing the app's records through MCP (app/routers/mcp.py,
+# app/routers/oauth.py, docs/deploy.md "AI chats (MCP)"). Off by default: with
+# it off, /mcp, /oauth/* and the /.well-known/oauth-* documents answer 404.
+MCP_ENABLED: bool = os.environ.get("MCP_ENABLED", "false").lower() == "true"
+# The app's public https origin, e.g. https://app.example.com: the OAuth
+# issuer, and the base of every address the sign-in documents hand out.
+# Required when MCP_ENABLED and APP_ENV=production (a proxy hides the real
+# one from the app); in development the request's own is used.
+MCP_PUBLIC_URL: str | None = os.environ.get("MCP_PUBLIC_URL", "").strip().rstrip("/") or None
+MCP_ACCESS_TOKEN_TTL_SECONDS: int = int(os.environ.get("MCP_ACCESS_TOKEN_TTL_SECONDS", str(60 * 60)))
+MCP_REFRESH_TOKEN_TTL_DAYS: int = int(os.environ.get("MCP_REFRESH_TOKEN_TTL_DAYS", "30"))
+# How many AI chats may be registered at once, and how many requests one
+# connection may make a minute (counted in each worker's memory).
+MCP_MAX_CLIENTS: int = int(os.environ.get("MCP_MAX_CLIENTS", "50"))
+MCP_REQUESTS_PER_MINUTE: int = int(os.environ.get("MCP_REQUESTS_PER_MINUTE", "120"))
+
 # Seeded dev user (migration 0002). Not a
 # production credential; a real deployment sets its own before going live.
 # The defaults are published in the README, which is why production refuses

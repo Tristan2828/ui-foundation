@@ -34,6 +34,10 @@ unset DATABASE_SSL_CA_FILE
 # Exported, so uvicorn serves it and the data-environment banner suite
 # expects it.
 export DATA_LABEL=local
+# AI chats through MCP (4.2.0) are on for this run, so the live check below
+# can walk the whole sign-in and every tool.
+export MCP_ENABLED=true
+export MCP_PUBLIC_URL=http://localhost:8000
 
 echo "check-backend-postgres: npm run verify"
 npm run verify || fail "npm run verify failed"
@@ -216,6 +220,17 @@ code_status=$(curl -s -b "$TOTP_JAR" -c "$TOTP_JAR" -o "$WIDGET_BODY" -w '%{http
 me_status=$(curl -s -b "$TOTP_JAR" -o /dev/null -w '%{http_code}' http://localhost:8000/api/auth/me)
 [ "$me_status" = "200" ] || fail "GET /api/auth/me after the TOTP step returned $me_status, expected 200"
 rm -f "$TOTP_JAR"
+
+# MCP (4.2.0): oauth_codes, oauth_grants and mcp_audit_log are written with
+# timestamps through the ORM, which SQLite-backed pytest can't check. The
+# script signs in as the fresh user, approves a chat, calls every tool and
+# refreshes; then the audit log must hold the two writes it made.
+echo "check-backend-postgres: AI chats through MCP: sign-in, every tool and the audit log against real Postgres (4.2.0)"
+SESSION_COOKIE=$(awk '$6 == "session_id" {print $7}' "$COOKIE_JAR")
+[ -n "$SESSION_COOKIE" ] || fail "no session_id cookie in the jar"
+(cd backend && "../$PY" scripts/check_mcp_live.py http://localhost:8000 "$SESSION_COOKIE") || fail "the live MCP check failed (see logs/backend-postgres-uvicorn.log)"
+audit_rows=$(docker compose exec -T postgres psql -q -t -A -U ui_foundation -d ui_foundation   -c "SELECT count(*) FROM mcp_audit_log WHERE after LIKE '%Live MCP widget%' OR after LIKE '%10.50%'")
+[ "$(echo "$audit_rows" | tr -d '[:space:]')" -ge 2 ] || fail "the audit log should hold the MCP create and update, found: $audit_rows"
 rm -f "$COOKIE_JAR" "$WIDGETS_BODY" "$WIDGET_BODY"
 
 echo "check-backend-postgres: VITE_API=real npx playwright test (MSW-independent specs only)"

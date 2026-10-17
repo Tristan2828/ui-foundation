@@ -15,7 +15,12 @@ from app.security import verify_password
 
 
 async def production_problems(
-    session: AsyncSession, *, cookie_secure: bool, data_label: str | None = None
+    session: AsyncSession,
+    *,
+    cookie_secure: bool,
+    data_label: str | None = None,
+    mcp_enabled: bool = False,
+    mcp_public_url: str | None = None,
 ) -> list[str]:
     """Everything that makes this deployment unsafe to serve; empty if none."""
     problems: list[str] = []
@@ -27,6 +32,15 @@ async def production_problems(
         problems.append(
             f"DATA_LABEL is set ({data_label!r}); production data has no label, and every "
             "screen would say it isn't production's. Unset it."
+        )
+
+    # Chats are sent to the issuer's address to sign in, and the OAuth
+    # documents name it; behind a proxy the app can't know it, and the
+    # protocol requires https.
+    if mcp_enabled and (mcp_public_url is None or not mcp_public_url.startswith("https://")):
+        problems.append(
+            "MCP_ENABLED is true but MCP_PUBLIC_URL is not an https:// address; AI chats can't "
+            "sign in without the app's public address (e.g. https://app.example.com)."
         )
 
     if not cookie_secure:

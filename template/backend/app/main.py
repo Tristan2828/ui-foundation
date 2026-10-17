@@ -1,6 +1,7 @@
 """FastAPI entrypoint. Mounts the built SPA (Phase 8 item 8 — single
 deployable, same-origin, no CORS; see app/spa.py for the client-route
-fallback), the two entity routers, and GET /api/environment.
+fallback), the entity routers, GET /api/environment, and the MCP/OAuth routes
+(app/routers/mcp.py, oauth.py).
 """
 
 import os
@@ -10,11 +11,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.config import APP_ENV, COOKIE_SECURE, DATA_LABEL, STATIC_DIR
+from app.config import APP_ENV, COOKIE_SECURE, DATA_LABEL, MCP_ENABLED, MCP_PUBLIC_URL, STATIC_DIR
 from app.db import engine
 from app.deploy_checks import production_problems
 from app.errors import register_error_handlers
-from app.routers import auth, client_errors, environment, widget_categories, widgets
+from app.routers import auth, client_errors, environment, mcp, oauth, widget_categories, widgets
 from app.spa import SPAStaticFiles
 
 
@@ -24,7 +25,11 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     if APP_ENV == "production":
         async with AsyncSession(engine) as session:
             problems = await production_problems(
-                session, cookie_secure=COOKIE_SECURE, data_label=DATA_LABEL
+                session,
+                cookie_secure=COOKIE_SECURE,
+                data_label=DATA_LABEL,
+                mcp_enabled=MCP_ENABLED,
+                mcp_public_url=MCP_PUBLIC_URL,
             )
         if problems:
             raise RuntimeError(
@@ -41,6 +46,10 @@ app.include_router(client_errors.router, prefix="/api")
 app.include_router(environment.router, prefix="/api")
 app.include_router(widget_categories.router, prefix="/api")
 app.include_router(widgets.router, prefix="/api")
+# AI chats (MCP_ENABLED; 404 otherwise). At the root, not under /api: the
+# addresses are the ones the OAuth documents and chats expect.
+app.include_router(oauth.router)
+app.include_router(mcp.router)
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/", SPAStaticFiles(directory=STATIC_DIR, html=True), name="spa")
