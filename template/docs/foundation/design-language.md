@@ -271,3 +271,74 @@ set, not a `DataTable` prop:
   shows the primitives, `DataTable` and the sidebar at each. Its checks
   measure that every step changes what it should, and that the default
   keeps today's sizes.
+
+## Widget cards (hub pages)
+
+A hub page (an app's home screen) shows a few small widgets from
+different parts of the app, usually above a grid of navigation tiles.
+Each widget is a `WidgetCard`: a titled card holding a short list,
+loading its own data. Use one when a screen samples several lists at
+once and each links on to the full list. A list someone works through
+belongs on its own screen, in a `DataTable`.
+
+```tsx
+const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 5
+
+<div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,--spacing(72)),1fr))] gap-4">
+  <WidgetCard
+    title="Ready to start"
+    icon={ListChecksIcon}
+    link={{ to: '/tasks?status=ready', label: 'All' }}
+    isLoading={isLoading}
+    error={error}
+    onRetry={() => refetch()}
+    isEmpty={data?.items.length === 0}
+    emptyMessage="Nothing waiting"
+    skeletonRows={3}
+  >
+    <WidgetList>
+      {data?.items.map((task) => (
+        <WidgetListItem
+          key={task.id}
+          to={`/tasks/${task.id}`}
+          trailing={<Badge variant={READINESS_VARIANT[task.readiness]}>{READINESS_LABEL[task.readiness]}</Badge>}
+        >
+          {task.title}
+        </WidgetListItem>
+      ))}
+    </WidgetList>
+  </WidgetCard>
+</div>
+```
+
+- **Three to six rows.** A widget is a sample, not the list: ask the API
+  for that many (the query's page size) and put the rest behind the
+  header `link` ("All", "All doing"), which goes to the full list
+  filtered the same way. Set `skeletonRows` to the number it usually holds, so the card
+  keeps its height when the data arrives.
+- **Each widget owns its four states.** Loading is a skeleton of rows,
+  empty is one quiet line the app writes ("Nothing waiting", not "No
+  data"), and **an error stays inside the card**: the compact
+  `ErrorState` with a retry, so one failing widget never takes the page
+  down. Never let a widget's error reach the route's error boundary.
+- **The title is a heading** (`headingLevel`, h2 under the page's h1 by
+  default) and names the card's region, so the page's outline and its
+  landmarks list every widget. Give each widget on a page a different
+  title.
+- **A row is one line:** its text is a link (`to` for a route in the
+  app, `href` for an external address, which opens in a new tab with the
+  external-link mark) or plain text, cut with an ellipsis, the whole of
+  it in the link's name and its tooltip. After it, an optional `note`
+  (muted, small: "2 h ago", "holds 2") and an optional `trailing`
+  element: a tone badge (pattern 5's mapping) or a control.
+- **A control in a row is named by the row's text.** Pass `trailing` as
+  a function and put the id it gets in the control's `aria-labelledby`:
+  `trailing={(id) => <Switch aria-labelledby={id} … />}`. A switch saves
+  the way any row's switch does (`useRecordUpdate`, pattern 15).
+- **Equal widths, height from content.** Put the cards in a grid of
+  equal columns that wraps (the class above: one column on a phone, as
+  many 288px-or-wider columns as fit). Each card is as tall as its rows;
+  it doesn't stretch to its tallest neighbour.
+- Storybook's `app/WidgetCard` shows three widgets on a page and every
+  one in each state; its checks run axe and the token and glyph checks in
+  both themes and at `large`.
