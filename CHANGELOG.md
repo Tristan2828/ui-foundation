@@ -27,6 +27,12 @@ AGENTS.md block.
   the row text's id for its `aria-labelledby`.
 - **`ErrorState` takes `size="compact"`** for a small container: less
   padding, the icon beside the title. The default is unchanged.
+- **Fix: `SecondaryFilters`' button is named by its content.** axe 4.14
+  (which a fresh `npm install` now resolves) flags an `aria-label` that
+  doesn't hold the visible text ("Filters 1" isn't in "Filters, 1
+  active"), as voice control reads it. The name is unchanged, "Filters,
+  1 active", so specs matching it still pass; it's now built from the
+  label, the visible count and a hidden " active".
 - **Design language: "Widget cards (hub pages)"**: when to use one, three
   to six rows, the error staying in the card, the grid they sit in.
 - Checked by Storybook's `app/WidgetCard` stories (three widgets on a

@@ -46,13 +46,25 @@ export function SecondaryFilters({ children, active, onClear, label = 'Filters' 
   const count = active.length
 
   const trigger = (
-    <Button variant="outline" aria-label={count > 0 ? `${label}, ${count} active` : label}>
+    // Named by its content, not an aria-label, so the name holds the visible
+    // text ("Filters 1") the way voice control reads it (WCAG 2.5.3, axe
+    // 4.14's label-content-name-mismatch): "Filters, 1 active". The comma
+    // sits inside the label's span at font size 0: every child of the flex
+    // button, and any sr-only or inline-block span, counts as a block and
+    // gets a space before it in the name ("Filters , 1 active").
+    <Button variant="outline">
       <SlidersHorizontalIcon aria-hidden="true" />
-      {label}
+      <span>
+        {label}
+        {count > 0 && <span className="text-[0px]">,</span>}
+      </span>
       {count > 0 && (
-        <span aria-hidden="true" className="rounded-full bg-primary px-1.5 type-caption text-primary-foreground tabular-nums">
-          {count}
-        </span>
+        <>
+          <span className="rounded-full bg-primary px-1.5 type-caption text-primary-foreground tabular-nums">
+            {count}
+          </span>
+          <span className="sr-only"> active</span>
+        </>
       )}
     </Button>
   )
