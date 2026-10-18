@@ -153,6 +153,10 @@ src/main.tsx                           FoundationProviders (theme, query client,
   name its columns (`DataTable`'s `visibleColumns`); they apply while the
   filters are still that view's (`activeView`), so they add nothing to
   the URL.
+- **Grouped rows** (4.8, #135): `DataTable`'s `groupBy` heads runs of
+  rows in the server's order (`byDay` for feeds and logs), one `<tbody>`
+  per group with a row header, and `PillFilter` is a quick filter as
+  pills, its value in the URL like the others.
 - **Saving without the form** (a row's switch, a quick action on the view)
   goes through `useRecordUpdate`: a PATCH that is optimistic in the
   record's detail query and every list page holding it, replaced by the

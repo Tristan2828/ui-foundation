@@ -9,7 +9,7 @@
 // pagination tree-shakeable and independently swappable, which buys nothing
 // here: every row model is manual (the server sorts and pages), so this
 // table never uses TanStack's own sorted/paginated row models at all.
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
 import { flexRender } from '@tanstack/react-table'
 import type { CellData, RowData, TableFeatures } from '@tanstack/react-table'
 import { cn } from 'cn'
@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EditInPlaceContext } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { LeaveGuard } from './editable-value'
+import { groupRuns, type RowGroup } from './table-groups'
 import {
   Table,
   TableBody,
@@ -115,6 +116,24 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * don't move it (only the first load can).
    */
   width?: DataTableWidth
+  /**
+   * Rows under headings: each row's group (`byDay(field)` for a feed or a
+   * log). Rows keep the server's order, and a heading row spanning every
+   * column starts each run of one key. Paging pages rows, not groups, so a
+   * group split across pages repeats its heading on the next.
+   */
+  groupBy?: (row: TData) => RowGroup
+  /**
+   * What a heading says after its label ("4 · 1 h 12 m"), from the group's
+   * rows on this page.
+   */
+  groupSummary?: (rows: TData[]) => ReactNode
+  /**
+   * False hides the column header row, for a list-like table whose columns
+   * explain themselves (a thumbnail, a title block, actions). Screen readers
+   * still get the column names; sorting moves to the toolbar.
+   */
+  header?: boolean
 }
 
 export type DataTableWidth = 'full' | 'content'
@@ -188,6 +207,15 @@ const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-norma
 // background so it reads identically on striped and unstriped rows, and it
 // stays on screen when the table is scrolled right.
 const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
+
+// `header={false}`: the header row stays in the table, so every cell keeps
+// its column header for a screen reader, but takes no room: each header
+// is its name in an sr-only span, in a cell with no height or padding.
+const HIDDEN_HEAD_CLASS = 'h-0 p-0'
+
+// A group's heading row (`groupBy`): a little air above, so the groups
+// read apart, and the page's background, never the zebra stripe.
+const GROUP_HEADING_CLASS = 'h-auto bg-background pt-4 pb-1.5 align-bottom'
 
 // `width="content"`: from a table area 80rem wide, as wide as the columns
 // need (`w-fit` over the table's own `w-full`), at least 36rem, or the
@@ -286,6 +314,9 @@ export function DataTable<TData extends Record<string, unknown>>({
   enableSortingRemoval,
   visibleColumns,
   width = 'full',
+  groupBy,
+  groupSummary,
+  header: showHeader = true,
 }: DataTableProps<TData>) {
   // Editing in place in the rows (cell pattern 18, "In a table's rows"):
   // a cell that renders an <EditableValue> edits where it's shown, one at
@@ -358,6 +389,32 @@ export function DataTable<TData extends Record<string, unknown>>({
     Boolean(pinFirstColumn) && isSuccessView,
   )
 
+  const rows = table.getRowModel().rows
+  const visibleColumnCount = table.getVisibleLeafColumns().length
+  // One body row, the same in a plain table and a grouped one.
+  const renderRow = (row: (typeof rows)[number]) => (
+    <TableRow key={row.id} className={cn(pinFirstColumn && ROW_GROUP_CLASS)}>
+      {row.getVisibleCells().map((cell, index) => (
+        <TableCell
+          key={cell.id}
+          className={cn(
+            pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
+            pinLastColumn && index === row.getVisibleCells().length - 1 && PINNED_LAST_COLUMN_CLASS,
+            cell.column.columnDef.meta?.align === 'center' && 'text-center',
+          )}
+        >
+          {pinFirstColumn && index === 0 ? (
+            <div className={PINNED_FIRST_CONTENT_CLASS}>
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </div>
+          ) : (
+            flexRender(cell.column.columnDef.cell, cell.getContext())
+          )}
+        </TableCell>
+      ))}
+    </TableRow>
+  )
+
   const content = (
     <div
       ref={root}
@@ -402,13 +459,15 @@ export function DataTable<TData extends Record<string, unknown>>({
               width === 'content' && '@7xl/data-table:[container-type:normal]',
             )}
           >
-            <TableHeader>
+            <TableHeader className={cn(!showHeader && '[&_tr]:border-0')}>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header, index) => {
                     const canSort = header.column.getCanSort()
                     const sortDirection = header.column.getIsSorted()
-                    const content = header.isPlaceholder ? null : canSort ? (
+                    // Hidden, a header is its name only: a sort button no
+                    // one can see would still take focus.
+                    const content = header.isPlaceholder ? null : canSort && showHeader ? (
                       <button
                         type="button"
                         className={cn(
@@ -433,6 +492,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                       <TableHead
                         key={header.id}
                         className={cn(
+                          !showHeader && HIDDEN_HEAD_CLASS,
                           pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
                           pinLastColumn &&
                             index === headerGroup.headers.length - 1 &&
@@ -449,7 +509,9 @@ export function DataTable<TData extends Record<string, unknown>>({
                                 : 'none'
                         }
                       >
-                        {pinFirstColumn && index === 0 ? (
+                        {!showHeader ? (
+                          <span className="sr-only">{content}</span>
+                        ) : pinFirstColumn && index === 0 ? (
                           <div className={PINNED_FIRST_CONTENT_CLASS}>{content}</div>
                         ) : (
                           content
@@ -460,32 +522,37 @@ export function DataTable<TData extends Record<string, unknown>>({
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className={cn(pinFirstColumn && ROW_GROUP_CLASS)}>
-                  {row.getVisibleCells().map((cell, index) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
-                        pinLastColumn &&
-                          index === row.getVisibleCells().length - 1 &&
-                          PINNED_LAST_COLUMN_CLASS,
-                        cell.column.columnDef.meta?.align === 'center' && 'text-center',
-                      )}
-                    >
-                      {pinFirstColumn && index === 0 ? (
-                        <div className={PINNED_FIRST_CONTENT_CLASS}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </div>
-                      ) : (
-                        flexRender(cell.column.columnDef.cell, cell.getContext())
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
+            {groupBy ? (
+              groupRuns(rows, (row) => groupBy(row.original)).map((run, runIndex) => (
+                // A body per group, headed by a row header for it
+                // (scope="rowgroup"), so a screen reader names a cell's
+                // group the way it names its column.
+                <TableBody key={`${runIndex}:${run.key}`} data-slot="table-group">
+                  <TableRow data-slot="table-group-heading" className="hover:bg-transparent">
+                    <TableHead scope="rowgroup" colSpan={visibleColumnCount} className={GROUP_HEADING_CLASS}>
+                      {/* Sticky, so the label stays in view while a wide
+                          table scrolls sideways. */}
+                      <span className="sticky left-(--table-cell-px) inline-flex items-baseline gap-2">
+                        <span className="type-label text-foreground">{run.label}</span>
+                        {groupSummary && (
+                          <span className="type-caption text-muted-foreground tabular-nums">
+                            {groupSummary(run.rows.map((row) => row.original))}
+                          </span>
+                        )}
+                      </span>
+                    </TableHead>
+                  </TableRow>
+                  {/* Never shown, but counted by the zebra stripe's
+                      nth-child (table.tsx, PINNED_CELL_CLASS): without it
+                      the heading is row 1, so every group's first row
+                      would be striped, and a group of one always. */}
+                  <tr hidden aria-hidden="true" data-slot="table-group-stripe-offset" />
+                  {run.rows.map(renderRow)}
+                </TableBody>
+              ))
+            ) : (
+              <TableBody>{rows.map(renderRow)}</TableBody>
+            )}
           </Table>
 
           {pinFirstColumn && isOverflowing && (

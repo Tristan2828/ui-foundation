@@ -1,16 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
-import { BookOpenIcon, BriefcaseIcon, HeartIcon, HouseIcon, PlaneIcon, Trash2Icon, WalletIcon, type LucideIcon } from 'lucide-react'
+import { BookOpenIcon, BriefcaseIcon, FileTextIcon, HeartIcon, HouseIcon, MusicIcon, PlaneIcon, Trash2Icon, VideoIcon, WalletIcon, type LucideIcon } from 'lucide-react'
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import { createMemoryRouter, Link, RouterProvider } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useTableUrlState } from '@/hooks/use-table-url-state'
+import { byDay } from '@/lib/group-by-day'
 import { DataTable } from './data-table'
 import { editInPlace } from './edit-in-place'
 import { EditableValue } from './editable-value'
 import { InlineCreate } from './inline-create'
+import { PillFilter } from './pill-filter'
 
 // DataTable's two opt-ins for a small entity, in a real browser
 // (e2e/data-table.spec.ts), with axe and the token check in both themes:
@@ -20,6 +23,12 @@ import { InlineCreate } from './inline-create'
 //   toolbar, a delete in the pinned last column. Saves take ~0.4s; a name
 //   another category has is refused the way a server's 422 is. "Elsewhere"
 //   is a link that leaves the page, for the leave prompt.
+// - Grouped: a feed under day headings (`groupBy: byDay`), no header row,
+//   and a PillFilter in the toolbar, its value and the page in the URL.
+//   Six rows a page, so This week's group carries on to page 2. Today is
+//   pinned (15 Oct 2026, UTC) so the headings never drift.
+//   GroupedNoMatches opens on a type with no items: the empty state with
+//   a way to take the filter off.
 
 const ICONS = { house: HouseIcon, wallet: WalletIcon, briefcase: BriefcaseIcon, heart: HeartIcon, plane: PlaneIcon, book: BookOpenIcon } satisfies Record<string, LucideIcon>
 type IconKey = keyof typeof ICONS
@@ -343,6 +352,124 @@ function InRouter() {
   return <RouterProvider router={router} />
 }
 
+// --- grouped under headings, with a pill filter ------------------------------
+
+type Kind = 'video' | 'audio' | 'text'
+type FeedItem = { id: number; title: string; kind: Kind; publishedAt: string; minutes: number }
+
+const KIND_LABELS: Record<Kind, string> = { video: 'Video', audio: 'Audio', text: 'Text' }
+const KIND_ICONS: Record<Kind, LucideIcon> = { video: VideoIcon, audio: MusicIcon, text: FileTextIcon }
+
+// Newest first, as a server would send them. No text items, so that pill
+// shows the empty state.
+const FEED: FeedItem[] = [
+  { id: 1, title: 'Morning briefing', kind: 'audio', publishedAt: '2026-10-15T07:30:00Z', minutes: 18 },
+  { id: 2, title: 'How the bridge was built', kind: 'video', publishedAt: '2026-10-15T06:10:00Z', minutes: 42 },
+  { id: 3, title: 'Kitchen garden, week 40', kind: 'video', publishedAt: '2026-10-14T19:00:00Z', minutes: 12 },
+  { id: 4, title: 'Evening news', kind: 'audio', publishedAt: '2026-10-14T18:00:00Z', minutes: 30 },
+  { id: 5, title: 'Interview: the new library', kind: 'audio', publishedAt: '2026-10-13T12:00:00Z', minutes: 55 },
+  { id: 6, title: 'Bread at home', kind: 'video', publishedAt: '2026-10-13T09:00:00Z', minutes: 9 },
+  { id: 7, title: 'Rail timetable changes', kind: 'audio', publishedAt: '2026-10-12T16:00:00Z', minutes: 7 },
+  { id: 8, title: 'Autumn walks', kind: 'video', publishedAt: '2026-10-09T10:00:00Z', minutes: 21 },
+  { id: 9, title: 'Weekend debate', kind: 'audio', publishedAt: '2026-10-07T20:00:00Z', minutes: 64 },
+  { id: 10, title: 'Repairing a bicycle wheel', kind: 'video', publishedAt: '2026-09-30T08:00:00Z', minutes: 16 },
+  { id: 11, title: 'Harvest festival', kind: 'video', publishedAt: '2026-08-22T13:00:00Z', minutes: 33 },
+]
+
+const FEED_PAGE_SIZE = 6
+const FEED_NOW = new Date('2026-10-15T10:00:00Z')
+const byPublished = byDay<FeedItem>('publishedAt', { now: FEED_NOW, timeZone: 'UTC' })
+
+function duration(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (hours === 0) return `${rest} m`
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest} m`
+}
+
+// A list's two columns: what the item is (its type's icon, title and
+// length) takes the width, and its action sits at the end.
+const FEED_COLUMNS: LegacyColumnDef<FeedItem, unknown>[] = [
+  {
+    id: 'title',
+    header: 'Item',
+    cell: ({ row }) => {
+      const Icon = KIND_ICONS[row.original.kind]
+      return (
+        <span className="flex items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <Icon aria-hidden="true" className="size-4" />
+          </span>
+          <span className="flex flex-col whitespace-normal">
+            <span className="font-medium text-foreground">{row.original.title}</span>
+            <span className="type-caption text-muted-foreground">
+              {KIND_LABELS[row.original.kind]} · {duration(row.original.minutes)}
+            </span>
+          </span>
+        </span>
+      )
+    },
+  },
+  {
+    id: 'actions',
+    header: 'Actions',
+    meta: { align: 'center' },
+    cell: ({ row }) => (
+      <Button variant="outline" size="sm" aria-label={`Open ${row.original.title}`}>
+        Open
+      </Button>
+    ),
+  },
+]
+
+function FeedTable() {
+  const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
+  const matching = filters.kind ? FEED.filter((item) => item.kind === filters.kind) : FEED
+  const rows = matching.slice((page - 1) * FEED_PAGE_SIZE, page * FEED_PAGE_SIZE)
+  const kindLabel = filters.kind ? KIND_LABELS[filters.kind as Kind]?.toLowerCase() : null
+  return (
+    <div className="flex flex-col gap-4 p-6">
+      <h1 className="type-page-title text-foreground">Feed</h1>
+      <DataTable<FeedItem>
+        header={false}
+        groupBy={byPublished}
+        groupSummary={(items) => `${items.length} · ${duration(items.reduce((sum, item) => sum + item.minutes, 0))}`}
+        columns={FEED_COLUMNS}
+        data={rows}
+        total={matching.length}
+        page={page}
+        pageSize={FEED_PAGE_SIZE}
+        onPageChange={setPage}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        getRowId={(row) => String(row.id)}
+        emptyTitle={kindLabel ? `No ${kindLabel} items` : 'Nothing in the feed yet'}
+        emptyAction={
+          filters.kind ? (
+            <Button variant="outline" onClick={() => setFilter('kind', '')}>
+              Show all types
+            </Button>
+          ) : undefined
+        }
+        toolbar={
+          <PillFilter
+            label="Type"
+            options={(Object.keys(KIND_LABELS) as Kind[]).map((kind) => ({ value: kind, label: KIND_LABELS[kind] }))}
+            value={filters.kind}
+            onValueChange={(kind) => setFilter('kind', kind)}
+          />
+        }
+      />
+    </div>
+  )
+}
+
+function FeedInRouter({ path }: { path: string }) {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <FeedTable /> }], { initialEntries: [path] }))
+  return <RouterProvider router={router} />
+}
+
 const meta: Meta = {
   title: 'app/DataTable',
   parameters: { controls: { disable: true }, layout: 'fullscreen' },
@@ -353,3 +480,7 @@ export default meta
 export const ContentWidth: StoryObj = { render: () => <ContentWidthTable /> }
 
 export const EditInTheRows: StoryObj = { render: () => <InRouter /> }
+
+export const Grouped: StoryObj = { render: () => <FeedInRouter path="/" /> }
+
+export const GroupedNoMatches: StoryObj = { render: () => <FeedInRouter path="/?kind=text" /> }

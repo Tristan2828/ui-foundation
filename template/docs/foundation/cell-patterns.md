@@ -1088,3 +1088,70 @@ What the cell decides:
   count reads it.
 - **On the record's view**, the same `CountLink` beside its label (`Open
   tasks: 3`), with the record's name in `label` like the table's.
+
+## 21. Rows grouped under headings, and a pill filter
+
+A feed, an activity log or a timeline reads best as rows under day
+headings (Today, Yesterday, Earlier this week, then each older week, then
+months), each heading with a count and a summary ("4 · 1 h 12 m"). The
+same screens usually want one quick filter as pills above the rows (All /
+Video / Audio / Text, one pressed at a time) rather than a dropdown: there
+are few values, and switching between them is the main thing people do.
+Raised for an app's feed (issue #135); the package's Storybook renders it
+(`app/DataTable` "Grouped" and "Grouped no matches"), with axe in both
+themes.
+
+```tsx
+import { byDay, DataTable, PillFilter } from '@tristan2828/ui-foundation'
+
+const byPublished = byDay<FeedItem>('publishedAt')   // module level: once, not every render
+
+const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
+
+<DataTable
+  header={false}
+  groupBy={byPublished}
+  groupSummary={(items) => `${items.length} · ${duration(sum(items, 'minutes'))}`}
+  emptyTitle={filters.kind ? `No ${KIND_LABELS[filters.kind].toLowerCase()} items` : 'Nothing in the feed yet'}
+  emptyAction={filters.kind ? <Button variant="outline" onClick={() => setFilter('kind', '')}>Show all types</Button> : undefined}
+  toolbar={
+    <PillFilter label="Type" value={filters.kind} onValueChange={(kind) => setFilter('kind', kind)}
+      options={KINDS.map((kind) => ({ value: kind, label: KIND_LABELS[kind] }))} />
+  }
+  … />
+```
+
+- **The server sorts, the table only heads.** `groupBy` says which
+  group a row is in; a heading row starts wherever the key changes, so
+  sort the list by the grouped field (newest first) or a key will come
+  back with a second heading. Paging pages rows: a group split across
+  pages repeats its heading on the next, and `groupSummary` is given the
+  group's rows *on this page*. A summary that must count the whole group
+  comes from the API.
+- **`byDay(field, { now, timeZone })`** counts calendar days in the
+  zone (the browser's by default), so a time near midnight or a daylight
+  saving change never moves a row to the wrong day. Weeks start on
+  Monday (`weekStartsOn: 0` for Sunday). Four weeks back it switches to
+  months ("September", "December 2025"). A later date is Upcoming, no
+  date is No date. Pin `now` in a test, as for pattern 8.
+- **A heading is a row header for its group** (`<th scope="rowgroup">`
+  in the group's own `<tbody>`), so a screen reader names a cell's group
+  as it names its column. It stays in view while a wide table scrolls
+  sideways.
+- **`header={false}`** for a list-like table whose columns explain
+  themselves (a thumbnail with a title block, then actions). The header
+  row takes no room but stays in the table, so the columns keep their
+  names for a screen reader; sorting, if any, moves to the toolbar.
+  Fewer, wider columns read as a list: put the thumbnail inside the
+  title's cell rather than a column of its own.
+- **`PillFilter` is a filter like the others**: its value is in the URL
+  (`useTableUrlState`, '' for All) and `setFilter` sets it, so it returns
+  to page 1 and survives a refresh, back and forward. Pressing the
+  pressed pill leaves it pressed; All takes the filter off
+  (`allLabel={null}` drops All for a filter that always has a value). It
+  is one tab stop, the arrows along it; the pressed pill is filled with
+  `--primary`, not the toggle's faint tint.
+- **No rows for a filter** is the table's own empty state, saying which
+  filter, with a button to take it off. An empty group never renders:
+  groups come from the rows.
+- **Not built:** collapsing groups, grouping by more than one key.
