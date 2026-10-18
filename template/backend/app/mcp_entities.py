@@ -6,7 +6,11 @@ names of their own.
 Each entry points at the entity's own router functions, so a chat's create
 and update go through exactly the validation the API applies, and every
 read is scoped to the signed-in user the same way. An entity with no
-`create` or `update` is read-only to chats. There is no delete.
+`create` or `update` is read-only to chats. A chat can delete only an entity
+that deletes softly (`delete` and `restore` below, issue #137): the record is
+marked, not removed, and `restore` brings it back. An entity that deletes for
+good gets no delete tool, so a chat that read planted instructions can't
+destroy data a backup alone would return.
 
 Adding an entity: one `McpEntity` below (docs/foundation/add-an-entity.md).
 """
@@ -59,6 +63,11 @@ class McpEntity:
     create: Callable[[AsyncSession, User, Any], Awaitable[Any]] | None = None
     update_schema: type[CamelModel] | None = None
     update: Callable[[AsyncSession, User, int, Any], Awaitable[Any]] | None = None
+    # Soft delete: `delete` marks a live record deleted, `restore` clears the
+    # mark and returns the record. Set both or neither, and only for an
+    # entity whose deletes are soft (a nullable deleted_at).
+    delete: Callable[[AsyncSession, User, int], Awaitable[None]] | None = None
+    restore: Callable[[AsyncSession, User, int], Awaitable[Any]] | None = None
 
 
 class WidgetFilters(CamelModel):
@@ -70,6 +79,8 @@ class WidgetFilters(CamelModel):
     in_stock: bool | None = None
     checklist_state: WidgetChecklistState | None = None
     extra_category_ids: list[int] | None = None
+    # True lists only the deleted widgets, to find one to restore.
+    deleted: bool | None = None
 
 
 async def _get_widget(session: AsyncSession, user: User, record_id: int) -> Widget:
@@ -86,6 +97,7 @@ async def _list_widgets(session: AsyncSession, user: User, args: ListArgs) -> tu
         "inStock": None,
         "checklistState": None,
         "extraCategoryIds": None,
+        "deleted": False,
         **args.filters,
     }
     page = await widgets_router.list_widgets(
@@ -106,6 +118,14 @@ async def _create_widget(session: AsyncSession, user: User, payload: WidgetCreat
 
 async def _update_widget(session: AsyncSession, user: User, record_id: int, payload: WidgetUpdate) -> Widget:
     return await widgets_router.update_widget(record_id, payload, user, session)
+
+
+async def _delete_widget(session: AsyncSession, user: User, record_id: int) -> None:
+    await widgets_router.delete_widget(record_id, user, session)
+
+
+async def _restore_widget(session: AsyncSession, user: User, record_id: int) -> Widget:
+    return await widgets_router.restore_widget(record_id, user, session)
 
 
 async def _get_category(session: AsyncSession, _: User, record_id: int) -> WidgetCategory | None:
@@ -139,6 +159,8 @@ ENTITIES: dict[str, McpEntity] = {
             create=_create_widget,
             update_schema=WidgetUpdate,
             update=_update_widget,
+            delete=_delete_widget,
+            restore=_restore_widget,
         ),
         McpEntity(
             name="widget-categories",

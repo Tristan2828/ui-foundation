@@ -283,4 +283,24 @@ describe("MSW mock conformance", () => {
     expect(res.status).toBe(404);
     await validate("/widgets/{id}", "delete", res);
   });
+
+  it("a deleted widget leaves the list and is listed by deleted=true; restore brings it back", async () => {
+    await fetch("http://localhost/api/widgets/1", { method: "DELETE" });
+    expect((await fetch("http://localhost/api/widgets/1")).status).toBe(404);
+    const live = await (await fetch("http://localhost/api/widgets")).json();
+    expect(live.items.some((w: { id: number }) => w.id === 1)).toBe(false);
+    const trash = await (await fetch("http://localhost/api/widgets?deleted=true")).json();
+    expect(trash.items.map((w: { id: number }) => w.id)).toEqual([1]);
+
+    const res = await fetch("http://localhost/api/widgets/1/restore", { method: "POST" });
+    expect(res.status).toBe(200);
+    await validate("/widgets/{id}/restore", "post", res);
+    expect((await fetch("http://localhost/api/widgets/1")).status).toBe(200);
+  });
+
+  it("POST /widgets/:id/restore matches its 404 schema for a widget that is not deleted", async () => {
+    const res = await fetch("http://localhost/api/widgets/1/restore", { method: "POST" });
+    expect(res.status).toBe(404);
+    await validate("/widgets/{id}/restore", "post", res);
+  });
 });

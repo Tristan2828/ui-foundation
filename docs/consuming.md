@@ -265,3 +265,22 @@ Tags `v1.0.0` to `v2.1.x` were a shadcn registry
 (`npx shadcn add Tristan2828/ui-foundation/starter#<tag>`). Those tags still
 install exactly as they did. For how 2.x apps took releases, read this file
 at a 2.x tag.
+
+## Adding soft delete to a 4.x app
+
+4.3 makes the Widget reference soft-delete and adds `delete` and `restore`
+to MCP. The package doesn't change; an app adopts it per entity, by hand,
+and only for entities whose plan says "soft-deleted":
+
+1. A migration adding a nullable, commented `deleted_at timestamptz`
+   (`0012_widget_soft_delete.py`), and the field on the model.
+2. In the router: DELETE sets it, a `restore` POST clears it, the list
+   filters on it (`deleted` parameter), and the get/update lookup treats a
+   deleted record as missing (`_get_or_404`).
+3. In `openapi.yaml`: the `deleted` parameter and the `restore` operation;
+   then `npm run gen:api`, the gateway's `restore`, a restore mutation, the
+   mocks, and an Undo on the delete toast.
+4. For MCP: set `delete` and `restore` on the entity's `McpEntity`, add
+   `deleted` to its filters, and copy `tool_delete` / `tool_restore` and
+   their definitions from `app/mcp_tools.py`.
+5. `npm run verify` and `npm run verify:backend`.

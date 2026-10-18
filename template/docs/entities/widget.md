@@ -71,6 +71,8 @@ foundation supports has a working, tested reference.
 ## Screens and access
 
 - Screens: list, view, create, edit, delete.
+- Deleting: **soft-deleted**. Delete marks the widget (`deleted_at`); the
+  toast offers Undo, which restores it. Chats can delete and restore it.
 - Ownership: **per-user** — each user sees only the widgets they created.
   Widget categories are **shared** and read-only (seeded).
 

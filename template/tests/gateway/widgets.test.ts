@@ -13,6 +13,7 @@ import {
   createWidget,
   updateWidget,
   deleteWidget,
+  restoreWidget,
 } from "../../src/api/gateway/widgets";
 import type { AppError, Page, QuerySpec } from "@tristan2828/ui-foundation";
 import type { components } from "../../src/api/schema";
@@ -614,6 +615,25 @@ describe("deleteWidget", () => {
 
     await expect(deleteWidget(1)).rejects.toMatchObject({
       kind: "server",
+    } satisfies Partial<AppError>);
+  });
+});
+
+describe("restoreWidget", () => {
+  it("POSTs to /widgets/{id}/restore and returns the widget on 200", async () => {
+    const fetchMock = stubFetch(jsonResponse({ id: 1, name: "Wireless Mouse" }, 200));
+
+    await expect(restoreWidget(1)).resolves.toMatchObject({ id: 1, name: "Wireless Mouse" });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/widgets/1/restore");
+    expect(init?.method).toBe("POST");
+  });
+
+  it("throws AppError{kind:'notfound'} on 404 (not deleted, or not there)", async () => {
+    stubFetch(jsonResponse({ detail: "Widget not found" }, 404));
+
+    await expect(restoreWidget(1)).rejects.toMatchObject({
+      kind: "notfound",
     } satisfies Partial<AppError>);
   });
 });

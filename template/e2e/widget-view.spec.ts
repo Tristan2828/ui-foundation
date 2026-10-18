@@ -252,6 +252,18 @@ test.describe('widget view', () => {
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
   })
 
+  test('delete: Undo in the toast restores the widget', async ({ page }) => {
+    await page.goto('/widgets/3')
+    await page.getByRole('button', { name: 'Delete' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
+    await expect(page).toHaveURL('/widgets')
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Undo' }).click()
+    await expect(page.getByText('Fountain Pen restored')).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
+  })
+
   test('validation: a failed delete keeps the view and says why', async ({ page }) => {
     await page.goto('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()

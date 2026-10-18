@@ -118,7 +118,8 @@ src/main.tsx                           FoundationProviders (theme, query client,
 - **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
   sign-in in the reference backend (`app/routers/mcp.py`, `oauth.py`). Tools come from
   one registry of entities (`app/mcp_entities.py`) and call the entities' own router
-  functions, so the API's validation and per-user scoping apply. No delete; every write
+  functions, so the API's validation and per-user scoping apply. Delete is soft only
+  (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
   is logged. Stdlib only, by decision (#132): no MCP SDK.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
@@ -157,7 +158,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   that store, and its saves are changes applied to the record's latest
   list, so they build on a tick still saving. The leave prompt is React Router's `useBlocker`,
   so apps need a data router (`createBrowserRouter`), as the template
-  has. Long text can **autosave** (4.3, `autosave`): the same store saves
+  has. Long text can **autosave** (4.4, `autosave`): the same store saves
   it a pause after typing stops, editable all the while, one save in
   flight with the next queued behind it on the latest draft, and leaving
   the page saves it before going on. `alwaysEditable` makes the editor
