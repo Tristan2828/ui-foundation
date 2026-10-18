@@ -160,12 +160,37 @@ export interface paths {
         get: operations["getWidget"];
         put?: never;
         post?: never;
-        /** Delete a widget */
+        /**
+         * Delete a widget
+         * @description Soft: the widget is marked deleted, not erased. It leaves the list and every other call (a second delete, a get or an update is a 404) until restoreWidget brings it back.
+         */
         delete: operations["deleteWidget"];
         options?: never;
         head?: never;
         /** Partially update a widget */
         patch: operations["updateWidget"];
+        trace?: never;
+    };
+    "/widgets/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore a deleted widget
+         * @description Undoes deleteWidget. Only a deleted widget can be restored: a live or missing one is a 404.
+         */
+        post: operations["restoreWidget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/client-errors": {
@@ -618,6 +643,8 @@ export interface operations {
                 inStock?: boolean;
                 /** @description Widgets linked to any of these categories through extraCategoryIds. Repeat the parameter once per id, e.g. "extraCategoryIds=1&extraCategoryIds=3". */
                 extraCategoryIds?: number[];
+                /** @description Absent or false lists live widgets. "deleted=true" lists only the deleted ones, to find one to restore. */
+                deleted?: boolean;
             };
             header?: never;
             path?: never;
@@ -740,6 +767,31 @@ export interface operations {
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
             422: components["responses"]["ValidationError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    restoreWidget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Restored. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Widget"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
             500: components["responses"]["ServerError"];
         };
     };

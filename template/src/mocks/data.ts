@@ -94,11 +94,15 @@ const initialWidgets: Widget[] = [
 
 export let widgetCategories: WidgetCategory[] = structuredClone(initialWidgetCategories);
 export let widgets: Widget[] = structuredClone(initialWidgets);
+// Deleted widgets (soft delete, openapi.yaml deleteWidget): out of `widgets`,
+// listed by `deleted=true`, brought back by restoreWidget.
+export let deletedWidgets: Widget[] = [];
 let nextId = widgets.length + 1;
 
 export function resetMockData(): void {
   widgetCategories = structuredClone(initialWidgetCategories);
   widgets = structuredClone(initialWidgets);
+  deletedWidgets = [];
   nextId = widgets.length + 1;
   resetMockAuth();
   resetMockClientErrors();

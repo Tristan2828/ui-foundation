@@ -129,7 +129,7 @@ class OAuthGrant(SQLModel, table=True):
 
 
 class McpAuditEntry(SQLModel, table=True):
-    """Every record an AI chat created or changed through MCP."""
+    """Every record an AI chat created, changed, deleted or restored through MCP."""
 
     __tablename__ = "mcp_audit_log"
 
@@ -137,13 +137,14 @@ class McpAuditEntry(SQLModel, table=True):
     # Not a foreign key: the log outlives the account and the connection.
     user_id: int = Field(index=True)
     client_id: str = Field(max_length=64)
-    # "create" or "update".
+    # "create", "update", "delete" or "restore".
     action: str = Field(max_length=16)
     entity: str = Field(max_length=64)
     record_id: int
     at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     # JSON objects of the fields that changed, as the API names them; before
-    # is null for a create.
+    # is null for a create. A delete or restore holds the whole record in
+    # both, so the log alone can rebuild it.
     before: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     after: str = Field(sa_column=Column(Text, nullable=False))
 
@@ -242,6 +243,11 @@ class Widget(SQLModel, table=True):
     # openapi.yaml don't mention it; the router scopes every query to the
     # session's user instead, and another user's widget is a plain 404.
     owner_id: int = Field(foreign_key="users.id", index=True)
+    # Soft delete (migration 0012). Null means live; a time means deleted
+    # then. Never on the wire: DELETE sets it, POST /widgets/{id}/restore
+    # clears it, and every other query leaves deleted widgets out
+    # (`Widget.deleted_at.is_(None)`) unless it asks (`deleted=true`).
+    deleted_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     # lazy="selectin": loaded with every widget query in one extra SELECT —
     # the async session can't lazy-load on attribute access later.
     tag_links: list[WidgetTagLink] = Relationship(

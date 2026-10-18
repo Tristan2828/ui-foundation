@@ -1,7 +1,8 @@
 """The MCP tools (issue #132), generated from `ENTITIES` (app/mcp_entities.py).
 
 fetch(url), search(query), list(entity, filters), create(entity, fields),
-update(url, fields). No delete. Every answer is text a chat can read;
+update(url, fields), and, for entities that delete softly only (issue #137),
+delete(url) and restore(url). Never a delete that can't be undone. Every answer is text a chat can read;
 a refusal (an unknown record, a field the API would reject) is raised as
 `ToolError` and goes back as a tool result marked as an error, with the
 field errors in words, so the chat can fix its call and try again.
@@ -9,7 +10,7 @@ field errors in words, so the chat can fix its call and try again.
 Writes go through the entity's own router function, so validation, the
 per-user scoping and the 404 for another user's record are the API's. Each
 write is then logged in `mcp_audit_log`: who, when, which chat, and the
-changed fields before and after.
+changed fields before and after (the whole record, for a delete or restore).
 """
 
 import json
@@ -303,6 +304,39 @@ async def tool_update(session: AsyncSession, caller: Caller, args: dict[str, Any
     return f"Updated {entity.singular} {_address(entity, record_id)}. {summary}\n\n{text}"
 
 
+async def tool_delete(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
+    entity, record_id = _parse_address(args.get("url"))
+    if entity.delete is None or entity.restore is None:
+        raise ToolError(f"{entity.name} can't be deleted through MCP.")
+    record = await _record(session, caller.user, entity, record_id)
+    whole = _dump(entity, record)
+    await entity.delete(session, caller.user, record_id)
+    await session.refresh(caller.user)
+    await _audit(session, caller, "delete", entity, record_id, whole, whole)
+    return (
+        f"Deleted {entity.singular} {_address(entity, record_id)} ({whole[entity.title]}). "
+        f"It isn't gone: restore with the restore tool and this address, "
+        f"or find it with list (filters: {{\"deleted\": true}})."
+    )
+
+
+async def tool_restore(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
+    entity, record_id = _parse_address(args.get("url"))
+    if entity.restore is None:
+        raise ToolError(f"{entity.name} can't be restored: it isn't deleted through MCP.")
+    try:
+        restored = await entity.restore(session, caller.user, record_id)
+    except HTTPException as exc:
+        if exc.status_code != 404:
+            raise
+        raise ToolError(f"No deleted {entity.singular} at {_address(entity, record_id)}.") from exc
+    await session.refresh(caller.user)
+    data = _dump(entity, restored)
+    text = await _render(session, caller.user, entity, data)
+    await _audit(session, caller, "restore", entity, record_id, data, data)
+    return f"Restored {entity.singular} {_address(entity, record_id)}.\n\n{text}"
+
+
 # ------------------------------------------------------------ definitions
 
 
@@ -342,6 +376,7 @@ def tool_definitions() -> list[dict[str, Any]]:
     names = list(ENTITIES)
     creatable = [e for e in ENTITIES.values() if e.create is not None and e.create_schema is not None]
     changeable = [e for e in ENTITIES.values() if e.update is not None and e.update_schema is not None]
+    deletable = [e for e in ENTITIES.values() if e.delete is not None and e.restore is not None]
     filterable = [e for e in ENTITIES.values() if e.filters is not None]
     read_only = {"readOnlyHint": True, "openWorldHint": False}
     write = {"readOnlyHint": False, "destructiveHint": False, "openWorldHint": False}
@@ -425,7 +460,7 @@ def tool_definitions() -> list[dict[str, Any]]:
                 "title": "Change a record",
                 "description": (
                     "Change some fields of a record; fields left out keep their value. Checked as the app's "
-                    "own form is. There is no delete. "
+                    "own form is. "
                     + " ".join(f"{e.name}: {_describe_fields(e.update_schema, True)}." for e in changeable if e.update_schema is not None)
                 ),
                 "inputSchema": {
@@ -439,6 +474,46 @@ def tool_definitions() -> list[dict[str, Any]]:
                 "annotations": {**write, "idempotentHint": True, "title": "Change a record"},
             }
         )
+    if deletable:
+        names_ = ", ".join(e.name for e in deletable)
+        tools.append(
+            {
+                "name": "delete",
+                "title": "Delete a record",
+                "description": (
+                    "Delete one record by its address. The record is marked deleted, not erased: it leaves "
+                    "lists and search, and restore brings it back. One record per call. Deletable: " + names_ + "."
+                ),
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"url": {"type": "string", "description": "The record's address (/<entity>/<id>)."}},
+                    "required": ["url"],
+                },
+                "annotations": {
+                    "readOnlyHint": False,
+                    "destructiveHint": True,
+                    "idempotentHint": False,
+                    "openWorldHint": False,
+                    "title": "Delete a record",
+                },
+            }
+        )
+        tools.append(
+            {
+                "name": "restore",
+                "title": "Restore a deleted record",
+                "description": (
+                    "Bring back a deleted record by its address. Find deleted records with list and "
+                    "filters {\"deleted\": true}. Restorable: " + names_ + "."
+                ),
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"url": {"type": "string", "description": "The deleted record's address (/<entity>/<id>)."}},
+                    "required": ["url"],
+                },
+                "annotations": {**write, "idempotentHint": True, "title": "Restore a deleted record"},
+            }
+        )
     return tools
 
 
@@ -448,6 +523,8 @@ HANDLERS = {
     "list": tool_list,
     "create": tool_create,
     "update": tool_update,
+    "delete": tool_delete,
+    "restore": tool_restore,
 }
 
 

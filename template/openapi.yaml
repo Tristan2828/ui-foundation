@@ -237,6 +237,12 @@ paths:
             Widgets linked to any of these categories through
             extraCategoryIds. Repeat the parameter once per id, e.g.
             "extraCategoryIds=1&extraCategoryIds=3".
+        - name: deleted
+          in: query
+          schema: { type: boolean, default: false }
+          description: >
+            Absent or false lists live widgets. "deleted=true" lists only the
+            deleted ones, to find one to restore.
       responses:
         "200":
           description: A page of widgets.
@@ -305,10 +311,37 @@ paths:
     delete:
       operationId: deleteWidget
       summary: Delete a widget
+      description: >
+        Soft: the widget is marked deleted, not erased. It leaves the list
+        and every other call (a second delete, a get or an update is a 404)
+        until restoreWidget brings it back.
       tags: [widgets]
       responses:
         "204":
           description: Deleted.
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /widgets/{id}/restore:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      operationId: restoreWidget
+      summary: Restore a deleted widget
+      description: >
+        Undoes deleteWidget. Only a deleted widget can be restored: a live
+        or missing one is a 404.
+      tags: [widgets]
+      responses:
+        "200":
+          description: Restored.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Widget" }
         "401": { $ref: "#/components/responses/UnauthorizedError" }
         "404": { $ref: "#/components/responses/NotFoundError" }
         "500": { $ref: "#/components/responses/ServerError" }

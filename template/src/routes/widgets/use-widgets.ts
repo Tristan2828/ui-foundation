@@ -7,6 +7,7 @@ import { useRecordUpdate, type AppError, type Page, type QuerySpec } from '@tris
 import {
   createWidget,
   deleteWidget,
+  restoreWidget,
   getWidget,
   listWidgets,
   updateWidget,
@@ -76,6 +77,19 @@ export function useDeleteWidgetMutation() {
       // Dropped, not refetched: the view still on screen would otherwise
       // fetch the deleted widget and flash "Not found" while it leaves.
       queryClient.removeQueries({ queryKey: widgetsKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: widgetsKeys.all })
+    },
+  })
+}
+
+// Undo of a delete: the widget is back in the lists, and its view can be
+// opened again.
+export function useRestoreWidgetMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<Widget, AppError, number>({
+    mutationFn: (id) => restoreWidget(id),
+    onSuccess: (widget) => {
+      queryClient.setQueryData(widgetsKeys.detail(widget.id), widget)
       queryClient.invalidateQueries({ queryKey: widgetsKeys.all })
     },
   })
