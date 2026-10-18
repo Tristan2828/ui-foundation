@@ -5,6 +5,21 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.4.1 — the Postgres check runs on its own database
+
+Template only. `scripts/check-backend-postgres.sh` used the dev
+`docker-compose.yml` Postgres on :5432 with its persistent volume, so it
+failed when another checkout (a worktree, another app) held :5432, and
+when the volume had been migrated by a branch this one doesn't have
+("Can't locate revision"). It now runs a compose project of its own, named
+for the checkout's path, on a free port (`CHECK_POSTGRES_PORT` to choose
+one), and deletes it after the run. `docker-compose.yml` publishes
+`${POSTGRES_PORT:-5432}`, so `docker compose up` for development is
+unchanged.
+
+- **How an app adopts it:** copy the two files' changes from the template
+  at the 4.4.1 tag, if the app still has the template's script.
+
 ## 4.4.0 — long text that saves as it's typed
 
 Additive: two new optional options on `editInPlace`; nothing changes until
@@ -33,6 +48,7 @@ save.
 - **How an app adopts it:** add `autosave: true` (or `alwaysEditable: true`,
   and drop `autoFocus` from its control) to the long-text field's
   `editInPlace`. See `docs/foundation/cell-patterns.md` "Editable value".
+
 ## 4.3.1 — MCP: a refused write leaves nothing behind
 
 Backend only, a fix to `app/mcp_tools.py` since 4.2.0. When an entity's router
