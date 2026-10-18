@@ -69,6 +69,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
+  { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
+  { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },

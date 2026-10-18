@@ -5,6 +5,29 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.8.0 — rows grouped under headings, and a pill filter
+
+Additive: new optional props and exports; nothing changes until a table
+opts in (#135). See `docs/foundation/cell-patterns.md` pattern 21.
+
+- **`DataTable` `groupBy` and `groupSummary`**: rows under headings, in
+  the server's order, a heading row (`<th scope="rowgroup">`, its own
+  `<tbody>`) starting each run of one key, with a summary of the group's
+  rows on the page. A group split across pages repeats its heading.
+- **`byDay(field, { now, timeZone, weekStartsOn, locale })`**, a
+  `groupBy` for feeds and logs: Today, Yesterday, Earlier this week,
+  "Week of 6 Oct" for four weeks back, then months; Upcoming and No date.
+  Calendar days in the zone, via Intl (no new dependency).
+- **`DataTable` `header={false}`**: no header row on screen, the column
+  names kept for screen readers, no hidden sort buttons to tab into.
+- **`PillFilter`**: one quick filter as pills (All plus the options), on
+  shadcn's ToggleGroup, now shipped as the primitive
+  `@tristan2828/ui-foundation/ui/toggle-group`. The value is the app's,
+  from `useTableUrlState` like any filter.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.8.0`,
+  `npx ui-foundation sync`. An app that had added `toggle-group` to its
+  own `src/components/ui/` must now import the package's (lint says so).
+
 ## 4.7.0 — scheduled jobs in the reference backend
 
 Template backend only (#136). An app that pulls from an outside service or

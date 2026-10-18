@@ -7,6 +7,8 @@
 export { AppShell, type AppShellProps, type AppShellVersion, type NavEntry, type NavItem, type NavSection } from '@/components/app/app-shell'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export { DataTable, type DataTableProps, type DataTableWidth, type SortingState } from '@/components/app/data-table'
+export { type RowGroup } from '@/components/app/table-groups'
+export { byDay, type ByDayOptions } from '@/lib/group-by-day'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
 export {
   EntityView,
@@ -39,6 +41,7 @@ export { ListEditor } from '@/components/app/list-editor'
 export { PasswordInput } from '@/components/app/password-input'
 export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-text-editor'
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
+export { PillFilter, type PillFilterOption, type PillFilterProps } from '@/components/app/pill-filter'
 export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
 export {
   StageCircle,

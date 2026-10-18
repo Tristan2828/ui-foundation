@@ -2,8 +2,9 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
 // DataTable's opt-ins for a small entity (app/DataTable stories), in a
-// real browser: `width="content"` (issue #104) and editing in its rows
-// with InlineCreate (issue #105). Axe and the token check on the stories
+// real browser: `width="content"` (issue #104), editing in its rows
+// with InlineCreate (issue #105), and rows grouped under headings with a
+// PillFilter and no header row (issue #135). Axe and the token check on the stories
 // at rest, in both themes, are e2e/storybook-visual.spec.ts's
 // COMPOSITE_STORIES; a cell open is checked here.
 const story = (id: string, theme: 'light' | 'dark' = 'light') =>
@@ -155,4 +156,78 @@ test.describe('DataTable, editing in its rows', () => {
       expect((await analyze()).violations).toEqual([])
     })
   }
+})
+
+test.describe('DataTable, rows grouped under headings, with a pill filter', () => {
+  const headings = (page: Page) => page.locator('[data-slot="table-group-heading"] th')
+  const pill = (page: Page, name: string) => page.getByRole('group', { name: 'Type' }).getByRole('button', { name })
+
+  test('a heading row starts each day, spanning the row, with its summary', async ({ page }) => {
+    await page.goto(story('grouped'))
+    await expect(headings(page)).toHaveText(['Today2 · 1 h', 'Yesterday2 · 42 m', 'Earlier this week2 · 1 h 4 m'])
+    const first = headings(page).first()
+    await expect(first).toHaveAttribute('scope', 'rowgroup')
+    await expect(first).toHaveAttribute('colspan', '2')
+    // Each group's rows are in its own body, after its heading.
+    await expect(page.locator('[data-slot="table-group"]').first().getByRole('cell', { name: /^Morning briefing/ })).toBeVisible()
+  })
+
+  test('a group split across pages repeats its heading on the next', async ({ page }) => {
+    await page.goto(story('grouped'))
+    await page.getByRole('button', { name: 'Next page' }).click()
+    await expect(headings(page)).toHaveText([
+      'Earlier this week1 · 7 m',
+      'Week of 5 Oct2 · 1 h 25 m',
+      /^Week of 28 Sept?1 · 16 m$/,
+      'August1 · 33 m',
+    ])
+  })
+
+  test('header={false}: no header row on screen, but every column keeps its name, and nothing hidden takes focus', async ({ page }) => {
+    await page.goto(story('grouped'))
+    await expect(page.getByRole('columnheader', { name: 'Item' })).toBeAttached()
+    await expect(page.getByRole('columnheader', { name: 'Actions' })).toBeAttached()
+    const head = (await page.locator('[data-slot="table-header"]').boundingBox())!
+    expect(head.height).toBeLessThanOrEqual(1)
+    await expect(page.locator('[data-slot="table-header"] button')).toHaveCount(0)
+  })
+
+  test('one pill pressed at a time; pressing it again leaves it on; the filter returns to page 1', async ({ page }) => {
+    await page.goto(story('grouped'))
+    await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'true')
+    await page.getByRole('button', { name: 'Next page' }).click()
+    await pill(page, 'Video').click()
+    await expect(pill(page, 'Video')).toHaveAttribute('aria-pressed', 'true')
+    await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'false')
+    await expect(page.getByText('1–6 of 6')).toBeVisible()
+    await expect(page.getByRole('cell', { name: /Audio ·/ })).toHaveCount(0)
+    await pill(page, 'Video').click()
+    // Proving nothing changes needs a moment for a change to have shown.
+    await page.waitForTimeout(300)
+    await expect(pill(page, 'Video')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByText('1–6 of 6')).toBeVisible()
+    await pill(page, 'All').click()
+    await expect(page.getByText('1–6 of 11')).toBeVisible()
+  })
+
+  test('from the keyboard: one tab stop, the arrows along it, Space presses', async ({ page }) => {
+    await page.goto(story('grouped'))
+    await pill(page, 'All').focus()
+    await page.keyboard.press('ArrowRight')
+    await page.keyboard.press('ArrowRight')
+    await expect(pill(page, 'Audio')).toBeFocused()
+    await page.keyboard.press('Space')
+    await expect(pill(page, 'Audio')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('cell', { name: /Video ·/ })).toHaveCount(0)
+  })
+
+  test("a filter with no rows: the table's empty state, with a way to take it off", async ({ page }) => {
+    await page.goto(story('grouped-no-matches'))
+    await expect(pill(page, 'Text')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByText('No text items')).toBeVisible()
+    await expect(headings(page)).toHaveCount(0)
+    await page.getByRole('button', { name: 'Show all types' }).click()
+    await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'true')
+    await expect(headings(page).first()).toHaveText('Today2 · 1 h')
+  })
 })
