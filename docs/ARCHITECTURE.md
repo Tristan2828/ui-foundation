@@ -62,6 +62,7 @@ packages/ui-foundation/     the npm package
   src/                      components/{ui,app}, auth/, api/, hooks/, mocks/, testing/, routes/ (login, register)
   styles/                   theme.css (tokens) + index.css (what apps import)
   eslint/                   the shared flat config
+  vite/                     buildInfo(): dist/build-info.json and the build's commit/PR
   bin/ui-foundation.mjs     sync | check-contract | check-deps
   conventions/              AGENTS.md block, docs/ and agent files that `sync` writes into apps
   openapi/foundation.yaml   the part of every app's contract the package calls
@@ -115,6 +116,11 @@ src/main.tsx                           FoundationProviders (theme, query client,
   production's, from its `DATA_LABEL` via `GET /environment`). The second
   is a query like any other server read, kept across session changes
   because it's the same for every user.
+- **Which build is live** (4.5). The package's Vite plugin
+  (`/vite`, `buildInfo()`) writes `dist/build-info.json` on every build:
+  `api` (`real`, or `mock` for an MSW bundle), the commit and the PR. The
+  reference backend refuses `APP_ENV=production` unless it says `real`,
+  and `AppShell`'s `version` shows the commit, linking to its PR.
 - **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
   sign-in in the reference backend (`app/routers/mcp.py`, `oauth.py`). Tools come from
   one registry of entities (`app/mcp_entities.py`) and call the entities' own router

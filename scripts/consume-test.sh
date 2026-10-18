@@ -148,6 +148,12 @@ fi
 npx vite build --outDir dist-mock >/dev/null
 grep -rql "mockServiceWorker" dist-mock/assets >/dev/null 2>&1 ||
   fail "the default build has no MSW either — the mock-free check above is vacuous"
+# The packed /vite entry: build-info.json tells the two apart, which is
+# what the backend's production check reads.
+grep -q '"api": "real"' dist-real/build-info.json 2>/dev/null ||
+  fail "the --mode real build's build-info.json doesn't say \"real\" — the backend would refuse it"
+grep -q '"api": "mock"' dist-mock/build-info.json 2>/dev/null ||
+  fail "the default build's build-info.json doesn't say \"mock\" — the backend couldn't refuse it"
 rm -rf dist-real dist-mock
 
 if [ "$INSTALL_ONLY" = true ]; then

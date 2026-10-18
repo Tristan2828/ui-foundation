@@ -71,6 +71,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
+  { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // Every density, the primitives and DataTable in each (large is the one

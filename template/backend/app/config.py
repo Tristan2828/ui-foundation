@@ -34,7 +34,8 @@ def database_connect_args() -> dict[str, object]:
         return {"ssl": ssl.create_default_context(cafile=DATABASE_SSL_CA_FILE)}
     return {"ssl": True}
 
-# dist/ is the frontend build (`npm run build`); resolved relative to this
+# dist/ is the frontend build (`npm run build:real` for a deployment; its
+# build-info.json says so, app/deploy_checks.py); resolved relative to this
 # file so it works regardless of the process's working directory.
 STATIC_DIR: str = os.environ.get(
     "STATIC_DIR",

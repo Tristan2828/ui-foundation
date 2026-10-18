@@ -2,6 +2,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import buildInfo from '@tristan2828/ui-foundation/vite'
 
 // https://vite.dev/config/
 // Only reached when VITE_API=real (src/main.tsx skips MSW in that mode) —
@@ -18,8 +19,13 @@ const BACKEND_URL = 'http://localhost:8000'
 const DEV_PORT = 5180
 const PREVIEW_PORT = 4180
 
+// buildInfo: on `vite build`, dist/build-info.json says whether the bundle
+// calls the real API or MSW (the backend refuses a mock bundle with
+// APP_ENV=production), and BUILD_COMMIT/BUILD_PR become the sidebar's
+// version entry (docs/deploy.md "Which build is live"). Set repoUrl to this
+// app's repository, or BUILD_REPO_URL at build time.
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), buildInfo()],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

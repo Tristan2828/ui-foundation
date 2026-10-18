@@ -1,6 +1,6 @@
 {
   "name": "@tristan2828/ui-foundation",
-  "version": "4.4.0",
+  "version": "4.5.0",
   "description": "Shared UI foundation for contract-first, database-backed React apps: shadcn primitives, DataTable/EntityForm composites, auth, the gateway error seam, design tokens, lint rules and the AI playbook.",
   "license": "MIT",
   "repository": {
@@ -16,6 +16,7 @@
     "dist",
     "styles",
     "eslint",
+    "vite",
     "bin",
     "conventions",
     "openapi"
@@ -47,6 +48,10 @@
     "./eslint": {
       "types": "./eslint/index.d.ts",
       "default": "./eslint/index.js"
+    },
+    "./vite": {
+      "types": "./vite/index.d.ts",
+      "default": "./vite/index.js"
     },
     "./styles.css": {
       "style": "./styles/index.css",
@@ -88,6 +93,7 @@
     "sonner": "^2.0.8",
     "tailwindcss": "^4.3.3",
     "typescript-eslint": "^8.70.0",
+    "vite": "^8.3.0",
     "zod": "^4.6.5"
   },
   "peerDependenciesMeta": {
@@ -122,6 +128,9 @@
       "optional": true
     },
     "typescript-eslint": {
+      "optional": true
+    },
+    "vite": {
       "optional": true
     }
   },

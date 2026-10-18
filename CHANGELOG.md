@@ -5,6 +5,34 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.5.0 — which build is live, and production refuses a mock build
+
+Additive. Two apps had each built both of these by hand (#142, #143).
+
+- **`@tristan2828/ui-foundation/vite`**, a new entry point: `buildInfo()`,
+  a Vite plugin. On `vite build` it writes `dist/build-info.json` (`api`:
+  `"real"` or `"mock"`, `commit`, `pr`, `builtAt`) and sets
+  `import.meta.env.VITE_BUILD_COMMIT`, `VITE_BUILD_PR` and
+  `VITE_BUILD_REPO_URL` from the build's `BUILD_COMMIT`, `BUILD_PR` and
+  `BUILD_REPO_URL` (or its `repoUrl` option). `vite` is now an optional
+  peer dependency (every app already has it).
+- **`AppShell`'s `version`** (optional, `AppShellVersion`): the short
+  commit in the sidebar footer, linking to its PR, or to the commit when
+  there's no PR. Nothing shows without a commit, so development shows
+  nothing.
+- **Template backend:** with `APP_ENV=production`, `production_problems`
+  refuses to start when `STATIC_DIR` has no `build-info.json` or it says
+  `"mock"`, naming `npm run build:real`.
+- **How an app adopts it:** add `buildInfo({ repoUrl: '<the app's repo>' })`
+  to `vite.config.ts`'s plugins, pass `version` to `AppShell` as the
+  template's `src/App.tsx` does, and set `BUILD_COMMIT` (and `BUILD_PR`
+  when there is one) where the app is built (`docs/deploy.md` "Which build
+  is live"). The backend check is copy-in: take `frontend_build_problem`
+  and the `static_dir` argument from the template's
+  `app/deploy_checks.py` and `app/main.py`, and **build with the plugin
+  before deploying it**, or production will refuse to start for want of
+  `build-info.json`. An app that already has its own check can drop it.
+
 ## 4.4.1 — the Postgres check runs on its own database
 
 Template only. `scripts/check-backend-postgres.sh` used the dev

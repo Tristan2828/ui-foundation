@@ -6,6 +6,15 @@ import { WidgetFormRoute } from '@/routes/widgets/widget-form'
 import { WidgetViewRoute } from '@/routes/widgets/widget-view'
 import { WidgetsTableRoute } from '@/routes/widgets/widgets-table'
 
+// Set by the foundation's Vite plugin at build time (vite.config.ts), from
+// BUILD_COMMIT, BUILD_PR and BUILD_REPO_URL. Undefined in development, and
+// empty without the build args, so the sidebar shows no version then.
+const BUILD_VERSION = {
+  commit: import.meta.env.VITE_BUILD_COMMIT,
+  pr: import.meta.env.VITE_BUILD_PR,
+  repoUrl: import.meta.env.VITE_BUILD_REPO_URL,
+}
+
 const router = createBrowserRouter([
   // Siblings of the AppShell tree, not children of it — AppShell redirects
   // to /login when unauthenticated, so these must sit outside that
@@ -15,7 +24,7 @@ const router = createBrowserRouter([
   { path: '/register', element: <RegisterRoute />, errorElement: <RouteErrorBoundary /> },
   {
     path: '/',
-    element: <AppShell title="UI Foundation" nav={NAV_ITEMS} />,
+    element: <AppShell title="UI Foundation" nav={NAV_ITEMS} version={BUILD_VERSION} />,
     children: [
       { index: true, element: <HomeRoute />, errorElement: <RouteErrorBoundary /> },
       {

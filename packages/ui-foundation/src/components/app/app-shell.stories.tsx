@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { BookOpenIcon, HomeIcon, ListChecksIcon, ListIcon, TagIcon } from 'lucide-react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { AuthContext, type AuthContextValue } from '@/auth/auth-context'
-import { AppShell } from './app-shell'
+import { AppShell, type AppShellVersion } from './app-shell'
 import type { NavEntry } from './app-shell-nav'
 
 // AppShell's sidebar: a flat nav (one "Navigation" group) and a nav with
@@ -11,7 +11,7 @@ import type { NavEntry } from './app-shell-nav'
 // not Projects, on /projects/categories/2. Signed in through AuthContext
 // directly, so nothing is fetched. Axe in both themes is
 // e2e/storybook-visual.spec.ts's COMPOSITE_STORIES; e2e/app-shell.spec.ts
-// checks the groups and the current entry.
+// checks the groups, the current entry and the version entry.
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -43,12 +43,12 @@ const SECTIONS: NavEntry[] = [
   { label: 'Reading', items: [{ to: '/reading', label: 'Books', icon: BookOpenIcon }] },
 ]
 
-function Shell({ nav, path }: { nav: NavEntry[]; path: string }) {
+function Shell({ nav, path, version }: { nav: NavEntry[]; path: string; version?: AppShellVersion }) {
   const router = createMemoryRouter(
     [
       {
         path: '/',
-        element: <AppShell title="Example" nav={nav} defaultSidebarOpen />,
+        element: <AppShell title="Example" nav={nav} defaultSidebarOpen version={version} />,
         children: [{ path: '*', element: <p>Page at {path}</p> }],
       },
     ],
@@ -73,3 +73,13 @@ type Story = StoryObj<typeof Shell>
 export const Sections: Story = { args: { nav: SECTIONS, path: '/projects/categories/2' } }
 
 export const Flat: Story = { args: { nav: FLAT, path: '/projects/7' } }
+
+// A production build's footer: the short commit, linking to its PR
+// (`@tristan2828/ui-foundation/vite` sets the values at build time).
+export const Version: Story = {
+  args: {
+    nav: FLAT,
+    path: '/projects/7',
+    version: { commit: '3655449e1c2b7d0a9f8e6b5c4d3a2f1e0d9c8b7a', pr: 139, repoUrl: 'https://github.com/example/app' },
+  },
+}
