@@ -36,3 +36,15 @@ test('flat: one "Navigation" group, current on a page below its entry', async ({
   await expect(current(page)).toHaveCount(1)
   await expect(current(page)).toHaveText('Projects')
 })
+
+test('version: the short commit and PR in the footer, linking to the PR', async ({ page }) => {
+  await open(page, 'version')
+  const entry = nav(page).getByRole('link', { name: 'Version 3655449 · PR #139' })
+  await expect(entry).toHaveAttribute('href', 'https://github.com/example/app/pull/139')
+  await expect(entry).toHaveAttribute('target', '_blank')
+})
+
+test('flat: no version entry without a version', async ({ page }) => {
+  await open(page, 'flat')
+  await expect(nav(page).getByText(/^Version /)).toHaveCount(0)
+})

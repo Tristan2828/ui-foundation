@@ -30,6 +30,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
                 data_label=DATA_LABEL,
                 mcp_enabled=MCP_ENABLED,
                 mcp_public_url=MCP_PUBLIC_URL,
+                static_dir=STATIC_DIR,
             )
         if problems:
             raise RuntimeError(

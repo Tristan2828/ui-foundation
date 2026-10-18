@@ -5,6 +5,9 @@ deployment is refused outright rather than warned about: a warning in a log
 nobody reads is how a published default password ends up on the internet.
 """
 
+import json
+from pathlib import Path
+
 from fastapi.concurrency import run_in_threadpool
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -21,9 +24,18 @@ async def production_problems(
     data_label: str | None = None,
     mcp_enabled: bool = False,
     mcp_public_url: str | None = None,
+    static_dir: str | None = None,
 ) -> list[str]:
-    """Everything that makes this deployment unsafe to serve; empty if none."""
+    """Everything that makes this deployment unsafe to serve; empty if none.
+
+    `static_dir` is the built frontend (STATIC_DIR); None skips its check.
+    """
     problems: list[str] = []
+
+    if static_dir is not None:
+        problem = frontend_build_problem(Path(static_dir))
+        if problem is not None:
+            problems.append(problem)
 
     # A label says the data isn't production's, and the app shows it on
     # every screen. Production serves production data, so a label here is
@@ -63,3 +75,31 @@ async def production_problems(
             )
 
     return problems
+
+
+BUILD_COMMAND = "Build it with `npm run build:real`, never a plain `npm run build`"
+
+
+def frontend_build_problem(static_dir: Path) -> str | None:
+    """Why the frontend at `static_dir` mustn't be served, or None.
+
+    The build writes build-info.json (the foundation's Vite plugin) saying
+    which API the bundle calls. A mock bundle runs MSW in the browser: the
+    app would show fake data to real users and save nothing, with nothing
+    saying so. A missing file means a build that predates the plugin, or
+    no build at all, so it can't be told apart and is refused too.
+    """
+    info_file = static_dir / "build-info.json"
+    try:
+        info = json.loads(info_file.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return f"The frontend has no {info_file}, so it can't be told from a mock build. {BUILD_COMMAND}."
+    except (OSError, ValueError):
+        return f"{info_file} can't be read as JSON. {BUILD_COMMAND}."
+    api = info.get("api") if isinstance(info, dict) else None
+    if api != "real":
+        return (
+            f"The frontend in {static_dir} was built with mocks (api: {api!r} in build-info.json); "
+            f"it would serve fake data. {BUILD_COMMAND}."
+        )
+    return None

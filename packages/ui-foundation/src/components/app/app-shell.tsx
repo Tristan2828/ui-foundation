@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
 import { activeNavTo, navGroups, type NavEntry } from '@/components/app/app-shell-nav'
+import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
 import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
@@ -29,6 +30,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 export type { NavEntry, NavItem, NavSection } from '@/components/app/app-shell-nav'
+export type { AppShellVersion } from '@/components/app/app-shell-version'
 
 export type AppShellProps = {
   /** Shown at the top of the sidebar (hidden on the collapsed icon rail). */
@@ -53,6 +55,13 @@ export type AppShellProps = {
    * primitive writes a cookie, read back here). A wide table wants false.
    */
   defaultSidebarOpen?: boolean
+  /**
+   * Which build is live, as a short commit in the sidebar footer linking to
+   * its PR (or to the commit when there's no PR). Nothing is shown without
+   * a commit, so development shows nothing. The values come from
+   * `@tristan2828/ui-foundation/vite` (`import.meta.env.VITE_BUILD_*`).
+   */
+  version?: AppShellVersion
 }
 
 // Must match SIDEBAR_COOKIE_NAME in ../ui/sidebar.tsx, which writes the
@@ -92,6 +101,21 @@ function ThemeToggle() {
   )
 }
 
+// Hidden on the icon rail, like the user's name beside it.
+function VersionEntry({ version }: { version: AppShellVersion }) {
+  const label = versionLabel(version)
+  if (!label) return null
+  const href = versionHref(version)
+  const className = 'block truncate px-2 type-caption text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden'
+  return href ? (
+    <a href={href} target="_blank" rel="noreferrer" className={`${className} hover:underline`}>
+      {label}
+    </a>
+  ) : (
+    <span className={className}>{label}</span>
+  )
+}
+
 function AppShellSkeleton() {
   return (
     <div className="flex h-screen w-full gap-4 p-4" data-state="loading">
@@ -104,7 +128,7 @@ function AppShellSkeleton() {
   )
 }
 
-export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }: AppShellProps) {
+export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true, version }: AppShellProps) {
   const { user, status, error, retry, logout } = useAuth()
   const location = useLocation()
   const reporter = useErrorReporter()
@@ -188,6 +212,7 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true }
               {sidebarExtra}
             </SidebarContent>
             <SidebarFooter>
+              {version && <VersionEntry version={version} />}
               {/* On the icon rail the name is hidden and the button centred —
                   otherwise the name's truncated sliver pushes the button off
                   the rail. */}

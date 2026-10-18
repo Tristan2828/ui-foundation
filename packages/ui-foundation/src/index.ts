@@ -4,7 +4,7 @@
 // points (`/gateway`, `/mocks`, `/testing`) so each stays behind its boundary.
 
 // Composites
-export { AppShell, type AppShellProps, type NavEntry, type NavItem, type NavSection } from '@/components/app/app-shell'
+export { AppShell, type AppShellProps, type AppShellVersion, type NavEntry, type NavItem, type NavSection } from '@/components/app/app-shell'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export { DataTable, type DataTableProps, type DataTableWidth, type SortingState } from '@/components/app/data-table'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'

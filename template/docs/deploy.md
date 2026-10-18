@@ -8,15 +8,19 @@ is in [`cloud-postgres.md`](cloud-postgres.md) (hosted) or
 
 ## Checklist
 
-Do these in order. Steps 3–5 are enforced: with `APP_ENV=production` the
-backend refuses to start until they're done (`backend/app/deploy_checks.py`).
+Do these in order. Steps 1 and 3–5 are enforced: with `APP_ENV=production`
+the backend refuses to start until they're done (`backend/app/deploy_checks.py`).
 
 1. **Build the frontend with `npm run build:real`** — never plain
    `npm run build`. `VITE_API` is baked in at build time (`src/main.tsx`),
    so a plain build ships MSW and the deployed app serves mock data instead
    of calling the backend. `build:real` uses Vite's `real` mode
    (`.env.real`), which leaves MSW out of the bundle entirely. FastAPI
-   serves `dist/` from `STATIC_DIR`.
+   serves `dist/` from `STATIC_DIR`. The build writes
+   `dist/build-info.json` (the foundation's Vite plugin, `vite.config.ts`),
+   and production refuses to start when it's missing or says `"mock"`.
+   Set `BUILD_COMMIT` and `BUILD_PR` for this build too ("Which build is
+   live" below).
 2. **Migrate:** `cd backend && .venv/Scripts/python -m alembic upgrade head`
    against the production `DATABASE_URL`. On a fresh database, set
    `SEED_USER_EMAIL`/`SEED_USER_PASSWORD` to real values *before* this
@@ -33,6 +37,50 @@ backend refuses to start until they're done (`backend/app/deploy_checks.py`).
    `backend/.env` copied from local development carries one.
 6. **Set `APP_ENV=production`.** Start the app; if it refuses, the error
    lists exactly what's left.
+
+## Which build is live
+
+The sidebar's footer names the build that's running: `Version 3655449 ·
+PR #139`, linking to the PR, or to the commit when there's no PR. The
+values are read at build time by the foundation's Vite plugin
+(`buildInfo()` in `vite.config.ts`) from three variables, and also land
+in `dist/build-info.json`:
+
+| Variable | |
+|---|---|
+| `BUILD_COMMIT` | the commit being built. Unset or empty: no version entry |
+| `BUILD_PR` | the PR's number, when the build comes from one |
+| `BUILD_REPO_URL` | the repository's web address, `https://github.com/<owner>/<app>`. Or set `repoUrl` once in `vite.config.ts`. Without either, the commit shows unlinked |
+
+In development (`npm run dev`) nothing is shown. Building in GitHub
+Actions:
+
+```yaml
+- run: npm run build:real
+  env:
+    BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    BUILD_PR: ${{ github.event.pull_request.number }}
+    BUILD_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+```
+
+A push to `main` from a merged PR has no PR number in its event; to name
+the PR there, look it up first
+(`gh pr list --state merged --search "$GITHUB_SHA" --json number -q '.[0].number'`)
+or leave it, and the entry links to the commit. In a Dockerfile, the
+same as build args, set before the build step:
+
+```dockerfile
+ARG BUILD_COMMIT=""
+ARG BUILD_PR=""
+ARG BUILD_REPO_URL=""
+ENV BUILD_COMMIT=$BUILD_COMMIT BUILD_PR=$BUILD_PR BUILD_REPO_URL=$BUILD_REPO_URL
+RUN npm run build:real
+```
+
+`docker build --build-arg BUILD_COMMIT=$(git rev-parse HEAD) --build-arg BUILD_PR=139 .`
+
+The build's commit also suits `VITE_RELEASE` and `RELEASE` ("Error
+reporting" below), so a report and the sidebar name the same build.
 
 ## Sign-in limits
 
