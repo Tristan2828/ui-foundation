@@ -5,6 +5,25 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.6.0 — MCP addresses under a section
+
+Template backend only (#141). MCP's `fetch`, `update`, `delete` and
+`restore` only understood `/<entity>/<id>`, so in an app that groups its
+screens under a section (`/media/channels/3`) a link pasted into a chat
+wasn't recognised.
+
+- **`McpEntity.path`** (optional, default `/<name>`): where the record's
+  page is in the app. A pasted address is matched against every entity's
+  path plus `/<id>`; the API's form (`/api/<name>/<id>`) and a full link
+  still work. The addresses the tools hand back use the path, so a chat
+  links to the page the user would open.
+- **`check_entities`** runs when `mcp_entities.py` loads and refuses a
+  malformed path, one under `/api`, or two entities with the same path.
+- **How an app adopts it:** copy the changes to `app/mcp_entities.py`,
+  `app/mcp_tools.py` and `tests/test_mcp.py` from the template at the
+  4.6.0 tag (keep the app's own `ENTITIES`), then set `path` on each
+  entity whose pages aren't at `/<name>`.
+
 ## 4.5.0 — which build is live, and production refuses a mock build
 
 Additive. Two apps had each built both of these by hand (#142, #143).

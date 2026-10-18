@@ -199,6 +199,14 @@ address below answers 404.
   `backend/app/mcp_entities.py`; add each new entity there (its router
   functions, a title field, the fields shown in a list, the fields that
   point at other entities).
+- **Addresses** are the records' pages in the app, so a link copied from
+  a screen works as it is: `/widgets/3`, or the full link with the app's
+  host. An entity whose pages sit under a section gives its `McpEntity` a
+  `path`: with `path="/media/channels"`, a chat reads
+  `/media/channels/3`, and every address the tools hand back (created,
+  search, list) is that page. The API's own form (`/api/<entity>/<id>`)
+  works too. Two entities can't share a path; the backend refuses to
+  start if they do.
 - **The log:** every create, update, delete and restore is a row in `mcp_audit_log`: the
   user, the chat, the time, the entity and record, and the changed fields
   before and after (JSON, as the API names them; the whole record for a

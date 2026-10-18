@@ -130,7 +130,9 @@ copied in, so by hand):
    `production_problems` arguments) and `app/deploy_checks.py`.
 3. Rewrite `ENTITIES` in `app/mcp_entities.py` for the app's own
    entities: for each, its router functions, `out`, `title`, `summary`,
-   `filters`, `sorts`, `relations` and the create/update schemas. Leave
+   `filters`, `sorts`, `relations` and the create/update schemas, and
+   `path` (4.6) for an entity whose pages sit under a section
+   (`/media/channels`). Leave
    out `create` and `update` for an entity chats should only read. Update
    `tests/test_mcp.py`'s expectations to match.
 4. Read the template's `docs/deploy.md` "AI chats (MCP)", set
