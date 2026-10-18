@@ -1,5 +1,7 @@
-# The local database: what `backend/scripts/dev.sh` uses by default and
-# scripts/check-backend-postgres.sh always uses. The backend itself runs on the host
+# The local database: what `backend/scripts/dev.sh` uses by default, on
+# :5432. scripts/check-backend-postgres.sh starts its own copy of it, a
+# separate project on a free port (POSTGRES_PORT), deleted after each run.
+# The backend itself runs on the host
 # (`uvicorn app.main:app --reload` from backend/, after `alembic upgrade
 # head`), not in a container. For a real database, point DATABASE_URL at a
 # hosted one (docs/cloud-postgres.md) or a self-hosted one
@@ -12,7 +14,7 @@ services:
       POSTGRES_PASSWORD: ui_foundation
       POSTGRES_DB: ui_foundation
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       # postgres:18+ images expect a single mount at /var/lib/postgresql
       # (not .../data) — the image manages a major-version-specific

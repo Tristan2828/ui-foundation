@@ -27,7 +27,17 @@ fail() { echo "check-backend-postgres: $1" >&2; exit 1; }
 # backend/.env points at (possibly a cloud database like Supabase) — this script registers test
 # users and runs migrations, which shouldn't land in a real database.
 # python-dotenv doesn't override variables already set, so these win.
-export DATABASE_URL="postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation"
+#
+# Its own copy, too: not the dev database `docker compose up` makes, and not
+# another checkout's. A compose project named for this checkout's path gets
+# its own volume (a database another branch migrated can't stop alembic
+# here), on a free port (5432 may be any checkout's dev database), and
+# cleanup deletes it. Set CHECK_POSTGRES_PORT to choose the port.
+CHECK_ID=$(printf '%s' "$REPO_ROOT" | cksum | cut -d' ' -f1)
+export COMPOSE_PROJECT_NAME="check-postgres-$CHECK_ID"
+POSTGRES_PORT="${CHECK_POSTGRES_PORT:-$(node -e "const s=require('net').createServer();s.listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})")}"
+export POSTGRES_PORT
+export DATABASE_URL="postgresql+asyncpg://ui_foundation:ui_foundation@localhost:$POSTGRES_PORT/ui_foundation"
 export DATABASE_SSL=false
 unset DATABASE_SSL_CA_FILE
 # The docker-compose database is local data, whatever backend/.env says.
@@ -57,11 +67,14 @@ PY="backend/.venv/Scripts/python"
 UVICORN_PID=""
 cleanup() {
   [ -n "$UVICORN_PID" ] && kill "$UVICORN_PID" 2>/dev/null || true
-  docker compose down >/dev/null 2>&1 || true
+  # -v: the volume is this run's alone; the next run migrates a fresh one.
+  docker compose down -v >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-echo "check-backend-postgres: starting Postgres (docker compose)"
+echo "check-backend-postgres: starting Postgres (docker compose project $COMPOSE_PROJECT_NAME, :$POSTGRES_PORT)"
+# A run that was killed before cleanup leaves its volume; start clean.
+docker compose down -v >/dev/null 2>&1 || true
 docker compose up -d postgres
 for i in $(seq 1 30); do
   docker compose ps postgres --format '{{.Health}}' | grep -q healthy && break
@@ -111,9 +124,8 @@ rm -f "$DUP_BODY"
 
 echo "check-backend-postgres: a fresh registration can call an authenticated endpoint immediately, no separate login (Phase 11)"
 COOKIE_JAR=$(mktemp)
-# A unique email per run — Postgres data persists across invocations (no
-# reset between runs, unlike the SQLite pytest fixture), so a fixed address
-# would 422 as "already registered" on the second run of this script.
+# A unique email per run, though each run now starts from an empty
+# database: harmless, and safe if CHECK_POSTGRES_PORT points at a reused one.
 FRESH_EMAIL="check-backend-postgres-$(date +%s)-$$@example.com"
 register_status=$(curl -s -c "$COOKIE_JAR" -o /dev/null -w '%{http_code}' -X POST http://localhost:8000/api/auth/register \
   -H 'Content-Type: application/json' \
