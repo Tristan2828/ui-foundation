@@ -208,14 +208,18 @@ outline (that stays `type-page-title` and `type-section-title`):
 
 | Class | For | Size / weight |
 |---|---|---|
-| `type-heading-1` | `#` in a note, with a rule under it | 26px / 700 |
-| `type-heading-2` | `##` | 20px / 600 |
-| `type-heading-3` | `###` | 17px / 600 |
+| `type-heading-1` | `#` in a note, with a 5px bar in `--heading-bar` | 26px / 700 |
+| `type-heading-2` | `##`, with a 3px bar in `--heading-bar` | 20px / 600 |
+| `type-heading-3` | `###`, with a 2px bar in `--rule` | 17px / 600 |
 
-The same text has two colour tokens of its own: `--link` (`text-link`), a
+The bar runs down the heading's left edge and thins as the level drops,
+so the level reads at a glance as well as from the size.
+
+The same text has three colour tokens of its own: `--link` (`text-link`), a
 link's colour, blue as well as underlined (5.59:1 on white, 8.90:1 on the
-dark page), and `--rule` (`bg-rule`), the 2px line a `---` divider draws,
-stronger than `--border`'s hairline. A callout (`> [!NOTE]`) is a 10% wash
+dark page); `--heading-bar` (`border-heading-bar`), the same blue for the
+bar beside `#` and `##`; and `--rule` (`bg-rule`), the 2px line a `---`
+divider draws, stronger than `--border`'s hairline. A callout (`> [!NOTE]`) is a 10% wash
 of its kind's tone behind ordinary text, with the icon in the tone's text
 shade: note `info`, tip `success`, important category slot 2, warning
 `warning`, caution `destructive`. The package draws all of it; an app
