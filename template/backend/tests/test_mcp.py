@@ -709,6 +709,28 @@ async def test_update_refuses_in_words_and_changes_nothing(web: AsyncClient, tok
     assert (await session.exec(select(McpAuditEntry))).all() == []
 
 
+async def test_a_refused_write_leaves_nothing_for_a_later_write_to_save(web: AsyncClient, token: str) -> None:
+    # The router sets the tags, then refuses the unknown category: the tags it
+    # already set must not ride along with the next write in the same request.
+    tags_before = (await web.get("/api/widgets/1")).json()["tags"]
+    refused = {"url": "/widgets/1", "fields": {"tags": ["fragile", "bulky"], "extraCategoryIds": [99]}}
+    batch = await web.post(
+        "/mcp",
+        json=[
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "update", "arguments": refused}},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+             "params": {"name": "update", "arguments": {"url": "/widgets/1", "fields": {"name": "Renamed"}}}},
+        ],
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    first, second = batch.json()
+    assert first["result"]["isError"]
+    assert first["result"]["content"][0]["text"].startswith("Nothing was saved.")
+    assert not second["result"].get("isError")
+    widget = (await web.get("/api/widgets/1")).json()
+    assert (widget["name"], widget["tags"]) == ("Renamed", tags_before)
+
+
 async def test_update_cannot_reach_another_users_record(web: AsyncClient, token: str, session: AsyncSession) -> None:
     session.add(User(id=2, email="other@example.com", name="Other", password_hash="unused"))
     await session.flush()

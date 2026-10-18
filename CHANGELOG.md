@@ -5,6 +5,25 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.3.1 — MCP: a refused write leaves nothing behind
+
+Backend only, a fix to `app/mcp_tools.py` since 4.2.0. When an entity's router
+refused a `create` or `update` part way through (a field error raised after
+it had already changed part of the record), the chat was told "Nothing was
+saved", but the partial change stayed in the request's session. A later
+write in the same request (a JSON-RPC batch) then committed it, with no
+row in `mcp_audit_log`. A refused write is now rolled back
+(`_refused`). Found adopting 4.2.0 in an app whose task router applies
+fields before its focus rule refuses. 4.3.0's `delete` and `restore` need
+no change: their routers refuse before they change anything.
+
+- **How an app adopts it** (the backend is copied in): in
+  `app/mcp_tools.py`, add `_refused` and use it in both `except
+  RequestValidationError` blocks, as in the template at the 4.3.1 tag. Add
+  `test_a_refused_write_leaves_nothing_for_a_later_write_to_save` to
+  `tests/test_mcp.py`, rewritten for one of the app's own routers that
+  changes a field before refusing another.
+
 ## 4.3.0 — soft delete as an entity pattern, and an MCP delete that only soft-deletes
 
 Additive: a new endpoint, a new list parameter and two new MCP tools in the

@@ -256,6 +256,17 @@ async def tool_list(session: AsyncSession, caller: Caller, args: dict[str, Any])
     return "\n".join([head, *(_list_line(entity, _dump(entity, item)) for item in items)])
 
 
+async def _refused(session: AsyncSession, caller: Caller, exc: RequestValidationError) -> ToolError:
+    """The router refused part way through, after changing some of the record
+    in the session. Over the API the request ends there; here a later write in
+    the same request (a JSON-RPC batch) would commit those changes, with no
+    audit row. So they are rolled back, and the user the reads scope by is
+    loaded again (the rollback expired it)."""
+    await session.rollback()
+    await session.refresh(caller.user)
+    return ToolError("Nothing was saved.\n" + "\n".join(f"- {line}" for line in _error_lines(list(exc.errors()))))
+
+
 async def tool_create(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
     entity = _entity(args.get("entity"))
     if entity.create is None or entity.create_schema is None:
@@ -264,7 +275,7 @@ async def tool_create(session: AsyncSession, caller: Caller, args: dict[str, Any
     try:
         created = await entity.create(session, caller.user, payload)
     except RequestValidationError as exc:
-        raise ToolError("Nothing was saved.\n" + "\n".join(f"- {line}" for line in _error_lines(list(exc.errors())))) from exc
+        raise await _refused(session, caller, exc) from exc
     # The router committed, which expired the user the later reads scope by.
     await session.refresh(caller.user)
     data = _dump(entity, created)
@@ -286,7 +297,7 @@ async def tool_update(session: AsyncSession, caller: Caller, args: dict[str, Any
     try:
         updated = await entity.update(session, caller.user, record_id, payload)
     except RequestValidationError as exc:
-        raise ToolError("Nothing was saved.\n" + "\n".join(f"- {line}" for line in _error_lines(list(exc.errors())))) from exc
+        raise await _refused(session, caller, exc) from exc
     await session.refresh(caller.user)
     after_all = _dump(entity, updated)
     changed = [key for key in after_all if after_all[key] != before_all.get(key)]
