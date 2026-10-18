@@ -241,6 +241,53 @@ address below answers 404.
   `http` on `localhost`, `127.0.0.1` or `[::1]`, matched exactly. `/mcp`
   also refuses a browser request whose `Origin` isn't the app's own.
 
+## Scheduled jobs
+
+Work that runs every so often inside the app's own process: pulling from
+an outside service, a nightly cleanup. A job is an async function that
+gets a database session of its own and returns a short summary of what it
+did (or None), registered once at import time, e.g. in the module that
+defines it, imported from `app/main.py`:
+
+```python
+from datetime import timedelta
+from app.jobs import register_job
+
+async def sync_feeds(session: AsyncSession) -> str | None:
+    added = ...
+    return f"{added} new"
+
+register_job("sync-feeds", every=timedelta(minutes=15), run=sync_feeds)
+# run_at_start=True: the first run soon after startup, not 15 minutes later.
+# timeout=timedelta(minutes=5) is the default; a run past it fails.
+```
+
+- **When they run:** with **`JOBS_ENABLED`**, which is on by default with
+  `APP_ENV=production` and off otherwise, so a dev server and the tests run
+  a job only when asked. Each job waits `every` after its last run, plus a
+  jitter (up to a tenth of `every`, at most a minute), so jobs started
+  together don't fire on the same second.
+- **One run at a time, once per interval, across processes.** On Postgres
+  each run holds an advisory lock for the job. Another process (a second
+  replica, a reload's overlap) skips rather than waits. A scheduled run
+  also skips when the job started less than `every` ago anywhere. So with
+  several replicas the job still runs about once per interval.
+- **A failure never stops the schedule.** An exception, or the timeout, is
+  logged, sent through `report_error` ("Error reporting" below, tagged
+  with the job's name) and recorded; the next run comes on time.
+- **What happened:** every run is a row in `job_runs` (started, finished,
+  outcome `ok`/`failed`/`skipped`, the error, the job's summary), kept
+  `JOB_RUNS_KEEP_DAYS` (30). `GET /api/jobs` lists each job's schedule,
+  whether it's running and its last run (skipped ones left out);
+  `SELECT * FROM job_runs ORDER BY started_at DESC` shows everything.
+- **Run one now:** `POST /api/jobs/<name>/run`, signed in. It starts in the
+  background and answers 202 with the job running, or 409 if it already
+  is. A run started by hand isn't held to the schedule.
+
+Not built in, by decision: cron expressions, queues, retries with
+backoff, a separate worker process. A job that must retry does it inside
+its own run.
+
 ## Error reporting
 
 Every 500 the backend answers, and every failure the browser sees, goes

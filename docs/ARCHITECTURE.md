@@ -127,6 +127,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   functions, so the API's validation and per-user scoping apply. Delete is soft only
   (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
   is logged. Stdlib only, by decision (#132): no MCP SDK.
+- **Scheduled jobs** (4.7, #136) run inside the app's one process
+  (`app/jobs.py`): `register_job`, started from the lifespan when
+  `JOBS_ENABLED`. A Postgres advisory lock keeps a job to one run at a
+  time across processes, and a run within `every` of the last skips, so
+  replicas don't double up. Every run is a row in `job_runs`;
+  `GET /api/jobs` and `POST /api/jobs/{name}/run` show and start them.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps

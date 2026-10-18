@@ -213,6 +213,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The scheduled jobs, each with its schedule and last run
+         * @description The jobs registered in the backend (app/jobs.py), in registration order. lastRun is the latest run that ran (ok or failed); runs a process skipped are left out.
+         */
+        get: operations["listJobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/jobs/{name}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run a scheduled job now
+         * @description Starts a run in the background and answers at once, with the job running. GET /jobs shows the run once it ends. 409 while the job is already running, in this process or another.
+         */
+        post: operations["runJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -376,6 +416,32 @@ export interface components {
         HTTPErrorBody: {
             detail: string;
         };
+        Job: {
+            /** @description The name the job was registered under, e.g. sync-feeds. */
+            name: string;
+            /** @description How long after a run the next one starts (before jitter). */
+            everySeconds: number;
+            /** @description A run still going after this fails. */
+            timeoutSeconds: number;
+            /** @description Whether a run is in progress, in any process. */
+            running: boolean;
+            /** @description The latest run that ran (ok or failed); null before the first. */
+            lastRun: components["schemas"]["JobRun"] | null;
+        };
+        JobRun: {
+            /** @enum {string} */
+            trigger: "schedule" | "manual";
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            finishedAt: string;
+            /** @enum {string} */
+            outcome: "ok" | "failed" | "skipped";
+            /** @description For a failed run, the error's type and message (or the timeout). null otherwise. */
+            error: string | null;
+            /** @description What the job said it did ("12 new"), or why a run was skipped. */
+            summary: string | null;
+        };
     };
     responses: {
         /** @description Validation failed on one or more fields. */
@@ -389,6 +455,15 @@ export interface components {
         };
         /** @description Resource not found. */
         NotFoundError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["HTTPErrorBody"];
+            };
+        };
+        /** @description Conflicts with what is already happening (a job already running). */
+        ConflictError: {
             headers: {
                 [name: string]: unknown;
             };
@@ -817,6 +892,54 @@ export interface operations {
             };
             401: components["responses"]["UnauthorizedError"];
             422: components["responses"]["ValidationError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    listJobs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every registered job. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"][];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    runJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Started. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            409: components["responses"]["ConflictError"];
             500: components["responses"]["ServerError"];
         };
     };

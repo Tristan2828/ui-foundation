@@ -88,6 +88,9 @@ echo "check-backend-postgres: alembic upgrade head"
 echo "check-backend-postgres: every table and column has a COMMENT ON (AGENTS.md Hard Rules)"
 (cd backend && "../$PY" scripts/check_db_comments.py) || fail "a table or column has no comment"
 
+echo "check-backend-postgres: scheduled jobs' lock and runs on Postgres"
+(cd backend && "../$PY" scripts/check_jobs_live.py) || fail "the live jobs check failed"
+
 echo "check-backend-postgres: starting uvicorn on :8000"
 mkdir -p logs # gitignored, so absent in a fresh clone
 # `exec` replaces the subshell with uvicorn itself, so $! is uvicorn's own

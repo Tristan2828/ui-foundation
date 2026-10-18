@@ -5,6 +5,34 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.7.0 — scheduled jobs in the reference backend
+
+Template backend only (#136). An app that pulls from an outside service or
+cleans up nightly registers a job instead of writing its own loop in
+`lifespan`, and gets what each app would otherwise get wrong:
+
+- **`register_job(name, every=…, run=…, run_at_start=False, timeout=…)`**
+  in `app/jobs.py`. Jobs start from the lifespan when `JOBS_ENABLED` (on by
+  default with `APP_ENV=production`, off otherwise).
+- **One run at a time, once per interval, across processes**: a Postgres
+  advisory lock per job, and a scheduled run that finds the job started
+  less than `every` ago skips. Jitter keeps jobs off the same second.
+- **`job_runs`** (migration `0013`): every run's times, outcome
+  (ok, failed, skipped), error and summary, kept `JOB_RUNS_KEEP_DAYS` (30).
+- **A failure never stops the schedule**: logged, sent through
+  `report_error`, recorded.
+- **`GET /api/jobs`** and **`POST /api/jobs/{name}/run`** (202, or 409
+  while running), signed in, in the contract with a new `ConflictError`
+  response.
+- **How an app adopts it:** copy `app/jobs.py`, `app/routers/jobs.py`,
+  `scripts/check_jobs_live.py` and `tests/test_jobs.py` from the template
+  at the 4.7.0 tag. Apply the changes to `app/config.py`, `app/main.py`,
+  `app/models.py`, `app/schemas.py` and `app/openapi_responses.py`. Add
+  migration `0013_job_runs.py`, renumbered onto the app's own chain. Add
+  the two paths, the `Job`/`JobRun` schemas and `ConflictError` to
+  `openapi.yaml` and run `npm run gen:api`. Then register the app's jobs
+  (`docs/deploy.md` "Scheduled jobs").
+
 ## 4.6.0 — MCP addresses under a section
 
 Template backend only (#141). MCP's `fetch`, `update`, `delete` and

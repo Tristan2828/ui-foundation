@@ -149,6 +149,26 @@ class McpAuditEntry(SQLModel, table=True):
     after: str = Field(sa_column=Column(Text, nullable=False))
 
 
+class JobRunRecord(SQLModel, table=True):
+    """One run of a scheduled job (app/jobs.py), kept JOB_RUNS_KEEP_DAYS."""
+
+    __tablename__ = "job_runs"
+
+    id: int | None = Field(default=None, primary_key=True)
+    # The name the job was registered under (register_job).
+    job: str = Field(max_length=64, index=True)
+    # "schedule" or "manual" (POST /jobs/{name}/run).
+    trigger: str = Field(max_length=16)
+    started_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False, index=True))
+    finished_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    # "ok", "failed", or "skipped" (another process was running it).
+    outcome: str = Field(max_length=16)
+    # What went wrong, for a failed run (scrubbed like an error report).
+    error: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    # What the job said it did ("12 new"), for an ok run.
+    summary: str | None = Field(default=None, max_length=500)
+
+
 class WidgetStatus(str, Enum):
     draft = "draft"
     active = "active"
