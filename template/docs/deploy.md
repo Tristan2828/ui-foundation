@@ -79,6 +79,22 @@ RUN npm run build:real
 
 `docker build --build-arg BUILD_COMMIT=$(git rev-parse HEAD) --build-arg BUILD_PR=139 .`
 
+**Which schema it migrates to.** With `alembic` (the template passes
+`backend/migrations/versions`), `build-info.json` also says `schema`: the
+head revision, read from the migration files. A live site whose
+`/build-info.json` names the latest revision was built from those
+migrations, so with `alembic upgrade head` run before the app starts, it
+proves the deploy migrated. Two heads (a branch nobody merged) fail the
+build, as `alembic upgrade head` would refuse them. A Docker build stage
+that builds the frontend needs `backend/migrations/versions` copied in
+before `npm run build:real`.
+
+Anything else a build should say about itself goes in `extra`, a function
+whose fields are merged into the file:
+`buildInfo({ extra: () => ({ region: process.env.REGION ?? null }) })`.
+It can't set the plugin's own fields (`api`, `commit`, `pr`, `builtAt`,
+`schema`); the build fails if it tries.
+
 The build's commit also suits `VITE_RELEASE` and `RELEASE` ("Error
 reporting" below), so a report and the sidebar name the same build.
 
@@ -205,8 +221,10 @@ address below answers 404.
   `path`: with `path="/media/channels"`, a chat reads
   `/media/channels/3`, and every address the tools hand back (created,
   search, list) is that page. The API's own form (`/api/<entity>/<id>`)
-  works too. Two entities can't share a path; the backend refuses to
-  start if they do.
+  works too, so a copied request URL can be pasted; an API grouped by
+  module gives the entity an `api_path` (`api_path="/api/media/channels"`
+  reads `/api/media/channels/3`). Two entities can't share a path or an
+  API path; the backend refuses to start if they do.
 - **The log:** every create, update, delete and restore is a row in `mcp_audit_log`: the
   user, the chat, the time, the entity and record, and the changed fields
   before and after (JSON, as the API names them; the whole record for a

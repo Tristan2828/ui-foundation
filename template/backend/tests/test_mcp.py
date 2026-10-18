@@ -957,3 +957,54 @@ def test_addresses_that_cannot_be_told_apart_are_refused_at_startup(path: str, p
 
 def test_the_registry_as_shipped_is_accepted() -> None:
     check_entities(ENTITIES)
+
+
+# ------------------------------------------- an API grouped by module
+
+
+def _widgets_api_under_a_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Widgets' API sits under a module, /api/inventory/widgets/<id>, and
+    its pages under the same section."""
+    entities = dict(ENTITIES)
+    entities["widgets"] = replace(entities["widgets"], path="/inventory/widgets", api_path="/api/inventory/widgets")
+    check_entities(entities)
+    monkeypatch.setattr(mcp_tools, "ENTITIES", entities)
+
+
+async def test_a_grouped_api_address_reads_the_record(
+    web: AsyncClient, token: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _widgets_api_under_a_module(monkeypatch)
+
+    text, is_error = await call(web, token, "fetch", {"url": "https://app.test/api/inventory/widgets/1"})
+    assert not is_error
+    # The address handed back is still the page's.
+    assert text.startswith("# Wireless Mouse\nAddress: /inventory/widgets/1")
+    assert (await call(web, token, "fetch", {"url": "/inventory/widgets/1"}))[0] == text
+    # Another entity's API form is unchanged.
+    assert not (await call(web, token, "fetch", {"url": "/api/widget-categories/1"}))[1]
+
+    updated, is_error = await call(web, token, "update", {"url": "/api/inventory/widgets/1", "fields": {"name": "Renamed"}})
+    assert not is_error
+    assert updated.startswith("Updated widget /inventory/widgets/1. Changed name.")
+
+    # The flat form no longer names widgets.
+    text, is_error = await call(web, token, "fetch", {"url": "/api/widgets/1"})
+    assert is_error and text.startswith("'/api/widgets/1' isn't a record address.")
+
+
+@pytest.mark.parametrize(
+    ("api_path", "problem"),
+    [
+        ("/api/widget-categories", "share the API address /api/widget-categories/<id>"),
+        ("/inventory/widgets", "must be under /api/"),
+        ("/api", "must be under /api/"),
+        ("/api/inventory/widgets/", "no trailing /"),
+        ("/API/Widgets", "lowercase"),
+    ],
+)
+def test_api_paths_that_cannot_be_told_apart_are_refused_at_startup(api_path: str, problem: str) -> None:
+    entities: dict[str, McpEntity] = dict(ENTITIES)
+    entities["widgets"] = replace(entities["widgets"], api_path=api_path)
+    with pytest.raises(ValueError, match=re.escape(problem)):
+        check_entities(entities)

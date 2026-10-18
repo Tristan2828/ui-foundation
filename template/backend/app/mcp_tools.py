@@ -65,17 +65,15 @@ def _address_forms() -> str:
 
 def _parse_address(value: Any) -> tuple[McpEntity, int]:
     """A record from its page's address (`/media/channels/3`, or the full
-    link with the app's host) or the API's (`/api/channels/3`). Paths are
-    matched whole: check_entities makes every page path distinct."""
+    link with the app's host) or the API's (`/api/media/channels/3`). Paths
+    are matched whole: check_entities makes every page path and every API
+    path distinct, and keeps the two apart (pages are never under /api)."""
     path = urlparse(value).path.rstrip("/") if isinstance(value, str) else ""
     prefix, _, record_id = path.rpartition("/")
     entity: McpEntity | None = None
     if _RECORD_ID.match(record_id):
-        if prefix.startswith("/api/"):
-            # The API's own form, so a copied request URL still works.
-            entity = ENTITIES.get(prefix.removeprefix("/api/"))
-        else:
-            entity = next((e for e in ENTITIES.values() if e.page_path == prefix), None)
+        # The API's own form too, so a copied request URL still works.
+        entity = next((e for e in ENTITIES.values() if prefix in (e.page_path, e.api_base)), None)
     if entity is None:
         raise ToolError(
             f"{value!r} isn't a record address. Use a record's address in the app, one of: "

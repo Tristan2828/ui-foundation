@@ -40,7 +40,8 @@ class ListArgs:
 
 @dataclass(frozen=True)
 class McpEntity:
-    # The API's URL segment (/api/<name>/<id>), and the entity's name in tools.
+    # The entity's name in tools, and its API's URL segment (/api/<name>/<id>)
+    # unless `api_path` says otherwise.
     name: str
     # What the entity is called in a sentence ("widget").
     singular: str
@@ -73,35 +74,55 @@ class McpEntity:
     # for an app that groups screens under a section. Empty means /<name>.
     # The address a chat pastes and the one the tools hand back.
     path: str = ""
+    # Where the record is in the API, before /<id>: "/api/media/channels" for
+    # an API grouped by module. Empty means /api/<name>. Read only from a
+    # pasted address, so a copied request URL works too.
+    api_path: str = ""
 
     @property
     def page_path(self) -> str:
         return self.path or f"/{self.name}"
 
+    @property
+    def api_base(self) -> str:
+        return self.api_path or f"/api/{self.name}"
+
 
 _PATH = re.compile(r"^(/[a-z0-9][a-z0-9-]*)+$")
 
 
+def _check_path(entity: McpEntity, option: str, value: str, example: str) -> None:
+    if not _PATH.match(value):
+        raise ValueError(
+            f"MCP entity {entity.name!r}: {option} {value!r} must be lowercase segments, "
+            f"each after a /, with no trailing / (e.g. {example})."
+        )
+
+
 def check_entities(entities: Mapping[str, McpEntity]) -> None:
     """Refuses, at startup, a registry whose addresses can't be told apart:
-    a malformed path, or two entities with the same page path or API
-    segment, or a page path under /api, which is where the API's form of an
-    address starts."""
+    a malformed path, two entities with the same page path or API path, a
+    page path under /api, which is where the API's form of an address
+    starts, or an API path outside it."""
     pages: dict[str, str] = {}
+    apis: dict[str, str] = {}
     for key, entity in entities.items():
         if key != entity.name:
             raise ValueError(f"MCP entity {entity.name!r} is registered as {key!r}.")
         page = entity.page_path
-        if not _PATH.match(page):
-            raise ValueError(
-                f"MCP entity {entity.name!r}: path {page!r} must be lowercase segments, "
-                "each after a /, with no trailing / (e.g. /media/channels)."
-            )
+        _check_path(entity, "path", page, "/media/channels")
         if page == "/api" or page.startswith("/api/"):
             raise ValueError(f"MCP entity {entity.name!r}: path {page!r} is under /api, the API's own addresses.")
         if page in pages:
             raise ValueError(f"MCP entities {pages[page]!r} and {entity.name!r} share the address {page}/<id>.")
         pages[page] = entity.name
+        api = entity.api_base
+        _check_path(entity, "api_path", api, "/api/media/channels")
+        if not api.startswith("/api/"):
+            raise ValueError(f"MCP entity {entity.name!r}: api_path {api!r} must be under /api/.")
+        if api in apis:
+            raise ValueError(f"MCP entities {apis[api]!r} and {entity.name!r} share the API address {api}/<id>.")
+        apis[api] = entity.name
 
 
 class WidgetFilters(CamelModel):

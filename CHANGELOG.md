@@ -5,6 +5,32 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.9.0 — the schema in build-info.json, and grouped API addresses for MCP
+
+Additive (#149, #150). An app that doesn't pass the new options sees no
+change.
+
+- **`buildInfo({ alembic })`**: the Alembic versions folder, from the Vite
+  root (`backend/migrations/versions`). `build-info.json` gains `schema`,
+  the head revision, read from the migration files (no Python in the
+  build). No head or several fails the build. The template passes it.
+- **`buildInfo({ extra })`**: a function whose fields are merged into
+  `build-info.json`. It can't set `api`, `commit`, `pr`, `builtAt` or
+  `schema`; the build fails if it tries.
+- **Template backend: `McpEntity.api_path`** (optional, default
+  `/api/<name>`): where the record is in the API, for an API grouped by
+  module. A pasted `/api/media/channels/3` now reads the record.
+  `check_entities` also refuses an API path outside `/api/`, or two
+  entities with the same one.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.9.0`.
+  For the schema, pass `alembic` to `buildInfo()` in `vite.config.ts`, and
+  make sure the build stage has the migrations (`docs/deploy.md` "Which
+  build is live"). An app with its own plugin rewriting `build-info.json`
+  deletes it and passes `alembic` or `extra`. For MCP, copy the changes to
+  `app/mcp_entities.py`, `app/mcp_tools.py` and `tests/test_mcp.py` from
+  the template at the 4.9.0 tag (keep the app's own `ENTITIES`), then set
+  `api_path` on each entity whose API isn't at `/api/<name>`.
+
 ## 4.8.0 — rows grouped under headings, and a pill filter
 
 Additive: new optional props and exports; nothing changes until a table

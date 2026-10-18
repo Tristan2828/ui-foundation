@@ -23,9 +23,10 @@ const PREVIEW_PORT = 4180
 // calls the real API or MSW (the backend refuses a mock bundle with
 // APP_ENV=production), and BUILD_COMMIT/BUILD_PR become the sidebar's
 // version entry (docs/deploy.md "Which build is live"). Set repoUrl to this
-// app's repository, or BUILD_REPO_URL at build time.
+// app's repository, or BUILD_REPO_URL at build time. `alembic` adds the
+// migrations' head revision as `schema`, the one the backend migrates to.
 export default defineConfig({
-  plugins: [react(), tailwindcss(), buildInfo()],
+  plugins: [react(), tailwindcss(), buildInfo({ alembic: 'backend/migrations/versions' })],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
