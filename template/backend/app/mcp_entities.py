@@ -15,7 +15,8 @@ destroy data a backup alone would return.
 Adding an entity: one `McpEntity` below (docs/foundation/add-an-entity.md).
 """
 
-from collections.abc import Awaitable, Callable
+import re
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -39,7 +40,7 @@ class ListArgs:
 
 @dataclass(frozen=True)
 class McpEntity:
-    # The URL segment: the record's address is /<name>/<id>.
+    # The API's URL segment (/api/<name>/<id>), and the entity's name in tools.
     name: str
     # What the entity is called in a sentence ("widget").
     singular: str
@@ -68,6 +69,39 @@ class McpEntity:
     # entity whose deletes are soft (a nullable deleted_at).
     delete: Callable[[AsyncSession, User, int], Awaitable[None]] | None = None
     restore: Callable[[AsyncSession, User, int], Awaitable[Any]] | None = None
+    # Where the record's page is in the app, before /<id>: "/media/channels"
+    # for an app that groups screens under a section. Empty means /<name>.
+    # The address a chat pastes and the one the tools hand back.
+    path: str = ""
+
+    @property
+    def page_path(self) -> str:
+        return self.path or f"/{self.name}"
+
+
+_PATH = re.compile(r"^(/[a-z0-9][a-z0-9-]*)+$")
+
+
+def check_entities(entities: Mapping[str, McpEntity]) -> None:
+    """Refuses, at startup, a registry whose addresses can't be told apart:
+    a malformed path, or two entities with the same page path or API
+    segment, or a page path under /api, which is where the API's form of an
+    address starts."""
+    pages: dict[str, str] = {}
+    for key, entity in entities.items():
+        if key != entity.name:
+            raise ValueError(f"MCP entity {entity.name!r} is registered as {key!r}.")
+        page = entity.page_path
+        if not _PATH.match(page):
+            raise ValueError(
+                f"MCP entity {entity.name!r}: path {page!r} must be lowercase segments, "
+                "each after a /, with no trailing / (e.g. /media/channels)."
+            )
+        if page == "/api" or page.startswith("/api/"):
+            raise ValueError(f"MCP entity {entity.name!r}: path {page!r} is under /api, the API's own addresses.")
+        if page in pages:
+            raise ValueError(f"MCP entities {pages[page]!r} and {entity.name!r} share the address {page}/<id>.")
+        pages[page] = entity.name
 
 
 class WidgetFilters(CamelModel):
@@ -172,3 +206,5 @@ ENTITIES: dict[str, McpEntity] = {
         ),
     )
 }
+
+check_entities(ENTITIES)

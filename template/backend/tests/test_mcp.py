@@ -9,6 +9,7 @@ code and token exchange, then tool calls with the access token. The
 import base64
 import hashlib
 import json
+import re
 from collections.abc import AsyncGenerator
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
@@ -27,7 +28,7 @@ from app.db import get_session
 from app.deploy_checks import production_problems
 from app.main import app
 from app import mcp_tools
-from app.mcp_entities import ENTITIES
+from app.mcp_entities import ENTITIES, McpEntity, check_entities
 from app.mcp_tools import tool_definitions
 from app.models import (
     McpAuditEntry,
@@ -873,3 +874,86 @@ async def test_production_refuses_mcp_without_an_https_public_address(session: A
         assert any("MCP_PUBLIC_URL" in p for p in problems)
     ok = await production_problems(session, mcp_enabled=True, mcp_public_url="https://app.example.com", **kwargs)
     assert not [p for p in ok if "MCP" in p]
+
+
+# ------------------------------------------------- addresses under a section
+
+
+def _widgets_under_a_section(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Widgets' pages sit under a section, as in an app that groups its
+    screens: /inventory/widgets/<id>. The API stays /api/widgets."""
+    entities = dict(ENTITIES)
+    entities["widgets"] = replace(entities["widgets"], path="/inventory/widgets")
+    check_entities(entities)
+    monkeypatch.setattr(mcp_tools, "ENTITIES", entities)
+
+
+async def test_a_sectioned_address_round_trips_through_every_tool(
+    web: AsyncClient, token: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _widgets_under_a_section(monkeypatch)
+
+    text, is_error = await call(web, token, "fetch", {"url": "https://app.test/inventory/widgets/1"})
+    assert not is_error
+    assert text.startswith("# Wireless Mouse\nAddress: /inventory/widgets/1")
+    # Another entity's addresses are unchanged.
+    assert "Category: Electronics (/widget-categories/1)" in text
+    # The API's form still reads the record.
+    assert (await call(web, token, "fetch", {"url": "/api/widgets/1"}))[0] == text
+
+    found, _ = await call(web, token, "search", {"query": "mouse"})
+    assert "- Wireless Mouse — /inventory/widgets/1 (" in found
+    listed, _ = await call(web, token, "list", {"entity": "widgets"})
+    assert "- Wireless Mouse — /inventory/widgets/1 (" in listed
+
+    created, is_error = await call(web, token, "create", {"entity": "widgets", "fields": NEW_WIDGET})
+    assert not is_error
+    address = created.split()[2].rstrip(".")
+    assert address.startswith("/inventory/widgets/")
+
+    updated, is_error = await call(web, token, "update", {"url": address, "fields": {"name": "Renamed"}})
+    assert not is_error
+    assert updated.startswith(f"Updated widget {address}. Changed name.")
+    deleted, is_error = await call(web, token, "delete", {"url": address})
+    assert not is_error and deleted.startswith(f"Deleted widget {address} ")
+    restored, is_error = await call(web, token, "restore", {"url": address})
+    assert not is_error and restored.startswith(f"Restored widget {address}.")
+
+    # The chat is told the addresses to use.
+    fetch = next(t for t in tool_definitions() if t["name"] == "fetch")
+    assert "/inventory/widgets/<id>" in fetch["description"]
+
+
+async def test_an_unknown_prefix_is_refused_in_words(
+    web: AsyncClient, token: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _widgets_under_a_section(monkeypatch)
+    for url in ["/widgets/1", "/inventory/1", "/other/widgets/1", "/inventory/widgets", "/api/inventory/widgets/1"]:
+        text, is_error = await call(web, token, "fetch", {"url": url})
+        assert is_error, url
+        assert text == (
+            f"{url!r} isn't a record address. Use a record's address in the app, one of: "
+            "/inventory/widgets/<id>, /widget-categories/<id>."
+        )
+
+
+@pytest.mark.parametrize(
+    ("path", "problem"),
+    [
+        ("/widget-categories", "share the address /widget-categories/<id>"),
+        ("/api/widgets", "under /api"),
+        ("/inventory/widgets/", "no trailing /"),
+        ("inventory/widgets", "each after a /"),
+        ("/Inventory/Widgets", "lowercase"),
+        ("/inventory//widgets", "each after a /"),
+    ],
+)
+def test_addresses_that_cannot_be_told_apart_are_refused_at_startup(path: str, problem: str) -> None:
+    entities: dict[str, McpEntity] = dict(ENTITIES)
+    entities["widgets"] = replace(entities["widgets"], path=path)
+    with pytest.raises(ValueError, match=re.escape(problem)):
+        check_entities(entities)
+
+
+def test_the_registry_as_shipped_is_accepted() -> None:
+    check_entities(ENTITIES)

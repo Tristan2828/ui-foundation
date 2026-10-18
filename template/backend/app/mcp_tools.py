@@ -32,7 +32,7 @@ from app.schemas import CamelModel
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
 SEARCH_PER_ENTITY = 5
-_ADDRESS = re.compile(r"^/(?P<entity>[a-z][a-z0-9-]*)/(?P<id>\d+)$")
+_RECORD_ID = re.compile(r"^\d+$")
 
 
 class ToolError(Exception):
@@ -55,20 +55,33 @@ def _entity(name: Any) -> McpEntity:
 
 
 def _address(entity: McpEntity, record_id: int) -> str:
-    return f"/{entity.name}/{record_id}"
+    """The record's page in the app: what a chat links to."""
+    return f"{entity.page_path}/{record_id}"
+
+
+def _address_forms() -> str:
+    return ", ".join(f"{entity.page_path}/<id>" for entity in ENTITIES.values())
 
 
 def _parse_address(value: Any) -> tuple[McpEntity, int]:
+    """A record from its page's address (`/media/channels/3`, or the full
+    link with the app's host) or the API's (`/api/channels/3`). Paths are
+    matched whole: check_entities makes every page path distinct."""
     path = urlparse(value).path.rstrip("/") if isinstance(value, str) else ""
-    # The API's own prefix is accepted so a copied request URL still works.
-    path = path.removeprefix("/api")
-    found = _ADDRESS.match(path)
-    if found is None or found["entity"] not in ENTITIES:
+    prefix, _, record_id = path.rpartition("/")
+    entity: McpEntity | None = None
+    if _RECORD_ID.match(record_id):
+        if prefix.startswith("/api/"):
+            # The API's own form, so a copied request URL still works.
+            entity = ENTITIES.get(prefix.removeprefix("/api/"))
+        else:
+            entity = next((e for e in ENTITIES.values() if e.page_path == prefix), None)
+    if entity is None:
         raise ToolError(
-            f"{value!r} isn't a record address. Use /<entity>/<id>, e.g. /widgets/3. "
-            f"Entities: {', '.join(ENTITIES)}."
+            f"{value!r} isn't a record address. Use a record's address in the app, one of: "
+            f"{_address_forms()}."
         )
-    return ENTITIES[found["entity"]], int(found["id"])
+    return entity, int(record_id)
 
 
 def _label(key: str) -> str:
@@ -396,8 +409,8 @@ def tool_definitions() -> list[dict[str, Any]]:
             "name": "fetch",
             "title": "Fetch a record",
             "description": (
-                "Read one record by its address in the app (/<entity>/<id>, e.g. /widgets/3, or the full "
-                "link): its fields, with the titles of the records it points at."
+                f"Read one record by its address in the app ({_address_forms()}, or the full link): "
+                "its fields, with the titles of the records it points at."
             ),
             "inputSchema": {
                 "type": "object",
@@ -477,7 +490,7 @@ def tool_definitions() -> list[dict[str, Any]]:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "url": {"type": "string", "description": "The record's address (/<entity>/<id>)."},
+                        "url": {"type": "string", "description": f"The record's address ({_address_forms()})."},
                         "fields": {"type": "object", "description": "Only the fields to change."},
                     },
                     "required": ["url", "fields"],
@@ -497,7 +510,7 @@ def tool_definitions() -> list[dict[str, Any]]:
                 ),
                 "inputSchema": {
                     "type": "object",
-                    "properties": {"url": {"type": "string", "description": "The record's address (/<entity>/<id>)."}},
+                    "properties": {"url": {"type": "string", "description": f"The record's address ({_address_forms()})."}},
                     "required": ["url"],
                 },
                 "annotations": {
@@ -519,7 +532,7 @@ def tool_definitions() -> list[dict[str, Any]]:
                 ),
                 "inputSchema": {
                     "type": "object",
-                    "properties": {"url": {"type": "string", "description": "The deleted record's address (/<entity>/<id>)."}},
+                    "properties": {"url": {"type": "string", "description": f"The deleted record's address ({_address_forms()})."}},
                     "required": ["url"],
                 },
                 "annotations": {**write, "idempotentHint": True, "title": "Restore a deleted record"},
