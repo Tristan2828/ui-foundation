@@ -5,6 +5,28 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.3.0 — soft delete as an entity pattern, and an MCP delete that only soft-deletes
+
+Additive: a new endpoint, a new list parameter and two new MCP tools in the
+reference backend and template; nothing in the package's exports changes.
+Issue #137.
+
+- **The entity plan asks how a record is deleted:** retired by a status,
+  soft-deleted, or hard-deleted. `docs/foundation/add-an-entity.md`
+  "Deleting" shows the soft pattern.
+- **Widgets are soft-deleted.** `DELETE /widgets/{id}` now sets a nullable
+  `deleted_at` (migration `0012`, commented) instead of removing the row.
+  New `POST /widgets/{id}/restore` and `deleted=true` on the list (only the
+  deleted). A deleted widget is a 404 to get, update and delete. The
+  delete toast offers Undo.
+- **MCP gains `delete(url)` and `restore(url)`,** offered only for entities
+  whose `McpEntity` sets both. `delete` is marked `destructiveHint`, so the
+  chat asks before each call; one record per call. Both are logged in
+  `mcp_audit_log` with the whole record. An entity that deletes for good
+  gets no delete tool.
+- **How an app adopts it:** `docs/consuming.md` "Adding soft delete to a 4.x
+  app".
+
 ## 4.2.0 — AI chats read and write an app's records through MCP
 
 Additive, and backend only: nothing in the package or the contract changes.

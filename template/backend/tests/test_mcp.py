@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 from collections.abc import AsyncGenerator
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
@@ -18,13 +19,15 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient, Response
-from sqlmodel import select
+from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app import config, rate_window
 from app.db import get_session
 from app.deploy_checks import production_problems
 from app.main import app
+from app import mcp_tools
+from app.mcp_entities import ENTITIES
 from app.mcp_tools import tool_definitions
 from app.models import (
     McpAuditEntry,
@@ -485,7 +488,7 @@ async def test_protocol_errors(web: AsyncClient, token: str) -> None:
     assert (await rpc(web, token, "nope")).json()["error"]["code"] == -32601
     assert (await web.post("/mcp", content=b"{", headers=auth)).json()["error"]["code"] == -32700
     assert (await web.post("/mcp", json={"id": 1}, headers=auth)).json()["error"]["code"] == -32600
-    unknown = await rpc(web, token, "tools/call", {"name": "delete", "arguments": {}})
+    unknown = await rpc(web, token, "tools/call", {"name": "drop", "arguments": {}})
     assert unknown.json()["error"]["code"] == -32602
     old = await web.post(
         "/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "ping"}, headers={**auth, "MCP-Protocol-Version": "1999-01-01"}
@@ -521,18 +524,19 @@ async def test_requests_are_rate_limited_per_connection(
 # ---------------------------------------------------------------- tools
 
 
-async def test_the_tools_are_the_five_and_none_deletes(web: AsyncClient, token: str) -> None:
+async def test_the_tools_are_the_seven_and_only_delete_is_destructive(web: AsyncClient, token: str) -> None:
     tools = (await rpc(web, token, "tools/list")).json()["result"]["tools"]
-    assert [t["name"] for t in tools] == ["fetch", "search", "list", "create", "update"]
+    assert [t["name"] for t in tools] == ["fetch", "search", "list", "create", "update", "delete", "restore"]
     assert tools == tool_definitions()
     for tool in tools:
         assert tool["inputSchema"]["type"] == "object"
-        assert "delete" not in tool["name"]
+    # delete is the one the chat must ask before; create, update and restore lose nothing.
+    assert [t["name"] for t in tools if t["annotations"].get("destructiveHint")] == ["delete"]
     # The entity's fields are in the description, so a chat can build a call.
     create = next(t for t in tools if t["name"] == "create")
     assert "availableFrom" in create["description"]
     assert "widget-categories" not in create["inputSchema"]["properties"]["entity"]["enum"]
-    assert [t["annotations"]["readOnlyHint"] for t in tools] == [True, True, True, False, False]
+    assert [t["annotations"]["readOnlyHint"] for t in tools] == [True, True, True, False, False, False, False]
 
 
 async def test_fetch_reads_a_record_with_its_related_titles(web: AsyncClient, token: str) -> None:
@@ -721,6 +725,93 @@ async def test_update_cannot_reach_another_users_record(web: AsyncClient, token:
     widget = await session.get(Widget, 2)
     assert widget is not None
     assert widget.name == "Theirs"
+
+
+def _only_one_entity_deletes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Widgets stop deleting softly; the delete and restore tools go with them."""
+    entities = dict(ENTITIES)
+    entities["widgets"] = replace(entities["widgets"], delete=None, restore=None)
+    monkeypatch.setattr(mcp_tools, "ENTITIES", entities)
+
+
+async def test_delete_marks_the_record_deleted_and_logs_the_whole_record(
+    web: AsyncClient, token: str, session: AsyncSession
+) -> None:
+    text, is_error = await call(web, token, "delete", {"url": "/widgets/1"})
+    assert not is_error
+    assert text.startswith("Deleted widget /widgets/1 (Wireless Mouse). It isn't gone")
+    widget = await session.get(Widget, 1)
+    assert widget is not None  # soft: the row is still there
+    assert widget.deleted_at is not None
+
+    entry = (await session.exec(select(McpAuditEntry))).one()
+    assert (entry.action, entry.entity, entry.record_id) == ("delete", "widgets", 1)
+    assert json.loads(entry.before or "")["name"] == "Wireless Mouse"
+    assert json.loads(entry.after) == json.loads(entry.before or "")
+
+    # Out of reads and lists; findable only by asking for the deleted.
+    assert (await call(web, token, "fetch", {"url": "/widgets/1"})) == ("No widget at /widgets/1.", True)
+    assert (await call(web, token, "list", {"entity": "widgets"}))[0] == "No widgets match."
+    assert (await call(web, token, "search", {"query": "Mouse"}))[0].startswith("Nothing matches")
+    listed, _ = await call(web, token, "list", {"entity": "widgets", "filters": {"deleted": True}})
+    assert "Wireless Mouse — /widgets/1" in listed
+    assert (await call(web, token, "update", {"url": "/widgets/1", "fields": {"name": "x"}}))[1] is True
+    # A second delete finds nothing to delete, and logs nothing.
+    assert (await call(web, token, "delete", {"url": "/widgets/1"})) == ("No widget at /widgets/1.", True)
+    assert len((await session.exec(select(McpAuditEntry))).all()) == 1
+
+
+async def test_restore_brings_a_deleted_record_back_and_logs_it(
+    web: AsyncClient, token: str, session: AsyncSession
+) -> None:
+    await call(web, token, "delete", {"url": "/widgets/1"})
+    text, is_error = await call(web, token, "restore", {"url": "/widgets/1"})
+    assert not is_error
+    assert text.startswith("Restored widget /widgets/1.")
+    assert "Name: Wireless Mouse" in text
+    widget = await session.get(Widget, 1)
+    assert widget is not None
+    assert widget.deleted_at is None
+    assert "Wireless Mouse" in (await call(web, token, "fetch", {"url": "/widgets/1"}))[0]
+
+    actions = [entry.action for entry in (await session.exec(select(McpAuditEntry).order_by(col(McpAuditEntry.id)))).all()]
+    assert actions == ["delete", "restore"]
+    # Nothing is deleted any more, so there is nothing to restore.
+    assert (await call(web, token, "restore", {"url": "/widgets/1"})) == ("No deleted widget at /widgets/1.", True)
+
+
+async def test_delete_and_restore_cannot_reach_another_users_record(
+    web: AsyncClient, token: str, session: AsyncSession
+) -> None:
+    session.add(User(id=2, email="other@example.com", name="Other", password_hash="unused"))
+    await session.flush()
+    session.add(
+        Widget(
+            id=2, name="Theirs", category_id=1, status=WidgetStatus.draft,
+            available_from=datetime(2026, 1, 1, tzinfo=timezone.utc), price=Decimal("1.00"),
+            description="", owner_id=2, deleted_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+        )
+    )
+    await session.commit()
+    assert (await call(web, token, "restore", {"url": "/widgets/2"})) == ("No deleted widget at /widgets/2.", True)
+    assert (await call(web, token, "delete", {"url": "/widgets/2"})) == ("No widget at /widgets/2.", True)
+    widget = await session.get(Widget, 2)
+    assert widget is not None
+    assert widget.deleted_at is not None
+    assert (await session.exec(select(McpAuditEntry))).all() == []
+
+
+async def test_an_entity_that_does_not_delete_softly_gets_no_delete_tool(
+    web: AsyncClient, token: str, session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _only_one_entity_deletes(monkeypatch)
+    tools = (await rpc(web, token, "tools/list")).json()["result"]["tools"]
+    assert [t["name"] for t in tools] == ["fetch", "search", "list", "create", "update"]
+    for name in ("delete", "restore"):
+        assert (await rpc(web, token, "tools/call", {"name": name, "arguments": {"url": "/widgets/1"}})).json()["error"]["code"] == -32602
+    widget = await session.get(Widget, 1)
+    assert widget is not None
+    assert widget.deleted_at is None
 
 
 async def test_tools_act_as_the_user_who_approved(web: AsyncClient, session: AsyncSession) -> None:

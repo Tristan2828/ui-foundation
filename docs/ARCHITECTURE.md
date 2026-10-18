@@ -118,7 +118,8 @@ src/main.tsx                           FoundationProviders (theme, query client,
 - **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
   sign-in in the reference backend (`app/routers/mcp.py`, `oauth.py`). Tools come from
   one registry of entities (`app/mcp_entities.py`) and call the entities' own router
-  functions, so the API's validation and per-user scoping apply. No delete; every write
+  functions, so the API's validation and per-user scoping apply. Delete is soft only
+  (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
   is logged. Stdlib only, by decision (#132): no MCP SDK.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every

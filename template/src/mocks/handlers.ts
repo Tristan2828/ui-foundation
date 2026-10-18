@@ -2,7 +2,7 @@
 // store in ./data. This is what lets the whole UI run with no backend at all.
 import { http, HttpResponse } from "msw";
 import { authHandlers, clientErrorHandlers, environmentHandlers } from "@tristan2828/ui-foundation/mocks";
-import { nextWidgetId, widgetCategories, widgets } from "./data";
+import { deletedWidgets, nextWidgetId, widgetCategories, widgets } from "./data";
 import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
@@ -172,7 +172,8 @@ export const handlers = [
     // Repeated, any of them (openapi.yaml).
     const extraCategoryIds = url.searchParams.getAll("extraCategoryIds").map(Number);
 
-    let result = widgets;
+    // "true" lists only the deleted widgets; absent or "false", the live ones.
+    let result = url.searchParams.get("deleted") === "true" ? deletedWidgets : widgets;
     if (status) result = result.filter((w) => w.status === status);
     if (categoryId) result = result.filter((w) => w.categoryId === Number(categoryId));
     if (search) result = result.filter((w) => w.name.toLowerCase().includes(search));
@@ -245,7 +246,18 @@ export const handlers = [
     if (index === -1) {
       return HttpResponse.json({ detail: `Widget ${params.id} not found` }, { status: 404 });
     }
-    widgets.splice(index, 1);
+    // Soft: moved aside, not erased, so restoreWidget can bring it back.
+    deletedWidgets.push(...widgets.splice(index, 1));
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post("*/api/widgets/:id/restore", ({ params }) => {
+    const index = deletedWidgets.findIndex((w) => w.id === Number(params.id));
+    if (index === -1) {
+      return HttpResponse.json({ detail: `Widget ${params.id} not found` }, { status: 404 });
+    }
+    const [widget] = deletedWidgets.splice(index, 1);
+    widgets.push(widget);
+    return HttpResponse.json(widget);
   }),
 ];

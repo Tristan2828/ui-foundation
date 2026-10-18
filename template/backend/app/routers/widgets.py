@@ -1,9 +1,10 @@
 """/widgets — see openapi.yaml operationIds listWidgets, createWidget,
-getWidget, updateWidget, deleteWidget. One router, no service layer on
+getWidget, updateWidget, deleteWidget, restoreWidget. One router, no service layer on
 purpose: stop and write docs/BLOCKERS.md rather than growing a router past
 ~60 lines.
 """
 
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -82,11 +83,12 @@ async def _check_categories_exist(ids: list[int], field: str, session: AsyncSess
         )
 
 
-async def _get_or_404(widget_id: int, user: User, session: AsyncSession) -> Widget:
+async def _get_or_404(widget_id: int, user: User, session: AsyncSession, *, deleted: bool = False) -> Widget:
     widget = await session.get(Widget, widget_id)
     # Someone else's widget is indistinguishable from a missing one — a 403
-    # would confirm the id exists.
-    if widget is None or widget.owner_id != user.id:
+    # would confirm the id exists. So is a deleted one (soft delete: it is
+    # still in the table, but only restore, with deleted=True, can reach it).
+    if widget is None or widget.owner_id != user.id or (widget.deleted_at is not None) != deleted:
         raise HTTPException(status_code=404, detail="Widget not found")
     return widget
 
@@ -105,10 +107,13 @@ async def list_widgets(
     inStock: bool | None = None,
     checklistState: WidgetChecklistState | None = None,
     extraCategoryIds: list[int] | None = Query(default=None),
+    deleted: bool = False,
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Page[Widget]:
     stmt = select(Widget).where(Widget.owner_id == user.id)
+    # Live widgets, or with deleted=true only the deleted ones (the trash).
+    stmt = stmt.where(col(Widget.deleted_at).is_not(None) if deleted else col(Widget.deleted_at).is_(None))
     if status is not None:
         stmt = stmt.where(Widget.status == status)
     if categoryId is not None:
@@ -213,7 +218,23 @@ async def delete_widget(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Response:
+    # Soft: the row stays, marked, and comes back with restore.
     widget = await _get_or_404(widget_id, user, session)
-    await session.delete(widget)
+    widget.deleted_at = datetime.now(timezone.utc)
+    session.add(widget)
     await session.commit()
     return Response(status_code=204)
+
+
+@router.post("/widgets/{widget_id}/restore", response_model=WidgetOut, responses=GET_RESPONSES)
+async def restore_widget(
+    widget_id: int,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> Widget:
+    widget = await _get_or_404(widget_id, user, session, deleted=True)
+    widget.deleted_at = None
+    session.add(widget)
+    await session.commit()
+    await session.refresh(widget)
+    return widget

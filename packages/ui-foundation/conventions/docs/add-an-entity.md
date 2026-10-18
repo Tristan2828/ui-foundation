@@ -437,7 +437,8 @@ is a filled-in example while the Widgets demo is still here).
    each value as its cell shows it), plus the sparse record showing its
    "not set" labels and no blank value. Its flows: the table's title link
    opens it, saving and cancelling the form return to it, creating opens
-   the new record's view, and Delete confirms then lands on the list.
+   the new record's view, and Delete confirms then lands on the list
+   (a soft-deleted entity's toast also has an Undo that restores it).
    Each quick action gets its own tests (copy `quick action: …` in
    `e2e/widget-view.spec.ts`): the change shows and the PATCH carries it
    (a list item sends the whole list), a server-side effect shows once the
@@ -518,3 +519,34 @@ is a filled-in example while the Widgets demo is still here).
   capability they don't have (a new field-type widget, say), don't copy
   one into `src/` to change it: raise it for the foundation (AGENTS.md
   "Changing the Foundation") and build the screen once the release ships.
+
+## Deleting
+
+The plan's "Deleting" line says which of three. The Widget reference is the
+soft one; copy it.
+
+- **Retired by a status:** no delete endpoint, screen or action. The
+  status field and its filter do the job.
+- **Soft-deleted:**
+  - *Model and migration:* a nullable `deleted_at timestamptz`, commented
+    in the migration (null means live; set by DELETE, cleared by restore).
+    It is never on the wire. `backend/app/models.py`,
+    `migrations/versions/0012_widget_soft_delete.py`.
+  - *Router:* `DELETE /<entity>/{id}` sets `deleted_at`; `POST
+    /<entity>/{id}/restore` clears it and returns the record (404 unless
+    it is deleted); the list leaves deleted records out unless asked
+    (`deleted=true` lists only them); get and update of a deleted record
+    are a 404. `backend/app/routers/widgets.py` (`_get_or_404`'s
+    `deleted` flag).
+  - *Contract, gateway, mocks:* `restore<Entity>` in `openapi.yaml`, the
+    gateway's `restore<Entity>`, a `useRestore<Entity>Mutation`, and mocks
+    that move the record aside (`deletedWidgets` in `src/mocks/data.ts`).
+  - *Screens:* the delete dialog says it can be undone, and the success
+    toast carries an Undo that restores (`delete-widget-action.tsx`).
+  - *MCP:* give the entity's `McpEntity` `delete` and `restore` (and add
+    `deleted` to its filters). Chats then get `delete(url)`, marked
+    destructive so the chat asks before each call, and `restore(url)`.
+    Both are logged with the whole record.
+- **Hard-deleted:** `DELETE` removes the row. Give the entity no `delete`
+  in `mcp_entities.py`: a chat that read planted instructions would
+  destroy data that only a backup returns.

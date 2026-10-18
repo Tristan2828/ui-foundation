@@ -187,6 +187,16 @@ except the quick actions, if any.
   rows").
 - Ownership: **shared** (every signed-in user sees every record) or
   **per-user** (each user sees only their own).
+- Deleting: how a record goes away, one of
+  - **retired by a status**: no delete; a status (Archived, Finished)
+    takes it out of the way, and a filter brings it back;
+  - **soft-deleted** (the default for a record someone typed): delete
+    marks it (`deleted_at`, null means live) and it comes back with
+    restore. The view's delete offers Undo, lists leave deleted records
+    out, and AI chats (MCP) can delete and restore it;
+  - **hard-deleted**: gone for good, back only from a backup. AI chats get
+    no delete for it. Say why it must be.
+  (`docs/foundation/add-an-entity.md` "Deleting".)
 
 ## Open questions
 

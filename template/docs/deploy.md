@@ -137,17 +137,24 @@ address below answers 404.
   login limits and two-step sign-in apply.
 - **What a chat can do:** `fetch` a record by its address
   (`/widgets/3`), `search` titles, `list` an entity with its filters, sort
-  and paging, `create` and `update` a record. A chat acts as the user who
+  and paging, `create` and `update` a record, and `delete` and `restore`
+  one that deletes softly. A chat acts as the user who
   approved, so it sees exactly that user's records. `create` and `update`
   run the entity's own router code, so the validation is the API's, and a
-  refused field comes back to the chat as text. **There is no delete tool.**
+  refused field comes back to the chat as text. **`delete` only marks a
+  record deleted** (`deleted_at`); `restore` brings it back, and `list`
+  with `filters: {"deleted": true}` finds the deleted ones. It is marked
+  destructive, so the chat asks before each call, and it takes one record
+  per call. An entity that deletes for good (a row removed) gets no
+  delete tool: leave `delete` and `restore` off its `McpEntity`.
   An entity is reachable only if it is listed in
   `backend/app/mcp_entities.py`; add each new entity there (its router
   functions, a title field, the fields shown in a list, the fields that
   point at other entities).
-- **The log:** every create and update is a row in `mcp_audit_log`: the
+- **The log:** every create, update, delete and restore is a row in `mcp_audit_log`: the
   user, the chat, the time, the entity and record, and the changed fields
-  before and after (JSON, as the API names them). Nothing prunes it.
+  before and after (JSON, as the API names them; the whole record for a
+  delete or restore). Nothing prunes it.
   `SELECT at, action, entity, record_id, before, after FROM mcp_audit_log
   ORDER BY at DESC;` It is written right after the change is saved, so a
   database failing between the two would leave a change unlogged.

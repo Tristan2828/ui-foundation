@@ -3,6 +3,7 @@ replacement for the Postgres-backed run in scripts/check-backend-postgres.sh.
 """
 
 import re
+from datetime import datetime, timezone
 from collections.abc import AsyncGenerator
 
 import pytest
@@ -71,6 +72,48 @@ async def test_delete_widget_returns_204_then_404(client: AsyncClient) -> None:
     assert res.status_code == 204
     res = await client.get("/api/widgets/1")
     assert res.status_code == 404
+    # Gone to every other call, too: deleting it again, or changing it.
+    assert (await client.delete("/api/widgets/1")).status_code == 404
+    assert (await client.patch("/api/widgets/1", json={"name": "x"})).status_code == 404
+
+
+async def test_delete_is_soft_and_restore_brings_the_widget_back(client: AsyncClient, session: AsyncSession) -> None:
+    before = (await client.get("/api/widgets/1")).json()
+    assert (await client.delete("/api/widgets/1")).status_code == 204
+    widget = await session.get(Widget, 1)
+    assert widget is not None  # the row stays
+    assert widget.deleted_at is not None
+
+    assert (await client.get("/api/widgets")).json()["total"] == 0
+    trash = (await client.get("/api/widgets?deleted=true")).json()
+    assert [w["id"] for w in trash["items"]] == [1]
+
+    restored = await client.post("/api/widgets/1/restore")
+    assert restored.status_code == 200
+    assert restored.json() == before
+    await session.refresh(widget)
+    assert widget.deleted_at is None
+    assert (await client.get("/api/widgets")).json()["total"] == 1
+    assert (await client.get("/api/widgets?deleted=true")).json() == {"items": [], "total": 0}
+    # Only a deleted widget can be restored.
+    assert (await client.post("/api/widgets/1/restore")).status_code == 404
+    assert (await client.post("/api/widgets/999/restore")).status_code == 404
+
+
+async def test_another_users_deleted_widget_cannot_be_listed_or_restored(
+    other_user_client: AsyncClient, session: AsyncSession
+) -> None:
+    widget = await session.get(Widget, 1)
+    assert widget is not None
+    widget.deleted_at = datetime(2026, 1, 2, tzinfo=timezone.utc)
+    session.add(widget)
+    await session.commit()
+    assert (await other_user_client.get("/api/widgets?deleted=true")).json() == {"items": [], "total": 0}
+    res = await other_user_client.post("/api/widgets/1/restore")
+    assert res.status_code == 404
+    assert res.json() == {"detail": "Widget not found"}
+    await session.refresh(widget)
+    assert widget.deleted_at is not None
 
 
 @pytest_asyncio.fixture
@@ -346,16 +389,13 @@ async def test_too_many_or_null_checklist_items_are_field_errors(client: AsyncCl
     assert null.status_code == 422
 
 
-async def test_deleting_a_widget_deletes_its_checklist(client: AsyncClient, session: AsyncSession) -> None:
-    widget_id = (
-        await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": [{"text": "Gone soon", "done": False}]})
-    ).json()["id"]
-    assert (await client.delete(f"/api/widgets/{widget_id}")).status_code == 204
-    from app.models import WidgetChecklistItem
-    from sqlmodel import select
-
-    left = (await session.exec(select(WidgetChecklistItem).where(WidgetChecklistItem.widget_id == widget_id))).all()
-    assert left == []
+async def test_a_deleted_widget_keeps_its_checklist_for_restore(client: AsyncClient) -> None:
+    created = (
+        await client.post("/api/widgets", json={**_NEW_WIDGET, "checklist": [{"text": "Back soon", "done": False}]})
+    ).json()
+    assert (await client.delete(f"/api/widgets/{created['id']}")).status_code == 204
+    restored = await client.post(f"/api/widgets/{created['id']}/restore")
+    assert restored.json()["checklist"] == created["checklist"]
 
 
 # --- checklistState: the computed, read-only field (3.7.0) ------------------

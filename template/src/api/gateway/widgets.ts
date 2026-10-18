@@ -67,7 +67,14 @@ export async function updateWidget(id: number, input: WidgetUpdate): Promise<Wid
   return res.body as Widget;
 }
 
+// Soft delete: the widget is marked, not erased, until restoreWidget.
 export async function deleteWidget(id: number): Promise<void> {
   const res = await safeFetch(`/widgets/${id}`, { method: "DELETE" });
   if (res.status !== 204) throw toAppError(res.status, res.body);
+}
+
+export async function restoreWidget(id: number): Promise<Widget> {
+  const res = await safeFetch(`/widgets/${id}/restore`, { method: "POST" });
+  if (res.status !== 200) throw toAppError(res.status, res.body);
+  return res.body as Widget;
 }
