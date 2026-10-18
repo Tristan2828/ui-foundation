@@ -10,8 +10,13 @@
 //   back. Unchanged closes with no request.
 // - Saving: the control stays, read-only, with "Saving…" under it, until
 //   the server agrees. Failed: it stays, with the draft and the reason.
-import { PencilIcon } from 'lucide-react'
-import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useSyncExternalStore, type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+// - `autosave`: it saves itself a pause after typing stops and stays
+//   editable while it does ("Saving…", then "Saved" under it). Leaving,
+//   Ctrl/Cmd+Enter and Esc save what's left now and close it.
+// - `alwaysEditable`: the control is shown at rest, with no pencil and no
+//   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
+import { CheckIcon, PencilIcon } from 'lucide-react'
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { useBlocker } from 'react-router'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
@@ -28,6 +33,7 @@ import { FieldError } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './edit-in-place'
 import type { EditInPlaceStore } from './edit-in-place-store'
+import { escapePassedThrough } from './escape-passthrough'
 
 // What a click on the shown value must leave alone: links navigate,
 // buttons and boxes do their own thing (a list item's done box ticks it).
@@ -120,10 +126,24 @@ export function EditableField({
   const refocus = useRef(false)
   const blurTimer = useRef<number | undefined>(undefined)
 
+  const always = Boolean(edit.alwaysEditable)
+  const autosave = always || Boolean(edit.autosave)
+
+  // An always-editable control starts over (it's uncontrolled: a rich-text
+  // editor reads its value once) when the value changed elsewhere while
+  // nothing of its own was unsaved and the caret wasn't in it.
+  const refresh = useCallback(() => {
+    if (!container.current?.contains(document.activeElement)) store.refresh(key)
+  }, [store, key])
+  useEffect(() => {
+    if (always) refresh()
+  }, [always, refresh, edit.value])
+
   const isOpen = state.status !== 'closed'
   const wasOpen = useRef(false)
   useEffect(() => {
-    if (isOpen && !wasOpen.current) {
+    // Always open: the caret stays wherever the person put it.
+    if (isOpen && !wasOpen.current && !always) {
       for (const selector of FOCUS_ORDER) {
         const target = container.current?.querySelector<HTMLElement>(selector)
         if (target) {
@@ -140,7 +160,7 @@ export function EditableField({
       ;(editButton.current ?? triggerBox.current?.querySelector('button'))?.focus()
     }
     wasOpen.current = isOpen
-  }, [isOpen])
+  }, [isOpen, always])
 
   useEffect(() => () => window.clearTimeout(blurTimer.current), [])
 
@@ -185,17 +205,29 @@ export function EditableField({
     start()
   }
 
+  // Always editable: Ctrl/Cmd+Enter or Esc saves now, the caret staying put.
+  const saveNow = () => {
+    window.clearTimeout(blurTimer.current)
+    void store.commit(key)
+  }
+
   const onKeyDown = (event: KeyboardEvent) => {
     if (state.status !== 'open') return
     if (event.key === 'Escape') {
-      // A list open inside the control closes first; Esc again gives up.
-      if (event.defaultPrevented || escapeClosesList.current) return
+      // A list open inside the control closes first; Esc again gives up
+      // (or, autosaving, saves what's left and closes: nothing reverts).
+      if ((event.defaultPrevented && !escapePassedThrough(event.nativeEvent)) || escapeClosesList.current) return
       event.preventDefault()
-      refocus.current = true
-      cancel()
+      if (always) saveNow()
+      else if (autosave) commitFromKeyboard()
+      else {
+        refocus.current = true
+        cancel()
+      }
     } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
       event.preventDefault()
-      commitFromKeyboard()
+      if (always) saveNow()
+      else commitFromKeyboard()
     } else if (event.key === 'Enter' && edit.kind === 'text' && !event.shiftKey && !event.altKey) {
       event.preventDefault()
       commitFromKeyboard()
@@ -204,16 +236,21 @@ export function EditableField({
 
   // Leaving the field saves it. Focus moving into the control's own list
   // (a portal) still counts as inside: React sends its focus events here.
+  // An autosaving field saves on its way to a link too: leaving the page
+  // then waits for that save rather than asking.
   const onBlur = (event: FocusEvent) => {
     window.clearTimeout(blurTimer.current)
-    if ((event.relatedTarget as Element | null)?.closest(LEAVING)) return
+    if (!autosave && (event.relatedTarget as Element | null)?.closest(LEAVING)) return
     blurTimer.current = window.setTimeout(() => {
-      if (store.state(key).status === 'open') void store.commit(key)
+      if (store.state(key).status !== 'open') return
+      void store.commit(key).then(() => {
+        if (always) refresh()
+      })
     }, 0)
   }
   const onFocus = () => window.clearTimeout(blurTimer.current)
 
-  if (state.status === 'closed') {
+  if (state.status === 'closed' && !always) {
     if (trigger)
       return (
         <span ref={triggerBox} className="contents">
@@ -247,38 +284,65 @@ export function EditableField({
     )
   }
 
-  const saving = state.status === 'saving'
+  // Always editable, before the store has it (the first render): the saved value.
+  const open = state.status === 'closed' ? { status: 'open' as const, draft: edit.value, error: null, autosave: undefined, revision: 0 } : state
+  const saving = open.status === 'saving'
+  const autosaving = open.autosave === 'saving'
   return (
     <span
       ref={container}
       data-slot="editable-value"
-      data-state={saving ? 'saving' : state.error ? 'failed' : 'editing'}
+      data-state={saving || autosaving ? 'saving' : open.error ? 'failed' : 'editing'}
       onKeyDown={onKeyDown}
       onBlur={onBlur}
       onFocus={onFocus}
       className={cn('flex min-w-0 flex-col gap-1.5', layout === 'block' ? 'w-full' : 'w-fit max-w-full', className)}
     >
       <Control
+        key={open.revision ?? 0}
         render={edit.control}
         id={controlId}
-        value={state.draft}
+        value={open.draft}
         onChange={(value) => store.change(key, value)}
         commit={commit}
         cancel={cancel}
         disabled={saving}
-        invalid={!saving && state.error !== null}
+        invalid={!saving && open.error !== null}
         label={label}
         describedBy={describedBy}
         onProblem={(problem) => store.report(key, problem)}
       />
       <span id={describedBy} className="type-body">
-        {saving ? (
+        {autosave ? (
+          // A quiet line, always there so a screen reader hears it change:
+          // "Saving…" while a save is in flight, "Saved" once nothing typed
+          // is waiting, and a refusal's reason above it.
+          <>
+            {open.error && <FieldError className="type-caption">{open.error}</FieldError>}
+            <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
+              {autosaving ? (
+                <>
+                  <Spinner aria-hidden="true" className="size-3.5" />
+                  Saving…
+                </>
+              ) : (
+                open.autosave === 'saved' &&
+                !open.error && (
+                  <>
+                    <CheckIcon aria-hidden="true" className="size-3.5" />
+                    Saved
+                  </>
+                )
+              )}
+            </span>
+          </>
+        ) : saving ? (
           <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
             <Spinner aria-hidden="true" className="size-3.5" />
             Saving…
           </span>
         ) : (
-          state.error && <FieldError className="type-caption">{state.error}</FieldError>
+          open.error && <FieldError className="type-caption">{open.error}</FieldError>
         )}
       </span>
     </span>
@@ -289,7 +353,12 @@ export function EditableField({
  * While a field holds something unsaved, leaving asks first: an in-app
  * link or Back (React Router's blocker, so the app needs a data router),
  * or closing the tab (`beforeunload`). Rendered by EntityView only while
- * a field is open, so a view nobody's editing never blocks anything.
+ * a field is being edited, so a view nobody's editing never blocks anything.
+ *
+ * When everything unsaved autosaves, an in-app move saves it first and
+ * goes on once saved, asking only if that save fails. Closing the tab
+ * can't wait, so it starts the save and asks; hiding the page (another
+ * tab, a phone's home screen) saves too.
  */
 export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
   const dirty = useSyncExternalStore(
@@ -297,22 +366,61 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
     () => store.dirty,
     () => store.dirty,
   )
+  const savesOnLeave = useSyncExternalStore(
+    store.subscribe,
+    () => store.savesOnLeave,
+    () => store.savesOnLeave,
+  )
   const blocker = useBlocker(({ currentLocation, nextLocation }) => store.dirty && currentLocation.pathname !== nextLocation.pathname)
+  const [saveFailed, setSaveFailed] = useState(false)
+
+  const latestBlocker = useRef(blocker)
+  useLayoutEffect(() => {
+    latestBlocker.current = blocker
+  })
+  useEffect(() => {
+    if (blocker.state !== 'blocked' || !store.savesOnLeave) return
+    let live = true
+    // The save may close the field; this prompt (and the move it blocked)
+    // stays until the save is done.
+    const release = store.hold()
+    void store.saveAll().then((saved) => {
+      if (live) {
+        const current = latestBlocker.current
+        if (saved && current.state === 'blocked') current.proceed()
+        else if (!saved) setSaveFailed(true)
+      }
+      release()
+    })
+    return () => {
+      live = false
+    }
+  }, [blocker.state, store])
 
   useEffect(() => {
     if (!dirty) return
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      void store.saveAll()
       event.preventDefault()
     }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') void store.saveAll()
+    }
     window.addEventListener('beforeunload', onBeforeUnload)
-    return () => window.removeEventListener('beforeunload', onBeforeUnload)
-  }, [dirty])
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [dirty, store])
 
   return (
     <Dialog
-      open={blocker.state === 'blocked'}
+      open={blocker.state === 'blocked' && (!savesOnLeave || saveFailed)}
       onOpenChange={(open) => {
-        if (!open && blocker.state === 'blocked') blocker.reset()
+        if (open) return
+        setSaveFailed(false)
+        if (blocker.state === 'blocked') blocker.reset()
       }}
     >
       <DialogContent showCloseButton={false} data-leave-guard="">
@@ -326,6 +434,7 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
             variant="destructive"
             onClick={() => {
               store.discard()
+              setSaveFailed(false)
               if (blocker.state === 'blocked') blocker.proceed()
             }}
           >

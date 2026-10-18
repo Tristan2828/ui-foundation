@@ -56,6 +56,8 @@ export type EditInPlace = {
   schema?: { safeParse: (value: unknown) => SafeParseResult<unknown> }
   save: (value: unknown) => Promise<unknown>
   isEqual?: (a: unknown, b: unknown) => boolean
+  autosave?: boolean
+  alwaysEditable?: boolean
 }
 
 export type EditInPlaceOptions<TDraft, TValue> = {
@@ -79,6 +81,22 @@ export type EditInPlaceOptions<TDraft, TValue> = {
   save: (value: TValue) => Promise<unknown>
   /** Whether a draft is still the saved value. Defaults to comparing as JSON. */
   isEqual?: (a: TDraft, b: TDraft) => boolean
+  /**
+   * Saves on its own, Notion-style, for long text: about a second after
+   * typing stops, and at once on leaving the field or the page. The
+   * control stays editable while it saves ("Saving…", then "Saved"), and
+   * saves never cross: the next waits for the one in flight and sends the
+   * latest draft. Esc saves and closes; nothing reverts. A refusal keeps
+   * the draft and its reason, as without it.
+   */
+  autosave?: boolean
+  /**
+   * The control is the value: shown at rest, with no click to open (the
+   * notes are the editor). Implies `autosave`. Its control shouldn't take
+   * `autoFocus`. At rest it shows the control, not the read view: a link
+   * in rich text is edited there, not followed.
+   */
+  alwaysEditable?: boolean
 }
 
 /** What a list item's fields are given while it's edited: a control's props, plus where the item is. */

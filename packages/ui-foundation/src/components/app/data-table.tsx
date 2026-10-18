@@ -292,10 +292,10 @@ export function DataTable<TData extends Record<string, unknown>>({
   // a time, with the leave-page prompt while one is open, the same rules
   // as a record's view.
   const [store] = useState(() => new EditInPlaceStore())
-  const openField = useSyncExternalStore(
+  const editing = useSyncExternalStore(
     store.subscribe,
-    () => store.open,
-    () => store.open,
+    () => store.editing,
+    () => store.editing,
   )
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
@@ -537,7 +537,7 @@ export function DataTable<TData extends Record<string, unknown>>({
 
   return (
     <EditInPlaceContext.Provider value={store}>
-      {openField !== null && <LeaveGuard store={store} />}
+      {editing && <LeaveGuard store={store} />}
       {width === 'content' ? <div className="@container/data-table">{content}</div> : content}
     </EditInPlaceContext.Provider>
   )

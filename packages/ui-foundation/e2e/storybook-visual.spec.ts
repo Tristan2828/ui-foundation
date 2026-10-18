@@ -66,6 +66,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
+  { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },

@@ -73,6 +73,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent } from '@/components/ui/popover'
 import { linkHref } from '@/lib/link-href'
+import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
 import { headingClass } from './prose-look'
@@ -521,6 +522,9 @@ export default function MilkdownEditor({
                 setDismissed({ from, to })
                 return true
               }
+              // An Esc nothing over the text took: the field's to act on,
+              // though ProseMirror will mark it handled.
+              if (event.key === 'Escape') passEscapeThrough(event)
               const mod = event.metaKey || event.ctrlKey
               if (mod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'k') {
                 event.preventDefault()

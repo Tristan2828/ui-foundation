@@ -257,3 +257,93 @@ test.describe('EntityView, a list edited in place', () => {
     await expect(items(page, 'Links')).toHaveText(['Floor plan', 'Movers'])
   })
 })
+
+// Long text that autosaves (app/EntityView Autosave): Notes is the editor
+// itself (`alwaysEditable`), Summary opens on a click (`autosave`). Each
+// save takes 500ms; text with "refuse" in it is refused. The template's
+// e2e/widget-edit-in-place.spec.ts covers autosave against a real save.
+test.describe('EntityView, long text that autosaves', () => {
+  const region = (page: Page, name: string) => page.getByRole('region', { name, exact: true })
+  const saves = (page: Page) =>
+    page.locator('dl > div').filter({ has: page.locator('dt').getByText('Saves', { exact: true }) }).locator('dd')
+
+  async function openAutosave(page: Page) {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('autosave'))
+    await expect(page.getByRole('heading', { level: 1, name: 'Office move' })).toBeVisible()
+  }
+
+  async function typeAtEnd(page: Page, editor: ReturnType<Page['getByRole']>, text: string) {
+    await editor.locator('p').last().click()
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.type(text)
+  }
+
+  test('always editable: the notes are the editor; typing saves with no click away, and stays editable while saving', async ({ page }) => {
+    await openAutosave(page)
+    const notes = region(page, 'Notes')
+    const editor = notes.getByRole('textbox', { name: 'Notes' })
+    // At rest, no click to open and no pencil.
+    await expect(editor).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit Notes' })).toHaveCount(0)
+
+    await typeAtEnd(page, editor, ' Then desks.')
+    // Saves on its own after the pause, the caret still in the text.
+    await expect(notes.getByRole('status')).toHaveText('Saving…')
+    await expect(editor).toBeFocused()
+    await expect(editor).toHaveAttribute('aria-readonly', 'false')
+    // Typing mid-save is kept, and saved next.
+    await page.keyboard.type(' Then chairs.')
+    await expect(notes.getByRole('status')).toHaveText('Saved', { timeout: 5000 })
+    await expect(page.getByTestId('saved-notes')).toHaveText('Pack the shared shelves first. Then desks. Then chairs.')
+    await expect(saves(page)).toHaveText('2')
+    await expect(editor).toBeFocused()
+  })
+
+  test('always editable: a refusal keeps exactly what was typed, with the reason', async ({ page }) => {
+    await openAutosave(page)
+    const notes = region(page, 'Notes')
+    const editor = notes.getByRole('textbox', { name: 'Notes' })
+    await typeAtEnd(page, editor, ' refuse')
+    await expect(notes.getByText('The server refused it, as a server would.')).toBeVisible({ timeout: 5000 })
+    await expect(editor).toContainText('Pack the shared shelves first. refuse')
+    await expect(editor).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByTestId('saved-notes')).toHaveText('Pack the shared shelves first.')
+  })
+
+  test('autosave on a click: saves while open; Esc saves what is left and closes, reverting nothing', async ({ page }) => {
+    await openAutosave(page)
+    const summary = region(page, 'Summary')
+    await summary.getByText('Moving to the third floor.').click()
+    const editor = summary.getByRole('textbox', { name: 'Summary' })
+    await expect(editor).toBeFocused()
+    await typeAtEnd(page, editor, ' In March.')
+    await expect(summary.getByRole('status')).toHaveText('Saved', { timeout: 5000 })
+    await expect(editor).toBeVisible()
+    await page.keyboard.type(' Week one.')
+    await page.keyboard.press('Escape')
+    await expect(editor).toHaveCount(0, { timeout: 5000 })
+    await expect(summary.getByText('Moving to the third floor. In March. Week one.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit Summary' })).toBeFocused()
+  })
+
+  test('leaving the page saves first and goes on, asking only when the save fails', async ({ page }) => {
+    await openAutosave(page)
+    const editor = region(page, 'Notes').getByRole('textbox', { name: 'Notes' })
+    await typeAtEnd(page, editor, ' refuse')
+    await page.getByRole('link', { name: 'Projects' }).click()
+    const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
+    await expect(prompt).toBeVisible({ timeout: 5000 })
+    await prompt.getByRole('button', { name: 'Keep editing' }).click()
+    await expect(prompt).toHaveCount(0)
+
+    // Fixed, then leaving: saved on the way out, no prompt.
+    await editor.locator('p').last().click()
+    await page.keyboard.press('ControlOrMeta+End')
+    for (let i = 0; i < ' refuse'.length; i++) await page.keyboard.press('Backspace')
+    await page.keyboard.type(' Then desks.')
+    await page.getByRole('link', { name: 'Projects' }).click()
+    await expect(page.getByText('Projects', { exact: true })).toBeVisible({ timeout: 5000 })
+    await expect(prompt).toHaveCount(0)
+  })
+})
