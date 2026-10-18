@@ -28,6 +28,7 @@ RATE_LIMITED: ResponsesDict = {
 SIGN_IN_EXPIRED: ResponsesDict = {
     410: {"model": HTTPErrorBody, "description": "The pending sign-in is missing, expired or out of tries."}
 }
+CONFLICT: ResponsesDict = {409: {"model": HTTPErrorBody, "description": "Conflicts with what is already happening."}}
 SERVER_ERROR: ResponsesDict = {500: {"model": HTTPErrorBody, "description": "Unhandled server error."}}
 
 LIST_RESPONSES = {**UNAUTHORIZED, **SERVER_ERROR}

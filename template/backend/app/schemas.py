@@ -201,6 +201,27 @@ class ClientErrorReport(CamelModel):
     release: str | None = Field(default=None, max_length=100)
 
 
+class JobRunOut(CamelModel):
+    """A run of a scheduled job (openapi.yaml JobRun)."""
+
+    trigger: Literal["schedule", "manual"]
+    started_at: datetime
+    finished_at: datetime
+    outcome: Literal["ok", "failed", "skipped"]
+    error: str | None
+    summary: str | None
+
+
+class JobOut(CamelModel):
+    """A scheduled job and its last run (openapi.yaml Job)."""
+
+    name: str
+    every_seconds: int
+    timeout_seconds: int
+    running: bool
+    last_run: JobRunOut | None
+
+
 class HTTPErrorBody(CamelModel):
     detail: str
 

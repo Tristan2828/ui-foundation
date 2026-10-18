@@ -107,6 +107,14 @@ MCP_REFRESH_TOKEN_TTL_DAYS: int = int(os.environ.get("MCP_REFRESH_TOKEN_TTL_DAYS
 MCP_MAX_CLIENTS: int = int(os.environ.get("MCP_MAX_CLIENTS", "50"))
 MCP_REQUESTS_PER_MINUTE: int = int(os.environ.get("MCP_REQUESTS_PER_MINUTE", "120"))
 
+# Scheduled jobs (app/jobs.py, docs/deploy.md "Scheduled jobs"): whether
+# this process runs the registered jobs on their schedules. On by default
+# with APP_ENV=production, off otherwise, so a dev server or a test runs a
+# job only when asked (POST /api/jobs/{name}/run, or JOBS_ENABLED=true).
+JOBS_ENABLED: bool = os.environ.get("JOBS_ENABLED", "true" if APP_ENV == "production" else "false").lower() == "true"
+# How long a job's runs are kept in job_runs.
+JOB_RUNS_KEEP_DAYS: int = int(os.environ.get("JOB_RUNS_KEEP_DAYS", "30"))
+
 # Seeded dev user (migration 0002). Not a
 # production credential; a real deployment sets its own before going live.
 # The defaults are published in the README, which is why production refuses

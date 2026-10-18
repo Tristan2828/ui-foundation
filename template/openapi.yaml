@@ -371,6 +371,51 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
+  /jobs:
+    get:
+      operationId: listJobs
+      summary: The scheduled jobs, each with its schedule and last run
+      description: >
+        The jobs registered in the backend (app/jobs.py), in registration
+        order. lastRun is the latest run that ran (ok or failed); runs a
+        process skipped are left out.
+      tags: [jobs]
+      responses:
+        "200":
+          description: Every registered job.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Job" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /jobs/{name}/run:
+    post:
+      operationId: runJob
+      summary: Run a scheduled job now
+      description: >
+        Starts a run in the background and answers at once, with the job
+        running. GET /jobs shows the run once it ends. 409 while the job is
+        already running, in this process or another.
+      tags: [jobs]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-z0-9][a-z0-9-]{0,63}$" }
+      responses:
+        "202":
+          description: Started.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
 components:
   schemas:
     DataEnvironment:
@@ -677,6 +722,36 @@ components:
       properties:
         detail: { type: string }
 
+    Job:
+      type: object
+      required: [name, everySeconds, timeoutSeconds, running, lastRun]
+      properties:
+        name: { type: string, description: "The name the job was registered under, e.g. sync-feeds." }
+        everySeconds: { type: integer, minimum: 0, description: "How long after a run the next one starts (before jitter)." }
+        timeoutSeconds: { type: integer, minimum: 0, description: "A run still going after this fails." }
+        running: { type: boolean, description: "Whether a run is in progress, in any process." }
+        lastRun:
+          oneOf:
+            - $ref: "#/components/schemas/JobRun"
+            - type: "null"
+          description: The latest run that ran (ok or failed); null before the first.
+
+    JobRun:
+      type: object
+      required: [trigger, startedAt, finishedAt, outcome, error, summary]
+      properties:
+        trigger: { type: string, enum: [schedule, manual] }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time }
+        outcome: { type: string, enum: [ok, failed, skipped] }
+        error:
+          type: ["string", "null"]
+          description: For a failed run, the error's type and message (or the timeout). null otherwise.
+        summary:
+          type: ["string", "null"]
+          maxLength: 500
+          description: What the job said it did ("12 new"), or why a run was skipped.
+
   responses:
     ValidationError:
       description: Validation failed on one or more fields.
@@ -685,6 +760,11 @@ components:
           schema: { $ref: "#/components/schemas/ValidationErrorBody" }
     NotFoundError:
       description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    ConflictError:
+      description: Conflicts with what is already happening (a job already running).
       content:
         application/json:
           schema: { $ref: "#/components/schemas/HTTPErrorBody" }
