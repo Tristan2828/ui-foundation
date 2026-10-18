@@ -197,6 +197,77 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
+  test('long text autosaves: typing saves with no click away, and stays editable while it saves', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await delayPatches(page, 800)
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toBeFocused()
+    await editor.locator('p').last().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.type(' Two pages.')
+
+    // Saved a pause after typing stops: no click away, the caret stays.
+    const status = description.getByRole('status')
+    await expect(status).toHaveText('Saving…')
+    await expect(editor).toBeFocused()
+    await expect(editor).toHaveAttribute('aria-readonly', 'false')
+    // Typing mid-save is kept, and goes in the next save.
+    await page.keyboard.type(' Quick start.')
+    await expect(status).toHaveText('Saved', { timeout: 5000 })
+    await expect(editor).toBeFocused()
+    const saved =
+      'A basic wireless mouse with a **2.4GHz** USB receiver.\n\n' +
+      '- Two buttons and a scroll wheel\n' +
+      '- Runs on one AA battery\n\n' +
+      'See the [setup guide](https://example.com/mouse-setup). Two pages.'
+    expect(bodies).toEqual([{ description: saved }, { description: `${saved} Quick start.` }])
+
+    // Esc closes it on what was saved: nothing reverts, nothing more is sent.
+    await page.keyboard.press('Escape')
+    await expect(editor).toHaveCount(0)
+    await expect(description.getByText('Two pages. Quick start.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit Description' })).toBeFocused()
+    expect(bodies).toHaveLength(2)
+  })
+
+  test('long text autosaves: leaving the page with a save still to come saves it and goes, with no prompt', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await page.getByRole('region', { name: 'Description' }).getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await editor.locator('p').last().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.type(' Left at once.')
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await expect(page).toHaveURL('/widgets')
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toHaveCount(0)
+    expect(bodies).toHaveLength(1)
+    expect((bodies[0] as { description: string }).description).toMatch(/Left at once\.$/)
+  })
+
+  test('long text autosaves: if the save on the way out is refused, leaving asks', async ({ page }) => {
+    await openWidget(page)
+    await refusePatches(page, 500, { detail: 'Database is down' })
+    await page.getByRole('region', { name: 'Description' }).getByText('Runs on one AA battery').click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await editor.locator('p').last().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.type(' Not saved.')
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: 'Discard your changes?' })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Keep editing' }).click()
+    await expect(page).toHaveURL('/widgets/1')
+    await expect(editor).toContainText('Not saved.')
+    await expect(page.getByRole('alert')).toHaveText('Database is down')
+  })
+
   test('long text: an edit to the last block saves no newline that was not typed', async ({ page }) => {
     const bodies = patchBodies(page)
     await openWidget(page)

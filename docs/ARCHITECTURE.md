@@ -158,7 +158,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   that store, and its saves are changes applied to the record's latest
   list, so they build on a tick still saving. The leave prompt is React Router's `useBlocker`,
   so apps need a data router (`createBrowserRouter`), as the template
-  has.
+  has. Long text can **autosave** (4.4, `autosave`): the same store saves
+  it a pause after typing stops, editable all the while, one save in
+  flight with the next queued behind it on the latest draft, and leaving
+  the page saves it before going on. `alwaysEditable` makes the editor
+  the value at rest. ProseMirror marks every Esc handled, so the editor
+  says which ones none of its menus used (`escape-passthrough.ts`).
 
 Every boundary is enforced mechanically: see the Hard Rules in
 [`conventions/AGENTS.md`](../packages/ui-foundation/conventions/AGENTS.md),

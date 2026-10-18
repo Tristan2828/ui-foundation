@@ -5,6 +5,34 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.4.0 — long text that saves as it's typed
+
+Additive: two new optional options on `editInPlace`; nothing changes until
+a field opts in. Asked for to make notes feel like Notion: no click away to
+save.
+
+- **`autosave: true`** on a `long-text` field edited in place: it saves
+  about a second after typing stops, without leaving the field, and at once
+  on leaving it. It stays editable while a save is in flight; the next save
+  waits behind it and sends the latest draft, so saves never cross. A quiet
+  "Saving…" / "Saved" line sits under it. A refusal keeps exactly what was
+  typed with the reason, as before. Esc saves what's left and closes:
+  nothing reverts. Rich text that can't round-trip (`onProblem`) still
+  saves nothing.
+- **`alwaysEditable: true`** (implies `autosave`): the editor is the value
+  at rest, with no click to open, and never closes. At rest it shows the
+  editor rather than the read view, so links in it are edited, not
+  followed.
+- **Leaving the page** with only autosaving text unsaved saves it and goes
+  on; "Discard your changes?" shows only if that save fails. Hiding the
+  page saves too.
+- **Fix: Esc in a rich-text field edited in place now gives up the edit**,
+  as `cell-patterns.md` always said. ProseMirror marked every Esc handled,
+  so the field never saw it and Esc did nothing.
+- The template's Widget Description autosaves (still opened with a click).
+- **How an app adopts it:** add `autosave: true` (or `alwaysEditable: true`,
+  and drop `autoFocus` from its control) to the long-text field's
+  `editInPlace`. See `docs/foundation/cell-patterns.md` "Editable value".
 ## 4.3.1 — MCP: a refused write leaves nothing behind
 
 Backend only, a fix to `app/mcp_tools.py` since 4.2.0. When an entity's router

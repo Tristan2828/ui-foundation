@@ -20,7 +20,9 @@
 //   header badge), Price, Description (rich text) and Extra Categories
 //   turn into the form's own control (widget-fields.tsx) where they're
 //   shown, and save when you leave them. Not optimistic: "Saving…" until
-//   the server agrees; a refusal stays open with its reason.
+//   the server agrees; a refusal stays open with its reason. Description
+//   autosaves as it's typed (`autosave`, Notion-style): a pause after
+//   typing stops, without leaving it, editable while it saves.
 // - The checklist, a list edited in place (editInPlace's `list` kind): an
 //   item is added at the end (Enter adds the next), its text edited where
 //   it's shown, moved and removed with the form's own buttons. Each change
@@ -138,9 +140,11 @@ function widgetEdits(
         />
       ),
     }),
-    // Long text, as rich text: Ctrl/Cmd+Enter saves, Enter is a new line.
+    // Long text, as rich text, saved as it's typed (a pause after typing
+    // stops); Ctrl/Cmd+Enter or Esc saves now and closes, Enter is a new line.
     description: editInPlace({
       kind: 'long-text',
+      autosave: true,
       value: widget.description,
       schema: rules.description,
       save: (description) => save({ description }),

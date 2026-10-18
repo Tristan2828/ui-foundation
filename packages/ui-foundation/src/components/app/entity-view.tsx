@@ -24,7 +24,9 @@
 // header badge uses it directly. A field not marked renders exactly as
 // before. Edit, in `actions`, stays for everything else. A sub-item list
 // edits in place too (editInPlace's `list` kind, editable-list.tsx): its
-// items added, edited, moved and removed on the page.
+// items added, edited, moved and removed on the page. Long text can
+// autosave as it's typed (`autosave`), and be the editor itself, with no
+// click to open (`alwaysEditable`).
 //
 // Two layouts. `column` (the default): every section in one column capped
 // at max-w-4xl. `rail`, for a record with long content: the page takes the
@@ -365,12 +367,12 @@ export function EntityView({
   back,
 }: EntityViewProps) {
   // Editing in place: one store per view, and the leave-page prompt only
-  // while a field is open.
+  // while a field is open (or one is always editable).
   const [store] = useState(() => new EditInPlaceStore())
-  const openField = useSyncExternalStore(
+  const editing = useSyncExternalStore(
     store.subscribe,
-    () => store.open,
-    () => store.open,
+    () => store.editing,
+    () => store.editing,
   )
 
   if (error?.kind === 'notfound') {
@@ -408,7 +410,7 @@ export function EntityView({
       data-state="success"
       data-layout={layout}
     >
-      {openField !== null && <LeaveGuard store={store} />}
+      {editing && <LeaveGuard store={store} />}
       <BackLink back={back} />
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

@@ -9,6 +9,7 @@ import type { AppError } from '@/api/contracts'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewLayout, type EntityViewSection } from './entity-view'
 import { Markdown } from './markdown'
+import { RichTextEditor } from './rich-text-editor'
 
 // One record in both layouts: `column` (the default) and `rail`, the
 // short sections in a column on the right of long Markdown. Axe and the
@@ -17,7 +18,9 @@ import { Markdown } from './markdown'
 // data router (its leave prompt is React Router's useBlocker), so each
 // story renders in a memory one; Owner saves after a short wait. Lists
 // edits two sub-item lists in place (a checklist in the main column, links
-// in the rail), each change saved after a short wait.
+// in the rail), each change saved after a short wait. Autosave is long
+// text saved as it's typed: notes that are the editor, and a summary that
+// opens on a click.
 
 // Long enough to scroll past a rail, with a table wider than the column
 // layout's 896px (it scrolls sideways there) but not than the rail
@@ -305,3 +308,74 @@ function ListsInRouter() {
 }
 
 export const Lists: StoryObj = { render: () => <ListsInRouter /> }
+
+// --- Long text that autosaves ---------------------------------------------
+
+// Notes that are the editor itself (`alwaysEditable`) and a summary that
+// opens on a click and autosaves as it's typed (`autosave`). Each save
+// takes 500ms, so "Saving…" shows; text with "refuse" in it is refused
+// the way a 500 is. Saves counts the requests a server would get.
+function AutosaveRecord() {
+  const [saved, setSaved] = useState({ notes: 'Pack the shared shelves first.', summary: 'Moving to the third floor.' })
+  const [saves, setSaves] = useState(0)
+  const saveText = (field: 'notes' | 'summary') => (text: string) =>
+    new Promise<void>((resolve, reject) =>
+      setTimeout(() => {
+        setSaves((count) => count + 1)
+        if (text.includes('refuse')) {
+          const error: AppError = { kind: 'server', message: 'The server refused it, as a server would.' }
+          reject(error)
+          return
+        }
+        setSaved((current) => ({ ...current, [field]: text }))
+        resolve()
+      }, 500),
+    )
+  const longText = (field: 'notes' | 'summary', alwaysEditable: boolean) =>
+    editInPlace<string>({
+      kind: 'long-text',
+      value: saved[field],
+      autosave: true,
+      alwaysEditable,
+      save: saveText(field),
+      control: (props) => (
+        <RichTextEditor
+          id={props.id}
+          defaultValue={props.value}
+          onChange={props.onChange}
+          onProblem={props.onProblem}
+          readOnly={props.disabled}
+          autoFocus={!alwaysEditable}
+          toolbar={alwaysEditable}
+          aria-invalid={props.invalid || undefined}
+          aria-label={props.label}
+          aria-describedby={props.describedBy}
+        />
+      ),
+    })
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Saved',
+      placement: 'rail',
+      fields: [
+        { label: 'Saves', value: String(saves) },
+        { label: 'Saved notes', value: <span data-testid="saved-notes">{saved.notes}</span> },
+      ],
+    },
+    { title: 'Summary', content: <Markdown>{saved.summary}</Markdown>, edit: longText('summary', false) },
+    { title: 'Notes', content: <Markdown>{saved.notes}</Markdown>, edit: longText('notes', true) },
+  ]
+  return <EntityView layout="rail" isLoading={false} back={{ to: '/projects', label: 'Projects' }} title="Office move" sections={sections} />
+}
+
+function AutosaveInRouter() {
+  const [router] = useState(() =>
+    createMemoryRouter([
+      { path: '/', element: <AutosaveRecord /> },
+      { path: '/projects', element: <p>Projects</p> },
+    ]),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const Autosave: StoryObj = { render: () => <AutosaveInRouter /> }

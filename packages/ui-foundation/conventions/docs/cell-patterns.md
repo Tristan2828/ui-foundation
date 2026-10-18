@@ -656,8 +656,9 @@ A value on the record's view that turns into **the form's own control**
 where it's shown, and saves when you leave it: a title, a status, a
 price, notes, a list of linked records. Widget's view is the reference
 (`src/routes/widgets/widget-view.tsx`): Name (the title), Status (its
-header badge), Price, Description (rich text) and Extra Categories, with
-the controls in `widget-fields.tsx`, the same ones the form uses.
+header badge), Price, Description (rich text that autosaves) and Extra
+Categories, with the controls in `widget-fields.tsx`, the same ones the
+form uses.
 
 The rule behind every part of it: **nothing typed is ever lost.**
 
@@ -684,7 +685,7 @@ Save button, no Undo:
 | Kind (`editInPlace({ kind })`) | Saves on | Esc |
 |---|---|---|
 | `text`: one line | Enter, or leaving it | puts the saved value back |
-| `long-text`: notes, rich text for Markdown | Ctrl/Cmd+Enter, or leaving it (Enter is a new line) | the same |
+| `long-text`: notes, rich text for Markdown | Ctrl/Cmd+Enter, or leaving it (Enter is a new line); with `autosave`, also a pause in typing | the same; with `autosave`, saves what's left and closes |
 | `choice`: a select, a switch, a single reference | the pick (its list opens with the field, non-modal) | closes the list with nothing picked: gives up |
 | `multi`: a multi reference | leaving it, or Ctrl/Cmd+Enter (Enter picks) | closes the list first; Esc again gives up |
 
@@ -712,6 +713,53 @@ word: a 422's field error as `EntityForm` shows it, or the error's
 message (a 500, no answer). The control is `aria-invalid` and described
 by the reason. Nothing reverts on its own, and there's no toast. Leaving
 again retries; Esc gives up.
+
+**Long text that saves itself (`autosave: true`)**, Notion-style, so
+nobody has to click away to save notes. Opt in per field:
+`editInPlace({ kind: 'long-text', autosave: true, ... })`.
+
+- It saves about a second after typing stops, without leaving the field,
+  and at once on leaving it (a click or Tab elsewhere, Ctrl/Cmd+Enter,
+  opening another value, a link off the page).
+- **Never read-only while it saves.** Typing carries on during a save;
+  the next save waits for the one in flight and sends whatever the text
+  is by then, so saves never cross and the latest always wins.
+- Under the text, a quiet line in the muted caption tone
+  (`role="status"`): "Saving…" with a spinner while a save is in flight,
+  "Saved" with a check once nothing typed is waiting. No toast.
+- **Refused:** exactly what was typed stays, with the reason under it, as
+  above. Typing again retries after the pause; a refused draft is never
+  re-sent on its own.
+- **Esc saves what's left and closes.** Nothing reverts: what was saved a
+  second ago stays saved, so "give up" would only drop the last second.
+- Rich text that can't save without rewriting what the person didn't edit
+  (`RichTextEditor`'s `onProblem`) saves nothing; its message shows after
+  the pause, and the next good edit saves.
+- **Leaving the page** with a save still to come saves it first and goes
+  on; "Discard your changes?" shows only if that save is refused. Closing
+  the tab can't wait: it starts the save and the browser asks. Hiding the
+  page (another tab, a phone's home screen) saves too.
+
+**Always editable (`alwaysEditable: true`, implies `autosave`)**: the
+notes are the editor itself, shown at rest, with no pencil and no click
+to open, and it never closes. Ctrl/Cmd+Enter or Esc saves now and leaves
+the caret where it is. It sits beside the one open value rather than
+being it: opening another value leaves it alone. Don't give its control
+`autoFocus`. The cost: at rest the page shows the editor, not the read
+view, so a link in the notes is edited there, not followed, and the
+editor loads on every visit. Use it where the notes are what the page is
+for; elsewhere `autosave` alone keeps the read view at rest.
+
+```tsx
+description: editInPlace({
+  kind: 'long-text',
+  autosave: true,                // or alwaysEditable: true, with no autoFocus on the control
+  value: widget.description,
+  schema: widgetFormSchema.shape.description,
+  save: (description) => editField.mutateAsync({ description }),
+  control: (props) => <WidgetDescriptionEditor {...} />,
+}),
+```
 
 **Leaving the page** (a link, Back) while a value holds unsaved text asks
 "Discard your changes?" first (Keep editing / Discard); closing the tab
