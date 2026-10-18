@@ -118,7 +118,8 @@ src/main.tsx                           FoundationProviders (theme, query client,
   because it's the same for every user.
 - **Which build is live** (4.5). The package's Vite plugin
   (`/vite`, `buildInfo()`) writes `dist/build-info.json` on every build:
-  `api` (`real`, or `mock` for an MSW bundle), the commit and the PR. The
+  `api` (`real`, or `mock` for an MSW bundle), the commit and the PR, and
+  (4.9, `alembic`) the migrations' head revision as `schema`. The
   reference backend refuses `APP_ENV=production` unless it says `real`,
   and `AppShell`'s `version` shows the commit, linking to its PR.
 - **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
