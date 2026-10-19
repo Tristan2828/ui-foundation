@@ -5,6 +5,23 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.15.0 — the accessibility suite scales with the nav
+
+Additive (#161). `defineA11ySuite`'s "every nav page" visited every
+sidebar page in one test, so an app of about 20 pages ran past
+Playwright's 30 s timeout on a loaded machine.
+
+- **`defineA11ySuite({ nav })`**: the app's `NavEntry[]` (the one
+  `AppShell` gets). Each nav page becomes its own test, in both themes,
+  plus one test that the rendered sidebar links exactly those pages.
+- **Without `nav`**, the pages are still found in the sidebar at run
+  time, and that one test's timeout now grows by 10 s per page.
+- **Pages in a folded sidebar section are found too** (links read by
+  element, not role), for apps using 4.14's collapsible sections.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.15.0`,
+  `npx ui-foundation sync`, then in `e2e/a11y.spec.ts` import the nav
+  (`import { NAV_ITEMS } from '../src/nav'`) and pass `nav: NAV_ITEMS`.
+
 ## 4.9.0 — the schema in build-info.json, and grouped API addresses for MCP
 
 Additive (#149, #150). An app that doesn't pass the new options sees no
