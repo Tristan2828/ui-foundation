@@ -1,13 +1,14 @@
-import { LogOutIcon, MoonIcon, SunIcon } from 'lucide-react'
+import { ChevronRightIcon, LogOutIcon, MoonIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
-import { activeNavTo, navGroups, type NavEntry } from '@/components/app/app-shell-nav'
+import { activeNavTo, navGroups, type NavEntry, type NavGroup, type NavItem } from '@/components/app/app-shell-nav'
 import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
 import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
+import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -40,7 +41,10 @@ export type AppShellProps = {
    * pages (`{ label, items }`, one per module, say). A nav with no sections
    * is the single "Navigation" group. One entry is marked active: the most
    * specific whose route matches, so '/tasks' and '/tasks/categories' can
-   * both be listed.
+   * both be listed. A section marked `collapsible` folds under its label,
+   * remembered per browser (`defaultOpen` for the first visit); the one
+   * holding the current page stays open, and the icon rail shows every
+   * section's items.
    */
   nav: readonly NavEntry[]
   /**
@@ -116,6 +120,111 @@ function VersionEntry({ version }: { version: AppShellVersion }) {
   )
 }
 
+// One group's entries. A plain Link, not NavLink: NavLink marks every
+// matching entry current, and only the most specific one should be
+// (activeNavTo).
+function NavMenu({ items, activeTo }: { items: readonly NavItem[]; activeTo: string | undefined }) {
+  return (
+    <SidebarMenu>
+      {items.map(({ to, label, icon: Icon }) => {
+        const isActive = to === activeTo
+        return (
+          <SidebarMenuItem key={to}>
+            <SidebarMenuButton
+              isActive={isActive}
+              tooltip={label}
+              render={<Link to={to} aria-current={isActive ? 'page' : undefined} />}
+            >
+              <Icon />
+              <span>{label}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )
+      })}
+    </SidebarMenu>
+  )
+}
+
+// Whether a collapsible section is open, remembered per browser by its
+// label. Storage can be missing or refuse (a private window): then it's
+// remembered for the page's life only.
+const SECTION_KEY = (label: string) => `ui-foundation:nav-section:${label}`
+
+function storedSectionOpen(label: string): boolean | null {
+  try {
+    const stored = window.localStorage.getItem(SECTION_KEY(label))
+    return stored === null ? null : stored === 'open'
+  } catch {
+    return null
+  }
+}
+
+function storeSectionOpen(label: string, open: boolean) {
+  try {
+    window.localStorage.setItem(SECTION_KEY(label), open ? 'open' : 'closed')
+  } catch {
+    // Not remembered; the state still holds until the page reloads.
+  }
+}
+
+// A section whose label folds it (#152). On the icon rail (the collapsed
+// sidebar on a wide screen) its items always show and its label stays the
+// rail's hidden one, so no page is out of reach and no hidden button
+// takes a tab stop. The section holding the current page is always open:
+// arriving in a closed one opens it and remembers that.
+function CollapsibleNavGroup({ group, activeTo }: { group: NavGroup & { label: string }; activeTo: string | undefined }) {
+  const { state, isMobile } = useSidebar()
+  const contentId = useId()
+  const [stored, setStored] = useState(() => storedSectionOpen(group.label))
+  const holdsCurrent = group.items.some((item) => item.to === activeTo)
+
+  // Arriving in a folded section unfolds it, and it stays unfolded after.
+  if (holdsCurrent && stored !== true) setStored(true)
+  useEffect(() => {
+    if (holdsCurrent) storeSectionOpen(group.label, true)
+  }, [holdsCurrent, group.label])
+
+  if (state === 'collapsed' && !isMobile) {
+    return (
+      <SidebarGroup>
+        <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <NavMenu items={group.items} activeTo={activeTo} />
+        </SidebarGroupContent>
+      </SidebarGroup>
+    )
+  }
+
+  const open = holdsCurrent || (stored ?? group.defaultOpen ?? true)
+  return (
+    <SidebarGroup data-collapsible-section={open ? 'open' : 'closed'}>
+      <SidebarGroupLabel
+        render={
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={contentId}
+            // Can't fold the section you're in: the page would sit inside it.
+            aria-disabled={holdsCurrent || undefined}
+            onClick={() => {
+              if (holdsCurrent) return
+              setStored(!open)
+              storeSectionOpen(group.label, !open)
+            }}
+          />
+        }
+        className="w-full justify-between text-left hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-disabled:hover:bg-transparent aria-disabled:hover:text-sidebar-foreground/70"
+      >
+        {group.label}
+        <ChevronRightIcon aria-hidden="true" className={cn('transition-transform', open && 'rotate-90')} />
+      </SidebarGroupLabel>
+      <SidebarGroupContent id={contentId} hidden={!open}>
+        <NavMenu items={group.items} activeTo={activeTo} />
+      </SidebarGroupContent>
+    </SidebarGroup>
+  )
+}
+
 function AppShellSkeleton() {
   return (
     <div className="flex h-screen w-full gap-4 p-4" data-state="loading">
@@ -182,33 +291,22 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true, 
               </span>
             </SidebarHeader>
             <SidebarContent>
-              {navGroups(nav).map((group, groupIndex) => (
-                <SidebarGroup key={`${groupIndex}:${group.label ?? ''}`}>
-                  {group.label !== undefined && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {group.items.map(({ to, label, icon: Icon }) => {
-                        // A plain Link, not NavLink: NavLink marks every
-                        // matching entry current, and only the most specific
-                        // one should be (activeNavTo).
-                        const isActive = to === activeTo
-                        return (
-                          <SidebarMenuItem key={to}>
-                            <SidebarMenuButton
-                              isActive={isActive}
-                              tooltip={label}
-                              render={<Link to={to} aria-current={isActive ? 'page' : undefined} />}
-                            >
-                              <Icon />
-                              <span>{label}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        )
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              ))}
+              {navGroups(nav).map((group, groupIndex) =>
+                group.collapsible && group.label !== undefined ? (
+                  <CollapsibleNavGroup
+                    key={`${groupIndex}:${group.label}`}
+                    group={{ ...group, label: group.label }}
+                    activeTo={activeTo}
+                  />
+                ) : (
+                  <SidebarGroup key={`${groupIndex}:${group.label ?? ''}`}>
+                    {group.label !== undefined && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+                    <SidebarGroupContent>
+                      <NavMenu items={group.items} activeTo={activeTo} />
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                ),
+              )}
               {sidebarExtra}
             </SidebarContent>
             <SidebarFooter>

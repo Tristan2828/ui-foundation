@@ -73,6 +73,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
+  // Sections that fold, open and folded (#152).
+  { id: 'app-appshell--collapsible', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },

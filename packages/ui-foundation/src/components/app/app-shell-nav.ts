@@ -13,6 +13,15 @@ export type NavItem = {
 export type NavSection = {
   label: string
   items: readonly NavItem[]
+  /**
+   * The label folds the section away: a button with a chevron. Whether
+   * it's open is remembered per browser, by the section's label. The
+   * section holding the page you're on is always open, and the icon rail
+   * shows every section's items whatever their state.
+   */
+  collapsible?: boolean
+  /** Whether a collapsible section starts open for someone who has never folded it. Defaults to true. */
+  defaultOpen?: boolean
 }
 
 /** One entry of `AppShell`'s `nav`: a page, or a labelled section of pages. */
@@ -26,6 +35,9 @@ export function isNavSection(entry: NavEntry): entry is NavSection {
 export type NavGroup = {
   label?: string
   items: readonly NavItem[]
+  /** From its section: the label folds it (NavSection's `collapsible`). */
+  collapsible?: boolean
+  defaultOpen?: boolean
 }
 
 /**
@@ -41,7 +53,11 @@ export function navGroups(nav: readonly NavEntry[]): NavGroup[] {
     if (isNavSection(entry)) {
       if (run.length) groups.push({ items: run })
       run = []
-      groups.push({ label: entry.label, items: entry.items })
+      groups.push({
+        label: entry.label,
+        items: entry.items,
+        ...(entry.collapsible && { collapsible: true, defaultOpen: entry.defaultOpen ?? true }),
+      })
     } else {
       run.push(entry)
     }
