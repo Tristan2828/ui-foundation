@@ -5,6 +5,31 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.10.0 — a notice across a record's page, and a credit for its data's source
+
+Additive (#158, #159): new optional props and exports; a view that passes
+neither looks exactly as before.
+
+- **`EntityView` `notice`**: under the header, above both columns, across
+  the page at every width. It sits in a `role="status"` region that's
+  always rendered, so a notice appearing or clearing after the page loads
+  is announced and one there from the start isn't.
+- **`Notice`**: `tone` (`info`, `success`, `warning`, `destructive`), an
+  optional `title`, the message, an optional `action` and `icon`. A wash
+  of the tone with `foreground` text, and no role of its own.
+- **`EntityView` `footer`**: after every section (below both columns in
+  the rail layout, last on a phone), in caption type, outside any card.
+- **`SourceCredit`**: `sources: { name, href, note? }[]`, "Data from A and
+  B." with each name a link opening in a new tab (said to screen readers),
+  then each `note` as written.
+- **A new primitive, `@tristan2828/ui-foundation/ui/alert`** (shadcn's
+  Alert, which `Notice` is built on), with its destructive variant's text
+  patched to `--destructive-text`: upstream's was 3.2:1 on the dark card.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.10.0`,
+  `npx ui-foundation sync` (`add-an-entity.md` and `design-language.md`
+  say when to use each). An app that had added `alert` to its own
+  `src/components/ui/` must now import the package's (lint says so).
+
 ## 4.9.0 — the schema in build-info.json, and grouped API addresses for MCP
 
 Additive (#149, #150). An app that doesn't pass the new options sees no

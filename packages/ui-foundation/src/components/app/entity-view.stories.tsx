@@ -9,7 +9,9 @@ import type { AppError } from '@/api/contracts'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewLayout, type EntityViewSection } from './entity-view'
 import { Markdown } from './markdown'
+import { Notice } from './notice'
 import { RichTextEditor } from './rich-text-editor'
+import { SourceCredit } from './source-credit'
 
 // One record in both layouts: `column` (the default) and `rail`, the
 // short sections in a column on the right of long Markdown. Axe and the
@@ -146,6 +148,69 @@ function LoadingRail() {
 }
 
 export const RailLoading: StoryObj = { render: () => <LoadingRail /> }
+
+// --- A notice and a footer ------------------------------------------------
+
+// A held record: the notice across the page under the header, cleared by
+// the action (as a tick elsewhere on the page would), and the data's
+// sources credited under both columns.
+function HeldRecord() {
+  const [held, setHeld] = useState(true)
+  return (
+    <EntityView
+      layout="rail"
+      isLoading={false}
+      back={{ to: '/', label: 'Books' }}
+      title="The Fall of Hyperion"
+      badges={<Badge variant="outline">To read</Badge>}
+      notice={
+        held && (
+          <Notice
+            tone="warning"
+            title="On hold"
+            action={
+              <Button size="sm" variant="outline" onClick={() => setHeld(false)}>
+                Release the hold
+              </Button>
+            }
+          >
+            Read “Hyperion” first: this one follows it.
+          </Notice>
+        )
+      }
+      sections={[
+        {
+          title: 'Details',
+          placement: 'rail',
+          fields: [
+            { label: 'Author', value: 'Dan Simmons' },
+            { label: 'Published', value: '1990' },
+          ],
+        },
+        { title: 'Notes', content: <Markdown>{NOTES}</Markdown> },
+      ]}
+      footer={
+        <SourceCredit
+          sources={[
+            {
+              name: 'Open Library',
+              href: 'https://openlibrary.org',
+              note: 'Covers and editions are Open Library’s, under its terms.',
+            },
+            { name: 'Wikidata', href: 'https://www.wikidata.org' },
+          ]}
+        />
+      }
+    />
+  )
+}
+
+function HeldInRouter() {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <HeldRecord /> }]))
+  return <RouterProvider router={router} />
+}
+
+export const NoticeAndFooter: StoryObj = { render: () => <HeldInRouter /> }
 
 // --- Lists edited in place ------------------------------------------------
 

@@ -8,6 +8,7 @@ import { expect, test } from '@playwright/test'
 // e2e/a11y.spec.ts. Story ids are `title`+export slugs.
 const STORYBOOK_URL = 'http://localhost:6006'
 const PRIMITIVES = [
+  'alert',
   'badge',
   'button',
   'card',
@@ -67,6 +68,10 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
+  // A notice across the page and a source credit under both columns.
+  { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },
+  // <Notice>: every tone's wash, on the page and on a card.
+  { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
@@ -97,6 +102,9 @@ const GLYPH_STORIES: {
 }[] = [
   { id: 'app-stagecircle--default' },
   { id: 'app-banners--default' },
+  // Each tone's icon on its own wash, and the source credit's link marks.
+  { id: 'app-notice--default' },
+  { id: 'app-entityview--notice-and-footer' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip' },
   // Every categorical slot, against the page and against a card.

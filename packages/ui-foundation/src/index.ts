@@ -49,6 +49,8 @@ export {
   type StageCircleStage,
   type StageCircleTone,
 } from '@/components/app/stage-circle'
+export { Notice, type NoticeProps, type NoticeTone } from '@/components/app/notice'
+export { SourceCredit, type Source, type SourceCreditProps } from '@/components/app/source-credit'
 export {
   WidgetCard,
   WidgetList,
