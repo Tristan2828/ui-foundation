@@ -67,6 +67,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
+  // A plain date on a form, required and optional (#157).
+  { id: 'app-datefield--default', mustShow: 'No due date' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },

@@ -5,6 +5,28 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.12.0 — a plain date field, and arrow keys in the calendar
+
+Additive (#157), plus a fix to the shipped `Calendar`.
+
+- **`DateField`**: a plain date (`'YYYY-MM-DD'`, or `''` for not set) as a
+  button opening the `Calendar` in a `Popover`. One control for the form
+  (a `Controller`) and for editing in place (`kind: 'choice'`: a pick
+  saves). `clearable` adds Clear for an optional field. The chosen day
+  (else today) has focus when it opens.
+- **`formatPlainDate(value, options?, locale?)`**: "Sep 2, 2026", never
+  shifted by the time zone (checked in browsers at UTC−10 and UTC+14).
+- **`ui/calendar` fix:** the arrow keys didn't move focus between days.
+  shadcn's `CalendarDayButton` made a ref for that but never passed it to
+  the button. Every app's date picker built on the package's `Calendar`
+  (the template's Available From included) gets arrow keys with this
+  release.
+- **Docs:** the plan template's `date` type is now the package's
+  `DateField` rather than a variant of `date-time`. `add-an-entity.md`
+  says how to wire one: contract, form, cells, editing in place, backend.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.12.0`,
+  `npx ui-foundation sync`.
+
 ## 4.9.0 — the schema in build-info.json, and grouped API addresses for MCP
 
 Additive (#149, #150). An app that doesn't pass the new options sees no

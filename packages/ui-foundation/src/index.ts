@@ -49,6 +49,8 @@ export {
   type StageCircleStage,
   type StageCircleTone,
 } from '@/components/app/stage-circle'
+export { DateField, type DateFieldProps } from '@/components/app/date-field'
+export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
 export {
   WidgetCard,
   WidgetList,
