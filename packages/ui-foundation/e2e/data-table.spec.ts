@@ -143,6 +143,41 @@ test.describe('DataTable, editing in its rows', () => {
     await expect(page.getByRole('row')).toHaveCount(7)
   })
 
+  test('a link cell: a link out at rest, the not-set label when empty, and a click on the link follows it', async ({
+    page,
+  }) => {
+    await open(page)
+    const link = row(page, 'Home').getByRole('link', { name: 'example.com/home (opens in a new tab)' })
+    await expect(link).toHaveAttribute('href', 'https://example.com/home')
+    await expect(link).toHaveAttribute('target', '_blank')
+    await expect(row(page, 'Finance')).toContainText('No website')
+    // Following the link doesn't open the cell.
+    const popup = page.waitForEvent('popup')
+    await link.click()
+    await (await popup).close()
+    await expect(page.getByRole('textbox', { name: 'Website of Home' })).toHaveCount(0)
+  })
+
+  test('a link cell: a bare address gains https, another scheme is refused, a blank clears it', async ({ page }) => {
+    await open(page)
+    await page.getByRole('button', { name: 'Edit Website of Finance' }).click()
+    const box = page.getByRole('textbox', { name: 'Website of Finance' })
+    await box.fill('javascript:alert(1)')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('row').filter({ has: box }).getByRole('alert')).toHaveText('Use a web or email address')
+    await box.fill('finance.example.org')
+    await page.keyboard.press('Enter')
+    await expect(row(page, 'Finance').getByRole('link', { name: /finance\.example\.org/ })).toHaveAttribute(
+      'href',
+      'https://finance.example.org',
+    )
+
+    await page.getByRole('button', { name: 'Edit Website of Home' }).click()
+    await page.getByRole('textbox', { name: 'Website of Home' }).fill('   ')
+    await page.keyboard.press('Enter')
+    await expect(row(page, 'Home')).toContainText('No website')
+  })
+
   for (const theme of ['light', 'dark'] as const) {
     test(`axe: a cell open, and refused (${theme})`, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 })

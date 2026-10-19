@@ -6,20 +6,19 @@ import { createMemoryRouter, Link, RouterProvider } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { byDay } from '@/lib/group-by-day'
 import { DataTable } from './data-table'
-import { editInPlace } from './edit-in-place'
-import { EditableValue } from './editable-value'
 import { InlineCreate } from './inline-create'
 import { PillFilter } from './pill-filter'
+import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 
 // DataTable's two opt-ins for a small entity, in a real browser
 // (e2e/data-table.spec.ts), with axe and the token check in both themes:
 // - ContentWidth: `width="content"`, a few short columns sized to fit on a
 //   wide screen, with a switch between the four states.
-// - EditInTheRows: every cell an editable value, InlineCreate in the
+// - EditInTheRows: every cell an editable value (NameCell, ChoiceCell,
+//   LinkCell), InlineCreate in the
 //   toolbar, a delete in the pinned last column. Saves take ~0.4s; a name
 //   another category has is refused the way a server's 422 is. "Elsewhere"
 //   is a link that leaves the page, for the leave prompt.
@@ -44,10 +43,10 @@ const COLOURS = {
 } as const
 type ColourKey = keyof typeof COLOURS
 
-type Category = { id: number; name: string; colour: ColourKey; icon: IconKey; widgets: number; notes?: string }
+type Category = { id: number; name: string; colour: ColourKey; icon: IconKey; widgets: number; notes?: string; website?: string | null }
 
 const SEED: Category[] = [
-  { id: 1, name: 'Home', colour: 'blue', icon: 'house', widgets: 12, notes: 'Everything for the house, the garden shed and the garage loft' },
+  { id: 1, name: 'Home', colour: 'blue', icon: 'house', widgets: 12, notes: 'Everything for the house, the garden shed and the garage loft', website: 'https://example.com/home' },
   { id: 2, name: 'Finance', colour: 'orange', icon: 'wallet', widgets: 4 },
   { id: 3, name: 'Work', colour: 'green', icon: 'briefcase', widgets: 27 },
   { id: 4, name: 'Health', colour: 'navy', icon: 'heart', widgets: 3 },
@@ -190,41 +189,8 @@ const NAME_RULE = {
   },
 }
 
-// A choice cell's control: its list opens with the field, a pick saves,
-// closing it with no pick gives up, and it isn't modal.
-function ChoiceSelect<T extends string>({
-  options,
-  props,
-}: {
-  options: Record<T, string>
-  props: { id: string; value: T; disabled: boolean; label: string; describedBy: string; commit: (value?: T) => void; cancel: () => void }
-}) {
-  return (
-    <Select
-      value={props.value}
-      onValueChange={(next) => next && props.commit(next as T)}
-      disabled={props.disabled}
-      defaultOpen
-      modal={false}
-      onOpenChange={(open) => {
-        if (!open) props.cancel()
-      }}
-    >
-      <SelectTrigger id={props.id} className="w-40" aria-label={props.label} aria-describedby={props.describedBy}>
-        <SelectValue>{(value: T) => options[value]}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {(Object.keys(options) as T[]).map((key) => (
-          <SelectItem key={key} value={key}>
-            {options[key]}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
-}
-
-const COLOUR_LABELS = Object.fromEntries(Object.entries(COLOURS).map(([key, { label }]) => [key, label])) as Record<ColourKey, string>
+const COLOUR_KEYS = Object.keys(COLOURS) as ColourKey[]
+const ICON_KEYS = Object.keys(ICONS) as IconKey[]
 
 // Made once per table: new column definitions on every render would
 // remount the cells, and an open one with them.
@@ -234,66 +200,52 @@ function editColumns(server: CategoryServer): LegacyColumnDef<Category, unknown>
       id: 'name',
       header: 'Name',
       cell: ({ row }) => (
-        <EditableValue
+        <NameCell
           label={`Name of ${row.original.name}`}
-          layout="inline"
-          edit={editInPlace<string>({
-            kind: 'text',
-            value: row.original.name,
-            schema: NAME_RULE,
-            save: (name) => server.update(row.original.id, { name }),
-            control: (props) => (
-              <Input
-                id={props.id}
-                className="w-48"
-                value={props.value}
-                readOnly={props.disabled}
-                aria-invalid={props.invalid || undefined}
-                aria-label={props.label}
-                aria-describedby={props.describedBy}
-                onChange={(event) => props.onChange(event.target.value)}
-              />
-            ),
-          })}
+          value={row.original.name}
+          schema={NAME_RULE}
+          save={(name) => server.update(row.original.id, { name })}
         >
           <Name category={row.original} />
-        </EditableValue>
+        </NameCell>
       ),
     },
     {
       id: 'colour',
       header: 'Colour',
       cell: ({ row }) => (
-        <EditableValue
+        <ChoiceCell<ColourKey>
           label={`Colour of ${row.original.name}`}
-          layout="inline"
-          edit={editInPlace<ColourKey>({
-            kind: 'choice',
-            value: row.original.colour,
-            save: (colour) => server.update(row.original.id, { colour }),
-            control: (props) => <ChoiceSelect options={COLOUR_LABELS} props={props} />,
-          })}
-        >
-          <Colour colour={row.original.colour} />
-        </EditableValue>
+          value={row.original.colour}
+          options={COLOUR_KEYS}
+          render={(colour) => <Colour colour={colour} />}
+          save={(colour) => server.update(row.original.id, { colour })}
+        />
       ),
     },
     {
       id: 'icon',
       header: 'Icon',
       cell: ({ row }) => (
-        <EditableValue
+        <ChoiceCell<IconKey>
           label={`Icon of ${row.original.name}`}
-          layout="inline"
-          edit={editInPlace<IconKey>({
-            kind: 'choice',
-            value: row.original.icon,
-            save: (icon) => server.update(row.original.id, { icon }),
-            control: (props) => <ChoiceSelect options={ICON_LABELS} props={props} />,
-          })}
-        >
-          {ICON_LABELS[row.original.icon]}
-        </EditableValue>
+          value={row.original.icon}
+          options={ICON_KEYS}
+          render={(icon) => ICON_LABELS[icon]}
+          save={(icon) => server.update(row.original.id, { icon })}
+        />
+      ),
+    },
+    {
+      id: 'website',
+      header: 'Website',
+      cell: ({ row }) => (
+        <LinkCell
+          label={`Website of ${row.original.name}`}
+          value={row.original.website ?? null}
+          emptyLabel="No website"
+          save={(website) => server.update(row.original.id, { website })}
+        />
       ),
     },
     { id: 'widgets', header: 'Widgets', cell: ({ row }) => <span className="tabular-nums">{row.original.widgets}</span> },

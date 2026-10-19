@@ -50,6 +50,14 @@ export {
   type StageCircleTone,
 } from '@/components/app/stage-circle'
 export {
+  ChoiceCell,
+  LinkCell,
+  NameCell,
+  type ChoiceCellProps,
+  type LinkCellProps,
+  type NameCellProps,
+} from '@/components/app/row-edit-cells'
+export {
   WidgetCard,
   WidgetList,
   WidgetListItem,

@@ -882,15 +882,26 @@ row`), every editable cell is an editable value, exactly as on a view.
 one is open, "Saving…" and a refusal in the cell. There's no pencil
 column and no edit route.
 
-- **A cell** is `<EditableValue label="<Column> of <name>" layout="inline"
-  edit={editInPlace({ ... })}>`, its shown value the cell as it always
-  was. The label names the column and the row, so its pencil reads "Edit
-  Colour of Work" and its control "Colour of Work". The kinds are the
-  same: `text` (Enter saves), `choice` (the list opens with it, non-modal,
-  a pick saves), `multi`.
+- **A cell is one of the package's three row-edit cells**, or an
+  `<EditableValue label="<Column> of <name>" layout="inline"
+  edit={editInPlace({ ... })}>` for anything else. The label names the
+  column and the row, so its pencil reads "Edit Colour of Work" and its
+  control "Colour of Work".
+  - **`NameCell`**: one line; Enter saves, the form's rule (`schema`)
+    runs first, a taken name's 422 shows in the cell. `children` is how
+    the name shows at rest (an icon beside it).
+  - **`ChoiceCell<T>`** (`options`, `render`): the list opens with the
+    cell, non-modal; a pick saves, closing it with no pick gives up.
+    `render` draws a value at rest, on the trigger and in the list.
+  - **`LinkCell`** (`linkText`, `emptyLabel`, `save(link | null)`): a
+    link opening in a new tab (said to screen readers), or the not-set
+    label; edited as one line. A bare `example.com` gains `https://`,
+    another scheme (`javascript:`) is refused in the cell, and a blank
+    box saves `null`. Clicking the link follows it; the pencil edits.
 - **A cell is a component** (`<Entity><Field>Cell`) that calls
   `useEdit<Entity>Field(row.id)` for its save, the view's single-field
-  save. A hook can't be called inside a column definition.
+  save, and renders the package's cell with it. A hook can't be called
+  inside a column definition.
 - **Stable columns and row ids.** Make the column definitions once
   (at module level, or `useMemo`) and give
   `DataTable` a `getRowId`: new definitions every render, or rows keyed
@@ -906,24 +917,29 @@ column and no edit route.
   and its delete together on a wide screen.
 
 ```tsx
-// A cell is its own component, so it can call the record's save hook.
+import { ChoiceCell, InlineCreate, LinkCell, NameCell } from '@tristan2828/ui-foundation'
+
+// Each cell is its own component, so it can call the record's save hook.
 function CategoryColourCell({ category }: { category: Category }) {
   const editField = useEditCategoryField(category.id)       // optimistic: false, toastOnError: false
   return (
-    <EditableValue label={`Colour of ${category.name}`} layout="inline"
-      edit={editInPlace({
-        kind: 'choice',
-        value: category.colour,
-        schema: categoryFormSchema.shape.colour,
-        save: (colour) => editField.mutateAsync({ colour }),
-        control: (props) => (
-          <CategoryColourSelect id={props.id} value={props.value} onChange={(colour) => props.commit(colour)}
-            readOnly={props.disabled} defaultOpen modal={false} onOpenChange={(open) => !open && props.cancel()}
-            aria-label={props.label} aria-describedby={props.describedBy} />
-        ),
-      })}>
-      <ColourSwatch colour={category.colour} />
-    </EditableValue>
+    <ChoiceCell label={`Colour of ${category.name}`} value={category.colour} options={CATEGORY_COLOURS}
+      render={(colour) => <ColourSwatch colour={colour} />}
+      save={(colour) => editField.mutateAsync({ colour })} />
+  )
+}
+function CategoryNameCell({ category }: { category: Category }) {
+  const editField = useEditCategoryField(category.id)
+  return (
+    <NameCell label={`Name of ${category.name}`} value={category.name} schema={categoryFormSchema.shape.name}
+      save={(name) => editField.mutateAsync({ name })} />
+  )
+}
+function CategoryWebsiteCell({ category }: { category: Category }) {
+  const editField = useEditCategoryField(category.id)
+  return (
+    <LinkCell label={`Website of ${category.name}`} value={category.website} emptyLabel="No website"
+      save={(website) => editField.mutateAsync({ website })} />
   )
 }
 
@@ -931,6 +947,7 @@ function CategoryColourCell({ category }: { category: Category }) {
 const CATEGORY_COLUMNS: LegacyColumnDef<Category, unknown>[] = [
   { id: 'name', header: 'Name', cell: ({ row }) => <CategoryNameCell category={row.original} /> },
   { id: 'colour', header: 'Colour', cell: ({ row }) => <CategoryColourCell category={row.original} /> },
+  { id: 'website', header: 'Website', cell: ({ row }) => <CategoryWebsiteCell category={row.original} /> },
   { id: 'actions', header: () => <span className="sr-only">Actions</span>, cell: ({ row }) => <DeleteCategoryAction category={row.original} /> },
 ]
 
