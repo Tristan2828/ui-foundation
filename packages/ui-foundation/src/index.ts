@@ -49,6 +49,9 @@ export {
   type StageCircleStage,
   type StageCircleTone,
 } from '@/components/app/stage-circle'
+export { ProgressRing, type ProgressRingProps } from '@/components/app/progress-ring'
+export { StepBar, type StepBarProps } from '@/components/app/step-bar'
+export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export {
   WidgetCard,
   WidgetList,

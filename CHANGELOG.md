@@ -5,6 +5,31 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.11.0 — a progress ring, a step bar, a half star, and a highlighted row
+
+Additive (#154, #156): new exports, one optional `DataTable` prop and two
+tokens; nothing changes until an app uses them. See
+`docs/foundation/cell-patterns.md` patterns 9, 13 and 22.
+
+- **`ProgressRing`** (`done`, `total`, `label?`): done out of total as a
+  small ring filling clockwise beside the count ("4/6"); `foreground`
+  under way, `success-text` complete, "Not started" for zero of zero.
+- **`StepBar`** (`value`, `steps` = 5, `word`, `label?`): an ordered enum
+  of bands as a short bar of steps, the band's word beside it, named
+  "Quality: High, 4 of 5".
+- **`RatingStar`** (`value: 'full' | 'half' | 'empty'`, `word`): a
+  three-value enum as one star; the half is the left half filled over
+  the whole outline.
+- **`DataTable` `highlightRow`**: the row to look at, an info wash on
+  every cell (over the stripe and the pinned columns) with a bar at its
+  start. Muted text inside it is darkened (new tokens `--table-highlight`,
+  `--table-highlight-muted-foreground`): plain `muted-foreground` is
+  4.09:1 on the wash.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.11.0`,
+  `npx ui-foundation sync`. An app that drew its own ring, step bar or
+  half star replaces it with the package's; one that greyed done rows
+  with opacity switches to `text-muted-foreground` (pattern 22).
+
 ## 4.9.0 — the schema in build-info.json, and grouped API addresses for MCP
 
 Additive (#149, #150). An app that doesn't pass the new options sees no
