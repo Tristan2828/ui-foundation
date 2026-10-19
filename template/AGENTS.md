@@ -91,6 +91,13 @@ A pattern the foundation lacks is worth raising there: the design language
 grows in the package so every app gets it, with axe contrast coverage in
 both themes.
 
+## Timed Screens
+A screen that runs on its own for minutes (a timer, a player, a paced
+routine) is built from the package's parts: `SessionView`,
+`useSessionClock`, `useWakeLock`, the audio cues and `useMuted`. Follow
+`docs/foundation/timed-screens.md`, including its Playwright recipe
+(`clock.install()` before `goto`, then `fastForward`, never `runFor`).
+
 ## Scope and Stopping
 - Do the task you were given and nothing beyond it. A task is done when
   `npm run verify` passes — not when it feels complete.

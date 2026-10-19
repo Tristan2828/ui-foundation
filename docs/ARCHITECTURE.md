@@ -158,6 +158,16 @@ src/main.tsx                           FoundationProviders (theme, query client,
   rows in the server's order (`byDay` for feeds and logs), one `<tbody>`
   per group with a row header, and `PillFilter` is a quick filter as
   pills, its value in the URL like the others.
+- **Timed screens** (4.16, #163–#166): `SessionView` is a modal over the
+  whole viewport (Base UI's dialog popup with its own classes, not
+  `DialogContent` overridden), with optional real fullscreen of the whole
+  page and a wake lock. `useSessionClock` reads `performance.now()` each
+  frame, never sums ticks. The audio cues are Web Audio and speech
+  synthesis, with no files. Each one's rules are a React-free factory
+  (`createWakeLock`, `createSessionClock`, `createAudioCues`,
+  `createMutedStore`), unit tested in node against fake browser APIs, and
+  the hooks and functions apps import are thin bindings to the real ones.
+  The browser side is `e2e/session-view.spec.ts` on the Timer story.
 - **Saving without the form** (a row's switch, a quick action on the view)
   goes through `useRecordUpdate`: a PATCH that is optimistic in the
   record's detail query and every list page holding it, replaced by the
