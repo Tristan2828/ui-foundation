@@ -194,7 +194,12 @@ is a filled-in example while the Widgets demo is still here).
    a toast naming the row and the server's reason; the lists refetch
    after). Its specs cover a flip that saves, the keyboard, and a failed
    save putting the switch back. Copy `useSaveWidgetField` whenever the
-   plan has a `toggle` or any quick action, and only then.
+   plan has a `toggle` or any quick action, and only then. It finds the
+   record under the entity's own detail and list keys: on a screen that
+   holds it in a query of its own, a plain change (`{ field: value }`) is
+   still sent but only shows once that query refetches, and a change
+   built from the record (`(record) => …`) is refused, with a console
+   warning naming the keys searched.
    - `src/routes/widgets/use-widgets.ts`, `use-widget-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)
@@ -276,6 +281,18 @@ is a filled-in example while the Widgets demo is still here).
      view is `rail`, with Details in the rail. The rail's sections come
      first in the page (header, rail, main) at every width, so the
      view's specs find them first too.
+   - **A notice** (`notice`), only when the plan names a state that
+     decides what you do with the record (held, overdue, archived and
+     read-only): a `<Notice tone=…>` saying what it means and what to do,
+     with at most one action. It goes under the header, across the page.
+     Pass `null` when the state doesn't hold; the view announces it
+     appearing or clearing. A badge still shows the state itself; the
+     notice is for the few states a badge is too quiet for.
+   - **A source credit** (`footer`), only when the record's data comes
+     from an outside service whose terms ask for one (many free APIs
+     do: a film database, a games catalogue): `<SourceCredit sources={[{
+     name, href, note }]} />`, with `note` the sentence the terms ask for,
+     word for word. Logos and their rules are the app's own.
    - **Every value renders the way its table cell does**: badges, names
      of linked records, a done-count, from the shared lookups in
      `<entity>-format.ts`. Never re-derive one for the view.

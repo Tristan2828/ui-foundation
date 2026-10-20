@@ -3,12 +3,13 @@ import { defineConfig, devices } from '@playwright/test'
 // This repo's own Storybook tests (e2e/storybook-visual.spec.ts, the
 // rich-text round trip in e2e/rich-text-editor.spec.ts, EntityView's
 // layouts in e2e/entity-view.spec.ts, DataTable's opt-ins in
-// e2e/data-table.spec.ts, DateField's time zones in e2e/date-field.spec.ts) —
+// e2e/data-table.spec.ts, the scale glyphs' names in e2e/scales.spec.ts,
+// DateField's time zones in e2e/date-field.spec.ts) —
 // kept out of the shipped playwright.config.ts so consuming apps don't
 // need Storybook. `npm run verify` runs both configs.
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'date-field.spec.ts'],
+  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

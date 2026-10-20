@@ -134,6 +134,13 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * still get the column names; sorting moves to the toolbar.
    */
   header?: boolean
+  /**
+   * The one row to look at (next up, the current one): tinted with info's
+   * wash, a bar in `info-text` at its start, and muted text inside it
+   * darkened so it still clears 4.5:1. Return true for at most a row or two.
+   * Colour isn't the only signal: say why in the row too (a badge, a word).
+   */
+  highlightRow?: (row: TData) => boolean
 }
 
 export type DataTableWidth = 'full' | 'content'
@@ -207,6 +214,15 @@ const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-norma
 // background so it reads identically on striped and unstriped rows, and it
 // stays on screen when the table is scrolled right.
 const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
+
+// `highlightRow`: the wash on every cell, so it covers the zebra stripe
+// (on the row) and the pinned cells' opaque backgrounds (on the cell, and
+// one class weaker than this), while a pinned cell's hover still wins. A
+// bar on the first cell, as hover's is, so it reads without colour too.
+// Inside, muted text takes the darker grey the wash needs (theme.css).
+const HIGHLIGHTED_ROW_CLASS =
+  '[--muted-foreground:var(--table-highlight-muted-foreground)] [&>td]:bg-(--table-highlight) ' +
+  '[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--info-text)]'
 
 // `header={false}`: the header row stays in the table, so every cell keeps
 // its column header for a screen reader, but takes no room: each header
@@ -317,6 +333,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   groupBy,
   groupSummary,
   header: showHeader = true,
+  highlightRow,
 }: DataTableProps<TData>) {
   // Editing in place in the rows (cell pattern 18, "In a table's rows"):
   // a cell that renders an <EditableValue> edits where it's shown, one at
@@ -393,7 +410,11 @@ export function DataTable<TData extends Record<string, unknown>>({
   const visibleColumnCount = table.getVisibleLeafColumns().length
   // One body row, the same in a plain table and a grouped one.
   const renderRow = (row: (typeof rows)[number]) => (
-    <TableRow key={row.id} className={cn(pinFirstColumn && ROW_GROUP_CLASS)}>
+    <TableRow
+      key={row.id}
+      data-highlighted={highlightRow?.(row.original) || undefined}
+      className={cn(pinFirstColumn && ROW_GROUP_CLASS, highlightRow?.(row.original) && HIGHLIGHTED_ROW_CLASS)}
+    >
       {row.getVisibleCells().map((cell, index) => (
         <TableCell
           key={cell.id}

@@ -8,6 +8,7 @@ import { expect, test } from '@playwright/test'
 // e2e/a11y.spec.ts. Story ids are `title`+export slugs.
 const STORYBOOK_URL = 'http://localhost:6006'
 const PRIMITIVES = [
+  'alert',
   'badge',
   'button',
   'card',
@@ -67,12 +68,20 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
+  // A notice across the page and a source credit under both columns.
+  { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },
+  // <Notice>: every tone's wash, on the page and on a card.
+  { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
+  // A highlighted row's wash, with muted text inside it (#156).
+  { id: 'app-datatable--highlighted', mustShow: 'Health' },
+  // Cell pattern 9's step bar and star, and pattern 13's ring (#154, #156).
+  { id: 'patterns-scales--default', mustShow: 'On a card' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
@@ -98,7 +107,12 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  // The ring's arc, the step bar's filled steps, the star in each shape.
+  { id: 'patterns-scales--default' },
   { id: 'app-banners--default' },
+  // Each tone's icon on its own wash, and the source credit's link marks.
+  { id: 'app-notice--default' },
+  { id: 'app-entityview--notice-and-footer' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip' },
   // Every categorical slot, against the page and against a card.
