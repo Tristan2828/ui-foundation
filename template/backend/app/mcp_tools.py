@@ -15,7 +15,7 @@ changed fields before and after (the whole record, for a delete or restore).
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
@@ -43,6 +43,15 @@ class ToolError(Exception):
 class Caller:
     user: User
     client_id: str
+    # Saved while `user` is loaded: a commit expires it (the router's, and
+    # each write's audit row), and reading an expired attribute under
+    # asyncio is MissingGreenlet. docs/foundation/add-an-entity.md, "After
+    # a commit, in the backend".
+    user_id: int = field(init=False)
+
+    def __post_init__(self) -> None:
+        assert self.user.id is not None
+        object.__setattr__(self, "user_id", self.user.id)
 
 
 # ---------------------------------------------------------------- helpers
@@ -189,7 +198,7 @@ async def _audit(
 ) -> None:
     session.add(
         McpAuditEntry(
-            user_id=caller.user.id or 0,
+            user_id=caller.user_id,
             client_id=caller.client_id,
             action=action,
             entity=entity.name,
@@ -200,6 +209,9 @@ async def _audit(
         )
     )
     await session.commit()
+    # The commit expired the user the reads scope by; a later call in the
+    # same JSON-RPC batch reads it.
+    await session.refresh(caller.user)
 
 
 # ---------------------------------------------------------------- the tools
