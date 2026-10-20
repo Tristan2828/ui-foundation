@@ -22,6 +22,135 @@ Playwright's 30 s timeout on a loaded machine.
   `npx ui-foundation sync`, then in `e2e/a11y.spec.ts` import the nav
   (`import { NAV_ITEMS } from '../src/nav'`) and pass `nav: NAV_ITEMS`.
 
+## 4.14.0 — sidebar sections that fold, remembered
+
+Additive (#152): two optional fields on `NavSection`; a nav that doesn't
+use them is unchanged.
+
+- **`collapsible: true`** turns a section's label into a button with a
+  chevron (`aria-expanded`, `aria-controls`) that folds its entries away.
+  Enter and Space toggle it; focus stays on it.
+- **Remembered per browser** in `localStorage`, by the section's label;
+  **`defaultOpen: false`** starts it folded for a first visit.
+- **The section holding the current page is always open** (its label is
+  `aria-disabled`), and arriving at a page in a folded section unfolds it.
+- **The icon rail** shows every section's entries, folded or not, so no
+  page is out of reach there.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.14.0`,
+  then add `collapsible: true` to the sections in `src/nav.ts`.
+
+## 4.13.0 — row-edit cells as components
+
+Additive (#155). Cell pattern 18's "In a table's rows" cells, which every
+app copied, now ship from the package:
+
+- **`NameCell`** (`label`, `value`, `save`, `schema?`, `children?`): one
+  line, Enter saves, the form's rule first, a taken name's 422 in the cell.
+- **`ChoiceCell<T>`** (`label`, `value`, `options`, `render`, `save`): the
+  list opens with the cell, a pick saves, closing gives up.
+- **`LinkCell`** (`label`, `value`, `save(link | null)`, `linkText?`,
+  `emptyLabel?`): a link out (new tab, said to screen readers) or the
+  not-set label; a bare address gains `https://`, another scheme is
+  refused, a blank clears it to `null`.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.13.0`,
+  `npx ui-foundation sync`. An app with its own `row-edit-cells.tsx` can
+  swap each cell for the package's (same labels, so its specs keep
+  passing) and delete the file.
+
+## 4.12.0 — a plain date field, and arrow keys in the calendar
+
+Additive (#157), plus a fix to the shipped `Calendar`.
+
+- **`DateField`**: a plain date (`'YYYY-MM-DD'`, or `''` for not set) as a
+  button opening the `Calendar` in a `Popover`. One control for the form
+  (a `Controller`) and for editing in place (`kind: 'choice'`: a pick
+  saves). `clearable` adds Clear for an optional field. The chosen day
+  (else today) has focus when it opens.
+- **`formatPlainDate(value, options?, locale?)`**: "Sep 2, 2026", never
+  shifted by the time zone (checked in browsers at UTC−10 and UTC+14).
+- **`ui/calendar` fix:** the arrow keys didn't move focus between days.
+  shadcn's `CalendarDayButton` made a ref for that but never passed it to
+  the button. Every app's date picker built on the package's `Calendar`
+  (the template's Available From included) gets arrow keys with this
+  release.
+- **Docs:** the plan template's `date` type is now the package's
+  `DateField` rather than a variant of `date-time`. `add-an-entity.md`
+  says how to wire one: contract, form, cells, editing in place, backend.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.12.0`,
+  `npx ui-foundation sync`.
+
+## 4.11.0 — a progress ring, a step bar, a half star, and a highlighted row
+
+Additive (#154, #156): new exports, one optional `DataTable` prop and two
+tokens; nothing changes until an app uses them. See
+`docs/foundation/cell-patterns.md` patterns 9, 13 and 22.
+
+- **`ProgressRing`** (`done`, `total`, `label?`): done out of total as a
+  small ring filling clockwise beside the count ("4/6"); `foreground`
+  under way, `success-text` complete, "Not started" for zero of zero.
+- **`StepBar`** (`value`, `steps` = 5, `word`, `label?`): an ordered enum
+  of bands as a short bar of steps, the band's word beside it, named
+  "Quality: High, 4 of 5".
+- **`RatingStar`** (`value: 'full' | 'half' | 'empty'`, `word`): a
+  three-value enum as one star; the half is the left half filled over
+  the whole outline.
+- **`DataTable` `highlightRow`**: the row to look at, an info wash on
+  every cell (over the stripe and the pinned columns) with a bar at its
+  start. Muted text inside it is darkened (new tokens `--table-highlight`,
+  `--table-highlight-muted-foreground`): plain `muted-foreground` is
+  4.09:1 on the wash.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.11.0`,
+  `npx ui-foundation sync`. An app that drew its own ring, step bar or
+  half star replaces it with the package's; one that greyed done rows
+  with opacity switches to `text-muted-foreground` (pattern 22).
+
+## 4.10.0 — a notice across a record's page, and a credit for its data's source
+
+Additive (#158, #159): new optional props and exports; a view that passes
+neither looks exactly as before.
+
+- **`EntityView` `notice`**: under the header, above both columns, across
+  the page at every width. It sits in a `role="status"` region that's
+  always rendered, so a notice appearing or clearing after the page loads
+  is announced and one there from the start isn't.
+- **`Notice`**: `tone` (`info`, `success`, `warning`, `destructive`), an
+  optional `title`, the message, an optional `action` and `icon`. A wash
+  of the tone with `foreground` text, and no role of its own.
+- **`EntityView` `footer`**: after every section (below both columns in
+  the rail layout, last on a phone), in caption type, outside any card.
+- **`SourceCredit`**: `sources: { name, href, note? }[]`, "Data from A and
+  B." with each name a link opening in a new tab (said to screen readers),
+  then each `note` as written.
+- **A new primitive, `@tristan2828/ui-foundation/ui/alert`** (shadcn's
+  Alert, which `Notice` is built on), with its destructive variant's text
+  patched to `--destructive-text`: upstream's was 3.2:1 on the dark card.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.10.0`,
+  `npx ui-foundation sync` (`add-an-entity.md` and `design-language.md`
+  say when to use each). An app that had added `alert` to its own
+  `src/components/ui/` must now import the package's (lint says so).
+
+## 4.9.1 — a save of a record outside its caches says so
+
+Package only (#153). `useRecordUpdate` builds each save from the record it
+finds under `detailKey` or `listsKey`. When a screen held the record
+somewhere else (a query gathering a related list's records), a save
+failed with a plain `Error` instead of an `AppError`, so nothing on screen
+explained it. Now:
+
+- **An object change** (`mutate({ status: 'done' })`) is sent anyway; it
+  needs no current record. It isn't shown until the server answers, and
+  only where the keys reach, so the screen's own query has to refetch
+  (`onSuccess`) to show it.
+- **A function change** (`mutate((record) => …)`) can't be built, so it's
+  refused with an `AppError` (`kind: 'server'`, "It isn't loaded on this
+  page. Reload and try again"), toasted like any refusal or handed back to
+  `mutateAsync` when editing in place.
+- **Both warn in the console**, naming the keys searched, in every build.
+
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.9.1`,
+  `npx ui-foundation sync` (a note in `add-an-entity.md`). Nothing changes
+  for a save whose record is cached.
+
 ## 4.9.0 — the schema in build-info.json, and grouped API addresses for MCP
 
 Additive (#149, #150). An app that doesn't pass the new options sees no

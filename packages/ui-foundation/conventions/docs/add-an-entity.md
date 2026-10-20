@@ -121,7 +121,8 @@ is a filled-in example while the Widgets demo is still here).
    (`WIDGET_STATUS_LABELS`) read by the options, the trigger (through
    `<SelectValue>`'s children, which otherwise shows the raw value), the
    toolbar filter and every badge — a `date-time` copies
-   Available From's date picker, a `yes/no` copies In Stock — a `Switch`
+   Available From's date picker, a `date` (a day, no time) is the
+   foundation's `DateField` (see below), a `yes/no` copies In Stock — a `Switch`
    (`@tristan2828/ui-foundation/ui/switch`) in a horizontal `Field` with
    its label beside it on the form, cell pattern 12 (the word Yes/No) in
    the table, and a three-way toolbar `Select` (either / yes / no) whose URL
@@ -170,6 +171,21 @@ is a filled-in example while the Widgets demo is still here).
    that arrives later reaches the cells through context, as
    `category-names.tsx` does for category names.
 
+   **A `date`** (a day with no time: when something was finished, a
+   due day) is `type: string, format: date` in `openapi.yaml`, so the
+   wire, the generated type and the form all hold `'YYYY-MM-DD'`, and
+   `''` on the form for an optional one not set (sent as `null`). No
+   `Date` object anywhere, so no time zone can move the day. On the form
+   it's the foundation's `DateField` in a `Controller` (`clearable` when
+   optional); the schema is the string (`z.string().min(1, …)` when
+   required). The table and the view show `formatPlainDate(value)`
+   ("Sep 2, 2026"), the not-set label when empty. Editing in place is
+   `editInPlace({ kind: 'choice', ... })` with `DateField` as the
+   control, `defaultOpen`, `modal={false}`, `onChange={(day) =>
+   props.commit(day)}` and `onOpenChange` cancelling on close, as a
+   Select is (Storybook `app/DateField` EditInPlace). The backend column
+   is a SQL `date` (`datetime.date` in the model).
+
    **A `yes/no` marked `toggle`** copies In Stock's cell
    (`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
    component that PATCHes the one field through `useSaveWidgetField`, the
@@ -178,7 +194,12 @@ is a filled-in example while the Widgets demo is still here).
    a toast naming the row and the server's reason; the lists refetch
    after). Its specs cover a flip that saves, the keyboard, and a failed
    save putting the switch back. Copy `useSaveWidgetField` whenever the
-   plan has a `toggle` or any quick action, and only then.
+   plan has a `toggle` or any quick action, and only then. It finds the
+   record under the entity's own detail and list keys: on a screen that
+   holds it in a query of its own, a plain change (`{ field: value }`) is
+   still sent but only shows once that query refetches, and a change
+   built from the record (`(record) => …`) is refused, with a console
+   warning naming the keys searched.
    - `src/routes/widgets/use-widgets.ts`, `use-widget-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)
@@ -260,6 +281,18 @@ is a filled-in example while the Widgets demo is still here).
      view is `rail`, with Details in the rail. The rail's sections come
      first in the page (header, rail, main) at every width, so the
      view's specs find them first too.
+   - **A notice** (`notice`), only when the plan names a state that
+     decides what you do with the record (held, overdue, archived and
+     read-only): a `<Notice tone=…>` saying what it means and what to do,
+     with at most one action. It goes under the header, across the page.
+     Pass `null` when the state doesn't hold; the view announces it
+     appearing or clearing. A badge still shows the state itself; the
+     notice is for the few states a badge is too quiet for.
+   - **A source credit** (`footer`), only when the record's data comes
+     from an outside service whose terms ask for one (many free APIs
+     do: a film database, a games catalogue): `<SourceCredit sources={[{
+     name, href, note }]} />`, with `note` the sentence the terms ask for,
+     word for word. Logos and their rules are the app's own.
    - **Every value renders the way its table cell does**: badges, names
      of linked records, a done-count, from the shared lookups in
      `<entity>-format.ts`. Never re-derive one for the view.

@@ -347,3 +347,56 @@ test.describe('EntityView, long text that autosaves', () => {
     await expect(prompt).toHaveCount(0)
   })
 })
+
+test.describe('EntityView, notice and footer (#158, #159)', () => {
+  async function openHeld(page: Page, width: number, height = 900) {
+    await page.setViewportSize({ width, height })
+    await page.goto(story('notice-and-footer'))
+    await expect(page.getByRole('heading', { level: 1, name: 'The Fall of Hyperion' })).toBeVisible()
+  }
+  const notice = (page: Page) => page.locator('[data-slot="notice"]')
+  const footer = (page: Page) => page.locator('[data-slot="entity-view-footer"]')
+
+  for (const width of [1280, 393]) {
+    test(`${width}px: the notice spans the page under the header; the footer comes after every section`, async ({
+      page,
+    }) => {
+      await openHeld(page, width)
+      const headerBox = (await header(page).boundingBox())!
+      const noticeBox = (await notice(page).boundingBox())!
+      const details = await box(page, 'Details')
+      const notes = await box(page, 'Notes')
+      const footerBox = (await footer(page).boundingBox())!
+      expect(noticeBox.y).toBeGreaterThan(headerBox.y + headerBox.height)
+      expect(Math.abs(noticeBox.width - headerBox.width)).toBeLessThan(2)
+      // Above both columns, whichever comes first at this width.
+      expect(noticeBox.y + noticeBox.height).toBeLessThan(Math.min(details.y, notes.y))
+      expect(footerBox.y).toBeGreaterThan(Math.max(details.y + details.height, notes.y + notes.height))
+      expect(await pageScrollsSideways(page)).toBe(false)
+    })
+  }
+
+  test('the notice sits in a status region that is there before it changes, so clearing it is a change', async ({
+    page,
+  }) => {
+    await openHeld(page, 1280)
+    const status = page.locator('[data-slot="entity-view-notice"]')
+    await expect(status).toHaveAttribute('role', 'status')
+    // The notice itself isn't an alert: it was there when the page opened.
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await expect(status).toContainText('On hold')
+    await page.getByRole('button', { name: 'Release the hold' }).click()
+    await expect(notice(page)).toHaveCount(0)
+    await expect(status).toHaveAttribute('role', 'status')
+    await expect(status).toBeEmpty()
+  })
+
+  test('each source opens in a new tab and says so', async ({ page }) => {
+    await openHeld(page, 1280)
+    const link = footer(page).getByRole('link', { name: 'Open Library (opens in a new tab)' })
+    await expect(link).toHaveAttribute('target', '_blank')
+    await expect(footer(page)).toContainText(
+      'Data from Open Library (opens in a new tab) and Wikidata (opens in a new tab). Covers and editions',
+    )
+  })
+})

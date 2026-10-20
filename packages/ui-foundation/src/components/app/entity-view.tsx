@@ -28,6 +28,10 @@
 // autosave as it's typed (`autosave`), and be the editor itself, with no
 // click to open (`alwaysEditable`).
 //
+// Around the sections: `notice` (a <Notice>) under the header, across the
+// page, for a state that decides what you do with the record; `footer`
+// (a <SourceCredit>) after them all, for crediting the data's source.
+//
 // Two layouts. `column` (the default): every section in one column capped
 // at max-w-4xl. `rail`, for a record with long content: the page takes the
 // content area's whole width, sections placed `rail` go in a narrow column
@@ -128,7 +132,19 @@ export type EntityViewProps = {
   badges?: ReactNode
   /** The header's actions: an Edit button, a Delete with its confirm dialog. */
   actions?: ReactNode
+  /**
+   * A state that decides what you do with the record, said before
+   * anything else (a `<Notice>`): under the header, across the page at
+   * every width. Announced when it appears or changes after the page loads.
+   */
+  notice?: ReactNode
   sections: EntityViewSection[]
+  /**
+   * Below every section (both columns in the rail layout), in small muted
+   * type outside any card: where the record's data comes from
+   * (`<SourceCredit>`), when its source's terms ask for a credit.
+   */
+  footer?: ReactNode
   /** `rail` puts the sections placed `rail` in a column on the right. Defaults to `column`. */
   layout?: EntityViewLayout
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
@@ -358,7 +374,9 @@ export function EntityView({
   titleEdit,
   badges,
   actions,
+  notice,
   sections,
+  footer,
   layout = 'column',
   railLabel,
   isLoading,
@@ -429,6 +447,13 @@ export function EntityView({
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </header>
 
+      {/* Always rendered, so a notice that appears or changes later (a
+          tick elsewhere on the page clears it) is announced; one there
+          from the start is read in its place. Empty, it takes no gap. */}
+      <div role="status" data-slot="entity-view-notice" className="empty:hidden">
+        {notice}
+      </div>
+
       {layout === 'rail' ? (
         <div className={RAIL_LAYOUT.columns}>
           {railSections.length > 0 && (
@@ -442,6 +467,12 @@ export function EntityView({
         </div>
       ) : (
         sections.map((section) => <ViewSection key={section.title} section={section} />)
+      )}
+
+      {footer && (
+        <footer data-slot="entity-view-footer" className="type-caption text-muted-foreground">
+          {footer}
+        </footer>
       )}
     </div>
     </EditInPlaceContext.Provider>

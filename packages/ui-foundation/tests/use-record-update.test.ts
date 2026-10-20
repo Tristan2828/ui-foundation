@@ -234,6 +234,76 @@ describe('useRecordUpdate', () => {
   })
 })
 
+describe('useRecordUpdate with the record in neither cache (#153)', () => {
+  // The screen holds the record in a query of its own, not under these keys.
+  function uncached(extra: { toastOnError?: boolean } = {}) {
+    const harness = setup(extra)
+    harness.client.removeQueries({ queryKey: detailKey })
+    harness.client.removeQueries({ queryKey: listsKey })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    return { ...harness, warn }
+  }
+
+  it('still sends an object change, and warns naming the keys searched', async () => {
+    const { server, save, warn } = uncached()
+    const saved = save({ status: 'done' })
+    await vi.waitFor(() => expect(server.requests).toHaveLength(1))
+    expect(server.requests[0].body).toEqual({ status: 'done' })
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('["tasks","detail",1]'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('["tasks","list"]'))
+
+    server.requests[0].answer()
+    await saved
+    expect(server.record.status).toBe('done')
+    expect(toast.error).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('toasts a refused object change with the field error on what was sent', async () => {
+    const { server, save, warn } = uncached()
+    const saved = save({ status: 'done' })
+    await vi.waitFor(() => expect(server.requests).toHaveLength(1))
+    server.requests[0].refuse({
+      kind: 'validation',
+      message: 'Validation failed',
+      fieldErrors: { name: ['Too long'], status: ['Not before the review'] },
+    })
+    await saved
+    expect(toast.error).toHaveBeenCalledWith("Couldn't update this record: Not before the review")
+    warn.mockRestore()
+  })
+
+  it('rejects a function change with an AppError, toasted, and sends nothing', async () => {
+    const { server, save, warn } = uncached()
+    await save(tick(0, true))
+    expect(server.requests).toHaveLength(0)
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't update this record: It isn't loaded on this page. Reload and try again",
+    )
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("can't be sent"))
+    warn.mockRestore()
+  })
+
+  it('hands the function change\'s AppError back when editing in place', async () => {
+    const { client, server, warn } = uncached({ toastOnError: false })
+    const options = recordUpdateMutationOptions<Task, TaskUpdate>(client, {
+      id: 1,
+      detailKey,
+      listsKey,
+      update: server.update,
+      name: (task) => task.name,
+      optimistic: false,
+      toastOnError: false,
+    })
+    await expect(new MutationObserver(client, options).mutate(tick(0, true))).rejects.toMatchObject({
+      kind: 'server',
+      message: "It isn't loaded on this page. Reload and try again",
+    })
+    expect(toast.error).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+})
+
 describe('useRecordUpdate for editing in place (optimistic: false, toastOnError: false)', () => {
   it('shows nothing until the server answers, then the server record', async () => {
     const { server, save, detail, listed } = setup({ optimistic: false, toastOnError: false })
