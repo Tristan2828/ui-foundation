@@ -72,12 +72,20 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },
   // <Notice>: every tone's wash, on the page and on a card.
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
+  // A plain date on a form, required and optional (#157).
+  { id: 'app-datefield--default', mustShow: 'No due date' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
+  // A highlighted row's wash, with muted text inside it (#156).
+  { id: 'app-datatable--highlighted', mustShow: 'Health' },
+  // Cell pattern 9's step bar and star, and pattern 13's ring (#154, #156).
+  { id: 'patterns-scales--default', mustShow: 'On a card' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
+  // Sections that fold, open and folded (#152).
+  { id: 'app-appshell--collapsible', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
@@ -101,6 +109,8 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  // The ring's arc, the step bar's filled steps, the star in each shape.
+  { id: 'patterns-scales--default' },
   { id: 'app-banners--default' },
   // Each tone's icon on its own wash, and the source credit's link marks.
   { id: 'app-notice--default' },

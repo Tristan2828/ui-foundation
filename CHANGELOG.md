@@ -5,6 +5,105 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.15.0 — the accessibility suite scales with the nav
+
+Additive (#161). `defineA11ySuite`'s "every nav page" visited every
+sidebar page in one test, so an app of about 20 pages ran past
+Playwright's 30 s timeout on a loaded machine.
+
+- **`defineA11ySuite({ nav })`**: the app's `NavEntry[]` (the one
+  `AppShell` gets). Each nav page becomes its own test, in both themes,
+  plus one test that the rendered sidebar links exactly those pages.
+- **Without `nav`**, the pages are still found in the sidebar at run
+  time, and that one test's timeout now grows by 10 s per page.
+- **Pages in a folded sidebar section are found too** (links read by
+  element, not role), for apps using 4.14's collapsible sections.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.15.0`,
+  `npx ui-foundation sync`, then in `e2e/a11y.spec.ts` import the nav
+  (`import { NAV_ITEMS } from '../src/nav'`) and pass `nav: NAV_ITEMS`.
+
+## 4.14.0 — sidebar sections that fold, remembered
+
+Additive (#152): two optional fields on `NavSection`; a nav that doesn't
+use them is unchanged.
+
+- **`collapsible: true`** turns a section's label into a button with a
+  chevron (`aria-expanded`, `aria-controls`) that folds its entries away.
+  Enter and Space toggle it; focus stays on it.
+- **Remembered per browser** in `localStorage`, by the section's label;
+  **`defaultOpen: false`** starts it folded for a first visit.
+- **The section holding the current page is always open** (its label is
+  `aria-disabled`), and arriving at a page in a folded section unfolds it.
+- **The icon rail** shows every section's entries, folded or not, so no
+  page is out of reach there.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.14.0`,
+  then add `collapsible: true` to the sections in `src/nav.ts`.
+
+## 4.13.0 — row-edit cells as components
+
+Additive (#155). Cell pattern 18's "In a table's rows" cells, which every
+app copied, now ship from the package:
+
+- **`NameCell`** (`label`, `value`, `save`, `schema?`, `children?`): one
+  line, Enter saves, the form's rule first, a taken name's 422 in the cell.
+- **`ChoiceCell<T>`** (`label`, `value`, `options`, `render`, `save`): the
+  list opens with the cell, a pick saves, closing gives up.
+- **`LinkCell`** (`label`, `value`, `save(link | null)`, `linkText?`,
+  `emptyLabel?`): a link out (new tab, said to screen readers) or the
+  not-set label; a bare address gains `https://`, another scheme is
+  refused, a blank clears it to `null`.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.13.0`,
+  `npx ui-foundation sync`. An app with its own `row-edit-cells.tsx` can
+  swap each cell for the package's (same labels, so its specs keep
+  passing) and delete the file.
+
+## 4.12.0 — a plain date field, and arrow keys in the calendar
+
+Additive (#157), plus a fix to the shipped `Calendar`.
+
+- **`DateField`**: a plain date (`'YYYY-MM-DD'`, or `''` for not set) as a
+  button opening the `Calendar` in a `Popover`. One control for the form
+  (a `Controller`) and for editing in place (`kind: 'choice'`: a pick
+  saves). `clearable` adds Clear for an optional field. The chosen day
+  (else today) has focus when it opens.
+- **`formatPlainDate(value, options?, locale?)`**: "Sep 2, 2026", never
+  shifted by the time zone (checked in browsers at UTC−10 and UTC+14).
+- **`ui/calendar` fix:** the arrow keys didn't move focus between days.
+  shadcn's `CalendarDayButton` made a ref for that but never passed it to
+  the button. Every app's date picker built on the package's `Calendar`
+  (the template's Available From included) gets arrow keys with this
+  release.
+- **Docs:** the plan template's `date` type is now the package's
+  `DateField` rather than a variant of `date-time`. `add-an-entity.md`
+  says how to wire one: contract, form, cells, editing in place, backend.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.12.0`,
+  `npx ui-foundation sync`.
+
+## 4.11.0 — a progress ring, a step bar, a half star, and a highlighted row
+
+Additive (#154, #156): new exports, one optional `DataTable` prop and two
+tokens; nothing changes until an app uses them. See
+`docs/foundation/cell-patterns.md` patterns 9, 13 and 22.
+
+- **`ProgressRing`** (`done`, `total`, `label?`): done out of total as a
+  small ring filling clockwise beside the count ("4/6"); `foreground`
+  under way, `success-text` complete, "Not started" for zero of zero.
+- **`StepBar`** (`value`, `steps` = 5, `word`, `label?`): an ordered enum
+  of bands as a short bar of steps, the band's word beside it, named
+  "Quality: High, 4 of 5".
+- **`RatingStar`** (`value: 'full' | 'half' | 'empty'`, `word`): a
+  three-value enum as one star; the half is the left half filled over
+  the whole outline.
+- **`DataTable` `highlightRow`**: the row to look at, an info wash on
+  every cell (over the stripe and the pinned columns) with a bar at its
+  start. Muted text inside it is darkened (new tokens `--table-highlight`,
+  `--table-highlight-muted-foreground`): plain `muted-foreground` is
+  4.09:1 on the wash.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.11.0`,
+  `npx ui-foundation sync`. An app that drew its own ring, step bar or
+  half star replaces it with the package's; one that greyed done rows
+  with opacity switches to `text-muted-foreground` (pattern 22).
+
 ## 4.10.0 — a notice across a record's page, and a credit for its data's source
 
 Additive (#158, #159): new optional props and exports; a view that passes

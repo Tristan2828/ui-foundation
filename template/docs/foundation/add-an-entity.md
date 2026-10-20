@@ -121,7 +121,8 @@ is a filled-in example while the Widgets demo is still here).
    (`WIDGET_STATUS_LABELS`) read by the options, the trigger (through
    `<SelectValue>`'s children, which otherwise shows the raw value), the
    toolbar filter and every badge — a `date-time` copies
-   Available From's date picker, a `yes/no` copies In Stock — a `Switch`
+   Available From's date picker, a `date` (a day, no time) is the
+   foundation's `DateField` (see below), a `yes/no` copies In Stock — a `Switch`
    (`@tristan2828/ui-foundation/ui/switch`) in a horizontal `Field` with
    its label beside it on the form, cell pattern 12 (the word Yes/No) in
    the table, and a three-way toolbar `Select` (either / yes / no) whose URL
@@ -169,6 +170,21 @@ is a filled-in example while the Widgets demo is still here).
    table flickers when, say, reference names arrive after the rows. Data
    that arrives later reaches the cells through context, as
    `category-names.tsx` does for category names.
+
+   **A `date`** (a day with no time: when something was finished, a
+   due day) is `type: string, format: date` in `openapi.yaml`, so the
+   wire, the generated type and the form all hold `'YYYY-MM-DD'`, and
+   `''` on the form for an optional one not set (sent as `null`). No
+   `Date` object anywhere, so no time zone can move the day. On the form
+   it's the foundation's `DateField` in a `Controller` (`clearable` when
+   optional); the schema is the string (`z.string().min(1, …)` when
+   required). The table and the view show `formatPlainDate(value)`
+   ("Sep 2, 2026"), the not-set label when empty. Editing in place is
+   `editInPlace({ kind: 'choice', ... })` with `DateField` as the
+   control, `defaultOpen`, `modal={false}`, `onChange={(day) =>
+   props.commit(day)}` and `onOpenChange` cancelling on close, as a
+   Select is (Storybook `app/DateField` EditInPlace). The backend column
+   is a SQL `date` (`datetime.date` in the model).
 
    **A `yes/no` marked `toggle`** copies In Stock's cell
    (`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
@@ -499,8 +515,9 @@ is a filled-in example while the Widgets demo is still here).
    `NAV_ENTRIES` so the shell smoke test covers the new screen, add
    `/<entity>/new` to `e2e/a11y.spec.ts`'s `formRoutes`, and add the view
    of a full record and of the sparse one to its `viewRoutes` (the table
-   page is picked up from the sidebar automatically; the form and the view
-   aren't in it). With fields edited in place, copy `e2e/a11y.spec.ts`'s
+   page comes from `src/nav.ts`, which the suite is given as `nav`: each
+   nav page is a test of its own, so the suite's time per test stays flat
+   as the app grows; the form and the view aren't in the nav). With fields edited in place, copy `e2e/a11y.spec.ts`'s
    "editing in place" block for them: a field open, saving and refused,
    the rich-text editor, an open list, a list edited in place (an item
    open, one being added, a refused change), and the leave prompt, in

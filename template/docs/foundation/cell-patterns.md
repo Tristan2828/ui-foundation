@@ -10,11 +10,13 @@ alternatives ([`column-options.md`](column-options.md)), not designed in the abs
 Patterns 12 (boolean), 15 (yes/no flipped in the row), 16 (title linking
 to its view), 17 (quick action on the view) and 18 (editable value) are
 the template's own references: Widget's In Stock and Name columns and its
-view render them, and their specs pin them. Patterns 19 (stage circle)
-and 20 (count linking to the related records), the multi-value variant
-of 4, the dependency list in 10 and the pressed icon in 15 were each
-built for a real app's screen first; the package's Storybook renders
-them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`), and
+view render them, and their specs pin them. Patterns 19 (stage circle),
+20 (count linking to the related records) and 22 (a highlighted row),
+the multi-value variant of 4, the step bar and star in 9, the dependency
+list in 10, the ring in 13 and the pressed icon in 15 were each built
+for a real app's screen first; the package's Storybook renders
+them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`,
+`patterns/Scales`, `app/DataTable`), and
 its checks pin their accessibility and contrast in both themes. The
 other patterns from 11 on are marked **Unproven**: written ahead of a
 real column, so no app has tested them on real data yet. Prefer a proven
@@ -281,6 +283,38 @@ own state.
   does not check icon contrast. That's a defensible choice — make it
   deliberately, in a comment, not by accident.
 
+### Two variants the package draws: a step bar and a star
+
+Both are in the package's Storybook (`patterns/Scales`), every value on
+the page and on a card, measured by axe and the glyph check in both
+themes. Each is one image to a screen reader, named in words.
+
+- **`StepBar`, an ordered enum of a few bands** (best to worst): a short
+  bar of steps, the first `value` filled in `foreground`, the rest the
+  track (`border`), with the band's word beside it in `muted-foreground`.
+  Narrower than five stars, and it reads as a scale, not a rating. Its
+  name says both: `label="Quality: High, 4 of 5"` (the default is
+  "High, 4 of 5", enough where the column header names the field).
+
+  ```tsx
+  const QUALITY: Record<Quality, { word: string; value: number }> = {
+    best: { word: 'Best', value: 5 }, high: { word: 'High', value: 4 }, /* … */
+  }
+  <StepBar value={QUALITY[q].value} word={QUALITY[q].word} />
+  ```
+
+- **`RatingStar`, a three-value enum** (yes / partly / no): a full, half
+  or empty star with the word beside it. The shape carries the value, so
+  it survives greyscale. The half is the left half filled over the whole
+  outline, never half a star: alone, half a star reads as broken.
+
+  ```tsx
+  <RatingStar value={OWNED[o].value /* 'full' | 'half' | 'empty' */} word={OWNED[o].word} />
+  ```
+
+- Both draw in `foreground`. Tone one only as pattern 5 would (a `*-text`
+  class in `className`), never by band alone.
+
 ## 10. Summary in the cell, detail in a popover
 
 A one-to-many value (`★ 4.7 (3)` opening a per-person breakdown).
@@ -413,6 +447,24 @@ A percentage, or a count out of a total (`7 of 12 done`).
   progress`).
 - **Cost:** a bar takes far more width than the number it replaces. On a
   wide table, the plain number from pattern 11 usually wins.
+
+### The compact form: `ProgressRing`
+
+Done out of total (a checklist, how far through an ordered list, the
+steps of a process) as a small ring filling clockwise beside the count
+("4/6"). Proven in an app's table cells and on its view; the package
+ships it, so this needs no `progress` install.
+
+```tsx
+<ProgressRing done={row.original.doneCount} total={row.original.itemCount} />
+```
+
+- The arc is `foreground` while under way and `success-text` once
+  complete, on a `border` track; the count is in tabular numbers. Zero
+  of zero shows the empty ring and reads "Not started".
+- Its name is "4 of 6 done" unless `label` says better ("4 of 6 chapters
+  read"). The count beside it is `aria-hidden`: the name already says it.
+- Prefer it to the bar in a table: it's as narrow as the count.
 
 ## 14. Avatar and name — *Unproven*
 
@@ -882,15 +934,26 @@ row`), every editable cell is an editable value, exactly as on a view.
 one is open, "Saving…" and a refusal in the cell. There's no pencil
 column and no edit route.
 
-- **A cell** is `<EditableValue label="<Column> of <name>" layout="inline"
-  edit={editInPlace({ ... })}>`, its shown value the cell as it always
-  was. The label names the column and the row, so its pencil reads "Edit
-  Colour of Work" and its control "Colour of Work". The kinds are the
-  same: `text` (Enter saves), `choice` (the list opens with it, non-modal,
-  a pick saves), `multi`.
+- **A cell is one of the package's three row-edit cells**, or an
+  `<EditableValue label="<Column> of <name>" layout="inline"
+  edit={editInPlace({ ... })}>` for anything else. The label names the
+  column and the row, so its pencil reads "Edit Colour of Work" and its
+  control "Colour of Work".
+  - **`NameCell`**: one line; Enter saves, the form's rule (`schema`)
+    runs first, a taken name's 422 shows in the cell. `children` is how
+    the name shows at rest (an icon beside it).
+  - **`ChoiceCell<T>`** (`options`, `render`): the list opens with the
+    cell, non-modal; a pick saves, closing it with no pick gives up.
+    `render` draws a value at rest, on the trigger and in the list.
+  - **`LinkCell`** (`linkText`, `emptyLabel`, `save(link | null)`): a
+    link opening in a new tab (said to screen readers), or the not-set
+    label; edited as one line. A bare `example.com` gains `https://`,
+    another scheme (`javascript:`) is refused in the cell, and a blank
+    box saves `null`. Clicking the link follows it; the pencil edits.
 - **A cell is a component** (`<Entity><Field>Cell`) that calls
   `useEdit<Entity>Field(row.id)` for its save, the view's single-field
-  save. A hook can't be called inside a column definition.
+  save, and renders the package's cell with it. A hook can't be called
+  inside a column definition.
 - **Stable columns and row ids.** Make the column definitions once
   (at module level, or `useMemo`) and give
   `DataTable` a `getRowId`: new definitions every render, or rows keyed
@@ -906,24 +969,29 @@ column and no edit route.
   and its delete together on a wide screen.
 
 ```tsx
-// A cell is its own component, so it can call the record's save hook.
+import { ChoiceCell, InlineCreate, LinkCell, NameCell } from '@tristan2828/ui-foundation'
+
+// Each cell is its own component, so it can call the record's save hook.
 function CategoryColourCell({ category }: { category: Category }) {
   const editField = useEditCategoryField(category.id)       // optimistic: false, toastOnError: false
   return (
-    <EditableValue label={`Colour of ${category.name}`} layout="inline"
-      edit={editInPlace({
-        kind: 'choice',
-        value: category.colour,
-        schema: categoryFormSchema.shape.colour,
-        save: (colour) => editField.mutateAsync({ colour }),
-        control: (props) => (
-          <CategoryColourSelect id={props.id} value={props.value} onChange={(colour) => props.commit(colour)}
-            readOnly={props.disabled} defaultOpen modal={false} onOpenChange={(open) => !open && props.cancel()}
-            aria-label={props.label} aria-describedby={props.describedBy} />
-        ),
-      })}>
-      <ColourSwatch colour={category.colour} />
-    </EditableValue>
+    <ChoiceCell label={`Colour of ${category.name}`} value={category.colour} options={CATEGORY_COLOURS}
+      render={(colour) => <ColourSwatch colour={colour} />}
+      save={(colour) => editField.mutateAsync({ colour })} />
+  )
+}
+function CategoryNameCell({ category }: { category: Category }) {
+  const editField = useEditCategoryField(category.id)
+  return (
+    <NameCell label={`Name of ${category.name}`} value={category.name} schema={categoryFormSchema.shape.name}
+      save={(name) => editField.mutateAsync({ name })} />
+  )
+}
+function CategoryWebsiteCell({ category }: { category: Category }) {
+  const editField = useEditCategoryField(category.id)
+  return (
+    <LinkCell label={`Website of ${category.name}`} value={category.website} emptyLabel="No website"
+      save={(website) => editField.mutateAsync({ website })} />
   )
 }
 
@@ -931,6 +999,7 @@ function CategoryColourCell({ category }: { category: Category }) {
 const CATEGORY_COLUMNS: LegacyColumnDef<Category, unknown>[] = [
   { id: 'name', header: 'Name', cell: ({ row }) => <CategoryNameCell category={row.original} /> },
   { id: 'colour', header: 'Colour', cell: ({ row }) => <CategoryColourCell category={row.original} /> },
+  { id: 'website', header: 'Website', cell: ({ row }) => <CategoryWebsiteCell category={row.original} /> },
   { id: 'actions', header: () => <span className="sr-only">Actions</span>, cell: ({ row }) => <DeleteCategoryAction category={row.original} /> },
 ]
 
@@ -1155,3 +1224,34 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   filter, with a button to take it off. An empty group never renders:
   groups come from the rows.
 - **Not built:** collapsing groups, grouping by more than one key.
+
+## 22. A highlighted row, and rows that are done
+
+One row of a table marked as **the one to look at**: next up, the
+current one. `DataTable`'s `highlightRow` returns true for it.
+
+```tsx
+<DataTable highlightRow={(book) => book.id === nextUpId} … />
+```
+
+- **A wash of info on every cell**, over the zebra stripe and the pinned
+  columns' opaque backgrounds (`--table-highlight`, pre-mixed onto the
+  page), and a bar in `info-text` at the row's start, so it reads without
+  colour too. Still **say why in the row** (a "Next up" word or badge):
+  the wash says "look here", not what it is.
+- **Muted text inside it is darkened for you.** `muted-foreground`
+  measures 4.09:1 on the wash, under 4.5:1, and no lighter wash fixes it
+  (4.47:1 even at 4%). So the row redefines `--muted-foreground` as
+  `--table-highlight-muted-foreground`: 6.75:1 in light, the usual grey in
+  dark (6.61:1). Use `text-muted-foreground` as anywhere else.
+- **At most a row or two.** A highlight on every other row highlights
+  nothing; a state many rows share is a column (pattern 5).
+- **Rows that are done: colour, not opacity.** Greying finished rows with
+  `opacity-50` (or `text-foreground/60`) drops their text under 4.5:1 the
+  same way. Render their text in `text-muted-foreground`, which is
+  measured, and keep the word that says done.
+- Storybook's `app/DataTable` Highlighted story has two highlighted rows
+  (one striped), pinned columns and muted text inside them, under axe and
+  the token check in both themes; `e2e/data-table.spec.ts` checks every
+  cell wears the wash.
+

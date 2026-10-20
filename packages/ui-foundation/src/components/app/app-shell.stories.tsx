@@ -11,7 +11,8 @@ import type { NavEntry } from './app-shell-nav'
 // not Projects, on /projects/categories/2. Signed in through AuthContext
 // directly, so nothing is fetched. Axe in both themes is
 // e2e/storybook-visual.spec.ts's COMPOSITE_STORIES; e2e/app-shell.spec.ts
-// checks the groups, the current entry and the version entry.
+// checks the groups, the current entry and the version entry, and
+// sections that fold (Collapsible, and on the icon rail CollapsibleRail).
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -43,12 +44,47 @@ const SECTIONS: NavEntry[] = [
   { label: 'Reading', items: [{ to: '/reading', label: 'Books', icon: BookOpenIcon }] },
 ]
 
-function Shell({ nav, path, version }: { nav: NavEntry[]; path: string; version?: AppShellVersion }) {
+// Every section folds: Projects (holding the current page) open, Media
+// open by default, Reading folded by default.
+const COLLAPSIBLE: NavEntry[] = [
+  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  {
+    label: 'Projects',
+    collapsible: true,
+    items: [
+      { to: '/projects', label: 'Projects', icon: ListIcon },
+      { to: '/projects/categories', label: 'Categories', icon: TagIcon },
+    ],
+  },
+  {
+    label: 'Media',
+    collapsible: true,
+    items: [{ to: '/media', label: 'Channels', icon: ListChecksIcon }],
+  },
+  {
+    label: 'Reading',
+    collapsible: true,
+    defaultOpen: false,
+    items: [{ to: '/reading', label: 'Books', icon: BookOpenIcon }],
+  },
+]
+
+function Shell({
+  nav,
+  path,
+  version,
+  sidebarOpen = true,
+}: {
+  nav: NavEntry[]
+  path: string
+  version?: AppShellVersion
+  sidebarOpen?: boolean
+}) {
   const router = createMemoryRouter(
     [
       {
         path: '/',
-        element: <AppShell title="Example" nav={nav} defaultSidebarOpen version={version} />,
+        element: <AppShell title="Example" nav={nav} defaultSidebarOpen={sidebarOpen} version={version} />,
         children: [{ path: '*', element: <p>Page at {path}</p> }],
       },
     ],
@@ -73,6 +109,17 @@ type Story = StoryObj<typeof Shell>
 export const Sections: Story = { args: { nav: SECTIONS, path: '/projects/categories/2' } }
 
 export const Flat: Story = { args: { nav: FLAT, path: '/projects/7' } }
+
+// Collapsible sections (#152): open, folded, and the one holding the page.
+export const Collapsible: Story = { args: { nav: COLLAPSIBLE, path: '/projects/categories/2' } }
+
+// A page inside Media, for arriving in a section folded earlier.
+export const CollapsibleInMedia: Story = { args: { nav: COLLAPSIBLE, path: '/media/4' } }
+
+// The same nav on the icon rail: every section's items, folded or not.
+export const CollapsibleRail: Story = {
+  args: { nav: COLLAPSIBLE, path: '/projects/categories/2', sidebarOpen: false },
+}
 
 // A production build's footer: the short commit, linking to its PR
 // (`@tristan2828/ui-foundation/vite` sets the values at build time).

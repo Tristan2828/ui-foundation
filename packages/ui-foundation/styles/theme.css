@@ -229,6 +229,13 @@
      matches the row without letting scrolled columns show through. Mixed
      in sRGB, as the browser composites the translucent stripe. */
   --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
+  /* A highlighted row (DataTable's highlightRow, #156): info's wash
+     pre-mixed onto the page, opaque so pinned cells can wear it. Muted
+     text measures 4.09:1 on it (below 4.5 at 12px; no lighter tint gets
+     there: 4.47 at 4%), so inside the row muted text takes a darker grey:
+     6.75:1. In dark the usual muted already clears it (6.61:1). */
+  --table-highlight: color-mix(in srgb, var(--info) 10%, var(--background));
+  --table-highlight-muted-foreground: var(--gray-600);
   --border: var(--gray-200);
   --input: var(--gray-200);
   --ring: var(--gray-400);
@@ -358,6 +365,8 @@
   --category-11: var(--category-11-400);
   --category-12: var(--category-12-400);
   --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
+  --table-highlight: color-mix(in srgb, var(--info) 20%, var(--background));
+  --table-highlight-muted-foreground: var(--gray-400); /* the usual muted: not var(--muted-foreground), which the row redefines from this */
   --border: var(--white-a10);
   --input: var(--white-a15);
   --ring: var(--gray-500);
