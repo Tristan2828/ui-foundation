@@ -23,6 +23,20 @@ describe('navGroups', () => {
       { items: [home] },
     ])
   })
+
+  it('carries a collapsible section through, open by default unless it says otherwise', () => {
+    expect(
+      navGroups([
+        { label: 'Tasks', items: [tasks], collapsible: true },
+        { label: 'Reading', items: [categories], collapsible: true, defaultOpen: false },
+        { label: 'Plain', items: [home] },
+      ]),
+    ).toStrictEqual([
+      { label: 'Tasks', items: [tasks], collapsible: true, defaultOpen: true },
+      { label: 'Reading', items: [categories], collapsible: true, defaultOpen: false },
+      { label: 'Plain', items: [home] },
+    ])
+  })
 })
 
 describe('activeNavTo', () => {

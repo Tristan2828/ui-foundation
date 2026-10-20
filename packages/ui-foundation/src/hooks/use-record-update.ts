@@ -21,6 +21,10 @@
 //   or the AppError's).
 // - **The lists refetch once the last save settles**, so a filter on the
 //   field drops the row once the server agrees.
+// - **A record in neither cache** (the screen holds it in a query of its
+//   own) still saves an object change, shown once that query refetches; a
+//   function change has nothing to build on and is refused like any other
+//   refusal. Both warn in the console, naming the keys searched.
 //
 // Editing in place uses the same save with `optimistic: false` and
 // `toastOnError: false`: nothing changes on screen until the server
@@ -88,6 +92,12 @@ function recordStates(queryClient: QueryClient) {
   let map = states.get(queryClient)
   if (!map) states.set(queryClient, (map = new Map()))
   return map
+}
+
+// A function change with no record in either cache to build it from.
+const notLoaded: AppError = {
+  kind: 'server',
+  message: "It isn't loaded on this page. Reload and try again",
 }
 
 function resolve<TRecord, TUpdate>(change: RecordChange<TRecord, TUpdate>, record: TRecord): TUpdate {
@@ -160,8 +170,19 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
     scope: { id: `record-update:${key}` },
     mutationFn: (change) => {
       const confirmed = map.get(key)?.confirmed ?? cached()
-      if (!confirmed) return Promise.reject(new Error('The record to update is not loaded'))
-      return update(id, resolve(change, confirmed))
+      if (confirmed) return update(id, resolve(change, confirmed))
+      // The screen holds the record somewhere these keys don't reach (a
+      // query gathering a related list's records, say). An object change
+      // needs no current record, so it's still sent; a function change
+      // can't be built, and says so rather than doing nothing. Warned in
+      // every build: the package has no dev flag every app's bundler sets.
+      console.warn(
+        `useRecordUpdate: record ${String(id)} isn't cached under ${JSON.stringify(detailKey)} ` +
+          `or any list under ${JSON.stringify(listsKey)}, so the change isn't shown until the server answers` +
+          (typeof change === 'function' ? ', and a change built from the record can\'t be sent' : ''),
+      )
+      if (typeof change === 'function') return Promise.reject(notLoaded)
+      return update(id, change)
     },
     onMutate: async (change) => {
       let state = map.get(key)
@@ -183,7 +204,8 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
       if (!state || !context) return
       // What was sent: the change built on the record it was sent against.
       const record = state.confirmed
-      const sent = record && resolve(context.entry.change, record)
+      const { change } = context.entry
+      const sent = record ? resolve(change, record) : typeof change === 'function' ? undefined : change
       settle(state, context.entry)
       if (toastOnError) toast.error(`Couldn't update ${record ? name(record) : 'this record'}: ${refusalReason(error, sent)}`)
     },

@@ -47,7 +47,10 @@ One or two sentences: what one record is, and who uses the screens.
     (cell pattern 20) and which of them it counts (`open tasks`).
   - *Close variants* (built by a small, stated change to the nearest
     pattern): `integer` (from decimal), `url` (from email — a format
-    check), `date` (from date-time — no time part).
+    check).
+  - *From the package, no Widget example:* `date` (a calendar day, no
+    time: OpenAPI `format: date`; the foundation's `DateField`; say
+    whether it's optional).
   - *Not supported yet:* a yes/no that can also be unset (three states),
     file, and anything else.
     Write it anyway with a note; the playbook will stop and raise it
