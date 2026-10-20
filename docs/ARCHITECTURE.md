@@ -134,6 +134,13 @@ src/main.tsx                           FoundationProviders (theme, query client,
   time across processes, and a run within `every` of the last skips, so
   replicas don't double up. Every run is a row in `job_runs`;
   `GET /api/jobs` and `POST /api/jobs/{name}/run` show and start them.
+- **Reminders** (4.17, #167, off by default) are Web Push. The package's
+  `pwa()` Vite plugin makes the app installable and writes `/push-sw.js`;
+  `usePushPermission` and `AllowReminders` subscribe a device on a click.
+  The reference backend sends (`app/push.py`: VAPID and RFC 8291 on
+  `cryptography`, the optional `push` extra, the backend's one crypto
+  dependency, by decision on #167), only to the browsers' push services,
+  and the `send-reminders` job sends each due row of `reminders`.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps

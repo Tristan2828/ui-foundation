@@ -1,7 +1,7 @@
 // In-memory store backing the MSW handlers. Resettable so tests (and the
 // mock-conformance suite) start from a known state. The signed-in user and
 // the demo credentials are the foundation's (@tristan2828/ui-foundation/mocks).
-import { resetMockAuth, resetMockClientErrors } from "@tristan2828/ui-foundation/mocks";
+import { resetMockAuth, resetMockClientErrors, resetMockPush } from "@tristan2828/ui-foundation/mocks";
 import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
@@ -106,6 +106,7 @@ export function resetMockData(): void {
   nextId = widgets.length + 1;
   resetMockAuth();
   resetMockClientErrors();
+  resetMockPush();
 }
 
 export function nextWidgetId(): number {

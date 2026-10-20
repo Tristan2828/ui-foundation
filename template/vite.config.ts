@@ -2,7 +2,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import buildInfo from '@tristan2828/ui-foundation/vite'
+import buildInfo, { pwa } from '@tristan2828/ui-foundation/vite'
 
 // https://vite.dev/config/
 // Only reached when VITE_API=real (src/main.tsx skips MSW in that mode) —
@@ -25,8 +25,17 @@ const PREVIEW_PORT = 4180
 // version entry (docs/deploy.md "Which build is live"). Set repoUrl to this
 // app's repository, or BUILD_REPO_URL at build time. `alembic` adds the
 // migrations' head revision as `schema`, the one the backend migrates to.
+//
+// pwa: the app installable (a manifest and icons in the theme's colours)
+// and /push-sw.js, the service worker reminders arrive through
+// (docs/foundation/reminders.md). Name the app here.
 export default defineConfig({
-  plugins: [react(), tailwindcss(), buildInfo({ alembic: 'backend/migrations/versions' })],
+  plugins: [
+    react(),
+    tailwindcss(),
+    buildInfo({ alembic: 'backend/migrations/versions' }),
+    pwa({ name: 'UI Foundation', shortName: 'Foundation' }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

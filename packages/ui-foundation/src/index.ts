@@ -44,6 +44,7 @@ export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 export { PillFilter, type PillFilterOption, type PillFilterProps } from '@/components/app/pill-filter'
 export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
 export { SessionView, type SessionViewProps } from '@/components/app/session-view'
+export { AllowReminders, type AllowRemindersProps } from '@/components/app/allow-reminders'
 export {
   StageCircle,
   type StageCircleProps,
@@ -109,6 +110,15 @@ export {
 } from '@/hooks/use-session-clock'
 export { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 export { useMuted } from '@/hooks/use-muted'
+export {
+  createPushController,
+  usePushPermission,
+  type PushController,
+  type PushControllerOptions,
+  type PushEnvironment,
+  type PushPermission,
+  type PushStatus,
+} from '@/hooks/use-push-permission'
 
 // Utilities
 export { cn } from '@/lib/utils'

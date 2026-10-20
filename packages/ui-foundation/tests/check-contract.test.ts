@@ -44,6 +44,17 @@ describe('check-contract', () => {
     expect(result.status).toBe(0)
   })
 
+  it('passes an app without reminders: no /push/* and none of their schemas', () => {
+    const spec = foundation()
+    for (const route of ['/push/public-key', '/push/subscriptions', '/push/subscriptions/{id}']) delete spec.paths[route]
+    for (const name of ['PushPublicKey', 'PushSubscriptionRequest', 'PushSubscriptionCreated']) {
+      delete spec.components.schemas[name]
+    }
+    const result = checkContract(spec)
+    expect(result.output).not.toContain('Push')
+    expect(result.status).toBe(0)
+  })
+
   it('requires RegisterRequest when the app has /auth/register', () => {
     const spec = foundation()
     delete spec.components.schemas.RegisterRequest

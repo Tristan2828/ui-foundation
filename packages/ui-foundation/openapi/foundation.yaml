@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: UI Foundation — the contract every app shares
-  version: "4.1.0"
+  version: "4.17.0"
   description: >
     The part of an app's API contract that the foundation package's own code
     calls: session-cookie auth under /auth/*, and the two error envelopes the
@@ -13,8 +13,8 @@ info:
 
     A path marked `x-optional: true` may be left out of an app's spec (an
     app without self-service sign-up omits /auth/register, an app that
-    doesn't render DataEnvironmentBanner omits /environment), but if
-    present it must match.
+    doesn't render DataEnvironmentBanner omits /environment, an app without
+    reminders omits /push/*), but if present it must match.
 
 servers:
   - url: /api
@@ -161,6 +161,68 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
+  /push/public-key:
+    x-optional: true
+    get:
+      operationId: getPushPublicKey
+      summary: The app's VAPID public key, which a browser subscribes to push with
+      description: >
+        For usePushPermission. 404 when the backend has push turned off.
+      tags: [push]
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushPublicKey" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /push/subscriptions:
+    x-optional: true
+    post:
+      operationId: savePushSubscription
+      summary: Save this device's push subscription for the signed-in user
+      description: >
+        The browser's PushSubscription.toJSON(). The same endpoint again
+        replaces its keys and owner and answers the same id. The endpoint
+        must be a push service's (422 otherwise): the backend POSTs to it.
+      tags: [push]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PushSubscriptionRequest" }
+      responses:
+        "201":
+          description: Saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushSubscriptionCreated" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /push/subscriptions/{id}:
+    x-optional: true
+    delete:
+      operationId: deletePushSubscription
+      summary: Stop sending to one of the signed-in user's devices
+      tags: [push]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted.
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
 components:
   schemas:
     DataEnvironment:
@@ -234,6 +296,40 @@ components:
         method: { type: string, maxLength: 10, description: The HTTP method of a failed request. }
         status: { type: integer, minimum: 100, maximum: 599, description: The HTTP status of a failed request. }
         release: { type: string, maxLength: 100, description: The frontend build (its commit). }
+
+    PushPublicKey:
+      type: object
+      required: [publicKey]
+      properties:
+        publicKey:
+          type: string
+          minLength: 1
+          description: The P-256 public key, base64url (applicationServerKey).
+
+    PushSubscriptionRequest:
+      type: object
+      required: [endpoint, keys]
+      properties:
+        endpoint:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: The push service's URL for this device.
+        expirationTime:
+          type: ["number", "null"]
+          description: Milliseconds since the epoch, sent by some browsers, ignored.
+        keys:
+          type: object
+          required: [p256dh, auth]
+          properties:
+            p256dh: { type: string, minLength: 1, maxLength: 100 }
+            auth: { type: string, minLength: 1, maxLength: 32 }
+
+    PushSubscriptionCreated:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
 
     ValidationErrorBody:
       type: object
