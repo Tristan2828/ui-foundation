@@ -48,3 +48,74 @@ test('flat: no version entry without a version', async ({ page }) => {
   await open(page, 'flat')
   await expect(nav(page).getByText(/^Version /)).toHaveCount(0)
 })
+
+test.describe('collapsible sections (#152)', () => {
+  const section = (page: Page, label: string) => nav(page).getByRole('button', { name: label, exact: true })
+
+  test('a collapsible label is a button that says whether its section is open, and controls it', async ({ page }) => {
+    await open(page, 'collapsible')
+    await expect(section(page, 'Media')).toHaveAttribute('aria-expanded', 'true')
+    await expect(section(page, 'Reading')).toHaveAttribute('aria-expanded', 'false')
+    const controlled = await section(page, 'Reading').getAttribute('aria-controls')
+    await expect(page.locator(`[id="${controlled}"]`)).toBeHidden()
+    await expect(nav(page).getByRole('link', { name: 'Books' })).toBeHidden()
+    await expect(nav(page).getByRole('link', { name: 'Channels' })).toBeVisible()
+  })
+
+  test('a click folds and unfolds, and the choice is remembered after a reload', async ({ page }) => {
+    await open(page, 'collapsible')
+    await section(page, 'Media').click()
+    await expect(section(page, 'Media')).toHaveAttribute('aria-expanded', 'false')
+    await expect(nav(page).getByRole('link', { name: 'Channels' })).toBeHidden()
+    await section(page, 'Reading').click()
+    await expect(nav(page).getByRole('link', { name: 'Books' })).toBeVisible()
+
+    await page.reload()
+    await expect(section(page, 'Media')).toHaveAttribute('aria-expanded', 'false')
+    await expect(section(page, 'Reading')).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  test('Enter and Space toggle it, and focus stays on the label', async ({ page }) => {
+    await open(page, 'collapsible')
+    await section(page, 'Media').focus()
+    await page.keyboard.press('Enter')
+    await expect(section(page, 'Media')).toHaveAttribute('aria-expanded', 'false')
+    await expect(section(page, 'Media')).toBeFocused()
+    await page.keyboard.press('Space')
+    await expect(section(page, 'Media')).toHaveAttribute('aria-expanded', 'true')
+    await expect(section(page, 'Media')).toBeFocused()
+  })
+
+  test('the section holding the current page is open and does not fold', async ({ page }) => {
+    await open(page, 'collapsible')
+    // Even when this browser had folded it.
+    await page.evaluate(() => window.localStorage.setItem('ui-foundation:nav-section:Projects', 'closed'))
+    await page.reload()
+    await expect(section(page, 'Projects')).toHaveAttribute('aria-expanded', 'true')
+    await expect(section(page, 'Projects')).toHaveAttribute('aria-disabled', 'true')
+    // Playwright won't click an aria-disabled button; Enter does the same.
+    await section(page, 'Projects').focus()
+    await page.keyboard.press('Enter')
+    await expect(section(page, 'Projects')).toHaveAttribute('aria-expanded', 'true')
+    await expect(current(page)).toBeVisible()
+    await expect(current(page)).toHaveText('Categories')
+  })
+
+  test('arriving at a page inside a folded section unfolds it, and it stays unfolded', async ({ page }) => {
+    await open(page, 'collapsible')
+    await section(page, 'Media').click()
+    expect(await page.evaluate(() => window.localStorage.getItem('ui-foundation:nav-section:Media'))).toBe('closed')
+    // The same browser opens a page inside Media.
+    await open(page, 'collapsible-in-media')
+    await expect(section(page, 'Media')).toHaveAttribute('aria-expanded', 'true')
+    await expect(current(page)).toHaveText('Channels')
+    expect(await page.evaluate(() => window.localStorage.getItem('ui-foundation:nav-section:Media'))).toBe('open')
+  })
+
+  test('on the icon rail every section shows its items, folded or not, and no label takes a tab stop', async ({ page }) => {
+    await open(page, 'collapsible-rail')
+    await expect(nav(page).getByRole('link', { name: 'Books' })).toBeVisible()
+    await expect(nav(page).getByRole('link', { name: 'Channels' })).toBeVisible()
+    await expect(nav(page).getByRole('button', { name: 'Reading', exact: true })).toHaveCount(0)
+  })
+})

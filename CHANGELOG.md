@@ -5,6 +5,23 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.14.0 — sidebar sections that fold, remembered
+
+Additive (#152): two optional fields on `NavSection`; a nav that doesn't
+use them is unchanged.
+
+- **`collapsible: true`** turns a section's label into a button with a
+  chevron (`aria-expanded`, `aria-controls`) that folds its entries away.
+  Enter and Space toggle it; focus stays on it.
+- **Remembered per browser** in `localStorage`, by the section's label;
+  **`defaultOpen: false`** starts it folded for a first visit.
+- **The section holding the current page is always open** (its label is
+  `aria-disabled`), and arriving at a page in a folded section unfolds it.
+- **The icon rail** shows every section's entries, folded or not, so no
+  page is out of reach there.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.14.0`,
+  then add `collapsible: true` to the sections in `src/nav.ts`.
+
 ## 4.13.0 — row-edit cells as components
 
 Additive (#155). Cell pattern 18's "In a table's rows" cells, which every
