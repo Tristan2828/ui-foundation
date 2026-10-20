@@ -76,6 +76,10 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
+  // A highlighted row's wash, with muted text inside it (#156).
+  { id: 'app-datatable--highlighted', mustShow: 'Health' },
+  // Cell pattern 9's step bar and star, and pattern 13's ring (#154, #156).
+  { id: 'patterns-scales--default', mustShow: 'On a card' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
@@ -101,6 +105,8 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  // The ring's arc, the step bar's filled steps, the star in each shape.
+  { id: 'patterns-scales--default' },
   { id: 'app-banners--default' },
   // Each tone's icon on its own wash, and the source credit's link marks.
   { id: 'app-notice--default' },
