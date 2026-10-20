@@ -5,6 +5,24 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.13.0 — row-edit cells as components
+
+Additive (#155). Cell pattern 18's "In a table's rows" cells, which every
+app copied, now ship from the package:
+
+- **`NameCell`** (`label`, `value`, `save`, `schema?`, `children?`): one
+  line, Enter saves, the form's rule first, a taken name's 422 in the cell.
+- **`ChoiceCell<T>`** (`label`, `value`, `options`, `render`, `save`): the
+  list opens with the cell, a pick saves, closing gives up.
+- **`LinkCell`** (`label`, `value`, `save(link | null)`, `linkText?`,
+  `emptyLabel?`): a link out (new tab, said to screen readers) or the
+  not-set label; a bare address gains `https://`, another scheme is
+  refused, a blank clears it to `null`.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.13.0`,
+  `npx ui-foundation sync`. An app with its own `row-edit-cells.tsx` can
+  swap each cell for the package's (same labels, so its specs keep
+  passing) and delete the file.
+
 ## 4.12.0 — a plain date field, and arrow keys in the calendar
 
 Additive (#157), plus a fix to the shipped `Calendar`.

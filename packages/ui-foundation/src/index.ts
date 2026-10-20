@@ -57,6 +57,14 @@ export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/compon
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
 export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
 export {
+  ChoiceCell,
+  LinkCell,
+  NameCell,
+  type ChoiceCellProps,
+  type LinkCellProps,
+  type NameCellProps,
+} from '@/components/app/row-edit-cells'
+export {
   WidgetCard,
   WidgetList,
   WidgetListItem,
