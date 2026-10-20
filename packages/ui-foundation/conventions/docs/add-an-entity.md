@@ -178,7 +178,12 @@ is a filled-in example while the Widgets demo is still here).
    a toast naming the row and the server's reason; the lists refetch
    after). Its specs cover a flip that saves, the keyboard, and a failed
    save putting the switch back. Copy `useSaveWidgetField` whenever the
-   plan has a `toggle` or any quick action, and only then.
+   plan has a `toggle` or any quick action, and only then. It finds the
+   record under the entity's own detail and list keys: on a screen that
+   holds it in a query of its own, a plain change (`{ field: value }`) is
+   still sent but only shows once that query refetches, and a change
+   built from the record (`(record) => …`) is refused, with a console
+   warning naming the keys searched.
    - `src/routes/widgets/use-widgets.ts`, `use-widget-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)

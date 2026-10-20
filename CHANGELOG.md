@@ -30,6 +30,28 @@ neither looks exactly as before.
   say when to use each). An app that had added `alert` to its own
   `src/components/ui/` must now import the package's (lint says so).
 
+## 4.9.1 — a save of a record outside its caches says so
+
+Package only (#153). `useRecordUpdate` builds each save from the record it
+finds under `detailKey` or `listsKey`. When a screen held the record
+somewhere else (a query gathering a related list's records), a save
+failed with a plain `Error` instead of an `AppError`, so nothing on screen
+explained it. Now:
+
+- **An object change** (`mutate({ status: 'done' })`) is sent anyway; it
+  needs no current record. It isn't shown until the server answers, and
+  only where the keys reach, so the screen's own query has to refetch
+  (`onSuccess`) to show it.
+- **A function change** (`mutate((record) => …)`) can't be built, so it's
+  refused with an `AppError` (`kind: 'server'`, "It isn't loaded on this
+  page. Reload and try again"), toasted like any refusal or handed back to
+  `mutateAsync` when editing in place.
+- **Both warn in the console**, naming the keys searched, in every build.
+
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.9.1`,
+  `npx ui-foundation sync` (a note in `add-an-entity.md`). Nothing changes
+  for a save whose record is cached.
+
 ## 4.9.0 — the schema in build-info.json, and grouped API addresses for MCP
 
 Additive (#149, #150). An app that doesn't pass the new options sees no
