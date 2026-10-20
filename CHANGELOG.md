@@ -5,6 +5,27 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.18.1 — the MCP tools read the user after a write
+
+A fix in the reference backend, which apps copy in; nothing changes in the
+package.
+
+- **Fix (template backend): a JSON-RPC batch that writes and then reads
+  no longer fails with a 500.** Each MCP write commits its audit row last
+  (`_audit` in `app/mcp_tools.py`), which expires the `User` the request
+  loaded, so the next call in the same batch that read `caller.user` failed
+  with `MissingGreenlet`. 4.18.0's rule, applied: `Caller` saves `user_id`
+  when it's made, the audit row uses it, and the user is loaded again after
+  the audit's commit. `test_a_batch_reads_after_a_write` (`tests/test_mcp.py`,
+  signed in for real) fails without the fix.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.18.1`.
+  An app with the MCP backend (4.2.0 or later) copies the change to
+  `app/mcp_tools.py` from the template: `Caller`'s `user_id` (set in
+  `__post_init__`), `user_id=caller.user_id` in `_audit`, and `await
+  session.refresh(caller.user)` after its commit. Then copy the test. An
+  app whose entities' MCP functions read the user after a commit of their
+  own gets the same treatment.
+
 ## 4.18.0 — three fixes found by an app: links with spaces, a test fixture that hid a 500, waiting on several tables
 
 Fixes, plus one new testing export, so a minor. Run `npx ui-foundation sync`

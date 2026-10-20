@@ -732,6 +732,36 @@ async def test_a_refused_write_leaves_nothing_for_a_later_write_to_save(web: Asy
     assert (widget["name"], widget["tags"]) == ("Renamed", tags_before)
 
 
+async def test_a_batch_reads_after_a_write(web: AsyncClient, token: str) -> None:
+    # Each write's audit row is committed last, which expires the user the
+    # request loaded; a read later in the same batch must not need it loaded.
+    calls = [
+        ("update", {"url": "/widgets/1", "fields": {"name": "Renamed"}}),
+        ("fetch", {"url": "/widgets/1"}),
+        ("create", {"entity": "widgets", "fields": NEW_WIDGET}),
+        ("list", {"entity": "widgets"}),
+        ("delete", {"url": "/widgets/1"}),
+        ("search", {"query": "Desk"}),
+        ("restore", {"url": "/widgets/1"}),
+        ("fetch", {"url": "/widgets/1"}),
+    ]
+    batch = await web.post(
+        "/mcp",
+        json=[
+            {"jsonrpc": "2.0", "id": i, "method": "tools/call", "params": {"name": name, "arguments": arguments}}
+            for i, (name, arguments) in enumerate(calls, start=1)
+        ],
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert batch.status_code == 200, batch.text
+    answers = batch.json()
+    assert [a["id"] for a in answers] == list(range(1, len(calls) + 1))
+    for (name, _), answer in zip(calls, answers):
+        assert not answer["result"].get("isError"), (name, answer)
+    assert "Renamed" in answers[1]["result"]["content"][0]["text"]
+    assert "Desk Lamp" in answers[5]["result"]["content"][0]["text"]
+
+
 async def test_update_cannot_reach_another_users_record(web: AsyncClient, token: str, session: AsyncSession) -> None:
     session.add(User(id=2, email="other@example.com", name="Other", password_hash="unused"))
     await session.flush()
