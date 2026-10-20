@@ -218,6 +218,10 @@ test.describe('editing features', () => {
     await expect(box.getByRole('textbox', { name: 'Link address' })).toHaveAccessibleDescription(
       'Enter a web or email address, like https://example.com.',
     )
+    // Two words are not an address either (#177).
+    await box.getByRole('textbox', { name: 'Link address' }).fill('setup guide')
+    await page.keyboard.press('Enter')
+    await expect(box.getByRole('alert')).toHaveText('An address has no spaces. Remove them, or write each as %20.')
     await page.keyboard.press('Escape')
     await expect(box).toHaveCount(0)
     await expect(editor(page, 'links')).toBeFocused()

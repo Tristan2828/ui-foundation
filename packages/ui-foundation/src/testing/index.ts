@@ -151,11 +151,30 @@ function navEntryRoutes(nav: readonly NavEntry[]): string[] {
   return [...new Set(nav.flatMap((entry) => (isNavSection(entry) ? entry.items : [entry]).map((item) => item.to)))]
 }
 
+/**
+ * Every data view on the page has loaded: at least one shows its data (or,
+ * with `{ success: false }`, the page has its screen up), and none still
+ * shows its skeleton. A page may hold several (two `DataTable`s, an
+ * `EntityView` over a table of its sub-records), so this never waits on a
+ * locator that matches each of them: Playwright's strict mode refuses
+ * `expect(page.locator('[data-state="success"]')).toBeVisible()` as soon
+ * as two match. Use it before reading or scanning a screen.
+ */
+export async function expectDataViewsLoaded(page: Page, { success = true }: { success?: boolean } = {}): Promise<void> {
+  if (success) await expect(page.locator('[data-state="success"]').first()).toBeVisible()
+  // A data view renders its skeleton from its first paint, so once the
+  // screen is up every one of them is either loading or settled.
+  else await expect(page.getByRole('main').first()).toBeVisible()
+  await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
+}
+
 async function expectNavPageAccessible(page: Page, route: string, colorScheme: 'light' | 'dark') {
   await page.goto(route)
   await expect(page.locator('html')).toHaveClass(colorScheme)
-  // Wait for data, not the loading skeleton, so the real UI is checked.
-  await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
+  // Wait for data, not the loading skeleton, so the real UI is checked. A
+  // nav page may have no data view, or only an empty one, so none has to
+  // show data.
+  await expectDataViewsLoaded(page, { success: false })
   await expectNoAxeViolations(page)
 }
 
@@ -214,8 +233,9 @@ export function defineA11ySuite({ formRoutes, viewRoutes = [], loggedOutRoutes, 
       for (const route of viewRoutes) {
         test(`${route} has zero axe violations`, async ({ page }) => {
           await page.goto(route)
-          // EntityView's loaded state, not its skeleton or an error.
-          await expect(page.locator('[data-state="success"]')).toBeVisible()
+          // EntityView's loaded state, not its skeleton or an error, and
+          // every other data view on the page loaded too.
+          await expectDataViewsLoaded(page)
           await expectNoAxeViolations(page)
         })
       }

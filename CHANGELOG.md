@@ -5,6 +5,56 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.18.0 — three fixes found by an app: links with spaces, a test fixture that hid a 500, waiting on several tables
+
+Fixes, plus one new testing export, so a minor. Run `npx ui-foundation sync`
+for the updated playbook.
+
+- **Fix: a link address with a space in it is refused** (#177). `linkHref`
+  added `https://` to anything without a scheme, so two words typed in a
+  `LinkCell` (or the rich-text editor's link box) saved as
+  `https://two words`, a link that goes nowhere. Whitespace inside an
+  address is now refused for every kind (a bare address, `https://`,
+  `mailto:`, `tel:`, a path, a heading); around it, it's trimmed as
+  before. The cell says "An address has no spaces"; the editor's link box
+  says "An address has no spaces. Remove them, or write each as %20."
+  Another scheme keeps its old message.
+- **Fix (template backend tests): the `client` fixture signs in for real.**
+  It stood a detached `User` in for `get_current_user`, so a router that
+  read `user.id` after `session.commit()` passed its tests and failed live
+  with `MissingGreenlet` (the commit expires the user the request loaded).
+  `client`, `test_widgets.py`'s `other_user_client` and `test_jobs.py`'s
+  `api` now hold a `sessions` row and send its cookie
+  (`tests/signed_in.py`, `session_cookie(session, user_id)`), and
+  `tests/test_signed_in.py` fails on the old fixture. The rule is in
+  `docs/foundation/add-an-entity.md`, "After a commit, in the backend":
+  after a commit, read by a `user_id` saved before it, never by the `User`.
+- **Fix: `defineA11ySuite` waits correctly on a page with several data
+  views.** A view route waited on `[data-state="success"]`, which Playwright's
+  strict mode refuses once two `DataTable`s (or an `EntityView` and a
+  table) are on the page, and a nav page could be scanned before its
+  screen was up. Both now wait until at least one data view shows its data
+  (a view route) or the screen is up (a nav page), and none still shows
+  its skeleton. The suite's options are unchanged.
+- **`expectDataViewsLoaded(page, { success? })`** from
+  `@tristan2828/ui-foundation/testing`: that wait, for an app's own specs.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.18.0`,
+  `npx ui-foundation sync`.
+  - Links: nothing to do.
+  - Several data views: an app's spec that worked around the strict-mode
+    failure (its own wait, or leaving a view route out of `viewRoutes`) can
+    go back to `defineA11ySuite`, or call `expectDataViewsLoaded(page)`
+    where it waited on `[data-state="success"]` itself.
+  - Backend (copy-in, so by hand): copy `backend/tests/signed_in.py` and
+    `test_signed_in.py` from the template, and in `conftest.py` replace the
+    `get_current_user` override with `cookies = await session_cookie(session,
+    1)` passed to `AsyncClient(..., cookies=cookies)`; do the same in any
+    fixture of the app's own that returns a `User(...)` for
+    `get_current_user` (the user needs a row; the template's `session`
+    fixture seeds user 1). Then run the backend's tests: a route that reads
+    the `User` after a commit now fails there, and the fix is to save
+    `user_id = user.id` before the commit.
+
 ## 4.17.0 — reminders: an installable app and Web Push
 
 Additive: new exports, a new Vite plugin and optional contract paths
