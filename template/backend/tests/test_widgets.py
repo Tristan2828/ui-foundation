@@ -16,7 +16,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.db import get_session
 from app.main import app
 from app.models import User, Widget, WidgetCategory
-from app.routers.auth import get_current_user
+from tests.signed_in import session_cookie
 
 
 async def test_list_widgets_is_paginated_and_camel_cased(client: AsyncClient) -> None:
@@ -125,13 +125,10 @@ async def other_user_client(session: AsyncSession) -> AsyncGenerator[AsyncClient
     async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
-    async def override_get_current_user() -> User:
-        return User(id=2, email="other@example.com", name="Other User", password_hash="unused")
-
+    cookies = await session_cookie(session, 2)
     app.dependency_overrides[get_session] = override_get_session
-    app.dependency_overrides[get_current_user] = override_get_current_user
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(transport=transport, base_url="http://test", cookies=cookies) as ac:
         yield ac
     app.dependency_overrides.clear()
 

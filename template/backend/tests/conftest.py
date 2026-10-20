@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.db import get_session
 from app.main import app
 from app.models import User, Widget, WidgetCategory, WidgetStatus
-from app.routers.auth import get_current_user
+from tests.signed_in import session_cookie
 
 
 @pytest_asyncio.fixture
@@ -38,8 +38,8 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     async with AsyncSession(engine) as session:
-        # Owner of the seeded widget, and the same id the `client` fixture's
-        # stand-in user has — widgets are scoped per user (migration 0003).
+        # Owner of the seeded widget, and the user the `client` fixture signs
+        # in as — widgets are scoped per user (migration 0003).
         session.add(User(id=1, email="test@example.com", name="Test User", password_hash="unused"))
         session.add(WidgetCategory(id=1, name="Electronics"))
         # The models declare no relationships, so the unit of work doesn't
@@ -65,20 +65,16 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest_asyncio.fixture
 async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Signed in as user 1 for real: a session row and its cookie, so the real
+    `get_current_user` loads the user in the request's own database session,
+    as it does live (`tests/signed_in.py` says why a stand-in user isn't)."""
+
     async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
-    # widgets/widget-categories require auth —
-    # this fixture is shared by test_widgets.py, which tests the widgets
-    # domain, not login, so it stands in a fixed authenticated user rather
-    # than making every test log in first. test_auth.py exercises the real
-    # get_current_user dependency directly, unoverridden.
-    async def override_get_current_user() -> User:
-        return User(id=1, email="test@example.com", name="Test User", password_hash="unused")
-
+    cookies = await session_cookie(session, 1)
     app.dependency_overrides[get_session] = override_get_session
-    app.dependency_overrides[get_current_user] = override_get_current_user
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(transport=transport, base_url="http://test", cookies=cookies) as ac:
         yield ac
     app.dependency_overrides.clear()

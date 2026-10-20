@@ -72,7 +72,7 @@ import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent } from '@/components/ui/popover'
-import { linkHref } from '@/lib/link-href'
+import { linkHref, linkRefusal } from '@/lib/link-href'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
@@ -901,7 +901,11 @@ function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => v
   const apply = () => {
     const href = linkHref(typed)
     if (href === null) {
-      setError('Enter a web or email address, like https://example.com.')
+      setError(
+        linkRefusal(typed) === 'whitespace'
+          ? 'An address has no spaces. Remove them, or write each as %20.'
+          : 'Enter a web or email address, like https://example.com.',
+      )
       return
     }
     onApply(href)

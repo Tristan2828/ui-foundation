@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { expectDataViewsLoaded } from '../src/testing'
 
 // DataTable's opt-ins for a small entity (app/DataTable stories), in a
 // real browser: `width="content"` (issue #104), editing in its rows
@@ -158,13 +159,17 @@ test.describe('DataTable, editing in its rows', () => {
     await expect(page.getByRole('textbox', { name: 'Website of Home' })).toHaveCount(0)
   })
 
-  test('a link cell: a bare address gains https, another scheme is refused, a blank clears it', async ({ page }) => {
+  test('a link cell: a bare address gains https, another scheme or a space is refused, a blank clears it', async ({ page }) => {
     await open(page)
     await page.getByRole('button', { name: 'Edit Website of Finance' }).click()
     const box = page.getByRole('textbox', { name: 'Website of Finance' })
     await box.fill('javascript:alert(1)')
     await page.keyboard.press('Enter')
     await expect(page.getByRole('row').filter({ has: box }).getByRole('alert')).toHaveText('Use a web or email address')
+    // Two words are not an address: never saved as https://finance wiki (#177).
+    await box.fill('finance wiki')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('row').filter({ has: box }).getByRole('alert')).toHaveText('An address has no spaces')
     await box.fill('finance.example.org')
     await page.keyboard.press('Enter')
     await expect(row(page, 'Finance').getByRole('link', { name: /finance\.example\.org/ })).toHaveAttribute(
@@ -303,5 +308,27 @@ test.describe('DataTable highlightRow (#156)', () => {
     const results = await new AxeBuilder({ page }).include('tbody tr[data-highlighted]').withRules(['color-contrast']).analyze()
     expect(results.passes.find((rule) => rule.id === 'color-contrast')?.nodes.length).toBeGreaterThan(0)
     expect(results.violations).toEqual([])
+  })
+})
+
+// The testing helper that waits for a page's data before reading or
+// scanning it, on a page with two tables, the second loading after the
+// first has its rows. A plain `[data-state="success"]` matches both, which
+// strict mode refuses; waiting on the first alone would scan a skeleton.
+test.describe('several tables on one page (expectDataViewsLoaded)', () => {
+  test('waits until every table has loaded, without a strict-mode violation', async ({ page }) => {
+    await page.goto(story('several-tables'))
+    await expectDataViewsLoaded(page)
+    // Both tables' rows are there the moment it returns: nothing waits here.
+    expect(await page.locator('[data-state="success"]').count()).toBe(2)
+    expect(await page.locator('[data-state="loading"]').count()).toBe(0)
+    expect(await page.getByRole('region', { name: 'Saving' }).getByRole('cell', { name: 'Health', exact: true }).count()).toBe(1)
+  })
+
+  test('the screen-up form waits for the skeletons too', async ({ page }) => {
+    await page.goto(story('several-tables'))
+    await expectDataViewsLoaded(page, { success: false })
+    expect(await page.locator('[data-state="loading"]').count()).toBe(0)
+    expect(await page.locator('[data-state="success"]').count()).toBe(2)
   })
 })

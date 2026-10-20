@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { BookOpenIcon, BriefcaseIcon, FileTextIcon, HeartIcon, HouseIcon, MusicIcon, PlaneIcon, Trash2Icon, VideoIcon, WalletIcon, type LucideIcon } from 'lucide-react'
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { createMemoryRouter, Link, RouterProvider } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,9 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   pinned (15 Oct 2026, UTC) so the headings never drift.
 //   GroupedNoMatches opens on a type with no items: the empty state with
 //   a way to take the filter off.
+// - SeveralTables: two tables on one page, the second loading a moment
+//   after the first has its rows, for the testing helper that waits on
+//   every data view of a page (`expectDataViewsLoaded`).
 // - Highlighted: `highlightRow`, two rows to look at (cell pattern 22).
 
 const ICONS = { house: HouseIcon, wallet: WalletIcon, briefcase: BriefcaseIcon, heart: HeartIcon, plane: PlaneIcon, book: BookOpenIcon } satisfies Record<string, LucideIcon>
@@ -471,6 +474,44 @@ function FeedInRouter({ path }: { path: string }) {
   return <RouterProvider router={router} />
 }
 
+// --- several tables on one page ------------------------------------------------
+
+function ReadTable({ title, rows, isLoading }: { title: string; rows: Category[]; isLoading: boolean }) {
+  return (
+    <section aria-label={title} className="flex flex-col gap-2">
+      <h2 className="type-section-title text-foreground">{title}</h2>
+      <DataTable<Category>
+        columns={READ_COLUMNS}
+        data={isLoading ? [] : rows}
+        total={isLoading ? 0 : rows.length}
+        page={1}
+        pageSize={25}
+        onPageChange={noop}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={isLoading}
+        emptyTitle="Nothing here yet"
+        getRowId={(row) => String(row.id)}
+      />
+    </section>
+  )
+}
+
+function SeveralTablesPage() {
+  const [secondLoading, setSecondLoading] = useState(true)
+  useEffect(() => {
+    const timer = setTimeout(() => setSecondLoading(false), 1500)
+    return () => clearTimeout(timer)
+  }, [])
+  return (
+    <main className="flex flex-col gap-6 p-6">
+      <h1 className="type-page-title text-foreground">Budget</h1>
+      <ReadTable title="Spending" rows={SEED.slice(0, 3)} isLoading={false} />
+      <ReadTable title="Saving" rows={SEED.slice(3)} isLoading={secondLoading} />
+    </main>
+  )
+}
+
 const meta: Meta = {
   title: 'app/DataTable',
   parameters: { controls: { disable: true }, layout: 'fullscreen' },
@@ -487,3 +528,5 @@ export const Grouped: StoryObj = { render: () => <FeedInRouter path="/" /> }
 export const Highlighted: StoryObj = { render: () => <HighlightedTable /> }
 
 export const GroupedNoMatches: StoryObj = { render: () => <FeedInRouter path="/?kind=text" /> }
+
+export const SeveralTables: StoryObj = { render: () => <SeveralTablesPage /> }

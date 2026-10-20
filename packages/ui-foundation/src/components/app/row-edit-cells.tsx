@@ -15,7 +15,7 @@ import type { ReactNode } from 'react'
 import { ExternalLinkIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { linkHref } from '@/lib/link-href'
+import { linkHref, linkRefusal } from '@/lib/link-href'
 import { editInPlace, type EditInPlaceOptions } from './edit-in-place'
 import { EditableValue } from './editable-value'
 
@@ -152,13 +152,16 @@ export type LinkCellProps = {
 }
 
 // A web or email address (`example.com` gains https://), blank for none.
-// Another scheme (`javascript:`) is refused before anything is sent.
+// Another scheme (`javascript:`) or a space inside the address is refused
+// before anything is sent.
 const LINK_RULE: Schema<string | null> = {
   safeParse: (value: unknown) => {
-    const href = linkHref(String(value ?? ''))
+    const typed = String(value ?? '')
+    const href = linkHref(typed)
     if (href === '') return { success: true, data: null }
     if (href === null) {
-      return { success: false, error: { issues: [{ message: 'Use a web or email address' }] } }
+      const message = linkRefusal(typed) === 'whitespace' ? 'An address has no spaces' : 'Use a web or email address'
+      return { success: false, error: { issues: [{ message }] } }
     }
     return { success: true, data: href }
   },

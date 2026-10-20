@@ -22,7 +22,7 @@ from app.db import get_session
 from app.error_reporting import ErrorContext
 from app.main import app
 from app.models import JobRunRecord, User
-from app.routers.auth import get_current_user
+from tests.signed_in import session_cookie
 from app.routers.jobs import get_jobs_engine
 
 
@@ -276,12 +276,14 @@ async def api(engine: AsyncEngine) -> AsyncGenerator[AsyncClient, None]:
         async with AsyncSession(engine) as session:
             yield session
 
+    # Signed in for real (tests/signed_in.py), not a stand-in user.
+    async with AsyncSession(engine) as session:
+        session.add(User(id=1, email="test@example.com", name="Test User", password_hash="unused"))
+        await session.commit()
+        cookies = await session_cookie(session, 1)
     app.dependency_overrides[get_jobs_engine] = lambda: engine
     app.dependency_overrides[get_session] = session_override
-    app.dependency_overrides[get_current_user] = lambda: User(
-        id=1, email="test@example.com", name="Test User", password_hash="unused"
-    )
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", cookies=cookies) as client:
         yield client
     app.dependency_overrides.clear()
 

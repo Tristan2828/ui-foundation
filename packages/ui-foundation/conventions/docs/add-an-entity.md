@@ -554,6 +554,24 @@ is a filled-in example while the Widgets demo is still here).
   one into `src/` to change it: raise it for the foundation (AGENTS.md
   "Changing the Foundation") and build the screen once the release ships.
 
+## After a commit, in the backend
+
+A router reads who's signed in from the `User` that `get_current_user`
+loaded in the request's own database session. `session.commit()` expires
+every object in that session (`expire_on_commit`, on by default), the user
+included, and reading an expired attribute is a lazy load, which under
+asyncio is a `MissingGreenlet` and a 500.
+
+- **After a commit, read by a `user_id` saved before it, never by the
+  `User`.** Take `user_id = user.id` at the top of the handler and use that
+  from then on; or `await session.refresh(user)` first, as `_start_session`
+  in `routers/auth.py` does to return it.
+- **Test signed in for real.** The backend's `client` fixture
+  (`tests/conftest.py`) holds a `sessions` row and sends its cookie,
+  so the real `get_current_user` runs (`tests/signed_in.py`). Never stand
+  a `User(...)` in for `get_current_user` in an override: a detached user
+  never expires, so the test passes and the route fails live.
+
 ## Deleting
 
 The plan's "Deleting" line says which of three. The Widget reference is the
