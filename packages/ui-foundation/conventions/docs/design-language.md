@@ -346,3 +346,33 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
 - Storybook's `app/WidgetCard` shows three widgets on a page and every
   one in each state; its checks run axe and the token and glyph checks in
   both themes and at `large`.
+
+## Notices
+
+A `Notice` says, across the page, a state that decides what you do with
+what's on it: held, overdue, archived and read-only. It's louder than a
+badge and stays until the state changes, unlike a toast. `EntityView`'s
+`notice` is its usual place (under the header); any page can render one
+under its own header.
+
+```tsx
+<Notice tone="warning" title="On hold" action={<Button size="sm" variant="outline">Release the hold</Button>}>
+  Read “Hyperion” first: this one follows it.
+</Notice>
+```
+
+- **The tone is the state's**, from the same grouping as its badge
+  (warning for held, destructive for overdue, info for "up next", success
+  rarely: a good state seldom needs saying across the page). `icon`
+  swaps the tone's own icon for a better one (a lock for read-only).
+- **A wash, not a fill:** the tone at 10% (20% in dark) with `foreground`
+  text and the tone's `*-text` icon. The message reads as body text, so
+  nothing inside it is muted. Storybook's `app/Notice` measures every
+  tone with axe and the glyph check in both themes.
+- **One or two sentences and at most one action**: what the state means
+  and what to do about it. More than that belongs in a section.
+- **Not an alert.** A notice there when the page opens is part of the
+  page, so it has no role of its own. `EntityView` keeps a `role="status"`
+  region in its place, so one appearing or clearing later is announced.
+  Elsewhere, put it in a status region that is rendered before it
+  changes.

@@ -10,11 +10,13 @@ alternatives ([`column-options.md`](column-options.md)), not designed in the abs
 Patterns 12 (boolean), 15 (yes/no flipped in the row), 16 (title linking
 to its view), 17 (quick action on the view) and 18 (editable value) are
 the template's own references: Widget's In Stock and Name columns and its
-view render them, and their specs pin them. Patterns 19 (stage circle)
-and 20 (count linking to the related records), the multi-value variant
-of 4, the dependency list in 10 and the pressed icon in 15 were each
-built for a real app's screen first; the package's Storybook renders
-them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`), and
+view render them, and their specs pin them. Patterns 19 (stage circle),
+20 (count linking to the related records) and 22 (a highlighted row),
+the multi-value variant of 4, the step bar and star in 9, the dependency
+list in 10, the ring in 13 and the pressed icon in 15 were each built
+for a real app's screen first; the package's Storybook renders
+them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`,
+`patterns/Scales`, `app/DataTable`), and
 its checks pin their accessibility and contrast in both themes. The
 other patterns from 11 on are marked **Unproven**: written ahead of a
 real column, so no app has tested them on real data yet. Prefer a proven
@@ -281,6 +283,38 @@ own state.
   does not check icon contrast. That's a defensible choice — make it
   deliberately, in a comment, not by accident.
 
+### Two variants the package draws: a step bar and a star
+
+Both are in the package's Storybook (`patterns/Scales`), every value on
+the page and on a card, measured by axe and the glyph check in both
+themes. Each is one image to a screen reader, named in words.
+
+- **`StepBar`, an ordered enum of a few bands** (best to worst): a short
+  bar of steps, the first `value` filled in `foreground`, the rest the
+  track (`border`), with the band's word beside it in `muted-foreground`.
+  Narrower than five stars, and it reads as a scale, not a rating. Its
+  name says both: `label="Quality: High, 4 of 5"` (the default is
+  "High, 4 of 5", enough where the column header names the field).
+
+  ```tsx
+  const QUALITY: Record<Quality, { word: string; value: number }> = {
+    best: { word: 'Best', value: 5 }, high: { word: 'High', value: 4 }, /* … */
+  }
+  <StepBar value={QUALITY[q].value} word={QUALITY[q].word} />
+  ```
+
+- **`RatingStar`, a three-value enum** (yes / partly / no): a full, half
+  or empty star with the word beside it. The shape carries the value, so
+  it survives greyscale. The half is the left half filled over the whole
+  outline, never half a star: alone, half a star reads as broken.
+
+  ```tsx
+  <RatingStar value={OWNED[o].value /* 'full' | 'half' | 'empty' */} word={OWNED[o].word} />
+  ```
+
+- Both draw in `foreground`. Tone one only as pattern 5 would (a `*-text`
+  class in `className`), never by band alone.
+
 ## 10. Summary in the cell, detail in a popover
 
 A one-to-many value (`★ 4.7 (3)` opening a per-person breakdown).
@@ -413,6 +447,24 @@ A percentage, or a count out of a total (`7 of 12 done`).
   progress`).
 - **Cost:** a bar takes far more width than the number it replaces. On a
   wide table, the plain number from pattern 11 usually wins.
+
+### The compact form: `ProgressRing`
+
+Done out of total (a checklist, how far through an ordered list, the
+steps of a process) as a small ring filling clockwise beside the count
+("4/6"). Proven in an app's table cells and on its view; the package
+ships it, so this needs no `progress` install.
+
+```tsx
+<ProgressRing done={row.original.doneCount} total={row.original.itemCount} />
+```
+
+- The arc is `foreground` while under way and `success-text` once
+  complete, on a `border` track; the count is in tabular numbers. Zero
+  of zero shows the empty ring and reads "Not started".
+- Its name is "4 of 6 done" unless `label` says better ("4 of 6 chapters
+  read"). The count beside it is `aria-hidden`: the name already says it.
+- Prefer it to the bar in a table: it's as narrow as the count.
 
 ## 14. Avatar and name — *Unproven*
 
@@ -1172,3 +1224,34 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   filter, with a button to take it off. An empty group never renders:
   groups come from the rows.
 - **Not built:** collapsing groups, grouping by more than one key.
+
+## 22. A highlighted row, and rows that are done
+
+One row of a table marked as **the one to look at**: next up, the
+current one. `DataTable`'s `highlightRow` returns true for it.
+
+```tsx
+<DataTable highlightRow={(book) => book.id === nextUpId} … />
+```
+
+- **A wash of info on every cell**, over the zebra stripe and the pinned
+  columns' opaque backgrounds (`--table-highlight`, pre-mixed onto the
+  page), and a bar in `info-text` at the row's start, so it reads without
+  colour too. Still **say why in the row** (a "Next up" word or badge):
+  the wash says "look here", not what it is.
+- **Muted text inside it is darkened for you.** `muted-foreground`
+  measures 4.09:1 on the wash, under 4.5:1, and no lighter wash fixes it
+  (4.47:1 even at 4%). So the row redefines `--muted-foreground` as
+  `--table-highlight-muted-foreground`: 6.75:1 in light, the usual grey in
+  dark (6.61:1). Use `text-muted-foreground` as anywhere else.
+- **At most a row or two.** A highlight on every other row highlights
+  nothing; a state many rows share is a column (pattern 5).
+- **Rows that are done: colour, not opacity.** Greying finished rows with
+  `opacity-50` (or `text-foreground/60`) drops their text under 4.5:1 the
+  same way. Render their text in `text-muted-foreground`, which is
+  measured, and keep the word that says done.
+- Storybook's `app/DataTable` Highlighted story has two highlighted rows
+  (one striped), pinned columns and muted text inside them, under axe and
+  the token check in both themes; `e2e/data-table.spec.ts` checks every
+  cell wears the wash.
+

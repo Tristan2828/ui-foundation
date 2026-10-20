@@ -28,6 +28,7 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   pinned (15 Oct 2026, UTC) so the headings never drift.
 //   GroupedNoMatches opens on a type with no items: the empty state with
 //   a way to take the filter off.
+// - Highlighted: `highlightRow`, two rows to look at (cell pattern 22).
 
 const ICONS = { house: HouseIcon, wallet: WalletIcon, briefcase: BriefcaseIcon, heart: HeartIcon, plane: PlaneIcon, book: BookOpenIcon } satisfies Record<string, LucideIcon>
 type IconKey = keyof typeof ICONS
@@ -126,6 +127,54 @@ function ContentWidthTable() {
         pinFirstColumn
         pinLastColumn
         toolbar={<Input className="w-64" placeholder="Search categories" aria-label="Search categories" />}
+      />
+    </div>
+  )
+}
+
+// --- highlightRow ---------------------------------------------------------------
+
+// Two rows marked to look at (one odd, one striped even), each also saying
+// why in words, with muted text inside them and pinned first and last
+// columns, so the wash, the darker muted grey and the bar are measured on
+// both kinds of row and on the opaque pinned cells.
+const NEXT_UP = new Set([2, 3])
+
+const HIGHLIGHT_COLUMNS: LegacyColumnDef<Category, unknown>[] = [
+  { id: 'name', header: 'Name', cell: ({ row }) => <Name category={row.original} /> },
+  {
+    id: 'state',
+    header: 'State',
+    cell: ({ row }) =>
+      NEXT_UP.has(row.original.id) ? 'Next up' : <span className="text-muted-foreground">Waiting</span>,
+  },
+  {
+    id: 'notes',
+    header: 'Notes',
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.notes ?? 'No notes'}</span>,
+  },
+  READ_COLUMNS[4],
+]
+
+function HighlightedTable() {
+  return (
+    <div className="flex flex-col gap-4 p-6">
+      <h1 className="type-page-title text-foreground">Categories</h1>
+      <DataTable<Category>
+        columns={HIGHLIGHT_COLUMNS}
+        data={SEED}
+        total={SEED.length}
+        page={1}
+        pageSize={25}
+        onPageChange={noop}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        emptyTitle="No categories yet"
+        getRowId={(row) => String(row.id)}
+        pinFirstColumn
+        pinLastColumn
+        highlightRow={(row) => NEXT_UP.has(row.id)}
       />
     </div>
   )
@@ -434,5 +483,7 @@ export const ContentWidth: StoryObj = { render: () => <ContentWidthTable /> }
 export const EditInTheRows: StoryObj = { render: () => <InRouter /> }
 
 export const Grouped: StoryObj = { render: () => <FeedInRouter path="/" /> }
+
+export const Highlighted: StoryObj = { render: () => <HighlightedTable /> }
 
 export const GroupedNoMatches: StoryObj = { render: () => <FeedInRouter path="/?kind=text" /> }

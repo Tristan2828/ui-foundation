@@ -266,3 +266,42 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
     await expect(headings(page).first()).toHaveText('Today2 · 1 h')
   })
 })
+
+test.describe('DataTable highlightRow (#156)', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`every cell of a highlighted row wears the wash, over the stripe and the pinned backgrounds (${theme})`, async ({
+      page,
+    }) => {
+      await page.goto(story('highlighted', theme))
+      await expect(page.getByRole('cell', { name: 'Finance', exact: true })).toBeVisible()
+      const highlighted = page.locator('tbody tr[data-highlighted]')
+      await expect(highlighted).toHaveCount(2)
+      // Finance (row 2, striped) and Work (row 3, not): the same wash on
+      // every cell, pinned ones included, and nowhere else.
+      const wash = await page.evaluate(() => {
+        const probe = document.createElement('div')
+        probe.style.backgroundColor = 'var(--table-highlight)'
+        document.body.append(probe)
+        const colour = getComputedStyle(probe).backgroundColor
+        probe.remove()
+        return colour
+      })
+      for (const name of ['Finance', 'Work']) {
+        const cells = page.locator('tbody tr', { has: page.getByRole('cell', { name, exact: true }) }).locator('td')
+        const colours = await cells.evaluateAll((tds) => tds.map((td) => getComputedStyle(td).backgroundColor))
+        expect(colours, name).toEqual(colours.map(() => wash))
+      }
+      const plain = page.locator('tbody tr', { has: page.getByRole('cell', { name: 'Health', exact: true }) })
+      await expect(plain).not.toHaveAttribute('data-highlighted')
+      expect(await plain.locator('td').first().evaluate((td) => getComputedStyle(td).backgroundColor)).not.toBe(wash)
+    })
+  }
+
+  test('muted text inside a highlighted row clears 4.5:1 (axe on the row in light, the tighter theme)', async ({ page }) => {
+    await page.goto(story('highlighted'))
+    await expect(page.getByRole('cell', { name: 'Finance', exact: true })).toBeVisible()
+    const results = await new AxeBuilder({ page }).include('tbody tr[data-highlighted]').withRules(['color-contrast']).analyze()
+    expect(results.passes.find((rule) => rule.id === 'color-contrast')?.nodes.length).toBeGreaterThan(0)
+    expect(results.violations).toEqual([])
+  })
+})
