@@ -231,6 +231,20 @@ Rules learned the hard way (each cost a phase to find):
   constant `build:real` still ships MSW (`consume-test.sh` asserts it).
 - **Test a commit, not a branch.** Scripts and workflows take a SHA or a
   tag, so every result belongs to one immutable tree.
+- **A package e2e spec runs only once it's listed.** The package's
+  `playwright.storybook.config.ts` names its specs in `testMatch`, so a new
+  `e2e/<name>.spec.ts` is silently skipped (and `playwright test <path>`
+  says "No tests found") until it's added there. Check that the run's test
+  count went up. (2026-10-19: one PR's spec never ran under verify.)
+- **Short of memory, run the gates one by one with fewer workers.** On a
+  16 GB Windows machine with other apps open, `npm run verify`'s parallel
+  Playwright runs crashed their workers (exit 3221225794), and Claude
+  Code's background-shell reaper stopped the run. The same gates in
+  sequence pass: the package's `verify:fast`, then `npx playwright test -c
+  playwright.storybook.config.ts --workers=1` in `packages/ui-foundation/`,
+  then the template's `verify:fast` and `npx playwright test --workers=1`.
+  A thousand failures at once with "worker process exited unexpectedly"
+  is this, not the code.
 
 **Claude Code cloud sessions** run `.claude/hooks/session-start.sh` on
 start (registered in `.claude/settings.json`; it does nothing anywhere
