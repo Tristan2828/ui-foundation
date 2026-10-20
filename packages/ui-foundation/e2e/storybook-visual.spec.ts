@@ -72,6 +72,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },
   // <Notice>: every tone's wash, on the page and on a card.
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
+  // A plain date on a form, required and optional (#157).
+  { id: 'app-datefield--default', mustShow: 'No due date' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },

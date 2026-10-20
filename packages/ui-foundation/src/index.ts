@@ -54,6 +54,8 @@ export { SourceCredit, type Source, type SourceCreditProps } from '@/components/
 export { ProgressRing, type ProgressRingProps } from '@/components/app/progress-ring'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
+export { DateField, type DateFieldProps } from '@/components/app/date-field'
+export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
 export {
   WidgetCard,
   WidgetList,
