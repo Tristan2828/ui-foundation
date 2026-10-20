@@ -13,6 +13,7 @@
 // are optional peer dependencies, needed only by apps that import this.
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { isNavSection, type NavEntry } from '../components/app/app-shell-nav'
 import type { MswOverride } from '../mocks/override'
 
 export type { MswHandle, MswOverride } from '../mocks/override'
@@ -108,8 +109,10 @@ async function navRoutes(page: Page, isMobile: boolean | undefined): Promise<str
     : page.getByRole('navigation', { name: 'Primary' })
 
   await expect(nav.getByRole('link').first()).toBeVisible()
+  // By element, not role: a link inside a folded sidebar section is hidden
+  // (AppShell's collapsible sections) and role queries skip it.
   const hrefs = await nav
-    .getByRole('link')
+    .locator('a[href]')
     .evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href))
   // Only this app's pages: a sidebarExtra group may link to other sites.
   const origin = new URL(page.url()).origin
@@ -130,32 +133,75 @@ export type A11ySuiteOptions = {
   viewRoutes?: readonly string[]
   /** Screens outside the app shell, e.g. '/login' (and '/register' if the app has it). */
   loggedOutRoutes: readonly string[]
+  /**
+   * The app's nav, the same `NavEntry[]` passed to `AppShell` (`src/nav.ts`).
+   * Given, each page in it is a test of its own, so the suite's time per
+   * test stays flat as the app grows, and one more test checks the
+   * rendered sidebar links exactly those pages. Left out, the pages are
+   * found in the sidebar at run time, in one test whose timeout grows with
+   * their number.
+   */
+  nav?: readonly NavEntry[]
+}
+
+// A page's share of the one discovering test's time: load, data, axe.
+const NAV_PAGE_BUDGET_MS = 10_000
+
+function navEntryRoutes(nav: readonly NavEntry[]): string[] {
+  return [...new Set(nav.flatMap((entry) => (isNavSection(entry) ? entry.items : [entry]).map((item) => item.to)))]
+}
+
+async function expectNavPageAccessible(page: Page, route: string, colorScheme: 'light' | 'dark') {
+  await page.goto(route)
+  await expect(page.locator('html')).toHaveClass(colorScheme)
+  // Wait for data, not the loading skeleton, so the real UI is checked.
+  await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
+  await expectNoAxeViolations(page)
 }
 
 /**
  * Accessibility of the real screens in light and dark mode: every page in
- * the Primary nav (discovered, so a new entity's table is covered with no
- * edit), the given form routes, and the logged-out screens. axe's
+ * the Primary nav (one test each from `nav`, or discovered in the sidebar
+ * when `nav` is left out), the given form routes, and the logged-out
+ * screens. axe's
  * color-contrast rule against the rendered dark DOM is also what keeps the
  * dark-mode tokens readable. The theme follows the OS setting, so
  * emulateMedia switches it.
  */
-export function defineA11ySuite({ formRoutes, viewRoutes = [], loggedOutRoutes }: A11ySuiteOptions): void {
+export function defineA11ySuite({ formRoutes, viewRoutes = [], loggedOutRoutes, nav }: A11ySuiteOptions): void {
+  const listed = nav && navEntryRoutes(nav)
+  if (listed) {
+    test('the sidebar links exactly the pages in nav', async ({ page, isMobile }) => {
+      const rendered = await navRoutes(page, isMobile)
+      expect(
+        [...rendered].sort(),
+        'The sidebar and the nav given to defineA11ySuite differ: pass the same NavEntry[] AppShell gets',
+      ).toEqual([...listed].sort())
+    })
+  }
+
   for (const colorScheme of ['light', 'dark'] as const) {
     test.describe(`accessibility (${colorScheme})`, () => {
       test.beforeEach(async ({ page }) => {
         await page.emulateMedia({ colorScheme })
       })
 
-      test('every nav page has zero axe violations', async ({ page, isMobile }) => {
-        for (const route of await navRoutes(page, isMobile)) {
-          await page.goto(route)
-          await expect(page.locator('html')).toHaveClass(colorScheme)
-          // Wait for data, not the loading skeleton, so the real UI is checked.
-          await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
-          await test.step(route, () => expectNoAxeViolations(page))
+      if (listed) {
+        for (const route of listed) {
+          test(`nav page ${route} has zero axe violations`, async ({ page }) => {
+            await expectNavPageAccessible(page, route, colorScheme)
+          })
         }
-      })
+      } else {
+        test('every nav page has zero axe violations', async ({ page, isMobile }, testInfo) => {
+          const routes = await navRoutes(page, isMobile)
+          // One test for every page: its time grows with the app.
+          test.setTimeout(testInfo.timeout + routes.length * NAV_PAGE_BUDGET_MS)
+          for (const route of routes) {
+            await test.step(route, () => expectNavPageAccessible(page, route, colorScheme))
+          }
+        })
+      }
 
       for (const route of [...formRoutes, ...loggedOutRoutes]) {
         test(`${route} has zero axe violations`, async ({ page }) => {
