@@ -5,6 +5,52 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.18.2 — three things an app found testing: a paused fake clock, a forced mutation's refetch, the mocks with storage blocked
+
+Two playbook notes and a template fix; nothing in the package's code
+changes. Run `npx ui-foundation sync` for the updated docs.
+
+- **Docs: three fake-clock gotchas in the timed-screens recipe**
+  (`docs/foundation/timed-screens.md`, "Testing a timed screen in
+  Playwright"). After `clock.install()` the fake clock keeps moving in real
+  time, so an open-ended count-up (a stopwatch, a hold that ends on a tap)
+  drifts under load: pause it once the session opens and move it only with
+  `fastForward`. `clock.pauseAt(Date.now())` fails with "Cannot
+  fast-forward to the past" (the page's clock is already ahead), so pause
+  at `Date.now() + 50`. A paused clock hangs axe and the dialog's close
+  animation, so `clock.resume()` before either. With an example.
+- **How an app adopts it:** `npx ui-foundation sync`. An app with a
+  count-up screen whose Playwright readings are off under load pauses its
+  clock as the example does.
+- **Docs: forcing a mutation's success forces its refetch too**
+  (`docs/foundation/add-an-entity.md`, step 8). An override that answers
+  only the mutation is undone by the mutation's invalidation refetch, which
+  reads the unchanged mock store; answer the follow-up GET (and the list's,
+  if the screen shows it) with the record the mutation answered. With an
+  example.
+- **How an app adopts it:** `npx ui-foundation sync`. A spec that forces a
+  mutation's success and then sees the old value gets the extra GET
+  override.
+- **Fix (template): the app renders in mock mode with storage blocked.**
+  MSW 2.15's cookie store calls `localStorage.getItem` unguarded when its
+  module loads (`msw/lib/core/utils/cookieStore.mjs`, an upstream MSW
+  issue, not filed from here; `docs/DEFERRED.md` says when to drop the
+  workaround), so where the browser blocks storage (a private window with
+  site data blocked, or the `Storage` methods throwing)
+  `import('./mocks/browser')` threw and the page stayed blank. `main.tsx`'s
+  `enableMocking()` now calls `swapBlockedLocalStorage()` first: if a
+  `localStorage` write throws, `window.localStorage` becomes an in-memory
+  one for the page's life. Mock mode only: it runs after the
+  `VITE_API === 'real'` check, so a real build keeps the browser's own
+  storage (the package's storage reads already fall back on their own). `e2e/blocked-storage.spec.ts` blocks storage both ways (the
+  methods throw, and `window.localStorage` itself throws) and checks the
+  page renders; both fail without the fix.
+- **How an app adopts it:** copy `swapBlockedLocalStorage` and its call
+  (before `import('./mocks/browser')`, after the `VITE_API === 'real'`
+  check) from the template's `src/main.tsx`, and copy
+  `e2e/blocked-storage.spec.ts`, changing its assertion to something the
+  app's home page shows.
+
 ## 4.18.1 — the MCP tools read the user after a write
 
 A fix in the reference backend, which apps copy in; nothing changes in the

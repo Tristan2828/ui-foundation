@@ -14,6 +14,7 @@ async function enableMocking() {
   // only this form lets `build:real` drop MSW entirely. Behind an imported
   // constant the dynamic imports below survive and MSW ships to production.
   if (import.meta.env.VITE_API === 'real') return
+  swapBlockedLocalStorage()
   const { worker } = await import('./mocks/browser')
   // start() before exposeMswForE2E(): worker.start() resets the runtime
   // handler list to the ones setupWorker() was configured with, so a
@@ -25,6 +26,35 @@ async function enableMocking() {
   await worker.start({ onUnhandledRequest: 'bypass' })
   const { exposeMswForE2E } = await import('@tristan2828/ui-foundation/mocks')
   exposeMswForE2E(worker)
+}
+
+// Mock mode only. MSW's cookie store calls localStorage.getItem unguarded
+// when its module loads, so where the browser blocks storage (a private
+// window with site data blocked, or every Storage call throwing) the import
+// above throws and the app never renders. An in-memory localStorage keeps
+// the mocks running for the page's life. Not for the real build: there the
+// package's own storage reads already fall back on their own.
+function swapBlockedLocalStorage() {
+  try {
+    const probe = '__storage_probe__'
+    window.localStorage.setItem(probe, probe)
+    window.localStorage.removeItem(probe)
+    return
+  } catch {
+    // Blocked: replace it below.
+  }
+  const items = new Map<string, string>()
+  const memory = {
+    get length() {
+      return items.size
+    },
+    key: (index: number) => [...items.keys()][index] ?? null,
+    getItem: (key: string) => items.get(key) ?? null,
+    setItem: (key: string, value: string) => void items.set(key, String(value)),
+    removeItem: (key: string) => void items.delete(key),
+    clear: () => items.clear(),
+  }
+  Object.defineProperty(window, 'localStorage', { value: memory, configurable: true })
 }
 
 enableMocking().then(() => {

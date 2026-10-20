@@ -153,3 +153,40 @@ test('running, paused and done', async ({ page }) => {
   before the page loads:
   `page.addInitScript(() => localStorage.setItem('my-app:routine:muted', 'true'))`.
 - **Reduced motion:** `await page.emulateMedia({ reducedMotion: 'reduce' })`.
+
+**An open-ended count-up: pause the fake clock.** After
+`clock.install()` the fake clock still moves in real time between
+steps, so every reading picks up however long the machine took since the
+last `fastForward`. A count-up with no end (a stopwatch, a hold that
+ends on a tap) has nothing to stop at, so under load its readings are
+off by a second or more. Pause the clock once the session opens and
+move it only with `fastForward`:
+
+```ts
+test('the hold counts up until the tap', async ({ page }) => {
+  await page.clock.install()
+  await page.goto('/routine')
+  await page.getByRole('button', { name: 'Start' }).click()
+  // Slightly ahead, never Date.now() itself: the page's clock has already
+  // moved past the test's, and pauseAt() refuses an earlier time with
+  // "Cannot fast-forward to the past".
+  await page.clock.pauseAt(Date.now() + 50)
+
+  await page.clock.fastForward('00:42')
+  await expect(page.getByRole('timer', { name: 'Held for' })).toHaveText('0:42')
+
+  // A paused clock stops axe and the dialog's close animation: resume first.
+  await page.clock.resume()
+  await expectNoAxeViolations(page)   // @tristan2828/ui-foundation/testing
+  await page.getByRole('button', { name: 'Close' }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+})
+```
+
+- **`pauseAt(Date.now() + 50)`, not `pauseAt(Date.now())`.** The page's
+  fake time is already a little ahead of the test's `Date.now()`, and
+  `pauseAt` fast-forwards to the time it's given, so a time already
+  passed fails with "Cannot fast-forward to the past".
+- **`clock.resume()` before axe or closing the view.** With the clock
+  paused, axe's scan never finishes and the dialog's close animation
+  never ends, so the test times out with nothing pointing at the clock.

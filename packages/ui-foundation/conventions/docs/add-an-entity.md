@@ -511,6 +511,29 @@ is a filled-in example while the Widgets demo is still here).
    `onError` — and stub it through the override, never `page.route`,
    which cannot see requests the MSW service worker makes
    (`e2e/msw-contract.spec.ts` has an example).
+   **Forcing a mutation's success forces its refetch too.** A mutation
+   invalidates its queries when it answers, and the refetch reads the
+   mock store, which the override never changed, so the screen goes back
+   to the old record and the test fails on a value it just saw. Answer
+   the follow-up GET with the record the mutation answered:
+
+   ```ts
+   // The record as the server would save it: what the PATCH answers.
+   const saved = { ...WIRELESS_MOUSE, status: 'archived' }
+   await waitForMswReady(page)
+   await page.evaluate((saved) => {
+     const { worker, http, HttpResponse } = window.__msw
+     worker.use(
+       http.patch('*/api/widgets/1', () => HttpResponse.json(saved)),
+       // The invalidation refetch: without this it shows the old status.
+       http.get('*/api/widgets/1', () => HttpResponse.json(saved)),
+     )
+   }, saved)
+   ```
+
+   Answer the list's GET the same way if the screen shows the list. Only
+   a forced error needs no GET: a refused mutation changes nothing to
+   read back.
 9. **Register the nav entry and route names** in `e2e/shell.spec.ts`'s
    `NAV_ENTRIES` so the shell smoke test covers the new screen, add
    `/<entity>/new` to `e2e/a11y.spec.ts`'s `formRoutes`, and add the view
