@@ -96,6 +96,13 @@ routine) is built from the package's parts: `SessionView`,
 `docs/foundation/timed-screens.md`, including its Playwright recipe
 (`clock.install()` before `goto`, then `fastForward`, never `runFor`).
 
+## Reminders
+A notification at a time the user chose, with the app closed, is Web
+Push: `pwa()` in `vite.config.ts`, `AllowReminders` with
+`usePushPermission()`, and the backend's `send_push` and reminders job.
+Follow `docs/foundation/reminders.md`. Never ask for notification
+permission on page load: only from the click on "Allow reminders".
+
 ## Scope and Stopping
 - Do the task you were given and nothing beyond it. A task is done when
   `npm run verify` passes — not when it feels complete.

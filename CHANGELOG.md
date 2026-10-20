@@ -5,6 +5,49 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.17.0 — reminders: an installable app and Web Push
+
+Additive: new exports, a new Vite plugin and optional contract paths
+(#167). Off until an app turns it on. See `docs/foundation/reminders.md`.
+
+- **`pwa({ name })`** from `@tristan2828/ui-foundation/vite`: serves and
+  builds `/manifest.webmanifest` (`display: standalone`, the theme's
+  colours), icons (an SVG with the name's first letter, plain PNGs in
+  `--primary` for iOS; `icon` swaps in the app's own PNG) and
+  `/push-sw.js`, a service worker for pushes and notification clicks only
+  (no fetch handler, no caching). Adds the manifest, theme-color and
+  apple-touch-icon tags to `index.html`.
+- **`usePushPermission()`**: `{ status, enable, disable, pending, error }`,
+  status `off`, `on`, `needs-install` (iPhone or iPad in a browser tab),
+  `blocked`, `unsupported` or `mock` (under MSW, whose worker holds the
+  page). `enable()` asks the browser first thing, from the click, then
+  registers the worker, subscribes with the backend's key and saves it.
+  `createPushController` is the same rules without React.
+- **`AllowReminders`**: explains, then asks, and says what to do in every
+  state (the Home Screen steps on iOS, where to unblock).
+- **Contract** (`openapi/foundation.yaml`, all `x-optional`):
+  `GET /push/public-key`, `POST /push/subscriptions`,
+  `DELETE /push/subscriptions/{id}`. MSW handlers: `pushHandlers` from
+  `/mocks`.
+- **Reference backend:** `app/push.py`, `send_push(session, user_id, title,
+  body, url)`, with VAPID (RFC 8292) and aes128gcm encryption (RFC 8291,
+  tested against its worked example) on `cryptography`, an optional
+  `push` extra. Sends only to the browsers' push services
+  (`PUSH_ALLOWED_HOSTS`), never follows a redirect, deletes a device the
+  service says is gone. `push_subscriptions` and `reminders` tables
+  (migrations `0014`, `0015`), and the `send-reminders` job: every minute,
+  each reminder due in its own time zone, once a day, at most 15 minutes
+  late. `PUSH_ENABLED`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`; the app
+  refuses to start with push on and either missing.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.17.0`,
+  `npx ui-foundation sync`. For reminders: copy `/push/*` and their three
+  schemas from the package's `openapi.yaml` into the app's, add
+  `pushHandlers` to the mocks and `pwa({ name })` to `vite.config.ts`, then
+  the backend side as `docs/deploy.md` "Reminders (Web Push)" says (an app
+  made from an older template copies `app/push.py`, `app/reminders.py`,
+  `app/routers/push.py` and the two migrations from the template). An app
+  without reminders does nothing.
+
 ## 4.16.0 — timed screens: a full-screen view, a session clock, a wake lock and sound cues
 
 Additive: new exports only (#163, #164, #165, #166). See

@@ -306,6 +306,44 @@ Not built in, by decision: cron expressions, queues, retries with
 backoff, a separate worker process. A job that must retry does it inside
 its own run.
 
+## Reminders (Web Push)
+
+Notifications at times users chose, reaching them with the app closed
+(`docs/foundation/reminders.md`). Off by default; with it off `/api/push/*`
+answers 404 and nothing else changes. To turn it on:
+
+1. **Install the push extra** where the backend runs:
+   `pip install -e ".[push]"` (PyCA's `cryptography`, with `cffi` and
+   `pycparser`; prebuilt for Linux, macOS and Windows).
+2. **Make the VAPID key pair, once:**
+   `cd backend && .venv/Scripts/python scripts/generate_vapid_keys.py`.
+   Set the `VAPID_PRIVATE_KEY` it prints as a secret in the deployment's
+   environment, never in the repo. Keep it: every device subscribes with
+   its public half, so a new key stops every device's reminders until each
+   allows them again.
+3. **Set `VAPID_SUBJECT`** to how a push service can reach whoever runs
+   the app: `mailto:ops@example.com` or an `https://` page.
+4. **Set `PUSH_ENABLED=true`.** The app refuses to start, in any
+   environment, while the extra, the key or the subject is missing.
+5. **Serve over HTTPS.** Browsers allow push only on a secure origin
+   (`localhost` counts, for development).
+
+- **Sending** goes only to the browsers' push services:
+  `PUSH_ALLOWED_HOSTS` (default `fcm.googleapis.com`,
+  `updates.push.services.mozilla.com`, `push.apple.com`,
+  `notify.windows.com`, each with its subdomains). The endpoint comes from
+  the browser, so anything else is refused when it's saved and when it's
+  sent to, and a redirect is never followed.
+- **The reminders job** (`send-reminders`, every minute) is registered
+  with push on and runs with `JOBS_ENABLED` ("Scheduled jobs" above).
+  `GET /api/jobs` shows its last run: "2 due: 3 sent, 1 gone".
+- **Check it end to end:** allow reminders in the app, then
+  `.venv/Scripts/python scripts/send_test_push.py <email>`. It prints
+  `1 sent` when the push service took it.
+- **A device that's gone** (the person unsubscribed, cleared site data or
+  uninstalled) answers 404 or 410 to the next send, and its row is
+  deleted. `SELECT * FROM push_subscriptions` lists every device.
+
 ## Error reporting
 
 Every 500 the backend answers, and every failure the browser sees, goes

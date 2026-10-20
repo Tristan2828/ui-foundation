@@ -74,6 +74,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
+  // Allow reminders in every state, on a card (#167).
+  { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
@@ -118,6 +120,8 @@ const GLYPH_STORIES: {
   // Each tone's icon on its own wash, and the source credit's link marks.
   { id: 'app-notice--default' },
   { id: 'app-entityview--notice-and-footer' },
+  // The bells on the button, in the on notice and the blocked one.
+  { id: 'app-allowreminders--default' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },
   { id: 'patterns-cellpatterns--icons-with-one-tooltip' },
   // Every categorical slot, against the page and against a card.

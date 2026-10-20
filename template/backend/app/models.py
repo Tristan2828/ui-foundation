@@ -3,11 +3,11 @@ JSON casing lives in app/schemas.py, never here. Table models are never
 returned directly from a router.
 """
 
-from datetime import datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, Text
+from sqlalchemy import Column, DateTime, Text, Time
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -167,6 +167,47 @@ class JobRunRecord(SQLModel, table=True):
     error: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     # What the job said it did ("12 new"), for an ok run.
     summary: str | None = Field(default=None, max_length=500)
+
+
+class PushSubscription(SQLModel, table=True):
+    """One device a user allowed reminders on (app/push.py): where its push
+    service takes messages for it, and the keys to encrypt them to."""
+
+    __tablename__ = "push_subscriptions"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    # The push service's URL for this device. Unique: the same device
+    # subscribing again (or under another account) replaces its row.
+    endpoint: str = Field(max_length=2048, unique=True)
+    # The browser's P-256 public key and auth secret, base64url.
+    p256dh: str = Field(max_length=100)
+    auth: str = Field(max_length=32)
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+class Reminder(SQLModel, table=True):
+    """A notification sent at a time the user chose, on the days they chose
+    (app/reminders.py, the send-reminders job)."""
+
+    __tablename__ = "reminders"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    title: str = Field(max_length=100)
+    body: str = Field(default="", max_length=300)
+    # The app's own path the notification opens ("/routines/3").
+    url: str = Field(default="/", max_length=500)
+    # When, in the user's own time zone: "HH:MM" on these days.
+    time_of_day: time = Field(sa_column=Column(Time(), nullable=False))
+    # Comma-separated mon,tue,wed,thu,fri,sat,sun, in that order.
+    days: str = Field(max_length=27)
+    # IANA name ("America/Chicago"); the job reads the time in it.
+    time_zone: str = Field(max_length=64)
+    enabled: bool = Field(default=True)
+    # The local date it was last sent on, so it goes once a day at most.
+    last_sent_on: date | None = Field(default=None)
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
 
 
 class WidgetStatus(str, Enum):

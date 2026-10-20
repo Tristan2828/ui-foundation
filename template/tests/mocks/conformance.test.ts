@@ -146,6 +146,27 @@ describe("MSW mock conformance", () => {
     await validate("/client-errors", "post", refused);
   });
 
+  it("/push/* match their schemas: the key, a device saved once, deleted once", async () => {
+    const key = await fetch("http://localhost/api/push/public-key");
+    expect(key.status).toBe(200);
+    await validate("/push/public-key", "get", key);
+    const subscribe = () =>
+      fetch("http://localhost/api/push/subscriptions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ endpoint: "https://fcm.googleapis.com/fcm/send/a", keys: { p256dh: "k", auth: "a" } }),
+      });
+    const first = await subscribe();
+    expect(first.status).toBe(201);
+    const { id } = await first.clone().json();
+    await validate("/push/subscriptions", "post", first);
+    expect(await (await subscribe()).json()).toEqual({ id });
+    expect((await fetch(`http://localhost/api/push/subscriptions/${id}`, { method: "DELETE" })).status).toBe(204);
+    const gone = await fetch(`http://localhost/api/push/subscriptions/${id}`, { method: "DELETE" });
+    expect(gone.status).toBe(404);
+    await validate("/push/subscriptions/{id}", "delete", gone);
+  });
+
   it("GET /auth/me matches its 200 schema", async () => {
     const res = await fetch("http://localhost/api/auth/me");
     expect(res.status).toBe(200);

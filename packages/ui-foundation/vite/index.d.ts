@@ -24,3 +24,30 @@ export type BuildInfoOptions = {
  * `BUILD_REPO_URL`.
  */
 export default function buildInfo(options?: BuildInfoOptions): Plugin
+
+export type PwaOptions = {
+  /** The app's name, as the Home Screen and the install prompt show it. */
+  name: string
+  /** A shorter one for under the icon. Defaults to `name`; its first letter is the SVG icon's. */
+  shortName?: string
+  description?: string
+  /** `#rrggbb`. Defaults to the package's `--primary` token. */
+  themeColor?: string
+  /** The letter's colour on the SVG icon, `#rrggbb`. Defaults to `--primary-foreground`. */
+  themeForegroundColor?: string
+  /** The splash screen's, `#rrggbb`. Defaults to `--background`. */
+  backgroundColor?: string
+  /**
+   * The app's own icon, a square PNG of at least 512×512 (path from the Vite
+   * root). Replaces the generated ones everywhere.
+   */
+  icon?: string
+}
+
+/**
+ * Makes the app installable and receives reminders: serves and builds
+ * `/manifest.webmanifest`, `/icons/*` and `/push-sw.js` (the service worker
+ * usePushPermission registers), and adds the manifest, theme-color and
+ * apple-touch-icon tags to index.html.
+ */
+export function pwa(options: PwaOptions): Plugin

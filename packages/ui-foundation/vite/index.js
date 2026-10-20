@@ -26,6 +26,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+export { pwa } from './pwa.js'
+
 const OWN_FIELDS = ['api', 'commit', 'pr', 'builtAt', 'schema']
 
 /** @param {string | undefined} value */

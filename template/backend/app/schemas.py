@@ -222,6 +222,33 @@ class JobOut(CamelModel):
     last_run: JobRunOut | None
 
 
+class PushPublicKeyOut(CamelModel):
+    """GET /push/public-key (openapi.yaml PushPublicKey)."""
+
+    public_key: str
+
+
+class PushSubscriptionKeys(CamelModel):
+    p256dh: str = Field(min_length=1, max_length=100)
+    auth: str = Field(min_length=1, max_length=32)
+
+
+class PushSubscriptionIn(CamelModel):
+    """POST /push/subscriptions: what the browser's PushSubscription.toJSON()
+    holds. expirationTime (milliseconds, not always whole) is accepted and
+    ignored."""
+
+    endpoint: str = Field(min_length=1, max_length=2048)
+    keys: PushSubscriptionKeys
+    expiration_time: float | None = None
+
+
+class PushSubscriptionOut(CamelModel):
+    """openapi.yaml PushSubscriptionCreated."""
+
+    id: int
+
+
 class HTTPErrorBody(CamelModel):
     detail: str
 

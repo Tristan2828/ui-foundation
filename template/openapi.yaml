@@ -371,6 +371,68 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
         "500": { $ref: "#/components/responses/ServerError" }
 
+  /push/public-key:
+    x-optional: true
+    get:
+      operationId: getPushPublicKey
+      summary: The app's VAPID public key, which a browser subscribes to push with
+      description: >
+        For usePushPermission. 404 when the backend has push turned off.
+      tags: [push]
+      responses:
+        "200":
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushPublicKey" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /push/subscriptions:
+    x-optional: true
+    post:
+      operationId: savePushSubscription
+      summary: Save this device's push subscription for the signed-in user
+      description: >
+        The browser's PushSubscription.toJSON(). The same endpoint again
+        replaces its keys and owner and answers the same id. The endpoint
+        must be a push service's (422 otherwise): the backend POSTs to it.
+      tags: [push]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PushSubscriptionRequest" }
+      responses:
+        "201":
+          description: Saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushSubscriptionCreated" }
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /push/subscriptions/{id}:
+    x-optional: true
+    delete:
+      operationId: deletePushSubscription
+      summary: Stop sending to one of the signed-in user's devices
+      tags: [push]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted.
+        "401": { $ref: "#/components/responses/UnauthorizedError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
   /jobs:
     get:
       operationId: listJobs
@@ -677,6 +739,40 @@ components:
         total:
           type: integer
           minimum: 0
+
+    PushPublicKey:
+      type: object
+      required: [publicKey]
+      properties:
+        publicKey:
+          type: string
+          minLength: 1
+          description: The P-256 public key, base64url (applicationServerKey).
+
+    PushSubscriptionRequest:
+      type: object
+      required: [endpoint, keys]
+      properties:
+        endpoint:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: The push service's URL for this device.
+        expirationTime:
+          type: ["number", "null"]
+          description: Milliseconds since the epoch, sent by some browsers, ignored.
+        keys:
+          type: object
+          required: [p256dh, auth]
+          properties:
+            p256dh: { type: string, minLength: 1, maxLength: 100 }
+            auth: { type: string, minLength: 1, maxLength: 32 }
+
+    PushSubscriptionCreated:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
 
     ClientErrorReport:
       type: object
