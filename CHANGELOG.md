@@ -5,6 +5,44 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.16.0 — timed screens: a full-screen view, a session clock, a wake lock and sound cues
+
+Additive: new exports only (#163, #164, #165, #166). See
+`docs/foundation/timed-screens.md`.
+
+- **`SessionView`**: the whole viewport over the app shell for a screen
+  that runs for minutes. A modal named by its required `title`, focus
+  kept inside, Esc and Close through `onOpenChange`, padded by the
+  safe-area insets, a fade and no zoom. `fullscreenControl` adds a "Full
+  screen" toggle for the browser's real fullscreen, absent where the
+  browser has none (iOS Safari on a phone). `keepAwake` holds a wake lock
+  while open. `initialFocus` picks the control focused on open.
+- **`useWakeLock(active)`**: a screen wake lock while `active`, asked for
+  again each time the tab comes back (the browser drops it when hidden),
+  released on deactivate or unmount, including a request still in flight.
+  A no-op where the API is missing or refused.
+- **`useSessionClock({ running, endsAt })`**: `{ elapsed, status, paused,
+  start, pause, resume, stop }`. Elapsed from `performance.now()` each
+  animation frame, so it doesn't drift; paused time left out; `idle` →
+  `running` → `done` at `endsAt`. `running: false` holds it still without
+  pausing it (the view closed).
+- **`usePrefersReducedMotion()`**, through `useSyncExternalStore`.
+- **Audio cues**: `unlockAudio()` (call it from the click that starts a
+  session), `chime({ pitch, volume, duration })`, `sequence([...])`,
+  `say(text)`, `hush()`, `vibrate(pattern)`. Web Audio and speech
+  synthesis, no audio files. Each is a no-op where the browser can't
+  make the sound. A cue before `unlockAudio()` is dropped, never played
+  late.
+- **`useMuted(key)`**: `[muted, setMuted]`, remembered in `localStorage`,
+  kept in memory where storage is blocked, and followed across tabs.
+- **Docs:** `docs/foundation/timed-screens.md`, with the Playwright recipe
+  for a timed screen's states: `clock.install()` before `goto`, then
+  `clock.fastForward()`, never `runFor()`.
+- **How an app adopts it:** `npm install @tristan2828/ui-foundation@4.16.0`,
+  `npx ui-foundation sync`. A screen that built its own full-screen
+  `Dialog`, wake-lock hook, Web Audio module or clock can replace it with
+  these. Nothing changes until it does.
+
 ## 4.15.0 — the accessibility suite scales with the nav
 
 Additive (#161). `defineA11ySuite`'s "every nav page" visited every

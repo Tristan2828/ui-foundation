@@ -43,6 +43,7 @@ export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 export { PillFilter, type PillFilterOption, type PillFilterProps } from '@/components/app/pill-filter'
 export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
+export { SessionView, type SessionViewProps } from '@/components/app/session-view'
 export {
   StageCircle,
   type StageCircleProps,
@@ -97,6 +98,28 @@ export {
   type RecordUpdateOptions,
 } from '@/hooks/use-record-update'
 export { useIsMobile } from '@/hooks/use-mobile'
+// Timed screens (docs/foundation/timed-screens.md)
+export { useWakeLock } from '@/hooks/use-wake-lock'
+export {
+  useSessionClock,
+  type SessionClock,
+  type SessionClockOptions,
+  type SessionClockState,
+  type SessionStatus,
+} from '@/hooks/use-session-clock'
+export { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
+export { useMuted } from '@/hooks/use-muted'
 
 // Utilities
 export { cn } from '@/lib/utils'
+export {
+  chime,
+  hush,
+  say,
+  sequence,
+  unlockAudio,
+  vibrate,
+  type ChimeOptions,
+  type SayOptions,
+  type SequenceOptions,
+} from '@/lib/audio-cues'

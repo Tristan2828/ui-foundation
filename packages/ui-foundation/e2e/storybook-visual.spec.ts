@@ -89,6 +89,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
+  // <SessionView> is a timed screen's whole viewport: its header controls
+  // and a timer's own (the big digits, the status line, a pressed toggle).
+  { id: 'app-sessionview--timer', mustShow: '1:00' },
   // Every density, the primitives and DataTable in each (large is the one
   // that changes their type and sizes).
   { id: 'patterns-density--primitives', mustShow: 'data-density="large"' },
@@ -126,6 +129,13 @@ const GLYPH_STORIES: {
   { id: 'ui-toggle--default' },
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
+  // SessionView's header (Full screen, Close) and a timer's controls. It's
+  // open on load, portaled to <body> like a popup.
+  {
+    id: 'app-sessionview--timer',
+    open: (page) => page.getByRole('dialog', { name: 'Morning stretch' }).waitFor(),
+    shows: '[data-slot=session-view]',
+  },
   // Category glyphs in DataTable rows at every density.
   { id: 'patterns-density--data-tables' },
   // The rich-text toolbar's icons (the read-only editor's are disabled:
