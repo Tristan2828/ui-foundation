@@ -5,6 +5,30 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.22.0 — canVibrate(), and a count-up recipe that pauses before Start (#194, #195)
+
+Additive: one new export, and a fix to a test recipe in the docs. Run
+`npx ui-foundation sync` for the updated `docs/foundation/timed-screens.md`.
+
+- **New: `canVibrate()`** (#194), exported beside `vibrate` from
+  `@tristan2828/ui-foundation`. True where the browser can vibrate
+  (Android browsers; iPhone browsers can't), the same test `vibrate()`
+  makes, which now calls it, so a Vibrate setting and the call never
+  disagree. `timed-screens.md` "Sound": offer a Vibrate toggle only where
+  it's true, read once (`useState(canVibrate)`).
+- **How an app adopts it:** an app with its own copy of the check deletes
+  it and imports `canVibrate` from the package. Nothing else changes.
+- **The open-ended count-up recipe pauses before Start** (#195). The old
+  one clicked Start, then `pauseAt(Date.now() + 50)`; the page's fake
+  clock runs in real time until the pause lands, so under load it had
+  already passed that time and `pauseAt` failed with "Cannot fast-forward
+  to the past". The recipe now installs at a fixed `t0`, goes to the page,
+  `pauseAt(t0 + 60_000)`, then clicks Start.
+- **How an app adopts it:** a spec copied from the old recipe moves its
+  `pauseAt` before the click that starts the session and pauses at a time
+  fixed from `install` (`install({ time: t0 })` … `pauseAt(t0 + 60_000)`),
+  never one read after Start.
+
 ## 4.21.0 — a nav entry that opens a saved view, and tab titles from the nav and the record (#188, #186)
 
 Additive: nothing an app has stops working. Run `npx ui-foundation sync`
