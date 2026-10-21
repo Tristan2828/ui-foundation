@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test'
 
+// `title`: the browser tab's, "<nav entry> · <app>", the app alone at home.
 const NAV_ENTRIES = [
-  { path: '/', label: 'Home', content: { role: 'button', name: 'Get started' } },
-  { path: '/widgets', label: 'Widgets', content: { role: 'heading', name: 'Widgets' } },
+  { path: '/', label: 'Home', title: 'UI Foundation', content: { role: 'button', name: 'Get started' } },
+  { path: '/widgets', label: 'Widgets', title: 'Widgets · UI Foundation', content: { role: 'heading', name: 'Widgets' } },
 ] as const
 
 // This spec is MSW-independent by design —
@@ -20,20 +21,22 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('app shell navigation', () => {
-  for (const { path, label, content } of NAV_ENTRIES) {
+  for (const { path, label, title, content } of NAV_ENTRIES) {
     test(`visits ${label} without the error boundary rendering`, async ({ page }) => {
       await page.goto(path)
       await expect(page.getByRole(content.role, { name: content.name })).toBeVisible()
       await expect(page.getByText('This page hit an error')).toHaveCount(0)
+      await expect(page).toHaveTitle(title)
     })
   }
 
   test('every sidebar nav entry is clickable and navigates', async ({ page }) => {
     await page.goto('/')
-    for (const { label, content } of NAV_ENTRIES) {
+    for (const { label, title, content } of NAV_ENTRIES) {
       await page.getByRole('link', { name: label }).click()
       await expect(page.getByRole(content.role, { name: content.name })).toBeVisible()
       await expect(page.getByText('This page hit an error')).toHaveCount(0)
+      await expect(page).toHaveTitle(title)
     }
   })
 })

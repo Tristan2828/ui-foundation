@@ -161,6 +161,13 @@ src/main.tsx                           FoundationProviders (theme, query client,
   name its columns (`DataTable`'s `visibleColumns`); they apply while the
   filters are still that view's (`activeView`), so they add nothing to
   the URL.
+- **The browser tab's title** (4.19, #186) is "<page> · <app>": `AppShell`
+  gives the app and the page its nav names (matched, like the current
+  entry, on each `to`'s path, so a `to` can open a saved view, #188), and
+  a screen's own (`useDocumentTitle`, `EntityView`'s record) wins while
+  it's mounted, whichever arrives first. The rules are one React-free
+  store (`createDocumentTitles`, `use-document-title.ts`), unit tested on
+  their own.
 - **Grouped rows** (4.8, #135): `DataTable`'s `groupBy` heads runs of
   rows in the server's order (`byDay` for feeds and logs), one `<tbody>`
   per group with a row header, and `PillFilter` is a quick filter as

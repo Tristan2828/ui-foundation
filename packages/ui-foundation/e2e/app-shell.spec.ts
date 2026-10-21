@@ -2,7 +2,10 @@ import { expect, test, type Page } from '@playwright/test'
 
 // AppShell's sidebar (app/AppShell stories), in a real browser: sections
 // render as labelled groups inside the Primary nav, a flat nav keeps its one
-// "Navigation" group, and one entry is current, the most specific match.
+// "Navigation" group, and one entry is current, the most specific match,
+// even when its `to` opens a list on a saved view. The browser tab's title
+// comes from the nav, and from a record's view inside the shell in either
+// order (the rules themselves: tests/use-document-title.test.ts).
 // Axe in both themes is e2e/storybook-visual.spec.ts's COMPOSITE_STORIES.
 const story = (id: string) => `http://localhost:6006/iframe.html?id=app-appshell--${id}&viewMode=story`
 
@@ -117,5 +120,65 @@ test.describe('collapsible sections (#152)', () => {
     await expect(nav(page).getByRole('link', { name: 'Books' })).toBeVisible()
     await expect(nav(page).getByRole('link', { name: 'Channels' })).toBeVisible()
     await expect(nav(page).getByRole('button', { name: 'Reading', exact: true })).toHaveCount(0)
+  })
+})
+
+// #188: `to` carries a query string, the list's saved view.
+test.describe('an entry opening a list on a saved view', () => {
+  test('is current on its page and opens its folded section', async ({ page }) => {
+    await open(page, 'saved-view')
+    await expect(current(page)).toHaveCount(1)
+    await expect(current(page)).toHaveText('Unread books')
+    await expect(current(page)).toHaveAttribute('href', '/reading?status=unread&sort=title:asc')
+    await expect(nav(page).getByRole('button', { name: 'Reading', exact: true })).toHaveAttribute('aria-expanded', 'true')
+  })
+})
+
+// #186: "<page> · <app>" from the nav, the record's title from EntityView.
+test.describe("the browser tab's title", () => {
+  test("names the nav's page with the app", async ({ page }) => {
+    await open(page, 'sections')
+    await expect(page).toHaveTitle('Categories · Example')
+  })
+
+  test("is the app's title alone on the home entry", async ({ page }) => {
+    await open(page, 'home')
+    await expect(page).toHaveTitle('Example')
+  })
+
+  test('names a page under an entry whose `to` has a query string', async ({ page }) => {
+    await open(page, 'saved-view')
+    await expect(page).toHaveTitle('Unread books · Example')
+  })
+
+  test("a view's title set before the nav's still wins", async ({ page }) => {
+    await open(page, 'with-view')
+    await expect(page.getByRole('heading', { level: 1, name: 'Apollo' })).toBeVisible()
+    await expect(page).toHaveTitle('Apollo · Example')
+  })
+
+  test("a view's title arriving after the nav's replaces it", async ({ page }) => {
+    await open(page, 'with-loading-view')
+    await expect(page.locator('[data-state="loading"]')).toBeVisible()
+    await expect(page).toHaveTitle('Projects · Example')
+    await page.getByRole('button', { name: 'Finish loading' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Apollo' })).toBeVisible()
+    await expect(page).toHaveTitle('Apollo · Example')
+  })
+
+  test("leaving the view puts the nav's title back", async ({ page }) => {
+    await open(page, 'with-view')
+    await expect(page).toHaveTitle('Apollo · Example')
+    await page.getByRole('main').getByRole('link', { name: 'Projects' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Apollo' })).toHaveCount(0)
+    await expect(page).toHaveTitle('Projects · Example')
+  })
+
+  test("documentTitle names the record otherwise, and false leaves the nav's", async ({ page }) => {
+    await open(page, 'with-view-document-title')
+    await expect(page).toHaveTitle('Project Apollo · Example')
+    await open(page, 'with-view-no-document-title')
+    await expect(page.getByRole('heading', { level: 1, name: 'Apollo' })).toBeVisible()
+    await expect(page).toHaveTitle('Projects · Example')
   })
 })

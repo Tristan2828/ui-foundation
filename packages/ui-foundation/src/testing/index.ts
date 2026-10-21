@@ -13,7 +13,7 @@
 // are optional peer dependencies, needed only by apps that import this.
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
-import { isNavSection, type NavEntry } from '../components/app/app-shell-nav'
+import { navPathname, navTargets, type NavEntry } from '../components/app/app-shell-nav'
 import type { MswOverride } from '../mocks/override'
 
 export type { MswHandle, MswOverride } from '../mocks/override'
@@ -95,7 +95,8 @@ export async function expectNoAxeViolations(
   expect(results.violations).toEqual([])
 }
 
-// The app's own pages, read from the Primary nav. Below the sidebar's
+// The app's own pages, read from the Primary nav: each link's path and
+// query string, as it would be visited. Below the sidebar's
 // mobile breakpoint the nav renders into an off-canvas Sheet *portaled to
 // document.body*, outside the <nav aria-label="Primary"> landmark, so the
 // links are read from the sheet there. Keyed off the `isMobile` fixture,
@@ -116,8 +117,13 @@ async function navRoutes(page: Page, isMobile: boolean | undefined): Promise<str
     .evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href))
   // Only this app's pages: a sidebarExtra group may link to other sites.
   const origin = new URL(page.url()).origin
-  return [...new Set(hrefs.filter((href) => new URL(href).origin === origin).map((href) => new URL(href).pathname))]
+  const own = hrefs.map((href) => new URL(href)).filter((url) => url.origin === origin)
+  return [...new Set(own.map((url) => `${url.pathname}${url.search}`))]
 }
+
+// The pages a list of routes names, by path: a `to` that opens a list on a
+// saved view ('/widgets?status=active') is the /widgets page.
+const pagePaths = (routes: readonly string[]) => [...new Set(routes.map(navPathname))].sort()
 
 export type A11ySuiteOptions = {
   /**
@@ -146,10 +152,6 @@ export type A11ySuiteOptions = {
 
 // A page's share of the one discovering test's time: load, data, axe.
 const NAV_PAGE_BUDGET_MS = 10_000
-
-function navEntryRoutes(nav: readonly NavEntry[]): string[] {
-  return [...new Set(nav.flatMap((entry) => (isNavSection(entry) ? entry.items : [entry]).map((item) => item.to)))]
-}
 
 /**
  * Every data view on the page has loaded: at least one shows its data (or,
@@ -188,14 +190,16 @@ async function expectNavPageAccessible(page: Page, route: string, colorScheme: '
  * emulateMedia switches it.
  */
 export function defineA11ySuite({ formRoutes, viewRoutes = [], loggedOutRoutes, nav }: A11ySuiteOptions): void {
-  const listed = nav && navEntryRoutes(nav)
+  // Each `to` as given, query string and all, so a page that opens on a
+  // saved view is checked on it.
+  const listed = nav && navTargets(nav)
   if (listed) {
     test('the sidebar links exactly the pages in nav', async ({ page, isMobile }) => {
       const rendered = await navRoutes(page, isMobile)
       expect(
-        [...rendered].sort(),
+        pagePaths(rendered),
         'The sidebar and the nav given to defineA11ySuite differ: pass the same NavEntry[] AppShell gets',
-      ).toEqual([...listed].sort())
+      ).toEqual(pagePaths(listed))
     })
   }
 
