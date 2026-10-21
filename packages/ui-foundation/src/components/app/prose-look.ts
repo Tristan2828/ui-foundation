@@ -16,20 +16,25 @@ import {
 import type { CalloutKind } from '@/lib/markdown-callout'
 
 /**
- * Classes for written text's own elements. No colours on the heading text:
- * <Markdown> adds the text colour, and the editor's read-only text is
- * muted as a whole.
+ * Classes for written text's own elements.
  *
- * Each of the first three heading levels has a bar down its left edge that
- * thins as the level drops: 5px in the heading-bar tone for `#`, 3px for
- * `##`, 2px in the rule tone for `###`. A level reads from the bar
- * as well as from the size.
+ * `#` and `##` sit on a full-width tinted band, stronger for `#`, which
+ * also has a 2px rule along its foot, so the top of the outline is marked
+ * twice. `###` is a small uppercase label. The band's text is always the
+ * foreground: the editor's read-only text is muted as a whole, and muted
+ * text on the `##` band measures 4.34:1.
+ *
+ * Where there's a band, the rest of the text (paragraphs, lists, tables,
+ * callouts, `###` and deeper) is inset by its padding, PROSE_INSET, so it
+ * lines up with the words inside the band rather than its edge.
  */
 export const PROSE = {
-  /** `#`: the largest, with the widest bar, so it reads as the top of the outline. */
-  heading1: 'type-heading-1 mt-4 border-l-[5px] border-heading-bar pl-3 first:mt-0',
-  heading2: 'type-heading-2 mt-3 border-l-[3px] border-heading-bar pl-3 first:mt-0',
-  heading3: 'type-heading-3 mt-1 border-l-2 border-rule pl-3 first:mt-0',
+  /** `#`: the largest, on the stronger band with a rule along its foot. */
+  heading1:
+    'type-heading-1 mt-4 rounded-t-sm border-b-2 border-rule bg-heading-band px-3 py-2 text-foreground first:mt-0',
+  heading2: 'type-heading-2 mt-5 rounded-sm bg-muted px-3 py-1.25 text-foreground first:mt-0',
+  /** `###`: a small uppercase label in the muted tone, no band. */
+  heading3: 'type-heading-3 mt-0.5 uppercase tracking-[0.08em] text-muted-foreground first:mt-0',
   /** `####` and deeper: a label, as before. */
   heading4: 'type-label mt-1 first:mt-0',
   /** Coloured as well as underlined. */
@@ -37,6 +42,15 @@ export const PROSE = {
   /** `---`: a 2px line in the rule tone, with room around it. */
   rule: 'my-2 h-0.5 rounded-full border-0 bg-rule',
 } as const
+
+/**
+ * On the text's container: when it has a band (the `<h3>` or `<h4>` a `#`
+ * or `##` renders as), everything else is inset by the band's 12px
+ * padding, so the text lines up with the words in the band. Text with no
+ * band stays flush, where the section's own text starts. A margin, so a
+ * list's own indent and a table's or callout's box keep theirs.
+ */
+export const PROSE_INSET = '[&:has(>:is(h3,h4))>:not(h3,h4)]:mx-3'
 
 /** A heading's classes by its Markdown level (1 for `#`). */
 export function headingClass(level: number): string {
