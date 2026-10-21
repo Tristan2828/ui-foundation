@@ -5,12 +5,13 @@ import { defineConfig, devices } from '@playwright/test'
 // layouts in e2e/entity-view.spec.ts, DataTable's opt-ins in
 // e2e/data-table.spec.ts, the scale glyphs' names in e2e/scales.spec.ts,
 // DateField's time zones in e2e/date-field.spec.ts, SessionView's timed
-// screen in e2e/session-view.spec.ts) —
+// screen in e2e/session-view.spec.ts, MultiPick's picks saved one by one
+// in e2e/multi-pick.spec.ts) —
 // kept out of the shipped playwright.config.ts so consuming apps don't
 // need Storybook. `npm run verify` runs both configs.
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'editable-list.spec.ts'],
+  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'editable-list.spec.ts', 'multi-pick.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

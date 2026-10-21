@@ -39,6 +39,9 @@ One or two sentences: what one record is, and who uses the screens.
     (to any number of records of another entity — name it; chips with a
     searchable dropdown, names as badges in the table, an any-of filter;
     the other entity's list endpoint must also accept `ids`),
+    either multi marked `small` when its options are few and stay few (up
+    to about 25: a dozen labels): every option shown at once as chips,
+    and editing in place saves each click,
     `computed` (read-only: the server works it out from other data on
     every read and never stores it — give its rule, and if it's a choice,
     its values in sort order with a label for each; a read-only column, a filter and a sort the
