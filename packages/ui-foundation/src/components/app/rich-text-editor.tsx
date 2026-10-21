@@ -46,10 +46,19 @@ export type RichTextEditorProps = {
    * lists, link, …), each button with its shortcut, and one floating over
    * selected words (bold to link). Alt+F10 reaches them from the text.
    * With them, "/" at a line's start lists the blocks the line can become
-   * (the slash menu). On by default; `false` leaves the text alone, its
-   * shortcuts still working.
+   * (the slash menu). On by default; `'floating'` keeps the floating one
+   * and the slash menu but no bar above the text (Notion-style, with
+   * `inline`); `false` leaves the text alone, its shortcuts still working.
    */
-  toolbar?: boolean
+  toolbar?: boolean | 'floating'
+  /**
+   * Looks like the text it edits: no border, no box, no padding, so it
+   * sits where `<Markdown>` would and reads the same. For notes that are
+   * always editable in place (`editInPlace`'s `inline`, which the control
+   * gets as `props.inline`); give it `toolbar="floating"` and a
+   * `placeholder`, which is all an empty one shows.
+   */
+  inline?: boolean
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string
@@ -65,11 +74,11 @@ export function RichTextEditor(props: RichTextEditorProps) {
         <div
           data-slot="rich-text-editor"
           data-state="loading"
-          className={cn('flex w-full flex-col rounded-lg border border-input', props.className)}
+          className={cn('flex w-full flex-col', !props.inline && 'rounded-lg border border-input', props.className)}
         >
           {/* The toolbar's height, so nothing moves when it arrives. */}
-          {props.toolbar !== false && <div className="h-9 border-b border-input" />}
-          <div className="flex min-h-24 flex-col gap-2 px-2.5 py-2">
+          {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input" />}
+          <div className={cn('flex flex-col gap-2', props.inline ? 'py-0.5' : 'min-h-24 px-2.5 py-2')}>
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
           </div>
