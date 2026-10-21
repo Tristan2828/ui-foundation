@@ -11,7 +11,7 @@ import { defineConfig, devices } from '@playwright/test'
 // need Storybook. `npm run verify` runs both configs.
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'multi-pick.spec.ts'],
+  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'editable-list.spec.ts', 'multi-pick.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

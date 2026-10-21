@@ -941,7 +941,9 @@ Checklist is the reference (`checklist` in `widgetEdits`). It's built on
   on the item (not its box, not a link in it) or its pencil ("Edit item
   2") turns it into the form's row (`renderItem`, the same fields as the
   form's `ListEditor` row), an editable value like any above: Enter or
-  leaving saves, Esc gives up, one open at a time.
+  leaving saves, Esc gives up, one open at a time. The row lays its parts
+  out side by side as `ListEditor`'s does, so a fragment (the box, then
+  the text's `Field`) needs no wrapper of its own.
 - **Add at the end.** "Add item" opens a new row; Enter saves it and
   opens the next, the caret already in it, so a run of items goes in from
   the keyboard. Esc on an empty one closes it; nothing is sent.
