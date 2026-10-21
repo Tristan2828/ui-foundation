@@ -3,6 +3,7 @@ import {
   POPUP_FOCUS_GUARDS,
   defineA11ySuite,
   expectNoAxeViolations,
+  forceMswOverride,
   waitForMswReady,
 } from '@tristan2828/ui-foundation/testing'
 import { NAV_ITEMS } from '../src/nav'
@@ -182,6 +183,50 @@ test.describe('a11y: editing in place on the view', () => {
         await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toBeVisible()
         await expectNoAxeViolations(page)
       })
+    })
+  }
+})
+
+// Written text's headings sit on tinted bands (`#` and `##`) or are a
+// small muted label (`###`): their contrast is checked in both themes,
+// read and open in the rich-text editor. No fixture has headings, so the
+// Standing Desk is given some.
+test.describe('a11y: headings in written text', () => {
+  const description =
+    '# Setup\n\nUnpack the frame first.\n\n## Parts\n\n- Two legs\n- One top\n\n### Tools\n\nA hex key, in the box.\n\n#### Spares\n\nFour bolts.'
+
+  for (const colorScheme of ['light', 'dark'] as const) {
+    test(colorScheme, async ({ page }) => {
+      await page.emulateMedia({ colorScheme })
+      await forceMswOverride(page, {
+        method: 'get',
+        path: '*/api/widgets/2',
+        body: {
+          id: 2,
+          name: 'Standing Desk',
+          categoryId: 2,
+          status: 'draft',
+          availableFrom: '2026-03-01T00:00:00Z',
+          assigneeEmail: null,
+          price: '349.00',
+          description,
+          tags: ['bulky', 'featured'],
+          inStock: true,
+          extraCategoryIds: [1, 3],
+          checklist: [],
+          checklistState: 'none',
+        },
+      })
+      await page.goto('/widgets/2')
+      const region = page.getByRole('region', { name: 'Description' })
+      await expect(region.getByRole('heading', { name: 'Setup' })).toBeVisible()
+      await test.step('read', () => expectNoAxeViolations(page))
+
+      await region.getByText('Unpack the frame first.').click()
+      const editor = page.getByRole('textbox', { name: 'Description' })
+      await expect(editor).toBeFocused()
+      await expect(editor.getByRole('heading', { name: 'Parts' })).toBeVisible()
+      await test.step('open in the editor', () => expectNoAxeViolations(page))
     })
   }
 })

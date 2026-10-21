@@ -767,35 +767,50 @@ test.describe('slash menu', () => {
   }
 })
 
-// How written text looks, in the editor and in <Markdown>: three heading
-// sizes a reader can tell apart (Heading 1 and 2 used to look alike),
-// each with a bar down its left edge that thins by level, links in their
-// own colour.
+// How written text looks, in the editor and in <Markdown> (#184): `#` and
+// `##` on tinted bands, `#`'s stronger with a 2px rule along its foot,
+// `###` a small uppercase label, the rest of the text lined up with the
+// words in the band, links in their own colour.
 test.describe('how written text looks', () => {
-  async function sizes(scope: import('@playwright/test').Locator) {
-    const size = (selector: string) =>
-      scope.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).fontSize))
-    return { h1: await size('h3'), h2: await size('h4'), h3: await size('h5'), body: await size('p') }
-  }
-
   for (const [where, url] of [
     ['the editor', 'http://localhost:6006/iframe.html?id=app-richtexteditor--default&viewMode=story'],
     ['<Markdown>', 'http://localhost:6006/iframe.html?id=app-markdown--default&viewMode=story'],
   ] as const) {
-    test(`${where}: each heading level smaller than the last, its bar thinner; links coloured`, async ({ page }) => {
+    test(`${where}: # and ## on bands, ### a label, the text lined up with the band's words; links coloured`, async ({
+      page,
+    }) => {
       await page.goto(url)
       const scope = page.locator(where === 'the editor' ? '.ProseMirror' : '[data-slot=markdown]')
       await expect(scope.locator('h3').first()).toBeVisible()
-      const { h1, h2, h3, body } = await sizes(scope)
-      expect(h1).toBeGreaterThan(h2)
-      expect(h2).toBeGreaterThan(h3)
-      expect(h3).toBeGreaterThan(body)
-      const bar = (selector: string) =>
-        scope.locator(selector).first().evaluate((element) => parseFloat(getComputedStyle(element).borderLeftWidth))
-      const bars = { h1: await bar('h3'), h2: await bar('h4'), h3: await bar('h5') }
-      expect(bars.h1).toBeGreaterThan(bars.h2)
-      expect(bars.h2).toBeGreaterThan(bars.h3)
-      expect(bars.h3).toBeGreaterThan(0)
+      const look = (selector: string) =>
+        scope
+          .locator(selector)
+          .first()
+          .evaluate((element) => {
+            const style = getComputedStyle(element)
+            return {
+              size: parseFloat(style.fontSize),
+              band: style.backgroundColor,
+              foot: parseFloat(style.borderBottomWidth),
+              left: element.getBoundingClientRect().left,
+              paddingLeft: parseFloat(style.paddingLeft),
+              transform: style.textTransform,
+            }
+          })
+      const [h1, h2, h3, body] = [await look('h3'), await look('h4'), await look('h5'), await look('p')]
+      const transparent = 'rgba(0, 0, 0, 0)'
+      expect(h1.size).toBeGreaterThan(h2.size)
+      expect(h2.size).toBeGreaterThan(body.size)
+      expect(h3.size).toBeLessThan(body.size)
+      expect(h3.transform).toBe('uppercase')
+      expect(h1.band).not.toBe(transparent)
+      expect(h2.band).not.toBe(transparent)
+      expect(h1.band).not.toBe(h2.band)
+      expect(h3.band).toBe(transparent)
+      expect([h1.foot, h2.foot]).toEqual([2, 0])
+      // The text starts where the words inside the band do.
+      expect(Math.abs(body.left - (h1.left + h1.paddingLeft))).toBeLessThan(1)
+      expect(Math.abs(h3.left - body.left)).toBeLessThan(1)
       const color = (selector: string) => scope.locator(selector).first().evaluate((element) => getComputedStyle(element).color)
       expect(await color('a')).not.toBe(await color('p'))
       // The divider is a 2px line, not a hairline.

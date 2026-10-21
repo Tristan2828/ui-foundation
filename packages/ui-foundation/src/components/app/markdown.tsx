@@ -15,8 +15,9 @@
 // Headings start at <h3>: the page owns the <h1> (the record's title) and
 // each section its <h2>, so a `# Heading` in the text sits under them
 // instead of competing with the page's own outline. They look like what
-// they are in the text, though: three clear sizes (the type-heading-*
-// roles), each with a bar down its left edge that thins by level.
+// they are in the text, though: `#` and `##` on a tinted band, `###` a
+// small uppercase label, and the text under them lined up with the words
+// in the band (prose-look.ts).
 //
 // A quote that starts `[!NOTE]` (GitHub's alert syntax) is a callout: a
 // tinted box with its kind's icon (src/lib/markdown-callout.ts).
@@ -27,7 +28,7 @@ import { cn } from 'cn'
 import { ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
-import { CALLOUT_BOX, CALLOUT_LOOK, headingClass, PROSE } from './prose-look'
+import { CALLOUT_BOX, CALLOUT_LOOK, headingClass, PROSE, PROSE_INSET } from './prose-look'
 
 const REMARK_PLUGINS = [remarkGfm, remarkCallouts]
 
@@ -43,13 +44,14 @@ function omitNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
   return rest
 }
 
+// The text's colour first, so a level's own (`###`'s muted label) wins.
 const COMPONENTS: Components = {
-  h1: (props) => <h3 {...omitNode(props)} className={cn(headingClass(1), 'text-foreground')} />,
-  h2: (props) => <h4 {...omitNode(props)} className={cn(headingClass(2), 'text-foreground')} />,
-  h3: (props) => <h5 {...omitNode(props)} className={cn(headingClass(3), 'text-foreground')} />,
-  h4: (props) => <h6 {...omitNode(props)} className={cn(headingClass(4), 'text-foreground')} />,
-  h5: (props) => <h6 {...omitNode(props)} className={cn(headingClass(5), 'text-foreground')} />,
-  h6: (props) => <h6 {...omitNode(props)} className={cn(headingClass(6), 'text-foreground')} />,
+  h1: (props) => <h3 {...omitNode(props)} className={cn('text-foreground', headingClass(1))} />,
+  h2: (props) => <h4 {...omitNode(props)} className={cn('text-foreground', headingClass(2))} />,
+  h3: (props) => <h5 {...omitNode(props)} className={cn('text-foreground', headingClass(3))} />,
+  h4: (props) => <h6 {...omitNode(props)} className={cn('text-foreground', headingClass(4))} />,
+  h5: (props) => <h6 {...omitNode(props)} className={cn('text-foreground', headingClass(5))} />,
+  h6: (props) => <h6 {...omitNode(props)} className={cn('text-foreground', headingClass(6))} />,
   a: (props) => {
     const { href, children, ...rest } = omitNode(props)
     if (!href) return <span>{children}</span>
@@ -141,7 +143,7 @@ export function Markdown({ children, className, ...rest }: MarkdownProps) {
     <div
       data-slot="markdown"
       {...rest}
-      className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', className)}
+      className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', PROSE_INSET, className)}
     >
       <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={COMPONENTS}>
         {children}

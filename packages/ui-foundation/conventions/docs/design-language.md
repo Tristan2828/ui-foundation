@@ -208,18 +208,23 @@ outline (that stays `type-page-title` and `type-section-title`):
 
 | Class | For | Size / weight |
 |---|---|---|
-| `type-heading-1` | `#` in a note, with a 5px bar in `--heading-bar` | 26px / 700 |
-| `type-heading-2` | `##`, with a 3px bar in `--heading-bar` | 20px / 600 |
-| `type-heading-3` | `###`, with a 2px bar in `--rule` | 17px / 600 |
+| `type-heading-1` | `#` in a note, on a band in `--heading-band` with a 2px `--rule` along its foot | 28px / 700 |
+| `type-heading-2` | `##`, on a band in `--muted` | 20px / 600 |
+| `type-heading-3` | `###`, a small uppercase label in `--muted-foreground` | 12px / 600 |
 
-The bar runs down the heading's left edge and thins as the level drops,
-so the level reads at a glance as well as from the size.
+The bands run the text's full width, with 12px of padding either side.
+In text with a band, the rest (paragraphs, lists, tables, callouts,
+`###` and deeper) is inset by the same 12px, so it lines up with the
+words in the band rather than its edge; text with no band stays flush. The level reads at a glance: two bands of
+different strength, then a label.
 
-The same text has three colour tokens of its own: `--link` (`text-link`), a
+The same text has four colour tokens of its own: `--link` (`text-link`), a
 link's colour, blue as well as underlined (5.59:1 on white, 8.90:1 on the
-dark page); `--heading-bar` (`border-heading-bar`), the same blue for the
-bar beside `#` and `##`; and `--rule` (`bg-rule`), the 2px line a `---`
-divider draws, stronger than `--border`'s hairline. A callout (`> [!NOTE]`) is a 10% wash
+dark page); `--heading-band` (`bg-heading-band`), the `#` band, one step
+stronger than `--muted`; `--rule` (`bg-rule`), the 2px line a `---`
+divider draws, stronger than `--border`'s hairline, and the foot of the
+`#` band; and `--heading-bar`, which the headings' old left bars drew in,
+kept for apps but unused by the package. A callout (`> [!NOTE]`) is a 10% wash
 of its kind's tone behind ordinary text, with the icon in the tone's text
 shade: note `info`, tip `success`, important category slot 2, warning
 `warning`, caution `destructive`. The package draws all of it; an app

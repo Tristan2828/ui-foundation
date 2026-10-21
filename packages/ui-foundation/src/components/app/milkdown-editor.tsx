@@ -786,6 +786,9 @@ export default function MilkdownEditor({
             // The same type roles <Markdown> uses, so text reads the same
             // being edited as being read.
             '[&_.ProseMirror]:flex [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
+            // PROSE_INSET, on the editable element: with a heading's band
+            // in the text, the rest lines up with the words in it.
+            '[&_.ProseMirror:has(>:is(h3,h4))>:not(h3,h4)]:mx-3',
             !inline && '[&_.ProseMirror]:min-h-20',
             // ProseMirror's own required style (prosemirror-view's CSS): spaces
             // as typed, so one at the end of a line isn't kept as &nbsp;.
