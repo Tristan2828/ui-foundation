@@ -142,17 +142,18 @@
    * Headings inside written text (a record's notes: <Markdown> and the
    * rich-text editor), not the screen's own outline. Three clear steps
    * over the 14px body, roughly Notion's proportions, so `#`, `##` and
-   * `###` never look alike. Where the roles are used, each also gets a
-   * bar down its left edge that thins by level (--heading-bar).
+   * `###` never look alike. Where the roles are used, `#` and `##` also
+   * sit on a tinted band (--heading-band, --muted) and `###` is a small
+   * uppercase label (prose-look.ts).
    */
-  --type-heading-1-size: 1.625rem;
-  --type-heading-1-leading: 2rem;
+  --type-heading-1-size: 1.75rem;
+  --type-heading-1-leading: 2.25rem;
   --type-heading-1-weight: 700;
   --type-heading-2-size: 1.25rem;
   --type-heading-2-leading: 1.75rem;
   --type-heading-2-weight: 600;
-  --type-heading-3-size: 1.0625rem;
-  --type-heading-3-leading: 1.5rem;
+  --type-heading-3-size: 0.75rem;
+  --type-heading-3-leading: 1.25rem;
   --type-heading-3-weight: 600;
 
   /*
@@ -208,8 +209,11 @@
   /* A thematic break (`---`) in written text: a 2px line meant to be
      seen, stronger than --border's hairline (on white: 2.59). */
   --rule: var(--gray-400);
-  /* The bar down the left of a `#` or `##` heading in written text, so
-     the level shows at a glance (on white: 5.59). `###` takes --rule. */
+  /* The band behind a `#` heading in written text: one step stronger than
+     --muted, which `##`'s band takes. Its foot is a 2px --rule. */
+  --heading-band: var(--gray-200);
+  /* Written text's headings drew a bar in this until 4.24.0; nothing in
+     the package uses it now. Kept for an app that does (on white: 5.59). */
   --heading-bar: var(--blue-700);
   /* Categorical slots — a glyph tint, never a fill behind text. */
   --category-1: var(--category-1-700);
@@ -305,12 +309,12 @@
   --type-label-leading: 1.625rem;
   --type-caption-size: 0.9375rem;
   --type-caption-leading: 1.25rem;
-  --type-heading-1-size: 2rem;
-  --type-heading-1-leading: 2.5rem;
+  --type-heading-1-size: 2.1875rem;
+  --type-heading-1-leading: 2.8125rem;
   --type-heading-2-size: 1.5625rem;
   --type-heading-2-leading: 2.125rem;
-  --type-heading-3-size: 1.3125rem;
-  --type-heading-3-leading: 1.875rem;
+  --type-heading-3-size: 0.9375rem;
+  --type-heading-3-leading: 1.5625rem;
 
   --table-cell-px: 0.75rem;
   --table-cell-py: 0.75rem;
@@ -350,6 +354,8 @@
   --info-text: var(--blue-400);
   --link: var(--blue-400); /* on near-black: 8.90 */
   --rule: var(--gray-600); /* on near-black: 2.54 */
+  /* Stronger is lighter on the dark page: halfway from --muted to gray-700. */
+  --heading-band: color-mix(in oklab, var(--gray-900), var(--gray-700));
   --heading-bar: var(--blue-400); /* on near-black: 8.90 */
   /* Categorical slots — lighter shades to read against the dark page. */
   --category-1: var(--category-1-400);

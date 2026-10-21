@@ -5,6 +5,28 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.24.0 — Heading levels in written text: bands, not bars (#184)
+
+A change of look, nothing to do beyond the upgrade: `<Markdown>` and the
+rich-text editor draw it. Run `npx ui-foundation sync` for the updated
+`docs/foundation/design-language.md` ("Written text").
+
+- **`#`** sits on a full-width band in the new `--heading-band` token
+  (`bg-heading-band`; one step stronger than `--muted` in both themes),
+  with a 2px `--rule` along its foot, and is a touch larger
+  (`type-heading-1`: 28px / 36px, was 26px / 32px).
+- **`##`** sits on a lighter band in `--muted`, with a little more room
+  above it.
+- **`###`** is a small uppercase label in `--muted-foreground`
+  (`type-heading-3`: 12px / 20px, was 17px / 24px). `####` and deeper are
+  unchanged.
+- **The rest of the text lines up with the words in the band:** in text
+  with a `#` or `##`, every other block is inset 12px (`PROSE_INSET`).
+  Text with neither stays flush, where the section's own text starts.
+- The left bars are gone. **`--heading-bar` is kept** (nothing in the
+  package uses it any more) for an app that drew with it; it will be
+  retired in the next major.
+
 ## 4.23.0 — MCP fields a chat may read but never write (#197)
 
 Additive: the package's code doesn't change, and an entity with no
