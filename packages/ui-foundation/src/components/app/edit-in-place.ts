@@ -30,6 +30,11 @@ export type EditControlProps<TDraft> = {
   describedBy: string
   /** For a control that can't always produce a value to save (RichTextEditor's `onProblem`). */
   onProblem: (message: string | null) => void
+  /**
+   * The field is `inline`: always editable, drawn as the text it edits.
+   * Give it to RichTextEditor's `inline` (with `toolbar="floating"`).
+   */
+  inline?: boolean
 }
 
 /**
@@ -58,6 +63,7 @@ export type EditInPlace = {
   isEqual?: (a: unknown, b: unknown) => boolean
   autosave?: boolean
   alwaysEditable?: boolean
+  inline?: boolean
 }
 
 export type EditInPlaceOptions<TDraft, TValue> = {
@@ -97,6 +103,15 @@ export type EditInPlaceOptions<TDraft, TValue> = {
    * in rich text is edited there, not followed.
    */
   alwaysEditable?: boolean
+  /**
+   * For long text: always editable (implies `alwaysEditable`), and drawn
+   * as the read view, not as a field: no border, no box, typed into where
+   * it's read (Notion-style). The control gets `inline: true`; pass it to
+   * RichTextEditor's `inline`, with `toolbar="floating"` (the toolbar over
+   * a selection and the slash menu, no bar above the text). An empty one
+   * shows the editor's `placeholder`, not the view's "Not set".
+   */
+  inline?: boolean
 }
 
 /** What a list item's fields are given while it's edited: a control's props, plus where the item is. */

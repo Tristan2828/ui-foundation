@@ -15,6 +15,8 @@
 //   Ctrl/Cmd+Enter and Esc save what's left now and close it.
 // - `alwaysEditable`: the control is shown at rest, with no pencil and no
 //   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
+// - `inline`: always editable, and the control is told to look like the
+//   value it edits (`inline` among its props).
 import { CheckIcon, PencilIcon } from 'lucide-react'
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { useBlocker } from 'react-router'
@@ -105,10 +107,14 @@ export function EditableField({
   const controlId = `${key}-control`
   const describedBy = `${key}-status`
 
-  // The latest config, read by the store whenever it needs it.
+  const always = Boolean(edit.alwaysEditable || edit.inline)
+  const autosave = always || Boolean(edit.autosave)
+
+  // The latest config, read by the store whenever it needs it (`inline`
+  // is always editable to it).
   const config = useRef(edit)
   useLayoutEffect(() => {
-    config.current = edit
+    config.current = always && !edit.alwaysEditable ? { ...edit, alwaysEditable: true } : edit
   })
   useEffect(() => store.register(key, () => config.current), [store, key])
 
@@ -125,9 +131,6 @@ export function EditableField({
   // Set by a keyboard save or Esc: the caret goes back to the edit button.
   const refocus = useRef(false)
   const blurTimer = useRef<number | undefined>(undefined)
-
-  const always = Boolean(edit.alwaysEditable)
-  const autosave = always || Boolean(edit.autosave)
 
   // An always-editable control starts over (it's uncontrolled: a rich-text
   // editor reads its value once) when the value changed elsewhere while
@@ -311,6 +314,7 @@ export function EditableField({
         label={label}
         describedBy={describedBy}
         onProblem={(problem) => store.report(key, problem)}
+        inline={Boolean(edit.inline)}
       />
       <span id={describedBy} className="type-body">
         {autosave ? (

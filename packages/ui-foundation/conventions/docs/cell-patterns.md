@@ -802,6 +802,32 @@ view, so a link in the notes is edited there, not followed, and the
 editor loads on every visit. Use it where the notes are what the page is
 for; elsewhere `autosave` alone keeps the read view at rest.
 
+**Edited where it's read (`inline: true`, implies `alwaysEditable`)**,
+Notion-style, for rich text: the editor from the start, drawn as the read
+view rather than as a field (no border, no box, the text where the
+section's text would be), so there's no mode change at all: click into
+the words and type. Its control gets `inline: true` among its props;
+pass it to `RichTextEditor`'s `inline`, with `toolbar="floating"`, which
+keeps the toolbar over a selection (Alt+F10 reaches it) and the "/" menu
+but drops the bar above the text. An empty one shows the editor's
+`placeholder` (say "or type / for blocks" in it), not the view's "Not
+set". It saves like any always-editable value (a pause after typing,
+leaving the page saves first) and is otherwise the same: on the form the
+control is the boxed editor with its fixed toolbar.
+
+```tsx
+notes: editInPlace({
+  kind: 'long-text',
+  inline: true,
+  value: widget.notes,
+  schema: widgetFormSchema.shape.notes,
+  save: (notes) => editField.mutateAsync({ notes }),
+  // The form's own control, spreading what it gets onto RichTextEditor:
+  // inline={props.inline} toolbar={props.inline ? 'floating' : true}
+  control: (props) => <WidgetNotesEditor {...} />,
+}),
+```
+
 ```tsx
 description: editInPlace({
   kind: 'long-text',
@@ -865,7 +891,9 @@ const price = editInPlace({
   beside it add a row or a column, and the toolbar's Table menu inserts
   rows and columns, aligns a column and deletes.
   `toolbar={false}` leaves out the toolbars and the slash menu where a
-  value is short and the shortcuts are enough.
+  value is short and the shortcuts are enough; `toolbar="floating"` keeps
+  the floating one and the slash menu without the bar above (an `inline`
+  field's look).
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
   `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.
