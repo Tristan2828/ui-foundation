@@ -89,6 +89,9 @@ const COMPOSITE_STORIES = [
   // Sections that fold, open and folded (#152).
   { id: 'app-appshell--collapsible', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
+  // An entry opening a list on a saved view (#188), and a record's view in the shell (#186).
+  { id: 'app-appshell--saved-view', mustShow: 'Page at /reading?status=unread&sort=title:asc' },
+  { id: 'app-appshell--with-view', mustShow: 'Pat Owner' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // <SessionView> is a timed screen's whole viewport: its header controls

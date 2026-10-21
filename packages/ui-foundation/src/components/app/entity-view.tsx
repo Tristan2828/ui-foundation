@@ -56,6 +56,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useDocumentTitle } from '@/hooks/use-document-title'
 import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
@@ -120,8 +121,15 @@ export type EntityViewPlacement = 'main' | 'rail'
 export type EntityViewLayout = 'column' | 'rail'
 
 export type EntityViewProps = {
-  /** The record's name or title, the page's <h1>. */
+  /** The record's name or title, the page's <h1>, and the browser tab's once it loads (`documentTitle`). */
   title?: string
+  /**
+   * The browser tab's name for this record once it has loaded: `title`
+   * unless this says otherwise, read as "<this> · <app>" inside `AppShell`.
+   * `false` leaves the tab to the nav ("Widgets · <app>"). Loading, an
+   * error, and leaving the view all show the nav's title.
+   */
+  documentTitle?: string | false
   /** The title is editable in place; `label` is the field's ("Name"). */
   titleEdit?: EditInPlace & { label: string }
   /**
@@ -371,6 +379,7 @@ function Rail({ label, sections }: { label: string; sections: EntityViewSection[
 
 export function EntityView({
   title,
+  documentTitle,
   titleEdit,
   badges,
   actions,
@@ -392,6 +401,7 @@ export function EntityView({
     () => store.editing,
     () => store.editing,
   )
+  useDocumentTitle(isLoading || error || documentTitle === false ? undefined : (documentTitle ?? title))
 
   if (error?.kind === 'notfound') {
     // A record that doesn't exist and one that belongs to another user are

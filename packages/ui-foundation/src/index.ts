@@ -94,6 +94,7 @@ export { createQueryClient } from '@/api/query-client'
 export { useTableUrlState } from '@/hooks/use-table-url-state'
 export type { TableView, UrlChanges } from '@/hooks/table-url-changes'
 export { useDebouncedValue } from '@/hooks/use-debounced-value'
+export { useDocumentTitle } from '@/hooks/use-document-title'
 export {
   useRecordUpdate,
   type RecordChange,

@@ -5,6 +5,45 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.21.0 — a nav entry that opens a saved view, and tab titles from the nav and the record (#188, #186)
+
+Additive: nothing an app has stops working. Run `npx ui-foundation sync`
+for the updated playbook.
+
+- **A nav entry's `to` can carry a query string** (#188), so a sidebar
+  entry can open its list on a saved view (`/widgets?status=active`).
+  `AppShell` matches an entry on its `to`'s path alone, so the entry is
+  current (`aria-current="page"`) on the list and every page under it,
+  and its collapsible section opens; the most specific entry is still the
+  one with the longest path. `defineA11ySuite`'s "the sidebar links
+  exactly the pages in nav" compares paths on both sides, and each nav
+  page is visited as its `to` is given, query string and all.
+- **How an app adopts it:** nothing to do. An app whose sidebar links the
+  bare path and replaces the URL with a view when the list is reached
+  with no query (the stopgap) can put the view in `to` instead.
+- **The browser tab names the page** (#186). `AppShell` sets
+  `document.title` to `"<page> · <title>"`, the page being the label of
+  the nav entry the path is under (the same one marked current); the home
+  entry (`'/'`) and a page under no entry give the app's title alone.
+  `EntityView` names the tab after its `title` once the record has
+  loaded ("Wireless Mouse · UI Foundation"), and the nav's comes back
+  while it loads, on an error and when you leave; its new `documentTitle`
+  prop names it otherwise, or `false` leaves the nav's. A new export,
+  `useDocumentTitle(title)`, names the tab from any other screen ("New
+  Widget"). A screen's title wins over the nav's whichever is set first,
+  so a record that loads after the shell, and a view mounted in the same
+  render as the shell (whose effect runs after its child's), both show.
+  When nothing names the tab (signed out), it gets back the title it had
+  (`index.html`'s).
+- **How an app adopts it:** nothing, for the nav and the views. Every tab
+  of the app now reads differently: a spec that asserted the old
+  `index.html` title on a page inside the shell asserts the new one. Name
+  any other screen with `useDocumentTitle`.
+- **Template: the app's own favicon placeholder.** `index.html` links
+  `public/favicon.svg` (a letter on the theme's colour) in place of Vite's
+  `vite.svg`, which is gone. An existing app can do the same with its own
+  icon; `docs/create-an-app.md` says where to replace it.
+
 ## 4.20.0 — rich text edited where it's read: always editable, floating toolbar only (#183)
 
 Additive: the current behaviour stays the default.
@@ -54,7 +93,7 @@ changes. Run `npx ui-foundation sync` for the updated docs.
   is the record's (not `props.value`), `onPick` the single-field save as
   a function of the record.
 
-## 4.18.3 — a list item's row edited in place sits side by side
+## 4.18.4 — a list item's row edited in place sits side by side
 
 - **Fix: `editInPlace({ kind: 'list' })` lays the item's row out as the
   form does** (#187). The row `renderItem` returns now sits in a flex row

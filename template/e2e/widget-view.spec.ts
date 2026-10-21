@@ -63,8 +63,11 @@ test.describe('widget view', () => {
     await forceMswOverride(page, { method: 'get', path: '*/api/widgets/1', delayMs: 1000, body: WIRELESS_MOUSE })
     await page.goto('/widgets/1')
     await expect(page.locator('[data-state="loading"]')).toBeVisible()
+    // The tab reads the nav's page until the record names it.
+    await expect(page).toHaveTitle('Widgets · UI Foundation')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
     await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
+    await expect(page).toHaveTitle('Wireless Mouse · UI Foundation')
   })
 
   test('not found: a 404 says so and offers the list, never a retry', async ({ page }) => {
@@ -74,6 +77,7 @@ test.describe('widget view', () => {
     await expect(page.getByText('Not found', { exact: true })).toBeVisible()
     await expect(page.getByText('Widget 99 not found')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0)
+    await expect(page).toHaveTitle('Widgets · UI Foundation')
 
     await page.getByRole('button', { name: 'Back to Widgets' }).click()
     await expect(page).toHaveURL('/widgets')
@@ -212,10 +216,12 @@ test.describe('widget view', () => {
     await table.getByRole('link', { name: 'Wireless Mouse' }).click()
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
+    await expect(page).toHaveTitle('Wireless Mouse · UI Foundation')
 
-    // And the link above the title goes back.
+    // And the link above the title goes back, and the tab with it.
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
     await expect(page).toHaveURL('/widgets')
+    await expect(page).toHaveTitle('Widgets · UI Foundation')
   })
 
   test('edit: saving returns to the view, showing the change', async ({ page }) => {
@@ -227,6 +233,7 @@ test.describe('widget view', () => {
 
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse Pro' })).toBeVisible()
+    await expect(page).toHaveTitle('Wireless Mouse Pro · UI Foundation')
   })
 
   test('edit: Cancel returns to the view, unchanged', async ({ page }) => {

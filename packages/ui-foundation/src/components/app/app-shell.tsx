@@ -3,11 +3,12 @@ import { useTheme } from 'next-themes'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
-import { activeNavTo, navGroups, type NavEntry, type NavGroup, type NavItem } from '@/components/app/app-shell-nav'
+import { activeNavTo, navGroups, navPageLabel, type NavEntry, type NavGroup, type NavItem } from '@/components/app/app-shell-nav'
 import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
 import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
+import { useShellDocumentTitle } from '@/hooks/use-document-title'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -34,14 +35,21 @@ export type { NavEntry, NavItem, NavSection } from '@/components/app/app-shell-n
 export type { AppShellVersion } from '@/components/app/app-shell-version'
 
 export type AppShellProps = {
-  /** Shown at the top of the sidebar (hidden on the collapsed icon rail). */
+  /**
+   * Shown at the top of the sidebar (hidden on the collapsed icon rail), and
+   * the app's part of the browser tab's title: "<page> · <title>", the page
+   * named by the current nav entry, or the title alone on the home entry
+   * ('/'). A screen names its own page with `useDocumentTitle` (EntityView
+   * does, with its record's title).
+   */
   title: string
   /**
    * The app's primary navigation, in order: pages, and labelled sections of
    * pages (`{ label, items }`, one per module, say). A nav with no sections
    * is the single "Navigation" group. One entry is marked active: the most
    * specific whose route matches, so '/tasks' and '/tasks/categories' can
-   * both be listed. A section marked `collapsible` folds under its label,
+   * both be listed. An entry is matched on its `to`'s path, so `to` can
+   * open a list on a saved view ('/tasks?status=open'). A section marked `collapsible` folds under its label,
    * remembered per browser (`defaultOpen` for the first visit); the one
    * holding the current page stays open, and the icon rail shows every
    * section's items.
@@ -246,6 +254,7 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true, 
   // resolves: that runs before React re-renders, and the <Navigate> this
   // component then renders starts a second navigation that wins.
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  useShellDocumentTitle(title, navPageLabel(nav, location.pathname))
 
   if (status === 'loading') {
     return <AppShellSkeleton />

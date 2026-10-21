@@ -269,6 +269,15 @@ is a filled-in example while the Widgets demo is still here).
      Its badge fields sit beside it, each the same `Badge` and variant map
      as its table cell. Edit (a `Button` rendering a `Link` to
      `/<entity>/:id/edit`) and the delete action go in `actions`.
+   - **The browser tab** reads the record's title once it loads
+     ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
+     puts the nav's ("Widgets · <app>") back while loading, on an error
+     and when you leave. Nothing to add. `documentTitle` names the tab
+     otherwise, when the title alone wouldn't say what the tab is (a
+     record named by a date, say: `documentTitle={`Entry ${title}`}`);
+     `false` leaves the nav's. Any other screen names its tab with
+     `useDocumentTitle('New Widget')`, which wins over the nav's while the
+     screen is mounted.
    - **Sections**, one per row of the plan's section table, in order.
      Fields are label/value rows (`fields`), labelled as on the form. A
      section that holds one long text or one sub-record list is a block
@@ -461,7 +470,12 @@ is a filled-in example while the Widgets demo is still here).
      values should stay grey, and colour is never the only signal.
 7. **Register routes** for `/<entity>`, `/<entity>/new`, `/<entity>/:id`
    (the view) and `/<entity>/:id/edit` in `src/App.tsx`, and add a nav
-   entry to `src/nav.ts`.
+   entry to `src/nav.ts`. Its label names the browser tab on the list and
+   every page under it ("Widgets · <app>"; the home entry, '/', gives the
+   app's name alone). For a list that should open on one of its saved
+   views, `to` carries that view's query string
+   (`/widgets?status=active`): the entry is still matched on its path, so
+   it stays current on the list and the records under it.
 8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the

@@ -67,3 +67,7 @@ or set up the backend unless the developer asks. Each is its own step.
 with you. Then build it with `docs/foundation/add-an-entity.md`. Upgrading
 the foundation later, changing it, choosing Postgres or the Notion API and
 the backend are all in [`consuming.md`](consuming.md).
+
+**Give the app its own icon** when it has one: `public/favicon.svg` is a
+placeholder (a letter on the theme's colour), and `pwa({ icon })` in
+`vite.config.ts` takes the installed app's.
