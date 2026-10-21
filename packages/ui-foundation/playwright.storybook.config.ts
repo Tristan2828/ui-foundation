@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 // This repo's own Storybook tests (e2e/storybook-visual.spec.ts, the
-// rich-text round trip in e2e/rich-text-editor.spec.ts, EntityView's
+// rich-text round trip in e2e/rich-text-editor.spec.ts, rich text edited
+// inline in e2e/rich-text-inline.spec.ts, EntityView's
 // layouts in e2e/entity-view.spec.ts, DataTable's opt-ins in
 // e2e/data-table.spec.ts, the scale glyphs' names in e2e/scales.spec.ts,
 // DateField's time zones in e2e/date-field.spec.ts, SessionView's timed
@@ -11,7 +12,7 @@ import { defineConfig, devices } from '@playwright/test'
 // need Storybook. `npm run verify` runs both configs.
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'editable-list.spec.ts', 'multi-pick.spec.ts'],
+  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'rich-text-inline.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'editable-list.spec.ts', 'multi-pick.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

@@ -32,11 +32,13 @@
 //   length as it nears `maxLength`.
 // - A fixed toolbar above the text (rich-text-toolbar.tsx), and a
 //   floating one over selected words (rich-text-floating-toolbar.tsx),
-//   unless `toolbar={false}`. Alt+F10 reaches the floating one when it
-//   shows, else the fixed one.
+//   unless `toolbar={false}`; `toolbar="floating"` leaves out the fixed
+//   one. Alt+F10 reaches the floating one when it shows, else the fixed one.
 // - A slash menu (rich-text-slash.ts, rich-text-slash-menu.tsx): "/" at a
 //   line's start lists the blocks it can become, also unless
 //   `toolbar={false}`.
+// - `inline`: the field drawn as the text it edits (no border, no box),
+//   for notes that are always editable where they're read.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
 import {
@@ -284,6 +286,7 @@ export default function MilkdownEditor({
   placeholder,
   maxLength,
   toolbar = true,
+  inline = false,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -325,6 +328,11 @@ export default function MilkdownEditor({
     latest.current = { onChange, onProblem, readOnly, placeholder }
   })
 
+  // The fixed bar above the text, and the menus over it (the floating
+  // toolbar and the slash menu), which `'floating'` keeps on their own.
+  const fixedToolbar = toolbar === true
+  const menus = toolbar !== false
+
   const ids = useId()
   const counterId = `${ids}-count`
   // The editable element's id: the app's, or one of its own, so the
@@ -345,11 +353,11 @@ export default function MilkdownEditor({
   if (describedBy) attributes['aria-describedby'] = describedBy
   if (ariaInvalid) attributes['aria-invalid'] = 'true'
   if (placeholder) attributes['aria-placeholder'] = placeholder
-  if (toolbar) attributes['aria-keyshortcuts'] = 'Alt+F10'
+  if (menus) attributes['aria-keyshortcuts'] = 'Alt+F10'
 
   // The slash menu: open while a "/" typed at a line's start is followed
   // by something some block answers to, and the field has focus.
-  const slash = toolbar && !readOnly && focused && editorState ? slashQuery(editorState) : null
+  const slash = menus && !readOnly && focused && editorState ? slashQuery(editorState) : null
   const slashMatches = slash ? slashItems(slash.query) : []
   const slashOpen = slash !== null && slashMatches.length > 0
   const slashMenuKey = slash ? `${slash.from}:${slash.query}` : ''
@@ -715,7 +723,7 @@ export default function MilkdownEditor({
   // and nothing else open over the text.
   const selection = editorState?.selection
   const floatingOpen = Boolean(
-    toolbar &&
+    menus &&
       !readOnly &&
       editorView &&
       focused &&
@@ -747,13 +755,16 @@ export default function MilkdownEditor({
         ref={setField}
         data-slot="rich-text-editor"
         className={cn(
-          'relative flex w-full min-w-0 flex-col rounded-lg border border-input bg-transparent type-body text-foreground break-words transition-[border-color,box-shadow]',
-          'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30',
-          'has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20',
+          'relative flex w-full min-w-0 flex-col bg-transparent type-body text-foreground break-words',
+          // Inline, it's the text itself: the caret shows where it's
+          // edited, and a refusal's reason under it says what's wrong.
+          !inline &&
+            'rounded-lg border border-input transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30',
+          !inline && 'has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20',
           className,
         )}
       >
-        {toolbar && (
+        {fixedToolbar && (
           <RichTextToolbar
             ref={toolbarRef}
             state={editorState}
@@ -769,12 +780,13 @@ export default function MilkdownEditor({
         <div
           ref={rootRef}
           className={cn(
-            'min-h-24 px-2.5 py-2',
+            !inline && 'min-h-24 px-2.5 py-2',
             // Read-only text is muted; the toolbar's buttons say so by being disabled.
             'has-[[aria-readonly=true]]:text-muted-foreground',
             // The same type roles <Markdown> uses, so text reads the same
             // being edited as being read.
-            '[&_.ProseMirror]:flex [&_.ProseMirror]:min-h-20 [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
+            '[&_.ProseMirror]:flex [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
+            !inline && '[&_.ProseMirror]:min-h-20',
             // ProseMirror's own required style (prosemirror-view's CSS): spaces
             // as typed, so one at the end of a line isn't kept as &nbsp;.
             '[&_.ProseMirror]:whitespace-pre-wrap [&_.ProseMirror]:break-words',

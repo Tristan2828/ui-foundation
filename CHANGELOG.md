@@ -5,6 +5,28 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.20.0 — rich text edited where it's read: always editable, floating toolbar only (#183)
+
+Additive: the current behaviour stays the default.
+
+- **New: `editInPlace({ kind: 'long-text', inline: true })`.** Notes that
+  are the editor from the start, drawn as the read view (no border, no
+  box), typed into where they're read, Notion-style. It implies
+  `alwaysEditable`, so it saves as that does: a pause after typing, and
+  leaving the page saves first. The control gets a new optional prop,
+  `inline`, among its `EditControlProps`.
+- **New: `RichTextEditor`'s `inline`** (the look above) **and
+  `toolbar="floating"`**: the toolbar over a selection (Alt+F10 still
+  reaches it) and the "/" menu, with no bar above the text. An empty
+  inline field shows the editor's `placeholder`, not the view's "Not set".
+- **How an app adopts it:** `npx ui-foundation sync` for the playbook
+  (`docs/foundation/cell-patterns.md`, "Edited where it's read"). Then, for
+  a notes field that should edit in place this way, add `inline: true` to
+  its `editInPlace` and pass the control's `inline` on to
+  `RichTextEditor`: `inline={props.inline} toolbar={props.inline ?
+  'floating' : true}`, with a `placeholder`. Nothing changes for a field
+  that doesn't opt in.
+
 ## 4.19.0 — a small set picked in place: every option shown, each click saves
 
 Additive: one new export, `MultiPick`, and its docs. Nothing existing

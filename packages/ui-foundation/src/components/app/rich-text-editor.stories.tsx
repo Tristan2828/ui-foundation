@@ -1,5 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useId, useState } from 'react'
+import { createMemoryRouter, RouterProvider } from 'react-router'
+import { editInPlace } from './edit-in-place'
+import { EntityView, type EntityViewSection } from './entity-view'
+import { Markdown } from './markdown'
 import { RichTextEditor } from './rich-text-editor'
 import { MARKDOWN_FIXTURES } from './rich-text-editor.fixtures'
 
@@ -142,3 +146,67 @@ export const Features: StoryObj<typeof RichTextEditor> = {
     </div>
   ),
 }
+
+// Notes edited where they're read (`editInPlace`'s `inline`, Notion-style):
+// the editor from the start, drawn as the text, with the toolbar over a
+// selection and the slash menu but no bar above (`toolbar="floating"`).
+// Next steps is empty, so it shows the editor's placeholder. Each save
+// takes 300ms; Saves counts the requests a server would get
+// (e2e/rich-text-inline.spec.ts, axe in both themes there).
+function InlineRecord() {
+  const [saved, setSaved] = useState({ notes: 'Pack the **shared** shelves first.\n\nThen the desks.\n', next: '' })
+  const [saves, setSaves] = useState(0)
+  const notes = (field: 'notes' | 'next') =>
+    editInPlace<string>({
+      kind: 'long-text',
+      inline: true,
+      value: saved[field],
+      save: (text) =>
+        new Promise<void>((resolve) =>
+          setTimeout(() => {
+            setSaves((count) => count + 1)
+            setSaved((current) => ({ ...current, [field]: text }))
+            resolve()
+          }, 300),
+        ),
+      control: (props) => (
+        <RichTextEditor
+          id={props.id}
+          defaultValue={props.value}
+          onChange={props.onChange}
+          onProblem={props.onProblem}
+          readOnly={props.disabled}
+          inline={props.inline}
+          toolbar={props.inline ? 'floating' : true}
+          placeholder="Write something, or type / for blocks"
+          aria-invalid={props.invalid || undefined}
+          aria-label={props.label}
+          aria-describedby={props.describedBy}
+        />
+      ),
+    })
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Saved',
+      fields: [
+        { label: 'Saves', value: <span data-testid="saves">{saves}</span> },
+        { label: 'Saved notes', value: <pre data-testid="saved-notes" className="font-sans whitespace-pre-wrap">{saved.notes}</pre> },
+      ],
+    },
+    { title: 'Notes', content: <Markdown>{saved.notes}</Markdown>, edit: notes('notes') },
+    { title: 'Next steps', content: <Markdown>{saved.next}</Markdown>, edit: notes('next') },
+  ]
+  return <EntityView isLoading={false} back={{ to: '/projects', label: 'Projects' }} title="Office move" sections={sections} />
+}
+
+function InlineInRouter() {
+  const [router] = useState(() =>
+    createMemoryRouter([
+      { path: '/', element: <InlineRecord /> },
+      { path: '/projects', element: <p>Projects</p> },
+    ]),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const Inline: StoryObj<typeof RichTextEditor> = { render: () => <InlineInRouter /> }
