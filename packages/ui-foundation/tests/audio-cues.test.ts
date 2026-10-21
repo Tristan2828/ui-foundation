@@ -2,8 +2,9 @@
 // speech synthesis that record what they're asked: nothing sounds before
 // unlockAudio(), a chime's envelope rises fast and fades slow, a sequence
 // spaces its strikes, a new spoken line cuts off the last, and every cue
-// is a no-op where the browser has no such API.
-import { describe, expect, it } from 'vitest'
+// is a no-op where the browser has no such API. canVibrate() and the shared
+// vibrate() read the same navigator.vibrate, so they never disagree.
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAudioCues } from '../src/lib/audio-cues'
 
 type Strike = { pitch: number; start: number; stop: number; gain: [string, number, number][] }
@@ -190,5 +191,37 @@ describe('audio cues', () => {
       cues.unlockAudio()
       cues.chime()
     }).not.toThrow()
+  })
+})
+
+describe('canVibrate', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.resetModules()
+  })
+
+  // A fresh module each time: the shared cues are built once, on first use.
+  const load = () => import('../src/lib/audio-cues')
+
+  it('is true where navigator.vibrate exists, and vibrate() reaches it', async () => {
+    const patterns: (number | number[])[] = []
+    vi.stubGlobal('navigator', { vibrate: (pattern: number | number[]) => (patterns.push(pattern), true) })
+    const { canVibrate, vibrate } = await load()
+    expect(canVibrate()).toBe(true)
+    vibrate([200, 100, 200])
+    expect(patterns).toEqual([[200, 100, 200]])
+  })
+
+  it('is false where navigator has no vibrate (iPhone browsers), and vibrate() is a no-op', async () => {
+    vi.stubGlobal('navigator', {})
+    const { canVibrate, vibrate } = await load()
+    expect(canVibrate()).toBe(false)
+    expect(() => vibrate(200)).not.toThrow()
+  })
+
+  it('is false where there is no navigator at all (server rendering)', async () => {
+    vi.stubGlobal('navigator', undefined)
+    const { canVibrate } = await load()
+    expect(canVibrate()).toBe(false)
   })
 })

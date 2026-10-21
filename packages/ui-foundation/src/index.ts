@@ -125,6 +125,7 @@ export {
 // Utilities
 export { cn } from '@/lib/utils'
 export {
+  canVibrate,
   chime,
   hush,
   say,

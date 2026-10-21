@@ -151,6 +151,16 @@ export function createAudioCues(env: AudioCuesEnvironment): AudioCues {
   }
 }
 
+/**
+ * Whether this browser can vibrate: Android browsers can, iPhone browsers
+ * can't. The same test vibrate() makes, so a Vibrate setting offered only
+ * where this is true never sets something that does nothing. Read it once;
+ * it doesn't change during a session.
+ */
+export function canVibrate(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
+}
+
 let shared: AudioCues | null = null
 
 function browserCues(): AudioCues {
@@ -161,10 +171,7 @@ function browserCues(): AudioCues {
     AudioContext: win?.AudioContext ?? win?.webkitAudioContext,
     speechSynthesis: win?.speechSynthesis,
     SpeechSynthesisUtterance: win?.SpeechSynthesisUtterance,
-    vibrate:
-      typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
-        ? (pattern) => navigator.vibrate(pattern)
-        : undefined,
+    vibrate: canVibrate() ? (pattern) => navigator.vibrate(pattern) : undefined,
   })
   return shared
 }

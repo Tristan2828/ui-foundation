@@ -10,6 +10,7 @@ package has the parts, so a screen like this is assembled, not rebuilt:
 | `useSessionClock` | A clock that doesn't drift, with pause and resume: `idle`, `running`, `done` |
 | `useWakeLock` | Keeps the screen on while a session runs (`SessionView`'s `keepAwake` uses it) |
 | `unlockAudio`, `chime`, `sequence`, `say`, `hush`, `vibrate` | Sound cues with no audio files |
+| `canVibrate` | Whether this browser can vibrate, to offer a Vibrate setting only where it works |
 | `useMuted` | A mute toggle remembered on this device |
 | `usePrefersReducedMotion` | Whether to swap movement for a fade |
 
@@ -95,6 +96,13 @@ Browsers block sound until the person has clicked or tapped. So:
   line still being spoken. `hush()` stops it. Call `hush()` when the
   session stops or the view closes.
 - `vibrate(pattern)` only works on Android. Elsewhere it does nothing.
+- **A Vibrate setting is offered only where `canVibrate()` is true.**
+  iPhone browsers can't vibrate, so a toggle there would set something
+  that does nothing. `canVibrate()` is the same test `vibrate()` makes, so
+  the two never disagree. Read it once, since it doesn't change during a
+  session: `const [vibrates] = useState(canVibrate)`. Show the toggle (a
+  pressed button named "Vibrate", like Mute) only when `vibrates` is
+  true, and check the setting before each `vibrate()` call.
 - Every one of them is a no-op where the browser can't make the sound, so
   none needs a check around it.
 - **Mute** is the app's: `const [muted, setMuted] = useMuted('my-app:routine:muted')`,
@@ -159,18 +167,18 @@ test('running, paused and done', async ({ page }) => {
 steps, so every reading picks up however long the machine took since the
 last `fastForward`. A count-up with no end (a stopwatch, a hold that
 ends on a tap) has nothing to stop at, so under load its readings are
-off by a second or more. Pause the clock once the session opens and
-move it only with `fastForward`:
+off by a second or more. Pause the clock before the session starts, at a
+time fixed from the install, and move it only with `fastForward`:
 
 ```ts
 test('the hold counts up until the tap', async ({ page }) => {
-  await page.clock.install()
+  const t0 = Date.now()
+  await page.clock.install({ time: t0 })
   await page.goto('/routine')
+  // The page's clock runs no faster than real time, so a minute on is still
+  // ahead for the whole test timeout; nothing on the start screen is timed.
+  await page.clock.pauseAt(t0 + 60_000)
   await page.getByRole('button', { name: 'Start' }).click()
-  // Slightly ahead, never Date.now() itself: the page's clock has already
-  // moved past the test's, and pauseAt() refuses an earlier time with
-  // "Cannot fast-forward to the past".
-  await page.clock.pauseAt(Date.now() + 50)
 
   await page.clock.fastForward('00:42')
   await expect(page.getByRole('timer', { name: 'Held for' })).toHaveText('0:42')
@@ -183,10 +191,12 @@ test('the hold counts up until the tap', async ({ page }) => {
 })
 ```
 
-- **`pauseAt(Date.now() + 50)`, not `pauseAt(Date.now())`.** The page's
-  fake time is already a little ahead of the test's `Date.now()`, and
-  `pauseAt` fast-forwards to the time it's given, so a time already
-  passed fails with "Cannot fast-forward to the past".
+- **Pause at a time fixed from `install`, before the session starts.**
+  Never at one read after it (`pauseAt(Date.now() + 50)` after Start):
+  until the pause lands the page's fake clock runs in real time, so a
+  slow round trip or a busy first frame puts it past that time, and
+  `pauseAt` fails with "Cannot fast-forward to the past". A time a minute
+  on from `install` is still ahead however slow the machine is.
 - **`clock.resume()` before axe or closing the view.** With the clock
   paused, axe's scan never finishes and the dialog's close animation
   never ends, so the test times out with nothing pointing at the clock.
