@@ -642,3 +642,26 @@ soft one; copy it.
 - **Hard-deleted:** `DELETE` removes the row. Give the entity no `delete`
   in `mcp_entities.py`: a chat that read planted instructions would
   destroy data that only a backup returns.
+
+## Fields only a script writes
+
+Some fields the API takes on create and update are for a script, not for
+the people or chats using the app: an importer that runs again and again
+stores each record's id in the source it came from, so a re-run finds the
+record even after it's renamed. The API has to accept that id, for the
+importer. A chat that changed or cleared it would break the matching, and
+the next run would create the record a second time.
+
+- *MCP:* list the field's wire name in the entity's `McpEntity`
+  `script_only` (`script_only=("sourceId",)`). Chats still read it
+  (`fetch` shows it), but `create` and `update` refuse a call that names
+  it, by its wire name or its snake_case one, before the entity's own
+  function runs: `Nothing was saved.` and `- sourceId: set by a script,
+  not through MCP`, with no audit row. It's left out of the two tools'
+  descriptions, so a chat isn't invited to send it. The backend refuses
+  to start if a name isn't a field of the create or update schema, or if
+  create requires it (a chat could then never create one).
+- *Screens:* the form leaves the field out, for the same reason.
+- Don't use it for a field the server works out itself (`computed`) or
+  one that's never on the request: those aren't in the create or update
+  schema to begin with.

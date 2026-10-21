@@ -5,6 +5,41 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.23.0 — MCP fields a chat may read but never write (#197)
+
+Additive: the package's code doesn't change, and an entity with no
+`script_only` behaves as before. Run `npx ui-foundation sync` for the
+updated `docs/foundation/add-an-entity.md` ("Fields only a script writes").
+
+- **New `McpEntity` option: `script_only: tuple[str, ...] = ()`**, in the
+  template's `backend/app/mcp_entities.py`: wire names of fields the API
+  takes from an importer or another script (a source record's id that a
+  re-run matches on) and a chat must never write. `create` and `update`
+  (`backend/app/mcp_tools.py`) refuse a call naming one, by its camelCase
+  wire name or its snake_case name, before the entity's function runs:
+  the tool answers `Nothing was saved.` with
+  `- <field>: set by a script, not through MCP` (beside any other field
+  problems), saves nothing and writes no audit row. The create and update
+  tool descriptions leave the field out; `fetch` still shows it.
+  `check_entities` refuses at start-up a name that isn't a field of the
+  entity's create or update schema (by wire name), or that the create
+  schema requires.
+- **How an app adopts it:** `mcp_entities.py` and `mcp_tools.py` are
+  copied into the app, so by hand. In `app/mcp_entities.py`, add the
+  `script_only` field to `McpEntity` (after `restore`) and the
+  `_wire_names` / `_check_script_only` helpers with their call at the end
+  of `check_entities`'s loop. In `app/mcp_tools.py`, take the new
+  `_validate` (a third argument, `script_only`), pass `entity.script_only`
+  from `tool_create` and `tool_update`, and take `_describe_fields`'s new
+  `script_only` argument and the two calls in `tool_definitions` that
+  pass it. An app whose `mcp_tools.py` hasn't drifted from the template
+  can copy it whole instead; `mcp_entities.py` holds the app's own
+  entities, so it's always patched. Then set `script_only` on
+  each entity with such a field, delete any wrappers that refused it
+  around the entity's `create`/`update`, and copy the "fields only a
+  script writes" tests from the template's `tests/test_mcp.py`, adjusted
+  to the app's field. `npm run verify:backend`.
+
 ## 4.22.0 — canVibrate(), and a count-up recipe that pauses before Start (#194, #195)
 
 Additive: one new export, and a fix to a test recipe in the docs. Run
