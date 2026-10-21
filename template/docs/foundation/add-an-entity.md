@@ -367,7 +367,10 @@ is a filled-in example while the Widgets demo is still here).
      `defaultOpen`, non-modal, `onChange={(v) => props.commit(v)}`,
      `onOpenChange={(open) => !open && props.cancel()}`; a yes/no switch
      commits on change), `multi` (a multi reference; `isEqual` comparing
-     ids as a set). A field gets `edit`, a `content` section gets `edit`,
+     ids as a set; a field the plan marks `small` is `MultiPick`, on the
+     form too, every option loaded once, and saves each click itself:
+     `value` is the record's, `onPick` the single-field save as a
+     function of the record, cell pattern 18 "A small set"). A field gets `edit`, a `content` section gets `edit`,
      the title gets `titleEdit={{ label, ...edit }}`, and a header badge
      wraps itself in `<EditableValue label edit layout="inline">`. The
      shown value stays exactly as before. A sub-record list the line

@@ -138,6 +138,8 @@ export type EditInPlaceListOptions<TItem> = {
   /**
    * The item's own fields while it's edited: the form's row (what its
    * ListEditor's `renderItem` shows), as controls over `props.value`.
+   * Laid out in a row as ListEditor's is: a fragment's parts sit side by
+   * side, and a single element fills the row.
    */
   renderItem: (props: EditListItemProps<TItem>) => ReactNode
   /** How the item reads when it isn't being edited. Its own controls (a done box) keep working. */

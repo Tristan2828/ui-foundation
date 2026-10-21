@@ -196,7 +196,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   it a pause after typing stops, editable all the while, one save in
   flight with the next queued behind it on the latest draft, and leaving
   the page saves it before going on. `alwaysEditable` makes the editor
-  the value at rest, and `inline` (4.19, #183) draws it as the read view
+  the value at rest, and `inline` (4.20, #183) draws it as the read view
   (no box; `RichTextEditor`'s `inline` and `toolbar="floating"`). ProseMirror marks every Esc handled, so the editor
   says which ones none of its menus used (`escape-passthrough.ts`).
 
@@ -361,7 +361,7 @@ fixed one when it isn't showing); Esc or Tab goes back to the text, the
 selection kept, and Esc hides it until the selection changes, before the
 field's own Esc. It's placed against the field's element, not portaled:
 above the words, below them when there's no room inside the text, so it
-never covers the fixed toolbar. `toolbar="floating"` (4.19) keeps it
+never covers the fixed toolbar. `toolbar="floating"` (4.20) keeps it
 and the slash menu without the fixed one, for an `inline` field. Base
 UI's Popover was tried first, and
 its focus guards (tabbable `aria-hidden` spans while focus is outside

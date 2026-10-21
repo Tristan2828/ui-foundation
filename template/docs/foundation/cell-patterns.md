@@ -740,12 +740,66 @@ Save button, no Undo:
 | `long-text`: notes, rich text for Markdown | Ctrl/Cmd+Enter, or leaving it (Enter is a new line); with `autosave`, also a pause in typing | the same; with `autosave`, saves what's left and closes |
 | `choice`: a select, a switch, a single reference | the pick (its list opens with the field, non-modal) | closes the list with nothing picked: gives up |
 | `multi`: a multi reference | leaving it, or Ctrl/Cmd+Enter (Enter picks) | closes the list first; Esc again gives up |
+| `multi` over a small set (`MultiPick`) | each click, on its own | closes it: every pick is already saved |
 
 In either multi picker (`MultiChoice`, `MultiReference`), on a form, in
 a toolbar filter or in place, Escape never removes a pick: it closes the
 list when it's open and leaves the value alone when it's closed (Base UI
 would empty it). A pick comes off only by its chip's remove button,
 Backspace in the empty input, or unpicking it in the list.
+
+**A small set (`MultiPick`): every option shown, each click saves.** A
+multi field whose options are few (up to about 25) and all loaded (a
+dozen labels, a short tag list) uses `MultiPick` instead, on the form
+and in place: every option a toggle chip with its icon or colour where
+the app draws one (`icon`), the picked ones pressed with a check, and a
+filter box above them, not in front of them. Larger sets, or ones that
+grow with the data, keep `MultiReference` (typing searches the server)
+or `MultiChoice`.
+
+- **The plan says which**, by marking the field `small`; the control
+  isn't switched by option count. The two save differently in place
+  (each pick here, the whole set on leaving there) and load differently
+  (every option here, a search there), so a set crossing 25 would change
+  how saving works under the user.
+- **Each click saves that one pick** (`onPick`), like a quick action
+  (pattern 17): the chip shows the pick at once with a spinner beside it
+  (`aria-busy`) until the server agrees. Nothing is disabled, and quick
+  picks each save, one after another, each built on the record's latest
+  value (a function change, as a sub-record list's is).
+- **A refusal puts back that one pick**, with its reason under the chips
+  in the destructive text tone ("Couldn't add Archived: <the server's
+  reason>"), the chip described by it. Picks still saving carry on. If
+  the field closed before the answer, the reason is a toast.
+- **Nothing is drafted**, so leaving the field (a click or Tab
+  elsewhere), Esc or Ctrl/Cmd+Enter only close it: there's no "Saving…"
+  under the field and nothing to give up.
+- **Keyboard:** opening puts the caret in the filter box; Down goes to
+  the chips, Left/Right (Home/End) move along them, Space or Enter
+  toggles one, Up goes back to the box.
+- Pass the record's value as `value`, not the control's `props.value`
+  (the draft, which never moves here), and keep the field's `save`: the
+  form's whole-set save, never called in place.
+
+```tsx
+const editField = useEditWidgetField(widget.id) // optimistic: false, toastOnError: false
+labels: editInPlace({
+  kind: 'multi',
+  value: widget.labelIds,
+  isEqual: sameIds,
+  save: (labelIds) => editField.mutateAsync({ labelIds }),
+  control: (props) => (
+    <WidgetLabelsPicker id={props.id} value={widget.labelIds}
+      onPick={(id, picked) => editField.mutateAsync((current) => ({
+        labelIds: [...current.labelIds.filter((other) => other !== id), ...(picked ? [id] : [])],
+      }))}
+      aria-label={props.label} aria-describedby={props.describedBy} />
+  ),
+}),
+// WidgetLabelsPicker: <MultiPick options={labels.map((l) => ({ id: l.id, label: l.name,
+//   icon: <TagIcon className={LABEL_COLOUR[l.slot]} /> }))} value onPick aria-label aria-describedby />
+// On the form, the same control with onValueChange={field.onChange} instead of onPick.
+```
 
 Leaving means clicking or tabbing anywhere else. Unchanged closes with no
 request; a value the form's schema refuses never leaves the browser and
@@ -915,7 +969,9 @@ Checklist is the reference (`checklist` in `widgetEdits`). It's built on
   on the item (not its box, not a link in it) or its pencil ("Edit item
   2") turns it into the form's row (`renderItem`, the same fields as the
   form's `ListEditor` row), an editable value like any above: Enter or
-  leaving saves, Esc gives up, one open at a time.
+  leaving saves, Esc gives up, one open at a time. The row lays its parts
+  out side by side as `ListEditor`'s does, so a fragment (the box, then
+  the text's `Field`) needs no wrapper of its own.
 - **Add at the end.** "Add item" opens a new row; Enter saves it and
   opens the next, the caret already in it, so a run of items goes in from
   the keyboard. Esc on an empty one closes it; nothing is sent.
