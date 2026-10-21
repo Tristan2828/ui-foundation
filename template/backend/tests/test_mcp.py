@@ -1038,3 +1038,97 @@ def test_api_paths_that_cannot_be_told_apart_are_refused_at_startup(api_path: st
     entities["widgets"] = replace(entities["widgets"], api_path=api_path)
     with pytest.raises(ValueError, match=re.escape(problem)):
         check_entities(entities)
+
+
+# ------------------------------------------- fields only a script writes
+
+
+def _assignee_set_by_a_script(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Widgets' assignee is set by a script (an importer, say), never by a
+    chat. Returns the calls that reached the entity's create and update."""
+    reached: list[str] = []
+    widgets = ENTITIES["widgets"]
+    assert widgets.create is not None and widgets.update is not None
+    create, update = widgets.create, widgets.update
+
+    async def spy_create(session: AsyncSession, user: User, payload: Any) -> Any:
+        reached.append("create")
+        return await create(session, user, payload)
+
+    async def spy_update(session: AsyncSession, user: User, record_id: int, payload: Any) -> Any:
+        reached.append("update")
+        return await update(session, user, record_id, payload)
+
+    entities = dict(ENTITIES)
+    entities["widgets"] = replace(widgets, script_only=("assigneeEmail",), create=spy_create, update=spy_update)
+    check_entities(entities)
+    monkeypatch.setattr(mcp_tools, "ENTITIES", entities)
+    return reached
+
+
+@pytest.mark.parametrize("key", ["assigneeEmail", "assignee_email"])
+async def test_create_refuses_a_script_only_field_and_saves_nothing(
+    web: AsyncClient, token: str, session: AsyncSession, monkeypatch: pytest.MonkeyPatch, key: str
+) -> None:
+    reached = _assignee_set_by_a_script(monkeypatch)
+    fields = {**NEW_WIDGET, key: "bob@example.com"}
+    text, is_error = await call(web, token, "create", {"entity": "widgets", "fields": fields})
+    assert (text, is_error) == ("Nothing was saved.\n- assigneeEmail: set by a script, not through MCP", True)
+    assert reached == []
+    assert (await session.exec(select(Widget).where(Widget.id != 1))).all() == []
+    assert (await session.exec(select(McpAuditEntry))).all() == []
+    # Left out, the same widget is created.
+    text, is_error = await call(web, token, "create", {"entity": "widgets", "fields": NEW_WIDGET})
+    assert not is_error and text.startswith("Created widget /widgets/2.")
+    assert reached == ["create"]
+
+
+@pytest.mark.parametrize("value", ["bob@example.com", None])
+@pytest.mark.parametrize("key", ["assigneeEmail", "assignee_email"])
+async def test_update_refuses_a_script_only_field_and_changes_nothing(
+    web: AsyncClient, token: str, session: AsyncSession, monkeypatch: pytest.MonkeyPatch, key: str, value: str | None
+) -> None:
+    reached = _assignee_set_by_a_script(monkeypatch)
+    # Changing it or clearing it, alongside a field a chat may change.
+    text, is_error = await call(web, token, "update", {"url": "/widgets/1", "fields": {"name": "Renamed", key: value}})
+    assert (text, is_error) == ("Nothing was saved.\n- assigneeEmail: set by a script, not through MCP", True)
+    assert reached == []
+    widget = await session.get(Widget, 1)
+    assert widget is not None
+    assert (widget.name, widget.assignee_email) == ("Wireless Mouse", "alice@example.com")
+    assert (await session.exec(select(McpAuditEntry))).all() == []
+
+
+async def test_a_script_only_field_is_read_but_not_offered_to_write(
+    web: AsyncClient, token: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def described(tool: str) -> str:
+        return next(str(t["description"]) for t in mcp_tools.tool_definitions() if t["name"] == tool)
+
+    for tool in ("create", "update"):
+        assert "assigneeEmail (" in described(tool)
+    _assignee_set_by_a_script(monkeypatch)
+    for tool in ("create", "update"):
+        assert "assigneeEmail" not in described(tool)
+        assert "name (string" in described(tool)
+    text, is_error = await call(web, token, "fetch", {"url": "/widgets/1"})
+    assert not is_error
+    assert "Assignee email: alice@example.com" in text
+
+
+@pytest.mark.parametrize(
+    ("entity", "script_only", "problem"),
+    [
+        ("widgets", ("assignee",), "script_only 'assignee' isn't a field of its create or update schema"),
+        ("widgets", ("assignee_email",), "script_only 'assignee_email' isn't a field"),
+        ("widgets", ("name",), "script_only 'name' is required to create one"),
+        ("widget-categories", ("name",), "script_only 'name' isn't a field"),
+    ],
+)
+def test_a_script_only_name_a_chat_could_not_write_is_refused_at_startup(
+    entity: str, script_only: tuple[str, ...], problem: str
+) -> None:
+    entities: dict[str, McpEntity] = dict(ENTITIES)
+    entities[entity] = replace(entities[entity], script_only=script_only)
+    with pytest.raises(ValueError, match=re.escape(problem)):
+        check_entities(entities)

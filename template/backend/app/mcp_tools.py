@@ -11,6 +11,9 @@ Writes go through the entity's own router function, so validation, the
 per-user scoping and the 404 for another user's record are the API's. Each
 write is then logged in `mcp_audit_log`: who, when, which chat, and the
 changed fields before and after (the whole record, for a delete or restore).
+A field the entity marks `script_only` (set by an importer, never a chat) is
+read like any other, but refused by create and update and left out of their
+descriptions.
 """
 
 import json
@@ -173,10 +176,21 @@ async def _render(session: AsyncSession, user: User, entity: McpEntity, data: di
     return "\n".join(lines)
 
 
-def _validate(schema: type[CamelModel], fields: dict[str, Any]) -> CamelModel:
+def _validate(schema: type[CamelModel], fields: dict[str, Any], script_only: tuple[str, ...]) -> CamelModel:
     known = {info.alias or name for name, info in schema.model_fields.items()}
     known |= set(schema.model_fields)
-    problems = [f"{key}: not a field of this entity" for key in fields if key not in known]
+    # A script-only field (McpEntity.script_only) by either of its names, to
+    # its wire name. Refused before the entity's function runs.
+    scripted: dict[str, str] = {}
+    for name, info in schema.model_fields.items():
+        wire = info.alias or name
+        if wire in script_only:
+            scripted[name] = scripted[wire] = wire
+    problems = [
+        f"{scripted[key]}: set by a script, not through MCP" if key in scripted else f"{key}: not a field of this entity"
+        for key in fields
+        if key in scripted or key not in known
+    ]
     model: CamelModel | None = None
     try:
         model = schema.model_validate(fields)
@@ -294,7 +308,7 @@ async def tool_create(session: AsyncSession, caller: Caller, args: dict[str, Any
     entity = _entity(args.get("entity"))
     if entity.create is None or entity.create_schema is None:
         raise ToolError(f"{entity.name} can't be created through MCP.")
-    payload = _validate(entity.create_schema, _as_dict(args.get("fields"), "fields"))
+    payload = _validate(entity.create_schema, _as_dict(args.get("fields"), "fields"), entity.script_only)
     try:
         created = await entity.create(session, caller.user, payload)
     except RequestValidationError as exc:
@@ -316,7 +330,7 @@ async def tool_update(session: AsyncSession, caller: Caller, args: dict[str, Any
         raise ToolError("fields is empty; name at least one field to change.")
     record = await _record(session, caller.user, entity, record_id)
     before_all = _dump(entity, record)
-    payload = _validate(entity.update_schema, fields)
+    payload = _validate(entity.update_schema, fields, entity.script_only)
     try:
         updated = await entity.update(session, caller.user, record_id, payload)
     except RequestValidationError as exc:
@@ -395,12 +409,14 @@ def _type_of(prop: dict[str, Any], defs: dict[str, Any]) -> str:
     return kind
 
 
-def _describe_fields(schema: type[BaseModel], only_required: bool) -> str:
+def _describe_fields(schema: type[BaseModel], only_required: bool, script_only: tuple[str, ...] = ()) -> str:
     json_schema = schema.model_json_schema(by_alias=True)
     defs = json_schema.get("$defs", {})
     required = set(json_schema.get("required", []))
     parts = []
     for name, prop in json_schema["properties"].items():
+        if name in script_only:
+            continue
         note = ", required" if name in required and not only_required else ""
         parts.append(f"{name} ({_type_of(prop, defs)}{note})")
     return "; ".join(parts)
@@ -474,7 +490,11 @@ def tool_definitions() -> list[dict[str, Any]]:
                 "description": (
                     "Create a record, checked exactly as the app's own form is. If a field is refused the "
                     "answer says which and why; nothing is saved. "
-                    + " ".join(f"{e.name}: {_describe_fields(e.create_schema, False)}." for e in creatable if e.create_schema is not None)
+                    + " ".join(
+                        f"{e.name}: {_describe_fields(e.create_schema, False, e.script_only)}."
+                        for e in creatable
+                        if e.create_schema is not None
+                    )
                 ),
                 "inputSchema": {
                     "type": "object",
@@ -495,7 +515,11 @@ def tool_definitions() -> list[dict[str, Any]]:
                 "description": (
                     "Change some fields of a record; fields left out keep their value. Checked as the app's "
                     "own form is. "
-                    + " ".join(f"{e.name}: {_describe_fields(e.update_schema, True)}." for e in changeable if e.update_schema is not None)
+                    + " ".join(
+                        f"{e.name}: {_describe_fields(e.update_schema, True, e.script_only)}."
+                        for e in changeable
+                        if e.update_schema is not None
+                    )
                 ),
                 "inputSchema": {
                     "type": "object",

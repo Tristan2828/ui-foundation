@@ -214,7 +214,10 @@ address below answers 404.
   An entity is reachable only if it is listed in
   `backend/app/mcp_entities.py`; add each new entity there (its router
   functions, a title field, the fields shown in a list, the fields that
-  point at other entities).
+  point at other entities). A field only an importer or another script
+  may write goes in its `script_only`: chats read it, and `create` and
+  `update` refuse it (`docs/foundation/add-an-entity.md` "Fields only a
+  script writes").
 - **Addresses** are the records' pages in the app, so a link copied from
   a screen works as it is: `/widgets/3`, or the full link with the app's
   host. An entity whose pages sit under a section gives its `McpEntity` a

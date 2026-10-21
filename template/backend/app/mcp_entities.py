@@ -70,6 +70,11 @@ class McpEntity:
     # entity whose deletes are soft (a nullable deleted_at).
     delete: Callable[[AsyncSession, User, int], Awaitable[None]] | None = None
     restore: Callable[[AsyncSession, User, int], Awaitable[Any]] | None = None
+    # Wire names of fields the API takes from an importer or another script,
+    # never from a chat (a source record's id that a re-run matches on).
+    # Chats read them; `create` and `update` refuse a call naming one, and
+    # the tool descriptions leave them out.
+    script_only: tuple[str, ...] = ()
     # Where the record's page is in the app, before /<id>: "/media/channels"
     # for an app that groups screens under a section. Empty means /<name>.
     # The address a chat pastes and the one the tools hand back.
@@ -99,11 +104,34 @@ def _check_path(entity: McpEntity, option: str, value: str, example: str) -> Non
         )
 
 
+def _wire_names(schema: type[CamelModel] | None) -> set[str]:
+    return set() if schema is None else {info.alias or name for name, info in schema.model_fields.items()}
+
+
+def _check_script_only(entity: McpEntity) -> None:
+    writable = _wire_names(entity.create_schema) | _wire_names(entity.update_schema)
+    for name in entity.script_only:
+        if name not in writable:
+            raise ValueError(
+                f"MCP entity {entity.name!r}: script_only {name!r} isn't a field of its create or update "
+                f"schema (by its wire name, e.g. categoryId)."
+            )
+        schema = entity.create_schema
+        if schema is not None and any(
+            (info.alias or key) == name and info.is_required() for key, info in schema.model_fields.items()
+        ):
+            raise ValueError(
+                f"MCP entity {entity.name!r}: script_only {name!r} is required to create one, so a chat "
+                f"never could; leave create off instead."
+            )
+
+
 def check_entities(entities: Mapping[str, McpEntity]) -> None:
     """Refuses, at startup, a registry whose addresses can't be told apart:
     a malformed path, two entities with the same page path or API path, a
     page path under /api, which is where the API's form of an address
-    starts, or an API path outside it."""
+    starts, or an API path outside it. And a `script_only` name that isn't
+    a field a chat could otherwise write, or that create requires."""
     pages: dict[str, str] = {}
     apis: dict[str, str] = {}
     for key, entity in entities.items():
@@ -123,6 +151,7 @@ def check_entities(entities: Mapping[str, McpEntity]) -> None:
         if api in apis:
             raise ValueError(f"MCP entities {apis[api]!r} and {entity.name!r} share the API address {api}/<id>.")
         apis[api] = entity.name
+        _check_script_only(entity)
 
 
 class WidgetFilters(CamelModel):
