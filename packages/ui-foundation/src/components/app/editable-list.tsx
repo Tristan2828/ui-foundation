@@ -16,7 +16,7 @@
 //   latest list when it's sent (`save` takes a change, not a list), so it
 //   never undoes a tick or another change still saving.
 import { PlusIcon } from 'lucide-react'
-import { useContext, useEffect, useId, useRef, useState } from 'react'
+import { useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
@@ -34,6 +34,14 @@ function locate(current: readonly unknown[], item: unknown, index: number) {
   if (index < current.length && sameItem(current[index], item)) return index
   const found = current.findIndex((other) => sameItem(other, item))
   return found === -1 ? index : found
+}
+
+// The form's row, in place too: ListEditor lays `renderItem` out in a
+// row, so its parts (a done box, then the text box) sit side by side
+// there and here alike. One element (an app's own row) fills it, as it
+// filled the field's column before.
+function ItemRow({ children }: { children: ReactNode }) {
+  return <span className="flex min-w-0 items-start gap-2 [&>:only-child]:flex-1">{children}</span>
 }
 
 type Parsed = { success: true; data: unknown } | { success: false; error: { issues: readonly { message: string }[] } }
@@ -120,7 +128,7 @@ export function EditableList({ label, edit, emptyLabel }: { label: string; edit:
   const itemEdit = (index: number): EditInPlace => ({
     kind: 'text',
     value: items[index],
-    control: (props) => edit.renderItem({ ...props, index, isNew: false }),
+    control: (props) => <ItemRow>{edit.renderItem({ ...props, index, isNew: false })}</ItemRow>,
     schema: { safeParse: (draft) => checkItem(edit, items, index, draft) },
     save: (item) =>
       edit.save((current) => {
@@ -133,7 +141,7 @@ export function EditableList({ label, edit, emptyLabel }: { label: string; edit:
   const addEdit: EditInPlace = {
     kind: 'text',
     value: edit.newItem(),
-    control: (props) => edit.renderItem({ ...props, index: items.length, isNew: true }),
+    control: (props) => <ItemRow>{edit.renderItem({ ...props, index: items.length, isNew: true })}</ItemRow>,
     schema: { safeParse: (draft) => checkItem(edit, items, items.length, draft) },
     save: (item) => edit.save((current) => [...current, item]),
   }

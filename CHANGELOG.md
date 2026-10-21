@@ -5,6 +5,20 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.18.3 — a list item's row edited in place sits side by side
+
+- **Fix: `editInPlace({ kind: 'list' })` lays the item's row out as the
+  form does** (#187). The row `renderItem` returns now sits in a flex row
+  (`items-start gap-2`) inside the field, as in `ListEditor`'s row, so a
+  fragment (a done box, then the text's `Field`) keeps the box beside the
+  text box while an item is edited or added, instead of stacking it above.
+  A single element still fills the width, so an app that wrapped its
+  `renderItem` in its own flex row looks as before.
+- **How an app adopts it:** nothing to do. An app that wrapped its
+  `renderItem` only to work around this can drop the wrapper and share
+  the form's fragment as is. `npx ui-foundation sync` picks up the note in
+  `docs/foundation/cell-patterns.md`.
+
 ## 4.18.2 — three things an app found testing: a paused fake clock, a forced mutation's refetch, the mocks with storage blocked
 
 Two playbook notes and a template fix; nothing in the package's code
