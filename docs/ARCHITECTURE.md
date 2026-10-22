@@ -564,8 +564,8 @@ limits what could publish a bad version:
   all jobs. `publish-py` applies the same rule on PyPI, reading the commit
   from each file's PEP 740 provenance (its Sigstore certificate).
 - No npm or PyPI token exists. The trusted publishers (GitHub Actions,
-  `Tristan2828/ui-foundation`, workflow `release.yml`, no environment) are
-  the only things that can publish besides the developer's own accounts.
+  `Tristan2828/ui-foundation`, workflow `release.yml`) are the only things
+  that can publish besides the developer's own accounts.
 
 What that gives up: a malicious change that passes the checks and gets
 merged reaches every app installing `^4.x`, with no human look at the
@@ -582,10 +582,13 @@ so installs warn (on PyPI, yank the version on pypi.org, which pins
 writes, gets a major version, a `CHANGELOG.md` entry and upgrade steps in
 [`consuming.md`](consuming.md).
 
-**PyPI setup** (before 4.25.0 merges): the project `ui-foundation-backend`
-is created on pypi.org as a pending trusted publisher (owner `Tristan2828`,
-repo `ui-foundation`, workflow `release.yml`, no environment). Without it
-the first `publish-py` fails and the release stops before tagging.
+**PyPI setup** (done 2026-10-21, before 4.25.0): the project
+`ui-foundation-backend` was created on pypi.org as a pending trusted
+publisher (repository `Tristan2828/ui-foundation`, workflow `release.yml`,
+environment any). The first `publish-py` run turns it into the project's
+trusted publisher. The token names the workflow file it ran in, so
+`publish-py` must stay a job of `release.yml` itself, never moved into a
+reusable workflow it calls.
 
 **npm setup** (done 2026-09-28): the account `tristan2828` has passkey 2FA.
 3.0.0 was published by hand, because trusted publishing can only be
