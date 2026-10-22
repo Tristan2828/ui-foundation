@@ -59,10 +59,16 @@ DATABASE_SSL=true
 ```
 
 `DATABASE_SSL=true` makes `backend/app/config.py`'s `database_connect_args()`
-pass SSL settings to `create_async_engine` — asyncpg's own SSL flag. This
-is not the same thing as libpq's `sslmode=` query parameter, which
-`postgresql+asyncpg://` URLs don't parse at all; don't try to put
-`?sslmode=require` on the URL, it's silently ignored.
+pass SSL settings to `create_async_engine` — asyncpg's own SSL flag.
+asyncpg doesn't read libpq's `sslmode=` query parameter, so the URL can't
+carry it to the driver. A connection string pasted as the provider gives
+it works anyway: `foundation_backend.config.normalize_database_url`
+(4.26) turns `postgres://` and `postgresql://` into `postgresql+asyncpg://`,
+drops `sslmode` and `channel_binding` from the query, and takes
+`DATABASE_SSL`'s default from `sslmode` (`require`, `verify-ca`,
+`verify-full` mean on; any other value means off). So
+`postgresql://…?sslmode=require&channel_binding=require` alone connects
+with SSL. An explicit `DATABASE_SSL` still wins; with neither, SSL is off.
 
 ## 3. Certificate verification needs Supabase's own root CA
 

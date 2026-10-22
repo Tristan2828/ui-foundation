@@ -11,20 +11,56 @@ Values already in the environment win over the file's.
 
 import os
 import ssl
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv(usecwd=True))
 
-DATABASE_URL: str = os.environ.get(
-    "DATABASE_URL",
-    "postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation",
+# libpq query params that asyncpg rejects or ignores. sslmode's intent is
+# kept: it becomes DATABASE_SSL's default (normalize_database_url below).
+_LIBPQ_ONLY_PARAMS = {"sslmode", "channel_binding"}
+_SSL_ON_MODES = {"require", "verify-ca", "verify-full"}
+
+
+def normalize_database_url(raw: str) -> tuple[str, bool | None]:
+    """Accept a connection string as a provider or a server's compose file
+    gives it (`postgresql://…?sslmode=require&channel_binding=require`, or a
+    plain `postgres://…`) and turn it into what SQLAlchemy + asyncpg need:
+    the `postgresql+asyncpg://` scheme, minus the libpq-only query params.
+    Returns (url, the SSL its sslmode implies, or None when it doesn't say).
+    An already-normalized URL passes through."""
+    parts = urlsplit(raw.strip())
+    scheme = parts.scheme
+    if scheme in ("postgres", "postgresql"):
+        scheme = "postgresql+asyncpg"
+    implied_ssl: bool | None = None
+    kept: list[tuple[str, str]] = []
+    for key, value in parse_qsl(parts.query, keep_blank_values=True):
+        if key == "sslmode":
+            implied_ssl = value in _SSL_ON_MODES
+        if key not in _LIBPQ_ONLY_PARAMS:
+            kept.append((key, value))
+    url = urlunsplit((scheme, parts.netloc, parts.path, urlencode(kept), parts.fragment))
+    return url, implied_ssl
+
+
+DATABASE_URL, _URL_IMPLIED_SSL = normalize_database_url(
+    os.environ.get(
+        "DATABASE_URL",
+        "postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation",
+    )
 )
 
 # Cloud Postgres support (docs/cloud-postgres.md).
-# asyncpg's own SSL flag — postgresql+asyncpg:// doesn't parse libpq's
-# sslmode= query param, so this can't be folded into DATABASE_URL itself.
-DATABASE_SSL: bool = os.environ.get("DATABASE_SSL", "false").lower() == "true"
+# asyncpg's own SSL flag: postgresql+asyncpg:// doesn't parse libpq's
+# sslmode= query param, so normalize_database_url drops it from the URL and
+# its value lands here instead. An explicit DATABASE_SSL wins over it;
+# neither set means no SSL.
+_DATABASE_SSL_ENV = os.environ.get("DATABASE_SSL")
+DATABASE_SSL: bool = (
+    _DATABASE_SSL_ENV.lower() == "true" if _DATABASE_SSL_ENV is not None else bool(_URL_IMPLIED_SSL)
+)
 
 # Some managed providers (confirmed on Supabase) serve their Postgres TLS
 # cert from a private CA that isn't in the OS trust store, unlike their own

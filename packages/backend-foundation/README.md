@@ -10,7 +10,7 @@ under the same version number, from the same commit.
 
 | Module | What it is |
 |---|---|
-| `config` | The settings it reads from the environment (database, cookies and sessions, sign-in limits, TOTP, error reporting, AI chats' OAuth, the seeded account) and `database_connect_args()` |
+| `config` | The settings it reads from the environment (database, cookies and sessions, sign-in limits, TOTP, error reporting, AI chats' OAuth, the seeded account), `database_connect_args()` and `normalize_database_url()` |
 | `db` | The async engine and the `get_session` dependency |
 | `models` | `User`, `Session`, `LoginFailure`, `RecoveryCode`, `PendingLogin`, `OAuthClient`, `OAuthCode`, `OAuthGrant` (table names `users`, `sessions`, …) |
 | `schemas` | `CamelModel`, `Page`, the sign-in and error-envelope schemas |
@@ -34,7 +34,7 @@ version as its `@tristan2828/ui-foundation`:
 
 ```toml
 dependencies = [
-  "ui-foundation-backend==4.25.0",
+  "ui-foundation-backend==4.26.0",
   ...
 ]
 ```
@@ -59,6 +59,15 @@ made by whoever runs it leaves it out, with `/auth/register` out of its
 `openapi.yaml` (the path is `x-optional`) and `LoginRoute
 registerPath={null}`. Including `router` alone serves sign-in with no way
 to make an account through the API.
+
+`DATABASE_URL` can be a connection string as a provider or a compose
+file gives it: `postgres://` and `postgresql://` become
+`postgresql+asyncpg://`, libpq's `sslmode` and `channel_binding` are
+dropped from the query (asyncpg reads neither), and `sslmode`
+(`require`, `verify-ca`, `verify-full`) sets `DATABASE_SSL`'s default. An
+explicit `DATABASE_SSL` wins; with neither, SSL is off. So the scripts run
+as `python -m foundation_backend.scripts.<name>` against any of those URLs,
+with no wrapper of the app's own.
 
 A setting the package reads is changed at runtime (a test's
 `monkeypatch`) on `foundation_backend.config` or on the module that
