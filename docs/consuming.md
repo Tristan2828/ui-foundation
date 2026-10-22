@@ -150,7 +150,8 @@ already exist, with the same names and columns.
    `app/config.py` calls `load_dotenv()`, then
    `from foundation_backend.config import *`, then keeps only the app's own
    settings (`STATIC_DIR` stays the app's: its default is relative to the
-   app's file). Other imports of the deleted modules
+   app's file). Code that turned a plain `postgresql://` or provider URL
+   into asyncpg's goes too: the package does that from 4.26. Other imports of the deleted modules
    (`from app.totp import …`, `from app.routers.auth import get_current_user`)
    become `foundation_backend.…`.
 4. **`main.py`** includes the package's routers:

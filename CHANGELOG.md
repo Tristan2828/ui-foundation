@@ -5,6 +5,36 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.26.0 — The backend reads a database URL as a provider gives it (#203)
+
+New export, so a minor: **`foundation_backend.config.normalize_database_url(raw)`**,
+which `DATABASE_URL` is now read through. Until now the package read it
+raw, so a plain `postgresql://` URL (a compose file's, or a server's) made
+SQLAlchemy pick psycopg2 and the async engine wouldn't start, and a
+provider's string as copied (`?sslmode=require&channel_binding=require`)
+passed params asyncpg rejects.
+
+- `postgres://` and `postgresql://` become `postgresql+asyncpg://`; an
+  already-normalized URL passes through. Surrounding whitespace from a
+  paste is dropped.
+- libpq's `sslmode` and `channel_binding` are dropped from the query;
+  every other param is kept.
+- `DATABASE_SSL`: an explicit value still wins. Unset, it follows the
+  URL's `sslmode` (`require`, `verify-ca`, `verify-full` mean on; any other
+  value means off), and with no `sslmode` it stays off, as before.
+
+No migration, no contract change, and nothing to do for an app whose URL
+is already `postgresql+asyncpg://` with `DATABASE_SSL` set.
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.26.0. An app that normalized `DATABASE_URL`
+  itself (in its `app/config.py`, before the package's star import) can
+  drop that code and its tests, and any wrapper scripts kept only so the
+  account scripts saw asyncpg's URL: run
+  `python -m foundation_backend.scripts.<name> <email>` from `backend/`
+  directly, and point the deploy docs at that. Then
+  `npm run verify:backend`.
+
 ## 4.25.0 — The backend's auth and security layer as a pip package
 
 New: **`ui-foundation-backend`** on PyPI (import `foundation_backend`,
