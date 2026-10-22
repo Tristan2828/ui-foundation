@@ -25,6 +25,8 @@ playwright/.cache/
 **/.mypy_cache/
 **/.pytest_cache/
 **/*.egg-info/
+# python -m build / pip wheel's working folder (the package's sdist and wheel)
+packages/backend-foundation/build/
 **/backend/certs/
 # Supabase CLI's own local link-cache (project ref, org id) — regenerated
 # by `supabase link`/`supabase projects create`, not project state

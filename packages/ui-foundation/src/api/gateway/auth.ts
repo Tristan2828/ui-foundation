@@ -49,7 +49,8 @@ export async function loginTotp(input: TotpLoginRequest): Promise<TotpStep> {
 }
 
 // Auto-logs in on success — the backend sets the same session cookie
-// /auth/login does (see backend/app/routers/auth.py's _start_session), so
+// /auth/login does (see _start_session in the backend package's
+// foundation_backend/routers/auth.py), so
 // the gateway shape is identical to login's: a User on 200, AppError
 // otherwise (a duplicate email arrives as kind:'validation' with
 // fieldErrors.email, same as any other field error).

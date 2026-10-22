@@ -16,7 +16,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.db import get_session
 from app.main import app
 from app.models import User, Widget, WidgetCategory
-from tests.signed_in import session_cookie
+from foundation_backend.testing.signed_in import session_cookie
 
 
 async def test_list_widgets_is_paginated_and_camel_cased(client: AsyncClient) -> None:

@@ -4,8 +4,15 @@ login, loginTotp, logout, getCurrentUser.
 Session-cookie auth (same-origin deployment, stdlib-only, zero new
 dependency); register reuses login's session-creation path via
 `_start_session`.
+
+Two routers, so an app includes only what it offers: `router` (login, the
+TOTP step, logout, me), which every app with accounts includes, and
+`register_router` (POST /auth/register), which only an app that lets
+people make their own account includes. An app that leaves it out also
+leaves `/auth/register` out of its contract (`x-optional`), and its login
+screen offers no link to it (`LoginRoute registerPath={null}`).
 `get_current_user` is exported for reuse as a router-level
-`dependencies=[Depends(get_current_user)]` on widgets/widget-categories.
+`dependencies=[Depends(get_current_user)]` on an app's own routers.
 """
 
 import hmac
@@ -18,19 +25,19 @@ from fastapi.responses import JSONResponse
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import login_limits, totp
-from app.config import (
+from foundation_backend import login_limits, totp
+from foundation_backend.config import (
     COOKIE_SECURE,
     PENDING_LOGIN_MAX_TRIES,
     PENDING_LOGIN_TTL_SECONDS,
     SESSION_TTL_DAYS,
 )
-from app.db import get_session
-from app.models import PendingLogin, RecoveryCode, User
-from app.models import Session as UserSession
-from app.openapi_responses import RATE_LIMITED, SERVER_ERROR, SIGN_IN_EXPIRED, UNAUTHORIZED, VALIDATION
-from app.schemas import LoginNextStep, LoginRequest, RegisterRequest, TotpLoginRequest, UserOut
-from app.security import (
+from foundation_backend.db import get_session
+from foundation_backend.models import PendingLogin, RecoveryCode, User
+from foundation_backend.models import Session as UserSession
+from foundation_backend.openapi_responses import RATE_LIMITED, SERVER_ERROR, SIGN_IN_EXPIRED, UNAUTHORIZED, VALIDATION
+from foundation_backend.schemas import LoginNextStep, LoginRequest, RegisterRequest, TotpLoginRequest, UserOut
+from foundation_backend.security import (
     DUMMY_PASSWORD_HASH,
     generate_session_token,
     hash_password,
@@ -39,6 +46,7 @@ from app.security import (
 )
 
 router = APIRouter(tags=["auth"])
+register_router = APIRouter(tags=["auth"])
 
 COOKIE_NAME = "session_id"
 # The sign-in waiting for its TOTP code. Sent only to the auth routes.
@@ -127,7 +135,7 @@ async def _start_session(user: User, response: Response, session: AsyncSession) 
     return user
 
 
-@router.post("/auth/register", response_model=UserOut, responses=REGISTER_RESPONSES)
+@register_router.post("/auth/register", response_model=UserOut, responses=REGISTER_RESPONSES)
 async def register(
     body: RegisterRequest,
     response: Response,

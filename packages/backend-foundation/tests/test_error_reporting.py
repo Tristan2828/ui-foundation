@@ -1,4 +1,4 @@
-"""Error reporting (app/error_reporting.py, POST /client-errors, issue #126):
+"""Error reporting (error_reporting.py, POST /client-errors, issue #126):
 a 500 sends one Sentry envelope to the DSN, nothing is sent without one,
 and a report never carries what it mustn't."""
 
@@ -13,14 +13,14 @@ from fastapi import Depends
 from httpx import ASGITransport, AsyncClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import error_reporting
-from app.db import get_session
-from app.main import app
-from app.models import Session as UserSession
-from app.models import User
-from app.routers import client_errors
-from app.routers.auth import get_current_user
-from app.security import hash_token
+from foundation_backend import error_reporting
+from foundation_backend.db import get_session
+from tests.minimal_app import app
+from foundation_backend.models import Session as UserSession
+from foundation_backend.models import User
+from foundation_backend.routers import client_errors
+from foundation_backend.routers.auth import get_current_user
+from foundation_backend.security import hash_token
 
 DSN = "https://publickey@errors.example.com/42"
 TOKEN = "session-token-for-reporting-tests"

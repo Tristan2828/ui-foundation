@@ -1,38 +1,20 @@
-"""Shared `responses=` fragments so every router documents the exact error
-shapes openapi.yaml declares, instead of FastAPI's default auto-docs (which
-don't know about dynamically raised HTTPExceptions at all, and name the
-422 model differently). Constants only — not a layer.
+"""Shared `responses=` fragments: the foundation's
+(`foundation_backend.openapi_responses`), re-exported for this app's
+routers. Constants only — not a layer.
 """
 
-from typing import Any
-
-from app.schemas import HTTPErrorBody, ValidationErrorBody
-
-ResponsesDict = dict[int | str, dict[str, Any]]
-
-UNAUTHORIZED: ResponsesDict = {401: {"model": HTTPErrorBody, "description": "Missing or invalid credentials."}}
-NOT_FOUND: ResponsesDict = {404: {"model": HTTPErrorBody, "description": "Resource not found."}}
-VALIDATION: ResponsesDict = {422: {"model": ValidationErrorBody, "description": "Validation failed."}}
-RATE_LIMITED: ResponsesDict = {
-    429: {
-        "model": HTTPErrorBody,
-        "description": "Too many failed attempts. Try again after Retry-After seconds.",
-        "headers": {
-            "Retry-After": {
-                "description": "Seconds until another attempt is allowed.",
-                "schema": {"type": "integer", "minimum": 1},
-            }
-        },
-    }
-}
-SIGN_IN_EXPIRED: ResponsesDict = {
-    410: {"model": HTTPErrorBody, "description": "The pending sign-in is missing, expired or out of tries."}
-}
-CONFLICT: ResponsesDict = {409: {"model": HTTPErrorBody, "description": "Conflicts with what is already happening."}}
-SERVER_ERROR: ResponsesDict = {500: {"model": HTTPErrorBody, "description": "Unhandled server error."}}
-
-LIST_RESPONSES = {**UNAUTHORIZED, **SERVER_ERROR}
-CREATE_RESPONSES = {**UNAUTHORIZED, **VALIDATION, **SERVER_ERROR}
-GET_RESPONSES = {**UNAUTHORIZED, **NOT_FOUND, **SERVER_ERROR}
-UPDATE_RESPONSES = {**UNAUTHORIZED, **NOT_FOUND, **VALIDATION, **SERVER_ERROR}
-DELETE_RESPONSES = {**UNAUTHORIZED, **NOT_FOUND, **SERVER_ERROR}
+from foundation_backend.openapi_responses import (
+    ResponsesDict as ResponsesDict,
+    UNAUTHORIZED as UNAUTHORIZED,
+    NOT_FOUND as NOT_FOUND,
+    VALIDATION as VALIDATION,
+    RATE_LIMITED as RATE_LIMITED,
+    SIGN_IN_EXPIRED as SIGN_IN_EXPIRED,
+    CONFLICT as CONFLICT,
+    SERVER_ERROR as SERVER_ERROR,
+    LIST_RESPONSES as LIST_RESPONSES,
+    CREATE_RESPONSES as CREATE_RESPONSES,
+    GET_RESPONSES as GET_RESPONSES,
+    UPDATE_RESPONSES as UPDATE_RESPONSES,
+    DELETE_RESPONSES as DELETE_RESPONSES,
+)

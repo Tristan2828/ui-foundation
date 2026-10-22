@@ -1,7 +1,7 @@
 """Set a user's password — the fix APP_ENV=production's startup check asks
 for when the seeded account still has the published default password.
 
-    cd backend && .venv/Scripts/python scripts/set_password.py dev@example.com
+    cd backend && .venv/Scripts/python -m foundation_backend.scripts.set_password dev@example.com
 
 Reads the new password with getpass (never an argument, so it stays out of
 shell history and the process list), or from stdin when stdin isn't a
@@ -17,11 +17,11 @@ import sys
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.db import engine
-from app.models import Session, User
-from app.security import hash_password
+from foundation_backend.db import engine
+from foundation_backend.models import Session, User
+from foundation_backend.security import hash_password
 
-MIN_LENGTH = 8  # matches RegisterRequest.password in app/schemas.py
+MIN_LENGTH = 8  # matches RegisterRequest.password in foundation_backend.schemas
 
 
 def read_password(prompt: str) -> str:
@@ -46,7 +46,7 @@ async def set_password(email: str, password: str) -> bool:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("usage: python scripts/set_password.py <email>", file=sys.stderr)
+        print("usage: python -m foundation_backend.scripts.set_password <email>", file=sys.stderr)
         return 2
     email = sys.argv[1]
     password = read_password(f"New password for {email}: ")

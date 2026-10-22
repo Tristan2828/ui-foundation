@@ -1,46 +1,7 @@
-"""Exception handlers — pin FastAPI's default error bodies to the exact
-shapes openapi.yaml declares (ValidationErrorBody, HTTPErrorBody), so the
-frontend gateway's toAppError (src/api/gateway/errors.ts) needs no changes.
+"""Exception handlers pinned to openapi.yaml's error shapes: the
+foundation's (`foundation_backend.errors`), re-exported.
 """
 
-from fastapi import FastAPI, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
-from app.error_reporting import ErrorContext, report_error
-
-
-def register_error_handlers(app: FastAPI) -> None:
-    @app.exception_handler(RequestValidationError)
-    async def validation_error_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
-        detail = [
-            {"loc": list(error["loc"]), "msg": error["msg"], "type": error["type"]}
-            for error in exc.errors()
-        ]
-        return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"detail": detail})
-
-    @app.exception_handler(StarletteHTTPException)
-    async def http_error_handler(_: Request, exc: StarletteHTTPException) -> JSONResponse:
-        # Headers kept: a 429's Retry-After is part of the contract.
-        return JSONResponse(
-            status_code=exc.status_code, content={"detail": str(exc.detail)}, headers=exc.headers
-        )
-
-    @app.exception_handler(Exception)
-    async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
-        # Every 500 is reported (app/error_reporting.py): only the route's
-        # pattern, the method and the user's id go with it, never anything
-        # else from the request.
-        route = request.scope.get("route")
-        report_error(
-            exc,
-            ErrorContext(
-                source="server",
-                route=getattr(route, "path", None),
-                method=request.method,
-                status=500,
-                user_id=getattr(request.state, "user_id", None),
-            ),
-        )
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+from foundation_backend.errors import (
+    register_error_handlers as register_error_handlers,
+)

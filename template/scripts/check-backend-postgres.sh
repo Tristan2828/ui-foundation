@@ -62,7 +62,7 @@ docker compose version >/dev/null 2>&1 ||
 
 PY="backend/.venv/Scripts/python"
 [ -x "$PY" ] || PY="backend/.venv/bin/python"
-[ -x "$PY" ] || fail "backend/.venv not found — run: cd backend && python -m venv .venv && .venv/*/pip install -e '.[dev]'"
+[ -x "$PY" ] || fail "backend/.venv not found — run: cd backend && python -m venv .venv && .venv/*/pip install -e '.[dev]' (in the ui-foundation repo: .venv/*/pip install -e ../../packages/backend-foundation -e '.[dev]')"
 
 UVICORN_PID=""
 cleanup() {
@@ -228,7 +228,7 @@ step_status=$(curl -s -c "$TOTP_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X POST
 grep -q '"next":"totp"' "$WIDGET_BODY" || fail "the 202 should say next: totp: $(cat "$WIDGET_BODY")"
 grep -q 'pending_login' "$TOTP_JAR" || fail "the 202 set no pending_login cookie"
 grep -q 'session_id' "$TOTP_JAR" && fail "the password alone of a TOTP account started a session"
-TOTP_CODE=$(cd backend && "../$PY" -c "from app import totp; print(totp.hotp(totp._key('$TOTP_SECRET'), totp.current_step()))")
+TOTP_CODE=$(cd backend && "../$PY" -c "from foundation_backend import totp; print(totp.hotp(totp._key('$TOTP_SECRET'), totp.current_step()))")
 code_status=$(curl -s -b "$TOTP_JAR" -c "$TOTP_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X POST http://localhost:8000/api/auth/login/totp \
   -H 'Content-Type: application/json' -d "{\"code\":\"$TOTP_CODE\"}")
 [ "$code_status" = "200" ] || fail "a right TOTP code returned $code_status, expected 200 — got: $(cat "$WIDGET_BODY")"

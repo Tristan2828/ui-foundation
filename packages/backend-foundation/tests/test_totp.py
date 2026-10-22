@@ -1,4 +1,4 @@
-"""The TOTP second step (app/totp.py, POST /auth/login/totp, issue #125)."""
+"""The TOTP second step (totp.py, POST /auth/login/totp, issue #125)."""
 
 import hashlib
 from collections.abc import AsyncGenerator
@@ -10,10 +10,10 @@ from httpx import ASGITransport, AsyncClient
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import totp
-from app.db import get_session
-from app.main import app
-from app.models import LoginFailure, PendingLogin, RecoveryCode, User
+from foundation_backend import totp
+from foundation_backend.db import get_session
+from tests.minimal_app import app
+from foundation_backend.models import LoginFailure, PendingLogin, RecoveryCode, User
 
 EMAIL = "totp@example.com"
 PASSWORD = "correct-horse-battery"
@@ -199,8 +199,8 @@ async def test_no_pending_sign_in_is_a_410(client: AsyncClient) -> None:
 async def test_wrong_codes_reach_the_account_limit(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("app.login_limits.LOGIN_MAX_FAILURES_PER_ACCOUNT", 2)
-    monkeypatch.setattr("app.login_limits.LOGIN_MAX_FAILURES_PER_IP", 100)
+    monkeypatch.setattr("foundation_backend.login_limits.LOGIN_MAX_FAILURES_PER_ACCOUNT", 2)
+    monkeypatch.setattr("foundation_backend.login_limits.LOGIN_MAX_FAILURES_PER_IP", 100)
     await password_step(client)
     wrong = "000000" if code_at(0) != "000000" else "111111"
     assert await send_code(client, wrong) == 401
@@ -215,8 +215,8 @@ async def test_wrong_codes_reach_the_account_limit(
 async def test_a_right_password_alone_never_resets_the_count_for_codes(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("app.login_limits.LOGIN_MAX_FAILURES_PER_ACCOUNT", 3)
-    monkeypatch.setattr("app.login_limits.LOGIN_MAX_FAILURES_PER_IP", 100)
+    monkeypatch.setattr("foundation_backend.login_limits.LOGIN_MAX_FAILURES_PER_ACCOUNT", 3)
+    monkeypatch.setattr("foundation_backend.login_limits.LOGIN_MAX_FAILURES_PER_IP", 100)
     wrong = "000000" if code_at(0) != "000000" else "111111"
     await password_step(client)
     assert await send_code(client, wrong) == 401

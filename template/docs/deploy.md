@@ -1,7 +1,7 @@
 # Deploying
 
 The shape this foundation is built for: one process. FastAPI serves the API
-under `/api` and the built SPA at `/` (`backend/app/spa.py`), so the app is
+under `/api` and the built SPA at `/` (`foundation_backend.spa`, from the backend's `ui-foundation-backend` package), so the app is
 same-origin, needs no CORS, and uses a plain session cookie. Database setup
 is in [`cloud-postgres.md`](cloud-postgres.md) (hosted) or
 [`home-lab-postgres.md`](home-lab-postgres.md) (a server you run).
@@ -9,7 +9,7 @@ is in [`cloud-postgres.md`](cloud-postgres.md) (hosted) or
 ## Checklist
 
 Do these in order. Steps 1 and 3–5 are enforced: with `APP_ENV=production`
-the backend refuses to start until they're done (`backend/app/deploy_checks.py`).
+the backend refuses to start until they're done (`foundation_backend.deploy_checks`).
 
 1. **Build the frontend with `npm run build:real`** — never plain
    `npm run build`. `VITE_API` is baked in at build time (`src/main.tsx`),
@@ -27,7 +27,7 @@ the backend refuses to start until they're done (`backend/app/deploy_checks.py`)
    runs — migration `0002` seeds that account once, at migration time.
 3. **Change any published default password.** If the seed account was
    created with the default (`dev-password-123`, printed in the README):
-   `cd backend && .venv/Scripts/python scripts/set_password.py <email>`
+   `cd backend && .venv/Scripts/python -m foundation_backend.scripts.set_password <email>`
    (prompts twice; or pipe the password in twice). This also ends that
    account's sessions.
 4. **Serve over HTTPS and set `COOKIE_SECURE=true`**, so the session cookie
@@ -101,7 +101,7 @@ reporting" below), so a report and the sidebar name the same build.
 ## Sign-in limits
 
 `POST /api/auth/login` counts failed attempts in the database
-(`login_failures`, `backend/app/login_limits.py`), so the counts survive a
+(`login_failures`, `foundation_backend.login_limits`), so the counts survive a
 restart and hold across worker processes. Over either limit it answers
 **429** with `Retry-After` (seconds), and the login screen says so and holds
 its button until then. The check runs before the password is checked, so an
@@ -143,12 +143,12 @@ the email, never the address.
 ## Two-step sign-in (TOTP)
 
 An account can require a code from an authenticator app after its password
-(RFC 6238, any authenticator app; `backend/app/totp.py`). It's per account,
+(RFC 6238, any authenticator app; `foundation_backend.totp`). It's per account,
 off until turned on, and these apps create accounts with a script, so it's
 turned on with one too:
 
 ```bash
-cd backend && .venv/Scripts/python scripts/enable_totp.py person@example.com
+cd backend && .venv/Scripts/python -m foundation_backend.scripts.enable_totp person@example.com
 ```
 
 It prints the `otpauth://` URI (paste it into a QR code generator, or into
@@ -167,7 +167,7 @@ also count toward the sign-in limits above, and a right password alone
 never clears them, so a known password doesn't buy more guesses at codes.
 
 **Lost the phone and the recovery codes:** the way back in is
-`scripts/disable_totp.py <email>`, run by whoever has the server. The
+`python -m foundation_backend.scripts.disable_totp <email>`, run by whoever has the server. The
 password alone signs in afterwards.
 
 **Encrypt database backups.** A TOTP secret has to be readable to check a
@@ -350,7 +350,7 @@ answers 404 and nothing else changes. To turn it on:
 ## Error reporting
 
 Every 500 the backend answers, and every failure the browser sees, goes
-through one function, `report_error` (`backend/app/error_reporting.py`).
+through one function, `report_error` (`foundation_backend.error_reporting`).
 It always logs. With **`ERROR_REPORTING_DSN`** set, it also sends the error to
 a Sentry-compatible server, which groups them, counts them and emails you.
 Unset, the default, errors are logged and nothing is sent.
@@ -390,7 +390,7 @@ values, query strings. The code building a report is never handed the
 request, only those fields. Messages and stacks are scrubbed on top of
 that: a query string or fragment in any URL is cut, and so is a database
 error's SQL and bound parameters (which hold row values). Tests check
-this: `backend/tests/test_error_reporting.py` sends a request with a body,
+this: the backend package's `tests/test_error_reporting.py` sends a request with a body,
 a cookie, a header and a query string and looks for each in the envelope.
 An error's own message can still say something about a record ("no widget
 named …"), since it's the message, so keep personal data out of exception

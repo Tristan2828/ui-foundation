@@ -3,8 +3,8 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
-from app.routers import environment
+from tests.minimal_app import app
+from foundation_backend.routers import environment
 
 
 @pytest.fixture

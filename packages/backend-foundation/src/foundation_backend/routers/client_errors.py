@@ -1,5 +1,5 @@
 """POST /client-errors (openapi.yaml operationId reportClientError): a
-failure the browser saw, forwarded to error reporting (app/error_reporting.py).
+failure the browser saw, forwarded to error reporting (error_reporting.py).
 
 Needs a session, so the public can't post into it; the user is the
 session's, never something the page says. Duplicates (the same error from
@@ -15,13 +15,13 @@ from collections import deque
 
 from fastapi import APIRouter, Cookie, Depends
 
-from app import error_reporting
-from app.config import CLIENT_ERRORS_PER_MINUTE
-from app.models import User
-from app.openapi_responses import SERVER_ERROR, UNAUTHORIZED, VALIDATION
-from app.routers.auth import get_current_user
-from app.schemas import ClientErrorReport
-from app.security import hash_token
+from foundation_backend import error_reporting
+from foundation_backend.config import CLIENT_ERRORS_PER_MINUTE
+from foundation_backend.models import User
+from foundation_backend.openapi_responses import SERVER_ERROR, UNAUTHORIZED, VALIDATION
+from foundation_backend.routers.auth import get_current_user
+from foundation_backend.schemas import ClientErrorReport
+from foundation_backend.security import hash_token
 
 router = APIRouter(tags=["errors"])
 

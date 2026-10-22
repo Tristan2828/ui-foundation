@@ -1,6 +1,6 @@
-"""Login/logout/me against the real get_current_user dependency — not the
-fixed-user override conftest.py's `client` fixture uses for test_widgets.py,
-which tests the widgets domain, not auth itself.
+"""Register/login/logout/me against the real get_current_user dependency,
+signing in through the routes themselves rather than conftest.py's
+`client` fixture.
 """
 
 from collections.abc import AsyncGenerator
@@ -8,18 +8,20 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
+from fastapi import APIRouter
+from fastapi.routing import APIRoute
 from httpx import ASGITransport, AsyncClient
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.db import get_session
-from app.main import app
-from app.models import Session as UserSession
-from app.models import User
-from app import security
-from app.routers import auth as auth_router
-from app.schemas import PASSWORD_MAX_LENGTH
-from app.security import generate_session_token, hash_password, hash_token
+from foundation_backend.db import get_session
+from tests.minimal_app import app
+from foundation_backend.models import Session as UserSession
+from foundation_backend.models import User
+from foundation_backend import security
+from foundation_backend.routers import auth as auth_router
+from foundation_backend.schemas import PASSWORD_MAX_LENGTH
+from foundation_backend.security import generate_session_token, hash_password, hash_token
 
 TEST_EMAIL = "auth-test@example.com"
 TEST_PASSWORD = "correct-horse-battery"
@@ -91,6 +93,16 @@ async def register_client(session: AsyncSession) -> AsyncGenerator[AsyncClient, 
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides.clear()
+
+
+def test_register_is_a_router_of_its_own() -> None:
+    # An app with no self-service accounts includes `router` alone and
+    # serves no /auth/register.
+    def paths(router: APIRouter) -> set[str]:
+        return {route.path for route in router.routes if isinstance(route, APIRoute)}
+
+    assert paths(auth_router.router) == {"/auth/login", "/auth/login/totp", "/auth/logout", "/auth/me"}
+    assert paths(auth_router.register_router) == {"/auth/register"}
 
 
 async def test_register_creates_user_and_logs_in(register_client: AsyncClient) -> None:

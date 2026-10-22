@@ -5,6 +5,50 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.25.0 — The backend's auth and security layer as a pip package
+
+New: **`ui-foundation-backend`** on PyPI (import `foundation_backend`,
+`packages/backend-foundation/`), released with the npm package under the
+same version. It holds what every app's backend copied from the template
+and never changed on purpose: settings, the engine and session
+dependency, the account tables, the sign-in and error schemas, password
+and token hashing, TOTP, sign-in limits, error reporting, the error
+handlers, the production start-up checks, the SPA mount, the `/auth/*`,
+`/environment`, `/client-errors` and OAuth routers, the
+`set_password`/`enable_totp`/`disable_totp` scripts and the `signed_in`
+test helper. A fix there now reaches an app by bumping one pin
+([`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) "backend-foundation").
+
+The code is the template's, moved, not rewritten. The one change of
+shape: **`foundation_backend.routers.auth` has two routers**, `router`
+(login, the TOTP step, logout, me) and `register_router`
+(`POST /auth/register`), so an app without self-service accounts includes
+`router` alone instead of deleting a route from a copied file.
+
+Nothing changes on the wire or in the database: no migration, and the
+npm package's code is unchanged (its conventions say where the backend
+layer lives; run `npx ui-foundation sync`).
+
+- **New apps** get it automatically: `create-app.sh` pins
+  `ui-foundation-backend==<version>` in `backend/pyproject.toml`, and the
+  template's `app/config.py`, `db.py`, `models.py`, `schemas.py`,
+  `openapi_responses.py`, `security.py`, `errors.py` and `spa.py`
+  re-export the package, so `from app.models import User` still works.
+  The scripts run as `python -m foundation_backend.scripts.<name> <email>`
+  from `backend/`.
+- **An existing app** keeps working as it is: its copied files are its
+  own. To take the package and its future fixes, follow
+  [`docs/consuming.md`](docs/consuming.md) "Adopting the backend package
+  (4.25)": pin it, delete the copies it owns, re-export, include its
+  routers (`register_router` only if the app has `/auth/register`), drop
+  the duplicated tests, and point the deploy docs at the `-m` scripts.
+  No migration: the tables are the same.
+- **Template backend:** its project is renamed `template-backend`
+  (`ui-foundation-backend` is now the published name). A test that
+  changes one of the package's settings patches `foundation_backend.config`,
+  not `app.config` (the template's `tests/test_mcp.py` does this for
+  `MCP_*`, which the OAuth router reads).
+
 ## 4.24.0 — Heading levels in written text: bands, not bars (#184)
 
 A change of look, nothing to do beyond the upgrade: `<Markdown>` and the
