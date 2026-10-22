@@ -21,14 +21,14 @@ from fastapi import HTTPException, Request
 from sqlmodel import col, delete, or_, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.config import (
+from foundation_backend.config import (
     CLIENT_IP_HEADER,
     LOGIN_ACCOUNT_WINDOW_SECONDS,
     LOGIN_IP_WINDOW_SECONDS,
     LOGIN_MAX_FAILURES_PER_ACCOUNT,
     LOGIN_MAX_FAILURES_PER_IP,
 )
-from app.models import LoginFailure
+from foundation_backend.models import LoginFailure
 
 IP = "ip"
 ACCOUNT = "account"

@@ -1,5 +1,5 @@
-"""SPA client-route fallback (app/spa.py) — mounted on a throwaway app over
-a temp directory, since app.main only mounts dist/ if it exists at import.
+"""SPA client-route fallback (spa.py) — mounted on a throwaway app over
+a temp directory, as an app's main.py mounts its dist/.
 """
 
 from collections.abc import AsyncGenerator
@@ -10,7 +10,7 @@ import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from app.spa import SPAStaticFiles
+from foundation_backend.spa import SPAStaticFiles
 
 
 @pytest_asyncio.fixture

@@ -33,7 +33,7 @@ from app.openapi_responses import (
     LIST_RESPONSES,
     UPDATE_RESPONSES,
 )
-from app.routers.auth import get_current_user
+from foundation_backend.routers.auth import get_current_user
 from app.schemas import Page, WidgetCreate, WidgetOut, WidgetUpdate
 
 router = APIRouter(tags=["widgets"], dependencies=[Depends(get_current_user)])

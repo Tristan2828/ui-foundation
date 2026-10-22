@@ -33,11 +33,11 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import config, rate_window
-from app.db import get_session
-from app.models import OAuthClient, OAuthCode, OAuthGrant, User
-from app.routers.auth import get_current_user
-from app.security import generate_session_token, hash_token
+from foundation_backend import config, rate_window
+from foundation_backend.db import get_session
+from foundation_backend.models import OAuthClient, OAuthCode, OAuthGrant, User
+from foundation_backend.routers.auth import get_current_user
+from foundation_backend.security import generate_session_token, hash_token
 
 CODE_TTL_SECONDS = 600
 SCOPE = "mcp"

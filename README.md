@@ -14,6 +14,10 @@ agents.
   gateway's error seam, design tokens, lint rules, Playwright suites, and
   the conventions an agent follows (synced into each app). Apps get fixes
   by bumping its version.
+- **[`ui-foundation-backend`](packages/backend-foundation)**, a pip package
+  with the backend's auth and security layer: sessions, sign-in limits,
+  TOTP, error reporting, the production start-up checks. Same version as
+  the npm package, bumped with it.
 - **[The template](template)**, a working app with one demo entity and a
   FastAPI reference backend. It is what every new app starts as, and is the
   app's own from then on.

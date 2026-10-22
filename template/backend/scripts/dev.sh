@@ -23,7 +23,16 @@ fi
 PY=".venv/Scripts/python"
 if [ ! -x "$PY" ]; then PY=".venv/bin/python"; fi
 
-"$PY" -m pip install -e ".[dev]" -q
+# In the ui-foundation repo, its backend package (ui-foundation-backend) is
+# installed editable from packages/backend-foundation in the same pip call,
+# never from PyPI. In an app that folder isn't there, and the package comes
+# from PyPI at the pin in pyproject.toml.
+FOUNDATION_BACKEND="../../packages/backend-foundation"
+if [ -f "$FOUNDATION_BACKEND/pyproject.toml" ]; then
+  "$PY" -m pip install -e "$FOUNDATION_BACKEND" -e ".[dev]" -q
+else
+  "$PY" -m pip install -e ".[dev]" -q
+fi
 
 DB_HOST=$("$PY" -c "from sqlalchemy.engine import make_url; from app.config import DATABASE_URL; print(make_url(DATABASE_URL).host or '')")
 case "$DB_HOST" in

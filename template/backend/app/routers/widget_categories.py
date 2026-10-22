@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.db import get_session
 from app.models import WidgetCategory
 from app.openapi_responses import SERVER_ERROR, UNAUTHORIZED
-from app.routers.auth import get_current_user
+from foundation_backend.routers.auth import get_current_user
 from app.schemas import WidgetCategoryOut
 
 router = APIRouter(tags=["widget-categories"], dependencies=[Depends(get_current_user)])

@@ -40,8 +40,8 @@ export function resolveErrorReporting(option: boolean | ErrorReportingOptions | 
 }
 
 // A query string or fragment in a URL or path, up to a stack frame's
-// trailing :line:col (the backend's scrub, in app/error_reporting.py, is
-// the same rule).
+// trailing :line:col (the backend's scrub, in
+// foundation_backend/error_reporting.py, is the same rule).
 const URL_QUERY =
   /(\b[a-z][a-z0-9+.-]*:\/\/[^\s?#"'()]+|(?<![\w/])\/[^\s?#"'()]*)[?#][^\s"'()]*?(?=(?::\d+){1,2}(?=[\s"'()]|$)|[\s"'()]|$)/gi;
 

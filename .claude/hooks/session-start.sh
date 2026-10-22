@@ -30,12 +30,15 @@ if command -v python3 >/dev/null 2>&1; then
   log "template/backend/.venv"
   (
     cd template/backend
+    # Both editable in one call: the template backend depends on
+    # ui-foundation-backend unpinned, and only this way does it resolve to
+    # packages/backend-foundation rather than PyPI.
     if command -v uv >/dev/null 2>&1; then
       [ -x .venv/bin/python ] || uv venv -q .venv
-      uv pip install -q --python .venv/bin/python -e ".[dev]" >&2
+      uv pip install -q --python .venv/bin/python -e ../../packages/backend-foundation -e ".[dev]" >&2
     else
       [ -x .venv/bin/python ] || python3 -m venv .venv
-      .venv/bin/python -m pip install -q -e ".[dev]" >&2
+      .venv/bin/python -m pip install -q -e ../../packages/backend-foundation -e ".[dev]" >&2
     fi
   )
 fi

@@ -605,10 +605,11 @@ asyncio is a `MissingGreenlet` and a 500.
 - **After a commit, read by a `user_id` saved before it, never by the
   `User`.** Take `user_id = user.id` at the top of the handler and use that
   from then on; or `await session.refresh(user)` first, as `_start_session`
-  in `routers/auth.py` does to return it.
+  in `foundation_backend/routers/auth.py` does to return it.
 - **Test signed in for real.** The backend's `client` fixture
   (`tests/conftest.py`) holds a `sessions` row and sends its cookie,
-  so the real `get_current_user` runs (`tests/signed_in.py`). Never stand
+  so the real `get_current_user` runs (`session_cookie` from
+  `foundation_backend.testing.signed_in`). Never stand
   a `User(...)` in for `get_current_user` in an override: a detached user
   never expires, so the test passes and the route fails live.
 

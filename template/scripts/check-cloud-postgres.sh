@@ -34,7 +34,7 @@ set_cloud_env() {
 
 PY="backend/.venv/Scripts/python"
 [ -x "$PY" ] || PY="backend/.venv/bin/python"
-[ -x "$PY" ] || fail "backend/.venv not found — run: cd backend && python -m venv .venv && .venv/*/pip install -e '.[dev]'"
+[ -x "$PY" ] || fail "backend/.venv not found — run: cd backend && python -m venv .venv && .venv/*/pip install -e '.[dev]' (in the ui-foundation repo: .venv/*/pip install -e ../../packages/backend-foundation -e '.[dev]')"
 
 echo "check-cloud-postgres: alembic upgrade head against CLOUD_DATABASE_URL"
 (set_cloud_env && cd backend && "../$PY" -m alembic upgrade head) ||

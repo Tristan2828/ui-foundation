@@ -1,4 +1,4 @@
-"""app/deploy_checks.py — what APP_ENV=production refuses to start with."""
+"""deploy_checks.py — what APP_ENV=production refuses to start with."""
 
 import json
 from pathlib import Path
@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.config import DEFAULT_SEED_EMAIL, DEFAULT_SEED_PASSWORD
-from app.deploy_checks import production_problems
-from app.models import User
-from app.security import hash_password
+from foundation_backend.config import DEFAULT_SEED_EMAIL, DEFAULT_SEED_PASSWORD
+from foundation_backend.deploy_checks import production_problems
+from foundation_backend.models import User
+from foundation_backend.security import hash_password
 
 
 async def test_safe_deployment_has_no_problems(session: AsyncSession) -> None:

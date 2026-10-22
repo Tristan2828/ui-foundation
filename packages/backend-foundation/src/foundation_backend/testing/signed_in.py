@@ -13,9 +13,9 @@ from datetime import datetime, timedelta, timezone
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Session as UserSession
-from app.routers.auth import COOKIE_NAME
-from app.security import generate_session_token, hash_token
+from foundation_backend.models import Session as UserSession
+from foundation_backend.routers.auth import COOKIE_NAME
+from foundation_backend.security import generate_session_token, hash_token
 
 
 async def session_cookie(session: AsyncSession, user_id: int) -> dict[str, str]:

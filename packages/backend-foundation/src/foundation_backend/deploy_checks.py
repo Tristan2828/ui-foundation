@@ -12,9 +12,9 @@ from fastapi.concurrency import run_in_threadpool
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.config import DEFAULT_SEED_EMAIL, DEFAULT_SEED_PASSWORD, SEED_USER_EMAIL
-from app.models import User
-from app.security import verify_password
+from foundation_backend.config import DEFAULT_SEED_EMAIL, DEFAULT_SEED_PASSWORD, SEED_USER_EMAIL
+from foundation_backend.models import User
+from foundation_backend.security import verify_password
 
 
 async def production_problems(
@@ -71,7 +71,7 @@ async def production_problems(
         ):
             problems.append(
                 f"User {email} still accepts the published default password. Change it "
-                "with backend/scripts/set_password.py before serving this deployment."
+                "with `python -m foundation_backend.scripts.set_password` before serving this deployment."
             )
 
     return problems

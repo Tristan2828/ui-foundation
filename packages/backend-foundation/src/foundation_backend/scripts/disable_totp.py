@@ -1,10 +1,10 @@
 """Turn off the TOTP second step for an account: the way back in when the
 phone and the recovery codes are both lost (docs/deploy.md "Two-step sign-in").
 
-    cd backend && .venv/Scripts/python scripts/disable_totp.py person@example.com
+    cd backend && .venv/Scripts/python -m foundation_backend.scripts.disable_totp person@example.com
 
 Clears the secret, deletes the recovery codes and any sign-in waiting for a
-code. The password alone signs in afterwards; run enable_totp.py to turn it
+code. The password alone signs in afterwards; run foundation_backend.scripts.enable_totp to turn it
 on again. Uses DATABASE_URL etc. from .env, same as the app.
 """
 
@@ -14,8 +14,8 @@ import sys
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.db import engine
-from app.models import PendingLogin, RecoveryCode, User
+from foundation_backend.db import engine
+from foundation_backend.models import PendingLogin, RecoveryCode, User
 
 
 async def disable(email: str) -> bool:
@@ -36,7 +36,7 @@ async def disable(email: str) -> bool:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("usage: python scripts/disable_totp.py <email>", file=sys.stderr)
+        print("usage: python -m foundation_backend.scripts.disable_totp <email>", file=sys.stderr)
         return 2
     if not asyncio.run(disable(sys.argv[1])):
         print(f"No user with email {sys.argv[1]}.", file=sys.stderr)

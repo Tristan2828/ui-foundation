@@ -1,0 +1,57 @@
+[project]
+name = "ui-foundation-backend"
+# The release workflow writes the release's version here, the same as
+# @tristan2828/ui-foundation's (packages/ui-foundation/package.json).
+version = "4.25.0"
+description = "The auth and security layer shared by FastAPI + SQLModel backends built on ui-foundation: sessions, sign-in limits, TOTP, error reporting, deploy checks, AI chats' OAuth."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+# Exactly the template backend's versions (template/backend/pyproject.toml),
+# so an app that pins the same ones resolves to one set.
+dependencies = [
+  "fastapi==0.141.1",
+  "sqlmodel==0.0.42",
+  "pydantic==2.13.5",
+  "python-dotenv==1.2.3",
+  "email-validator==2.3.0",
+]
+
+[project.urls]
+Repository = "https://github.com/Tristan2828/ui-foundation"
+Changelog = "https://github.com/Tristan2828/ui-foundation/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+  "mypy==2.3.1",
+  "pytest==9.1.1",
+  "pytest-asyncio==1.4.0",
+  "httpx==0.28.1",
+  "aiosqlite==0.22.1",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+# Reference copies for an app to take, not modules of this package
+# (src/foundation_backend/migrations/README.md).
+exclude = ["src/foundation_backend/migrations/"]
+
+[[tool.mypy.overrides]]
+module = "alembic.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+foundation_backend = ["py.typed", "migrations/*.py", "migrations/README.md"]

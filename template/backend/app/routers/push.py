@@ -18,7 +18,7 @@ from app import config, push
 from app.db import get_session
 from app.models import PushSubscription, User
 from app.openapi_responses import NOT_FOUND, SERVER_ERROR, UNAUTHORIZED, VALIDATION
-from app.routers.auth import get_current_user
+from foundation_backend.routers.auth import get_current_user
 from app.schemas import PushPublicKeyOut, PushSubscriptionIn, PushSubscriptionOut
 
 

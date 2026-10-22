@@ -1,4 +1,4 @@
-"""Failed sign-in limits (app/login_limits.py, issue #124): per client IP
+"""Failed sign-in limits (login_limits.py, issue #124): per client IP
 and per account, counted in login_failures, checked before the password.
 
 The test account's hash uses 1 PBKDF2 iteration (verify_password reads the
@@ -17,10 +17,10 @@ from httpx import ASGITransport, AsyncClient
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import login_limits
-from app.db import get_session
-from app.main import app
-from app.models import LoginFailure, User
+from foundation_backend import login_limits
+from foundation_backend.db import get_session
+from tests.minimal_app import app
+from foundation_backend.models import LoginFailure, User
 
 EMAIL = "limits@example.com"
 PASSWORD = "correct-horse-battery"
@@ -97,7 +97,7 @@ async def test_the_limit_is_checked_before_the_password(
     for _ in range(10):
         await attempt(client)
     calls: list[str] = []
-    monkeypatch.setattr("app.routers.auth.verify_password", lambda password, stored: calls.append(stored) or False)
+    monkeypatch.setattr("foundation_backend.routers.auth.verify_password", lambda password, stored: calls.append(stored) or False)
     assert await attempt(client) == 429
     assert calls == []
 

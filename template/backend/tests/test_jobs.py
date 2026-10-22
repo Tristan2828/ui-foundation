@@ -19,10 +19,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app import jobs
 from app.db import get_session
-from app.error_reporting import ErrorContext
+from foundation_backend.error_reporting import ErrorContext
 from app.main import app
 from app.models import JobRunRecord, User
-from tests.signed_in import session_cookie
+from foundation_backend.testing.signed_in import session_cookie
 from app.routers.jobs import get_jobs_engine
 
 
@@ -276,7 +276,7 @@ async def api(engine: AsyncEngine) -> AsyncGenerator[AsyncClient, None]:
         async with AsyncSession(engine) as session:
             yield session
 
-    # Signed in for real (tests/signed_in.py), not a stand-in user.
+    # Signed in for real (foundation_backend.testing.signed_in), not a stand-in user.
     async with AsyncSession(engine) as session:
         session.add(User(id=1, email="test@example.com", name="Test User", password_hash="unused"))
         await session.commit()

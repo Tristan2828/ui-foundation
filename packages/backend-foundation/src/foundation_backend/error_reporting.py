@@ -1,6 +1,6 @@
 """Error reporting: one seam, `report_error`, with one built-in destination.
 
-Called by the unhandled-exception handler (every 500, app/errors.py), by
+Called by the unhandled-exception handler (every 500, errors.py), by
 POST /client-errors (failures the browser saw), and usable by app code.
 It always logs. With ERROR_REPORTING_DSN set it also sends the error, as a
 Sentry envelope over plain HTTP (stdlib only, no SDK), to Sentry itself or
@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from urllib.parse import urlsplit
 
-from app.config import APP_ENV, ERROR_REPORTING_DSN, RELEASE
+from foundation_backend.config import APP_ENV, ERROR_REPORTING_DSN, RELEASE
 
 logger = logging.getLogger("app.errors")
 

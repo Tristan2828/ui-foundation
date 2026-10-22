@@ -36,7 +36,8 @@ jobs:
           retention-days: 7
 
   verify-backend:
-    # The reference backend's gate: mypy, pytest (SQLite) and a diff of
+    # The backend package's gate (packages/backend-foundation: mypy, pytest),
+    # then the reference backend's: mypy, pytest (SQLite) and a diff of
     # FastAPI's generated OpenAPI document against template/openapi.yaml.
     # Then the migrations against a real Postgres and the COMMENT ON check
     # (scripts/check_db_comments.py), which SQLite can't run. The full
@@ -68,8 +69,14 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: template/backend/pyproject.toml
-      - run: pip install -e ".[dev]"
+          cache-dependency-path: |
+            packages/backend-foundation/pyproject.toml
+            template/backend/pyproject.toml
+      # Both editable in one pip call: the template depends on
+      # ui-foundation-backend unpinned, and only this way does it resolve to
+      # this commit's packages/backend-foundation rather than PyPI.
+      - run: pip install -e ../../packages/backend-foundation -e ".[dev]"
+      - run: bash ../../packages/backend-foundation/scripts/verify.sh
       - run: bash scripts/verify.sh
       - name: Migrations and COMMENT ON check against Postgres
         env:

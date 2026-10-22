@@ -8,7 +8,11 @@ React Router v7, TanStack Query. The shared layer — primitives, the
 `DataTable`/`EntityView`/`EntityForm` composites, the app shell, auth,
 the gateway error seam, design tokens, lint rules — is the npm package
 `@tristan2828/ui-foundation`, updated by bumping its version. Everything in
-`src/` is this app's own.
+`src/` is this app's own. The backend's auth and security layer (sign-in,
+sessions, limits, TOTP, error reporting, deploy checks) is the pip package
+`ui-foundation-backend` (`foundation_backend`), pinned in
+`backend/pyproject.toml` to the same version; never copy one of its
+modules into `backend/app/`.
 
 Contract-first: `openapi.yaml` is the source of truth and is owned by this
 app. In development MSW serves the contract, so there may be no backend at

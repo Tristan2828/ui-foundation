@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.db import get_session
 from app.main import app
 from app.models import User, Widget, WidgetCategory, WidgetStatus
-from tests.signed_in import session_cookie
+from foundation_backend.testing.signed_in import session_cookie
 
 
 @pytest_asyncio.fixture
@@ -67,7 +67,7 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
 async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Signed in as user 1 for real: a session row and its cookie, so the real
     `get_current_user` loads the user in the request's own database session,
-    as it does live (`tests/signed_in.py` says why a stand-in user isn't)."""
+    as it does live (`foundation_backend.testing.signed_in` says why a stand-in user isn't)."""
 
     async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
