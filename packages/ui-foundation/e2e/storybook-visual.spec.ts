@@ -74,6 +74,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
+  // One image on a record: every look of ImageField, and on a form.
+  { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
+  { id: 'app-imagefield--default', mustShow: 'Edit plant' },
+  // Images in written text, and the editor that uploads them (its Image button).
+  { id: 'app-markdown--images', mustShow: 'A view of the yard:' },
+  { id: 'app-richtexteditor--image-uploads', mustShow: 'Paste or drop a photo here.' },
   // Allow reminders in every state, on a card (#167).
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
@@ -145,6 +151,9 @@ const GLYPH_STORIES: {
   },
   // Category glyphs in DataTable rows at every density.
   { id: 'patterns-density--data-tables' },
+  // ImageField's buttons and its empty tile, and the toolbar's Image button.
+  { id: 'app-imagefield--all-looks' },
+  { id: 'app-richtexteditor--image-uploads' },
   // The rich-text toolbar's icons (the read-only editor's are disabled:
   // a disabled control is exempt, and its opacity isn't measured here).
   { id: 'app-richtexteditor--features' },

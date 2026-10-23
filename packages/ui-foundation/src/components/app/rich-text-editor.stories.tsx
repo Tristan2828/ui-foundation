@@ -1,11 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useId, useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
+import { Toaster } from '@/components/ui/sonner'
+import type { ImageUpload } from '@/lib/image-file'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewSection } from './entity-view'
 import { Markdown } from './markdown'
 import { RichTextEditor } from './rich-text-editor'
 import { MARKDOWN_FIXTURES } from './rich-text-editor.fixtures'
+import { delayedUpload, failingUpload, SAVED_PHOTO } from './image-upload.fixtures'
 
 // Every element the editor styles, on screen at once, so axe checks each
 // one's contrast and the token check each colour, in both themes.
@@ -54,6 +57,8 @@ height = 72cm
 
 ---
 
+![A desk frame, assembled](${SAVED_PHOTO})
+
 <b>Raw HTML shows as text</b>
 `
 
@@ -71,12 +76,18 @@ function Labelled({
   placeholder,
   maxLength,
   readOnly,
+  toolbar,
+  upload,
+  imageMaxSize,
 }: {
   label: string
   markdown: string
   placeholder?: string
   maxLength?: number
   readOnly?: boolean
+  toolbar?: boolean | 'floating'
+  upload?: ImageUpload
+  imageMaxSize?: number
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
@@ -94,6 +105,9 @@ function Labelled({
         placeholder={placeholder}
         maxLength={maxLength}
         readOnly={readOnly}
+        toolbar={toolbar}
+        upload={upload}
+        imageMaxSize={imageMaxSize}
       />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
@@ -143,6 +157,25 @@ export const Features: StoryObj<typeof RichTextEditor> = {
       <Labelled label="table" markdown={'| Part | Count |\n| --- | --- |\n| Top | 1 |\n| Leg | 4 |\n\nAfter the table.\n'} />
       <Labelled label="callout" markdown={'> [!NOTE]\n> Measure twice.\n\nAfter the callout.\n'} />
       <Labelled label="readOnly" markdown={'Saving, so nothing can change.\n'} readOnly />
+    </div>
+  ),
+}
+
+// Images uploaded into the text, each editor with a fake upload: one
+// that stores the file after 1.2s (paste, drop or the toolbar's Image
+// button; a placeholder shows meanwhile), one whose uploads all fail, one
+// that takes files up to 1 MB, one with the floating toolbar only (paste
+// and drop, no button), and one without `upload`, which handles no files.
+// A refusal is a toast (e2e/rich-text-editor.spec.ts "image upload").
+export const ImageUploads: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-6">
+      <Labelled label="uploads" markdown={'Paste or drop a photo here.\n'} upload={delayedUpload()} />
+      <Labelled label="failing" markdown={'Every upload fails here.\n'} upload={failingUpload()} />
+      <Labelled label="sizeLimit" markdown={'Images up to 1 MB.\n'} upload={delayedUpload(300)} imageMaxSize={1024 * 1024} />
+      <Labelled label="floating" markdown={'No bar above, paste or drop still upload.\n'} upload={delayedUpload(300)} toolbar="floating" />
+      <Labelled label="noUpload" markdown={'No upload: files are ignored.\n'} />
+      <Toaster />
     </div>
   ),
 }

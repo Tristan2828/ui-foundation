@@ -1,6 +1,7 @@
 // The rich-text editor's fixed toolbar: one row of pressed/not-pressed
-// buttons above the text, each a format and its keyboard shortcut, and a
-// Table menu (rich-text-table-menu.tsx).
+// buttons above the text, each a format and its keyboard shortcut, a
+// Table menu (rich-text-table-menu.tsx), and, when the editor uploads
+// images, an Image button (a plain button: it opens the file picker).
 //
 // - One tab stop (ARIA's toolbar pattern): Tab reaches the last button
 //   used, the arrow keys, Home and End move along the row.
@@ -14,6 +15,8 @@
 //   showing: rich-text-floating-toolbar.tsx).
 import { Fragment, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import type { EditorState } from '@milkdown/kit/prose/state'
+import { ImageIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Toggle } from '@/components/ui/toggle'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -41,6 +44,8 @@ export type FormatButtonsProps = {
   onFormat: (id: FormatId) => void
   /** A Table menu item picked (only the fixed toolbar has the menu). */
   onTable?: (action: TableAction) => void
+  /** The Image button pressed: pick images to upload. No button without it. */
+  onImage?: () => void
   /** The editable element, for the Table menu to give focus back to. */
   text?: () => HTMLElement | null
 }
@@ -48,16 +53,19 @@ export type FormatButtonsProps = {
 // A toolbar's row of buttons: one tab stop, the last one used (ARIA's
 // toolbar pattern); the arrow keys, Home and End move along the row. The
 // toolbar's element (`role="toolbar"`, its name) is the caller's.
-export function FormatButtons({ formats, state, readOnly, onFormat, onTable, text = () => null }: FormatButtonsProps) {
+export function FormatButtons({ formats, state, readOnly, onFormat, onTable, onImage, text = () => null }: FormatButtonsProps) {
   const apple = isApple()
   const groups = SETS[formats]
   const items = groups.flat()
+  // The Image button, last in the row, after the formats.
+  const imageIndex = onImage ? items.length : -1
+  const count = items.length + (onImage ? 1 : 0)
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
   // The one button Tab reaches: the last one used.
   const [current, setCurrent] = useState(0)
 
   const move = (index: number) => {
-    const next = (index + items.length) % items.length
+    const next = (index + count) % count
     setCurrent(next)
     buttons.current[next]?.focus()
   }
@@ -67,7 +75,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onTable, tex
       ArrowRight: () => move(current + 1),
       ArrowLeft: () => move(current - 1),
       Home: () => move(0),
-      End: () => move(items.length - 1),
+      End: () => move(count - 1),
     }
     const action = keys[event.key]
     if (!action || event.metaKey || event.ctrlKey || event.altKey) return
@@ -138,6 +146,34 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onTable, tex
           })}
         </Fragment>
       ))}
+      {onImage && (
+        <>
+          <Separator orientation="vertical" className="mx-1 h-5 self-center" />
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  ref={(element: HTMLButtonElement | null) => {
+                    buttons.current[imageIndex] = element
+                  }}
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Image"
+                  disabled={readOnly}
+                  tabIndex={imageIndex === current ? 0 : -1}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onFocus={() => setCurrent(imageIndex)}
+                  onKeyDown={onKeyDown}
+                  onClick={onImage}
+                />
+              }
+            >
+              <ImageIcon />
+            </TooltipTrigger>
+            <TooltipContent>Image · or paste or drop one</TooltipContent>
+          </Tooltip>
+        </>
+      )}
     </TooltipProvider>
   )
 }
@@ -152,13 +188,15 @@ export interface RichTextToolbarProps {
   onFormat: (id: FormatId) => void
   /** A Table menu item picked: run it on the editor and give it focus back. */
   onTable: (action: TableAction) => void
+  /** The Image button pressed (only when the editor uploads images). */
+  onImage?: () => void
   /** The editable element, for the Table menu to give focus back to. */
   text: () => HTMLElement | null
   /** The toolbar's element, for Alt+F10 to reach it from the text. */
   ref?: Ref<HTMLDivElement>
 }
 
-export function RichTextToolbar({ state, readOnly, controls, onFormat, onTable, text, ref }: RichTextToolbarProps) {
+export function RichTextToolbar({ state, readOnly, controls, onFormat, onTable, onImage, text, ref }: RichTextToolbarProps) {
   return (
     <div
       ref={ref}
@@ -168,7 +206,7 @@ export function RichTextToolbar({ state, readOnly, controls, onFormat, onTable, 
       data-slot="rich-text-toolbar"
       className="flex flex-wrap items-center gap-0.5 border-b border-input px-1 py-1"
     >
-      <FormatButtons formats="all" state={state} readOnly={readOnly} onFormat={onFormat} onTable={onTable} text={text} />
+      <FormatButtons formats="all" state={state} readOnly={readOnly} onFormat={onFormat} onTable={onTable} onImage={onImage} text={text} />
     </div>
   )
 }
