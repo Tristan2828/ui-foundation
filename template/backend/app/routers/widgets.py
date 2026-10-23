@@ -83,6 +83,24 @@ async def _check_categories_exist(ids: list[int], field: str, session: AsyncSess
         )
 
 
+async def _check_item_categories_exist(category_ids: list[int], field: str, session: AsyncSession) -> None:
+    # A sub-record item's reference: the same check, refused at the item's
+    # own path (["body", "pairings", 2, "categoryId"]) so the form binds it
+    # to that row. A referenced entity that is per-user also checks the
+    # owner here (another user's record is as unknown as a missing one).
+    if not category_ids:
+        return
+    found = set(
+        (await session.exec(select(WidgetCategory.id).where(col(WidgetCategory.id).in_(category_ids)))).all()
+    )
+    if issues := [
+        {"loc": ("body", field, index, "categoryId"), "msg": "Category not found", "type": "value_error.foreign_key"}
+        for index, category_id in enumerate(category_ids)
+        if category_id not in found
+    ]:
+        raise RequestValidationError(issues)
+
+
 async def _get_or_404(widget_id: int, user: User, session: AsyncSession, *, deleted: bool = False) -> Widget:
     widget = await session.get(Widget, widget_id)
     # Someone else's widget is indistinguishable from a missing one — a 403
@@ -157,14 +175,16 @@ async def create_widget(
 ) -> Widget:
     await _check_categories_exist([payload.category_id], "categoryId", session)
     await _check_categories_exist(payload.extra_category_ids, "extraCategoryIds", session)
+    await _check_item_categories_exist([item.category_id for item in payload.pairings], "pairings", session)
     widget = Widget(
-        **payload.model_dump(exclude={"price", "tags", "extra_category_ids", "checklist"}),
+        **payload.model_dump(exclude={"price", "tags", "extra_category_ids", "checklist", "pairings"}),
         price=Decimal(payload.price),
         owner_id=user.id,
     )
     widget.set_tags(payload.tags)
     widget.set_extra_category_ids(payload.extra_category_ids)
     widget.set_checklist([(item.text, item.done) for item in payload.checklist])
+    widget.set_pairings([(item.category_id, item.note) for item in payload.pairings])
     session.add(widget)
     await session.commit()
     await session.refresh(widget)
@@ -202,6 +222,11 @@ async def update_widget(
     if "checklist" in updates:
         updates.pop("checklist")
         widget.set_checklist([(item.text, item.done) for item in payload.checklist or []])
+    if "pairings" in updates:
+        updates.pop("pairings")
+        pairings = payload.pairings or []
+        await _check_item_categories_exist([item.category_id for item in pairings], "pairings", session)
+        widget.set_pairings([(item.category_id, item.note) for item in pairings])
     if "price" in updates:
         updates["price"] = Decimal(updates["price"])
     for field, value in updates.items():

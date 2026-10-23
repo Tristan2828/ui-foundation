@@ -394,10 +394,12 @@ export interface components {
             extraCategoryIds: number[];
             /** @description Sub-records — an ordered list of items that belong to this widget alone, edited on its form and saved with it. Forces a list editor (add, remove, move up/down) on the form and a done-count in the table. Always present on read, in the order saved; empty when none. A field error inside an item is keyed by its path, e.g. loc ["body", "checklist", 2, "text"]. */
             checklist: components["schemas"]["ChecklistItem"][];
+            /** @description Sub-records whose items hold a reference — an ordered list of the categories this widget pairs with, each with a note. Read and written whole, in order, like checklist. An item carries the referenced id only (categoryId); names come from the lookup by id, GET /widget-categories?ids=..., as for any reference. Always present on read; empty when none. An id that isn't a category is a 422 at the item's path, e.g. loc ["body", "pairings", 2, "categoryId"]. */
+            pairings: components["schemas"]["WidgetPairing"][];
             /** @description Computed, read-only field — worked out by the server from other data on every read, never stored and never sent by a client (absent from WidgetCreate/WidgetUpdate). Forces a read-only badge column, a filter and a sort that the server evaluates, so they hold across pages. */
             readonly checklistState: components["schemas"]["WidgetChecklistState"];
         };
-        /** @description Widget without a server-assigned id. tags, extraCategoryIds and checklist default to [], inStock to true. */
+        /** @description Widget without a server-assigned id. tags, extraCategoryIds, checklist and pairings default to [], inStock to true. */
         WidgetCreate: {
             name: components["schemas"]["Widget"]["name"];
             categoryId: components["schemas"]["Widget"]["categoryId"];
@@ -410,8 +412,9 @@ export interface components {
             inStock?: components["schemas"]["Widget"]["inStock"];
             extraCategoryIds?: components["schemas"]["Widget"]["extraCategoryIds"];
             checklist?: components["schemas"]["Widget"]["checklist"];
+            pairings?: components["schemas"]["Widget"]["pairings"];
         };
-        /** @description All fields optional — PATCH semantics. tags, when sent, replaces the whole set (send [] to clear it); so do extraCategoryIds and checklist (which also keeps the order sent). */
+        /** @description All fields optional — PATCH semantics. tags, when sent, replaces the whole set (send [] to clear it); so do extraCategoryIds, checklist and pairings (the last two also keep the order sent). */
         WidgetUpdate: {
             name?: components["schemas"]["Widget"]["name"];
             categoryId?: components["schemas"]["Widget"]["categoryId"];
@@ -424,6 +427,7 @@ export interface components {
             inStock?: components["schemas"]["Widget"]["inStock"];
             extraCategoryIds?: components["schemas"]["Widget"]["extraCategoryIds"];
             checklist?: components["schemas"]["Widget"]["checklist"];
+            pairings?: components["schemas"]["Widget"]["pairings"];
         };
         /**
          * @description none: the checklist is empty. open: at least one item isn't done. complete: every item is done. Sorts in this order.
@@ -436,6 +440,13 @@ export interface components {
             text: string;
             /** @description Ticked off. */
             done: boolean;
+        };
+        /** @description One item of a widget's pairings: a sub-record with a reference field. No id of its own: the list is read and written whole, in order. The same category may appear in more than one item. */
+        WidgetPairing: {
+            /** @description The category paired with (WidgetCategory.id). Unknown is a 422 at this item's path, never a foreign-key 500. */
+            categoryId: number;
+            /** @description Optional text, "" when none. Surrounding spaces are trimmed. */
+            note: string;
         };
         /** @description Wire pagination shape — deliberately not Page<T>. The gateway computes page/pageSize from offset/limit; see src/api/gateway/. */
         WidgetListResponse: {

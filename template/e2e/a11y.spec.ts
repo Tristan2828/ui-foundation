@@ -176,6 +176,31 @@ test.describe('a11y: editing in place on the view', () => {
         await test.step('change refused', () => expectNoAxeViolations(page))
       })
 
+      test('the pairings: an item with a reference open, and refused', async ({ page }) => {
+        await page.goto('/widgets/1')
+        const pairings = page.getByRole('region', { name: 'Pairings' })
+        await pairings.getByText('Furniture', { exact: true }).click()
+        await expect(page.getByRole('combobox', { name: 'Pairing 2 category' })).toBeFocused()
+        await test.step('item open', () => expectNoAxeViolations(page))
+
+        await waitForMswReady(page)
+        await page.evaluate(() => {
+          const { worker, http, HttpResponse } = window.__msw
+          worker.use(
+            http.patch('*/api/widgets/:id', () =>
+              HttpResponse.json(
+                { detail: [{ loc: ['body', 'pairings', 1, 'categoryId'], msg: 'Category not found', type: 'value_error' }] },
+                { status: 422 },
+              ),
+            ),
+          )
+        })
+        await page.getByRole('textbox', { name: 'Pairing 2 note' }).fill('Spare')
+        await page.keyboard.press('Enter')
+        await expect(pairings.getByRole('alert')).toHaveText('Category not found')
+        await test.step('refused', () => expectNoAxeViolations(page))
+      })
+
       test('the leave-page prompt', async ({ page }) => {
         await openName(page)
         await nameField(page).fill('Half typed')
@@ -214,6 +239,7 @@ test.describe('a11y: headings in written text', () => {
           inStock: true,
           extraCategoryIds: [1, 3],
           checklist: [],
+          pairings: [],
           checklistState: 'none',
         },
       })

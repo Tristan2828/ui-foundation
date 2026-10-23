@@ -5,6 +5,55 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.27.0 — A `reference` inside a sub-record item
+
+The entity plan and the playbook now allow a **`reference` as a
+sub-record item field** (a comic's segments, each pointing at a series),
+and the template's Widget has a worked example to copy: **Pairings**, a
+list of `{ categoryId, note }` items. No package code changed: `ListEditor`
+and the list edited in place already take any row; this release is the
+convention, the reference files and their tests.
+
+The convention (`docs/foundation/entity-plan-template.md` "Sub-records",
+`docs/foundation/add-an-entity.md` "A `reference` inside a sub-record
+item"):
+
+- **Wire:** the item carries the referenced id only, named as a
+  top-level reference is (`categoryId`; `seriesId` for a Series), never
+  a name or a nested record. Names come from the other entity's lookup by
+  id (`GET /<other>?ids=…`), on the form and on the view. An optional text
+  field beside it is a `string`, `""` when empty. The list is read and
+  written whole, in order, like any sub-record list.
+- **Backend:** a child table with `position` and a commented foreign key;
+  every item's id checked in one query before saving, and one that isn't
+  there (or, for a per-user entity, isn't this user's) refused with a 422
+  at the item's path, `["body", "<list>", 2, "<field>Id"]`, never a
+  foreign-key 500.
+- **Form:** one row component shared with editing in place: the
+  referenced entity's combobox (its own search per row, the picked name
+  from the lookup by id) and the item's other fields. A server 422 at the
+  item's path binds to that row's picker; a row with no pick is refused
+  on that row.
+- **View:** each item as the referenced record's name, linked to its view
+  when it has one. **Editing in place:** `editInPlace({ kind: 'list' })`
+  with that row; Enter in the open list picks without saving.
+
+Not built (`docs/DEFERRED.md`): a "New …" option that creates the
+referenced record from the item's picker, and AI chats naming an item's
+reference (they print its id).
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.27.0, run `npx ui-foundation sync`, and
+  `npm run verify`. Nothing changes for an app's existing entities. To
+  build a plan with a reference item field, follow the playbook's new
+  paragraph; while the Widgets demo is gone, copy the template's files
+  at this version (`widget-fields.tsx`'s `WidgetPairingItemFields` and
+  `WidgetCategoryCombobox`, Pairings in `widget-form.tsx`, `pairings` in
+  `widgetEdits`, `_check_item_categories_exist` in `routers/widgets.py`,
+  migration `0016_widget_pairings.py`) and add a row for the pattern to
+  your `AGENTS.md` "### Reference files". The template's migration 0016
+  is the demo's own; an app doesn't need it.
+
 ## 4.26.0 — The backend reads a database URL as a provider gives it (#203)
 
 New export, so a minor: **`foundation_backend.config.normalize_database_url(raw)`**,

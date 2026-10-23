@@ -27,6 +27,9 @@
 //   item is added at the end (Enter adds the next), its text edited where
 //   it's shown, moved and removed with the form's own buttons. Each change
 //   saves the whole list, built on the latest one.
+// - The pairings, a list whose items hold a reference, edited in place
+//   the same way: each row is the form's (a category combobox and a
+//   note), and each item reads as its category's name and its note.
 // - Quick actions (widget-quick-actions.tsx, cell pattern 17): In Stock
 //   flips from the header and checklist items tick in place.
 // Anything else goes through Edit.
@@ -55,6 +58,7 @@ import {
   WidgetDescriptionEditor,
   WidgetExtraCategoriesPicker,
   WidgetNameInput,
+  WidgetPairingItemFields,
   WidgetPriceInput,
   WidgetStatusSelect,
 } from './widget-fields'
@@ -67,8 +71,24 @@ type WidgetUpdate = components['schemas']['WidgetUpdate']
 
 type WidgetEdits = Record<'name' | 'status' | 'price' | 'description' | 'extraCategoryIds', EditInPlace> & {
   checklist: EditInPlaceList
+  pairings: EditInPlaceList
 }
 type ChecklistItemValue = Widget['checklist'][number]
+type PairingValue = Widget['pairings'][number]
+
+// How a pairing reads, as an item on the view: the referenced record's
+// name, from the view's lookup by id (CategoryName), then its note.
+// WidgetCategory has no view of its own, so the name is plain text; a
+// referenced entity with one links to it, as a top-level reference does:
+// <Link to={`/<other>/${item.<other>Id}`}><OtherName id={...} /></Link>.
+function PairingShown({ item }: { item: PairingValue }) {
+  return (
+    <span>
+      <CategoryName id={item.categoryId} />
+      {item.note && <span className="text-muted-foreground"> · {item.note}</span>}
+    </span>
+  )
+}
 
 const sameIds = (a: number[], b: number[]) => [...a].sort().join() === [...b].sort().join()
 
@@ -209,6 +229,36 @@ function widgetEdits(
         />
       ),
     }),
+    // Sub-records with a reference: the same list kind, the form's row
+    // (WidgetPairingItemFields) as each item's fields. A pick from the
+    // combobox changes the draft; Enter or leaving the row saves it. The
+    // new item starts with no category, which the schema refuses, so a
+    // blank pairing is never sent.
+    pairings: editInPlace<PairingValue>({
+      kind: 'list',
+      value: widget.pairings,
+      schema: rules.pairings,
+      save: (change) => saveChange((current) => ({ pairings: change(current.pairings) })),
+      newItem: () => ({ categoryId: undefined as unknown as number, note: '' }),
+      itemName: (index) => `pairing ${index + 1}`,
+      addLabel: 'Add pairing',
+      renderShown: (item) => <PairingShown item={item} />,
+      renderItem: (props) => (
+        <WidgetPairingItemFields
+          id={props.id}
+          index={props.index}
+          value={props.value}
+          onCategoryChange={(categoryId) => props.onChange({ ...props.value, categoryId })}
+          categoryInvalid={props.invalid}
+          readOnly={props.disabled}
+          describedBy={props.describedBy}
+          noteProps={{
+            value: props.value.note,
+            onChange: (event) => props.onChange({ ...props.value, note: event.target.value }),
+          }}
+        />
+      ),
+    }),
   }
 }
 
@@ -274,6 +324,13 @@ function widgetSections(widget: Widget, edits: WidgetEdits): EntityViewSection[]
       content: widget.checklist.length > 0 && <ChecklistDoneCount widget={widget} />,
       edit: edits.checklist,
     },
+    {
+      title: 'Pairings',
+      emptyLabel: 'No pairings',
+      // Edited in place as a list; each item reads as PairingShown.
+      content: null,
+      edit: edits.pairings,
+    },
   ]
 }
 
@@ -284,8 +341,11 @@ export function WidgetViewRoute() {
   const widgetQuery = useWidgetQuery(widgetId)
   const widget = widgetQuery.data
 
-  // Names for every category this widget links to, in one lookup by id.
-  const categoryIds = widget ? [widget.categoryId, ...widget.extraCategoryIds] : []
+  // Names for every category this widget links to, in one lookup by id:
+  // its own references and every pairing's.
+  const categoryIds = widget
+    ? [widget.categoryId, ...widget.extraCategoryIds, ...widget.pairings.map((pairing) => pairing.categoryId)]
+    : []
   const categoriesQuery = useWidgetCategoriesByIdsQuery(categoryIds)
   const names = useMemo(() => widgetCategoryNames(categoriesQuery.data), [categoriesQuery.data])
 

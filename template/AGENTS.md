@@ -227,6 +227,7 @@ uses the pattern (the playbook then stops and asks).
 | `yes/no` marked `toggle` | `src/routes/widgets/in-stock-toggle.tsx` |
 | `computed` | Progress (`checklistState`): `widget-schema.ts`, `widgets-columns.tsx`, the backend's `routers/widgets.py` |
 | Sub-records | Checklist in `widget-form.tsx` (edited), `widget-quick-actions.tsx` (ticked on the view; the read-only markup is in `docs/foundation/add-an-entity.md`), and `checklist` in `widgetEdits` (edited in place as a list; its row shared with the form as `WidgetChecklistItemFields` in `widget-fields.tsx`) |
+| Sub-records with a `reference` in each item | Pairings: `WidgetPairingItemFields` and `WidgetCategoryCombobox` in `widget-fields.tsx` (the row, shared by form and view), Pairings in `widget-form.tsx`, `pairings` in `widgetEdits` and `PairingShown` in `widget-view.tsx`; `_check_item_categories_exist` in the backend's `routers/widgets.py`, `WidgetPairing` in `models.py` and migration `0016` |
 | Mocks | `src/mocks/data.ts`, `src/mocks/handlers.ts` |
 | Screen states and specs | `e2e/widgets-table.spec.ts`, `e2e/widget-view.spec.ts`, `e2e/widget-form.spec.ts`, `e2e/widget-edit-in-place.spec.ts` |
 | Backend router, model, migration | `backend/app/routers/widgets.py`, `backend/app/models.py`, `backend/migrations/versions/` |

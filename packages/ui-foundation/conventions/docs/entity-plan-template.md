@@ -96,9 +96,28 @@ per list; delete the section if there are none.
 | done | Done | yes/no | yes | default no |
 
 - Item fields use the same types as the main table (`text`, `url`,
-  `yes/no`… — not another sub-record or a reference). Items have no screen
-  of their own: they're added, edited, reordered and removed on the
-  record's form, and the order is kept.
+  `yes/no`…), including a `reference` (below), but not another
+  sub-record, a `multi reference` or a `multi choice`. Items have no
+  screen of their own: they're added, edited, reordered and removed on
+  the record's form, and the order is kept.
+- **A `reference` item field** points each item at a record of another
+  entity: name it, as for a top-level reference (`seriesId` → Series).
+  Each row picks it with the same searchable combobox; the item carries
+  the referenced id only, and every name comes from the other entity's
+  lookup by id (its list endpoint must accept `ids`). Say whether it's
+  required, and whether the same record may appear in more than one
+  item. On the view each item reads as the record's name, linked to its
+  view when it has one. An optional text item field beside it is `""`
+  when empty. Widget's `pairings` is the worked example
+  (`docs/entities/widget.md`):
+
+  | Field | Label | Type | Required | Options / rules |
+  |---|---|---|---|---|
+  | categoryId | Category | reference → WidgetCategory | yes | picked from a searchable list; repeats allowed |
+  | note | Note | text | no | up to 100 chars, trimmed; empty means none |
+
+  Not supported yet: creating the referenced record from the item's
+  picker (a "New …" option); create it on its own screen first.
 
 ## List screen
 
