@@ -496,6 +496,7 @@ test.describe('widgets table', () => {
             inStock: true,
             extraCategoryIds: [],
             checklist: [],
+            pairings: [],
             checklistState: 'none',
           },
         ],

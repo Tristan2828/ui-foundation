@@ -36,6 +36,11 @@ const initialWidgets: Widget[] = [
       { text: "Charge the battery", done: true },
       { text: "Pair the receiver", done: false },
     ],
+    // Sub-records with a reference: ids only, names looked up by id.
+    pairings: [
+      { categoryId: 3, note: "Desk sets" },
+      { categoryId: 2, note: "" },
+    ],
     checklistState: "open",
   },
   {
@@ -51,6 +56,7 @@ const initialWidgets: Widget[] = [
     inStock: true,
     extraCategoryIds: [1, 3],
     checklist: [],
+    pairings: [],
     checklistState: "none",
   },
   {
@@ -66,6 +72,7 @@ const initialWidgets: Widget[] = [
     inStock: false,
     extraCategoryIds: [],
     checklist: [],
+    pairings: [],
     checklistState: "none",
   },
   {
@@ -88,6 +95,7 @@ const initialWidgets: Widget[] = [
     inStock: false,
     extraCategoryIds: [],
     checklist: [],
+    pairings: [],
     checklistState: "none",
   },
 ];
