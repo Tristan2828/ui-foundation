@@ -78,7 +78,8 @@ describe('mergeMarkdown', () => {
   })
 
   it('refuses, rather than save a block the editor dropped part of (an image)', () => {
-    // The editor doesn't show images: writing its version would delete them.
+    // Until 4.27 the editor dropped every image as it loaded; writing its
+    // version would have deleted them. Any part dropped is still refused.
     const original = 'Intro.\n\nText ![a chart](chart.png) more.\n\nOutro.\n'
     const baseline = 'Intro.\n\nText  more.\n\nOutro.\n'
     const current = baseline.replace('Intro.', 'Intro, edited.')

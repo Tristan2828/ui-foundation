@@ -11,6 +11,9 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 // here rather than shared.
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.tsx'],
+  // Sample photos for the image stories (ImageField, images in <Markdown>
+  // and the editor), served from a path as an app's files would be.
+  staticDirs: ['./public'],
   addons: ['@storybook/addon-docs'],
   framework: {
     name: '@storybook/react-vite',

@@ -401,8 +401,8 @@ inline text as runs with their set of marks (so `[**a**](u)` is
 pads short rows, and both had made every edit refuse). A block the editor
 shows some other way the matching misses is written as the editor shows
 it, but only if nothing in it is lost (no text, address or image). If
-something would be, it's kept as written and the guard refuses: the
-editor drops images on load. A
+something would be, it's kept as written and the guard refuses (until 4.27 the editor
+dropped images on load, and this was what kept them). A
 guard re-parses the result and refuses to save if it would mean anything
 other than what's on screen (the draft stays, with a message). Tested in
 node over the editor's real output (`tests/markdown-merge.test.ts`) and
@@ -464,6 +464,27 @@ toolbar, for the same reason.
 or a heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
 code.
+
+**Images (4.27)** show in the editor as `<Markdown>` shows them, at most
+the field's width. Until 4.27 the editor dropped every one as it loaded:
+Milkdown's image node wants a string title and remark gives `null` for
+none, so a small remark plugin makes it `''` (written back as none).
+With the app's `upload` (`RichTextEditor`'s prop; the package knows no
+endpoint), an image pasted, dropped or picked with the toolbar's Image
+button is uploaded and inserted as `![](url)`
+(`rich-text-image-upload.ts`). While it uploads, a placeholder is a
+decoration, never part of the document, so no save (an autosave
+included) ever holds one; it moves with the text, and the image goes in
+where it is when the upload resolves, several in the order the files
+came. A refusal (type, size: `src/lib/image-file.ts`, shared with
+`ImageField`) or a failure removes it and is a toast. Milkdown's own
+`plugin/upload` was the obvious choice and wasn't used: it keeps the
+placeholder forever when an upload fails, and takes no part in our
+paste handling. A paste uploads only when it holds files and no HTML
+with words in it: an office app copies a picture of the selection with
+its text, and that paste is the text. Without `upload`, none of this
+runs. `ImageField` (a photo on a record) is the form's side of the same
+`upload`: the value is the stored file's id.
 
 **Written text's look (3.21)** (`prose-look.ts`), shared by the editor
 and `<Markdown>`: three heading roles (`type-heading-1` to `-3`, 26, 20

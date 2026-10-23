@@ -947,7 +947,11 @@ const price = editInPlace({
   `toolbar={false}` leaves out the toolbars and the slash menu where a
   value is short and the shortcuts are enough; `toolbar="floating"` keeps
   the floating one and the slash menu without the bar above (an `inline`
-  field's look).
+  field's look). Images in the text (`![alt](url)`) show; give it the
+  app's `upload` (the same one `ImageField` takes) and an image pasted,
+  dropped or picked with the toolbar's Image button is uploaded and goes
+  in as `![](url)`, a placeholder showing meanwhile (never saved), a
+  refusal or failure in a toast. No `upload`, no file handling at all.
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
   `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.

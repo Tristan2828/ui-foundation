@@ -186,6 +186,35 @@ is a filled-in example while the Widgets demo is still here).
    Select is (Storybook `app/DateField` EditInPlace). The backend column
    is a SQL `date` (`datetime.date` in the model).
 
+   **An image on a record** (a photo of it) is the stored file's id on the
+   wire (`string`, nullable), and on the form the foundation's
+   `ImageField` in a `Controller` (`z.string().nullable()`): `value` and
+   `onChange` are the id, `thumbUrl` the record's saved photo,
+   `onBusyChange` holds the submit while a file uploads (Storybook
+   `app/ImageField`). Its `upload` is the app's own, one function in the
+   gateway that sends the file to the app's endpoint and resolves to
+   `{ id, thumbUrl, url }` (the `ImageUploadResult`), rejecting with the
+   `AppError`; the same function goes to a notes field's
+   `RichTextEditor`, so pictures in its text use the same storage:
+
+   ```ts
+   // src/api/gateway/files.ts
+   export async function uploadImage(file: File): Promise<ImageUploadResult> {
+     const body = new FormData()
+     body.append('file', file)
+     const response = await safeFetch('/files', { method: 'POST', body })
+     if (response.status !== 201) throw toAppError(response.status, response.body, response.headers)
+     const { id } = response.body as components['schemas']['File']
+     return { id, thumbUrl: `/api/files/${id}/content?size=thumb`, url: `/api/files/${id}/content` }
+   }
+   ```
+
+   The types it takes default to JPEG, PNG and WebP; never add SVG or
+   HTML, which run script when served from the app's own domain. The
+   endpoint, the storage and serving the files are the app's (the
+   template has none); `<Markdown>` shows an image only from a web
+   address or a path on the site, so `url` is one of those.
+
    **A `yes/no` marked `toggle`** copies In Stock's cell
    (`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
    component that PATCHes the one field through `useSaveWidgetField`, the

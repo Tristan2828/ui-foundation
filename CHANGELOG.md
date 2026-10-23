@@ -5,6 +5,53 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.27.0 — ImageField, and images uploaded in the Markdown editor
+
+Additive, so a minor: a photo on a record and pictures in notes, with the
+upload the app's own (the package knows no endpoint and no storage).
+
+- **New: `ImageField`**, a form control for one image. A thumbnail with
+  Replace and Remove, or Add photo when empty. A file picked uploads at
+  once through the app's `upload(file) => Promise<{ id, thumbUrl, url? }>`;
+  while it does, the buttons wait and say so, and the value (the stored
+  file's id, or `null`) changes only once it's stored. A file of a type it
+  doesn't take, or over `maxSize`, is refused before it's sent, and a
+  failed upload's `message` shows under the field. Use it in a
+  react-hook-form `Controller`, with `thumbUrl` for the record's saved
+  photo and `onBusyChange` to hold a submit meanwhile.
+- **New: `RichTextEditor`'s `upload`** (with `imageAccept` and
+  `imageMaxSize`): an image pasted, dropped, or picked with an Image
+  button on the fixed toolbar is uploaded and goes in as `![](url)` (the
+  result's `url`, else its `thumbUrl`). A placeholder shows where it will
+  go while it uploads; it isn't part of the text, so nothing is saved for
+  it. A refused file or a failed upload takes it away and says why in a
+  toast. Without `upload`, nothing changes: no button, and files pasted or
+  dropped are handled as before.
+- **New exports:** `ImageField`, `ImageFieldProps`, `ImageUpload`,
+  `ImageUploadResult` and `DEFAULT_IMAGE_TYPES` (JPEG, PNG and WebP, the
+  default for both).
+- **Fixed: the editor shows images.** It dropped every `![alt](url)` as
+  the text loaded (Milkdown's image node refused remark's empty title), so
+  editing a note with an image in it refused to save. Images now show,
+  at most the field's width, and such a note edits and saves like any
+  other.
+- **`<Markdown>`'s images** were already inside the text's width, lazy and
+  with their alt text; they now keep their shape at any width (`h-auto`).
+  Their address goes through the same URL check as links: a web address or
+  a path on the site (`/api/files/7/content`), never `data:` or `blob:`.
+
+No migration, no contract change, no new dependency. The backend side
+(an upload endpoint, storage, serving files safely) stays each app's
+(`docs/DEFERRED.md`).
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.27.0 and run `npx ui-foundation sync`. To
+  use it, write the app's `upload` in its gateway (a `safeFetch` of the
+  file to its own endpoint, resolving to `{ id, thumbUrl, url }`, rejecting
+  with the `AppError`), then give it to `ImageField` on the form and to
+  each notes field's `RichTextEditor`. An app carrying its own image field
+  can replace it with `ImageField`.
+
 ## 4.26.0 — The backend reads a database URL as a provider gives it (#203)
 
 New export, so a minor: **`foundation_backend.config.normalize_database_url(raw)`**,

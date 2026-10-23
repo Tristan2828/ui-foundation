@@ -21,7 +21,7 @@
 //   padded, marks it nested differently) and that `meaning` still misses is
 //   written as the editor shows it, as long as nothing in it is lost
 //   (`content`): no text, address or image. A block the editor drops part
-//   of (it doesn't show images) is kept as written, and the guard refuses.
+//   of (until 4.27, every image) is kept as written, and the guard refuses.
 // - Guard: the result must mean exactly what the editor shows. If it
 //   wouldn't (two blocks fusing, say), the merge throws instead of saving
 //   something else; the draft stays on screen.
