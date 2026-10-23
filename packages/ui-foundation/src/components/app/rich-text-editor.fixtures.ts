@@ -68,7 +68,7 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "> [!NOTE]\n> Measure twice.\n\n> [!warning]\n> Lower-case marker, kept.\n\n> [!TIP]\n>\n> - a list first\n> - two items\n\n> A plain quote.\n\nAfter the callouts.\n",
     editorWrites: "> [!NOTE]\n> Measure twice.\n\n> [!warning]\n> Lower-case marker, kept.\n\n> [!TIP]\n>\n> - a list first\n> - two items\n\n> A plain quote.\n\nAfter the callouts.\n",
   },
-  // Images show in the editor (4.27; until then it dropped every one as
+  // Images show in the editor (4.28; until then it dropped every one as
   // it loaded). A reference image is written inline, as a reference link is.
   images: {
     markdown: "An inline ![a chart](https://example.com/chart.png) image.\n\n![](https://example.com/photo.jpg)\n\n![Titled](https://example.com/t.png \"A title\")\n\n![ref image][pic]\n\n[pic]: https://example.com/ref.png\n\nAfter the images.\n",

@@ -401,7 +401,7 @@ inline text as runs with their set of marks (so `[**a**](u)` is
 pads short rows, and both had made every edit refuse). A block the editor
 shows some other way the matching misses is written as the editor shows
 it, but only if nothing in it is lost (no text, address or image). If
-something would be, it's kept as written and the guard refuses (until 4.27 the editor
+something would be, it's kept as written and the guard refuses (until 4.28 the editor
 dropped images on load, and this was what kept them). A
 guard re-parses the result and refuses to save if it would mean anything
 other than what's on screen (the draft stays, with a message). Tested in
@@ -465,8 +465,8 @@ or a heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
 code.
 
-**Images (4.27)** show in the editor as `<Markdown>` shows them, at most
-the field's width. Until 4.27 the editor dropped every one as it loaded:
+**Images (4.28)** show in the editor as `<Markdown>` shows them, at most
+the field's width. Until 4.28 the editor dropped every one as it loaded:
 Milkdown's image node wants a string title and remark gives `null` for
 none, so a small remark plugin makes it `''` (written back as none).
 With the app's `upload` (`RichTextEditor`'s prop; the package knows no
