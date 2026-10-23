@@ -31,7 +31,7 @@ function validateWidgetInput(
     }
   } else {
     // PATCH: a field left out keeps its value; null clears only
-    // assigneeEmail. inStock, extraCategoryIds and checklist refuse null
+    // assigneeEmail. inStock, extraCategoryIds, checklist and pairings refuse null
     // in their own checks below.
     for (const field of [...REQUIRED_FIELDS, "tags"] as const) {
       if (input[field] === null) {
@@ -102,6 +102,28 @@ function validateWidgetInput(
       });
     }
   }
+  // Sub-records with a reference: an ordered list of {categoryId, note}, at
+  // most 20. An unknown category is a 422 at the item's own path, e.g.
+  // ["body", "pairings", 2, "categoryId"], never a whole-list error.
+  if (input.pairings !== undefined) {
+    const items = input.pairings as unknown;
+    if (!Array.isArray(items)) {
+      issues.push({ loc: ["body", "pairings"], msg: "value is not a valid list", type: "type_error.list" });
+    } else if (items.length > 20) {
+      issues.push({ loc: ["body", "pairings"], msg: "List should have at most 20 items", type: "too_long" });
+    } else {
+      items.forEach((item, index) => {
+        if (!Number.isInteger(item?.categoryId)) {
+          issues.push({ loc: ["body", "pairings", index, "categoryId"], msg: "Field required", type: "missing" });
+        } else if (!widgetCategories.some((c) => c.id === item.categoryId)) {
+          issues.push({ loc: ["body", "pairings", index, "categoryId"], msg: "Category not found", type: "value_error.foreign_key" });
+        }
+        if (typeof item?.note !== "string" || item.note.trim().length > 100) {
+          issues.push({ loc: ["body", "pairings", index, "note"], msg: "Note must be 100 characters or fewer", type: "string_too_long" });
+        }
+      });
+    }
+  }
   if (input.categoryId != null && !widgetCategories.some((c) => c.id === input.categoryId)) {
     issues.push({ loc: ["body", "categoryId"], msg: "category not found", type: "value_error.foreign_key" });
   }
@@ -112,6 +134,11 @@ function validateWidgetInput(
 // The backend trims item text before storing it; so do the mocks.
 function trimChecklist(items: Widget["checklist"]): Widget["checklist"] {
   return items.map((item) => ({ text: item.text.trim(), done: item.done }));
+}
+
+// The backend trims each note too.
+function trimPairings(items: Widget["pairings"]): Widget["pairings"] {
+  return items.map((item) => ({ categoryId: item.categoryId, note: item.note.trim() }));
 }
 
 // The computed, read-only checklistState (openapi.yaml): worked out from
@@ -214,6 +241,7 @@ export const handlers = [
       inStock: input.inStock ?? true,
       extraCategoryIds: [...(input.extraCategoryIds ?? [])].sort((a, b) => a - b),
       checklist: trimChecklist(input.checklist ?? []),
+      pairings: trimPairings(input.pairings ?? []),
       id: nextWidgetId(),
       // Last, so a client-sent checklistState can't survive the spread.
       checklistState: checklistStateOf(input.checklist ?? []),
@@ -236,6 +264,7 @@ export const handlers = [
     // Read back in ascending id order, like the backend.
     if (input.extraCategoryIds) widget.extraCategoryIds = [...input.extraCategoryIds].sort((a, b) => a - b);
     if (input.checklist) widget.checklist = trimChecklist(input.checklist);
+    if (input.pairings) widget.pairings = trimPairings(input.pairings);
     // Recomputed after every write, and never taken from the request.
     // (readOnly in the generated type, since only the server sets it.)
     Object.assign(widget, { checklistState: checklistStateOf(widget.checklist) });

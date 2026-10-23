@@ -407,6 +407,68 @@ test.describe('widget form', () => {
     await expect(page.getByLabel('Item 1 text')).not.toHaveAttribute('aria-invalid', 'true')
   })
 
+  test('sub-records with a reference: saved picks load by name, and a pick found by searching saves', async ({
+    page,
+  }) => {
+    // Wireless Mouse (id 1): Stationery (Desk sets), then Furniture.
+    await page.goto('/widgets/1/edit')
+    await expect(page.getByRole('combobox', { name: 'Pairing 1 category' })).toHaveValue('Stationery')
+    await expect(page.getByLabel('Pairing 1 note')).toHaveValue('Desk sets')
+    await expect(page.getByRole('combobox', { name: 'Pairing 2 category' })).toHaveValue('Furniture')
+    await expect(page.getByLabel('Pairing 2 note')).toHaveValue('')
+
+    await page.getByRole('button', { name: 'Add pairing' }).click()
+    // Each row has its own search: this one finds Electronics alone.
+    const picker = page.getByRole('combobox', { name: 'Pairing 3 category' })
+    await picker.fill('elec')
+    await page.getByRole('option', { name: 'Electronics' }).click()
+    await expect(picker).toHaveValue('Electronics')
+    await expect(page.getByRole('combobox', { name: 'Pairing 1 category' })).toHaveValue('Stationery')
+    await page.getByLabel('Pairing 3 note').fill('  Gift sets  ')
+    await page.getByRole('button', { name: 'Remove pairing 2' }).click()
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    // The view shows each item's name and its trimmed note.
+    await expect(page).toHaveURL('/widgets/1')
+    const pairings = page.getByRole('region', { name: 'Pairings' })
+    await expect(pairings.getByRole('listitem')).toHaveText(['Stationery · Desk sets', 'Electronics · Gift sets'])
+  })
+
+  test('sub-records with a reference: a row with no pick is caught on its own row', async ({ page }) => {
+    await page.goto('/widgets/2/edit')
+    await expect(page.getByText('No pairings yet.')).toBeVisible()
+    await page.getByRole('button', { name: 'Add pairing' }).click()
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page.getByText('Pick a category or remove the pairing')).toBeVisible()
+    await expect(page.getByRole('combobox', { name: 'Pairing 1 category' })).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
+  })
+
+  test("sub-records with a reference: a server 422 on one item's reference binds to that row's picker", async ({
+    page,
+  }) => {
+    await page.goto('/widgets/1/edit')
+    await expect(page.getByRole('combobox', { name: 'Pairing 2 category' })).toHaveValue('Furniture')
+    await waitForMswReady(page)
+    await page.evaluate(() => {
+      const { worker, http, HttpResponse } = window.__msw
+      worker.use(
+        http.patch('*/api/widgets/1', () =>
+          HttpResponse.json(
+            { detail: [{ loc: ['body', 'pairings', 1, 'categoryId'], msg: 'Category not found', type: 'value_error.foreign_key' }] },
+            { status: 422 },
+          ),
+        ),
+      )
+    })
+    await page.getByRole('button', { name: 'Save changes' }).click()
+
+    await expect(page.getByText('Category not found')).toBeVisible()
+    await expect(page.getByRole('combobox', { name: 'Pairing 2 category' })).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByRole('combobox', { name: 'Pairing 1 category' })).not.toHaveAttribute('aria-invalid', 'true')
+  })
+
   test('yes/no: a new widget starts in stock, and the switch state is what saves', async ({ page }) => {
     await page.goto('/widgets/new')
     const inStock = page.getByRole('switch', { name: 'In Stock' })

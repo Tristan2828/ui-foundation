@@ -168,6 +168,22 @@ class WidgetChecklistItem(SQLModel, table=True):
     done: bool = Field(default=False)
 
 
+class WidgetPairing(SQLModel, table=True):
+    """One item of a widget's pairings — sub-records whose items hold a
+    reference (migration 0016). The checklist's shape (a child table, its
+    own surrogate id, a `position`) plus a foreign key to the referenced
+    table. The router checks each id exists before saving, so a missing one
+    is a 422 at the item's path, never a foreign-key 500 at commit."""
+
+    __tablename__ = "widget_pairings"
+
+    id: int | None = Field(default=None, primary_key=True)
+    widget_id: int = Field(foreign_key="widgets.id", index=True, ondelete="CASCADE")
+    position: int
+    category_id: int = Field(foreign_key="widget_categories.id", index=True, ondelete="CASCADE")
+    note: str = Field(default="", max_length=100)
+
+
 class WidgetCategory(SQLModel, table=True):
     """The widget's reference entity (Widget.category_id, and the
     extraCategoryIds links). Named for its widget, not plain Category, so an
@@ -224,6 +240,14 @@ class Widget(SQLModel, table=True):
         }
     )
 
+    pairing_items: list[WidgetPairing] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "cascade": "all, delete-orphan",
+            "order_by": "WidgetPairing.position",
+        }
+    )
+
     @property
     def checklist_state(self) -> WidgetChecklistState:
         """The wire field (WidgetOut.checklistState), from the loaded items.
@@ -246,6 +270,19 @@ class Widget(SQLModel, table=True):
         self.checklist_items = [
             WidgetChecklistItem(position=position, text=text, done=done)
             for position, (text, done) in enumerate(items)
+        ]
+
+    @property
+    def pairings(self) -> list[WidgetPairing]:
+        """The wire field (WidgetOut.pairings), in saved order."""
+        return sorted(self.pairing_items, key=lambda item: item.position)
+
+    def set_pairings(self, items: list[tuple[int, str]]) -> None:
+        """Replace the whole list, in the order given. The router checks
+        every category id exists first."""
+        self.pairing_items = [
+            WidgetPairing(position=position, category_id=category_id, note=note)
+            for position, (category_id, note) in enumerate(items)
         ]
 
     @property

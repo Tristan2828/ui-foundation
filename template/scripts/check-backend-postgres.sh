@@ -210,6 +210,16 @@ grep -q '"checklist":\[{"text":"Second","done":true},{"text":"First","done":fals
 blank_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"checklist":[{"text":"  ","done":false}]}')
 [ "$blank_status" = "422" ] || fail "a blank checklist item returned $blank_status, expected 422: $(cat "$WIDGET_BODY")"
 grep -q '"loc":\["body","checklist",0,"text"\]' "$WIDGET_BODY" || fail "a blank item's 422 should be keyed to checklist.0.text: $(cat "$WIDGET_BODY")"
+# pairings (4.27.0): sub-records whose items hold a reference (migration
+# 0016), order kept, and an unknown category a 422 at its item, never the
+# foreign-key error Postgres would raise at commit.
+echo "check-backend-postgres: pairings order and a per-item reference 422 against real Postgres (4.27.0)"
+pair_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"pairings":[{"categoryId":3,"note":"Second"},{"categoryId":2,"note":""}]}')
+[ "$pair_status" = "200" ] || fail "PATCH pairings returned $pair_status — got: $(cat "$WIDGET_BODY")"
+grep -q '"pairings":\[{"categoryId":3,"note":"Second"},{"categoryId":2,"note":""}\]' "$WIDGET_BODY" || fail "PATCH didn't keep the pairings order: $(cat "$WIDGET_BODY")"
+ref_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"pairings":[{"categoryId":2,"note":""},{"categoryId":9999,"note":""}]}')
+[ "$ref_status" = "422" ] || fail "an unknown pairing category returned $ref_status, expected 422: $(cat "$WIDGET_BODY")"
+grep -q '"loc":\["body","pairings",1,"categoryId"\]' "$WIDGET_BODY" || fail "an unknown pairing category's 422 should be keyed to pairings.1.categoryId: $(cat "$WIDGET_BODY")"
 # Sign-in limits and TOTP (4.0.0): login_failures.failed_at and
 # pending_logins.expires_at are timestamp columns written through the ORM,
 # the class of bug SQLite-backed pytest can't see (Phase C).

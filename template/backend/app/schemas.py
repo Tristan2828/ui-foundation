@@ -70,6 +70,17 @@ class ChecklistItem(CamelModel):
     done: bool
 
 
+class WidgetPairing(CamelModel):
+    """openapi.yaml WidgetPairing — both directions. The item carries the
+    referenced id only; the router checks it exists (a 422 at
+    ["body", "pairings", <i>, "categoryId"]). The note is trimmed."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    category_id: int
+    note: str = Field(max_length=100)
+
+
 class WidgetOut(CamelModel):
     id: int
     name: str
@@ -83,6 +94,7 @@ class WidgetOut(CamelModel):
     in_stock: bool
     extra_category_ids: list[int]
     checklist: list[ChecklistItem]
+    pairings: list[WidgetPairing]
     # Computed on every read (Widget.checklist_state); never accepted on
     # create or update, so it's absent from WidgetCreate/WidgetUpdate.
     checklist_state: WidgetChecklistState
@@ -105,6 +117,7 @@ class WidgetCreate(CamelModel):
     in_stock: bool = True
     extra_category_ids: list[int] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
     checklist: list[ChecklistItem] = Field(default_factory=list, max_length=50)
+    pairings: list[WidgetPairing] = Field(default_factory=list, max_length=20)
 
     _check_tags = field_validator("tags")(_unique_tags)
     _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)
@@ -129,6 +142,7 @@ class WidgetUpdate(CamelModel):
     in_stock: bool | None = None
     extra_category_ids: list[int] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
     checklist: list[ChecklistItem] | None = Field(default=None, max_length=50)
+    pairings: list[WidgetPairing] | None = Field(default=None, max_length=20)
 
     _check_tags = field_validator("tags")(_unique_tags)
     _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)

@@ -258,7 +258,7 @@ describe("MSW mock conformance", () => {
   });
 
   // The backend's rules too (tests/test_widgets.py), so the two agree.
-  it.each(["name", "categoryId", "status", "availableFrom", "price", "description", "tags", "inStock", "extraCategoryIds", "checklist"])(
+  it.each(["name", "categoryId", "status", "availableFrom", "price", "description", "tags", "inStock", "extraCategoryIds", "checklist", "pairings"])(
     "PATCH /widgets/:id with %s: null is a 422 on that field",
     async (field) => {
       const res = await fetch("http://localhost/api/widgets/1", {
@@ -272,6 +272,32 @@ describe("MSW mock conformance", () => {
       await validate("/widgets/{id}", "patch", res);
     },
   );
+
+  // Sub-records with a reference (openapi.yaml pairings): kept in order,
+  // notes trimmed, and an unknown category refused at the item's own path.
+  it("PATCH /widgets/:id keeps pairings in order and refuses an unknown category at its item", async () => {
+    const saved = await fetch("http://localhost/api/widgets/1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pairings: [{ categoryId: 2, note: " Spare " }, { categoryId: 1, note: "" }] }),
+    });
+    expect(saved.status).toBe(200);
+    expect((await saved.clone().json()).pairings).toEqual([
+      { categoryId: 2, note: "Spare" },
+      { categoryId: 1, note: "" },
+    ]);
+    await validate("/widgets/{id}", "patch", saved);
+
+    const refused = await fetch("http://localhost/api/widgets/1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pairings: [{ categoryId: 1, note: "" }, { categoryId: 999, note: "" }] }),
+    });
+    expect(refused.status).toBe(422);
+    const body = await refused.clone().json();
+    expect(body.detail.map((issue: { loc: unknown }) => issue.loc)).toEqual([["body", "pairings", 1, "categoryId"]]);
+    await validate("/widgets/{id}", "patch", refused);
+  });
 
   it("PATCH /widgets/:id with assigneeEmail: null clears it", async () => {
     const res = await fetch("http://localhost/api/widgets/1", {

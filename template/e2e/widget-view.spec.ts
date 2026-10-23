@@ -24,6 +24,10 @@ const WIRELESS_MOUSE = {
     { text: 'Charge the battery', done: true },
     { text: 'Pair the receiver', done: false },
   ],
+  pairings: [
+    { categoryId: 3, note: 'Desk sets' },
+    { categoryId: 2, note: '' },
+  ],
   checklistState: 'open',
 }
 
@@ -143,6 +147,14 @@ test.describe('widget view', () => {
     await expect(list.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeChecked()
     await expect(list.getByRole('checkbox', { name: 'Done: Pair the receiver' })).not.toBeChecked()
 
+    // Sub-records with a reference: each item reads as the referenced
+    // record's name (from the lookup by id, never the id), then its note.
+    const pairings = page.getByRole('region', { name: 'Pairings' })
+    await expect(pairings.getByRole('list', { name: 'Pairings' }).getByRole('listitem')).toHaveText([
+      'Stationery · Desk sets',
+      'Furniture',
+    ])
+
     // Long text, as Markdown: emphasis, a list, a link that opens a new tab.
     const description = page.getByRole('region', { name: 'Description' })
     await expect(description.locator('strong')).toHaveText('2.4GHz')
@@ -163,6 +175,7 @@ test.describe('widget view', () => {
     await expect(page.getByRole('switch', { name: 'In stock' })).not.toBeChecked()
     await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
     await expect(page.getByRole('region', { name: 'Checklist' })).toContainText('No items')
+    await expect(page.getByRole('region', { name: 'Pairings' })).toContainText('No pairings')
 
     // No value anywhere on the page is blank.
     const values = await page.locator('dd').allTextContents()

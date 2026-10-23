@@ -38,6 +38,7 @@ import {
   WidgetDescriptionEditor,
   WidgetExtraCategoriesPicker,
   WidgetNameInput,
+  WidgetPairingItemFields,
   WidgetPriceInput,
   WidgetStatusSelect,
 } from './widget-fields'
@@ -103,6 +104,7 @@ export function WidgetFormRoute() {
   // Sub-records: the items live in the form's own state and save with the
   // widget. useFieldArray's `fields` carry the stable keys ListEditor needs.
   const checklist = useFieldArray({ control: form.control, name: 'checklist' })
+  const pairings = useFieldArray({ control: form.control, name: 'pairings' })
 
   if (isEdit && widgetQuery.isLoading) {
     return <WidgetFormSkeleton />
@@ -397,6 +399,48 @@ export function WidgetFormRoute() {
           }}
         />
         <FieldError errors={[form.formState.errors.checklist?.root ?? form.formState.errors.checklist]} />
+      </FieldSet>
+
+      {/* Sub-records whose items hold a reference: each row picks a
+          category with the same searchable combobox as Category above, and
+          a server 422 at ["body", "pairings", 2, "categoryId"] binds to
+          that row's picker. */}
+      <FieldSet>
+        <FieldLegend variant="label">Pairings (optional)</FieldLegend>
+        <ListEditor
+          aria-label="Pairings"
+          items={pairings.fields}
+          itemName={(index) => `pairing ${index + 1}`}
+          addLabel="Add pairing"
+          emptyText="No pairings yet."
+          max={20}
+          onAdd={() => pairings.append({ categoryId: undefined as unknown as number, note: '' })}
+          onRemove={pairings.remove}
+          onMove={pairings.move}
+          renderItem={(index) => {
+            const errors = form.formState.errors.pairings?.[index]
+            return (
+              <Controller
+                control={form.control}
+                name={`pairings.${index}.categoryId`}
+                render={({ field }) => (
+                  <WidgetPairingItemFields
+                    id={`widget-pairing-${index}`}
+                    index={index}
+                    value={{ categoryId: field.value }}
+                    onCategoryChange={field.onChange}
+                    categoryInvalid={!!errors?.categoryId}
+                    categoryError={<FieldError errors={[errors?.categoryId]} />}
+                    noteProps={form.register(`pairings.${index}.note`)}
+                    noteInvalid={!!errors?.note}
+                    noteError={<FieldError errors={[errors?.note]} />}
+                  />
+                )}
+              />
+            )
+          }}
+        />
+        <FieldError errors={[form.formState.errors.pairings?.root ?? form.formState.errors.pairings]} />
       </FieldSet>
 
       {/* Yes/no: a Switch with its label beside it (Field orientation

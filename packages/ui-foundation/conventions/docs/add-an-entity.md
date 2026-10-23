@@ -153,7 +153,8 @@ is a filled-in example while the Widgets demo is still here).
    controls named by position ("Item 2 text"), a per-item `FieldError`
    (a server 422 at `["body", "checklist", 2, "text"]` arrives as
    `fieldErrors["checklist.2.text"]` and binds to that row), and a summary
-   in the table, never the items — and a `computed` field copies
+   in the table, never the items (an item with a `reference` field
+   copies Pairings, below) — and a `computed` field copies
    Progress (`checklistState`): `readOnly` in `openapi.yaml` and absent
    from `<Entity>Create`/`<Entity>Update`, one SQL expression in the
    router that the filter and sort use (correlated `EXISTS`, or a scalar
@@ -214,6 +215,66 @@ is a filled-in example while the Widgets demo is still here).
    endpoint, the storage and serving the files are the app's (the
    template has none); `<Markdown>` shows an image only from a web
    address or a path on the site, so `url` is one of those.
+
+   **A `reference` inside a sub-record item** (a list whose items each
+   point at another entity's record) copies Pairings, Widget's
+   `pairings`: Checklist's list, with a reference in each item.
+   - *Wire:* the item carries the referenced id only, named as a
+     top-level reference is (`{ categoryId, note }`, `seriesId` for a
+     Series), never a name or a nested record. Every name, on the form
+     and on the view, comes from the other entity's lookup by id
+     (`GET /<other>?ids=…`), as for a `multi reference`; add `ids` to
+     its list endpoint if it lacks one. An optional text field beside it
+     is a required `string` that is `""` when empty (`note`), so an item
+     never holds a null. `openapi.yaml` describes the item as its own
+     schema (`WidgetPairing`), with `maxItems` on the list.
+   - *Backend:* a child table like the checklist's (`widget_pairings`:
+     `position`, and a foreign key to the referenced table, commented),
+     replaced whole on every write. Before saving, the router checks every
+     item's id in one query (`_check_item_categories_exist`): one that
+     isn't there, or, for a per-user entity, isn't this user's, is a 422 at
+     the item's own path, `["body", "pairings", 2, "categoryId"]`, never a
+     foreign-key 500. Its tests: order kept with repeats, replace and
+     clear, the note trimmed, an unknown id refused at its item on create
+     and on update with nothing saved, `null` and too many refused.
+   - *The mocks* refuse an unknown id at the same path, and trim the note.
+   - *The form's row* is one component shared with editing in place
+     (`WidgetPairingItemFields` in `widget-fields.tsx`): the referenced
+     record's combobox (`WidgetCategoryCombobox`, the form's Category
+     combobox with its own search per row, a lookup by id for the picked
+     record's name, and the picked name not counted as a search, so
+     opening the list offers every record) and the other fields, each
+     named by position ("Pairing 2 category"). On the form it sits in a
+     `Controller` over `<list>.<i>.<field>Id`, the rest `register`ed, and
+     a server 422 at that path (`fieldErrors["pairings.2.categoryId"]`)
+     binds to that row's picker. A new row starts with no pick, which the
+     schema refuses on that row ("Pick a category or remove the
+     pairing"), so a blank item is never sent.
+   - *The view* shows each item as the referenced record's name, from the
+     view's one lookup by id (add every item's id to the ids it already
+     looks up), then its other fields. The name links to the record's
+     view when that entity has one (`<Link to={`/<other>/${id}`}>`);
+     WidgetCategory has none, so Pairings shows it as plain text.
+   - *Editing in place* is `editInPlace({ kind: 'list', ... })` like
+     Checklist's (`pairings` in `widgetEdits`): `renderItem` is the
+     form's row, `renderShown` the item as the view shows it, `newItem`
+     starts with no pick. In the row, Enter in the open list picks
+     without saving; Enter in the row's text box saves the item, as does
+     leaving the row (a click on an option is still inside it), and the
+     item being added opens again after an Enter, as Checklist's does.
+   - *Specs* (copy the `pairings` tests): on the form, saved picks load
+     by name, a pick found by searching saves, a row with no pick is
+     caught on that row, and a server 422 at the item's reference binds
+     to that row's picker; on the view, the names and the sparse record's
+     not-set label; in place (`the pairings edited in place`), an item
+     added from the keyboard (search, Enter picks, Enter saves) with the
+     PATCH sending ids, an item's reference changed by a click, move and
+     remove, no pick never sent, and a refused id staying open with the
+     reason; and the in-place a11y block for a row open and refused.
+   - *Not built:* a "New …" option in the item's picker that creates the
+     referenced record inline. Create it on its own screen (or the
+     table's `InlineCreate`) first. AI chats (MCP) print an item's
+     reference as its id, not its name.
 
    **A `yes/no` marked `toggle`** copies In Stock's cell
    (`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
@@ -418,7 +479,8 @@ is a filled-in example while the Widgets demo is still here).
      shared with the form (`WidgetChecklistItemFields`), the item as the
      view shows it (its quick action, if any) as `renderShown`, the list's
      schema, and `save: (change) => edit.mutateAsync((current) => ({
-     <field>: change(current.<field>) }))`. **With no `Edit in place`
+     <field>: change(current.<field>) }))` (an item with a reference:
+     copy `pairings` in `widgetEdits`, above). **With no `Edit in place`
      line, nothing is editable in place** and none of this is copied.
      Never a computed field.
 

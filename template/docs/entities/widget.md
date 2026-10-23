@@ -40,6 +40,21 @@ foundation supports has a working, tested reference.
 | text | Text | text | yes | 1–300 chars, trimmed |
 | done | Done | yes/no | yes | default no |
 
+### pairings — Pairings
+
+Sub-records whose items hold a reference: the categories the widget
+pairs with, each with a note.
+
+- Most items: 20.
+- In the table: not shown.
+- On the view: each item in order, as its category's name, then its note.
+  The list is edited in place: items added, edited, moved and removed.
+
+| Field | Label | Type | Required | Options / rules |
+|---|---|---|---|---|
+| categoryId | Category | reference → WidgetCategory | yes | picked from a searchable list; the same category may appear in more than one item |
+| note | Note | text | no | up to 100 chars, trimmed; empty means none |
+
 ## List screen
 
 - Default sort: none (server order).
@@ -57,16 +72,18 @@ foundation supports has a working, tested reference.
 | Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail | rail |
 | Description | description | main |
 | Checklist | checklist | main |
+| Pairings | pairings | main |
 
 - "Not set" labels: `extraCategoryIds`: No extra categories; `tags`:
-  Untagged; `assigneeEmail`: Unassigned; `checklist`: No items.
+  Untagged; `assigneeEmail`: Unassigned; `checklist`: No items;
+  `pairings`: No pairings.
 - Quick actions: `inStock`, `checklist`. Ticking an item can change
   `checklistState` (the server works it out), so the header's progress
   badge follows the tick once the save answers.
 - Edit in place: `name` (the title), `status` (its header badge), `price`,
   `description` (Markdown, as rich text), `extraCategoryIds`, `checklist`
   (its items added, edited, moved and removed; ticking stays a quick
-  action).
+  action), `pairings` (the same, each item's category picked in its row).
 
 ## Screens and access
 

@@ -312,6 +312,7 @@ test.describe('widget view: editing in place', () => {
         inStock: true,
         extraCategoryIds: [1, 3],
         checklist: [],
+        pairings: [],
         checklistState: 'none',
       },
     })
@@ -357,6 +358,7 @@ test.describe('widget view: editing in place', () => {
         inStock: true,
         extraCategoryIds: [1, 3],
         checklist: [],
+        pairings: [],
         checklistState: 'none',
       },
     })
@@ -911,5 +913,122 @@ test.describe('widget view: the checklist edited in place', () => {
     await page.getByRole('textbox', { name: 'Item 3 text' }).fill('Half typed')
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
     await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toBeVisible()
+  })
+})
+
+// Sub-records whose items hold a reference: each row is the form's (a
+// category combobox and a note), the item reads as the category's name.
+test.describe('widget view: the pairings edited in place (a reference in each item)', () => {
+  const pairings = (page: Page) => page.getByRole('region', { name: 'Pairings' })
+  const items = (page: Page) => pairings(page).getByRole('list', { name: 'Pairings' }).getByRole('listitem')
+  const SAVED = [
+    { categoryId: 3, note: 'Desk sets' },
+    { categoryId: 2, note: '' },
+  ]
+
+  test('a pairing added from the keyboard: search, Enter picks without saving, a note, Enter saves', async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
+    const picker = page.getByRole('combobox', { name: 'Pairing 3 category' })
+    await expect(picker).toBeFocused()
+    await picker.fill('Elec')
+    const electronics = page.getByRole('option', { name: 'Electronics' })
+    await expect(electronics).toBeVisible()
+    await picker.press('ArrowDown')
+    await expect(electronics).toHaveAttribute('data-highlighted', '')
+    // Enter in the open list picks; the row stays open for its note.
+    await page.keyboard.press('Enter')
+    await expect(picker).toHaveValue('Electronics')
+    await expect(electronics).toBeHidden()
+    expect(bodies).toEqual([])
+
+    const note = page.getByRole('textbox', { name: 'Pairing 3 note' })
+    await note.fill('Gift sets')
+    await page.keyboard.press('Enter')
+
+    // The item carries the id; the view shows the name.
+    expect(bodies).toEqual([{ pairings: [...SAVED, { categoryId: 1, note: 'Gift sets' }] }])
+    await expect(items(page)).toHaveText(['Stationery · Desk sets', 'Furniture', 'Electronics · Gift sets'])
+    // Enter opened the next one; an empty one closes on Esc with nothing sent.
+    await expect(page.getByRole('combobox', { name: 'Pairing 4 category' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('combobox', { name: 'Pairing 4 category' })).toHaveCount(0)
+    expect(bodies).toHaveLength(1)
+
+    // Saved, not just shown: away to the list and back reads it again.
+    await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
+    await page.getByRole('link', { name: 'Wireless Mouse' }).click()
+    await expect(items(page)).toHaveText(['Stationery · Desk sets', 'Furniture', 'Electronics · Gift sets'])
+  })
+
+  test("an item's reference changes where it's shown: a click picks, leaving saves", async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await items(page).nth(1).getByText('Furniture', { exact: true }).click()
+    const picker = page.getByRole('combobox', { name: 'Pairing 2 category' })
+    await expect(picker).toBeFocused()
+    // The saved pick shows by name, from the lookup by id.
+    await expect(picker).toHaveValue('Furniture')
+    await page.getByRole('button', { name: 'Show options' }).click()
+    await page.getByRole('option', { name: 'Electronics' }).click()
+    await expect(picker).toHaveValue('Electronics')
+    expect(bodies).toEqual([])
+
+    await page.getByRole('heading', { level: 2, name: 'Pairings' }).click()
+    await expect(picker).toHaveCount(0)
+    expect(bodies).toEqual([{ pairings: [SAVED[0], { categoryId: 1, note: '' }] }])
+    await expect(items(page)).toHaveText(['Stationery · Desk sets', 'Electronics'])
+  })
+
+  test("move and remove: the form's buttons, each one save of the whole list", async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await pairings(page).getByRole('button', { name: 'Move pairing 2 up' }).click()
+    await expect(items(page)).toHaveText(['Furniture', 'Stationery · Desk sets'])
+    await pairings(page).getByRole('button', { name: 'Remove pairing 1' }).click()
+    await expect(items(page)).toHaveText(['Stationery · Desk sets'])
+    expect(bodies).toEqual([{ pairings: [SAVED[1], SAVED[0]] }, { pairings: [SAVED[0]] }])
+  })
+
+  test("a pairing with no category is never sent: the form's rule shows under it", async ({ page }) => {
+    const bodies = patchBodies(page)
+    await openWidget(page)
+    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
+    await page.getByRole('textbox', { name: 'Pairing 3 note' }).fill('No category yet')
+    await page.keyboard.press('Enter')
+    await expect(pairings(page).getByRole('alert')).toHaveText('Pick a category or remove the pairing')
+    expect(bodies).toEqual([])
+  })
+
+  test("a refused reference stays open with the pick and the server's reason", async ({ page }) => {
+    await openWidget(page)
+    await refusePatches(page, 422, {
+      detail: [{ loc: ['body', 'pairings', 2, 'categoryId'], msg: 'Category not found', type: 'value_error.foreign_key' }],
+    })
+    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
+    const picker = page.getByRole('combobox', { name: 'Pairing 3 category' })
+    await page.getByRole('button', { name: 'Show options' }).click()
+    await page.getByRole('option', { name: 'Stationery' }).click()
+    await page.getByRole('textbox', { name: 'Pairing 3 note' }).fill('Again')
+    await page.keyboard.press('Enter')
+
+    await expect(picker).toHaveValue('Stationery')
+    await expect(picker).toHaveAttribute('aria-invalid', 'true')
+    await expect(picker).toHaveAccessibleDescription('Category not found')
+    await expect(items(page)).toHaveText(['Stationery · Desk sets', 'Furniture'])
+  })
+
+  test('an empty list says so, and takes its first pairing', async ({ page }) => {
+    // Blank Slate (id 4) has no pairings.
+    const bodies = patchBodies(page)
+    await openWidget(page, 4)
+    await expect(pairings(page)).toContainText('No pairings')
+    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
+    await page.getByRole('button', { name: 'Show options' }).click()
+    await page.getByRole('option', { name: 'Furniture' }).click()
+    await page.getByRole('textbox', { name: 'Pairing 1 note' }).press('Enter')
+    await expect(items(page)).toHaveText(['Furniture'])
+    expect(bodies).toEqual([{ pairings: [{ categoryId: 2, note: '' }] }])
   })
 })
