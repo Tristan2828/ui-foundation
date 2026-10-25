@@ -22,17 +22,22 @@
 // function and it gets the id to put in `aria-labelledby`.
 import { useId, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
-import { ExternalLinkIcon, type LucideIcon } from 'lucide-react'
+import { ExternalLinkIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
+import type { IconComponent } from '@/components/app/icon-component'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export interface WidgetCardProps {
   title: string
-  /** A Lucide icon shown before the title. Decorative: the title names the card. */
-  icon?: LucideIcon
+  /**
+   * An icon shown before the title: a Lucide icon, or an app's own mark (an
+   * outside service's logo on a card about that service). Decorative: the
+   * title names the card.
+   */
+  icon?: IconComponent
   /** The title's heading level: 2 under the page's h1 (the default), deeper under a section. */
   headingLevel?: 2 | 3 | 4 | 5 | 6
   /**

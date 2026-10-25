@@ -5,6 +5,7 @@
 
 // Composites
 export { AppShell, type AppShellProps, type AppShellVersion, type NavEntry, type NavItem, type NavSection } from '@/components/app/app-shell'
+export type { IconComponent } from '@/components/app/icon-component'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export { DataTable, type DataTableProps, type DataTableWidth, type SortingState } from '@/components/app/data-table'
 export { type RowGroup } from '@/components/app/table-groups'
@@ -128,6 +129,7 @@ export {
 export { cn } from '@/lib/utils'
 export {
   canVibrate,
+  cancelCues,
   chime,
   hush,
   say,
@@ -135,6 +137,8 @@ export {
   unlockAudio,
   vibrate,
   type ChimeOptions,
+  type Cue,
+  type CueTime,
   type SayOptions,
   type SequenceOptions,
 } from '@/lib/audio-cues'

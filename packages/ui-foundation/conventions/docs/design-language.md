@@ -101,6 +101,50 @@ doesn't (2.7:1). A deliberately faint icon that carries nothing on its
 own (an "empty" star beside a rating's filled ones, pattern 9) may go
 lower; say so in a comment.
 
+## Logos and brand marks
+
+An app's own logo (`AppShell`'s `logo`) and the marks of the services it
+links to (a video site's mark on "Open on …", on a `WidgetCard` about it)
+are **icon components** (`IconComponent`): sized by a `size-*` class,
+`aria-hidden` passed through to the `<svg>`, with the same props as a
+Lucide icon, so they go wherever an icon goes. Lucide has no brand logos,
+and the package ships none: an app keeps the few it needs as its own
+components (Simple Icons' paths are CC0), with no icon pack as a
+dependency.
+
+Colour them in one of two ways:
+
+- **`currentColor`** for a one-colour mark that isn't a colour of its own
+  (a black or white logo): it takes the text colour around it, so it
+  turns over with the theme. The default.
+- **A brand token** for a mark whose colour *is* the brand (a red play
+  button). Define it in the app's `src/index.css`, the same value in both
+  themes, since a logo keeps its colours, and register it so it's a
+  class:
+
+  ```css
+  :root {
+    --brand-videosite: #ff0033;
+    --brand-videosite-foreground: #ffffff;
+  }
+  @theme inline {
+    --color-brand-videosite: var(--brand-videosite);
+    --color-brand-videosite-foreground: var(--brand-videosite-foreground);
+  }
+  ```
+
+  Then `fill-brand-videosite` on the mark's shape. This is the one place
+  a raw colour value is right, and it doesn't break "semantic tokens
+  only": the token's name says what it's for. **Brand tokens paint
+  marks only**: never text, a surface, a border, a focus ring or a tone.
+  A mark is decorative (whatever it sits beside names it), so it isn't
+  held to the 3:1 above, but check it against the page in both themes;
+  where it vanishes in one, give it a `currentColor` outline or use the
+  one-colour mark there.
+
+The package's own stories show the slots with made-up marks in
+`currentColor` (`app/AppShell` With logo, `app/WidgetCard` Brand mark).
+
 ## Categorical colour
 
 Tones say good, bad or *notice this*. A value that is merely *different* from its

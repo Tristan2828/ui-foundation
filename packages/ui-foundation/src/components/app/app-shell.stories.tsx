@@ -17,7 +17,9 @@ import { EntityView } from './entity-view'
 // checks the groups, the current entry and the version entry, sections
 // that fold (Collapsible, and on the icon rail CollapsibleRail), an entry
 // opening a list on a saved view (SavedView, #188), and the browser tab's
-// title from the nav and from a record's view (Home, WithView…, #186).
+// title from the nav and from a record's view (Home, WithView…, #186),
+// and the app's logo beside its title and alone on the rail (WithLogo…,
+// #211).
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -113,17 +115,30 @@ function ProjectView({ loaded: loadedAtFirst, documentTitle }: { loaded: boolean
 
 type ShellView = { loaded: boolean; documentTitle?: string | false }
 
+// A made-up app mark, drawn the way an app's own is: an icon component
+// that sizes by class, passes aria-hidden on and fills with currentColor.
+function ExampleLogo({ className, ...rest }: { className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} data-testid="app-logo" {...rest}>
+      <path fillRule="evenodd" d="M12 2 22 7.5v9L12 22 2 16.5v-9L12 2Zm0 5-5 2.75v4.5L12 17l5-2.75v-4.5L12 7Z" />
+    </svg>
+  )
+}
+
 function Shell({
   nav,
   path,
   version,
   sidebarOpen = true,
   view,
+  logo,
 }: {
   nav: NavEntry[]
   path: string
   version?: AppShellVersion
   sidebarOpen?: boolean
+  /** Shows ExampleLogo as the app's logo. */
+  logo?: boolean
   /** /projects/:id is a project's EntityView. */
   view?: ShellView
 }) {
@@ -131,7 +146,15 @@ function Shell({
     [
       {
         path: '/',
-        element: <AppShell title="Example" nav={nav} defaultSidebarOpen={sidebarOpen} version={version} />,
+        element: (
+          <AppShell
+            title="Example"
+            logo={logo ? ExampleLogo : undefined}
+            nav={nav}
+            defaultSidebarOpen={sidebarOpen}
+            version={version}
+          />
+        ),
         children: [
           ...(view ? [{ path: 'projects/:id', element: <ProjectView {...view} /> }] : []),
           { path: '*', element: <p>Page at {path}</p> },
@@ -200,3 +223,7 @@ export const WithViewDocumentTitle: Story = {
 export const WithViewNoDocumentTitle: Story = {
   args: { nav: SECTIONS, path: '/projects/7', view: { loaded: true, documentTitle: false } },
 }
+
+// The app's logo (#211): before the title, and alone at the top of the rail.
+export const WithLogo: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true } }
+export const WithLogoRail: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true, sidebarOpen: false } }

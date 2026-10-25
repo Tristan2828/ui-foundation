@@ -182,3 +182,29 @@ test.describe("the browser tab's title", () => {
     await expect(page).toHaveTitle('Projects · Example')
   })
 })
+
+test.describe("the app's logo (#211)", () => {
+  const header = (page: Page) => nav(page).locator('[data-sidebar="header"]')
+
+  test('sits before the title, decorative, centred on its line', async ({ page }) => {
+    await open(page, 'with-logo')
+    const logo = header(page).getByTestId('app-logo')
+    const title = header(page).getByText('Example', { exact: true })
+    await expect(logo).toBeVisible()
+    await expect(logo).toHaveAttribute('aria-hidden', 'true')
+    const [logoBox, titleBox] = [await logo.boundingBox(), await title.boundingBox()]
+    expect(logoBox!.x + logoBox!.width).toBeLessThanOrEqual(titleBox!.x)
+    expect(Math.abs(logoBox!.y + logoBox!.height / 2 - (titleBox!.y + titleBox!.height / 2))).toBeLessThanOrEqual(1)
+  })
+
+  test('on the icon rail it stays alone, centred over the nav icons', async ({ page }) => {
+    await open(page, 'with-logo-rail')
+    const logo = header(page).getByTestId('app-logo')
+    await expect(logo).toBeVisible()
+    await expect(header(page).getByText('Example', { exact: true })).toBeHidden()
+    const logoBox = (await logo.boundingBox())!
+    const iconBox = (await nav(page).getByRole('link', { name: 'Home' }).locator('svg').boundingBox())!
+    expect(logoBox.width).toBeCloseTo(iconBox.width, 0)
+    expect(Math.abs(logoBox.x + logoBox.width / 2 - (iconBox.x + iconBox.width / 2))).toBeLessThanOrEqual(1)
+  })
+})

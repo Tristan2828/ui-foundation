@@ -49,7 +49,9 @@ is right. Do not disable, skip, or work around it.
 - NEVER use a raw hex value or a Tailwind palette color (`bg-blue-500`).
   Semantic tokens only: `bg-primary`, `text-muted-foreground`. (Enforced:
   the foundation's ESLint token rule; axe contrast in light and dark mode,
-  `e2e/a11y.spec.ts`.)
+  `e2e/a11y.spec.ts`.) The one exception is an app's `--brand-<name>`
+  tokens, for logos and brand marks only (`docs/foundation/design-language.md`
+  "Logos and brand marks").
 - NEVER fetch in `useEffect`. All server state goes through TanStack Query.
   (Enforced: eslint-plugin-query + the no-bare-fetch rule.)
 - NEVER read auth state outside `useAuth()`. The package exports nothing

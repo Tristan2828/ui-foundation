@@ -7,9 +7,9 @@ package has the parts, so a screen like this is assembled, not rebuilt:
 | Part | What it does |
 |---|---|
 | `SessionView` | The whole viewport over the app shell: a modal named by its title, focus kept inside, Esc closes it. Optional real fullscreen and a held wake lock |
-| `useSessionClock` | A clock that doesn't drift, with pause and resume: `idle`, `running`, `done` |
+| `useSessionClock` | A clock that doesn't drift, with pause, resume and seek: `idle`, `running`, `done` |
 | `useWakeLock` | Keeps the screen on while a session runs (`SessionView`'s `keepAwake` uses it) |
-| `unlockAudio`, `chime`, `sequence`, `say`, `hush`, `vibrate` | Sound cues with no audio files |
+| `unlockAudio`, `chime`, `sequence`, `cancelCues`, `say`, `hush`, `vibrate` | Sound cues with no audio files, booked ahead where they must be on time |
 | `canVibrate` | Whether this browser can vibrate, to offer a Vibrate setting only where it works |
 | `useMuted` | A mute toggle remembered on this device |
 | `usePrefersReducedMotion` | Whether to swap movement for a fade |
@@ -58,7 +58,7 @@ const primary = useRef<HTMLButtonElement>(null)
 ## The clock
 
 `useSessionClock({ running?, endsAt? })` returns
-`{ elapsed, status, paused, start, pause, resume, stop }`.
+`{ elapsed, status, paused, start, startFrom, seek, pause, resume, stop }`.
 
 - `elapsed` is in milliseconds, read from `performance.now()` each
   animation frame. It is never summed from ticks, so it doesn't drift.
@@ -73,8 +73,15 @@ const primary = useRef<HTMLButtonElement>(null)
   front of it.
 - It re-renders once per frame, only while counting. Format what it shows
   from `elapsed`, never by counting renders.
-- A hidden tab draws no frames, but its time still counts. The first frame
-  back catches up, and reaches `done` if it's due.
+- A hidden tab draws no frames, but its time still counts. While hidden,
+  the clock reads the time on a slow tick instead (once a second at most),
+  enough for a countdown in the tab's title, and coming back catches up
+  exactly, reaching `done` if it's due. See "Background tabs" below.
+- `startFrom(ms)` starts a run at a given elapsed time: one resumed from
+  storage after a reload. `seek(ms)` moves a running run there, paused or
+  not, for Skip and Back; at or past `endsAt` it's `done`. A seek while
+  idle or done does nothing: use `startFrom`. Pause and resume stay exact
+  after either. Don't keep a `Date.now()` clock of your own beside it.
 
 For phases (stretch two minutes, rest thirty seconds), keep one clock for
 the whole session and work out the phase from `elapsed`. A clock per
@@ -88,10 +95,13 @@ Browsers block sound until the person has clicked or tapped. So:
   click handler itself, not in an effect after it. Every cue before that
   is dropped rather than played late. iOS also needs speech started from
   a click, and `unlockAudio()` does that too.
-- `chime({ pitch?, volume?, duration? })`: a soft sine tone, a short
+- `chime({ pitch?, volume?, duration?, at? })`: a soft sine tone, a short
   attack and a slow fade. `pitch` is in Hz (660 by default). For a
   closing pair, use `sequence([{ pitch: 660 }, { pitch: 880 }])`, 180 ms
-  apart by default.
+  apart by default. `at` (a `Date.now()` time; `sequence` takes it in its
+  options) books it ahead: see "Background tabs". Each returns a handle
+  whose `cancel()` takes back what hasn't sounded yet, and `cancelCues()`
+  takes back every booked chime.
 - `say(text)` speaks a line ("Next: stretch, 2 minutes"), cutting off any
   line still being spoken. `hush()` stops it. Call `hush()` when the
   session stops or the view closes.
@@ -112,7 +122,42 @@ Browsers block sound until the person has clicked or tapped. So:
   (`aria-pressed={muted}`) named "Mute".
 - **Cue on a change of state** in an effect that compares the previous
   state with the current one, so the cue plays once. Never play a cue
-  during render.
+  during render. A cue that must be on time while the tab is in the
+  background (a phase ending) is booked ahead instead, below.
+
+## Background tabs
+
+A timer is often left running in a tab behind another. The browser draws
+no frames there and slows its timers (Chrome to about once a minute after
+a few minutes), so anything driven by them runs late: a chime from an
+effect on a phase change sounds when the person comes back, not when the
+phase ends. Web Audio's own clock keeps time, so:
+
+- **Book the cues ahead from the run's plan.** When counting starts
+  (start, resume, the view reopened, unmuted), work out when each coming
+  cue is due from the plan and the clock's position, and book it:
+  `sequence(closingPair, { at: Date.now() + endsAt - clock.elapsed })`,
+  a `chime({ at })` for each phase boundary. They strike on time whatever
+  the page's timers do.
+- **Take them back whenever counting stops, and rebook when the run
+  moves:** `cancelCues()` on pause, on closing the view, on mute and on
+  leaving the screen (an effect's cleanup); on Skip and Back, `seek`,
+  then `cancelCues()` and book again from the new position. A chime
+  already sounding rings out. Reaching `done` takes nothing back: the
+  closing cue is sounding then.
+- **Do it in the handlers**, where you know why counting stopped, not in
+  an effect on `paused`: an effect's cleanup can't tell pause from done.
+  The Timer story (`app/SessionView`) does exactly this.
+- **Speech can't be booked.** `say()` still comes when the clock's slow
+  tick reaches the moment, so in a background tab it may be late. Keep
+  what must be on time to chimes.
+- **The tab's title** (`Focus 18:42`) can count down from `elapsed`: the
+  clock's slow tick re-renders while hidden. Set it in an effect, and put
+  the plain title back when the run ends. A tick a browser has slowed to
+  once a minute shows a coarser countdown; the time itself is never off.
+- Booked cues need `unlockAudio()` from a click, like any other. iOS
+  Safari may suspend audio in a background tab altogether; nothing in a
+  web page gets round that.
 
 ## Motion
 
@@ -161,6 +206,67 @@ test('running, paused and done', async ({ page }) => {
   before the page loads:
   `page.addInitScript(() => localStorage.setItem('my-app:routine:muted', 'true'))`.
 - **Reduced motion:** `await page.emulateMedia({ reducedMotion: 'reduce' })`.
+
+**A background tab:** set the page's visibility yourself, stop its
+animation frames, and record what's booked on a stand-in `AudioContext`:
+
+```ts
+test.beforeEach(async ({ page }) => {
+  await page.clock.install()
+  await page.addInitScript(() => {
+    let visibility: DocumentVisibilityState = 'visible'
+    Object.defineProperty(document, 'visibilityState', { get: () => visibility })
+    Object.defineProperty(document, 'hidden', { get: () => visibility === 'hidden' })
+    const booked: { pitch: number; at: number; cancelled: boolean }[] = []
+    class RecordingAudioContext {
+      state = 'running'; currentTime = 0; destination = {}
+      resume = async () => {}
+      last = { pitch: 0, at: 0, cancelled: false }
+      createOscillator() {
+        const cue = (this.last = { pitch: 0, at: 0, cancelled: false })
+        return {
+          frequency: { setValueAtTime: (hz: number) => (cue.pitch = hz) },
+          connect: (node: unknown) => node,
+          start: (at: number) => booked.push(Object.assign(cue, { at })),
+          stop: () => {},
+        }
+      }
+      createGain() {
+        const cue = this.last
+        return {
+          gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+          connect: (node: unknown) => node,
+          disconnect: () => (cue.cancelled = true),
+        }
+      }
+    }
+    Object.assign(window, {
+      AudioContext: RecordingAudioContext,
+      __booked: booked,
+      __hide() {
+        visibility = 'hidden'
+        window.requestAnimationFrame = () => 0   // a hidden tab draws no frames
+        document.dispatchEvent(new Event('visibilitychange'))
+      },
+    })
+  })
+})
+
+test('the end is booked ahead, and the title counts down while hidden', async ({ page }) => {
+  await page.goto('/routine')
+  await page.getByRole('button', { name: 'Start' }).click()
+  // Seconds ahead on the audio clock: the closing pair five minutes on.
+  const booked = () => page.evaluate(() => (window as any).__booked.map((c: any) => [c.pitch, Math.round(c.at), c.cancelled]))
+  await expect.poll(booked).toContainEqual([660, 300, false])
+
+  await page.evaluate(() => (window as any).__hide())
+  await page.clock.fastForward('00:10')
+  await expect(page).toHaveTitle(/^4:50/)
+})
+```
+
+Pause, Skip and Back are asserted the same way: the earlier booking's
+`cancelled` turns true and a new one appears at the new time.
 
 **An open-ended count-up: pause the fake clock.** After
 `clock.install()` the fake clock still moves in real time between
