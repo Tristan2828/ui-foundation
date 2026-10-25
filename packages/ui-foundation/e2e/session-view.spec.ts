@@ -194,3 +194,117 @@ test('reduced motion swaps the breathing circle for a still one', async ({ page 
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect(circle).toHaveAttribute('data-motion', 'reduced')
 })
+
+// A background tab (#193), as docs/foundation/timed-screens.md "Background
+// tabs" tells an app to test it: the page's visibility set by the test,
+// no animation frames while hidden, the fake clock fast-forwarded, and a
+// Web Audio that records what it's asked to book.
+test.describe('in a background tab', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.clock.install()
+    await page.addInitScript(() => {
+      let visibility: DocumentVisibilityState = 'visible'
+      Object.defineProperty(document, 'visibilityState', { get: () => visibility })
+      Object.defineProperty(document, 'hidden', { get: () => visibility === 'hidden' })
+      const strikes: { pitch: number; start: number; cancelled: boolean }[] = []
+      class RecordingAudioContext {
+        state = 'running'
+        currentTime = 0
+        destination = {}
+        resume = async () => {}
+        private last: { pitch: number; start: number; cancelled: boolean } | null = null
+        createOscillator() {
+          const strike = { pitch: 0, start: 0, cancelled: false }
+          this.last = strike
+          return {
+            frequency: { setValueAtTime: (value: number) => (strike.pitch = value) },
+            connect: (node: unknown) => node,
+            start: (time: number) => {
+              strike.start = time
+              strikes.push(strike)
+            },
+            stop: () => {},
+          }
+        }
+        createGain() {
+          const strike = this.last!
+          return {
+            gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+            connect: (node: unknown) => node,
+            disconnect: () => (strike.cancelled = true),
+          }
+        }
+      }
+      Object.assign(window, {
+        AudioContext: RecordingAudioContext,
+        __strikes: strikes,
+        __setVisibility(state: DocumentVisibilityState) {
+          visibility = state
+          // A hidden tab draws no frames: only the clock's slow tick runs.
+          if (state === 'hidden') window.requestAnimationFrame = () => 0
+          document.dispatchEvent(new Event('visibilitychange'))
+        },
+      })
+    })
+  })
+
+  const hide = (page: Page) =>
+    page.evaluate(() => (window as unknown as { __setVisibility(s: string): void }).__setVisibility('hidden'))
+  // Booked strikes as [pitch, seconds ahead on the audio clock, cancelled].
+  const strikes = (page: Page) =>
+    page.evaluate(() =>
+      (window as unknown as { __strikes: { pitch: number; start: number; cancelled: boolean }[] }).__strikes.map(
+        (strike) => [strike.pitch, Math.round(strike.start), strike.cancelled],
+      ),
+    )
+
+  test("the tab's title still counts down, on the clock's slow tick", async ({ page }) => {
+    await open(page)
+    await view(page).getByRole('button', { name: 'Start' }).click()
+    await page.clock.fastForward('00:05')
+    await expect(page).toHaveTitle('0:55 · Morning stretch')
+    await hide(page)
+    await page.clock.fastForward('00:10')
+    await expect(page).toHaveTitle('0:45 · Morning stretch')
+    await page.clock.fastForward('00:45')
+    await expect(page).toHaveTitle('Morning stretch')
+    await expect(status(page)).toHaveText('Done')
+  })
+
+  test('the closing pair is booked ahead from the start, taken back on pause, and rebooked on resume and skip', async ({
+    page,
+  }) => {
+    await open(page)
+    await view(page).getByRole('button', { name: 'Start' }).click()
+    // The start chime now, and the closing pair a minute ahead.
+    await expect.poll(() => strikes(page)).toEqual([
+      [660, 0, false],
+      [660, 60, false],
+      [880, 60, false],
+    ])
+
+    await page.clock.fastForward('00:20')
+    await view(page).getByRole('button', { name: 'Pause' }).click()
+    await expect.poll(() => strikes(page)).toEqual([
+      [660, 0, false],
+      [660, 60, true],
+      [880, 60, true],
+    ])
+
+    await page.clock.fastForward('05:00')
+    await view(page).getByRole('button', { name: 'Resume' }).click()
+    await expect.poll(async () => (await strikes(page)).slice(3)).toEqual([
+      [660, 40, false],
+      [880, 40, false],
+    ])
+
+    await view(page).getByRole('button', { name: 'Skip 10 s' }).click()
+    await expect(timeLeft(page)).toHaveText('0:30')
+    await expect.poll(async () => (await strikes(page)).slice(3)).toEqual([
+      [660, 40, true],
+      [880, 40, true],
+      [660, 30, false],
+      [880, 30, false],
+    ])
+  })
+})

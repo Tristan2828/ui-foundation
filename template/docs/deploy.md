@@ -379,6 +379,21 @@ Unset, the default, errors are logged and nothing is sent.
   and a session sends at most `CLIENT_ERRORS_PER_MINUTE` (10) a minute.
   Both are counted in each worker's memory. It needs a data router
   (`createBrowserRouter`), as the template has, to know the route.
+- **Noise it drops on its own** (4.29): `Script error.` from a script on
+  another origin, and an uncaught error none of whose stack frames is in
+  one of the app's scripts: every frame at a page's own address (a script
+  the browser or an extension injected, such as Firefox for iOS's
+  `__firefox__`) or in an extension (`chrome-extension://`, …). A screen
+  that crashed and a failed request are never dropped this way. For a
+  pattern of your own, pass `errorReporting={{ release, ignore: (report) => … }}`:
+  return true to drop it.
+- **After a deploy** (4.29), a tab still running the build before it can't
+  load that build's lazy chunks any more. `FoundationProviders` handles
+  it, reporting on or off: on Vite's `vite:preloadError` it reloads the
+  page once onto the new build, and nothing is reported. If the chunk
+  fails again within a minute of that reload (a file missing from the new
+  build too), it's let through to the screen's error and reported. Don't
+  add a listener of your own.
 
 **What a report holds:** the error's type, message and stack; the route
 **pattern** (`/widgets/:id`, `/api/widgets/{widget_id}`), never the URL; the

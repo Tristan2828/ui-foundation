@@ -5,6 +5,62 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.29.0 — Brand marks, background-tab timers, and less noise after a deploy
+
+Additive, so a minor. Four requests from apps (#193, #205, #206, #211).
+
+- **New: `AppShell`'s `logo`** (#211): the app's mark before its title at
+  the top of the sidebar, and alone, centred, at the top of the collapsed
+  icon rail. Decorative; `title` still names the app.
+- **`WidgetCard`'s `icon` takes any icon component** (#211), not only a
+  `LucideIcon`: an app's own mark for a card about an outside service.
+  Every Lucide icon still fits. **New export: `IconComponent`**, the type
+  both slots take.
+- **Design language: logos and brand marks** (#211). An app keeps the
+  marks it needs as its own components (no icon pack), coloured with
+  `currentColor` or with app-level `--brand-<name>` tokens, for marks
+  only, the same in both themes (`design-language.md` "Logos and brand
+  marks"; the token Hard Rule names the exception).
+- **Timed screens in a background tab** (#193):
+  - `chime` and `sequence` take `at` (a `Date.now()` time) and book the
+    chime ahead on the Web Audio clock, so it strikes on time in a
+    background tab. Each returns a `Cue` whose `cancel()` takes back what
+    hasn't sounded; **new: `cancelCues()`** takes back every booked chime.
+    New types `Cue` and `CueTime`.
+  - `useSessionClock` ticks once a second (or as the browser allows) while
+    the tab is hidden, enough for a countdown in the tab's title, and
+    catches up exactly when it comes back.
+  - `useSessionClock` returns **`startFrom(ms)`** (a run resumed from
+    storage) and **`seek(ms)`** (Skip and Back), with pause and resume
+    still exact.
+  - `timed-screens.md` has a "Background tabs" section and its Playwright
+    recipe.
+- **Error reporting drops what can't be the app's** (#205): `Script
+  error.` with nothing else, and a `window`/`unhandledrejection` error
+  whose every stack frame is at a page's own address (a script the browser
+  or an extension injected, e.g. Firefox for iOS's `__firefox__`) or in an
+  extension. Route crashes and failed requests are never filtered.
+  **New: `ErrorReportingOptions`' `ignore(report)`** drops a pattern of
+  the app's own.
+- **After a deploy, a missing lazy chunk reloads the page once** (#206)
+  instead of crashing the screen: `FoundationProviders` listens for Vite's
+  `vite:preloadError`, reloads once (remembered in `sessionStorage`), and
+  reports nothing meanwhile. A second failure within a minute of the
+  reload is a real missing file: it reaches the error boundary and is
+  reported.
+
+No migration, no contract change, no new dependency.
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.29.0 and run `npx ui-foundation sync`.
+  Then, as wanted: pass the app's logo to `AppShell`'s `logo`; swap a
+  widget card's generic icon for the outside service's mark; keep the
+  app's `--brand-*` tokens as the design language says; replace an own
+  `AudioContext` scheduler, hidden-tab tick and `Date.now()` clock with
+  `chime({ at })`/`cancelCues()` and `startFrom`/`seek`; remove an own
+  `vite:preloadError` listener; resolve the noise issues in the error
+  tracker once deployed.
+
 ## 4.28.0 — ImageField, and images uploaded in the Markdown editor
 
 Additive, so a minor: a photo on a record and pictures in notes, with the

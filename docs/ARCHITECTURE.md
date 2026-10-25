@@ -166,7 +166,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   which logs and, with a DSN, sends a Sentry envelope; and the package's
   reporter (`src/error-reporting/`), which posts crashes and `server`
   failures to the app's own `POST /client-errors` for the backend to
-  forward. A report holds patterns and ids, never request data.
+  forward. A report holds patterns and ids, never request data. It drops
+  uncaught errors that can't be the app's (4.29, #205: `Script error.`,
+  every frame at a page address or in an extension), and nothing is
+  reported while the page reloads onto a new build: a lazy chunk gone
+  after a deploy (`vite:preloadError`) reloads it once
+  (`lib/stale-chunk-reload.ts`, #206), reporting on or off.
 - **A small entity** (3.26) edits in its table's rows: `DataTable` runs
   the same edit-in-place store as a view, so a cell that renders an
   `EditableValue` edits where it's shown, and `InlineCreate` creates from
@@ -197,7 +202,10 @@ src/main.tsx                           FoundationProviders (theme, query client,
   (`createWakeLock`, `createSessionClock`, `createAudioCues`,
   `createMutedStore`), unit tested in node against fake browser APIs, and
   the hooks and functions apps import are thin bindings to the real ones.
-  The browser side is `e2e/session-view.spec.ts` on the Timer story.
+  The browser side is `e2e/session-view.spec.ts` on the Timer story. In a
+  background tab (4.29, #193) cues are booked ahead on the Web Audio clock
+  (`at`, `cancelCues`), the clock ticks slowly while hidden, and it can
+  start from and seek to a time.
 - **Saving without the form** (a row's switch, a quick action on the view)
   goes through `useRecordUpdate`: a PATCH that is optimistic in the
   record's detail query and every list page holding it, replaced by the

@@ -1,16 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { ClockIcon, LinkIcon, ListChecksIcon, type LucideIcon } from 'lucide-react'
+import { ClockIcon, LinkIcon, ListChecksIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import type { IconComponent } from './icon-component'
 import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 
 // A hub page's widgets (issue #121): three made-up widgets, each a list
 // with a different trailing element (a tone badge, a note and a switch, a
 // muted time on external links). Default is the page as loaded; All
-// states is every widget in each of the four states. Axe, the token check
+// states is every widget in each of the four states; Brand mark is a card
+// about an outside service, titled with that service's mark (#211). Axe, the token check
 // and the glyph check measure both in both themes and at the large
 // density (e2e/storybook-visual.spec.ts).
 const meta: Meta = {
@@ -42,7 +44,7 @@ function stateProps(state: State) {
 
 type Widget = {
   title: string
-  icon: LucideIcon
+  icon: IconComponent
   link?: { to: string; label: string }
   emptyMessage: string
   rows: number
@@ -163,6 +165,46 @@ export const AllStates: StoryObj = {
           </div>
         </section>
       ))}
+    </div>
+  ),
+}
+
+// A made-up outside service's mark, as an app keeps its own (Simple Icons'
+// paths, say): an icon component that passes className and aria-hidden on.
+function ExampleServiceMark({ className, ...rest }: { className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} data-testid="service-mark" {...rest}>
+      <path fillRule="evenodd" d="M2 7a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V7Zm8 1.5v7l6-3.5-6-3.5Z" />
+    </svg>
+  )
+}
+
+const RECENTLY_IN_SERVICE: Widget = {
+  title: 'Recently in Example Video',
+  icon: ExampleServiceMark,
+  link: { to: '/videos', label: 'All' },
+  emptyMessage: 'Nothing watched yet',
+  rows: 2,
+  body: (
+    <WidgetList>
+      <WidgetListItem href="https://example.com/watch/1" note="Today">
+        Hanging a gate that stays square
+      </WidgetListItem>
+      <WidgetListItem href="https://example.com/watch/2" note="Oct 20">
+        Timber stains compared
+      </WidgetListItem>
+    </WidgetList>
+  ),
+}
+
+export const BrandMark: StoryObj = {
+  name: 'Brand mark',
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Home</h1>
+      <div className={GRID}>
+        <Widget widget={RECENTLY_IN_SERVICE} state="success" />
+      </div>
     </div>
   ),
 }

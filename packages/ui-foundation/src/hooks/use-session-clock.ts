@@ -8,6 +8,13 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 // `clock.fastForward()` land a test on the right state
 // (docs/foundation/timed-screens.md).
 //
+// A hidden tab draws no frames, so while it's hidden a slow timer reads
+// the time instead (once a second, or as often as the browser lets a
+// background tab's timers run), enough for a countdown in the tab's
+// title; the first frame back catches up exactly (#193). A run can start
+// from a given elapsed time and seek, for a run resumed from storage and
+// for Skip and Back.
+//
 // The rules live in createSessionClock, React-free, so they're unit tested
 // against a fake clock (tests/use-session-clock.test.ts).
 
@@ -23,7 +30,14 @@ export type SessionClockState = {
 }
 
 export type SessionClockStore = {
-  start: () => void
+  /** Starts counting from `from` milliseconds (default 0), from any state. */
+  start: (from?: number) => void
+  /**
+   * Moves a running clock to `elapsed` milliseconds, paused or not, without
+   * changing either; at or past `endsAt` it's `done`. Ignored while idle or
+   * done: `start(from)` begins again from a time.
+   */
+  seek: (elapsed: number) => void
   pause: () => void
   resume: () => void
   /** Back to `idle` at zero. */
@@ -58,6 +72,7 @@ export function createSessionClock(now: () => number): SessionClockStore {
   const begin = () => {
     if (counting() && since === null) since = now()
   }
+  const clamp = (ms: number) => Math.min(Math.max(Number.isFinite(ms) ? ms : 0, 0), endsAt ?? Infinity)
 
   const update = () => {
     let elapsed = banked + (since === null ? 0 : now() - since)
@@ -74,10 +89,17 @@ export function createSessionClock(now: () => number): SessionClockStore {
   }
 
   return {
-    start() {
+    start(from = 0) {
       status = 'running'
       paused = false
-      banked = 0
+      banked = clamp(from)
+      since = null
+      begin()
+      update()
+    },
+    seek(elapsed) {
+      if (status !== 'running') return
+      banked = clamp(elapsed)
       since = null
       begin()
       update()
@@ -133,13 +155,25 @@ export type SessionClockOptions = {
 }
 
 export type SessionClock = SessionClockState &
-  Pick<SessionClockStore, 'start' | 'pause' | 'resume' | 'stop'>
+  Pick<SessionClockStore, 'seek' | 'pause' | 'resume' | 'stop'> & {
+    /** Starts counting from zero, from any state (a click handler as is). */
+    start: () => void
+    /** Starts counting from `elapsed` milliseconds: a run resumed from storage. */
+    startFrom: (elapsed: number) => void
+  }
+
+// How often a hidden tab reads the time. Browsers slow a background tab's
+// timers (Chrome to once a minute after a while), so this is at most.
+const HIDDEN_TICK_MS = 1000
 
 /**
  * A drift-free clock with pause and resume, read from `performance.now()`
  * each animation frame. It re-renders once per frame only while counting.
- * A hidden tab draws no frames, but its time still counts: the first frame
- * back catches up (and reaches `done` if it's due).
+ * A hidden tab draws no frames, but its time still counts: while hidden it
+ * re-renders on a slow tick (once a second at most, for a countdown in the
+ * tab's title), and coming back catches up exactly (and reaches `done` if
+ * it's due). `startFrom(ms)` and `seek(ms)` begin from, and move to, a
+ * given elapsed time.
  */
 export function useSessionClock({ running = true, endsAt }: SessionClockOptions = {}): SessionClock {
   const [clock] = useState(() => createSessionClock(() => performance.now()))
@@ -155,8 +189,21 @@ export function useSessionClock({ running = true, endsAt }: SessionClockOptions 
       clock.tick()
       frame = requestAnimationFrame(next)
     })
-    return () => cancelAnimationFrame(frame)
+    let hiddenTick: ReturnType<typeof setInterval> | undefined
+    const onVisibility = () => {
+      clearInterval(hiddenTick)
+      hiddenTick = document.hidden ? setInterval(clock.tick, HIDDEN_TICK_MS) : undefined
+      clock.tick()
+    }
+    if (document.hidden) hiddenTick = setInterval(clock.tick, HIDDEN_TICK_MS)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearInterval(hiddenTick)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [clock, counting])
 
-  return { ...state, start: clock.start, pause: clock.pause, resume: clock.resume, stop: clock.stop }
+  const [start] = useState(() => () => clock.start())
+  return { ...state, start, startFrom: clock.start, seek: clock.seek, pause: clock.pause, resume: clock.resume, stop: clock.stop }
 }

@@ -128,3 +128,83 @@ describe('createSessionClock', () => {
     expect(calls).toBe(2)
   })
 })
+
+// Starting from and seeking to a given elapsed time (#193): a run resumed
+// from storage, and Skip and Back, with pause and resume still exact.
+describe('createSessionClock: start from, and seek', () => {
+  it('starts from a given elapsed time and counts on from it', () => {
+    const t = fakeClock()
+    t.clock.setEndsAt(60_000)
+    t.clock.start(42_000)
+    expect(t.state).toEqual({ elapsed: 42_000, status: 'running', paused: false })
+    t.advance(1_000)
+    expect(t.state.elapsed).toBe(43_000)
+  })
+
+  it('starting from at or past the end is done; from below zero is zero', () => {
+    const t = fakeClock()
+    t.clock.setEndsAt(60_000)
+    t.clock.start(90_000)
+    expect(t.state).toEqual({ elapsed: 60_000, status: 'done', paused: false })
+    t.clock.start(-5)
+    expect(t.state.elapsed).toBe(0)
+  })
+
+  it('seeks while running, forward and back, and keeps counting from there', () => {
+    const t = fakeClock()
+    t.clock.setEndsAt(60_000)
+    t.clock.start()
+    t.advance(10_000)
+    t.clock.seek(30_000)
+    expect(t.state.elapsed).toBe(30_000)
+    t.advance(500)
+    expect(t.state.elapsed).toBe(30_500)
+    t.clock.seek(5_000)
+    t.advance(250)
+    expect(t.state).toEqual({ elapsed: 5_250, status: 'running', paused: false })
+  })
+
+  it('seeks while paused and stays paused; resume counts on from the new time', () => {
+    const t = fakeClock()
+    t.clock.start()
+    t.advance(10_000)
+    t.clock.pause()
+    t.clock.seek(20_000)
+    t.advance(5_000)
+    expect(t.state).toEqual({ elapsed: 20_000, status: 'running', paused: true })
+    t.clock.resume()
+    t.advance(1_000)
+    expect(t.state.elapsed).toBe(21_000)
+  })
+
+  it('a seek to or past the end is done', () => {
+    const t = fakeClock()
+    t.clock.setEndsAt(60_000)
+    t.clock.start()
+    t.clock.seek(75_000)
+    expect(t.state).toEqual({ elapsed: 60_000, status: 'done', paused: false })
+  })
+
+  it('ignores a seek while idle or done', () => {
+    const t = fakeClock()
+    t.clock.seek(5_000)
+    expect(t.state).toEqual({ elapsed: 0, status: 'idle', paused: false })
+    t.clock.setEndsAt(1_000)
+    t.clock.start()
+    t.advance(2_000)
+    t.clock.seek(500)
+    expect(t.state).toEqual({ elapsed: 1_000, status: 'done', paused: false })
+  })
+
+  it('does not hold the clock still while not running: seek works, time waits', () => {
+    const t = fakeClock()
+    t.clock.setRunning(false)
+    t.clock.start()
+    t.clock.seek(3_000)
+    t.advance(1_000)
+    expect(t.state.elapsed).toBe(3_000)
+    t.clock.setRunning(true)
+    t.advance(1_000)
+    expect(t.state.elapsed).toBe(4_000)
+  })
+})
