@@ -205,7 +205,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   The browser side is `e2e/session-view.spec.ts` on the Timer story. In a
   background tab (4.29, #193) cues are booked ahead on the Web Audio clock
   (`at`, `cancelCues`), the clock ticks slowly while hidden, and it can
-  start from and seek to a time.
+  start from and seek to a time. When iOS stops the audio clock (speech,
+  a call, the lock screen), the cues resume the context, take back the
+  bookings it left on the stopped clock and say so (`onCuesRecovered`,
+  with `cuesInSync` as a tick's check), so the screen rebooks from where
+  its run is (4.30, #217); `keepAudioAlive` is the opt-in silent track
+  that keeps sound going with the phone locked.
 - **Saving without the form** (a row's switch, a quick action on the view)
   goes through `useRecordUpdate`: a PATCH that is optimistic in the
   record's detail query and every list page holding it, replaced by the

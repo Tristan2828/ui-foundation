@@ -5,6 +5,43 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.30.0 — Timed screens recover from an audio interruption
+
+Additive, so a minor. One request from an app (#217): on iOS the audio
+clock stops while the context is interrupted (speech speaking, a
+notification, a call, the lock screen), so 4.29.0's booked chimes went
+silent or came late, and the app had no way to notice.
+
+- **The package resumes a stopped audio context** as soon as it stops
+  (`statechange` to anything but `running` or `closed`), when the page is
+  visible again, and on the next `unlockAudio()`. Nothing to do.
+- **New: `onCuesRecovered(callback)`** calls back when the audio runs
+  again after stopping, and returns the unsubscribe. Every booked chime
+  has been taken back by then (each would have struck late), so the
+  callback books again from where the run is now. The context's first run
+  isn't a recovery.
+- **New: `cuesInSync()`**: false when the audio clock has drifted from
+  `Date.now()` by more than 250 ms since the bookings, or the audio is
+  stopped; true when nothing is booked. For a tick to rebook where no
+  recovery was announced (`cancelCues()`, then book again).
+- **New: `keepAudioAlive({ title, onToggle? })`**, opt-in, to keep the
+  sound playing with the phone locked: a silent looped track so iOS keeps
+  the page's audio session, with `title` and Pause and Play on the lock
+  screen (`onToggle(playing)` when pressed). Returns `{ pause(), stop() }`.
+  Keep it behind a setting that is off by default: it pauses other apps'
+  music. New types `KeepAudioAlive` and `KeepAudioAliveOptions`.
+- `timed-screens.md` has an "Interruptions" section under "Background
+  tabs", a `keepAudioAlive` bullet under "Sound", and the Playwright
+  recipe's stand-in `AudioContext` takes `statechange` listeners.
+
+**To take it:** bump the version, run `sync`. An app with its own
+`AudioContext` scheduler can replace it with `chime({ at })`,
+`cancelCues()` and `onCuesRecovered` (subscribe in an effect and rebook
+from the run's position, as the Timer story does), and replace its own
+silent-track module with `keepAudioAlive`. Screens that already book with
+the package add `onCuesRecovered`. A test's stand-in `AudioContext`
+without `addEventListener` still works; it just can't be interrupted.
+
 ## 4.29.0 — Brand marks, background-tab timers, and less noise after a deploy
 
 Additive, so a minor. Four requests from apps (#193, #205, #206, #211).

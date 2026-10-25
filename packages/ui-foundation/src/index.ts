@@ -131,7 +131,9 @@ export {
   canVibrate,
   cancelCues,
   chime,
+  cuesInSync,
   hush,
+  onCuesRecovered,
   say,
   sequence,
   unlockAudio,
@@ -142,3 +144,8 @@ export {
   type SayOptions,
   type SequenceOptions,
 } from '@/lib/audio-cues'
+export {
+  keepAudioAlive,
+  type KeepAudioAlive,
+  type KeepAudioAliveOptions,
+} from '@/lib/keep-audio-alive'

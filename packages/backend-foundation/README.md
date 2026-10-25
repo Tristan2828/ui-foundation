@@ -34,7 +34,7 @@ version as its `@tristan2828/ui-foundation`:
 
 ```toml
 dependencies = [
-  "ui-foundation-backend==4.29.0",
+  "ui-foundation-backend==4.30.0",
   ...
 ]
 ```

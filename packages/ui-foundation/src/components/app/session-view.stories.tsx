@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useMuted } from '@/hooks/use-muted'
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 import { useSessionClock, type SessionClock } from '@/hooks/use-session-clock'
-import { cancelCues, chime, say, sequence, unlockAudio } from '@/lib/audio-cues'
+import { cancelCues, chime, onCuesRecovered, say, sequence, unlockAudio } from '@/lib/audio-cues'
 import { SessionView } from './session-view'
 
 // A timed screen as an app builds one (docs/foundation/timed-screens.md):
@@ -139,6 +139,18 @@ function TimerSession() {
     if (next) cancelCues()
     else if (counting && open) sequence([{ pitch: 660 }, { pitch: 880 }], { at: Date.now() + LENGTH - clock.elapsed })
   }
+
+  // After an interruption (a call, the lock screen on iOS) the audio clock
+  // stood still and the package has taken back every booking: book the pair
+  // again from where the run is now. The callback reads the latest state
+  // through a ref, so one subscription serves the whole mount.
+  const rebook = useRef(() => {})
+  useEffect(() => {
+    rebook.current = () => {
+      if (counting && open) book(clock.elapsed)
+    }
+  })
+  useEffect(() => onCuesRecovered(() => rebook.current()), [])
 
   // Speech can't be booked: the spoken line comes when the clock (ticking
   // slowly in a background tab) reaches done.

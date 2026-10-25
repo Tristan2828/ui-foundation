@@ -113,6 +113,17 @@ Browsers block sound until the person has clicked or tapped. So:
   session: `const [vibrates] = useState(canVibrate)`. Show the toggle (a
   pressed button named "Vibrate", like Mute) only when `vibrates` is
   true, and check the setting before each `vibrate()` call.
+- **`keepAudioAlive({ title, onToggle? })`** keeps the sound going with the
+  phone locked. iOS pauses a page's audio on the lock screen unless the
+  page is playing media, so this plays a silent looped track and shows
+  `title` with Pause and Play on the lock screen; `onToggle(playing)` is
+  called when the person presses them, to pause or resume the run. Call it
+  from the click that starts the run, and keep it **behind a setting that
+  is off by default**: it takes the device's audio session, which pauses
+  another app's music. It returns `{ pause(), stop() }`: `pause()` shows
+  Play (without calling `onToggle`), `stop()` ends it (on done, on leaving);
+  to start again after `pause()`, call `keepAudioAlive` again from a click.
+  Only one runs at a time.
 - Every one of them is a no-op where the browser can't make the sound, so
   none needs a check around it.
 - **Mute** is the app's: `const [muted, setMuted] = useMuted('my-app:routine:muted')`,
@@ -158,6 +169,28 @@ phase ends. Web Audio's own clock keeps time, so:
 - Booked cues need `unlockAudio()` from a click, like any other. iOS
   Safari may suspend audio in a background tab altogether; nothing in a
   web page gets round that.
+
+### Interruptions
+
+On iOS the audio clock **stops** while the context is interrupted: speech
+speaking, a notification, a call, the lock screen. Booked strikes after
+that are silent, or come late by as long as the clock stood still. The
+package resumes the context as soon as it stops (and again when the page is
+visible, and on the next `unlockAudio()`), but only the screen knows where
+its run is now, so it rebooks:
+
+- **`onCuesRecovered(callback)`** calls back when the audio runs again
+  after stopping, and returns the unsubscribe. By then every booked strike
+  has been taken back, since each would have struck late, so the callback
+  books again from the run's position, the same way as when counting
+  starts. Subscribe in an effect and return the unsubscribe from its
+  cleanup. The context's first run, after the start click, isn't a
+  recovery.
+- **`cuesInSync()`** is false when the audio clock has drifted from
+  `Date.now()` by more than 250 ms since the bookings were made, or the
+  audio is stopped. It's true when nothing is booked. Check it on a tick,
+  for where no recovery was announced: when it's false, `cancelCues()` and
+  book again.
 
 ## Motion
 
@@ -218,9 +251,17 @@ test.beforeEach(async ({ page }) => {
     Object.defineProperty(document, 'visibilityState', { get: () => visibility })
     Object.defineProperty(document, 'hidden', { get: () => visibility === 'hidden' })
     const booked: { pitch: number; at: number; cancelled: boolean }[] = []
+    const contexts: RecordingAudioContext[] = []
     class RecordingAudioContext {
       state = 'running'; currentTime = 0; destination = {}
-      resume = async () => {}
+      listeners: (() => void)[] = []
+      addEventListener = (_type: string, listener: () => void) => void this.listeners.push(listener)
+      resume = async () => this.change('running')
+      change(state: string) {
+        this.state = state
+        this.listeners.forEach((listener) => listener())
+      }
+      constructor() { contexts.push(this) }
       last = { pitch: 0, at: 0, cancelled: false }
       createOscillator() {
         const cue = (this.last = { pitch: 0, at: 0, cancelled: false })
@@ -243,6 +284,7 @@ test.beforeEach(async ({ page }) => {
     Object.assign(window, {
       AudioContext: RecordingAudioContext,
       __booked: booked,
+      __interrupt: () => contexts.forEach((context) => context.change('interrupted')),
       __hide() {
         visibility = 'hidden'
         window.requestAnimationFrame = () => 0   // a hidden tab draws no frames
@@ -267,6 +309,11 @@ test('the end is booked ahead, and the title counts down while hidden', async ({
 
 Pause, Skip and Back are asserted the same way: the earlier booking's
 `cancelled` turns true and a new one appears at the new time.
+
+An interruption is the same again: `__interrupt()` stops the stand-in
+context, which the package resumes. Expect the earlier booking's
+`cancelled` to turn true and a new one to appear from the run's position,
+the screen's `onCuesRecovered` callback having rebooked.
 
 **An open-ended count-up: pause the fake clock.** After
 `clock.install()` the fake clock still moves in real time between
