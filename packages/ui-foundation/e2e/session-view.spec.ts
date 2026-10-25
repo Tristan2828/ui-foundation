@@ -276,19 +276,19 @@ test.describe('in a background tab', () => {
   }) => {
     await open(page)
     await view(page).getByRole('button', { name: 'Start' }).click()
-    // The start chime now, and the closing pair a minute ahead.
+    // The closing pair a minute ahead (booked as the clock starts), and the start chime now.
     await expect.poll(() => strikes(page)).toEqual([
-      [660, 0, false],
       [660, 60, false],
       [880, 60, false],
+      [660, 0, false],
     ])
 
     await page.clock.fastForward('00:20')
     await view(page).getByRole('button', { name: 'Pause' }).click()
     await expect.poll(() => strikes(page)).toEqual([
-      [660, 0, false],
       [660, 60, true],
       [880, 60, true],
+      [660, 0, false],
     ])
 
     await page.clock.fastForward('05:00')
