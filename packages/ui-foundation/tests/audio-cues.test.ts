@@ -20,16 +20,26 @@ function fakeAudio(initialState: AudioContextState = 'suspended') {
     currentTime = 10
     destination = {}
     resumes = 0
+    // Set false to leave it stuck, as iOS does while a call is on.
+    resumeWorks = true
+    private listeners: (() => void)[] = []
     // A chime makes its oscillator, then its gain: both record here.
     private building: Strike | null = null
     constructor() {
       contexts.push(this)
     }
+    addEventListener(type: string, listener: () => void) {
+      if (type === 'statechange') this.listeners.push(listener)
+    }
+    // The browser changing the state, and saying so.
+    change(state: string) {
+      this.state = state as AudioContextState
+      this.listeners.forEach((listener) => listener())
+    }
     resume() {
       this.resumes++
-      return Promise.resolve().then(() => {
-        this.state = 'running'
-      })
+      if (!this.resumeWorks) return Promise.reject(new Error('not allowed'))
+      return Promise.resolve().then(() => this.change('running'))
     }
     createOscillator() {
       const strike: Strike = { pitch: 0, start: 0, stop: 0, gain: [], cancelled: false }
@@ -263,6 +273,187 @@ describe('audio cues', () => {
       cues.unlockAudio()
       cues.chime()
     }).not.toThrow()
+  })
+})
+
+// #217: on iOS the audio clock stops while the context is interrupted. The
+// cues resume it, take back what was booked on the stopped clock, and say so.
+describe('recovering from an interruption', () => {
+  function fakePage() {
+    const listeners: (() => void)[] = []
+    return {
+      visibilityState: 'hidden' as DocumentVisibilityState,
+      addEventListener: (_type: string, listener: () => void) => void listeners.push(listener),
+      show() {
+        this.visibilityState = 'visible'
+        listeners.forEach((listener) => listener())
+      },
+    }
+  }
+
+  const started = async (page?: ReturnType<typeof fakePage>) => {
+    const audio = fakeAudio()
+    let wall = 1000
+    const cues = createAudioCues({
+      AudioContext: audio.AudioContext,
+      document: page as unknown as Pick<Document, 'addEventListener' | 'visibilityState'>,
+      now: () => wall,
+    })
+    cues.unlockAudio()
+    await settle()
+    return { audio, cues, context: audio.contexts[0], advance: (ms: number) => (wall += ms) }
+  }
+
+  it('resumes a context that stops, then takes back its bookings and calls back once', async () => {
+    const { audio, cues, context } = await started()
+    const recovered = vi.fn()
+    cues.onCuesRecovered(recovered)
+    cues.chime({ at: 6000 })
+    expect(audio.strikes[0].cancelled).toBe(false)
+
+    context.change('interrupted')
+    expect(context.resumes).toBe(2)
+    expect(recovered).not.toHaveBeenCalled()
+    await settle()
+
+    expect(recovered).toHaveBeenCalledTimes(1)
+    expect(audio.strikes[0].cancelled).toBe(true)
+    cues.chime({ at: 6000 })
+    expect(audio.strikes).toHaveLength(2)
+  })
+
+  it('takes back a strike the stopped clock had reached, too: it would ring on late', async () => {
+    const { audio, cues, context } = await started()
+    cues.chime()
+    context.currentTime = 12
+    context.change('suspended')
+    await settle()
+    expect(audio.strikes[0].cancelled).toBe(true)
+  })
+
+  it("the context's first run is not a recovery", async () => {
+    const audio = fakeAudio()
+    const cues = createAudioCues({ AudioContext: audio.AudioContext })
+    const recovered = vi.fn()
+    cues.onCuesRecovered(recovered)
+    cues.unlockAudio()
+    await settle()
+    expect(audio.contexts[0].state).toBe('running')
+    expect(recovered).not.toHaveBeenCalled()
+  })
+
+  it('a callback that unsubscribed is not called, and one that throws does not stop the others', async () => {
+    const { cues, context } = await started()
+    const gone = vi.fn()
+    const after = vi.fn()
+    cues.onCuesRecovered(gone)()
+    cues.onCuesRecovered(() => {
+      throw new Error('a screen failed')
+    })
+    cues.onCuesRecovered(after)
+    context.change('interrupted')
+    await settle()
+    expect(gone).not.toHaveBeenCalled()
+    expect(after).toHaveBeenCalledTimes(1)
+  })
+
+  it('a refused resume is tried again when the page is visible again', async () => {
+    const page = fakePage()
+    const { cues, context } = await started(page)
+    const recovered = vi.fn()
+    cues.onCuesRecovered(recovered)
+    context.resumeWorks = false
+    context.change('interrupted')
+    await settle()
+    expect(recovered).not.toHaveBeenCalled()
+
+    context.resumeWorks = true
+    page.show()
+    await settle()
+    expect(context.resumes).toBe(3)
+    expect(recovered).toHaveBeenCalledTimes(1)
+  })
+
+  it('a click on unlockAudio() recovers a context whose change was never announced', async () => {
+    const { cues, context } = await started()
+    const recovered = vi.fn()
+    cues.onCuesRecovered(recovered)
+    context.state = 'interrupted' as AudioContextState
+    cues.unlockAudio()
+    await settle()
+    expect(recovered).toHaveBeenCalledTimes(1)
+  })
+
+  it('works with a stand-in context that has no addEventListener', async () => {
+    const audio = fakeAudio()
+    Reflect.deleteProperty(audio.AudioContext.prototype, 'addEventListener')
+    const cues = createAudioCues({ AudioContext: audio.AudioContext })
+    expect(() => cues.unlockAudio()).not.toThrow()
+    await settle()
+    expect(() => cues.chime()).not.toThrow()
+    expect(audio.strikes).toHaveLength(1)
+  })
+})
+
+describe('cuesInSync', () => {
+  const booked = async () => {
+    const audio = fakeAudio('running')
+    let wall = 1000
+    const cues = createAudioCues({ AudioContext: audio.AudioContext, now: () => wall })
+    cues.unlockAudio()
+    cues.chime({ at: 9000 })
+    return { audio, cues, context: audio.contexts[0], advance: (ms: number) => (wall += ms) }
+  }
+
+  it('is true with nothing booked, and before any context', () => {
+    const cues = createAudioCues({ AudioContext: fakeAudio('running').AudioContext })
+    expect(cues.cuesInSync()).toBe(true)
+    cues.unlockAudio()
+    expect(cues.cuesInSync()).toBe(true)
+  })
+
+  it('is true while the audio clock keeps time with Date.now()', async () => {
+    const { cues, context, advance } = await booked()
+    advance(5000)
+    context.currentTime += 5
+    expect(cues.cuesInSync()).toBe(true)
+  })
+
+  it('is false once the audio clock has stood still, and true again after a rebook', async () => {
+    const { cues, context, advance } = await booked()
+    advance(5000)
+    context.currentTime += 1 // the clock stopped for four seconds
+    expect(cues.cuesInSync()).toBe(false)
+
+    cues.cancelCues()
+    expect(cues.cuesInSync()).toBe(true)
+    cues.chime({ at: 9000 })
+    advance(1000)
+    context.currentTime += 1
+    expect(cues.cuesInSync()).toBe(true)
+  })
+
+  it('allows 250 ms of drift and no more', async () => {
+    const { cues, context, advance } = await booked()
+    advance(1000)
+    context.currentTime += 1.25
+    expect(cues.cuesInSync()).toBe(true)
+    context.currentTime += 0.01
+    expect(cues.cuesInSync()).toBe(false)
+  })
+
+  it('takes the time to compare against, for a screen that already has it', async () => {
+    const { cues, context } = await booked()
+    context.currentTime += 2
+    expect(cues.cuesInSync(3000)).toBe(true)
+    expect(cues.cuesInSync(9000)).toBe(false)
+  })
+
+  it('is false while the audio is stopped', async () => {
+    const { cues, context } = await booked()
+    context.resumeWorks = false
+    context.change('interrupted')
+    expect(cues.cuesInSync()).toBe(false)
   })
 })
 

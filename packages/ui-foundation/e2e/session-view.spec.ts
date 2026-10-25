@@ -207,11 +207,21 @@ test.describe('in a background tab', () => {
       Object.defineProperty(document, 'visibilityState', { get: () => visibility })
       Object.defineProperty(document, 'hidden', { get: () => visibility === 'hidden' })
       const strikes: { pitch: number; start: number; cancelled: boolean }[] = []
+      const contexts: RecordingAudioContext[] = []
       class RecordingAudioContext {
         state = 'running'
         currentTime = 0
         destination = {}
-        resume = async () => {}
+        private listeners: (() => void)[] = []
+        addEventListener = (_type: string, listener: () => void) => void this.listeners.push(listener)
+        resume = async () => this.change('running')
+        change(state: string) {
+          this.state = state
+          this.listeners.forEach((listener) => listener())
+        }
+        constructor() {
+          contexts.push(this)
+        }
         private last: { pitch: number; start: number; cancelled: boolean } | null = null
         createOscillator() {
           const strike = { pitch: 0, start: 0, cancelled: false }
@@ -238,6 +248,8 @@ test.describe('in a background tab', () => {
       Object.assign(window, {
         AudioContext: RecordingAudioContext,
         __strikes: strikes,
+        // iOS stopping the audio (a call, the lock screen); the package resumes it.
+        __interrupt: () => contexts.forEach((context) => context.change('interrupted')),
         __setVisibility(state: DocumentVisibilityState) {
           visibility = state
           // A hidden tab draws no frames: only the clock's slow tick runs.
@@ -305,6 +317,24 @@ test.describe('in a background tab', () => {
       [880, 40, true],
       [660, 30, false],
       [880, 30, false],
+    ])
+  })
+
+  test('an interruption takes back the booked pair and rebooks it from where the run is (#217)', async ({ page }) => {
+    await open(page)
+    await view(page).getByRole('button', { name: 'Start' }).click()
+    await page.clock.fastForward('00:20')
+    await expect(timeLeft(page)).toHaveText('0:40')
+
+    await page.evaluate(() => (window as unknown as { __interrupt(): void }).__interrupt())
+    // Everything booked on the stopped clock is taken back (the start chime
+    // too: it would ring on late), and the pair is booked again, 40 s ahead.
+    await expect.poll(() => strikes(page)).toEqual([
+      [660, 60, true],
+      [880, 60, true],
+      [660, 0, true],
+      [660, 40, false],
+      [880, 40, false],
     ])
   })
 })
