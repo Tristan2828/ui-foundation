@@ -1,11 +1,12 @@
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { createQueryClient } from '@/api/query-client'
 import { AuthProvider } from '@/auth/use-auth'
 import { MockModeBanner } from '@/components/app/mock-mode-banner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ErrorReportingProvider } from '@/error-reporting/error-reporting-provider'
 import { resolveErrorReporting, type ErrorReportingOptions } from '@/error-reporting/reporter'
+import { browserStaleChunkReload } from '@/lib/stale-chunk-reload'
 
 // Everything an app's root needs around its router, in the order that
 // works: the theme outermost, the mock-mode banner above the router so it
@@ -13,6 +14,8 @@ import { resolveErrorReporting, type ErrorReportingOptions } from '@/error-repor
 // QueryClientProvider because it queries /auth/me through TanStack Query.
 // An app's DataEnvironmentBanner goes first among the children, before its
 // router: it queries too, and shows on every route like the mock banner.
+// It also reloads the page once when a lazy chunk is gone after a deploy
+// (lib/stale-chunk-reload.ts), so no app adds its own listener.
 export function FoundationProviders({
   mockMode,
   queryClient,
@@ -34,6 +37,7 @@ export function FoundationProviders({
 }) {
   const [client] = useState(() => queryClient ?? createQueryClient())
   const reporting = resolveErrorReporting(errorReporting)
+  useEffect(() => browserStaleChunkReload().install(window), [])
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <MockModeBanner active={mockMode} />

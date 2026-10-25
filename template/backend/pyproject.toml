@@ -1,9 +1,15 @@
 [project]
-name = "ui-foundation-backend"
+name = "template-backend"
 version = "0.1.0"
 description = "FastAPI + SQLModel reference implementation of openapi.yaml. Conforms to a contract it does not own."
 requires-python = ">=3.11"
 dependencies = [
+  # The foundation's auth and security layer (PyPI). In an app, pinned to
+  # the release the app was made from (scripts/create-app.sh writes
+  # ==X.Y.Z); upgrading it is docs/consuming.md's recipe. In the
+  # ui-foundation repo it stays unpinned and is installed editable from
+  # packages/backend-foundation in the same pip call as this project.
+  "ui-foundation-backend",
   "fastapi==0.141.1",
   "sqlmodel==0.0.42",
   "alembic==1.20.0",

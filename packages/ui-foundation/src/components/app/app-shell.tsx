@@ -6,6 +6,7 @@ import { useAuth } from '@/auth/use-auth'
 import { activeNavTo, navGroups, navPageLabel, type NavEntry, type NavGroup, type NavItem } from '@/components/app/app-shell-nav'
 import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
+import type { IconComponent } from '@/components/app/icon-component'
 import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
 import { useShellDocumentTitle } from '@/hooks/use-document-title'
@@ -43,6 +44,14 @@ export type AppShellProps = {
    * does, with its record's title).
    */
   title: string
+  /**
+   * The app's mark, shown before `title` at the top of the sidebar, and
+   * alone, centred, at the top of the collapsed icon rail. Drawn like an
+   * icon (`IconComponent`: sized by the shell, `aria-hidden` passed
+   * through) and decorative, since `title` names the app. Its own colours,
+   * or `currentColor` for the sidebar's text colour.
+   */
+  logo?: IconComponent
   /**
    * The app's primary navigation, in order: pages, and labelled sections of
    * pages (`{ label, items }`, one per module, say). A nav with no sections
@@ -245,7 +254,7 @@ function AppShellSkeleton() {
   )
 }
 
-export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true, version }: AppShellProps) {
+export function AppShell({ title, logo: Logo, nav, sidebarExtra, defaultSidebarOpen = true, version }: AppShellProps) {
   const { user, status, error, retry, logout } = useAuth()
   const location = useLocation()
   const reporter = useErrorReporter()
@@ -292,12 +301,22 @@ export function AppShell({ title, nav, sidebarExtra, defaultSidebarOpen = true, 
         <nav aria-label="Primary">
           <Sidebar collapsible="icon">
             <SidebarHeader>
-              {/* Hidden on the icon rail: unlike a menu button's label, a
-                  bare span gets no collapse treatment from the sidebar
-                  primitive, so it would wrap onto itself at rail width. */}
-              <span className="px-2 text-sm font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-                {title}
-              </span>
+              {/* The title is hidden on the icon rail: unlike a menu
+                  button's label, a bare span gets no collapse treatment
+                  from the sidebar primitive, so it would wrap onto itself
+                  at rail width. The logo stays, centred where the menu
+                  buttons' icons are. */}
+              <div className="flex items-center gap-2 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+                {Logo && (
+                  <Logo
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-sidebar-foreground group-data-[collapsible=icon]:size-4"
+                  />
+                )}
+                <span className="truncate text-sm font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+                  {title}
+                </span>
+              </div>
             </SidebarHeader>
             <SidebarContent>
               {navGroups(nav).map((group, groupIndex) =>

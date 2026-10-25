@@ -12,12 +12,18 @@
 // Raw HTML in the text shows as its characters, as <Markdown> shows it,
 // and nothing pasted or typed can add markup.
 //
+// Images in the text (`![alt](url)`) show, at most the field's width.
+// With `upload`, an image pasted, dropped or picked with the toolbar's
+// Image button is uploaded through the app's own storage and goes in as
+// `![](url)`; while it uploads, a placeholder shows where it will go.
+//
 // The editor (Milkdown) is loaded on first use, so a page that only reads
 // Markdown never downloads it. Until it arrives, a placeholder the size of
 // the field shows.
 import { lazy, Suspense } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
+import type { ImageUpload } from '@/lib/image-file'
 
 const MilkdownEditor = lazy(() => import('./milkdown-editor'))
 
@@ -59,6 +65,21 @@ export type RichTextEditorProps = {
    * `placeholder`, which is all an empty one shows.
    */
   inline?: boolean
+  /**
+   * Images uploaded into the text: pasted, dropped, or picked with an
+   * Image button on the fixed toolbar. Each file goes through this (the
+   * app's own storage: the package knows no endpoint) and goes in as
+   * `![](url)`, from the result's `url`, else its `thumbUrl`. A
+   * placeholder shows where it will go while it uploads (it isn't saved);
+   * a refused file or a failed upload takes it away and says why in a
+   * toast. Without it, the editor handles no files: a paste or drop does
+   * what it always did.
+   */
+  upload?: ImageUpload
+  /** The image types `upload` takes. Defaults to JPEG, PNG and WebP (`DEFAULT_IMAGE_TYPES`). */
+  imageAccept?: readonly string[]
+  /** The largest image `upload` takes, in bytes: a bigger one is refused before it's sent, with its size and the limit. */
+  imageMaxSize?: number
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string

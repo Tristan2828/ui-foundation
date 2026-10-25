@@ -1,4 +1,4 @@
-"""AI chats through MCP (issue #132): the OAuth sign-in (app/routers/oauth.py),
+"""AI chats through MCP (issue #132): the OAuth sign-in (foundation_backend.routers.oauth),
 the /mcp endpoint (app/routers/mcp.py) and its tools (app/mcp_tools.py).
 
 Runs the real sign-in: a session cookie for the user approving, PKCE, the
@@ -23,9 +23,9 @@ from httpx import ASGITransport, AsyncClient, Response
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import config, rate_window
+from foundation_backend import config, rate_window
 from app.db import get_session
-from app.deploy_checks import production_problems
+from foundation_backend.deploy_checks import production_problems
 from app.main import app
 from app import mcp_tools
 from app.mcp_entities import ENTITIES, McpEntity, check_entities
@@ -190,7 +190,7 @@ def test_mcp_is_off_unless_the_environment_turns_it_on(monkeypatch: pytest.Monke
     monkeypatch.delenv("MCP_ENABLED", raising=False)
     import importlib
 
-    import app.config as fresh
+    import foundation_backend.config as fresh
 
     assert importlib.reload(fresh).MCP_ENABLED is False
 

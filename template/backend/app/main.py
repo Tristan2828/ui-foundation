@@ -1,9 +1,10 @@
 """FastAPI entrypoint. Mounts the built SPA (Phase 8 item 8 — single
-deployable, same-origin, no CORS; see app/spa.py for the client-route
-fallback), the entity routers, GET /api/environment, the scheduled jobs
-(app/jobs.py, app/routers/jobs.py), Web Push and reminders (app/push.py,
-app/reminders.py, app/routers/push.py) and the MCP/OAuth routes
-(app/routers/mcp.py, oauth.py).
+deployable, same-origin, no CORS; see foundation_backend.spa for the
+client-route fallback), the foundation's sign-in, environment, client-error
+and OAuth routes (the ui-foundation-backend package), the entity routers,
+the scheduled jobs (app/jobs.py, app/routers/jobs.py), Web Push and reminders (app/push.py,
+app/reminders.py, app/routers/push.py) and the MCP routes
+(app/routers/mcp.py).
 """
 
 import os
@@ -16,10 +17,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app import jobs, push, reminders
 from app.config import APP_ENV, COOKIE_SECURE, DATA_LABEL, JOBS_ENABLED, MCP_ENABLED, MCP_PUBLIC_URL, PUSH_ENABLED, STATIC_DIR
 from app.db import engine
-from app.deploy_checks import production_problems
 from app.errors import register_error_handlers
-from app.routers import auth, client_errors, environment, jobs as jobs_router, mcp, oauth, push as push_router, widget_categories, widgets
+from app.routers import jobs as jobs_router, mcp, push as push_router, widget_categories, widgets
 from app.spa import SPAStaticFiles
+from foundation_backend.deploy_checks import production_problems
+from foundation_backend.routers import auth, client_errors, environment, oauth
 
 
 @asynccontextmanager
@@ -58,7 +60,12 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="UI Foundation Demo API — Widgets", version="1.0.0", lifespan=lifespan)
 register_error_handlers(app)
+# The foundation's sign-in routes (foundation_backend.routers.auth). The
+# template lets people make their own account, so it includes
+# register_router too; an app that doesn't leaves it out, with
+# /auth/register out of its openapi.yaml and LoginRoute registerPath={null}.
 app.include_router(auth.router, prefix="/api")
+app.include_router(auth.register_router, prefix="/api")
 app.include_router(client_errors.router, prefix="/api")
 app.include_router(environment.router, prefix="/api")
 app.include_router(jobs_router.router, prefix="/api")

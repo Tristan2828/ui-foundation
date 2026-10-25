@@ -42,8 +42,8 @@ done
 [ "$INSTALL_ONLY" = true ] || [ -n "$ENTITY" ] ||
   fail "usage: consume-test.sh --install-only | consume-test.sh <EntityName>"
 
-if [ -n "$(git status --porcelain -- packages/ui-foundation template scripts/create-app.sh)" ]; then
-  fail "uncommitted changes under packages/ui-foundation, template/ or scripts/create-app.sh — commit first, so the result belongs to a SHA"
+if [ -n "$(git status --porcelain -- packages/ui-foundation packages/backend-foundation template scripts/create-app.sh)" ]; then
+  fail "uncommitted changes under packages/, template/ or scripts/create-app.sh — commit first, so the result belongs to a SHA"
 fi
 SHA=$(git rev-parse HEAD)
 
@@ -114,6 +114,12 @@ cd "$APP"
 
 # Installed, not linked: a symlink here would mean the workspace leaked in.
 [ ! -L node_modules/@tristan2828/ui-foundation ] || fail "the package is a symlink — expected an install from the tarball"
+
+# The backend's foundation package pinned to this commit's version: the
+# template lists it unpinned, which resolves only inside this repo.
+BACKEND_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$REPO_ROOT/packages/backend-foundation/pyproject.toml")
+grep -q "^  \"ui-foundation-backend==$BACKEND_VERSION\",\$" backend/pyproject.toml ||
+  fail "backend/pyproject.toml doesn't pin ui-foundation-backend==$BACKEND_VERSION"
 
 # The app's own browsers. A fresh app resolves the template's
 # @playwright/test range to the newest release, which can be newer than

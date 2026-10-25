@@ -55,6 +55,27 @@ describe('widgetFormSchema', () => {
     expect(blank.error?.issues[0]?.message).toBe('Write something or remove the item')
   })
 
+  it('takes pairings with a picked category and an optional trimmed note; one with no pick is refused on that item', () => {
+    expect(WIDGET_FORM_DEFAULTS.pairings).toEqual([])
+    const ok = widgetFormSchema.safeParse({
+      ...validWidget,
+      pairings: [
+        { categoryId: 2, note: '  Desk sets  ' },
+        { categoryId: 2, note: '' },
+      ],
+    })
+    expect(ok.success && ok.data.pairings).toEqual([
+      { categoryId: 2, note: 'Desk sets' },
+      { categoryId: 2, note: '' },
+    ])
+    const unpicked = widgetFormSchema.safeParse({
+      ...validWidget,
+      pairings: [{ categoryId: 1, note: '' }, { categoryId: undefined, note: 'No pick' }],
+    })
+    expect(unpicked.error?.issues[0]?.path).toEqual(['pairings', 1, 'categoryId'])
+    expect(unpicked.error?.issues[0]?.message).toBe('Pick a category or remove the pairing')
+  })
+
   it('accepts an empty assignee and a padded valid one, rejects an invalid one', () => {
     expect(widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '' }).success).toBe(true)
     const padded = widgetFormSchema.safeParse({ ...validWidget, assigneeEmail: '  a@example.com ' })

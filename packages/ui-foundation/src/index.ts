@@ -5,6 +5,7 @@
 
 // Composites
 export { AppShell, type AppShellProps, type AppShellVersion, type NavEntry, type NavItem, type NavSection } from '@/components/app/app-shell'
+export type { IconComponent } from '@/components/app/icon-component'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export { DataTable, type DataTableProps, type DataTableWidth, type SortingState } from '@/components/app/data-table'
 export { type RowGroup } from '@/components/app/table-groups'
@@ -58,6 +59,8 @@ export { ProgressRing, type ProgressRingProps } from '@/components/app/progress-
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
+export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
+export { DEFAULT_IMAGE_TYPES, type ImageUpload, type ImageUploadResult } from '@/lib/image-file'
 export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
 export {
   ChoiceCell,
@@ -126,6 +129,7 @@ export {
 export { cn } from '@/lib/utils'
 export {
   canVibrate,
+  cancelCues,
   chime,
   hush,
   say,
@@ -133,6 +137,8 @@ export {
   unlockAudio,
   vibrate,
   type ChimeOptions,
+  type Cue,
+  type CueTime,
   type SayOptions,
   type SequenceOptions,
 } from '@/lib/audio-cues'

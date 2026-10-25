@@ -74,6 +74,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
+  // One image on a record: every look of ImageField, and on a form.
+  { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
+  { id: 'app-imagefield--default', mustShow: 'Edit plant' },
+  // Images in written text, and the editor that uploads them (its Image button).
+  { id: 'app-markdown--images', mustShow: 'A view of the yard:' },
+  { id: 'app-richtexteditor--image-uploads', mustShow: 'Paste or drop a photo here.' },
   // Allow reminders in every state, on a card (#167).
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
@@ -92,8 +98,13 @@ const COMPOSITE_STORIES = [
   // An entry opening a list on a saved view (#188), and a record's view in the shell (#186).
   { id: 'app-appshell--saved-view', mustShow: 'Page at /reading?status=unread&sort=title:asc' },
   { id: 'app-appshell--with-view', mustShow: 'Pat Owner' },
+  // The app's logo beside its title, and alone on the rail (#211).
+  { id: 'app-appshell--with-logo', mustShow: 'Page at /projects/7' },
+  { id: 'app-appshell--with-logo-rail', mustShow: 'Page at /projects/7' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
+  // A card titled with an outside service's mark (#211).
+  { id: 'app-widgetcard--brand-mark', mustShow: 'Timber stains compared' },
   // <SessionView> is a timed screen's whole viewport: its header controls
   // and a timer's own (the big digits, the status line, a pressed toggle).
   { id: 'app-sessionview--timer', mustShow: '1:00' },
@@ -136,6 +147,7 @@ const GLYPH_STORIES: {
   { id: 'ui-toggle--default' },
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
+  { id: 'app-widgetcard--brand-mark' },
   // SessionView's header (Full screen, Close) and a timer's controls. It's
   // open on load, portaled to <body> like a popup.
   {
@@ -145,6 +157,9 @@ const GLYPH_STORIES: {
   },
   // Category glyphs in DataTable rows at every density.
   { id: 'patterns-density--data-tables' },
+  // ImageField's buttons and its empty tile, and the toolbar's Image button.
+  { id: 'app-imagefield--all-looks' },
+  { id: 'app-richtexteditor--image-uploads' },
   // The rich-text toolbar's icons (the read-only editor's are disabled:
   // a disabled control is exempt, and its opacity isn't measured here).
   { id: 'app-richtexteditor--features' },

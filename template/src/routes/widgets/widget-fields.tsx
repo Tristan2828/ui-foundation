@@ -9,6 +9,14 @@
 import { useState, type ComponentProps, type ReactNode } from 'react'
 import { MultiReference, RichTextEditor } from '@tristan2828/ui-foundation'
 import { Checkbox } from '@tristan2828/ui-foundation/ui/checkbox'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@tristan2828/ui-foundation/ui/combobox'
 import { Field } from '@tristan2828/ui-foundation/ui/field'
 import { Input } from '@tristan2828/ui-foundation/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tristan2828/ui-foundation/ui/select'
@@ -192,5 +200,118 @@ export function WidgetExtraCategoriesPicker({
       aria-describedby={ariaDescribedBy}
       readOnly={readOnly}
     />
+  )
+}
+
+// A single reference, picked from a searchable list: the form's Category
+// combobox (widget-form.tsx explains each prop), with a lookup by id for the
+// picked category's name, so a pick the current search doesn't return
+// still shows its name. Each instance has its own search, so a list of
+// items can hold one per row.
+export function WidgetCategoryCombobox({
+  id,
+  value,
+  onChange,
+  invalid,
+  readOnly,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+}: Omit<WidgetFieldProps<number | null>, 'onChange'> & { onChange: (categoryId: number) => void }) {
+  const [search, setSearch] = useState('')
+  const optionsQuery = useWidgetCategoriesQuery(search)
+  const pickedQuery = useWidgetCategoriesByIdsQuery(value == null ? [] : [value])
+  const names = widgetCategoryNames(optionsQuery.data, pickedQuery.data)
+  return (
+    <Combobox
+      items={(optionsQuery.data ?? []).map((category) => category.id)}
+      value={value ?? null}
+      onValueChange={(picked) => picked != null && onChange(picked)}
+      // The box showing the pick's own name is no search: opening the list
+      // then offers every category, not only the one already picked.
+      onInputValueChange={(text) => setSearch(value != null && text === names.get(value) ? '' : text)}
+      itemToStringLabel={(categoryId: number) => names.get(categoryId) ?? ''}
+      filter={null}
+      readOnly={readOnly}
+    >
+      <ComboboxInput
+        id={id}
+        aria-label={ariaLabel}
+        aria-invalid={invalid}
+        aria-describedby={ariaDescribedBy}
+        placeholder="Search categories"
+      />
+      <ComboboxContent>
+        <ComboboxEmpty>No categories found.</ComboboxEmpty>
+        <ComboboxList>
+          {(optionsQuery.data ?? []).map((category) => (
+            <ComboboxItem key={category.id} value={category.id}>
+              {category.name}
+            </ComboboxItem>
+          ))}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  )
+}
+
+// A pairing's own fields, one row of the list: a sub-record item with a
+// reference field. Its category (WidgetCategoryCombobox) and its note,
+// each named by position ("Pairing 2 category"). One element, so the row
+// fills ListEditor's: side by side from `sm`, stacked on a phone. The form
+// binds each field and its error; in place, the view shows the error
+// under the row.
+export function WidgetPairingItemFields({
+  id,
+  index,
+  value,
+  onCategoryChange,
+  categoryInvalid,
+  categoryError,
+  noteProps,
+  noteInvalid,
+  noteError,
+  readOnly,
+  describedBy,
+}: {
+  /** The category picker's id; the note's is `${id}-note`. */
+  id: string
+  index: number
+  value: { categoryId: number | null | undefined }
+  onCategoryChange: (categoryId: number) => void
+  categoryInvalid?: boolean
+  categoryError?: ReactNode
+  noteProps: ComponentProps<'input'>
+  noteInvalid?: boolean
+  noteError?: ReactNode
+  readOnly?: boolean
+  describedBy?: string
+}) {
+  return (
+    <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+      <Field data-invalid={categoryInvalid} className="min-w-0">
+        <WidgetCategoryCombobox
+          id={id}
+          value={value.categoryId ?? null}
+          onChange={onCategoryChange}
+          invalid={categoryInvalid}
+          readOnly={readOnly}
+          aria-label={`Pairing ${index + 1} category`}
+          aria-describedby={describedBy}
+        />
+        {categoryError}
+      </Field>
+      <Field data-invalid={noteInvalid} className="min-w-0">
+        <Input
+          id={`${id}-note`}
+          placeholder="Note (optional)"
+          aria-label={`Pairing ${index + 1} note`}
+          aria-invalid={noteInvalid}
+          aria-describedby={describedBy}
+          readOnly={readOnly}
+          {...noteProps}
+        />
+        {noteError}
+      </Field>
+    </div>
   )
 }

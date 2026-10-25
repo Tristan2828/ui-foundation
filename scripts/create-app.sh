@@ -34,23 +34,30 @@ git config user.email >/dev/null || [ -n "${GIT_AUTHOR_EMAIL:-}" ] ||
   fail "git has no user.email — run: git config --global user.email you@example.com (and user.name)"
 
 mkdir "$APP_NAME"
+# The backend package's reference migrations at the same ref, if it has
+# them (packages/backend-foundation, 4.25.0 on), for the step after npm.
+BACKEND_PACKAGE="packages/backend-foundation"
+REFERENCE_MIGRATIONS="$BACKEND_PACKAGE/src/foundation_backend/migrations"
+DOWNLOAD="$(mktemp -d)"
+trap 'rm -rf "$DOWNLOAD"' EXIT
 if [ -n "${FOUNDATION_REPO_DIR:-}" ]; then
   echo "create-app: copying template/ at $REF from $FOUNDATION_REPO_DIR"
   git -C "$FOUNDATION_REPO_DIR" archive "$REF" template | tar -x --strip-components=1 -C "$APP_NAME" ||
     fail "can't read template/ at '$REF' in $FOUNDATION_REPO_DIR"
+  mkdir "$DOWNLOAD/repo"
+  git -C "$FOUNDATION_REPO_DIR" archive "$REF" "$BACKEND_PACKAGE" 2>/dev/null | tar -x -C "$DOWNLOAD/repo" 2>/dev/null || true
 else
   # A tag or SHA, never a branch: those URLs are immutable, so there's no
   # CDN staleness to reason about.
   # The whole archive, then its template/: picking template/ out with a
   # pattern needs GNU tar's --wildcards, which macOS's bsdtar lacks.
   echo "create-app: downloading template/ at $REF"
-  DOWNLOAD="$(mktemp -d)"
-  trap 'rm -rf "$DOWNLOAD"' EXIT
   curl -fsSL --retry 4 --retry-delay 2 --retry-all-errors "https://codeload.github.com/$REPO/tar.gz/$REF" |
     tar -xz -C "$DOWNLOAD" ||
     fail "can't download template/ at '$REF' — is it a real tag of $REPO?"
   cp -R "$DOWNLOAD"/*/template/. "$APP_NAME"/ ||
     fail "the archive of '$REF' has no template/"
+  mv "$DOWNLOAD"/*/ "$DOWNLOAD/repo"
 fi
 cd "$APP_NAME"
 [ -f package.json ] || fail "the template at $REF has no package.json — is $REF older than v3.0.0? Apps before 3.0 were created with the shadcn registry"
@@ -63,9 +70,13 @@ cd "$APP_NAME"
 if [ -n "${FOUNDATION_TARBALL:-}" ]; then
   SPEC="file:$FOUNDATION_TARBALL"
   INSTALL=()
+  # Not on PyPI: a test app pins the commit's own version, and nothing
+  # installs its backend (consume-test.sh checks the pin is written).
+  BACKEND_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$DOWNLOAD/repo/$BACKEND_PACKAGE/pyproject.toml" 2>/dev/null || true)
 elif [[ "$REF" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
   SPEC="^${BASH_REMATCH[1]}"
   INSTALL=("$PACKAGE@${BASH_REMATCH[1]}")
+  BACKEND_VERSION="${BASH_REMATCH[1]}"
 else
   fail "'$REF' isn't a release tag (vX.Y.Z); to test a commit, set FOUNDATION_REPO_DIR and FOUNDATION_TARBALL (scripts/consume-test.sh does)"
 fi
@@ -79,6 +90,33 @@ fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n')
 const html = fs.readFileSync('index.html', 'utf8')
 fs.writeFileSync('index.html', html.replace('<title>UI Foundation</title>', '<title>' + process.env.APP_NAME + '</title>'))
 "
+
+# The backend's foundation package (PyPI ui-foundation-backend) at exactly
+# the same release: the template lists it unpinned, which only works inside
+# the ui-foundation repo. Templates before 4.25.0 don't list it.
+if grep -q '^  "ui-foundation-backend",$' backend/pyproject.toml; then
+  [ -n "$BACKEND_VERSION" ] || fail "can't tell which ui-foundation-backend version '$REF' is"
+  echo "create-app: backend/pyproject.toml pins ui-foundation-backend==$BACKEND_VERSION"
+  BACKEND_VERSION="$BACKEND_VERSION" node -e "
+const fs = require('fs')
+const toml = fs.readFileSync('backend/pyproject.toml', 'utf8')
+fs.writeFileSync('backend/pyproject.toml', toml.replace(/^  \"ui-foundation-backend\",$/m, '  \"ui-foundation-backend==' + process.env.BACKEND_VERSION + '\",'))
+"
+fi
+
+# The package's reference migrations (its tables), each only where the
+# template has no revision of that number: while the template carries its
+# own (it does today), this copies nothing.
+if [ -d "$DOWNLOAD/repo/$REFERENCE_MIGRATIONS" ]; then
+  for migration in "$DOWNLOAD/repo/$REFERENCE_MIGRATIONS"/[0-9]*.py; do
+    [ -e "$migration" ] || continue
+    number="$(basename "$migration")"; number="${number%%_*}"
+    if ! ls backend/migrations/versions/"${number}"_*.py >/dev/null 2>&1; then
+      echo "create-app: backend/migrations/versions/$(basename "$migration") (from $BACKEND_PACKAGE)"
+      cp "$migration" backend/migrations/versions/
+    fi
+  done
+fi
 
 echo "create-app: npm install ($PACKAGE $SPEC${INSTALL[0]:+, installing ${INSTALL[0]}})"
 npm install --no-audit --no-fund ${INSTALL[@]+"${INSTALL[@]}"}

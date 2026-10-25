@@ -5,13 +5,21 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { reportClientError } from '@/api/gateway/client-errors'
 import { useAuth } from '@/auth/use-auth'
+import { browserStaleChunkReload } from '@/lib/stale-chunk-reload'
 import { ErrorReportingContext, useRoutePattern } from './error-reporting-context'
 import { createErrorReporter, type ErrorReporter, type ErrorReportingOptions } from './reporter'
 
 export function ErrorReportingProvider({ options, children }: { options: ErrorReportingOptions; children: ReactNode }) {
   const queryClient = useQueryClient()
   const { status } = useAuth()
-  const [reporter] = useState(() => createErrorReporter({ options, send: (report) => void reportClientError(report) }))
+  const [reporter] = useState(() =>
+    createErrorReporter({
+      options,
+      send: (report) => void reportClientError(report),
+      // A failure that sends the page to a new build is the old build going, not a bug.
+      muted: browserStaleChunkReload().isReloading,
+    }),
+  )
   useEffect(() => reporter.setSignedIn(status === 'authenticated'), [reporter, status])
   useEffect(() => reporter.install(queryClient, window), [reporter, queryClient])
   return <ErrorReportingContext.Provider value={reporter}>{children}</ErrorReportingContext.Provider>

@@ -2,12 +2,14 @@
 // speech synthesis that record what they're asked: nothing sounds before
 // unlockAudio(), a chime's envelope rises fast and fades slow, a sequence
 // spaces its strikes, a new spoken line cuts off the last, and every cue
-// is a no-op where the browser has no such API. canVibrate() and the shared
+// is a no-op where the browser has no such API. A chime booked `at` a
+// later time is scheduled that far ahead on the audio clock, and a cancel
+// takes back only the strikes that haven't sounded (#193). canVibrate() and the shared
 // vibrate() read the same navigator.vibrate, so they never disagree.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAudioCues } from '../src/lib/audio-cues'
 
-type Strike = { pitch: number; start: number; stop: number; gain: [string, number, number][] }
+type Strike = { pitch: number; start: number; stop: number; gain: [string, number, number][]; cancelled: boolean }
 
 function fakeAudio(initialState: AudioContextState = 'suspended') {
   const contexts: FakeContext[] = []
@@ -30,7 +32,7 @@ function fakeAudio(initialState: AudioContextState = 'suspended') {
       })
     }
     createOscillator() {
-      const strike: Strike = { pitch: 0, start: 0, stop: 0, gain: [] }
+      const strike: Strike = { pitch: 0, start: 0, stop: 0, gain: [], cancelled: false }
       this.building = strike
       return {
         type: '',
@@ -40,7 +42,10 @@ function fakeAudio(initialState: AudioContextState = 'suspended') {
           strike.start = time
           strikes.push(strike)
         },
-        stop: (time: number) => (strike.stop = time),
+        stop: (time?: number) => {
+          if (time !== undefined) strike.stop = time
+        },
+        onended: null,
       }
     }
     createGain() {
@@ -51,6 +56,7 @@ function fakeAudio(initialState: AudioContextState = 'suspended') {
           exponentialRampToValueAtTime: (value: number, time: number) => strike.gain.push(['ramp', value, time]),
         },
         connect: (node: unknown) => node,
+        disconnect: () => (strike.cancelled = true),
       }
     }
   }
@@ -132,6 +138,71 @@ describe('audio cues', () => {
     ])
   })
 
+  it('a chime booked `at` a later time is scheduled that far ahead on the audio clock', () => {
+    const audio = fakeAudio('running')
+    let time = 50_000
+    const cues = createAudioCues({ AudioContext: audio.AudioContext, now: () => time })
+    cues.unlockAudio()
+    cues.chime({ pitch: 523, at: 52_500 })
+    cues.sequence([{ pitch: 660 }, { pitch: 880 }], { spacing: 250, at: 60_000 })
+    // Already past: it strikes now, as chime() does.
+    time = 61_000
+    cues.chime({ pitch: 440, at: 60_000 })
+    expect(audio.strikes.map((s) => [s.pitch, s.start])).toEqual([
+      [523, 12.5],
+      [660, 20],
+      [880, 20.25],
+      [440, 10],
+    ])
+  })
+
+  it('cancelCues() takes back every strike not yet sounded, and leaves one sounding to ring out', () => {
+    const audio = fakeAudio('running')
+    const cues = createAudioCues({ AudioContext: audio.AudioContext, now: () => 0 })
+    cues.unlockAudio()
+    cues.chime({ pitch: 440 })
+    cues.chime({ pitch: 523, at: 5_000 })
+    cues.sequence([{ pitch: 660 }, { pitch: 880 }], { at: 9_000 })
+    audio.contexts[0].currentTime = 10.5
+    cues.cancelCues()
+    expect(audio.strikes.map((s) => [s.pitch, s.cancelled])).toEqual([
+      [440, false],
+      [523, true],
+      [660, true],
+      [880, true],
+    ])
+    // Booking again after a cancel works as before.
+    cues.chime({ pitch: 523, at: 5_000 })
+    expect(audio.strikes.at(-1)).toMatchObject({ pitch: 523, cancelled: false })
+  })
+
+  it("a cue's own cancel() takes back only its strikes, the rest of a sequence included", () => {
+    const audio = fakeAudio('running')
+    const cues = createAudioCues({ AudioContext: audio.AudioContext, now: () => 0 })
+    cues.unlockAudio()
+    const pair = cues.sequence([{ pitch: 660 }, { pitch: 880 }], { spacing: 1_000 })
+    const later = cues.chime({ pitch: 523, at: 5_000 })
+    // The first of the pair has struck; the second hasn't.
+    audio.contexts[0].currentTime = 10.5
+    pair.cancel()
+    expect(audio.strikes.map((s) => [s.pitch, s.cancelled])).toEqual([
+      [660, false],
+      [880, true],
+      [523, false],
+    ])
+    later.cancel()
+    expect(audio.strikes.at(-1)!.cancelled).toBe(true)
+  })
+
+  it('a booking before unlockAudio() is dropped, and its cancel() does nothing', () => {
+    const audio = fakeAudio('running')
+    const cues = createAudioCues({ AudioContext: audio.AudioContext })
+    const cue = cues.chime({ at: Date.now() + 5_000 })
+    cue.cancel()
+    cues.cancelCues()
+    expect(audio.strikes).toHaveLength(0)
+  })
+
   it('a context suspended again later (iOS interrupts it) stays silent until the next unlock', async () => {
     const audio = fakeAudio()
     const cues = createAudioCues({ AudioContext: audio.AudioContext })
@@ -173,7 +244,8 @@ describe('audio cues', () => {
     expect(() => {
       cues.unlockAudio()
       cues.chime()
-      cues.sequence([{}, {}])
+      cues.sequence([{}, {}], { at: 1 }).cancel()
+      cues.cancelCues()
       cues.say('Done')
       cues.hush()
       cues.vibrate(200)

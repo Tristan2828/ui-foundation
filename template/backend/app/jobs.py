@@ -47,7 +47,7 @@ from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import JOB_RUNS_KEEP_DAYS
-from app.error_reporting import ErrorContext, report_error, scrub
+from foundation_backend.error_reporting import ErrorContext, report_error, scrub
 from app.models import JobRunRecord
 
 logger = logging.getLogger("app.jobs")

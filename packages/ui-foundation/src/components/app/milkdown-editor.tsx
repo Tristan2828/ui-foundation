@@ -39,6 +39,10 @@
 //   `toolbar={false}`.
 // - `inline`: the field drawn as the text it edits (no border, no box),
 //   for notes that are always editable where they're read.
+// - Images in the text show (`![alt](url)`), at most the field's width.
+//   With `upload`, an image pasted, dropped or picked with the toolbar's
+//   Image button is uploaded through it and goes in as `![](url)`
+//   (rich-text-image-upload.ts); a refusal or a failed upload is a toast.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
 import {
@@ -70,10 +74,12 @@ import { isInTable, TableMap } from '@milkdown/kit/prose/tables'
 import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
 import { $nodeSchema, $prose, $remark, getMarkdown } from '@milkdown/kit/utils'
 import { cn } from 'cn'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent } from '@/components/ui/popover'
+import { acceptAttribute } from '@/lib/image-file'
 import { linkHref, linkRefusal } from '@/lib/link-href'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
@@ -83,6 +89,7 @@ import type { RichTextEditorProps } from './rich-text-editor'
 import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
 import { tableAt, toggleFormat, type FormatId } from './rich-text-formats'
 import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry } from './rich-text-node-views'
+import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
 import { addRowAtEnd, handleTableKey, runTableAction, type TableAction } from './rich-text-table'
 import type { FormatItem } from './rich-text-format-items'
@@ -139,6 +146,17 @@ const calloutSchema = $nodeSchema('callout', () => ({
     },
   },
 }))
+
+// Milkdown's image node wants a string title, and remark reads an image
+// with none (`![alt](url)`, nearly every one) as a `null` title: the node
+// refused it, and the image was dropped as the text loaded. An empty
+// title is written back as none.
+type MdImage = { type: string; title?: string | null; children?: MdImage[] }
+function emptyImageTitles(node: MdImage) {
+  if (node.type === 'image' && node.title == null) node.title = ''
+  node.children?.forEach(emptyImageTitles)
+}
+const imageTitles = $remark('imageTitles', () => () => (tree: unknown) => emptyImageTitles(tree as MdImage))
 
 // Raw HTML pasted in as Milkdown's html chip becomes the plain text it
 // shows, so a paste can never add markup to the Markdown.
@@ -287,6 +305,9 @@ export default function MilkdownEditor({
   maxLength,
   toolbar = true,
   inline = false,
+  upload,
+  imageAccept,
+  imageMaxSize,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -323,10 +344,12 @@ export default function MilkdownEditor({
   // rendered into through a portal.
   const [widgets, setWidgets] = useState<Widget[]>([])
   // The latest props, for the editor's callbacks, which are set up once.
-  const latest = useRef({ onChange, onProblem, readOnly, placeholder })
+  const latest = useRef({ onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize })
   useEffect(() => {
-    latest.current = { onChange, onProblem, readOnly, placeholder }
+    latest.current = { onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize }
   })
+  // The toolbar's Image button opens this file picker.
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   // The fixed bar above the text, and the menus over it (the floating
   // toolbar and the slash menu), which `'floating'` keeps on their own.
@@ -456,6 +479,41 @@ export default function MilkdownEditor({
 
     // Paste, copy, the editor's own keys and the placeholder.
     const slashing = $prose(() => slashPlugin())
+
+    // Images pasted or dropped, uploaded through the app's `upload`; with
+    // none given, a paste or drop is left to the handlers after this one,
+    // as if this weren't here.
+    const imageUploads = $prose(() => imageUploadPlugin())
+    const startUploads = (view: EditorView, files: File[], at: number | null) => {
+      const { upload: send, imageAccept: accept, imageMaxSize: maxSize } = latest.current
+      if (!send) return false
+      uploadImages(view, files, at, { upload: send, accept, maxSize, onError: (message) => toast.error(message) })
+      return true
+    }
+    const imageInput = $prose(
+      () =>
+        new Plugin({
+          props: {
+            handlePaste: (view, event) => {
+              if (!latest.current.upload || !view.editable) return false
+              const files = pastedImages(event.clipboardData)
+              if (files.length === 0) return false
+              event.preventDefault()
+              return startUploads(view, files, null)
+            },
+            // Files from outside (a text or an image moved within the
+            // editor carries none).
+            handleDrop: (view, event, _slice, moved) => {
+              if (moved || !latest.current.upload || !view.editable) return false
+              const files = droppedFiles(event.dataTransfer)
+              if (files.length === 0) return false
+              event.preventDefault()
+              const at = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? view.state.selection.from
+              return startUploads(view, files, at)
+            },
+          },
+        }),
+    )
 
     const input = $prose(
       (ctx) =>
@@ -620,9 +678,12 @@ export default function MilkdownEditor({
       .use(gfm)
       .use(calloutRemark)
       .use(calloutSchema)
+      .use(imageTitles)
       .use(history)
       .use(changes)
       .use(slashing)
+      .use(imageUploads)
+      .use(imageInput)
       .use(input)
 
     void make.create().then((editor) => {
@@ -661,6 +722,22 @@ export default function MilkdownEditor({
       view.setProps({ editable: () => !readOnly, attributes: JSON.parse(attributesKey) as Record<string, string> })
     })
   }, [readOnly, attributesKey])
+
+  // The toolbar's Image button: the file picker, then each file picked
+  // uploaded in place of the selection, and focus back in the text.
+  const pickImages = () => imageInputRef.current?.click()
+  const imagesPicked = (files: File[]) => {
+    const send = latest.current.upload
+    if (!editorView || !send || files.length === 0) return
+    uploadImages(editorView, files, null, {
+      upload: send,
+      accept: imageAccept,
+      maxSize: imageMaxSize,
+      onError: (message) => toast.error(message),
+    })
+    editorView.focus()
+  }
+  const uploading = editorState ? uploadPlaceholders(editorState).length : 0
 
   // A toolbar button: its format on the selection, then focus back in the
   // text (Link opens the link box instead, which gives it back on close).
@@ -774,7 +851,24 @@ export default function MilkdownEditor({
             controls={editorState ? editableId : undefined}
             onFormat={runFormat}
             onTable={runTable}
+            onImage={upload ? pickImages : undefined}
             text={textElement}
+          />
+        )}
+        {upload && (
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept={acceptAttribute(imageAccept)}
+            multiple
+            hidden
+            tabIndex={-1}
+            onChange={(event) => {
+              const files = Array.from(event.target.files ?? [])
+              // Cleared, so picking the same file again still counts.
+              event.target.value = ''
+              imagesPicked(files)
+            }}
           />
         )}
         <div
@@ -805,6 +899,11 @@ export default function MilkdownEditor({
             '[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:font-mono',
             '[&_hr]:my-2 [&_hr]:h-0.5 [&_hr]:rounded-full [&_hr]:border-0 [&_hr]:bg-rule',
             '[&_hr.ProseMirror-selectednode]:outline-2 [&_hr.ProseMirror-selectednode]:outline-offset-4 [&_hr.ProseMirror-selectednode]:outline-ring',
+            // An image, as <Markdown> shows it: never wider than the field.
+            // (ProseMirror's own separator images, around an image alone on
+            // its line, are left alone.)
+            '[&_img[src]]:inline-block [&_img[src]]:h-auto [&_img[src]]:max-w-full [&_img[src]]:rounded-md [&_img[src]]:align-bottom',
+            '[&_img.ProseMirror-selectednode]:outline-2 [&_img.ProseMirror-selectednode]:outline-offset-2 [&_img.ProseMirror-selectednode]:outline-ring',
             // A table: a header row on the muted fill, a line between every
             // cell, cells that wrap and never shrink to nothing; selected
             // cells (a drag across them) tinted.
@@ -875,6 +974,13 @@ export default function MilkdownEditor({
           />
         )}
       </div>
+      {upload && (
+        // The placeholders in the text are drawn, not read: this says
+        // what's uploading.
+        <p role="status" className="sr-only">
+          {uploading > 0 ? `Uploading ${uploading === 1 ? 'an image' : `${uploading} images`}…` : ''}
+        </p>
+      )}
       {showCount && (
         <p
           id={counterId}

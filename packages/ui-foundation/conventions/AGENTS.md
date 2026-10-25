@@ -6,7 +6,11 @@ React Router v7, TanStack Query. The shared layer — primitives, the
 `DataTable`/`EntityView`/`EntityForm` composites, the app shell, auth,
 the gateway error seam, design tokens, lint rules — is the npm package
 `@tristan2828/ui-foundation`, updated by bumping its version. Everything in
-`src/` is this app's own.
+`src/` is this app's own. The backend's auth and security layer (sign-in,
+sessions, limits, TOTP, error reporting, deploy checks) is the pip package
+`ui-foundation-backend` (`foundation_backend`), pinned in
+`backend/pyproject.toml` to the same version; never copy one of its
+modules into `backend/app/`.
 
 Contract-first: `openapi.yaml` is the source of truth and is owned by this
 app. In development MSW serves the contract, so there may be no backend at
@@ -43,7 +47,9 @@ is right. Do not disable, skip, or work around it.
 - NEVER use a raw hex value or a Tailwind palette color (`bg-blue-500`).
   Semantic tokens only: `bg-primary`, `text-muted-foreground`. (Enforced:
   the foundation's ESLint token rule; axe contrast in light and dark mode,
-  `e2e/a11y.spec.ts`.)
+  `e2e/a11y.spec.ts`.) The one exception is an app's `--brand-<name>`
+  tokens, for logos and brand marks only (`docs/foundation/design-language.md`
+  "Logos and brand marks").
 - NEVER fetch in `useEffect`. All server state goes through TanStack Query.
   (Enforced: eslint-plugin-query + the no-bare-fetch rule.)
 - NEVER read auth state outside `useAuth()`. The package exports nothing

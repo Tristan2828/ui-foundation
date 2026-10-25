@@ -10,6 +10,15 @@
 //   `auth`, `notfound`, `validation`, `rate_limited` or `network`: those are
 //   expected answers or the connection, not bugs.
 //
+// What it never reports (#205): a `window` or `unhandledrejection` error
+// that can't be the app's. That's `Script error.` with nothing else (a
+// script on another origin), and an error none of whose stack frames is in
+// a script: every frame is at a page's own address (a script the browser
+// or an extension injected, such as Firefox for iOS's `__firefox__`; a
+// Vite build has no inline scripts) or in an extension. An app drops more
+// with `ignore`. While the page reloads onto a new build (#206), nothing
+// is reported: what fails then is the old build going away.
+//
 // What a report holds: the error's type, message and stack, the route
 // *pattern* (`/widgets/:id`), the method and status of a failed request,
 // and the release. Query strings are cut from every URL in the message and
@@ -24,6 +33,11 @@ import { httpStatusOf } from "../api/gateway/errors";
 export type ErrorReportingOptions = {
   /** The frontend build a report names, e.g. the commit (`import.meta.env.VITE_RELEASE`). */
   release?: string;
+  /**
+   * Return true to drop a report: a known noise pattern the package doesn't
+   * filter yet. Sees every report, from every source, before it's sent.
+   */
+  ignore?: (report: ClientErrorReport) => boolean;
 };
 
 export type ReportSource = ClientErrorReport["source"];
@@ -40,8 +54,8 @@ export function resolveErrorReporting(option: boolean | ErrorReportingOptions | 
 }
 
 // A query string or fragment in a URL or path, up to a stack frame's
-// trailing :line:col (the backend's scrub, in app/error_reporting.py, is
-// the same rule).
+// trailing :line:col (the backend's scrub, in
+// foundation_backend/error_reporting.py, is the same rule).
 const URL_QUERY =
   /(\b[a-z][a-z0-9+.-]*:\/\/[^\s?#"'()]+|(?<![\w/])\/[^\s?#"'()]*)[?#][^\s"'()]*?(?=(?::\d+){1,2}(?=[\s"'()]|$)|[\s"'()]|$)/gi;
 
@@ -87,6 +101,52 @@ function describe(error: unknown): Described {
   return { type: "Error", message: typeof error === "string" ? error : "A value that isn't an Error was thrown." };
 }
 
+const EXTENSION_SCHEMES = /^(chrome-extension|moz-extension|safari-extension|safari-web-extension|ms-browser-extension):/i;
+const SCRIPT_FILE = /\.(?:[cm]?js|jsx|[cm]?ts|tsx)$/i;
+// A stack frame's location at the end of its line: `at f (url:1:2)`,
+// `at url:1:2`, `f@url:1:2`, `global code@url:1:2`.
+const FRAME_URL = /([a-z][a-z0-9+.-]*:\/\/[^\s()]+?):\d+(?::\d+)?\)?\s*$/i;
+
+function stackUrls(stack: string | undefined): string[] {
+  if (!stack) return [];
+  return stack.split("\n").flatMap((line) => {
+    const match = FRAME_URL.exec(line.trim());
+    return match ? [match[1]] : [];
+  });
+}
+
+/**
+ * Whether `url` is somewhere the app's own code can't be: an extension, or
+ * an address on the page's origin that isn't a script file (a page, as
+ * `/timers/2`, where only an injected or inline script runs).
+ */
+function outsideAppScripts(url: string, page: string): boolean {
+  if (EXTENSION_SCHEMES.test(url)) return true;
+  let parsed: URL;
+  let origin: string;
+  try {
+    parsed = new URL(url);
+    origin = new URL(page).origin;
+  } catch {
+    return false;
+  }
+  return parsed.origin === origin && !SCRIPT_FILE.test(parsed.pathname);
+}
+
+/**
+ * Whether an uncaught error can't be the app's (#205): `Script error.` with
+ * nothing else, or every frame of its stack (else the event's file) outside
+ * the app's scripts. An error with no location at all is kept: a thrown
+ * string may well be the app's.
+ */
+export function fromOutsideApp(error: unknown, event: { message?: string; filename?: string }, page: string): boolean {
+  const stack = error instanceof Error ? error.stack : undefined;
+  if (!stack && error == null && /^Script error\.?$/.test(event.message ?? "")) return true;
+  const urls = stackUrls(stack);
+  if (urls.length === 0 && event.filename) urls.push(event.filename);
+  return urls.length > 0 && urls.every((url) => outsideAppScripts(url, page));
+}
+
 export type ErrorReporter = {
   /** Reports `error` from `source`, unless it's a duplicate or signed out. */
   report: (source: ReportSource, error: unknown, request?: { method?: string; status?: number }) => void;
@@ -102,25 +162,30 @@ export function createErrorReporter({
   options,
   send,
   now = Date.now,
+  page = () => globalThis.location?.href ?? "",
+  muted = () => false,
 }: {
   options: ErrorReportingOptions;
   send: (report: ClientErrorReport) => void;
   now?: () => number;
+  /** The page's address, which an injected script's frames carry. */
+  page?: () => string;
+  /** True while nothing should be reported: the page reloading onto a new build. */
+  muted?: () => boolean;
 }): ErrorReporter {
   const lastSent = new Map<string, number>();
   let route: string | null = null;
   let signedIn = false;
 
   const report: ErrorReporter["report"] = (source, error, request = {}) => {
-    if (!signedIn) return;
+    if (!signedIn || muted()) return;
     const described = describe(error);
     const message = scrub(described.message, MAX_MESSAGE);
     const signature = [source, described.type, message, route ?? ""].join("\u001f");
     const at = now();
     for (const [key, sentAt] of lastSent) if (at - sentAt >= DEDUPE_MS) lastSent.delete(key);
     if (lastSent.has(signature)) return;
-    lastSent.set(signature, at);
-    send({
+    const sent: ClientErrorReport = {
       source,
       type: described.type.slice(0, 200),
       message,
@@ -129,7 +194,10 @@ export function createErrorReporter({
       ...(request.method ? { method: request.method } : {}),
       ...(request.status ? { status: request.status } : {}),
       ...(options.release ? { release: options.release.slice(0, 100) } : {}),
-    });
+    };
+    if (options.ignore?.(sent)) return;
+    lastSent.set(signature, at);
+    send(sent);
   };
 
   const reportAppError = (source: "query" | "mutation", error: unknown, method?: string) => {
@@ -147,7 +215,8 @@ export function createErrorReporter({
     },
     install: (queryClient, target) => {
       const onError = (event: Event) => {
-        const { error, message } = event as ErrorEvent;
+        const { error, message, filename } = event as ErrorEvent;
+        if (fromOutsideApp(error, { message, filename }, page())) return;
         report("window", error ?? message);
       };
       const onRejection = (event: Event) => {
@@ -155,6 +224,7 @@ export function createErrorReporter({
         // An AppError is a request's answer: the caches below report the
         // ones that are bugs, and the rest are expected.
         if (isAppError(reason)) return;
+        if (fromOutsideApp(reason, {}, page())) return;
         report("unhandledrejection", reason);
       };
       target.addEventListener("error", onError);

@@ -8,7 +8,11 @@ React Router v7, TanStack Query. The shared layer — primitives, the
 `DataTable`/`EntityView`/`EntityForm` composites, the app shell, auth,
 the gateway error seam, design tokens, lint rules — is the npm package
 `@tristan2828/ui-foundation`, updated by bumping its version. Everything in
-`src/` is this app's own.
+`src/` is this app's own. The backend's auth and security layer (sign-in,
+sessions, limits, TOTP, error reporting, deploy checks) is the pip package
+`ui-foundation-backend` (`foundation_backend`), pinned in
+`backend/pyproject.toml` to the same version; never copy one of its
+modules into `backend/app/`.
 
 Contract-first: `openapi.yaml` is the source of truth and is owned by this
 app. In development MSW serves the contract, so there may be no backend at
@@ -45,7 +49,9 @@ is right. Do not disable, skip, or work around it.
 - NEVER use a raw hex value or a Tailwind palette color (`bg-blue-500`).
   Semantic tokens only: `bg-primary`, `text-muted-foreground`. (Enforced:
   the foundation's ESLint token rule; axe contrast in light and dark mode,
-  `e2e/a11y.spec.ts`.)
+  `e2e/a11y.spec.ts`.) The one exception is an app's `--brand-<name>`
+  tokens, for logos and brand marks only (`docs/foundation/design-language.md`
+  "Logos and brand marks").
 - NEVER fetch in `useEffect`. All server state goes through TanStack Query.
   (Enforced: eslint-plugin-query + the no-bare-fetch rule.)
 - NEVER read auth state outside `useAuth()`. The package exports nothing
@@ -223,6 +229,7 @@ uses the pattern (the playbook then stops and asks).
 | `yes/no` marked `toggle` | `src/routes/widgets/in-stock-toggle.tsx` |
 | `computed` | Progress (`checklistState`): `widget-schema.ts`, `widgets-columns.tsx`, the backend's `routers/widgets.py` |
 | Sub-records | Checklist in `widget-form.tsx` (edited), `widget-quick-actions.tsx` (ticked on the view; the read-only markup is in `docs/foundation/add-an-entity.md`), and `checklist` in `widgetEdits` (edited in place as a list; its row shared with the form as `WidgetChecklistItemFields` in `widget-fields.tsx`) |
+| Sub-records with a `reference` in each item | Pairings: `WidgetPairingItemFields` and `WidgetCategoryCombobox` in `widget-fields.tsx` (the row, shared by form and view), Pairings in `widget-form.tsx`, `pairings` in `widgetEdits` and `PairingShown` in `widget-view.tsx`; `_check_item_categories_exist` in the backend's `routers/widgets.py`, `WidgetPairing` in `models.py` and migration `0016` |
 | Mocks | `src/mocks/data.ts`, `src/mocks/handlers.ts` |
 | Screen states and specs | `e2e/widgets-table.spec.ts`, `e2e/widget-view.spec.ts`, `e2e/widget-form.spec.ts`, `e2e/widget-edit-in-place.spec.ts` |
 | Backend router, model, migration | `backend/app/routers/widgets.py`, `backend/app/models.py`, `backend/migrations/versions/` |

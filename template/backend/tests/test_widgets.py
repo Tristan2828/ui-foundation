@@ -16,7 +16,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.db import get_session
 from app.main import app
 from app.models import User, Widget, WidgetCategory
-from tests.signed_in import session_cookie
+from foundation_backend.testing.signed_in import session_cookie
 
 
 async def test_list_widgets_is_paginated_and_camel_cased(client: AsyncClient) -> None:
@@ -393,6 +393,77 @@ async def test_a_deleted_widget_keeps_its_checklist_for_restore(client: AsyncCli
     assert (await client.delete(f"/api/widgets/{created['id']}")).status_code == 204
     restored = await client.post(f"/api/widgets/{created['id']}/restore")
     assert restored.json()["checklist"] == created["checklist"]
+
+
+# --- pairings: sub-records whose items hold a reference (4.27.0) ------------
+
+
+async def test_pairings_default_to_empty_and_keep_the_order_saved_with_repeats(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await _add_categories(session)
+    empty = await client.post("/api/widgets", json=_NEW_WIDGET)
+    assert empty.json()["pairings"] == []
+    items = [{"categoryId": 2, "note": ""}, {"categoryId": 1, "note": "Desk sets"}, {"categoryId": 2, "note": "Again"}]
+    created = await client.post("/api/widgets", json={**_NEW_WIDGET, "pairings": items})
+    assert created.status_code == 201
+    assert created.json()["pairings"] == items
+    fetched = await client.get(f"/api/widgets/{created.json()['id']}")
+    assert fetched.json()["pairings"] == items
+
+
+async def test_patch_pairings_replaces_reorders_clears_or_leaves_them(
+    client: AsyncClient, session: AsyncSession
+) -> None:
+    await _add_categories(session)
+    a, b = {"categoryId": 1, "note": "A"}, {"categoryId": 2, "note": "B"}
+    widget_id = (await client.post("/api/widgets", json={**_NEW_WIDGET, "pairings": [a, b]})).json()["id"]
+    reordered = await client.patch(f"/api/widgets/{widget_id}", json={"pairings": [b, a]})
+    assert reordered.json()["pairings"] == [b, a]
+    untouched = await client.patch(f"/api/widgets/{widget_id}", json={"name": "Renamed"})
+    assert untouched.json()["pairings"] == [b, a]
+    cleared = await client.patch(f"/api/widgets/{widget_id}", json={"pairings": []})
+    assert cleared.json()["pairings"] == []
+
+
+async def test_pairing_notes_are_trimmed_and_too_long_is_a_field_error_on_that_item(client: AsyncClient) -> None:
+    trimmed = await client.post("/api/widgets", json={**_NEW_WIDGET, "pairings": [{"categoryId": 1, "note": "  Tidy  "}]})
+    assert trimmed.json()["pairings"] == [{"categoryId": 1, "note": "Tidy"}]
+    long = await client.post(
+        "/api/widgets",
+        json={**_NEW_WIDGET, "pairings": [{"categoryId": 1, "note": ""}, {"categoryId": 1, "note": "x" * 101}]},
+    )
+    assert long.status_code == 422
+    assert any(item["loc"] == ["body", "pairings", 1, "note"] for item in long.json()["detail"])
+
+
+async def test_an_unknown_category_in_a_pairing_is_a_422_at_that_item_never_a_500(client: AsyncClient) -> None:
+    # Create and update alike: the reference is checked before anything is
+    # saved, and the error is keyed to the item's own path.
+    pairings = [{"categoryId": 1, "note": ""}, {"categoryId": 1, "note": ""}, {"categoryId": 999, "note": ""}]
+    created = await client.post("/api/widgets", json={**_NEW_WIDGET, "pairings": pairings})
+    assert created.status_code == 422
+    assert [item["loc"] for item in created.json()["detail"]] == [["body", "pairings", 2, "categoryId"]]
+
+    widget_id = (await client.post("/api/widgets", json=_NEW_WIDGET)).json()["id"]
+    updated = await client.patch(f"/api/widgets/{widget_id}", json={"pairings": pairings})
+    assert updated.status_code == 422
+    assert [item["loc"] for item in updated.json()["detail"]] == [["body", "pairings", 2, "categoryId"]]
+    assert (await client.get(f"/api/widgets/{widget_id}")).json()["pairings"] == []
+
+
+async def test_too_many_null_or_idless_pairings_are_field_errors(client: AsyncClient) -> None:
+    too_many = [{"categoryId": 1, "note": ""}] * 21
+    res = await client.post("/api/widgets", json={**_NEW_WIDGET, "pairings": too_many})
+    assert res.status_code == 422
+    assert any(item["loc"][-1] == "pairings" for item in res.json()["detail"])
+    widget_id = (await client.post("/api/widgets", json=_NEW_WIDGET)).json()["id"]
+    null = await client.patch(f"/api/widgets/{widget_id}", json={"pairings": None})
+    assert null.status_code == 422
+    assert [item["loc"] for item in null.json()["detail"]] == [["body", "pairings"]]
+    idless = await client.patch(f"/api/widgets/{widget_id}", json={"pairings": [{"note": "No category"}]})
+    assert idless.status_code == 422
+    assert any(item["loc"] == ["body", "pairings", 0, "categoryId"] for item in idless.json()["detail"])
 
 
 # --- checklistState: the computed, read-only field (3.7.0) ------------------

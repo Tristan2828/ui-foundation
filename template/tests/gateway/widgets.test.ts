@@ -37,6 +37,7 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
     inStock: true,
     extraCategoryIds: [],
     checklist: [],
+    pairings: [],
     checklistState: "none",
     ...overrides,
   };
@@ -573,6 +574,39 @@ describe("updateWidget", () => {
     await expect(updateWidget(3, { checklist: [] })).rejects.toMatchObject({
       kind: "validation",
       fieldErrors: { "checklist.2.text": ["Text must be 1–300 characters"] },
+    });
+  });
+
+  // openapi.yaml: pairings, sub-records whose items hold a reference, are
+  // replaced whole, keep the order sent, and carry the referenced id only.
+  it("sends the pairings in the body in the order given, ids only", async () => {
+    const pairings = [
+      { categoryId: 2, note: "" },
+      { categoryId: 1, note: "Desk sets" },
+      { categoryId: 2, note: "Again" },
+    ];
+    const fetchMock = stubFetch(jsonResponse(makeWidget({ id: 3, pairings }), 200));
+
+    const result = await updateWidget(3, { pairings });
+
+    const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
+    expect(body).toEqual({ pairings });
+    expect(result.pairings).toEqual(pairings);
+  });
+
+  // openapi.yaml: "An id that isn't a category is a 422 at the item's path,
+  // e.g. loc ["body", "pairings", 2, "categoryId"]" — so it lands on that row.
+  it("keys a 422 on a pairing's reference under fieldErrors['pairings.2.categoryId']", async () => {
+    stubFetch(
+      jsonResponse(
+        { detail: [{ loc: ["body", "pairings", 2, "categoryId"], msg: "Category not found", type: "value_error.foreign_key" }] },
+        422,
+      ),
+    );
+
+    await expect(updateWidget(3, { pairings: [] })).rejects.toMatchObject({
+      kind: "validation",
+      fieldErrors: { "pairings.2.categoryId": ["Category not found"] },
     });
   });
 

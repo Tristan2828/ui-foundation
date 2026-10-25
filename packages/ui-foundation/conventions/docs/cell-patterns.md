@@ -947,7 +947,11 @@ const price = editInPlace({
   `toolbar={false}` leaves out the toolbars and the slash menu where a
   value is short and the shortcuts are enough; `toolbar="floating"` keeps
   the floating one and the slash menu without the bar above (an `inline`
-  field's look).
+  field's look). Images in the text (`![alt](url)`) show; give it the
+  app's `upload` (the same one `ImageField` takes) and an image pasted,
+  dropped or picked with the toolbar's Image button is uploaded and goes
+  in as `![](url)`, a placeholder showing meanwhile (never saved), a
+  refusal or failure in a toast. No `upload`, no file handling at all.
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
   `useEdit<Entity>Field`), `mutateAsync` of one field's PATCH.
@@ -989,6 +993,13 @@ Checklist is the reference (`checklist` in `widgetEdits`). It's built on
   about the list (too many items) under the row being added.
 - `content` shows above the items (the done-count) and `emptyLabel` in
   place of them when there are none.
+- **An item with a reference** (Widget's Pairings, `pairings` in
+  `widgetEdits`) reads as the referenced record's name, from the view's
+  lookup by id, and its row is the form's: a combobox per row, with its
+  own search. Enter in the open list picks without saving, a click on an
+  option is still inside the row, and Enter in the row's text box or
+  leaving the row saves the item, ids only on the wire. A new item starts
+  with no pick, which the list's schema refuses on that row.
 
 ```tsx
 const checklist = editInPlace<ChecklistItem>({

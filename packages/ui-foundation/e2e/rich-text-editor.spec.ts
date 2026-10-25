@@ -1059,3 +1059,157 @@ test('"/divider" puts in a divider and a line under it', async ({ page }) => {
   await page.keyboard.type('Below')
   await expect(saved(page, 'formats')).toContainText('Third line.\n\n---\n\nBelow')
 })
+
+// Images uploaded into the text, on the ImageUploads story: each editor
+// has a fake upload (1.2s to store, one that always fails, one that takes
+// up to 1 MB, one on the floating toolbar), and one has none.
+const IMAGE_UPLOADS = 'http://localhost:6006/iframe.html?id=app-richtexteditor--image-uploads&viewMode=story'
+
+// A PNG's bytes (a 1×1 pixel), padded to `size` bytes, as an array the
+// page can make a File from.
+function pngBytes(size = 68) {
+  const pixel = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  )
+  return [...Buffer.concat([pixel, Buffer.alloc(Math.max(0, size - pixel.length))])]
+}
+
+type FileSpec = { name: string; type: string; bytes: number[] }
+const photo = (name = 'photo.png', size?: number): FileSpec => ({ name, type: 'image/png', bytes: pngBytes(size) })
+
+// A paste of files (and any text/html with them), as a screenshot or a
+// copied image arrives.
+async function pasteFiles(page: Page, name: string, files: FileSpec[], data: Record<string, string> = {}) {
+  await editor(page, name).evaluate(
+    (element, { files, data }) => {
+      const transfer = new DataTransfer()
+      for (const file of files) transfer.items.add(new File([new Uint8Array(file.bytes)], file.name, { type: file.type }))
+      for (const [type, value] of Object.entries(data)) transfer.setData(type, value)
+      element.dispatchEvent(new ClipboardEvent('paste', { clipboardData: transfer, bubbles: true, cancelable: true }))
+    },
+    { files, data },
+  )
+}
+
+// A drop of files from outside onto the start of the text's first block.
+async function dropFiles(page: Page, name: string, files: FileSpec[]) {
+  await editor(page, name).evaluate((element, files) => {
+    const transfer = new DataTransfer()
+    for (const file of files) transfer.items.add(new File([new Uint8Array(file.bytes)], file.name, { type: file.type }))
+    const block = element.firstElementChild!.getBoundingClientRect()
+    const at = { clientX: block.left + 1, clientY: block.top + block.height / 2 }
+    element.dispatchEvent(new DragEvent('dragover', { dataTransfer: transfer, bubbles: true, cancelable: true, ...at }))
+    element.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true, cancelable: true, ...at }))
+  }, files)
+}
+
+test.describe('image upload', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(IMAGE_UPLOADS)
+    await expect(editor(page, 'uploads')).toBeVisible()
+  })
+
+  test('a pasted image shows a placeholder, nothing saved for it, then goes in as ![](url)', async ({ page }) => {
+    await caretAtEnd(page, 'uploads')
+    await pasteFiles(page, 'uploads', [photo('screenshot.png')])
+    const placeholder = editor(page, 'uploads').locator('[data-slot=rich-text-image-upload]')
+    await expect(placeholder).toHaveText('Uploading screenshot.png…')
+    await expect(page.locator('[data-fixture="uploads"]').getByRole('status')).toHaveText('Uploading an image…')
+    // The placeholder isn't in the document: the Markdown is as it was.
+    expect(await saved(page, 'uploads').textContent()).toBe('Paste or drop a photo here.\n')
+
+    await expect(placeholder).toHaveCount(0)
+    await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(1)
+    await expect(saved(page, 'uploads')).toHaveText(/^Paste or drop a photo here\.!\[\]\(blob:[^)]+\)\n$/)
+  })
+
+  test('a dropped image goes in where it was dropped', async ({ page }) => {
+    await dropFiles(page, 'uploads', [photo('dropped.png')])
+    await expect(editor(page, 'uploads').locator('[data-slot=rich-text-image-upload]')).toHaveText('Uploading dropped.png…')
+    await expect(saved(page, 'uploads')).toHaveText(/^!\[\]\(blob:[^)]+\)Paste or drop a photo here\.\n$/)
+  })
+
+  test("the toolbar's Image button picks files, which upload in order", async ({ page }) => {
+    await caretAtEnd(page, 'uploads')
+    const button = page.locator('[data-fixture="uploads"]').getByRole('button', { name: 'Image', exact: true })
+    const chooser = page.waitForEvent('filechooser')
+    await button.click()
+    const picker = await chooser
+    expect(picker.isMultiple()).toBe(true)
+    await picker.setFiles([
+      { name: 'one.png', mimeType: 'image/png', buffer: Buffer.from(pngBytes()) },
+      { name: 'two.png', mimeType: 'image/png', buffer: Buffer.from(pngBytes()) },
+    ])
+    await expect(editor(page, 'uploads').locator('[data-slot=rich-text-image-upload]')).toHaveText(['Uploading one.png…', 'Uploading two.png…'])
+    await expect(page.locator('[data-fixture="uploads"]').getByRole('status')).toHaveText('Uploading 2 images…')
+    await expect(editor(page, 'uploads')).toBeFocused()
+    await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(2)
+    expect((await saved(page, 'uploads').textContent())!.match(/!\[\]\(blob:/g)).toHaveLength(2)
+  })
+
+  test('typing goes on while it uploads, and the image lands after the words typed before it', async ({ page }) => {
+    await caretAtEnd(page, 'uploads')
+    await pasteFiles(page, 'uploads', [photo()])
+    await page.keyboard.type(' typed')
+    await expect(saved(page, 'uploads')).toHaveText(/^Paste or drop a photo here\.!\[\]\(blob:[^)]+\) typed\n$/)
+  })
+
+  test('a failed upload takes the placeholder away and says why in a toast', async ({ page }) => {
+    await caretAtEnd(page, 'failing')
+    await pasteFiles(page, 'failing', [photo()])
+    await expect(editor(page, 'failing').locator('[data-slot=rich-text-image-upload]')).toHaveCount(1)
+    await expect(page.getByText('Storage is full. Free some space and try again.')).toBeVisible()
+    await expect(editor(page, 'failing').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+    expect(await saved(page, 'failing').textContent()).toBe('Every upload fails here.\n')
+  })
+
+  test('an image over the size limit, or a file that is not one, is refused before it is sent', async ({ page }) => {
+    await caretAtEnd(page, 'sizeLimit')
+    await pasteFiles(page, 'sizeLimit', [photo('huge.png', 2 * 1024 * 1024)])
+    await expect(page.getByText('That image is 2 MB. The limit is 1 MB.')).toBeVisible()
+    await dropFiles(page, 'sizeLimit', [{ name: 'notes.pdf', type: 'application/pdf', bytes: [37, 80, 68, 70] }])
+    await expect(page.getByText('That file is a PDF. Choose a JPEG, PNG or WebP image.')).toBeVisible()
+    await expect(editor(page, 'sizeLimit').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+    expect(await saved(page, 'sizeLimit').textContent()).toBe('Images up to 1 MB.\n')
+  })
+
+  test("an office app's copy, words with a picture of them, pastes the words", async ({ page }) => {
+    await caretAtEnd(page, 'uploads')
+    await pasteFiles(page, 'uploads', [photo('image.png')], { 'text/html': '<p>Quarterly <b>numbers</b></p>', 'text/plain': 'Quarterly numbers' })
+    await expect(saved(page, 'uploads')).toContainText('Quarterly **numbers**')
+    await expect(editor(page, 'uploads').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+  })
+
+  test('with only the floating toolbar, paste still uploads (no bar, no button)', async ({ page }) => {
+    const field = page.locator('[data-fixture="floating"]')
+    await expect(field.getByRole('toolbar')).toHaveCount(0)
+    await caretAtEnd(page, 'floating')
+    await pasteFiles(page, 'floating', [photo()])
+    await expect(editor(page, 'floating').locator('img[src^="blob:"]')).toHaveCount(1)
+  })
+
+  test('without `upload`, files are left alone: no button, and a paste or drop of one changes nothing', async ({ page }) => {
+    const field = page.locator('[data-fixture="noUpload"]')
+    await expect(field.getByRole('button', { name: 'Image', exact: true })).toHaveCount(0)
+    await expect(field.locator('input[type=file]')).toHaveCount(0)
+    await caretAtEnd(page, 'noUpload')
+    await pasteFiles(page, 'noUpload', [photo()])
+    await dropFiles(page, 'noUpload', [photo()])
+    await page.waitForTimeout(300)
+    await expect(editor(page, 'noUpload').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+    expect(await saved(page, 'noUpload').textContent()).toBe('No upload: files are ignored.\n')
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`the button and the placeholder are accessible (${theme})`, async ({ page }) => {
+      await page.goto(`${IMAGE_UPLOADS}&globals=theme:${theme}`)
+      if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      await caretAtEnd(page, 'uploads')
+      await pasteFiles(page, 'uploads', [photo()])
+      await expect(editor(page, 'uploads').locator('[data-slot=rich-text-image-upload]')).toBeVisible()
+      const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
+})

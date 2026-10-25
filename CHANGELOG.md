@@ -5,6 +5,232 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.29.0 — Brand marks, background-tab timers, and less noise after a deploy
+
+Additive, so a minor. Four requests from apps (#193, #205, #206, #211).
+
+- **New: `AppShell`'s `logo`** (#211): the app's mark before its title at
+  the top of the sidebar, and alone, centred, at the top of the collapsed
+  icon rail. Decorative; `title` still names the app.
+- **`WidgetCard`'s `icon` takes any icon component** (#211), not only a
+  `LucideIcon`: an app's own mark for a card about an outside service.
+  Every Lucide icon still fits. **New export: `IconComponent`**, the type
+  both slots take.
+- **Design language: logos and brand marks** (#211). An app keeps the
+  marks it needs as its own components (no icon pack), coloured with
+  `currentColor` or with app-level `--brand-<name>` tokens, for marks
+  only, the same in both themes (`design-language.md` "Logos and brand
+  marks"; the token Hard Rule names the exception).
+- **Timed screens in a background tab** (#193):
+  - `chime` and `sequence` take `at` (a `Date.now()` time) and book the
+    chime ahead on the Web Audio clock, so it strikes on time in a
+    background tab. Each returns a `Cue` whose `cancel()` takes back what
+    hasn't sounded; **new: `cancelCues()`** takes back every booked chime.
+    New types `Cue` and `CueTime`.
+  - `useSessionClock` ticks once a second (or as the browser allows) while
+    the tab is hidden, enough for a countdown in the tab's title, and
+    catches up exactly when it comes back.
+  - `useSessionClock` returns **`startFrom(ms)`** (a run resumed from
+    storage) and **`seek(ms)`** (Skip and Back), with pause and resume
+    still exact.
+  - `timed-screens.md` has a "Background tabs" section and its Playwright
+    recipe.
+- **Error reporting drops what can't be the app's** (#205): `Script
+  error.` with nothing else, and a `window`/`unhandledrejection` error
+  whose every stack frame is at a page's own address (a script the browser
+  or an extension injected, e.g. Firefox for iOS's `__firefox__`) or in an
+  extension. Route crashes and failed requests are never filtered.
+  **New: `ErrorReportingOptions`' `ignore(report)`** drops a pattern of
+  the app's own.
+- **After a deploy, a missing lazy chunk reloads the page once** (#206)
+  instead of crashing the screen: `FoundationProviders` listens for Vite's
+  `vite:preloadError`, reloads once (remembered in `sessionStorage`), and
+  reports nothing meanwhile. A second failure within a minute of the
+  reload is a real missing file: it reaches the error boundary and is
+  reported.
+
+No migration, no contract change, no new dependency.
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.29.0 and run `npx ui-foundation sync`.
+  Then, as wanted: pass the app's logo to `AppShell`'s `logo`; swap a
+  widget card's generic icon for the outside service's mark; keep the
+  app's `--brand-*` tokens as the design language says; replace an own
+  `AudioContext` scheduler, hidden-tab tick and `Date.now()` clock with
+  `chime({ at })`/`cancelCues()` and `startFrom`/`seek`; remove an own
+  `vite:preloadError` listener; resolve the noise issues in the error
+  tracker once deployed.
+
+## 4.28.0 — ImageField, and images uploaded in the Markdown editor
+
+Additive, so a minor: a photo on a record and pictures in notes, with the
+upload the app's own (the package knows no endpoint and no storage).
+
+- **New: `ImageField`**, a form control for one image. A thumbnail with
+  Replace and Remove, or Add photo when empty. A file picked uploads at
+  once through the app's `upload(file) => Promise<{ id, thumbUrl, url? }>`;
+  while it does, the buttons wait and say so, and the value (the stored
+  file's id, or `null`) changes only once it's stored. A file of a type it
+  doesn't take, or over `maxSize`, is refused before it's sent, and a
+  failed upload's `message` shows under the field. Use it in a
+  react-hook-form `Controller`, with `thumbUrl` for the record's saved
+  photo and `onBusyChange` to hold a submit meanwhile.
+- **New: `RichTextEditor`'s `upload`** (with `imageAccept` and
+  `imageMaxSize`): an image pasted, dropped, or picked with an Image
+  button on the fixed toolbar is uploaded and goes in as `![](url)` (the
+  result's `url`, else its `thumbUrl`). A placeholder shows where it will
+  go while it uploads; it isn't part of the text, so nothing is saved for
+  it. A refused file or a failed upload takes it away and says why in a
+  toast. Without `upload`, nothing changes: no button, and files pasted or
+  dropped are handled as before.
+- **New exports:** `ImageField`, `ImageFieldProps`, `ImageUpload`,
+  `ImageUploadResult` and `DEFAULT_IMAGE_TYPES` (JPEG, PNG and WebP, the
+  default for both).
+- **Fixed: the editor shows images.** It dropped every `![alt](url)` as
+  the text loaded (Milkdown's image node refused remark's empty title), so
+  editing a note with an image in it refused to save. Images now show,
+  at most the field's width, and such a note edits and saves like any
+  other.
+- **`<Markdown>`'s images** were already inside the text's width, lazy and
+  with their alt text; they now keep their shape at any width (`h-auto`).
+  Their address goes through the same URL check as links: a web address or
+  a path on the site (`/api/files/7/content`), never `data:` or `blob:`.
+
+No migration, no contract change, no new dependency. The backend side
+(an upload endpoint, storage, serving files safely) stays each app's
+(`docs/DEFERRED.md`).
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.28.0 and run `npx ui-foundation sync`. To
+  use it, write the app's `upload` in its gateway (a `safeFetch` of the
+  file to its own endpoint, resolving to `{ id, thumbUrl, url }`, rejecting
+  with the `AppError`), then give it to `ImageField` on the form and to
+  each notes field's `RichTextEditor`. An app carrying its own image field
+  can replace it with `ImageField`.
+
+## 4.27.0 — A `reference` inside a sub-record item
+
+The entity plan and the playbook now allow a **`reference` as a
+sub-record item field** (a comic's segments, each pointing at a series),
+and the template's Widget has a worked example to copy: **Pairings**, a
+list of `{ categoryId, note }` items. No package code changed: `ListEditor`
+and the list edited in place already take any row; this release is the
+convention, the reference files and their tests.
+
+The convention (`docs/foundation/entity-plan-template.md` "Sub-records",
+`docs/foundation/add-an-entity.md` "A `reference` inside a sub-record
+item"):
+
+- **Wire:** the item carries the referenced id only, named as a
+  top-level reference is (`categoryId`; `seriesId` for a Series), never
+  a name or a nested record. Names come from the other entity's lookup by
+  id (`GET /<other>?ids=…`), on the form and on the view. An optional text
+  field beside it is a `string`, `""` when empty. The list is read and
+  written whole, in order, like any sub-record list.
+- **Backend:** a child table with `position` and a commented foreign key;
+  every item's id checked in one query before saving, and one that isn't
+  there (or, for a per-user entity, isn't this user's) refused with a 422
+  at the item's path, `["body", "<list>", 2, "<field>Id"]`, never a
+  foreign-key 500.
+- **Form:** one row component shared with editing in place: the
+  referenced entity's combobox (its own search per row, the picked name
+  from the lookup by id) and the item's other fields. A server 422 at the
+  item's path binds to that row's picker; a row with no pick is refused
+  on that row.
+- **View:** each item as the referenced record's name, linked to its view
+  when it has one. **Editing in place:** `editInPlace({ kind: 'list' })`
+  with that row; Enter in the open list picks without saving.
+
+Not built (`docs/DEFERRED.md`): a "New …" option that creates the
+referenced record from the item's picker, and AI chats naming an item's
+reference (they print its id).
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.27.0, run `npx ui-foundation sync`, and
+  `npm run verify`. Nothing changes for an app's existing entities. To
+  build a plan with a reference item field, follow the playbook's new
+  paragraph; while the Widgets demo is gone, copy the template's files
+  at this version (`widget-fields.tsx`'s `WidgetPairingItemFields` and
+  `WidgetCategoryCombobox`, Pairings in `widget-form.tsx`, `pairings` in
+  `widgetEdits`, `_check_item_categories_exist` in `routers/widgets.py`,
+  migration `0016_widget_pairings.py`) and add a row for the pattern to
+  your `AGENTS.md` "### Reference files". The template's migration 0016
+  is the demo's own; an app doesn't need it.
+
+## 4.26.0 — The backend reads a database URL as a provider gives it (#203)
+
+New export, so a minor: **`foundation_backend.config.normalize_database_url(raw)`**,
+which `DATABASE_URL` is now read through. Until now the package read it
+raw, so a plain `postgresql://` URL (a compose file's, or a server's) made
+SQLAlchemy pick psycopg2 and the async engine wouldn't start, and a
+provider's string as copied (`?sslmode=require&channel_binding=require`)
+passed params asyncpg rejects.
+
+- `postgres://` and `postgresql://` become `postgresql+asyncpg://`; an
+  already-normalized URL passes through. Surrounding whitespace from a
+  paste is dropped.
+- libpq's `sslmode` and `channel_binding` are dropped from the query;
+  every other param is kept.
+- `DATABASE_SSL`: an explicit value still wins. Unset, it follows the
+  URL's `sslmode` (`require`, `verify-ca`, `verify-full` mean on; any other
+  value means off), and with no `sslmode` it stays off, as before.
+
+No migration, no contract change, and nothing to do for an app whose URL
+is already `postgresql+asyncpg://` with `DATABASE_SSL` set.
+
+- **How an app adopts it:** bump `@tristan2828/ui-foundation` and
+  `ui-foundation-backend` to 4.26.0. An app that normalized `DATABASE_URL`
+  itself (in its `app/config.py`, before the package's star import) can
+  drop that code and its tests, and any wrapper scripts kept only so the
+  account scripts saw asyncpg's URL: run
+  `python -m foundation_backend.scripts.<name> <email>` from `backend/`
+  directly, and point the deploy docs at that. Then
+  `npm run verify:backend`.
+
+## 4.25.0 — The backend's auth and security layer as a pip package
+
+New: **`ui-foundation-backend`** on PyPI (import `foundation_backend`,
+`packages/backend-foundation/`), released with the npm package under the
+same version. It holds what every app's backend copied from the template
+and never changed on purpose: settings, the engine and session
+dependency, the account tables, the sign-in and error schemas, password
+and token hashing, TOTP, sign-in limits, error reporting, the error
+handlers, the production start-up checks, the SPA mount, the `/auth/*`,
+`/environment`, `/client-errors` and OAuth routers, the
+`set_password`/`enable_totp`/`disable_totp` scripts and the `signed_in`
+test helper. A fix there now reaches an app by bumping one pin
+([`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) "backend-foundation").
+
+The code is the template's, moved, not rewritten. The one change of
+shape: **`foundation_backend.routers.auth` has two routers**, `router`
+(login, the TOTP step, logout, me) and `register_router`
+(`POST /auth/register`), so an app without self-service accounts includes
+`router` alone instead of deleting a route from a copied file.
+
+Nothing changes on the wire or in the database: no migration, and the
+npm package's code is unchanged (its conventions say where the backend
+layer lives; run `npx ui-foundation sync`).
+
+- **New apps** get it automatically: `create-app.sh` pins
+  `ui-foundation-backend==<version>` in `backend/pyproject.toml`, and the
+  template's `app/config.py`, `db.py`, `models.py`, `schemas.py`,
+  `openapi_responses.py`, `security.py`, `errors.py` and `spa.py`
+  re-export the package, so `from app.models import User` still works.
+  The scripts run as `python -m foundation_backend.scripts.<name> <email>`
+  from `backend/`.
+- **An existing app** keeps working as it is: its copied files are its
+  own. To take the package and its future fixes, follow
+  [`docs/consuming.md`](docs/consuming.md) "Adopting the backend package
+  (4.25)": pin it, delete the copies it owns, re-export, include its
+  routers (`register_router` only if the app has `/auth/register`), drop
+  the duplicated tests, and point the deploy docs at the `-m` scripts.
+  No migration: the tables are the same.
+- **Template backend:** its project is renamed `template-backend`
+  (`ui-foundation-backend` is now the published name). A test that
+  changes one of the package's settings patches `foundation_backend.config`,
+  not `app.config` (the template's `tests/test_mcp.py` does this for
+  `MCP_*`, which the OAuth router reads).
+
 ## 4.24.0 — Heading levels in written text: bands, not bars (#184)
 
 A change of look, nothing to do beyond the upgrade: `<Markdown>` and the

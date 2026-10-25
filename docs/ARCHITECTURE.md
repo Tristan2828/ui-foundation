@@ -12,13 +12,16 @@ tables that display and edit rows — built and maintained mostly by AI
 agents. Stack: Vite + React 19 + TypeScript, Tailwind v4, shadcn/ui on Base
 UI, React Router 7, TanStack Query; an optional FastAPI backend.
 
-Two things ship from this repo, under one version number:
+Three things ship from this repo, under one version number:
 
 - **`@tristan2828/ui-foundation`** (`packages/ui-foundation/`), an npm
   package holding everything apps share: primitives, composites, the app
   shell and auth, the gateway's error seam, design tokens, lint rules,
   Playwright suites, and the conventions an agent follows (synced into each
   app). Apps get fixes by bumping its version.
+- **`ui-foundation-backend`** (`packages/backend-foundation/`, 4.25), a pip
+  package holding the backend's auth and security layer (see
+  "backend-foundation" below). Apps get its fixes by bumping its pin.
 - **The template** (`template/`), a working app with one demo entity
   (Widgets) and a reference backend. `scripts/create-app.sh` copies it to
   start a new app. From then on the copy is the app's own.
@@ -51,9 +54,10 @@ What it costs, and how the cost is kept small:
 - **Lint makes the boundary hold.** Importing the package's internals, or a
   primitive the package ships from the app's own `src/components/ui/`, is
   an error. So "copy it and change it" can't happen quietly.
-- **The backend is still copy-in.** `template/backend/` is copied with the
-  template and diverges from then on. Sharing it is a separate decision
-  ([`DEFERRED.md`](DEFERRED.md)).
+- **Most of the backend is still copy-in.** `template/backend/` is copied
+  with the template and diverges from then on, except its auth and
+  security layer, which since 4.25 is a pip package (see
+  "backend-foundation" below).
 
 ## Repository layout
 
@@ -67,6 +71,9 @@ packages/ui-foundation/     the npm package
   conventions/              AGENTS.md block, docs/ and agent files that `sync` writes into apps
   openapi/foundation.yaml   the part of every app's contract the package calls
   e2e/, .storybook/         Storybook accessibility + token-colour checks for every primitive
+packages/backend-foundation/  the pip package ui-foundation-backend (import foundation_backend)
+  src/foundation_backend/   auth, sessions, sign-in limits, TOTP, error reporting, deploy checks, OAuth
+  tests/                    its pytest suite, against tests/minimal_app.py (the package alone)
 template/                   the app every new app starts as (Widgets demo + reference backend)
 scripts/                    create-app.sh, consume-test.sh (+ fixtures/entity-plans/)
 docs/                       this repo's docs
@@ -76,6 +83,15 @@ npm workspaces tie the two together. The template depends on the
 package by version, and in this repo that resolves to the workspace, so
 the template always runs against the package as built from the same
 commit. `npm install` builds the package (a root `postinstall`).
+
+The backend half has no workspace mechanism, so it has a rule instead:
+**install both editable in one pip call**,
+`pip install -e packages/backend-foundation -e 'template/backend[dev]'`
+(from `template/backend/`: `-e ../../packages/backend-foundation -e ".[dev]"`).
+`template/backend/pyproject.toml` lists `ui-foundation-backend` unpinned,
+and only that call makes it resolve to this commit's folder rather than
+PyPI. `template/backend/scripts/dev.sh`, the cloud session hook and CI's
+`verify-backend` all do it; there is one venv, `template/backend/.venv`.
 
 ## The layers (in an app)
 
@@ -150,7 +166,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   which logs and, with a DSN, sends a Sentry envelope; and the package's
   reporter (`src/error-reporting/`), which posts crashes and `server`
   failures to the app's own `POST /client-errors` for the backend to
-  forward. A report holds patterns and ids, never request data.
+  forward. A report holds patterns and ids, never request data. It drops
+  uncaught errors that can't be the app's (4.29, #205: `Script error.`,
+  every frame at a page address or in an extension), and nothing is
+  reported while the page reloads onto a new build: a lazy chunk gone
+  after a deploy (`vite:preloadError`) reloads it once
+  (`lib/stale-chunk-reload.ts`, #206), reporting on or off.
 - **A small entity** (3.26) edits in its table's rows: `DataTable` runs
   the same edit-in-place store as a view, so a cell that renders an
   `EditableValue` edits where it's shown, and `InlineCreate` creates from
@@ -181,7 +202,10 @@ src/main.tsx                           FoundationProviders (theme, query client,
   (`createWakeLock`, `createSessionClock`, `createAudioCues`,
   `createMutedStore`), unit tested in node against fake browser APIs, and
   the hooks and functions apps import are thin bindings to the real ones.
-  The browser side is `e2e/session-view.spec.ts` on the Timer story.
+  The browser side is `e2e/session-view.spec.ts` on the Timer story. In a
+  background tab (4.29, #193) cues are booked ahead on the Web Audio clock
+  (`at`, `cancelCues`), the clock ticks slowly while hidden, and it can
+  start from and seek to a time.
 - **Saving without the form** (a row's switch, a quick action on the view)
   goes through `useRecordUpdate`: a PATCH that is optimistic in the
   record's detail query and every list page holding it, replaced by the
@@ -230,13 +254,66 @@ the app:
 `template/` is an app like any other. After changing anything in
 `conventions/`, run `npm run sync` and commit what it writes.
 
+## backend-foundation (4.25)
+
+Until 4.25 every app copied `template/backend/` whole, so a security fix in
+sign-in reached an app only when someone remembered to copy it. Once two
+apps needed the same backend fixes, the layer apps never change on purpose
+became a pip package: **`ui-foundation-backend`**, import
+`foundation_backend`, in `packages/backend-foundation/`, released with the
+npm package under the same version
+([its README](../packages/backend-foundation/README.md)).
+
+**What's in it:** the settings it reads (`config`), the engine and session
+dependency (`db`), the account tables (`users`, `sessions`,
+`login_failures`, `recovery_codes`, `pending_logins`, `oauth_clients`,
+`oauth_codes`, `oauth_grants`), the sign-in and error-envelope schemas
+with `CamelModel` and `Page`, password and token hashing, TOTP, sign-in
+limits, the rate window, error reporting and the error handlers, the
+production start-up checks, the SPA mount, the routers for `/auth/*`,
+`/environment`, `/client-errors` and the OAuth sign-in, the
+`set_password`/`enable_totp`/`disable_totp` scripts (`python -m
+foundation_backend.scripts.<name>`), the `signed_in` test helper, and
+reference copies of the migrations that create its tables.
+
+**What stays copy-in:** everything that is the app's (its entities,
+models, routers, migration chain, `main.py`), plus, for now, the MCP
+tools, scheduled jobs, Web Push and reminders ([`DEFERRED.md`](DEFERRED.md)
+says when those move). The app's `app/config.py`, `db.py`, `models.py`,
+`schemas.py`, `openapi_responses.py`, `security.py`, `errors.py` and
+`spa.py` re-export the package's names, so `from app.models import User`
+works as before; `config.py` adds the app's own settings after a star
+import.
+
+**One design change, `register_router`:** `routers.auth` has two routers.
+`router` (login, the TOTP step, logout, me) is every app's;
+`register_router` (`POST /auth/register`) is included only by an app that
+lets people make their own account. An app without it leaves
+`/auth/register` out of its contract (`x-optional`) and passes
+`LoginRoute registerPath={null}`, as before; now it no longer has to
+delete a route from a copied file to get there.
+
+**How an app upgrades it:** bump `ui-foundation-backend==X.Y.Z` in
+`backend/pyproject.toml` with the npm package, run any migrations the
+changelog names for that release (the tables live in the app's own
+migration chain), then `npm run verify:backend`. `create-app.sh` writes
+the pin for a new app ([`consuming.md`](consuming.md) "Adopting the
+backend package").
+
+**Migrations stay the app's.** The package's `migrations/` are reference
+copies (`0002_auth`, `0010_login_limits_totp`, and `0011_mcp`'s OAuth
+tables as `0011_oauth`), never run from the package. `create-app.sh`
+copies one into a new app only where the template has no revision of
+that number, so while the template carries its own (today), it copies
+nothing.
+
 ## Verification
 
 | Gate | Runs | Covers |
 |---|---|---|
 | `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
 | `npm run verify` (root) | before any PR; CI (`verify`) | + the package's Storybook checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language stories clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
-| `npm run verify:backend` | backend changes; CI (`verify-backend`) | the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
+| `npm run verify:backend` | backend changes; CI (`verify-backend`) | `packages/backend-foundation`'s mypy strict and pytest (SQLite, against the package alone), then the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres (its own throwaway compose project per checkout, on a free port, deleted after the run, so worktrees and dev databases don't collide) |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
 | `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on every PR (a required check on `main`) | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |
@@ -273,7 +350,8 @@ Rules learned the hard way (each cost a phase to find):
 
 **Claude Code cloud sessions** run `.claude/hooks/session-start.sh` on
 start (registered in `.claude/settings.json`; it does nothing anywhere
-else). It runs `npm install`, makes `template/backend/.venv`, and handles
+else). It runs `npm install`, makes `template/backend/.venv` (both backend
+projects editable, in one call), and handles
 a cloud image whose Playwright browsers are an older revision than the
 pinned `@playwright/test`: it maps the pinned revision onto the installed
 binaries in `~/.cache/ui-foundation-pw` and sets `PLAYWRIGHT_BROWSERS_PATH`
@@ -331,8 +409,8 @@ inline text as runs with their set of marks (so `[**a**](u)` is
 pads short rows, and both had made every edit refuse). A block the editor
 shows some other way the matching misses is written as the editor shows
 it, but only if nothing in it is lost (no text, address or image). If
-something would be, it's kept as written and the guard refuses: the
-editor drops images on load. A
+something would be, it's kept as written and the guard refuses (until 4.28 the editor
+dropped images on load, and this was what kept them). A
 guard re-parses the result and refuses to save if it would mean anything
 other than what's on screen (the draft stays, with a message). Tested in
 node over the editor's real output (`tests/markdown-merge.test.ts`) and
@@ -395,6 +473,27 @@ or a heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
 code.
 
+**Images (4.28)** show in the editor as `<Markdown>` shows them, at most
+the field's width. Until 4.28 the editor dropped every one as it loaded:
+Milkdown's image node wants a string title and remark gives `null` for
+none, so a small remark plugin makes it `''` (written back as none).
+With the app's `upload` (`RichTextEditor`'s prop; the package knows no
+endpoint), an image pasted, dropped or picked with the toolbar's Image
+button is uploaded and inserted as `![](url)`
+(`rich-text-image-upload.ts`). While it uploads, a placeholder is a
+decoration, never part of the document, so no save (an autosave
+included) ever holds one; it moves with the text, and the image goes in
+where it is when the upload resolves, several in the order the files
+came. A refusal (type, size: `src/lib/image-file.ts`, shared with
+`ImageField`) or a failure removes it and is a toast. Milkdown's own
+`plugin/upload` was the obvious choice and wasn't used: it keeps the
+placeholder forever when an upload fails, and takes no part in our
+paste handling. A paste uploads only when it holds files and no HTML
+with words in it: an office app copies a picture of the selection with
+its text, and that paste is the text. Without `upload`, none of this
+runs. `ImageField` (a photo on a record) is the form's side of the same
+`upload`: the value is the stored file's id.
+
 **Written text's look (3.21)** (`prose-look.ts`), shared by the editor
 and `<Markdown>`: three heading roles (`type-heading-1` to `-3`, 26, 20
 and 17px over the 14px body, each with a left bar that thins by level:
@@ -449,20 +548,26 @@ by measurement.
 
 Releases are cut and published automatically; no step needs a person.
 `.github/workflows/release.yml` runs on every push to `main` that changes
-`packages/ui-foundation/`, `template/` or `scripts/create-app.sh`. It:
+`packages/ui-foundation/`, `packages/backend-foundation/`, `template/` or
+`scripts/create-app.sh`. It:
 
 1. picks the version: the next patch after the latest `v*` tag, or the
    version in `packages/ui-foundation/package.json` if that is higher. A
-   minor or major release is made by bumping it there in the PR, and
-   nothing is committed back.
-2. builds and packs the package (`build` job),
+   minor or major release is made by bumping it there in the PR (and
+   `packages/backend-foundation/pyproject.toml` to match), and nothing is
+   committed back.
+2. builds and packs the npm package (`build` job), and builds the pip
+   package's sdist and wheel with that version written in (`build-py`),
 3. **publishes** `@tristan2828/ui-foundation@<version>` to npm through
    trusted publishing, with provenance (`publish` job; OIDC, no stored
-   token),
-4. tags the commit `v<version>` and creates a GitHub release. The template
-   at that tag and the package at that version always belong together.
+   token), and `ui-foundation-backend==<version>` to PyPI the same way
+   (`publish-py`, `pypa/gh-action-pypi-publish` pinned to a SHA),
+4. tags the commit `v<version>` and creates a GitHub release, once both
+   are published. The template at that tag and the packages at that
+   version always belong together.
 5. runs `release-smoke`: an app created from the live release, with its
-   full `verify`, the one check of exactly what apps get. It writes the
+   full `verify` and its backend's (`ui-foundation-backend` from PyPI),
+   the one check of exactly what apps get. It writes the
    result at the top of the release notes. A failure also fails the run,
    and GitHub emails the developer. Re-run it by hand with
    `gh workflow run release-smoke.yml -f tag=v<version>`.
@@ -474,33 +579,45 @@ protection on `main` requires a pull request and the `verify`,
 published version has passed the install test. Beyond that, the workflow
 limits what could publish a bad version:
 
-- Only the `publish` job can publish, and it runs no third-party code: no
-  checkout, no `npm ci`, only `npm publish` of the tarball `build` packed.
-  `build` installs the dependency tree without that permission.
+- Only the `publish` and `publish-py` jobs can publish, and neither runs
+  code from the repo or its dependency trees: no checkout, no `npm ci` or
+  `pip install`, only `npm publish` of the tarball `build` packed, and the
+  PyPA publish action on the files `build-py` built. The build jobs
+  install the dependency trees without that permission.
 - Third-party actions in every workflow are pinned to commit SHAs, and
   every workflow starts from read-only (or no) permissions.
 - A version already on npm is only accepted as a re-run if its provenance
   names this commit. Otherwise `publish` fails rather than letting `tag`
   pair this commit's template with another commit's package (which happens
   when `tag` failed after a publish). Tag that commit by hand, then re-run
-  all jobs.
-- No npm token exists. The trusted publisher (GitHub Actions,
-  `Tristan2828/ui-foundation`, workflow `release.yml`) is the only thing
-  that can publish besides the developer's own passkey-protected account.
+  all jobs. `publish-py` applies the same rule on PyPI, reading the commit
+  from each file's PEP 740 provenance (its Sigstore certificate).
+- No npm or PyPI token exists. The trusted publishers (GitHub Actions,
+  `Tristan2828/ui-foundation`, workflow `release.yml`) are the only things
+  that can publish besides the developer's own accounts.
 
 What that gives up: a malicious change that passes the checks and gets
 merged reaches every app installing `^4.x`, with no human look at the
 built package. The passkey step cost one manual approval per release;
 the developer chose automation over it.
 
-**A bad release** keeps its version: npm versions can't be reused. Ship
-the fix as the next patch, and meanwhile
+**A bad release** keeps its version: npm and PyPI versions can't be
+reused. Ship the fix as the next patch, and meanwhile
 `npm deprecate @tristan2828/ui-foundation@<version> "<why>; use <next>"`
-so installs warn. `release-smoke` marks its notes if it failed.
+so installs warn (on PyPI, yank the version on pypi.org, which pins
+`==<version>` still install). `release-smoke` marks its notes if it failed.
 
 **A breaking change** to anything the package exports, or to what `sync`
 writes, gets a major version, a `CHANGELOG.md` entry and upgrade steps in
 [`consuming.md`](consuming.md).
+
+**PyPI setup** (done 2026-10-21, before 4.25.0): the project
+`ui-foundation-backend` was created on pypi.org as a pending trusted
+publisher (repository `Tristan2828/ui-foundation`, workflow `release.yml`,
+environment any). The first `publish-py` run turns it into the project's
+trusted publisher. The token names the workflow file it ran in, so
+`publish-py` must stay a job of `release.yml` itself, never moved into a
+reusable workflow it calls.
 
 **npm setup** (done 2026-09-28): the account `tristan2828` has passkey 2FA.
 3.0.0 was published by hand, because trusted publishing can only be

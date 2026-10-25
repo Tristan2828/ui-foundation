@@ -28,7 +28,7 @@ a data source. For the design behind it, see
 
 | The app's (in its repo) | The package's (`@tristan2828/ui-foundation`) |
 |---|---|
-| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/`, `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell`, `DataTable`, `EntityView` and editing in place, `EntityForm`, `Markdown`, `RichTextEditor`, `StageCircle`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `InlineCreate`, the timed-screen parts (`SessionView`, `useSessionClock`, `useWakeLock`, the audio cues, `useMuted`), reminders (`AllowReminders`, `usePushPermission`, the `pwa()` Vite plugin and its service worker), login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
+| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/` (except what `ui-foundation-backend` holds), `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell`, `DataTable`, `EntityView` and editing in place, `EntityForm`, `Markdown`, `RichTextEditor`, `StageCircle`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `InlineCreate`, the timed-screen parts (`SessionView`, `useSessionClock`, `useWakeLock`, the audio cues, `useMuted`), reminders (`AllowReminders`, `usePushPermission`, the `pwa()` Vite plugin and its service worker), login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
 
 The app's column changes whenever the app wants. The package's column
 changes only through a release, which reaches every app.
@@ -99,9 +99,13 @@ behind `/api` changes.
 
 Every app starts with `backend/`, a FastAPI + SQLModel + Alembic reference
 implementation of the template's `openapi.yaml`: auth, per-user ownership
-and the Widgets demo. Unlike the frontend package, it is **copied in** and
-the app's own from then on. A fix to the reference backend here doesn't
-reach an app on its own.
+and the Widgets demo. Most of it is **copied in** and the app's own from
+then on; a fix to that part here doesn't reach an app on its own. Its auth
+and security layer (sign-in, sessions, limits, TOTP, error reporting, the
+deploy checks, the SPA mount, the OAuth sign-in) is the pip package
+`ui-foundation-backend` since 4.25, pinned in `backend/pyproject.toml` at
+the same version as the npm package and upgraded with it
+([`ARCHITECTURE.md`](ARCHITECTURE.md) "backend-foundation").
 
 - The entity playbook covers the frontend only. A new entity's backend side
   (model, migration, router) is written by hand against the spec,
@@ -112,6 +116,70 @@ reach an app on its own.
   `docs/deploy.md`.
 - Not using it (a Notion-backed app, say)? Delete `backend/`,
   `docker-compose.yml` and the `verify:backend` script.
+
+## Adopting the backend package (4.25)
+
+For an app made before 4.25.0, whose `backend/app/` holds its own copies of
+the files the package now owns. Do it after the app is on the npm package
+4.25.0 or later, and its backend has the 4.0 sign-in files (an app on 3.x
+takes "Moving a 3.x app to 4.0" below first). No migration: the tables
+already exist, with the same names and columns.
+
+1. **Pin it.** In `backend/pyproject.toml`, add
+   `"ui-foundation-backend==<the npm package's version>",` to
+   `dependencies`, and `pip install -e ".[dev]"` in `backend/`. If the app
+   checks Python dependencies against an allowlist, add it there.
+2. **Delete the copies** the package owns: `app/db.py`,
+   `app/openapi_responses.py`, `app/security.py`, `app/totp.py`,
+   `app/login_limits.py`, `app/rate_window.py`, `app/error_reporting.py`,
+   `app/errors.py`, `app/deploy_checks.py`, `app/spa.py`,
+   `app/routers/auth.py`, `app/routers/environment.py`,
+   `app/routers/client_errors.py`, `app/routers/oauth.py` and
+   `scripts/set_password.py`, `scripts/enable_totp.py`,
+   `scripts/disable_totp.py`. First diff each against the template at the
+   tag the app came from: an app's own change to one is a fork to raise
+   here, not to lose.
+3. **Re-export** where the app imports `app.*` names, as the template's
+   files at 4.25.0 do (copy them): `app/db.py`, `app/openapi_responses.py`,
+   `app/security.py`, `app/errors.py` and `app/spa.py` become re-exports;
+   `app/models.py` imports `User`, `Session`, `LoginFailure`,
+   `RecoveryCode`, `PendingLogin`, `OAuthClient`, `OAuthCode`, `OAuthGrant`
+   from `foundation_backend.models` (as `X as X`) and keeps the app's own
+   models; `app/schemas.py` the same for the foundation's schemas
+   (`CamelModel`, `Page`, `UserOut`, the sign-in and error bodies);
+   `app/config.py` calls `load_dotenv()`, then
+   `from foundation_backend.config import *`, then keeps only the app's own
+   settings (`STATIC_DIR` stays the app's: its default is relative to the
+   app's file). Code that turned a plain `postgresql://` or provider URL
+   into asyncpg's goes too: the package does that from 4.26. Other imports of the deleted modules
+   (`from app.totp import …`, `from app.routers.auth import get_current_user`)
+   become `foundation_backend.…`.
+4. **`main.py`** includes the package's routers:
+   `from foundation_backend.routers import auth, client_errors, environment, oauth`,
+   then `auth.router`, `client_errors.router` and `environment.router`
+   under `/api`, `oauth.router` at the root if the app has AI chats, and
+   `auth.register_router` only if people make their own accounts (an app
+   without `/auth/register` in its `openapi.yaml` leaves it out; that is
+   the route a copied `auth.py` used to have deleted).
+   `production_problems` comes from `foundation_backend.deploy_checks`.
+5. **Tests:** delete the copies of `test_auth.py`, `test_login_limits.py`,
+   `test_totp.py`, `test_environment.py`, `test_deploy_checks.py`,
+   `test_error_reporting.py`, `test_spa.py`, `test_signed_in.py` and
+   `tests/signed_in.py` (the package runs them); import `session_cookie`
+   from `foundation_backend.testing.signed_in`. A test that changes one of
+   the package's settings patches `foundation_backend.config` (or the
+   module that imported it), not `app.config`, whose copy the package
+   never reads.
+6. **Scripts and docs:** `python -m foundation_backend.scripts.set_password <email>`
+   (and `enable_totp`, `disable_totp`), run from `backend/`, replace the
+   deleted scripts; point the app's deploy docs at them.
+7. `npm run verify:backend`, and the Postgres check if the app has one.
+   The Docker image installs the package from `pyproject.toml`; check that
+   it builds.
+
+From then on, `ui-foundation-backend` moves with the npm package: bump
+both to the same version, run any migration the changelog names for it,
+then `npm run verify:backend`.
 
 ## Adding AI chats (MCP) to a 4.x app
 

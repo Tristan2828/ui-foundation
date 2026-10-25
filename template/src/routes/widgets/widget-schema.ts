@@ -104,6 +104,18 @@ export const widgetFormSchema = z.object({
       }),
     )
     .max(50, 'A checklist can have at most 50 items'),
+  // Sub-records whose items hold a reference: each item picks a category
+  // (the id; its name comes from the lookup by id) and adds a note. Whether
+  // the id exists is the server's call, a 422 bound to that item's picker
+  // (`pairings.2.categoryId`). An optional item text is '' when empty.
+  pairings: z
+    .array(
+      z.object({
+        categoryId: z.number({ error: requiredError('Pick a category or remove the pairing') }),
+        note: z.string().trim().max(100, 'A note must be 100 characters or fewer'),
+      }),
+    )
+    .max(20, 'A widget can have at most 20 pairings'),
 })
 
 export type WidgetFormValues = z.infer<typeof widgetFormSchema>
@@ -121,6 +133,7 @@ export const WIDGET_FORM_DEFAULTS: WidgetFormValues = {
   inStock: true,
   extraCategoryIds: [],
   checklist: [],
+  pairings: [],
 }
 
 // Widget.availableFrom is a full datetime (openapi.yaml: format date-time).
@@ -153,6 +166,7 @@ export function widgetToFormValues(widget: Widget): WidgetFormValues {
     inStock: widget.inStock,
     extraCategoryIds: widget.extraCategoryIds,
     checklist: widget.checklist,
+    pairings: widget.pairings,
   }
 }
 
@@ -169,6 +183,7 @@ function formValuesToWidgetInput(values: WidgetFormValues): WidgetCreate {
     inStock: values.inStock,
     extraCategoryIds: values.extraCategoryIds,
     checklist: values.checklist,
+    pairings: values.pairings,
   }
 }
 

@@ -3,44 +3,37 @@ models (app/models.py) never cross this boundary directly.
 
 JSON is camelCase (alias_generator=to_camel + populate_by_name) so Python
 stays snake_case internally while matching openapi.yaml on the wire.
+
+The foundation's (sign-in, the data environment, client errors, the error
+envelopes, CamelModel and Page) are `foundation_backend.schemas`,
+re-exported here.
 """
 
 from datetime import datetime
 from decimal import Decimal
-from typing import ClassVar, Generic, Literal, TypeVar
+from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
+from pydantic import ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 from pydantic.alias_generators import to_camel
 
 from app.models import WidgetChecklistState, WidgetStatus, WidgetTag
-
-T = TypeVar("T")
+from foundation_backend.schemas import (
+    CamelModel as CamelModel,
+    Page as Page,
+    DataEnvironmentOut as DataEnvironmentOut,
+    UserOut as UserOut,
+    PASSWORD_MAX_LENGTH as PASSWORD_MAX_LENGTH,
+    LoginRequest as LoginRequest,
+    LoginNextStep as LoginNextStep,
+    TotpLoginRequest as TotpLoginRequest,
+    RegisterRequest as RegisterRequest,
+    ClientErrorReport as ClientErrorReport,
+    HTTPErrorBody as HTTPErrorBody,
+    ValidationErrorItem as ValidationErrorItem,
+    ValidationErrorBody as ValidationErrorBody,
+)
 
 PRICE_PATTERN = r"^\d+\.\d{2}$"
-# PBKDF2 hashes a long password down first, so length costs little, but a
-# request body still shouldn't be unbounded.
-PASSWORD_MAX_LENGTH = 1024
-
-
-class CamelModel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
-
-
-class Page(CamelModel, Generic[T]):
-    """Matches WidgetListResponse in openapi.yaml: {items, total}. The
-    gateway (src/api/gateway/widgets.ts) computes page/pageSize from
-    offset/limit client-side — this wire shape is deliberately not the
-    UI-owned Page<T> in src/api/contracts.ts.
-    """
-
-    items: list[T]
-    total: int = Field(ge=0)
-
-
-class DataEnvironmentOut(CamelModel):
-    """DataEnvironment in openapi.yaml: config.DATA_LABEL, null for production data."""
-
-    data_label: str | None
 
 
 class WidgetCategoryOut(CamelModel):
@@ -77,6 +70,17 @@ class ChecklistItem(CamelModel):
     done: bool
 
 
+class WidgetPairing(CamelModel):
+    """openapi.yaml WidgetPairing — both directions. The item carries the
+    referenced id only; the router checks it exists (a 422 at
+    ["body", "pairings", <i>, "categoryId"]). The note is trimmed."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    category_id: int
+    note: str = Field(max_length=100)
+
+
 class WidgetOut(CamelModel):
     id: int
     name: str
@@ -90,6 +94,7 @@ class WidgetOut(CamelModel):
     in_stock: bool
     extra_category_ids: list[int]
     checklist: list[ChecklistItem]
+    pairings: list[WidgetPairing]
     # Computed on every read (Widget.checklist_state); never accepted on
     # create or update, so it's absent from WidgetCreate/WidgetUpdate.
     checklist_state: WidgetChecklistState
@@ -112,6 +117,7 @@ class WidgetCreate(CamelModel):
     in_stock: bool = True
     extra_category_ids: list[int] = Field(default_factory=list, json_schema_extra={"uniqueItems": True})
     checklist: list[ChecklistItem] = Field(default_factory=list, max_length=50)
+    pairings: list[WidgetPairing] = Field(default_factory=list, max_length=20)
 
     _check_tags = field_validator("tags")(_unique_tags)
     _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)
@@ -136,6 +142,7 @@ class WidgetUpdate(CamelModel):
     in_stock: bool | None = None
     extra_category_ids: list[int] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
     checklist: list[ChecklistItem] | None = Field(default=None, max_length=50)
+    pairings: list[WidgetPairing] | None = Field(default=None, max_length=20)
 
     _check_tags = field_validator("tags")(_unique_tags)
     _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)
@@ -147,58 +154,6 @@ class WidgetUpdate(CamelModel):
         if v is None and info.field_name not in cls.NULLABLE_FIELDS:
             raise ValueError(f"{to_camel(info.field_name or '')} can't be null")
         return v
-
-
-class UserOut(CamelModel):
-    id: int
-    email: str
-    name: str
-
-
-def _normalize_email(v: str) -> str:
-    # Emails are stored lowercased (migration 0003), so login and register
-    # must match on the same form — otherwise `Dev@Example.com` registers
-    # as a second account alongside `dev@example.com`.
-    return v.lower()
-
-
-class LoginRequest(CamelModel):
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)
-
-    _email_lower = field_validator("email")(_normalize_email)
-
-
-class LoginNextStep(CamelModel):
-    """A 202 from POST /auth/login: the password was right, a code is next."""
-
-    next: Literal["totp"]
-
-
-class TotpLoginRequest(CamelModel):
-    code: str = Field(min_length=1, max_length=64)
-
-
-class RegisterRequest(CamelModel):
-    email: EmailStr
-    name: str = Field(min_length=1, max_length=200)
-    password: str = Field(min_length=8, max_length=PASSWORD_MAX_LENGTH)
-
-    _email_lower = field_validator("email")(_normalize_email)
-
-
-class ClientErrorReport(CamelModel):
-    """POST /client-errors: a failure the browser saw. Only these fields
-    exist, so nothing else from the page can be sent."""
-
-    source: Literal["route", "window", "unhandledrejection", "query", "mutation"]
-    type: str = Field(min_length=1, max_length=200)
-    message: str = Field(max_length=2000)
-    stack: str | None = Field(default=None, max_length=16000)
-    route: str | None = Field(default=None, max_length=300)
-    method: str | None = Field(default=None, max_length=10)
-    status: int | None = Field(default=None, ge=100, le=599)
-    release: str | None = Field(default=None, max_length=100)
 
 
 class JobRunOut(CamelModel):
@@ -247,17 +202,3 @@ class PushSubscriptionOut(CamelModel):
     """openapi.yaml PushSubscriptionCreated."""
 
     id: int
-
-
-class HTTPErrorBody(CamelModel):
-    detail: str
-
-
-class ValidationErrorItem(CamelModel):
-    loc: list[str | int]
-    msg: str
-    type: str
-
-
-class ValidationErrorBody(CamelModel):
-    detail: list[ValidationErrorItem]

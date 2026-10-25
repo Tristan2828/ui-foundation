@@ -16,7 +16,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app import db, jobs
 from app.models import JobRunRecord, User
 from app.openapi_responses import CONFLICT, NOT_FOUND, SERVER_ERROR, UNAUTHORIZED
-from app.routers.auth import get_current_user
+from foundation_backend.routers.auth import get_current_user
 from app.schemas import JobOut, JobRunOut
 
 router = APIRouter(tags=["jobs"])

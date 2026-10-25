@@ -1,7 +1,8 @@
 name: release-smoke
 
 # Creates an app from a live release — the template at the tag, the package
-# from npm — and runs that app's full verify. Everything before a release
+# from npm, its backend's ui-foundation-backend from PyPI — and runs that
+# app's full verify and its backend's. Everything before a release
 # tests a tarball; this is the one check of exactly what apps get. Then it
 # writes the result at the top of the GitHub release's notes.
 #
@@ -68,6 +69,32 @@ jobs:
           cd release-smoke
           npx playwright install --with-deps chromium
           npm run verify
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Its backend, with ui-foundation-backend from PyPI
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          cd "$RUNNER_TEMP/release-smoke/backend"
+          if ! grep -q '"ui-foundation-backend==' pyproject.toml; then
+            echo "This release's backend doesn't use ui-foundation-backend (before 4.25.0); not checked here."
+            exit 0
+          fi
+          # As on npm, a new version can take a moment to be installable.
+          for attempt in $(seq 1 20); do
+            if python -m pip download --no-cache-dir --no-deps -q -d "$RUNNER_TEMP/pypi-check" "ui-foundation-backend==${TAG#v}"; then
+              break
+            fi
+            if [ "$attempt" -eq 20 ]; then
+              echo "ui-foundation-backend ${TAG#v} isn't installable from PyPI."
+              exit 1
+            fi
+            echo "Not installable from PyPI yet (attempt $attempt); retrying in 30s."
+            sleep 30
+          done
+          python -m pip install -e ".[dev]"
+          bash scripts/verify.sh
 
   record:
     needs: create-app
@@ -85,9 +112,9 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$RESULT" = "success" ]; then
-            status="**Live on npm, and [release-smoke]($RUN_URL) passed:** an app created from this release passes \`verify\`."
+            status="**Live on npm and PyPI, and [release-smoke]($RUN_URL) passed:** an app created from this release passes \`verify\` and its backend's."
           else
-            status="**Live on npm, but [release-smoke]($RUN_URL) failed:** an app created from this release doesn't pass \`verify\`. Don't upgrade apps onto it; the fix ships as the next patch."
+            status="**Live on npm and PyPI, but [release-smoke]($RUN_URL) failed:** an app created from this release doesn't pass \`verify\`. Don't upgrade apps onto it; the fix ships as the next patch."
           fi
           # Replace an earlier status paragraph (this workflow's, release.yml's,
           # or a pre-3.1 "staged" one), keep the rest of the notes.

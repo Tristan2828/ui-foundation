@@ -8,6 +8,12 @@
 // here is a no-op where the browser can't make the sound
 // (docs/foundation/timed-screens.md "Sound").
 //
+// A chime can be booked ahead (`at`, #193): it's scheduled on the Web
+// Audio clock, so it strikes on time in a background tab, whose timers
+// and frames the browser slows or stops. cancelCues() takes back every
+// booked strike that hasn't sounded yet (on pause, skip or leaving), so a
+// screen rebooks from its new position.
+//
 // createAudioCues takes the browser's APIs, so the rules are unit tested
 // against fakes (tests/audio-cues.test.ts); the functions exported below
 // are one shared instance over the real ones.
@@ -21,9 +27,24 @@ export type ChimeOptions = {
   duration?: number
 }
 
-export type SequenceOptions = {
+export type CueTime = {
+  /**
+   * When to strike, in `Date.now()` milliseconds, booked on the audio
+   * clock so it's on time in a background tab. Left out, or already past,
+   * it strikes now.
+   */
+  at?: number
+}
+
+export type SequenceOptions = CueTime & {
   /** Milliseconds between one chime's strike and the next's (default 180). */
   spacing?: number
+}
+
+/** A chime or sequence as booked. */
+export type Cue = {
+  /** Takes back its strikes that haven't sounded yet; one already sounding rings out. */
+  cancel: () => void
 }
 
 export type SayOptions = {
@@ -40,14 +61,18 @@ export type AudioCuesEnvironment = {
   speechSynthesis?: Pick<SpeechSynthesis, 'speak' | 'cancel'>
   SpeechSynthesisUtterance?: new (text?: string) => SpeechSynthesisUtterance
   vibrate?: (pattern: number | number[]) => boolean
+  /** The clock `at` is read on (default `Date.now`). */
+  now?: () => number
 }
 
 export type AudioCues = {
   /** Call from the click or tap that starts a session; sound is allowed from then on. */
   unlockAudio: () => void
-  chime: (options?: ChimeOptions) => void
-  /** Several chimes in a row (a closing pair), `spacing` apart. */
-  sequence: (chimes: ChimeOptions[], options?: SequenceOptions) => void
+  chime: (options?: ChimeOptions & CueTime) => Cue
+  /** Several chimes in a row (a closing pair), `spacing` apart, from `at`. */
+  sequence: (chimes: ChimeOptions[], options?: SequenceOptions) => Cue
+  /** Takes back every booked strike that hasn't sounded yet. */
+  cancelCues: () => void
   /** Speaks `text`, cutting off any line still being spoken. */
   say: (text: string, options?: SayOptions) => void
   /** Stops whatever is being spoken. */
@@ -60,16 +85,27 @@ const ATTACK = 0.015
 // An exponential ramp can't reach zero, so a chime starts and ends here.
 const SILENT = 0.0001
 
+type Strike = { start: number; end: number; oscillator: OscillatorNode; gain: GainNode }
+
+const NO_CUE: Cue = { cancel: () => {} }
+
 export function createAudioCues(env: AudioCuesEnvironment): AudioCues {
+  const now = env.now ?? Date.now
   let context: AudioContext | null = null
+  // Strikes booked and not yet over, so a cancel can reach them.
+  const booked = new Set<Strike>()
   // A resume asked for from a click: the context is still "suspended" for
   // a moment, and a chime from that same click should still play.
   let resuming = false
 
   const playable = () => context !== null && (context.state === 'running' || resuming)
 
-  const strike = (ctx: AudioContext, { pitch = 660, volume = 0.25, duration = 1200 }: ChimeOptions, delay: number) => {
-    const start = ctx.currentTime + delay / 1000
+  const strike = (
+    ctx: AudioContext,
+    { pitch = 660, volume = 0.25, duration = 1200 }: ChimeOptions,
+    delay: number,
+  ): Strike => {
+    const start = ctx.currentTime + Math.max(delay, 0) / 1000
     const end = start + Math.max(duration, 50) / 1000
     const peak = Math.min(Math.max(volume, SILENT), 1)
     const oscillator = ctx.createOscillator()
@@ -82,7 +118,31 @@ export function createAudioCues(env: AudioCuesEnvironment): AudioCues {
     oscillator.connect(gain).connect(ctx.destination)
     oscillator.start(start)
     oscillator.stop(end + 0.05)
+    const booking: Strike = { start, end, oscillator, gain }
+    for (const old of booked) if (old.end < ctx.currentTime) booked.delete(old)
+    booked.add(booking)
+    oscillator.onended = () => booked.delete(booking)
+    return booking
   }
+
+  // Silences a strike that hasn't sounded yet: one already sounding rings out.
+  const unbook = (ctx: AudioContext, booking: Strike) => {
+    if (!booked.has(booking)) return
+    if (booking.start <= ctx.currentTime) return
+    booked.delete(booking)
+    try {
+      booking.gain.disconnect()
+      booking.oscillator.stop()
+    } catch {
+      // Already stopped.
+    }
+  }
+
+  const book = (ctx: AudioContext, strikes: Strike[]): Cue => ({
+    cancel: () => strikes.forEach((booking) => unbook(ctx, booking)),
+  })
+
+  const delayUntil = (at: number | undefined) => (at === undefined ? 0 : at - now())
 
   return {
     unlockAudio() {
@@ -112,14 +172,23 @@ export function createAudioCues(env: AudioCuesEnvironment): AudioCues {
         }
       }
     },
-    chime(options = {}) {
-      if (!playable() || !context) return
-      strike(context, options, 0)
+    chime({ at, ...options } = {}) {
+      if (!playable() || !context) return NO_CUE
+      return book(context, [strike(context, options, delayUntil(at))])
     },
-    sequence(chimes, { spacing = 180 } = {}) {
-      if (!playable() || !context) return
+    sequence(chimes, { spacing = 180, at } = {}) {
+      if (!playable() || !context) return NO_CUE
       const ctx = context
-      chimes.forEach((options, index) => strike(ctx, options, index * spacing))
+      const delay = Math.max(delayUntil(at), 0)
+      return book(
+        ctx,
+        chimes.map((options, index) => strike(ctx, options, delay + index * spacing)),
+      )
+    },
+    cancelCues() {
+      if (!context) return
+      const ctx = context
+      for (const booking of [...booked]) unbook(ctx, booking)
     },
     say(text, { lang, rate, volume } = {}) {
       if (!env.speechSynthesis || !env.SpeechSynthesisUtterance) return
@@ -178,10 +247,15 @@ function browserCues(): AudioCues {
 
 /** Call from the click or tap that starts a session; sound is allowed from then on. */
 export const unlockAudio: AudioCues['unlockAudio'] = () => browserCues().unlockAudio()
-/** A soft sine chime; dropped before unlockAudio() or where there's no Web Audio. */
+/**
+ * A soft sine chime, now or booked `at` a `Date.now()` time; dropped before
+ * unlockAudio() or where there's no Web Audio.
+ */
 export const chime: AudioCues['chime'] = (options) => browserCues().chime(options)
-/** Several chimes `spacing` ms apart (a closing pair). */
+/** Several chimes `spacing` ms apart (a closing pair), now or from `at`. */
 export const sequence: AudioCues['sequence'] = (chimes, options) => browserCues().sequence(chimes, options)
+/** Takes back every booked chime that hasn't sounded yet: on pause, skip, back or leaving. */
+export const cancelCues: AudioCues['cancelCues'] = () => browserCues().cancelCues()
 /** Speaks a line, cutting off the one before. A no-op without speech synthesis. */
 export const say: AudioCues['say'] = (text, options) => browserCues().say(text, options)
 /** Stops whatever is being spoken. */

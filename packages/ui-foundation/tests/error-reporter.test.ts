@@ -18,9 +18,27 @@ import {
 let uninstall: (() => void) | undefined
 afterEach(() => uninstall?.())
 
-function setUp({ signedIn = true, now = (): number => 0 }: { signedIn?: boolean; now?: () => number } = {}) {
+const PAGE = 'https://app.example.com/timers/2'
+
+function setUp({
+  signedIn = true,
+  now = (): number => 0,
+  ignore,
+  muted,
+}: {
+  signedIn?: boolean
+  now?: () => number
+  ignore?: (report: ClientErrorReport) => boolean
+  muted?: () => boolean
+} = {}) {
   const sent: ClientErrorReport[] = []
-  const reporter = createErrorReporter({ options: { release: 'abc1234' }, send: (report) => sent.push(report), now })
+  const reporter = createErrorReporter({
+    options: { release: 'abc1234', ignore },
+    send: (report) => sent.push(report),
+    now,
+    page: () => PAGE,
+    muted,
+  })
   reporter.setSignedIn(signedIn)
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const target = new EventTarget()
@@ -28,8 +46,13 @@ function setUp({ signedIn = true, now = (): number => 0 }: { signedIn?: boolean;
   return { sent, reporter, queryClient, target }
 }
 
-function windowError(target: EventTarget, error: unknown) {
-  target.dispatchEvent(Object.assign(new Event('error'), { error, message: String(error) }))
+function windowError(target: EventTarget, error: unknown, event: { message?: string; filename?: string } = {}) {
+  target.dispatchEvent(Object.assign(new Event('error'), { error, message: String(error), filename: '', ...event }))
+}
+
+function withStack<E extends Error>(error: E, ...frames: string[]): E {
+  error.stack = [`${error.name}: ${error.message}`, ...frames].join('\n')
+  return error
 }
 
 function rejection(target: EventTarget, reason: unknown) {
@@ -146,6 +169,90 @@ describe('the sources', () => {
     const { sent, reporter } = setUp()
     ;(reporter as ErrorReporter).report('route', new RangeError('Invalid time value'))
     expect(sent).toMatchObject([{ source: 'route', type: 'RangeError', message: 'Invalid time value' }])
+  })
+})
+
+describe("errors that can't be the app's (#205)", () => {
+  it("drops Firefox for iOS's injected scripts, whose only frame is the page's own address", () => {
+    const { sent, target } = setUp()
+    windowError(
+      target,
+      withStack(new TypeError("undefined is not an object (evaluating 'window.__firefox__.reader')"), `global code@${PAGE}:1:28`),
+    )
+    windowError(target, withStack(new ReferenceError("Can't find variable: __firefox__")), { filename: PAGE })
+    // An earlier route of the same page: the script was injected when the page loaded there.
+    windowError(
+      target,
+      withStack(
+        new TypeError("undefined is not an object (evaluating 'window.__firefox__.refresh_youtube_quality_1')"),
+        'global code@https://app.example.com/timers/1:1:5',
+      ),
+    )
+    expect(sent).toEqual([])
+  })
+
+  it("drops a wallet extension's error, and a rejection from an extension's script", () => {
+    const { sent, target } = setUp()
+    windowError(
+      target,
+      withStack(
+        new TypeError("undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')"),
+        `global code@${PAGE}:1:1`,
+      ),
+    )
+    rejection(target, withStack(new Error('wallet locked'), '    at connect (chrome-extension://abcdef/inpage.js:1:2400)'))
+    rejection(target, withStack(new Error('wallet locked'), 'connect@moz-extension://1234/inpage.js:1:9'))
+    rejection(target, withStack(new Error('wallet locked'), 'connect@safari-web-extension://1234/inpage.js:1:9'))
+    expect(sent).toEqual([])
+  })
+
+  it('drops `Script error.` from a script on another origin, which says nothing else', () => {
+    const { sent, target } = setUp()
+    windowError(target, null, { message: 'Script error.' })
+    expect(sent).toEqual([])
+  })
+
+  it('keeps an error with a frame in the app\'s scripts, even beside injected frames', () => {
+    const { sent, target } = setUp()
+    windowError(target, withStack(new TypeError('x is undefined'), '    at f (https://app.example.com/assets/index-abc.js:1:200)'))
+    windowError(
+      target,
+      withStack(new TypeError('y is undefined'), `g@${PAGE}:1:1`, 'f@https://app.example.com/assets/index-abc.js:1:200'),
+    )
+    windowError(target, withStack(new TypeError('z is undefined'), '    at f (http://localhost:5180/src/routes/widgets.tsx:4:2)'))
+    expect(sent.map((report) => report.message)).toEqual(['x is undefined', 'y is undefined', 'z is undefined'])
+  })
+
+  it("keeps an error with no location at all, as a thrown string: it may be the app's", () => {
+    const { sent, target } = setUp()
+    windowError(target, 'something odd')
+    rejection(target, 'lost promise')
+    expect(sent.map((report) => report.source)).toEqual(['window', 'unhandledrejection'])
+  })
+
+  it('never filters a route crash, a query or a mutation by where it was thrown', async () => {
+    const { sent, reporter, queryClient } = setUp()
+    reporter.report('route', withStack(new Error('render failed'), `global code@${PAGE}:1:1`))
+    await failQuery(queryClient, toAppError(500, { detail: 'Database is down' }))
+    await failMutation(queryClient, toAppError(500, { detail: 'Internal server error' }))
+    expect(sent.map((report) => report.source)).toEqual(['route', 'query', 'mutation'])
+  })
+
+  it("drops what the app's `ignore` says to, from any source", async () => {
+    const { sent, target, queryClient } = setUp({ ignore: (report) => report.message.includes('ResizeObserver') })
+    windowError(target, new Error('ResizeObserver loop completed with undelivered notifications.'))
+    windowError(target, new Error('boom'))
+    await failQuery(queryClient, toAppError(500, { detail: 'ResizeObserver is down' }))
+    expect(sent.map((report) => report.message)).toEqual(['boom'])
+  })
+
+  it('sends nothing while muted (the page reloading onto a new build)', () => {
+    let muted = true
+    const { sent, target } = setUp({ muted: () => muted })
+    windowError(target, new Error('boom'))
+    muted = false
+    windowError(target, new Error('boom'))
+    expect(sent).toHaveLength(1)
   })
 })
 

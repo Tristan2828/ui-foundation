@@ -19,6 +19,12 @@
 // small uppercase label, and the text under them lined up with the words
 // in the band (prose-look.ts).
 //
+// An image (`![alt](url)`, one the rich-text editor uploaded) stays inside
+// the text's width, loads only as it nears the screen, and keeps its alt
+// text; with none (`![](url)`) it's decorative to a screen reader. Its
+// address goes through the same urlTransform: a web address or a path on
+// the site (`/api/files/7/content`), never `javascript:` or `data:`.
+//
 // A quote that starts `[!NOTE]` (GitHub's alert syntax) is a callout: a
 // tinted box with its kind's icon (src/lib/markdown-callout.ts).
 import type { ComponentProps } from 'react'
@@ -118,7 +124,7 @@ const COMPONENTS: Components = {
   code: (props) => <code {...omitNode(props)} className="rounded bg-muted px-1 py-0.5 font-mono text-foreground" />,
   img: (props) => {
     const { alt, ...rest } = omitNode(props)
-    return <img {...rest} alt={alt ?? ''} loading="lazy" className="max-w-full rounded-md" />
+    return <img {...rest} alt={alt ?? ''} loading="lazy" className="h-auto max-w-full rounded-md" />
   },
   // GFM tables use the package's own table, zebra stripes and density
   // tokens included, so a table in the notes reads like every other table.
