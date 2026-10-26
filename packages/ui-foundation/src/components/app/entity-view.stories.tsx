@@ -195,6 +195,7 @@ function HeldRecord() {
             {
               name: 'Open Library',
               href: 'https://openlibrary.org',
+              icon: ExampleLibraryMark,
               note: 'Covers and editions are Open Library’s, under its terms.',
             },
             { name: 'Wikidata', href: 'https://www.wikidata.org' },
@@ -202,6 +203,16 @@ function HeldRecord() {
         />
       }
     />
+  )
+}
+
+// A made-up mark for the credit, as an app keeps its own: an icon
+// component that passes className and aria-hidden on to its <svg>.
+function ExampleLibraryMark({ className, ...rest }: { className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} {...rest}>
+      <path d="M4 4h4v16H4zM10 4h4v16h-4zM16.2 4.6l3.8-1 3.9 15.5-3.9 1z" />
+    </svg>
   )
 }
 

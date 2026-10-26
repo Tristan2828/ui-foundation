@@ -5,6 +5,22 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.31.0 — A source credit can carry the service's mark
+
+Additive, so a minor. One request from an app (#220).
+
+- **New: `Source`'s `icon`**, an `IconComponent`: the service's mark,
+  drawn before its name inside the credit's link, `aria-hidden` and sized
+  to the line's text. The name stays the link's accessible text, and the
+  external-link arrow and "(opens in a new tab)" stay as they were. A
+  source without one renders exactly as before.
+- `add-an-entity.md` (the view's source credit) and `design-language.md`
+  ("Logos and brand marks") name the slot; the EntityView Notice and
+  footer story shows one.
+
+**To take it:** bump the version, run `sync`. An app that leaves its
+credit lines as words can pass the marks it already has as `icon`.
+
 ## 4.30.0 — Timed screens recover from an audio interruption
 
 Additive, so a minor. One request from an app (#217): on iOS the audio

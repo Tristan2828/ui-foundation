@@ -1,10 +1,12 @@
 // Credits the outside services a record's data comes from, as many free
 // APIs require on every screen showing their data ("This product uses the
 // TMDB API but is not endorsed or certified by TMDB"). EntityView's
-// `footer` is its usual home. Text and links only: a service's logo and
-// its usage rules are the app's.
+// `footer` is its usual home. A source's mark is the app's own icon
+// component (`icon`), drawn before its name; its usage rules are the app's.
 import { Fragment } from 'react'
 import { ExternalLinkIcon } from 'lucide-react'
+
+import type { IconComponent } from '@/components/app/icon-component'
 
 export type Source = {
   /** The service's name, the link's text: "TMDB". */
@@ -13,6 +15,12 @@ export type Source = {
   href: string
   /** A sentence the service's terms ask for, shown after the list as written. */
   note?: string
+  /**
+   * The service's mark, drawn before its name inside the link and hidden
+   * from screen readers: the name stays the link's text. The app's own
+   * component, the one it shows for this service elsewhere.
+   */
+  icon?: IconComponent
 }
 
 export type SourceCreditProps = {
@@ -33,7 +41,7 @@ export function SourceCredit({ sources, lead = 'Data from' }: SourceCreditProps)
   return (
     <p data-slot="source-credit" className="type-caption text-muted-foreground">
       {lead}{' '}
-      {sources.map((source, index) => (
+      {sources.map(({ icon: Icon, ...source }, index) => (
         <Fragment key={source.name}>
           {joined(index, sources.length)}
           <a
@@ -42,6 +50,7 @@ export function SourceCredit({ sources, lead = 'Data from' }: SourceCreditProps)
             rel="noreferrer"
             className="rounded-sm underline underline-offset-2 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
           >
+            {Icon && <Icon aria-hidden="true" className="mr-1 inline size-3.5 align-text-bottom" />}
             {source.name}
             <ExternalLinkIcon aria-hidden="true" className="ml-0.5 inline size-3 align-baseline" />
             <span className="sr-only"> (opens in a new tab)</span>
