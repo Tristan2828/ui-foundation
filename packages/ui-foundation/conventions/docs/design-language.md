@@ -104,7 +104,8 @@ lower; say so in a comment.
 ## Logos and brand marks
 
 An app's own logo (`AppShell`'s `logo`) and the marks of the services it
-links to (a video site's mark on "Open on …", on a `WidgetCard` about it)
+links to (a video site's mark on "Open on …", on a `WidgetCard` about it,
+beside its name in a `SourceCredit`)
 are **icon components** (`IconComponent`): sized by a `size-*` class,
 `aria-hidden` passed through to the `<svg>`, with the same props as a
 Lucide icon, so they go wherever an icon goes. Lucide has no brand logos,
@@ -143,7 +144,8 @@ Colour them in one of two ways:
   one-colour mark there.
 
 The package's own stories show the slots with made-up marks in
-`currentColor` (`app/AppShell` With logo, `app/WidgetCard` Brand mark).
+`currentColor` (`app/AppShell` With logo, `app/WidgetCard` Brand mark,
+`app/EntityView` Notice and footer).
 
 ## Categorical colour
 

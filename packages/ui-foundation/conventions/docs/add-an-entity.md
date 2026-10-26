@@ -390,8 +390,11 @@ is a filled-in example while the Widgets demo is still here).
    - **A source credit** (`footer`), only when the record's data comes
      from an outside service whose terms ask for one (many free APIs
      do: a film database, a games catalogue): `<SourceCredit sources={[{
-     name, href, note }]} />`, with `note` the sentence the terms ask for,
-     word for word. Logos and their rules are the app's own.
+     name, href, note, icon }]} />`, with `note` the sentence the terms ask
+     for, word for word, and `icon` the service's mark when the app has
+     one (the same component it shows for that service elsewhere; drawn
+     before the name, which stays the link's text). Logos and their rules
+     are the app's own.
    - **Every value renders the way its table cell does**: badges, names
      of linked records, a done-count, from the shared lookups in
      `<entity>-format.ts`. Never re-derive one for the view.
