@@ -12,6 +12,11 @@
 // Raw HTML in the text shows as its characters, as <Markdown> shows it,
 // and nothing pasted or typed can add markup.
 //
+// Headings in the text sit under the page's outline (`headingLevel`, from
+// <h3> by default), as <Markdown>'s do. A table wider than the field
+// scrolls sideways, and while it does, its box is a tab stop the arrow
+// keys scroll.
+//
 // Images in the text (`![alt](url)`) show, at most the field's width.
 // With `upload`, an image pasted, dropped or picked with the toolbar's
 // Image button is uploaded through the app's own storage and goes in as
@@ -24,6 +29,7 @@ import { lazy, Suspense } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
+import type { HeadingLevel } from './prose-look'
 
 const MilkdownEditor = lazy(() => import('./milkdown-editor'))
 
@@ -80,6 +86,15 @@ export type RichTextEditorProps = {
   imageAccept?: readonly string[]
   /** The largest image `upload` takes, in bytes: a bigger one is refused before it's sent, with its size and the limit. */
   imageMaxSize?: number
+  /**
+   * The HTML level the text's `#` renders as, where the field sits in the
+   * page's outline: 2 straight under the page's <h1> (a form), 3 (the
+   * default) under a section's <h2>. `##` is one below it, `###` two
+   * below, never past <h6>, as in `<Markdown>`. Only the element changes:
+   * the look, and the Markdown saved (`#` stays `#`), don't. Read once,
+   * when it mounts.
+   */
+  headingLevel?: HeadingLevel
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string

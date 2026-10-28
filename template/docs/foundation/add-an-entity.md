@@ -152,7 +152,15 @@ is a filled-in example while the Widgets demo is still here).
    `<ListEditor>` inside a `FieldSet`/`FieldLegend` on the form, each row's
    controls named by position ("Item 2 text"), a per-item `FieldError`
    (a server 422 at `["body", "checklist", 2, "text"]` arrives as
-   `fieldErrors["checklist.2.text"]` and binds to that row), and a summary
+   `fieldErrors["checklist.2.text"]` and binds to that row). A list whose
+   items are rich (five or six fields each) and run to ten or more also
+   passes `summary={(i) => …}`, one line per item that opens to its
+   fields, one at a time, and `invalid={(i) => !!errors.<list>?.[i]}` so
+   an item the save refuses opens to show why. A list whose items repeat
+   with small changes passes
+   ``onDuplicate={(i) => insert(i + 1, { ...getValues(`<list>.${i}`) })}``,
+   leaving out any saved id; the copy lands after its original and opens.
+   Then a summary
    in the table, never the items (an item with a `reference` field
    copies Pairings, below) — and a `computed` field copies
    Progress (`checklistState`): `readOnly` in `openapi.yaml` and absent
@@ -438,7 +446,10 @@ is a filled-in example while the Widgets demo is still here).
      (`> [!NOTE]`) and links, links opening in a new tab; raw HTML shows
      as the characters typed, never as markup. The app needs no Markdown dependency of its own. Plain
      long text renders as text (`whitespace-pre-line` keeps its line
-     breaks).
+     breaks). Give `<Markdown>` and `RichTextEditor` a `headingLevel` for
+     where they sit: the default (3) in an `EntityView` section,
+     `headingLevel={2}` for a `RichTextEditor` on a form straight under
+     the page's `<h1>`.
    - **Quick actions: only the fields the plan's `Quick actions` line
      names**, each a control that saves on its own (cell pattern 17,
      `widget-quick-actions.tsx`). A `yes/no` is a

@@ -5,6 +5,67 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.33.0 — Totals rows, list items that open, headings that follow the page
+
+Additive, so a minor. Four requests from apps (#222, #223, #225, #226).
+
+- **New: `DataTable`'s `totals`** (#225): sums under the columns they add
+  up, as a `<tfoot>` row. `{ label, cells: { [columnId]: value } }`: the
+  label in a `<th scope="row">` in the first visible column, each
+  already-formatted value under its column in that column's alignment
+  and tabular figures, over a 2px border. It follows `visibleColumns`,
+  pins with `pinFirstColumn` and `pinLastColumn`, scrolls with the table
+  and is a body row's height at every density. It is hidden while
+  loading, on an error and when there are no rows. The values come from
+  the server, for every matching row, not the page. New type
+  `DataTableTotals`. Money stays left-aligned like its column: right
+  alignment is still a request of its own (`cell-patterns.md` §11).
+- **New: `ListEditor`'s `summary`, `invalid` and `onDuplicate`** (#222).
+  - `summary(index)` shows each item as one line, a button
+    (`aria-expanded`) that opens it to its fields. One item is open at a
+    time, held by row id so it stays open through a move. A new or
+    duplicated item opens, and so does an item a field inside takes focus
+    in.
+  - `invalid(index)` keeps an item with an error open. Several can be.
+  - `onDuplicate(index)` puts "Duplicate <item>" beside Remove, disabled at
+    `max`. The app inserts the copy after the original (useFieldArray's
+    `insert(i + 1, copy)`, leaving out a saved id), and it opens.
+  - Without them, nothing changes.
+- **New primitive: `@tristan2828/ui-foundation/ui/collapsible`**
+  (shadcn's, on Base UI), which the summary lines use.
+- **New: `headingLevel` on `Markdown` and `RichTextEditor`** (#223): the
+  HTML level the text's `#` renders as, each deeper level one below,
+  capped at `<h6>`. The default, 3, is what both did before (`#` h3,
+  `##` h4, `###` h5), so nothing moves. Only the element changes: the look
+  and the saved Markdown don't. New type `HeadingLevel`.
+- **Wide tables in written text are reachable from the keyboard** (#223),
+  in both: while a table overflows, its box is a tab stop, a region named
+  "Table, scrolls sideways: <its first columns>", and the arrow keys
+  scroll it (Home and End too in the editor). It updates as the table or
+  the text resizes. A table that fits is unchanged.
+- **Template:** the push test's fake service reads the request body
+  before it answers a redirect (#226). On Windows, a socket closed with
+  unread data on it is reset, and the client could see the reset before
+  the 302.
+
+**How an app adopts it:** bump the version, run `sync`.
+
+- **A table of money or quantities:** have the list endpoint return its
+  sums beside `total`, pass them as `totals`, and drop any stopgap totals
+  line from the toolbar.
+- **A long list of rich sub-records:** pass `summary`, `invalid`
+  (`(i) => !!errors.<list>?.[i]`) and `onDuplicate` to its `<ListEditor>`.
+- **Written text straight under the page's `<h1>`** (a form's notes
+  field, a page that is the note): pass `headingLevel={2}`. Leave the
+  default under a section's `<h2>`. An a11y test that worked around `#`
+  headings or wide tables can drop the workaround.
+- **An app that installed shadcn's `collapsible`** into
+  `src/components/ui/` gets a lint error after the bump: delete that copy
+  and import `@tristan2828/ui-foundation/ui/collapsible`.
+- **An app that adopted push (#167)** makes the same one-line change in its
+  `backend/tests/test_push.py`, if it hasn't already: read the body in the
+  fake service's `do_POST`.
+
 ## 4.32.0 — Hub places: ModuleCard, compact hub cards, a numeric type role
 
 Additive, so a minor. One request from an app (#224).

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { byDay } from '@/lib/group-by-day'
-import { DataTable } from './data-table'
+import { DataTable, type DataTableTotals } from './data-table'
 import { InlineCreate } from './inline-create'
 import { PillFilter } from './pill-filter'
 import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
@@ -32,6 +32,10 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   after the first has its rows, for the testing helper that waits on
 //   every data view of a page (`expectDataViewsLoaded`).
 // - Highlighted: `highlightRow`, two rows to look at (cell pattern 22).
+// - Totals: `totals`, sums under Quantity, Price and Target price for
+//   every matching row (eight, over two pages), with the first and last
+//   columns pinned, a Weight column hidden by `visibleColumns` (its total
+//   with it), and a switch between the four states.
 
 const ICONS = { house: HouseIcon, wallet: WalletIcon, briefcase: BriefcaseIcon, heart: HeartIcon, plane: PlaneIcon, book: BookOpenIcon } satisfies Record<string, LucideIcon>
 type IconKey = keyof typeof ICONS
@@ -178,6 +182,100 @@ function HighlightedTable() {
         pinFirstColumn
         pinLastColumn
         highlightRow={(row) => NEXT_UP.has(row.id)}
+      />
+    </div>
+  )
+}
+
+// --- totals --------------------------------------------------------------------
+
+type Item = { id: number; name: string; room: string; quantity: number; priceCents: number; targetCents: number; weightGrams: number }
+
+const ITEMS: Item[] = [
+  { id: 1, name: 'Desk lamp', room: 'Study', quantity: 2, priceCents: 3450, targetCents: 2900, weightGrams: 1200 },
+  { id: 2, name: 'Bookshelf', room: 'Living room', quantity: 1, priceCents: 18900, targetCents: 15000, weightGrams: 32000 },
+  { id: 3, name: 'Standing mat', room: 'Study', quantity: 1, priceCents: 4999, targetCents: 4000, weightGrams: 2100 },
+  { id: 4, name: 'Coat hooks', room: 'Hall', quantity: 6, priceCents: 1275, targetCents: 1000, weightGrams: 900 },
+  { id: 5, name: 'Bath towels', room: 'Bathroom', quantity: 4, priceCents: 5600, targetCents: 4800, weightGrams: 2400 },
+  { id: 6, name: 'Pot rack', room: 'Kitchen', quantity: 1, priceCents: 8900, targetCents: 7500, weightGrams: 4300 },
+  { id: 7, name: 'Shoe bench', room: 'Hall', quantity: 1, priceCents: 12900, targetCents: 11000, weightGrams: 9800 },
+  { id: 8, name: 'Curtain rail', room: 'Bedroom', quantity: 2, priceCents: 3800, targetCents: 3000, weightGrams: 1600 },
+]
+
+const ITEMS_PAGE_SIZE = 5
+const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+const kilograms = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
+const usd = (cents: number) => money.format(cents / 100)
+const kg = (grams: number) => `${kilograms.format(grams / 1000)} kg`
+const sum = (field: 'quantity' | 'priceCents' | 'targetCents' | 'weightGrams') => ITEMS.reduce((total, item) => total + item[field], 0)
+
+// What the list endpoint sends beside `total`, for all eight items, not
+// the page's five: the client only lays it out.
+const ITEM_TOTALS: DataTableTotals = {
+  label: `Total · ${ITEMS.length} items`,
+  cells: {
+    quantity: sum('quantity'),
+    price: usd(sum('priceCents')),
+    target: usd(sum('targetCents')),
+    weight: kg(sum('weightGrams')),
+  },
+}
+
+const ITEM_COLUMNS: LegacyColumnDef<Item, unknown>[] = [
+  { id: 'name', header: 'Item', cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
+  { id: 'room', header: 'Room', cell: ({ row }) => row.original.room },
+  { id: 'quantity', header: 'Quantity', cell: ({ row }) => <span className="tabular-nums">{row.original.quantity}</span> },
+  { id: 'price', header: 'Price', cell: ({ row }) => <span className="tabular-nums">{usd(row.original.priceCents)}</span> },
+  { id: 'target', header: 'Target price', cell: ({ row }) => <span className="tabular-nums">{usd(row.original.targetCents)}</span> },
+  { id: 'weight', header: 'Weight', cell: ({ row }) => <span className="tabular-nums">{kg(row.original.weightGrams)}</span> },
+  {
+    id: 'actions',
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ({ row }) => (
+      <Button variant="ghost" size="icon-sm" aria-label={`Delete ${row.original.name}`}>
+        <Trash2Icon />
+      </Button>
+    ),
+  },
+]
+
+// Weight is the hidden one: a saved view that leaves it out.
+const ITEM_VISIBLE_COLUMNS = ['name', 'room', 'quantity', 'price', 'target', 'actions']
+
+function TotalsTable() {
+  const [state, setState] = useState<State>('loaded')
+  const [page, setPage] = useState(1)
+  const loaded = state === 'loaded'
+  return (
+    <div className="flex flex-col gap-4 p-6">
+      <div role="group" aria-label="State" className="flex gap-1.5">
+        {(['loaded', 'loading', 'empty', 'error'] as const).map((each) => (
+          <Button key={each} size="sm" variant={each === state ? 'default' : 'outline'} aria-pressed={each === state} onClick={() => setState(each)}>
+            {each}
+          </Button>
+        ))}
+      </div>
+      <h1 className="type-page-title text-foreground">Shopping list</h1>
+      <DataTable<Item>
+        columns={ITEM_COLUMNS}
+        data={loaded ? ITEMS.slice((page - 1) * ITEMS_PAGE_SIZE, page * ITEMS_PAGE_SIZE) : []}
+        total={loaded ? ITEMS.length : 0}
+        page={page}
+        pageSize={ITEMS_PAGE_SIZE}
+        onPageChange={setPage}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={state === 'loading'}
+        error={state === 'error' ? LOAD_ERROR : null}
+        onRetry={noop}
+        emptyTitle="Nothing on the list yet"
+        getRowId={(row) => String(row.id)}
+        visibleColumns={ITEM_VISIBLE_COLUMNS}
+        pinFirstColumn
+        pinLastColumn
+        // As an app passes it: the server's totals whatever the state;
+        // the table shows them only beside rows.
+        totals={ITEM_TOTALS}
       />
     </div>
   )
@@ -526,6 +624,8 @@ export const EditInTheRows: StoryObj = { render: () => <InRouter /> }
 export const Grouped: StoryObj = { render: () => <FeedInRouter path="/" /> }
 
 export const Highlighted: StoryObj = { render: () => <HighlightedTable /> }
+
+export const Totals: StoryObj = { render: () => <TotalsTable /> }
 
 export const GroupedNoMatches: StoryObj = { render: () => <FeedInRouter path="/?kind=text" /> }
 

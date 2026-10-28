@@ -12,12 +12,20 @@
 //   renders as its text.
 // - Links open in a new tab, so following one never leaves the record.
 //
-// Headings start at <h3>: the page owns the <h1> (the record's title) and
-// each section its <h2>, so a `# Heading` in the text sits under them
-// instead of competing with the page's own outline. They look like what
-// they are in the text, though: `#` and `##` on a tinted band, `###` a
-// small uppercase label, and the text under them lined up with the words
-// in the band (prose-look.ts).
+// Headings start at <h3> by default: the page owns the <h1> (the
+// record's title) and each section its <h2>, so a `# Heading` in the text
+// sits under them instead of competing with the page's own outline. Text
+// that sits elsewhere says so with `headingLevel`, the level `#` renders
+// as (2 straight under the page's <h1>), each level below it one deeper,
+// never past <h6>, so the page's outline never skips a level (axe's
+// heading-order). They look like what they are in the text, wherever they
+// sit: `#` and `##` on a tinted band, `###` a small uppercase label, and
+// the text under them lined up with the words in the band (prose-look.ts).
+//
+// A table wider than the text scrolls sideways, and while it does, its
+// box is a tab stop, named for its columns, that the arrow keys scroll
+// (prose-table-scroll.ts). Its cells wrap first, so that's only a table
+// with many columns, or a long word in one.
 //
 // An image (`![alt](url)`, one the rich-text editor uploaded) stays inside
 // the text's width, loads only as it nears the screen, and keeps its alt
@@ -27,14 +35,25 @@
 //
 // A quote that starts `[!NOTE]` (GitHub's alert syntax) is a callout: a
 // tinted box with its kind's icon (src/lib/markdown-callout.ts).
-import type { ComponentProps } from 'react'
+import { useEffect, useMemo, useRef, type ComponentProps } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn } from 'cn'
 import { ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
-import { CALLOUT_BOX, CALLOUT_LOOK, headingClass, PROSE, PROSE_INSET } from './prose-look'
+import {
+  CALLOUT_BOX,
+  CALLOUT_LOOK,
+  DEFAULT_HEADING_LEVEL,
+  headingBand,
+  headingClass,
+  headingTag,
+  PROSE,
+  PROSE_INSET,
+  type HeadingLevel,
+} from './prose-look'
+import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 
 const REMARK_PLUGINS = [remarkGfm, remarkCallouts]
 
@@ -50,14 +69,36 @@ function omitNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
   return rest
 }
 
-// The text's colour first, so a level's own (`###`'s muted label) wins.
+// A GFM table in the package's own table, in its box that scrolls
+// sideways: a tab stop and a named region only while the table overflows
+// it. Watched again after each render, so a header row with new words
+// renames it.
+function NotesTable(props: ComponentProps<'table'>) {
+  const boxRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    const table = box.querySelector('table')
+    const region = watchTableScroll(box, table, headerTexts(table))
+    return () => region.destroy()
+  })
+  return (
+    <Table {...props} containerRef={boxRef} containerClassName={cn('rounded-lg border border-border', TABLE_SCROLL_FOCUS)} />
+  )
+}
+
+// A heading by its Markdown level: the element the page's outline gives
+// it (headingTag), the look its level has. The text's colour first, so a
+// level's own (`###`'s muted label) wins.
+function heading(level: number, top: HeadingLevel): Components['h1'] {
+  const Tag = headingTag(level, top)
+  return (props) => (
+    <Tag {...omitNode(props)} data-band={headingBand(level) || undefined} className={cn('text-foreground', headingClass(level))} />
+  )
+}
+
+// Everything but the headings, which follow `headingLevel` (componentsFor).
 const COMPONENTS: Components = {
-  h1: (props) => <h3 {...omitNode(props)} className={cn('text-foreground', headingClass(1))} />,
-  h2: (props) => <h4 {...omitNode(props)} className={cn('text-foreground', headingClass(2))} />,
-  h3: (props) => <h5 {...omitNode(props)} className={cn('text-foreground', headingClass(3))} />,
-  h4: (props) => <h6 {...omitNode(props)} className={cn('text-foreground', headingClass(4))} />,
-  h5: (props) => <h6 {...omitNode(props)} className={cn('text-foreground', headingClass(5))} />,
-  h6: (props) => <h6 {...omitNode(props)} className={cn('text-foreground', headingClass(6))} />,
   a: (props) => {
     const { href, children, ...rest } = omitNode(props)
     if (!href) return <span>{children}</span>
@@ -128,7 +169,7 @@ const COMPONENTS: Components = {
   },
   // GFM tables use the package's own table, zebra stripes and density
   // tokens included, so a table in the notes reads like every other table.
-  table: (props) => <Table {...omitNode(props)} containerClassName="rounded-lg border border-border" />,
+  table: (props) => <NotesTable {...omitNode(props)} />,
   thead: (props) => <TableHeader {...omitNode(props)} className="bg-muted" />,
   tbody: (props) => <TableBody {...omitNode(props)} />,
   tr: (props) => <TableRow {...omitNode(props)} />,
@@ -138,20 +179,40 @@ const COMPONENTS: Components = {
   td: (props) => <TableCell {...omitNode(props)} className="border-r border-border whitespace-normal last:border-r-0" />,
 }
 
+// The components for each `headingLevel`, made once each.
+const BY_LEVEL = new Map<HeadingLevel, Components>()
+function componentsFor(top: HeadingLevel): Components {
+  let components = BY_LEVEL.get(top)
+  if (!components) {
+    components = { ...COMPONENTS }
+    for (const level of [1, 2, 3, 4, 5, 6] as const) components[`h${level}`] = heading(level, top)
+    BY_LEVEL.set(top, components)
+  }
+  return components
+}
+
 export type MarkdownProps = {
   /** The Markdown source. Raw HTML in it is shown as text, never rendered. */
   children: string
+  /**
+   * The HTML level the text's `#` renders as, where the text sits in the
+   * page's outline: 2 straight under the page's <h1>, 3 (the default)
+   * under a section's <h2>. `##` is one below it, `###` two below, never
+   * past <h6>. Only the element changes: each level looks the same.
+   */
+  headingLevel?: HeadingLevel
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
-export function Markdown({ children, className, ...rest }: MarkdownProps) {
+export function Markdown({ children, headingLevel = DEFAULT_HEADING_LEVEL, className, ...rest }: MarkdownProps) {
+  const components = useMemo(() => componentsFor(headingLevel), [headingLevel])
   return (
     <div
       data-slot="markdown"
       {...rest}
       className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', PROSE_INSET, className)}
     >
-      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={COMPONENTS}>
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
         {children}
       </ReactMarkdown>
     </div>

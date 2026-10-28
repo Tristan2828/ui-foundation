@@ -84,3 +84,62 @@ export const Images: StoryObj<typeof Markdown> = {
     </div>
   ),
 }
+
+// The same note where a page would put it: straight under the page's
+// title (`headingLevel={2}`), under a section's <h2> (the default, from
+// <h3>), and deeper still (`headingLevel={5}`, capped at <h6>). The
+// page's outline never skips a level (axe's heading-order); each level
+// looks the same wherever it sits (e2e/rich-text-editor.spec.ts "heading
+// levels").
+const LEVELS_NOTE = `# Overview
+
+An opening paragraph.
+
+## Details
+
+Some words under the second level.
+
+### Small print
+
+The last words.
+`
+
+export const HeadingLevels: StoryObj<typeof Markdown> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-6">
+      <h1 className="type-page-title text-foreground">A page of notes</h1>
+      <Markdown data-testid="underPage" headingLevel={2}>
+        {LEVELS_NOTE}
+      </Markdown>
+      <section aria-labelledby="levels-section" className="flex flex-col gap-6">
+        <h2 id="levels-section" className="type-section-title text-foreground">
+          A section of notes
+        </h2>
+        <Markdown data-testid="underSection">{LEVELS_NOTE}</Markdown>
+        <Markdown data-testid="capped" headingLevel={5}>
+          {LEVELS_NOTE}
+        </Markdown>
+      </section>
+    </div>
+  ),
+}
+
+// In a narrow column, a table with more columns than fit, even with its
+// cells wrapping: its box scrolls sideways, so it's a tab stop and a
+// region named for its columns. The table under it fits, and is neither
+// (e2e/rich-text-editor.spec.ts "table scroll").
+export const WideTable: StoryObj<typeof Markdown> = {
+  render: () => (
+    <div className="flex w-80 flex-col gap-6 border border-border p-3">
+      <Markdown data-testid="wideTable">
+        {`A table that scrolls sideways:
+
+| Item | Size | Colour | Material | Weight | Supplier | Ordered | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Shelf | Large | Grey | Pine | 12kg | Northwind | March | Two boxes |
+`}
+      </Markdown>
+      <Markdown data-testid="narrowTable">{'| Item | Count |\n| --- | --- |\n| Shelf | 2 |\n'}</Markdown>
+    </div>
+  ),
+}
