@@ -86,7 +86,8 @@ Every data view handles: loading, empty, error, and success. Use
 `<Skeleton>`, `<Empty>`, and the error boundary — `DataTable` already does,
 and `EntityView` (one record) adds not found: a plain 404, never a retry.
 A small widget on a hub page is a `WidgetCard`, which holds all four for
-its own data, its error inside the card.
+its own data, its error inside the card; a hub's place (a module, with
+one live number) is a `ModuleCard` in a `ModuleStrip`, the same way.
 Every screen has one Playwright test per state, forced via MSW overrides
 (`@tristan2828/ui-foundation/testing`).
 

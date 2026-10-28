@@ -71,6 +71,15 @@ export {
   type NameCellProps,
 } from '@/components/app/row-edit-cells'
 export {
+  ModuleCard,
+  ModuleStrip,
+  type CategorySlot,
+  type ModuleCardLink,
+  type ModuleCardPlace,
+  type ModuleCardProps,
+  type ModuleStripProps,
+} from '@/components/app/module-card'
+export {
   WidgetCard,
   WidgetList,
   WidgetListItem,

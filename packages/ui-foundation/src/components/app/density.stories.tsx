@@ -25,11 +25,15 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { Toggle } from '@/components/ui/toggle'
+import { MemoryRouter } from 'react-router'
 import { DataTable } from './data-table'
+import { ModuleCard, ModuleStrip } from './module-card'
+import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 
 // Not a component: every density (styles/theme.css, design-language.md
 // "Density") with the same primitives in each, so a reviewer sees what
-// each one changes. compact and comfortable retune table rows only; large
+// each one changes. compact and comfortable retune table rows (compact
+// also a hub's cards: Hub cards); large
 // grows everything (type, spacing, control heights, icons, the sidebar)
 // for a screen read from across the room. Each sample sets data-density on
 // its own section, so leave the toolbar's Density at "default" here; the
@@ -258,6 +262,55 @@ function DemoSidebar({ density }: { density: Density }) {
   )
 }
 
+// --- Hub cards ----------------------------------------------------------------
+
+// compact reaches a hub's cards too (#224): WidgetCard's padding and rows,
+// and ModuleCard's band and body. Text keeps its size.
+function HubSample({ density }: { density: Density }) {
+  return (
+    <MemoryRouter>
+      <div className="flex max-w-xl flex-col gap-4">
+        <ModuleStrip aria-label={`Places (${density})`}>
+          <ModuleCard
+            title="Projects"
+            icon={BriefcaseIcon}
+            category={1}
+            to="/projects"
+            value={5}
+            note="open"
+            action={{ to: '/projects?view=today', label: 'Today' }}
+          />
+          <ModuleCard
+            title="Trips"
+            icon={PlaneIcon}
+            category={2}
+            to="/trips"
+            value={2}
+            note="booked"
+            action={{ to: '/trips/next', label: 'Next' }}
+          />
+        </ModuleStrip>
+        <WidgetCard
+          title={`Ready to start (${density})`}
+          link={{ to: '/projects?status=ready', label: 'All' }}
+          isLoading={false}
+          isEmpty={false}
+          emptyMessage="Nothing waiting"
+        >
+          <WidgetList>
+            <WidgetListItem to="/projects/1" trailing={<Badge variant="outline-success">Ready</Badge>}>
+              Standing desk
+            </WidgetListItem>
+            <WidgetListItem to="/projects/2" note="2 h ago">
+              Office chair
+            </WidgetListItem>
+          </WidgetList>
+        </WidgetCard>
+      </div>
+    </MemoryRouter>
+  )
+}
+
 const meta: Meta = {
   title: 'patterns/Density',
   parameters: { controls: { disable: true } },
@@ -298,6 +351,19 @@ export const Sidebars: StoryObj = {
       {(['default', 'large'] as const).map((density) => (
         <Sample key={density} density={density}>
           <DemoSidebar density={density} />
+        </Sample>
+      ))}
+    </div>
+  ),
+}
+
+export const HubCards: StoryObj = {
+  name: 'Hub cards',
+  render: () => (
+    <div className="flex flex-col gap-10">
+      {DENSITIES.map((density) => (
+        <Sample key={density} density={density}>
+          <HubSample density={density} />
         </Sample>
       ))}
     </div>

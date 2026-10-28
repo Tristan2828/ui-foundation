@@ -221,7 +221,7 @@ room that stays readable.
 
 ## Typography
 
-Five roles cover every screen. Each is one class that sets size, line
+Six roles cover every screen. Each is one class that sets size, line
 height and weight together, from tokens in the package's `styles/theme.css`:
 
 | Class | For | Size / weight |
@@ -231,12 +231,17 @@ height and weight together, from tokens in the package's `styles/theme.css`:
 | `type-body` | running text, table cells, form text, the pagination summary | 14px / 400 |
 | `type-label` | column headers, field labels, a small heading over a group | 14px / 500 |
 | `type-caption` | counts, metadata, helper text under a field | 12px / 400 |
+| `type-numeric` | the one live number on a card (`ModuleCard`'s count), in tabular figures | 22px / 500 |
 
 - **Use a role instead of size and weight classes,** not as well as them.
   `type-page-title` replaces `text-lg font-semibold`. Combining a role with
   `text-sm`, `font-medium` or `leading-*` makes two classes set the same
   property, and which one wins depends on the order of rules in the
   stylesheet, not on the order in `className`.
+- **`type-numeric` sets tabular figures** (`font-variant-numeric:
+  tabular-nums`), so counts line up from card to card and don't change
+  width as they tick. A number in running text or a table cell keeps its
+  row's role; add `tabular-nums` there if a column of them should align.
 - **Colour stays separate:** `type-caption text-muted-foreground`. A role
   never sets a colour, so any text token pairs with it.
 - **Why `type-*` and not `text-*`:** `cn` (tailwind-merge) treats an
@@ -294,13 +299,18 @@ set, not a `DataTable` prop:
 
 | `data-density` | Changes | Table cell padding (vertical) | Header height | For |
 |---|---|---|---|---|
-| `compact` | table rows only | 4px | 32px | wide tables people scan, many rows per screen |
+| `compact` | table rows, and a hub's cards (`WidgetCard`, `WidgetList` rows, `ModuleCard`) | 4px | 32px | wide tables people scan, many rows per screen; a dense hub |
 | *(unset)* | — | 8px | 40px | the default |
 | `comfortable` | table rows only | 12px | 48px | short tables, or rows people read rather than scan |
 | `large` | **everything**: type, spacing, control heights, icons, the sidebar, table rows | 12px | 56px | a screen read from a distance: a TV used as the desktop monitor, with a mouse and keyboard |
 
 - `compact` and `comfortable` change padding only. Text keeps
   `type-body`, so compact never drops below a readable size.
+- On a hub, `compact` takes a `WidgetCard`'s padding from 16px to 12px,
+  a `WidgetList` row from 36px to 32px (6px around its line) and a
+  `ModuleCard`'s band and body by 4px each. On a phone a compact row is
+  44px instead, its link filling that height, so it stays a finger's
+  target.
 - `large` grows the whole UI by about a quarter: body text 14 → 18px,
   controls 32 → 40px tall, icons 16 → 20px, the sidebar 256 → 320px.
   Breakpoints and `max-w-*` containers stay where they are, which is
@@ -308,7 +318,8 @@ set, not a `DataTable` prop:
   a wide screen can fall into the phone layout).
 - For `large`, set it on **`<html>`**. Menus, selects, dialogs and
   tooltips are portaled to `<body>`, so a wrapper `<div>` doesn't reach
-  them. `compact` and `comfortable` only touch tables, so a wrapper is fine.
+  them. `compact` and `comfortable` only touch tables and hub cards, so a
+  wrapper is fine.
 - Pick **one density per screen**. Two tables at different densities side
   by side look like a mistake.
 - Size things the way the package does and `large` reaches them for free:
@@ -321,9 +332,13 @@ set, not a `DataTable` prop:
   Tailwind's own scale (`--spacing`, `--text-*`, `--radius`), the `--type-*`
   roles and `--control-text-sm` (the small Button and Toggle). Each
   default is the value it always had, so a screen without `data-density`
-  doesn't change. The selectors are in `styles/theme.css`. Storybook's
+  doesn't change. The selectors are in `styles/theme.css`. A composite
+  reaches `compact` with the `density-compact:` variant (`styles/index.css`:
+  any ancestor with `data-density="compact"`), the way `WidgetCard` and
+  `ModuleCard` do; an app's own card can use it too. Storybook's
   Density toolbar shows any story at a density, and `patterns/Density`
-  shows the primitives, `DataTable` and the sidebar at each. Its checks
+  shows the primitives, `DataTable`, the sidebar and the hub cards at
+  each. Its checks
   measure that every step changes what it should, and that the default
   keeps today's sizes.
 
@@ -397,6 +412,66 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
 - Storybook's `app/WidgetCard` shows three widgets on a page and every
   one in each state; its checks run axe and the token and glyph checks in
   both themes and at `large`.
+
+## Module cards (a hub's places)
+
+Above its widgets, a hub shows the app's places: its modules, and the
+sites outside it that it links to. Each is a `ModuleCard` in a
+`ModuleStrip`: a small card that names the place, shows one live number,
+and offers one action.
+
+```tsx
+const { data, isLoading, error, refetch } = useProjectsSummaryQuery()
+
+<ModuleStrip aria-label="Places">
+  <ModuleCard
+    title="Projects"
+    icon={ListTodoIcon}
+    category={1}
+    to="/projects"
+    value={data?.openCount}
+    note="open"
+    action={{ to: '/projects?view=today', label: 'Today' }}
+    isLoading={isLoading}
+    error={error}
+    onRetry={() => refetch()}
+  />
+  <ModuleCard title="Recipes" icon={RecipesMark} category={6} href="https://recipes.example.com" note="Opens its own app" />
+</ModuleStrip>
+```
+
+- **The band names the place and links to it.** The icon takes the
+  place's categorical slot (`category`, 1–12), and the band behind the
+  icon and the name is a 10% wash of the same slot over the card, with
+  `foreground` text on it (axe measures every slot's wash in both themes).
+  Give each place the slot it has elsewhere in the app (its sidebar entry,
+  its badges), so a place is one colour everywhere. Without a `category`
+  the icon is muted and the band plain.
+- **One number, with a short note.** `value` is the one count that says
+  what's live there ("5" open, "2" due today), in `type-numeric`; `note`
+  is a few words under it. A card with no `value` shows no number, and
+  that is not an empty state: a place outside the app usually has none,
+  and its note says what it is ("Opens its own app").
+- **One action** at the foot: the thing most often done next ("Today",
+  "Start", "Add one"). It's described by the place's name, so several
+  "Open" links on one page stay distinct.
+- **A place outside the app** takes `href` instead of `to` (an action
+  can too): it opens in a new tab with the external-link mark. Its icon
+  can be the service's own mark ("Logos and brand marks" above).
+- **States are the number's.** While loading, a skeleton the number's
+  size (the note stays, it doesn't load); on an error, "Couldn't load"
+  and Retry inside the card, so one failing place never hides the
+  others. The band and the action work in every state.
+- **The strip** is a navigation landmark (`aria-label` names it) of
+  equal columns, 170px or wider, that wrap: six to eight across a
+  desktop. On a phone it's three columns of smaller tiles with no action,
+  each tile one link to its place (at least 44px tall); Retry stays its
+  own button above it. Six places make the phone's 3 × 2 grid; past
+  that, put the rest behind one tile ("More") rather than a third row.
+- Storybook's `app/ModuleCard` shows a hub with a strip and a widget,
+  every state, and both at `compact`; its checks run axe and the token and
+  glyph checks in both themes and at `large`, and measure the strip at a
+  desktop and a phone width.
 
 ## Notices
 

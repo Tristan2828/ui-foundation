@@ -5,6 +5,45 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.32.0 — Hub places: ModuleCard, compact hub cards, a numeric type role
+
+Additive, so a minor. One request from an app (#224).
+
+- **New: `ModuleCard` and `ModuleStrip`**, a hub's places above its
+  widgets. A card's band holds the place's icon, tinted with its
+  categorical slot (`category`), and its name on a 10% wash of the same
+  slot, and links to the place (`to`, or `href` for another site, which
+  opens in a new tab). Under it, one live number (`value`, any number or
+  short string) with a `note`, and one `action` link at the foot. States
+  are the number's: a skeleton while `isLoading`, "Couldn't load" and
+  Retry inside the card on an `error`; no `value` shows no number, which
+  is not an empty state. `ModuleStrip` is a navigation landmark of equal
+  columns, 170px or wider, that wrap; on a phone, three columns of tiles
+  with no action, each tile one link of 44px or more. New types
+  `ModuleCardProps`, `ModuleStripProps`, `ModuleCardLink`,
+  `ModuleCardPlace` and `CategorySlot`.
+- **`data-density="compact"` reaches a hub's cards**: `WidgetCard`'s
+  padding (16 → 12px), `WidgetList` rows (36 → 32px) and `ModuleCard`'s
+  band and body. Text stays at `type-body`; on a phone a compact row is
+  44px, its link filling it. Without `compact`, nothing changes size.
+  **New variant: `density-compact:`**, for an app's own cards to follow
+  it the same way.
+- **New typography role: `type-numeric`**, 22px / 500 in tabular figures,
+  for a card's count (28px at `large`).
+- Axe, the token check and the glyph check cover every slot's band wash
+  in both themes and at `large`. `design-language.md` has a "Module cards
+  (a hub's places)" section, and its Typography and Density sections name
+  the new role and what compact reaches. Storybook: `app/ModuleCard` and
+  `patterns/Density` Hub cards.
+
+**How an app adopts it:** bump the version and run `sync`. Then, on a hub
+whose places are plain cards or tiles, replace them with a `ModuleStrip`
+of `ModuleCard`s: give each the slot its module has elsewhere, its
+summary number as `value` (with the query's `isLoading`, `error` and
+`refetch`), and one `action`. A dense hub sets `data-density="compact"`
+on the hub route's wrapper. An app that set `tabular-nums` and a size by
+hand on such a number can use `type-numeric`.
+
 ## 4.31.0 — A source credit can carry the service's mark
 
 Additive, so a minor. One request from an app (#220).
