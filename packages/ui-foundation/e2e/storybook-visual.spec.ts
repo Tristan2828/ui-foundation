@@ -105,6 +105,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
   { id: 'app-widgetcard--brand-mark', mustShow: 'Timber stains compared' },
+  // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
+  // slot under foreground text, the number, the note, the action, in
+  // every state, and at compact.
+  { id: 'app-modulecard--default', mustShow: 'beds planted' },
+  { id: 'app-modulecard--all-states', mustShow: 'No slot: a plain band' },
+  { id: 'app-modulecard--compact', mustShow: 'beds planted' },
   // <SessionView> is a timed screen's whole viewport: its header controls
   // and a timer's own (the big digits, the status line, a pressed toggle).
   { id: 'app-sessionview--timer', mustShow: '1:00' },
@@ -113,6 +119,7 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-density--primitives', mustShow: 'data-density="large"' },
   { id: 'patterns-density--data-tables', mustShow: 'data-density="large"' },
   { id: 'patterns-density--sidebars', mustShow: 'data-density="large"' },
+  { id: 'patterns-density--hub-cards', mustShow: 'data-density="large"' },
 ]
 
 // Stories whose glyphs carry meaning on their own: every <svg> in them must
@@ -148,6 +155,10 @@ const GLYPH_STORIES: {
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },
+  // A place's slot-tinted icon on its own wash, the external mark, a brand
+  // mark, and the error icon.
+  { id: 'app-modulecard--default' },
+  { id: 'app-modulecard--all-states' },
   // SessionView's header (Full screen, Close) and a timer's controls. It's
   // open on load, portaled to <body> like a popup.
   {
@@ -301,6 +312,8 @@ test.describe('primitive stories have zero axe violations at the large density',
 const LARGE_COMPOSITE_STORIES = [
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
+  { id: 'app-modulecard--default', mustShow: 'beds planted' },
+  { id: 'app-modulecard--all-states', mustShow: 'No slot: a plain band' },
 ]
 
 test.describe('composite stories have zero axe violations at the large density', () => {
@@ -551,6 +564,39 @@ test('large density grows the primitives; every other density keeps their size',
   }
 })
 
+// compact reaches a hub's cards through the density-compact variant
+// (#224), which nothing type-checks. In the Hub cards story, compact must
+// tighten WidgetCard's padding and rows and ModuleCard's band and body;
+// every other density keeps today's (large grows them, as it grows all).
+// Text stays at type-body: the rows' text keeps its 14px.
+test('compact density tightens the hub cards; the default keeps their size', async ({ page }) => {
+  await page.goto(storyUrlById('patterns-density--hub-cards', 'light'))
+  const measure = (density: string) =>
+    page.locator(`[data-sample="${density}"]`).evaluate((sample) => {
+      const height = (selector: string) => sample.querySelector(selector)!.getBoundingClientRect().height
+      const widget = sample.querySelector('[data-slot=widget-card] [data-slot=card]')!
+      return {
+        widgetPadding: parseFloat(getComputedStyle(widget).paddingTop),
+        row: height('[data-slot=widget-list-item]'),
+        band: height('[data-slot=module-card-band]'),
+        body: height('[data-slot=module-card-body]'),
+        rowText: parseFloat(getComputedStyle(sample.querySelector('[data-slot=widget-list-item]')!).fontSize),
+      }
+    })
+  const today = { widgetPadding: 16, row: 37, band: 36, body: 66, rowText: 14 }
+  for (const density of ['default', 'comfortable']) {
+    const got = await measure(density)
+    for (const [key, value] of Object.entries(today)) {
+      expect(got[key as keyof typeof today], `${key} (${density})`).toBeCloseTo(value, 1)
+    }
+  }
+  const compact = await measure('compact')
+  for (const key of ['widgetPadding', 'row', 'band', 'body'] as const) {
+    expect(compact[key], `${key} (compact)`).toBeLessThan(today[key])
+  }
+  expect(compact.rowText, 'rowText (compact)').toBe(today.rowText)
+})
+
 test('large density widens the sidebar; the default keeps 16rem', async ({ page }) => {
   await page.goto(storyUrlById('patterns-density--sidebars', 'light'))
   const width = (density: string) =>
@@ -566,7 +612,7 @@ test('large density widens the sidebar; the default keeps 16rem', async ({ page 
 // size must equal its token, so an unbuilt or misnamed role fails here.
 test('typography roles resolve to their tokens', async ({ page }) => {
   await page.goto(storyUrlById('ui-typography--default', 'light'))
-  const roles = ['page-title', 'section-title', 'body', 'label', 'caption', 'heading-1', 'heading-2', 'heading-3']
+  const roles = ['page-title', 'section-title', 'body', 'label', 'caption', 'numeric', 'heading-1', 'heading-2', 'heading-3']
   for (const role of roles) {
     const { size, expected, weight, expectedWeight } = await page
       .locator(`[data-role="type-${role}"]`)
@@ -584,6 +630,7 @@ test('typography roles resolve to their tokens', async ({ page }) => {
     expect(size, `type-${role} font-size`).toBe(expected)
     expect(weight, `type-${role} font-weight`).toBe(expectedWeight)
   }
+  await expect(page.locator('[data-role="type-numeric"]')).toHaveCSS('font-variant-numeric', 'tabular-nums')
 })
 
 // Each <svg>'s ink (its `color`, which strokes and fills use through

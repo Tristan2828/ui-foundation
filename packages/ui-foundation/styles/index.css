@@ -16,6 +16,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Compact density beyond tables (design-language.md "Density"): a
+   composite's own rows and padding tighten under data-density="compact"
+   on any ancestor, the way the table's tokens do. `density-compact:py-1`.
+   Text never shrinks under it. */
+@custom-variant density-compact (&:where([data-density="compact"], [data-density="compact"] *));
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;
@@ -112,6 +118,14 @@
   font-size: var(--type-caption-size);
   line-height: var(--type-caption-leading);
   font-weight: var(--type-caption-weight);
+}
+/* Counts on a hub's cards: tabular figures, so numbers line up from card
+   to card and don't shift width as they change. */
+@utility type-numeric {
+  font-size: var(--type-numeric-size);
+  line-height: var(--type-numeric-leading);
+  font-weight: var(--type-numeric-weight);
+  font-variant-numeric: tabular-nums;
 }
 @utility type-heading-1 {
   font-size: var(--type-heading-1-size);

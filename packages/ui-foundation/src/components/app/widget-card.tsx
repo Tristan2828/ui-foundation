@@ -20,6 +20,11 @@
 // muted note ("2 h ago") and an optional trailing element (a badge, a
 // switch). A trailing control is labelled by the row's text: pass a
 // function and it gets the id to put in `aria-labelledby`.
+//
+// Under data-density="compact" (#224) the card's padding drops to 12px and
+// a row's to 4px, for a dense hub; text stays at type-body. On a phone a
+// compact row is 44px tall and its link fills that height, so it stays a
+// finger's target.
 import { useId, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
 import { ExternalLinkIcon } from 'lucide-react'
@@ -89,7 +94,7 @@ export function WidgetCard({
       data-state={state}
       className={cn('min-w-0 self-start', className)}
     >
-      <Card>
+      <Card className="density-compact:[--card-spacing:--spacing(3)]">
         <CardHeader className="flex items-center justify-between gap-3">
           <Heading id={headingId} className="flex min-w-0 items-center gap-2 type-section-title text-foreground">
             {Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
@@ -120,8 +125,12 @@ export function WidgetCard({
 }
 
 // One row's height, shared by the skeleton and the list so the card doesn't
-// jump: py-2 around one line of type-body (or a small control).
-const ROW_CLASS = 'flex min-h-9 items-center gap-3 py-2'
+// jump: py-2 around one line of type-body (or a small control). Compact
+// is 32px (6px around the line); on a phone it's 44px, the link's own
+// padding making up the height (ROW_LINK_CLASS).
+const ROW_CLASS =
+  'flex min-h-9 items-center gap-3 py-2 density-compact:min-h-8 density-compact:py-1 ' +
+  'max-sm:density-compact:min-h-11 max-sm:density-compact:py-0'
 
 // Varied widths, so the skeleton reads as a list of titles, not a grid.
 const SKELETON_WIDTHS = ['w-3/5', 'w-2/5', 'w-1/2', 'w-2/3', 'w-1/3', 'w-3/5']
@@ -169,7 +178,8 @@ export interface WidgetListItemProps {
 
 const ROW_LINK_CLASS =
   'min-w-0 truncate rounded-sm font-medium text-foreground underline-offset-4 outline-none ' +
-  'hover:underline focus-visible:underline focus-visible:ring-3 focus-visible:ring-ring/50'
+  'hover:underline focus-visible:underline focus-visible:ring-3 focus-visible:ring-ring/50 ' +
+  'max-sm:density-compact:py-3'
 
 export function WidgetListItem({ children, to, href, note, trailing, className }: WidgetListItemProps) {
   const textId = useId()
