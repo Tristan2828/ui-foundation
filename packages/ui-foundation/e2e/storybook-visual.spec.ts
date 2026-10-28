@@ -80,6 +80,12 @@ const COMPOSITE_STORIES = [
   // Images in written text, and the editor that uploads them (its Image button).
   { id: 'app-markdown--images', mustShow: 'A view of the yard:' },
   { id: 'app-richtexteditor--image-uploads', mustShow: 'Paste or drop a photo here.' },
+  // Written text under a page's h1 and a section's h2 (headingLevel), and
+  // a wide table's box, a named tab stop while it scrolls (#223).
+  { id: 'app-markdown--heading-levels', mustShow: 'A page of notes' },
+  { id: 'app-markdown--wide-table', mustShow: 'A table that scrolls sideways:' },
+  { id: 'app-richtexteditor--heading-levels', mustShow: 'A form with notes' },
+  { id: 'app-richtexteditor--wide-table', mustShow: 'wideTable' },
   // Allow reminders in every state, on a card (#167).
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
@@ -88,6 +94,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   // A highlighted row's wash, with muted text inside it (#156).
   { id: 'app-datatable--highlighted', mustShow: 'Health' },
+  // A list of sub-records, and one whose items open to edit, with Duplicate (#222).
+  { id: 'app-listeditor--default', mustShow: 'Pack for the trip' },
+  { id: 'app-listeditor--rows-that-open', mustShow: 'Romanian deadlift' },
+  // A totals row under the columns it adds up, a pinned label (#225).
+  { id: 'app-datatable--totals', mustShow: 'Total · 8 items' },
   // Cell pattern 9's step bar and star, and pattern 13's ring (#154, #156).
   { id: 'patterns-scales--default', mustShow: 'On a card' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
@@ -155,6 +166,8 @@ const GLYPH_STORIES: {
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },
+  // A summary line's chevron and the row's Move, Duplicate and Remove icons (#222).
+  { id: 'app-listeditor--rows-that-open' },
   // A place's slot-tinted icon on its own wash, the external mark, a brand
   // mark, and the error icon.
   { id: 'app-modulecard--default' },

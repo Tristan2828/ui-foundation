@@ -28,6 +28,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -141,9 +142,30 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * Colour isn't the only signal: say why in the row too (a badge, a word).
    */
   highlightRow?: (row: TData) => boolean
+  /**
+   * A totals row under the columns it adds up, the way a spreadsheet's
+   * is: `label` in the first visible column ("Total · 18 items"), then
+   * each of `cells` under the column with that id, in its alignment. The
+   * values come from the server, for every row the filters match, never
+   * summed from the page on the client. Shown only with rows: never while
+   * loading, on error or empty. Leave undefined (or null, before the data
+   * has come) for no row.
+   */
+  totals?: DataTableTotals | null
 }
 
 export type DataTableWidth = 'full' | 'content'
+
+export type DataTableTotals = {
+  /** Goes in the first visible column, as the row's header. */
+  label: ReactNode
+  /**
+   * One value per column id, already formatted. A column left out, or
+   * hidden by `visibleColumns`, gets an empty cell or none. The first
+   * visible column holds the label, so a value for it isn't shown.
+   */
+  cells?: Partial<Record<string, ReactNode>>
+}
 
 // A column def's id as TanStack resolves it (constructColumn): `id`, then
 // `accessorKey` with dots as underscores, then a string header. Group
@@ -197,6 +219,10 @@ const PINNED_COLUMN_CLASS =
 // column marks the hovered row.
 const PINNED_LAST_COLUMN_CLASS = `sticky right-0 border-l ${PINNED_CELL_CLASS}`
 
+// The totals row's label, pinned with the first column (`totals`): the
+// same opaque cell, with no hover, since the row isn't one to pick.
+const PINNED_TOTALS_LABEL_CLASS = `sticky left-0 border-r ${PINNED_CELL_CLASS}`
+
 // A pinned first column's content, capped below md at 45% of the table's
 // scroll area (`cqw`: the container is an inline-size query container)
 // and wrapping, so a long title can't widen the column past the screen
@@ -223,6 +249,17 @@ const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
 const HIGHLIGHTED_ROW_CLASS =
   '[--muted-foreground:var(--table-highlight-muted-foreground)] [&>td]:bg-(--table-highlight) ' +
   '[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--info-text)]'
+
+// `totals`: a footer row the way a spreadsheet's totals are, set apart
+// from the rows by a border twice a row divider's width and medium type,
+// on the page's background (table.tsx's footer tint is translucent, so a
+// pinned cell over it couldn't match without bleed-through). Its cells
+// read the body's density tokens, so it's a row's height, not the
+// header's; tabular figures line its numbers up with the column's.
+const TOTALS_FOOTER_CLASS = 'border-t-2 border-border bg-background tabular-nums'
+
+// Its label is a row header (<th scope="row">), padded as a body cell is.
+const TOTALS_LABEL_CLASS = 'h-auto py-(--table-cell-py)'
 
 // `header={false}`: the header row stays in the table, so every cell keeps
 // its column header for a screen reader, but takes no room: each header
@@ -334,6 +371,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   groupSummary,
   header: showHeader = true,
   highlightRow,
+  totals,
 }: DataTableProps<TData>) {
   // Editing in place in the rows (cell pattern 18, "In a table's rows"):
   // a cell that renders an <EditableValue> edits where it's shown, one at
@@ -407,7 +445,8 @@ export function DataTable<TData extends Record<string, unknown>>({
   )
 
   const rows = table.getRowModel().rows
-  const visibleColumnCount = table.getVisibleLeafColumns().length
+  const visibleLeafColumns = table.getVisibleLeafColumns()
+  const visibleColumnCount = visibleLeafColumns.length
   // One body row, the same in a plain table and a grouped one.
   const renderRow = (row: (typeof rows)[number]) => (
     <TableRow
@@ -573,6 +612,35 @@ export function DataTable<TData extends Record<string, unknown>>({
               ))
             ) : (
               <TableBody>{rows.map(renderRow)}</TableBody>
+            )}
+            {totals && (
+              // After every group's body, so it totals the table, not the
+              // last group. A cell per visible column, so each value sits
+              // under its own and the pinned edges stay opaque.
+              <TableFooter className={TOTALS_FOOTER_CLASS}>
+                <TableRow data-slot="table-totals" className="hover:bg-transparent">
+                  {visibleLeafColumns.map((column, index) => {
+                    const className = cn(
+                      pinFirstColumn && index === 0 && PINNED_TOTALS_LABEL_CLASS,
+                      pinLastColumn && index === visibleColumnCount - 1 && PINNED_LAST_COLUMN_CLASS,
+                      column.columnDef.meta?.align === 'center' && 'text-center',
+                    )
+                    return index === 0 ? (
+                      <TableHead key={column.id} scope="row" className={cn(TOTALS_LABEL_CLASS, className)}>
+                        {pinFirstColumn ? (
+                          <div className={PINNED_FIRST_CONTENT_CLASS}>{totals.label}</div>
+                        ) : (
+                          totals.label
+                        )}
+                      </TableHead>
+                    ) : (
+                      <TableCell key={column.id} className={className}>
+                        {totals.cells?.[column.id]}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              </TableFooter>
             )}
           </Table>
 

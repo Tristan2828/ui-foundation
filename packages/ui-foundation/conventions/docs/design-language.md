@@ -269,6 +269,20 @@ In text with a band, the rest (paragraphs, lists, tables, callouts,
 words in the band rather than its edge; text with no band stays flush. The level reads at a glance: two bands of
 different strength, then a label.
 
+Headings in the text sit under where the text is in the page's outline.
+`headingLevel` on `<Markdown>` and `RichTextEditor` is the HTML level `#`
+renders as: 2 straight under the page's `<h1>` (a form, or a page that is
+the note), 3 under a section's `<h2>` (the default). `##` is one below it
+and `###` two below, never past `<h6>`, so the outline never skips a
+level (axe's heading-order). Only the element moves: each level keeps its
+look, and the editor saves `#` as `#`.
+
+A table wider than the text scrolls sideways. While it does, its box is a
+tab stop and a region named "Table, scrolls sideways: " and its first
+columns ("Item, Size, Colour, …"), so two such tables keep distinct
+names; the arrow keys scroll it (in the editor Home and End too), with
+the `ring` focus ring. A table that fits gets no tab stop and no region.
+
 The same text has four colour tokens of its own: `--link` (`text-link`), a
 link's colour, blue as well as underlined (5.59:1 on white, 8.90:1 on the
 dark page); `--heading-band` (`bg-heading-band`), the `#` band, one step
@@ -330,7 +344,9 @@ set, not a `DataTable` prop:
 - Under the hood, the table primitive's cells read `--table-cell-px`,
   `--table-cell-py` and `--table-head-height`. `large` also redefines
   Tailwind's own scale (`--spacing`, `--text-*`, `--radius`), the `--type-*`
-  roles and `--control-text-sm` (the small Button and Toggle). Each
+  roles and `--control-text-sm` (the small Button and Toggle).
+  `DataTable`'s totals row reads the body cells' tokens, so it is a row's
+  height at every density. Each
   default is the value it always had, so a screen without `data-density`
   doesn't change. The selectors are in `styles/theme.css`. A composite
   reaches `compact` with the `density-compact:` variant (`styles/index.css`:

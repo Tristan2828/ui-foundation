@@ -7,7 +7,13 @@
 export { AppShell, type AppShellProps, type AppShellVersion, type NavEntry, type NavItem, type NavSection } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
-export { DataTable, type DataTableProps, type DataTableWidth, type SortingState } from '@/components/app/data-table'
+export {
+  DataTable,
+  type DataTableProps,
+  type DataTableTotals,
+  type DataTableWidth,
+  type SortingState,
+} from '@/components/app/data-table'
 export { type RowGroup } from '@/components/app/table-groups'
 export { byDay, type ByDayOptions } from '@/lib/group-by-day'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
@@ -35,6 +41,7 @@ export { ErrorState } from '@/components/app/error-state'
 export { InlineCreate, type InlineCreateProps } from '@/components/app/inline-create'
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
+export type { HeadingLevel } from '@/components/app/prose-look'
 export { MockModeBanner } from '@/components/app/mock-mode-banner'
 export { MultiChoice } from '@/components/app/multi-choice'
 export { MultiPick, type MultiPickOption, type MultiPickProps } from '@/components/app/multi-pick'

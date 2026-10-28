@@ -6,7 +6,7 @@ import type { ImageUpload } from '@/lib/image-file'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewSection } from './entity-view'
 import { Markdown } from './markdown'
-import { RichTextEditor } from './rich-text-editor'
+import { RichTextEditor, type RichTextEditorProps } from './rich-text-editor'
 import { MARKDOWN_FIXTURES } from './rich-text-editor.fixtures'
 import { delayedUpload, failingUpload, SAVED_PHOTO } from './image-upload.fixtures'
 
@@ -79,6 +79,7 @@ function Labelled({
   toolbar,
   upload,
   imageMaxSize,
+  headingLevel,
 }: {
   label: string
   markdown: string
@@ -88,6 +89,7 @@ function Labelled({
   toolbar?: boolean | 'floating'
   upload?: ImageUpload
   imageMaxSize?: number
+  headingLevel?: RichTextEditorProps['headingLevel']
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
@@ -108,6 +110,7 @@ function Labelled({
         toolbar={toolbar}
         upload={upload}
         imageMaxSize={imageMaxSize}
+        headingLevel={headingLevel}
       />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
@@ -176,6 +179,62 @@ export const ImageUploads: StoryObj<typeof RichTextEditor> = {
       <Labelled label="floating" markdown={'No bar above, paste or drop still upload.\n'} upload={delayedUpload(300)} toolbar="floating" />
       <Labelled label="noUpload" markdown={'No upload: files are ignored.\n'} />
       <Toaster />
+    </div>
+  ),
+}
+
+// A note with all three heading levels, in three editors where a page
+// would put them: straight under a form's title (`headingLevel={2}`: `#`
+// is an <h2>), under a section's <h2> (the default, from <h3>), and deeper
+// still (`headingLevel={5}`, `##` and `###` both capped at <h6>). The
+// page's outline never skips a level (axe's heading-order), and each saves
+// the Markdown it opened with (e2e/rich-text-editor.spec.ts "heading levels").
+const LEVELS_NOTE = `# Overview
+
+An opening paragraph.
+
+## Details
+
+Some words under the second level.
+
+### Small print
+
+The last words.
+`
+
+export const HeadingLevels: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-6">
+      <h1 className="type-page-title text-foreground">A form with notes</h1>
+      <Labelled label="underPage" markdown={LEVELS_NOTE} headingLevel={2} />
+      <section aria-labelledby="levels-section" className="flex flex-col gap-6">
+        <h2 id="levels-section" className="type-section-title text-foreground">
+          A section with notes
+        </h2>
+        <Labelled label="underSection" markdown={LEVELS_NOTE} />
+        <Labelled label="capped" markdown={LEVELS_NOTE} headingLevel={5} />
+      </section>
+    </div>
+  ),
+}
+
+// A table wider than the field, which scrolls sideways: its box is a tab
+// stop, a region named for its columns, and the arrow keys scroll it. The
+// one under it fits, so its box is neither, until enough columns are
+// added that it scrolls too (e2e/rich-text-editor.spec.ts "table scroll").
+const WIDE_TABLE = `| Item | Size | Colour | Material | Weight | Supplier | Ordered | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Shelf | Large | Grey | Pine | 12kg | Northwind | March | Two boxes |
+| Lamp | Small | White | Steel | 2kg | Southgate | April | Bulb extra |
+
+After the wide table.
+`
+
+export const WideTable: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-6">
+      <Labelled label="wideTable" markdown={WIDE_TABLE} />
+      <Labelled label="narrowTable" markdown={'| Item | Count |\n| --- | --- |\n| Shelf | 2 |\n\nAfter the narrow table.\n'} />
     </div>
   ),
 }

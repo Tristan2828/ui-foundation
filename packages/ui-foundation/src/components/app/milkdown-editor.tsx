@@ -12,11 +12,15 @@
 //   in the text shows as its characters (an uneditable chip, Milkdown's
 //   html node), and HTML pasted as such a chip becomes plain text.
 // - Headings render from <h3>, like <Markdown>: the page owns <h1> and
-//   <h2>; they look like <Markdown>'s (prose-look.ts). A task-list item
-//   renders a real checkbox that toggles it.
+//   <h2>. `headingLevel` moves them to where the field sits in the page's
+//   outline, as it does <Markdown>'s; only the element moves, never the
+//   level the Markdown is saved with (a node view draws it, from the
+//   node's own level). They look like <Markdown>'s (prose-look.ts). A
+//   task-list item renders a real checkbox that toggles it.
 // - Callouts (`> [!NOTE]`, src/lib/markdown-callout.ts): a node of their
 //   own, drawn as <Markdown> draws them, the icon a menu of kinds.
-// - Tables in a box that scrolls sideways, with Notion's "add a row" and
+// - Tables in a box that scrolls sideways (a tab stop the arrow keys
+//   scroll while it does: rich-text-node-views.ts), with Notion's "add a row" and
 //   "add a column" bars, Tab in the last cell adding a row and Enter going
 //   down a column (rich-text-table.ts); the toolbar's Table menu does the
 //   rest.
@@ -84,7 +88,7 @@ import { linkHref, linkRefusal } from '@/lib/link-href'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
-import { headingClass } from './prose-look'
+import { DEFAULT_HEADING_LEVEL, headingBand, headingClass, headingTag, type HeadingLevel } from './prose-look'
 import type { RichTextEditorProps } from './rich-text-editor'
 import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
 import { tableAt, toggleFormat, type FormatId } from './rich-text-formats'
@@ -173,10 +177,13 @@ function htmlToText(fragment: Fragment): Fragment {
   return Fragment.fromArray(nodes)
 }
 
-function headingView(node: ProseNode): NodeView {
+// A heading: the element `headingLevel` gives its level, the look its
+// level has. Marked as a band for PROSE_INSET (`#` and `##`).
+function headingView(node: ProseNode, top: HeadingLevel): NodeView {
   const level = Number(node.attrs.level)
-  const dom = document.createElement(`h${Math.min(level + 2, 6)}`)
+  const dom = document.createElement(headingTag(level, top))
   dom.className = headingClass(level)
+  if (headingBand(level)) dom.dataset.band = ''
   return {
     dom,
     contentDOM: dom,
@@ -308,6 +315,7 @@ export default function MilkdownEditor({
   upload,
   imageAccept,
   imageMaxSize,
+  headingLevel = DEFAULT_HEADING_LEVEL,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -666,9 +674,10 @@ export default function MilkdownEditor({
             return mod && !event.shiftKey && !event.altKey && event.key === 'Enter' && isInTable(view.state)
           },
           nodeViews: {
-            heading: headingView,
+            // The level when it mounts, as with defaultValue.
+            heading: (node) => headingView(node, headingLevel),
             callout: (node, _view, getPos) => calloutView(node, getPos, registry),
-            table: (_node, _view, getPos) => tableView(getPos, registry),
+            table: (node, view, getPos) => tableView(node, view, getPos, registry),
             list_item: (node, view, getPos) =>
               node.attrs.checked == null ? (undefined as unknown as NodeView) : taskItemView(node, view, getPos),
           },
@@ -882,7 +891,7 @@ export default function MilkdownEditor({
             '[&_.ProseMirror]:flex [&_.ProseMirror]:flex-col [&_.ProseMirror]:gap-3',
             // PROSE_INSET, on the editable element: with a heading's band
             // in the text, the rest lines up with the words in it.
-            '[&_.ProseMirror:has(>:is(h3,h4))>:not(h3,h4)]:mx-3',
+            '[&_.ProseMirror:has(>[data-band])>:not([data-band])]:mx-3',
             !inline && '[&_.ProseMirror]:min-h-20',
             // ProseMirror's own required style (prosemirror-view's CSS): spaces
             // as typed, so one at the end of a line isn't kept as &nbsp;.

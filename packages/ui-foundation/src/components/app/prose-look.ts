@@ -44,13 +44,42 @@ export const PROSE = {
 } as const
 
 /**
- * On the text's container: when it has a band (the `<h3>` or `<h4>` a `#`
- * or `##` renders as), everything else is inset by the band's 12px
- * padding, so the text lines up with the words in the band. Text with no
- * band stays flush, where the section's own text starts. A margin, so a
- * list's own indent and a table's or callout's box keep theirs.
+ * On the text's container: when it has a band (a `#` or `##`, marked
+ * `data-band`, whatever element its `headingLevel` makes it), everything
+ * else is inset by the band's 12px padding, so the text lines up with the
+ * words in the band. Text with no band stays flush, where the section's
+ * own text starts. A margin, so a list's own indent and a table's or
+ * callout's box keep theirs.
  */
-export const PROSE_INSET = '[&:has(>:is(h3,h4))>:not(h3,h4)]:mx-3'
+export const PROSE_INSET = '[&:has(>[data-band])>:not([data-band])]:mx-3'
+
+/**
+ * The HTML level a heading in the text can render as. `headingLevel` on
+ * <Markdown> and the editor is the one `#` renders as: where the text
+ * sits in the page's outline (2 straight under the page's <h1>, 3 under a
+ * section's <h2>, the default).
+ */
+export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
+
+/** `#` renders as an <h3>: the page owns the <h1> and each section its <h2>. */
+export const DEFAULT_HEADING_LEVEL: HeadingLevel = 3
+
+/**
+ * The element a heading renders as, by its Markdown level (1 for `#`) and
+ * the level `#` renders as: `##` one below it, `###` two below, and so on,
+ * never past <h6>. Only the element follows the page; the look (the band,
+ * the label) stays the Markdown level's (headingClass), so a `#` looks
+ * like a `#` wherever it sits.
+ */
+export function headingTag(level: number, top: HeadingLevel = DEFAULT_HEADING_LEVEL): `h${HeadingLevel}` {
+  const markdown = Math.max(1, Math.floor(level) || 1)
+  return `h${Math.min(top + markdown - 1, 6) as HeadingLevel}`
+}
+
+/** Whether a heading sits on a band (`#` and `##`): the text beside it is inset (PROSE_INSET). */
+export function headingBand(level: number): boolean {
+  return level <= 2
+}
 
 /** A heading's classes by its Markdown level (1 for `#`). */
 export function headingClass(level: number): string {

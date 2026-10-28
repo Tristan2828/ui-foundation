@@ -311,6 +311,101 @@ test.describe('DataTable highlightRow (#156)', () => {
   })
 })
 
+// `totals` (issue #225): a footer row of sums under the columns they add
+// up. Axe and the token check at rest, in both themes, are
+// storybook-visual's.
+test.describe('DataTable totals (#225)', () => {
+  const totalsRow = (page: Page) => page.locator('tfoot [data-slot="table-totals"]')
+  // The story's own table, never another one on the page.
+  const totalsTable = (page: Page) => page.locator('[data-state="success"]')
+  const state = (page: Page, name: string) => page.getByRole('group', { name: 'State' }).getByRole('button', { name })
+  const open = async (page: Page) => {
+    await page.goto(story('totals'))
+    await expect(page.getByRole('cell', { name: 'Bookshelf', exact: true })).toBeVisible()
+  }
+
+  test('with rows: the label a row header in the first column, each sum under its own column', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await open(page)
+    const label = totalsRow(page).getByRole('rowheader', { name: 'Total · 8 items' })
+    await expect(label).toBeVisible()
+    // One cell per header, so nothing shifts a column over.
+    const headers = totalsTable(page).locator('thead th')
+    const cells = totalsRow(page).locator('th, td')
+    await expect(cells).toHaveCount(await headers.count())
+    // Every row's sum, not the page's five.
+    await expect(cells).toHaveText(['Total · 8 items', '', '18', '$598.24', '$492.00', ''])
+    for (let index = 0; index < (await headers.count()); index++) {
+      const header = (await headers.nth(index).boundingBox())!
+      const cell = (await cells.nth(index).boundingBox())!
+      expect(Math.abs(cell.x - header.x), `column ${index} left`).toBeLessThanOrEqual(1)
+      expect(Math.abs(cell.x + cell.width - (header.x + header.width)), `column ${index} right`).toBeLessThanOrEqual(1)
+    }
+    // A sum's text starts where its column's values do.
+    const price = page.getByRole('cell', { name: '$34.50', exact: true }).locator('span')
+    const priceTotal = cells.nth(3)
+    const textLeft = (element: HTMLElement) => {
+      const range = document.createRange()
+      range.selectNodeContents(element)
+      return range.getBoundingClientRect().left
+    }
+    expect(Math.abs((await priceTotal.evaluate(textLeft)) - (await price.evaluate(textLeft)))).toBeLessThanOrEqual(1)
+    await expect(priceTotal).toHaveCSS('font-variant-numeric', 'tabular-nums')
+  })
+
+  test("a hidden column's sum isn't shown", async ({ page }) => {
+    await open(page)
+    await expect(page.getByRole('columnheader', { name: 'Weight' })).toHaveCount(0)
+    await expect(totalsRow(page)).not.toContainText('kg')
+  })
+
+  test('set apart by a border thicker than a row divider', async ({ page }) => {
+    await open(page)
+    const footer = totalsTable(page).locator('tfoot')
+    const divider = await totalsTable(page).locator('tbody tr').first().evaluate((row) => parseFloat(getComputedStyle(row).borderBottomWidth))
+    const border = await footer.evaluate((element) => parseFloat(getComputedStyle(element).borderTopWidth))
+    expect(border).toBeGreaterThan(divider)
+  })
+
+  for (const each of ['loading', 'empty', 'error'] as const) {
+    test(`${each}: no totals row`, async ({ page }) => {
+      await open(page)
+      await expect(totalsRow(page)).toBeVisible()
+      await state(page, each).click()
+      await expect(page.locator(`[data-state="${each}"]`).first()).toBeVisible()
+      await expect(page.locator('tfoot')).toHaveCount(0)
+      await expect(page.getByText('Total · 8 items')).toHaveCount(0)
+    })
+  }
+
+  test('on a phone: the label stays pinned with the first column, the sums scroll with theirs', async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 852 })
+    await open(page)
+    const container = page.locator('[data-slot="table-container"]', { has: totalsRow(page) })
+    expect(await container.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true)
+    const label = totalsRow(page).getByRole('rowheader')
+    const priceHeader = totalsTable(page).getByRole('columnheader', { name: 'Price', exact: true })
+    const priceTotal = totalsRow(page).locator('td').nth(2)
+    const before = { label: (await label.boundingBox())!.x, total: (await priceTotal.boundingBox())!.x }
+    await container.evaluate((element) => {
+      element.scrollLeft = 100
+    })
+    await expect.poll(async () => (await priceTotal.boundingBox())!.x).toBeLessThan(before.total - 80)
+    expect(Math.abs((await label.boundingBox())!.x - before.label)).toBeLessThanOrEqual(1)
+    expect(Math.abs((await priceTotal.boundingBox())!.x - (await priceHeader.boundingBox())!.x)).toBeLessThanOrEqual(1)
+    // Opaque, as a pinned body cell is, so the sums don't show through.
+    const pageBackground = await page.evaluate(() => {
+      const probe = document.createElement('div')
+      probe.style.backgroundColor = 'var(--background)'
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).backgroundColor
+      probe.remove()
+      return colour
+    })
+    await expect(label).toHaveCSS('background-color', pageBackground)
+  })
+})
+
 // The testing helper that waits for a page's data before reading or
 // scanning it, on a page with two tables, the second loading after the
 // first has its rows. A plain `[data-state="success"]` matches both, which

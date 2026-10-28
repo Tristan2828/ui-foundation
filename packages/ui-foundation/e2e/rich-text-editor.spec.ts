@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
@@ -1212,4 +1212,206 @@ test.describe('image upload', () => {
       expect(results.violations).toEqual([])
     })
   }
+})
+
+// Headings sit where the text does in the page's outline (`headingLevel`,
+// prose-look.ts): the HeadingLevels stories put one note under a page's
+// title (`#` an <h2>), under a section's <h2> (the default, from <h3>),
+// and deeper (from <h5>, capped at <h6>).
+const LEVELS = {
+  editor: 'http://localhost:6006/iframe.html?id=app-richtexteditor--heading-levels&viewMode=story',
+  markdown: 'http://localhost:6006/iframe.html?id=app-markdown--heading-levels&viewMode=story',
+}
+
+// Each heading in the text, as its element and its words.
+function headingsIn(scope: Locator) {
+  return scope
+    .locator('h1, h2, h3, h4, h5, h6')
+    .evaluateAll((elements) => elements.map((element) => `${element.tagName.toLowerCase()} ${element.textContent}`))
+}
+
+test.describe('heading levels', () => {
+  const expected: Record<string, string[]> = {
+    underPage: ['h2 Overview', 'h3 Details', 'h4 Small print'],
+    underSection: ['h3 Overview', 'h4 Details', 'h5 Small print'],
+    capped: ['h5 Overview', 'h6 Details', 'h6 Small print'],
+  }
+
+  for (const where of ['editor', 'markdown'] as const) {
+    const scope = (page: Page, name: string) => (where === 'editor' ? editor(page, name) : page.getByTestId(name))
+
+    test(`${where}: # renders at headingLevel, each level one below it, never past <h6>; <h3> by default`, async ({ page }) => {
+      await page.goto(LEVELS[where])
+      for (const [name, headings] of Object.entries(expected)) {
+        await expect.poll(() => headingsIn(scope(page, name)), { message: name }).toEqual(headings)
+      }
+    })
+
+    test(`${where}: each level looks the same wherever it sits`, async ({ page }) => {
+      await page.goto(LEVELS[where])
+      await expect(scope(page, 'capped').locator('h5')).toBeVisible()
+      const look = (name: string, index: number) =>
+        scope(page, name)
+          .locator('h1, h2, h3, h4, h5, h6')
+          .nth(index)
+          .evaluate((element) => {
+            const style = getComputedStyle(element)
+            return { size: style.fontSize, band: style.backgroundColor, transform: style.textTransform }
+          })
+      for (const index of [0, 1, 2]) {
+        const first = await look('underSection', index)
+        expect(await look('underPage', index)).toEqual(first)
+        expect(await look('capped', index)).toEqual(first)
+      }
+      // The text beside a band is still lined up with the band's words.
+      const start = (selector: string) =>
+        scope(page, 'capped')
+          .locator(selector)
+          .first()
+          .evaluate((element) => element.getBoundingClientRect().left + parseFloat(getComputedStyle(element).paddingLeft))
+      expect(Math.abs((await start('p')) - (await start('h5')))).toBeLessThan(1)
+    })
+
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${where}: the page's outline never skips a level, zero axe violations (${theme})`, async ({ page }) => {
+        await page.goto(`${LEVELS[where]}&globals=theme:${theme}`)
+        await expect(scope(page, 'capped').locator('h5')).toBeVisible()
+        const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region']).analyze()
+        expect(results.violations).toEqual([])
+      })
+    }
+  }
+
+  test('the editor saves the Markdown it opened with: the level moves the element, never the `#`', async ({ page }) => {
+    await page.goto(LEVELS.editor)
+    for (const name of ['underPage', 'capped']) {
+      const opened = (await saved(page, name).textContent())!
+      expect(opened.startsWith('# Overview\n')).toBe(true)
+      await caretAtEnd(page, name)
+      await page.keyboard.type('xyz')
+      await expect(saved(page, name)).toContainText('xyz')
+      for (let i = 0; i < 3; i++) await page.keyboard.press('Backspace')
+      expect(await saved(page, name).textContent()).toBe(opened)
+    }
+    // A line made a Heading 1 under the page's title is an <h2>, saved as `#`.
+    await editor(page, 'underPage').getByText('The last words.').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Control+Shift+Digit1')
+    await expect(saved(page, 'underPage')).toContainText('\n# The last words.\n')
+    await expect(editor(page, 'underPage').locator('h2')).toHaveCount(2)
+  })
+})
+
+// A table wider than the text scrolls sideways; while it does, its box is
+// a tab stop, a region named for its columns, that the arrow keys scroll
+// (prose-table-scroll.ts). The WideTable stories hold one that overflows
+// and one that fits.
+const TABLES = {
+  editor: 'http://localhost:6006/iframe.html?id=app-richtexteditor--wide-table&viewMode=story',
+  markdown: 'http://localhost:6006/iframe.html?id=app-markdown--wide-table&viewMode=story',
+}
+
+// The editor's table box: the first child of its node view.
+function editorTableBox(page: Page, name: string) {
+  return editor(page, name).locator('[data-slot=rich-text-table] > :first-child')
+}
+
+test.describe('table scroll', () => {
+  for (const where of ['editor', 'markdown'] as const) {
+    const box = (page: Page, name: string) =>
+      where === 'editor' ? editorTableBox(page, name) : page.getByTestId(name).locator('[data-slot=table-container]')
+    const scrollLeft = (page: Page) => box(page, 'wideTable').evaluate((element) => element.scrollLeft)
+
+    test(`${where}: a table wider than the text is a named tab stop the arrow keys scroll; one that fits is neither`, async ({
+      page,
+    }) => {
+      await page.goto(TABLES[where])
+      const wide = box(page, 'wideTable')
+      await expect(wide).toHaveAttribute('tabindex', '0')
+      await expect(wide).toHaveAttribute('role', 'region')
+      await expect(page.getByRole('region', { name: 'Table, scrolls sideways: Item, Size, Colour, …', exact: true })).toBeVisible()
+      const narrow = box(page, 'narrowTable')
+      await expect(narrow).toBeVisible()
+      await expect(narrow).not.toHaveAttribute('tabindex')
+      await expect(narrow).not.toHaveAttribute('role')
+      await expect(narrow).not.toHaveAttribute('aria-label')
+
+      await wide.focus()
+      await expect(wide).toBeFocused()
+      expect(await scrollLeft(page)).toBe(0)
+      await page.keyboard.press('ArrowRight')
+      await expect.poll(() => scrollLeft(page)).toBeGreaterThan(0)
+      // Its focus ring shows.
+      expect(await wide.evaluate((element) => getComputedStyle(element).boxShadow)).not.toBe('none')
+    })
+
+    for (const theme of ['light', 'dark'] as const) {
+      test(`${where}: zero axe violations, the wide table's box included (${theme})`, async ({ page }) => {
+        await page.goto(`${TABLES[where]}&globals=theme:${theme}`)
+        await expect(box(page, 'wideTable')).toHaveAttribute('role', 'region')
+        const results = await new AxeBuilder({ page })
+          .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
+          .analyze()
+        expect(results.violations).toEqual([])
+      })
+    }
+  }
+
+  test('editor: Tab from the text reaches the box; End and Home scroll it; typing there adds nothing', async ({ page }) => {
+    await page.goto(TABLES.editor)
+    const wide = editorTableBox(page, 'wideTable')
+    await expect(wide).toHaveAttribute('tabindex', '0')
+    const opened = (await saved(page, 'wideTable').textContent())!
+    await editor(page, 'wideTable').getByText('After the wide table.').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Tab')
+    await expect(wide).toBeFocused()
+    const position = () => wide.evaluate((element) => [element.scrollLeft, element.scrollWidth - element.clientWidth])
+    await page.keyboard.press('End')
+    await expect
+      .poll(async () => {
+        const [left, max] = await position()
+        return max > 0 && Math.abs(left - max) < 1
+      })
+      .toBe(true)
+    await page.keyboard.press('Home')
+    await expect.poll(async () => (await position())[0]).toBe(0)
+    await page.keyboard.type('q')
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(200)
+    expect(await saved(page, 'wideTable').textContent()).toBe(opened)
+  })
+
+  test('editor: a click in a cell puts the caret there, never on the box', async ({ page }) => {
+    await page.goto(TABLES.editor)
+    const wide = editorTableBox(page, 'wideTable')
+    await expect(wide).toHaveAttribute('tabindex', '0')
+    await wide.getByText('Shelf', { exact: true }).click()
+    await expect(editor(page, 'wideTable')).toBeFocused()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type('Z')
+    await expect(saved(page, 'wideTable')).toContainText(/\| ShelfZ +\|/)
+  })
+
+  test('editor: a table that grows past the field becomes a tab stop, and stops being one when it fits again', async ({
+    page,
+  }) => {
+    await page.goto(TABLES.editor)
+    const fixture = page.locator('[data-fixture="narrowTable"]')
+    const narrow = editorTableBox(page, 'narrowTable')
+    await expect(narrow).toBeVisible()
+    await expect(narrow).not.toHaveAttribute('tabindex')
+    for (let i = 0; i < 5; i++) {
+      await narrow.hover()
+      await fixture.getByRole('button', { name: 'Add a column' }).click()
+    }
+    await expect(narrow).toHaveAttribute('tabindex', '0')
+    await expect(narrow).toHaveAttribute('role', 'region')
+    await expect(narrow).toHaveAttribute('aria-label', 'Table, scrolls sideways: Item, Count')
+    for (let i = 0; i < 5; i++) await page.keyboard.press('ControlOrMeta+z')
+    await expect(fixture.locator('tr').first().locator('th')).toHaveCount(2)
+    await expect(narrow).not.toHaveAttribute('tabindex')
+    await expect(narrow).not.toHaveAttribute('role')
+  })
 })

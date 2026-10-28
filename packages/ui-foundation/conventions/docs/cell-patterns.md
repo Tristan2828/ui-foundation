@@ -388,6 +388,14 @@ cell: ({ getValue }) => {
 - An API `format: decimal` arrives as a **string**. `Number()` is exact
   enough to display (about 15 significant digits). Never add up money in
   floats on the client: totals come from the backend.
+- **A column's total goes in `DataTable`'s `totals`**:
+  ``totals={data && { label: `Total · ${data.total} items`, cells: { price: usd(data.totals.price) } }}``.
+  One formatted value per column id, from the list endpoint beside
+  `total`, so it covers every matching row, not only the page. It renders
+  as a footer row: the label in a row header in the first visible column,
+  each value under its column in that column's alignment and tabular
+  figures, above a 2px border. A hidden column's value isn't shown, and
+  the row is hidden while loading, on error and when empty.
 - **Right-aligning isn't available yet.** `DataTable`'s `meta.align` only
   supports `'center'`, and a right-aligned cell under a left-aligned header
   looks broken. Stay left-aligned until a real column needs
