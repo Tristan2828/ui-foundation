@@ -14,6 +14,7 @@ export {
   type NavSection,
 } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
+export { Board, type BoardColumn, type BoardMoveTarget, type BoardProps } from '@/components/app/board'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export {
   DataTable,

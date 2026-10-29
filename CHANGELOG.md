@@ -7,6 +7,24 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.36.0 — A board
+
+Additive, so a minor.
+
+- **New: `Board`**, a list as a column per value of one choice field, a
+  card per record, moved by dragging it to another column or by its Move
+  menu (the keyboard and a phone, and values with no column, such as
+  Archived). `onMove` is the app's save, through `useRecordUpdate`;
+  without it the board is read-only. It owns its loading, error and
+  empty states, and its columns take a `count` and a `footer` for a list
+  longer than a page. Story `app/Board`, axe in both themes,
+  `e2e/board.spec.ts`; `design-language.md` "A list as a board".
+
+**How an app adopts it:** bump both packages and run `sync`. Nothing
+changes for an app that doesn't use it. An app with its own board
+replaces its columns, drag and Move menu with `Board`, keeping its card
+content and its save.
+
 ## 4.35.0 — MCP tools, scheduled jobs and Web Push move into the backend package
 
 Additive to both packages, so a minor (#230). Nothing changes on the wire
