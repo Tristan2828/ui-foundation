@@ -3,12 +3,14 @@ import { useTheme } from 'next-themes'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
+import { BottomBar, BOTTOM_BAR_PADDING } from '@/components/app/app-shell-bottom-bar'
 import {
   activeNavTo,
   childrenOpen,
   navGroups,
   navPageLabel,
   withChildren,
+  type BottomBarItem,
   type NavEntry,
   type NavGroup,
   type NavItem,
@@ -44,7 +46,7 @@ import {
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
-export type { NavEntry, NavItem, NavSection } from '@/components/app/app-shell-nav'
+export type { BottomBarItem, NavEntry, NavItem, NavSection } from '@/components/app/app-shell-nav'
 export type { AppShellVersion } from '@/components/app/app-shell-version'
 
 export type AppShellProps = {
@@ -96,6 +98,16 @@ export type AppShellProps = {
    * `@tristan2828/ui-foundation/vite` (`import.meta.env.VITE_BUILD_*`).
    */
   version?: AppShellVersion
+  /**
+   * A bar of shortcuts at the bottom of a phone's screen (below the md
+   * breakpoint), in thumb reach: at most five, each a page
+   * (`{ to, label, icon }`) or a nav section by its label
+   * (`{ group: 'Every day', icon }`, with an optional shorter `label`),
+   * which opens a sheet of that section's entries. The item holding the
+   * current page is marked. The header's menu button stays, for
+   * everything. The shell pads its content so nothing sits under the bar.
+   */
+  bottomBar?: readonly BottomBarItem[]
 }
 
 // Must match SIDEBAR_COOKIE_NAME in ../ui/sidebar.tsx, which writes the
@@ -295,7 +307,15 @@ function AppShellSkeleton() {
   )
 }
 
-export function AppShell({ title, logo: Logo, nav, sidebarExtra, defaultSidebarOpen = true, version }: AppShellProps) {
+export function AppShell({
+  title,
+  logo: Logo,
+  nav,
+  sidebarExtra,
+  defaultSidebarOpen = true,
+  version,
+  bottomBar,
+}: AppShellProps) {
   const { user, status, error, retry, logout } = useAuth()
   const location = useLocation()
   const reporter = useErrorReporter()
@@ -413,10 +433,11 @@ export function AppShell({ title, logo: Logo, nav, sidebarExtra, defaultSidebarO
             <div className="flex-1" />
             <ThemeToggle />
           </header>
-          <div className="flex-1 p-6">
+          <div className={cn('flex-1 p-6', bottomBar?.length && BOTTOM_BAR_PADDING)}>
             <Outlet />
           </div>
         </SidebarInset>
+        {bottomBar && bottomBar.length > 0 && <BottomBar items={bottomBar} nav={nav} activeTo={activeTo} />}
       </SidebarProvider>
       {/* top-center, not sonner's bottom-right default: that sat on
           DataTable's pagination buttons, which are bottom-right too.

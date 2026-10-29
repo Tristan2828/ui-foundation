@@ -59,6 +59,15 @@ Additive, so a minor.
   icon rail they take no icons: the entry looks current while one of them
   is, and its tooltip names them. `navTargets` and the a11y suite include
   them.
+- **New: `AppShell`'s `bottomBar`** (#240): on a phone (below the md
+  breakpoint) a bar of up to five shortcuts at the bottom of the screen,
+  each a page (`{ to, label, icon }`) or a nav section by its label
+  (`{ group, label?, icon }`) that opens a bottom sheet of that section's
+  entries, children under their parents. The sheet takes focus, closes on
+  Escape and on navigation. The item holding the current page is marked
+  `aria-current`. The shell pads its content by the bar's height and
+  `env(safe-area-inset-bottom)`; toasts already sit at the top, clear of
+  it. The header's menu button stays. New type `BottomBarItem`.
 - **The long synced docs open with an index** (#232): `add-an-entity.md`,
   `cell-patterns.md`, `design-language.md` and `timed-screens.md` (every
   doc over 300 lines) list each section, and each of the entity
@@ -87,6 +96,8 @@ Additive, so a minor.
 - **A nav worked out per page to fake sub-entries:** declare the
   module's pages as its entry's `children` in `src/nav.ts` and drop the
   per-location nav and the indent icon.
+- **A hand-built phone bottom bar:** pass its items as `bottomBar`
+  and delete the layout route, its sheets and its padding.
 - **A hand-drawn chart of one value over time:** replace it with
   `LineChart`.
 - **A long hub:** pass `collapsible` and a `storageKey` per widget to

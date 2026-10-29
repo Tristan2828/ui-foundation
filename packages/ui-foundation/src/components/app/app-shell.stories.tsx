@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
   BookOpenIcon,
+  HouseIcon,
   HomeIcon,
   LibraryIcon,
   ListChecksIcon,
@@ -15,7 +16,7 @@ import { useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { AuthContext, type AuthContextValue } from '@/auth/auth-context'
 import { Button } from '@/components/ui/button'
-import { AppShell, type AppShellVersion } from './app-shell'
+import { AppShell, type AppShellVersion, type BottomBarItem } from './app-shell'
 import type { NavEntry } from './app-shell-nav'
 import { EntityView } from './entity-view'
 
@@ -30,7 +31,8 @@ import { EntityView } from './entity-view'
 // opening a list on a saved view (SavedView, #188), and the browser tab's
 // title from the nav and from a record's view (Home, WithView…, #186),
 // the app's logo beside its title and alone on the rail (WithLogo…,
-// #211), and a module's pages under its entry (Nested…, #239).
+// #211), a module's pages under its entry (Nested…, #239), and the
+// phone's bottom bar (BottomBar, #240; e2e/app-shell-bottom-bar.spec.ts).
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -181,6 +183,7 @@ function Shell({
   nav,
   path,
   version,
+  bottomBar,
   sidebarOpen = true,
   view,
   logo,
@@ -188,6 +191,7 @@ function Shell({
   nav: NavEntry[]
   path: string
   version?: AppShellVersion
+  bottomBar?: BottomBarItem[]
   sidebarOpen?: boolean
   /** Shows ExampleLogo as the app's logo. */
   logo?: boolean
@@ -205,6 +209,7 @@ function Shell({
             nav={nav}
             defaultSidebarOpen={sidebarOpen}
             version={version}
+            bottomBar={bottomBar}
           />
         ),
         children: [
@@ -286,3 +291,15 @@ export const Nested: Story = { args: { nav: NESTED, path: '/media/channels/3' } 
 export const NestedOnParent: Story = { args: { nav: NESTED, path: '/media/videos' } }
 export const NestedElsewhere: Story = { args: { nav: NESTED, path: '/' } }
 export const NestedRail: Story = { args: { nav: NESTED, path: '/media/channels/3', sidebarOpen: false } }
+
+// The phone's bottom bar (#240): Home, two sections (one with a shorter
+// label) and a page, on a page inside Collections. Below the md breakpoint
+// only, so open it at a phone's width.
+const BOTTOM_BAR: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { group: 'Collections', icon: LibraryIcon },
+  { group: 'Home and money', label: 'Household', icon: WalletIcon },
+  { to: '/media/comics', label: 'Comics', icon: BookOpenIcon },
+]
+
+export const BottomBar: Story = { args: { nav: NESTED, path: '/media/channels/3', bottomBar: BOTTOM_BAR } }

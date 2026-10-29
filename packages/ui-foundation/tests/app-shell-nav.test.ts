@@ -7,6 +7,7 @@ import { HomeIcon, ListIcon, TagIcon } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 import {
   activeNavTo,
+  bottomBarCurrent,
   childrenOpen,
   navGroups,
   navPageLabel,
@@ -157,5 +158,30 @@ describe('children', () => {
     expect(childrenOpen(youtube, '/')).toBe(false)
     expect(childrenOpen({ ...youtube, open: 'always' }, '/')).toBe(true)
     expect(childrenOpen(home, '/')).toBe(false)
+  })
+})
+
+// #240: which item of the phone's bottom bar holds the current page.
+describe('bottomBarCurrent', () => {
+  const channels: NavItem = { to: '/media/channels', label: 'Channels', icon: TagIcon }
+  const youtube: NavItem = { to: '/media/videos', label: 'YouTube', icon: ListIcon, children: [channels] }
+  const nav: NavEntry[] = [home, { label: 'Collections', items: [youtube] }, { label: 'Tasks', items: [tasks, categories] }]
+  const bar = [
+    { to: '/', label: 'Home', icon: HomeIcon },
+    { group: 'Collections', icon: ListIcon },
+    { group: 'Tasks', icon: ListIcon },
+    { to: '/tasks/categories', label: 'Categories', icon: TagIcon },
+  ]
+
+  it("is a page's own link first, else the section it's in, children included", () => {
+    expect(bottomBarCurrent(bar, nav, '/')).toBe(0)
+    expect(bottomBarCurrent(bar, nav, '/media/channels')).toBe(1)
+    expect(bottomBarCurrent(bar, nav, '/tasks')).toBe(2)
+    expect(bottomBarCurrent(bar, nav, '/tasks/categories')).toBe(3)
+  })
+
+  it('is none off the nav, or for a section the nav lacks', () => {
+    expect(bottomBarCurrent(bar, nav, undefined)).toBeUndefined()
+    expect(bottomBarCurrent([{ group: 'Missing', icon: ListIcon }], nav, '/tasks')).toBeUndefined()
   })
 })
