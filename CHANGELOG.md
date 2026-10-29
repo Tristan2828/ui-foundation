@@ -7,6 +7,111 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.34.0 — Nested nav, a phone bottom bar, a line chart, folding widgets
+
+Additive, so a minor. Nine requests from apps (#232–#240).
+
+- **New: `DataTable`'s `meta.align: 'right'`** (#237), for money and
+  counts. The header and cells right-align, a sort arrow sits on the
+  label's left so the label's right edge lines up with the numbers, and
+  `totals` cells follow their column. `cell-patterns.md` §11 now says to
+  right-align money and counts.
+
+- **New: `defineA11ySuite`'s `checkSidebar`** (#234), default `true`.
+  With `false`, the suite checks only the `nav` pages and routes it's
+  given, without the test that the sidebar links exactly `nav`, so a
+  modular app can keep one a11y spec per module. `loggedOutRoutes` is
+  now optional, so only one of those files needs to check `/login`.
+
+- **New: `headingFrom` on `Markdown` and `RichTextEditor`** (#235).
+  `'hash'` (the default) is 4.33's mapping, `#` at `headingLevel`.
+  `'text'` puts the text's own highest heading at `headingLevel`, the
+  rest keeping their distance, so notes that start at `##` (an export
+  from Notion, a README) don't skip a level under the page's heading.
+  The editor reads it from the text it opens with; a heading added above
+  it renders at `headingLevel` too. The look and the saved Markdown
+  don't change. New type `HeadingFrom`.
+
+- **New: `WidgetCard`'s `collapsible`, `defaultCollapsed` and
+  `storageKey`** (#233). A chevron button at the header's end (named by
+  the title, `aria-expanded`, `aria-controls` the body) folds the card to
+  its header; the header's link stays. With `storageKey` the choice is
+  remembered in `localStorage` on that device, and where storage is
+  blocked it still folds for the page's life. The body is hidden, not
+  unmounted. `useMuted` now runs on the same remembered-flag store.
+
+- **New: `LineChart`** (#238): a small value-over-time chart for a
+  record's page, plain SVG, no chart dependency. One series (`points`,
+  `{ x, y }` oldest first, spaced by their dates), an optional dashed
+  `target` with its label, one point marked (`mark`: `min`, `max`,
+  `last`) with its value, `formatY`/`formatX`, `height`. The line is
+  `info-text` and the target `success-text`, each 3:1 on a card in both
+  themes (the glyph check measures them). A skeleton while loading, an
+  empty line, a dot for one point. A screen reader gets the figure's
+  name, a summary and a table of every point. New types `LineChartPoint`,
+  `LineChartMark`, `LineChartProps`. `design-language.md` "A value over
+  time" says how to use it.
+- **New: `NavItem`'s `children` and `open`** (#239): a module's own
+  pages listed under its entry, one level deep, as shadcn's sidebar
+  sub-menu (a list inside the entry's item, so assistive tech reads them
+  as its pages). They show while the page is the entry or one of them
+  (`open: 'current'`, the default) or always (`'always'`); otherwise
+  they're in the page but hidden, as a folded section's are. The most
+  specific match is current and names the tab, children included. On the
+  icon rail they take no icons: the entry looks current while one of them
+  is, and its tooltip names them. `navTargets` and the a11y suite include
+  them.
+- **New: `AppShell`'s `bottomBar`** (#240): on a phone (below the md
+  breakpoint) a bar of up to five shortcuts at the bottom of the screen,
+  each a page (`{ to, label, icon }`) or a nav section by its label
+  (`{ group, label?, icon }`) that opens a bottom sheet of that section's
+  entries, children under their parents. The sheet takes focus, closes on
+  Escape and on navigation. The item holding the current page is marked
+  `aria-current`. The shell pads its content by the bar's height and
+  `env(safe-area-inset-bottom)`; toasts already sit at the top, clear of
+  it. The header's menu button stays. New type `BottomBarItem`.
+- **The long synced docs open with an index** (#232): `add-an-entity.md`,
+  `cell-patterns.md`, `design-language.md` and `timed-screens.md` (every
+  doc over 300 lines) list each section, and each of the entity
+  playbook's steps, with its anchor and the lines it spans, so an agent
+  reads the index and then only those lines. Written from the headings
+  by the package's `npm run docs:index`, and checked in its
+  `verify:fast`. `AGENTS.md`'s block says to use it.
+
+- **New: Python dependencies are allowlisted too** (#236).
+  `ui-foundation-backend` ships `python -m foundation_backend.scripts.check_deps`:
+  run from `backend/`, it fails on any requirement in `pyproject.toml`
+  (`dependencies`, every optional group, every `[dependency-groups]`
+  group) that isn't in `../deps-allowlist.json`'s new `python` list, or
+  isn't pinned with `==`. The template lists its backend's seventeen and
+  runs it first in `backend/scripts/verify.sh`.
+
+**How an app adopts it:** bump the version, run `sync`.
+
+- **A money or count column:** add `meta: { align: 'right' }` to it.
+- **The backend's dependencies:** bump `ui-foundation-backend` to this
+  version, add a `"python": [...]` list to `deps-allowlist.json` naming
+  every distribution in `backend/pyproject.toml` (the template's is the
+  starting point), pin any that aren't with `==`, and add
+  `"$PY" -m foundation_backend.scripts.check_deps` to the top of
+  `backend/scripts/verify.sh`'s checks.
+- **A nav worked out per page to fake sub-entries:** declare the
+  module's pages as its entry's `children` in `src/nav.ts` and drop the
+  per-location nav and the indent icon.
+- **A hand-built phone bottom bar:** pass its items as `bottomBar`
+  and delete the layout route, its sheets and its padding.
+- **A hand-drawn chart of one value over time:** replace it with
+  `LineChart`.
+- **A long hub:** pass `collapsible` and a `storageKey` per widget to
+  the `WidgetCard`s read less often.
+- **Notes imported or pasted from another tool:** add
+  `headingFrom="text"` beside their `headingLevel`, and drop any a11y
+  workaround for `heading-order` on them.
+- **An app split into modules:** an `e2e/a11y-<module>.spec.ts` per
+  module, each passing its own entries as `nav` with
+  `checkSidebar: false`, and one spec with the whole nav (and
+  `loggedOutRoutes`) that keeps the sidebar check.
+
 ## 4.33.0 — Totals rows, list items that open, headings that follow the page
 
 Additive, so a minor. Four requests from apps (#222, #223, #225, #226).

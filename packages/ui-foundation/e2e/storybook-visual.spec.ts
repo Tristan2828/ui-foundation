@@ -112,10 +112,18 @@ const COMPOSITE_STORIES = [
   // The app's logo beside its title, and alone on the rail (#211).
   { id: 'app-appshell--with-logo', mustShow: 'Page at /projects/7' },
   { id: 'app-appshell--with-logo-rail', mustShow: 'Page at /projects/7' },
+  // A module's pages under its entry, open, and on the rail (#239).
+  { id: 'app-appshell--nested', mustShow: 'Page at /media/channels/3' },
+  { id: 'app-appshell--nested-rail', mustShow: 'Page at /media/channels/3' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
   { id: 'app-widgetcard--brand-mark', mustShow: 'Timber stains compared' },
+  // A value over time against a target, every state (#238).
+  { id: 'app-linechart--default', mustShow: 'Standing desk' },
+  { id: 'app-linechart--all-states', mustShow: 'No points yet' },
+  // Cards that fold to their header, one folded at rest (#233).
+  { id: 'app-widgetcard--collapsible', mustShow: 'Fix the gate latch' },
   // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
   // slot under foreground text, the number, the note, the action, in
   // every state, and at compact.
@@ -166,6 +174,11 @@ const GLYPH_STORIES: {
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },
+  // A chart's line (info-text) and target (success-text) on a card (#238).
+  { id: 'app-linechart--default' },
+  { id: 'app-linechart--all-states' },
+  // The fold chevrons (#233).
+  { id: 'app-widgetcard--collapsible' },
   // A summary line's chevron and the row's Move, Duplicate and Remove icons (#222).
   { id: 'app-listeditor--rows-that-open' },
   // A place's slot-tinted icon on its own wash, the external mark, a brand

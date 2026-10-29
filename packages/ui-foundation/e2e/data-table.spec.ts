@@ -341,16 +341,37 @@ test.describe('DataTable totals (#225)', () => {
       expect(Math.abs(cell.x - header.x), `column ${index} left`).toBeLessThanOrEqual(1)
       expect(Math.abs(cell.x + cell.width - (header.x + header.width)), `column ${index} right`).toBeLessThanOrEqual(1)
     }
-    // A sum's text starts where its column's values do.
+    // A right-aligned column (#237): a sum's text ends where its column's
+    // values do, and so does the header's label.
     const price = page.getByRole('cell', { name: '$34.50', exact: true }).locator('span')
     const priceTotal = cells.nth(3)
-    const textLeft = (element: HTMLElement) => {
+    const textRight = (element: HTMLElement) => {
       const range = document.createRange()
       range.selectNodeContents(element)
-      return range.getBoundingClientRect().left
+      return range.getBoundingClientRect().right
     }
-    expect(Math.abs((await priceTotal.evaluate(textLeft)) - (await price.evaluate(textLeft)))).toBeLessThanOrEqual(1)
+    const valueRight = await price.evaluate(textRight)
+    expect(Math.abs((await priceTotal.evaluate(textRight)) - valueRight)).toBeLessThanOrEqual(1)
     await expect(priceTotal).toHaveCSS('font-variant-numeric', 'tabular-nums')
+    const quantityHeader = totalsTable(page).getByRole('columnheader', { name: 'Quantity', exact: true })
+    const quantity = page.getByRole('cell', { name: '2', exact: true }).first().locator('span')
+    expect(Math.abs((await quantityHeader.evaluate(textRight)) - (await quantity.evaluate(textRight)))).toBeLessThanOrEqual(1)
+  })
+
+  test("a right-aligned sortable column: the arrow left of the label, the label's right edge on the values'", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await open(page)
+    const sort = totalsTable(page).getByRole('columnheader', { name: 'Price', exact: true }).getByRole('button')
+    const arrow = (await sort.locator('svg').boundingBox())!
+    const label = await sort.evaluate((button) => {
+      const range = document.createRange()
+      range.selectNodeContents([...button.childNodes].find((node) => node.nodeType === Node.TEXT_NODE)!)
+      return range.getBoundingClientRect().toJSON() as DOMRect
+    })
+    expect(arrow.x + arrow.width).toBeLessThanOrEqual(label.left + 1)
+    const value = page.getByRole('cell', { name: '$34.50', exact: true }).locator('span')
+    const valueRight = await value.evaluate((element) => element.getBoundingClientRect().right)
+    expect(Math.abs(label.right - valueRight)).toBeLessThanOrEqual(1)
   })
 
   test("a hidden column's sum isn't shown", async ({ page }) => {

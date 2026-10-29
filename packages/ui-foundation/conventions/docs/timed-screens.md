@@ -1,5 +1,18 @@
 # Timed Screens
 
+<!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
+## Index
+
+- [The view](#the-view) · lines 34–69
+- [The clock](#the-clock) · lines 71–101
+- [Sound](#sound) · lines 103–150
+- [Background tabs](#background-tabs) · lines 152–206
+  - [Interruptions](#interruptions) · lines 186–206
+- [Motion](#motion) · lines 208–212
+- [Testing a timed screen in Playwright](#testing-a-timed-screen-in-playwright) · lines 214–368
+
+<!-- /index -->
+
 A screen that runs on its own for minutes: a paced timer, a step-by-step
 player, a recipe step, anything followed from across the room. The
 package has the parts, so a screen like this is assembled, not rebuilt:

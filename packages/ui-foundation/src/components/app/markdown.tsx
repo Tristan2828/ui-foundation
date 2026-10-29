@@ -42,6 +42,7 @@ import { cn } from 'cn'
 import { ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
+import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
   CALLOUT_BOX,
   CALLOUT_LOOK,
@@ -51,6 +52,7 @@ import {
   headingTag,
   PROSE,
   PROSE_INSET,
+  type HeadingFrom,
   type HeadingLevel,
 } from './prose-look'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
@@ -90,8 +92,8 @@ function NotesTable(props: ComponentProps<'table'>) {
 // A heading by its Markdown level: the element the page's outline gives
 // it (headingTag), the look its level has. The text's colour first, so a
 // level's own (`###`'s muted label) wins.
-function heading(level: number, top: HeadingLevel): Components['h1'] {
-  const Tag = headingTag(level, top)
+function heading(level: number, top: HeadingLevel, textTop: number): Components['h1'] {
+  const Tag = headingTag(level, top, textTop)
   return (props) => (
     <Tag {...omitNode(props)} data-band={headingBand(level) || undefined} className={cn('text-foreground', headingClass(level))} />
   )
@@ -179,14 +181,16 @@ const COMPONENTS: Components = {
   td: (props) => <TableCell {...omitNode(props)} className="border-r border-border whitespace-normal last:border-r-0" />,
 }
 
-// The components for each `headingLevel`, made once each.
-const BY_LEVEL = new Map<HeadingLevel, Components>()
-function componentsFor(top: HeadingLevel): Components {
-  let components = BY_LEVEL.get(top)
+// The components for each `headingLevel` and level that takes it (`#`,
+// or the text's highest with `headingFrom="text"`), made once each.
+const BY_LEVEL = new Map<string, Components>()
+function componentsFor(top: HeadingLevel, textTop: number): Components {
+  const key = `${top}:${textTop}`
+  let components = BY_LEVEL.get(key)
   if (!components) {
     components = { ...COMPONENTS }
-    for (const level of [1, 2, 3, 4, 5, 6] as const) components[`h${level}`] = heading(level, top)
-    BY_LEVEL.set(top, components)
+    for (const level of [1, 2, 3, 4, 5, 6] as const) components[`h${level}`] = heading(level, top, textTop)
+    BY_LEVEL.set(key, components)
   }
   return components
 }
@@ -201,11 +205,25 @@ export type MarkdownProps = {
    * past <h6>. Only the element changes: each level looks the same.
    */
   headingLevel?: HeadingLevel
+  /**
+   * Which heading takes `headingLevel`: `'hash'` (the default), `#`;
+   * `'text'`, the text's own highest, for notes that start at `##` (an
+   * import, a paste). The rest keep their distance from it. The text
+   * itself is never rewritten.
+   */
+  headingFrom?: HeadingFrom
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
-export function Markdown({ children, headingLevel = DEFAULT_HEADING_LEVEL, className, ...rest }: MarkdownProps) {
-  const components = useMemo(() => componentsFor(headingLevel), [headingLevel])
+export function Markdown({
+  children,
+  headingLevel = DEFAULT_HEADING_LEVEL,
+  headingFrom = 'hash',
+  className,
+  ...rest
+}: MarkdownProps) {
+  const textTop = useMemo(() => (headingFrom === 'text' ? textTopHeading(children) : 1), [headingFrom, children])
+  const components = useMemo(() => componentsFor(headingLevel, textTop), [headingLevel, textTop])
   return (
     <div
       data-slot="markdown"

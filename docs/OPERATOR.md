@@ -41,8 +41,8 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
   sync`. Upgrading each app regularly is what keeps the shared code shared.
 - **New dependencies.** An agent that needs one writes the case in
   `docs/BLOCKERS.md` and stops. Decide in allowlist terms: the package has
-  `packages/ui-foundation/deps-allowlist.json`, each app has its own (the
-  Python side has no enforcer yet). Expect auto-mode to refuse the install
+  `packages/ui-foundation/deps-allowlist.json`, each app has its own (its
+  `python` list is the backend's, checked by `verify:backend` since 4.34). Expect auto-mode to refuse the install
   itself; you run it.
 - **Secrets.** Database passwords, tokens and API keys never go in a chat
   with an agent. Write them to the gitignored `backend/.env` yourself.

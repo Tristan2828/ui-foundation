@@ -29,7 +29,7 @@ import { lazy, Suspense } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
-import type { HeadingLevel } from './prose-look'
+import type { HeadingFrom, HeadingLevel } from './prose-look'
 
 const MilkdownEditor = lazy(() => import('./milkdown-editor'))
 
@@ -95,6 +95,13 @@ export type RichTextEditorProps = {
    * when it mounts.
    */
   headingLevel?: HeadingLevel
+  /**
+   * Which heading takes `headingLevel`: `'hash'` (the default), `#`;
+   * `'text'`, the text's own highest when it mounts, for notes that start
+   * at `##`, as in `<Markdown>`. A heading added above it renders at
+   * `headingLevel` too. The Markdown saved is never rewritten.
+   */
+  headingFrom?: HeadingFrom
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string

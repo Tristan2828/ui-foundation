@@ -87,8 +87,8 @@ export const Images: StoryObj<typeof Markdown> = {
 
 // The same note where a page would put it: straight under the page's
 // title (`headingLevel={2}`), under a section's <h2> (the default, from
-// <h3>), and deeper still (`headingLevel={5}`, capped at <h6>). The
-// page's outline never skips a level (axe's heading-order); each level
+// <h3>), and deeper still (`headingLevel={5}`, capped at <h6>), and two
+// notes that start below `#` (`headingFrom="text"`). The page's outline never skips a level (axe's heading-order); each level
 // looks the same wherever it sits (e2e/rich-text-editor.spec.ts "heading
 // levels").
 const LEVELS_NOTE = `# Overview
@@ -104,12 +104,35 @@ Some words under the second level.
 The last words.
 `
 
+// Notes with no `#`, as pasted or imported (`headingFrom="text"`): the
+// text's own highest heading takes `headingLevel`, so `##` is the <h2>
+// under the page's title, and a note starting at `###` starts there too.
+const FROM_TEXT_NOTE = `## Imported details
+
+Words from another tool.
+
+### Imported small print
+
+More words.
+`
+
+const FROM_TEXT_DEEP_NOTE = `### Deep small print
+
+The deepest words.
+`
+
 export const HeadingLevels: StoryObj<typeof Markdown> = {
   render: () => (
     <div className="flex max-w-xl flex-col gap-6">
       <h1 className="type-page-title text-foreground">A page of notes</h1>
       <Markdown data-testid="underPage" headingLevel={2}>
         {LEVELS_NOTE}
+      </Markdown>
+      <Markdown data-testid="fromText" headingLevel={2} headingFrom="text">
+        {FROM_TEXT_NOTE}
+      </Markdown>
+      <Markdown data-testid="fromTextDeep" headingLevel={2} headingFrom="text">
+        {FROM_TEXT_DEEP_NOTE}
       </Markdown>
       <section aria-labelledby="levels-section" className="flex flex-col gap-6">
         <h2 id="levels-section" className="type-section-title text-foreground">

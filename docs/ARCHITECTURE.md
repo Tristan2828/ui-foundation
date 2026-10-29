@@ -259,6 +259,14 @@ the app:
 `template/` is an app like any other. After changing anything in
 `conventions/`, run `npm run sync` and commit what it writes.
 
+Every convention doc over 300 lines opens with an index (4.34, #232):
+each section and each of the playbook's numbered steps, with the lines
+it spans, so an agent reads the index and then only those lines. It is
+written from the headings by `npm run docs:index` in the package
+(`scripts/doc-index.mjs`), never by hand, and the package's `verify:fast`
+fails when one is stale. After editing a doc there: `docs:index`, then
+`sync`.
+
 ## backend-foundation (4.25)
 
 Until 4.25 every app copied `template/backend/` whole, so a security fix in
@@ -278,7 +286,9 @@ limits, the rate window, error reporting and the error handlers, the
 production start-up checks, the SPA mount, the routers for `/auth/*`,
 `/environment`, `/client-errors` and the OAuth sign-in, the
 `set_password`/`enable_totp`/`disable_totp` scripts (`python -m
-foundation_backend.scripts.<name>`), the `signed_in` test helper, and
+foundation_backend.scripts.<name>`), the Python dependency check
+(`scripts.check_deps`: `backend/pyproject.toml` against
+`deps-allowlist.json`'s `python` list, run by the app's `verify.sh`), the `signed_in` test helper, and
 reference copies of the migrations that create its tables.
 
 **What stays copy-in:** everything that is the app's (its entities,

@@ -12,7 +12,8 @@ import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 // with a different trailing element (a tone badge, a note and a switch, a
 // muted time on external links). Default is the page as loaded; All
 // states is every widget in each of the four states; Brand mark is a card
-// about an outside service, titled with that service's mark (#211). Axe, the token check
+// about an outside service, titled with that service's mark (#211);
+// Collapsible folds and remembers each card (#233). Axe, the token check
 // and the glyph check measure both in both themes and at the large
 // density (e2e/storybook-visual.spec.ts).
 const meta: Meta = {
@@ -204,6 +205,36 @@ export const BrandMark: StoryObj = {
       <h1 className="type-page-title text-foreground">Home</h1>
       <div className={GRID}>
         <Widget widget={RECENTLY_IN_SERVICE} state="success" />
+      </div>
+    </div>
+  ),
+}
+
+// A hub with more widgets than a phone holds (#233): each folds to its
+// header with the chevron, remembered on this device (`storageKey`).
+// Saved links starts folded (`defaultCollapsed`) until someone opens it
+// (e2e/widget-card.spec.ts).
+export const Collapsible: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Home</h1>
+      <div className={GRID}>
+        {WIDGETS.map((widget) => (
+          <WidgetCard
+            key={widget.title}
+            title={widget.title}
+            icon={widget.icon}
+            link={widget.link}
+            emptyMessage={widget.emptyMessage}
+            skeletonRows={widget.rows}
+            collapsible
+            storageKey={`ui-foundation:stories:hub.${widget.title}`}
+            defaultCollapsed={widget === SAVED_LINKS}
+            {...stateProps('success')}
+          >
+            {widget.body}
+          </WidgetCard>
+        ))}
       </div>
     </div>
   ),

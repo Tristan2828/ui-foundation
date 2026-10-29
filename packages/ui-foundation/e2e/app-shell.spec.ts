@@ -208,3 +208,40 @@ test.describe("the app's logo (#211)", () => {
     expect(Math.abs(logoBox.x + logoBox.width / 2 - (iconBox.x + iconBox.width / 2))).toBeLessThanOrEqual(1)
   })
 })
+
+// #239: a module's own pages under its entry.
+test.describe('nested entries', () => {
+  const entry = (page: Page, name: string) =>
+    nav(page).locator('[data-sidebar="menu-item"]').filter({ has: page.getByRole('link', { name, exact: true }) }).first()
+
+  test("on one of a module's pages: its pages are a list inside its entry, the page current, the tab named for it", async ({ page }) => {
+    await open(page, 'nested')
+    await expect(current(page)).toHaveText('Channels')
+    await expect(nav(page).getByRole('link', { name: 'YouTube' })).not.toHaveAttribute('aria-current')
+    const youtube = entry(page, 'YouTube')
+    await expect(youtube.getByRole('list').getByRole('link')).toHaveText(['Channels', 'Playlists'])
+    // Another module's pages wait until you're in it; an `open: 'always'` entry's never do.
+    await expect(nav(page).getByRole('link', { name: 'Series' })).toBeHidden()
+    await expect(nav(page).getByRole('link', { name: 'Accounts' })).toBeVisible()
+    await expect(page).toHaveTitle('Channels · Example')
+  })
+
+  test("on the module's own page its pages show too; elsewhere they fold away", async ({ page }) => {
+    await open(page, 'nested-on-parent')
+    await expect(current(page)).toHaveText('YouTube')
+    await expect(nav(page).getByRole('link', { name: 'Playlists' })).toBeVisible()
+    await open(page, 'nested-elsewhere')
+    await expect(nav(page).getByRole('link', { name: 'Channels' })).toBeHidden()
+    await expect(nav(page).getByRole('link', { name: 'Series' })).toBeHidden()
+  })
+
+  test('on the icon rail: no child icons, the module looks current, its tooltip names its pages', async ({ page }) => {
+    await open(page, 'nested-rail')
+    await expect(nav(page).getByRole('link', { name: 'Channels' })).toBeHidden()
+    const youtube = nav(page).getByRole('link', { name: 'YouTube' })
+    await expect(youtube).toHaveAttribute('data-active', '')
+    await expect(youtube).not.toHaveAttribute('aria-current')
+    await youtube.hover()
+    await expect(page.locator('[data-slot=tooltip-content][data-open]')).toHaveText('YouTube: Channels, Playlists')
+  })
+})

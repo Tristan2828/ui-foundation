@@ -65,15 +65,26 @@ export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
 export const DEFAULT_HEADING_LEVEL: HeadingLevel = 3
 
 /**
+ * Which heading in the text takes `headingLevel`: `'hash'` (the default),
+ * `#`, whatever the text holds; `'text'`, the text's own highest heading,
+ * so notes that start at `##` (an export from Notion, a README) put their
+ * first heading straight under the page's, not a level further down.
+ */
+export type HeadingFrom = 'hash' | 'text'
+
+/**
  * The element a heading renders as, by its Markdown level (1 for `#`) and
  * the level `#` renders as: `##` one below it, `###` two below, and so on,
- * never past <h6>. Only the element follows the page; the look (the band,
- * the label) stays the Markdown level's (headingClass), so a `#` looks
- * like a `#` wherever it sits.
+ * never past <h6>. `textTop` is the level that renders at `top` instead
+ * of `#` (`headingFrom="text"`: the text's highest), and a heading above
+ * it renders at `top` too. Only the element follows the page; the look
+ * (the band, the label) stays the Markdown level's (headingClass), so a
+ * `#` looks like a `#` wherever it sits.
  */
-export function headingTag(level: number, top: HeadingLevel = DEFAULT_HEADING_LEVEL): `h${HeadingLevel}` {
+export function headingTag(level: number, top: HeadingLevel = DEFAULT_HEADING_LEVEL, textTop = 1): `h${HeadingLevel}` {
   const markdown = Math.max(1, Math.floor(level) || 1)
-  return `h${Math.min(top + markdown - 1, 6) as HeadingLevel}`
+  const below = Math.max(0, markdown - Math.max(1, Math.floor(textTop) || 1))
+  return `h${Math.min(top + below, 6) as HeadingLevel}`
 }
 
 /** Whether a heading sits on a band (`#` and `##`): the text beside it is inset (PROSE_INSET). */

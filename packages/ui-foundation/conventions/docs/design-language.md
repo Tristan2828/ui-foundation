@@ -1,5 +1,24 @@
 # Design Language
 
+<!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
+## Index
+
+- [Semantic tones](#semantic-tones) · lines 28–56
+- [The three badge styles](#the-three-badge-styles) · lines 58–75
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 77–106
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 108–121
+- [Logos and brand marks](#logos-and-brand-marks) · lines 123–167
+- [Categorical colour](#categorical-colour) · lines 169–239
+- [Typography](#typography) · lines 241–323
+  - [Written text (notes)](#written-text-notes) · lines 272–323
+- [Density](#density) · lines 325–382
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 384–459
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 461–519
+- [Notices](#notices) · lines 521–549
+- [A value over time](#a-value-over-time) · lines 551–584
+
+<!-- /index -->
+
 The part of this foundation a consuming app cannot cheaply get right on
 its own: color that carries meaning, checked for contrast in both themes.
 Tokens and styles here **grow freely**, in the foundation package, so every
@@ -275,7 +294,11 @@ renders as: 2 straight under the page's `<h1>` (a form, or a page that is
 the note), 3 under a section's `<h2>` (the default). `##` is one below it
 and `###` two below, never past `<h6>`, so the outline never skips a
 level (axe's heading-order). Only the element moves: each level keeps its
-look, and the editor saves `#` as `#`.
+look, and the editor saves `#` as `#`. Text pasted or imported from
+another tool often has no `#` and starts at `##`; `headingFrom="text"`
+puts the text's own highest heading at `headingLevel` instead, the rest
+keeping their distance from it (the editor reads it from the text it
+opens with). The text isn't rewritten.
 
 A table wider than the text scrolls sideways. While it does, its box is a
 tab stop and a region named "Table, scrolls sideways: " and its first
@@ -411,6 +434,12 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
   default) and names the card's region, so the page's outline and its
   landmarks list every widget. Give each widget on a page a different
   title.
+- **More widgets than a phone screen holds:** make the ones read less
+  often `collapsible`, with a `storageKey` per widget
+  (`"<app>:hub.<widget>"`) so a card folded stays folded on that device,
+  and `defaultCollapsed` for one that should start folded. The chevron
+  at the header's end is named by the title; the header's link stays
+  while folded.
 - **A row is one line:** its text is a link (`to` for a route in the
   app, `href` for an external address, which opens in a new tab with the
   external-link mark) or plain text, cut with an ellipsis, the whole of
@@ -518,3 +547,38 @@ under its own header.
   region in its place, so one appearing or clearing later is announced.
   Elsewhere, put it in a status region that is rendered before it
   changes.
+
+## A value over time
+
+`LineChart` (4.34) is the one chart: a single series on a record's page
+(a price checked daily, a weight, a balance), oldest first, with an
+optional dashed `target` and one point marked (`mark`: `'min'`, `'max'`
+or `'last'`) with its value.
+
+```tsx
+<LineChart
+  label="Price over time"
+  points={data.history.map(({ checkedOn, price }) => ({ x: checkedOn, y: Number(price) }))}
+  target={{ y: Number(data.targetPrice), label: 'Buy at' }}
+  mark="min"
+  formatY={usd}
+  formatX={(x) => formatPlainDate(String(x), { month: 'short', day: 'numeric' })}
+  isLoading={isLoading}
+/>
+```
+
+- **Points sit apart by their x** when every x is a day (`'YYYY-MM-DD'`)
+  or a number, so a gap in the checks shows as a gap; otherwise they're
+  evenly spaced.
+- **The colours are fixed:** the line in `info-text`, the target in
+  `success-text`, each clearing 3:1 on a card in both themes. Don't
+  restyle them; a chart that needs another meaning (a limit not to
+  cross) is a request for the foundation.
+- **It owns its states:** a skeleton at `height` while loading, one
+  quiet line with no points (`emptyMessage`), a dot for one point.
+- **A screen reader gets the values, not the picture:** the figure is
+  named by `label`, with a summary (first, last, lowest, highest, the
+  target) and a table of every point. Give it the same `formatY` and
+  `formatX` the page uses for those values elsewhere.
+- One series and a few dozen points. Several series, zoom or tooltips
+  are a request for the foundation, not a hand-drawn chart in the app.

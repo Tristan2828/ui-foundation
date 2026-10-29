@@ -1,10 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { BookOpenIcon, HomeIcon, ListChecksIcon, ListIcon, TagIcon } from 'lucide-react'
+import {
+  BookOpenIcon,
+  HouseIcon,
+  HomeIcon,
+  LibraryIcon,
+  ListChecksIcon,
+  ListIcon,
+  ListVideoIcon,
+  PlaySquareIcon,
+  TagIcon,
+  TvIcon,
+  WalletIcon,
+} from 'lucide-react'
 import { useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { AuthContext, type AuthContextValue } from '@/auth/auth-context'
 import { Button } from '@/components/ui/button'
-import { AppShell, type AppShellVersion } from './app-shell'
+import { AppShell, type AppShellVersion, type BottomBarItem } from './app-shell'
 import type { NavEntry } from './app-shell-nav'
 import { EntityView } from './entity-view'
 
@@ -18,8 +30,9 @@ import { EntityView } from './entity-view'
 // that fold (Collapsible, and on the icon rail CollapsibleRail), an entry
 // opening a list on a saved view (SavedView, #188), and the browser tab's
 // title from the nav and from a record's view (Home, WithView…, #186),
-// and the app's logo beside its title and alone on the rail (WithLogo…,
-// #211).
+// the app's logo beside its title and alone on the rail (WithLogo…,
+// #211), a module's pages under its entry (Nested…, #239), and the
+// phone's bottom bar (BottomBar, #240; e2e/app-shell-bottom-bar.spec.ts).
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -89,6 +102,47 @@ const SAVED_VIEW: NavEntry[] = [
   },
 ]
 
+// A module's pages under its entry (#239): YouTube's and Comics' show
+// while you're in that module; Budget's always.
+const NESTED: NavEntry[] = [
+  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  {
+    label: 'Collections',
+    items: [
+      {
+        to: '/media/videos',
+        label: 'YouTube',
+        icon: PlaySquareIcon,
+        children: [
+          { to: '/media/channels', label: 'Channels', icon: TvIcon },
+          { to: '/media/playlists', label: 'Playlists', icon: ListVideoIcon },
+        ],
+      },
+      {
+        to: '/media/comics',
+        label: 'Comics',
+        icon: BookOpenIcon,
+        children: [
+          { to: '/media/series', label: 'Series', icon: LibraryIcon },
+          { to: '/media/reading-lists', label: 'Reading lists', icon: ListIcon },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Home and money',
+    items: [
+      {
+        to: '/budget',
+        label: 'Budget',
+        icon: WalletIcon,
+        open: 'always',
+        children: [{ to: '/budget/accounts', label: 'Accounts', icon: TagIcon }],
+      },
+    ],
+  },
+]
+
 // One project's view, for the tab's title (#186). `loaded` false holds it
 // in its loading state until "Finish loading" is pressed, so the record's
 // title arrives after the nav's; true has it from the first render, so
@@ -129,6 +183,7 @@ function Shell({
   nav,
   path,
   version,
+  bottomBar,
   sidebarOpen = true,
   view,
   logo,
@@ -136,6 +191,7 @@ function Shell({
   nav: NavEntry[]
   path: string
   version?: AppShellVersion
+  bottomBar?: BottomBarItem[]
   sidebarOpen?: boolean
   /** Shows ExampleLogo as the app's logo. */
   logo?: boolean
@@ -153,6 +209,7 @@ function Shell({
             nav={nav}
             defaultSidebarOpen={sidebarOpen}
             version={version}
+            bottomBar={bottomBar}
           />
         ),
         children: [
@@ -227,3 +284,22 @@ export const WithViewNoDocumentTitle: Story = {
 // The app's logo (#211): before the title, and alone at the top of the rail.
 export const WithLogo: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true } }
 export const WithLogoRail: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true, sidebarOpen: false } }
+
+// A module's pages under its entry (#239), on one of them, on the module's
+// own entry, elsewhere, and on the icon rail.
+export const Nested: Story = { args: { nav: NESTED, path: '/media/channels/3' } }
+export const NestedOnParent: Story = { args: { nav: NESTED, path: '/media/videos' } }
+export const NestedElsewhere: Story = { args: { nav: NESTED, path: '/' } }
+export const NestedRail: Story = { args: { nav: NESTED, path: '/media/channels/3', sidebarOpen: false } }
+
+// The phone's bottom bar (#240): Home, two sections (one with a shorter
+// label) and a page, on a page inside Collections. Below the md breakpoint
+// only, so open it at a phone's width.
+const BOTTOM_BAR: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { group: 'Collections', icon: LibraryIcon },
+  { group: 'Home and money', label: 'Household', icon: WalletIcon },
+  { to: '/media/comics', label: 'Comics', icon: BookOpenIcon },
+]
+
+export const BottomBar: Story = { args: { nav: NESTED, path: '/media/channels/3', bottomBar: BOTTOM_BAR } }

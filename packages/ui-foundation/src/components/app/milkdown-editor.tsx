@@ -87,6 +87,7 @@ import { acceptAttribute } from '@/lib/image-file'
 import { linkHref, linkRefusal } from '@/lib/link-href'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
+import { textTopHeading } from '@/lib/markdown-top-heading'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
 import { DEFAULT_HEADING_LEVEL, headingBand, headingClass, headingTag, type HeadingLevel } from './prose-look'
 import type { RichTextEditorProps } from './rich-text-editor'
@@ -179,9 +180,9 @@ function htmlToText(fragment: Fragment): Fragment {
 
 // A heading: the element `headingLevel` gives its level, the look its
 // level has. Marked as a band for PROSE_INSET (`#` and `##`).
-function headingView(node: ProseNode, top: HeadingLevel): NodeView {
+function headingView(node: ProseNode, top: HeadingLevel, textTop: number): NodeView {
   const level = Number(node.attrs.level)
-  const dom = document.createElement(headingTag(level, top))
+  const dom = document.createElement(headingTag(level, top, textTop))
   dom.className = headingClass(level)
   if (headingBand(level)) dom.dataset.band = ''
   return {
@@ -316,6 +317,7 @@ export default function MilkdownEditor({
   imageAccept,
   imageMaxSize,
   headingLevel = DEFAULT_HEADING_LEVEL,
+  headingFrom = 'hash',
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -409,6 +411,8 @@ export default function MilkdownEditor({
     const root = rootRef.current
     if (!root) return
     const original = defaultValue
+    // The level that takes headingLevel, read from the text it loads.
+    const textTop = headingFrom === 'text' ? textTopHeading(original) : 1
     let baseline: string | null = null
     let cancelled = false
 
@@ -675,7 +679,7 @@ export default function MilkdownEditor({
           },
           nodeViews: {
             // The level when it mounts, as with defaultValue.
-            heading: (node) => headingView(node, headingLevel),
+            heading: (node) => headingView(node, headingLevel, textTop),
             callout: (node, _view, getPos) => calloutView(node, getPos, registry),
             table: (node, view, getPos) => tableView(node, view, getPos, registry),
             list_item: (node, view, getPos) =>

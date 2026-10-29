@@ -1,6 +1,6 @@
 {
   "name": "@tristan2828/ui-foundation",
-  "version": "4.33.0",
+  "version": "4.34.0",
   "description": "Shared UI foundation for contract-first, database-backed React apps: shadcn primitives, DataTable/EntityForm composites, auth, the gateway error seam, design tokens, lint rules and the AI playbook.",
   "license": "MIT",
   "repository": {
@@ -65,10 +65,11 @@
     "prepack": "npm run build",
     "gen:api": "openapi-typescript ./openapi/foundation.yaml -o ./src/api/schema.ts",
     "lint": "eslint .",
+    "docs:index": "node scripts/doc-index.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort",
-    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.ts && tsc -b && eslint . --max-warnings 0 && node bin/ui-foundation.mjs check-deps && npm run build && vitest run",
+    "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.ts && node scripts/doc-index.mjs --check && tsc -b && eslint . --max-warnings 0 && node bin/ui-foundation.mjs check-deps && npm run build && vitest run",
     "verify": "npm run verify:fast && playwright test -c playwright.storybook.config.ts"
   },
   "peerDependencies": {

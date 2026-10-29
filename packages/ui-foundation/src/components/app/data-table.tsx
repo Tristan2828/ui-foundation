@@ -42,7 +42,8 @@ export type SortingState = { id: string; desc: boolean }[]
 // it), so the merge applies whichever of the two a column def imports from.
 // A column opts in with `meta: { align: 'center' }` — right for a cell whose
 // content is a single glyph, which otherwise reads off-centre under a
-// wider header.
+// wider header — or `'right'`, for money and counts, so their digits (and
+// the totals row's sums) line up on the right.
 declare module '@tanstack/table-core' {
   /* eslint-disable @typescript-eslint/no-unused-vars -- interface merging
      requires matching the original's exact type parameter list; none of the
@@ -52,7 +53,7 @@ declare module '@tanstack/table-core' {
     TData extends RowData,
     TValue extends CellData = CellData,
   > {
-    align?: 'center'
+    align?: 'center' | 'right'
   }
   /* eslint-enable @typescript-eslint/no-unused-vars */
 }
@@ -268,6 +269,10 @@ const HIDDEN_HEAD_CLASS = 'h-0 p-0'
 
 // A group's heading row (`groupBy`): a little air above, so the groups
 // read apart, and the page's background, never the zebra stripe.
+// A column's `meta.align` as the class its header, cells and totals take.
+const ALIGN_CLASS = { center: 'text-center', right: 'text-right' } as const
+const alignClass = (align: 'center' | 'right' | undefined) => align && ALIGN_CLASS[align]
+
 const GROUP_HEADING_CLASS = 'h-auto bg-background pt-4 pb-1.5 align-bottom'
 
 // `width="content"`: from a table area 80rem wide, as wide as the columns
@@ -460,7 +465,7 @@ export function DataTable<TData extends Record<string, unknown>>({
           className={cn(
             pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
             pinLastColumn && index === row.getVisibleCells().length - 1 && PINNED_LAST_COLUMN_CLASS,
-            cell.column.columnDef.meta?.align === 'center' && 'text-center',
+            alignClass(cell.column.columnDef.meta?.align),
           )}
         >
           {pinFirstColumn && index === 0 ? (
@@ -533,6 +538,9 @@ export function DataTable<TData extends Record<string, unknown>>({
                         className={cn(
                           'flex items-center gap-1 text-foreground',
                           header.column.columnDef.meta?.align === 'center' && 'w-full justify-center',
+                          // The arrow on the label's left, so the label's
+                          // right edge lines up with the numbers under it.
+                          header.column.columnDef.meta?.align === 'right' && 'ml-auto flex-row-reverse',
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
@@ -557,7 +565,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                           pinLastColumn &&
                             index === headerGroup.headers.length - 1 &&
                             PINNED_LAST_COLUMN_CLASS,
-                          header.column.columnDef.meta?.align === 'center' && 'text-center',
+                          alignClass(header.column.columnDef.meta?.align),
                         )}
                         aria-sort={
                           !canSort
@@ -623,7 +631,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                     const className = cn(
                       pinFirstColumn && index === 0 && PINNED_TOTALS_LABEL_CLASS,
                       pinLastColumn && index === visibleColumnCount - 1 && PINNED_LAST_COLUMN_CLASS,
-                      column.columnDef.meta?.align === 'center' && 'text-center',
+                      alignClass(column.columnDef.meta?.align),
                     )
                     return index === 0 ? (
                       <TableHead key={column.id} scope="row" className={cn(TOTALS_LABEL_CLASS, className)}>

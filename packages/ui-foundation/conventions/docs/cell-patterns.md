@@ -1,5 +1,42 @@
 # Cell Patterns
 
+<!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
+## Index
+
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 65–84
+- [1. Plain text](#1-plain-text) · lines 86–93
+- [2. Icon + label](#2-icon--label) · lines 95–118
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 120–133
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 135–212
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 160–212
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 214–227
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 229–241
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 243–264
+- [8. Date, relative](#8-date-relative) · lines 266–303
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 305–353
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 323–353
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 355–405
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 373–405
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 407–447
+- [12. Boolean](#12-boolean) · lines 449–479
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 481–517
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 501–517
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 519–536
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 538–647
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 564–647
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 649–684
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 686–753
+- [18. Editable value](#18-editable-value) · lines 755–1170
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1014–1071
+  - [In a table's rows](#in-a-tables-rows) · lines 1073–1158
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1160–1170
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1172–1238
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1240–1304
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1306–1371
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1373–1401
+
+<!-- /index -->
+
 How a column's value should *look*. Each entry is markup plus the bits a
 first attempt gets wrong — **not components**: the lookup maps are always
 per-entity, and only the shape is reusable. Copy the markup into your
@@ -375,14 +412,23 @@ A count, a quantity, a price.
 // Module scope: one formatter per column, not one per cell render.
 const priceFormatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' })
 
-cell: ({ getValue }) => {
-  const value = getValue<string | null>()
-  return value == null ? emptyCell : <span className="tabular-nums">{priceFormatter.format(Number(value))}</span>
+{
+  accessorKey: 'price',
+  header: 'Price',
+  meta: { align: 'right' },
+  cell: ({ getValue }) => {
+    const value = getValue<string | null>()
+    return value == null ? emptyCell : <span className="tabular-nums">{priceFormatter.format(Number(value))}</span>
+  },
 }
 ```
 
-- `tabular-nums` gives every digit the same width, so values line up down
-  the column even when left-aligned.
+- **Money and counts are right-aligned** (`meta: { align: 'right' }`), with
+  `tabular-nums`, so the units line up down the column and with the
+  `totals` under it. The header's label is right-aligned too, a sort
+  arrow on its left, so its right edge sits on the values'. A number
+  that's an identifier or a year (an order number, 2024) isn't a
+  quantity: leave it left-aligned like text.
 - **Zero is a value, not an empty cell.** Test `value == null`, never
   falsiness, or `0` renders as an em dash.
 - An API `format: decimal` arrives as a **string**. `Number()` is exact
@@ -396,10 +442,6 @@ cell: ({ getValue }) => {
   each value under its column in that column's alignment and tabular
   figures, above a 2px border. A hidden column's value isn't shown, and
   the row is hidden while loading, on error and when empty.
-- **Right-aligning isn't available yet.** `DataTable`'s `meta.align` only
-  supports `'center'`, and a right-aligned cell under a left-aligned header
-  looks broken. Stay left-aligned until a real column needs
-  `align: 'right'`, then raise it for the foundation.
 - The currency code comes from the data or the plan, never a guess. The
   template's `USD` is the demo's.
 - **Cost:** none to speak of. It's the plain-text pattern with formatting.

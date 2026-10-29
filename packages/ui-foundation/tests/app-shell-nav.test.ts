@@ -7,6 +7,8 @@ import { HomeIcon, ListIcon, TagIcon } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 import {
   activeNavTo,
+  bottomBarCurrent,
+  childrenOpen,
   navGroups,
   navPageLabel,
   navPathname,
@@ -133,5 +135,53 @@ describe('navPageLabel', () => {
 
   it('names an entry whose `to` has a query string', () => {
     expect(navPageLabel([home, { ...tasks, to: '/tasks?status=active', label: 'Active' }], '/tasks/3')).toBe('Active')
+  })
+})
+
+// #239: a module's own pages under its entry.
+describe('children', () => {
+  const channels: NavItem = { to: '/media/channels', label: 'Channels', icon: TagIcon }
+  const playlists: NavItem = { to: '/media/playlists', label: 'Playlists', icon: TagIcon }
+  const youtube: NavItem = { to: '/media/videos', label: 'YouTube', icon: ListIcon, children: [channels, playlists] }
+  const nested: NavEntry[] = [home, { label: 'Collections', items: [youtube] }]
+
+  it('are pages of the nav: listed after their parent, current, and naming the tab', () => {
+    expect(navTargets(nested)).toEqual(['/', '/media/videos', '/media/channels', '/media/playlists'])
+    expect(activeNavTo(nested, '/media/channels/3')).toBe('/media/channels')
+    expect(activeNavTo(nested, '/media/videos/9')).toBe('/media/videos')
+    expect(navPageLabel(nested, '/media/playlists')).toBe('Playlists')
+  })
+
+  it("show while the page is the parent or one of them, or always with open: 'always'", () => {
+    expect(childrenOpen(youtube, '/media/videos')).toBe(true)
+    expect(childrenOpen(youtube, '/media/channels')).toBe(true)
+    expect(childrenOpen(youtube, '/')).toBe(false)
+    expect(childrenOpen({ ...youtube, open: 'always' }, '/')).toBe(true)
+    expect(childrenOpen(home, '/')).toBe(false)
+  })
+})
+
+// #240: which item of the phone's bottom bar holds the current page.
+describe('bottomBarCurrent', () => {
+  const channels: NavItem = { to: '/media/channels', label: 'Channels', icon: TagIcon }
+  const youtube: NavItem = { to: '/media/videos', label: 'YouTube', icon: ListIcon, children: [channels] }
+  const nav: NavEntry[] = [home, { label: 'Collections', items: [youtube] }, { label: 'Tasks', items: [tasks, categories] }]
+  const bar = [
+    { to: '/', label: 'Home', icon: HomeIcon },
+    { group: 'Collections', icon: ListIcon },
+    { group: 'Tasks', icon: ListIcon },
+    { to: '/tasks/categories', label: 'Categories', icon: TagIcon },
+  ]
+
+  it("is a page's own link first, else the section it's in, children included", () => {
+    expect(bottomBarCurrent(bar, nav, '/')).toBe(0)
+    expect(bottomBarCurrent(bar, nav, '/media/channels')).toBe(1)
+    expect(bottomBarCurrent(bar, nav, '/tasks')).toBe(2)
+    expect(bottomBarCurrent(bar, nav, '/tasks/categories')).toBe(3)
+  })
+
+  it('is none off the nav, or for a section the nav lacks', () => {
+    expect(bottomBarCurrent(bar, nav, undefined)).toBeUndefined()
+    expect(bottomBarCurrent([{ group: 'Missing', icon: ListIcon }], nav, '/tasks')).toBeUndefined()
   })
 })

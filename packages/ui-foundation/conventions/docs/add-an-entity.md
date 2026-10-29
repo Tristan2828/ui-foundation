@@ -1,5 +1,27 @@
 # Add an Entity
 
+<!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
+## Index
+
+- [The reference files](#the-reference-files) · lines 37–59
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–702
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 99–106
+  - Step 2: `npm run gen:api` · lines 107–108
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 109–120
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 121–130
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 131–135
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–598
+  - Step 7: Register routes · lines 599–609
+  - Step 8: Add Playwright specs for all three screens · lines 610–684
+  - Step 9: Register the nav entry and route names · lines 685–699
+  - Step 10: `npm run verify`. · lines 700–702
+- [What not to copy](#what-not-to-copy) · lines 704–730
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 732–749
+- [Deleting](#deleting) · lines 751–780
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 782–803
+
+<!-- /index -->
+
 The most-repeated task in this system: add a full CRUD entity — spec, mocks,
 gateway, tests, table, view, form, routes — following the patterns in
 `src/routes/widgets/`. This file is the only copy of the steps, written for
@@ -449,7 +471,8 @@ is a filled-in example while the Widgets demo is still here).
      breaks). Give `<Markdown>` and `RichTextEditor` a `headingLevel` for
      where they sit: the default (3) in an `EntityView` section,
      `headingLevel={2}` for a `RichTextEditor` on a form straight under
-     the page's `<h1>`.
+     the page's `<h1>`. Text that's imported or pasted from another
+     tool (often starting at `##`) also gets `headingFrom="text"`.
    - **Quick actions: only the fields the plan's `Quick actions` line
      names**, each a control that saves on its own (cell pattern 17,
      `widget-quick-actions.tsx`). A `yes/no` is a
@@ -580,7 +603,10 @@ is a filled-in example while the Widgets demo is still here).
    app's name alone). For a list that should open on one of its saved
    views, `to` carries that view's query string
    (`/widgets?status=active`): the entry is still matched on its path, so
-   it stays current on the list and the records under it.
+   it stays current on the list and the records under it. A page that
+   belongs to a module already in the nav (its categories, its channels)
+   goes in that module's entry's `children`, not a new top-level entry:
+   it shows under the module while you're in it.
 8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the
@@ -662,7 +688,11 @@ is a filled-in example while the Widgets demo is still here).
    of a full record and of the sparse one to its `viewRoutes` (the table
    page comes from `src/nav.ts`, which the suite is given as `nav`: each
    nav page is a test of its own, so the suite's time per test stays flat
-   as the app grows; the form and the view aren't in the nav). With fields edited in place, copy `e2e/a11y.spec.ts`'s
+   as the app grows; the form and the view aren't in the nav). An app
+   with one a11y spec per module (`e2e/a11y-<module>.spec.ts`) adds them
+   to its module's file instead, which passes only that module's nav
+   entries with `checkSidebar: false`; one file keeps the whole nav and
+   the sidebar check. With fields edited in place, copy `e2e/a11y.spec.ts`'s
    "editing in place" block for them: a field open, saving and refused,
    the rich-text editor, an open list, a list edited in place (an item
    open, one being added, a refused change), and the leave prompt, in

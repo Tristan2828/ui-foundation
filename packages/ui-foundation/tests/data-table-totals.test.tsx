@@ -11,7 +11,7 @@ type Item = { id: number; name: string; price: string; weight: string }
 
 const columns: LegacyColumnDef<Item, unknown>[] = [
   { id: 'name', header: 'Item', cell: ({ row }) => row.original.name },
-  { id: 'price', header: 'Price', cell: ({ row }) => row.original.price },
+  { id: 'price', header: 'Price', meta: { align: 'right' }, cell: ({ row }) => row.original.price },
   { id: 'weight', header: 'Weight', cell: ({ row }) => row.original.weight },
   { id: 'actions', header: 'Actions', meta: { align: 'center' }, cell: () => null },
 ]
@@ -65,6 +65,13 @@ describe('DataTable totals', () => {
     expect(cells[0].attributes).toContain('scope="row"')
     // A column's own alignment carries down to its footer cell.
     expect(cells[3].attributes).toMatch(/class="[^"]*text-center/)
+    expect(cells[1].attributes).toMatch(/class="[^"]*text-right/)
+  })
+
+  it("right-aligns a 'right' column's header and cells", () => {
+    const html = render()
+    expect(html).toMatch(/<th[^>]*class="[^"]*text-right[^"]*"[^>]*>Price<\/th>/)
+    expect(html).toMatch(/<td[^>]*class="[^"]*text-right[^"]*"[^>]*>\$34.50<\/td>/)
   })
 
   it('leaves out a hidden column, and a value for it', () => {
