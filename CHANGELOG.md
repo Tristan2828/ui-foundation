@@ -5,9 +5,9 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.34.0 — Requests from apps
+## 4.34.0 — Nested nav, a phone bottom bar, a line chart, folding widgets
 
-Additive, so a minor.
+Additive, so a minor. Nine requests from apps (#232–#240).
 
 - **New: `DataTable`'s `meta.align: 'right'`** (#237), for money and
   counts. The header and cells right-align, a sort arrow sits on the
