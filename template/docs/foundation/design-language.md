@@ -3,19 +3,20 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 28–56
-- [The three badge styles](#the-three-badge-styles) · lines 58–75
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 77–106
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 108–121
-- [Logos and brand marks](#logos-and-brand-marks) · lines 123–167
-- [Categorical colour](#categorical-colour) · lines 169–239
-- [Typography](#typography) · lines 241–323
-  - [Written text (notes)](#written-text-notes) · lines 272–323
-- [Density](#density) · lines 325–382
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 384–459
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 461–519
-- [Notices](#notices) · lines 521–549
-- [A value over time](#a-value-over-time) · lines 551–584
+- [Semantic tones](#semantic-tones) · lines 29–57
+- [The three badge styles](#the-three-badge-styles) · lines 59–76
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 78–107
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 109–122
+- [Logos and brand marks](#logos-and-brand-marks) · lines 124–168
+- [Categorical colour](#categorical-colour) · lines 170–240
+- [Typography](#typography) · lines 242–324
+  - [Written text (notes)](#written-text-notes) · lines 273–324
+- [Density](#density) · lines 326–383
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 385–460
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 462–520
+- [Notices](#notices) · lines 522–550
+- [A value over time](#a-value-over-time) · lines 552–585
+- [A list as a board](#a-list-as-a-board) · lines 587–638
 
 <!-- /index -->
 
@@ -582,3 +583,56 @@ or `'last'`) with its value.
   `formatX` the page uses for those values elsewhere.
 - One series and a few dozen points. Several series, zoom or tooltips
   are a request for the foundation, not a hand-drawn chart in the app.
+
+## A list as a board
+
+`Board` (4.36) shows a list as a column per value of one choice field (a
+status, a stage), a card per record, and moves a record by moving its
+card. It is a second view of a list, on its own page beside the
+`DataTable`, never a replacement: filters, sorting and saved views stay
+the table's.
+
+```tsx
+<Board
+  aria-label="Projects by stage"
+  columns={STAGES.map((stage) => ({ value: stage, name: STAGE_NAMES[stage], label: <StageLabel value={stage} />, count: totals[stage] }))}
+  items={projects}
+  getId={(project) => project.id}
+  getColumn={(project) => project.stage}
+  getName={(project) => project.name}
+  renderCard={(project) => <ProjectCard project={project} />}
+  onMove={(project, stage) => saves.get(project.id)?.({ stage })}
+  moveTo={[...STAGE_TARGETS, { value: 'archived', label: 'Archived' }]}
+  isLoading={isLoading}
+  error={error}
+  onRetry={refetch}
+  emptyTitle="No projects yet"
+/>
+```
+
+- **A card moves two ways:** dragged to another column, and its Move
+  button, a menu of `moveTo` (the columns by default) for the keyboard
+  and a phone, where there is no drag. A value with no column (Archived,
+  Dropped) is only in the menu, and takes the card off the board. After
+  a move from the menu the focus is back on the card's Move button in
+  its new column (on the board, if the card left it), and a status line
+  tells a screen reader "Moved <name> to <column>".
+- **A column has a name in words** for the menu and that line: its
+  `label` when that is a string, else give `name` (a label with a glyph
+  in it is not plain text). The columns are headings, h2 by default;
+  `headingLevel` puts them under a section's heading.
+- **Saving is the app's**, through `useRecordUpdate`, optimistic: cards
+  are placed by `getColumn` on the record, so a move shows at once and a
+  refusal puts the card back with the toast. Without `onMove` the board
+  is read-only, for a computed field.
+- **A column is its own query** when a list can outgrow one page: give
+  it `count` (the total) and a `footer` linking the table filtered to it
+  when it holds more than it shows.
+- **The card is short:** the title (a link to the record, cell pattern
+  16) and three or four values as glyphs, the same cells the table uses.
+  An empty value is left out, not shown as a dash.
+- It owns its states: skeleton columns, `ErrorState`, and an empty
+  board; an empty column is a muted line, not an empty state. The
+  columns share the width, at least 16rem each, and scroll sideways with
+  snap points; a phone shows one column at a time, with the edge of the
+  next one showing.
