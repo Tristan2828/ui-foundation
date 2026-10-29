@@ -145,7 +145,9 @@ export function WidgetCard({
                   aria-expanded={!collapsed}
                   aria-controls={contentId}
                   onClick={() => setFolded(!collapsed)}
-                  className="-my-1 -mr-1.5"
+                  // The button's own open look (a filled background) would
+                  // read as pressed: the chevron says it.
+                  className="-my-1 -mr-1.5 aria-expanded:not-hover:bg-transparent"
                 >
                   <ChevronDownIcon aria-hidden="true" className={cn('transition-transform', collapsed && '-rotate-90')} />
                 </Button>

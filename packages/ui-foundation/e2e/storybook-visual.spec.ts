@@ -116,6 +116,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
   { id: 'app-widgetcard--brand-mark', mustShow: 'Timber stains compared' },
+  // A value over time against a target, every state (#238).
+  { id: 'app-linechart--default', mustShow: 'Standing desk' },
+  { id: 'app-linechart--all-states', mustShow: 'No points yet' },
   // Cards that fold to their header, one folded at rest (#233).
   { id: 'app-widgetcard--collapsible', mustShow: 'Fix the gate latch' },
   // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
@@ -168,6 +171,9 @@ const GLYPH_STORIES: {
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },
+  // A chart's line (info-text) and target (success-text) on a card (#238).
+  { id: 'app-linechart--default' },
+  { id: 'app-linechart--all-states' },
   // The fold chevrons (#233).
   { id: 'app-widgetcard--collapsible' },
   // A summary line's chevron and the row's Move, Duplicate and Remove icons (#222).

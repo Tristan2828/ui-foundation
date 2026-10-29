@@ -38,6 +38,17 @@ Additive, so a minor.
   blocked it still folds for the page's life. The body is hidden, not
   unmounted. `useMuted` now runs on the same remembered-flag store.
 
+- **New: `LineChart`** (#238): a small value-over-time chart for a
+  record's page, plain SVG, no chart dependency. One series (`points`,
+  `{ x, y }` oldest first, spaced by their dates), an optional dashed
+  `target` with its label, one point marked (`mark`: `min`, `max`,
+  `last`) with its value, `formatY`/`formatX`, `height`. The line is
+  `info-text` and the target `success-text`, each 3:1 on a card in both
+  themes (the glyph check measures them). A skeleton while loading, an
+  empty line, a dot for one point. A screen reader gets the figure's
+  name, a summary and a table of every point. New types `LineChartPoint`,
+  `LineChartMark`, `LineChartProps`. `design-language.md` "A value over
+  time" says how to use it.
 - **The long synced docs open with an index** (#232): `add-an-entity.md`,
   `cell-patterns.md`, `design-language.md` and `timed-screens.md` (every
   doc over 300 lines) list each section, and each of the entity
@@ -63,6 +74,8 @@ Additive, so a minor.
   starting point), pin any that aren't with `==`, and add
   `"$PY" -m foundation_backend.scripts.check_deps` to the top of
   `backend/scripts/verify.sh`'s checks.
+- **A hand-drawn chart of one value over time:** replace it with
+  `LineChart`.
 - **A long hub:** pass `collapsible` and a `storageKey` per widget to
   the `WidgetCard`s read less often.
 - **Notes imported or pasted from another tool:** add

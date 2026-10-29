@@ -63,6 +63,12 @@ export {
 export { Notice, type NoticeProps, type NoticeTone } from '@/components/app/notice'
 export { SourceCredit, type Source, type SourceCreditProps } from '@/components/app/source-credit'
 export { ProgressRing, type ProgressRingProps } from '@/components/app/progress-ring'
+export {
+  LineChart,
+  type LineChartMark,
+  type LineChartPoint,
+  type LineChartProps,
+} from '@/components/app/line-chart'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
