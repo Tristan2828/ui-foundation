@@ -1,8 +1,10 @@
 # Changelog
 
-Notable releases and what an app must do to take them. Every merge that
-changes the package or the template also publishes a patch release to
-npm, with its `release-smoke` result in the notes; those are listed on the
+Notable releases and what an app must do to take them. Since 4.34 a
+release is cut only when a PR bumps the version (#231), so each one has
+an entry here covering every PR since the last. Before that every merge
+published a patch, with its `release-smoke` result in the notes; those
+are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
 ## 4.33.0 — Totals rows, list items that open, headings that follow the page

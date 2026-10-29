@@ -21,14 +21,18 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Decisions that are yours
 
-- **Releases publish themselves.** Every merge that touches the package or
-  the template publishes a version to npm, then `release-smoke` creates an
-  app from it and writes the result into the GitHub release's notes. A
+- **Releases publish themselves.** A merge that bumps the version in
+  `packages/ui-foundation/package.json` publishes it to npm and PyPI, then
+  `release-smoke` creates an app from it and writes the result into the
+  GitHub release's notes. A merge without a bump publishes nothing; it
+  goes out with the next one. A
   failure emails you. Merging is the moment to look at the result: once
   merged, it reaches every app that upgrades (`ARCHITECTURE.md`
   "Releasing").
-- **Versions.** Patch versions are picked automatically. A minor or major release is
-  a version bump in `packages/ui-foundation/package.json`, made in the PR.
+- **Versions.** Every release is a version bump in
+  `packages/ui-foundation/package.json`, made in the PR that finishes the
+  work: a patch, a minor or a major. A forgotten bump: `gh workflow run
+  release.yml` releases `main` as it is, at the next patch.
   Anything that breaks an app's code or its synced files is a major, with a
   `CHANGELOG.md` entry and upgrade steps. When an agent's change looks
   breaking, decide whether it's worth a major or should be made additive.
@@ -47,7 +51,7 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
 - **Merging.** `main` requires a pull request and its `verify`,
   `verify-backend` and `install-test` checks, but no review, so you can
   merge your own PRs. Force-pushes and deletion are blocked. Every merge
-  that touches the package or the template publishes a release.
+  that bumps the version publishes a release.
 
 ## When a session goes sideways
 
