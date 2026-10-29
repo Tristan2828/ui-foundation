@@ -1,4 +1,4 @@
-"""app/jobs.py and app/routers/jobs.py — scheduled jobs (issue #136).
+"""foundation_backend.jobs and foundation_backend.routers.jobs — scheduled jobs (issue #136).
 
 On SQLite, so the lock under test is this process's. The advisory lock
 across processes, and job_runs' timestamps on Postgres, are
@@ -17,13 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlmodel import SQLModel, col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import jobs
-from app.db import get_session
+from foundation_backend import jobs
+from foundation_backend.db import get_session
 from foundation_backend.error_reporting import ErrorContext
-from app.main import app
-from app.models import JobRunRecord, User
+from foundation_backend.models import JobRunRecord, User
 from foundation_backend.testing.signed_in import session_cookie
-from app.routers.jobs import get_jobs_engine
+from foundation_backend.routers.jobs import get_jobs_engine
+from tests.minimal_app import app
 
 
 @pytest_asyncio.fixture

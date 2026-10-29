@@ -13,8 +13,8 @@ to the device, where the app's service worker shows it.
 | `usePushPermission()` | the package | Whether this device gets reminders, and `enable`/`disable` |
 | `AllowReminders` | the package | The control: says what reminders are, then asks, on a click |
 | `/push/public-key`, `/push/subscriptions` | `openapi.yaml`, the foundation's part (optional) | The VAPID key to subscribe with; this device's subscription saved or dropped |
-| `app/push.py` | the reference backend | `send_push(session, user_id, title, body, url)`: encrypted (RFC 8291), signed (VAPID), to every device the user allowed |
-| `app/reminders.py`, `reminders` | the reference backend | A reminder row (when, which days, the text, the path), and the `send-reminders` job that sends each one when it's due |
+| `foundation_backend.push` | `ui-foundation-backend` | `send_push(session, user_id, title, body, url)`: encrypted (RFC 8291), signed (VAPID), to every device the user allowed |
+| `foundation_backend.reminders`, `reminders` | `ui-foundation-backend` | A reminder row (when, which days, the text, the path), and the `send-reminders` job that sends each one when it's due |
 
 Off until the backend turns it on (`PUSH_ENABLED`, `docs/deploy.md`
 "Reminders (Web Push)"). An app without reminders leaves `/push/*` out of
@@ -82,4 +82,4 @@ reads `mock` and never subscribes: screens show the `mock` state, and a
 Playwright spec checks it the same way. The rest is the backend's: its
 tests decrypt every message as a browser would. To try it end to end, run
 the real backend with push on, allow reminders in the browser, then
-`backend/scripts/send_test_push.py <email>`.
+`python -m foundation_backend.scripts.send_test_push <email>` (from `backend/`).

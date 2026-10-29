@@ -5,7 +5,7 @@ backend, that arrives with the app closed.
 
 How it works: the browser subscribes with its push service (Google's for
 Chrome, Mozilla's, Apple's, Microsoft's) and hands the app an endpoint URL
-and two keys, stored in push_subscriptions (app/routers/push.py). To send,
+and two keys, stored in push_subscriptions (routers/push.py). To send,
 the backend encrypts the message to the browser's key (RFC 8291,
 aes128gcm), signs a token saying which server sent it (VAPID, RFC 8292)
 and POSTs both to the endpoint. The push service delivers it, and the
@@ -47,8 +47,8 @@ from urllib.parse import urlsplit
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import config
-from app.models import PushSubscription
+from foundation_backend import config
+from foundation_backend.models import PushSubscription
 
 if TYPE_CHECKING:
     from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey

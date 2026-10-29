@@ -272,7 +272,7 @@ defines it, imported from `app/main.py`:
 
 ```python
 from datetime import timedelta
-from app.jobs import register_job
+from foundation_backend.jobs import register_job
 
 async def sync_feeds(session: AsyncSession) -> str | None:
     added = ...
@@ -319,7 +319,7 @@ answers 404 and nothing else changes. To turn it on:
    `pip install -e ".[push]"` (PyCA's `cryptography`, with `cffi` and
    `pycparser`; prebuilt for Linux, macOS and Windows).
 2. **Make the VAPID key pair, once:**
-   `cd backend && .venv/Scripts/python scripts/generate_vapid_keys.py`.
+   `cd backend && .venv/Scripts/python -m foundation_backend.scripts.generate_vapid_keys`.
    Set the `VAPID_PRIVATE_KEY` it prints as a secret in the deployment's
    environment, never in the repo. Keep it: every device subscribes with
    its public half, so a new key stops every device's reminders until each
@@ -341,7 +341,7 @@ answers 404 and nothing else changes. To turn it on:
   with push on and runs with `JOBS_ENABLED` ("Scheduled jobs" above).
   `GET /api/jobs` shows its last run: "2 due: 3 sent, 1 gone".
 - **Check it end to end:** allow reminders in the app, then
-  `.venv/Scripts/python scripts/send_test_push.py <email>`. It prints
+  `.venv/Scripts/python -m foundation_backend.scripts.send_test_push <email>`. It prints
   `1 sent` when the push service took it.
 - **A device that's gone** (the person unsubscribed, cleared site data or
   uninstalled) answers 404 or 410 to the next send, and its row is

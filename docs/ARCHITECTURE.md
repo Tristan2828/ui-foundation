@@ -139,13 +139,13 @@ src/main.tsx                           FoundationProviders (theme, query client,
   reference backend refuses `APP_ENV=production` unless it says `real`,
   and `AppShell`'s `version` shows the commit, linking to its PR.
 - **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
-  sign-in in the reference backend (`app/routers/mcp.py`, `oauth.py`). Tools come from
+  sign-in in the reference backend (`foundation_backend.routers.mcp`, `oauth`). Tools come from
   one registry of entities (`app/mcp_entities.py`) and call the entities' own router
   functions, so the API's validation and per-user scoping apply. Delete is soft only
   (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
   is logged. Stdlib only, by decision (#132): no MCP SDK.
 - **Scheduled jobs** (4.7, #136) run inside the app's one process
-  (`app/jobs.py`): `register_job`, started from the lifespan when
+  (`foundation_backend.jobs`): `register_job`, started from the lifespan when
   `JOBS_ENABLED`. A Postgres advisory lock keeps a job to one run at a
   time across processes, and a run within `every` of the last skips, so
   replicas don't double up. Every run is a row in `job_runs`;
@@ -153,7 +153,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
 - **Reminders** (4.17, #167, off by default) are Web Push. The package's
   `pwa()` Vite plugin makes the app installable and writes `/push-sw.js`;
   `usePushPermission` and `AllowReminders` subscribe a device on a click.
-  The reference backend sends (`app/push.py`: VAPID and RFC 8291 on
+  The reference backend sends (`foundation_backend.push`: VAPID and RFC 8291 on
   `cryptography`, the optional `push` extra, the backend's one crypto
   dependency, by decision on #167), only to the browsers' push services,
   and the `send-reminders` job sends each due row of `reminders`.
@@ -286,15 +286,21 @@ limits, the rate window, error reporting and the error handlers, the
 production start-up checks, the SPA mount, the routers for `/auth/*`,
 `/environment`, `/client-errors` and the OAuth sign-in, the
 `set_password`/`enable_totp`/`disable_totp` scripts (`python -m
-foundation_backend.scripts.<name>`), the Python dependency check
+foundation_backend.scripts.<name>`), and since 4.35 (#230) AI chats'
+tools and `/mcp` (`mcp`, `mcp_tools`, `routers.mcp`), the scheduled jobs
+(`jobs`, `routers.jobs`), Web Push and reminders (`push`, `reminders`,
+`routers.push`, the `push` extra), their tables (`mcp_audit_log`,
+`job_runs`, `push_subscriptions`, `reminders`) and scripts, the Python dependency check
 (`scripts.check_deps`: `backend/pyproject.toml` against
 `deps-allowlist.json`'s `python` list, run by the app's `verify.sh`), the `signed_in` test helper, and
 reference copies of the migrations that create its tables.
 
-**What stays copy-in:** everything that is the app's (its entities,
-models, routers, migration chain, `main.py`), plus, for now, the MCP
-tools, scheduled jobs, Web Push and reminders ([`DEFERRED.md`](DEFERRED.md)
-says when those move). The app's `app/config.py`, `db.py`, `models.py`,
+**What stays copy-in:** everything that is the app's: its entities,
+models, routers, migration chain and `main.py`, its `McpEntity` list
+(`app/mcp_entities.py`, which calls `register_entities`), and the jobs it
+registers. Until 4.35 the MCP tools, jobs and push were copied too, and
+each release that touched them was a hand-applied step in every app
+(#230). The app's `app/config.py`, `db.py`, `models.py`,
 `schemas.py`, `openapi_responses.py`, `security.py`, `errors.py` and
 `spa.py` re-export the package's names, so `from app.models import User`
 works as before; `config.py` adds the app's own settings after a star

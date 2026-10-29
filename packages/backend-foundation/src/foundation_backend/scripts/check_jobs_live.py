@@ -19,9 +19,9 @@ from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from app import jobs  # noqa: E402
-from app.db import engine  # noqa: E402
-from app.models import JobRunRecord  # noqa: E402
+from foundation_backend import jobs  # noqa: E402
+from foundation_backend.db import engine  # noqa: E402
+from foundation_backend.models import JobRunRecord  # noqa: E402
 
 NAME = "live-check"
 

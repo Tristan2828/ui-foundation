@@ -4,7 +4,7 @@ records. Stdlib and FastAPI only. Off unless MCP_ENABLED (404 then).
 
 Stateless JSON-RPC: every POST carries one message (or a batch) and gets
 one JSON answer. There is no server-to-chat stream, so GET answers 405, as
-the spec allows. The tools are app/mcp_tools.py's; the caller is the user
+the spec allows. The tools are mcp_tools.py's; the caller is the user
 and chat an OAuth access token (foundation_backend.routers.oauth) belongs to, so a
 chat sees and changes exactly what that user can.
 """
@@ -18,8 +18,8 @@ from fastapi.responses import JSONResponse, Response
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from foundation_backend import config, rate_window
-from app.db import get_session
-from app.mcp_tools import Caller, ToolError, call_tool, tool_definitions
+from foundation_backend.db import get_session
+from foundation_backend.mcp_tools import Caller, ToolError, call_tool, tool_definitions
 from foundation_backend.routers.oauth import authenticate_bearer, public_base, require_enabled
 
 PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")

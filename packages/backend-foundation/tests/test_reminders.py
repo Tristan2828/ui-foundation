@@ -1,4 +1,4 @@
-"""app/reminders.py: when a reminder is due, and the send-reminders job
+"""foundation_backend.reminders: when a reminder is due, and the send-reminders job
 (issue #167). Sending itself is tests/test_push.py's; here it's replaced.
 
 Time zones are fixed offsets and UTC, so the tests need no time zone
@@ -12,8 +12,8 @@ import pytest
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import jobs, push, reminders
-from app.models import Reminder
+from foundation_backend import jobs, push, reminders
+from foundation_backend.models import Reminder
 
 MON_WED_FRI = reminders.parse_days("mon,wed,fri")
 CHICAGO_WINTER = timezone(timedelta(hours=-6))

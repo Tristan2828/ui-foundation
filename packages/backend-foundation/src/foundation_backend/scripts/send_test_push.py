@@ -1,7 +1,7 @@
 """Send a test notification to every device a user allowed reminders on,
 to check push end to end (docs/deploy.md "Reminders (Web Push)").
 
-    cd backend && .venv/Scripts/python scripts/send_test_push.py dev@example.com
+    cd backend && .venv/Scripts/python -m foundation_backend.scripts.send_test_push dev@example.com
 
 Uses PUSH_ENABLED, VAPID_* and DATABASE_URL from .env, like the app.
 Prints how it went: sent, gone (deleted), failed.
@@ -13,9 +13,9 @@ import sys
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import push
-from app.db import engine
-from app.models import User
+from foundation_backend import push
+from foundation_backend.db import engine
+from foundation_backend.models import User
 
 
 async def send(email: str) -> int:

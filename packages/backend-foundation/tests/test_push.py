@@ -1,4 +1,4 @@
-"""app/push.py and app/routers/push.py: Web Push (issue #167).
+"""foundation_backend.push and foundation_backend.routers.push: Web Push (issue #167).
 
 The encryption is checked byte for byte against RFC 8291's worked example
 (Appendix A), and every message is decrypted here as the browser would.
@@ -22,10 +22,9 @@ from httpx import AsyncClient
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import config, push
-from app.main import app, lifespan
-from app.models import PushSubscription, User
-from app.routers import push as push_router
+from foundation_backend import config, push
+from foundation_backend.models import PushSubscription, User
+from foundation_backend.routers import push as push_router
 
 b64 = push.b64url_encode
 unb64 = push.b64url_decode
@@ -45,7 +44,7 @@ class Device:
         return b64(push.public_key_bytes(self.key))
 
     def decrypt(self, body: bytes) -> bytes:
-        """RFC 8291 from the receiving end, written out apart from app/push.py."""
+        """RFC 8291 from the receiving end, written out apart from foundation_backend.push."""
         salt, record_size, id_length = body[:16], int.from_bytes(body[16:20], "big"), body[20]
         as_public = body[21 : 21 + id_length]
         assert record_size == 4096
@@ -218,13 +217,6 @@ def test_config_problems_name_what_is_missing(monkeypatch: pytest.MonkeyPatch, p
     assert "push extra" in (push.config_problem() or "")
     monkeypatch.setattr(config, "PUSH_ENABLED", False)
     assert push.config_problem() is None
-
-
-async def test_the_app_refuses_to_start_with_push_on_and_no_key(monkeypatch: pytest.MonkeyPatch, push_on: None) -> None:
-    monkeypatch.setattr(config, "VAPID_PRIVATE_KEY", None)
-    with pytest.raises(RuntimeError, match="VAPID_PRIVATE_KEY"):
-        async with lifespan(app):
-            pass
 
 
 # ---------------------------------------------------------------- routes

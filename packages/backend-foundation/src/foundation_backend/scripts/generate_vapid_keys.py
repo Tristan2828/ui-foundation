@@ -1,7 +1,7 @@
 """Make the app's VAPID key pair for Web Push (docs/deploy.md "Reminders
 (Web Push)").
 
-    cd backend && .venv/Scripts/python scripts/generate_vapid_keys.py
+    cd backend && .venv/Scripts/python -m foundation_backend.scripts.generate_vapid_keys
 
 Prints VAPID_PRIVATE_KEY for the backend's environment (a secret: never in
 the repo) and its public half, which the backend serves the browser itself
@@ -10,7 +10,7 @@ device subscribes with the public half, so a new key stops every device's
 reminders until each allows them again. Needs the push extra.
 """
 
-from app import push
+from foundation_backend import push
 
 
 def main() -> None:

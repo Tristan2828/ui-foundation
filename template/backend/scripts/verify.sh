@@ -14,8 +14,7 @@ if [ ! -x "$PY" ]; then PY="$(command -v python)"; fi
 # pinned (ui-foundation-backend's check, like check-deps on the npm side).
 "$PY" -m foundation_backend.scripts.check_deps
 "$PY" -m mypy app scripts/check_spec_conformance.py scripts/check_db_comments.py \
-  scripts/check_mcp_live.py scripts/check_jobs_live.py \
-  scripts/generate_vapid_keys.py scripts/send_test_push.py
+  scripts/check_mcp_live.py
 "$PY" -m pytest -q
 "$PY" scripts/check_spec_conformance.py
 

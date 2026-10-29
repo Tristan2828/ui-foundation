@@ -7,6 +7,34 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.35.0 — MCP tools, scheduled jobs and Web Push move into the backend package
+
+Additive to both packages, so a minor (#230). Nothing changes on the wire
+or in the database.
+
+- **`ui-foundation-backend` now holds AI chats' tools, the scheduled
+  jobs, Web Push and reminders**, as 4.25 moved sign-in: `mcp`
+  (`McpEntity`, `ListArgs`, `check_entities`, `register_entities`),
+  `mcp_tools`, `routers.mcp`, `jobs`, `routers.jobs`, `push`,
+  `reminders`, `routers.push`, their tables (`McpAuditEntry`,
+  `JobRunRecord`, `PushSubscription`, `Reminder`), the job and push
+  schemas, their settings in `config` (`JOBS_ENABLED`,
+  `JOB_RUNS_KEEP_DAYS`, `PUSH_*`, `VAPID_*`), and the scripts
+  `generate_vapid_keys`, `send_test_push` and `check_jobs_live`. A new
+  `push` extra brings `cryptography`. Reference copies of migrations
+  0013–0015 are in its `migrations/`.
+- **The template keeps only what is its own:** its `McpEntity` list
+  (`app/mcp_entities.py`, ending in `register_entities(ENTITIES)`), its
+  `main.py` wiring, and a test of its entities through the package's
+  tools. The package's tests (jobs, push, reminders, the MCP registry)
+  replace the template's copies, so a fix like #226's reaches every app
+  with the pin.
+
+**How an app adopts it:** bump both packages, run `sync`, then follow
+`docs/consuming.md` "Moving to the shared MCP, jobs and push (4.35)" to
+delete its copies. An app that doesn't keeps working on its own copies,
+without their fixes.
+
 ## 4.34.0 — Nested nav, a phone bottom bar, a line chart, folding widgets
 
 Additive, so a minor. Nine requests from apps (#232–#240).

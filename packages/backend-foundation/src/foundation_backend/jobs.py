@@ -21,11 +21,11 @@ run a job only when asked). What every job gets without writing it:
   jitter, so jobs started together don't fire on the same second.
 - **Every run is a row in job_runs**: started, finished, outcome (ok,
   failed, skipped), the error, and the job's own summary ("12 new"). Rows
-  older than JOB_RUNS_KEEP_DAYS are trimmed after each run.
+  older than config.JOB_RUNS_KEEP_DAYS are trimmed after each run.
 - **A failure never stops the schedule.** An exception or the timeout is
   logged, sent through report_error and recorded; the next run is on time.
 - **Run it now:** POST /api/jobs/{name}/run (409 while it's running);
-  GET /api/jobs lists each job's schedule and last run (app/routers/jobs.py).
+  GET /api/jobs lists each job's schedule and last run (routers/jobs.py).
 
 Not here, by decision: cron expressions, queues, retries with backoff, a
 separate worker process.
@@ -46,9 +46,9 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.config import JOB_RUNS_KEEP_DAYS
+from foundation_backend import config
 from foundation_backend.error_reporting import ErrorContext, report_error, scrub
-from app.models import JobRunRecord
+from foundation_backend.models import JobRunRecord
 
 logger = logging.getLogger("app.jobs")
 
@@ -204,7 +204,7 @@ async def _record(
     error: str | None = None,
     summary: str | None = None,
 ) -> JobRunRecord:
-    """Writes the run, and trims the job's runs past JOB_RUNS_KEEP_DAYS."""
+    """Writes the run, and trims the job's runs past config.JOB_RUNS_KEEP_DAYS."""
     finished_at = _now()
     async with AsyncSession(engine, expire_on_commit=False) as session:
         row = JobRunRecord(
@@ -217,7 +217,7 @@ async def _record(
             summary=summary,
         )
         session.add(row)
-        cutoff = finished_at - timedelta(days=JOB_RUNS_KEEP_DAYS)
+        cutoff = finished_at - timedelta(days=config.JOB_RUNS_KEEP_DAYS)
         await session.exec(
             delete(JobRunRecord).where(col(JobRunRecord.job) == name, col(JobRunRecord.started_at) < cutoff)
         )

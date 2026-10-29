@@ -182,6 +182,46 @@ From then on, `ui-foundation-backend` moves with the npm package: bump
 both to the same version, run any migration the changelog names for it,
 then `npm run verify:backend`.
 
+## Moving to the shared MCP, jobs and push (4.35)
+
+4.35 moves the template's MCP tools, scheduled jobs, Web Push and
+reminders into `ui-foundation-backend` (#230), as 4.25 did for sign-in.
+Nothing changes on the wire or in the database, so an app that keeps its
+own copies keeps working; it just stops getting their fixes. To take
+them (in `backend/`):
+
+1. **Pin it.** `ui-foundation-backend==4.35.0` (with `[push]` if the app
+   sends reminders, or keep its own push extra), then `pip install -e ".[dev]"`.
+2. **Delete the copies** the package now owns: `app/mcp_tools.py`,
+   `app/routers/mcp.py`, `app/jobs.py`, `app/routers/jobs.py`,
+   `app/push.py`, `app/reminders.py`, `app/routers/push.py`,
+   `scripts/check_jobs_live.py`, `scripts/generate_vapid_keys.py`,
+   `scripts/send_test_push.py`, and the tests `tests/test_jobs.py`,
+   `tests/test_push.py`, `tests/test_reminders.py` (the package runs
+   them). Keep a test of the app's own jobs, and `tests/test_mcp.py` for
+   its own entities.
+3. **Re-export** the four tables from `foundation_backend.models` in
+   `app/models.py` (`McpAuditEntry`, `JobRunRecord`, `PushSubscription`,
+   `Reminder`) and delete their classes; the same for the job and push
+   schemas in `app/schemas.py`. Delete `JOBS_ENABLED`, `JOB_RUNS_KEEP_DAYS`,
+   `PUSH_*` and `VAPID_*` from `app/config.py` (its star import brings
+   them). A test that monkeypatches one patches `foundation_backend.config`.
+4. **`app/mcp_entities.py`** keeps only the app's entities: import
+   `ListArgs`, `McpEntity` and `register_entities` from
+   `foundation_backend.mcp`, delete the class definitions and
+   `check_entities`, and end with `register_entities(ENTITIES)`.
+5. **`app/main.py`**: import `jobs`, `push`, `reminders` from
+   `foundation_backend`, the routers from `foundation_backend.routers`
+   (`jobs`, `mcp`, `push`), and `app.mcp_entities` once so its entities
+   are registered. The template's `main.py` at the 4.35.0 tag is the
+   reference. A job of the app's own imports `register_job` from
+   `foundation_backend.jobs`.
+6. **Scripts:** `scripts/verify.sh`'s mypy list loses the moved scripts;
+   `check-backend-postgres.sh` runs `python -m
+   foundation_backend.scripts.check_jobs_live`; `docs/deploy.md`'s VAPID
+   and test-push commands are `python -m foundation_backend.scripts.<name>`.
+7. No migration: the tables are the same. `npm run verify:backend`.
+
 ## Adding AI chats (MCP) to a 4.x app
 
 4.2 adds an MCP endpoint to the reference backend. The package and the
