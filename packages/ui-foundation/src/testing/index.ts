@@ -137,8 +137,11 @@ export type A11ySuiteOptions = {
    * sparse one, so both filled values and "not set" labels are checked.
    */
   viewRoutes?: readonly string[]
-  /** Screens outside the app shell, e.g. '/login' (and '/register' if the app has it). */
-  loggedOutRoutes: readonly string[]
+  /**
+   * Screens outside the app shell, e.g. '/login' (and '/register' if the
+   * app has it). An app with several a11y spec files lists them in one.
+   */
+  loggedOutRoutes?: readonly string[]
   /**
    * The app's nav, the same `NavEntry[]` passed to `AppShell` (`src/nav.ts`).
    * Given, each page in it is a test of its own, so the suite's time per
@@ -148,6 +151,13 @@ export type A11ySuiteOptions = {
    * their number.
    */
   nav?: readonly NavEntry[]
+  /**
+   * Whether to check that the rendered sidebar links exactly `nav`'s pages
+   * (default true). An app with one a11y spec per module passes each
+   * module's own entries as `nav` with `checkSidebar: false`, and keeps
+   * the check in one file that passes the whole nav.
+   */
+  checkSidebar?: boolean
 }
 
 // A page's share of the one discovering test's time: load, data, axe.
@@ -184,16 +194,24 @@ async function expectNavPageAccessible(page: Page, route: string, colorScheme: '
  * Accessibility of the real screens in light and dark mode: every page in
  * the Primary nav (one test each from `nav`, or discovered in the sidebar
  * when `nav` is left out), the given form routes, and the logged-out
- * screens. axe's
+ * screens. A modular app can split it into a spec per module: each passes
+ * its module's `nav` entries and routes with `checkSidebar: false`, and
+ * one file keeps the whole-sidebar check. axe's
  * color-contrast rule against the rendered dark DOM is also what keeps the
  * dark-mode tokens readable. The theme follows the OS setting, so
  * emulateMedia switches it.
  */
-export function defineA11ySuite({ formRoutes, viewRoutes = [], loggedOutRoutes, nav }: A11ySuiteOptions): void {
+export function defineA11ySuite({
+  formRoutes,
+  viewRoutes = [],
+  loggedOutRoutes = [],
+  nav,
+  checkSidebar = true,
+}: A11ySuiteOptions): void {
   // Each `to` as given, query string and all, so a page that opens on a
   // saved view is checked on it.
   const listed = nav && navTargets(nav)
-  if (listed) {
+  if (listed && checkSidebar) {
     test('the sidebar links exactly the pages in nav', async ({ page, isMobile }) => {
       const rendered = await navRoutes(page, isMobile)
       expect(

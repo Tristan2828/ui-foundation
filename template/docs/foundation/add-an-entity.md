@@ -662,7 +662,11 @@ is a filled-in example while the Widgets demo is still here).
    of a full record and of the sparse one to its `viewRoutes` (the table
    page comes from `src/nav.ts`, which the suite is given as `nav`: each
    nav page is a test of its own, so the suite's time per test stays flat
-   as the app grows; the form and the view aren't in the nav). With fields edited in place, copy `e2e/a11y.spec.ts`'s
+   as the app grows; the form and the view aren't in the nav). An app
+   with one a11y spec per module (`e2e/a11y-<module>.spec.ts`) adds them
+   to its module's file instead, which passes only that module's nav
+   entries with `checkSidebar: false`; one file keeps the whole nav and
+   the sidebar check. With fields edited in place, copy `e2e/a11y.spec.ts`'s
    "editing in place" block for them: a field open, saving and refused,
    the rich-text editor, an open list, a list edited in place (an item
    open, one being added, a refused change), and the leave prompt, in

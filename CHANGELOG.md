@@ -15,9 +15,19 @@ Additive, so a minor.
   `totals` cells follow their column. `cell-patterns.md` §11 now says to
   right-align money and counts.
 
+- **New: `defineA11ySuite`'s `checkSidebar`** (#234), default `true`.
+  With `false`, the suite checks only the `nav` pages and routes it's
+  given, without the test that the sidebar links exactly `nav`, so a
+  modular app can keep one a11y spec per module. `loggedOutRoutes` is
+  now optional, so only one of those files needs to check `/login`.
+
 **How an app adopts it:** bump the version, run `sync`.
 
 - **A money or count column:** add `meta: { align: 'right' }` to it.
+- **An app split into modules:** an `e2e/a11y-<module>.spec.ts` per
+  module, each passing its own entries as `nav` with
+  `checkSidebar: false`, and one spec with the whole nav (and
+  `loggedOutRoutes`) that keeps the sidebar check.
 
 ## 4.33.0 — Totals rows, list items that open, headings that follow the page
 
