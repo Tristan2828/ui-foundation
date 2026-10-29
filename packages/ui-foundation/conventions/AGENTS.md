@@ -35,9 +35,12 @@ is right. Do not disable, skip, or work around it.
   that also writes a primitive the package ships (a dependency of the one
   you asked for), delete the copy and import the package's. (Enforced: lint
   rejects `@/components/ui/<name>` for any primitive the package ships.)
-- NEVER add a dependency that is not in `deps-allowlist.json`. If you
-  believe one is needed, write the case in `docs/BLOCKERS.md` and stop.
-  (Enforced: `ui-foundation check-deps` in verify.)
+- NEVER add a dependency that is not in `deps-allowlist.json`, npm or
+  Python (its `python` list, for `backend/pyproject.toml`, each pinned
+  with `==`). If you believe one is needed, write the case in
+  `docs/BLOCKERS.md` and stop. (Enforced: `ui-foundation check-deps` in
+  verify; `python -m foundation_backend.scripts.check_deps` in
+  verify:backend.)
 - NEVER hand-write an API type. All types come from `src/api/schema.d.ts`,
   generated from `openapi.yaml`. If a type is missing, run `npm run gen:api`.
   (Enforced: codegen diff in verify.)

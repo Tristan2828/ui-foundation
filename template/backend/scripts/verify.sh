@@ -10,6 +10,9 @@ PY=".venv/Scripts/python"
 if [ ! -x "$PY" ]; then PY=".venv/bin/python"; fi
 if [ ! -x "$PY" ]; then PY="$(command -v python)"; fi
 
+# Every Python dependency is in ../deps-allowlist.json's "python" list and
+# pinned (ui-foundation-backend's check, like check-deps on the npm side).
+"$PY" -m foundation_backend.scripts.check_deps
 "$PY" -m mypy app scripts/check_spec_conformance.py scripts/check_db_comments.py \
   scripts/check_mcp_live.py scripts/check_jobs_live.py \
   scripts/generate_vapid_keys.py scripts/send_test_push.py

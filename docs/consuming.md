@@ -128,7 +128,8 @@ already exist, with the same names and columns.
 1. **Pin it.** In `backend/pyproject.toml`, add
    `"ui-foundation-backend==<the npm package's version>",` to
    `dependencies`, and `pip install -e ".[dev]"` in `backend/`. If the app
-   checks Python dependencies against an allowlist, add it there.
+   checks Python dependencies against an allowlist (`deps-allowlist.json`'s
+   `python` list, 4.34), add it there.
 2. **Delete the copies** the package owns: `app/db.py`,
    `app/openapi_responses.py`, `app/security.py`, `app/totp.py`,
    `app/login_limits.py`, `app/rate_window.py`, `app/error_reporting.py`,

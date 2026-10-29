@@ -286,7 +286,9 @@ limits, the rate window, error reporting and the error handlers, the
 production start-up checks, the SPA mount, the routers for `/auth/*`,
 `/environment`, `/client-errors` and the OAuth sign-in, the
 `set_password`/`enable_totp`/`disable_totp` scripts (`python -m
-foundation_backend.scripts.<name>`), the `signed_in` test helper, and
+foundation_backend.scripts.<name>`), the Python dependency check
+(`scripts.check_deps`: `backend/pyproject.toml` against
+`deps-allowlist.json`'s `python` list, run by the app's `verify.sh`), the `signed_in` test helper, and
 reference copies of the migrations that create its tables.
 
 **What stays copy-in:** everything that is the app's (its entities,

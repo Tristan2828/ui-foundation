@@ -46,9 +46,23 @@ Additive, so a minor.
   by the package's `npm run docs:index`, and checked in its
   `verify:fast`. `AGENTS.md`'s block says to use it.
 
+- **New: Python dependencies are allowlisted too** (#236).
+  `ui-foundation-backend` ships `python -m foundation_backend.scripts.check_deps`:
+  run from `backend/`, it fails on any requirement in `pyproject.toml`
+  (`dependencies`, every optional group, every `[dependency-groups]`
+  group) that isn't in `../deps-allowlist.json`'s new `python` list, or
+  isn't pinned with `==`. The template lists its backend's seventeen and
+  runs it first in `backend/scripts/verify.sh`.
+
 **How an app adopts it:** bump the version, run `sync`.
 
 - **A money or count column:** add `meta: { align: 'right' }` to it.
+- **The backend's dependencies:** bump `ui-foundation-backend` to this
+  version, add a `"python": [...]` list to `deps-allowlist.json` naming
+  every distribution in `backend/pyproject.toml` (the template's is the
+  starting point), pin any that aren't with `==`, and add
+  `"$PY" -m foundation_backend.scripts.check_deps` to the top of
+  `backend/scripts/verify.sh`'s checks.
 - **A long hub:** pass `collapsible` and a `storageKey` per widget to
   the `WidgetCard`s read less often.
 - **Notes imported or pasted from another tool:** add

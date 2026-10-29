@@ -1,5 +1,5 @@
 {
-  "$comment": "Every dependency this app may install. Checked by `ui-foundation check-deps` (in `npm run verify:fast`) against package.json. An addition here is a deliberate human decision, not something an agent edits on its own — see AGENTS.md. Covers the npm side only; the reference backend pins its Python dependencies in backend/pyproject.toml.",
+  "$comment": "Every dependency this app may install. Checked by `ui-foundation check-deps` (in `npm run verify:fast`) against package.json, and its `python` list by `python -m foundation_backend.scripts.check_deps` (in `npm run verify:backend`) against backend/pyproject.toml, each pinned there with ==. An addition here is a deliberate human decision, not something an agent edits on its own — see AGENTS.md.",
   "tools": {
     "shadcn": "4.21.0",
     "@playwright/test": "1.63.0",
@@ -51,5 +51,24 @@
     "openapi-typescript",
     "openapi-response-validator",
     "js-yaml"
+  ],
+  "python": [
+    "ui-foundation-backend",
+    "fastapi",
+    "sqlmodel",
+    "alembic",
+    "asyncpg",
+    "uvicorn",
+    "pydantic",
+    "python-dotenv",
+    "email-validator",
+    "cryptography",
+    "mypy",
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "pyyaml",
+    "types-pyyaml",
+    "aiosqlite"
   ]
 }

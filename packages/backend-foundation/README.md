@@ -20,6 +20,7 @@ under the same version number, from the same commit.
 | `routers.auth` | `router` (login, the TOTP step, logout, me) and `register_router` (`POST /auth/register`), with `get_current_user` |
 | `routers.environment`, `routers.client_errors`, `routers.oauth` | `GET /environment`, `POST /client-errors`, AI chats' OAuth sign-in (off unless `MCP_ENABLED`) |
 | `scripts.set_password`, `scripts.enable_totp`, `scripts.disable_totp` | Run as `python -m foundation_backend.scripts.<name> <email>` from the app's `backend/` |
+| `scripts.check_deps` | `python -m foundation_backend.scripts.check_deps` from `backend/`: every requirement in `pyproject.toml` is in `../deps-allowlist.json`'s `python` list and pinned with `==` (4.34, #236). The app's `scripts/verify.sh` runs it |
 | `testing.signed_in` | `session_cookie`, to sign a test client in for real |
 | `migrations/` | Reference copies of the Alembic revisions that create these tables; never run from here ([`migrations/README.md`](src/foundation_backend/migrations/README.md)) |
 
