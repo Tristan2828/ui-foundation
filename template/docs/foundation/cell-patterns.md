@@ -375,14 +375,23 @@ A count, a quantity, a price.
 // Module scope: one formatter per column, not one per cell render.
 const priceFormatter = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' })
 
-cell: ({ getValue }) => {
-  const value = getValue<string | null>()
-  return value == null ? emptyCell : <span className="tabular-nums">{priceFormatter.format(Number(value))}</span>
+{
+  accessorKey: 'price',
+  header: 'Price',
+  meta: { align: 'right' },
+  cell: ({ getValue }) => {
+    const value = getValue<string | null>()
+    return value == null ? emptyCell : <span className="tabular-nums">{priceFormatter.format(Number(value))}</span>
+  },
 }
 ```
 
-- `tabular-nums` gives every digit the same width, so values line up down
-  the column even when left-aligned.
+- **Money and counts are right-aligned** (`meta: { align: 'right' }`), with
+  `tabular-nums`, so the units line up down the column and with the
+  `totals` under it. The header's label is right-aligned too, a sort
+  arrow on its left, so its right edge sits on the values'. A number
+  that's an identifier or a year (an order number, 2024) isn't a
+  quantity: leave it left-aligned like text.
 - **Zero is a value, not an empty cell.** Test `value == null`, never
   falsiness, or `0` renders as an em dash.
 - An API `format: decimal` arrives as a **string**. `Number()` is exact
@@ -396,10 +405,6 @@ cell: ({ getValue }) => {
   each value under its column in that column's alignment and tabular
   figures, above a 2px border. A hidden column's value isn't shown, and
   the row is hidden while loading, on error and when empty.
-- **Right-aligning isn't available yet.** `DataTable`'s `meta.align` only
-  supports `'center'`, and a right-aligned cell under a left-aligned header
-  looks broken. Stay left-aligned until a real column needs
-  `align: 'right'`, then raise it for the foundation.
 - The currency code comes from the data or the plan, never a guess. The
   template's `USD` is the demo's.
 - **Cost:** none to speak of. It's the plain-text pattern with formatting.

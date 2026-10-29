@@ -33,7 +33,8 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   every data view of a page (`expectDataViewsLoaded`).
 // - Highlighted: `highlightRow`, two rows to look at (cell pattern 22).
 // - Totals: `totals`, sums under Quantity, Price and Target price for
-//   every matching row (eight, over two pages), with the first and last
+//   every matching row (eight, over two pages), right-aligned like their
+//   columns (Price sortable, its arrow left of its label), with the first and last
 //   columns pinned, a Weight column hidden by `visibleColumns` (its total
 //   with it), and a switch between the four states.
 
@@ -224,10 +225,12 @@ const ITEM_TOTALS: DataTableTotals = {
 const ITEM_COLUMNS: LegacyColumnDef<Item, unknown>[] = [
   { id: 'name', header: 'Item', cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
   { id: 'room', header: 'Room', cell: ({ row }) => row.original.room },
-  { id: 'quantity', header: 'Quantity', cell: ({ row }) => <span className="tabular-nums">{row.original.quantity}</span> },
-  { id: 'price', header: 'Price', cell: ({ row }) => <span className="tabular-nums">{usd(row.original.priceCents)}</span> },
-  { id: 'target', header: 'Target price', cell: ({ row }) => <span className="tabular-nums">{usd(row.original.targetCents)}</span> },
-  { id: 'weight', header: 'Weight', cell: ({ row }) => <span className="tabular-nums">{kg(row.original.weightGrams)}</span> },
+  // Counts and money right-aligned (cell pattern 11), so the digits and
+  // the sums under them line up. Price sorts, for its header's arrow.
+  { id: 'quantity', header: 'Quantity', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{row.original.quantity}</span> },
+  { id: 'price', accessorKey: 'priceCents', header: 'Price', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{usd(row.original.priceCents)}</span> },
+  { id: 'target', header: 'Target price', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{usd(row.original.targetCents)}</span> },
+  { id: 'weight', header: 'Weight', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{kg(row.original.weightGrams)}</span> },
   {
     id: 'actions',
     header: () => <span className="sr-only">Actions</span>,

@@ -5,6 +5,20 @@ changes the package or the template also publishes a patch release to
 npm, with its `release-smoke` result in the notes; those are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.34.0 — Requests from apps
+
+Additive, so a minor.
+
+- **New: `DataTable`'s `meta.align: 'right'`** (#237), for money and
+  counts. The header and cells right-align, a sort arrow sits on the
+  label's left so the label's right edge lines up with the numbers, and
+  `totals` cells follow their column. `cell-patterns.md` §11 now says to
+  right-align money and counts.
+
+**How an app adopts it:** bump the version, run `sync`.
+
+- **A money or count column:** add `meta: { align: 'right' }` to it.
+
 ## 4.33.0 — Totals rows, list items that open, headings that follow the page
 
 Additive, so a minor. Four requests from apps (#222, #223, #225, #226).
