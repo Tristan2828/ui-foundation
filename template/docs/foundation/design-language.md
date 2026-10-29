@@ -1,5 +1,23 @@
 # Design Language
 
+<!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
+## Index
+
+- [Semantic tones](#semantic-tones) · lines 27–55
+- [The three badge styles](#the-three-badge-styles) · lines 57–74
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 76–105
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 107–120
+- [Logos and brand marks](#logos-and-brand-marks) · lines 122–166
+- [Categorical colour](#categorical-colour) · lines 168–238
+- [Typography](#typography) · lines 240–322
+  - [Written text (notes)](#written-text-notes) · lines 271–322
+- [Density](#density) · lines 324–381
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 383–458
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 460–518
+- [Notices](#notices) · lines 520–548
+
+<!-- /index -->
+
 The part of this foundation a consuming app cannot cheaply get right on
 its own: color that carries meaning, checked for contrast in both themes.
 Tokens and styles here **grow freely**, in the foundation package, so every

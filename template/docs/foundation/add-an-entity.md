@@ -1,5 +1,27 @@
 # Add an Entity
 
+<!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
+## Index
+
+- [The reference files](#the-reference-files) · lines 37–59
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–699
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 99–106
+  - Step 2: `npm run gen:api` · lines 107–108
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 109–120
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 121–130
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 131–135
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–598
+  - Step 7: Register routes · lines 599–606
+  - Step 8: Add Playwright specs for all three screens · lines 607–681
+  - Step 9: Register the nav entry and route names · lines 682–696
+  - Step 10: `npm run verify`. · lines 697–699
+- [What not to copy](#what-not-to-copy) · lines 701–727
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 729–746
+- [Deleting](#deleting) · lines 748–777
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 779–800
+
+<!-- /index -->
+
 The most-repeated task in this system: add a full CRUD entity — spec, mocks,
 gateway, tests, table, view, form, routes — following the patterns in
 `src/routes/widgets/`. This file is the only copy of the steps, written for

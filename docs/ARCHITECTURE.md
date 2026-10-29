@@ -259,6 +259,14 @@ the app:
 `template/` is an app like any other. After changing anything in
 `conventions/`, run `npm run sync` and commit what it writes.
 
+Every convention doc over 300 lines opens with an index (4.34, #232):
+each section and each of the playbook's numbered steps, with the lines
+it spans, so an agent reads the index and then only those lines. It is
+written from the headings by `npm run docs:index` in the package
+(`scripts/doc-index.mjs`), never by hand, and the package's `verify:fast`
+fails when one is stale. After editing a doc there: `docs:index`, then
+`sync`.
+
 ## backend-foundation (4.25)
 
 Until 4.25 every app copied `template/backend/` whole, so a security fix in

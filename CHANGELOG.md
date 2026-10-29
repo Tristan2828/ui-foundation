@@ -38,6 +38,14 @@ Additive, so a minor.
   blocked it still folds for the page's life. The body is hidden, not
   unmounted. `useMuted` now runs on the same remembered-flag store.
 
+- **The long synced docs open with an index** (#232): `add-an-entity.md`,
+  `cell-patterns.md`, `design-language.md` and `timed-screens.md` (every
+  doc over 300 lines) list each section, and each of the entity
+  playbook's steps, with its anchor and the lines it spans, so an agent
+  reads the index and then only those lines. Written from the headings
+  by the package's `npm run docs:index`, and checked in its
+  `verify:fast`. `AGENTS.md`'s block says to use it.
+
 **How an app adopts it:** bump the version, run `sync`.
 
 - **A money or count column:** add `meta: { align: 'right' }` to it.
