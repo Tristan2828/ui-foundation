@@ -21,14 +21,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Reminders through Web Push (app/push.py): `pip install -e ".[push]"`, and
+# Reminders through Web Push (foundation_backend.push): `pip install -e ".[push]"`, and
 # PUSH_ENABLED=true. PyCA's library, for the P-256 and AES-GCM the
 # standard library lacks; it brings cffi and pycparser.
 push = [
   "cryptography==50.0.2",
 ]
 dev = [
-  # The push extra too, so the tests and mypy cover app/push.py.
+  # The push extra too, for the app's start-up test with push on.
   "cryptography==50.0.2",
   "mypy==2.3.1",
   "pytest==9.1.1",

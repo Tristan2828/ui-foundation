@@ -2,9 +2,9 @@
 deployable, same-origin, no CORS; see foundation_backend.spa for the
 client-route fallback), the foundation's sign-in, environment, client-error
 and OAuth routes (the ui-foundation-backend package), the entity routers,
-the scheduled jobs (app/jobs.py, app/routers/jobs.py), Web Push and reminders (app/push.py,
-app/reminders.py, app/routers/push.py) and the MCP routes
-(app/routers/mcp.py).
+and the package's scheduled jobs, Web Push and reminders, and MCP routes
+(foundation_backend.jobs, .push, .reminders, .routers.mcp; #230), with
+this app's MCP entities (app/mcp_entities.py).
 """
 
 import os
@@ -14,14 +14,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import jobs, push, reminders
+from app import mcp_entities  # noqa: F401  (registers the app's MCP entities)
 from app.config import APP_ENV, COOKIE_SECURE, DATA_LABEL, JOBS_ENABLED, MCP_ENABLED, MCP_PUBLIC_URL, PUSH_ENABLED, STATIC_DIR
 from app.db import engine
 from app.errors import register_error_handlers
-from app.routers import jobs as jobs_router, mcp, push as push_router, widget_categories, widgets
+from app.routers import widget_categories, widgets
 from app.spa import SPAStaticFiles
 from foundation_backend.deploy_checks import production_problems
-from foundation_backend.routers import auth, client_errors, environment, oauth
+from foundation_backend import jobs, push, reminders
+from foundation_backend.routers import auth, client_errors, environment, jobs as jobs_router, mcp, oauth, push as push_router
 
 
 @asynccontextmanager
@@ -47,8 +48,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
                 "Refusing to start with APP_ENV=production (see docs/deploy.md):\n- "
                 + "\n- ".join(problems)
             )
-    # Scheduled jobs (app/jobs.py): registered by the modules that define
-    # them, imported before this runs, or here.
+    # Scheduled jobs (foundation_backend.jobs): registered by the modules
+    # that define them, imported before this runs, or here.
     if PUSH_ENABLED:
         reminders.register()
     schedules = jobs.start_jobs(engine) if JOBS_ENABLED else []

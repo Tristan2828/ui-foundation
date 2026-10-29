@@ -1,5 +1,6 @@
 """AI chats through MCP (issue #132): the OAuth sign-in (foundation_backend.routers.oauth),
-the /mcp endpoint (app/routers/mcp.py) and its tools (app/mcp_tools.py).
+the /mcp endpoint and its tools (foundation_backend.routers.mcp, .mcp_tools),
+through this app's entities (app/mcp_entities.py).
 
 Runs the real sign-in: a session cookie for the user approving, PKCE, the
 code and token exchange, then tool calls with the access token. The
@@ -27,9 +28,10 @@ from foundation_backend import config, rate_window
 from app.db import get_session
 from foundation_backend.deploy_checks import production_problems
 from app.main import app
-from app import mcp_tools
-from app.mcp_entities import ENTITIES, McpEntity, check_entities
-from app.mcp_tools import tool_definitions
+from foundation_backend import mcp_tools
+from foundation_backend.mcp import McpEntity, check_entities
+from foundation_backend.mcp_tools import tool_definitions
+from app.mcp_entities import ENTITIES
 from app.models import (
     McpAuditEntry,
     OAuthClient,

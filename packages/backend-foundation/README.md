@@ -10,23 +10,28 @@ under the same version number, from the same commit.
 
 | Module | What it is |
 |---|---|
-| `config` | The settings it reads from the environment (database, cookies and sessions, sign-in limits, TOTP, error reporting, AI chats' OAuth, the seeded account), `database_connect_args()` and `normalize_database_url()` |
+| `config` | The settings it reads from the environment (database, cookies and sessions, sign-in limits, TOTP, error reporting, AI chats' OAuth, scheduled jobs, Web Push, the seeded account), `database_connect_args()` and `normalize_database_url()` |
 | `db` | The async engine and the `get_session` dependency |
-| `models` | `User`, `Session`, `LoginFailure`, `RecoveryCode`, `PendingLogin`, `OAuthClient`, `OAuthCode`, `OAuthGrant` (table names `users`, `sessions`, …) |
-| `schemas` | `CamelModel`, `Page`, the sign-in and error-envelope schemas |
+| `models` | `User`, `Session`, `LoginFailure`, `RecoveryCode`, `PendingLogin`, `OAuthClient`, `OAuthCode`, `OAuthGrant`, and since 4.35 `McpAuditEntry`, `JobRunRecord`, `PushSubscription`, `Reminder` (table names `users`, `sessions`, …) |
+| `schemas` | `CamelModel`, `Page`, the sign-in and error-envelope schemas, `JobOut`/`JobRunOut` and the push schemas |
 | `security`, `totp`, `login_limits`, `rate_window` | Password and token hashing, the TOTP step, failed sign-in limits, an in-memory rate window |
 | `errors`, `error_reporting`, `openapi_responses` | Error bodies pinned to the contract, `report_error`, the shared `responses=` fragments |
 | `deploy_checks`, `spa` | What `APP_ENV=production` refuses to start with; the SPA mount with its client-route fallback |
 | `routers.auth` | `router` (login, the TOTP step, logout, me) and `register_router` (`POST /auth/register`), with `get_current_user` |
 | `routers.environment`, `routers.client_errors`, `routers.oauth` | `GET /environment`, `POST /client-errors`, AI chats' OAuth sign-in (off unless `MCP_ENABLED`) |
+| `mcp`, `mcp_tools`, `routers.mcp` | AI chats' tools (4.35, #230): `McpEntity` and `ListArgs` for an app's entities, `register_entities` (checked by `check_entities`), the tools generated from them, and `/mcp` itself (off unless `MCP_ENABLED`). Every write is a row in `mcp_audit_log` |
+| `jobs`, `routers.jobs` | Scheduled jobs (4.35): `register_job`, `start_jobs`/`stop_jobs` for the app's lifespan, one run at a time across processes, `GET /jobs` and `POST /jobs/{name}/run` |
+| `push`, `reminders`, `routers.push` | Web Push and reminders (4.35): `send_push`, `config_problem()`, the `send-reminders` job (`reminders.register()`), `/push/*`. Needs the `push` extra (`cryptography`) |
 | `scripts.set_password`, `scripts.enable_totp`, `scripts.disable_totp` | Run as `python -m foundation_backend.scripts.<name> <email>` from the app's `backend/` |
+| `scripts.generate_vapid_keys`, `scripts.send_test_push`, `scripts.check_jobs_live` | A VAPID key pair; one test notification to a user's devices; the jobs runner against a live Postgres (`check-backend-postgres.sh` runs it) |
 | `scripts.check_deps` | `python -m foundation_backend.scripts.check_deps` from `backend/`: every requirement in `pyproject.toml` is in `../deps-allowlist.json`'s `python` list and pinned with `==` (4.34, #236). The app's `scripts/verify.sh` runs it |
 | `testing.signed_in` | `session_cookie`, to sign a test client in for real |
 | `migrations/` | Reference copies of the Alembic revisions that create these tables; never run from here ([`migrations/README.md`](src/foundation_backend/migrations/README.md)) |
 
 An app keeps everything else: its entities, models, routers and
-migrations, and, in the template, MCP's tools, scheduled jobs and Web
-Push.
+migrations, its `McpEntity` list (`app/mcp_entities.py`), the jobs it
+registers by name, and its `main.py`, which includes the package's
+routers and starts its jobs.
 
 ## How an app uses it
 
@@ -35,7 +40,7 @@ version as its `@tristan2828/ui-foundation`:
 
 ```toml
 dependencies = [
-  "ui-foundation-backend==4.34.0",
+  "ui-foundation-backend==4.35.0",
   ...
 ]
 ```

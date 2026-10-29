@@ -28,9 +28,9 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ValidationError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.mcp_entities import ENTITIES, ListArgs, McpEntity
-from app.models import McpAuditEntry, User
-from app.schemas import CamelModel
+from foundation_backend.mcp import ENTITIES, ListArgs, McpEntity
+from foundation_backend.models import McpAuditEntry, User
+from foundation_backend.schemas import CamelModel
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100

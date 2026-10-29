@@ -279,7 +279,7 @@ export interface paths {
         };
         /**
          * The scheduled jobs, each with its schedule and last run
-         * @description The jobs registered in the backend (app/jobs.py), in registration order. lastRun is the latest run that ran (ok or failed); runs a process skipped are left out.
+         * @description The jobs registered in the backend (foundation_backend.jobs), in registration order. lastRun is the latest run that ran (ok or failed); runs a process skipped are left out.
          */
         get: operations["listJobs"];
         put?: never;

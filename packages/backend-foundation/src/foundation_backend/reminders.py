@@ -1,6 +1,6 @@
 """Reminders (issue #167): a notification at a time of day the user chose,
-on the days they chose, sent through Web Push (app/push.py) by the
-scheduled-jobs runner (app/jobs.py). No scheduler of its own.
+on the days they chose, sent through Web Push (push.py) by the
+scheduled-jobs runner (jobs.py). No scheduler of its own.
 
 A reminder is a row in `reminders`: the time ("07:30"), the days
 ("mon,wed,fri"), the user's time zone, the text and the path it opens. An
@@ -27,8 +27,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import jobs, push
-from app.models import Reminder
+from foundation_backend import jobs, push
+from foundation_backend.models import Reminder
 
 logger = logging.getLogger("app.reminders")
 

@@ -89,7 +89,7 @@ echo "check-backend-postgres: every table and column has a COMMENT ON (AGENTS.md
 (cd backend && "../$PY" scripts/check_db_comments.py) || fail "a table or column has no comment"
 
 echo "check-backend-postgres: scheduled jobs' lock and runs on Postgres"
-(cd backend && "../$PY" scripts/check_jobs_live.py) || fail "the live jobs check failed"
+(cd backend && "../$PY" -m foundation_backend.scripts.check_jobs_live) || fail "the live jobs check failed"
 
 echo "check-backend-postgres: starting uvicorn on :8000"
 mkdir -p logs # gitignored, so absent in a fresh clone

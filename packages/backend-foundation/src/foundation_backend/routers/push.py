@@ -4,7 +4,7 @@
 The browser subscribes with the app's VAPID public key, then hands over
 where its push service takes messages and the keys to encrypt them to.
 Each row is one device, the signed-in user's. Off unless PUSH_ENABLED (404
-then). Sending is app/push.py's.
+then). Sending is push.py's.
 """
 
 from datetime import datetime, timezone
@@ -14,12 +14,12 @@ from fastapi.exceptions import RequestValidationError
 from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import config, push
-from app.db import get_session
-from app.models import PushSubscription, User
-from app.openapi_responses import NOT_FOUND, SERVER_ERROR, UNAUTHORIZED, VALIDATION
+from foundation_backend import config, push
+from foundation_backend.db import get_session
+from foundation_backend.models import PushSubscription, User
+from foundation_backend.openapi_responses import NOT_FOUND, SERVER_ERROR, UNAUTHORIZED, VALIDATION
 from foundation_backend.routers.auth import get_current_user
-from app.schemas import PushPublicKeyOut, PushSubscriptionIn, PushSubscriptionOut
+from foundation_backend.schemas import PushPublicKeyOut, PushSubscriptionIn, PushSubscriptionOut
 
 
 def require_enabled() -> None:

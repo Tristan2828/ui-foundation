@@ -1,5 +1,6 @@
 """The foundation's wire schemas: accounts and sign-in, the data
-environment, client error reports, the error envelopes, and the base every
+environment, client error reports, scheduled jobs, Web Push, the error
+envelopes, and the base every
 app schema builds on (CamelModel, Page). Table models (models.py) never
 cross this boundary directly.
 
@@ -7,6 +8,7 @@ JSON is camelCase (alias_generator=to_camel + populate_by_name) so Python
 stays snake_case internally while matching openapi.yaml on the wire.
 """
 
+from datetime import datetime
 from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -104,3 +106,51 @@ class ValidationErrorItem(CamelModel):
 
 class ValidationErrorBody(CamelModel):
     detail: list[ValidationErrorItem]
+
+
+class JobRunOut(CamelModel):
+    """A run of a scheduled job (openapi.yaml JobRun)."""
+
+    trigger: Literal["schedule", "manual"]
+    started_at: datetime
+    finished_at: datetime
+    outcome: Literal["ok", "failed", "skipped"]
+    error: str | None
+    summary: str | None
+
+
+class JobOut(CamelModel):
+    """A scheduled job and its last run (openapi.yaml Job)."""
+
+    name: str
+    every_seconds: int
+    timeout_seconds: int
+    running: bool
+    last_run: JobRunOut | None
+
+
+class PushPublicKeyOut(CamelModel):
+    """GET /push/public-key (openapi.yaml PushPublicKey)."""
+
+    public_key: str
+
+
+class PushSubscriptionKeys(CamelModel):
+    p256dh: str = Field(min_length=1, max_length=100)
+    auth: str = Field(min_length=1, max_length=32)
+
+
+class PushSubscriptionIn(CamelModel):
+    """POST /push/subscriptions: what the browser's PushSubscription.toJSON()
+    holds. expirationTime (milliseconds, not always whole) is accepted and
+    ignored."""
+
+    endpoint: str = Field(min_length=1, max_length=2048)
+    keys: PushSubscriptionKeys
+    expiration_time: float | None = None
+
+
+class PushSubscriptionOut(CamelModel):
+    """openapi.yaml PushSubscriptionCreated."""
+
+    id: int

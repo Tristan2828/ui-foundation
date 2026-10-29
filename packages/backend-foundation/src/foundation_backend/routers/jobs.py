@@ -1,5 +1,5 @@
 """GET /jobs and POST /jobs/{name}/run (openapi.yaml listJobs, runJob):
-the scheduled jobs (app/jobs.py), when each last ran and how it went, and
+the scheduled jobs (jobs.py), when each last ran and how it went, and
 a way to run one now.
 
 Signed in, like every other read here; jobs aren't anyone's own, so any
@@ -13,11 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel import col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app import db, jobs
-from app.models import JobRunRecord, User
-from app.openapi_responses import CONFLICT, NOT_FOUND, SERVER_ERROR, UNAUTHORIZED
+from foundation_backend import db, jobs
+from foundation_backend.models import JobRunRecord, User
+from foundation_backend.openapi_responses import CONFLICT, NOT_FOUND, SERVER_ERROR, UNAUTHORIZED
 from foundation_backend.routers.auth import get_current_user
-from app.schemas import JobOut, JobRunOut
+from foundation_backend.schemas import JobOut, JobRunOut
 
 router = APIRouter(tags=["jobs"])
 

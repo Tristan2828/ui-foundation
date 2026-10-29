@@ -3,12 +3,13 @@ JSON casing lives in app/schemas.py, never here. Table models are never
 returned directly from a router.
 
 The foundation's tables (users, sessions, sign-in limits, TOTP, AI chats'
-OAuth) are `foundation_backend.models`, re-exported here so
+OAuth and audit log, scheduled jobs' runs, push subscriptions, reminders)
+are `foundation_backend.models`, re-exported here so
 `from app.models import User` works and every table is on
 `SQLModel.metadata` once this module is imported (migrations/env.py).
 """
 
-from datetime import date, datetime, time
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 
@@ -24,89 +25,11 @@ from foundation_backend.models import (
     OAuthClient as OAuthClient,
     OAuthCode as OAuthCode,
     OAuthGrant as OAuthGrant,
+    McpAuditEntry as McpAuditEntry,
+    JobRunRecord as JobRunRecord,
+    PushSubscription as PushSubscription,
+    Reminder as Reminder,
 )
-
-
-class McpAuditEntry(SQLModel, table=True):
-    """Every record an AI chat created, changed, deleted or restored through MCP."""
-
-    __tablename__ = "mcp_audit_log"
-
-    id: int | None = Field(default=None, primary_key=True)
-    # Not a foreign key: the log outlives the account and the connection.
-    user_id: int = Field(index=True)
-    client_id: str = Field(max_length=64)
-    # "create", "update", "delete" or "restore".
-    action: str = Field(max_length=16)
-    entity: str = Field(max_length=64)
-    record_id: int
-    at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    # JSON objects of the fields that changed, as the API names them; before
-    # is null for a create. A delete or restore holds the whole record in
-    # both, so the log alone can rebuild it.
-    before: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
-    after: str = Field(sa_column=Column(Text, nullable=False))
-
-
-class JobRunRecord(SQLModel, table=True):
-    """One run of a scheduled job (app/jobs.py), kept JOB_RUNS_KEEP_DAYS."""
-
-    __tablename__ = "job_runs"
-
-    id: int | None = Field(default=None, primary_key=True)
-    # The name the job was registered under (register_job).
-    job: str = Field(max_length=64, index=True)
-    # "schedule" or "manual" (POST /jobs/{name}/run).
-    trigger: str = Field(max_length=16)
-    started_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False, index=True))
-    finished_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    # "ok", "failed", or "skipped" (another process was running it).
-    outcome: str = Field(max_length=16)
-    # What went wrong, for a failed run (scrubbed like an error report).
-    error: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
-    # What the job said it did ("12 new"), for an ok run.
-    summary: str | None = Field(default=None, max_length=500)
-
-
-class PushSubscription(SQLModel, table=True):
-    """One device a user allowed reminders on (app/push.py): where its push
-    service takes messages for it, and the keys to encrypt them to."""
-
-    __tablename__ = "push_subscriptions"
-
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
-    # The push service's URL for this device. Unique: the same device
-    # subscribing again (or under another account) replaces its row.
-    endpoint: str = Field(max_length=2048, unique=True)
-    # The browser's P-256 public key and auth secret, base64url.
-    p256dh: str = Field(max_length=100)
-    auth: str = Field(max_length=32)
-    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-
-
-class Reminder(SQLModel, table=True):
-    """A notification sent at a time the user chose, on the days they chose
-    (app/reminders.py, the send-reminders job)."""
-
-    __tablename__ = "reminders"
-
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
-    title: str = Field(max_length=100)
-    body: str = Field(default="", max_length=300)
-    # The app's own path the notification opens ("/routines/3").
-    url: str = Field(default="/", max_length=500)
-    # When, in the user's own time zone: "HH:MM" on these days.
-    time_of_day: time = Field(sa_column=Column(Time(), nullable=False))
-    # Comma-separated mon,tue,wed,thu,fri,sat,sun, in that order.
-    days: str = Field(max_length=27)
-    # IANA name ("America/Chicago"); the job reads the time in it.
-    time_zone: str = Field(max_length=64)
-    enabled: bool = Field(default=True)
-    # The local date it was last sent on, so it goes once a day at most.
-    last_sent_on: date | None = Field(default=None)
-    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
 
 
 class WidgetStatus(str, Enum):

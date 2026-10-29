@@ -2,7 +2,7 @@
 name = "ui-foundation-backend"
 # The release workflow writes the release's version here, the same as
 # @tristan2828/ui-foundation's (packages/ui-foundation/package.json).
-version = "4.34.0"
+version = "4.35.0"
 description = "The auth and security layer shared by FastAPI + SQLModel backends built on ui-foundation: sessions, sign-in limits, TOTP, error reporting, deploy checks, AI chats' OAuth."
 readme = "README.md"
 license = "MIT"
@@ -22,7 +22,14 @@ Repository = "https://github.com/Tristan2828/ui-foundation"
 Changelog = "https://github.com/Tristan2828/ui-foundation/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
+# Web Push (foundation_backend.push): PyCA's library, for the P-256 and
+# AES-GCM the standard library lacks. An app that sends reminders installs
+# it (its own push extra, or ui-foundation-backend[push]).
+push = [
+  "cryptography==50.0.2",
+]
 dev = [
+  "cryptography==50.0.2",
   "mypy==2.3.1",
   "pytest==9.1.1",
   "pytest-asyncio==1.4.0",
