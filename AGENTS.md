@@ -43,10 +43,14 @@ direction and the queue) and any open item in
   app's) is `template/deps-allowlist.json`. Never add a dependency that
   isn't listed. Write the case in `docs/BLOCKERS.md` and stop. Pinned tool
   versions are in the template's `tools`; never `@latest`.
-- **Never hand-tag or hand-publish.** A merge to `main` publishes the release
+- **Never hand-tag or hand-publish.** A merge to `main` that bumps the
+  version in `packages/ui-foundation/package.json` publishes the release
   to npm with no further review (`docs/ARCHITECTURE.md` "Releasing"), so
   the PR's checks are the last gate before every app. Open a PR for every
-  change.
+  change. Bump the version (and the backend package's to match) in the PR
+  that finishes a feature or carries a fix an app needs now, with its
+  `CHANGELOG.md` entry; a PR that's one step of a larger piece doesn't
+  bump, and goes out with the one that does.
 
 ## Scope and stopping
 

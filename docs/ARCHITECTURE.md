@@ -564,13 +564,22 @@ by measurement.
 Releases are cut and published automatically; no step needs a person.
 `.github/workflows/release.yml` runs on every push to `main` that changes
 `packages/ui-foundation/`, `packages/backend-foundation/`, `template/` or
-`scripts/create-app.sh`. It:
+`scripts/create-app.sh`, and **releases only when the version in
+`packages/ui-foundation/package.json` is past the latest `v*` tag** (#231,
+since 4.34). A PR that finishes a feature, or a fix an app needs now,
+bumps it (and `packages/backend-foundation/pyproject.toml` and its
+README's pin to match): a patch, a minor or a major. Its merge releases
+everything merged since the last tag as that one version, under one
+`CHANGELOG.md` entry with one "How an app adopts it". A merge with no
+bump (a step of a feature that isn't finished, a Dependabot update)
+releases nothing and goes out with the next bump; a Dependabot security
+fix an app needs now gets a patch bump pushed to its PR. Why: until 4.34 every
+merge released a patch, 116 tags in six weeks, and an app reads every
+release it hasn't applied. Run by hand (`gh workflow run release.yml`),
+it releases `main` as it is, for a forgotten bump: at the bumped version,
+or the next patch after the latest tag. It:
 
-1. picks the version: the next patch after the latest `v*` tag, or the
-   version in `packages/ui-foundation/package.json` if that is higher. A
-   minor or major release is made by bumping it there in the PR (and
-   `packages/backend-foundation/pyproject.toml` to match), and nothing is
-   committed back.
+1. decides the version as above. Nothing is committed back.
 2. builds and packs the npm package (`build` job), and builds the pip
    package's sdist and wheel with that version written in (`build-py`),
 3. **publishes** `@tristan2828/ui-foundation@<version>` to npm through
@@ -617,7 +626,8 @@ built package. The passkey step cost one manual approval per release;
 the developer chose automation over it.
 
 **A bad release** keeps its version: npm and PyPI versions can't be
-reused. Ship the fix as the next patch, and meanwhile
+reused. Ship the fix as the next patch (bump the patch number in the
+fix's PR; it can go out the same day), and meanwhile
 `npm deprecate @tristan2828/ui-foundation@<version> "<why>; use <next>"`
 so installs warn (on PyPI, yank the version on pypi.org, which pins
 `==<version>` still install). `release-smoke` marks its notes if it failed.
