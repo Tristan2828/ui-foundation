@@ -7,6 +7,50 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.37.0 — The reminders job on an app's own table, and a widget header linking out
+
+Additive to both packages, so a minor (#247, #248). Nothing changes on the
+wire or in the database.
+
+- **The reminders job takes the app's table model** (#247):
+  `reminders.register(model=MyReminder)` and
+  `send_due_reminders(session, now, model=MyReminder)` read any table
+  model with the reminder columns, in whatever schema or table name the
+  app keeps them. Left out, they read the package's `reminders`, as
+  before.
+- **Push and reminder tables only for an app that uses them** (#247):
+  `PushSubscription` moved to `foundation_backend.push_models` and the
+  package's `Reminder` to `foundation_backend.reminders_models`, so
+  importing `foundation_backend.models` no longer puts
+  `push_subscriptions` and `reminders` on `SQLModel.metadata`.
+  `push_subscriptions` arrives with `foundation_backend.push` (or
+  `reminders`, which sends through it); `reminders` with the package's
+  `Reminder` (imported, or the job run without a model).
+  `from foundation_backend.models import PushSubscription, Reminder`
+  still works and registers the table then.
+- **`WidgetCard`'s header link can go outside the app** (#248):
+  `link={{ href, label }}` beside `{ to, label }` opens in a new tab with
+  the external-link mark and "(opens in a new tab)" for a screen reader,
+  as `WidgetListItem`'s `href` does. The type is exported as
+  `WidgetCardLink`. Story `app/WidgetCard` (Saved links, Brand mark),
+  `e2e/widget-card.spec.ts`; `design-language.md` "Widget cards".
+
+**How an app adopts it:** bump both packages and run `sync`. Nothing
+changes for an app on the package's tables.
+
+- An app that keeps reminders in its own table and copied the job's
+  query and send loop deletes its copy and registers the package's job
+  on its model: `reminders.register(model=MyReminder)`
+  (`docs/foundation/reminders.md` "A reminder is the app's own row").
+- An app that relied on `foundation_backend.models` alone to put
+  `push_subscriptions` or `reminders` on the metadata (its Alembic
+  `env.py`, a test's `create_all`) imports the table from where it uses
+  it, or re-exports it from its `app/models.py` as the template does.
+  An app without push, or with reminders in its own table, now sees
+  autogenerate leave those tables alone; it re-exports neither.
+- A widget about an outside service can put its address in the header:
+  `link={{ href: 'https://…', label: 'Open <service>' }}`.
+
 ## 4.36.0 — A board
 
 Additive, so a minor.

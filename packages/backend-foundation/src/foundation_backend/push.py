@@ -48,7 +48,7 @@ from sqlmodel import col, delete, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from foundation_backend import config
-from foundation_backend.models import PushSubscription
+from foundation_backend.push_models import PushSubscription
 
 if TYPE_CHECKING:
     from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey

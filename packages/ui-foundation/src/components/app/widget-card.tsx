@@ -23,6 +23,11 @@
 // where that's blocked). The body is hidden, not unmounted, so whatever
 // the app keeps in it stays put.
 //
+// The header's link is an app route (`to`) or, for a widget about a
+// service outside the app, its address (`href`, #248): that one opens in a
+// new tab, with the outside-link mark and a screen reader's "(opens in a
+// new tab)", as WidgetListItem's `href` does.
+//
 // WidgetList and WidgetListItem are the common body: rows with dividers,
 // each a primary link (or plain text) truncated to one line, an optional
 // muted note ("2 h ago") and an optional trailing element (a badge, a
@@ -57,11 +62,12 @@ export interface WidgetCardProps {
   headingLevel?: 2 | 3 | 4 | 5 | 6
   /**
    * A link on the right of the header to everything the widget samples:
-   * `{ to: '/tasks?status=doing', label: 'All doing' }`. Its accessible
-   * name is `label`, described by the title, so several "All" links on one
-   * page stay distinct.
+   * `{ to: '/tasks?status=doing', label: 'All doing' }`, or an outside
+   * address, opened in a new tab: `{ href: 'https://example.com', label:
+   * 'Open Example' }`. Its accessible name is `label`, described by the
+   * title, so several "All" links on one page stay distinct.
    */
-  link?: { to: To; label: string }
+  link?: WidgetCardLink
   isLoading: boolean
   error?: AppError | null
   onRetry?: () => void
@@ -84,6 +90,8 @@ export interface WidgetCardProps {
   children?: ReactNode
   className?: string
 }
+
+export type WidgetCardLink = { to: To; label: string; href?: never } | { href: string; label: string; to?: never }
 
 const HEADER_LINK_CLASS =
   'shrink-0 rounded-sm type-label text-foreground underline underline-offset-4 outline-none ' +
@@ -132,10 +140,24 @@ export function WidgetCard({
           </Heading>
           {(link || collapsible) && (
             <div className="flex shrink-0 items-center gap-1">
-              {link && (
-                <Link to={link.to} aria-describedby={headingId} className={HEADER_LINK_CLASS}>
+              {link?.href !== undefined ? (
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-describedby={headingId}
+                  className={cn(HEADER_LINK_CLASS, 'inline-flex items-center gap-1')}
+                >
                   {link.label}
-                </Link>
+                  <ExternalLinkIcon aria-hidden="true" className="size-3 shrink-0 text-muted-foreground" />
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              ) : (
+                link && (
+                  <Link to={link.to} aria-describedby={headingId} className={HEADER_LINK_CLASS}>
+                    {link.label}
+                  </Link>
+                )
               )}
               {collapsible && (
                 <Button

@@ -6,11 +6,11 @@ import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import type { IconComponent } from './icon-component'
-import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
+import { WidgetCard, WidgetList, WidgetListItem, type WidgetCardLink } from './widget-card'
 
 // A hub page's widgets (issue #121): three made-up widgets, each a list
 // with a different trailing element (a tone badge, a note and a switch, a
-// muted time on external links). Default is the page as loaded; All
+// muted time on external links, and the header linking out, #248). Default is the page as loaded; All
 // states is every widget in each of the four states; Brand mark is a card
 // about an outside service, titled with that service's mark (#211);
 // Collapsible folds and remembers each card (#233). Axe, the token check
@@ -46,7 +46,7 @@ function stateProps(state: State) {
 type Widget = {
   title: string
   icon: IconComponent
-  link?: { to: string; label: string }
+  link?: WidgetCardLink
   emptyMessage: string
   rows: number
   body: ReactNode
@@ -94,6 +94,8 @@ const WAITING_ON: Widget = {
 const SAVED_LINKS: Widget = {
   title: 'Saved links',
   icon: LinkIcon,
+  // An outside address in the header (#248): it opens in a new tab.
+  link: { href: 'https://example.com/saved', label: 'Open saved' },
   emptyMessage: 'No links saved yet',
   rows: 3,
   body: (
@@ -183,7 +185,7 @@ function ExampleServiceMark({ className, ...rest }: { className?: string; 'aria-
 const RECENTLY_IN_SERVICE: Widget = {
   title: 'Recently in Example Video',
   icon: ExampleServiceMark,
-  link: { to: '/videos', label: 'All' },
+  link: { href: 'https://example.com/history', label: 'Open Example Video' },
   emptyMessage: 'Nothing watched yet',
   rows: 2,
   body: (

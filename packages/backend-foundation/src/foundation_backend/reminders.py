@@ -5,7 +5,12 @@ scheduled-jobs runner (jobs.py). No scheduler of its own.
 A reminder is a row in `reminders`: the time ("07:30"), the days
 ("mon,wed,fri"), the user's time zone, the text and the path it opens. An
 app gives it an API and screens like any entity of its own
-(docs/foundation/reminders.md).
+(docs/foundation/reminders.md). The table is the package's
+(reminders_models.Reminder) unless the app hands the job its own model
+(#247): `register(model=MyReminder)`, any table model with those columns,
+in whatever schema or table name the app keeps them. Importing this
+module registers no table: the package's model is loaded only when the
+job runs without one of the app's.
 
 The send-reminders job runs every minute (registered when PUSH_ENABLED, so
 it needs JOBS_ENABLED to run on its own). Each run sends every enabled
@@ -22,13 +27,13 @@ reminder that's due:
 import logging
 from collections.abc import Iterable
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
+from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from sqlmodel import col, select
+from sqlmodel import SQLModel, col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from foundation_backend import jobs, push
-from foundation_backend.models import Reminder
 
 logger = logging.getLogger("app.reminders")
 
@@ -87,11 +92,24 @@ def due_on(
     return today
 
 
-async def send_due_reminders(session: AsyncSession, now: datetime | None = None) -> str | None:
-    """One run of the job: sends each due reminder, marks it sent today."""
+def _default_model() -> type[SQLModel]:
+    from foundation_backend.reminders_models import Reminder
+
+    return Reminder
+
+
+async def send_due_reminders(
+    session: AsyncSession, now: datetime | None = None, *, model: type[SQLModel] | None = None
+) -> str | None:
+    """One run of the job: sends each due reminder, marks it sent today.
+
+    `model` is the reminders table to read: the package's when left out,
+    or an app's own with the same columns (id, user_id, title, body, url,
+    time_of_day, days, time_zone, enabled, last_sent_on)."""
     now = now or datetime.now(timezone.utc)
-    result = await session.exec(select(Reminder).where(col(Reminder.enabled).is_(True)))
-    due: list[tuple[Reminder, date]] = []
+    table: Any = model or _default_model()
+    result = await session.exec(select(table).where(col(table.enabled).is_(True)))
+    due: list[tuple[Any, date]] = []
     skipped = 0
     for reminder in result.all():
         try:
@@ -131,7 +149,13 @@ async def send_due_reminders(session: AsyncSession, now: datetime | None = None)
     return f"{summary}; {skipped} unreadable" if skipped else summary
 
 
-def register() -> None:
-    """Adds the send-reminders job (main.py, when PUSH_ENABLED)."""
-    if JOB_NAME not in jobs.JOBS:
-        jobs.register_job(JOB_NAME, every=timedelta(minutes=1), run=send_due_reminders, timeout=timedelta(minutes=2))
+def register(model: type[SQLModel] | None = None) -> None:
+    """Adds the send-reminders job (main.py, when PUSH_ENABLED), reading
+    `model`'s table: the package's `reminders` when left out."""
+    if JOB_NAME in jobs.JOBS:
+        return
+
+    async def run(session: AsyncSession) -> str | None:
+        return await send_due_reminders(session, model=model)
+
+    jobs.register_job(JOB_NAME, every=timedelta(minutes=1), run=run, timeout=timedelta(minutes=2))

@@ -68,6 +68,18 @@ Scope it to the signed-in user, as Widgets are.
   sends a reminder when today is one of its days in its time zone and the
   time has come, once a day at most. More than 15 minutes late (the
   backend was down) and it's skipped for the day rather than sent late.
+- **Reminders in a table of the app's own** (another schema, another
+  name, as an app with a schema per module keeps them): define its table
+  model with the same columns (`id`, `user_id`, `title`, `body`, `url`,
+  `time_of_day`, `days`, `time_zone`, `enabled`, `last_sent_on`) and hand
+  it to the job, `reminders.register(model=MyReminder)` in place of
+  `reminders.register()`. Left out, the job reads the package's
+  `reminders` table. Neither table is on `SQLModel.metadata` until the
+  app uses it: `push_subscriptions` arrives with `foundation_backend.push`
+  (and `foundation_backend.reminders`, which sends through it), the
+  package's `reminders` only with its `Reminder` model (imported, or the
+  job run without a model). So an app without push, or with its own
+  table, gets neither from `create_all` or autogenerate.
 - **Something else to send?** Call `send_push` from the app's own code or
   job: a message when a long task finishes, a daily summary. The `url` is
   always the app's own path.
