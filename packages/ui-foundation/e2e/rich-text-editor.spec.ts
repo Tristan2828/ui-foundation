@@ -1235,6 +1235,9 @@ test.describe('heading levels', () => {
     underPage: ['h2 Overview', 'h3 Details', 'h4 Small print'],
     underSection: ['h3 Overview', 'h4 Details', 'h5 Small print'],
     capped: ['h5 Overview', 'h6 Details', 'h6 Small print'],
+    // headingFrom="text" (#235): the text's own highest heading takes headingLevel.
+    fromText: ['h2 Imported details', 'h3 Imported small print'],
+    fromTextDeep: ['h2 Deep small print'],
   }
 
   for (const where of ['editor', 'markdown'] as const) {
@@ -1284,9 +1287,9 @@ test.describe('heading levels', () => {
 
   test('the editor saves the Markdown it opened with: the level moves the element, never the `#`', async ({ page }) => {
     await page.goto(LEVELS.editor)
-    for (const name of ['underPage', 'capped']) {
+    for (const name of ['underPage', 'capped', 'fromText']) {
       const opened = (await saved(page, name).textContent())!
-      expect(opened.startsWith('# Overview\n')).toBe(true)
+      expect(opened.startsWith(name === 'fromText' ? '## Imported details\n' : '# Overview\n')).toBe(true)
       await caretAtEnd(page, name)
       await page.keyboard.type('xyz')
       await expect(saved(page, name)).toContainText('xyz')

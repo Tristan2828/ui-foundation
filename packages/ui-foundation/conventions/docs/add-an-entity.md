@@ -449,7 +449,8 @@ is a filled-in example while the Widgets demo is still here).
      breaks). Give `<Markdown>` and `RichTextEditor` a `headingLevel` for
      where they sit: the default (3) in an `EntityView` section,
      `headingLevel={2}` for a `RichTextEditor` on a form straight under
-     the page's `<h1>`.
+     the page's `<h1>`. Text that's imported or pasted from another
+     tool (often starting at `##`) also gets `headingFrom="text"`.
    - **Quick actions: only the fields the plan's `Quick actions` line
      names**, each a control that saves on its own (cell pattern 17,
      `widget-quick-actions.tsx`). A `yes/no` is a

@@ -21,9 +21,21 @@ Additive, so a minor.
   modular app can keep one a11y spec per module. `loggedOutRoutes` is
   now optional, so only one of those files needs to check `/login`.
 
+- **New: `headingFrom` on `Markdown` and `RichTextEditor`** (#235).
+  `'hash'` (the default) is 4.33's mapping, `#` at `headingLevel`.
+  `'text'` puts the text's own highest heading at `headingLevel`, the
+  rest keeping their distance, so notes that start at `##` (an export
+  from Notion, a README) don't skip a level under the page's heading.
+  The editor reads it from the text it opens with; a heading added above
+  it renders at `headingLevel` too. The look and the saved Markdown
+  don't change. New type `HeadingFrom`.
+
 **How an app adopts it:** bump the version, run `sync`.
 
 - **A money or count column:** add `meta: { align: 'right' }` to it.
+- **Notes imported or pasted from another tool:** add
+  `headingFrom="text"` beside their `headingLevel`, and drop any a11y
+  workaround for `heading-order` on them.
 - **An app split into modules:** an `e2e/a11y-<module>.spec.ts` per
   module, each passing its own entries as `nav` with
   `checkSidebar: false`, and one spec with the whole nav (and

@@ -80,6 +80,7 @@ function Labelled({
   upload,
   imageMaxSize,
   headingLevel,
+  headingFrom,
 }: {
   label: string
   markdown: string
@@ -90,6 +91,7 @@ function Labelled({
   upload?: ImageUpload
   imageMaxSize?: number
   headingLevel?: RichTextEditorProps['headingLevel']
+  headingFrom?: RichTextEditorProps['headingFrom']
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
@@ -111,6 +113,7 @@ function Labelled({
         upload={upload}
         imageMaxSize={imageMaxSize}
         headingLevel={headingLevel}
+        headingFrom={headingFrom}
       />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
@@ -186,8 +189,8 @@ export const ImageUploads: StoryObj<typeof RichTextEditor> = {
 // A note with all three heading levels, in three editors where a page
 // would put them: straight under a form's title (`headingLevel={2}`: `#`
 // is an <h2>), under a section's <h2> (the default, from <h3>), and deeper
-// still (`headingLevel={5}`, `##` and `###` both capped at <h6>). The
-// page's outline never skips a level (axe's heading-order), and each saves
+// still (`headingLevel={5}`, `##` and `###` both capped at <h6>), and two
+// notes that start below `#` (`headingFrom="text"`). The page's outline never skips a level (axe's heading-order), and each saves
 // the Markdown it opened with (e2e/rich-text-editor.spec.ts "heading levels").
 const LEVELS_NOTE = `# Overview
 
@@ -202,11 +205,30 @@ Some words under the second level.
 The last words.
 `
 
+// Notes with no `#`, as pasted or imported (`headingFrom="text"`): the
+// text's own highest heading takes `headingLevel`, so `##` is the <h2>
+// under the page's title, and a note starting at `###` starts there too.
+const FROM_TEXT_NOTE = `## Imported details
+
+Words from another tool.
+
+### Imported small print
+
+More words.
+`
+
+const FROM_TEXT_DEEP_NOTE = `### Deep small print
+
+The deepest words.
+`
+
 export const HeadingLevels: StoryObj<typeof RichTextEditor> = {
   render: () => (
     <div className="flex max-w-xl flex-col gap-6">
       <h1 className="type-page-title text-foreground">A form with notes</h1>
       <Labelled label="underPage" markdown={LEVELS_NOTE} headingLevel={2} />
+      <Labelled label="fromText" markdown={FROM_TEXT_NOTE} headingLevel={2} headingFrom="text" />
+      <Labelled label="fromTextDeep" markdown={FROM_TEXT_DEEP_NOTE} headingLevel={2} headingFrom="text" />
       <section aria-labelledby="levels-section" className="flex flex-col gap-6">
         <h2 id="levels-section" className="type-section-title text-foreground">
           A section with notes

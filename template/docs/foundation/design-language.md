@@ -275,7 +275,11 @@ renders as: 2 straight under the page's `<h1>` (a form, or a page that is
 the note), 3 under a section's `<h2>` (the default). `##` is one below it
 and `###` two below, never past `<h6>`, so the outline never skips a
 level (axe's heading-order). Only the element moves: each level keeps its
-look, and the editor saves `#` as `#`.
+look, and the editor saves `#` as `#`. Text pasted or imported from
+another tool often has no `#` and starts at `##`; `headingFrom="text"`
+puts the text's own highest heading at `headingLevel` instead, the rest
+keeping their distance from it (the editor reads it from the text it
+opens with). The text isn't rewritten.
 
 A table wider than the text scrolls sideways. While it does, its box is a
 tab stop and a region named "Table, scrolls sideways: " and its first
