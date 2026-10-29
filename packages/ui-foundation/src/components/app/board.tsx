@@ -6,7 +6,9 @@
 // - Columns: `columns`, in order, each a `value` with its `label` (a stage
 //   circle and a word, say), an optional `count` (the column's total,
 //   which may be more than the cards loaded), an `empty` line, and a
-//   `footer` ("Showing 100 of 240", a link to the filtered list).
+//   `footer` ("Showing 100 of 240", a link to the filtered list). A
+//   column whose `label` isn't plain text gives its `name` for the Move
+//   menu and what a screen reader hears after a move.
 // - Cards: every record in `items` whose `getColumn` is one of the
 //   columns' values, in `items`' order; a record whose value has no column
 //   isn't shown. `renderCard` is the card's content: the title (a link to
@@ -15,6 +17,9 @@
 //   has a Move button (a menu of `moveTo`, by default the columns: the
 //   keyboard and a phone, where there is no drag). `moveTo` may add values
 //   with no column, such as Dropped, which take the card off the board.
+//   After a move from the menu the focus goes back to the card's Move
+//   button in its new column (to the board, if the card left it), and a
+//   status line says where the card went.
 //   Without `onMove` the board is read-only: a computed field.
 //   `onMove(item, value)` is the save; the app makes it optimistic
 //   (useRecordUpdate), so placing cards by `getColumn` on the record shows
@@ -25,8 +30,9 @@
 //   an empty state, only a muted line.
 //
 // Columns share the width, at least 16rem each, and scroll sideways with
-// snap points when they don't fit (a phone shows one at a time).
-import { useId, useState, type DragEvent, type ReactNode } from 'react'
+// snap points when they don't fit. A phone shows one column at a time,
+// with the edge of the next one showing.
+import { useEffect, useId, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import { ArrowRightLeftIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
@@ -50,6 +56,12 @@ export type BoardColumn<V extends string> = {
   value: V
   /** The column's heading: a word, or a glyph and a word. */
   label: ReactNode
+  /**
+   * The column's name as plain text: its entry in the default Move menu and
+   * in what a screen reader hears after a move. Omitted: `label` when it is
+   * a string, else `value`.
+   */
+  name?: string
   /** The column's total, beside its heading. Omitted: the cards on the board are counted. */
   count?: number
   /** The line an empty column shows. Default "Nothing here". */
@@ -74,8 +86,10 @@ export type BoardProps<T, V extends string> = {
   renderCard: (item: T) => ReactNode
   /** Saves the record's new value. Omitted: a read-only board. */
   onMove?: (item: T, value: V) => void
-  /** The Move menu's choices. Default: the columns. */
+  /** The Move menu's choices. Default: the columns, by their `name`. */
   moveTo?: readonly BoardMoveTarget<V>[]
+  /** The columns' heading level: 2 under the page's h1 (the default), deeper under a section. */
+  headingLevel?: 2 | 3 | 4 | 5 | 6
   isLoading?: boolean
   error?: AppError | null
   onRetry?: () => void
@@ -88,6 +102,13 @@ export type BoardProps<T, V extends string> = {
 // elsewhere (a file, a link) carries.
 const DRAG_TYPE = 'application/x-ui-foundation-board-card'
 
+// At least 16rem, sharing the width; on a phone the board's width less 2rem,
+// so the next column's edge shows there is more to scroll to.
+const COLUMN_WIDTH = 'min-w-[calc(100%-2rem)] flex-1 basis-0 sm:min-w-64'
+
+const columnName = <V extends string>(column: BoardColumn<V>): string =>
+  column.name ?? (typeof column.label === 'string' ? column.label : column.value)
+
 export function Board<T, V extends string>({
   'aria-label': ariaLabel,
   columns,
@@ -98,6 +119,7 @@ export function Board<T, V extends string>({
   renderCard,
   onMove,
   moveTo,
+  headingLevel = 2,
   isLoading = false,
   error = null,
   onRetry,
@@ -105,6 +127,28 @@ export function Board<T, V extends string>({
   emptyDescription,
   emptyAction,
 }: BoardProps<T, V>) {
+  const boardRef = useRef<HTMLDivElement>(null)
+  const [announcement, setAnnouncement] = useState('')
+  // A move from the Move menu, until its card is in its new column or off
+  // the board. The card is remounted there, so the Move button that had
+  // the focus is gone: its new one takes the focus, or the board does.
+  const moved = useRef<{ id: string; value: V } | null>(null)
+  useEffect(() => {
+    const pending = moved.current
+    if (pending === null) return
+    const item = items.find((candidate) => String(getId(candidate)) === pending.id)
+    if (item !== undefined && getColumn(item) !== pending.value) return
+    moved.current = null
+    const board = boardRef.current
+    // Only when the focus was lost with the old button, never taken from
+    // wherever the user has gone since.
+    if (board === null || (document.activeElement !== null && document.activeElement !== document.body)) return
+    const button = Array.from(board.querySelectorAll<HTMLElement>('[data-board-move]')).find(
+      (candidate) => candidate.dataset.boardMove === pending.id,
+    )
+    ;(button ?? board).focus()
+  }, [items, getId, getColumn])
+
   if (error) {
     return (
       <div data-slot="board" data-state="error">
@@ -116,7 +160,7 @@ export function Board<T, V extends string>({
     return (
       <div data-slot="board" data-state="loading" role="group" aria-busy="true" aria-label={ariaLabel} className="flex gap-3 overflow-x-auto pb-2">
         {columns.map((column) => (
-          <div key={column.value} className="flex min-w-64 flex-1 basis-0 flex-col gap-2 rounded-lg bg-muted p-2">
+          <div key={column.value} className={cn('flex flex-col gap-2 rounded-lg bg-muted p-2', COLUMN_WIDTH)}>
             <Skeleton className="h-5 w-24" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -139,18 +183,25 @@ export function Board<T, V extends string>({
       </div>
     )
   }
-  const targets = moveTo ?? columns.map((column) => ({ value: column.value, label: String(column.value) }))
-  const move = (id: string, value: V) => {
+  const targets = moveTo ?? columns.map((column) => ({ value: column.value, label: columnName(column) }))
+  const move = (id: string, value: V, from: 'drag' | 'menu') => {
     const item = items.find((candidate) => String(getId(candidate)) === id)
-    if (item !== undefined && getColumn(item) !== value) onMove?.(item, value)
+    if (onMove === undefined || item === undefined || getColumn(item) === value) return
+    const column = columns.find((candidate) => candidate.value === value)
+    const where = targets.find((target) => target.value === value)?.label ?? (column ? columnName(column) : value)
+    setAnnouncement(`Moved ${getName(item)} to ${where}`)
+    if (from === 'menu') moved.current = { id, value }
+    onMove(item, value)
   }
   return (
     <div
+      ref={boardRef}
       data-slot="board"
       data-state="success"
       role="group"
       aria-label={ariaLabel}
-      className="flex snap-x gap-3 overflow-x-auto pb-2"
+      tabIndex={-1}
+      className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 outline-none"
     >
       {columns.map((column) => {
         const cards = shown.filter((item) => getColumn(item) === column.value)
@@ -159,7 +210,8 @@ export function Board<T, V extends string>({
             key={column.value}
             column={column}
             count={column.count ?? cards.length}
-            onDrop={onMove ? (id) => move(id, column.value) : undefined}
+            headingLevel={headingLevel}
+            onDrop={onMove ? (id) => move(id, column.value, 'drag') : undefined}
           >
             {cards.map((item) => (
               <Card
@@ -181,10 +233,11 @@ export function Board<T, V extends string>({
                   <div className="flex min-w-0 flex-1 flex-col gap-2">{renderCard(item)}</div>
                   {onMove && (
                     <MoveMenu
+                      id={String(getId(item))}
                       name={getName(item)}
                       value={getColumn(item)}
                       targets={targets}
-                      onMove={(value) => move(String(getId(item)), value)}
+                      onMove={(value) => move(String(getId(item)), value, 'menu')}
                     />
                   )}
                 </div>
@@ -197,6 +250,9 @@ export function Board<T, V extends string>({
           </BoardColumnView>
         )
       })}
+      <span role="status" className="sr-only">
+        {announcement}
+      </span>
     </div>
   )
 }
@@ -204,23 +260,29 @@ export function Board<T, V extends string>({
 function BoardColumnView<V extends string>({
   column,
   count,
+  headingLevel,
   onDrop,
   children,
 }: {
   column: BoardColumn<V>
   count: number
+  headingLevel: 2 | 3 | 4 | 5 | 6
   onDrop?: (id: string) => void
   children: ReactNode
 }) {
   const [over, setOver] = useState(false)
   const headingId = useId()
+  const Heading = `h${headingLevel}` as const
   const accepts = (event: DragEvent) => onDrop !== undefined && event.dataTransfer.types.includes(DRAG_TYPE)
   return (
     <section
       aria-labelledby={headingId}
       data-slot="board-column"
       data-over={over || undefined}
-      className="flex min-w-64 flex-1 basis-0 snap-start flex-col gap-2 rounded-lg bg-muted p-2 outline-2 outline-offset-2 outline-transparent data-over:outline-ring"
+      className={cn(
+        'flex snap-start flex-col gap-2 rounded-lg bg-muted p-2 outline-2 outline-offset-2 outline-transparent data-over:outline-ring',
+        COLUMN_WIDTH,
+      )}
       onDragOver={(event) => {
         if (!accepts(event)) return
         event.preventDefault()
@@ -237,21 +299,23 @@ function BoardColumnView<V extends string>({
         onDrop?.(event.dataTransfer.getData(DRAG_TYPE))
       }}
     >
-      <h2 id={headingId} className="flex items-center gap-2 px-1 pt-0.5 type-label">
+      <Heading id={headingId} className="flex items-center gap-2 px-1 pt-0.5 type-label">
         {column.label}
         <span className="font-normal tabular-nums text-muted-foreground">{count}</span>
-      </h2>
+      </Heading>
       {children}
     </section>
   )
 }
 
 function MoveMenu<V extends string>({
+  id,
   name,
   value,
   targets,
   onMove,
 }: {
+  id: string
   name: string
   value: V
   targets: readonly BoardMoveTarget<V>[]
@@ -259,7 +323,9 @@ function MoveMenu<V extends string>({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-xs" aria-label={`Move ${name}`} title="Move to…" />}>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon-xs" aria-label={`Move ${name}`} title="Move to…" data-board-move={id} />}
+      >
         <ArrowRightLeftIcon aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
@@ -267,7 +333,9 @@ function MoveMenu<V extends string>({
           <DropdownMenuLabel>Move to</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={value} onValueChange={(next) => onMove(next as V)}>
             {targets.map((target) => (
-              <DropdownMenuRadioItem key={target.value} value={target.value}>
+              // Choosing closes the menu: a move is done, not a setting to
+              // try several of.
+              <DropdownMenuRadioItem key={target.value} value={target.value} closeOnClick>
                 {target.label}
               </DropdownMenuRadioItem>
             ))}

@@ -36,6 +36,7 @@ const STAGES: Record<Exclude<Stage, 'archived'>, { label: string; circle: StageC
 
 const COLUMNS: BoardColumn<Stage>[] = (Object.keys(STAGES) as (keyof typeof STAGES)[]).map((value) => ({
   value,
+  name: STAGES[value].label,
   label: (
     <span className="inline-flex items-center gap-1.5">
       <StageCircle stage={STAGES[value].circle} tone={STAGES[value].tone} />
@@ -63,7 +64,15 @@ function ProjectCard({ project }: { project: Project }) {
   )
 }
 
-function ProjectsBoard({ initial = PROJECTS, readOnly = false }: { initial?: Project[]; readOnly?: boolean }) {
+function ProjectsBoard({
+  initial = PROJECTS,
+  readOnly = false,
+  columnsOnly = false,
+}: {
+  initial?: Project[]
+  readOnly?: boolean
+  columnsOnly?: boolean
+}) {
   const [projects, setProjects] = useState(initial)
   return (
     <Board
@@ -79,7 +88,7 @@ function ProjectsBoard({ initial = PROJECTS, readOnly = false }: { initial?: Pro
           ? undefined
           : (project, stage) => setProjects((all) => all.map((p) => (p.id === project.id ? { ...p, stage } : p)))
       }
-      moveTo={MOVE_TO}
+      moveTo={columnsOnly ? undefined : MOVE_TO}
       emptyTitle="No projects yet"
       emptyDescription="A new project starts as an idea."
     />
@@ -89,6 +98,9 @@ function ProjectsBoard({ initial = PROJECTS, readOnly = false }: { initial?: Pro
 export const Default: StoryObj = { render: () => <ProjectsBoard /> }
 
 export const ReadOnly: StoryObj = { render: () => <ProjectsBoard readOnly /> }
+
+// No `moveTo`: the Move menu is the columns, by their `name`.
+export const ColumnsOnly: StoryObj = { render: () => <ProjectsBoard columnsOnly /> }
 
 export const States: StoryObj = {
   render: () => (

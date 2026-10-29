@@ -54,6 +54,17 @@ describe('Board', () => {
     expect(readOnly).not.toContain('Move One')
   })
 
+  it('heads its columns at h2, or at the level it is given', () => {
+    expect(render(props())).toMatch(/<h2[^>]*>A</)
+    const nested = render(props({ headingLevel: 3 }))
+    expect(nested).toMatch(/<h3[^>]*>A</)
+    expect(nested).not.toContain('<h2')
+  })
+
+  it('has an empty status line for what a move announces', () => {
+    expect(render(props())).toMatch(/<span role="status" class="sr-only"><\/span>/)
+  })
+
   it('has a loading, an empty and an error state for the whole board', () => {
     expect(render(props({ isLoading: true }))).toContain('data-state="loading"')
     const empty = render(props({ items: [ITEMS[2]], emptyTitle: 'No items yet' }))

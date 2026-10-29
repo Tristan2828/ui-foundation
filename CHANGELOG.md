@@ -17,8 +17,13 @@ Additive, so a minor.
   Archived). `onMove` is the app's save, through `useRecordUpdate`;
   without it the board is read-only. It owns its loading, error and
   empty states, and its columns take a `count` and a `footer` for a list
-  longer than a page. Story `app/Board`, axe in both themes,
-  `e2e/board.spec.ts`; `design-language.md` "A list as a board".
+  longer than a page. A move from the Move menu keeps the focus on the
+  card (or the board, if the card left it) and is announced to a screen
+  reader; a column gives its `name` in words for the menu when its
+  `label` isn't plain text, and `headingLevel` sets its heading's level.
+  On a phone a column is the board's width less 2rem, one at a time.
+  Story `app/Board`, axe in both themes, `e2e/board.spec.ts`;
+  `design-language.md` "A list as a board".
 
 **How an app adopts it:** bump both packages and run `sync`. Nothing
 changes for an app that doesn't use it. An app with its own board

@@ -16,7 +16,7 @@
 - [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 462–520
 - [Notices](#notices) · lines 522–550
 - [A value over time](#a-value-over-time) · lines 552–585
-- [A list as a board](#a-list-as-a-board) · lines 587–630
+- [A list as a board](#a-list-as-a-board) · lines 587–638
 
 <!-- /index -->
 
@@ -595,7 +595,7 @@ the table's.
 ```tsx
 <Board
   aria-label="Projects by stage"
-  columns={STAGES.map((stage) => ({ value: stage, label: <StageLabel value={stage} />, count: totals[stage] }))}
+  columns={STAGES.map((stage) => ({ value: stage, name: STAGE_NAMES[stage], label: <StageLabel value={stage} />, count: totals[stage] }))}
   items={projects}
   getId={(project) => project.id}
   getColumn={(project) => project.stage}
@@ -613,7 +613,14 @@ the table's.
 - **A card moves two ways:** dragged to another column, and its Move
   button, a menu of `moveTo` (the columns by default) for the keyboard
   and a phone, where there is no drag. A value with no column (Archived,
-  Dropped) is only in the menu, and takes the card off the board.
+  Dropped) is only in the menu, and takes the card off the board. After
+  a move from the menu the focus is back on the card's Move button in
+  its new column (on the board, if the card left it), and a status line
+  tells a screen reader "Moved <name> to <column>".
+- **A column has a name in words** for the menu and that line: its
+  `label` when that is a string, else give `name` (a label with a glyph
+  in it is not plain text). The columns are headings, h2 by default;
+  `headingLevel` puts them under a section's heading.
 - **Saving is the app's**, through `useRecordUpdate`, optimistic: cards
   are placed by `getColumn` on the record, so a move shows at once and a
   refusal puts the card back with the toast. Without `onMove` the board
@@ -627,4 +634,5 @@ the table's.
 - It owns its states: skeleton columns, `ErrorState`, and an empty
   board; an empty column is a muted line, not an empty state. The
   columns share the width, at least 16rem each, and scroll sideways with
-  snap points on a phone.
+  snap points; a phone shows one column at a time, with the edge of the
+  next one showing.
