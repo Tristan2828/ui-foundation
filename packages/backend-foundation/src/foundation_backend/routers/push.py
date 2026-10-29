@@ -16,7 +16,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from foundation_backend import config, push
 from foundation_backend.db import get_session
-from foundation_backend.models import PushSubscription, User
+from foundation_backend.models import User
+from foundation_backend.push_models import PushSubscription
 from foundation_backend.openapi_responses import NOT_FOUND, SERVER_ERROR, UNAUTHORIZED, VALIDATION
 from foundation_backend.routers.auth import get_current_user
 from foundation_backend.schemas import PushPublicKeyOut, PushSubscriptionIn, PushSubscriptionOut

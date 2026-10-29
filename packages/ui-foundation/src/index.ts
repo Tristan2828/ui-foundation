@@ -105,6 +105,7 @@ export {
   WidgetCard,
   WidgetList,
   WidgetListItem,
+  type WidgetCardLink,
   type WidgetCardProps,
   type WidgetListItemProps,
 } from '@/components/app/widget-card'

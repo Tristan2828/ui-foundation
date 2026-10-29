@@ -12,11 +12,11 @@
 - [Typography](#typography) · lines 242–324
   - [Written text (notes)](#written-text-notes) · lines 273–324
 - [Density](#density) · lines 326–383
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 385–460
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 462–520
-- [Notices](#notices) · lines 522–550
-- [A value over time](#a-value-over-time) · lines 552–585
-- [A list as a board](#a-list-as-a-board) · lines 587–638
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 385–463
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 465–523
+- [Notices](#notices) · lines 525–553
+- [A value over time](#a-value-over-time) · lines 555–588
+- [A list as a board](#a-list-as-a-board) · lines 590–641
 
 <!-- /index -->
 
@@ -424,7 +424,10 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
 - **Three to six rows.** A widget is a sample, not the list: ask the API
   for that many (the query's page size) and put the rest behind the
   header `link` ("All", "All doing"), which goes to the full list
-  filtered the same way. Set `skeletonRows` to the number it usually holds, so the card
+  filtered the same way. A widget about a service outside the app links
+  its header there instead: `link={{ href: 'https://…', label: 'Open
+  <service>' }}` opens it in a new tab, with the external-link mark and
+  "(opens in a new tab)" for a screen reader. Set `skeletonRows` to the number it usually holds, so the card
   keeps its height when the data arrives.
 - **Each widget owns its four states.** Loading is a skeleton of rows,
   empty is one quiet line the app writes ("Nothing waiting", not "No

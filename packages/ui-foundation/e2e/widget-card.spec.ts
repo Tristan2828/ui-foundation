@@ -4,7 +4,8 @@ import { expect, test, type Page } from '@playwright/test'
 // WidgetCard's `collapsible` (#233), on the Collapsible story: the chevron
 // folds a card to its header and opens it again from the keyboard, the
 // choice survives a reload, a blocked localStorage still folds for the
-// page's life, and axe passes folded and open in both themes. The token
+// page's life, and axe passes folded and open in both themes. The header's
+// link to an outside address (#248) opens in a new tab. The token
 // and glyph checks at rest are e2e/storybook-visual.spec.ts's.
 const STORY = 'http://localhost:6006/iframe.html?id=app-widgetcard--collapsible&viewMode=story'
 
@@ -62,6 +63,21 @@ test('with localStorage blocked, it starts at defaultCollapsed and still folds',
   await expect(toggle(page, 'Saved links')).toHaveAttribute('aria-expanded', 'false')
   await toggle(page, 'Ready to start').click()
   await expect(page.getByText('Fix the gate latch')).toBeHidden()
+})
+
+test('a header link to an outside address opens in a new tab, named by its label and described by the title', async ({
+  page,
+}) => {
+  // Saved links starts folded: its header link is still there (#248).
+  const link = card(page, 'Saved links').getByRole('link', { name: 'Open saved (opens in a new tab)' })
+  await expect(link).toBeVisible()
+  await expect(link).toHaveAttribute('href', 'https://example.com/saved')
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', 'noreferrer')
+  await expect(link).toHaveAccessibleDescription('Saved links')
+  // An app route stays a plain link in the same tab.
+  const route = card(page, 'Ready to start').getByRole('link', { name: 'All' })
+  await expect(route).not.toHaveAttribute('target')
 })
 
 for (const theme of ['light', 'dark'] as const) {

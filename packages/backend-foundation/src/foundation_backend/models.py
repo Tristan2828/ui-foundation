@@ -1,18 +1,30 @@
 """The foundation's table models: accounts, sessions, sign-in limits, the
-TOTP step, AI chats' OAuth and their audit log, scheduled jobs' runs, and
-Web Push subscriptions and reminders. DB shape only. Column names stay
+TOTP step, AI chats' OAuth and their audit log, and scheduled jobs' runs.
+DB shape only. Column names stay
 snake_case; JSON casing lives in schemas.py, never here. Table models are
 never returned directly from a router.
 
 Importing this module puts these tables on `SQLModel.metadata`, beside an
 app's own (its `app/models.py` re-exports them). An app's migrations
 create them; `migrations/` here holds reference copies.
+
+Web Push's `PushSubscription` (push_models.py) and the package's
+`Reminder` (reminders_models.py) are apart (#247): they reach the metadata
+only for an app that uses them, by importing push or that model, so an
+app without push, or with reminders in its own table, gets no table it
+didn't ask for from `create_all` or autogenerate. Both still import from
+here, loaded on first use.
 """
 
-from datetime import date, datetime, time
+from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Column, DateTime, Text, Time
+from sqlalchemy import Column, DateTime, Text
 from sqlmodel import Field, SQLModel
+
+if TYPE_CHECKING:
+    from foundation_backend.push_models import PushSubscription as PushSubscription
+    from foundation_backend.reminders_models import Reminder as Reminder
 
 
 class User(SQLModel, table=True):
@@ -173,42 +185,17 @@ class JobRunRecord(SQLModel, table=True):
     summary: str | None = Field(default=None, max_length=500)
 
 
-class PushSubscription(SQLModel, table=True):
-    """One device a user allowed reminders on (foundation_backend.push): where its push
-    service takes messages for it, and the keys to encrypt them to."""
-
-    __tablename__ = "push_subscriptions"
-
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
-    # The push service's URL for this device. Unique: the same device
-    # subscribing again (or under another account) replaces its row.
-    endpoint: str = Field(max_length=2048, unique=True)
-    # The browser's P-256 public key and auth secret, base64url.
-    p256dh: str = Field(max_length=100)
-    auth: str = Field(max_length=32)
-    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+# `from foundation_backend.models import PushSubscription` (the 4.35 form)
+# keeps working, and registers the table only then.
+_LAZY = {
+    "PushSubscription": "foundation_backend.push_models",
+    "Reminder": "foundation_backend.reminders_models",
+}
 
 
-class Reminder(SQLModel, table=True):
-    """A notification sent at a time the user chose, on the days they chose
-    (foundation_backend.reminders, the send-reminders job)."""
+def __getattr__(name: str) -> Any:
+    if name in _LAZY:
+        import importlib
 
-    __tablename__ = "reminders"
-
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
-    title: str = Field(max_length=100)
-    body: str = Field(default="", max_length=300)
-    # The app's own path the notification opens ("/routines/3").
-    url: str = Field(default="/", max_length=500)
-    # When, in the user's own time zone: "HH:MM" on these days.
-    time_of_day: time = Field(sa_column=Column(Time(), nullable=False))
-    # Comma-separated mon,tue,wed,thu,fri,sat,sun, in that order.
-    days: str = Field(max_length=27)
-    # IANA name ("America/Chicago"); the job reads the time in it.
-    time_zone: str = Field(max_length=64)
-    enabled: bool = Field(default=True)
-    # The local date it was last sent on, so it goes once a day at most.
-    last_sent_on: date | None = Field(default=None)
-    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+        return getattr(importlib.import_module(_LAZY[name]), name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
