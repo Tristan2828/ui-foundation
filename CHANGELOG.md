@@ -49,6 +49,16 @@ Additive, so a minor.
   name, a summary and a table of every point. New types `LineChartPoint`,
   `LineChartMark`, `LineChartProps`. `design-language.md` "A value over
   time" says how to use it.
+- **New: `NavItem`'s `children` and `open`** (#239): a module's own
+  pages listed under its entry, one level deep, as shadcn's sidebar
+  sub-menu (a list inside the entry's item, so assistive tech reads them
+  as its pages). They show while the page is the entry or one of them
+  (`open: 'current'`, the default) or always (`'always'`); otherwise
+  they're in the page but hidden, as a folded section's are. The most
+  specific match is current and names the tab, children included. On the
+  icon rail they take no icons: the entry looks current while one of them
+  is, and its tooltip names them. `navTargets` and the a11y suite include
+  them.
 - **The long synced docs open with an index** (#232): `add-an-entity.md`,
   `cell-patterns.md`, `design-language.md` and `timed-screens.md` (every
   doc over 300 lines) list each section, and each of the entity
@@ -74,6 +84,9 @@ Additive, so a minor.
   starting point), pin any that aren't with `==`, and add
   `"$PY" -m foundation_backend.scripts.check_deps` to the top of
   `backend/scripts/verify.sh`'s checks.
+- **A nav worked out per page to fake sub-entries:** declare the
+  module's pages as its entry's `children` in `src/nav.ts` and drop the
+  per-location nav and the indent icon.
 - **A hand-drawn chart of one value over time:** replace it with
   `LineChart`.
 - **A long hub:** pass `collapsible` and a `storageKey` per widget to

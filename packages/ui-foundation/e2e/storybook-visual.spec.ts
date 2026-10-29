@@ -112,6 +112,9 @@ const COMPOSITE_STORIES = [
   // The app's logo beside its title, and alone on the rail (#211).
   { id: 'app-appshell--with-logo', mustShow: 'Page at /projects/7' },
   { id: 'app-appshell--with-logo-rail', mustShow: 'Page at /projects/7' },
+  // A module's pages under its entry, open, and on the rail (#239).
+  { id: 'app-appshell--nested', mustShow: 'Page at /media/channels/3' },
+  { id: 'app-appshell--nested-rail', mustShow: 'Page at /media/channels/3' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).

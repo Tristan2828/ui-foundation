@@ -4,21 +4,21 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 37–59
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–699
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–702
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 99–106
   - Step 2: `npm run gen:api` · lines 107–108
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 109–120
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 121–130
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 131–135
   - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–598
-  - Step 7: Register routes · lines 599–606
-  - Step 8: Add Playwright specs for all three screens · lines 607–681
-  - Step 9: Register the nav entry and route names · lines 682–696
-  - Step 10: `npm run verify`. · lines 697–699
-- [What not to copy](#what-not-to-copy) · lines 701–727
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 729–746
-- [Deleting](#deleting) · lines 748–777
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 779–800
+  - Step 7: Register routes · lines 599–609
+  - Step 8: Add Playwright specs for all three screens · lines 610–684
+  - Step 9: Register the nav entry and route names · lines 685–699
+  - Step 10: `npm run verify`. · lines 700–702
+- [What not to copy](#what-not-to-copy) · lines 704–730
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 732–749
+- [Deleting](#deleting) · lines 751–780
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 782–803
 
 <!-- /index -->
 
@@ -603,7 +603,10 @@ is a filled-in example while the Widgets demo is still here).
    app's name alone). For a list that should open on one of its saved
    views, `to` carries that view's query string
    (`/widgets?status=active`): the entry is still matched on its path, so
-   it stays current on the list and the records under it.
+   it stays current on the list and the records under it. A page that
+   belongs to a module already in the nav (its categories, its channels)
+   goes in that module's entry's `children`, not a new top-level entry:
+   it shows under the module while you're in it.
 8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the

@@ -3,7 +3,16 @@ import { useTheme } from 'next-themes'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
-import { activeNavTo, navGroups, navPageLabel, type NavEntry, type NavGroup, type NavItem } from '@/components/app/app-shell-nav'
+import {
+  activeNavTo,
+  childrenOpen,
+  navGroups,
+  navPageLabel,
+  withChildren,
+  type NavEntry,
+  type NavGroup,
+  type NavItem,
+} from '@/components/app/app-shell-nav'
 import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
 import type { IconComponent } from '@/components/app/icon-component'
@@ -25,6 +34,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
@@ -61,7 +73,8 @@ export type AppShellProps = {
    * open a list on a saved view ('/tasks?status=open'). A section marked `collapsible` folds under its label,
    * remembered per browser (`defaultOpen` for the first visit); the one
    * holding the current page stays open, and the icon rail shows every
-   * section's items.
+   * section's items. An entry's `children` (a module's own pages) show
+   * under it while you're on one of them.
    */
   nav: readonly NavEntry[]
   /**
@@ -140,21 +153,49 @@ function VersionEntry({ version }: { version: AppShellVersion }) {
 // One group's entries. A plain Link, not NavLink: NavLink marks every
 // matching entry current, and only the most specific one should be
 // (activeNavTo).
+//
+// An entry's children (#239) are a list inside its item, so they're read
+// as its pages, shown while you're in them (childrenOpen) and otherwise
+// in the page but hidden, as a folded section's are. The icon rail has no
+// room for them: there the entry looks current while one of them is, and
+// its tooltip names them.
 function NavMenu({ items, activeTo }: { items: readonly NavItem[]; activeTo: string | undefined }) {
+  const { state, isMobile } = useSidebar()
+  const rail = state === 'collapsed' && !isMobile
   return (
     <SidebarMenu>
-      {items.map(({ to, label, icon: Icon }) => {
+      {items.map((item) => {
+        const { to, label, icon: Icon, children } = item
         const isActive = to === activeTo
+        const childActive = children?.some((child) => child.to === activeTo) ?? false
         return (
           <SidebarMenuItem key={to}>
             <SidebarMenuButton
-              isActive={isActive}
-              tooltip={label}
+              isActive={isActive || (rail && childActive)}
+              tooltip={children?.length ? `${label}: ${children.map((child) => child.label).join(', ')}` : label}
               render={<Link to={to} aria-current={isActive ? 'page' : undefined} />}
             >
               <Icon />
               <span>{label}</span>
             </SidebarMenuButton>
+            {children && children.length > 0 && (
+              <SidebarMenuSub hidden={!childrenOpen(item, activeTo)}>
+                {children.map(({ to: childTo, label: childLabel, icon: ChildIcon }) => {
+                  const isChildActive = childTo === activeTo
+                  return (
+                    <SidebarMenuSubItem key={childTo}>
+                      <SidebarMenuSubButton
+                        isActive={isChildActive}
+                        render={<Link to={childTo} aria-current={isChildActive ? 'page' : undefined} />}
+                      >
+                        <ChildIcon />
+                        <span>{childLabel}</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )
+                })}
+              </SidebarMenuSub>
+            )}
           </SidebarMenuItem>
         )
       })}
@@ -193,7 +234,7 @@ function CollapsibleNavGroup({ group, activeTo }: { group: NavGroup & { label: s
   const { state, isMobile } = useSidebar()
   const contentId = useId()
   const [stored, setStored] = useState(() => storedSectionOpen(group.label))
-  const holdsCurrent = group.items.some((item) => item.to === activeTo)
+  const holdsCurrent = withChildren(group.items).some((item) => item.to === activeTo)
 
   // Arriving in a folded section unfolds it, and it stays unfolded after.
   if (holdsCurrent && stored !== true) setStored(true)

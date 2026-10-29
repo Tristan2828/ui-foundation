@@ -1,5 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { BookOpenIcon, HomeIcon, ListChecksIcon, ListIcon, TagIcon } from 'lucide-react'
+import {
+  BookOpenIcon,
+  HomeIcon,
+  LibraryIcon,
+  ListChecksIcon,
+  ListIcon,
+  ListVideoIcon,
+  PlaySquareIcon,
+  TagIcon,
+  TvIcon,
+  WalletIcon,
+} from 'lucide-react'
 import { useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { AuthContext, type AuthContextValue } from '@/auth/auth-context'
@@ -18,8 +29,8 @@ import { EntityView } from './entity-view'
 // that fold (Collapsible, and on the icon rail CollapsibleRail), an entry
 // opening a list on a saved view (SavedView, #188), and the browser tab's
 // title from the nav and from a record's view (Home, WithView…, #186),
-// and the app's logo beside its title and alone on the rail (WithLogo…,
-// #211).
+// the app's logo beside its title and alone on the rail (WithLogo…,
+// #211), and a module's pages under its entry (Nested…, #239).
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -86,6 +97,47 @@ const SAVED_VIEW: NavEntry[] = [
     collapsible: true,
     defaultOpen: false,
     items: [{ to: '/reading?status=unread&sort=title:asc', label: 'Unread books', icon: BookOpenIcon }],
+  },
+]
+
+// A module's pages under its entry (#239): YouTube's and Comics' show
+// while you're in that module; Budget's always.
+const NESTED: NavEntry[] = [
+  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  {
+    label: 'Collections',
+    items: [
+      {
+        to: '/media/videos',
+        label: 'YouTube',
+        icon: PlaySquareIcon,
+        children: [
+          { to: '/media/channels', label: 'Channels', icon: TvIcon },
+          { to: '/media/playlists', label: 'Playlists', icon: ListVideoIcon },
+        ],
+      },
+      {
+        to: '/media/comics',
+        label: 'Comics',
+        icon: BookOpenIcon,
+        children: [
+          { to: '/media/series', label: 'Series', icon: LibraryIcon },
+          { to: '/media/reading-lists', label: 'Reading lists', icon: ListIcon },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Home and money',
+    items: [
+      {
+        to: '/budget',
+        label: 'Budget',
+        icon: WalletIcon,
+        open: 'always',
+        children: [{ to: '/budget/accounts', label: 'Accounts', icon: TagIcon }],
+      },
+    ],
   },
 ]
 
@@ -227,3 +279,10 @@ export const WithViewNoDocumentTitle: Story = {
 // The app's logo (#211): before the title, and alone at the top of the rail.
 export const WithLogo: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true } }
 export const WithLogoRail: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true, sidebarOpen: false } }
+
+// A module's pages under its entry (#239), on one of them, on the module's
+// own entry, elsewhere, and on the icon rail.
+export const Nested: Story = { args: { nav: NESTED, path: '/media/channels/3' } }
+export const NestedOnParent: Story = { args: { nav: NESTED, path: '/media/videos' } }
+export const NestedElsewhere: Story = { args: { nav: NESTED, path: '/' } }
+export const NestedRail: Story = { args: { nav: NESTED, path: '/media/channels/3', sidebarOpen: false } }

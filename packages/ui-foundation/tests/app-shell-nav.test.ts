@@ -7,6 +7,7 @@ import { HomeIcon, ListIcon, TagIcon } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 import {
   activeNavTo,
+  childrenOpen,
   navGroups,
   navPageLabel,
   navPathname,
@@ -133,5 +134,28 @@ describe('navPageLabel', () => {
 
   it('names an entry whose `to` has a query string', () => {
     expect(navPageLabel([home, { ...tasks, to: '/tasks?status=active', label: 'Active' }], '/tasks/3')).toBe('Active')
+  })
+})
+
+// #239: a module's own pages under its entry.
+describe('children', () => {
+  const channels: NavItem = { to: '/media/channels', label: 'Channels', icon: TagIcon }
+  const playlists: NavItem = { to: '/media/playlists', label: 'Playlists', icon: TagIcon }
+  const youtube: NavItem = { to: '/media/videos', label: 'YouTube', icon: ListIcon, children: [channels, playlists] }
+  const nested: NavEntry[] = [home, { label: 'Collections', items: [youtube] }]
+
+  it('are pages of the nav: listed after their parent, current, and naming the tab', () => {
+    expect(navTargets(nested)).toEqual(['/', '/media/videos', '/media/channels', '/media/playlists'])
+    expect(activeNavTo(nested, '/media/channels/3')).toBe('/media/channels')
+    expect(activeNavTo(nested, '/media/videos/9')).toBe('/media/videos')
+    expect(navPageLabel(nested, '/media/playlists')).toBe('Playlists')
+  })
+
+  it("show while the page is the parent or one of them, or always with open: 'always'", () => {
+    expect(childrenOpen(youtube, '/media/videos')).toBe(true)
+    expect(childrenOpen(youtube, '/media/channels')).toBe(true)
+    expect(childrenOpen(youtube, '/')).toBe(false)
+    expect(childrenOpen({ ...youtube, open: 'always' }, '/')).toBe(true)
+    expect(childrenOpen(home, '/')).toBe(false)
   })
 })
