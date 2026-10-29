@@ -415,6 +415,12 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
   default) and names the card's region, so the page's outline and its
   landmarks list every widget. Give each widget on a page a different
   title.
+- **More widgets than a phone screen holds:** make the ones read less
+  often `collapsible`, with a `storageKey` per widget
+  (`"<app>:hub.<widget>"`) so a card folded stays folded on that device,
+  and `defaultCollapsed` for one that should start folded. The chevron
+  at the header's end is named by the title; the header's link stays
+  while folded.
 - **A row is one line:** its text is a link (`to` for a route in the
   app, `href` for an external address, which opens in a new tab with the
   external-link mark) or plain text, cut with an ellipsis, the whole of

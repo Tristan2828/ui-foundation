@@ -15,6 +15,14 @@
 // outline and its landmarks. Height follows content (`self-start` in a
 // grid), so a short widget doesn't stretch to its tallest neighbour.
 //
+// `collapsible` (#233) folds a card to its header, for a hub with more
+// widgets than a phone screen holds: a chevron button at the header's end
+// (named by the title, `aria-expanded`, `aria-controls` the body), the
+// header's link still there while folded. With `storageKey` the choice is
+// remembered on this device (useRememberedFlag: localStorage, in memory
+// where that's blocked). The body is hidden, not unmounted, so whatever
+// the app keeps in it stays put.
+//
 // WidgetList and WidgetListItem are the common body: rows with dividers,
 // each a primary link (or plain text) truncated to one line, an optional
 // muted note ("2 h ago") and an optional trailing element (a badge, a
@@ -27,13 +35,15 @@
 // finger's target.
 import { useId, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
-import { ExternalLinkIcon } from 'lucide-react'
+import { ChevronDownIcon, ExternalLinkIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
 import type { IconComponent } from '@/components/app/icon-component'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useRememberedFlag } from '@/hooks/use-remembered-flag'
 
 export interface WidgetCardProps {
   title: string
@@ -61,6 +71,16 @@ export interface WidgetCardProps {
   emptyMessage: string
   /** How many rows the loading skeleton shows: the number the widget usually holds. */
   skeletonRows?: number
+  /** A button at the header's end that folds the card to its header, and opens it again. */
+  collapsible?: boolean
+  /** Whether a collapsible card starts folded, until the person folds or opens it. */
+  defaultCollapsed?: boolean
+  /**
+   * Remembers a collapsible card folded or open on this device, under this
+   * key (name it for the app and the widget: `"my-app:hub.waiting"`).
+   * Left out, it starts at `defaultCollapsed` on every visit.
+   */
+  storageKey?: string
   children?: ReactNode
   className?: string
 }
@@ -80,18 +100,28 @@ export function WidgetCard({
   isEmpty,
   emptyMessage,
   skeletonRows = 3,
+  collapsible = false,
+  defaultCollapsed = false,
+  storageKey,
   children,
   className,
 }: WidgetCardProps) {
   const headingId = useId()
+  const contentId = useId()
   const Heading = `h${headingLevel}` as const
   const state = error ? 'error' : isLoading ? 'loading' : isEmpty ? 'empty' : 'success'
+  const [folded, setFolded] = useRememberedFlag(
+    collapsible && storageKey !== undefined ? `${storageKey}:collapsed` : undefined,
+    defaultCollapsed,
+  )
+  const collapsed = collapsible && folded
 
   return (
     <section
       aria-labelledby={headingId}
       data-slot="widget-card"
       data-state={state}
+      data-collapsed={collapsed || undefined}
       className={cn('min-w-0 self-start', className)}
     >
       <Card className="density-compact:[--card-spacing:--spacing(3)]">
@@ -100,13 +130,30 @@ export function WidgetCard({
             {Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
             <span className="truncate">{title}</span>
           </Heading>
-          {link && (
-            <Link to={link.to} aria-describedby={headingId} className={HEADER_LINK_CLASS}>
-              {link.label}
-            </Link>
+          {(link || collapsible) && (
+            <div className="flex shrink-0 items-center gap-1">
+              {link && (
+                <Link to={link.to} aria-describedby={headingId} className={HEADER_LINK_CLASS}>
+                  {link.label}
+                </Link>
+              )}
+              {collapsible && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-labelledby={headingId}
+                  aria-expanded={!collapsed}
+                  aria-controls={contentId}
+                  onClick={() => setFolded(!collapsed)}
+                  className="-my-1 -mr-1.5"
+                >
+                  <ChevronDownIcon aria-hidden="true" className={cn('transition-transform', collapsed && '-rotate-90')} />
+                </Button>
+              )}
+            </div>
           )}
         </CardHeader>
-        <CardContent aria-busy={state === 'loading' || undefined}>
+        <CardContent id={contentId} hidden={collapsed} aria-busy={state === 'loading' || undefined}>
           {error ? (
             <ErrorState error={error} onRetry={onRetry} size="compact" />
           ) : state === 'loading' ? (

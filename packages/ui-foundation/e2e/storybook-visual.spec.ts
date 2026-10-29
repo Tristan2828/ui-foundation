@@ -116,6 +116,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
   { id: 'app-widgetcard--brand-mark', mustShow: 'Timber stains compared' },
+  // Cards that fold to their header, one folded at rest (#233).
+  { id: 'app-widgetcard--collapsible', mustShow: 'Fix the gate latch' },
   // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
   // slot under foreground text, the number, the note, the action, in
   // every state, and at compact.
@@ -166,6 +168,8 @@ const GLYPH_STORIES: {
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },
+  // The fold chevrons (#233).
+  { id: 'app-widgetcard--collapsible' },
   // A summary line's chevron and the row's Move, Duplicate and Remove icons (#222).
   { id: 'app-listeditor--rows-that-open' },
   // A place's slot-tinted icon on its own wash, the external mark, a brand

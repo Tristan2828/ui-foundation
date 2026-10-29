@@ -30,9 +30,19 @@ Additive, so a minor.
   it renders at `headingLevel` too. The look and the saved Markdown
   don't change. New type `HeadingFrom`.
 
+- **New: `WidgetCard`'s `collapsible`, `defaultCollapsed` and
+  `storageKey`** (#233). A chevron button at the header's end (named by
+  the title, `aria-expanded`, `aria-controls` the body) folds the card to
+  its header; the header's link stays. With `storageKey` the choice is
+  remembered in `localStorage` on that device, and where storage is
+  blocked it still folds for the page's life. The body is hidden, not
+  unmounted. `useMuted` now runs on the same remembered-flag store.
+
 **How an app adopts it:** bump the version, run `sync`.
 
 - **A money or count column:** add `meta: { align: 'right' }` to it.
+- **A long hub:** pass `collapsible` and a `storageKey` per widget to
+  the `WidgetCard`s read less often.
 - **Notes imported or pasted from another tool:** add
   `headingFrom="text"` beside their `headingLevel`, and drop any a11y
   workaround for `heading-order` on them.
