@@ -9,6 +9,7 @@ import {
   recordUpdateMutationOptions,
   refusalReason,
   type RecordChange,
+  type RecordUpdateOptions,
 } from '../src/hooks/use-record-update'
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
@@ -75,7 +76,9 @@ const TASK: Task = {
 }
 const OTHER: Task = { ...TASK, id: 2, name: 'Another task', checklist: [], progress: 'none' }
 
-function setup(extra: { optimistic?: boolean; toastOnError?: boolean } = {}) {
+function setup(
+  extra: Pick<RecordUpdateOptions<Task, TaskUpdate>, 'optimistic' | 'toastOnError' | 'onSuccess' | 'onError' | 'onSettled'> = {},
+) {
   const client = new QueryClient()
   const server = fakeServer(TASK)
   client.setQueryData(detailKey, structuredClone(TASK))
@@ -336,6 +339,75 @@ describe('useRecordUpdate for editing in place (optimistic: false, toastOnError:
     await expect(result).rejects.toEqual(refusal)
     expect(toast.error).not.toHaveBeenCalled()
     expect(detail()?.status).toBe('doing')
+  })
+})
+
+describe("useRecordUpdate's own onSuccess, onError and onSettled (#250)", () => {
+  // A MutationObserver nobody subscribes to is a control that has
+  // unmounted: TanStack skips its mutate() callbacks, not the mutation's.
+  it('runs onSuccess with the cache already holding the saved record, after the caller is gone', async () => {
+    const seen: (Task | undefined)[] = []
+    const onSuccess = vi.fn()
+    const onSettled = vi.fn()
+    const { client, server, detail } = setup()
+    const perCall = vi.fn()
+    const options = recordUpdateMutationOptions<Task, TaskUpdate>(client, {
+      id: 1,
+      detailKey,
+      listsKey,
+      update: server.update,
+      name: (task) => task.name,
+      onSuccess: (saved, change) => {
+        seen.push(client.getQueryData<Task>(detailKey))
+        onSuccess(saved, change)
+      },
+      onSettled,
+    })
+    const result = new MutationObserver(client, options).mutate({ status: 'todo' }, { onSuccess: perCall })
+    await vi.waitFor(() => expect(server.requests).toHaveLength(1))
+    server.requests[0].answer()
+    await result
+
+    expect(onSuccess).toHaveBeenCalledExactlyOnceWith(server.record, { status: 'todo' })
+    expect(seen[0]).toEqual(server.record)
+    expect(onSettled).toHaveBeenCalledExactlyOnceWith(server.record, null, { status: 'todo' })
+    expect(perCall).not.toHaveBeenCalled()
+    expect(detail()?.status).toBe('todo')
+  })
+
+  it('runs onError after the rollback and the toast, then onSettled', async () => {
+    const order: string[] = []
+    const onError = vi.fn<(error: AppError, change: unknown) => void>(() => void order.push('onError'))
+    const onSettled = vi.fn(() => order.push('onSettled'))
+    vi.mocked(toast.error).mockImplementation(() => order.push('toast') as never)
+    const { server, save, detail } = setup({
+      onError: (error, change) => {
+        expect(detail()?.status).toBe('doing')
+        onError(error, change)
+      },
+      onSettled,
+    })
+    const refusal: AppError = { kind: 'server', message: 'Database is down' }
+    const saved = save({ status: 'done' })
+    await vi.waitFor(() => expect(server.requests).toHaveLength(1))
+    server.requests[0].refuse(refusal)
+    await saved
+
+    expect(onError).toHaveBeenCalledExactlyOnceWith(refusal, { status: 'done' })
+    expect(onSettled).toHaveBeenCalledExactlyOnceWith(undefined, refusal, { status: 'done' })
+    expect(order).toEqual(['toast', 'onError', 'onSettled'])
+    vi.mocked(toast.error).mockReset()
+  })
+
+  it('hands a function change to the callbacks as given', async () => {
+    const onSuccess = vi.fn()
+    const { server, save } = setup({ onSuccess })
+    const change = tick(0, true)
+    const saved = save(change)
+    await vi.waitFor(() => expect(server.requests).toHaveLength(1))
+    server.requests[0].answer()
+    await saved
+    expect(onSuccess).toHaveBeenCalledExactlyOnceWith(server.record, change)
   })
 })
 

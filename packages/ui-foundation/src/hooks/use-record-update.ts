@@ -30,6 +30,13 @@
 // `toastOnError: false`: nothing changes on screen until the server
 // agrees, and a refusal comes back to the field (`mutateAsync` rejects)
 // instead of a toast.
+//
+// A follow-up the save needs once the server answers (refetching a
+// summary or a related list) goes in the hook's own `onSuccess`,
+// `onError` or `onSettled`, not `mutate(change, { onSuccess })`: TanStack
+// runs a `mutate()` callback only while the calling component is still
+// mounted, so a popover closed mid-save would skip it. These run on the
+// mutation, after the package's own cache work, either way (#250).
 import {
   hashKey,
   useMutation,
@@ -76,6 +83,17 @@ export type RecordUpdateOptions<TRecord extends { id: RecordId }, TUpdate extend
    * `AppError`, and `refusalReason` words it.
    */
   toastOnError?: boolean
+  /**
+   * After a save the server accepted, once the caches hold its record:
+   * a refresh the save always needs (another query it changes). Runs
+   * even when the calling component has unmounted, unlike a `mutate()`
+   * callback; keep per-call effects (navigate, a toast) on `mutate()`.
+   */
+  onSuccess?: (saved: TRecord, change: RecordChange<TRecord, TUpdate>) => unknown
+  /** After a refused save, once it has rolled back (and toasted, unless `toastOnError: false`). */
+  onError?: (error: AppError, change: RecordChange<TRecord, TUpdate>) => unknown
+  /** After every save, accepted or refused, following `onSuccess` or `onError`. */
+  onSettled?: (saved: TRecord | undefined, error: AppError | null, change: RecordChange<TRecord, TUpdate>) => unknown
 }
 
 // Not optimistic: waits its turn and is sent the same way, but isn't shown.
@@ -122,7 +140,18 @@ export function refusalReason(error: AppError, sent?: object): string {
  */
 export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TUpdate extends Partial<TRecord>>(
   queryClient: QueryClient,
-  { id, detailKey, listsKey, update, name, optimistic = true, toastOnError = true }: RecordUpdateOptions<TRecord, TUpdate>,
+  {
+    id,
+    detailKey,
+    listsKey,
+    update,
+    name,
+    optimistic = true,
+    toastOnError = true,
+    onSuccess,
+    onError,
+    onSettled,
+  }: RecordUpdateOptions<TRecord, TUpdate>,
 ): MutationOptions<TRecord, AppError, RecordChange<TRecord, TUpdate>, { entry: Entry<TRecord, TUpdate> }> {
   const key = hashKey(detailKey)
   const lists = { queryKey: listsKey }
@@ -199,22 +228,26 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
       render(state)
       return { entry }
     },
-    onError: (error, _change, context) => {
+    onError: (error, change, context) => {
       const state = map.get(key)
-      if (!state || !context) return
-      // What was sent: the change built on the record it was sent against.
-      const record = state.confirmed
-      const { change } = context.entry
-      const sent = record ? resolve(change, record) : typeof change === 'function' ? undefined : change
-      settle(state, context.entry)
-      if (toastOnError) toast.error(`Couldn't update ${record ? name(record) : 'this record'}: ${refusalReason(error, sent)}`)
+      if (state && context) {
+        // What was sent: the change built on the record it was sent against.
+        const record = state.confirmed
+        const sent = record ? resolve(change, record) : typeof change === 'function' ? undefined : change
+        settle(state, context.entry)
+        if (toastOnError) toast.error(`Couldn't update ${record ? name(record) : 'this record'}: ${refusalReason(error, sent)}`)
+      }
+      return onError?.(error, change)
     },
-    onSuccess: (saved, _change, context) => {
+    onSuccess: (saved, change, context) => {
       const state = map.get(key)
-      if (!state || !context) return
-      state.confirmed = saved
-      settle(state, context.entry)
+      if (state && context) {
+        state.confirmed = saved
+        settle(state, context.entry)
+      }
+      return onSuccess?.(saved, change)
     },
+    onSettled: (saved, error, change) => onSettled?.(saved, error, change),
   }
 }
 
@@ -224,7 +257,8 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
  * with the entity's query keys and its gateway PATCH, then
  * `mutate({ field: value })` or `mutate((record) => ({ field: ... }))`.
  * `isPending` is that control's own save in flight. A refusal rolls back
- * and shows a toast by itself.
+ * and shows a toast by itself. A refresh every save needs goes in the
+ * options' `onSuccess`, which runs even if the control has unmounted.
  */
 export function useRecordUpdate<TRecord extends { id: RecordId }, TUpdate extends Partial<TRecord>>(
   options: RecordUpdateOptions<TRecord, TUpdate>,
