@@ -7,6 +7,41 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.42.0 — SpinWheel; FillInQueue and FillInChoice
+
+Additive, so a minor.
+
+- **`SpinWheel`** picks one item at random, weighted: an SVG wheel of
+  slices (`items`, each `{ id, label, weight?, emphasis? }`; `weight` is
+  a slice's size and its chance), a pointer at the top, the count in
+  the hub and a Spin button. It turns a few times with an ease-out and
+  stops with the pointer inside the pick, then calls `onResult(item)`
+  and says "Picked <label>" in a polite live region; with reduced
+  motion it doesn't turn. `result` is the slice drawn picked at rest
+  (the app's), `emphasis` a tinted slice, `emptyMessage` the empty
+  wheel (Spin disabled), `random` the source of chance for tests.
+  `pickSpinWheelIndex(items, value)` is the pick on its own.
+  design-language.md "Picking at random"; Storybook `app/SpinWheel`.
+- **`FillInQueue`** fills in a list of records' missing values one
+  record at a time: progress and "Record i of n" on top, the app's
+  `renderItem` in a centred column, Skip and Save and next under it.
+  `onSave(item)` is the app's save; when it resolves the next record is
+  shown (the saved one usually left `items`; one still there is moved
+  past), Skip wraps round, and the focus goes to the new record. Enter
+  is Save and next (not in a textarea); a refused save keeps the record
+  with its message under the buttons. `canSave` (a boolean, or asked
+  about the record on screen), `progress`, `loading`, `error` with
+  `onRetry`, `empty`, and `index`/`onIndexChange`.
+  **`FillInChoice`** is a record's field as a row of toggle buttons
+  (`aria-pressed`, clicked again to clear) named by its `label`, a
+  `suggestion` drawn dashed in the info tone with "Suggested: <label>
+  (<note>)" under it, and `shortcut` for the number keys inside the
+  queue. design-language.md "Filling in what's missing"; Storybook
+  `app/FillInQueue`.
+
+**How an app adopts it:** bump both packages and run `sync`. Nothing
+changes on its own.
+
 ## 4.41.0 — A list in place added by upload; muted text on the edit tint
 
 Additive, so a minor (#256, #257).
