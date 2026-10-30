@@ -7,6 +7,35 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.38.0 — Follow-ups on `useRecordUpdate` itself
+
+Additive, so a minor (#250).
+
+- **`useRecordUpdate` takes `onSuccess`, `onError` and `onSettled`**:
+  `onSuccess(saved, change)` runs once the caches hold the server's
+  record, `onError(error, change)` after the rollback (and its toast),
+  `onSettled(saved, error, change)` after either. They run on the
+  mutation, so they run even when the control that saved has unmounted,
+  which a `mutate(change, { onSuccess })` callback doesn't: TanStack
+  skips those once the caller is gone, so a popover closed mid-save lost
+  its refresh. What a callback returns is awaited before `mutateAsync`
+  resolves, as in TanStack. `cell-patterns.md` "17. Quick action on the view"
+  says where a refresh goes.
+
+**How an app adopts it:** bump both packages and run `sync`. Then move
+each refresh a save always needs (invalidating another query, a hub
+summary) from `mutate(change, { onSuccess })` into the hook's options:
+
+```ts
+const save = useRecordUpdate<Widget, WidgetUpdate>({
+  ...keysAndUpdate,
+  onSuccess: () => client.invalidateQueries({ queryKey: summaryKey }),
+})
+```
+
+Per-call effects (navigate after a form saves, a toast in the call's own
+words) stay on `mutate()`.
+
 ## 4.37.0 — The reminders job on an app's own table, and a widget header linking out
 
 Additive to both packages, so a minor (#247, #248). Nothing changes on the

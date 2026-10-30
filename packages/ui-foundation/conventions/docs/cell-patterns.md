@@ -25,15 +25,15 @@
 - [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 538–647
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 564–647
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 649–684
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 686–753
-- [18. Editable value](#18-editable-value) · lines 755–1170
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1014–1071
-  - [In a table's rows](#in-a-tables-rows) · lines 1073–1158
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1160–1170
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1172–1238
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1240–1304
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1306–1371
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1373–1401
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 686–759
+- [18. Editable value](#18-editable-value) · lines 761–1176
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1020–1077
+  - [In a table's rows](#in-a-tables-rows) · lines 1079–1164
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1166–1176
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1178–1244
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1246–1310
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1312–1377
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1379–1407
 
 <!-- /index -->
 
@@ -731,6 +731,12 @@ const save = useSaveWidgetField(widget.id) // one per control
   page. When the save answers, the view takes the record the server
   returned, so a server-side effect shows (a computed field, a flag the
   change cleared). Never write a quick action's mutation by hand.
+- **A refresh the save always needs goes on the hook**: another query
+  the change affects (a summary, a related list) is invalidated in
+  `useRecordUpdate`'s own `onSuccess`, never `mutate(change, { onSuccess })`,
+  which TanStack skips once the control unmounts (a popover closed
+  mid-save). Per-call effects (navigate, a toast in the call's words)
+  stay on `mutate()`.
 - **A list is sent whole, built from the latest record**: pass a function
   of the record (`(current) => ({ checklist: ... })`), not a list read from
   props. Saves of one record run one at a time and each request is built
