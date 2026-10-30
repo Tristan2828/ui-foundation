@@ -1,8 +1,9 @@
 // keepAudioAlive (src/lib/keep-audio-alive.ts, #217) against a fake audio
 // element and Media Session that record what they're asked: a silent
 // looped track plays, the lock screen gets the title and a Pause and Play
-// that call back, pause() and stop() undo it, and it's a no-op where the
-// browser has no audio element.
+// that call back, pause() and stop() undo it, Safari's audio session is
+// "playback" while it runs, and it's a no-op where the browser has no audio
+// element.
 import { describe, expect, it, vi } from 'vitest'
 import { createKeepAudioAlive, silentWav } from '../src/lib/keep-audio-alive'
 
@@ -158,6 +159,32 @@ describe('keepAudioAlive', () => {
     const keeping = createKeepAudioAlive({ ...bare.env, mediaSession: undefined })({ title: 'Focus' })
     expect(bare.audios[0].plays).toBe(1)
     expect(() => (keeping.pause(), keeping.stop())).not.toThrow()
+  })
+
+  it("sets Safari's audio session to playback while it runs and puts it back on stop()", () => {
+    const { env } = fakeBrowser()
+    const audioSession = { type: 'auto' }
+    const keeping = createKeepAudioAlive({ ...env, audioSession })({ title: 'Focus' })
+    expect(audioSession.type).toBe('playback')
+    keeping.pause()
+    expect(audioSession.type).toBe('playback')
+    keeping.stop()
+    expect(audioSession.type).toBe('auto')
+  })
+
+  it('an audio session that refuses the type is not an error', () => {
+    const { env, audios } = fakeBrowser()
+    const audioSession = {
+      get type() {
+        return 'auto'
+      },
+      set type(_value: string) {
+        throw new TypeError('unsupported type')
+      },
+    }
+    const keeping = createKeepAudioAlive({ ...env, audioSession })({ title: 'Focus' })
+    expect(audios[0].plays).toBe(1)
+    expect(() => keeping.stop()).not.toThrow()
   })
 
   it('is a no-op where the browser has no audio element', () => {
