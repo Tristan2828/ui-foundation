@@ -3,20 +3,21 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 29–57
-- [The three badge styles](#the-three-badge-styles) · lines 59–76
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 78–107
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 109–122
-- [Logos and brand marks](#logos-and-brand-marks) · lines 124–168
-- [Categorical colour](#categorical-colour) · lines 170–240
-- [Typography](#typography) · lines 242–324
-  - [Written text (notes)](#written-text-notes) · lines 273–324
-- [Density](#density) · lines 326–383
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 385–463
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 465–523
-- [Notices](#notices) · lines 525–553
-- [A value over time](#a-value-over-time) · lines 555–588
-- [A list as a board](#a-list-as-a-board) · lines 590–641
+- [Semantic tones](#semantic-tones) · lines 30–58
+- [The three badge styles](#the-three-badge-styles) · lines 60–77
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 79–108
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 110–123
+- [Logos and brand marks](#logos-and-brand-marks) · lines 125–169
+- [Categorical colour](#categorical-colour) · lines 171–241
+- [Typography](#typography) · lines 243–325
+  - [Written text (notes)](#written-text-notes) · lines 274–325
+- [Density](#density) · lines 327–384
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 386–464
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 466–524
+- [Notices](#notices) · lines 526–554
+- [A value over time](#a-value-over-time) · lines 556–589
+- [A list as a board](#a-list-as-a-board) · lines 591–642
+- [A list as cards](#a-list-as-cards) · lines 644–690
 
 <!-- /index -->
 
@@ -639,3 +640,51 @@ the table's.
   columns share the width, at least 16rem each, and scroll sideways with
   snap points; a phone shows one column at a time, with the edge of the
   next one showing.
+
+## A list as cards
+
+`DataTable`'s `layouts` (4.39) draw the same rows as cards beside the
+table: a thumbnail grid for a feed, covers for a collection, a dense line
+each for clearing a backlog. They are layouts of one list, not other
+pages: the toolbar, filters, saved views, paging and `groupBy` headings
+are the table's in every one, and so are its loading, empty and error
+states.
+
+```tsx
+const { layout, setLayout } = useTableLayout({
+  layouts: ['table', 'covers'],
+  defaultLayout: 'covers',
+  storageKey: 'my-app:books:layout',
+})
+
+<DataTable
+  {...tableProps}
+  layouts={[{ id: 'covers', label: 'Covers', icon: LayoutGridIcon, size: 'sm', aspect: '2:3', renderCard: (book) => <BookCard book={book} /> }]}
+  layout={layout}
+  onLayoutChange={setLayout}
+/>
+```
+
+- **The switch** sits at the end of the toolbar, the table first (rename
+  it with `tableLayout`, "Rows" for a list-like table with no header).
+  The pick is in the URL (`?layout=`) and remembered per table on the
+  device, so name the `storageKey` for the list. A list opens on the
+  layout it is read in most: covers for something browsed by its art, the
+  table for something compared by its columns.
+- **A grid's sizes** are the package's: `sm` for covers (three across on
+  a phone), `md` for thumbnails (two), `lg` for big ones (one). `list`
+  is one card per line in a bordered box, divided like rows.
+- **The picture** is `Artwork`: a fixed shape (2:3 posters and books,
+  1:1 square art, 16:9 video), the record's image or a neutral
+  placeholder (the list's icon, and the title where most records have no
+  picture), so the grid's rows stay even. Its corners hold an
+  `ArtworkTag` (a length, "Live") and an `ArtworkToggle`, a round button
+  that marks the record (Read, Owned): dark on the picture while off,
+  success's fill while on.
+- **The card holds what the row does**: the title as the link to the
+  record (cell pattern 16), the list's key line in muted text, then its
+  status, rating or quality as the table's own cells draw them, and the
+  same actions. A card leaves an empty value out rather than showing a
+  dash. Never an action only one layout has.
+- `totals` and `highlightRow` are the table's alone. Sorting is the
+  toolbar's in a card layout (there is no header to click).

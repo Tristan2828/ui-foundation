@@ -10,12 +10,13 @@ import { defineConfig, devices } from '@playwright/test'
 // in e2e/multi-pick.spec.ts, ImageField and images in <Markdown>
 // in e2e/images.spec.ts, ModuleStrip at desktop and phone widths in
 // e2e/module-card.spec.ts, ListEditor's rows that open in
-// e2e/list-editor.spec.ts) —
+// e2e/list-editor.spec.ts, DataTable's card layouts in
+// e2e/data-table-layouts.spec.ts) —
 // kept out of the shipped playwright.config.ts so consuming apps don't
 // need Storybook. `npm run verify` runs both configs.
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'rich-text-inline.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'editable-list.spec.ts', 'multi-pick.spec.ts', 'images.spec.ts', 'module-card.spec.ts', 'list-editor.spec.ts', 'widget-card.spec.ts', 'line-chart.spec.ts', 'app-shell-bottom-bar.spec.ts', 'board.spec.ts'],
+  testMatch: ['storybook-visual.spec.ts', 'rich-text-editor.spec.ts', 'rich-text-inline.spec.ts', 'entity-view.spec.ts', 'data-table.spec.ts', 'app-shell.spec.ts', 'scales.spec.ts', 'date-field.spec.ts', 'session-view.spec.ts', 'editable-list.spec.ts', 'multi-pick.spec.ts', 'images.spec.ts', 'module-card.spec.ts', 'list-editor.spec.ts', 'widget-card.spec.ts', 'line-chart.spec.ts', 'app-shell-bottom-bar.spec.ts', 'board.spec.ts', 'data-table-layouts.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

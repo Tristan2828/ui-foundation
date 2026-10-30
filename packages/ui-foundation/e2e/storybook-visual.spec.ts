@@ -94,6 +94,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
+  // DataTable's card layouts (#252): a feed's grid and compact list under
+  // day headings, and covers with a round Read button and a placeholder.
+  { id: 'app-datatable-layouts--feed', mustShow: 'Earlier this week' },
+  { id: 'app-datatable-layouts--feed-grid', mustShow: 'Earlier this week' },
+  { id: 'app-datatable-layouts--feed-compact', mustShow: 'Earlier this week' },
+  { id: 'app-datatable-layouts--covers', mustShow: 'Harbour Lights' },
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   // A highlighted row's wash, with muted text inside it (#156).
   { id: 'app-datatable--highlighted', mustShow: 'Health' },
