@@ -1,5 +1,4 @@
-import { test } from '@playwright/test'
-import { defineDataEnvironmentBannerSuite } from '@tristan2828/ui-foundation/testing'
+import { defineDataEnvironmentBannerSuite, test } from '@tristan2828/ui-foundation/testing'
 
 // The same screens as the mock-mode banner: one inside the shell, and the
 // logged-out one. In mock mode the banner is absent unless the suite

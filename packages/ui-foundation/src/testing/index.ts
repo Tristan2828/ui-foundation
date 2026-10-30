@@ -12,15 +12,84 @@
 // Runs in Node, inside Playwright: @playwright/test and @axe-core/playwright
 // are optional peer dependencies, needed only by apps that import this.
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test as base, type Page, type Request, type Response } from '@playwright/test'
 import { navPathname, navTargets, type NavEntry } from '../components/app/app-shell-nav'
 import type { MswOverride } from '../mocks/override'
 
 export type { MswHandle, MswOverride } from '../mocks/override'
+export { expect }
 
 // This module runs in Node (Playwright), but the package builds without
 // Node's types; this is the one global it reads.
 declare const process: { env: Record<string, string | undefined> }
+
+// A page load returns at the load event, but the app isn't up yet: React
+// renders only after MSW's worker.start(), which took up to 2.4 s past
+// load in a busy run, and a test's first 5 s expect then failed on an
+// empty page. Under the same load `vite preview` sometimes refuses a
+// connection (about 1 page in 1500): one of the entry's chunks fails, the
+// browser never retries a module script, and the page stays empty until
+// the test's timeout. Both were seen as "never rendered" in every suite.
+const REFUSED = /ERR_CONNECTION_(REFUSED|RESET)/
+
+// The app's first render into the template's `<div id="root">`, which is
+// the boot in a mock build (after MSW's start) and a real one alike. A
+// page without one (another site, about:blank) has nothing to wait for.
+const rendered = (page: Page) =>
+  page.waitForFunction(() => {
+    const root = document.getElementById('root')
+    return !root || root.hasChildNodes()
+  })
+
+async function boot(page: Page, load: () => Promise<Response | null>, again: () => Promise<Response | null>) {
+  for (let attempt = 1; ; attempt++) {
+    let onFailed: (request: Request) => void = () => {}
+    const refused = new Promise<string>((resolve) => {
+      onFailed = (request) => {
+        const url = new URL(request.url())
+        const own = url.origin === new URL(page.url()).origin
+        if (own && REFUSED.test(request.failure()?.errorText ?? '')) resolve(url.pathname)
+      }
+      page.on('requestfailed', onFailed)
+    })
+    try {
+      const response = await (attempt === 1 ? load() : again())
+      const file = await Promise.race([rendered(page).then(() => null), refused])
+      if (file === null) return response
+      if (attempt === 2) throw new Error(`The server refused ${file} twice: the app never booted`)
+    } finally {
+      page.off('requestfailed', onFailed)
+    }
+  }
+}
+
+/**
+ * Makes the page's `goto()` and `reload()` return once the app has
+ * booted (its first render into `#root`), not at the load event, and load
+ * the page once more when one of the app's own files is refused before
+ * then; a second refusal fails naming the file. The wait is bounded by
+ * the test's timeout like any navigation, and the page's own expects keep
+ * their time from there. The `test` exported here applies it to every
+ * test's `page`; this is for a page an app's own fixture opens.
+ */
+export function withBootWait(page: Page): Page {
+  const goto = page.goto.bind(page)
+  const reload = page.reload.bind(page)
+  page.goto = (url, options) => boot(page, () => goto(url, options), () => reload(options))
+  page.reload = (options) => boot(page, () => reload(options), () => reload(options))
+  return page
+}
+
+/**
+ * Playwright's `test`, with a `page` whose `goto()` and `reload()` wait
+ * for the app's boot (`withBootWait`). Import `test` and `expect` from
+ * here instead of '@playwright/test'; the suites below use it too.
+ */
+export const test = base.extend({
+  page: async ({ page }, provide) => {
+    await provide(withBootWait(page))
+  },
+})
 
 /**
  * Forces a response for the page's *first* load: set before navigation, so

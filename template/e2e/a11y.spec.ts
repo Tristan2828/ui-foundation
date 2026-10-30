@@ -1,9 +1,11 @@
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import {
   POPUP_FOCUS_GUARDS,
   defineA11ySuite,
+  expect,
   expectNoAxeViolations,
   forceMswOverride,
+  test,
   waitForMswReady,
 } from '@tristan2828/ui-foundation/testing'
 import { NAV_ITEMS } from '../src/nav'

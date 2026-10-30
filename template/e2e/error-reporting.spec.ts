@@ -1,5 +1,5 @@
-import { expect, test, type Page, type Request } from '@playwright/test'
-import { forceLoggedOut, forceMswOverride } from '@tristan2828/ui-foundation/testing'
+import type { Page, Request } from '@playwright/test'
+import { expect, forceLoggedOut, forceMswOverride, test } from '@tristan2828/ui-foundation/testing'
 
 // Error reporting (FoundationProviders' errorReporting, on in src/main.tsx):
 // a server failure or a crashed screen is posted to POST /api/client-errors,

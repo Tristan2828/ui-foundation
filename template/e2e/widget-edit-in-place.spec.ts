@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { forceMswOverride, waitForMswReady } from '@tristan2828/ui-foundation/testing'
+import type { Page } from '@playwright/test'
+import { expect, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui-foundation/testing'
 
 // Editing in place on the widget view (cell pattern 18): Name, Status,
 // Price, Description and Extra Categories turn into the form's own control

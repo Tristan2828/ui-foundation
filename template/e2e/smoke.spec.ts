@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // See e2e/shell.spec.ts — same real-backend-only login step, needed for the
 // same reason (this spec runs against VITE_API=real in check-backend-postgres.sh,

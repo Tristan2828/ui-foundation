@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { expectNoAxeViolations } from '@tristan2828/ui-foundation/testing'
+import type { Page } from '@playwright/test'
+import { expect, expectNoAxeViolations, test } from '@tristan2828/ui-foundation/testing'
 
 // Forces the widgets list's *first* request via `page.addInitScript` —
 // registering the override this way, before any of the page's own scripts

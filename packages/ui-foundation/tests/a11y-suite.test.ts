@@ -15,6 +15,8 @@ vi.mock('@playwright/test', () => {
       prefix.pop()
     },
     beforeEach: () => {},
+    // The package's `test` (the page waits for the app's boot) is this one.
+    extend: () => test,
   })
   return { test, expect: () => {} }
 })

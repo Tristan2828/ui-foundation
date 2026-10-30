@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // Phase 2 exit criterion: the app serves Page<Widget>-shaped data from MSW
 // with no backend process running at all. Runs against Playwright's
