@@ -6,11 +6,11 @@
 - [The view](#the-view) · lines 36–109
   - [The dark stage](#the-dark-stage) · lines 73–109
 - [The clock](#the-clock) · lines 111–141
-- [Sound](#sound) · lines 143–190
-- [Background tabs](#background-tabs) · lines 192–246
-  - [Interruptions](#interruptions) · lines 226–246
-- [Motion](#motion) · lines 248–252
-- [Testing a timed screen in Playwright](#testing-a-timed-screen-in-playwright) · lines 254–408
+- [Sound](#sound) · lines 143–193
+- [Background tabs](#background-tabs) · lines 195–249
+  - [Interruptions](#interruptions) · lines 229–249
+- [Motion](#motion) · lines 251–255
+- [Testing a timed screen in Playwright](#testing-a-timed-screen-in-playwright) · lines 257–411
 
 <!-- /index -->
 
@@ -176,7 +176,10 @@ Browsers block sound until the person has clicked or tapped. So:
   another app's music. It returns `{ pause(), stop() }`: `pause()` shows
   Play (without calling `onToggle`), `stop()` ends it (on done, on leaving);
   to start again after `pause()`, call `keepAudioAlive` again from a click.
-  Only one runs at a time.
+  Only one runs at a time. Where Safari has an audio session
+  (`navigator.audioSession`) it's set to `"playback"` while the track
+  runs, so the ringer switch doesn't mute the cues either, and put back on
+  `stop()`.
 - Every one of them is a no-op where the browser can't make the sound, so
   none needs a check around it.
 - **Mute** is the app's: `const [muted, setMuted] = useMuted('my-app:routine:muted')`,

@@ -7,6 +7,21 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.44.0 — `keepAudioAlive` sets Safari's playback audio session
+
+Additive, so a minor.
+
+- **`keepAudioAlive`** (#261) now sets `navigator.audioSession.type` to
+  `"playback"` while its silent track runs, where Safari has an audio
+  session (iOS 17+), so the iPhone's ringer switch doesn't mute the
+  page's cues either; `stop()` puts the type back. Guarded: a no-op
+  where the browser has no audio session or refuses the type.
+
+**How an app adopts:** nothing to change for the new behaviour. An app
+that set `navigator.audioSession.type = 'playback'` itself around its
+`keepAudioAlive()` call can delete that line (and a wrapper left with
+nothing else in it).
+
 ## 4.43.0 — `testing`'s page loads wait for the app's boot
 
 Additive, so a minor.
