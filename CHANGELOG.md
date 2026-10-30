@@ -7,6 +7,31 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.43.0 — `testing`'s page loads wait for the app's boot
+
+Additive, so a minor.
+
+- **`test` and `expect` from `@tristan2828/ui-foundation/testing`**:
+  Playwright's, with a `page` whose `goto()` and `reload()` return once
+  the app has rendered into `#root`, not at the load event. React renders
+  only after MSW's `worker.start()`, which the load event doesn't wait
+  for (up to 2.4 s past it under load), so a spec's first expect met an
+  empty page. When one of the app's own files is refused before then
+  (`vite preview` under load, `ERR_CONNECTION_REFUSED`/`RESET`, which the
+  browser never retries for a module script), the page is loaded once
+  more; a second refusal fails naming the file. A page without `#root`
+  isn't waited on. `withBootWait(page)` does the same to a page an app's
+  own fixture opens.
+- **The suites use it**: `defineA11ySuite`'s page loads (and the banner
+  suites') no longer flake as "never rendered" in a busy run.
+- The template's specs import `test` and `expect` from the package;
+  add-an-entity.md step 8 says to.
+
+**To take it:** in each spec, import `test` and `expect` from
+`@tristan2828/ui-foundation/testing` instead of `@playwright/test`
+(types like `Page` still come from Playwright). An app that wrote its
+own boot wait can drop it for this one.
+
 ## 4.42.0 — SpinWheel; FillInQueue and FillInChoice
 
 Additive, so a minor.

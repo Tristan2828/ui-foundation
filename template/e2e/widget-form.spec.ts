@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // Forces widget id 2's (Standing Desk) *first* GET via page.addInitScript —
 // see e2e/widgets-table.spec.ts and src/mocks/e2e-hooks.ts for why this

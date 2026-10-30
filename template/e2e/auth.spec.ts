@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { forceLoggedOut, forceMswOverride, waitForMswReady } from '@tristan2828/ui-foundation/testing'
+import { expect, forceLoggedOut, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui-foundation/testing'
 
 // MSW defaults to signed in, so only the "start out logged out" cases
 // override GET /auth/me; login, logout and a wrong password all exercise

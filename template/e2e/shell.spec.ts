@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // `title`: the browser tab's, "<nav entry> · <app>", the app alone at home.
 const NAV_ENTRIES = [

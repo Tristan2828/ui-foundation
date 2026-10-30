@@ -4,7 +4,7 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 37–59
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–702
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–706
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 99–106
   - Step 2: `npm run gen:api` · lines 107–108
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 109–120
@@ -12,13 +12,13 @@
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 131–135
   - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–598
   - Step 7: Register routes · lines 599–609
-  - Step 8: Add Playwright specs for all three screens · lines 610–684
-  - Step 9: Register the nav entry and route names · lines 685–699
-  - Step 10: `npm run verify`. · lines 700–702
-- [What not to copy](#what-not-to-copy) · lines 704–730
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 732–749
-- [Deleting](#deleting) · lines 751–780
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 782–803
+  - Step 8: Add Playwright specs for all three screens · lines 610–688
+  - Step 9: Register the nav entry and route names · lines 689–703
+  - Step 10: `npm run verify`. · lines 704–706
+- [What not to copy](#what-not-to-copy) · lines 708–734
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 736–753
+- [Deleting](#deleting) · lines 755–784
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 786–807
 
 <!-- /index -->
 
@@ -612,7 +612,11 @@ is a filled-in example while the Widgets demo is still here).
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the
    `window.__msw` handle from `@tristan2828/ui-foundation/testing`, and
    `e2e/widgets-table.spec.ts`/`e2e/widget-form.spec.ts`/
-   `e2e/widget-view.spec.ts` for the pattern. The view's states are
+   `e2e/widget-view.spec.ts` for the pattern. Import `test` and
+   `expect` from there too, not from `@playwright/test`: its page's
+   `goto()` and `reload()` return once the app has rendered (after MSW's
+   start), and load once more if the server refused one of its files,
+   so a spec's first expect never meets an empty page. The view's states are
    loading, not found (a 404: "Not found", the way back, no retry), error
    (a failed load, then Try again recovering) and success (every section,
    each value as its cell shows it), plus the sparse record showing its

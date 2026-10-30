@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { forceMswOverride, waitForMswReady } from '@tristan2828/ui-foundation/testing'
+import type { Page } from '@playwright/test'
+import { expect, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui-foundation/testing'
 
 // The widget view (/widgets/:id): one test per state (loading, not found,
 // error, success, the sparse record's empty values), then the ways in and

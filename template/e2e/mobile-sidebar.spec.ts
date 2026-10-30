@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // The sidebar below the mobile breakpoint: an off-canvas Sheet instead of
 // the persistent sidebar shell.spec.ts covers, so this runs only in the

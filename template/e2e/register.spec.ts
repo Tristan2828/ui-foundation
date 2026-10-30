@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // Mirrors e2e/auth.spec.ts's state coverage:
 // validation (duplicate email, weak password, mismatched confirmation) and

@@ -1,4 +1,5 @@
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // The app renders where the browser blocks storage: a private window with
 // site data blocked, or a policy that makes every Storage call throw. MSW's
