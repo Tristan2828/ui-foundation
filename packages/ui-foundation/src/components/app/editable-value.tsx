@@ -270,7 +270,11 @@ export function EditableField({
           className,
         )}
       >
-        <span className="min-w-0 flex-1">{children}</span>
+        {/* Muted text (a "Not set", a placeholder) reads as foreground on
+            the hover and focus background: muted on bg-muted is under 4.5:1. */}
+        <span className="min-w-0 flex-1 group-hover/editable:[&_.text-muted-foreground]:text-foreground group-has-[[data-edit]:focus-visible]/editable:[&_.text-muted-foreground]:text-foreground">
+          {children}
+        </span>
         <Button
           ref={editButton}
           data-edit=""

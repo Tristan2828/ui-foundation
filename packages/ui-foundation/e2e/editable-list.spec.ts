@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // A list item's row edited in place (app/EditableList ItemRows, #187): the
@@ -43,5 +44,71 @@ for (const { section, name } of [
     const adding = page.getByRole('textbox', { name: `${name} ${count + 1} text` })
     await expect(adding).toBeFocused()
     await expectBeside(page.getByRole('checkbox', { name: `${name} ${count + 1} done` }), adding)
+  })
+}
+
+// A list added by upload (app/EditableList AddedByUpload, #256): the
+// list's own `add` puts the uploaded file at the end through `save`, and
+// it then edits, moves and removes like any item; a refused upload says
+// why under the list. A muted value on the hover and focus tint reads as
+// foreground (#257): axe with the caret on a pencil, in both themes.
+const uploads = 'http://localhost:6006/iframe.html?id=app-editablelist--added-by-upload&viewMode=story'
+
+async function openUploads(page: Page, theme: 'light' | 'dark' = 'light') {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(`${uploads}&globals=theme:${theme}`)
+  await expect(page.getByRole('heading', { level: 1, name: 'Office move' })).toBeVisible()
+  return page.getByRole('region', { name: 'Files', exact: true })
+}
+
+test('Files: an upload adds at the end, then edits, moves and removes like any item', async ({ page }) => {
+  const files = await openUploads(page)
+  const add = files.getByRole('button', { name: 'Add files' })
+  await add.click()
+  await expect(files.getByText('photo-1.jpg')).toBeVisible()
+  await expect(files.getByRole('listitem')).toHaveCount(2)
+  await expect(add).toBeFocused()
+
+  await files.getByRole('button', { name: 'Edit photo-1.jpg' }).click()
+  const caption = page.getByRole('textbox', { name: 'Caption for photo-1.jpg' })
+  await expect(caption).toBeFocused()
+  await caption.fill('The hallway')
+  await page.keyboard.press('Enter')
+  await expect(files.getByText('The hallway')).toBeVisible()
+
+  await files.getByRole('button', { name: 'Move photo-1.jpg up' }).click()
+  await expect(files.getByRole('listitem').first()).toContainText('The hallway')
+
+  await files.getByRole('button', { name: 'Remove floor-plan.pdf' }).click()
+  await expect(files.getByRole('listitem')).toHaveCount(1)
+  await expect(files.getByText('floor-plan.pdf')).toBeHidden()
+})
+
+test('Files: the add stops at its limit, and a refused upload says why under the list', async ({ page }) => {
+  const files = await openUploads(page)
+  const add = files.getByRole('button', { name: 'Add files' })
+  await add.click()
+  await expect(files.getByRole('listitem')).toHaveCount(2)
+  await add.click()
+  await expect(files.getByRole('listitem')).toHaveCount(3)
+  await expect(add).toBeDisabled()
+
+  await files.getByRole('button', { name: 'Refuse an upload' }).click()
+  await expect(files.getByText('That file is too large (at most 10 MB).')).toBeVisible()
+})
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`muted values on the hover and focus tint pass axe (${theme})`, async ({ page }) => {
+    await openUploads(page, theme)
+    const axe = () => new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region']).analyze()
+    // The view's own "Not set", then a file's "No caption", each with the caret on its pencil.
+    for (const pencil of ['Edit Owner', 'Edit floor-plan.pdf']) {
+      const button = page.getByRole('button', { name: pencil })
+      await button.focus()
+      await expect(button).toBeFocused()
+      expect((await axe()).violations).toEqual([])
+      await button.hover()
+      expect((await axe()).violations).toEqual([])
+    }
   })
 }
