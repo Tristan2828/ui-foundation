@@ -7,7 +7,7 @@ import { useMuted } from '@/hooks/use-muted'
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 import { useSessionClock, type SessionClock } from '@/hooks/use-session-clock'
 import { cancelCues, chime, onCuesRecovered, say, sequence, unlockAudio } from '@/lib/audio-cues'
-import { SessionView } from './session-view'
+import { SessionStage, SessionView, sessionStageLit, sessionStageMain, sessionStageQuiet } from './session-view'
 
 // A timed screen as an app builds one (docs/foundation/timed-screens.md):
 // SessionView over the page, a one-minute useSessionClock, a chime on
@@ -17,7 +17,10 @@ import { SessionView } from './session-view'
 // audio clock when the run starts, resumes or skips, and taken back on
 // pause or close; Skip seeks the clock; the tab's title counts down.
 // Opened on load so axe sees it (e2e/storybook-visual.spec.ts), and driven
-// through its states in e2e/session-view.spec.ts.
+// through its states in e2e/session-view.spec.ts. DarkStage is the same run
+// on the dark stage (#253): the view dark whatever the theme, a SessionStage
+// glowing in the run's tone (success while it counts), the time lit in it,
+// the controls quiet outlines.
 const LENGTH = 60_000
 
 function remaining(elapsed: number): string {
@@ -30,11 +33,13 @@ function TimerScreen({
   muted,
   setMuted,
   primary,
+  stage,
 }: {
   clock: SessionClock
   muted: boolean
   setMuted: (muted: boolean) => void
   primary: RefObject<HTMLButtonElement | null>
+  stage: boolean
 }) {
   const reducedMotion = usePrefersReducedMotion()
 
@@ -51,15 +56,19 @@ function TimerScreen({
   const counting = clock.status === 'running' && !clock.paused
   const status = clock.status === 'done' ? 'Done' : clock.status === 'idle' ? 'Ready' : clock.paused ? 'Paused' : 'Running'
 
+  const quiet = stage ? sessionStageQuiet : undefined
+  // On the stage the main control is an outline too, only brighter.
+  const main = stage ? sessionStageMain : undefined
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-8">
+    <SessionStage tone={stage && counting ? 'success' : 'neutral'} glow={stage} className="items-center justify-center gap-8">
       <div
         data-motion={reducedMotion ? 'reduced' : 'full'}
         aria-hidden
         className={cn('size-40 rounded-full bg-primary/15 ring-2 ring-primary', reducedMotion && 'transition-opacity duration-1000')}
         style={reducedMotion ? { opacity: counting ? 1 : 0.5 } : { transform: `scale(${0.75 + breath * 0.25})` }}
       />
-      <p role="timer" aria-label="Time left" className="text-6xl font-semibold tabular-nums">
+      <p role="timer" aria-label="Time left" className={cn('text-6xl font-semibold tabular-nums', stage && sessionStageLit)}>
         {remaining(clock.elapsed)}
       </p>
       <p role="status" className="type-label text-muted-foreground">
@@ -68,33 +77,33 @@ function TimerScreen({
       <div className="flex gap-2">
         {clock.status === 'running' ? (
           <>
-            <Button ref={primary} size="lg" onClick={clock.paused ? clock.resume : clock.pause}>
+            <Button ref={primary} size="lg" variant={stage ? 'outline' : 'default'} className={main} onClick={clock.paused ? clock.resume : clock.pause}>
               {clock.paused ? <PlayIcon /> : <PauseIcon />}
               {clock.paused ? 'Resume' : 'Pause'}
             </Button>
-            <Button size="lg" variant="outline" onClick={skip}>
+            <Button size="lg" variant="outline" className={quiet} onClick={skip}>
               <FastForwardIcon />
               Skip 10 s
             </Button>
           </>
         ) : (
-          <Button ref={primary} size="lg" onClick={start}>
+          <Button ref={primary} size="lg" variant={stage ? 'outline' : 'default'} className={main} onClick={start}>
             {clock.status === 'done' ? <RotateCcwIcon /> : <PlayIcon />}
             {clock.status === 'done' ? 'Start again' : 'Start'}
           </Button>
         )}
-        <Button size="lg" variant="outline" aria-pressed={muted} onClick={() => setMuted(!muted)}>
+        <Button size="lg" variant="outline" className={quiet} aria-pressed={muted} onClick={() => setMuted(!muted)}>
           {muted ? <VolumeXIcon /> : <Volume2Icon />}
           Mute
         </Button>
       </div>
-    </div>
+    </SessionStage>
   )
 }
 
 // The clock lives above the view, so closing it holds the time
 // (`running: open`) rather than losing it, and reopening carries on.
-function TimerSession() {
+function TimerSession({ dark = false }: { dark?: boolean }) {
   const [open, setOpen] = useState(true)
   const clock = useSessionClock({ running: open, endsAt: LENGTH })
   const [muted, setMuted] = useMuted('ui-foundation:stories:session-muted')
@@ -176,8 +185,9 @@ function TimerSession() {
         keepAwake
         fullscreenControl
         initialFocus={primary}
+        dark={dark}
       >
-        <TimerScreen clock={timed} muted={muted} setMuted={changeMuted} primary={primary} />
+        <TimerScreen clock={timed} muted={muted} setMuted={changeMuted} primary={primary} stage={dark} />
       </SessionView>
     </div>
   )
@@ -192,4 +202,8 @@ export default meta
 
 export const Timer: StoryObj = {
   render: () => <TimerSession />,
+}
+
+export const DarkStage: StoryObj = {
+  render: () => <TimerSession dark />,
 }

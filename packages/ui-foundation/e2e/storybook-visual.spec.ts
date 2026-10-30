@@ -136,6 +136,9 @@ const COMPOSITE_STORIES = [
   // <SessionView> is a timed screen's whole viewport: its header controls
   // and a timer's own (the big digits, the status line, a pressed toggle).
   { id: 'app-sessionview--timer', mustShow: '1:00' },
+  // Its dark stage (#253): dark inside the view in both app themes, the
+  // lit time on the tone's glow, the quiet outline controls.
+  { id: 'app-sessionview--dark-stage', mustShow: '1:00' },
   // Every density, the primitives and DataTable in each (large is the one
   // that changes their type and sizes).
   { id: 'patterns-density--primitives', mustShow: 'data-density="large"' },
@@ -192,6 +195,11 @@ const GLYPH_STORIES: {
   // open on load, portaled to <body> like a popup.
   {
     id: 'app-sessionview--timer',
+    open: (page) => page.getByRole('dialog', { name: 'Morning stretch' }).waitFor(),
+    shows: '[data-slot=session-view]',
+  },
+  {
+    id: 'app-sessionview--dark-stage',
     open: (page) => page.getByRole('dialog', { name: 'Morning stretch' }).waitFor(),
     shows: '[data-slot=session-view]',
   },
