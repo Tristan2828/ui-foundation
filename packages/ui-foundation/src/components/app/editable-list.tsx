@@ -8,7 +8,8 @@
 //   form's row (`renderItem`), an EditableValue like any field: leaving or
 //   Enter saves, Esc gives up, one field open at a time.
 // - "Add" at the end opens a new item the same way. Enter saves it and
-//   opens the next, so a run of items goes in from the keyboard.
+//   opens the next, so a run of items goes in from the keyboard. Or the
+//   app's own `add` (an upload) puts items at the end, saved as a move is.
 // - Move and remove save at once. Whatever is open is saved first; while
 //   the change saves, the buttons wait, "Saving…" shows under the list,
 //   and a refusal leaves the list as it was with the reason under it.
@@ -20,7 +21,7 @@ import { useContext, useEffect, useId, useRef, useState, type ReactNode } from '
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
-import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './edit-in-place'
+import { EditInPlaceContext, type EditInPlace, type EditInPlaceList, type EditListAddProps } from './edit-in-place'
 import { messageOf } from './edit-in-place-store'
 import { EditableField } from './editable-value'
 import { ListEditor } from './list-editor'
@@ -59,16 +60,23 @@ function checkItem(edit: EditInPlaceList, items: readonly unknown[], index: numb
   return { success: false, error: { issues: issue ? [issue] : [] } }
 }
 
+// The app's own add, as a component of its own: it renders the app's
+// control with what it's given, and holds nothing.
+function ListAdd({ render, ...props }: EditListAddProps<unknown> & { render: (props: EditListAddProps<unknown>) => ReactNode }) {
+  return <div data-list-add-slot="">{render(props)}</div>
+}
+
 export function EditableList({ label, edit, emptyLabel }: { label: string; edit: EditInPlaceList; emptyLabel?: string }) {
   const store = useContext(EditInPlaceContext)
   if (!store) throw new Error('A list edited in place works inside an <EntityView>, which runs editing in place.')
   const items = edit.value
   const statusId = useId()
-  const [status, setStatus] = useState<{ saving: boolean; error: string | null }>({ saving: false, error: null })
+  const [status, setStatus] = useState<{ saving: boolean; inFlight: number; error: string | null }>({ saving: false, inFlight: 0, error: null })
 
   // The buttons are disabled while a change saves, which drops the caret.
   // Once the list shows the outcome it goes to the first of these buttons
-  // (by name) that's there and enabled, else to Add.
+  // (by name) that's there and enabled, else to Add (or the app's add's
+  // first button).
   const root = useRef<HTMLDivElement>(null)
   const focusNext = useRef<string[] | null>(null)
   useEffect(() => {
@@ -77,24 +85,28 @@ export function EditableList({ label, edit, emptyLabel }: { label: string; edit:
     focusNext.current = null
     const buttons = [...(root.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? [])]
     const target = names.map((name) => buttons.find((button) => button.getAttribute('aria-label') === name)).find(Boolean)
-    ;(target ?? root.current?.querySelector<HTMLButtonElement>('[data-list-add]:not(:disabled)'))?.focus()
+    ;(target ?? root.current?.querySelector<HTMLButtonElement>('[data-list-add]:not(:disabled), [data-list-add-slot] button:not(:disabled)'))?.focus()
   }, [items, status.saving])
 
-  // Move and remove: save the open field first (if it can't save, it stays
-  // and nothing else happens), then the change.
-  const act = async (change: (current: unknown[]) => unknown[], focusAfter: string[], focusIfRefused: string[]) => {
-    if (status.saving) return
+  // Move, remove and the app's own add: save the open field first (if it
+  // can't save, it stays and nothing else happens), then the change. An
+  // add that lands while a change saves (an upload finishing) still goes:
+  // `save` builds on the latest list, and "Saving…" stays until both are done.
+  const act = async (change: (current: unknown[]) => unknown[], focusAfter: string[], focusIfRefused: string[], waits = true) => {
+    if (waits && status.saving) return false
     const open = store.open
-    if (open !== null && !(await store.commit(open))) return
-    setStatus({ saving: true, error: null })
+    if (open !== null && !(await store.commit(open))) return false
+    setStatus((now) => ({ saving: true, inFlight: now.inFlight + 1, error: null }))
+    let error: string | null = null
     try {
       await edit.save(change)
       focusNext.current = focusAfter
-      setStatus({ saving: false, error: null })
-    } catch (error) {
+    } catch (refused) {
       focusNext.current = focusIfRefused
-      setStatus({ saving: false, error: messageOf(error) })
+      error = messageOf(refused)
     }
+    setStatus((now) => ({ saving: now.inFlight > 1, inFlight: now.inFlight - 1, error: error ?? now.error }))
+    return error === null
   }
 
   const move = (from: number, to: number) => {
@@ -137,10 +149,17 @@ export function EditableList({ label, edit, emptyLabel }: { label: string; edit:
       }),
   })
 
+  // The app's own add: its items saved at the end, the caret back on it.
+  const addItems = (added: unknown[]) =>
+    added.length === 0 ? Promise.resolve(true) : act((current) => [...current, ...added], [], [], false)
+  const onProblem = (message: string | null) => setStatus((now) => ({ ...now, error: message }))
+
   // The item being added, at the end.
+  const newItem = edit.newItem
+  if (!newItem && !edit.add) throw new Error('A list edited in place needs `newItem` (a blank item to add) or `add` (its own control).')
   const addEdit: EditInPlace = {
     kind: 'text',
-    value: edit.newItem(),
+    value: newItem?.(),
     control: (props) => <ItemRow>{edit.renderItem({ ...props, index: items.length, isNew: true })}</ItemRow>,
     schema: { safeParse: (draft) => checkItem(edit, items, items.length, draft) },
     save: (item) => edit.save((current) => [...current, item]),
@@ -152,7 +171,7 @@ export function EditableList({ label, edit, emptyLabel }: { label: string; edit:
         aria-label={label}
         items={items.map((_, index) => ({ id: String(index) }))}
         itemName={edit.itemName}
-        addLabel={edit.addLabel}
+        addLabel={edit.addLabel ?? ''}
         emptyText={emptyLabel}
         disabled={status.saving}
         onRemove={remove}
@@ -163,6 +182,9 @@ export function EditableList({ label, edit, emptyLabel }: { label: string; edit:
           </EditableField>
         )}
         add={
+          edit.add ? (
+            <ListAdd render={edit.add} add={addItems} items={items} disabled={status.saving} onProblem={onProblem} />
+          ) : (
           <EditableField
             label={edit.itemName(items.length)}
             edit={addEdit}
@@ -184,6 +206,7 @@ export function EditableList({ label, edit, emptyLabel }: { label: string; edit:
               </div>
             )}
           />
+          )
         }
       />
       <span id={statusId} className="type-body">

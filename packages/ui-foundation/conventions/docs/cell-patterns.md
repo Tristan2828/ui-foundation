@@ -26,14 +26,14 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 564–647
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 649–684
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 686–759
-- [18. Editable value](#18-editable-value) · lines 761–1176
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1020–1077
-  - [In a table's rows](#in-a-tables-rows) · lines 1079–1164
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1166–1176
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1178–1244
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1246–1310
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1312–1377
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1379–1407
+- [18. Editable value](#18-editable-value) · lines 761–1207
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1023–1108
+  - [In a table's rows](#in-a-tables-rows) · lines 1110–1195
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1197–1207
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1209–1275
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1277–1341
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1343–1408
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1410–1438
 
 <!-- /index -->
 
@@ -781,8 +781,11 @@ the form stay.
 **At rest: says it's editable without shouting.** The value reads as it
 always did. Hover tints it (`bg-muted`) and shows a pencil; the pencil is
 a real button ("Edit <label>"), so Tab reaches it and Enter opens the
-field, and its focus ring tints the value too. On a touch screen the
-pencil always shows. A click anywhere on the value opens it, except on a
+field, and its focus ring tints the value too. Muted text inside it (the
+view's "Not set", a "No caption", a done item) turns `text-foreground`
+on that tint, since muted on `bg-muted` is under 4.5:1; the package does
+it, so an app just uses `text-muted-foreground` as anywhere else. On a
+touch screen the pencil always shows. A click anywhere on the value opens it, except on a
 link inside it (a reference to a record with a view, a link in the
 notes), which still navigates.
 
@@ -1056,6 +1059,14 @@ Checklist is the reference (`checklist` in `widgetEdits`). It's built on
   option is still inside the row, and Enter in the row's text box or
   leaving the row saves the item, ids only on the wire. A new item starts
   with no pick, which the list's schema refuses on that row.
+- **Items that come from elsewhere** (a record's files, added by upload):
+  `add` in place of `newItem` and `addLabel`. It renders the app's own
+  control (an "Add files" button over a hidden file input) and is given
+  `add(items)`, which saves them at the end through `save`, as a move is
+  ("Saving…", a refusal under the list, the caret back on the control),
+  plus `items` (to stop at a limit), `disabled` (a change is saving) and
+  `onProblem(message)` (an upload refused, under the list). Each item
+  then reads, edits, moves and removes like a checklist's.
 
 ```tsx
 const checklist = editInPlace<ChecklistItem>({
@@ -1075,6 +1086,26 @@ const checklist = editInPlace<ChecklistItem>({
 The row's fields are one component shared with the form
 (`WidgetChecklistItemFields` in `widget-fields.tsx`), each field named by
 position ("Item 2 text") as the row buttons name the item.
+
+A list added by upload:
+
+```tsx
+const files = editInPlace<Attachment>({
+  kind: 'list',
+  value: record.attachments,
+  save: (change) => editField.mutateAsync((current) => ({ attachments: change(current.attachments) })),
+  itemName: (index) => record.attachments[index]?.name ?? `file ${index + 1}`,
+  add: ({ add, items, disabled, onProblem }) => (
+    <UploadButton                                           // the app's: a button over <input type="file" hidden>
+      disabled={disabled || items.length >= MAX}
+      onUploaded={(stored) => add(stored.map(toAttachment))}
+      onRefused={(error) => onProblem(error.message)}
+    />
+  ),
+  renderShown: (file) => <FileRow file={file} />,           // its thumbnail, name and caption
+  renderItem: (props) => <CaptionInput {...props} />,       // what edits on a click: the caption
+})
+```
 
 ### In a table's rows
 

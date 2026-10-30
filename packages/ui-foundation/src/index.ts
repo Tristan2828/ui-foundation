@@ -51,6 +51,7 @@ export {
   type EditInPlaceListOptions,
   type EditInPlaceOptions,
   type EditKind,
+  type EditListAddProps,
   type EditListItemProps,
 } from '@/components/app/edit-in-place'
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'

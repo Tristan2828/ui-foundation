@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useRef, useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
+import { PaperclipIcon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -86,6 +88,118 @@ function RowsInRouter() {
   return <RouterProvider router={router} />
 }
 
+// A list added by upload (#256): the list's own `add` is an "Add files"
+// button that "uploads" (a short wait), then adds the file at the end
+// through `save`; "Refuse an upload" reports why under the list. Each
+// file reads as its name and caption, a missing caption the muted "No
+// caption", which turns foreground on the hover and focus tint (#257), as
+// the view's own "Not set" does. e2e/editable-list.spec.ts adds, moves,
+// removes, and runs axe with the caret on a pencil in both themes.
+
+type StoredFile = { name: string; caption: string }
+
+const FILES_MAX = 3
+
+// Files held in state, saved after a short wait; an "upload" is another
+// short wait that names the next photo.
+function useSavedFiles() {
+  const [files, setFiles] = useState<StoredFile[]>([{ name: 'floor-plan.pdf', caption: '' }])
+  const latest = useRef(files)
+  const uploaded = useRef(0)
+  const save = (change: (current: StoredFile[]) => StoredFile[]) =>
+    new Promise<void>((resolve) =>
+      setTimeout(() => {
+        latest.current = change(latest.current)
+        setFiles(latest.current)
+        resolve()
+      }, 100),
+    )
+  const upload = () =>
+    new Promise<StoredFile>((resolve) =>
+      setTimeout(() => resolve({ name: `photo-${(uploaded.current += 1)}.jpg`, caption: '' }), 100),
+    )
+  return { files, save, upload }
+}
+
+function FilesRecord() {
+  const { files, save, upload } = useSavedFiles()
+  const [uploading, setUploading] = useState(false)
+  const fileList = editInPlace<StoredFile>({
+    kind: 'list',
+    value: files,
+    save,
+    itemName: (index) => files[index]?.name ?? `file ${index + 1}`,
+    add: ({ add, items, disabled, onProblem }) => (
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled || uploading || items.length >= FILES_MAX}
+          onClick={() => {
+            onProblem(null)
+            setUploading(true)
+            void upload()
+              .then((stored) => add([stored]))
+              .finally(() => setUploading(false))
+          }}
+        >
+          <PaperclipIcon />
+          {uploading ? 'Uploading…' : 'Add files'}
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onProblem('That file is too large (at most 10 MB).')}>
+          Refuse an upload
+        </Button>
+      </div>
+    ),
+    renderShown: (file) => (
+      <span className="flex flex-col">
+        {file.caption || <span className="text-muted-foreground">No caption</span>}
+        <span className="type-caption text-muted-foreground">{file.name}</span>
+      </span>
+    ),
+    renderItem: ({ value, onChange, disabled, invalid, describedBy, label }) => (
+      <Input
+        value={value.caption}
+        readOnly={disabled}
+        aria-invalid={invalid || undefined}
+        aria-label={`Caption for ${label}`}
+        aria-describedby={describedBy}
+        placeholder="Caption (optional)"
+        autoFocus
+        onChange={(event) => onChange({ ...value, caption: event.target.value })}
+      />
+    ),
+  })
+  const [owner, setOwner] = useState('')
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Details',
+      fields: [
+        {
+          label: 'Owner',
+          value: owner || null,
+          edit: editInPlace<string>({
+            kind: 'text',
+            value: owner,
+            save: async (next) => setOwner(next.trim()),
+            control: (props) => (
+              <Input id={props.id} value={props.value} aria-label={props.label} autoFocus onChange={(event) => props.onChange(event.target.value)} />
+            ),
+          }),
+        },
+      ],
+    },
+    { title: 'Files', content: null, emptyLabel: 'No files yet', edit: fileList },
+  ]
+  return <EntityView isLoading={false} back={{ to: '/', label: 'Projects' }} title="Office move" sections={sections} />
+}
+
+function FilesInRouter() {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <FilesRecord /> }]))
+  return <RouterProvider router={router} />
+}
+
 const meta: Meta = {
   title: 'app/EditableList',
   parameters: { controls: { disable: true }, layout: 'fullscreen' },
@@ -94,3 +208,5 @@ const meta: Meta = {
 export default meta
 
 export const ItemRows: StoryObj = { render: () => <RowsInRouter /> }
+
+export const AddedByUpload: StoryObj = { render: () => <FilesInRouter /> }

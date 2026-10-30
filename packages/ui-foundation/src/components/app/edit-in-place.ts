@@ -122,14 +122,32 @@ export type EditListItemProps<TItem> = EditControlProps<TItem> & {
   isNew: boolean
 }
 
+/** What a list's own `add` is given: how to put new items at the end, saved as the list's other changes are. */
+export type EditListAddProps<TItem> = {
+  /**
+   * Saves these items at the end of the list, through the list's `save`
+   * (built on its latest list, after whatever is open and whatever is
+   * still saving). "Saving…" and a refusal show under the list, as for a
+   * move. Resolves once it's done: `true` saved, `false` refused.
+   */
+  add: (items: TItem[]) => Promise<boolean>
+  /** The list as saved: to stop adding at a limit (`items.length >= max`). */
+  items: readonly TItem[]
+  /** A change is saving: the list's buttons wait, and so should this one. */
+  disabled: boolean
+  /** Why the add can't happen (an upload refused), under the list where a refused save shows; `null` clears it. */
+  onProblem: (message: string | null) => void
+}
+
 /**
- * A list of sub-items edited in place (a checklist, a list of links), on
- * a `content` section of EntityView. Make one with `editInPlace({ kind:
- * 'list', ... })`. Every item reads as `renderShown` (a quick action, such
- * as its done box, still works there); clicking it or its pencil turns it
- * into `renderItem`, the form's own row. "Add" at the end opens a new item;
- * move up, move down and remove are ListEditor's buttons. Each change is one
- * save of the whole list.
+ * A list of sub-items edited in place (a checklist, a list of links, a
+ * record's files), on a `content` section of EntityView. Make one with
+ * `editInPlace({ kind: 'list', ... })`. Every item reads as `renderShown`
+ * (a quick action, such as its done box, still works there); clicking it
+ * or its pencil turns it into `renderItem`, the form's own row. "Add" at
+ * the end opens a new item (`newItem`), or the app's own `add` puts items
+ * there (an upload); move up, move down and remove are ListEditor's
+ * buttons. Each change is one save of the whole list.
  */
 export type EditInPlaceListOptions<TItem> = {
   kind: 'list'
@@ -144,12 +162,19 @@ export type EditInPlaceListOptions<TItem> = {
   renderItem: (props: EditListItemProps<TItem>) => ReactNode
   /** How the item reads when it isn't being edited. Its own controls (a done box) keep working. */
   renderShown: (item: TItem, index: number) => ReactNode
-  /** A blank item, what "Add" starts from. */
-  newItem: () => TItem
+  /** A blank item, what "Add" starts from. Not needed with `add`; one or the other is. */
+  newItem?: () => TItem
+  /**
+   * In place of "Add" and its blank item: what adds items, such as a file
+   * upload or a picker, e.g. a button that uploads, then calls
+   * `props.add(stored.map(toItem))`. The items save at the end of the list
+   * through `save`, so they read, move and save like any other.
+   */
+  add?: (props: EditListAddProps<TItem>) => ReactNode
   /** How the buttons name an item, as on the form: (i) => `item ${i + 1}` gives "Move item 2 up". */
   itemName: (index: number) => string
-  /** The Add button's text, e.g. "Add item". */
-  addLabel: string
+  /** The Add button's text, e.g. "Add item". Not needed with `add`, whose control has its own. */
+  addLabel?: string
   /**
    * The form's schema for the whole list (`widgetFormSchema.shape.checklist`).
    * Each change is checked as the list it would make; a message about an
@@ -167,7 +192,8 @@ export type EditInPlaceListOptions<TItem> = {
 }
 
 /** A list marked editable in place. Make one with `editInPlace({ kind: 'list', ... })`. */
-export type EditInPlaceList = Omit<EditInPlaceListOptions<unknown>, 'renderItem' | 'renderShown' | 'schema' | 'save'> & {
+export type EditInPlaceList = Omit<EditInPlaceListOptions<unknown>, 'renderItem' | 'renderShown' | 'schema' | 'save' | 'add'> & {
+  add?: (props: EditListAddProps<unknown>) => ReactNode
   renderItem: (props: EditListItemProps<unknown>) => ReactNode
   renderShown: (item: unknown, index: number) => ReactNode
   schema?: { safeParse: (value: unknown) => SafeParseResult<unknown[]> }

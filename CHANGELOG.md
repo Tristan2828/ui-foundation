@@ -7,6 +7,60 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.41.0 — A list in place added by upload; muted text on the edit tint
+
+Additive, so a minor (#256, #257).
+
+- **editInPlace's `list` kind takes `add`** (#256): what adds items in
+  place of "Add" and its blank row, such as an upload or a picker. It
+  renders the app's own control and is given `add(items)`, which saves
+  them at the end of the list through the list's `save`, as a move is:
+  "Saving…" under the list, a refusal there with the list as it was, the
+  caret back on the control. It also gets `items` (to stop at a limit),
+  `disabled` (a change is saving) and `onProblem(message)`, which puts an
+  upload's refusal where a refused save shows. `newItem` and `addLabel`
+  are optional with it. A list of files then reads, edits, moves and
+  saves exactly like a checklist (`cell-patterns.md` "A list of
+  sub-items"; the `EditableList` story "Added by upload").
+- **Muted text on an editable value's hover and focus tint reads as
+  foreground** (#257): `text-muted-foreground` on `bg-muted` is 4.34:1 in
+  light mode, under AA. EntityView's "Not set", a done checklist item, an
+  app's own muted placeholder ("No caption") inside an `EditableValue`
+  turn `text-foreground` while the value is hovered or its pencil has the
+  caret; axe covers both themes (`e2e/editable-list.spec.ts`).
+
+**How an app adopts it:** bump both packages and run `sync`. Nothing
+else changes on its own; the contrast fix needs nothing. Then:
+
+- **Remove any stopgap** that turned muted text foreground on the edit
+  tint (`group-hover/editable:text-foreground` and its
+  `group-has-[[data-edit]:focus-visible]/editable` twin): the package
+  does it now.
+- **A list built by hand on `ListEditor` and `EditableValue` because its
+  Add is an upload** moves onto the `list` kind:
+
+```tsx
+const files = editInPlace<Attachment>({
+  kind: 'list',
+  value: record.attachments,
+  save: (change) => editField.mutateAsync((current) => ({ attachments: change(current.attachments) })),
+  itemName: (index) => record.attachments[index]?.name ?? `file ${index + 1}`,
+  add: ({ add, items, disabled, onProblem }) => (
+    <UploadButton
+      disabled={disabled || items.length >= MAX}
+      onUploaded={(stored) => add(stored.map(toAttachment))}
+      onRefused={(error) => onProblem(error.message)}
+    />
+  ),
+  renderShown: (file) => <FileRow file={file} />,
+  renderItem: (props) => <CaptionInput {...props} />,
+})
+// The section: { title: 'Files', content: null, emptyLabel: 'No files yet', edit: files }
+```
+
+Its own save queue and "Saving…" line go: the list keeps both. Its
+Playwright specs keep their names (the row buttons are ListEditor's, as
+before).
 ## 4.40.0 — A list as cards: `DataTable` layouts
 
 Additive, so a minor (#252). 4.39.0 is the dark stage for timed screens.
