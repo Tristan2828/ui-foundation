@@ -15,9 +15,18 @@ export {
 } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
 export { Board, type BoardColumn, type BoardMoveTarget, type BoardProps } from '@/components/app/board'
+export {
+  Artwork,
+  ArtworkTag,
+  ArtworkToggle,
+  type ArtworkAspect,
+  type ArtworkProps,
+  type ArtworkToggleProps,
+} from '@/components/app/artwork'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export {
   DataTable,
+  type DataTableCardLayout,
   type DataTableProps,
   type DataTableTotals,
   type DataTableWidth,
@@ -136,6 +145,7 @@ export { createQueryClient } from '@/api/query-client'
 
 // Hooks
 export { useTableUrlState } from '@/hooks/use-table-url-state'
+export { useTableLayout, type TableLayoutOptions } from '@/hooks/use-table-layout'
 export type { TableView, UrlChanges } from '@/hooks/table-url-changes'
 export { useDebouncedValue } from '@/hooks/use-debounced-value'
 export { useDocumentTitle } from '@/hooks/use-document-title'

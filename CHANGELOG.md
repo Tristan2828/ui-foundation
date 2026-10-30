@@ -7,6 +7,53 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.40.0 — A list as cards: `DataTable` layouts
+
+Additive, so a minor (#252). 4.39.0 is the dark stage for timed screens.
+
+- **`DataTable` takes card layouts beside its table**: `layouts`, each an
+  id, a label, an icon and a `renderCard(row)`, drawn as a grid (`size`
+  `sm` covers, `md` thumbnails, `lg` big ones; the columns come from the
+  table's width, three, two or one on a phone) or a `list` (one card per
+  line). A switch at the end of the toolbar moves between them, the table
+  first (`tableLayout` renames it, "Rows" for a list-like table). Paging,
+  `groupBy` headings with their summaries, and the loading (a skeleton
+  card grid or list), empty, error and past-the-last-page states work in
+  every layout.
+- **`useTableLayout({ layouts, defaultLayout, storageKey })`** gives
+  `layout` and `setLayout` for DataTable's `layout` and `onLayoutChange`:
+  the URL's `?layout=`, then the one remembered for the table on this
+  device, then its default.
+- **`Artwork`**, a card's picture: a fixed shape (2:3, 1:1, 16:9), the
+  image or a neutral placeholder (the list's icon, optionally the title),
+  and four corner slots. **`ArtworkTag`** labels a picture (a length,
+  "Live"); **`ArtworkToggle`** is the round button that marks a record
+  from its cover (Read, Owned).
+- `design-language.md` "A list as cards" says when a list gets cards and
+  what a card holds.
+
+**How an app adopts it:** bump both packages and run `sync`. A table that
+stays a table changes nothing. For one that gets cards:
+
+```tsx
+const { layout, setLayout } = useTableLayout({
+  layouts: ['table', 'covers'],
+  defaultLayout: 'covers',
+  storageKey: 'my-app:books:layout',
+})
+
+<DataTable
+  {...tableProps}
+  layouts={[{ id: 'covers', label: 'Covers', icon: LayoutGridIcon, size: 'sm', aspect: '2:3', renderCard: (book) => <BookCard book={book} /> }]}
+  layout={layout}
+  onLayoutChange={setLayout}
+/>
+```
+
+Build each card from the cells the table already uses, so the two never
+disagree, and give it every action the row has. Playwright: one success
+test per layout (`?layout=covers` in the URL opens it), and one that the
+pick is remembered.
 ## 4.39.0 — A dark stage for timed screens
 
 Additive, so a minor (#253).

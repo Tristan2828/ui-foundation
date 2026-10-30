@@ -14,15 +14,18 @@ import { flexRender } from '@tanstack/react-table'
 import type { CellData, RowData, TableFeatures } from '@tanstack/react-table'
 import { cn } from 'cn'
 import { getCoreRowModel, useLegacyTable, type LegacyColumnDef } from '@tanstack/react-table/legacy'
-import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon, TableIcon } from 'lucide-react'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import type { ArtworkAspect } from './artwork'
 import { EditInPlaceContext } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { LeaveGuard } from './editable-value'
+import type { IconComponent } from './icon-component'
 import { groupRuns, type RowGroup } from './table-groups'
 import {
   Table,
@@ -153,6 +156,50 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * has come) for no row.
    */
   totals?: DataTableTotals | null
+  /**
+   * Card layouts besides the table (a thumbnail grid, covers, one line
+   * each), and a switch between them at the end of the toolbar, the table
+   * first. Each draws a row with its own `renderCard`; paging, `groupBy`
+   * headings and the loading, empty and error states hold in every one.
+   * The columns still define the table, and sorting is the toolbar's in a
+   * card layout. `totals` and `highlightRow` are the table's alone.
+   */
+  layouts?: readonly DataTableCardLayout<TData>[]
+  /**
+   * The layout showing: `'table'` or a card layout's id, from
+   * useTableLayout (the URL's `?layout=`, then the one remembered for this
+   * table, then its default). An id the table doesn't have shows the table.
+   * Left out, the switch keeps its own state, starting on the table.
+   */
+  layout?: string
+  onLayoutChange?: (layout: string) => void
+  /** The table's own entry in the switch: "Table" with a table icon unless set ("Rows", for a list-like table). */
+  tableLayout?: { label?: string; icon?: IconComponent }
+}
+
+/** One of DataTable's card layouts (`layouts`). */
+export type DataTableCardLayout<TData> = {
+  /** In the URL (`?layout=covers`) and remembered, so keep it short and stable. */
+  id: string
+  /** The switch's word for it ("Covers"); its accessible name on a phone, where only the icon shows. */
+  label: string
+  icon: IconComponent
+  /** A row as a card. Everything it holds is the app's: the picture (Artwork), the title link, the actions. */
+  renderCard: (row: TData) => ReactNode
+  /**
+   * `grid` (the default): cards side by side, as many across as fit, the
+   * package's sizing from the table's width; `list`: one card per line,
+   * divided like rows, for a dense one-line-each layout.
+   */
+  arrange?: 'grid' | 'list'
+  /**
+   * A grid card's width: `sm` covers (about 8.5rem, three across on a
+   * phone), `md` (the default) thumbnails (11rem, two on a phone), `lg`
+   * big thumbnails (14rem, one on a phone).
+   */
+  size?: 'sm' | 'md' | 'lg'
+  /** The picture's shape, for the loading skeleton's cards: 16:9 unless set. */
+  aspect?: ArtworkAspect
 }
 
 export type DataTableWidth = 'full' | 'content'
@@ -181,6 +228,94 @@ function leafColumnIds<TData extends Record<string, unknown>>(columns: readonly 
       (typeof column.header === 'string' ? column.header : undefined)
     return id === undefined ? [] : [id]
   })
+}
+
+// A card grid's columns: as many of the size as the table's width holds,
+// and a fixed count on a phone-width table (`@container/data-table-cards`,
+// under 28rem), where minimum widths would leave one lonely column.
+const CARD_GRID_CLASS = {
+  sm: 'grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] @max-md/data-table-cards:grid-cols-3',
+  md: 'grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] @max-md/data-table-cards:grid-cols-2',
+  lg: 'grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] @max-md/data-table-cards:grid-cols-1',
+} as const
+
+const CARD_GRID_GAP_CLASS = 'gap-x-4 gap-y-6 @max-md/data-table-cards:gap-x-2.5 @max-md/data-table-cards:gap-y-4'
+
+// A `list` layout: rows in a bordered box, divided as the table's are.
+const CARD_LIST_CLASS = 'divide-y divide-border overflow-hidden rounded-lg border border-border'
+
+const SKELETON_ASPECT_CLASS: Record<ArtworkAspect, string> = {
+  '2:3': 'aspect-[2/3]',
+  '1:1': 'aspect-square',
+  '16:9': 'aspect-video',
+}
+
+function CardsSkeleton<TData>({ layout }: { layout: DataTableCardLayout<TData> }) {
+  if (layout.arrange === 'list') {
+    return (
+      <div className={cn(CARD_LIST_CLASS, 'flex flex-col')} data-state="loading">
+        {Array.from({ length: 6 }, (_, index) => (
+          <div key={index} className="flex items-center gap-3 px-3 py-2">
+            <Skeleton className="size-6 shrink-0 rounded-full" />
+            <Skeleton className="h-4 flex-1" />
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return (
+    <div className="@container/data-table-cards" data-state="loading">
+      <div className={cn('grid', CARD_GRID_CLASS[layout.size ?? 'md'], CARD_GRID_GAP_CLASS)}>
+        {Array.from({ length: 8 }, (_, index) => (
+          <div key={index} className="flex flex-col gap-2">
+            <Skeleton className={cn('w-full rounded-md', SKELETON_ASPECT_CLASS[layout.aspect ?? '16:9'])} />
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// The layout switch: a toggle group (one tab stop, the arrow keys along
+// it), the pressed one in the muted fill with the foreground's colour and
+// medium weight, the others in muted text, so the difference isn't the
+// fill alone. On a phone only the icons show; the label stays their name.
+const LAYOUT_ITEM_CLASS =
+  'gap-1.5 text-muted-foreground aria-pressed:bg-muted aria-pressed:font-medium aria-pressed:text-foreground'
+
+function LayoutSwitch({
+  options,
+  value,
+  onValueChange,
+}: {
+  options: readonly { id: string; label: string; icon: IconComponent }[]
+  value: string
+  onValueChange: (layout: string) => void
+}) {
+  return (
+    <ToggleGroup
+      aria-label="Layout"
+      variant="outline"
+      size="sm"
+      spacing={0}
+      data-slot="data-table-layout-switch"
+      value={[value]}
+      onValueChange={(next) => {
+        // [] is the pressed one pressed again: it stays on.
+        const chosen = next[0]
+        if (chosen !== undefined && chosen !== value) onValueChange(chosen)
+      }}
+    >
+      {options.map(({ id, label, icon: Icon }) => (
+        <ToggleGroupItem key={id} value={id} className={LAYOUT_ITEM_CLASS} title={label}>
+          <Icon aria-hidden="true" className="size-4" />
+          <span className="max-sm:sr-only">{label}</span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  )
 }
 
 function TableSkeleton({ columnCount }: { columnCount: number }) {
@@ -377,7 +512,21 @@ export function DataTable<TData extends Record<string, unknown>>({
   header: showHeader = true,
   highlightRow,
   totals,
+  layouts,
+  layout: layoutProp,
+  onLayoutChange,
+  tableLayout,
 }: DataTableProps<TData>) {
+  // The switch's own state, for a table that doesn't pass `layout`.
+  const [ownLayout, setOwnLayout] = useState('table')
+  const requestedLayout = layoutProp ?? ownLayout
+  const cardLayout = layouts?.find((candidate) => candidate.id === requestedLayout)
+  const currentLayout = cardLayout?.id ?? 'table'
+  const setLayout = (next: string) => {
+    if (layoutProp === undefined) setOwnLayout(next)
+    onLayoutChange?.(next)
+  }
+
   // Editing in place in the rows (cell pattern 18, "In a table's rows"):
   // a cell that renders an <EditableValue> edits where it's shown, one at
   // a time, with the leave-page prompt while one is open, the same rules
@@ -446,7 +595,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   const containerRef = useRef<HTMLDivElement>(null)
   const { barRef, isOverflowing, scrollWidth } = useBottomScrollbar(
     containerRef,
-    Boolean(pinFirstColumn) && isSuccessView,
+    Boolean(pinFirstColumn) && isSuccessView && !cardLayout,
   )
 
   const rows = table.getRowModel().rows
@@ -485,18 +634,37 @@ export function DataTable<TData extends Record<string, unknown>>({
       ref={root}
       className={cn('flex flex-col gap-4', width === 'content' && CONTENT_WIDTH_CLASS)}
       data-width={width}
+      data-layout={layouts?.length ? currentLayout : undefined}
       style={
         width === 'content' && !isSuccessView && lastWidth !== null
           ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
           : undefined
       }
     >
-      {toolbar}
+      {layouts?.length ? (
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+          <div className="min-w-0 flex-1">{toolbar}</div>
+          <LayoutSwitch
+            options={[
+              { id: 'table', label: tableLayout?.label ?? 'Table', icon: tableLayout?.icon ?? TableIcon },
+              ...layouts,
+            ]}
+            value={currentLayout}
+            onValueChange={setLayout}
+          />
+        </div>
+      ) : (
+        toolbar
+      )}
 
       {error ? (
         <ErrorState error={error} onRetry={onRetry} />
       ) : isLoading || isPastLastPage ? (
-        <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
+        cardLayout ? (
+          <CardsSkeleton layout={cardLayout} />
+        ) : (
+          <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
+        )
       ) : isEmpty ? (
         <Empty data-state="empty">
           <EmptyHeader>
@@ -507,152 +675,156 @@ export function DataTable<TData extends Record<string, unknown>>({
         </Empty>
       ) : (
         <>
-          <Table
-            data-state="success"
-            containerRef={containerRef}
-            // With the sticky bar below as the visible scrollbar, hide the
-            // container's own. It stays overflow-x-auto and fully
-            // scrollable (wheel, trackpad, drag, and the sync effect); it
-            // just no longer draws a bar directly under the last row.
-            containerClassName={cn(
-              pinFirstColumn &&
-                '@container [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-              // A size container has no width of its own to give, so
-              // `width="content"` couldn't fit the table. Its query only
-              // serves a phone-width rule, and an 80rem table area never
-              // is one.
-              width === 'content' && '@7xl/data-table:[container-type:normal]',
-            )}
-          >
-            <TableHeader className={cn(!showHeader && '[&_tr]:border-0')}>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header, index) => {
-                    const canSort = header.column.getCanSort()
-                    const sortDirection = header.column.getIsSorted()
-                    // Hidden, a header is its name only: a sort button no
-                    // one can see would still take focus.
-                    const content = header.isPlaceholder ? null : canSort && showHeader ? (
-                      <button
-                        type="button"
-                        className={cn(
-                          'flex items-center gap-1 text-foreground',
-                          header.column.columnDef.meta?.align === 'center' && 'w-full justify-center',
-                          // The arrow on the label's left, so the label's
-                          // right edge lines up with the numbers under it.
-                          header.column.columnDef.meta?.align === 'right' && 'ml-auto flex-row-reverse',
-                        )}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {sortDirection === 'asc' ? (
-                          <ArrowUpIcon className="size-3.5 text-muted-foreground" />
-                        ) : sortDirection === 'desc' ? (
-                          <ArrowDownIcon className="size-3.5 text-muted-foreground" />
-                        ) : (
-                          <ArrowUpDownIcon className="size-3.5 text-muted-foreground/50" />
-                        )}
-                      </button>
-                    ) : (
-                      flexRender(header.column.columnDef.header, header.getContext())
-                    )
-                    return (
-                      <TableHead
-                        key={header.id}
-                        className={cn(
-                          !showHeader && HIDDEN_HEAD_CLASS,
-                          pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
-                          pinLastColumn &&
-                            index === headerGroup.headers.length - 1 &&
-                            PINNED_LAST_COLUMN_CLASS,
-                          alignClass(header.column.columnDef.meta?.align),
-                        )}
-                        aria-sort={
-                          !canSort
-                            ? undefined
-                            : sortDirection === 'asc'
-                              ? 'ascending'
-                              : sortDirection === 'desc'
-                                ? 'descending'
-                                : 'none'
-                        }
-                      >
-                        {!showHeader ? (
-                          <span className="sr-only">{content}</span>
-                        ) : pinFirstColumn && index === 0 ? (
-                          <div className={PINNED_FIRST_CONTENT_CLASS}>{content}</div>
-                        ) : (
-                          content
-                        )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            {groupBy ? (
-              groupRuns(rows, (row) => groupBy(row.original)).map((run, runIndex) => (
-                // A body per group, headed by a row header for it
-                // (scope="rowgroup"), so a screen reader names a cell's
-                // group the way it names its column.
-                <TableBody key={`${runIndex}:${run.key}`} data-slot="table-group">
-                  <TableRow data-slot="table-group-heading" className="hover:bg-transparent">
-                    <TableHead scope="rowgroup" colSpan={visibleColumnCount} className={GROUP_HEADING_CLASS}>
-                      {/* Sticky, so the label stays in view while a wide
-                          table scrolls sideways. */}
-                      <span className="sticky left-(--table-cell-px) inline-flex items-baseline gap-2">
-                        <span className="type-label text-foreground">{run.label}</span>
-                        {groupSummary && (
-                          <span className="type-caption text-muted-foreground tabular-nums">
-                            {groupSummary(run.rows.map((row) => row.original))}
-                          </span>
-                        )}
-                      </span>
-                    </TableHead>
+          {cardLayout ? (
+            <Cards layout={cardLayout} rows={rows} groupBy={groupBy} groupSummary={groupSummary} />
+          ) : (
+            <Table
+              data-state="success"
+              containerRef={containerRef}
+              // With the sticky bar below as the visible scrollbar, hide the
+              // container's own. It stays overflow-x-auto and fully
+              // scrollable (wheel, trackpad, drag, and the sync effect); it
+              // just no longer draws a bar directly under the last row.
+              containerClassName={cn(
+                pinFirstColumn &&
+                  '@container [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+                // A size container has no width of its own to give, so
+                // `width="content"` couldn't fit the table. Its query only
+                // serves a phone-width rule, and an 80rem table area never
+                // is one.
+                width === 'content' && '@7xl/data-table:[container-type:normal]',
+              )}
+            >
+              <TableHeader className={cn(!showHeader && '[&_tr]:border-0')}>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header, index) => {
+                      const canSort = header.column.getCanSort()
+                      const sortDirection = header.column.getIsSorted()
+                      // Hidden, a header is its name only: a sort button no
+                      // one can see would still take focus.
+                      const content = header.isPlaceholder ? null : canSort && showHeader ? (
+                        <button
+                          type="button"
+                          className={cn(
+                            'flex items-center gap-1 text-foreground',
+                            header.column.columnDef.meta?.align === 'center' && 'w-full justify-center',
+                            // The arrow on the label's left, so the label's
+                            // right edge lines up with the numbers under it.
+                            header.column.columnDef.meta?.align === 'right' && 'ml-auto flex-row-reverse',
+                          )}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {sortDirection === 'asc' ? (
+                            <ArrowUpIcon className="size-3.5 text-muted-foreground" />
+                          ) : sortDirection === 'desc' ? (
+                            <ArrowDownIcon className="size-3.5 text-muted-foreground" />
+                          ) : (
+                            <ArrowUpDownIcon className="size-3.5 text-muted-foreground/50" />
+                          )}
+                        </button>
+                      ) : (
+                        flexRender(header.column.columnDef.header, header.getContext())
+                      )
+                      return (
+                        <TableHead
+                          key={header.id}
+                          className={cn(
+                            !showHeader && HIDDEN_HEAD_CLASS,
+                            pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
+                            pinLastColumn &&
+                              index === headerGroup.headers.length - 1 &&
+                              PINNED_LAST_COLUMN_CLASS,
+                            alignClass(header.column.columnDef.meta?.align),
+                          )}
+                          aria-sort={
+                            !canSort
+                              ? undefined
+                              : sortDirection === 'asc'
+                                ? 'ascending'
+                                : sortDirection === 'desc'
+                                  ? 'descending'
+                                  : 'none'
+                          }
+                        >
+                          {!showHeader ? (
+                            <span className="sr-only">{content}</span>
+                          ) : pinFirstColumn && index === 0 ? (
+                            <div className={PINNED_FIRST_CONTENT_CLASS}>{content}</div>
+                          ) : (
+                            content
+                          )}
+                        </TableHead>
+                      )
+                    })}
                   </TableRow>
-                  {/* Never shown, but counted by the zebra stripe's
-                      nth-child (table.tsx, PINNED_CELL_CLASS): without it
-                      the heading is row 1, so every group's first row
-                      would be striped, and a group of one always. */}
-                  <tr hidden aria-hidden="true" data-slot="table-group-stripe-offset" />
-                  {run.rows.map(renderRow)}
-                </TableBody>
-              ))
-            ) : (
-              <TableBody>{rows.map(renderRow)}</TableBody>
-            )}
-            {totals && (
-              // After every group's body, so it totals the table, not the
-              // last group. A cell per visible column, so each value sits
-              // under its own and the pinned edges stay opaque.
-              <TableFooter className={TOTALS_FOOTER_CLASS}>
-                <TableRow data-slot="table-totals" className="hover:bg-transparent">
-                  {visibleLeafColumns.map((column, index) => {
-                    const className = cn(
-                      pinFirstColumn && index === 0 && PINNED_TOTALS_LABEL_CLASS,
-                      pinLastColumn && index === visibleColumnCount - 1 && PINNED_LAST_COLUMN_CLASS,
-                      alignClass(column.columnDef.meta?.align),
-                    )
-                    return index === 0 ? (
-                      <TableHead key={column.id} scope="row" className={cn(TOTALS_LABEL_CLASS, className)}>
-                        {pinFirstColumn ? (
-                          <div className={PINNED_FIRST_CONTENT_CLASS}>{totals.label}</div>
-                        ) : (
-                          totals.label
-                        )}
+                ))}
+              </TableHeader>
+              {groupBy ? (
+                groupRuns(rows, (row) => groupBy(row.original)).map((run, runIndex) => (
+                  // A body per group, headed by a row header for it
+                  // (scope="rowgroup"), so a screen reader names a cell's
+                  // group the way it names its column.
+                  <TableBody key={`${runIndex}:${run.key}`} data-slot="table-group">
+                    <TableRow data-slot="table-group-heading" className="hover:bg-transparent">
+                      <TableHead scope="rowgroup" colSpan={visibleColumnCount} className={GROUP_HEADING_CLASS}>
+                        {/* Sticky, so the label stays in view while a wide
+                            table scrolls sideways. */}
+                        <span className="sticky left-(--table-cell-px) inline-flex items-baseline gap-2">
+                          <span className="type-label text-foreground">{run.label}</span>
+                          {groupSummary && (
+                            <span className="type-caption text-muted-foreground tabular-nums">
+                              {groupSummary(run.rows.map((row) => row.original))}
+                            </span>
+                          )}
+                        </span>
                       </TableHead>
-                    ) : (
-                      <TableCell key={column.id} className={className}>
-                        {totals.cells?.[column.id]}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              </TableFooter>
-            )}
-          </Table>
+                    </TableRow>
+                    {/* Never shown, but counted by the zebra stripe's
+                        nth-child (table.tsx, PINNED_CELL_CLASS): without it
+                        the heading is row 1, so every group's first row
+                        would be striped, and a group of one always. */}
+                    <tr hidden aria-hidden="true" data-slot="table-group-stripe-offset" />
+                    {run.rows.map(renderRow)}
+                  </TableBody>
+                ))
+              ) : (
+                <TableBody>{rows.map(renderRow)}</TableBody>
+              )}
+              {totals && (
+                // After every group's body, so it totals the table, not the
+                // last group. A cell per visible column, so each value sits
+                // under its own and the pinned edges stay opaque.
+                <TableFooter className={TOTALS_FOOTER_CLASS}>
+                  <TableRow data-slot="table-totals" className="hover:bg-transparent">
+                    {visibleLeafColumns.map((column, index) => {
+                      const className = cn(
+                        pinFirstColumn && index === 0 && PINNED_TOTALS_LABEL_CLASS,
+                        pinLastColumn && index === visibleColumnCount - 1 && PINNED_LAST_COLUMN_CLASS,
+                        alignClass(column.columnDef.meta?.align),
+                      )
+                      return index === 0 ? (
+                        <TableHead key={column.id} scope="row" className={cn(TOTALS_LABEL_CLASS, className)}>
+                          {pinFirstColumn ? (
+                            <div className={PINNED_FIRST_CONTENT_CLASS}>{totals.label}</div>
+                          ) : (
+                            totals.label
+                          )}
+                        </TableHead>
+                      ) : (
+                        <TableCell key={column.id} className={className}>
+                          {totals.cells?.[column.id]}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                </TableFooter>
+              )}
+            </Table>
+          )}
 
-          {pinFirstColumn && isOverflowing && (
+          {pinFirstColumn && isOverflowing && !cardLayout && (
             <div
               ref={barRef}
               aria-hidden="true"
@@ -704,5 +876,54 @@ export function DataTable<TData extends Record<string, unknown>>({
       {editing && <LeaveGuard store={store} />}
       {width === 'content' ? <div className="@container/data-table">{content}</div> : content}
     </EditInPlaceContext.Provider>
+  )
+}
+
+// A card layout's success view: the rows as cards in a grid or a list,
+// each run of one group (`groupBy`) under its own heading, as the table's
+// heading rows are, with the same label and summary.
+function Cards<TData extends Record<string, unknown>>({
+  layout,
+  rows,
+  groupBy,
+  groupSummary,
+}: {
+  layout: DataTableCardLayout<TData>
+  rows: readonly { id: string; original: TData }[]
+  groupBy?: (row: TData) => RowGroup
+  groupSummary?: (rows: TData[]) => ReactNode
+}) {
+  const list = (items: readonly { id: string; original: TData }[]) => (
+    <ul
+      role="list"
+      className={cn(
+        layout.arrange === 'list' ? CARD_LIST_CLASS : ['grid', CARD_GRID_CLASS[layout.size ?? 'md'], CARD_GRID_GAP_CLASS],
+      )}
+    >
+      {items.map((row) => (
+        <li key={row.id} data-slot="data-table-card" className="min-w-0">
+          {layout.renderCard(row.original)}
+        </li>
+      ))}
+    </ul>
+  )
+  return (
+    <div className="@container/data-table-cards flex flex-col gap-6" data-state="success" data-slot="data-table-cards">
+      {groupBy
+        ? groupRuns(rows, (row) => groupBy(row.original)).map((run, runIndex) => (
+            <section key={`${runIndex}:${run.key}`} data-slot="table-group" className="flex flex-col gap-3">
+              <h2 data-slot="table-group-heading" className="flex items-baseline gap-2 border-b border-border pb-1.5">
+                <span className="type-label text-foreground">{run.label}</span>
+                {groupSummary && (
+                  <span className="type-caption text-muted-foreground tabular-nums">
+                    {groupSummary(run.rows.map((row) => row.original))}
+                  </span>
+                )}
+              </h2>
+              {list(run.rows)}
+            </section>
+          ))
+        : list(rows)}
+    </div>
   )
 }
