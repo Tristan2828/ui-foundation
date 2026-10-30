@@ -3,13 +3,14 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The view](#the-view) · lines 34–69
-- [The clock](#the-clock) · lines 71–101
-- [Sound](#sound) · lines 103–150
-- [Background tabs](#background-tabs) · lines 152–206
-  - [Interruptions](#interruptions) · lines 186–206
-- [Motion](#motion) · lines 208–212
-- [Testing a timed screen in Playwright](#testing-a-timed-screen-in-playwright) · lines 214–368
+- [The view](#the-view) · lines 36–109
+  - [The dark stage](#the-dark-stage) · lines 73–109
+- [The clock](#the-clock) · lines 111–141
+- [Sound](#sound) · lines 143–190
+- [Background tabs](#background-tabs) · lines 192–246
+  - [Interruptions](#interruptions) · lines 226–246
+- [Motion](#motion) · lines 248–252
+- [Testing a timed screen in Playwright](#testing-a-timed-screen-in-playwright) · lines 254–408
 
 <!-- /index -->
 
@@ -19,7 +20,8 @@ package has the parts, so a screen like this is assembled, not rebuilt:
 
 | Part | What it does |
 |---|---|
-| `SessionView` | The whole viewport over the app shell: a modal named by its title, focus kept inside, Esc closes it. Optional real fullscreen and a held wake lock |
+| `SessionView` | The whole viewport over the app shell: a modal named by its title, focus kept inside, Esc closes it. Optional real fullscreen, a held wake lock, and `dark` for the dark stage |
+| `SessionStage`, `sessionStageLit`, `sessionStageMain`, `sessionStageQuiet` | The stage under the header: a tone, a glow of it behind the centre, the time lit in it, quiet outline controls |
 | `useSessionClock` | A clock that doesn't drift, with pause, resume and seek: `idle`, `running`, `done` |
 | `useWakeLock` | Keeps the screen on while a session runs (`SessionView`'s `keepAwake` uses it) |
 | `unlockAudio`, `chime`, `sequence`, `cancelCues`, `say`, `hush`, `vibrate` | Sound cues with no audio files, booked ahead where they must be on time |
@@ -29,7 +31,7 @@ package has the parts, so a screen like this is assembled, not rebuilt:
 
 All of them are imported from `@tristan2828/ui-foundation`. The package's
 Storybook has the whole thing working together: `app/SessionView`, the
-Timer story.
+Timer story, and the same run on the dark stage, DarkStage.
 
 ## The view
 
@@ -67,6 +69,44 @@ const primary = useRef<HTMLButtonElement>(null)
 - **Never build this from `DialogContent`** with its classes overridden
   piece by piece. That fights the primitive's own classes on every
   upgrade, and gets the details above wrong.
+
+### The dark stage
+
+For a screen followed in a dim room: always dark while it runs, whatever
+the app's theme. A black stage, the time lit in the phase's colour with a
+soft glow of it behind, everything else dimmed, the controls quiet
+outlines.
+
+```tsx
+<SessionView open onOpenChange={close} title="Timer" dark={darkStage}>
+  <SessionStage tone={darkStage ? phaseTone : 'neutral'} glow={darkStage}>
+    <div role="timer" className={cn('font-mono text-[17cqi]', darkStage && sessionStageLit)}>{time}</div>
+    <Button variant="outline" className={cn(darkStage && sessionStageQuiet)}>Skip</Button>
+  </SessionStage>
+</SessionView>
+```
+
+- **`dark` scopes the dark tokens to the view.** It puts theme.css's
+  `.dark` on the view itself, so every token and `dark:` variant inside
+  is the dark theme's and the page under it keeps its own. A popup opened
+  from the view (a menu, a select) portals to `<body>` and keeps the app's
+  theme.
+- **`SessionStage`** is the box the run draws in, filling the view below
+  the header. `tone` is the phase's (`neutral`, `success`, `info`,
+  `warning`, `destructive`); `glow` washes it behind the centre, faintly
+  for `neutral`. It sets `--stage-tone` and `--stage-tone-text` for
+  what's inside.
+- **`sessionStageLit`** on the big time: the tone's text shade (white
+  for `neutral`) with a glow around the figures. **`sessionStageQuiet`**
+  on an outline `Button`: no fill, a faint border, dimmed text that
+  brightens on hover. **`sessionStageMain`** on the main control (Start,
+  Done, `variant="outline"`): an outline too, in the foreground colour.
+- **Contrast is checked in dark only**, since the stage is never light:
+  the package's axe run covers the DarkStage story in both app themes. An
+  app's own Playwright runs axe on its screen with the stage on, under a
+  light and a dark app theme.
+- **Make it a setting**, remembered per device like Mute, when the app's
+  own look is the default: off, the view and stage are as before.
 
 ## The clock
 

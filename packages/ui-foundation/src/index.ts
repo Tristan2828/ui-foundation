@@ -61,7 +61,16 @@ export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 export { PillFilter, type PillFilterOption, type PillFilterProps } from '@/components/app/pill-filter'
 export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
-export { SessionView, type SessionViewProps } from '@/components/app/session-view'
+export {
+  SessionStage,
+  SessionView,
+  sessionStageLit,
+  sessionStageMain,
+  sessionStageQuiet,
+  type SessionStageProps,
+  type SessionStageTone,
+  type SessionViewProps,
+} from '@/components/app/session-view'
 export { AllowReminders, type AllowRemindersProps } from '@/components/app/allow-reminders'
 export {
   StageCircle,

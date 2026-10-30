@@ -338,3 +338,53 @@ test.describe('in a background tab', () => {
     ])
   })
 })
+
+// The dark stage (#253): `dark` scopes the dark tokens to the view, so on a
+// light app the view is black and the page under it stays light; the
+// stage glows in the run's tone and the time is lit in its text shade.
+test.describe('the dark stage', () => {
+  const DARK_STORY = 'http://localhost:6006/iframe.html?id=app-sessionview--dark-stage&viewMode=story&globals=theme:light'
+  const colour = (page: Page, selector: string, property: string) =>
+    view(page).evaluate(
+      (el, [sel, prop]) => getComputedStyle(sel ? el.querySelector(sel)! : el).getPropertyValue(prop),
+      [selector, property],
+    )
+
+  test('dark inside the view, the page light, the time lit in the tone while it counts', async ({ page }) => {
+    await page.clock.install()
+    await page.goto(DARK_STORY)
+    await expect(view(page)).toBeVisible()
+    await expect(page.locator('html')).not.toHaveClass(/dark/)
+    await expect(view(page)).toHaveAttribute('data-look', 'dark')
+    const pageBackground = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+    expect(await colour(page, '', 'background-color')).not.toBe(await pageBackground())
+    expect(await colour(page, '', 'color-scheme')).toBe('dark')
+
+    const stage = view(page).locator('[data-slot=session-stage]')
+    await expect(stage).toHaveAttribute('data-tone', 'neutral')
+    await expect(stage).toHaveAttribute('data-glow', 'true')
+
+    await view(page).getByRole('button', { name: 'Start' }).click()
+    await page.clock.fastForward('00:05')
+    await expect(stage).toHaveAttribute('data-tone', 'success')
+    const lit = await colour(page, '[role=timer]', 'color')
+    const successText = await stage.evaluate((el) => {
+      const probe = document.createElement('span')
+      probe.style.color = 'var(--success-text)'
+      el.append(probe)
+      const value = getComputedStyle(probe).color
+      probe.remove()
+      return value
+    })
+    expect(lit).toBe(successText)
+    expect(await colour(page, '[role=timer]', 'text-shadow')).not.toBe('none')
+  })
+
+  test('without dark, the view keeps the app theme', async ({ page }) => {
+    await page.goto(`${STORY}&globals=theme:light`)
+    await expect(view(page)).toBeVisible()
+    await expect(view(page)).not.toHaveAttribute('data-look', 'dark')
+    expect(await colour(page, '', 'background-color')).toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor))
+    await expect(view(page).locator('[data-slot=session-stage]')).not.toHaveAttribute('data-glow')
+  })
+})

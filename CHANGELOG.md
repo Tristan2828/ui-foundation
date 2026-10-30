@@ -7,6 +7,43 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.39.0 — A dark stage for timed screens
+
+Additive, so a minor (#253).
+
+- **`SessionView` takes `dark`**: the view renders with the dark theme's
+  tokens (theme.css's `.dark`, and `color-scheme: dark`) whatever the
+  app's theme, scoped to the view, so the page under it keeps its own.
+  It carries `data-look="dark"`.
+- **`SessionStage`**: the stage a timed screen draws its run in, below the
+  view's header. `tone` (`neutral`, `success`, `info`, `warning`,
+  `destructive`) and `glow`, a radial wash of the tone behind the centre.
+  It sets `--stage-tone` and `--stage-tone-text` for its children.
+- **`sessionStageLit`** (the big time in the tone's text shade, with a
+  glow around the figures), **`sessionStageQuiet`** (a quiet outline
+  control) and **`sessionStageMain`** (the main control, an outline in
+  the foreground colour) are class strings for the stage's contents.
+- Storybook's `app/SessionView` has a DarkStage story, axe-checked in both
+  app themes; `timed-screens.md` "The dark stage" has the recipe.
+
+**How an app adopts it:** bump both packages and run `sync`. Nothing
+changes until a screen opts in. To offer the dark stage as a setting,
+keep a remembered switch beside the screen's Mute (`useMuted` with its
+own key works for any on/off), then:
+
+```tsx
+<SessionView dark={darkStage} …>
+  <SessionStage tone={darkStage ? phaseTone : 'neutral'} glow={darkStage}>
+    <div role="timer" className={cn(TIME, darkStage && sessionStageLit)}>{time}</div>
+    <Button variant="outline" className={cn(darkStage && sessionStageQuiet)}>Skip</Button>
+  </SessionStage>
+</SessionView>
+```
+
+A screen that draws its own box inside the view (a border, a
+`bg-background` panel) drops it on the stage, or the glow sits behind it.
+Run the screen's axe check with the stage on under both app themes.
+
 ## 4.38.0 — Follow-ups on `useRecordUpdate` itself
 
 Additive, so a minor (#250).
