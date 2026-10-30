@@ -15,6 +15,15 @@ export {
 } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
 export { Board, type BoardColumn, type BoardMoveTarget, type BoardProps } from '@/components/app/board'
+export { SpinWheel, type SpinWheelProps } from '@/components/app/spin-wheel'
+export { pickSpinWheelIndex, type SpinWheelItem } from '@/components/app/spin-wheel-pick'
+export {
+  FillInChoice,
+  FillInQueue,
+  type FillInChoiceProps,
+  type FillInQueueProgress,
+  type FillInQueueProps,
+} from '@/components/app/fill-in-queue'
 export {
   Artwork,
   ArtworkTag,

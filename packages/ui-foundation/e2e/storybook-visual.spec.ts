@@ -66,6 +66,12 @@ const COMPOSITE_STORIES = [
   // <Board>: a list as columns of cards, every app's second view of a list.
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
   { id: 'app-board--states', mustShow: 'No projects yet' },
+  // <SpinWheel>: its slices' fills and labels, a picked and a tinted slice, the empty wheel.
+  { id: 'app-spinwheel--default', mustShow: 'Spin to pick what to do next.' },
+  { id: 'app-spinwheel--all-states', mustShow: 'No items yet' },
+  // <FillInQueue>: the progress, the choices (a suggestion dashed), the buttons, every state.
+  { id: 'app-fillinqueue--default', mustShow: 'Repaint the fence' },
+  { id: 'app-fillinqueue--states', mustShow: 'Every project has an effort' },
   { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },

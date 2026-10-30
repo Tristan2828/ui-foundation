@@ -3,21 +3,23 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 30–58
-- [The three badge styles](#the-three-badge-styles) · lines 60–77
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 79–108
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 110–123
-- [Logos and brand marks](#logos-and-brand-marks) · lines 125–169
-- [Categorical colour](#categorical-colour) · lines 171–241
-- [Typography](#typography) · lines 243–325
-  - [Written text (notes)](#written-text-notes) · lines 274–325
-- [Density](#density) · lines 327–384
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 386–464
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 466–524
-- [Notices](#notices) · lines 526–554
-- [A value over time](#a-value-over-time) · lines 556–589
-- [A list as a board](#a-list-as-a-board) · lines 591–642
-- [A list as cards](#a-list-as-cards) · lines 644–690
+- [Semantic tones](#semantic-tones) · lines 32–60
+- [The three badge styles](#the-three-badge-styles) · lines 62–79
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 81–110
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 112–125
+- [Logos and brand marks](#logos-and-brand-marks) · lines 127–171
+- [Categorical colour](#categorical-colour) · lines 173–243
+- [Typography](#typography) · lines 245–327
+  - [Written text (notes)](#written-text-notes) · lines 276–327
+- [Density](#density) · lines 329–386
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 388–466
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 468–526
+- [Notices](#notices) · lines 528–556
+- [A value over time](#a-value-over-time) · lines 558–591
+- [A list as a board](#a-list-as-a-board) · lines 593–644
+- [A list as cards](#a-list-as-cards) · lines 646–692
+- [Picking at random](#picking-at-random) · lines 694–725
+- [Filling in what's missing](#filling-in-whats-missing) · lines 727–777
 
 <!-- /index -->
 
@@ -688,3 +690,88 @@ const { layout, setLayout } = useTableLayout({
   dash. Never an action only one layout has.
 - `totals` and `highlightRow` are the table's alone. Sorting is the
   toolbar's in a card layout (there is no header to click).
+
+## Picking at random
+
+`SpinWheel` (4.42) picks one of a few candidates by chance, for "what do
+I do next?" when every one would do: a wheel of slices, a pointer at the
+top and a Spin button.
+
+```tsx
+const [picked, setPicked] = useState<SpinWheelItem | null>(null)
+
+<SpinWheel
+  aria-label="Ready tasks"
+  items={tasks.map((task) => ({ id: task.id, label: task.title, weight: task.priority, emphasis: task.flagged }))}
+  result={picked?.id ?? null}
+  onResult={setPicked}
+  emptyMessage="Nothing ready to pick from"
+/>
+```
+
+- **The candidates and their chances are the app's.** `weight` (> 0,
+  default 1) is both a slice's size and its chance, so a bigger slice
+  is visibly likelier. Keep it to what fits: a dozen or so; past that,
+  slices thin out and lose their labels (the full label is still each
+  slice's tooltip).
+- **The result is the app's too:** `onResult` when the wheel stops, and
+  `result` is the slice drawn picked at rest (a solid fill). Show what
+  was picked next to the wheel, with what to do about it (a link to the
+  record, Start); the wheel only points.
+- `emphasis` tints a slice (a flagged record). It doesn't change the
+  chance; give it a weight for that.
+- It spins a few turns with an ease-out and says "Picked <label>" to a
+  screen reader; with reduced motion it doesn't turn, the result is at
+  once. Square, the width of its container up to 28rem.
+
+## Filling in what's missing
+
+`FillInQueue` (4.42) walks a list of records that are each missing a
+value, one record at a time: a size for every project without one, a
+category for each unsorted purchase. It is a screen of its own for
+clearing a backlog of blanks, linked from the list ("12 without a
+size"); the list stays where a record is edited one field at a time.
+
+```tsx
+<FillInQueue
+  items={missing}
+  getKey={(project) => project.id}
+  progress={{ done: total - missing.length, total }}
+  canSave={(project) => drafts[project.id]?.size != null}
+  onSave={(project) => saveSize.mutateAsync({ id: project.id, size: drafts[project.id].size })}
+  renderItem={(project) => (
+    <>
+      <RecordHeading project={project} />
+      <FillInChoice
+        label="Size"
+        choices={SIZES}
+        value={drafts[project.id]?.size}
+        onChange={(size) => setDraft(project.id, { size })}
+        suggestion={project.guess ? { value: project.guess, note: 'from similar projects' } : undefined}
+        shortcut
+      />
+    </>
+  )}
+  loading={isLoading}
+  error={error}
+  onRetry={refetch}
+  empty="Every project has a size"
+/>
+```
+
+- **The app owns the list, the draft and the save.** `items` is the
+  query for records still missing the value, so a saved one leaves it
+  and the next takes its place; one still missing something after a
+  save is moved past. `progress` is the app's count. The draft is kept
+  per record, so Skip and back finds it as it was.
+- **A record is its heading, the few values to decide by, then its
+  fields:** a `FillInChoice` (a row of toggle buttons, one picked,
+  clicked again to clear) for a short choice, any input for the rest.
+  A guess is a `suggestion`: drawn dashed in the info tone and said
+  under the row, never picked for the person.
+- **Quick from the keyboard:** Enter is Save and next (not in a
+  textarea), and the one row marked `shortcut` takes the number keys.
+  After a move the focus is on the new record.
+- A refused save keeps the record and says why under the buttons, not
+  in a toast. It owns its states: skeletons, `ErrorState`, and the
+  empty queue, which is the good news ("Every project has a size").
