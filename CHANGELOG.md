@@ -31,6 +31,21 @@ way to draw a field it only knows as data, and a record's source.
 **How an app adopts:** nothing to change. A fill-in screen can draw
 fields from data with `FillInField` and name sources with `groups`
 (`design-language.md` "Filling in what's missing").
+## 4.52.0 — EmojiField: pick one emoji on a form
+
+Additive, so a minor. No new dependency.
+
+- **`EmojiField`**: one emoji, as a field like `DateField`. A button
+  showing the choice opens a popup with a search box and a curated set of
+  about a hundred emoji in groups (morning, body, food, home, work, play,
+  outside, symbols), each with an accessible name and search keywords. The
+  value is the emoji itself, or `''` for none; `clearable` adds Clear. It
+  is not the whole of Unicode: a joined emoji can still be typed or pasted
+  into a plain text field.
+
+**How an app adopts:** import `EmojiField` from the package and use it in
+a `Controller` where a text input took an emoji.
+
 ## 4.51.0 — Charts: a projection on LineChart, and MultiLineChart
 
 Additive, so a minor. An app with balances over time wanted where they
