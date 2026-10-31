@@ -131,12 +131,15 @@ export {
 } from '@/components/app/module-card'
 export {
   WidgetCard,
+  WidgetCardGroup,
   WidgetList,
   WidgetListItem,
+  type WidgetCardGroupProps,
   type WidgetCardLink,
   type WidgetCardProps,
   type WidgetListItemProps,
 } from '@/components/app/widget-card'
+export { WidgetLayoutSheet, type WidgetLayoutSheetProps } from '@/components/app/widget-layout-sheet'
 export { ThemeProvider } from '@/components/theme-provider'
 
 // Screens outside the app shell
@@ -156,6 +159,15 @@ export { createQueryClient } from '@/api/query-client'
 // Hooks
 export { useTableUrlState } from '@/hooks/use-table-url-state'
 export { useTableLayout, type TableLayoutOptions } from '@/hooks/use-table-layout'
+export {
+  useWidgetLayout,
+  createWidgetLayoutStore,
+  mergeWidgetLayout,
+  type SavedWidgetLayout,
+  type WidgetLayout,
+  type WidgetLayoutOptions,
+  type WidgetLayoutStore,
+} from '@/hooks/use-widget-layout'
 export type { TableView, UrlChanges } from '@/hooks/table-url-changes'
 export { useDebouncedValue } from '@/hooks/use-debounced-value'
 export { useDocumentTitle } from '@/hooks/use-document-title'
