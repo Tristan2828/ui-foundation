@@ -7,6 +7,21 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.52.0 — EmojiField: pick one emoji on a form
+
+Additive, so a minor. No new dependency.
+
+- **`EmojiField`**: one emoji, as a field like `DateField`. A button
+  showing the choice opens a popup with a search box and a curated set of
+  about a hundred emoji in groups (morning, body, food, home, work, play,
+  outside, symbols), each with an accessible name and search keywords. The
+  value is the emoji itself, or `''` for none; `clearable` adds Clear. It
+  is not the whole of Unicode: a joined emoji can still be typed or pasted
+  into a plain text field.
+
+**How an app adopts:** import `EmojiField` from the package and use it in
+a `Controller` where a text input took an emoji.
+
 ## 4.50.0 — The notes editor: Full screen and Indent/Outdent for floating-toolbar fields
 
 Additive, so a minor. 4.48.0's Full screen, Indent and Outdent sat on the

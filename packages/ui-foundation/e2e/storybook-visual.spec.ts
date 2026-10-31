@@ -63,6 +63,8 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
   { id: 'app-countlink--default', mustShow: 'Move house' },
+  { id: 'app-emojifield--default', mustShow: 'Routine emoji' },
+  { id: 'app-emojifield--open', mustShow: 'Morning and sleep' },
   // <Board>: a list as columns of cards, every app's second view of a list.
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
   { id: 'app-board--states', mustShow: 'No projects yet' },
