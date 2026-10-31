@@ -7,6 +7,30 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.53.0 — FillInQueue: rows for every kind of value, fields as data, and groups
+
+Additive, so a minor. `FillInQueue` (4.42) had only `FillInChoice`, a
+row of toggle buttons; a page filling in records of several kinds (an
+app's every module) needs a row for text, numbers, money and dates, a
+way to draw a field it only knows as data, and a record's source.
+
+- **`FillInInput`**: one text, long text, number, money (the currency's
+  symbol before it) or date (`DateField`) value, labelled, with a
+  suggestion as a dashed "Use $249.00" button under it.
+- **`FillInSelect`**: one value from a list too long for buttons (a
+  reference to another record), as a Select, with the same suggestion.
+- **`FillInField`**: a field as an API describes it (`{ name, label,
+  kind, choices, suggestion }`; `FillInFieldSpec`) drawn as the row its
+  kind calls for: `FillInChoice` for up to nine choices, `FillInSelect`
+  for more, `FillInInput` for the rest. Numbers keep their text as typed
+  ("1." on the way to "1.5").
+- **`groups` and `getGroup` on `FillInQueue`**: a record's source (icon,
+  label, its own "3 of 12 filled") above its heading; with more than one
+  group counted, each one's count under the bar.
+
+**How an app adopts:** nothing to change. A fill-in screen can draw
+fields from data with `FillInField` and name sources with `groups`
+(`design-language.md` "Filling in what's missing").
 ## 4.52.0 — EmojiField: pick one emoji on a form
 
 Additive, so a minor. No new dependency.
