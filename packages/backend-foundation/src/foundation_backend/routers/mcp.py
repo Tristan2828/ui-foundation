@@ -19,6 +19,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from foundation_backend import config, rate_window
 from foundation_backend.db import get_session
+from foundation_backend.error_reporting import ErrorContext, report_error, scrub
 from foundation_backend.mcp_tools import Caller, ToolError, call_tool, tool_definitions
 from foundation_backend.routers.oauth import authenticate_bearer, public_base, require_enabled
 
@@ -35,6 +36,10 @@ router = APIRouter(include_in_schema=False, dependencies=[Depends(require_enable
 
 def _rpc_error(request_id: Any, code: int, message: str) -> dict[str, Any]:
     return {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}}
+
+
+def _tool_failed(request_id: Any, text: str) -> dict[str, Any]:
+    return {"jsonrpc": "2.0", "id": request_id, "result": {"content": [{"type": "text", "text": text}], "isError": True}}
 
 
 def _unauthorized(request: Request, description: str) -> HTTPException:
@@ -89,11 +94,20 @@ async def _handle(message: Any, caller: Caller, session: AsyncSession) -> dict[s
         try:
             text = await call_tool(session, caller, name, arguments or {})
         except ToolError as exc:
-            return {
-                "jsonrpc": "2.0",
-                "id": request_id,
-                "result": {"content": [{"type": "text", "text": str(exc)}], "isError": True},
-            }
+            return _tool_failed(request_id, str(exc))
+        except Exception as exc:
+            # A bug in an entity's function (or a router's refusal the entity
+            # didn't turn into a ToolError), not a refusal of the chat's
+            # arguments. Answered as a 500 the chat's connector says only
+            # "isn't responding" and retries for ever; answered as a failed
+            # tool, the chat reads the error's class and message. Whatever it
+            # changed is rolled back, and it is reported like any 500.
+            await session.rollback()
+            report_error(
+                exc,
+                ErrorContext(source="server", route="/mcp", method="POST", status=500, user_id=caller.user.id, tags={"mcp_tool": name}),
+            )
+            return _tool_failed(request_id, f"The {name} tool failed with an error in the app: {type(exc).__name__}: {scrub(str(exc), 500)}")
         if text is None:
             return _rpc_error(request_id, -32602, f"Unknown tool {name!r}.")
         return {"jsonrpc": "2.0", "id": request_id, "result": {"content": [{"type": "text", "text": text}]}}
