@@ -19,6 +19,17 @@ open-panel row, both themes.
 **How an app adopts:** nothing. An app that darkened muted text in the
 picked row itself (`in-aria-selected:text-foreground`) can drop it.
 
+## 4.47.2 — MCP: 4.47.1's failed tool, for a signed-in user
+
+A fix, so a patch. 4.47.1's report of an unexpected tool error read
+`caller.user.id` after rolling the session back, which expires the user
+loaded by `/mcp`; reading it then is a lazy load, `MissingGreenlet` under
+asyncio, so the error still escaped as a 500 for every real caller (the
+package's test used a user outside the session). The report now uses
+`caller.user_id`, saved while the user was loaded.
+
+**How an app adopts:** bump both packages; nothing else changes.
+
 ## 4.47.1 — MCP: an error in an entity is a failed tool, not a 500
 
 A fix, so a patch. Three things a chat's connector reported only as "The

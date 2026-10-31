@@ -152,11 +152,16 @@ async def test_a_required_filter_left_out_is_a_refusal(session: AsyncSession, ca
         await call_tool(session, caller, "list", {"entity": "notes"})
 
 
-async def test_an_error_in_an_entity_is_a_failed_tool_naming_it(session: AsyncSession, caller: Caller, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_an_error_in_an_entity_is_a_failed_tool_naming_it(session: AsyncSession, monkeypatch: pytest.MonkeyPatch) -> None:
     # Not a 500 (a chat's connector says only "isn't responding"): the
     # tool fails with the error's class and message, and it is reported.
-    reported: list[BaseException] = []
-    monkeypatch.setattr(mcp_router, "report_error", lambda exc, _context: reported.append(exc))
+    # The user is the session's own, as over /mcp: the rollback expires it,
+    # so the report must not read caller.user (MissingGreenlet, 4.47.1).
+    user = await session.get(User, 1)
+    assert user is not None
+    caller = Caller(user=user, client_id="chat")
+    reported: list[tuple[BaseException, int | None]] = []
+    monkeypatch.setattr(mcp_router, "report_error", lambda exc, context: reported.append((exc, context.user_id)))
 
     async def _broken(_session: AsyncSession, _user: User, _record_id: int) -> NoteOut:
         raise AttributeError("'NoteOut' object has no attribute 'shelf'")
@@ -167,4 +172,4 @@ async def test_an_error_in_an_entity_is_a_failed_tool_naming_it(session: AsyncSe
     assert answer is not None and answer["result"]["isError"] is True
     text = answer["result"]["content"][0]["text"]
     assert text == "The fetch tool failed with an error in the app: AttributeError: 'NoteOut' object has no attribute 'shelf'"
-    assert len(reported) == 1 and isinstance(reported[0], AttributeError)
+    assert len(reported) == 1 and isinstance(reported[0][0], AttributeError) and reported[0][1] == 1
