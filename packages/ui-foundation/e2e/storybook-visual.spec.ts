@@ -72,6 +72,8 @@ const COMPOSITE_STORIES = [
   // <FillInQueue>: the progress, the choices (a suggestion dashed), the buttons, every state.
   { id: 'app-fillinqueue--default', mustShow: 'Repaint the fence' },
   { id: 'app-fillinqueue--states', mustShow: 'Every project has an effort' },
+  // FillInField's rows by kind (money with a suggestion, a date, a long list), and a record's group.
+  { id: 'app-fillinqueue--fields', mustShow: 'New desk chair' },
   { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },

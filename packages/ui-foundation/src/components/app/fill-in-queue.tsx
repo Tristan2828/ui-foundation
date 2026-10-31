@@ -20,6 +20,11 @@
 // - Saving: the button shows it's pending; a refusal keeps the record and
 //   says why under the buttons, not in a toast.
 // - Progress: the app counts (`progress`): a bar and "12 of 160 filled".
+// - Groups: records from several sources (a module, a list) name theirs
+//   above the heading with `groups` and `getGroup`: its icon and label,
+//   and, when the group has its own `progress`, "3 of 12 filled" beside
+//   it. With more than one group counted, each one's count is listed
+//   under the bar.
 // - States: `loading` (skeletons), `error` (ErrorState, with `onRetry`),
 //   and an empty queue (`empty`, default "Nothing left to fill in").
 //
@@ -40,6 +45,7 @@ import {
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
+import type { IconComponent } from '@/components/app/icon-component'
 import { nextFillInKey, resolveFillInIndex } from '@/components/app/fill-in-queue-index'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
@@ -56,6 +62,14 @@ export interface FillInQueueProgress {
   label?: string
 }
 
+export interface FillInQueueGroup {
+  id: string
+  label: string
+  icon?: IconComponent
+  /** This group's own count, said beside its name on its records. */
+  progress?: Omit<FillInQueueProgress, 'label'>
+}
+
 export interface FillInQueueProps<T> {
   /** The records still missing something, in order. */
   items: readonly T[]
@@ -70,6 +84,10 @@ export interface FillInQueueProps<T> {
   onSkip?: (item: T) => void
   /** A bar and "12 of 160 filled" at the top. The app counts. */
   progress?: FillInQueueProgress
+  /** Where records come from: named above each record's heading. */
+  groups?: readonly FillInQueueGroup[]
+  /** The id of the record's group in `groups`. */
+  getGroup?: (item: T) => string
   /** Default "Save and next". */
   saveLabel?: string
   /** Default "Skip". */
@@ -134,6 +152,8 @@ export function FillInQueue<T>({
   canSave = true,
   onSkip,
   progress,
+  groups,
+  getGroup,
   saveLabel = 'Save and next',
   skipLabel = 'Skip',
   loading = false,
@@ -256,7 +276,21 @@ export function FillInQueue<T>({
     }
   }
 
-  const progressBar = progress && <ProgressLine progress={progress} />
+  const counted = groups?.filter((group) => group.progress !== undefined) ?? []
+  const progressBar = (progress || counted.length > 1) && (
+    <div className="flex flex-col gap-1.5">
+      {progress && <ProgressLine progress={progress} />}
+      {counted.length > 1 && (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 type-caption text-muted-foreground tabular-nums" data-slot="fill-in-queue-groups">
+          {counted.map((group) => (
+            <li key={group.id}>
+              {group.label} {group.progress?.done} of {group.progress?.total}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
 
   if (error !== undefined && error !== null && error !== false) {
     return (
@@ -317,6 +351,8 @@ export function FillInQueue<T>({
   }
 
   const position = `Record ${index + 1} of ${items.length}`
+  const groupId = getGroup?.(current)
+  const group = groupId === undefined ? undefined : groups?.find((g) => g.id === groupId)
   return (
     <ShortcutContext.Provider value={register}>
       <div
@@ -343,6 +379,7 @@ export function FillInQueue<T>({
             data-slot="fill-in-queue-record"
             className="flex flex-col gap-6 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
+            {group && <GroupLine group={group} label={progress?.label} />}
             {renderItem(current)}
           </div>
           <div className="flex flex-col gap-2 border-t border-border pt-4">
@@ -364,6 +401,21 @@ export function FillInQueue<T>({
         </div>
       </div>
     </ShortcutContext.Provider>
+  )
+}
+
+function GroupLine({ group, label = 'filled' }: { group: FillInQueueGroup; label?: string }) {
+  const Icon = group.icon
+  return (
+    <p className="-mb-4 flex items-center gap-1.5 type-caption text-muted-foreground" data-slot="fill-in-queue-group">
+      {Icon && <Icon className="size-4" aria-hidden="true" />}
+      <span className="font-medium">{group.label}</span>
+      {group.progress && (
+        <span className="tabular-nums">
+          · {group.progress.done} of {group.progress.total} {label}
+        </span>
+      )}
+    </p>
   )
 }
 

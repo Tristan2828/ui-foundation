@@ -21,9 +21,23 @@ export {
   FillInChoice,
   FillInQueue,
   type FillInChoiceProps,
+  type FillInQueueGroup,
   type FillInQueueProgress,
   type FillInQueueProps,
 } from '@/components/app/fill-in-queue'
+export {
+  FillInField,
+  FillInInput,
+  FillInSelect,
+  type FillInFieldKind,
+  type FillInFieldProps,
+  type FillInFieldSpec,
+  type FillInInputKind,
+  type FillInInputProps,
+  type FillInSelectProps,
+  type FillInSuggestion,
+  type FillInValue,
+} from '@/components/app/fill-in-field'
 export {
   Artwork,
   ArtworkTag,

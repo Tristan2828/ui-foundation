@@ -20,7 +20,7 @@
 - [A list as cards](#a-list-as-cards) · lines 703–749
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 751–773
 - [Picking at random](#picking-at-random) · lines 775–806
-- [Filling in what's missing](#filling-in-whats-missing) · lines 808–858
+- [Filling in what's missing](#filling-in-whats-missing) · lines 808–875
 
 <!-- /index -->
 
@@ -856,3 +856,20 @@ size"); the list stays where a record is edited one field at a time.
 - A refused save keeps the record and says why under the buttons, not
   in a toast. It owns its states: skeletons, `ErrorState`, and the
   empty queue, which is the good news ("Every project has a size").
+- **Other kinds of value** (4.53): `FillInInput` is the row for text,
+  long text, a number, money (the currency's symbol before it) or a date
+  (`DateField`), and `FillInSelect` for a list too long for buttons (a
+  reference to another record). Each has the label above and a
+  suggestion under it as a dashed "Use $249.00" button, never filled in
+  for the person.
+- **Fields as data:** `FillInField` takes a field as an API describes it
+  (`{ name, label, kind, choices, suggestion }`, `kind` one of choice,
+  reference, text, longText, number, money, date) and draws the row its
+  kind calls for: `FillInChoice` for up to nine choices, `FillInSelect`
+  for more, `FillInInput` for the rest. Its value is a choice's value, a
+  number for number and money, text otherwise, null for none. For a page
+  that draws records it doesn't know in advance.
+- **Records from several places:** `groups` (`{ id, label, icon,
+  progress }`) and `getGroup` name a record's source above its heading,
+  with that group's own count; with more than one group counted, each
+  one's count is listed under the bar.

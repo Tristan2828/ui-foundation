@@ -3,6 +3,8 @@ import { useState } from 'react'
 import type { AppError } from '@/api/contracts'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
+import { HomeIcon, WalletIcon } from 'lucide-react'
+import { FillInField, type FillInFieldSpec, type FillInValue } from './fill-in-field'
 import { FillInChoice, FillInQueue } from './fill-in-queue'
 
 // Projects with no effort set yet, filled in one at a time
@@ -128,3 +130,90 @@ export const States: StoryObj = {
     </div>
   ),
 }
+
+// Records from two sources, each field described as data and drawn by its
+// kind (FillInField): a row of choices, a long list, money, a date, text.
+// Each record names its group above the heading, with its own count.
+type Gap = { key: string; group: 'money' | 'house'; title: string; context: string; fields: FillInFieldSpec[] }
+
+const ACCOUNTS = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `Account ${i + 1}` }))
+
+const GAPS: Gap[] = [
+  {
+    key: 'money-1',
+    group: 'money',
+    title: 'New desk chair',
+    context: 'Planned purchase · Office',
+    fields: [
+      { name: 'price', label: 'Price', kind: 'money', suggestion: { value: 249, note: 'last price seen' } },
+      { name: 'buyAt', label: 'Buy at', kind: 'date' },
+      { name: 'paidFrom', label: 'Paid from', kind: 'reference', choices: ACCOUNTS },
+    ],
+  },
+  {
+    key: 'house-1',
+    group: 'house',
+    title: 'Smoke alarm',
+    context: 'House item',
+    fields: [
+      {
+        name: 'area',
+        label: 'Area',
+        kind: 'choice',
+        choices: [
+          { value: 'kitchen', label: 'Kitchen' },
+          { value: 'hall', label: 'Hall' },
+          { value: 'garage', label: 'Garage' },
+        ],
+      },
+      { name: 'model', label: 'Model', kind: 'text' },
+      { name: 'count', label: 'How many', kind: 'number' },
+    ],
+  },
+]
+
+function MixedQueue() {
+  const [gaps, setGaps] = useState(GAPS)
+  const [drafts, setDrafts] = useState<Record<string, Record<string, FillInValue>>>({})
+  const filled = GAPS.length - gaps.length
+  const countOf = (group: Gap['group']) => {
+    const all = GAPS.filter((gap) => gap.group === group).length
+    return { done: all - gaps.filter((gap) => gap.group === group).length, total: all }
+  }
+  return (
+    <FillInQueue
+      items={gaps}
+      getKey={(gap) => gap.key}
+      progress={{ done: filled, total: GAPS.length }}
+      groups={[
+        { id: 'money', label: 'Money', icon: WalletIcon, progress: countOf('money') },
+        { id: 'house', label: 'House', icon: HomeIcon, progress: countOf('house') },
+      ]}
+      getGroup={(gap) => gap.group}
+      canSave={(gap) => Object.values(drafts[gap.key] ?? {}).some((value) => value !== null)}
+      onSave={(gap) => setGaps((all) => all.filter((g) => g.key !== gap.key))}
+      renderItem={(gap) => (
+        <>
+          <div className="flex flex-col gap-1">
+            <h2 className="type-section-title">{gap.title}</h2>
+            <p className="type-caption text-muted-foreground">{gap.context}</p>
+          </div>
+          {gap.fields.map((field, index) => (
+            <FillInField
+              key={field.name}
+              field={field}
+              value={drafts[gap.key]?.[field.name]}
+              onChange={(value) =>
+                setDrafts((all) => ({ ...all, [gap.key]: { ...all[gap.key], [field.name]: value } }))
+              }
+              shortcut={index === 0}
+            />
+          ))}
+        </>
+      )}
+      empty="Nothing left to fill in"
+    />
+  )
+}
+
+export const Fields: StoryObj = { render: () => <MixedQueue /> }
