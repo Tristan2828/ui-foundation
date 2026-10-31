@@ -112,7 +112,7 @@ test('the States story has a loading, an empty and an error state', async ({ pag
 test("FillInField: a record's group, money with a suggestion, a long list, and the next group's record", async ({ page }) => {
   await page.goto(story('fields'))
   await expect(record(page).getByRole('heading')).toHaveText('New desk chair')
-  await expect(record(page).getByText('Money')).toBeVisible()
+  await expect(record(page).getByText('Money', { exact: true })).toBeVisible()
   await expect(page.getByText('Money 0 of 1')).toBeVisible()
   await expect(save(page)).toBeDisabled()
 
@@ -131,7 +131,7 @@ test("FillInField: a record's group, money with a suggestion, a long list, and t
 
   await save(page).click()
   await expect(record(page).getByRole('heading')).toHaveText('Smoke alarm')
-  await expect(record(page).getByText('House')).toBeVisible()
+  await expect(record(page).getByText('House', { exact: true })).toBeVisible()
   await expect(page.getByText('Money 1 of 1')).toBeVisible()
   await record(page).focus()
   await page.keyboard.press('2')
