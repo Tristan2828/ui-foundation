@@ -97,6 +97,10 @@ function ProjectsBoard({
 
 export const Default: StoryObj = { render: () => <ProjectsBoard /> }
 
+// Columns with no cards show their `empty` line: muted text on the column's
+// muted fill, which axe checks in both themes.
+export const EmptyColumns: StoryObj = { render: () => <ProjectsBoard initial={PROJECTS.slice(0, 2)} /> }
+
 export const ReadOnly: StoryObj = { render: () => <ProjectsBoard readOnly /> }
 
 // No `moveTo`: the Move menu is the columns, by their `name`.
