@@ -66,3 +66,34 @@ export function chartLayout(points: readonly LineChartPoint[], target?: number, 
     markIndex,
   }
 }
+
+export type SeriesLayout = {
+  /** Each series' places, in the order given, each in its points' order. */
+  places: { x: number; y: number }[][]
+  domain: { min: number; max: number }
+  targetY?: number
+}
+
+// Several series on one plot (MultiLineChart): one y range over all their
+// values and the target, and one x range over all their points, so a
+// series that starts later starts further right. When an x isn't a time
+// or a number, each series' points are evenly spaced over the longest's.
+export function seriesLayout(series: readonly (readonly LineChartPoint[])[], target?: number): SeriesLayout {
+  const shared = chartLayout(series.flat(), target)
+  const { min, max } = shared.domain
+  const height = (y: number) => (max - y) / (max - min)
+  const times = series.flat().map((point) => along(point.x))
+  const timed = times.every(Number.isFinite) && new Set(times).size > 1
+  const first = Math.min(...times)
+  const span = Math.max(...times) - first
+  const longest = Math.max(...series.map((points) => points.length - 1))
+  const across = (x: LineChartPoint['x'], index: number) => {
+    if (timed) return (along(x) - first) / span
+    return longest === 0 ? 0.5 : index / longest
+  }
+  return {
+    places: series.map((points) => points.map((point, index) => ({ x: across(point.x, index), y: height(point.y) }))),
+    domain: shared.domain,
+    targetY: shared.targetY,
+  }
+}

@@ -3,24 +3,25 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 33–61
-- [The three badge styles](#the-three-badge-styles) · lines 63–80
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 82–111
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 113–126
-- [Logos and brand marks](#logos-and-brand-marks) · lines 128–172
-- [Categorical colour](#categorical-colour) · lines 174–244
-- [Typography](#typography) · lines 246–337
-  - [Written text (notes)](#written-text-notes) · lines 277–337
-- [Density](#density) · lines 339–396
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 398–512
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 514–583
-- [Notices](#notices) · lines 585–613
-- [A value over time](#a-value-over-time) · lines 615–648
-- [A list as a board](#a-list-as-a-board) · lines 650–701
-- [A list as cards](#a-list-as-cards) · lines 703–749
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 751–773
-- [Picking at random](#picking-at-random) · lines 775–806
-- [Filling in what's missing](#filling-in-whats-missing) · lines 808–858
+- [Semantic tones](#semantic-tones) · lines 34–62
+- [The three badge styles](#the-three-badge-styles) · lines 64–81
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 83–112
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 114–127
+- [Logos and brand marks](#logos-and-brand-marks) · lines 129–173
+- [Categorical colour](#categorical-colour) · lines 175–245
+- [Typography](#typography) · lines 247–338
+  - [Written text (notes)](#written-text-notes) · lines 278–338
+- [Density](#density) · lines 340–397
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 399–513
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 515–584
+- [Notices](#notices) · lines 586–614
+- [A value over time](#a-value-over-time) · lines 616–694
+  - [Several values over time](#several-values-over-time) · lines 657–694
+- [A list as a board](#a-list-as-a-board) · lines 696–747
+- [A list as cards](#a-list-as-cards) · lines 749–795
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 797–819
+- [Picking at random](#picking-at-random) · lines 821–852
+- [Filling in what's missing](#filling-in-whats-missing) · lines 854–904
 
 <!-- /index -->
 
@@ -644,8 +645,53 @@ or `'last'`) with its value.
   named by `label`, with a summary (first, last, lowest, highest, the
   target) and a table of every point. Give it the same `formatY` and
   `formatX` the page uses for those values elsewhere.
-- One series and a few dozen points. Several series, zoom or tooltips
-  are a request for the foundation, not a hand-drawn chart in the app.
+- **A projection** (4.51): `projection={{ label: 'Projected', points }}`
+  carries the line on past its last point, dashed in the same colour, for
+  where a value may go (a balance at a rate of return), never for what was
+  measured. Its points come after the last of `points`; the mark stays on
+  `points`, and a screen reader gets the projection's end in the summary
+  and its rows in the table, each named by `label`.
+- One series and a few dozen points. Zoom or tooltips are a request for
+  the foundation, not a hand-drawn chart in the app.
+
+### Several values over time
+
+`MultiLineChart` (4.51) puts several series on one plot, sharing one x
+and one y range: a net worth beside its assets and what's owed, or a
+balance's history beside low, middle and high projections.
+
+```tsx
+<MultiLineChart
+  label="Net worth over time"
+  series={[
+    { label: 'Assets', tone: 'success', points: assets },
+    { label: 'Owed', tone: 'destructive', points: owed },
+    { label: 'Net worth', points: netWorth },
+  ]}
+  target={{ y: 1_500_000, label: 'Target' }}
+  formatY={usd}
+  formatX={month}
+  isLoading={isLoading}
+/>
+```
+
+- **Tones, not colours:** each series takes a text tone (`info`, the
+  default, `success`, `warning`, `destructive` or `muted`), each clearing
+  3:1 on a card in both themes. Pick by meaning where there is one (what's
+  owed in `destructive`); otherwise keep the series that matters most in
+  `info` and the rest `muted`.
+- **`dashed` is for what wasn't measured:** a projection or a plan. A
+  projection that starts at the last measured point should repeat that
+  point as its first, so the lines meet.
+- **A legend under the plot** names each series with its latest value,
+  so colour never carries the meaning alone. The target is a dashed
+  `success-text` line, as on `LineChart`.
+- **It owns its states** as `LineChart` does: a skeleton, one quiet line
+  when no series has a point, a dot for a series of one point.
+- **A screen reader gets a summary** (each series from first to last
+  value, and the target) and a table with a column per series.
+- Up to four or five series. More than that, or bars and stacked areas,
+  are a request for the foundation.
 
 ## A list as a board
 

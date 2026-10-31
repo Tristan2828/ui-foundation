@@ -81,3 +81,39 @@ export const AllStates: StoryObj = {
     </div>
   ),
 }
+
+// A balance's history carried on dashed (4.51): where it may go by 2030,
+// against the target it's meant to reach.
+const BALANCES: LineChartPoint[] = [
+  { x: '2024-01-01', y: 41000 },
+  { x: '2024-07-01', y: 47500 },
+  { x: '2025-01-01', y: 52000 },
+  { x: '2025-07-01', y: 61000 },
+  { x: '2026-01-01', y: 66500 },
+]
+const AHEAD: LineChartPoint[] = [
+  { x: '2027-01-01', y: 80000 },
+  { x: '2028-01-01', y: 95000 },
+  { x: '2029-01-01', y: 111000 },
+  { x: '2030-01-01', y: 128000 },
+]
+const year = (x: LineChartPoint['x']) => String(x).slice(0, 4)
+
+export const Projection: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Savings</h1>
+      <OnCard title="Balance">
+        <LineChart
+          label="Balance and projection"
+          points={BALANCES}
+          projection={{ label: 'Projected', points: AHEAD }}
+          target={{ y: 120000, label: 'Target' }}
+          mark="last"
+          formatY={usd}
+          formatX={year}
+        />
+      </OnCard>
+    </div>
+  ),
+}
