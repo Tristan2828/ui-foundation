@@ -109,6 +109,12 @@ export {
   type LineChartPoint,
   type LineChartProps,
 } from '@/components/app/line-chart'
+export {
+  MultiLineChart,
+  type ChartSeries,
+  type ChartTone,
+  type MultiLineChartProps,
+} from '@/components/app/multi-line-chart'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'

@@ -68,3 +68,65 @@ test("on a phone: the chart fills its card's width, and nothing on it spills out
   const spill = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   expect(spill).toBe(0)
 })
+
+test('a projection: the line carries on dashed from its last point to the right edge, in the same colour', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(story('projection'))
+  const figure = page.getByRole('figure', { name: 'Balance and projection' })
+  const plot = (await figure.locator('[aria-hidden="true"]').first().boundingBox())!
+  const measured = (await figure.locator('polyline').first().boundingBox())!
+  const ahead = figure.locator('[data-slot="line-chart-projection"] polyline')
+  await expect(ahead).toHaveAttribute('stroke-dasharray', '6 4')
+  const dashed = (await ahead.boundingBox())!
+  // Where the measured line ends, the dashed one starts, and it runs to the edge.
+  expect(Math.abs(dashed.x - (measured.x + measured.width))).toBeLessThanOrEqual(2)
+  expect(Math.abs(dashed.x + dashed.width - (plot.x + plot.width))).toBeLessThanOrEqual(2)
+  const colour = (line: typeof ahead) => line.evaluate((el) => getComputedStyle(el).color)
+  expect(await colour(ahead)).toBe(await colour(figure.locator('polyline').first()))
+  await expect(figure.locator('[aria-hidden="true"]').nth(1)).toHaveText('20242030')
+  await expect(figure.locator('figcaption')).toContainText('Projected $128,000.00 on 2030')
+})
+
+const multi = (name: string) => `http://localhost:6006/iframe.html?id=app-multilinechart--${name}&viewMode=story`
+
+test('several series: a line each across the plot, a legend naming each with its latest value', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(multi('default'))
+  const figure = page.getByRole('figure', { name: 'Net worth over time' })
+  await expect(figure.locator('[data-slot="multi-line-chart-series"]')).toHaveCount(3)
+  const legend = figure.locator('[data-slot="multi-line-chart-legend"] li')
+  await expect(legend).toHaveText(['Assets$197,500', 'Owed$59,500', 'Net worth$138,000'])
+  // Each series in its own colour.
+  const colours = await figure
+    .locator('[data-slot="multi-line-chart-series"]')
+    .evaluateAll((all) => all.map((el) => getComputedStyle(el).color))
+  expect(new Set(colours).size).toBe(3)
+  const table = figure.getByRole('table', { name: 'Net worth over time' })
+  await expect(table.getByRole('columnheader')).toHaveText(['When', 'Assets', 'Owed', 'Net worth'])
+  await expect(table.getByRole('row')).toHaveCount(7)
+})
+
+test('projections: dashed series start where the measured one ends, under a target', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(multi('projections'))
+  const figure = page.getByRole('figure', { name: 'Invested and projected' })
+  const lines = figure.locator('[data-slot="multi-line-chart-series"] polyline')
+  await expect(lines).toHaveCount(4)
+  await expect(figure.locator('[data-slot="multi-line-chart-series"] polyline[stroke-dasharray]')).toHaveCount(3)
+  const measured = (await lines.nth(0).boundingBox())!
+  const middle = (await lines.nth(2).boundingBox())!
+  expect(Math.abs(middle.x - (measured.x + measured.width))).toBeLessThanOrEqual(2)
+  await expect(figure.locator('[aria-hidden="true"]').first().getByText('Target $300,000')).toBeVisible()
+})
+
+test('several series, every state; on a phone nothing spills out', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 })
+  await page.goto(multi('all-states'))
+  await expect(page.locator('[data-slot="multi-line-chart"][data-state="loading"]')).toHaveAttribute('aria-busy', 'true')
+  await expect(page.getByRole('figure', { name: 'Net worth with no points' })).toContainText('No points yet')
+  await expect(page.getByRole('figure', { name: 'Net worth with one point' }).locator('[data-slot="multi-line-chart-dot"]')).toHaveCount(3)
+  await page.goto(multi('projections'))
+  await expect(page.getByRole('figure', { name: 'Invested and projected' })).toBeVisible()
+  const spill = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(spill).toBe(0)
+})
