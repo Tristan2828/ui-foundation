@@ -20,7 +20,16 @@
 // smaller tiles with no action, each tile a whole link (the band link's
 // target stretched over the card) at least 44px tall. Retry sits above
 // that target. data-density="compact" tightens the band and the body.
-import { Children, useId, type ReactNode } from 'react'
+//
+// `mobile="row"` makes the strip one sideways-scrolling row of chips below
+// the sidebar's breakpoint (md) instead, so a hub's widgets start on the
+// first screen: each place's icon in its slot's colour, its name and its
+// number, a skeleton while that loads and a dash when it fails (Retry is
+// the card's; the place's own page says what went wrong). Each ModuleCard
+// renders its chip beside its card, one shown at each width. The row
+// scrolls inside itself and is `relative`, so a chip's sr-only text
+// (absolutely placed) scrolls with it instead of widening the page.
+import { Children, createContext, useContext, useId, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
 import { AlertCircleIcon, ExternalLinkIcon } from 'lucide-react'
 import { cn } from 'cn'
@@ -105,6 +114,13 @@ const BAND_LINK_CLASS =
   'max-sm:focus-visible:ring-0 max-sm:focus-visible:after:ring-3 max-sm:focus-visible:after:ring-inset ' +
   'max-sm:focus-visible:after:ring-ring/50'
 
+// The chip on a phone in a `mobile="row"` strip. Its focus ring is inset:
+// the row clips anything drawn outside it.
+const CHIP_CLASS =
+  'flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-3 type-label ' +
+  'whitespace-nowrap text-foreground outline-none hover:bg-accent focus-visible:ring-3 ' +
+  'focus-visible:ring-inset focus-visible:ring-ring/50'
+
 const ACTION_CLASS =
   'flex items-center gap-1 border-t border-border px-3 py-2 type-label text-foreground underline ' +
   'underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-inset ' +
@@ -116,6 +132,68 @@ function NewTabMark() {
       <ExternalLinkIcon aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="sr-only"> (opens in a new tab)</span>
     </>
+  )
+}
+
+/** How a ModuleStrip shows its places on a phone: `tiles` (the default), or one sideways `row` of chips. */
+export type ModuleStripMobile = 'tiles' | 'row'
+
+const StripMobileContext = createContext<ModuleStripMobile>('tiles')
+
+function ChipValue({ state, value }: { state: 'loading' | 'error' | 'success'; value?: number | string }) {
+  if (state === 'loading')
+    return (
+      <>
+        <Skeleton className="h-4 w-4" />
+        <span className="sr-only">Loading</span>
+      </>
+    )
+  if (state === 'error')
+    return (
+      <span className="text-muted-foreground">
+        <span aria-hidden="true">—</span>
+        <span className="sr-only">Couldn't load</span>
+      </span>
+    )
+  if (value === undefined) return null
+  return (
+    <span data-slot="module-card-chip-value" className="font-semibold tabular-nums">
+      {value}
+    </span>
+  )
+}
+
+function ModuleChip({
+  title,
+  icon: Icon,
+  category,
+  to,
+  href,
+  value,
+  state,
+}: Pick<ModuleCardProps, 'title' | 'icon' | 'category' | 'to' | 'href' | 'value'> & {
+  state: 'loading' | 'error' | 'success'
+}) {
+  const content = (
+    <>
+      <Icon
+        aria-hidden="true"
+        className={cn('size-4 shrink-0', category ? ICON_CLASS[category] : 'text-muted-foreground')}
+      />
+      {title}
+      <ChipValue state={state} value={value} />
+    </>
+  )
+  const chipProps = { 'data-slot': 'module-card-chip', 'data-state': state, className: cn(CHIP_CLASS, 'md:hidden') }
+  return href !== undefined ? (
+    <a href={href} target="_blank" rel="noreferrer" {...chipProps}>
+      {content}
+      <NewTabMark />
+    </a>
+  ) : (
+    <Link to={to as To} {...chipProps}>
+      {content}
+    </Link>
   )
 }
 
@@ -136,6 +214,7 @@ export function ModuleCard({
   const titleId = useId()
   const bodyId = useId()
   const state = error ? 'error' : isLoading ? 'loading' : 'success'
+  const mobile = useContext(StripMobileContext)
 
   const band = (
     <>
@@ -154,11 +233,11 @@ export function ModuleCard({
     className: cn(BAND_LINK_CLASS, category && BAND_CLASS[category]),
   }
 
-  return (
+  const card = (
     <Card
       data-slot="module-card"
       data-state={state}
-      className={cn('relative h-full min-w-0 gap-0 py-0', className)}
+      className={cn('relative h-full min-w-0 gap-0 py-0', mobile === 'row' && 'max-md:hidden', className)}
     >
       {href !== undefined ? (
         <a href={href} target="_blank" rel="noreferrer" {...bandProps}>
@@ -228,6 +307,14 @@ export function ModuleCard({
         ))}
     </Card>
   )
+
+  if (mobile === 'tiles') return card
+  return (
+    <>
+      {card}
+      <ModuleChip title={title} icon={Icon} category={category} to={to} href={href} value={value} state={state} />
+    </>
+  )
 }
 
 export interface ModuleStripProps {
@@ -235,19 +322,43 @@ export interface ModuleStripProps {
   'aria-label': string
   /** ModuleCards, one per place. */
   children: ReactNode
+  /**
+   * On a phone: three columns of `tiles` (the default), or one `row` of
+   * chips (icon, name, number) that scrolls sideways, below the sidebar's
+   * breakpoint. A desktop shows the cards either way.
+   */
+  mobile?: ModuleStripMobile
   className?: string
+}
+
+// The list's columns: whole class names, so Tailwind generates them.
+const STRIP_LIST = {
+  tiles: 'grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(--spacing(42.5),1fr))]',
+  row: 'flex gap-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(--spacing(42.5),1fr))]',
 }
 
 /**
  * A hub's places, a ModuleCard each: equal columns of 170px or more that
- * wrap, and three columns of tiles on a phone.
+ * wrap, and on a phone three columns of tiles, or one sideways row of
+ * chips (`mobile="row"`).
  */
-export function ModuleStrip({ 'aria-label': label, children, className }: ModuleStripProps) {
+export function ModuleStrip({ 'aria-label': label, children, mobile = 'tiles', className }: ModuleStripProps) {
+  const row = mobile === 'row'
   return (
-    <nav aria-label={label} data-slot="module-strip" className={className}>
-      <ul className="grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(--spacing(42.5),1fr))]">
-        {Children.map(children, (child) => child && <li className="min-w-0">{child}</li>)}
-      </ul>
-    </nav>
+    <StripMobileContext.Provider value={mobile}>
+      <nav
+        aria-label={label}
+        data-slot="module-strip"
+        data-mobile={mobile}
+        className={cn(row && 'relative min-w-0 max-md:overflow-x-auto max-md:[scrollbar-width:none]', className)}
+      >
+        <ul className={STRIP_LIST[mobile]}>
+          {Children.map(
+            children,
+            (child) => child && <li className={cn('min-w-0', row && 'max-md:shrink-0')}>{child}</li>,
+          )}
+        </ul>
+      </nav>
+    </StripMobileContext.Provider>
   )
 }

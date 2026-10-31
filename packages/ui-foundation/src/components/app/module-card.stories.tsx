@@ -3,17 +3,19 @@ import { BookOpenIcon, CameraIcon, DumbbellIcon, ListTodoIcon, SproutIcon, Timer
 import { MemoryRouter } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
-import { ModuleCard, ModuleStrip, type ModuleCardProps } from './module-card'
+import { ModuleCard, ModuleStrip, type ModuleCardProps, type ModuleStripMobile } from './module-card'
 import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 
 // A hub page's places (issue #224): a strip of made-up modules above a
 // widget, as an app's home screen would have them. Default is the page as
 // loaded; All states is a strip in each state (loading, failed, with and
 // without a number, a place with no slot); Compact is Default under
-// data-density="compact". Axe, the token check and the glyph check
+// data-density="compact"; Row and Row states are Default and All states
+// with `mobile="row"`, one sideways row of chips on a phone. Axe, the
+// token check and the glyph check
 // measure each in both themes, and Default at the large density too
 // (e2e/storybook-visual.spec.ts); e2e/module-card.spec.ts measures the
-// strip at desktop and phone widths.
+// strip at desktop and phone widths, and runs axe on the row at a phone's.
 const meta: Meta = {
   title: 'app/ModuleCard',
   parameters: { controls: { disable: true } },
@@ -103,9 +105,17 @@ const PLACES: ModuleCardProps[] = [
   },
 ]
 
-function Strip({ label, places = PLACES }: { label: string; places?: ModuleCardProps[] }) {
+function Strip({
+  label,
+  places = PLACES,
+  mobile,
+}: {
+  label: string
+  places?: ModuleCardProps[]
+  mobile?: ModuleStripMobile
+}) {
   return (
-    <ModuleStrip aria-label={label}>
+    <ModuleStrip aria-label={label} mobile={mobile}>
       {places.map((place) => (
         <ModuleCard key={place.title} {...place} />
       ))}
@@ -115,11 +125,11 @@ function Strip({ label, places = PLACES }: { label: string; places?: ModuleCardP
 
 const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,--spacing(72)),1fr))] gap-4'
 
-function Hub() {
+function Hub({ mobile }: { mobile?: ModuleStripMobile }) {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="type-page-title text-foreground">Home</h1>
-      <Strip label="Places" />
+      <Strip label="Places" mobile={mobile} />
       <div className={GRID}>
         <WidgetCard
           title="Ready to start"
@@ -149,16 +159,19 @@ export const Default: StoryObj = { render: () => <Hub /> }
 
 const FIRST_THREE = PLACES.slice(0, 3)
 
-export const AllStates: StoryObj = {
-  name: 'All states',
-  render: () => (
+function AllStatesPage({ mobile }: { mobile?: ModuleStripMobile }) {
+  return (
     <div className="flex flex-col gap-8">
       <h1 className="type-page-title text-foreground">Every place in every state</h1>
       <section aria-labelledby="state-loading" className="flex flex-col gap-3">
         <h2 id="state-loading" className="type-label text-muted-foreground">
           State: loading
         </h2>
-        <Strip label="Places (loading)" places={FIRST_THREE.map((place) => ({ ...place, isLoading: true }))} />
+        <Strip
+          label="Places (loading)"
+          mobile={mobile}
+          places={FIRST_THREE.map((place) => ({ ...place, isLoading: true }))}
+        />
       </section>
       <section aria-labelledby="state-error" className="flex flex-col gap-3">
         <h2 id="state-error" className="type-label text-muted-foreground">
@@ -166,6 +179,7 @@ export const AllStates: StoryObj = {
         </h2>
         <Strip
           label="Places (error)"
+          mobile={mobile}
           places={FIRST_THREE.map((place) => ({ ...place, error: ERROR, onRetry: () => {} }))}
         />
       </section>
@@ -175,6 +189,7 @@ export const AllStates: StoryObj = {
         </h2>
         <Strip
           label="Places (success)"
+          mobile={mobile}
           places={[
             PLACES[0],
             PLACES[6],
@@ -183,8 +198,10 @@ export const AllStates: StoryObj = {
         />
       </section>
     </div>
-  ),
+  )
 }
+
+export const AllStates: StoryObj = { name: 'All states', render: () => <AllStatesPage /> }
 
 export const Compact: StoryObj = {
   render: () => (
@@ -193,3 +210,7 @@ export const Compact: StoryObj = {
     </div>
   ),
 }
+
+export const Row: StoryObj = { render: () => <Hub mobile="row" /> }
+
+export const RowStates: StoryObj = { name: 'Row states', render: () => <AllStatesPage mobile="row" /> }

@@ -13,14 +13,14 @@
   - [Written text (notes)](#written-text-notes) · lines 277–328
 - [Density](#density) · lines 330–387
 - [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 389–503
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 505–563
-- [Notices](#notices) · lines 565–593
-- [A value over time](#a-value-over-time) · lines 595–628
-- [A list as a board](#a-list-as-a-board) · lines 630–681
-- [A list as cards](#a-list-as-cards) · lines 683–729
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 731–753
-- [Picking at random](#picking-at-random) · lines 755–786
-- [Filling in what's missing](#filling-in-whats-missing) · lines 788–838
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 505–574
+- [Notices](#notices) · lines 576–604
+- [A value over time](#a-value-over-time) · lines 606–639
+- [A list as a board](#a-list-as-a-board) · lines 641–692
+- [A list as cards](#a-list-as-cards) · lines 694–740
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 742–764
+- [Picking at random](#picking-at-random) · lines 766–797
+- [Filling in what's missing](#filling-in-whats-missing) · lines 799–849
 
 <!-- /index -->
 
@@ -557,10 +557,21 @@ const { data, isLoading, error, refetch } = useProjectsSummaryQuery()
   each tile one link to its place (at least 44px tall); Retry stays its
   own button above it. Six places make the phone's 3 × 2 grid; past
   that, put the rest behind one tile ("More") rather than a third row.
+- **A row of chips on a phone** (`<ModuleStrip mobile="row">`), when the
+  hub's widgets should start on the first screen, or there are more
+  places than six tiles: below the sidebar's breakpoint the strip is one
+  row that scrolls sideways, a chip per place with its icon in its slot's
+  colour, its name and its number (no note, no action). While the number
+  loads, a small skeleton; on an error, a muted dash ("Couldn't load" to
+  a screen reader), with Retry left to the desktop card and the place's
+  own page. The row scrolls inside itself and the page never does. A
+  desktop shows the cards either way, so don't render your own row
+  beside a strip hidden on a phone.
 - Storybook's `app/ModuleCard` shows a hub with a strip and a widget,
-  every state, and both at `compact`; its checks run axe and the token and
-  glyph checks in both themes and at `large`, and measure the strip at a
-  desktop and a phone width.
+  every state, both at `compact`, and both again as a row of chips (Row,
+  Row states); its checks run axe and the token and glyph checks in both
+  themes and at `large`, measure the strip at a desktop and a phone
+  width, and run axe on the chips at a phone's.
 
 ## Notices
 

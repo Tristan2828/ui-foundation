@@ -7,6 +7,31 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.47.0 — Phone layouts: EntityView's main column first, ModuleStrip's row of chips
+
+Additive, so a minor.
+
+- **`EntityView` `mobileOrder`** (`EntityViewMobileOrder`): where the
+  rail layout is one column (a phone, or a narrow content area),
+  `main-first` puts the main column (Notes, a checklist) straight after
+  the header and its `strip`, then the rail. `rail-first` stays the
+  default. Two columns wide nothing moves: the rail is on the right
+  either way, and with `main-first` the DOM (so reading and tab order)
+  is main, then rail, matching left to right.
+- **`ModuleStrip` `mobile="row"`** (`ModuleStripMobile`): below the
+  sidebar's breakpoint the places become one sideways-scrolling row of
+  chips, each its icon in its slot's colour, its name and its number: a
+  skeleton while that loads, a dash ("Couldn't load" to a screen
+  reader) on an error. The row scrolls inside itself, so the page never
+  scrolls sideways. `tiles` (the default) keeps the three-column tiles;
+  a desktop shows the cards either way.
+
+**How an app adopts:** nothing changes until a view passes
+`mobileOrder="main-first"` or a strip passes `mobile="row"`. An app that
+re-ordered a view's sections itself at phone width, or kept its own row
+of places beside a strip hidden on a phone, drops that copy for the
+prop.
+
 ## 4.46.0 — DataTable's Group menu and detail panel; EntityView's subtitle and key numbers
 
 Additive, so a minor.

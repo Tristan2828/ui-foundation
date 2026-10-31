@@ -39,8 +39,11 @@
 // content area's whole width, sections placed `rail` go in a narrow column
 // on the right that stays in view while the main column scrolls (an issue
 // tracker's shape), and the rest fill the main column. Below the width two
-// columns need, one column: header, rail, main. The DOM is in that order at
-// every width, so reading and tab order match the screen.
+// columns need, one column: header, rail, main, or header, main, rail with
+// `mobileOrder="main-first"` (a record whose long content is what you open
+// it for: notes, a checklist). The DOM is in that order at every width, so
+// reading and tab order match the screen: beside each other, the columns'
+// places come from the grid, not the DOM.
 import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowLeftIcon, SearchXIcon } from 'lucide-react'
@@ -122,6 +125,12 @@ export type EntityViewPlacement = 'main' | 'rail'
  */
 export type EntityViewLayout = 'column' | 'rail'
 
+/**
+ * Which column comes first where the rail layout is one column (a phone,
+ * or a narrow content area): `rail-first` (the default) or `main-first`.
+ */
+export type EntityViewMobileOrder = 'rail-first' | 'main-first'
+
 export type EntityViewProps = {
   /** The record's name or title, the page's <h1>, and the browser tab's once it loads (`documentTitle`). */
   title?: string
@@ -170,6 +179,14 @@ export type EntityViewProps = {
   footer?: ReactNode
   /** `rail` puts the sections placed `rail` in a column on the right. Defaults to `column`. */
   layout?: EntityViewLayout
+  /**
+   * In the `rail` layout, where its columns stack (a phone): the rail
+   * before the main column (`rail-first`, the default), or the main column
+   * straight after the header and its `strip` (`main-first`). Two columns
+   * wide, the rail stays on the right either way. The `column` layout
+   * ignores it.
+   */
+  mobileOrder?: EntityViewMobileOrder
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
   railLabel?: string
   isLoading: boolean
@@ -282,7 +299,7 @@ function ViewSection({ section, inRail = false }: { section: EntityViewSection; 
 // two columns follows the width the page actually has (the sidebar open
 // or not), not the window's: two from 56rem (896px), where the main
 // column still gets ~32rem beside a 22rem rail. Below that, one column in
-// DOM order (header, rail, main); from it, the grid puts the rail on the
+// DOM order (header, rail, main, or main first); from it, the grid puts the rail on the
 // right of row 1 and main on its left, both starting under the header.
 const RAIL_LAYOUT = {
   page: '@container/view flex min-w-0 flex-col gap-6',
@@ -317,7 +334,7 @@ function SkeletonCard({ rows, stacked }: { rows: number; stacked: boolean }) {
 
 // The page's shape before the record arrives, in the layout it will have,
 // so nothing jumps when it loads.
-function EntityViewSkeleton({ layout }: { layout: EntityViewLayout }) {
+function EntityViewSkeleton({ layout, mobileOrder }: { layout: EntityViewLayout; mobileOrder: EntityViewMobileOrder }) {
   const header = (
     <>
       <Skeleton className="h-5 w-24" />
@@ -328,16 +345,20 @@ function EntityViewSkeleton({ layout }: { layout: EntityViewLayout }) {
     </>
   )
   if (layout === 'rail') {
+    const main = (
+      <div className={RAIL_LAYOUT.main}>
+        <SkeletonCard rows={6} stacked={false} />
+      </div>
+    )
     return (
       <div className={RAIL_LAYOUT.page} data-state="loading" data-layout="rail">
         {header}
         <div className={RAIL_LAYOUT.columns}>
+          {mobileOrder === 'main-first' && main}
           <div className={cn(RAIL_LAYOUT.rail, 'flex flex-col gap-6')}>
             <SkeletonCard rows={4} stacked />
           </div>
-          <div className={RAIL_LAYOUT.main}>
-            <SkeletonCard rows={6} stacked={false} />
-          </div>
+          {mobileOrder === 'rail-first' && main}
         </div>
       </div>
     )
@@ -404,6 +425,7 @@ export function EntityView({
   sections,
   footer,
   layout = 'column',
+  mobileOrder = 'rail-first',
   railLabel,
   isLoading,
   error,
@@ -443,10 +465,17 @@ export function EntityView({
 
   if (error) return <ErrorState error={error} onRetry={onRetry} />
 
-  if (isLoading) return <EntityViewSkeleton layout={layout} />
+  if (isLoading) return <EntityViewSkeleton layout={layout} mobileOrder={mobileOrder} />
 
   const railSections = sections.filter((section) => section.placement === 'rail')
   const mainSections = sections.filter((section) => section.placement !== 'rail')
+  const main = (
+    <div className={cn(RAIL_LAYOUT.main, railSections.length === 0 && RAIL_LAYOUT.mainAlone)}>
+      {mainSections.map((section) => (
+        <ViewSection key={section.title} section={section} />
+      ))}
+    </div>
+  )
 
   return (
     <EditInPlaceContext.Provider value={store}>
@@ -490,14 +519,11 @@ export function EntityView({
 
       {layout === 'rail' ? (
         <div className={RAIL_LAYOUT.columns}>
+          {mobileOrder === 'main-first' && main}
           {railSections.length > 0 && (
             <Rail label={railLabel ?? `${title ?? 'Record'} details`} sections={railSections} />
           )}
-          <div className={cn(RAIL_LAYOUT.main, railSections.length === 0 && RAIL_LAYOUT.mainAlone)}>
-            {mainSections.map((section) => (
-              <ViewSection key={section.title} section={section} />
-            ))}
-          </div>
+          {mobileOrder === 'rail-first' && main}
         </div>
       ) : (
         sections.map((section) => <ViewSection key={section.title} section={section} />)

@@ -75,6 +75,7 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
+  { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
   // A notice across the page and a source credit under both columns.
@@ -157,6 +158,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-modulecard--default', mustShow: 'beds planted' },
   { id: 'app-modulecard--all-states', mustShow: 'No slot: a plain band' },
   { id: 'app-modulecard--compact', mustShow: 'beds planted' },
+  { id: 'app-modulecard--row', mustShow: 'beds planted' },
+  { id: 'app-modulecard--row-states', mustShow: 'No slot: a plain band' },
   // <SessionView> is a timed screen's whole viewport: its header controls
   // and a timer's own (the big digits, the status line, a pressed toggle).
   { id: 'app-sessionview--timer', mustShow: '1:00' },
