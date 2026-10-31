@@ -110,6 +110,7 @@ import {
 } from './rich-text-slash'
 import { RichTextSlashMenu } from './rich-text-slash-menu'
 import { RichTextToolbar } from './rich-text-toolbar'
+import { RichTextToolsBar } from './rich-text-tools-bar'
 import { CalloutKindMenu, TableBar } from './rich-text-widgets'
 
 // The commonmark preset, minus the plugin that writes `<br />`. A $remark
@@ -373,6 +374,7 @@ export default function MilkdownEditor({
   const [dismissed, setDismissed] = useState<{ from: number; to: number } | null>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const floatingRef = useRef<HTMLDivElement>(null)
+  const toolsRef = useRef<HTMLDivElement>(null)
   // The field's element, which the floating toolbar is placed against.
   const [field, setField] = useState<HTMLDivElement | null>(null)
   // Whether the floating toolbar shows, for the editor's keys (set up once).
@@ -395,7 +397,7 @@ export default function MilkdownEditor({
   // Whether focus is on the floating toolbar, or in a menu opened from it
   // (the Highlight menu's popup is in a portal).
   const inFloating = (node: Node | null) =>
-    Boolean(floatingRef.current?.contains(node) || (node instanceof Element && node.closest('[data-rich-text-menu]')))
+    Boolean(floatingRef.current?.contains(node) || toolsRef.current?.contains(node) || (node instanceof Element && node.closest('[data-rich-text-menu]')))
   // Full screen: the field fills the window, in place (the editor stays
   // mounted, so nothing is lost).
   const [fullScreen, setFullScreen] = useState(false)
@@ -636,7 +638,7 @@ export default function MilkdownEditor({
               // Alt+F10: to the floating toolbar when it shows, else the
               // fixed one (the convention editors share).
               if (event.altKey && event.key === 'F10') {
-                const bar = floatingOpenRef.current ? floatingRef.current : toolbarRef.current
+                const bar = floatingOpenRef.current ? floatingRef.current : (toolbarRef.current ?? toolsRef.current)
                 const button = bar?.querySelector<HTMLElement>('button[tabindex="0"]')
                 if (!button) return false
                 event.preventDefault()
@@ -895,6 +897,8 @@ export default function MilkdownEditor({
     floatingOpenRef.current = floatingOpen
   })
   const returnToText = () => editorView?.focus()
+  // The tools strip of a field with only the floating toolbar.
+  const toolsOpen = Boolean(toolbar === 'floating' && editorView && (focused || fullScreen))
   const toggleFullScreen = () => {
     setFullScreen((on) => !on)
     editorView?.focus()
@@ -1056,6 +1060,22 @@ export default function MilkdownEditor({
             active={slashIndex}
             onHighlight={(index) => setSlashActive({ key: slashMenuKey, index })}
             onPick={(format) => applySlash(editorView, slash, format)}
+          />
+        )}
+        {toolsOpen && (
+          <RichTextToolsBar
+            ref={toolsRef}
+            state={editorState}
+            readOnly={readOnly}
+            fullScreen={fullScreen}
+            controls={editableId}
+            onFormat={runFormat}
+            onFullScreen={toggleFullScreen}
+            onReturn={returnToText}
+            onBlur={(event) => {
+              const next = event.relatedTarget as Node | null
+              if (editorView && !editorView.dom.contains(next) && !inFloating(next)) setFocused(false)
+            }}
           />
         )}
         {floatingOpen && editorView && editorState && (

@@ -124,3 +124,62 @@ test.describe('rich text edited inline', () => {
     })
   }
 })
+
+// The tools strip a floating-toolbar field carries while it has focus:
+// Full screen, and Indent and Outdent on a phone (rich-text-tools-bar.tsx).
+test.describe('the tools strip', () => {
+  const tools = (page: Page) => page.getByRole('toolbar', { name: 'Editor tools' })
+
+  test('only while the field has focus: Full screen, and no Indent with a mouse', async ({ page }) => {
+    await openInline(page)
+    await expect(tools(page)).toHaveCount(0)
+    await caretAtEnd(page)
+    await expect(tools(page)).toBeVisible()
+    await expect(tools(page).getByRole('button')).toHaveCount(1)
+    await expect(tools(page).getByRole('button', { name: 'Full screen' })).toBeVisible()
+    await notes(page).blur()
+    await page.mouse.click(5, 5)
+    await expect(tools(page)).toHaveCount(0)
+  })
+
+  test('Full screen fills the window, keeps the text, and Esc leaves', async ({ page }) => {
+    await openInline(page)
+    await caretAtEnd(page)
+    await tools(page).getByRole('button', { name: 'Full screen' }).click()
+    const field = region(page, 'Notes').locator('[data-slot=rich-text-editor]')
+    await expect(field).toHaveAttribute('data-full-screen', 'true')
+    await expect(notes(page)).toBeFocused()
+    await page.keyboard.type(' Typed.')
+    await page.keyboard.press('Escape')
+    await expect(field).not.toHaveAttribute('data-full-screen')
+    await expect(page.getByTestId('saved-notes')).toContainText('Typed.', { timeout: 5000 })
+  })
+
+  test('on a phone it has Indent and Outdent, which nest a list item', async ({ page }) => {
+    await openInline(page)
+    await page.setViewportSize({ width: 390, height: 800 })
+    await caretAtEnd(page)
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('- One')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Two')
+    await tools(page).getByRole('button', { name: 'Indent' }).click()
+    await expect(page.getByTestId('saved-notes')).toContainText('- One\n  - Two', { timeout: 5000 })
+    await tools(page).getByRole('button', { name: 'Outdent' }).click()
+    await expect(page.getByTestId('saved-notes')).toContainText('- One\n- Two', { timeout: 5000 })
+    await expect(notes(page)).toBeFocused()
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`on a phone, and full screen, zero axe violations (${theme})`, async ({ page }) => {
+      await openInline(page, theme)
+      await page.setViewportSize({ width: 390, height: 800 })
+      await caretAtEnd(page)
+      await expect(tools(page).getByRole('button', { name: 'Indent' })).toBeVisible()
+      const axe = () => new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
+      expect((await axe()).violations).toEqual([])
+      await tools(page).getByRole('button', { name: 'Full screen' }).click()
+      expect((await axe()).violations).toEqual([])
+    })
+  }
+})
