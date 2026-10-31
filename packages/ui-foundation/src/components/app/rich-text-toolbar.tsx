@@ -32,6 +32,8 @@ import { RichTextTableMenu } from './rich-text-table-menu'
 const SELECTION: FormatId[] = ['bold', 'italic', 'strike', 'code', 'highlight', 'link']
 const SETS = {
   all: FORMAT_GROUPS,
+  // Outdent and Indent, for a field with no bar above the text (rich-text-tools-bar.tsx).
+  tools: [[FORMAT_ITEMS.get('outdent')!, FORMAT_ITEMS.get('indent')!]],
   selection: [SELECTION.slice(0, 5), SELECTION.slice(5)].map((ids) => ids.map((id) => FORMAT_ITEMS.get(id)!)),
 } satisfies Record<string, FormatItem[][]>
 

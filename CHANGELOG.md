@@ -7,6 +7,23 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.50.0 — The notes editor: Full screen and Indent/Outdent for floating-toolbar fields
+
+Additive, so a minor. 4.48.0's Full screen, Indent and Outdent sat on the
+fixed toolbar only, so notes edited where they're read
+(`toolbar="floating"`, as on a task page) had neither.
+
+- **A tools strip** for `toolbar="floating"` fields: a small toolbar
+  ("Editor tools") over the field's top right corner while the field has
+  focus (or is full screen) with **Full screen**, and, on a touch screen
+  or under 768px, **Outdent** and **Indent** for list items. The same
+  buttons and keys as the fixed toolbar's; Alt+F10 reaches it when nothing
+  else is showing; Esc gives focus back to the text, or leaves full
+  screen. `toolbar={true}` and `{false}` are unchanged.
+
+**How an app adopts:** nothing to change; an inline field with
+`toolbar="floating"` shows the strip when focused.
+
 ## 4.48.0 — The notes editor: highlight, full screen, Indent and Outdent, a visible new task item
 
 Additive, so a minor.

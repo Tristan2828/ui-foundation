@@ -514,7 +514,10 @@ screen or under 768px (`(pointer: coarse), (max-width: 767px)`), where
 there is no Tab. A *new task item* took no width (its text box was a
 shrink-to-fit flex child), so the caret was zero-width and nothing named
 the line; it fills the row now and shows a "To-do" placeholder (a node
-decoration) while it is empty and the caret is in it.
+decoration) while it is empty and the caret is in it. A field with only the
+floating toolbar (4.50, `rich-text-tools-bar.tsx`) has no bar for the
+Full screen, Indent and Outdent buttons, so a small "Editor tools" strip
+shows over its top right corner while it has focus (or is full screen).
 
 **Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
 (a `Popover` with no trigger, placed through the `anchor` the package's
