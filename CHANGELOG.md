@@ -7,7 +7,6 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-<<<<<<< HEAD
 ## 4.52.0 — EmojiField: pick one emoji on a form
 
 Additive, so a minor. No new dependency.
@@ -22,7 +21,7 @@ Additive, so a minor. No new dependency.
 
 **How an app adopts:** import `EmojiField` from the package and use it in
 a `Controller` where a text input took an emoji.
-=======
+
 ## 4.51.0 — Charts: a projection on LineChart, and MultiLineChart
 
 Additive, so a minor. An app with balances over time wanted where they
@@ -43,7 +42,6 @@ may go next and several values on one plot.
 
 **How an app adopts:** nothing to change. Use `projection` or
 `MultiLineChart` where a screen needs them.
->>>>>>> origin/main
 
 ## 4.50.1 � Board: the empty-column line clears 4.5:1
 
