@@ -28,8 +28,10 @@
 // autosave as it's typed (`autosave`), and be the editor itself, with no
 // click to open (`alwaysEditable`).
 //
+// In the header, `subtitle` under the title (a goal, a one-line summary).
 // Around the sections: `notice` (a <Notice>) under the header, across the
-// page, for a state that decides what you do with the record; `footer`
+// page, for a state that decides what you do with the record; `strip` (a
+// <KeyStats>) under that, the record's key numbers; `footer`
 // (a <SourceCredit>) after them all, for crediting the data's source.
 //
 // Two layouts. `column` (the default): every section in one column capped
@@ -133,6 +135,12 @@ export type EntityViewProps = {
   /** The title is editable in place; `label` is the field's ("Name"). */
   titleEdit?: EditInPlace & { label: string }
   /**
+   * A line under the title, in muted body type: what the record is for (a
+   * goal, a one-line summary). Any markup, an `<EditableValue>` included,
+   * so it can be edited in place where it's shown.
+   */
+  subtitle?: ReactNode
+  /**
    * A few status-like values beside the title, as `<Badge>`s, or as the
    * control that changes one when the plan makes it a quick action (a
    * status `Select`, a yes/no `Switch`).
@@ -146,6 +154,13 @@ export type EntityViewProps = {
    * every width. Announced when it appears or changes after the page loads.
    */
   notice?: ReactNode
+  /**
+   * A row of the record's key numbers (`<KeyStats>`) under the header and
+   * its notice, across the page at every width: in the rail layout above
+   * both columns, so on a phone it comes before the rail and the main
+   * column.
+   */
+  strip?: ReactNode
   sections: EntityViewSection[]
   /**
    * Below every section (both columns in the rail layout), in small muted
@@ -381,9 +396,11 @@ export function EntityView({
   title,
   documentTitle,
   titleEdit,
+  subtitle,
   badges,
   actions,
   notice,
+  strip,
   sections,
   footer,
   layout = 'column',
@@ -452,6 +469,11 @@ export function EntityView({
               title
             )}
           </h1>
+          {subtitle && (
+            <div data-slot="entity-view-subtitle" className="type-body break-words text-muted-foreground">
+              {subtitle}
+            </div>
+          )}
           {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
         </div>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
@@ -463,6 +485,8 @@ export function EntityView({
       <div role="status" data-slot="entity-view-notice" className="empty:hidden">
         {notice}
       </div>
+
+      {strip && <div data-slot="entity-view-strip">{strip}</div>}
 
       {layout === 'rail' ? (
         <div className={RAIL_LAYOUT.columns}>

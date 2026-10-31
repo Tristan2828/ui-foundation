@@ -36,6 +36,13 @@ describe("applyUrlChanges", () => {
 describe("viewToUrlChanges", () => {
   const current = new URLSearchParams("search=mouse&status=draft&tags=bulky&sort=name:asc&page=4&other=keep");
 
+  it("sets a view's grouping ('' turns it off) and keeps the one on when the view names none", () => {
+    const grouped = new URLSearchParams("group=status&page=2");
+    expect(applyUrlChanges(grouped, viewToUrlChanges(FILTERS, MULTI, { group: "area" })).get("group")).toBe("area");
+    expect(applyUrlChanges(grouped, viewToUrlChanges(FILTERS, MULTI, { group: "" })).has("group")).toBe(false);
+    expect(applyUrlChanges(grouped, viewToUrlChanges(FILTERS, MULTI, {})).get("group")).toBe("status");
+  });
+
   it("sets exactly the view's filters and sort, clearing every filter it doesn't name", () => {
     const view = viewToUrlChanges(FILTERS, MULTI, {
       filters: { status: "active" },

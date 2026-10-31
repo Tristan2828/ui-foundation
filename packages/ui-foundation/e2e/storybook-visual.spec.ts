@@ -114,6 +114,13 @@ const COMPOSITE_STORIES = [
   { id: 'app-listeditor--rows-that-open', mustShow: 'Romanian deadlift' },
   // A totals row under the columns it adds up, a pinned label (#225).
   { id: 'app-datatable--totals', mustShow: 'Total · 8 items' },
+  // The Group menu at None, rows grouped by a multi-value field (folding
+  // headings, counts, summaries), the list with a detail panel, and a
+  // record's goal and key numbers in its header.
+  { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
+  { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
+  { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
+  { id: 'app-entityview--header-slots', mustShow: 'Boxes packed' },
   // Cell pattern 9's step bar and star, and pattern 13's ring (#154, #156).
   { id: 'patterns-scales--default', mustShow: 'On a card' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },

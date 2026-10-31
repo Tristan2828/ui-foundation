@@ -7,7 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import type { AppError } from '@/api/contracts'
 import { editInPlace } from './edit-in-place'
+import { EditableValue } from './editable-value'
 import { EntityView, type EntityViewLayout, type EntityViewSection } from './entity-view'
+import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { Notice } from './notice'
 import { RichTextEditor } from './rich-text-editor'
@@ -455,3 +457,71 @@ function AutosaveInRouter() {
 }
 
 export const Autosave: StoryObj = { render: () => <AutosaveInRouter /> }
+
+// HeaderSlots: `subtitle` under the title, a goal edited in place there
+// (an <EditableValue> of its own), and `strip`, the record's key numbers
+// as <KeyStats>, above the rail and the main column (before both on a
+// phone).
+function HeaderSlotsRecord() {
+  const [goal, setGoal] = useState('Every team settled on the third floor by the end of March.')
+  const goals = editInPlace<string>({
+    kind: 'text',
+    value: goal,
+    save: (next) => new Promise((resolve) => setTimeout(() => resolve(setGoal(next)), 300)),
+    control: (props) => (
+      <Input
+        id={props.id}
+        value={props.value}
+        onChange={(event) => props.onChange(event.target.value)}
+        readOnly={props.disabled}
+        aria-invalid={props.invalid || undefined}
+        aria-label={props.label}
+        aria-describedby={props.describedBy}
+      />
+    ),
+  })
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Summary',
+      placement: 'rail',
+      fields: [
+        { label: 'Floor', value: 'Third' },
+        { label: 'Starts', value: 'Mar 2, 2026' },
+      ],
+    },
+    { title: 'Notes', content: <Markdown>Measure twice, cut once.</Markdown> },
+  ]
+  return (
+    <EntityView
+      layout="rail"
+      isLoading={false}
+      back={{ to: '/', label: 'Projects' }}
+      title="Office move"
+      subtitle={
+        <EditableValue label="Goal" edit={goals} layout="inline">
+          {goal}
+        </EditableValue>
+      }
+      badges={<Badge variant="outline">In progress</Badge>}
+      strip={
+        <KeyStats
+          stats={[
+            { label: 'Boxes packed', value: '84', hint: 'of 125' },
+            { label: 'Teams moved', value: '1', hint: 'of 3' },
+            { label: 'Next lift slot', value: 'Mar 9' },
+            { label: 'Budget left', value: null },
+          ]}
+        />
+      }
+      actions={<Button variant="outline">Edit</Button>}
+      sections={sections}
+    />
+  )
+}
+
+function HeaderSlotsInRouter() {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <HeaderSlotsRecord /> }]))
+  return <RouterProvider router={router} />
+}
+
+export const HeaderSlots: StoryObj = { render: () => <HeaderSlotsInRouter /> }

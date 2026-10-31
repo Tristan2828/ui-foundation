@@ -36,6 +36,7 @@ export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export {
   DataTable,
   type DataTableCardLayout,
+  type DataTableGrouping,
   type DataTableProps,
   type DataTableTotals,
   type DataTableWidth,
@@ -44,6 +45,7 @@ export {
 export { type RowGroup } from '@/components/app/table-groups'
 export { byDay, type ByDayOptions } from '@/lib/group-by-day'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
+export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
 export {
   EntityView,
   type EntityViewField,
@@ -157,7 +159,7 @@ export type { ErrorReportingOptions } from '@/error-reporting/reporter'
 export { createQueryClient } from '@/api/query-client'
 
 // Hooks
-export { useTableUrlState } from '@/hooks/use-table-url-state'
+export { useTableUrlState, type TableUrlStateOptions } from '@/hooks/use-table-url-state'
 export { useTableLayout, type TableLayoutOptions } from '@/hooks/use-table-layout'
 export {
   useWidgetLayout,
