@@ -7,6 +7,18 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.50.1 — Board: the empty-column line clears 4.5:1
+
+A fix, no API change. A column with no cards shows its `empty` line as
+`text-muted-foreground` on the column's muted fill, which measured 4.34:1
+in light, under AA. The columns now redefine `--muted-foreground` as
+`--table-highlight-muted-foreground` (as 4.49.0 did for the picked row;
+the usual grey in dark), so the line, the footer and the count read at
+4.5:1. A new `EmptyColumns` story puts the line under axe in both themes.
+
+**How an app adopts:** nothing. An app that darkened the empty line itself
+can drop it.
+
 ## 4.50.0 â€” The notes editor: Full screen and Indent/Outdent for floating-toolbar fields
 
 Additive, so a minor. 4.48.0's Full screen, Indent and Outdent sat on the
