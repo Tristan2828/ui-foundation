@@ -18,6 +18,7 @@ from foundation_backend import mcp, mcp_tools
 from foundation_backend.mcp import ListArgs, McpEntity, check_entities, register_entities
 from foundation_backend.mcp_tools import Caller, ToolError, call_tool, tool_definitions
 from foundation_backend.models import User
+from foundation_backend.routers import mcp as mcp_router
 from foundation_backend.schemas import CamelModel
 
 
@@ -97,3 +98,73 @@ async def test_an_unknown_entity_is_a_refusal_naming_the_ones_there_are(session:
     register_entities({"notes": NOTE})
     with pytest.raises(ToolError, match="Entities: notes"):
         await call_tool(session, caller, "list", {"entity": "widgets"})
+
+
+class ShelfOut(CamelModel):
+    id: int
+    shelf_name: str
+
+
+class BookOut(CamelModel):
+    id: int
+    title: str
+    shelf_id: int
+
+
+SHELF = McpEntity(
+    name="shelves",
+    singular="shelf",
+    out=ShelfOut,
+    title="shelfName",
+    get=lambda _s, _u, record_id: _found(ShelfOut(id=record_id, shelf_name="Top")),
+    list=lambda _s, _u, _a: _found(([], 0)),
+)
+BOOK = McpEntity(
+    name="books",
+    singular="book",
+    out=BookOut,
+    title="title",
+    get=lambda _s, _u, record_id: _found(BookOut(id=record_id, title="Dune", shelf_id=3)),
+    list=lambda _s, _u, _a: _found(([], 0)),
+    relations={"shelfId": "shelves"},
+)
+
+
+async def _found(value: Any) -> Any:
+    return value
+
+
+class NoteFilters(CamelModel):
+    pinned: bool
+
+
+async def test_a_related_records_camel_case_title_is_read_by_its_wire_name(session: AsyncSession, caller: Caller) -> None:
+    # A title like "shelfName" is the out field's wire name; the related
+    # record is an out model, whose attribute is shelf_name.
+    register_entities({"books": BOOK, "shelves": SHELF})
+    fetched = await call_tool(session, caller, "fetch", {"url": "/books/1"})
+    assert fetched is not None and "Shelf: Top (/shelves/3)" in fetched, fetched
+
+
+async def test_a_required_filter_left_out_is_a_refusal(session: AsyncSession, caller: Caller) -> None:
+    register_entities({"notes": replace(NOTE, filters=NoteFilters)})
+    with pytest.raises(ToolError, match="Filters not understood.\n- pinned"):
+        await call_tool(session, caller, "list", {"entity": "notes"})
+
+
+async def test_an_error_in_an_entity_is_a_failed_tool_naming_it(session: AsyncSession, caller: Caller, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Not a 500 (a chat's connector says only "isn't responding"): the
+    # tool fails with the error's class and message, and it is reported.
+    reported: list[BaseException] = []
+    monkeypatch.setattr(mcp_router, "report_error", lambda exc, _context: reported.append(exc))
+
+    async def _broken(_session: AsyncSession, _user: User, _record_id: int) -> NoteOut:
+        raise AttributeError("'NoteOut' object has no attribute 'shelf'")
+
+    register_entities({"notes": replace(NOTE, get=_broken)})
+    message = {"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "fetch", "arguments": {"url": "/notes/1"}}}
+    answer = await mcp_router._handle(message, caller, session)
+    assert answer is not None and answer["result"]["isError"] is True
+    text = answer["result"]["content"][0]["text"]
+    assert text == "The fetch tool failed with an error in the app: AttributeError: 'NoteOut' object has no attribute 'shelf'"
+    assert len(reported) == 1 and isinstance(reported[0], AttributeError)

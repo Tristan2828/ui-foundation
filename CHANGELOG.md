@@ -29,6 +29,31 @@ Additive, so a minor.
 **How an app adopts:** nothing to change. Notes that contain `==x==`
 typed on purpose now read as highlighted words.
 
+## 4.47.1 — MCP: an error in an entity is a failed tool, not a 500
+
+A fix, so a patch. Three things a chat's connector reported only as "The
+connector's server isn't responding", retried for ever:
+
+- **An unexpected exception in a tool** (an entity's `get`, `list`,
+  `create`, …, or a router's `HTTPException` the entity didn't turn into
+  a refusal) was a 500. It is now a failed tool result (`isError`) that
+  names the error's class and message, scrubbed and capped as error
+  reports are: "The fetch tool failed with an error in the app:
+  AttributeError: …". The session is rolled back and the error is
+  reported (`report_error`, tagged `mcp_tool`) as any 500 is.
+- **`list` with a required filter left out** (an entity whose `filters`
+  model has a required field, called with no `filters`) skipped the
+  validation and raised inside the entity's `list`. The filters are now
+  validated even when none are given, so it is the usual "Filters not
+  understood" refusal naming the field.
+- **`fetch` of a record related to an entity whose `title` is
+  camelCase** (`"assetClass"`) read the title as an attribute of the
+  related record, which is snake_case, and raised `AttributeError`. It
+  is now read by wire name from the record's out model, as everywhere
+  else.
+
+**How an app adopts:** bump both packages; nothing else changes.
+
 ## 4.47.0 — Phone layouts: EntityView's main column first, ModuleStrip's row of chips
 
 Additive, so a minor.
