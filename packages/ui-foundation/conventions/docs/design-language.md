@@ -12,14 +12,14 @@
 - [Typography](#typography) · lines 245–327
   - [Written text (notes)](#written-text-notes) · lines 276–327
 - [Density](#density) · lines 329–386
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 388–466
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 468–526
-- [Notices](#notices) · lines 528–556
-- [A value over time](#a-value-over-time) · lines 558–591
-- [A list as a board](#a-list-as-a-board) · lines 593–644
-- [A list as cards](#a-list-as-cards) · lines 646–692
-- [Picking at random](#picking-at-random) · lines 694–725
-- [Filling in what's missing](#filling-in-whats-missing) · lines 727–777
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 388–502
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 504–562
+- [Notices](#notices) · lines 564–592
+- [A value over time](#a-value-over-time) · lines 594–627
+- [A list as a board](#a-list-as-a-board) · lines 629–680
+- [A list as cards](#a-list-as-cards) · lines 682–728
+- [Picking at random](#picking-at-random) · lines 730–761
+- [Filling in what's missing](#filling-in-whats-missing) · lines 763–813
 
 <!-- /index -->
 
@@ -446,7 +446,42 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
   (`"<app>:hub.<widget>"`) so a card folded stays folded on that device,
   and `defaultCollapsed` for one that should start folded. The chevron
   at the header's end is named by the title; the header's link stays
-  while folded.
+  while folded. Give a card that folds a `summary`: one short value its
+  header shows while folded (`summary={data?.total}`, `"Due today"`),
+  so a hub of folded cards still reads at a glance. It follows the
+  card's state: a small skeleton while loading, a muted dash on an error
+  (the error itself is in the body, opened), and `emptySummary`
+  (`"None"`) or nothing when empty.
+- **One open at a time on a phone:** put the cards in a
+  `WidgetCardGroup accordion="mobile"` (its `className` is the grid),
+  give each an `id`, and name the one to start open in `defaultOpen`.
+  Below the sidebar's breakpoint every card folds, opening one folds the
+  others, and a tap anywhere on a header (not its link) toggles it; on a
+  desktop the cards keep their own `collapsible`. `accordion` alone does
+  it at every width.
+- **Letting someone order the cards:** keep the order in
+  `useWidgetLayout('<app>:hub', ids)` (every card's id, in the default
+  order), render `layout.visible`, and put a `WidgetLayoutSheet` (its
+  Customize button) beside the page's title, with each card's title by id.
+  Its rows have Up, Down and a Show switch, with Reset: the same on a
+  phone, a desktop and a keyboard (the focus stays on the button
+  pressed). The order is kept on the device; a removed id drops out and
+  a new one falls in at its default place. To follow the person between
+  devices, pass `{ store }`, a `WidgetLayoutStore` over the app's
+  backend.
+
+```tsx
+const HUB_CARDS = { ready: 'Ready to start', waiting: 'Waiting on', links: 'Saved links' }
+const layout = useWidgetLayout('my-app:hub', Object.keys(HUB_CARDS))
+
+<div className="flex items-center justify-between gap-3">
+  <h1 className="type-page-title text-foreground">Home</h1>
+  <WidgetLayoutSheet layout={layout} titles={HUB_CARDS} />
+</div>
+<WidgetCardGroup accordion="mobile" defaultOpen="ready" className="grid … gap-4">
+  {layout.visible.map((id) => <HubCard key={id} id={id} />)}
+</WidgetCardGroup>
+```
 - **A row is one line:** its text is a link (`to` for a route in the
   app, `href` for an external address, which opens in a new tab with the
   external-link mark) or plain text, cut with an ellipsis, the whole of
@@ -462,7 +497,8 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
   many 288px-or-wider columns as fit). Each card is as tall as its rows;
   it doesn't stretch to its tallest neighbour.
 - Storybook's `app/WidgetCard` shows three widgets on a page and every
-  one in each state; its checks run axe and the token and glyph checks in
+  one in each state, a folded summary in each state and an accordion,
+  and `app/WidgetLayoutSheet` a hub with its Customize sheet; its checks run axe and the token and glyph checks in
   both themes and at `large`.
 
 ## Module cards (a hub's places)

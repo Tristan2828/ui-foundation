@@ -23,6 +23,21 @@
 // where that's blocked). The body is hidden, not unmounted, so whatever
 // the app keeps in it stays put.
 //
+// `summary` (#263) is one short value a folded card shows in its header
+// ("3", "Due today"), so a hub of folded cards still reads at a glance.
+// It follows the card's state: a small skeleton while loading, a muted
+// dash ("Couldn't load" to a screen reader) on an error, `emptySummary`
+// (or nothing) when empty. Opened, the summary goes and the body shows,
+// the error in it as before. The chevron is described by it.
+//
+// WidgetCardGroup (#263) makes its cards an accordion: every card in it
+// folds, opening one folds the others, and a click anywhere on a header
+// (not on its link or another control) toggles it; the chevron stays the
+// keyboard's way in. `accordion="mobile"` does that only below the
+// sidebar's breakpoint (useIsMobile), so a desktop hub keeps each card's
+// own `collapsible`. While the accordion is on it owns the folding and a
+// card's `storageKey` is left alone.
+//
 // The header's link is an app route (`to`) or, for a widget about a
 // service outside the app, its address (`href`, #248): that one opens in a
 // new tab, with the outside-link mark and a screen reader's "(opens in a
@@ -38,7 +53,7 @@
 // a row's to 4px, for a dense hub; text stays at type-body. On a phone a
 // compact row is 44px tall and its link fills that height, so it stays a
 // finger's target.
-import { useId, type ReactNode } from 'react'
+import { createContext, useContext, useId, useState, type MouseEvent, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
 import { ChevronDownIcon, ExternalLinkIcon } from 'lucide-react'
 import { cn } from 'cn'
@@ -48,10 +63,16 @@ import type { IconComponent } from '@/components/app/icon-component'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { useRememberedFlag } from '@/hooks/use-remembered-flag'
 
 export interface WidgetCardProps {
   title: string
+  /**
+   * The card's id, on its region: the one WidgetCardGroup's `defaultOpen`
+   * names and useWidgetLayout orders (`"ready"`). Unique on the page.
+   */
+  id?: string
   /**
    * An icon shown before the title: a Lucide icon, or an app's own mark (an
    * outside service's logo on a card about that service). Decorative: the
@@ -87,6 +108,14 @@ export interface WidgetCardProps {
    * Left out, it starts at `defaultCollapsed` on every visit.
    */
   storageKey?: string
+  /**
+   * One short value shown in the header while the card is folded: a count
+   * (`3`), or a word or two (`"Due today"`). A skeleton while loading, a
+   * muted dash on an error. Ignored while open.
+   */
+  summary?: ReactNode
+  /** What a folded card's summary says when it's empty (`"None"`); nothing when left out. */
+  emptySummary?: ReactNode
   children?: ReactNode
   className?: string
 }
@@ -98,6 +127,7 @@ const HEADER_LINK_CLASS =
   'hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring/50'
 
 export function WidgetCard({
+  id,
   title,
   icon: Icon,
   headingLevel = 2,
@@ -111,21 +141,39 @@ export function WidgetCard({
   collapsible = false,
   defaultCollapsed = false,
   storageKey,
+  summary,
+  emptySummary,
   children,
   className,
 }: WidgetCardProps) {
   const headingId = useId()
   const contentId = useId()
+  const summaryId = useId()
+  const ownId = useId()
+  const cardId = id ?? ownId
+  const group = useContext(GroupContext)
+  const inAccordion = group !== null && group.active
   const Heading = `h${headingLevel}` as const
   const state = error ? 'error' : isLoading ? 'loading' : isEmpty ? 'empty' : 'success'
   const [folded, setFolded] = useRememberedFlag(
     collapsible && storageKey !== undefined ? `${storageKey}:collapsed` : undefined,
     defaultCollapsed,
   )
-  const collapsed = collapsible && folded
+  const collapsed = inAccordion ? group.openId !== cardId : collapsible && folded
+  const foldable = inAccordion || collapsible
+  const toggle = () => (inAccordion ? group.setOpenId(collapsed ? cardId : null) : setFolded(!collapsed))
+  const summaryShown = collapsed && (summary !== undefined || emptySummary !== undefined)
+  // In an accordion the whole header toggles, except where the click lands
+  // on its link or another control (the chevron toggles on its own).
+  const onHeaderClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (!inAccordion) return
+    if ((event.target as Element).closest('a, button, input, select, textarea, [role="switch"]')) return
+    toggle()
+  }
 
   return (
     <section
+      id={id}
       aria-labelledby={headingId}
       data-slot="widget-card"
       data-state={state}
@@ -133,13 +181,21 @@ export function WidgetCard({
       className={cn('min-w-0 self-start', className)}
     >
       <Card className="density-compact:[--card-spacing:--spacing(3)]">
-        <CardHeader className="flex items-center justify-between gap-3">
+        <CardHeader
+          onClick={onHeaderClick}
+          className={cn('flex items-center justify-between gap-3', inAccordion && 'cursor-pointer select-none')}
+        >
           <Heading id={headingId} className="flex min-w-0 items-center gap-2 type-section-title text-foreground">
             {Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
             <span className="truncate">{title}</span>
           </Heading>
-          {(link || collapsible) && (
+          {(link || foldable || summaryShown) && (
             <div className="flex shrink-0 items-center gap-1">
+              {summaryShown && (
+                <span id={summaryId} data-slot="widget-card-summary" className="mr-2 flex items-center">
+                  <WidgetCardSummary state={state} summary={summary} emptySummary={emptySummary} />
+                </span>
+              )}
               {link?.href !== undefined ? (
                 <a
                   href={link.href}
@@ -159,14 +215,15 @@ export function WidgetCard({
                   </Link>
                 )
               )}
-              {collapsible && (
+              {foldable && (
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   aria-labelledby={headingId}
+                  aria-describedby={summaryShown ? summaryId : undefined}
                   aria-expanded={!collapsed}
                   aria-controls={contentId}
-                  onClick={() => setFolded(!collapsed)}
+                  onClick={toggle}
                   // The button's own open look (a filled background) would
                   // read as pressed: the chevron says it.
                   className="-my-1 -mr-1.5 aria-expanded:not-hover:bg-transparent"
@@ -192,6 +249,76 @@ export function WidgetCard({
         </CardContent>
       </Card>
     </section>
+  )
+}
+
+// A folded card's one value, by state. Loading's skeleton is about one
+// number wide; an error's dash says "Couldn't load" to a screen reader,
+// the error itself waiting in the body.
+function WidgetCardSummary({
+  state,
+  summary,
+  emptySummary,
+}: {
+  state: 'loading' | 'error' | 'empty' | 'success'
+  summary: ReactNode
+  emptySummary: ReactNode
+}) {
+  if (state === 'loading') {
+    return (
+      <>
+        <Skeleton data-state="loading" className="h-4 w-8" />
+        <span className="sr-only">Loading</span>
+      </>
+    )
+  }
+  if (state === 'error') {
+    return (
+      <span data-state="error" className="type-label text-muted-foreground">
+        <span aria-hidden="true">—</span>
+        <span className="sr-only">Couldn't load</span>
+      </span>
+    )
+  }
+  if (state === 'empty') {
+    return emptySummary === undefined ? null : (
+      <span data-state="empty" className="type-label text-muted-foreground">
+        {emptySummary}
+      </span>
+    )
+  }
+  return <span className="type-label tabular-nums text-foreground">{summary}</span>
+}
+
+type GroupState = { active: boolean; openId: string | null; setOpenId: (id: string | null) => void }
+
+const GroupContext = createContext<GroupState | null>(null)
+
+export interface WidgetCardGroupProps {
+  /**
+   * One card open at a time: `true` always, `"mobile"` only below the
+   * sidebar's breakpoint (a desktop hub keeps each card's own
+   * `collapsible`), `false` never (the group is a plain wrapper).
+   */
+  accordion?: boolean | 'mobile'
+  /** The `id` of the card open at first; all folded (showing their summaries) when left out. */
+  defaultOpen?: string | null
+  children: ReactNode
+  /** The wrapper's classes: the hub's grid of cards, usually. */
+  className?: string
+}
+
+/** Wraps a hub's WidgetCards so that opening one folds the others (on a phone only, with `accordion="mobile"`). */
+export function WidgetCardGroup({ accordion = true, defaultOpen = null, children, className }: WidgetCardGroupProps) {
+  const isMobile = useIsMobile()
+  const [openId, setOpenId] = useState<string | null>(defaultOpen)
+  const active = accordion === 'mobile' ? isMobile : accordion
+  return (
+    <GroupContext.Provider value={{ active, openId, setOpenId }}>
+      <div data-slot="widget-card-group" data-accordion={active || undefined} className={className}>
+        {children}
+      </div>
+    </GroupContext.Provider>
   )
 }
 
