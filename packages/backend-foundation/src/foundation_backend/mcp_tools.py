@@ -167,7 +167,8 @@ async def _render(session: AsyncSession, user: User, entity: McpEntity, data: di
                     found = await related.get(session, user, related_id)
                 except HTTPException:
                     found = None
-                title = getattr(found, related.title) if found is not None else "(missing)"
+                # By wire name, as everywhere: `title` may be camelCase.
+                title = _dump(related, found)[related.title] if found is not None else "(missing)"
                 names.append(f"{title} ({_address(related, related_id)})")
             text = ", ".join(names) if names else "(none)"
         else:
@@ -276,9 +277,11 @@ async def tool_list(session: AsyncSession, caller: Caller, args: dict[str, Any])
             raise ToolError(f"sort must be one of: {allowed}.")
     raw = _as_dict(args.get("filters"), "filters")
     filters: dict[str, Any] = {}
-    if raw:
-        if entity.filters is None:
-            raise ToolError(f"{entity.name} has no filters.")
+    if raw and entity.filters is None:
+        raise ToolError(f"{entity.name} has no filters.")
+    # Validated even when none are given: a required filter left out is
+    # the chat's mistake, said as one, not an error in the entity's list.
+    if entity.filters is not None:
         try:
             parsed = entity.filters.model_validate(raw)
         except ValidationError as exc:
