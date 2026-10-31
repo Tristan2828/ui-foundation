@@ -118,6 +118,7 @@ export {
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
+export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
 export { DEFAULT_IMAGE_TYPES, type ImageUpload, type ImageUploadResult } from '@/lib/image-file'
 export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
