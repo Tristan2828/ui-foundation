@@ -5,15 +5,21 @@
 // same as its keyboard shortcut.
 import { lift, setBlockType, toggleMark, wrapIn } from '@milkdown/kit/prose/commands'
 import { Fragment, type MarkType, type Node as ProseNode, type NodeType, type Schema } from '@milkdown/kit/prose/model'
-import { liftListItem, wrapInList } from '@milkdown/kit/prose/schema-list'
+import { liftListItem, sinkListItem, wrapInList } from '@milkdown/kit/prose/schema-list'
 import { TextSelection, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { CalloutKind } from '@/lib/markdown-callout'
+import { HIGHLIGHT_COLORS, type HighlightColor } from '@/lib/markdown-highlight'
 
 export type FormatId =
   | 'bold'
   | 'italic'
   | 'strike'
   | 'code'
+  | 'highlight'
+  | HighlightFormat
+  | 'highlight-off'
+  | 'indent'
+  | 'outdent'
   | 'text'
   | 'heading1'
   | 'heading2'
@@ -27,6 +33,15 @@ export type FormatId =
   | 'divider'
   | 'table'
   | 'link'
+
+/** Words highlighted in each colour. `highlight` is the toolbar's menu of them. */
+export type HighlightFormat = `highlight-${HighlightColor}`
+
+/** The colour a highlight format puts on, or null when it isn't one. */
+export function highlightColorOf(id: FormatId): HighlightColor | null {
+  const color = id.startsWith('highlight-') ? id.slice('highlight-'.length) : null
+  return HIGHLIGHT_COLORS.find((one) => one === color) ?? null
+}
 
 /** A callout of each kind: `callout` is a note, the default. */
 export type CalloutFormat = 'callout' | `callout-${Exclude<CalloutKind, 'note'>}`
@@ -47,6 +62,43 @@ const MARKS: Partial<Record<FormatId, string>> = {
   strike: 'strike_through',
   code: 'inlineCode',
   link: 'link',
+}
+
+/**
+ * The colour of the highlight on the selection (the caret's own, or what
+ * is typed next, with nothing selected), or null when there is none or the
+ * words are highlighted in more than one.
+ */
+export function highlightColor(state: EditorState): HighlightColor | null {
+  const type = state.schema.marks.highlight
+  if (!type) return null
+  const { from, to, empty, $from } = state.selection
+  const colors = new Set<string | null>()
+  if (empty) colors.add((type.isInSet(state.storedMarks ?? $from.marks())?.attrs.color as string | undefined) ?? null)
+  else
+    state.doc.nodesBetween(from, to, (node) => {
+      if (node.isInline) colors.add((type.isInSet(node.marks)?.attrs.color as string | undefined) ?? null)
+    })
+  if (colors.size !== 1) return null
+  const [only] = [...colors]
+  return HIGHLIGHT_COLORS.find((color) => color === only) ?? null
+}
+
+// Highlights the selection in `color` (what was highlighted before, in any
+// colour, replaced), or takes the highlight off with null. With nothing
+// selected it is what is typed next.
+function setHighlight(state: EditorState, dispatch: Dispatch, color: HighlightColor | null): boolean {
+  const type = state.schema.marks.highlight
+  if (!type) return false
+  const { from, to, empty } = state.selection
+  if (empty) {
+    const tr = state.tr.removeStoredMark(type)
+    dispatch(color ? tr.addStoredMark(type.create({ color })) : tr)
+    return true
+  }
+  const tr = state.tr.removeMark(from, to, type)
+  dispatch(color ? tr.addMark(from, to, type.create({ color })) : tr)
+  return true
 }
 
 function markOn(state: EditorState, type: MarkType): boolean {
@@ -80,12 +132,18 @@ export function formatOn(state: EditorState, id: FormatId): boolean {
   const parent = state.selection.$from.parent
   const level = HEADING_LEVEL[id]
   if (level) return parent.type.name === 'heading' && parent.attrs.level === level
+  if (id === 'highlight') return highlightColor(state) !== null
+  const color = highlightColorOf(id)
+  if (color) return highlightColor(state) === color
   const kind = calloutKindOf(id)
   if (kind) return ancestor(state, (node) => node.type.name === 'callout')?.node.attrs.kind === kind
   switch (id) {
     case 'text':
       return parent.type.name === 'paragraph' && !ancestor(state, (node) => isList(node) || node.type.name === 'blockquote')
     case 'divider':
+    case 'indent':
+    case 'outdent':
+    case 'highlight-off':
       return false
     case 'table':
       return tableAt(state) !== null
@@ -137,6 +195,11 @@ export function toggleFormat(state: EditorState, dispatch: Dispatch, id: FormatI
   const { schema } = state
   const mark = MARKS[id]
   if (mark && id !== 'link') return toggleMark(schema.marks[mark])(state, dispatch)
+  const color = highlightColorOf(id)
+  if (color) return setHighlight(state, dispatch, formatOn(state, id) ? null : color)
+  if (id === 'highlight-off') return setHighlight(state, dispatch, null)
+  if (id === 'indent') return sinkListItem(schema.nodes.list_item)(state, dispatch)
+  if (id === 'outdent') return liftListItem(schema.nodes.list_item)(state, dispatch)
   const on = formatOn(state, id)
   const paragraph = schema.nodes.paragraph
   const level = HEADING_LEVEL[id]

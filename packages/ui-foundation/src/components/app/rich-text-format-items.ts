@@ -13,6 +13,9 @@ import {
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
+  HighlighterIcon,
+  IndentDecreaseIcon,
+  IndentIncreaseIcon,
   ItalicIcon,
   LinkIcon,
   ListChecksIcon,
@@ -27,7 +30,8 @@ import {
 } from 'lucide-react'
 import { CALLOUT_KINDS } from '@/lib/markdown-callout'
 import { CALLOUT_LOOK } from './prose-look'
-import type { CalloutFormat, FormatId } from './rich-text-formats'
+import { HIGHLIGHT_COLORS } from '@/lib/markdown-highlight'
+import type { CalloutFormat, FormatId, HighlightFormat } from './rich-text-formats'
 
 export type FormatItem = {
   id: FormatId
@@ -40,6 +44,10 @@ export type FormatItem = {
   keys?: string
   /** More for the tooltip than the shortcut. */
   hint?: string
+  /** Does something rather than turns on and off: a plain button, never pressed. */
+  action?: boolean
+  /** Only in a toolbar on a touch screen or a narrow one, where the keyboard has no Tab. */
+  touch?: boolean
 }
 
 export const FORMAT_GROUPS: FormatItem[][] = [
@@ -48,6 +56,7 @@ export const FORMAT_GROUPS: FormatItem[][] = [
     { id: 'italic', label: 'Italic', icon: ItalicIcon, keys: 'Mod+I' },
     { id: 'strike', label: 'Strikethrough', icon: StrikethroughIcon, keys: 'Mod+Shift+S' },
     { id: 'code', label: 'Code', icon: CodeIcon, keys: 'Mod+E' },
+    { id: 'highlight', label: 'Highlight', icon: HighlighterIcon },
   ],
   [
     { id: 'heading1', label: 'Heading 1', icon: Heading1Icon, keys: 'Block+1' },
@@ -58,6 +67,8 @@ export const FORMAT_GROUPS: FormatItem[][] = [
     { id: 'tasks', label: 'Task list', icon: ListChecksIcon, keys: 'Block+4', hint: 'tick an item: Mod+Shift+Enter' },
     { id: 'bullets', label: 'Bulleted list', icon: ListIcon, keys: 'Block+5' },
     { id: 'numbers', label: 'Numbered list', icon: ListOrderedIcon, keys: 'Block+6' },
+    { id: 'outdent', label: 'Outdent', icon: IndentDecreaseIcon, hint: 'a list item, one level out', action: true, touch: true },
+    { id: 'indent', label: 'Indent', icon: IndentIncreaseIcon, hint: 'a list item, one level in', action: true, touch: true },
   ],
   [
     { id: 'quote', label: 'Quote', icon: TextQuoteIcon, keys: 'Mod+Shift+B' },
@@ -80,6 +91,16 @@ export const CALLOUT_VARIANTS: FormatItem[] = CALLOUT_KINDS.filter((kind) => kin
   id: `callout-${kind}` as CalloutFormat,
   label: `${CALLOUT_LOOK[kind].label} callout`,
   icon: CALLOUT_LOOK[kind].icon,
+}))
+
+/**
+ * Highlight in each colour, for the slash menu: "Green highlight". Not on
+ * the toolbar (its Highlight is a menu of them).
+ */
+export const HIGHLIGHT_VARIANTS: FormatItem[] = HIGHLIGHT_COLORS.map((color) => ({
+  id: `highlight-${color}` as HighlightFormat,
+  label: `${color[0].toUpperCase()}${color.slice(1)} highlight`,
+  icon: HighlighterIcon,
 }))
 
 /** Notion's block keys: the digit after Ctrl+Shift (Cmd+Option on a Mac), and its format. */

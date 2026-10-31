@@ -9,7 +9,7 @@
 // list, a quote or a code block.
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
-import { CALLOUT_VARIANTS, FORMAT_GROUPS, type FormatItem } from './rich-text-format-items'
+import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, type FormatItem } from './rich-text-format-items'
 import { toggleFormat, type FormatId } from './rich-text-formats'
 
 /** Where the "/" that opened the menu is, while it's open. */
@@ -104,20 +104,25 @@ const KEYWORDS: Partial<Record<FormatId, string[]>> = {
   codeBlock: ['pre'],
   divider: ['hr', 'rule', 'line', 'separator', '---'],
   table: ['grid', 'columns'],
+  'highlight-amber': ['highlight', 'mark', 'marker', 'colour', 'color'],
+  'highlight-yellow': ['highlight', 'mark', 'marker', 'colour', 'color'],
+  'highlight-green': ['highlight', 'mark', 'marker', 'colour', 'color'],
+  'highlight-red': ['highlight', 'mark', 'marker', 'colour', 'color'],
 }
 
 // The menu's items: the blocks, in the toolbar's order. The kinds of
-// callout past the default only once something's typed ("/warn"), so
+// callout past the default, and the highlights, only once something's
+// typed ("/warn"), so
 // the list "/" opens with stays short.
 const BLOCKS = FORMAT_GROUPS.flat().filter((item) => KEYWORDS[item.id])
-const TYPED_ONLY = CALLOUT_VARIANTS
 
 /** The blocks matching what's typed after the "/": in the name, or the start of a keyword. */
 export function slashItems(query: string): FormatItem[] {
   const typed = query.trim().toLowerCase()
   if (!typed) return BLOCKS
   const blocks = [...BLOCKS]
-  blocks.splice(BLOCKS.findIndex((item) => item.id === 'callout') + 1, 0, ...TYPED_ONLY)
+  blocks.splice(BLOCKS.findIndex((item) => item.id === 'callout') + 1, 0, ...CALLOUT_VARIANTS)
+  blocks.push(...HIGHLIGHT_VARIANTS)
   return blocks.filter(
     (item) => item.label.toLowerCase().includes(typed) || KEYWORDS[item.id]!.some((word) => word.startsWith(typed)),
   )
@@ -135,6 +140,8 @@ export function applySlash(view: EditorView, span: SlashQuery, id: FormatId): vo
   if (done) {
     for (const step of done.steps) tr.step(step)
     tr.setSelection(done.selection.getBookmark().resolve(tr.doc))
+    // A highlight picked here is for what is typed next.
+    if (done.storedMarks) tr.setStoredMarks(done.storedMarks)
   }
   view.dispatch(tr.scrollIntoView())
 }

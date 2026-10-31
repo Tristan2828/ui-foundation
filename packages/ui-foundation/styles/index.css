@@ -54,6 +54,10 @@
     --color-info-foreground: var(--info-foreground);
     --color-info-text: var(--info-text);
     --color-link: var(--link);
+    --color-highlight-amber: var(--highlight-amber);
+    --color-highlight-yellow: var(--highlight-yellow);
+    --color-highlight-green: var(--highlight-green);
+    --color-highlight-red: var(--highlight-red);
     --color-rule: var(--rule);
     --color-heading-band: var(--heading-band);
     --color-heading-bar: var(--heading-bar);

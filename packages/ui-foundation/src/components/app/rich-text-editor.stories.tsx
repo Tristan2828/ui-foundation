@@ -17,6 +17,8 @@ const SAMPLE = `# Plan
 Notes with **bold**, *emphasis*, ~~struck~~ and \`inline code\`, and a
 [link to the docs](https://example.com/docs).
 
+Highlights: ==amber==, =={yellow}yellow==, =={green}green== and =={red}red==.
+
 ## Steps
 
 1. Measure the desk
