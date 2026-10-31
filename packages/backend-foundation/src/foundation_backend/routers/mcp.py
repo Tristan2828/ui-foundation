@@ -105,7 +105,7 @@ async def _handle(message: Any, caller: Caller, session: AsyncSession) -> dict[s
             await session.rollback()
             report_error(
                 exc,
-                ErrorContext(source="server", route="/mcp", method="POST", status=500, user_id=caller.user.id, tags={"mcp_tool": name}),
+                ErrorContext(source="server", route="/mcp", method="POST", status=500, user_id=caller.user_id, tags={"mcp_tool": name}),
             )
             return _tool_failed(request_id, f"The {name} tool failed with an error in the app: {type(exc).__name__}: {scrub(str(exc), 500)}")
         if text is None:
