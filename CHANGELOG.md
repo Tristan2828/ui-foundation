@@ -24,6 +24,18 @@ fixed toolbar only, so notes edited where they're read
 **How an app adopts:** nothing to change; an inline field with
 `toolbar="floating"` shows the strip when focused.
 
+## 4.49.0 — DataTable: muted text in the picked row clears 4.5:1
+
+A fix, no API change. With `detailPanel`, the row whose panel is open
+takes the muted fill, and `text-muted-foreground` in its cells measured
+4.34:1 in light, under AA. The picked row now redefines `--muted-foreground`
+as `--table-highlight-muted-foreground` (the darker grey `highlightRow`
+already uses; the usual grey in dark). Axe covers a muted cell in an
+open-panel row, both themes.
+
+**How an app adopts:** nothing. An app that darkened muted text in the
+picked row itself (`in-aria-selected:text-foreground`) can drop it.
+
 ## 4.48.0 — The notes editor: highlight, full screen, Indent and Outdent, a visible new task item
 
 Additive, so a minor.

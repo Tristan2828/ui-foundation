@@ -177,4 +177,19 @@ test.describe('DataTable detail panel', () => {
       expect((await analyze(page)).violations).toEqual([])
     }
   })
+
+  test('muted text in the picked row clears 4.5:1 in both themes', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    for (const theme of ['light', 'dark'] as const) {
+      await page.goto(story('chores-with-panel', '', theme))
+      // "Find the spare keys" has no area: a muted "No area" cell.
+      await row(page, 'Find the spare keys').getByRole('cell', { name: '10 m' }).click()
+      await expect(panel(page)).toBeVisible()
+      const picked = page.locator('tbody tr[aria-selected="true"]')
+      await expect(picked.getByText('No area')).toBeVisible()
+      const results = await new AxeBuilder({ page }).include('tbody tr[aria-selected="true"]').withRules(['color-contrast']).analyze()
+      expect(results.passes.find((rule) => rule.id === 'color-contrast')?.nodes.length).toBeGreaterThan(0)
+      expect(results.violations).toEqual([])
+    }
+  })
 })
