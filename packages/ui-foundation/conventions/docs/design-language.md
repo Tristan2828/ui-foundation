@@ -9,18 +9,18 @@
 - [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 113–126
 - [Logos and brand marks](#logos-and-brand-marks) · lines 128–172
 - [Categorical colour](#categorical-colour) · lines 174–244
-- [Typography](#typography) · lines 246–328
-  - [Written text (notes)](#written-text-notes) · lines 277–328
-- [Density](#density) · lines 330–387
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 389–503
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 505–574
-- [Notices](#notices) · lines 576–604
-- [A value over time](#a-value-over-time) · lines 606–639
-- [A list as a board](#a-list-as-a-board) · lines 641–692
-- [A list as cards](#a-list-as-cards) · lines 694–740
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 742–764
-- [Picking at random](#picking-at-random) · lines 766–797
-- [Filling in what's missing](#filling-in-whats-missing) · lines 799–849
+- [Typography](#typography) · lines 246–337
+  - [Written text (notes)](#written-text-notes) · lines 277–337
+- [Density](#density) · lines 339–396
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 398–512
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 514–583
+- [Notices](#notices) · lines 585–613
+- [A value over time](#a-value-over-time) · lines 615–648
+- [A list as a board](#a-list-as-a-board) · lines 650–701
+- [A list as cards](#a-list-as-cards) · lines 703–749
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 751–773
+- [Picking at random](#picking-at-random) · lines 775–806
+- [Filling in what's missing](#filling-in-whats-missing) · lines 808–858
 
 <!-- /index -->
 
@@ -322,6 +322,15 @@ of its kind's tone behind ordinary text, with the icon in the tone's text
 shade: note `info`, tip `success`, important category slot 2, warning
 `warning`, caution `destructive`. The package draws all of it; an app
 only renders `<Markdown>` or the editor.
+
+Highlighted words (`==words==` in the Markdown) have four colour tokens:
+`--highlight-amber` (the default), `--highlight-yellow`,
+`--highlight-green` and `--highlight-red` (`bg-highlight-amber`, …). Each
+is a wash behind words that keep `--foreground`, so the pair is the
+contrast that counts: light washes in the light theme and deep ones in the
+dark, each pair checked by axe in both (the Default story's four marks).
+Use them as a background behind written text only, never as a tone: a
+status is `success`, `warning`, `destructive` or `info`.
 
 `--link` is for written text only. A link in a table cell is
 `text-foreground` and underlined, never blue: a column of coloured text

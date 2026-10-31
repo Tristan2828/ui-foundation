@@ -44,6 +44,10 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "> A quote\n> over two lines\n\n```ts\nconst x = 1\n```\n\n---\n\nAfter the rule.\n",
     editorWrites: "> A quote\n> over two lines\n\n```ts\nconst x = 1\n```\n\n---\n\nAfter the rule.\n",
   },
+  highlights: {
+    markdown: "Pack the ==shared== shelves, then =={yellow}the **desks**==.\n\nA =={green}green== note and a =={red}red [link](https://example.com)== one.\n",
+    editorWrites: "Pack the ==shared== shelves, then =={yellow}the **desks**==.\n\nA =={green}green== note and a =={red}red [link](https://example.com)== one.\n",
+  },
   rawHtml: {
     markdown: "Before <b>not bold</b> after.\n\n<div>block html</div>\n\n<script>alert(1)</script>\n\nEnd.\n",
     editorWrites: "Before <b>not bold</b> after.\n\n<div>block html</div>\n\n<script>alert(1)</script>\n\nEnd.\n",

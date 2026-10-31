@@ -209,6 +209,13 @@
   /* A link in written text: coloured as well as underlined, so it reads
      as a link at a glance (on white: 5.59). */
   --link: var(--blue-700);
+  /* Highlighted words in written text (the notes editor's highlight, four
+     colours): a wash behind words that keep --foreground. Light washes,
+     text on each measures 11 or more. */
+  --highlight-amber: oklch(0.9 0.1 75);
+  --highlight-yellow: oklch(0.94 0.13 100);
+  --highlight-green: oklch(0.9 0.1 150);
+  --highlight-red: oklch(0.89 0.07 25);
   /* A thematic break (`---`) in written text: a 2px line meant to be
      seen, stronger than --border's hairline (on white: 2.59). */
   --rule: var(--gray-400);
@@ -358,6 +365,11 @@
   --warning-text: var(--amber-400);
   --info-text: var(--blue-400);
   --link: var(--blue-400); /* on near-black: 8.90 */
+  /* Highlighted words: deep washes, --foreground on each measures 7 or more. */
+  --highlight-amber: oklch(0.42 0.09 75);
+  --highlight-yellow: oklch(0.44 0.09 100);
+  --highlight-green: oklch(0.4 0.08 150);
+  --highlight-red: oklch(0.4 0.1 25);
   --rule: var(--gray-600); /* on near-black: 2.54 */
   /* Stronger is lighter on the dark page: halfway from --muted to gray-700. */
   --heading-band: color-mix(in oklab, var(--gray-900), var(--gray-700));

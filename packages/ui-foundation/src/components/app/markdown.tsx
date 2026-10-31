@@ -35,6 +35,9 @@
 //
 // A quote that starts `[!NOTE]` (GitHub's alert syntax) is a callout: a
 // tinted box with its kind's icon (src/lib/markdown-callout.ts).
+//
+// `==words==` is highlighted words (amber, or `=={green}words==`: yellow,
+// green, red): a <mark> on the colour's wash (src/lib/markdown-highlight.ts).
 import { useEffect, useMemo, useRef, type ComponentProps } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -42,6 +45,7 @@ import { cn } from 'cn'
 import { ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
+import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
   CALLOUT_BOX,
@@ -57,7 +61,14 @@ import {
 } from './prose-look'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 
-const REMARK_PLUGINS = [remarkGfm, remarkCallouts]
+const REMARK_PLUGINS = [remarkGfm, remarkCallouts, remarkHighlights]
+
+const HIGHLIGHT_WASH = {
+  amber: 'bg-highlight-amber',
+  yellow: 'bg-highlight-yellow',
+  green: 'bg-highlight-green',
+  red: 'bg-highlight-red',
+}
 
 function isCalloutKind(value: unknown): value is CalloutKind {
   return CALLOUT_KINDS.includes(value as CalloutKind)
@@ -140,6 +151,16 @@ const COMPONENTS: Components = {
     <blockquote {...omitNode(props)} className="flex flex-col gap-3 border-l-2 border-border pl-4 text-muted-foreground" />
   ),
   hr: () => <hr className={PROSE.rule} />,
+  // Highlighted words (remarkHighlights marks them): the colour's wash.
+  mark: (props) => {
+    const { children, ...rest } = omitNode(props)
+    const color = (rest as Record<string, unknown>)['data-color']
+    return (
+      <mark {...rest} className={cn('rounded-sm text-foreground', isHighlightColor(color) ? HIGHLIGHT_WASH[color] : 'bg-highlight-amber')}>
+        {children}
+      </mark>
+    )
+  },
   // A callout (remarkCallouts marks it): its kind's wash and icon, named
   // for screen readers by the kind ("Note: …").
   div: (props) => {
