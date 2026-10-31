@@ -568,11 +568,13 @@ const GROUP_TOGGLE_CLASS =
 // ring inside it (a row has no outline of its own room); the picked one
 // takes the muted fill on every cell, over the zebra stripe and the pinned
 // cells' opaque backgrounds as highlightRow's wash does, with a bar in
-// --primary at its start, so it reads without colour too.
+// --primary at its start, so it reads without colour too. Muted text on that
+// fill measures 4.34:1 in light, so inside the row it takes the same darker
+// grey as a highlighted row's (theme.css).
 const SELECTABLE_ROW_CLASS =
   'cursor-pointer outline-none focus-visible:[&>td]:shadow-[inset_0_2px_0_0_var(--ring),inset_0_-2px_0_0_var(--ring)]'
 const SELECTED_ROW_CLASS =
-  '[&>td]:bg-muted [&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary)] ' +
+  '[--muted-foreground:var(--table-highlight-muted-foreground)] [&>td]:bg-muted [&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary)] ' +
   'focus-visible:[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary),inset_0_2px_0_0_var(--ring),inset_0_-2px_0_0_var(--ring)]'
 
 // The table and the panel side by side once one is picked on a wide
