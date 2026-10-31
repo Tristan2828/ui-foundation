@@ -67,6 +67,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-emojifield--open', mustShow: 'Morning and sleep' },
   // <Board>: a list as columns of cards, every app's second view of a list.
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
+  { id: 'app-board--empty-columns', mustShow: 'No planned projects' },
   { id: 'app-board--states', mustShow: 'No projects yet' },
   // <SpinWheel>: its slices' fills and labels, a picked and a tinted slice, the empty wheel.
   { id: 'app-spinwheel--default', mustShow: 'Spin to pick what to do next.' },
