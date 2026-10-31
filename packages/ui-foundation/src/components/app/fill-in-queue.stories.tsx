@@ -143,7 +143,7 @@ const GAPS: Gap[] = [
     key: 'money-1',
     group: 'money',
     title: 'New desk chair',
-    context: 'Planned purchase · Office',
+    context: 'Planned purchase Â· Office',
     fields: [
       { name: 'price', label: 'Price', kind: 'money', suggestion: { value: 249, note: 'last price seen' } },
       { name: 'buyAt', label: 'Buy at', kind: 'date' },

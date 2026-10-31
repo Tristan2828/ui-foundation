@@ -412,7 +412,7 @@ function GroupLine({ group, label = 'filled' }: { group: FillInQueueGroup; label
       <span className="font-medium">{group.label}</span>
       {group.progress && (
         <span className="tabular-nums">
-          · {group.progress.done} of {group.progress.total} {label}
+          Â· {group.progress.done} of {group.progress.total} {label}
         </span>
       )}
     </p>
