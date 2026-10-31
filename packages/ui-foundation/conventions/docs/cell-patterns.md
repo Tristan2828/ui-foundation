@@ -26,15 +26,15 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 565–648
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 650–685
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 687–760
-- [18. Editable value](#18-editable-value) · lines 762–1208
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1024–1109
-  - [In a table's rows](#in-a-tables-rows) · lines 1111–1196
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1198–1208
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1210–1276
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1278–1342
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1344–1412
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1414–1442
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1444–1518
+- [18. Editable value](#18-editable-value) · lines 762–1216
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1032–1117
+  - [In a table's rows](#in-a-tables-rows) · lines 1119–1204
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1206–1216
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1218–1284
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1286–1350
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1352–1420
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1422–1450
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1452–1526
 
 <!-- /index -->
 
@@ -1003,7 +1003,15 @@ const price = editInPlace({
   icon a menu of kinds. In a table, Tab in the last cell adds a row,
   Enter goes down a column (and out from the last row), bars under and
   beside it add a row or a column, and the toolbar's Table menu inserts
-  rows and columns, aligns a column and deletes.
+  rows and columns, aligns a column and deletes. Selected words can be
+  highlighted in four colours (amber, yellow, green, red) from the
+  toolbars' Highlight menu or with "/highlight", and un-highlighted;
+  they're saved as `==words==` (`=={green}words==` for the others), plain
+  Markdown, and `<Markdown>` shows them. The fixed toolbar's Full screen
+  button fills the window with the field (Esc leaves; nothing is lost or
+  saved by it), and on a touch screen or under 768px it carries Indent
+  and Outdent for list items, where there is no Tab. A new checklist item
+  shows a "To-do" placeholder and the caret until you type.
   `toolbar={false}` leaves out the toolbars and the slash menu where a
   value is short and the shortcuts are enough; `toolbar="floating"` keeps
   the floating one and the slash menu without the bar above (an `inline`

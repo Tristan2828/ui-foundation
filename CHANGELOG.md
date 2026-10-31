@@ -19,6 +19,28 @@ open-panel row, both themes.
 **How an app adopts:** nothing. An app that darkened muted text in the
 picked row itself (`in-aria-selected:text-foreground`) can drop it.
 
+## 4.48.0 — The notes editor: highlight, full screen, Indent and Outdent, a visible new task item
+
+Additive, so a minor.
+
+- **Highlight** in four colours (amber, yellow, green, red) from a
+  Highlight menu on the fixed and the floating toolbar, or `/highlight`
+  in the slash menu, and Remove highlight. Saved as plain Markdown:
+  `==words==` (amber) and `=={green}words==` for the others. `<Markdown>`
+  shows them too. New tokens `--highlight-amber`, `--highlight-yellow`,
+  `--highlight-green`, `--highlight-red` (and `bg-highlight-*`), light
+  and dark; the text on each keeps `--foreground`.
+- **Full screen**: the fixed toolbar's last button makes the field fill
+  the window (Esc or the button leaves); nothing is lost or saved by it.
+- **Indent and Outdent** for list items (bullets, numbers, checklists),
+  in the toolbar on a touch screen or under 768px, where there is no Tab.
+- **A new checklist item** shows a "To-do" placeholder and the caret
+  (its text box had no width).
+- No new exports.
+
+**How an app adopts:** nothing to change. Notes that contain `==x==`
+typed on purpose now read as highlighted words.
+
 ## 4.47.2 — MCP: 4.47.1's failed tool, for a signed-in user
 
 A fix, so a patch. 4.47.1's report of an unexpected tool error read

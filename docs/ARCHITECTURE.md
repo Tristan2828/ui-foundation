@@ -487,6 +487,35 @@ whose Enter would split the line. A pick is one transaction (one undo
 brings the "/…" back). Placed against the field like the floating
 toolbar, for the same reason.
 
+**Highlight, full screen, Indent and Outdent, the new task item (4.48)**
+(`rich-text-highlight-menu.tsx`, `src/lib/markdown-highlight.ts`).
+*Highlight* is a `highlight` mark with a colour, stored as plain Markdown:
+`==words==` (amber, the default) and `=={green}words==` (`yellow`,
+`green`, `red`). HTML was never an option: `<Markdown>` shows raw HTML as
+its characters and the editor refuses to write any. remark has no
+highlight, so two small plugins read the marks out of the parsed text
+nodes (`remarkHighlights` for `<Markdown>`, a `<mark data-color>`;
+`remarkHighlightNodes` for the editor, a `highlight` mark written back
+by `highlightHandler`). Marks pair inside one parent, so words wrap bold
+or a link but never run across blocks; the merge needs nothing, since to
+it the marks are text. The colours are `--highlight-*` tokens. The
+Highlight menu is on the fixed and the floating toolbar (its popup is
+marked `data-rich-text-menu` so focus in it still counts as the
+field's), and `/highlight` in the slash menu (typed only) sets the mark
+for what is typed next. *Full screen* is the field itself made
+`fixed inset-0` (the fixed toolbar's last button), not a dialog or the
+Fullscreen API: the editor stays mounted so nothing is lost, and
+popovers and toasts, which portal to the body, stay above it (the
+Fullscreen API's top layer would hide them). Inside a transformed
+ancestor (a dialog) it fills that ancestor. Esc leaves, after the
+floating toolbar and the slash menu take theirs. *Indent* and *Outdent*
+(`sinkListItem`/`liftListItem`) are in the toolbar only on a touch
+screen or under 768px (`(pointer: coarse), (max-width: 767px)`), where
+there is no Tab. A *new task item* took no width (its text box was a
+shrink-to-fit flex child), so the caret was zero-width and nothing named
+the line; it fills the row now and shows a "To-do" placeholder (a node
+decoration) while it is empty and the caret is in it.
+
 **Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
 (a `Popover` with no trigger, placed through the `anchor` the package's
 `PopoverContent` takes). Only web and email addresses, a path on the site

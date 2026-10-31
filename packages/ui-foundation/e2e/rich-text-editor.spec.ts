@@ -303,8 +303,8 @@ test.describe('toolbar', () => {
   test('one row of named buttons, each with its shortcut, one tab stop', async ({ page }) => {
     const bar = toolbar(page, 'formats')
     const labels = [
-      'Bold', 'Italic', 'Strikethrough', 'Code', 'Heading 1', 'Heading 2', 'Heading 3',
-      'Task list', 'Bulleted list', 'Numbered list', 'Quote', 'Callout', 'Code block', 'Divider', 'Table', 'Link',
+      'Bold', 'Italic', 'Strikethrough', 'Code', 'Highlight', 'Heading 1', 'Heading 2', 'Heading 3',
+      'Task list', 'Bulleted list', 'Numbered list', 'Quote', 'Callout', 'Code block', 'Divider', 'Table', 'Link', 'Full screen',
     ]
     await expect(bar.getByRole('button')).toHaveCount(labels.length)
     for (const label of labels) await expect(bar.getByRole('button', { name: label, exact: true })).toBeVisible()
@@ -323,11 +323,11 @@ test.describe('toolbar', () => {
     await page.keyboard.press('ArrowRight')
     await expect(button(page, 'Italic')).toBeFocused()
     await page.keyboard.press('End')
-    await expect(button(page, 'Link')).toBeFocused()
+    await expect(button(page, 'Full screen')).toBeFocused()
     await page.keyboard.press('ArrowRight')
     await expect(button(page, 'Bold')).toBeFocused()
     await page.keyboard.press('ArrowLeft')
-    await expect(button(page, 'Link')).toBeFocused()
+    await expect(button(page, 'Full screen')).toBeFocused()
     await page.keyboard.press('Home')
     await expect(button(page, 'Bold')).toBeFocused()
   })
@@ -413,10 +413,13 @@ test.describe('toolbar', () => {
     await expect(button(page, 'Link')).toHaveAttribute('aria-pressed', 'true')
   })
 
-  test('read-only, every button is disabled', async ({ page }) => {
+  test('read-only, every button is disabled but Full screen (reading is what it is for)', async ({ page }) => {
     const buttons = toolbar(page, 'readOnly').getByRole('button')
-    await expect(buttons).toHaveCount(16)
-    for (const one of await buttons.all()) await expect(one).toBeDisabled()
+    await expect(buttons).toHaveCount(18)
+    for (const one of await buttons.all()) {
+      if ((await one.getAttribute('aria-label')) === 'Full screen') await expect(one).toBeEnabled()
+      else await expect(one).toBeDisabled()
+    }
   })
 
   for (const theme of ['light', 'dark'] as const) {
@@ -466,7 +469,7 @@ test.describe('floating toolbar', () => {
     await expect(floating(page)).toHaveCount(0)
     await pickWord(page, 1)
     await expect(floating(page)).toBeVisible()
-    const labels = ['Bold', 'Italic', 'Strikethrough', 'Code', 'Link']
+    const labels = ['Bold', 'Italic', 'Strikethrough', 'Code', 'Highlight', 'Link']
     await expect(floating(page).getByRole('button')).toHaveCount(labels.length)
     for (const label of labels) await expect(floatingButton(page, label)).toBeVisible()
     await expect(floating(page).locator('[tabindex="0"]')).toHaveCount(1)

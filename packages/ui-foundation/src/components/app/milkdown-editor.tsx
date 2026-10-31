@@ -76,7 +76,7 @@ import { Fragment, Slice, type Node as ProseNode } from '@milkdown/kit/prose/mod
 import { NodeSelection, Plugin, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
 import { isInTable, TableMap } from '@milkdown/kit/prose/tables'
 import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
-import { $nodeSchema, $prose, $remark, getMarkdown } from '@milkdown/kit/utils'
+import { $markSchema, $nodeSchema, $prose, $remark, getMarkdown } from '@milkdown/kit/utils'
 import { cn } from 'cn'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -87,6 +87,7 @@ import { acceptAttribute } from '@/lib/image-file'
 import { linkHref, linkRefusal } from '@/lib/link-href'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
+import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes } from '@/lib/markdown-highlight'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
 import { DEFAULT_HEADING_LEVEL, headingBand, headingClass, headingTag, type HeadingLevel } from './prose-look'
@@ -152,6 +153,37 @@ const calloutSchema = $nodeSchema('callout', () => ({
   },
 }))
 
+// Highlighted words (`==words==`, `=={green}words==`: src/lib/markdown-highlight.ts):
+// a mark of their own, its colour an attribute.
+const highlightRemark = $remark('remarkHighlightNodes', () => remarkHighlightNodes)
+const highlightSchema = $markSchema('highlight', () => ({
+  attrs: { color: { default: DEFAULT_HIGHLIGHT } },
+  parseDOM: [
+    {
+      tag: 'mark[data-color]',
+      getAttrs: (dom) => {
+        const color = (dom as HTMLElement).dataset.color
+        return { color: isHighlightColor(color) ? color : DEFAULT_HIGHLIGHT }
+      },
+    },
+  ],
+  toDOM: (mark) => ['mark', { 'data-color': String(mark.attrs.color) }, 0],
+  parseMarkdown: {
+    match: (node) => node.type === 'highlight',
+    runner: (state, node, type) => {
+      state.openMark(type, { color: isHighlightColor(node.color) ? node.color : DEFAULT_HIGHLIGHT })
+      state.next(node.children)
+      state.closeMark(type)
+    },
+  },
+  toMarkdown: {
+    match: (mark) => mark.type.name === 'highlight',
+    runner: (state, mark) => {
+      state.withMark(mark, 'highlight', undefined, { color: mark.attrs.color })
+    },
+  },
+}))
+
 // Milkdown's image node wants a string title, and remark reads an image
 // with none (`![alt](url)`, nearly every one) as a `null` title: the node
 // refused it, and the image was dropped as the text loaded. An empty
@@ -202,6 +234,8 @@ function taskItemView(node: ProseNode, view: EditorView, getPos: () => number | 
   box.tabIndex = -1
   box.setAttribute('aria-label', 'Done')
   const contentDOM = document.createElement('div')
+  // Takes the row's width, so an empty item's caret and placeholder show.
+  contentDOM.className = 'min-w-0 flex-1'
   dom.append(box, contentDOM)
   dom.dataset.itemType = 'task'
 
@@ -358,6 +392,23 @@ export default function MilkdownEditor({
   useEffect(() => {
     latest.current = { onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize }
   })
+  // Whether focus is on the floating toolbar, or in a menu opened from it
+  // (the Highlight menu's popup is in a portal).
+  const inFloating = (node: Node | null) =>
+    Boolean(floatingRef.current?.contains(node) || (node instanceof Element && node.closest('[data-rich-text-menu]')))
+  // Full screen: the field fills the window, in place (the editor stays
+  // mounted, so nothing is lost).
+  const [fullScreen, setFullScreen] = useState(false)
+  const fullScreenRef = useRef(false)
+  useEffect(() => {
+    fullScreenRef.current = fullScreen
+    if (!fullScreen) return
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = overflow
+    }
+  }, [fullScreen])
   // The toolbar's Image button opens this file picker.
   const imageInputRef = useRef<HTMLInputElement>(null)
 
@@ -567,7 +618,7 @@ export default function MilkdownEditor({
               },
               // Moving to the floating toolbar keeps it showing.
               blur: (_view, event) => {
-                if (!floatingRef.current?.contains(event.relatedTarget as Node | null)) setFocused(false)
+                if (!inFloating(event.relatedTarget as Node | null)) setFocused(false)
                 return false
               },
               // The floating toolbar waits for the mouse to be up: a drag
@@ -600,6 +651,12 @@ export default function MilkdownEditor({
                 setDismissed({ from, to })
                 return true
               }
+              // Esc leaves full screen, and goes no further.
+              if (event.key === 'Escape' && fullScreenRef.current) {
+                event.preventDefault()
+                setFullScreen(false)
+                return true
+              }
               // An Esc nothing over the text took: the field's to act on,
               // though ProseMirror will mark it handled.
               if (event.key === 'Escape') passEscapeThrough(event)
@@ -619,6 +676,13 @@ export default function MilkdownEditor({
               return false
             },
             decorations: (state) => {
+              // An empty task item the caret is in says where typing goes.
+              const { $from, empty } = state.selection
+              if (empty && $from.parent.type.name === 'paragraph' && $from.parent.content.size === 0 && $from.depth >= 2) {
+                const item = $from.node($from.depth - 1)
+                if (item.type.name === 'list_item' && item.attrs.checked != null)
+                  return DecorationSet.create(state.doc, [Decoration.node($from.before(), $from.after(), { 'data-placeholder': 'To-do' })])
+              }
               const text = latest.current.placeholder
               const only = state.doc.childCount === 1 ? state.doc.firstChild : null
               if (!text || !only || only.type.name !== 'paragraph' || only.content.size > 0) return null
@@ -635,7 +699,7 @@ export default function MilkdownEditor({
         ctx.update(remarkStringifyOptionsCtx, (options) => ({
           ...options,
           ...markdownStyle(original),
-          handlers: { ...options.handlers, callout: calloutHandler as never },
+          handlers: { ...options.handlers, callout: calloutHandler as never, highlight: highlightHandler as never },
         }))
         ctx.update(editorViewOptionsCtx, (options) => ({
           ...options,
@@ -691,6 +755,8 @@ export default function MilkdownEditor({
       .use(gfm)
       .use(calloutRemark)
       .use(calloutSchema)
+      .use(highlightRemark)
+      .use(highlightSchema)
       .use(imageTitles)
       .use(history)
       .use(changes)
@@ -829,6 +895,19 @@ export default function MilkdownEditor({
     floatingOpenRef.current = floatingOpen
   })
   const returnToText = () => editorView?.focus()
+  const toggleFullScreen = () => {
+    setFullScreen((on) => !on)
+    editorView?.focus()
+  }
+  // Esc on the toolbar leaves full screen too (a menu's own Esc, in its
+  // portal, isn't ours).
+  const leaveFullScreen = (event: ReactKeyboardEvent) => {
+    if (!fullScreen || event.key !== 'Escape' || event.defaultPrevented || !event.currentTarget.contains(event.target as Node)) return
+    event.preventDefault()
+    event.stopPropagation()
+    setFullScreen(false)
+    editorView?.focus()
+  }
 
   useEffect(() => {
     slashMenuRef.current = slashOpen && slash ? { key: slashMenuKey, span: slash, items: slashMatches, index: slashIndex } : null
@@ -844,8 +923,11 @@ export default function MilkdownEditor({
       <div
         ref={setField}
         data-slot="rich-text-editor"
+        data-full-screen={fullScreen || undefined}
+        onKeyDown={leaveFullScreen}
         className={cn(
-          'relative flex w-full min-w-0 flex-col bg-transparent type-body text-foreground break-words',
+          fullScreen ? 'fixed inset-0 z-50 h-dvh rounded-none! border-0! bg-background! ring-0!' : 'relative',
+          'flex w-full min-w-0 flex-col bg-transparent type-body text-foreground break-words',
           // Inline, it's the text itself: the caret shows where it's
           // edited, and a refusal's reason under it says what's wrong.
           !inline &&
@@ -865,6 +947,8 @@ export default function MilkdownEditor({
             onFormat={runFormat}
             onTable={runTable}
             onImage={upload ? pickImages : undefined}
+            onFullScreen={toggleFullScreen}
+            fullScreen={fullScreen}
             text={textElement}
           />
         )}
@@ -888,6 +972,8 @@ export default function MilkdownEditor({
           ref={rootRef}
           className={cn(
             !inline && 'min-h-24 px-2.5 py-2',
+            // Full screen: the text scrolls under the toolbar, in a column to read.
+            fullScreen && 'min-h-0 flex-1 overflow-y-auto px-4 py-3 md:px-8 [&_.ProseMirror]:mx-auto [&_.ProseMirror]:w-full [&_.ProseMirror]:max-w-3xl',
             // Read-only text is muted; the toolbar's buttons say so by being disabled.
             'has-[[aria-readonly=true]]:text-muted-foreground',
             // The same type roles <Markdown> uses, so text reads the same
@@ -903,6 +989,8 @@ export default function MilkdownEditor({
             '[&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-1 [&_ul]:pl-6',
             '[&_ol]:flex [&_ol]:list-decimal [&_ol]:flex-col [&_ol]:gap-1 [&_ol]:pl-6',
             '[&_li[data-item-type=task]]:-ml-6 [&_li[data-item-type=task]]:flex [&_li[data-item-type=task]]:list-none [&_li[data-item-type=task]]:items-start [&_li[data-item-type=task]]:gap-2',
+            // Highlighted words: the colour's wash, the text's own colour on it.
+            '[&_mark]:rounded-sm [&_mark]:text-foreground [&_mark[data-color=amber]]:bg-highlight-amber [&_mark[data-color=yellow]]:bg-highlight-yellow [&_mark[data-color=green]]:bg-highlight-green [&_mark[data-color=red]]:bg-highlight-red',
             '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
             // Headings, callouts and tables are drawn by their node views;
             // these are the elements Milkdown draws itself.
@@ -982,7 +1070,7 @@ export default function MilkdownEditor({
             onReturn={returnToText}
             onBlur={(event) => {
               const next = event.relatedTarget as Node | null
-              if (!editorView.dom.contains(next) && !floatingRef.current?.contains(next)) setFocused(false)
+              if (!editorView.dom.contains(next) && !inFloating(next)) setFocused(false)
             }}
           />
         )}
