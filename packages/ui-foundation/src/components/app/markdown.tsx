@@ -38,19 +38,29 @@
 //
 // `==words==` is highlighted words (amber, or `=={green}words==`: yellow,
 // green, red): a <mark> on the colour's wash (src/lib/markdown-highlight.ts).
-import { useEffect, useMemo, useRef, type ComponentProps } from 'react'
+//
+// With `foldKey`, each heading at the text's top level has a button before
+// it that folds its section away (src/lib/markdown-fold.ts), remembered on
+// this device under the key and shared with an editor or NotesOutline
+// given the same one. The text itself is never changed.
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ComponentProps } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
+import type { PluggableList } from 'unified'
 import remarkGfm from 'remark-gfm'
 import { cn } from 'cn'
-import { ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
+import { ChevronDownIcon, ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useFolds } from '@/hooks/fold-store'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
+import { rehypeFold, toggleFold } from '@/lib/markdown-fold'
 import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
   CALLOUT_BOX,
   CALLOUT_LOOK,
   DEFAULT_HEADING_LEVEL,
+  FOLD_BUTTON,
+  FOLD_HEADING,
   headingBand,
   headingClass,
   headingTag,
@@ -86,7 +96,7 @@ function omitNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
 // sideways: a tab stop and a named region only while the table overflows
 // it. Watched again after each render, so a header row with new words
 // renames it.
-function NotesTable(props: ComponentProps<'table'>) {
+function NotesTable({ hidden, ...props }: ComponentProps<'table'>) {
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const box = boxRef.current
@@ -96,18 +106,67 @@ function NotesTable(props: ComponentProps<'table'>) {
     return () => region.destroy()
   })
   return (
-    <Table {...props} containerRef={boxRef} containerClassName={cn('rounded-lg border border-border', TABLE_SCROLL_FOCUS)} />
+    <Table
+      {...props}
+      containerRef={boxRef}
+      // Folded away, the box goes with the table.
+      containerClassName={cn('rounded-lg border border-border', TABLE_SCROLL_FOCUS, hidden && 'hidden')}
+    />
   )
+}
+
+// Folds a section by its heading's id: given only with `foldKey`.
+const FoldContext = createContext<((id: string) => void) | null>(null)
+
+type HeadingProps = ComponentProps<'h1'> & {
+  'data-fold-id'?: string
+  'data-foldable'?: string
+  'data-folded'?: string
+  'data-fold-label'?: string
 }
 
 // A heading by its Markdown level: the element the page's outline gives
 // it (headingTag), the look its level has. The text's colour first, so a
-// level's own (`###`'s muted label) wins.
+// level's own (`###`'s muted label) wins. With `foldKey`, a top-level one
+// (marked by rehypeFold) sits beside its fold button, the look on the two
+// together; one with nothing under it keeps the button's room, so its
+// words line up with the others'.
 function heading(level: number, top: HeadingLevel, textTop: number): Components['h1'] {
   const Tag = headingTag(level, top, textTop)
-  return (props) => (
-    <Tag {...omitNode(props)} data-band={headingBand(level) || undefined} className={cn('text-foreground', headingClass(level))} />
-  )
+  return function Heading(props) {
+    const toggle = useContext(FoldContext)
+    const {
+      'data-fold-id': foldId,
+      'data-foldable': foldable,
+      'data-folded': folded,
+      'data-fold-label': label,
+      hidden,
+      ...rest
+    } = omitNode(props) as HeadingProps
+    const look = cn('text-foreground', headingClass(level))
+    const band = headingBand(level) || undefined
+    if (!toggle || foldId === undefined) return <Tag {...rest} hidden={hidden} data-band={band} className={look} />
+    const open = folded !== 'true'
+    return (
+      <div data-fold-id={foldId} hidden={hidden} data-band={band} className={cn(FOLD_HEADING, look)}>
+        {foldable === 'true' ? (
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-label={label || 'Section'}
+            data-slot="fold-button"
+            className={FOLD_BUTTON}
+            onClick={() => toggle(foldId)}
+          >
+            <ChevronDownIcon aria-hidden="true" className={cn('size-4 transition-transform', !open && '-rotate-90')} />
+          </button>
+        ) : (
+          <span aria-hidden="true" className="-ml-1 w-5 shrink-0" />
+        )}
+        <Tag {...rest} className="min-w-0 flex-1" />
+      </div>
+    )
+  }
 }
 
 // Everything but the headings, which follow `headingLevel` (componentsFor).
@@ -150,7 +209,7 @@ const COMPONENTS: Components = {
   blockquote: (props) => (
     <blockquote {...omitNode(props)} className="flex flex-col gap-3 border-l-2 border-border pl-4 text-muted-foreground" />
   ),
-  hr: () => <hr className={PROSE.rule} />,
+  hr: ({ hidden }) => <hr hidden={hidden} className={PROSE.rule} />,
   // Highlighted words (remarkHighlights marks them): the colour's wash.
   mark: (props) => {
     const { children, ...rest } = omitNode(props)
@@ -170,7 +229,7 @@ const COMPONENTS: Components = {
     const look = CALLOUT_LOOK[kind]
     const Icon = look.icon
     return (
-      <div role="note" data-callout={kind} className={cn(CALLOUT_BOX, look.box)}>
+      <div role="note" data-callout={kind} hidden={rest.hidden} className={cn(CALLOUT_BOX, look.box)}>
         <Icon aria-hidden="true" className={cn('mt-0.5 size-4 shrink-0', look.tint)} />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <span className="sr-only">{look.label}: </span>
@@ -233,6 +292,15 @@ export type MarkdownProps = {
    * itself is never rewritten.
    */
   headingFrom?: HeadingFrom
+  /**
+   * Folds the text by its headings: each heading at its top level gets a
+   * button that folds what's under it (to the next heading of its level
+   * or higher). What's folded is remembered on this device under this key
+   * (name it for the app and the record: `"my-app:task:84:notes"`), and
+   * shared with a RichTextEditor or NotesOutline given the same key. The
+   * text is never changed.
+   */
+  foldKey?: string
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
@@ -240,20 +308,27 @@ export function Markdown({
   children,
   headingLevel = DEFAULT_HEADING_LEVEL,
   headingFrom = 'hash',
+  foldKey,
   className,
   ...rest
 }: MarkdownProps) {
   const textTop = useMemo(() => (headingFrom === 'text' ? textTopHeading(children) : 1), [headingFrom, children])
   const components = useMemo(() => componentsFor(headingLevel, textTop), [headingLevel, textTop])
+  const [folded, setFolded] = useFolds(foldKey)
+  const rehypePlugins = useMemo<PluggableList>(() => (foldKey === undefined ? [] : [[rehypeFold, { folded }]]), [foldKey, folded])
+  const toggle = useCallback((id: string) => setFolded(toggleFold(folded, id)), [folded, setFolded])
   return (
     <div
       data-slot="markdown"
+      data-fold-scope={foldKey}
       {...rest}
       className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', PROSE_INSET, className)}
     >
-      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
-        {children}
-      </ReactMarkdown>
+      <FoldContext.Provider value={foldKey === undefined ? null : toggle}>
+        <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={rehypePlugins} components={components}>
+          {children}
+        </ReactMarkdown>
+      </FoldContext.Provider>
     </div>
   )
 }

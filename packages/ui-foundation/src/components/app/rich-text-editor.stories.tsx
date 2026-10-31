@@ -5,7 +5,9 @@ import { Toaster } from '@/components/ui/sonner'
 import type { ImageUpload } from '@/lib/image-file'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewSection } from './entity-view'
+import { FOLDING_SAMPLE, startFolded } from './folding.fixtures'
 import { Markdown } from './markdown'
+import { NotesOutline } from './notes-outline'
 import { RichTextEditor, type RichTextEditorProps } from './rich-text-editor'
 import { MARKDOWN_FIXTURES } from './rich-text-editor.fixtures'
 import { delayedUpload, failingUpload, SAVED_PHOTO } from './image-upload.fixtures'
@@ -83,6 +85,7 @@ function Labelled({
   imageMaxSize,
   headingLevel,
   headingFrom,
+  foldKey,
 }: {
   label: string
   markdown: string
@@ -94,6 +97,7 @@ function Labelled({
   imageMaxSize?: number
   headingLevel?: RichTextEditorProps['headingLevel']
   headingFrom?: RichTextEditorProps['headingFrom']
+  foldKey?: string
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
@@ -116,6 +120,7 @@ function Labelled({
         imageMaxSize={imageMaxSize}
         headingLevel={headingLevel}
         headingFrom={headingFrom}
+        foldKey={foldKey}
       />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
@@ -326,3 +331,20 @@ function InlineInRouter() {
 }
 
 export const Inline: StoryObj<typeof RichTextEditor> = { render: () => <InlineInRouter /> }
+
+// Folding by headings (`foldKey`) while editing, the outline beside: it
+// opens with Watering folded (e2e/folding.spec.ts).
+function FoldingStory() {
+  const foldKey = 'story:editor:folding'
+  useState(() => startFolded(foldKey))
+  return (
+    <div className="flex max-w-3xl flex-col gap-6 md:flex-row">
+      <NotesOutline markdown={FOLDING_SAMPLE} foldKey={foldKey} className="md:w-56 md:shrink-0" />
+      <div className="min-w-0 flex-1">
+        <Labelled label="folding" markdown={FOLDING_SAMPLE} foldKey={foldKey} />
+      </div>
+    </div>
+  )
+}
+
+export const Folding: StoryObj<typeof RichTextEditor> = { render: () => <FoldingStory /> }
