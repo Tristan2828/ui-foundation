@@ -18,6 +18,7 @@ open-panel row, both themes.
 
 **How an app adopts:** nothing. An app that darkened muted text in the
 picked row itself (`in-aria-selected:text-foreground`) can drop it.
+
 ## 4.47.1 — MCP: an error in an entity is a failed tool, not a 500
 
 A fix, so a patch. Three things a chat's connector reported only as "The
