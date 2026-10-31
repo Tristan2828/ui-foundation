@@ -7,6 +7,27 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.51.0 â€” Charts: a projection on LineChart, and MultiLineChart
+
+Additive, so a minor. An app with balances over time wanted where they
+may go next and several values on one plot.
+
+- **`LineChart`'s `projection`**: `{ label, points }` carries the line
+  on past its last point, dashed in the same colour, sharing the plot's
+  ranges with the target. The mark stays on the measured points; a screen
+  reader gets the projection's end in the summary and its rows in the
+  table.
+- **`MultiLineChart`**: several series on one plot, one x and one y
+  range, each in a text tone (`info`, `success`, `warning`, `destructive`
+  or `muted`) and solid or `dashed`, with an optional dashed target and a
+  legend naming each series with its latest value. The same four states
+  as `LineChart`; a screen reader gets a summary and a table with a column
+  per series. Exported with `ChartSeries` and `ChartTone`.
+- `design-language.md` "A value over time" covers both.
+
+**How an app adopts:** nothing to change. Use `projection` or
+`MultiLineChart` where a screen needs them.
+
 ## 4.50.1 — Board: the empty-column line clears 4.5:1
 
 A fix, no API change. A column with no cards shows its `empty` line as
