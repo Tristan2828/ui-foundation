@@ -568,6 +568,23 @@ kinds (a React widget portaled into the node view's slot,
 `rich-text-node-views.ts`, `rich-text-widgets.tsx`); from the keyboard,
 "/" at a line's start inside a callout lists the kinds.
 
+**Folding by headings (4.54)** (`src/lib/markdown-fold.ts`,
+`rich-text-fold.ts`, `notes-outline.tsx`, `src/hooks/fold-store.ts`):
+`foldKey` on `<Markdown>` and the editor puts a fold button before each
+top-level heading; it folds the blocks after it up to the next heading of
+its level or higher. Folding is the reader's, never the text's: what's
+folded is a set of heading ids (level and words, `2:Beds`, numbered when
+repeated) kept in localStorage under the key, so the Markdown and the
+merge never see it. `<Markdown>` hides a section's blocks with a rehype
+plugin (`hidden` on each top-level element); the editor with node
+decorations, the heading's node view drawing the button from its
+decoration's spec. The caret put inside a folded section opens it, a
+fold around the caret moves it to the heading, and the arrow keys pass
+over folded text as the browser does. `NotesOutline` lists the headings
+beside either, given the same key, with Fold all and Open all; a jump
+opens the sections around the heading and focuses its button. Find in
+page doesn't see folded text (`hidden="until-found"` would; DEFERRED).
+
 **Tables (3.21)** (`rich-text-table.ts`, `rich-text-table-menu.tsx`): the
 node view puts a table in a box that scrolls sideways, with Notion's
 "add a row" and "add a column" bars (mouse shortcuts, out of the tab

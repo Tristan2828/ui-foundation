@@ -7,6 +7,30 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.54.0 — Folding notes by headings, and NotesOutline
+
+Additive, so a minor. No new dependency. A long note (tens of thousands of
+characters, a dozen `#` sections) wanted structure without changing how
+it's stored.
+
+- **`foldKey` on `<Markdown>` and `RichTextEditor`**: each heading at the
+  text's top level gets a button that folds what's under it, to the next
+  heading of its level or higher. What's folded is remembered on this
+  device under the key (localStorage) and shared by everything given the
+  same key; the Markdown, and what the editor saves, never change. In the
+  editor, Ctrl/Cmd+Alt+[ folds the section the caret is in and
+  Ctrl/Cmd+Alt+] opens the heading it's on; the caret put inside a folded
+  section opens it.
+- **`NotesOutline`**: a text's headings (the top two levels by default,
+  `depth`) as a list to jump with, with Fold all and Open all, beside a
+  `<Markdown>` or editor given the same `foldKey`. A jump opens the
+  sections around the heading and lands on its fold button.
+
+**How an app adopts:** pass `foldKey` (named for the app and the record,
+`"my-app:task:84:notes"`) to the notes' `<Markdown>` and editor, and put
+`NotesOutline` with the same key and the notes' Markdown beside long
+notes. Without `foldKey` nothing changes.
+
 ## 4.53.0 — FillInQueue: rows for every kind of value, fields as data, and groups
 
 Additive, so a minor. `FillInQueue` (4.42) had only `FillInChoice`, a
@@ -31,6 +55,7 @@ way to draw a field it only knows as data, and a record's source.
 **How an app adopts:** nothing to change. A fill-in screen can draw
 fields from data with `FillInField` and name sources with `groups`
 (`design-language.md` "Filling in what's missing").
+
 ## 4.52.0 — EmojiField: pick one emoji on a form
 
 Additive, so a minor. No new dependency.

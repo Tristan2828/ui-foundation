@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { useState } from 'react'
+import { FOLDING_SAMPLE, startFolded } from './folding.fixtures'
 import { SAVED_PHOTO, WIDE_PHOTO } from './image-upload.fixtures'
 import { Markdown } from './markdown'
+import { NotesOutline } from './notes-outline'
 
 // Every element <Markdown> styles, on screen at once, so axe checks each
 // one's contrast and the token check each colour, in both themes. The raw
@@ -166,3 +169,20 @@ export const WideTable: StoryObj<typeof Markdown> = {
     </div>
   ),
 }
+
+// Folding by headings (`foldKey`), with the outline beside the text: it
+// opens with Watering folded (e2e/folding.spec.ts).
+function FoldingStory() {
+  const foldKey = 'story:markdown:folding'
+  useState(() => startFolded(foldKey))
+  return (
+    <div className="flex max-w-3xl flex-col gap-6 md:flex-row">
+      <NotesOutline markdown={FOLDING_SAMPLE} foldKey={foldKey} className="md:w-56 md:shrink-0" />
+      <Markdown foldKey={foldKey} className="min-w-0 flex-1">
+        {FOLDING_SAMPLE}
+      </Markdown>
+    </div>
+  )
+}
+
+export const Folding: StoryObj<typeof Markdown> = { render: () => <FoldingStory /> }

@@ -101,6 +101,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-markdown--wide-table', mustShow: 'A table that scrolls sideways:' },
   { id: 'app-richtexteditor--heading-levels', mustShow: 'A form with notes' },
   { id: 'app-richtexteditor--wide-table', mustShow: 'wideTable' },
+  { id: 'app-markdown--folding', mustShow: 'Fold all' },
+  { id: 'app-richtexteditor--folding', mustShow: 'Fold all' },
   // Allow reminders in every state, on a card (#167).
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },

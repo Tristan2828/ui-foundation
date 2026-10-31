@@ -22,6 +22,9 @@
 // Image button is uploaded through the app's own storage and goes in as
 // `![](url)`; while it uploads, a placeholder shows where it will go.
 //
+// With `foldKey`, the text folds by its headings (NotesOutline lists them
+// beside it), the Markdown untouched.
+//
 // The editor (Milkdown) is loaded on first use, so a page that only reads
 // Markdown never downloads it. Until it arrives, a placeholder the size of
 // the field shows.
@@ -102,6 +105,17 @@ export type RichTextEditorProps = {
    * `headingLevel` too. The Markdown saved is never rewritten.
    */
   headingFrom?: HeadingFrom
+  /**
+   * Folds the text by its headings, as `<Markdown>`'s `foldKey` does: each
+   * heading at the text's top level has a button that folds what's under
+   * it, Ctrl/Cmd+Alt+[ folds the section the caret is in and
+   * Ctrl/Cmd+Alt+] opens the heading it's on, and the caret moving into a
+   * folded section opens it. Remembered on this device under this key,
+   * and shared with `<Markdown>` and NotesOutline given the same one.
+   * Only the view folds: the Markdown saved never changes. Read once,
+   * when it mounts.
+   */
+  foldKey?: string
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string
