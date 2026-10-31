@@ -1,9 +1,17 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
 // ModuleStrip and ModuleCard (app/ModuleCard, #224): the strip's columns at
-// a desktop width and a phone's, and the phone tile as one link. Axe, the
-// token check and the glyph check are e2e/storybook-visual.spec.ts's.
-const story = (name: string) => `http://localhost:6006/iframe.html?id=app-modulecard--${name}&viewMode=story`
+// a desktop width and a phone's, the phone tile as one link, and
+// `mobile="row"`'s chips. Axe, the token check and the glyph check are
+// e2e/storybook-visual.spec.ts's, except for the chips, which only show at a
+// phone's width: axe runs on those here, in both themes.
+const story = (name: string, theme = 'light') =>
+  `http://localhost:6006/iframe.html?id=app-modulecard--${name}&viewMode=story&globals=theme:${theme}`
+const axe = (page: Page) =>
+  new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
+const pageScrollsSideways = (page: Page) =>
+  page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
 
 const columns = (page: Page, label: string) =>
   page
@@ -88,5 +96,71 @@ test.describe('on a phone', () => {
     const link = page.getByRole('link', { name: 'Repaint the shed' })
     const box = await link.boundingBox()
     expect(box!.height).toBeGreaterThanOrEqual(44)
+  })
+})
+
+test.describe('mobile="row" on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('one row of chips that scrolls inside itself; the page never scrolls sideways', async ({ page }) => {
+    await page.goto(story('row'))
+    const strip = page.getByRole('navigation', { name: 'Places' })
+    await expect(strip.locator('[data-slot=module-card]').first()).toBeHidden()
+    const chips = strip.locator('[data-slot=module-card-chip]')
+    await expect(chips).toHaveCount(7)
+    const boxes = await chips.evaluateAll((all) => all.map((chip) => chip.getBoundingClientRect().toJSON()))
+    for (const box of boxes) {
+      expect(box.top).toBeCloseTo(boxes[0].top, 0)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+    }
+    // Icon, name and number.
+    await expect(strip.getByRole('link', { name: 'Projects 5', exact: true })).toBeVisible()
+    // The row overflows and scrolls; the page doesn't, sr-only text included
+    // (the new-tab note on the last chip).
+    expect(await strip.evaluate((nav) => nav.scrollWidth > nav.clientWidth)).toBe(true)
+    expect(await pageScrollsSideways(page)).toBe(false)
+    const reading = strip.getByRole('link', { name: 'Reading (opens in a new tab)' })
+    await expect(reading).toHaveAttribute('target', '_blank')
+    // Focusing a chip past the edge scrolls the row to it, not the page.
+    await reading.focus()
+    await expect(reading).toBeInViewport()
+    expect(await pageScrollsSideways(page)).toBe(false)
+  })
+
+  test('a chip shows a skeleton while loading and a dash on an error', async ({ page }) => {
+    await page.goto(story('row-states'))
+    const loading = page.getByRole('navigation', { name: 'Places (loading)' })
+    await expect(loading.locator('[data-slot=module-card-chip][data-state=loading] [data-slot=skeleton]')).toHaveCount(3)
+    await expect(loading.getByRole('link', { name: 'Projects Loading' })).toBeVisible()
+    const failed = page.getByRole('navigation', { name: 'Places (error)' })
+    await expect(failed.locator('[data-slot=module-card-chip][data-state=error]')).toHaveCount(3)
+    await expect(failed.getByRole('link', { name: "Projects Couldn't load" })).toBeVisible()
+    await expect(failed.getByText('—').first()).toBeVisible()
+    await expect(failed.getByRole('button', { name: 'Retry' })).toBeHidden()
+    expect(await pageScrollsSideways(page)).toBe(false)
+  })
+
+  for (const theme of ['light', 'dark'] as const) {
+    for (const name of ['row', 'row-states']) {
+      test(`${name}: zero axe violations (${theme})`, async ({ page }) => {
+        await page.goto(story(name, theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        await expect(page.locator('[data-slot=module-card-chip]').first()).toBeVisible()
+        expect((await axe(page)).violations).toEqual([])
+      })
+    }
+  }
+})
+
+test.describe('mobile="row" at a desktop width', () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test('the strip is the cards, as without it', async ({ page }) => {
+    await page.goto(story('row'))
+    const widths = await columns(page, 'Places')
+    expect(widths.length).toBeGreaterThanOrEqual(6)
+    for (const width of widths) expect(width).toBeGreaterThanOrEqual(170)
+    await expect(page.locator('[data-slot=module-card-chip]').first()).toBeHidden()
+    await expect(page.getByRole('link', { name: 'Today' })).toBeVisible()
   })
 })

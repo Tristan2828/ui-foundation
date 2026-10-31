@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import type { AppError } from '@/api/contracts'
 import { editInPlace } from './edit-in-place'
 import { EditableValue } from './editable-value'
-import { EntityView, type EntityViewLayout, type EntityViewSection } from './entity-view'
+import { EntityView, type EntityViewLayout, type EntityViewMobileOrder, type EntityViewSection } from './entity-view'
 import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { Notice } from './notice'
@@ -24,7 +24,9 @@ import { SourceCredit } from './source-credit'
 // edits two sub-item lists in place (a checklist in the main column, links
 // in the rail), each change saved after a short wait. Autosave is long
 // text saved as it's typed: notes that are the editor, and a summary that
-// opens on a click.
+// opens on a click. Rail, main first is the rail layout with
+// `mobileOrder="main-first"`: the same at a desktop width, Notes straight
+// after the header on a phone.
 
 // Long enough to scroll past a rail, with a table wider than the column
 // layout's 896px (it scrolls sideways there) but not than the rail
@@ -73,7 +75,7 @@ function useOwner() {
   return { owner, owners }
 }
 
-function Record({ layout }: { layout: EntityViewLayout }) {
+function Record({ layout, mobileOrder }: { layout: EntityViewLayout; mobileOrder?: EntityViewMobileOrder }) {
   const { owner, owners } = useOwner()
   const sections: EntityViewSection[] = [
     {
@@ -111,6 +113,7 @@ function Record({ layout }: { layout: EntityViewLayout }) {
   return (
     <EntityView
       layout={layout}
+      mobileOrder={mobileOrder}
       isLoading={false}
       back={{ to: '/', label: 'Projects' }}
       title="Office move"
@@ -121,8 +124,10 @@ function Record({ layout }: { layout: EntityViewLayout }) {
   )
 }
 
-function InRouter({ layout }: { layout: EntityViewLayout }) {
-  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <Record layout={layout} /> }]))
+function InRouter({ layout, mobileOrder }: { layout: EntityViewLayout; mobileOrder?: EntityViewMobileOrder }) {
+  const [router] = useState(() =>
+    createMemoryRouter([{ path: '/', element: <Record layout={layout} mobileOrder={mobileOrder} /> }]),
+  )
   return <RouterProvider router={router} />
 }
 
@@ -136,6 +141,11 @@ export default meta
 export const Column: StoryObj = { render: () => <InRouter layout="column" /> }
 
 export const Rail: StoryObj = { render: () => <InRouter layout="rail" /> }
+
+export const RailMainFirst: StoryObj = {
+  name: 'Rail, main first',
+  render: () => <InRouter layout="rail" mobileOrder="main-first" />,
+}
 
 function LoadingRail() {
   const [router] = useState(() =>

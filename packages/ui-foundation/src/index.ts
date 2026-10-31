@@ -50,6 +50,7 @@ export {
   EntityView,
   type EntityViewField,
   type EntityViewLayout,
+  type EntityViewMobileOrder,
   type EntityViewPlacement,
   type EntityViewProps,
   type EntityViewSection,
@@ -129,6 +130,7 @@ export {
   type ModuleCardLink,
   type ModuleCardPlace,
   type ModuleCardProps,
+  type ModuleStripMobile,
   type ModuleStripProps,
 } from '@/components/app/module-card'
 export {

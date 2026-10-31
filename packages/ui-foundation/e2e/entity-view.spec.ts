@@ -125,6 +125,35 @@ test.describe('EntityView, rail layout', () => {
     await expect(rail(page)).toHaveAttribute('data-fits', '')
   })
 
+  test('main first: phone width puts the main column straight after the header, then the rail', async ({ page }) => {
+    await open(page, 'rail-main-first', 393, 851)
+    const headerBox = (await header(page).boundingBox())!
+    const notes = await box(page, 'Notes')
+    const followUps = await box(page, 'Follow-ups')
+    const summary = await box(page, 'Summary')
+    expect(notes.y).toBeGreaterThan(headerBox.y + headerBox.height)
+    expect(followUps.y).toBeGreaterThan(notes.y + notes.height)
+    expect(summary.y).toBeGreaterThan(followUps.y + followUps.height)
+    expect(Math.abs(notes.x - summary.x)).toBeLessThan(2)
+    expect(await pageScrollsSideways(page)).toBe(false)
+    // In the DOM too, so a screen reader reads it in that order.
+    expect(await page.locator('[data-slot=card-header] h2').allTextContents()).toEqual([
+      'Notes',
+      'Follow-ups',
+      'Summary',
+      'Links',
+    ])
+  })
+
+  test('main first: at a desktop width the rail is still on the right, beside main', async ({ page }) => {
+    await open(page, 'rail-main-first', 1280)
+    const notes = await box(page, 'Notes')
+    const summary = await box(page, 'Summary')
+    expect(Math.abs(notes.y - summary.y)).toBeLessThan(2)
+    expect(notes.x + notes.width).toBeLessThan(summary.x)
+    expect(summary.width).toBeCloseTo(352, 0)
+  })
+
   test('tab order is header, rail, main, at every width', async ({ page }) => {
     for (const width of [1280, 393]) {
       await open(page, 'rail', width)

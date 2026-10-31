@@ -4,21 +4,21 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 37–59
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–715
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–720
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 99–106
   - Step 2: `npm run gen:api` · lines 107–108
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 109–120
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 121–130
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 131–135
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–607
-  - Step 7: Register routes · lines 608–618
-  - Step 8: Add Playwright specs for all three screens · lines 619–697
-  - Step 9: Register the nav entry and route names · lines 698–712
-  - Step 10: `npm run verify`. · lines 713–715
-- [What not to copy](#what-not-to-copy) · lines 717–743
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 745–762
-- [Deleting](#deleting) · lines 764–793
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 795–816
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–612
+  - Step 7: Register routes · lines 613–623
+  - Step 8: Add Playwright specs for all three screens · lines 624–702
+  - Step 9: Register the nav entry and route names · lines 703–717
+  - Step 10: `npm run verify`. · lines 718–720
+- [What not to copy](#what-not-to-copy) · lines 722–748
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 750–767
+- [Deleting](#deleting) · lines 769–798
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 800–821
 
 <!-- /index -->
 
@@ -409,7 +409,12 @@ is a filled-in example while the Widgets demo is still here).
      and every `placement` from the copied view (one column). Widget's
      view is `rail`, with Details in the rail. The rail's sections come
      first in the page (header, rail, main) at every width, so the
-     view's specs find them first too.
+     view's specs find them first too. When the plan says the main
+     column comes first on a phone (the record is opened for its notes
+     or its checklist), pass `mobileOrder="main-first"`: header, main,
+     rail where the columns stack, and in the DOM at every width, with
+     the rail still on the right two columns wide. Never re-order
+     `sections` by the window's width yourself.
    - **A subtitle** (`subtitle`), only when the plan names a line that
      says what the record is for (a goal, a one-line summary): under the
      title in muted body type. When the plan marks it editable, wrap it
