@@ -1,3 +1,4 @@
+import { useCallback, useSyncExternalStore } from 'react'
 import { useSearchParams } from 'react-router'
 import type { SortingState } from '@/components/app/data-table'
 import {
@@ -8,6 +9,16 @@ import {
   type TableView,
   type UrlChanges,
 } from './table-url-changes'
+import { browserStore } from './use-table-layout'
+
+export type TableUrlStateOptions = {
+  /**
+   * Where the table's grouping (DataTable's `grouping`) is remembered on
+   * this device, one key per table (`"my-app:tasks:group"`), the way
+   * useTableLayout remembers a layout. Without one it lives only in the URL.
+   */
+  groupStorageKey?: string
+}
 
 // A table's page, sort and filters, kept in the URL query string
 // (`?page=2&sort=name:asc&search=mouse&tags=fragile&tags=bulky`) instead of
@@ -24,13 +35,34 @@ import {
 // counts as active); pass that view's `columns` to DataTable. A view is
 // pressed with applyView().
 //
+// `grouping` is DataTable's: a grouping's id, or '' for None. It's
+// `?group=` in the URL, then the one remembered under `groupStorageKey`,
+// then None. Like the sort it doesn't change which rows are shown, so it
+// keeps the page and doesn't count toward the active view; a view that
+// names a `group` sets it when pressed.
+//
 // Every setter is one update(), and must stay one: see setFilters.
 export function useTableUrlState<F extends string, M extends string = never, V extends string = never>(
   filterNames: readonly F[],
   multiFilterNames: readonly M[] = [],
   views: Readonly<Record<V, TableView<NoInfer<F>, NoInfer<M>>>> = {} as Record<V, TableView<F, M>>,
+  { groupStorageKey }: TableUrlStateOptions = {},
 ) {
   const [params, setParams] = useSearchParams()
+
+  const subscribe = useCallback(
+    (listener: () => void) => (groupStorageKey === undefined ? () => {} : browserStore.subscribe(groupStorageKey, listener)),
+    [groupStorageKey],
+  )
+  const rememberedGrouping = useSyncExternalStore(
+    subscribe,
+    () => (groupStorageKey === undefined ? null : browserStore.get(groupStorageKey)),
+    () => null,
+  )
+  const grouping = params.get('group') ?? rememberedGrouping ?? ''
+  const rememberGrouping = (next: string) => {
+    if (groupStorageKey !== undefined) browserStore.set(groupStorageKey, next)
+  }
 
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1)
 
@@ -58,6 +90,11 @@ export function useTableUrlState<F extends string, M extends string = never, V e
     filters,
     multiFilters,
     activeView,
+    grouping,
+    setGrouping: (next: string) => {
+      rememberGrouping(next)
+      update({ group: next || null })
+    },
     setPage: (next: number) => update({ page: next > 1 ? String(next) : null }),
     setSorting: (next: SortingState) => update({ sort: serializeSort(next), page: null }),
     setFilter: (name: F, value: string) => update({ [name]: value, page: null }),
@@ -72,6 +109,9 @@ export function useTableUrlState<F extends string, M extends string = never, V e
     setMultiFilter: (name: M, values: string[]) => update({ [name]: values, page: null }),
     // Replaces the whole filter + sort state at once — a saved view. See
     // viewToUrlChanges() for why anything the view doesn't set is cleared.
-    applyView: (view: TableView<F, M>) => update(viewToUrlChanges(filterNames, multiFilterNames, view)),
+    applyView: (view: TableView<F, M>) => {
+      if (view.group !== undefined) rememberGrouping(view.group)
+      update(viewToUrlChanges(filterNames, multiFilterNames, view))
+    },
   }
 }

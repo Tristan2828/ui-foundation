@@ -4,21 +4,21 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 37–59
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–706
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–715
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 99–106
   - Step 2: `npm run gen:api` · lines 107–108
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 109–120
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 121–130
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 131–135
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–598
-  - Step 7: Register routes · lines 599–609
-  - Step 8: Add Playwright specs for all three screens · lines 610–688
-  - Step 9: Register the nav entry and route names · lines 689–703
-  - Step 10: `npm run verify`. · lines 704–706
-- [What not to copy](#what-not-to-copy) · lines 708–734
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 736–753
-- [Deleting](#deleting) · lines 755–784
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 786–807
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–607
+  - Step 7: Register routes · lines 608–618
+  - Step 8: Add Playwright specs for all three screens · lines 619–697
+  - Step 9: Register the nav entry and route names · lines 698–712
+  - Step 10: `npm run verify`. · lines 713–715
+- [What not to copy](#what-not-to-copy) · lines 717–743
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 745–762
+- [Deleting](#deleting) · lines 764–793
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 795–816
 
 <!-- /index -->
 
@@ -410,6 +410,15 @@ is a filled-in example while the Widgets demo is still here).
      view is `rail`, with Details in the rail. The rail's sections come
      first in the page (header, rail, main) at every width, so the
      view's specs find them first too.
+   - **A subtitle** (`subtitle`), only when the plan names a line that
+     says what the record is for (a goal, a one-line summary): under the
+     title in muted body type. When the plan marks it editable, wrap it
+     in `<EditableValue label=… edit={editInPlace(…)} layout="inline">`.
+   - **Key numbers** (`strip`), only when the plan names a few figures
+     read before anything else (done of total, time left, the next
+     date): `<KeyStats stats={[{ label, value, hint? }]} />`, under the
+     header across the page, so on a phone it comes before the rail and
+     the main column. Three to five; more belong in a section.
    - **A notice** (`notice`), only when the plan names a state that
      decides what you do with the record (held, overdue, archived and
      read-only): a `<Notice tone=…>` saying what it means and what to do,

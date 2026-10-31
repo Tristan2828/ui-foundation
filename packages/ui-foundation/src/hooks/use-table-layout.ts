@@ -64,7 +64,8 @@ export function resolveLayout(
   return defaultLayout
 }
 
-const browserStore = createLayoutStore(() => (typeof window === 'undefined' ? undefined : window.localStorage))
+// This device's remembered picks, shared with useTableUrlState's grouping.
+export const browserStore = createLayoutStore(() => (typeof window === 'undefined' ? undefined : window.localStorage))
 
 export type TableLayoutOptions = {
   /** Every layout id the table has, the table's own `'table'` among them. */

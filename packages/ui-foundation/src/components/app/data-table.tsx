@@ -14,11 +14,31 @@ import { flexRender } from '@tanstack/react-table'
 import type { CellData, RowData, TableFeatures } from '@tanstack/react-table'
 import { cn } from 'cn'
 import { getCoreRowModel, useLegacyTable, type LegacyColumnDef } from '@tanstack/react-table/legacy'
-import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon, TableIcon } from 'lucide-react'
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ArrowUpDownIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ListTreeIcon,
+  TableIcon,
+  XIcon,
+} from 'lucide-react'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ArtworkAspect } from './artwork'
@@ -26,7 +46,7 @@ import { EditInPlaceContext } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { LeaveGuard } from './editable-value'
 import type { IconComponent } from './icon-component'
-import { groupRuns, type RowGroup } from './table-groups'
+import { groupByValues, groupRuns, type GroupRun, type RowGroup } from './table-groups'
 import {
   Table,
   TableBody,
@@ -129,10 +149,43 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   groupBy?: (row: TData) => RowGroup
   /**
-   * What a heading says after its label ("4 · 1 h 12 m"), from the group's
-   * rows on this page.
+   * What a heading says after its label ("4 · 1 h 12 m", "3 ready · top
+   * 42"), from the group's rows on this page, for `groupBy`'s headings and
+   * a grouping's alike. `group` says which group it is.
    */
-  groupSummary?: (rows: TData[]) => ReactNode
+  groupSummary?: (rows: TData[], group: RowGroup) => ReactNode
+  /**
+   * The fields the rows can be grouped by, picked in a Group menu at the
+   * end of the toolbar: None (the default, the table as it is without
+   * this), then each of these. Choice fields: each group is one of the
+   * field's options, in the options' order. While grouped, the field's
+   * column is hidden (its value is the heading), each heading folds its
+   * rows away and says how many there are, with `groupSummary` after it,
+   * and a Fold all button joins the menu. A grouping, while on, takes the
+   * place of `groupBy`. It groups this page's rows: paging still pages
+   * rows.
+   */
+  groupings?: readonly DataTableGrouping<TData>[]
+  /**
+   * The grouping on: a grouping's id, or '' for None, from
+   * useTableUrlState's `grouping` (the URL's `?group=`, then the one
+   * remembered for this table). An id the table doesn't have is None.
+   * Left out, the menu keeps its own state, starting on None.
+   */
+  grouping?: string
+  onGroupingChange?: (grouping: string) => void
+  /**
+   * A record read beside the list without leaving it. Clicking a row (its
+   * title link too; a modified click still opens the link) or Enter on it
+   * selects it and opens this panel: beside the table on a wide screen
+   * (64rem and up), a bottom sheet below that. ↑ and ↓ move the selection
+   * while the list has focus; Escape or Close closes it. Everything in
+   * the panel is the app's, an "Open page" link included. The table
+   * layout's alone: a card layout's cards are as they are.
+   */
+  detailPanel?: (row: TData) => ReactNode
+  /** The panel's heading and landmark name: "Details" unless set. */
+  detailLabel?: string
   /**
    * False hides the column header row, for a list-like table whose columns
    * explain themselves (a thumbnail, a title block, actions). Screen readers
@@ -175,6 +228,28 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
   onLayoutChange?: (layout: string) => void
   /** The table's own entry in the switch: "Table" with a table icon unless set ("Rows", for a list-like table). */
   tableLayout?: { label?: string; icon?: IconComponent }
+}
+
+/** A field DataTable's rows can be grouped by (`groupings`). */
+export type DataTableGrouping<TData> = {
+  /**
+   * The field's column id, hidden while grouped, and the grouping's id in
+   * the URL (`?group=status`) and in a saved view's `group`.
+   */
+  id: string
+  /** The menu's word for it ("Status"), and the menu button's while it's on ("Group: Status"). */
+  label: string
+  /** The field's options, in order: the groups, their order and their headings. */
+  options: readonly { value: string; label: string }[]
+  /**
+   * The row's value: one option's value, or a list of them for a
+   * multi-value field, whose row then shows under each. A value the
+   * options don't name gets a group of its own after theirs, headed by
+   * the value itself.
+   */
+  value: (row: TData) => string | readonly string[] | null | undefined
+  /** The heading over rows with no value, last: "Not set" unless set ("No category"). */
+  emptyLabel?: string
 }
 
 /** One of DataTable's card layouts (`layouts`). */
@@ -318,6 +393,79 @@ function LayoutSwitch({
   )
 }
 
+// The Group menu (`groupings`): a radio list, None first, that closes on
+// a pick. Base UI's radio group needs a value for None, so it's this
+// stand-in, never '' (the grouping's own word for None).
+const NO_GROUPING = '__none__'
+
+function GroupMenu<TData>({
+  groupings,
+  value,
+  onValueChange,
+}: {
+  groupings: readonly DataTableGrouping<TData>[]
+  value: string
+  onValueChange: (grouping: string) => void
+}) {
+  const current = groupings.find((grouping) => grouping.id === value)
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="outline" size="sm" data-slot="data-table-group-menu" />}>
+        <ListTreeIcon aria-hidden="true" />
+        {current ? `Group: ${current.label}` : 'Group'}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Group by</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={current?.id ?? NO_GROUPING}
+            onValueChange={(next) => onValueChange(next === NO_GROUPING ? '' : String(next))}
+          >
+            <DropdownMenuRadioItem value={NO_GROUPING} closeOnClick>
+              None
+            </DropdownMenuRadioItem>
+            {groupings.map((grouping) => (
+              <DropdownMenuRadioItem key={grouping.id} value={grouping.id} closeOnClick>
+                {grouping.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+// Whether the detail panel (`detailPanel`) fits beside the table, or opens
+// as a bottom sheet. Wide on the server and wherever matchMedia is missing
+// (a test's DOM), so markup never depends on it.
+const WIDE_QUERY = '(min-width: 64rem)'
+const canMatchMedia = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+function subscribeWide(listener: () => void) {
+  if (!canMatchMedia()) return () => {}
+  const query = window.matchMedia(WIDE_QUERY)
+  query.addEventListener('change', listener)
+  return () => query.removeEventListener('change', listener)
+}
+const useIsWide = () =>
+  useSyncExternalStore(
+    subscribeWide,
+    () => !canMatchMedia() || window.matchMedia(WIDE_QUERY).matches,
+    () => true,
+  )
+
+// A click on one of these inside a row is the control's own, not a pick of
+// the row. A link is the exception: a plain click picks the row instead of
+// following it (a modified one still opens it, in a new tab).
+const ROW_CONTROL_SELECTOR =
+  'a[href],button,input,select,textarea,label,summary,[contenteditable="true"],' +
+  '[role="button"],[role="checkbox"],[role="switch"],[role="combobox"],[role="link"],[role="slider"]'
+
+// Keys typed into one of these are its own: ↑/↓ and Escape stay with it.
+const TYPING_SELECTOR =
+  'input,select,textarea,[contenteditable="true"],[role="combobox"],[role="listbox"],[role="menu"],' +
+  '[role="slider"],[role="spinbutton"]'
+
 function TableSkeleton({ columnCount }: { columnCount: number }) {
   return (
     <div className="flex flex-col gap-2 p-2" data-state="loading">
@@ -409,6 +557,36 @@ const ALIGN_CLASS = { center: 'text-center', right: 'text-right' } as const
 const alignClass = (align: 'center' | 'right' | undefined) => align && ALIGN_CLASS[align]
 
 const GROUP_HEADING_CLASS = 'h-auto bg-background pt-4 pb-1.5 align-bottom'
+
+// A grouping's heading (`groupings`) is a button that folds its rows: the
+// label, then the count, a chevron that turns when folded.
+const GROUP_TOGGLE_CLASS =
+  '-mx-1 inline-flex items-baseline gap-2 rounded-sm px-1 outline-none hover:underline ' +
+  'focus-visible:ring-3 focus-visible:ring-ring/50'
+
+// `detailPanel`: a row that can be picked shows a pointer and its focus
+// ring inside it (a row has no outline of its own room); the picked one
+// takes the muted fill on every cell, over the zebra stripe and the pinned
+// cells' opaque backgrounds as highlightRow's wash does, with a bar in
+// --primary at its start, so it reads without colour too.
+const SELECTABLE_ROW_CLASS =
+  'cursor-pointer outline-none focus-visible:[&>td]:shadow-[inset_0_2px_0_0_var(--ring),inset_0_-2px_0_0_var(--ring)]'
+const SELECTED_ROW_CLASS =
+  '[&>td]:bg-muted [&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary)] ' +
+  'focus-visible:[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary),inset_0_2px_0_0_var(--ring),inset_0_-2px_0_0_var(--ring)]'
+
+// The table and the panel side by side once one is picked on a wide
+// screen. The grid is there from the start, so opening the panel never
+// remounts the table (and the focused row with it).
+const WITH_DETAIL_OPEN_CLASS = 'grid-cols-[minmax(0,1fr)_minmax(18rem,26rem)]'
+const DETAIL_ASIDE_CLASS =
+  'sticky top-4 flex max-h-[calc(100dvh-2rem)] min-w-0 flex-col gap-3 overflow-y-auto rounded-lg border ' +
+  'border-border bg-card p-4 text-card-foreground'
+
+// One row's place in the list, for the detail panel: a row shown under two
+// groups (a multi-value grouping) is two places, each picked on its own.
+type RowPlace = { key: string; rowId: string }
+const EMPTY_KEYS: ReadonlySet<string> = new Set()
 
 // `width="content"`: from a table area 80rem wide, as wide as the columns
 // need (`w-fit` over the table's own `w-full`), at least 36rem, or the
@@ -516,6 +694,11 @@ export function DataTable<TData extends Record<string, unknown>>({
   layout: layoutProp,
   onLayoutChange,
   tableLayout,
+  groupings,
+  grouping: groupingProp,
+  onGroupingChange,
+  detailPanel,
+  detailLabel = 'Details',
 }: DataTableProps<TData>) {
   // The switch's own state, for a table that doesn't pass `layout`.
   const [ownLayout, setOwnLayout] = useState('table')
@@ -526,6 +709,23 @@ export function DataTable<TData extends Record<string, unknown>>({
     if (layoutProp === undefined) setOwnLayout(next)
     onLayoutChange?.(next)
   }
+
+  // The grouping on (`groupings`), the menu's own state for a table that
+  // doesn't pass `grouping`.
+  const [ownGrouping, setOwnGrouping] = useState('')
+  const activeGrouping = groupings?.find((candidate) => candidate.id === (groupingProp ?? ownGrouping))
+  const setGrouping = (next: string) => {
+    if (groupingProp === undefined) setOwnGrouping(next)
+    onGroupingChange?.(next)
+  }
+  // The folded headings, for the grouping they were folded in: picking
+  // another starts with every group open.
+  const [folds, setFolds] = useState<{ grouping: string; keys: ReadonlySet<string> }>({ grouping: '', keys: EMPTY_KEYS })
+  const folded = activeGrouping && folds.grouping === activeGrouping.id ? folds.keys : EMPTY_KEYS
+
+  // The picked row (`detailPanel`) and the place it was picked in.
+  const [selection, setSelection] = useState<RowPlace | null>(null)
+  const isWide = useIsWide()
 
   // Editing in place in the rows (cell pattern 18, "In a table's rows"):
   // a cell that renders an <EditableValue> edits where it's shown, one at
@@ -541,9 +741,13 @@ export function DataTable<TData extends Record<string, unknown>>({
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   // TanStack treats a column missing from this map as visible, so every
   // column gets an entry once a list is given.
-  const columnVisibility = visibleColumns
-    ? Object.fromEntries(leafColumnIds(columns).map((id) => [id, visibleColumns.includes(id)]))
-    : {}
+  // While grouped, the grouped column is hidden: its value is the heading.
+  const columnVisibility = {
+    ...(visibleColumns
+      ? Object.fromEntries(leafColumnIds(columns).map((id) => [id, visibleColumns.includes(id)]))
+      : {}),
+    ...(activeGrouping ? { [activeGrouping.id]: false } : {}),
+  }
 
   const table = useLegacyTable({
     data,
@@ -599,14 +803,123 @@ export function DataTable<TData extends Record<string, unknown>>({
   )
 
   const rows = table.getRowModel().rows
+  type Row = (typeof rows)[number]
   const visibleLeafColumns = table.getVisibleLeafColumns()
   const visibleColumnCount = visibleLeafColumns.length
+
+  // The groups, if any: a grouping's (folding, with counts), else groupBy's.
+  const runs: (GroupRun<Row> & { foldable: boolean })[] | null = activeGrouping
+    ? groupByValues(
+        rows,
+        (row) => activeGrouping.value(row.original),
+        activeGrouping.options,
+        activeGrouping.emptyLabel ?? 'Not set',
+      ).map((run) => ({ ...run, foldable: true }))
+    : groupBy
+      ? groupRuns(rows, (row) => groupBy(row.original)).map((run) => ({ ...run, foldable: false }))
+      : null
+  const allFolded = runs !== null && runs.length > 0 && runs.every((run) => folded.has(run.key))
+  const toggleFold = (key: string) => {
+    if (!activeGrouping) return
+    const keys = new Set(folded)
+    if (!keys.delete(key)) keys.add(key)
+    setFolds({ grouping: activeGrouping.id, keys })
+  }
+  const foldAll = () => {
+    if (!activeGrouping || !runs) return
+    setFolds({ grouping: activeGrouping.id, keys: allFolded ? EMPTY_KEYS : new Set(runs.map((run) => run.key)) })
+  }
+
+  // Every row's place in the list as shown (folded groups left out), in
+  // order, for ↑/↓. Under a grouping a place is the group and the row,
+  // since a multi-value field shows a row in more than one.
+  const placeKey = (runKey: string, rowId: string) =>
+    activeGrouping ? `${encodeURIComponent(runKey)}:${rowId}` : rowId
+  const places: RowPlace[] = runs
+    ? runs.flatMap((run) =>
+        folded.has(run.key) ? [] : run.rows.map((row) => ({ key: placeKey(run.key, row.id), rowId: row.id })),
+      )
+    : rows.map((row) => ({ key: row.id, rowId: row.id }))
+  const selectedRow = detailPanel && selection ? rows.find((row) => row.id === selection.rowId) : undefined
+  // The place marked picked: where it was picked, or (regrouped since) the
+  // row's first place. None while its group is folded.
+  const selectedKey = selectedRow
+    ? places.some((place) => place.key === selection?.key)
+      ? selection?.key
+      : places.find((place) => place.rowId === selectedRow.id)?.key
+    : undefined
+  // The list's one tab stop: the picked row, else the first.
+  const tabStopKey = selectedKey ?? places[0]?.key
+  const focusRow = (key: string | undefined) => {
+    if (key === undefined) return
+    containerRef.current?.querySelector<HTMLElement>(`tr[data-row-key="${CSS.escape(key)}"]`)?.focus()
+  }
+  const closeDetail = () => {
+    setSelection(null)
+    focusRow(selectedKey)
+  }
+  const onRowClick = (event: React.MouseEvent<HTMLTableRowElement>, place: RowPlace) => {
+    const target = event.target as Element
+    // A click from a portal (a picker's popup opened from a cell) reaches
+    // the row through React, not the DOM: it's that control's.
+    if (!event.currentTarget.contains(target)) return
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    const control = target.closest(ROW_CONTROL_SELECTOR)
+    if (control && event.currentTarget.contains(control)) {
+      if (!control.matches('a[href]')) return
+      // In the capture phase, so react-router's Link sees it prevented and
+      // doesn't navigate.
+      event.preventDefault()
+    }
+    setSelection(place)
+  }
+  const onListKeyDown = (event: React.KeyboardEvent<HTMLTableElement>) => {
+    const target = event.target as HTMLElement
+    if (event.defaultPrevented || !event.currentTarget.contains(target) || target.closest(TYPING_SELECTOR)) return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (places.length === 0) return
+      event.preventDefault()
+      const down = event.key === 'ArrowDown'
+      const index = places.findIndex((place) => place.key === selectedKey)
+      const nextIndex =
+        index === -1 ? (down ? 0 : places.length - 1) : Math.min(places.length - 1, Math.max(0, index + (down ? 1 : -1)))
+      const next = places[nextIndex]
+      if (!next) return
+      setSelection(next)
+      focusRow(next.key)
+    } else if (event.key === 'Enter' && target.dataset.rowKey !== undefined) {
+      const place = places.find((candidate) => candidate.key === target.dataset.rowKey)
+      if (!place) return
+      event.preventDefault()
+      setSelection(place)
+    } else if (event.key === 'Escape' && selectedRow) {
+      event.preventDefault()
+      closeDetail()
+    }
+  }
+
   // One body row, the same in a plain table and a grouped one.
-  const renderRow = (row: (typeof rows)[number]) => (
+  const renderRow = (row: Row, key: string = row.id) => {
+    const isSelected = key === selectedKey
+    return (
     <TableRow
-      key={row.id}
+      key={key}
       data-highlighted={highlightRow?.(row.original) || undefined}
-      className={cn(pinFirstColumn && ROW_GROUP_CLASS, highlightRow?.(row.original) && HIGHLIGHTED_ROW_CLASS)}
+      {...(detailPanel
+        ? {
+            'data-row-key': key,
+            'data-selected': isSelected || undefined,
+            'aria-selected': isSelected,
+            tabIndex: key === tabStopKey ? 0 : -1,
+            onClickCapture: (event: React.MouseEvent<HTMLTableRowElement>) => onRowClick(event, { key, rowId: row.id }),
+          }
+        : {})}
+      className={cn(
+        pinFirstColumn && ROW_GROUP_CLASS,
+        highlightRow?.(row.original) && HIGHLIGHTED_ROW_CLASS,
+        detailPanel && SELECTABLE_ROW_CLASS,
+        isSelected && SELECTED_ROW_CLASS,
+      )}
     >
       {row.getVisibleCells().map((cell, index) => (
         <TableCell
@@ -627,7 +940,8 @@ export function DataTable<TData extends Record<string, unknown>>({
         </TableCell>
       ))}
     </TableRow>
-  )
+    )
+  }
 
   const content = (
     <div
@@ -641,17 +955,29 @@ export function DataTable<TData extends Record<string, unknown>>({
           : undefined
       }
     >
-      {layouts?.length ? (
+      {layouts?.length || groupings?.length ? (
         <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
           <div className="min-w-0 flex-1">{toolbar}</div>
-          <LayoutSwitch
-            options={[
-              { id: 'table', label: tableLayout?.label ?? 'Table', icon: tableLayout?.icon ?? TableIcon },
-              ...layouts,
-            ]}
-            value={currentLayout}
-            onValueChange={setLayout}
-          />
+          {groupings?.length ? (
+            <div className="flex items-center gap-2">
+              {activeGrouping && (
+                <Button variant="ghost" size="sm" data-slot="data-table-fold-all" disabled={!runs?.length} onClick={foldAll}>
+                  {allFolded ? 'Unfold all' : 'Fold all'}
+                </Button>
+              )}
+              <GroupMenu groupings={groupings} value={activeGrouping?.id ?? ''} onValueChange={setGrouping} />
+            </div>
+          ) : null}
+          {layouts?.length ? (
+            <LayoutSwitch
+              options={[
+                { id: 'table', label: tableLayout?.label ?? 'Table', icon: tableLayout?.icon ?? TableIcon },
+                ...layouts,
+              ]}
+              value={currentLayout}
+              onValueChange={setLayout}
+            />
+          ) : null}
         </div>
       ) : (
         toolbar
@@ -674,13 +1000,46 @@ export function DataTable<TData extends Record<string, unknown>>({
           {emptyAction}
         </Empty>
       ) : (
-        <>
+        <DetailFrame
+          enabled={Boolean(detailPanel) && !cardLayout}
+          aside={
+            selectedRow && detailPanel && isWide ? (
+              <aside
+                aria-label={detailLabel}
+                data-slot="data-table-detail"
+                className={DETAIL_ASIDE_CLASS}
+                onKeyDown={(event) => {
+                  const target = event.target as HTMLElement
+                  if (event.key !== 'Escape' || event.defaultPrevented || target.closest(TYPING_SELECTOR)) return
+                  event.preventDefault()
+                  closeDetail()
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="type-label text-muted-foreground">{detailLabel}</h2>
+                  <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={closeDetail}>
+                    <XIcon aria-hidden="true" />
+                  </Button>
+                </div>
+                {detailPanel(selectedRow.original)}
+              </aside>
+            ) : null
+          }
+        >
           {cardLayout ? (
-            <Cards layout={cardLayout} rows={rows} groupBy={groupBy} groupSummary={groupSummary} />
+            <Cards
+              layout={cardLayout}
+              runs={runs}
+              rows={rows}
+              folded={folded}
+              onToggleFold={toggleFold}
+              groupSummary={groupSummary}
+            />
           ) : (
             <Table
               data-state="success"
               containerRef={containerRef}
+              onKeyDown={detailPanel ? onListKeyDown : undefined}
               // With the sticky bar below as the visible scrollbar, hide the
               // container's own. It stays overflow-x-auto and fully
               // scrollable (wheel, trackpad, drag, and the sync effect); it
@@ -761,36 +1120,51 @@ export function DataTable<TData extends Record<string, unknown>>({
                   </TableRow>
                 ))}
               </TableHeader>
-              {groupBy ? (
-                groupRuns(rows, (row) => groupBy(row.original)).map((run, runIndex) => (
-                  // A body per group, headed by a row header for it
-                  // (scope="rowgroup"), so a screen reader names a cell's
-                  // group the way it names its column.
-                  <TableBody key={`${runIndex}:${run.key}`} data-slot="table-group">
-                    <TableRow data-slot="table-group-heading" className="hover:bg-transparent">
-                      <TableHead scope="rowgroup" colSpan={visibleColumnCount} className={GROUP_HEADING_CLASS}>
-                        {/* Sticky, so the label stays in view while a wide
-                            table scrolls sideways. */}
-                        <span className="sticky left-(--table-cell-px) inline-flex items-baseline gap-2">
-                          <span className="type-label text-foreground">{run.label}</span>
-                          {groupSummary && (
-                            <span className="type-caption text-muted-foreground tabular-nums">
-                              {groupSummary(run.rows.map((row) => row.original))}
-                            </span>
-                          )}
-                        </span>
-                      </TableHead>
-                    </TableRow>
-                    {/* Never shown, but counted by the zebra stripe's
-                        nth-child (table.tsx, PINNED_CELL_CLASS): without it
-                        the heading is row 1, so every group's first row
-                        would be striped, and a group of one always. */}
-                    <tr hidden aria-hidden="true" data-slot="table-group-stripe-offset" />
-                    {run.rows.map(renderRow)}
-                  </TableBody>
-                ))
+              {runs ? (
+                runs.map((run, runIndex) => {
+                  const isFolded = folded.has(run.key)
+                  return (
+                    // A body per group, headed by a row header for it
+                    // (scope="rowgroup"), so a screen reader names a cell's
+                    // group the way it names its column.
+                    <TableBody
+                      key={`${runIndex}:${run.key}`}
+                      data-slot="table-group"
+                      data-folded={isFolded || undefined}
+                    >
+                      {/* The row's own has-aria-expanded tint (table.tsx) would
+                          fill every open heading: it's never a row to pick. */}
+                      <TableRow
+                        data-slot="table-group-heading"
+                        className="hover:bg-transparent has-aria-expanded:bg-transparent"
+                      >
+                        <TableHead scope="rowgroup" colSpan={visibleColumnCount} className={GROUP_HEADING_CLASS}>
+                          {/* Sticky, so the label stays in view while a wide
+                              table scrolls sideways. */}
+                          <span className="sticky left-(--table-cell-px) inline-flex items-baseline gap-2">
+                            <GroupLabel run={run} isFolded={isFolded} onToggle={() => toggleFold(run.key)} />
+                            {groupSummary && (
+                              <span className="type-caption text-muted-foreground tabular-nums">
+                                {groupSummary(
+                                  run.rows.map((row) => row.original),
+                                  { key: run.key, label: run.label },
+                                )}
+                              </span>
+                            )}
+                          </span>
+                        </TableHead>
+                      </TableRow>
+                      {/* Never shown, but counted by the zebra stripe's
+                          nth-child (table.tsx, PINNED_CELL_CLASS): without it
+                          the heading is row 1, so every group's first row
+                          would be striped, and a group of one always. */}
+                      <tr hidden aria-hidden="true" data-slot="table-group-stripe-offset" />
+                      {!isFolded && run.rows.map((row) => renderRow(row, placeKey(run.key, row.id)))}
+                    </TableBody>
+                  )
+                })
               ) : (
-                <TableBody>{rows.map(renderRow)}</TableBody>
+                <TableBody>{rows.map((row) => renderRow(row))}</TableBody>
               )}
               {totals && (
                 // After every group's body, so it totals the table, not the
@@ -866,7 +1240,7 @@ export function DataTable<TData extends Record<string, unknown>>({
               </Button>
             </div>
           </div>
-        </>
+        </DetailFrame>
       )}
     </div>
   )
@@ -875,25 +1249,84 @@ export function DataTable<TData extends Record<string, unknown>>({
     <EditInPlaceContext.Provider value={store}>
       {editing && <LeaveGuard store={store} />}
       {width === 'content' ? <div className="@container/data-table">{content}</div> : content}
+      {detailPanel && (
+        // Below the wide screen's width, the panel is a bottom sheet. Its
+        // own Close and Escape close it, and focus goes back to the row.
+        <Sheet
+          open={Boolean(selectedRow) && !isWide && isSuccessView && !cardLayout}
+          onOpenChange={(open) => {
+            if (!open) setSelection(null)
+          }}
+        >
+          <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto" data-slot="data-table-detail-sheet">
+            <SheetHeader className="pb-0">
+              <SheetTitle>{detailLabel}</SheetTitle>
+            </SheetHeader>
+            <div className="px-4 pb-4">{selectedRow && detailPanel(selectedRow.original)}</div>
+          </SheetContent>
+        </Sheet>
+      )}
     </EditInPlaceContext.Provider>
   )
 }
 
+// The list and, once a row is picked on a wide screen, the detail panel
+// beside it (`detailPanel`). Without a panel it adds nothing.
+function DetailFrame({ enabled, aside, children }: { enabled: boolean; aside: ReactNode; children: ReactNode }) {
+  if (!enabled) return <>{children}</>
+  return (
+    <div data-slot="data-table-with-detail" className={cn('grid items-start gap-4', aside && WITH_DETAIL_OPEN_CLASS)}>
+      <div className="flex min-w-0 flex-col gap-4">{children}</div>
+      {aside}
+    </div>
+  )
+}
+
+// A group's heading text: under a grouping, a button that folds the group,
+// with its row count; under `groupBy`, the label alone.
+function GroupLabel({
+  run,
+  isFolded,
+  onToggle,
+}: {
+  run: { label: string; rows: readonly unknown[]; foldable: boolean }
+  isFolded: boolean
+  onToggle: () => void
+}) {
+  if (!run.foldable) return <span className="type-label text-foreground">{run.label}</span>
+  return (
+    <button type="button" aria-expanded={!isFolded} onClick={onToggle} className={GROUP_TOGGLE_CLASS}>
+      <ChevronDownIcon
+        aria-hidden="true"
+        className={cn('size-4 self-center text-muted-foreground transition-transform', isFolded && '-rotate-90')}
+      />
+      <span className="type-label text-foreground">{run.label}</span>
+      <span className="type-caption text-muted-foreground tabular-nums">{run.rows.length}</span>
+    </button>
+  )
+}
+
 // A card layout's success view: the rows as cards in a grid or a list,
-// each run of one group (`groupBy`) under its own heading, as the table's
-// heading rows are, with the same label and summary.
+// each group (`groupBy`, or a grouping) under its own heading, as the
+// table's heading rows are, with the same label, summary and folding.
+type CardRow<TData> = { id: string; original: TData }
+
 function Cards<TData extends Record<string, unknown>>({
   layout,
+  runs,
   rows,
-  groupBy,
+  folded,
+  onToggleFold,
   groupSummary,
 }: {
   layout: DataTableCardLayout<TData>
-  rows: readonly { id: string; original: TData }[]
-  groupBy?: (row: TData) => RowGroup
-  groupSummary?: (rows: TData[]) => ReactNode
+  runs: (GroupRun<CardRow<TData>> & { foldable: boolean })[] | null
+  rows: readonly CardRow<TData>[]
+  folded: ReadonlySet<string>
+  onToggleFold: (key: string) => void
+  groupSummary?: (rows: TData[], group: RowGroup) => ReactNode
 }) {
-  const list = (items: readonly { id: string; original: TData }[]) => (
+  const list = (items: readonly CardRow<TData>[]) => (
     <ul
       role="list"
       className={cn(
@@ -909,20 +1342,31 @@ function Cards<TData extends Record<string, unknown>>({
   )
   return (
     <div className="@container/data-table-cards flex flex-col gap-6" data-state="success" data-slot="data-table-cards">
-      {groupBy
-        ? groupRuns(rows, (row) => groupBy(row.original)).map((run, runIndex) => (
-            <section key={`${runIndex}:${run.key}`} data-slot="table-group" className="flex flex-col gap-3">
-              <h2 data-slot="table-group-heading" className="flex items-baseline gap-2 border-b border-border pb-1.5">
-                <span className="type-label text-foreground">{run.label}</span>
-                {groupSummary && (
-                  <span className="type-caption text-muted-foreground tabular-nums">
-                    {groupSummary(run.rows.map((row) => row.original))}
-                  </span>
-                )}
-              </h2>
-              {list(run.rows)}
-            </section>
-          ))
+      {runs
+        ? runs.map((run, runIndex) => {
+            const isFolded = folded.has(run.key)
+            return (
+              <section
+                key={`${runIndex}:${run.key}`}
+                data-slot="table-group"
+                data-folded={isFolded || undefined}
+                className="flex flex-col gap-3"
+              >
+                <h2 data-slot="table-group-heading" className="flex items-baseline gap-2 border-b border-border pb-1.5">
+                  <GroupLabel run={run} isFolded={isFolded} onToggle={() => onToggleFold(run.key)} />
+                  {groupSummary && (
+                    <span className="type-caption text-muted-foreground tabular-nums">
+                      {groupSummary(
+                        run.rows.map((row) => row.original),
+                        { key: run.key, label: run.label },
+                      )}
+                    </span>
+                  )}
+                </h2>
+                {!isFolded && list(run.rows)}
+              </section>
+            )
+          })
         : list(rows)}
     </div>
   )

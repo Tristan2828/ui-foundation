@@ -3,23 +3,24 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 32–60
-- [The three badge styles](#the-three-badge-styles) · lines 62–79
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 81–110
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 112–125
-- [Logos and brand marks](#logos-and-brand-marks) · lines 127–171
-- [Categorical colour](#categorical-colour) · lines 173–243
-- [Typography](#typography) · lines 245–327
-  - [Written text (notes)](#written-text-notes) · lines 276–327
-- [Density](#density) · lines 329–386
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 388–466
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 468–526
-- [Notices](#notices) · lines 528–556
-- [A value over time](#a-value-over-time) · lines 558–591
-- [A list as a board](#a-list-as-a-board) · lines 593–644
-- [A list as cards](#a-list-as-cards) · lines 646–692
-- [Picking at random](#picking-at-random) · lines 694–725
-- [Filling in what's missing](#filling-in-whats-missing) · lines 727–777
+- [Semantic tones](#semantic-tones) · lines 33–61
+- [The three badge styles](#the-three-badge-styles) · lines 63–80
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 82–111
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 113–126
+- [Logos and brand marks](#logos-and-brand-marks) · lines 128–172
+- [Categorical colour](#categorical-colour) · lines 174–244
+- [Typography](#typography) · lines 246–328
+  - [Written text (notes)](#written-text-notes) · lines 277–328
+- [Density](#density) · lines 330–387
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 389–467
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 469–527
+- [Notices](#notices) · lines 529–557
+- [A value over time](#a-value-over-time) · lines 559–592
+- [A list as a board](#a-list-as-a-board) · lines 594–645
+- [A list as cards](#a-list-as-cards) · lines 647–693
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 695–717
+- [Picking at random](#picking-at-random) · lines 719–750
+- [Filling in what's missing](#filling-in-whats-missing) · lines 752–802
 
 <!-- /index -->
 
@@ -648,8 +649,8 @@ the table's.
 `DataTable`'s `layouts` (4.39) draw the same rows as cards beside the
 table: a thumbnail grid for a feed, covers for a collection, a dense line
 each for clearing a backlog. They are layouts of one list, not other
-pages: the toolbar, filters, saved views, paging and `groupBy` headings
-are the table's in every one, and so are its loading, empty and error
+pages: the toolbar, filters, saved views, paging, `groupBy` headings
+and a picked grouping's folding ones (cell pattern 23) are the table's in every one, and so are its loading, empty and error
 states.
 
 ```tsx
@@ -690,6 +691,30 @@ const { layout, setLayout } = useTableLayout({
   dash. Never an action only one layout has.
 - `totals` and `highlightRow` are the table's alone. Sorting is the
   toolbar's in a card layout (there is no header to click).
+
+## Key numbers on a record
+
+`KeyStats` (4.45), in `EntityView`'s `strip`: the few figures a record's
+page is read for first (done of total, time left, the next date), in a
+row under the header, across the page at every width.
+
+```tsx
+<EntityView
+  subtitle={<EditableValue label="Goal" edit={goals} layout="inline">{goal}</EditableValue>}
+  strip={<KeyStats stats={[{ label: 'Done', value: '7', hint: 'of 12' }, { label: 'Next step', value: formatPlainDate(next) }]} />}
+  … />
+```
+
+- **A label over its value**: the label in caption type and muted, the
+  value in the section title's size and tabular figures, a `hint`
+  under it in caption type. One bordered card, the figures side by side,
+  wrapping on a phone. A `<dl>`, so each label is read with its value.
+- **An empty value reads as `emptyLabel`** ("Not set"), in body type and
+  muted, never a blank or a dash.
+- **Three to five.** It's what the page is for at a glance; anything
+  more is a section's label/value rows.
+- **`subtitle`** is the line under the title: what the record is for,
+  in muted body type, editable in place like any value.
 
 ## Picking at random
 

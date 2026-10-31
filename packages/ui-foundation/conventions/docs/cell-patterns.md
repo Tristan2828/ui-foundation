@@ -3,37 +3,38 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 65–84
-- [1. Plain text](#1-plain-text) · lines 86–93
-- [2. Icon + label](#2-icon--label) · lines 95–118
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 120–133
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 135–212
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 160–212
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 214–227
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 229–241
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 243–264
-- [8. Date, relative](#8-date-relative) · lines 266–303
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 305–353
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 323–353
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 355–405
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 373–405
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 407–447
-- [12. Boolean](#12-boolean) · lines 449–479
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 481–517
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 501–517
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 519–536
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 538–647
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 564–647
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 649–684
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 686–759
-- [18. Editable value](#18-editable-value) · lines 761–1207
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1023–1108
-  - [In a table's rows](#in-a-tables-rows) · lines 1110–1195
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1197–1207
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1209–1275
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1277–1341
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1343–1408
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1410–1438
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 66–85
+- [1. Plain text](#1-plain-text) · lines 87–94
+- [2. Icon + label](#2-icon--label) · lines 96–119
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 121–134
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 136–213
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 161–213
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 215–228
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 230–242
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 244–265
+- [8. Date, relative](#8-date-relative) · lines 267–304
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 306–354
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 324–354
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 356–406
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 374–406
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 408–448
+- [12. Boolean](#12-boolean) · lines 450–480
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 482–518
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 502–518
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 520–537
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 539–648
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 565–648
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 650–685
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 687–760
+- [18. Editable value](#18-editable-value) · lines 762–1208
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1024–1109
+  - [In a table's rows](#in-a-tables-rows) · lines 1111–1196
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1198–1208
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1210–1276
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1278–1342
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1344–1412
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1414–1442
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1444–1518
 
 <!-- /index -->
 
@@ -1405,7 +1406,10 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
 - **No rows for a filter** is the table's own empty state, saying which
   filter, with a button to take it off. An empty group never renders:
   groups come from the rows.
-- **Not built:** collapsing groups, grouping by more than one key.
+- **Headings that fold, picked by the reader** are pattern 23's
+  `groupings`: a Group menu over choice fields. `groupBy` stays the
+  app's one fixed grouping (a feed's days). **Not built:** grouping by
+  more than one key.
 
 ## 22. A highlighted row, and rows that are done
 
@@ -1437,3 +1441,78 @@ current one. `DataTable`'s `highlightRow` returns true for it.
   the token check in both themes; `e2e/data-table.spec.ts` checks every
   cell wears the wash.
 
+## 23. A Group menu, and a record read beside the list
+
+A working list (tasks, chores, a backlog) is read two ways besides its
+columns: **grouped by one of its choice fields**, picked by the reader
+(by status to see what's moving, by area to plan a trip round the
+house), and **one record at a time without leaving the list**, its notes
+and key facts in a panel beside the rows. `DataTable`'s `groupings` and
+`detailPanel` (4.45) do both. Raised for an app's task list; the
+package's Storybook renders it (`app/DataTable grouping`), with axe in
+both themes and its specs in a real browser.
+
+```tsx
+const GROUPINGS: DataTableGrouping<Task>[] = [   // module level
+  { id: 'status', label: 'Status', options: STATUS_OPTIONS, value: (task) => task.status },
+  { id: 'categories', label: 'Category', options: CATEGORY_OPTIONS, value: (task) => task.categories, emptyLabel: 'No category' },
+  { id: 'canDoNow', label: 'Can do now', options: [{ value: 'yes', label: 'Can do now' }, { value: 'no', label: 'Not yet' }],
+    value: (task) => (task.canDoNow ? 'yes' : 'no') },
+]
+
+const { grouping, setGrouping, ...table } = useTableUrlState(FILTERS, MULTI, VIEWS, { groupStorageKey: 'my-app:tasks:group' })
+
+<DataTable
+  groupings={GROUPINGS}
+  grouping={grouping}
+  onGroupingChange={setGrouping}
+  groupSummary={(tasks) => `${tasks.filter(isReady).length} ready · top ${Math.max(...tasks.map((task) => task.score))}`}
+  detailLabel="Task"
+  detailPanel={(task) => <TaskPreview task={task} />}   // its own "Open page" link
+  … />
+```
+
+- **None is the default**, and the table is exactly as it was until a
+  grouping is picked. The Group menu sits at the end of the toolbar
+  (before a layout switch): None, then each grouping. While grouped a
+  Fold all button joins it, and the menu says which ("Group: Status").
+- **Only choice fields**: each group is one of the field's options, in
+  the options' order (the order the form lists them), so give the same
+  options list the column and the form use. A multi-value field (an
+  array) shows the row under each of its values; a row with none goes
+  last, under `emptyLabel` ("Not set" unless set). A yes/no field is two
+  options, worded as headings ("Can do now", "Not yet").
+- **The grouped column is hidden** while grouped (its value is the
+  heading), so a grouping's `id` is its column's id.
+- **A heading is a button** (`aria-expanded`) that folds its rows away:
+  a chevron, the label, the count, then `groupSummary`'s line, given the
+  group's rows *on this page* and the group itself. Folds reset when the
+  grouping changes.
+- **Remembered like the layout**: `useTableUrlState`'s `grouping` is
+  `?group=` in the URL, then the one remembered under `groupStorageKey`
+  on this device, then None. A saved view can name a `group` (''
+  for None) to turn one on when pressed; a view that names none keeps
+  the grouping that's on. Grouping doesn't change which rows are shown,
+  so it keeps the page and doesn't count toward the active view.
+- **It groups the page's rows**: paging pages rows, not groups, so a
+  list that groups wants a page size that holds it (a working list of a
+  few dozen), and a summary that must count a whole group across pages
+  comes from the API. A grouping, while on, takes the place of
+  `groupBy`'s headings.
+- **The detail panel** opens on a click on a row, or Enter on it (its
+  title link included: a plain click picks the row, a modified one still
+  opens the link in a new tab, and the panel's own "Open page" link
+  leaves). A control in a cell (a button, a switch, an editable value)
+  stays the control's. The picked row is marked (`aria-selected`, the
+  muted fill and a bar in `--primary` at its start); ↑ and ↓ move the pick
+  while the list has focus, and Escape or Close closes it, focus back on
+  the row. On a wide screen (64rem and up) the panel sits beside the
+  table and stays in view as the page scrolls; below that it is a
+  bottom sheet.
+- **The panel is the app's**: a heading-sized title, a few badges, a
+  short notes preview (a few lines of the record's notes, not the whole
+  editor), and an "Open page" link (a `<Link>` in `text-link`, so it's
+  announced as the link it is). Without `detailPanel` rows behave as they
+  always have: the title link opens the record's page.
+- **The table layout's alone:** a card layout's cards don't open the
+  panel.

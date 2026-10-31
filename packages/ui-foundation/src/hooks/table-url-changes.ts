@@ -17,6 +17,13 @@ export type TableView<F extends string, M extends string> = {
    * Applies only while the view is active (see activeViewOf).
    */
   columns?: readonly string[]
+  /**
+   * The grouping this view turns on, for DataTable's `grouping`: a
+   * grouping's id, or '' for None. Pressing the view sets it; a view that
+   * leaves it out keeps whatever grouping is on, since a grouping is how
+   * the rows are read, not which rows they are.
+   */
+  group?: string
 }
 
 export function serializeSort(next: Sort) {
@@ -49,6 +56,7 @@ export function viewToUrlChanges<F extends string, M extends string>(
     ...Object.fromEntries(filterNames.map((name) => [name, view.filters?.[name] ?? ''])),
     ...Object.fromEntries(multiFilterNames.map((name) => [name, view.multiFilters?.[name] ?? []])),
     sort: view.sort ? serializeSort(view.sort) : null,
+    ...(view.group === undefined ? {} : { group: view.group || null }),
     page: null,
   }
 }

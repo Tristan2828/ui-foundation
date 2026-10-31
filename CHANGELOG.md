@@ -7,6 +7,39 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.45.0 — DataTable's Group menu and detail panel; EntityView's subtitle and key numbers
+
+Additive, so a minor.
+
+- **`DataTable` `groupings`** (cell pattern 23): a Group menu at the end
+  of the toolbar, None (the default: the table as it was) then each
+  choice field the app lists (`DataTableGrouping`: `id`, `label`,
+  `options`, `value`, `emptyLabel`). Groups follow the options' order; a
+  multi-value field shows the row under each value; the grouped column
+  is hidden. Each heading is a button (`aria-expanded`) that folds its
+  rows, with its count and `groupSummary`'s line, and Fold all joins the
+  menu while grouped. `grouping` / `onGroupingChange` control it.
+- **`useTableUrlState`'s `grouping` and `setGrouping`**: `?group=` in
+  the URL, then the one remembered under the new fourth argument's
+  `groupStorageKey`, then None. A saved view's new `group` turns one on
+  when pressed.
+- **`groupSummary`** is given the group as a second argument
+  (`{ key, label }`), for `groupBy`'s headings too.
+- **`DataTable` `detailPanel`** (and `detailLabel`): a click or Enter on
+  a row picks it (`aria-selected`, the muted fill, a `--primary` bar) and
+  opens the app's panel beside the table from 64rem, a bottom `Sheet`
+  below that. ↑/↓ move the pick while the list has focus; Escape and
+  Close close it. A plain click on the row's title link picks the row
+  instead of leaving; without the prop, rows are as they were.
+- **`EntityView` `subtitle` and `strip`**, and **`KeyStats`**: a line
+  under the title (a goal, editable in place), and the record's key
+  numbers under the header, before both columns on a phone.
+
+**How an app adopts:** nothing changes until a table passes
+`groupings` or `detailPanel`, or a view passes `subtitle` or `strip`. To
+group a list, pass `groupings` and wire `grouping`/`setGrouping` from
+`useTableUrlState(filters, multi, views, { groupStorageKey })`.
+
 ## 4.44.0 — `keepAudioAlive` sets Safari's playback audio session
 
 Additive, so a minor.
