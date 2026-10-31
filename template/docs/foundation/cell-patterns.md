@@ -1448,7 +1448,7 @@ columns: **grouped by one of its choice fields**, picked by the reader
 (by status to see what's moving, by area to plan a trip round the
 house), and **one record at a time without leaving the list**, its notes
 and key facts in a panel beside the rows. `DataTable`'s `groupings` and
-`detailPanel` (4.45) do both. Raised for an app's task list; the
+`detailPanel` (4.46) do both. Raised for an app's task list; the
 package's Storybook renders it (`app/DataTable grouping`), with axe in
 both themes and its specs in a real browser.
 

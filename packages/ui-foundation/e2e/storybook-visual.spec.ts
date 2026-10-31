@@ -146,6 +146,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-linechart--all-states', mustShow: 'No points yet' },
   // Cards that fold to their header, one folded at rest (#233).
   { id: 'app-widgetcard--collapsible', mustShow: 'Fix the gate latch' },
+  // A folded card's value in each state, an accordion, and a hub's
+  // Customize sheet, open (#263).
+  { id: 'app-widgetcard--folded-summary', mustShow: '3 ready' },
+  { id: 'app-widgetcard--accordion', mustShow: 'Fix the gate latch' },
+  { id: 'app-widgetlayoutsheet--open', mustShow: 'Customize this page' },
   // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
   // slot under foreground text, the number, the note, the action, in
   // every state, and at compact.
@@ -204,6 +209,9 @@ const GLYPH_STORIES: {
   { id: 'app-linechart--all-states' },
   // The fold chevrons (#233).
   { id: 'app-widgetcard--collapsible' },
+  // The accordion's chevrons, and the sheet's arrows (#263).
+  { id: 'app-widgetcard--accordion' },
+  { id: 'app-widgetlayoutsheet--open' },
   // A summary line's chevron and the row's Move, Duplicate and Remove icons (#222).
   { id: 'app-listeditor--rows-that-open' },
   // A place's slot-tinted icon on its own wash, the external mark, a brand

@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.45.0 — DataTable's Group menu and detail panel; EntityView's subtitle and key numbers
+## 4.46.0 — DataTable's Group menu and detail panel; EntityView's subtitle and key numbers
 
 Additive, so a minor.
 
@@ -39,6 +39,39 @@ Additive, so a minor.
 `groupings` or `detailPanel`, or a view passes `subtitle` or `strip`. To
 group a list, pass `groupings` and wire `grouping`/`setGrouping` from
 `useTableUrlState(filters, multi, views, { groupStorageKey })`.
+## 4.45.0 — A hub's folded summaries, one card open at a time, and a Customize sheet
+
+Additive, so a minor.
+
+- **`WidgetCard`'s `summary`** (#263): one short value a folded card
+  shows in its header (`3`, `"Due today"`), following the card's state:
+  a small skeleton while loading, a muted dash (and "Couldn't load" to a
+  screen reader) on an error, whose `ErrorState` is in the body when
+  opened, and `emptySummary` (`"None"`) or nothing when empty. The
+  chevron is described by it. A new `id` names the card (on its region).
+- **`WidgetCardGroup`**: its cards fold one open at a time, and a click
+  anywhere on a header (not its link or a control) toggles the card.
+  `accordion="mobile"` does that only below the sidebar's breakpoint, so
+  a desktop keeps each card's own `collapsible`; `accordion` (the
+  default, `true`) at every width. `defaultOpen` names the card open at
+  first.
+- **`useWidgetLayout(pageKey, defaultIds, { store? })`** returns
+  `{ order, hidden, visible, move, toggle, reset, isDefault }`, kept in
+  localStorage under `<pageKey>:widgets` (in memory where storage is
+  blocked). A removed id drops out; a new one falls in after the card
+  before it in the default order. `store` takes a `WidgetLayoutStore` (an
+  app's own, over its backend); `createWidgetLayoutStore` and
+  `mergeWidgetLayout` are exported for one.
+- **`WidgetLayoutSheet`**: a Customize button and its sheet, listing the
+  page's cards with Up, Down and a Show switch, and Reset. Keyboard: the
+  focus stays on the button pressed (`aria-disabled` at either end), and
+  a live region says where the card went.
+
+**How an app adopts:** nothing changes until it opts in. For a long hub:
+add a `summary` to each card, wrap them in `WidgetCardGroup
+accordion="mobile"` with an `id` each, and render them by
+`useWidgetLayout`'s `visible` with a `WidgetLayoutSheet` beside the
+page's title (design-language.md "Widget cards (hub pages)").
 
 ## 4.44.0 — `keepAudioAlive` sets Safari's playback audio session
 

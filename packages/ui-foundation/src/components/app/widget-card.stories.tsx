@@ -6,14 +6,16 @@ import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import type { IconComponent } from './icon-component'
-import { WidgetCard, WidgetList, WidgetListItem, type WidgetCardLink } from './widget-card'
+import { WidgetCard, WidgetCardGroup, WidgetList, WidgetListItem, type WidgetCardLink } from './widget-card'
 
 // A hub page's widgets (issue #121): three made-up widgets, each a list
 // with a different trailing element (a tone badge, a note and a switch, a
 // muted time on external links, and the header linking out, #248). Default is the page as loaded; All
 // states is every widget in each of the four states; Brand mark is a card
 // about an outside service, titled with that service's mark (#211);
-// Collapsible folds and remembers each card (#233). Axe, the token check
+// Collapsible folds and remembers each card (#233); Folded summary is a
+// folded card's one value in each state, and Accordion a WidgetCardGroup
+// holding one card open at a time (#263). Axe, the token check
 // and the glyph check measure both in both themes and at the large
 // density (e2e/storybook-visual.spec.ts).
 const meta: Meta = {
@@ -49,6 +51,8 @@ type Widget = {
   link?: WidgetCardLink
   emptyMessage: string
   rows: number
+  /** The folded card's one value (#263). */
+  summary: string
   body: ReactNode
 }
 
@@ -58,6 +62,7 @@ const READY: Widget = {
   link: { to: '/tasks?status=ready', label: 'All' },
   emptyMessage: 'Nothing waiting',
   rows: 3,
+  summary: '3 ready',
   body: (
     <WidgetList>
       <WidgetListItem to="/tasks/1" trailing={<Badge variant="outline-success">Ready</Badge>}>
@@ -79,6 +84,7 @@ const WAITING_ON: Widget = {
   link: { to: '/conditions', label: 'All' },
   emptyMessage: 'Nothing on hold',
   rows: 2,
+  summary: '2',
   body: (
     <WidgetList>
       <WidgetListItem note="holds 2" trailing={(id) => <Switch aria-labelledby={id} defaultChecked={false} />}>
@@ -98,6 +104,7 @@ const SAVED_LINKS: Widget = {
   link: { href: 'https://example.com/saved', label: 'Open saved' },
   emptyMessage: 'No links saved yet',
   rows: 3,
+  summary: '3',
   body: (
     <WidgetList>
       <WidgetListItem href="https://example.com/shed-paint" note="2 h ago">
@@ -188,6 +195,7 @@ const RECENTLY_IN_SERVICE: Widget = {
   link: { href: 'https://example.com/history', label: 'Open Example Video' },
   emptyMessage: 'Nothing watched yet',
   rows: 2,
+  summary: '2',
   body: (
     <WidgetList>
       <WidgetListItem href="https://example.com/watch/1" note="Today">
@@ -238,6 +246,67 @@ export const Collapsible: StoryObj = {
           </WidgetCard>
         ))}
       </div>
+    </div>
+  ),
+}
+
+// A folded card's one value (#263), in each of the four states: the
+// number, a small skeleton, a muted dash (the error waits in the body:
+// open it), and `emptySummary`'s word. Each card opens with its chevron.
+export const FoldedSummary: StoryObj = {
+  name: 'Folded summary',
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Home</h1>
+      <div className={GRID}>
+        {STATES.map((state) => (
+          <WidgetCard
+            key={state}
+            title={`${READY.title} (${state})`}
+            icon={READY.icon}
+            link={READY.link}
+            emptyMessage={READY.emptyMessage}
+            skeletonRows={READY.rows}
+            collapsible
+            defaultCollapsed
+            summary={READY.summary}
+            emptySummary="None"
+            {...stateProps(state)}
+          >
+            {READY.body}
+          </WidgetCard>
+        ))}
+      </div>
+    </div>
+  ),
+}
+
+// One card open at a time (#263): opening a card folds the one that was
+// open, and a click anywhere on a header (not its link) toggles it.
+// `accordion` here is on at every width so the story shows it on a
+// desktop; a hub passes `accordion="mobile"` to keep a desktop's cards
+// side by side (e2e/widget-card.spec.ts).
+export const Accordion: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Home</h1>
+      <WidgetCardGroup accordion defaultOpen="ready" className="grid max-w-md gap-3">
+        {WIDGETS.map((widget, index) => (
+          <WidgetCard
+            key={widget.title}
+            id={['ready', 'waiting', 'links'][index]}
+            title={widget.title}
+            icon={widget.icon}
+            link={widget.link}
+            emptyMessage={widget.emptyMessage}
+            skeletonRows={widget.rows}
+            summary={widget.summary}
+            {...stateProps('success')}
+          >
+            {widget.body}
+          </WidgetCard>
+        ))}
+      </WidgetCardGroup>
     </div>
   ),
 }
