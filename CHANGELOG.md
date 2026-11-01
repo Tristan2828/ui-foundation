@@ -7,6 +7,28 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.56.0 — Fixtures replace Storybook
+
+No export changes, so a minor. The package's browser tests no longer run
+on Storybook: a small page of the package's own (`e2e/harness/`, built by
+Vite) renders each component state by id, and the same checks run against
+it (axe in both themes and at the large density, token colours, glyph
+contrast, density and every behaviour spec). Nothing an app imports is
+affected, and the three Storybook dev dependencies are gone.
+
+- **`*.stories.tsx` are now `*.fixtures.tsx`**, typed by a local
+  `Meta`/`StoryObj` (`src/fixtures/types.ts`); ids are unchanged
+  (`app-board--default`).
+- **`npm run harness`** serves an index of every fixture, with a theme and
+  density picker, on :6180; `story.html?id=...&theme=dark&density=large`
+  opens one. `playwright.harness.config.ts` replaces
+  `playwright.storybook.config.ts`; `npm run verify` runs it.
+- **Docs:** the synced docs say "the package's fixtures" where they said
+  Storybook, and `column-options.md` drops its Storybook step.
+
+**How an app adopts:** bump, run `ui-foundation sync` (only docs change),
+run `verify`. Nothing else.
+
 ## 4.55.0 â€” Group icons, and a row click that isn't the panel
 
 Additive, so a minor. No new dependency. A list grouped by a choice field

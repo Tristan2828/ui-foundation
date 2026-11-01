@@ -52,7 +52,7 @@ view render them, and their specs pin them. Patterns 19 (stage circle),
 20 (count linking to the related records) and 22 (a highlighted row),
 the multi-value variant of 4, the step bar and star in 9, the dependency
 list in 10, the ring in 13 and the pressed icon in 15 were each built
-for a real app's screen first; the package's Storybook renders
+for a real app's screen first; the package's fixtures renders
 them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`,
 `patterns/Scales`, `app/DataTable`), and
 its checks pin their accessibility and contrast in both themes. The
@@ -151,7 +151,7 @@ narrow.
   read-only cell isn't a button: `render={<span role="img" aria-label … tabIndex={0} />}`
   keeps it focusable and named without faking one.
 - Needs the `TooltipProvider` that `AppShell` mounts — free in any
-  cell, absent in an isolated Storybook story.
+  cell, absent in an isolated fixture.
 - Encode the value in the glyph's **shape** (solid / half / slashed /
   dashed), not its colour.
 - **Give the trigger a focus ring**
@@ -162,7 +162,7 @@ narrow.
 
 A multi value (several categories on one record) where each value has
 its own icon and colour slot, and the column is narrow. The package's
-Storybook renders it (`patterns/CellPatterns`, "Icons with one tooltip").
+fixtures render it (`patterns/CellPatterns`, "Icons with one tooltip").
 
 ```tsx
 // values: the row's categories, `undefined` for one still loading.
@@ -323,7 +323,7 @@ own state.
 
 ### Two variants the package draws: a step bar and a star
 
-Both are in the package's Storybook (`patterns/Scales`), every value on
+Both are in the package's fixtures (`patterns/Scales`), every value on
 the page and on a card, measured by axe and the glyph check in both
 themes. Each is one image to a screen reader, named in words.
 
@@ -375,7 +375,7 @@ A one-to-many value (`★ 4.7 (3)` opening a per-person breakdown).
 
 The records a row waits on (parts it needs, a date that has to pass,
 other records that have to finish), summarised in the cell, listed in
-the popover. The package's Storybook renders it
+the popover. The package's fixtures render it
 (`patterns/CellPatterns`, "Dependency list").
 
 - **The cell: a computed summary.** "Ready" when nothing holds the row,
@@ -567,7 +567,7 @@ now", "happened"). Widget's In Stock column is the reference
 A yes/no that belongs to another value rather than having a column of
 its own: a "focus" flag that only exists while the status is "doing", a
 "pinned" mark on an open item. It's a small icon button inside the owning
-value's cell, beside its word. The package's Storybook renders it
+value's cell, beside its word. The package's fixtures render it
 (`patterns/CellPatterns`, "Pressed icon in a cell").
 
 **Pick it over the Switch** when the yes/no only means something while
@@ -621,7 +621,7 @@ export function FocusToggle({ item }: { item: Item }) {
   mode (3.2:1; dark is 5.2:1). `/70` measures 2.7:1, and a control a
   reader can't see fails them. Hover lifts it to full
   `muted-foreground`. axe doesn't measure icons, so the package's
-  Storybook glyph check does.
+  fixtures glyph check does.
 - **Tone: `destructive-text`, read as "flagged", not "error".** A flag
   claims attention ahead of the rest of the row, and the destructive
   tone is the one with that pull. The other tones are taken where it
@@ -1201,8 +1201,8 @@ const CATEGORY_COLUMNS: LegacyColumnDef<Category, unknown>[] = [
     create={(name) => createCategory.mutateAsync({ name, colour: 'blue', icon: 'house' })} />} … />
 ```
 
-The worked example is the package's Storybook story `app/DataTable`
-"Edit in the rows" (`data-table.stories.tsx`); the template has no small
+The worked example is the package's fixture `app/DataTable`
+"Edit in the rows" (`data-table.fixtures.tsx`); the template has no small
 entity yet.
 
 ### A table of a few short columns: `width="content"`
@@ -1223,7 +1223,7 @@ A status that's an ordered lifecycle (each record moves through the same
 stages, in the same order, toward one that means *done*), with one or
 more exit states off the side. A small circle beside the word fills as
 the record moves on. The package ships it: `StageCircle`, rendered with
-every stage and tone in its Storybook (`app/StageCircle`).
+every stage and tone in its fixtures (`app/StageCircle`).
 
 | Stage (`stage`) | Drawn as | Say it for |
 |---|---|---|
@@ -1290,7 +1290,7 @@ cell: ({ getValue }) => {
 A count of the records in another table that point at this row (open
 Tasks per Project, items per Tag), which opens that table already filtered
 to them. The count is a `computed` integer (the entity plan's type).
-The package ships it: `CountLink`, rendered in its Storybook
+The package ships it: `CountLink`, rendered in its fixtures
 (`app/CountLink`).
 
 ```tsx
@@ -1359,7 +1359,7 @@ months), each heading with a count and a summary ("4 · 1 h 12 m"). The
 same screens usually want one quick filter as pills above the rows (All /
 Video / Audio / Text, one pressed at a time) rather than a dropdown: there
 are few values, and switching between them is the main thing people do.
-Raised for an app's feed (issue #135); the package's Storybook renders it
+Raised for an app's feed (issue #135); the package's fixtures renders it
 (`app/DataTable` "Grouped" and "Grouped no matches"), with axe in both
 themes.
 
@@ -1446,7 +1446,7 @@ current one. `DataTable`'s `highlightRow` returns true for it.
   `opacity-50` (or `text-foreground/60`) drops their text under 4.5:1 the
   same way. Render their text in `text-muted-foreground`, which is
   measured, and keep the word that says done.
-- Storybook's `app/DataTable` Highlighted story has two highlighted rows
+- The fixtures' `app/DataTable` Highlighted story has two highlighted rows
   (one striped), pinned columns and muted text inside them, under axe and
   the token check in both themes; `e2e/data-table.spec.ts` checks every
   cell wears the wash.
@@ -1459,7 +1459,7 @@ columns: **grouped by one of its choice fields**, picked by the reader
 house), and **one record at a time without leaving the list**, its notes
 and key facts in a panel beside the rows. `DataTable`'s `groupings` and
 `detailPanel` (4.46) do both. Raised for an app's task list; the
-package's Storybook renders it (`app/DataTable grouping`), with axe in
+package's fixtures render it (`app/DataTable grouping`), with axe in
 both themes and its specs in a real browser.
 
 ```tsx

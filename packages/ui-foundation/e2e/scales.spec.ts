@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test'
 
 // ProgressRing, StepBar and RatingStar (patterns/Scales): each is one
 // image to a screen reader, named in words. Axe, the token check and the
-// glyph check are e2e/storybook-visual.spec.ts's.
-const STORY = 'http://localhost:6006/iframe.html?id=patterns-scales--default&viewMode=story'
+// glyph check are e2e/fixtures-visual.spec.ts's.
+const STORY = 'http://localhost:6180/story.html?id=patterns-scales--default'
 
 test('each glyph is named in words, and zero of zero reads as not started', async ({ page }) => {
   await page.goto(STORY)

@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test'
 
 // FillInQueue and FillInChoice (app/FillInQueue): picking by a click and by
 // a number key, Save and next, Skip wrapping round, a refused save, and the
-// empty queue. Axe and the token check are e2e/storybook-visual.spec.ts's.
-const story = (name: string) => `http://localhost:6006/iframe.html?id=app-fillinqueue--${name}&viewMode=story`
+// empty queue. Axe and the token check are e2e/fixtures-visual.spec.ts's.
+const story = (name: string) => `http://localhost:6180/story.html?id=app-fillinqueue--${name}`
 
 const record = (page: Page) => page.locator('[data-slot=fill-in-queue-record]')
 const save = (page: Page) => page.getByRole('button', { name: 'Save and next' })

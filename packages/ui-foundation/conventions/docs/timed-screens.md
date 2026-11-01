@@ -30,7 +30,7 @@ package has the parts, so a screen like this is assembled, not rebuilt:
 | `usePrefersReducedMotion` | Whether to swap movement for a fade |
 
 All of them are imported from `@tristan2828/ui-foundation`. The package's
-Storybook has the whole thing working together: `app/SessionView`, the
+The package's fixtures have the whole thing working together: `app/SessionView`, the
 Timer story, and the same run on the dark stage, DarkStage.
 
 ## The view

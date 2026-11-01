@@ -5,7 +5,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 // form's row, a done box then the text box, sits side by side while the
 // item is edited and while one is added, as in the form's ListEditor. A
 // row the app already wrapped in its own flex row still fills the width.
-const story = 'http://localhost:6006/iframe.html?id=app-editablelist--item-rows&viewMode=story'
+const story = 'http://localhost:6180/story.html?id=app-editablelist--item-rows'
 
 async function open(page: Page) {
   await page.setViewportSize({ width: 1280, height: 900 })
@@ -52,11 +52,11 @@ for (const { section, name } of [
 // it then edits, moves and removes like any item; a refused upload says
 // why under the list. A muted value on the hover and focus tint reads as
 // foreground (#257): axe with the caret on a pencil, in both themes.
-const uploads = 'http://localhost:6006/iframe.html?id=app-editablelist--added-by-upload&viewMode=story'
+const uploads = 'http://localhost:6180/story.html?id=app-editablelist--added-by-upload'
 
 async function openUploads(page: Page, theme: 'light' | 'dark' = 'light') {
   await page.setViewportSize({ width: 1280, height: 900 })
-  await page.goto(`${uploads}&globals=theme:${theme}`)
+  await page.goto(`${uploads}&theme=${theme}`)
   await expect(page.getByRole('heading', { level: 1, name: 'Office move' })).toBeVisible()
   return page.getByRole('region', { name: 'Files', exact: true })
 }

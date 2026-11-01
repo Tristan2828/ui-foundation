@@ -214,14 +214,14 @@ is a filled-in example while the Widgets demo is still here).
    `editInPlace({ kind: 'choice', ... })` with `DateField` as the
    control, `defaultOpen`, `modal={false}`, `onChange={(day) =>
    props.commit(day)}` and `onOpenChange` cancelling on close, as a
-   Select is (Storybook `app/DateField` EditInPlace). The backend column
+   Select is (the fixtures' `app/DateField` EditInPlace). The backend column
    is a SQL `date` (`datetime.date` in the model).
 
    **An image on a record** (a photo of it) is the stored file's id on the
    wire (`string`, nullable), and on the form the foundation's
    `ImageField` in a `Controller` (`z.string().nullable()`): `value` and
    `onChange` are the id, `thumbUrl` the record's saved photo,
-   `onBusyChange` holds the submit while a file uploads (Storybook
+   `onBusyChange` holds the submit while a file uploads (the fixtures'
    `app/ImageField`). Its `upload` is the app's own, one function in the
    gateway that sends the file to the app's endpoint and resolves to
    `{ id, thumbUrl, url }` (the `ImageUploadResult`), rejecting with the

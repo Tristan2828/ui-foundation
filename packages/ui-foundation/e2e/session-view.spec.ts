@@ -6,8 +6,8 @@ import { expect, test, type Page } from '@playwright/test'
 // returns, real fullscreen where the browser has it, the clock's states
 // reached with Playwright's fake clock (docs/foundation/timed-screens.md),
 // and the reduced-motion swap. Axe in both themes is
-// e2e/storybook-visual.spec.ts's COMPOSITE_STORIES.
-const STORY = 'http://localhost:6006/iframe.html?id=app-sessionview--timer&viewMode=story'
+// e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
+const STORY = 'http://localhost:6180/story.html?id=app-sessionview--timer'
 
 const view = (page: Page) => page.getByRole('dialog', { name: 'Morning stretch' })
 const timeLeft = (page: Page) => view(page).getByRole('timer', { name: 'Time left' })
@@ -343,7 +343,7 @@ test.describe('in a background tab', () => {
 // light app the view is black and the page under it stays light; the
 // stage glows in the run's tone and the time is lit in its text shade.
 test.describe('the dark stage', () => {
-  const DARK_STORY = 'http://localhost:6006/iframe.html?id=app-sessionview--dark-stage&viewMode=story&globals=theme:light'
+  const DARK_STORY = 'http://localhost:6180/story.html?id=app-sessionview--dark-stage&theme=light'
   const colour = (page: Page, selector: string, property: string) =>
     view(page).evaluate(
       (el, [sel, prop]) => getComputedStyle(sel ? el.querySelector(sel)! : el).getPropertyValue(prop),
@@ -381,7 +381,7 @@ test.describe('the dark stage', () => {
   })
 
   test('without dark, the view keeps the app theme', async ({ page }) => {
-    await page.goto(`${STORY}&globals=theme:light`)
+    await page.goto(`${STORY}&theme=light`)
     await expect(view(page)).toBeVisible()
     await expect(view(page)).not.toHaveAttribute('data-look', 'dark')
     expect(await colour(page, '', 'background-color')).toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor))
