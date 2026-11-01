@@ -7,6 +7,27 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.55.0 — Group icons, and a row click that isn't the panel
+
+Additive, so a minor. No new dependency. A list grouped by a choice field
+wanted the field's own visual in its heading, and a list with a side panel
+wanted a click on a row to open the record's page, with the panel behind a
+button of the app's.
+
+- **`icon` on a grouping's options**: a node that leads the option's
+  heading (and its card layouts' headings), hidden from assistive tech, so
+  the heading says it in words and in the same visual the cells use.
+- **`onRowClick` with `detailPanel`**: a click on a row (or Enter on it)
+  runs it with the row instead of picking the row for the panel. A link or
+  control inside the row keeps its own click.
+- **`detailRow` and `onDetailRowChange`**: the row the panel shows,
+  controlled by its row id (null for none), so a control of the app's own
+  (a button in a row) opens it. Up and down, Escape and Close work as before.
+
+**How an app adopts:** nothing changes until a prop is passed. To open a
+page on a row click, pass `onRowClick={(row) => navigate(...)}` and open the
+panel from a button that sets `detailRow`.
+
 ## 4.54.0 — Folding notes by headings, and NotesOutline
 
 Additive, so a minor. No new dependency. A long note (tens of thousands of
