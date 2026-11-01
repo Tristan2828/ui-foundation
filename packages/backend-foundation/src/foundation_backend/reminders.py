@@ -22,18 +22,25 @@ reminder that's due:
   backend that was down at 07:30 doesn't send the morning's at noon.
 - **Sent or not, it's done for the day.** A user with no device
   subscribed gets nothing, and the job doesn't try again every minute.
+- **Channels beyond push** (email, a phone-alert app) are the app's
+  senders, handed to `register(senders=...)`: the job still decides what's
+  due and stamps it once, and says per channel whether it was sent or
+  failed, and why (`ChannelResult`).
 """
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable, Mapping
+from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
-from typing import Any
+from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from sqlalchemy import inspect
 from sqlmodel import SQLModel, col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from foundation_backend import jobs, push
+from foundation_backend.error_reporting import ErrorContext, report_error
 
 logger = logging.getLogger("app.reminders")
 
@@ -98,19 +105,158 @@ def _default_model() -> type[SQLModel]:
     return Reminder
 
 
-async def send_due_reminders(
-    session: AsyncSession, now: datetime | None = None, *, model: type[SQLModel] | None = None
-) -> str | None:
-    """One run of the job: sends each due reminder, marks it sent today.
+PUSH = "push"
+ChannelStatus = Literal["sent", "failed", "skipped"]
+
+
+@dataclass
+class ChannelResult:
+    """How one reminder went on one channel: sent, failed (with `error`,
+    why), or skipped (nothing to send to: push with no device subscribed).
+    `detail` is the channel's own count or note ("2 sent, 1 gone")."""
+
+    status: ChannelStatus
+    error: str | None = None
+    detail: str = ""
+
+
+Sender = Callable[[AsyncSession, Any], Awaitable[ChannelResult | None]]
+"""Sends one due reminder (a row of the job's model) on one channel. It
+returns None when sent, or a ChannelResult; an exception it raises is a
+failed result with the exception as its error. It may read the session
+but shouldn't write it: the job commits the reminder's stamp."""
+
+ChannelsOf = Callable[[Any], Iterable[str]]
+"""The channels a reminder goes out on (a column of the app's, say). Left
+out, every reminder goes on every channel: push and each extra sender."""
+
+OnSent = Callable[[AsyncSession, Any, dict[str, ChannelResult]], Awaitable[None]]
+"""Called with a reminder and its results by channel before the job marks
+it sent and commits, so a last-sent time per channel lands in the same
+commit."""
+
+
+@dataclass
+class ReminderSent:
+    """A reminder the run sent (its id): the local day it was due on, and
+    how each of its channels went."""
+
+    reminder_id: Any
+    on: date
+    results: dict[str, ChannelResult]
+
+
+@dataclass
+class RemindersRun:
+    """One run of the job: what was sent, rows skipped as unreadable, and
+    push's device counts across every reminder."""
+
+    sent: list[ReminderSent] = field(default_factory=list)
+    unreadable: int = 0
+    push_result: push.PushResult = field(default_factory=push.PushResult)
+
+    def summary(self) -> str | None:
+        """The job's line in the jobs record, None when nothing was due.
+        Push-only runs read as before ("1 due: 2 sent"); each other
+        channel adds its own count ("email: 1 sent, 1 failed")."""
+        if not self.sent and not self.unreadable:
+            return None
+        counts: dict[str, dict[str, int]] = {}
+        for item in self.sent:
+            for channel, result in item.results.items():
+                tally = counts.setdefault(channel, {})
+                tally[result.status] = tally.get(result.status, 0) + 1
+        parts = [self.push_result.summary()] if PUSH in counts or not counts else []
+        for channel, tally in counts.items():
+            if channel != PUSH:
+                words = [f"{tally[status]} {status}" for status in ("sent", "failed", "skipped") if status in tally]
+                parts.append(f"{channel}: {', '.join(words)}")
+        summary = f"{len(self.sent)} due: {'; '.join(parts)}"
+        return f"{summary}; {self.unreadable} unreadable" if self.unreadable else summary
+
+
+def _push_sender(totals: push.PushResult) -> Sender:
+    """The package's channel: every device the user allowed, counted into
+    the run's totals."""
+
+    async def send(session: AsyncSession, reminder: Any) -> ChannelResult:
+        outcome = await push.send_push(
+            session,
+            reminder.user_id,
+            reminder.title,
+            reminder.body,
+            reminder.url,
+            tag=f"reminder-{reminder.id}",
+        )
+        totals.sent += outcome.sent
+        totals.removed += outcome.removed
+        totals.failed += outcome.failed
+        detail = outcome.summary()
+        if outcome.sent:
+            return ChannelResult("sent", detail=detail)
+        if outcome.failed:
+            return ChannelResult("failed", error=f"Every device failed ({detail}).", detail=detail)
+        return ChannelResult("skipped", detail="No device subscribed.")
+
+    return send
+
+
+async def _loaded(session: AsyncSession, reminder: Any) -> Any:
+    """The reminder with its columns loaded again after a commit (the
+    previous reminder's stamp, or push dropping a gone subscription)
+    expired them: an async session can't load them lazily."""
+    if inspect(reminder).expired_attributes:
+        await session.refresh(reminder)
+    return reminder
+
+
+def _report(channel: str, exc: BaseException) -> None:
+    tags = {"job": JOB_NAME, "channel": channel}
+    report_error(exc, ErrorContext(source="server", route=f"job {JOB_NAME}", tags=tags))
+
+
+async def _send_on(session: AsyncSession, reminder: Any, channel: str, sender: Sender | None) -> ChannelResult:
+    """One channel for one reminder, never raising: a failure is reported
+    (error_reporting) and returned."""
+    if sender is None:
+        result = ChannelResult("failed", error=f"No sender for channel {channel!r}.")
+    else:
+        try:
+            result = await sender(session, await _loaded(session, reminder)) or ChannelResult("sent")
+        except Exception as exc:  # noqa: BLE001 — one channel failing never stops the others
+            _report(channel, exc)
+            return ChannelResult("failed", error=str(exc) or type(exc).__name__)
+    if result.status == "failed":
+        _report(channel, RuntimeError(f"Reminder {(await _loaded(session, reminder)).id} on {channel}: {result.error}"))
+    return result
+
+
+async def run_due_reminders(
+    session: AsyncSession,
+    now: datetime | None = None,
+    *,
+    model: type[SQLModel] | None = None,
+    senders: Mapping[str, Sender] | None = None,
+    channels: ChannelsOf | None = None,
+    on_sent: OnSent | None = None,
+) -> RemindersRun:
+    """One run of the job: sends each due reminder on its channels, marks
+    it sent today, and says how each channel went.
 
     `model` is the reminders table to read: the package's when left out,
     or an app's own with the same columns (id, user_id, title, body, url,
-    time_of_day, days, time_zone, enabled, last_sent_on)."""
+    time_of_day, days, time_zone, enabled, last_sent_on). `senders` adds
+    channels beyond Web Push by name ({"email": send_email}); one named
+    "push" replaces the package's. `channels` picks a reminder's channels
+    (all of them when left out), and `on_sent` sees each reminder's results
+    before it's stamped. A failed channel doesn't stop the others, and the
+    reminder is done for the day either way: a channel that's down isn't
+    tried again every minute."""
     now = now or datetime.now(timezone.utc)
     table: Any = model or _default_model()
     result = await session.exec(select(table).where(col(table.enabled).is_(True)))
+    run = RemindersRun()
     due: list[tuple[Any, date]] = []
-    skipped = 0
     for reminder in result.all():
         try:
             on = due_on(
@@ -123,39 +269,56 @@ async def send_due_reminders(
         except ValueError:
             # A row an app wrote wrong: skipped, and said so in the summary.
             logger.warning("reminder %s: unreadable days or time zone", reminder.id)
-            skipped += 1
+            run.unreadable += 1
             continue
         if on is not None:
             due.append((reminder, on))
-    totals = push.PushResult()
+    available: dict[str, Sender] = {PUSH: _push_sender(run.push_result), **(senders or {})}
     for reminder, on in due:
-        outcome = await push.send_push(
-            session,
-            reminder.user_id,
-            reminder.title,
-            reminder.body,
-            reminder.url,
-            tag=f"reminder-{reminder.id}",
-        )
-        totals.sent += outcome.sent
-        totals.removed += outcome.removed
-        totals.failed += outcome.failed
+        reminder_id = (await _loaded(session, reminder)).id
+        names = list(dict.fromkeys(channels(reminder))) if channels else list(available)
+        results = {name: await _send_on(session, reminder, name, available.get(name)) for name in names}
+        if on_sent is not None:
+            try:
+                await on_sent(session, await _loaded(session, reminder), results)
+            except Exception as exc:  # noqa: BLE001 — stamped anyway, or it's sent again next minute
+                _report("on_sent", exc)
         reminder.last_sent_on = on
         session.add(reminder)
         await session.commit()
-    if not due and not skipped:
-        return None
-    summary = f"{len(due)} due: {totals.summary()}"
-    return f"{summary}; {skipped} unreadable" if skipped else summary
+        run.sent.append(ReminderSent(reminder_id, on, results))
+    return run
 
 
-def register(model: type[SQLModel] | None = None) -> None:
+async def send_due_reminders(
+    session: AsyncSession,
+    now: datetime | None = None,
+    *,
+    model: type[SQLModel] | None = None,
+    senders: Mapping[str, Sender] | None = None,
+    channels: ChannelsOf | None = None,
+    on_sent: OnSent | None = None,
+) -> str | None:
+    """run_due_reminders as the job runs it: its summary line, or None
+    when nothing was due."""
+    run = await run_due_reminders(session, now, model=model, senders=senders, channels=channels, on_sent=on_sent)
+    return run.summary()
+
+
+def register(
+    model: type[SQLModel] | None = None,
+    *,
+    senders: Mapping[str, Sender] | None = None,
+    channels: ChannelsOf | None = None,
+    on_sent: OnSent | None = None,
+) -> None:
     """Adds the send-reminders job (main.py, when PUSH_ENABLED), reading
-    `model`'s table: the package's `reminders` when left out."""
+    `model`'s table (the package's `reminders` when left out) and sending
+    on push and `senders`, as run_due_reminders says."""
     if JOB_NAME in jobs.JOBS:
         return
 
     async def run(session: AsyncSession) -> str | None:
-        return await send_due_reminders(session, model=model)
+        return await send_due_reminders(session, model=model, senders=senders, channels=channels, on_sent=on_sent)
 
     jobs.register_job(JOB_NAME, every=timedelta(minutes=1), run=run, timeout=timedelta(minutes=2))
