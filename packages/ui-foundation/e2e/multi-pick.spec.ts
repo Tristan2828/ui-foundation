@@ -8,7 +8,7 @@ import { expect, test, type Page } from '@playwright/test'
 // toggles them, and Esc or a click outside only closes. Axe in both
 // themes with the picker open and a refusal showing.
 const story = (id: string, theme: 'light' | 'dark' = 'light') =>
-  `http://localhost:6006/iframe.html?id=app-multipick--${id}&viewMode=story&globals=theme:${theme}`
+  `http://localhost:6180/story.html?id=app-multipick--${id}&theme=${theme}`
 
 const LABELS = ['Finance', 'Design', 'Support', 'Facilities', 'Legal', 'Hiring', 'Security', 'Archived', 'Travel', 'Training']
 

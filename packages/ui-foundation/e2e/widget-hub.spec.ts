@@ -8,9 +8,9 @@ import { expect, test, type Page } from '@playwright/test'
 // ordering and hiding cards from the keyboard, the focus staying on the
 // button pressed, remembered after a reload and undone by Reset. Axe runs
 // on each in both themes; the token and glyph checks at rest are
-// e2e/storybook-visual.spec.ts's.
+// e2e/fixtures-visual.spec.ts's.
 const story = (id: string, theme = 'light') =>
-  `http://localhost:6006/iframe.html?id=${id}&viewMode=story&globals=theme:${theme}`
+  `http://localhost:6180/story.html?id=${id}&theme=${theme}`
 
 const card = (page: Page, title: string) => page.getByRole('region', { name: title })
 const chevron = (page: Page, title: string) => card(page, title).getByRole('button', { name: title, exact: true })

@@ -1,6 +1,6 @@
 {
   "name": "@tristan2828/ui-foundation",
-  "version": "4.55.0",
+  "version": "4.56.0",
   "description": "Shared UI foundation for contract-first, database-backed React apps: shadcn primitives, DataTable/EntityForm composites, auth, the gateway error seam, design tokens, lint rules and the AI playbook.",
   "license": "MIT",
   "repository": {
@@ -66,11 +66,11 @@
     "gen:api": "openapi-typescript ./openapi/foundation.yaml -o ./src/api/schema.ts",
     "lint": "eslint .",
     "docs:index": "node scripts/doc-index.mjs",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "preview-storybook": "vite preview --outDir storybook-static --port 6006 --strictPort",
+    "harness": "vite -c vite.harness.config.ts",
+    "build-harness": "vite build -c vite.harness.config.ts",
+    "preview-harness": "vite preview -c vite.harness.config.ts",
     "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.ts && node scripts/doc-index.mjs --check && tsc -b && eslint . --max-warnings 0 && node bin/ui-foundation.mjs check-deps && npm run build && vitest run",
-    "verify": "npm run verify:fast && playwright test -c playwright.storybook.config.ts"
+    "verify": "npm run verify:fast && playwright test -c playwright.harness.config.ts"
   },
   "peerDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -157,8 +157,6 @@
     "@base-ui/react": "^1.8.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
-    "@storybook/addon-docs": "^10.6.0",
-    "@storybook/react-vite": "^10.6.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/eslint-plugin-query": "^5.103.1",
     "@tanstack/react-query": "^5.103.1",
@@ -180,7 +178,6 @@
     "react-hook-form": "^7.88.0",
     "react-router": "^7.18.4",
     "sonner": "^2.0.8",
-    "storybook": "^10.6.3",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.0",

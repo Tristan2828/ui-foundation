@@ -8,10 +8,10 @@ import { expect, test, type Page } from '@playwright/test'
 // URL, remembered and set by a saved view; then the panel: a click, Enter,
 // ↑/↓, Escape and Close, a title link picking instead of leaving, and the
 // phone's bottom sheet. Axe on the stories at rest is
-// e2e/storybook-visual.spec.ts's; the open panel and a folded heading are
+// e2e/fixtures-visual.spec.ts's; the open panel and a folded heading are
 // checked here, in both themes.
 const story = (id: string, query = '', theme: 'light' | 'dark' = 'light') =>
-  `http://localhost:6006/iframe.html?id=app-datatable-grouping--${id}&viewMode=story&globals=theme:${theme}${query}`
+  `http://localhost:6180/story.html?id=app-datatable-grouping--${id}&theme=${theme}${query}`
 
 const groupMenu = (page: Page) => page.locator('[data-slot="data-table-group-menu"]')
 const headings = (page: Page) => page.locator('[data-slot="table-group-heading"] button[aria-expanded]')

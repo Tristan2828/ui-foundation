@@ -4,9 +4,9 @@ import { FOLDING_SAMPLE } from '../src/components/app/folding.fixtures'
 // Folding by headings (`foldKey`) and NotesOutline, on the Folding stories
 // of <Markdown> and the rich-text editor. Each opens with Watering folded
 // (unless something already is), the outline beside the text. Their axe
-// checks, in both themes, are storybook-visual.spec.ts's.
-const MARKDOWN = 'http://localhost:6006/iframe.html?id=app-markdown--folding&viewMode=story'
-const EDITOR = 'http://localhost:6006/iframe.html?id=app-richtexteditor--folding&viewMode=story'
+// checks, in both themes, are fixtures-visual.spec.ts's.
+const MARKDOWN = 'http://localhost:6180/story.html?id=app-markdown--folding'
+const EDITOR = 'http://localhost:6180/story.html?id=app-richtexteditor--folding'
 
 const outline = (page: Page) => page.getByRole('navigation', { name: 'Outline' })
 // A heading's fold button, in the text (the outline's buttons are its headings' words too).

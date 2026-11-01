@@ -6,13 +6,13 @@ import { expect, test, type Page } from '@playwright/test'
 // children, focus inside, Escape and navigation closing it), the content
 // padded clear of the bar, nothing at a desktop width, and axe in both
 // themes.
-const STORY = 'http://localhost:6006/iframe.html?id=app-appshell--bottom-bar&viewMode=story'
+const STORY = 'http://localhost:6180/story.html?id=app-appshell--bottom-bar'
 
 const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom bar' })
 
 async function openAtPhoneWidth(page: Page, theme?: 'light' | 'dark') {
   await page.setViewportSize({ width: 393, height: 852 })
-  await page.goto(theme ? `${STORY}&globals=theme:${theme}` : STORY)
+  await page.goto(theme ? `${STORY}&theme=${theme}` : STORY)
   await expect(bar(page)).toBeVisible()
 }
 

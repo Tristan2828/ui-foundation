@@ -70,7 +70,7 @@ packages/ui-foundation/     the npm package
   bin/ui-foundation.mjs     sync | check-contract | check-deps
   conventions/              AGENTS.md block, docs/ and agent files that `sync` writes into apps
   openapi/foundation.yaml   the part of every app's contract the package calls
-  e2e/, .storybook/         Storybook accessibility + token-colour checks for every primitive
+  e2e/, src/fixtures/       the fixtures harness (e2e/harness/) and the accessibility + token-colour checks on every primitive
 packages/backend-foundation/  the pip package ui-foundation-backend (import foundation_backend)
   src/foundation_backend/   auth, sessions, sign-in limits, TOTP, error reporting, deploy checks, OAuth
   tests/                    its pytest suite, against tests/minimal_app.py (the package alone)
@@ -333,7 +333,7 @@ nothing.
 | Gate | Runs | Covers |
 |---|---|---|
 | `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
-| `npm run verify` (root) | before any PR; CI (`verify`) | + the package's Storybook checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language stories clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
+| `npm run verify` (root) | before any PR; CI (`verify`) | + the package's fixtures checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language fixtures clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
 | `npm run verify:backend` | backend changes; CI (`verify-backend`) | `packages/backend-foundation`'s mypy strict and pytest (SQLite, against the package alone), then the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres (its own throwaway compose project per checkout, on a free port, deleted after the run, so worktrees and dev databases don't collide) |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
@@ -355,7 +355,7 @@ Rules learned the hard way (each cost a phase to find):
 - **Test a commit, not a branch.** Scripts and workflows take a SHA or a
   tag, so every result belongs to one immutable tree.
 - **A package e2e spec runs only once it's listed.** The package's
-  `playwright.storybook.config.ts` names its specs in `testMatch`, so a new
+  `playwright.harness.config.ts` names its specs in `testMatch`, so a new
   `e2e/<name>.spec.ts` is silently skipped (and `playwright test <path>`
   says "No tests found") until it's added there. Check that the run's test
   count went up. (2026-10-19: one PR's spec never ran under verify.)
@@ -364,7 +364,7 @@ Rules learned the hard way (each cost a phase to find):
   Playwright runs crashed their workers (exit 3221225794), and Claude
   Code's background-shell reaper stopped the run. The same gates in
   sequence pass: the package's `verify:fast`, then `npx playwright test -c
-  playwright.storybook.config.ts --workers=1` in `packages/ui-foundation/`,
+  playwright.harness.config.ts --workers=1` in `packages/ui-foundation/`,
   then the template's `verify:fast` and `npx playwright test --workers=1`.
   A thousand failures at once with "worker process exited unexpectedly"
   is this, not the code.
@@ -416,7 +416,7 @@ stop and say so rather than ship a lossy one.
 | Maintained | Releases through 2026 (7.22.2 on 2026-09-23); ProseMirror underneath, itself long-lived |
 | React 19 | Framework-agnostic core, mounted by our own component; no React peer |
 | Markdown round trip | remark in and out: the same parser and GFM extension `<Markdown>` renders with, so what's edited is what's shown. Faithful to meaning on every fixture (headings, nested lists, tables, links, task lists, raw HTML), but it writes its own style: `*` bullets, padded tables, `***` rules, `\` hard breaks, inline links for reference links. Hence the merge below |
-| Accessible | A `role="textbox"` contenteditable with `aria-multiline`, named by `aria-label`/`aria-labelledby`; axe-clean in both themes (its Storybook story); keyboard throughout |
+| Accessible | A `role="textbox"` contenteditable with `aria-multiline`, named by `aria-label`/`aria-labelledby`; axe-clean in both themes (its fixture); keyboard throughout |
 | Bundle | ~106 KB gzipped in the app's build, about 47 KB of it remark/micromark that `react-markdown` already ships. Loaded on first use (`React.lazy`): the view's own chunk doesn't grow |
 
 **What closes the gap: block-by-block saving** (`src/lib/markdown-merge.ts`).

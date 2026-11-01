@@ -5,8 +5,8 @@ import { expect, test, type Page } from '@playwright/test'
 // caret in a new task item, in a real browser. The Features story's
 // editors: "formats" ("Format me here." and two more lines) and "tasks"
 // ("Open item", "Done item"); each shows what it would save.
-const FEATURES = 'http://localhost:6006/iframe.html?id=app-richtexteditor--features&viewMode=story'
-const DEFAULT = 'http://localhost:6006/iframe.html?id=app-richtexteditor--default&viewMode=story'
+const FEATURES = 'http://localhost:6180/story.html?id=app-richtexteditor--features'
+const DEFAULT = 'http://localhost:6180/story.html?id=app-richtexteditor--default'
 
 const editor = (page: Page, name: string) => page.getByRole('textbox', { name, exact: true })
 const saved = (page: Page, name: string) => page.getByTestId(`saved-${name}`)
@@ -69,7 +69,7 @@ test.describe('highlight', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`all four colours and the open menu, zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${DEFAULT}&globals=theme:${theme}`)
+      await page.goto(`${DEFAULT}&theme=${theme}`)
       await expect(page.locator('mark')).toHaveCount(4)
       await button(page, 'Highlight').first().click()
       await expect(page.getByRole('menuitemradio', { name: 'Green' })).toBeVisible()
@@ -111,7 +111,7 @@ test.describe('full screen', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${DEFAULT}&globals=theme:${theme}`)
+      await page.goto(`${DEFAULT}&theme=${theme}`)
       await button(page, 'Full screen').click()
       const results = await new AxeBuilder({ page }).disableRules(AXE_RULES).analyze()
       expect(results.violations).toEqual([])
@@ -141,7 +141,7 @@ test.describe('indent and outdent', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`on a phone, zero axe violations (${theme})`, async ({ page }) => {
       await page.setViewportSize({ width: 390, height: 800 })
-      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await page.goto(`${FEATURES}&theme=${theme}`)
       await expect(button(page, 'Indent', field(page, 'tasks'))).toBeVisible()
       const results = await new AxeBuilder({ page }).disableRules(AXE_RULES).analyze()
       expect(results.violations).toEqual([])

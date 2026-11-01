@@ -4,10 +4,10 @@ import { expect, test, type Page } from '@playwright/test'
 // ModuleStrip and ModuleCard (app/ModuleCard, #224): the strip's columns at
 // a desktop width and a phone's, the phone tile as one link, and
 // `mobile="row"`'s chips. Axe, the token check and the glyph check are
-// e2e/storybook-visual.spec.ts's, except for the chips, which only show at a
+// e2e/fixtures-visual.spec.ts's, except for the chips, which only show at a
 // phone's width: axe runs on those here, in both themes.
 const story = (name: string, theme = 'light') =>
-  `http://localhost:6006/iframe.html?id=app-modulecard--${name}&viewMode=story&globals=theme:${theme}`
+  `http://localhost:6180/story.html?id=app-modulecard--${name}&theme=${theme}`
 const axe = (page: Page) =>
   new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
 const pageScrollsSideways = (page: Page) =>

@@ -84,9 +84,9 @@ know goes where it will be read:
 ```bash
 npm install                 # installs every workspace and builds the package
 npm run dev                 # builds the package, then the template on :5180 (mock API)
-npm run storybook           # the package's Storybook on :6006
+npm run harness             # the package's fixtures, every component state, on :6180
 npm run verify:fast         # package + template gates, no browsers
-npm run verify              # everything, including Storybook and Playwright
+npm run verify              # everything, including the fixtures harness and Playwright
 npm run sync                # rebuild the package and re-sync conventions into template/
 npm run verify:backend      # the template's reference backend (mypy, pytest, spec conformance)
 bash scripts/consume-test.sh --install-only   # a fresh app from the packed tarball (commit first)

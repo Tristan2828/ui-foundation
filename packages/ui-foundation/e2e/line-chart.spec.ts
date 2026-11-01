@@ -3,8 +3,8 @@ import { expect, test } from '@playwright/test'
 // LineChart (#238), on its stories: the chart's shape on a card, its four
 // states, a phone's width, and what a screen reader gets. Axe, the token
 // check and the line's and target's 3:1 (the glyph check) are
-// e2e/storybook-visual.spec.ts's, in both themes.
-const story = (name: string) => `http://localhost:6006/iframe.html?id=app-linechart--${name}&viewMode=story`
+// e2e/fixtures-visual.spec.ts's, in both themes.
+const story = (name: string) => `http://localhost:6180/story.html?id=app-linechart--${name}`
 
 test('the chart: a line across the plot, the dashed target, the lowest point marked with its value', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
@@ -87,7 +87,7 @@ test('a projection: the line carries on dashed from its last point to the right 
   await expect(figure.locator('figcaption')).toContainText('Projected $128,000.00 on 2030')
 })
 
-const multi = (name: string) => `http://localhost:6006/iframe.html?id=app-multilinechart--${name}&viewMode=story`
+const multi = (name: string) => `http://localhost:6180/story.html?id=app-multilinechart--${name}`
 
 test('several series: a line each across the plot, a legend naming each with its latest value', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })

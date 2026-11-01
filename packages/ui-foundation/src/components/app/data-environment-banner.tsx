@@ -17,7 +17,7 @@ export function DataEnvironmentBanner() {
   return <DataEnvironmentNotice label={label} />
 }
 
-/** The banner itself, for a label already known (Storybook, tests). Renders nothing for null. */
+/** The banner itself, for a label already known (fixtures, tests). Renders nothing for null. */
 export function DataEnvironmentNotice({ label }: { label: string | null }) {
   if (label === null) return null
 

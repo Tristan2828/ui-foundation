@@ -4,8 +4,8 @@ import { expect, test, type Page } from '@playwright/test'
 // the rail beside the main column on wide screens, one column in the order
 // header → rail → main on narrow ones, the rail sticky only while it fits,
 // reading and tab order, and editing in place in the rail. Axe in both
-// themes is e2e/storybook-visual.spec.ts's COMPOSITE_STORIES.
-const story = (id: string) => `http://localhost:6006/iframe.html?id=app-entityview--${id}&viewMode=story`
+// themes is e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
+const story = (id: string) => `http://localhost:6180/story.html?id=app-entityview--${id}`
 
 async function open(page: Page, id: string, width: number, height = 900) {
   await page.setViewportSize({ width, height })

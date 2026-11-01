@@ -9,7 +9,7 @@ import { MARKDOWN_FIXTURES } from '../src/components/app/rich-text-editor.fixtur
 // Markdown in, Markdown out, nothing the person didn't touch rewritten,
 // and no HTML getting in. The RoundTrip story renders one editor per
 // fixture, each with the Markdown it would save beside it.
-const ROUND_TRIP = 'http://localhost:6006/iframe.html?id=app-richtexteditor--round-trip&viewMode=story'
+const ROUND_TRIP = 'http://localhost:6180/story.html?id=app-richtexteditor--round-trip'
 
 const processor = unified().use(remarkParse).use(remarkGfm)
 function lastBlockStart(markdown: string) {
@@ -123,7 +123,7 @@ test.describe('rich-text round trip', () => {
 // What the editor does beyond formatting, on the Features story: paste
 // and copy as Markdown, links, ticking a task from the keyboard, the
 // placeholder and the length count.
-const FEATURES = 'http://localhost:6006/iframe.html?id=app-richtexteditor--features&viewMode=story'
+const FEATURES = 'http://localhost:6180/story.html?id=app-richtexteditor--features'
 
 async function paste(page: Page, name: string, data: Record<string, string>) {
   await editor(page, name).evaluate((element, entries) => {
@@ -258,7 +258,7 @@ test.describe('editing features', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`the link box has zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await page.goto(`${FEATURES}&theme=${theme}`)
       await selectFirstWord(page, 'links')
       await page.keyboard.press('ControlOrMeta+k')
       const box = page.getByRole('dialog', { name: 'Add link' })
@@ -424,7 +424,7 @@ test.describe('toolbar', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`pressed, focused and with its tooltip open, zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await page.goto(`${FEATURES}&theme=${theme}`)
       await selectFormat(page)
       await button(page, 'Bold').click()
       await button(page, 'Italic').hover()
@@ -603,7 +603,7 @@ test.describe('floating toolbar', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`pressed, focused and with its tooltip open, zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await page.goto(`${FEATURES}&theme=${theme}`)
       await pickWord(page, 1)
       await floatingButton(page, 'Bold').click()
       await page.keyboard.press('Alt+F10')
@@ -756,7 +756,7 @@ test.describe('slash menu', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`open, highlighted and hovered, zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await page.goto(`${FEATURES}&theme=${theme}`)
       await newLine(page)
       await page.keyboard.type('/')
       await page.keyboard.press('ArrowDown')
@@ -776,8 +776,8 @@ test.describe('slash menu', () => {
 // words in the band, links in their own colour.
 test.describe('how written text looks', () => {
   for (const [where, url] of [
-    ['the editor', 'http://localhost:6006/iframe.html?id=app-richtexteditor--default&viewMode=story'],
-    ['<Markdown>', 'http://localhost:6006/iframe.html?id=app-markdown--default&viewMode=story'],
+    ['the editor', 'http://localhost:6180/story.html?id=app-richtexteditor--default'],
+    ['<Markdown>', 'http://localhost:6180/story.html?id=app-markdown--default'],
   ] as const) {
     test(`${where}: # and ## on bands, ### a label, the text lined up with the band's words; links coloured`, async ({
       page,
@@ -923,7 +923,7 @@ test.describe('callouts', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`its menu open, zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await page.goto(`${FEATURES}&theme=${theme}`)
       await kindButton(page, 'Note').click()
       await expect(page.getByRole('menu')).toBeVisible()
       const results = await new AxeBuilder({ page })
@@ -1041,7 +1041,7 @@ test.describe('tables', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`the caret in a table and its menu open, zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${FEATURES}&globals=theme:${theme}`)
+      await page.goto(`${FEATURES}&theme=${theme}`)
       await caretIn(page, 1, 0)
       await menuButton(page).click()
       await expect(page.getByRole('menu')).toBeVisible()
@@ -1066,7 +1066,7 @@ test('"/divider" puts in a divider and a line under it', async ({ page }) => {
 // Images uploaded into the text, on the ImageUploads story: each editor
 // has a fake upload (1.2s to store, one that always fails, one that takes
 // up to 1 MB, one on the floating toolbar), and one has none.
-const IMAGE_UPLOADS = 'http://localhost:6006/iframe.html?id=app-richtexteditor--image-uploads&viewMode=story'
+const IMAGE_UPLOADS = 'http://localhost:6180/story.html?id=app-richtexteditor--image-uploads'
 
 // A PNG's bytes (a 1×1 pixel), padded to `size` bytes, as an array the
 // page can make a File from.
@@ -1206,7 +1206,7 @@ test.describe('image upload', () => {
 
   for (const theme of ['light', 'dark'] as const) {
     test(`the button and the placeholder are accessible (${theme})`, async ({ page }) => {
-      await page.goto(`${IMAGE_UPLOADS}&globals=theme:${theme}`)
+      await page.goto(`${IMAGE_UPLOADS}&theme=${theme}`)
       if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
       await caretAtEnd(page, 'uploads')
       await pasteFiles(page, 'uploads', [photo()])
@@ -1222,8 +1222,8 @@ test.describe('image upload', () => {
 // title (`#` an <h2>), under a section's <h2> (the default, from <h3>),
 // and deeper (from <h5>, capped at <h6>).
 const LEVELS = {
-  editor: 'http://localhost:6006/iframe.html?id=app-richtexteditor--heading-levels&viewMode=story',
-  markdown: 'http://localhost:6006/iframe.html?id=app-markdown--heading-levels&viewMode=story',
+  editor: 'http://localhost:6180/story.html?id=app-richtexteditor--heading-levels',
+  markdown: 'http://localhost:6180/story.html?id=app-markdown--heading-levels',
 }
 
 // Each heading in the text, as its element and its words.
@@ -1280,7 +1280,7 @@ test.describe('heading levels', () => {
 
     for (const theme of ['light', 'dark'] as const) {
       test(`${where}: the page's outline never skips a level, zero axe violations (${theme})`, async ({ page }) => {
-        await page.goto(`${LEVELS[where]}&globals=theme:${theme}`)
+        await page.goto(`${LEVELS[where]}&theme=${theme}`)
         await expect(scope(page, 'capped').locator('h5')).toBeVisible()
         const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region']).analyze()
         expect(results.violations).toEqual([])
@@ -1313,8 +1313,8 @@ test.describe('heading levels', () => {
 // (prose-table-scroll.ts). The WideTable stories hold one that overflows
 // and one that fits.
 const TABLES = {
-  editor: 'http://localhost:6006/iframe.html?id=app-richtexteditor--wide-table&viewMode=story',
-  markdown: 'http://localhost:6006/iframe.html?id=app-markdown--wide-table&viewMode=story',
+  editor: 'http://localhost:6180/story.html?id=app-richtexteditor--wide-table',
+  markdown: 'http://localhost:6180/story.html?id=app-markdown--wide-table',
 }
 
 // The editor's table box: the first child of its node view.
@@ -1353,7 +1353,7 @@ test.describe('table scroll', () => {
 
     for (const theme of ['light', 'dark'] as const) {
       test(`${where}: zero axe violations, the wide table's box included (${theme})`, async ({ page }) => {
-        await page.goto(`${TABLES[where]}&globals=theme:${theme}`)
+        await page.goto(`${TABLES[where]}&theme=${theme}`)
         await expect(box(page, 'wideTable')).toHaveAttribute('role', 'region')
         const results = await new AxeBuilder({ page })
           .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])

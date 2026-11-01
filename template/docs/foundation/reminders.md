@@ -35,7 +35,7 @@ const push = usePushPermission()
 - **Put it where reminders are set**: the top of the reminders list, or a
   settings page. One per device: each phone or browser allows its own.
 - **Every state says what to do next.** `AllowReminders` shows them all
-  (the package's Storybook, `app/AllowReminders`):
+  (the package's fixtures, `app/AllowReminders`):
 
 | `status` | Means | Shows |
 |---|---|---|

@@ -10,7 +10,7 @@
   "files.exclude": {
     "**/node_modules": true,
     "dist": true,
-    "storybook-static": true,
+    "harness-dist": true,
     "test-results": true,
     "playwright-report": true,
     "backend/.venv": true,

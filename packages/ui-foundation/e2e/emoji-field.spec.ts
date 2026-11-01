@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 // EmojiField (app/EmojiField stories): pick by click, search, keyboard, clear.
-const story = (id: string) => `http://localhost:6006/iframe.html?id=app-emojifield--${id}&viewMode=story`
+const story = (id: string) => `http://localhost:6180/story.html?id=app-emojifield--${id}`
 
 test('picks an emoji and shows it', async ({ page }) => {
   await page.goto(story('default'))

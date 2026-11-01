@@ -57,7 +57,7 @@ shade in both themes, because it always carries white text and the page
 behind it never enters the calculation.
 
 Measured ratios (WCAG 2.x, sRGB) are recorded next to each primitive in
-the package's `styles/theme.css`, and its `e2e/storybook-visual.spec.ts` re-checks all
+the package's `styles/theme.css`, and its `e2e/fixtures-visual.spec.ts` re-checks all
 twelve tone/style combinations with axe against the rendered DOM in both
 themes. **A new tone or style is not done until it appears in that story.**
 
@@ -116,7 +116,7 @@ Two rules that keep this honest:
 An icon that carries meaning on its own (a stage circle, a category's
 icon, a pressed flag) must clear WCAG's **3:1 non-text minimum** against
 the background behind it, in both themes. axe measures text only, so the
-package's Storybook has a glyph check of its own: every `<svg>` in its
+package's fixtures have a glyph check of its own: every `<svg>` in its
 design-language stories, its ink (with any opacity modifier painted over
 its background) against what's behind it. Every `*-text` tone, every
 category slot and `muted-foreground` clear it as they are. An opacity
@@ -235,7 +235,7 @@ Five things about them:
 - **The glyph check re-measures them.** All twelve clear the 3:1
   non-text minimum in both themes, on the page and on a card (recorded in
   `theme.css`). axe checks text contrast, not icon contrast, so the
-  package's Storybook glyph check draws an icon in each slot on both
+  package's fixtures glyph check draws an icon in each slot on both
   surfaces (`patterns/CategoricalColour`) and fails a change that takes
   one below 3:1. Its `SideBySide` story shows both themes at once, under
   normal vision and simulated deuteranopia and protanopia.
@@ -389,8 +389,8 @@ set, not a `DataTable` prop:
   doesn't change. The selectors are in `styles/theme.css`. A composite
   reaches `compact` with the `density-compact:` variant (`styles/index.css`:
   any ancestor with `data-density="compact"`), the way `WidgetCard` and
-  `ModuleCard` do; an app's own card can use it too. Storybook's
-  Density toolbar shows any story at a density, and `patterns/Density`
+  `ModuleCard` do; an app's own card can use it too. the package's
+  fixtures page shows any fixture at a density, and `patterns/Density`
   shows the primitives, `DataTable`, the sidebar and the hub cards at
   each. Its checks
   measure that every step changes what it should, and that the default
@@ -507,7 +507,7 @@ const layout = useWidgetLayout('my-app:hub', Object.keys(HUB_CARDS))
   equal columns that wraps (the class above: one column on a phone, as
   many 288px-or-wider columns as fit). Each card is as tall as its rows;
   it doesn't stretch to its tallest neighbour.
-- Storybook's `app/WidgetCard` shows three widgets on a page and every
+- The fixtures' `app/WidgetCard` shows three widgets on a page and every
   one in each state, a folded summary in each state and an accordion,
   and `app/WidgetLayoutSheet` a hub with its Customize sheet; its checks run axe and the token and glyph checks in
   both themes and at `large`.
@@ -577,7 +577,7 @@ const { data, isLoading, error, refetch } = useProjectsSummaryQuery()
   own page. The row scrolls inside itself and the page never does. A
   desktop shows the cards either way, so don't render your own row
   beside a strip hidden on a phone.
-- Storybook's `app/ModuleCard` shows a hub with a strip and a widget,
+- The fixtures' `app/ModuleCard` shows a hub with a strip and a widget,
   every state, both at `compact`, and both again as a row of chips (Row,
   Row states); its checks run axe and the token and glyph checks in both
   themes and at `large`, measure the strip at a desktop and a phone
@@ -603,7 +603,7 @@ under its own header.
   swaps the tone's own icon for a better one (a lock for read-only).
 - **A wash, not a fill:** the tone at 10% (20% in dark) with `foreground`
   text and the tone's `*-text` icon. The message reads as body text, so
-  nothing inside it is muted. Storybook's `app/Notice` measures every
+  nothing inside it is muted. The fixtures' `app/Notice` measures every
   tone with axe and the glyph check in both themes.
 - **One or two sentences and at most one action**: what the state means
   and what to do about it. More than that belongs in a section.

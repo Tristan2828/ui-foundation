@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 // DateField (app/DateField stories) in a real browser, in time zones on
 // both sides of UTC: the day picked is the day saved and the day shown,
 // never one off.
-const story = (id: string) => `http://localhost:6006/iframe.html?id=app-datefield--${id}&viewMode=story`
+const story = (id: string) => `http://localhost:6180/story.html?id=app-datefield--${id}`
 
 for (const timezoneId of ['Pacific/Honolulu', 'Pacific/Kiritimati']) {
   test.describe(`DateField in ${timezoneId}`, () => {
