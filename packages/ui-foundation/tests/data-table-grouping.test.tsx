@@ -186,3 +186,24 @@ describe('DataTable detailPanel', () => {
     ])
   })
 })
+
+describe('DataTable group icons', () => {
+  const iconGroupings: DataTableGrouping<Chore>[] = [
+    {
+      ...groupings[0]!,
+      options: groupings[0]!.options.map((option) => ({ ...option, icon: <i data-icon={option.value} /> })),
+    },
+  ]
+
+  it("leads a heading with its option's icon, hidden from assistive tech, before the label", () => {
+    const html = render({ groupings: iconGroupings, grouping: 'status' })
+    expect(html).toMatch(/<span aria-hidden="true"[^>]*><i data-icon="todo"><\/i><\/span><span class="type-label[^"]*">To do<\/span>/)
+    expect(html).toContain('data-icon="doing"')
+    expect(html).toContain('data-icon="done"')
+  })
+
+  it('shows no icon for an option without one, and none when ungrouped', () => {
+    expect(render({ groupings, grouping: 'status' })).not.toContain('data-icon')
+    expect(render({ groupings: iconGroupings })).not.toContain('data-icon')
+  })
+})

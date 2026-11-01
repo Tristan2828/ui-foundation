@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { useState } from 'react'
-import { createMemoryRouter, Link, RouterProvider } from 'react-router'
+import { CheckIcon, CircleDashedIcon, EyeIcon, PlayIcon } from 'lucide-react'
+import { createMemoryRouter, Link, RouterProvider, useNavigate } from 'react-router'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
@@ -23,6 +24,10 @@ import { DataTable, type DataTableGrouping } from './data-table'
 //   on a row opens it beside the list (a bottom sheet on a phone), ↑/↓
 //   move it, Escape or Close closes it. Each row's title is a link, which
 //   picks the row here; the panel has the "Open page" link.
+// - ChoresWithQuickLook: the same, with `onRowClick` and `detailRow`: a
+//   click on a row opens its page, and the panel opens from a Quick look
+//   button in the row instead. The Status headings lead with an icon (an
+//   option's `icon`), here and in the stories above.
 
 type Status = 'todo' | 'doing' | 'done'
 type Area = 'kitchen' | 'garden' | 'garage' | 'hall'
@@ -42,6 +47,12 @@ const AREA_OPTIONS = [
 const STATUS_LABELS = Object.fromEntries(STATUS_OPTIONS.map((option) => [option.value, option.label])) as Record<Status, string>
 const AREA_LABELS = Object.fromEntries(AREA_OPTIONS.map((option) => [option.value, option.label])) as Record<Area, string>
 
+const STATUS_ICONS: Record<Status, React.ReactNode> = {
+  todo: <CircleDashedIcon className="size-4 text-muted-foreground" />,
+  doing: <PlayIcon className="size-4 text-info-text" />,
+  done: <CheckIcon className="size-4 text-success-text" />,
+}
+
 const CHORES: Chore[] = [
   { id: 1, title: 'Descale the kettle', status: 'todo', areas: ['kitchen'], minutes: 10, ready: true, notes: 'Half water, half vinegar; boil twice.' },
   { id: 2, title: 'Rake the leaves', status: 'doing', areas: ['garden'], minutes: 40, ready: true, notes: 'Front lawn first, then the path.' },
@@ -54,7 +65,12 @@ const CHORES: Chore[] = [
 ]
 
 const GROUPINGS: DataTableGrouping<Chore>[] = [
-  { id: 'status', label: 'Status', options: STATUS_OPTIONS, value: (chore) => chore.status },
+  {
+    id: 'status',
+    label: 'Status',
+    options: STATUS_OPTIONS.map((option) => ({ ...option, icon: STATUS_ICONS[option.value] })),
+    value: (chore) => chore.status,
+  },
   { id: 'areas', label: 'Area', options: AREA_OPTIONS, value: (chore) => chore.areas, emptyLabel: 'No area' },
   {
     id: 'ready',
@@ -77,7 +93,9 @@ function minutes(total: number) {
   return total >= 60 ? `${Math.floor(total / 60)} h ${total % 60 ? `${total % 60} m` : ''}`.trim() : `${total} m`
 }
 
-function ChoresTable({ withPanel }: { withPanel?: boolean }) {
+function ChoresTable({ withPanel, quickLook }: { withPanel?: boolean; quickLook?: boolean }) {
+  const navigate = useNavigate()
+  const [detailRow, setDetailRow] = useState<string | null>(null)
   const { grouping, setGrouping, applyView } = useTableUrlState([], [], VIEWS, { groupStorageKey: 'storybook:chores:group' })
   const columns: LegacyColumnDef<Chore, unknown>[] = [
     {
@@ -100,6 +118,24 @@ function ChoresTable({ withPanel }: { withPanel?: boolean }) {
           <span className="text-muted-foreground">No area</span>
         ),
     },
+    ...(quickLook
+      ? [
+          {
+            id: 'quick-look',
+            header: 'Quick look',
+            cell: ({ row }) => (
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Quick look: ${row.original.title}`}
+                onClick={() => setDetailRow(String(row.original.id))}
+              >
+                <EyeIcon aria-hidden="true" />
+              </Button>
+            ),
+          } satisfies LegacyColumnDef<Chore, unknown>,
+        ]
+      : []),
     { id: 'ready', header: 'Ready', cell: ({ row }) => (row.original.ready ? 'Yes' : 'No') },
     { id: 'minutes', header: 'Time', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{minutes(row.original.minutes)}</span> },
   ]
@@ -132,9 +168,12 @@ function ChoresTable({ withPanel }: { withPanel?: boolean }) {
             </Button>
           </div>
         }
-        detailLabel={withPanel ? 'Chore' : undefined}
+        detailLabel={withPanel || quickLook ? 'Chore' : undefined}
+        {...(quickLook
+          ? { onRowClick: (chore: Chore) => navigate(`/chores/${chore.id}`), detailRow, onDetailRowChange: setDetailRow }
+          : {})}
         detailPanel={
-          withPanel
+          withPanel || quickLook
             ? (chore) => (
                 <div className="flex flex-col gap-3">
                   <p className="type-section-title text-foreground">{chore.title}</p>
@@ -166,11 +205,11 @@ function ChorePage() {
   )
 }
 
-function InRouter({ path, withPanel }: { path: string; withPanel?: boolean }) {
+function InRouter({ path, withPanel, quickLook }: { path: string; withPanel?: boolean; quickLook?: boolean }) {
   const [router] = useState(() =>
     createMemoryRouter(
       [
-        { path: '/', element: <ChoresTable withPanel={withPanel} /> },
+        { path: '/', element: <ChoresTable withPanel={withPanel} quickLook={quickLook} /> },
         { path: '/chores/:id', element: <ChorePage /> },
       ],
       { initialEntries: [path] },
@@ -191,3 +230,5 @@ export const Chores: StoryObj = { render: () => <InRouter path="/" /> }
 export const ChoresByArea: StoryObj = { render: () => <InRouter path="/?group=areas" /> }
 
 export const ChoresWithPanel: StoryObj = { render: () => <InRouter path="/" withPanel /> }
+
+export const ChoresWithQuickLook: StoryObj = { render: () => <InRouter path="/?group=status" quickLook /> }

@@ -193,3 +193,28 @@ test.describe('DataTable detail panel', () => {
     }
   })
 })
+
+test.describe('DataTable row click and a controlled panel', () => {
+  const panel = (page: Page) => page.getByRole('complementary', { name: 'Chore' })
+
+  test('a row click runs onRowClick; the panel opens from a control in the row', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('chores-with-quick-look'))
+    await page.getByRole('button', { name: 'Quick look: Rake the leaves' }).click()
+    await expect(panel(page)).toContainText('Front lawn first, then the path.')
+    await expect(row(page, 'Rake the leaves')).toHaveAttribute('aria-selected', 'true')
+    await panel(page).getByRole('button', { name: 'Close' }).click()
+    await expect(panel(page)).toHaveCount(0)
+
+    await row(page, 'Rake the leaves').getByRole('cell', { name: 'Garden' }).click()
+    await expect(page.getByText("A chore's page")).toBeVisible()
+  })
+
+  test('a title link keeps its own navigation, and Status headings lead with an icon', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('chores-with-quick-look'))
+    await expect(page.locator('[data-slot="table-group-heading"] svg').first()).toBeVisible()
+    await page.getByRole('link', { name: 'Oil the hinges' }).click()
+    await expect(page.getByText("A chore's page")).toBeVisible()
+  })
+})

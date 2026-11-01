@@ -184,6 +184,21 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * layout's alone: a card layout's cards are as they are.
    */
   detailPanel?: (row: TData) => ReactNode
+  /**
+   * What a click on a row (or Enter on it) does instead of picking it for
+   * the `detailPanel`: open its page, say. A link or control inside the row
+   * keeps its own click, and the panel is then opened from the app's own
+   * control through `detailRow`. Left out, a row click picks the row.
+   */
+  onRowClick?: (row: TData) => void
+  /**
+   * The row the `detailPanel` shows, controlled: its row id (`getRowId`), or
+   * null for none. With `onDetailRowChange` it lets a control of the app's
+   * own (a button in a row) open the panel. Left out, the table keeps the
+   * pick itself.
+   */
+  detailRow?: string | null
+  onDetailRowChange?: (rowId: string | null) => void
   /** The panel's heading and landmark name: "Details" unless set. */
   detailLabel?: string
   /**
@@ -240,7 +255,7 @@ export type DataTableGrouping<TData> = {
   /** The menu's word for it ("Status"), and the menu button's while it's on ("Group: Status"). */
   label: string
   /** The field's options, in order: the groups, their order and their headings. */
-  options: readonly { value: string; label: string }[]
+  options: readonly { value: string; label: string; icon?: ReactNode }[]
   /**
    * The row's value: one option's value, or a list of them for a
    * multi-value field, whose row then shows under each. A value the
@@ -700,6 +715,9 @@ export function DataTable<TData extends Record<string, unknown>>({
   grouping: groupingProp,
   onGroupingChange,
   detailPanel,
+  onRowClick: onRowClickProp,
+  detailRow,
+  onDetailRowChange,
   detailLabel = 'Details',
 }: DataTableProps<TData>) {
   // The switch's own state, for a table that doesn't pass `layout`.
@@ -716,6 +734,10 @@ export function DataTable<TData extends Record<string, unknown>>({
   // doesn't pass `grouping`.
   const [ownGrouping, setOwnGrouping] = useState('')
   const activeGrouping = groupings?.find((candidate) => candidate.id === (groupingProp ?? ownGrouping))
+  // Each group's icon (an option's `icon`), by the group's key.
+  const groupIcons = activeGrouping
+    ? new Map(activeGrouping.options.flatMap((option) => (option.icon ? [[option.value, option.icon] as const] : [])))
+    : undefined
   const setGrouping = (next: string) => {
     if (groupingProp === undefined) setOwnGrouping(next)
     onGroupingChange?.(next)
@@ -726,7 +748,21 @@ export function DataTable<TData extends Record<string, unknown>>({
   const folded = activeGrouping && folds.grouping === activeGrouping.id ? folds.keys : EMPTY_KEYS
 
   // The picked row (`detailPanel`) and the place it was picked in.
-  const [selection, setSelection] = useState<RowPlace | null>(null)
+  const [ownSelection, setOwnSelection] = useState<RowPlace | null>(null)
+  // Controlled (`detailRow`): the app's row id, at the place picked in when
+  // that's the same row, else the row's first place.
+  const selection: RowPlace | null =
+    detailRow === undefined
+      ? ownSelection
+      : detailRow === null
+        ? null
+        : ownSelection?.rowId === detailRow
+          ? ownSelection
+          : { key: detailRow, rowId: detailRow }
+  const setSelection = (next: RowPlace | null) => {
+    setOwnSelection(next)
+    onDetailRowChange?.(next?.rowId ?? null)
+  }
   const isWide = useIsWide()
 
   // Editing in place in the rows (cell pattern 18, "In a table's rows"):
@@ -868,10 +904,15 @@ export function DataTable<TData extends Record<string, unknown>>({
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
     const control = target.closest(ROW_CONTROL_SELECTOR)
     if (control && event.currentTarget.contains(control)) {
-      if (!control.matches('a[href]')) return
+      if (!control.matches('a[href]') || onRowClickProp) return
       // In the capture phase, so react-router's Link sees it prevented and
       // doesn't navigate.
       event.preventDefault()
+    }
+    if (onRowClickProp) {
+      const row = rows.find((candidate) => candidate.id === place.rowId)
+      if (row) onRowClickProp(row.original)
+      return
     }
     setSelection(place)
   }
@@ -893,6 +934,11 @@ export function DataTable<TData extends Record<string, unknown>>({
       const place = places.find((candidate) => candidate.key === target.dataset.rowKey)
       if (!place) return
       event.preventDefault()
+      if (onRowClickProp) {
+        const row = rows.find((candidate) => candidate.id === place.rowId)
+        if (row) onRowClickProp(row.original)
+        return
+      }
       setSelection(place)
     } else if (event.key === 'Escape' && selectedRow) {
       event.preventDefault()
@@ -1036,6 +1082,7 @@ export function DataTable<TData extends Record<string, unknown>>({
               folded={folded}
               onToggleFold={toggleFold}
               groupSummary={groupSummary}
+              groupIcons={groupIcons}
             />
           ) : (
             <Table
@@ -1144,7 +1191,12 @@ export function DataTable<TData extends Record<string, unknown>>({
                           {/* Sticky, so the label stays in view while a wide
                               table scrolls sideways. */}
                           <span className="sticky left-(--table-cell-px) inline-flex items-baseline gap-2">
-                            <GroupLabel run={run} isFolded={isFolded} onToggle={() => toggleFold(run.key)} />
+                            <GroupLabel
+                              run={run}
+                              icon={groupIcons?.get(run.key)}
+                              isFolded={isFolded}
+                              onToggle={() => toggleFold(run.key)}
+                            />
                             {groupSummary && (
                               <span className="type-caption text-muted-foreground tabular-nums">
                                 {groupSummary(
@@ -1288,21 +1340,39 @@ function DetailFrame({ enabled, aside, children }: { enabled: boolean; aside: Re
 // with its row count; under `groupBy`, the label alone.
 function GroupLabel({
   run,
+  icon,
   isFolded,
   onToggle,
 }: {
   run: { label: string; rows: readonly unknown[]; foldable: boolean }
+  icon?: ReactNode
   isFolded: boolean
   onToggle: () => void
 }) {
-  if (!run.foldable) return <span className="type-label text-foreground">{run.label}</span>
+  const label = (
+    <>
+      {icon ? (
+        <span aria-hidden="true" className="inline-flex shrink-0 items-center self-center">
+          {icon}
+        </span>
+      ) : null}
+      <span className="type-label text-foreground">{run.label}</span>
+    </>
+  )
+  if (!run.foldable) {
+    return icon ? (
+      <span className="inline-flex items-baseline gap-1.5">{label}</span>
+    ) : (
+      <span className="type-label text-foreground">{run.label}</span>
+    )
+  }
   return (
     <button type="button" aria-expanded={!isFolded} onClick={onToggle} className={GROUP_TOGGLE_CLASS}>
       <ChevronDownIcon
         aria-hidden="true"
         className={cn('size-4 self-center text-muted-foreground transition-transform', isFolded && '-rotate-90')}
       />
-      <span className="type-label text-foreground">{run.label}</span>
+      {label}
       <span className="type-caption text-muted-foreground tabular-nums">{run.rows.length}</span>
     </button>
   )
@@ -1320,6 +1390,7 @@ function Cards<TData extends Record<string, unknown>>({
   folded,
   onToggleFold,
   groupSummary,
+  groupIcons,
 }: {
   layout: DataTableCardLayout<TData>
   runs: (GroupRun<CardRow<TData>> & { foldable: boolean })[] | null
@@ -1327,6 +1398,7 @@ function Cards<TData extends Record<string, unknown>>({
   folded: ReadonlySet<string>
   onToggleFold: (key: string) => void
   groupSummary?: (rows: TData[], group: RowGroup) => ReactNode
+  groupIcons?: ReadonlyMap<string, ReactNode>
 }) {
   const list = (items: readonly CardRow<TData>[]) => (
     <ul
@@ -1355,7 +1427,7 @@ function Cards<TData extends Record<string, unknown>>({
                 className="flex flex-col gap-3"
               >
                 <h2 data-slot="table-group-heading" className="flex items-baseline gap-2 border-b border-border pb-1.5">
-                  <GroupLabel run={run} isFolded={isFolded} onToggle={() => onToggleFold(run.key)} />
+                  <GroupLabel run={run} icon={groupIcons?.get(run.key)} isFolded={isFolded} onToggle={() => onToggleFold(run.key)} />
                   {groupSummary && (
                     <span className="type-caption text-muted-foreground tabular-nums">
                       {groupSummary(
