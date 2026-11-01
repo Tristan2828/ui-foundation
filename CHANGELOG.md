@@ -7,7 +7,49 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.56.0 — Fixtures replace Storybook
+## 4.57.0 â€” Reminders on more channels than push
+
+Additive, so a minor; the backend package only. No new dependency. An
+app wanted reminders by email (and later a phone-alert app) as well as Web
+Push, without copying the send-reminders job to do it: the job is the one
+place that decides a reminder is due and stamps it once.
+
+- **`senders` on `reminders.register()`** (and `send_due_reminders`):
+  channels beyond Web Push by name, `{"email": send_email}`. A sender is
+  `async (session, reminder)`; it returns `None` when sent or a
+  `ChannelResult` (`"sent"`, `"failed"` with its `error`, or `"skipped"`),
+  and an exception it raises is a failed result. A sender named `"push"`
+  replaces the package's.
+- **`channels`**: picks each reminder's channels (`"push"` and the
+  senders' names), from a column of the app's. Left out, every reminder
+  goes on every channel.
+- **`on_sent`**: `async (session, reminder, results)`, called before the
+  reminder's stamp is committed, so a last-sent time per channel lands in
+  the same commit.
+- **Per-channel results**: `run_due_reminders` (the same arguments)
+  returns a `RemindersRun`, each due reminder's id, day and
+  `ChannelResult` by channel; `send_due_reminders` returns its summary,
+  which reads as before for push alone (`"1 due: 2 sent"`) and adds each
+  other channel (`"; email: 1 sent, 1 failed"`).
+- **A failed channel** doesn't stop the others; it goes to error
+  reporting (tagged with the channel), and the reminder is still done for
+  the day, so a channel that's down isn't retried every minute. Push with
+  no device subscribed is `"skipped"`.
+- **Fix:** with two reminders due in the same minute, the job's commit of
+  the first expired the second (the jobs runner's session expires on
+  commit), so reading it failed. The job reloads a reminder before using
+  it.
+- **Docs:** `reminders.md` "Channels beyond push".
+
+**How an app adopts:** bump both packages and run `ui-foundation sync`.
+Push-only apps change nothing. To add a channel, write its sender in the
+app and pass it, with `channels` if each reminder picks its own and
+`on_sent` to store per-channel results:
+`reminders.register(model=MyReminder, senders={"email": send_email},
+channels=..., on_sent=...)`. A new channel's key and outbound host are the
+app's own settings.
+
+## 4.56.0 â€” Fixtures replace Storybook
 
 No export changes, so a minor. The package's browser tests no longer run
 on Storybook: a small page of the package's own (`e2e/harness/`, built by
@@ -135,7 +177,7 @@ may go next and several values on one plot.
 **How an app adopts:** nothing to change. Use `projection` or
 `MultiLineChart` where a screen needs them.
 
-## 4.50.1 — Board: the empty-column line clears 4.5:1
+## 4.50.1 â€” Board: the empty-column line clears 4.5:1
 
 A fix, no API change. A column with no cards shows its `empty` line as
 `text-muted-foreground` on the column's muted fill, which measured 4.34:1

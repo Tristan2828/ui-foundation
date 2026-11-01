@@ -80,6 +80,30 @@ Scope it to the signed-in user, as Widgets are.
   package's `reminders` only with its `Reminder` model (imported, or the
   job run without a model). So an app without push, or with its own
   table, gets neither from `create_all` or autogenerate.
+- **Channels beyond push** (email, a phone-alert app): hand the job a
+  sender per channel, and it still decides what's due and stamps it once.
+  A sender is `async def send(session, reminder)`: it returns `None` when
+  sent, or a `ChannelResult` ("sent", "failed" with its `error`, or
+  "skipped"), and an exception it raises is a failed result. `channels`
+  picks a reminder's channels (every one when left out; push is
+  `"push"`), and `on_sent` sees each reminder's results before its stamp
+  is committed, so a last-sent time per channel lands with it:
+
+  ```python
+  reminders.register(
+      model=MyReminder,
+      senders={"email": send_email},
+      channels=lambda r: r.channels.split(","),
+      on_sent=stamp_channels,  # async (session, reminder, results)
+  )
+  ```
+
+  One failed channel doesn't stop the others; it's sent to error
+  reporting, and the reminder is done for the day either way (a channel
+  that's down isn't tried again every minute). A sender reads the session
+  but doesn't write it. `run_due_reminders` (same arguments) returns
+  each reminder's results, for a script or a test; a sender named
+  `"push"` replaces the package's.
 - **Something else to send?** Call `send_push` from the app's own code or
   job: a message when a long task finishes, a daily summary. The `url` is
   always the app's own path.

@@ -2,7 +2,7 @@
 name = "ui-foundation-backend"
 # The release workflow writes the release's version here, the same as
 # @tristan2828/ui-foundation's (packages/ui-foundation/package.json).
-version = "4.55.0"
+version = "4.57.0"
 description = "The auth and security layer shared by FastAPI + SQLModel backends built on ui-foundation: sessions, sign-in limits, TOTP, error reporting, deploy checks, AI chats' OAuth."
 readme = "README.md"
 license = "MIT"
