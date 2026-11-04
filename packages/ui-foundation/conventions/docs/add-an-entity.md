@@ -4,22 +4,22 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 38–60
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–724
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–731
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 100–107
   - Step 2: `npm run gen:api` · lines 108–109
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 110–121
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 122–131
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 132–136
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 137–613
-  - Step 7: Register routes · lines 614–627
-  - Step 8: Add Playwright specs for all three screens · lines 628–706
-  - Step 9: Register the nav entry and route names · lines 707–721
-  - Step 10: `npm run verify`. · lines 722–724
-- [Opening a record over its list](#opening-a-record-over-its-list) · lines 726–782
-- [What not to copy](#what-not-to-copy) · lines 784–810
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 812–829
-- [Deleting](#deleting) · lines 831–860
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 862–883
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 137–620
+  - Step 7: Register routes · lines 621–634
+  - Step 8: Add Playwright specs for all three screens · lines 635–713
+  - Step 9: Register the nav entry and route names · lines 714–728
+  - Step 10: `npm run verify`. · lines 729–731
+- [Opening a record over its list](#opening-a-record-over-its-list) · lines 733–789
+- [What not to copy](#what-not-to-copy) · lines 791–817
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 819–836
+- [Deleting](#deleting) · lines 838–867
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 869–890
 
 <!-- /index -->
 
@@ -488,6 +488,13 @@ is a filled-in example while the Widgets demo is still here).
      `headingLevel={2}` for a `RichTextEditor` on a form straight under
      the page's `<h1>`. Text that's imported or pasted from another
      tool (often starting at `##`) also gets `headingFrom="text"`.
+   - **A checklist kept in the text** (`- [ ] item`, `- [x] done`) is
+     ticked where it's read with `<Markdown onTasksChange={save}>`: each
+     box a checkbox named for its item, and a tick hands over the whole
+     text with only that box flipped, for the field's save
+     (`useEdit<Entity>Field`). Without the prop the boxes are pictures
+     and the text stays read-only. A list's "2/5" column counts them
+     with `countTasks(text)` (`{ done, total }`; `total` 0 for none).
    - **Quick actions: only the fields the plan's `Quick actions` line
      names**, each a control that saves on its own (cell pattern 17,
      `widget-quick-actions.tsx`). A `yes/no` is a

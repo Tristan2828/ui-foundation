@@ -43,17 +43,26 @@
 // it that folds its section away (src/lib/markdown-fold.ts), remembered on
 // this device under the key and shared with an editor or NotesOutline
 // given the same one. The text itself is never changed.
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ComponentProps } from 'react'
+//
+// A task item (`- [ ] to do`, `- [x] done`) shows its box as a glyph
+// with its state in words: read-only text has nothing to tick. With
+// `onTasksChange`, each box is a real checkbox, named for its item's
+// words, that ticks or unticks the item in the text and hands the whole
+// new text over to save (src/lib/markdown-tasks.ts): only that item's
+// `[ ]` or `[x]` changes, the rest stays exactly as written.
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import type { PluggableList } from 'unified'
 import remarkGfm from 'remark-gfm'
 import { cn } from 'cn'
 import { ChevronDownIcon, ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useFolds } from '@/hooks/fold-store'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
 import { rehypeFold, toggleFold } from '@/lib/markdown-fold'
 import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
+import { toggleTaskAt } from '@/lib/markdown-tasks'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
   CALLOUT_BOX,
@@ -112,6 +121,55 @@ function NotesTable({ hidden, ...props }: ComponentProps<'table'>) {
       // Folded away, the box goes with the table.
       containerClassName={cn('rounded-lg border border-border', TABLE_SCROLL_FOCUS, hidden && 'hidden')}
     />
+  )
+}
+
+// Ticks a task item by where it starts in the text: given only with
+// `onTasksChange`. Each task item hands its box its own start and words.
+const TaskToggleContext = createContext<((offset: number) => void) | null>(null)
+const TaskItemContext = createContext<{ offset: number; name: string } | null>(null)
+
+// The little of the syntax tree read for a task item's box.
+type HastNode = {
+  type: string
+  tagName?: string
+  value?: string
+  children?: HastNode[]
+  position?: { start: { offset?: number } }
+}
+
+// An item's own words, for its checkbox's name: its nested lists left
+// out, so a parent is named for itself and not its children too.
+function itemText(node: HastNode | undefined): string {
+  if (!node) return ''
+  if (node.type === 'text') return node.value ?? ''
+  if (node.tagName === 'ul' || node.tagName === 'ol') return ''
+  return (node.children ?? []).map(itemText).join('')
+}
+
+// A task item's box: a real checkbox when ticking is on (named for its
+// item, so a screen reader hears "Buy milk, checkbox, checked"), the
+// glyph otherwise.
+function TaskBox({ checked }: { checked: boolean }) {
+  const toggle = useContext(TaskToggleContext)
+  const item = useContext(TaskItemContext)
+  if (toggle && item)
+    return (
+      <Checkbox
+        checked={checked}
+        onCheckedChange={() => toggle(item.offset)}
+        // Ticking is all it does: a click never reaches whatever the text
+        // sits in (a card that opens the record, a field that edits).
+        onClick={(event) => event.stopPropagation()}
+        aria-label={item.name || (checked ? 'Done' : 'Not done')}
+        data-slot="task-box"
+        className="mr-2 inline-flex align-[-0.1875rem]"
+      />
+    )
+  return checked ? (
+    <SquareCheckIcon role="img" aria-label="Done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-foreground" />
+  ) : (
+    <SquareIcon role="img" aria-label="Not done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-muted-foreground" />
   )
 }
 
@@ -196,16 +254,26 @@ const COMPONENTS: Components = {
   ol: (props) => <ol {...omitNode(props)} className="flex list-decimal flex-col gap-1 pl-6" />,
   li: (props) => {
     const { className, ...rest } = omitNode(props)
-    return <li {...rest} className={cn(className?.includes('task-list-item') && '-ml-6 list-none')} />
+    const task = className?.includes('task-list-item')
+    // A task item's box hangs where a bullet would; a list under it starts
+    // at its words, and so does a loose item's next paragraph.
+    const item = (
+      <li
+        {...rest}
+        className={cn(task && '-ml-6 list-none [&>ol]:pl-12 [&>p:not(:first-child)]:pl-6 [&>ul]:pl-12')}
+      />
+    )
+    const node = props.node as HastNode | undefined
+    const offset = node?.position?.start.offset
+    if (!task || offset === undefined) return item
+    // A loose item's words are its first paragraph; what's under it isn't its name.
+    const first = node?.children?.find((child) => child.tagName === 'p')
+    const name = itemText(first ?? node).replace(/\s+/g, ' ').trim()
+    return <TaskItemContext.Provider value={{ offset, name }}>{item}</TaskItemContext.Provider>
   },
-  // A GitHub task-list box (`- [x] done`). Read-only, so a glyph with its
-  // state in words, never a checkbox someone will try to tick.
-  input: ({ checked }) =>
-    checked ? (
-      <SquareCheckIcon role="img" aria-label="Done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-foreground" />
-    ) : (
-      <SquareIcon role="img" aria-label="Not done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-muted-foreground" />
-    ),
+  // A GitHub task-list box (`- [x] done`): a glyph, or a checkbox with
+  // `onTasksChange` (TaskBox).
+  input: ({ checked }) => <TaskBox checked={Boolean(checked)} />,
   blockquote: (props) => (
     <blockquote {...omitNode(props)} className="flex flex-col gap-3 border-l-2 border-border pl-4 text-muted-foreground" />
   ),
@@ -308,6 +376,17 @@ export type MarkdownProps = {
    * what was folded is remembered for when it's on again. Default `true`.
    */
   foldable?: boolean
+  /**
+   * Lets the text's task items be ticked where they're read: each
+   * `- [ ]` and `- [x]` box becomes a checkbox, named for its item, and
+   * ticking one calls this with the whole text, that item's box flipped
+   * and nothing else changed, for the app to save. The tick shows at
+   * once and a second one builds on it, until `children` changes (pass
+   * the saved text back in). Return the save's promise: if it rejects,
+   * the boxes go back to `children`. Without it (the default) the boxes
+   * are pictures and the text stays read-only.
+   */
+  onTasksChange?: (markdown: string) => void | Promise<unknown>
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
@@ -317,6 +396,7 @@ export function Markdown({
   headingFrom = 'hash',
   foldKey: foldKeyProp,
   foldable = true,
+  onTasksChange,
   className,
   ...rest
 }: MarkdownProps) {
@@ -326,6 +406,23 @@ export function Markdown({
   const [folded, setFolded] = useFolds(foldKey)
   const rehypePlugins = useMemo<PluggableList>(() => (foldKey === undefined ? [] : [[rehypeFold, { folded }]]), [foldKey, folded])
   const toggle = useCallback((id: string) => setFolded(toggleFold(folded, id)), [folded, setFolded])
+  // Ticks not yet back as `children`: shown, and built on by the next
+  // tick, so two quick ticks on a slow save both land. Kept while
+  // `children` is the text they started from or one of their own saves
+  // coming back; dropped when it's anything else, or a save fails.
+  const [pending, setPending] = useState<{ base: string; text: string; sent: string[] } | null>(null)
+  const live = pending && (pending.base === children || pending.sent.includes(children)) ? pending : null
+  const shown = live ? live.text : children
+  const tickTask = useCallback(
+    (offset: number) => {
+      const next = toggleTaskAt(shown, offset)
+      setPending({ base: live ? live.base : children, text: next, sent: [...(live ? live.sent : []), next] })
+      const saving = onTasksChange?.(next)
+      if (saving && typeof saving.then === 'function')
+        saving.then(undefined, () => setPending((current) => (current?.sent.includes(next) ? null : current)))
+    },
+    [onTasksChange, children, shown, live],
+  )
   return (
     <div
       data-slot="markdown"
@@ -334,9 +431,11 @@ export function Markdown({
       className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', PROSE_INSET, className)}
     >
       <FoldContext.Provider value={foldKey === undefined ? null : toggle}>
-        <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={rehypePlugins} components={components}>
-          {children}
-        </ReactMarkdown>
+        <TaskToggleContext.Provider value={onTasksChange ? tickTask : null}>
+          <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={rehypePlugins} components={components}>
+            {onTasksChange ? shown : children}
+          </ReactMarkdown>
+        </TaskToggleContext.Provider>
       </FoldContext.Provider>
     </div>
   )

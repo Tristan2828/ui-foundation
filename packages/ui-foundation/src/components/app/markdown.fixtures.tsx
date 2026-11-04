@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@/fixtures/types'
 import { useState } from 'react'
 import { FOLDING_SAMPLE, startFolded } from './folding.fixtures'
 import { SAVED_PHOTO, WIDE_PHOTO } from './image-upload.fixtures'
+import { countTasks } from '@/lib/markdown-tasks'
 import { Markdown } from './markdown'
 import { NotesOutline } from './notes-outline'
 
@@ -193,5 +194,87 @@ export const FoldingOff: StoryObj<typeof Markdown> = {
     <Markdown foldKey="story:markdown:folding-off" foldable={false} className="max-w-3xl">
       {FOLDING_SAMPLE}
     </Markdown>
+  ),
+}
+
+// Task items ticked where they're read (`onTasksChange`): each box a
+// checkbox named for its item, nested items, an item in a loose list, a
+// numbered one and one in a callout among them; a `- [ ]` in a code block
+// stays text. Under it, what would be saved and the count a table's
+// column would show (countTasks). Contrast-checked in both themes
+// (e2e/fixtures-visual.spec.ts); ticking is e2e/markdown-tasks.spec.ts's.
+const TASKS_SAMPLE = `Packing for the move:
+
+- [ ] Book the van
+- [x] Order boxes
+  - [ ] Small boxes
+  - [x] Wardrobe boxes
+- A plain bullet
+
+1. [ ] Read the meters
+
+- [ ] Label every box
+
+  Kitchen first, then the bedrooms.
+
+> [!NOTE]
+> - [ ] Keep the receipt
+
+\`\`\`
+- [ ] not a task, just text
+\`\`\`
+`
+
+function TickableTasksStory() {
+  const [text, setText] = useState(TASKS_SAMPLE)
+  const { done, total } = countTasks(text)
+  return (
+    <div className="flex max-w-xl flex-col gap-4">
+      <Markdown onTasksChange={setText}>{text}</Markdown>
+      <p className="type-caption text-muted-foreground" data-testid="task-count">
+        {done}/{total} done
+      </p>
+      {/* What would be saved, for the spec. */}
+      <pre data-testid="saved-tasks" className="sr-only">
+        {text}
+      </pre>
+    </div>
+  )
+}
+
+export const TickableTasks: StoryObj<typeof Markdown> = { render: () => <TickableTasksStory /> }
+
+// Ticks saved over a network: one save that lands after 600ms (two quick
+// ticks both show at once, and both are saved), one that always fails
+// (the box goes back). e2e/markdown-tasks.spec.ts.
+const SLOW_SAMPLE = '- [ ] Water the ferns\n- [ ] Feed the fish\n'
+
+function SlowSave({ label, fails }: { label: string; fails?: boolean }) {
+  const [text, setText] = useState(SLOW_SAMPLE)
+  const save = (next: string) =>
+    new Promise<void>((resolve, reject) =>
+      setTimeout(() => {
+        if (fails) return reject(new Error('Could not save'))
+        setText(next)
+        resolve()
+      }, 600),
+    )
+  return (
+    <div className="flex flex-col gap-2" data-fixture={label}>
+      <span className="type-label text-foreground">{label}</span>
+      <Markdown onTasksChange={save}>{text}</Markdown>
+      <pre data-testid={`saved-${label}`} className="sr-only">
+        {text}
+      </pre>
+    </div>
+  )
+}
+
+export const TasksSavedSlowly: StoryObj<typeof Markdown> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-6">
+      <SlowSave label="slow" />
+      <SlowSave label="failing" fails />
+    </div>
   ),
 }

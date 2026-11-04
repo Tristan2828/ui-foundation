@@ -7,6 +7,33 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.60.0 — Checklists in notes: typed in the editor, ticked where they're read
+
+Additive, so a minor; the UI package only. No new dependency. A task's
+checklist can live in its notes as Markdown task items (`- [ ] item`,
+`- [x] done`), edited and ticked without a field of its own.
+
+- **`[] ` at a line's start** in `RichTextEditor` makes it a checklist
+  item (`[x] ` a ticked one), on a plain line or in a bulleted item.
+  Enter makes the next item, **its box unticked**: before, Enter after
+  a ticked item made another ticked one. Enter in an empty item ends the
+  list, as in a bulleted one. The toolbar's Task list button, Block+4
+  and `/todo` are unchanged.
+- **`onTasksChange` on `<Markdown>`**: the text's task boxes become
+  checkboxes, each named for its item, reachable with Tab and ticked
+  with a click or Space, without opening an editor. A tick calls it with
+  the whole text, only that item's `[ ]`/`[x]` flipped, for the app to
+  save. Without it (the default) the boxes stay pictures.
+- **`countTasks(markdown)`** → `{ done, total }`, for a list's "2/5"
+  column; nested items count, plain items and code blocks don't.
+  **`toggleTaskAt(markdown, offset)`** is the flip `<Markdown>` uses.
+- `<Markdown>`'s nested task items now indent under their parent, and a
+  loose item's second paragraph lines up with its words.
+
+**How an app adopts:** nothing to change. To tick a record's checklist
+on its page, pass the field's save as `onTasksChange`
+(docs/foundation/add-an-entity.md, the Markdown long text).
+
 ## 4.59.0 — Headings can stay plain, and release jobs time out
 
 Additive, so a minor; no new dependency, nothing for apps to do.
