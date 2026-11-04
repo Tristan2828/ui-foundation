@@ -39,6 +39,11 @@
 // to the dialog's bar (Open full page, Close), and not found's way out
 // closes the dialog.
 //
+// Printing the notes (entity-view-print.tsx): sections marked `print`
+// (the long text: details, prep, questions) give the header a Print notes
+// button, which prints those sections alone under the title and
+// subtitle, with no rail, shell or buttons, on light paper.
+//
 // Two layouts. `column` (the default): every section in one column capped
 // at max-w-4xl. `rail`, for a record with long content: the page takes the
 // content area's whole width, sections placed `rail` go in a narrow column
@@ -67,6 +72,7 @@ import {
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { PrintNotes, type EntityViewPrintSection } from './entity-view-print'
 import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
@@ -120,6 +126,15 @@ export type EntityViewSection = (
    * long text and long lists. The `column` layout ignores it.
    */
   placement?: EntityViewPlacement
+  /**
+   * The section is part of the record's printed notes: marking any one
+   * adds a Print notes button to the header, which prints the marked
+   * sections alone (their content as shown, read-only, nothing folded)
+   * under the title and subtitle. `{ answerSpace: true }` also leaves
+   * room under each item of the section's numbered lists, to write an
+   * answer by hand (a visit's questions).
+   */
+  print?: boolean | { answerSpace?: boolean }
 }
 
 export type EntityViewPlacement = 'main' | 'rail'
@@ -193,6 +208,8 @@ export type EntityViewProps = {
    * ignores it.
    */
   mobileOrder?: EntityViewMobileOrder
+  /** The Print notes button's words, when a section is marked `print`. Defaults to "Print notes". */
+  printLabel?: string
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
   railLabel?: string
   isLoading: boolean
@@ -433,6 +450,7 @@ export function EntityView({
   layout = 'column',
   mobileOrder = 'rail-first',
   railLabel,
+  printLabel = 'Print notes',
   isLoading,
   error,
   onRetry,
@@ -482,6 +500,16 @@ export function EntityView({
 
   if (isLoading) return <EntityViewSkeleton layout={layout} mobileOrder={mobileOrder} />
 
+  const printSections: EntityViewPrintSection[] = sections
+    .filter((section) => section.print)
+    .map((section) => ({
+      title: section.title,
+      ...('fields' in section ? { fields: section.fields } : { content: section.content, emptyLabel: section.emptyLabel }),
+      answerSpace: typeof section.print === 'object' && section.print.answerSpace === true,
+    }))
+  const printButton = printSections.length > 0 && (
+    <PrintNotes label={printLabel} title={title} subtitle={subtitle} sections={printSections} />
+  )
   const railSections = sections.filter((section) => section.placement === 'rail')
   const mainSections = sections.filter((section) => section.placement !== 'rail')
   const main = (
@@ -520,7 +548,12 @@ export function EntityView({
           )}
           {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+        {(actions || printButton) && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {printButton}
+            {actions}
+          </div>
+        )}
       </header>
 
       {/* Always rendered, so a notice that appears or changes later (a

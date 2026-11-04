@@ -44,6 +44,9 @@
 // this device under the key and shared with an editor or NotesOutline
 // given the same one. The text itself is never changed.
 //
+// Printed (EntityView's Print notes, PrintingContext), it's the whole
+// text: nothing folded, no fold buttons, task boxes as glyphs.
+//
 // A task item (`- [ ] to do`, `- [x] done`) shows its box as a glyph
 // with its state in words: read-only text has nothing to tick. With
 // `onTasksChange`, each box is a real checkbox, named for its item's
@@ -78,6 +81,7 @@ import {
   type HeadingFrom,
   type HeadingLevel,
 } from './prose-look'
+import { usePrinting } from './print-context'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 
 const REMARK_PLUGINS = [remarkGfm, remarkCallouts, remarkHighlights]
@@ -396,11 +400,15 @@ export function Markdown({
   headingFrom = 'hash',
   foldKey: foldKeyProp,
   foldable = true,
-  onTasksChange,
+  onTasksChange: onTasksChangeProp,
   className,
   ...rest
 }: MarkdownProps) {
-  const foldKey = foldable ? foldKeyProp : undefined
+  // On paper (EntityView's Print notes): every heading plain and open,
+  // every task box a picture.
+  const printing = usePrinting()
+  const onTasksChange = printing ? undefined : onTasksChangeProp
+  const foldKey = foldable && !printing ? foldKeyProp : undefined
   const textTop = useMemo(() => (headingFrom === 'text' ? textTopHeading(children) : 1), [headingFrom, children])
   const components = useMemo(() => componentsFor(headingLevel, textTop), [headingLevel, textTop])
   const [folded, setFolded] = useFolds(foldKey)

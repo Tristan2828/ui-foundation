@@ -158,3 +158,84 @@
     @apply font-sans;
     }
 }
+
+/* Printed notes (EntityView's Print notes, src/components/app/entity-view-print.tsx).
+   While its copy is in <body>, paper shows that copy alone: the app beside
+   it (shell, header, rail, dialogs) is left off, and the copy is in the
+   light theme's colours even when the screen is dark. Its buttons (edit
+   pencils, move and remove) are left off too: paper has nothing to press.
+   Tables are ruled all round, never cut off at the scroll box's edge, and
+   their cells tall enough to write in; a heading stays with what follows
+   it; a section marked answerSpace leaves room under each numbered item. */
+@media print {
+  body:has(> [data-print-notes]) > :not([data-print-notes]) {
+    display: none !important;
+  }
+  :root:has(> body > [data-print-notes]) {
+    --background: var(--white);
+    --foreground: var(--black);
+    --card: var(--white);
+    --card-foreground: var(--black);
+    --popover: var(--white);
+    --popover-foreground: var(--black);
+    --primary: var(--gray-950);
+    --primary-foreground: var(--gray-50);
+    --secondary: var(--gray-100);
+    --secondary-foreground: var(--gray-950);
+    --muted: var(--gray-100);
+    --muted-foreground: var(--gray-500);
+    --accent: var(--gray-100);
+    --accent-foreground: var(--gray-950);
+    --destructive-text: var(--red-700);
+    --success-text: var(--green-800);
+    --warning-text: var(--amber-800);
+    --info-text: var(--blue-800);
+    --link: var(--blue-700);
+    --highlight-amber: oklch(0.9 0.1 75);
+    --highlight-yellow: oklch(0.94 0.13 100);
+    --highlight-green: oklch(0.9 0.1 150);
+    --highlight-red: oklch(0.89 0.07 25);
+    --rule: var(--gray-400);
+    --heading-band: var(--gray-200);
+    --heading-bar: var(--blue-700);
+    --table-stripe: var(--white);
+    --border: var(--gray-400);
+    --input: var(--gray-200);
+    color-scheme: light;
+    background: var(--white);
+  }
+  [data-print-notes] button {
+    display: none !important;
+  }
+  [data-print-notes] :is(h1, h2, h3, h4, h5, h6) {
+    break-after: avoid;
+  }
+  [data-print-notes] [data-slot="table-container"] {
+    /* Not w-full: the text's inset margins would push its right edge
+       off the paper. */
+    width: auto;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+  }
+  [data-print-notes] table {
+    border-collapse: collapse;
+  }
+  [data-print-notes] tr {
+    break-inside: avoid;
+  }
+  [data-print-notes] :is(th, td) {
+    border: 1px solid var(--border);
+    background: var(--white);
+  }
+  [data-print-notes] td {
+    height: 2.5rem;
+  }
+  [data-print-notes] [data-answer-space] ol > li {
+    padding-bottom: 5rem;
+    break-inside: avoid;
+  }
+  [data-print-notes] [data-answer-space] li ol > li {
+    padding-bottom: 0;
+  }
+}

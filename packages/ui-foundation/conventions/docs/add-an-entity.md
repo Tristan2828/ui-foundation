@@ -4,22 +4,22 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 38–60
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–731
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–743
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 100–107
   - Step 2: `npm run gen:api` · lines 108–109
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 110–121
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 122–131
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 132–136
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 137–620
-  - Step 7: Register routes · lines 621–634
-  - Step 8: Add Playwright specs for all three screens · lines 635–713
-  - Step 9: Register the nav entry and route names · lines 714–728
-  - Step 10: `npm run verify`. · lines 729–731
-- [Opening a record over its list](#opening-a-record-over-its-list) · lines 733–789
-- [What not to copy](#what-not-to-copy) · lines 791–817
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 819–836
-- [Deleting](#deleting) · lines 838–867
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 869–890
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 137–632
+  - Step 7: Register routes · lines 633–646
+  - Step 8: Add Playwright specs for all three screens · lines 647–725
+  - Step 9: Register the nav entry and route names · lines 726–740
+  - Step 10: `npm run verify`. · lines 741–743
+- [Opening a record over its list](#opening-a-record-over-its-list) · lines 745–801
+- [What not to copy](#what-not-to-copy) · lines 803–829
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 831–848
+- [Deleting](#deleting) · lines 850–879
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 881–902
 
 <!-- /index -->
 
@@ -495,6 +495,18 @@ is a filled-in example while the Widgets demo is still here).
      (`useEdit<Entity>Field`). Without the prop the boxes are pictures
      and the text stays read-only. A list's "2/5" column counts them
      with `countTasks(text)` (`{ done, total }`; `total` 0 for none).
+   - **Notes worth taking on paper** (a visit's prep and questions, a
+     guide, a checklist to tick by hand): mark each of those sections
+     `print: true`. The header gets a Print notes button (`printLabel`
+     renames it) that prints the marked sections alone, under the title
+     and subtitle: no rail, no shell, no buttons, light paper in either
+     theme, headings and bullets as written, nothing folded, tables
+     ruled with room in their empty cells. `print: { answerSpace: true }`
+     also leaves space under each item of the section's numbered lists,
+     for questions answered by hand. A section's own content that should
+     print differently (a list of sub-items as plain text) reads
+     `usePrinting()`, true in the printed copy. The browser's own print
+     (Ctrl+P) still prints the whole page.
    - **Quick actions: only the fields the plan's `Quick actions` line
      names**, each a control that saves on its own (cell pattern 17,
      `widget-quick-actions.tsx`). A `yes/no` is a

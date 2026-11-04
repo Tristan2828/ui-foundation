@@ -535,3 +535,82 @@ function HeaderSlotsInRouter() {
 }
 
 export const HeaderSlots: StoryObj = { render: () => <HeaderSlotsInRouter /> }
+
+// --- Printing the notes ---------------------------------------------------
+// A visit's page with its prep and questions marked `print`: the header
+// gets Print notes, and paper shows those two sections alone under the
+// title (e2e/entity-view-print.spec.ts): the table ruled with room to
+// write, each numbered question with space under it, no rail, no buttons.
+// The Questions list is folded under a foldKey on screen; printed, it's
+// whole.
+
+const PREP = `# Going in
+
+- **Bring:** the referral letter and the list of current medicines
+- **Ask at the desk:** whether parking is validated
+
+## Before and after
+
+Rate each from 0 to 10.
+
+| Movement | Before | That evening | Next day |
+|---|---|---|---|
+| Climbing the stairs | | | |
+| Lifting the shopping | | | |
+| Getting out of the car | | | |
+`
+
+const QUESTIONS = `# Questions
+
+In priority order.
+
+1. **Limits afterwards:** exercise, lifting, travel?
+
+   **Answer:**
+
+2. **Follow-up:** is a second visit booked?
+
+   **Answer:**
+
+3. **Next step:** what if it doesn't help?
+
+   **Answer:**
+`
+
+function PrintRecord() {
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Visit',
+      placement: 'rail',
+      fields: [
+        { label: 'Status', value: <Badge variant="outline">Scheduled</Badge> },
+        { label: 'With', value: 'The clinic' },
+      ],
+    },
+    { title: 'Prep', content: <Markdown>{PREP}</Markdown>, print: true },
+    {
+      title: 'Questions',
+      content: <Markdown foldKey="fixtures:print:questions">{QUESTIONS}</Markdown>,
+      print: { answerSpace: true },
+    },
+    { title: 'Files', content: null, emptyLabel: 'No files yet' },
+  ]
+  return (
+    <EntityView
+      layout="rail"
+      isLoading={false}
+      back={{ to: '/', label: 'Visits' }}
+      title="Check-up"
+      subtitle="Mar 9, 2026 · Visit"
+      actions={<Button variant="outline">Edit</Button>}
+      sections={sections}
+    />
+  )
+}
+
+function PrintInRouter() {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <PrintRecord /> }]))
+  return <RouterProvider router={router} />
+}
+
+export const PrintNotes: StoryObj = { name: 'Print notes', render: () => <PrintInRouter /> }

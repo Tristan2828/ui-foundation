@@ -69,6 +69,7 @@ export {
   type EntityViewProps,
   type EntityViewSection,
 } from '@/components/app/entity-view'
+export { usePrinting } from '@/components/app/print-context'
 export {
   RecordDialogRoute,
   RecordLink,

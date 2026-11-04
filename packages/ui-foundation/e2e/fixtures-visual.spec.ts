@@ -87,6 +87,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
+  { id: 'app-entityview--print-notes', mustShow: 'Climbing the stairs' },
   // A notice across the page and a source credit under both columns.
   { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },
   // <Notice>: every tone's wash, on the page and on a card.
