@@ -7,6 +7,34 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.58.0 — A record opened in a dialog over its list
+
+Additive, so a minor; the UI package only. No new dependency. A list read
+one record at a time (a board's cards, a backlog) can open a record in a
+centered dialog over itself instead of going to the record's page, the
+address staying the record's (docs/foundation/add-an-entity.md "Opening
+a record over its list").
+
+- **`RecordDialogRoute`**: the list route's element, with the record's
+  route as its child. Opened from the list, the record is a dialog over
+  it; the list stays mounted at the address it was opened from (its
+  search, filters, sort and page unchanged). Back, Esc, the backdrop and
+  Close go back to the list, focus back on what opened it. The dialog's
+  bar has **Open full page**. A deep link, or a record opened from
+  another page, is the full page.
+- **`useOpenRecord`**, **`<RecordLink>`** and **`recordDialogState`**
+  open a record over the list (a row click, a card's link, a `<Link>`'s
+  `state`); **`useRecordDialog`** gives a screen inside the dialog its
+  `close` (null on the full page).
+- **`EntityView`** in a dialog: its title names the dialog, the back
+  link gives way to the dialog's bar, and not found's way out closes the
+  dialog. Unchanged on its page.
+- **`DataTable`'s `onRowClick` works without a `detailPanel`**: the rows
+  take a pointer, Enter and ↑/↓. Before, it only did anything alongside
+  a panel.
+
+To take it: nothing. To use it, follow the new add-an-entity section.
+
 ## 4.57.0 — Reminders on more channels than push
 
 Additive, so a minor; the backend package only. No new dependency. An

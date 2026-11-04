@@ -70,6 +70,20 @@ export {
   type EntityViewSection,
 } from '@/components/app/entity-view'
 export {
+  RecordDialogRoute,
+  RecordLink,
+  type RecordDialogRouteProps,
+  type RecordLinkProps,
+} from '@/components/app/record-dialog'
+export {
+  recordDialogState,
+  useOpenRecord,
+  useRecordDialog,
+  type RecordDialogBackground,
+  type RecordDialogContextValue,
+  type RecordDialogState,
+} from '@/components/app/record-dialog-context'
+export {
   editInPlace,
   type EditControlProps,
   type EditInPlace,
