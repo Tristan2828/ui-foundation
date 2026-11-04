@@ -78,6 +78,10 @@ const COMPOSITE_STORIES = [
   // FillInField's rows by kind (money with a suggestion, a date, a long list), and a record's group.
   { id: 'app-fillinqueue--fields', mustShow: 'New desk chair' },
   { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
+  // A record open in a dialog over its list, and the dialog's loading and not-found states.
+  { id: 'app-recorddialog--open', mustShow: 'after a dry day' },
+  { id: 'app-recorddialog--loading', mustShow: 'Open full page' },
+  { id: 'app-recorddialog--not-found', mustShow: 'Back to Projects' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },

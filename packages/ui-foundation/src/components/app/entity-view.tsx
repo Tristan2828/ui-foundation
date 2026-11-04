@@ -34,6 +34,11 @@
 // <KeyStats>) under that, the record's key numbers; `footer`
 // (a <SourceCredit>) after them all, for crediting the data's source.
 //
+// Opened in a dialog over its list (RecordDialogRoute, record-dialog.tsx),
+// the view is the same: its <h1> names the dialog, the back link gives way
+// to the dialog's bar (Open full page, Close), and not found's way out
+// closes the dialog.
+//
 // Two layouts. `column` (the default): every section in one column capped
 // at max-w-4xl. `rail`, for a record with long content: the page takes the
 // content area's whole width, sections placed `rail` go in a narrow column
@@ -66,6 +71,7 @@ import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './ed
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
 import { EditableValue, LeaveGuard } from './editable-value'
+import { useRecordDialog } from './record-dialog-context'
 
 export type EntityViewField = {
   label: string
@@ -435,6 +441,9 @@ export function EntityView({
   // Editing in place: one store per view, and the leave-page prompt only
   // while a field is open (or one is always editable).
   const [store] = useState(() => new EditInPlaceStore())
+  // Opened over its list (RecordDialogRoute): the heading names the dialog,
+  // and the dialog's own bar replaces the back link.
+  const dialog = useRecordDialog()
   const editing = useSyncExternalStore(
     store.subscribe,
     () => store.editing,
@@ -455,9 +464,15 @@ export function EntityView({
           <EmptyDescription>{error.message}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link to={back.to} />}>
-            Back to {back.label}
-          </Button>
+          {dialog ? (
+            <Button size="sm" variant="outline" onClick={dialog.close}>
+              Back to {back.label}
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" nativeButton={false} render={<Link to={back.to} />}>
+              Back to {back.label}
+            </Button>
+          )}
         </EmptyContent>
       </Empty>
     )
@@ -485,11 +500,11 @@ export function EntityView({
       data-layout={layout}
     >
       {editing && <LeaveGuard store={store} />}
-      <BackLink back={back} />
+      {!dialog && <BackLink back={back} />}
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <h1 className="type-page-title break-words text-foreground">
+          <h1 id={dialog?.titleId} className="type-page-title break-words text-foreground">
             {titleEdit ? (
               <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline" className="w-full">
                 {title}

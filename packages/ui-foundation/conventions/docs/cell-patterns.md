@@ -34,7 +34,7 @@
 - [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1288–1352
 - [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1354–1422
 - [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1424–1452
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1454–1528
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1454–1530
 
 <!-- /index -->
 
@@ -1523,6 +1523,8 @@ const { grouping, setGrouping, ...table } = useTableUrlState(FILTERS, MULTI, VIE
   short notes preview (a few lines of the record's notes, not the whole
   editor), and an "Open page" link (a `<Link>` in `text-link`, so it's
   announced as the link it is). Without `detailPanel` rows behave as they
-  always have: the title link opens the record's page.
+  always have: the title link opens the record's page, or, with
+  `onRowClick`, the row opens the record (a dialog over the list:
+  add-an-entity.md "Opening a record over its list").
 - **The table layout's alone:** a card layout's cards don't open the
   panel.

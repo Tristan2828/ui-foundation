@@ -185,10 +185,13 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   detailPanel?: (row: TData) => ReactNode
   /**
-   * What a click on a row (or Enter on it) does instead of picking it for
-   * the `detailPanel`: open its page, say. A link or control inside the row
-   * keeps its own click, and the panel is then opened from the app's own
-   * control through `detailRow`. Left out, a row click picks the row.
+   * What a click on a row (or Enter on it) does: open its page, or open it
+   * in a dialog over the list (`useOpenRecord`, add-an-entity.md "Opening a
+   * record over its list"). The rows then take a pointer and the keyboard
+   * (↑/↓ between rows, Enter). A link or control inside the row keeps its
+   * own click. With a `detailPanel` it replaces picking the row, and the
+   * panel is then opened from the app's own control through `detailRow`.
+   * Left out, a row click picks the row for the panel, if there is one.
    */
   onRowClick?: (row: TData) => void
   /**
@@ -878,6 +881,9 @@ export function DataTable<TData extends Record<string, unknown>>({
         folded.has(run.key) ? [] : run.rows.map((row) => ({ key: placeKey(run.key, row.id), rowId: row.id })),
       )
     : rows.map((row) => ({ key: row.id, rowId: row.id }))
+  // Rows that open on a click or Enter: picked for the panel, or the app's
+  // own `onRowClick` (a record's page, or a dialog over the list).
+  const rowsOpen = Boolean(detailPanel || onRowClickProp)
   const selectedRow = detailPanel && selection ? rows.find((row) => row.id === selection.rowId) : undefined
   // The place marked picked: where it was picked, or (regrouped since) the
   // row's first place. None while its group is folded.
@@ -923,7 +929,9 @@ export function DataTable<TData extends Record<string, unknown>>({
       if (places.length === 0) return
       event.preventDefault()
       const down = event.key === 'ArrowDown'
-      const index = places.findIndex((place) => place.key === selectedKey)
+      // From the picked row, or (no panel: rows that only open) the focused one.
+      const fromKey = selectedKey ?? target.closest<HTMLElement>('tr[data-row-key]')?.dataset.rowKey
+      const index = places.findIndex((place) => place.key === fromKey)
       const nextIndex =
         index === -1 ? (down ? 0 : places.length - 1) : Math.min(places.length - 1, Math.max(0, index + (down ? 1 : -1)))
       const next = places[nextIndex]
@@ -948,16 +956,15 @@ export function DataTable<TData extends Record<string, unknown>>({
 
   // One body row, the same in a plain table and a grouped one.
   const renderRow = (row: Row, key: string = row.id) => {
-    const isSelected = key === selectedKey
+    const isSelected = Boolean(detailPanel) && key === selectedKey
     return (
     <TableRow
       key={key}
       data-highlighted={highlightRow?.(row.original) || undefined}
-      {...(detailPanel
+      {...(rowsOpen
         ? {
             'data-row-key': key,
-            'data-selected': isSelected || undefined,
-            'aria-selected': isSelected,
+            ...(detailPanel ? { 'data-selected': isSelected || undefined, 'aria-selected': isSelected } : {}),
             tabIndex: key === tabStopKey ? 0 : -1,
             onClickCapture: (event: React.MouseEvent<HTMLTableRowElement>) => onRowClick(event, { key, rowId: row.id }),
           }
@@ -965,7 +972,7 @@ export function DataTable<TData extends Record<string, unknown>>({
       className={cn(
         pinFirstColumn && ROW_GROUP_CLASS,
         highlightRow?.(row.original) && HIGHLIGHTED_ROW_CLASS,
-        detailPanel && SELECTABLE_ROW_CLASS,
+        rowsOpen && SELECTABLE_ROW_CLASS,
         isSelected && SELECTED_ROW_CLASS,
       )}
     >
@@ -1088,7 +1095,7 @@ export function DataTable<TData extends Record<string, unknown>>({
             <Table
               data-state="success"
               containerRef={containerRef}
-              onKeyDown={detailPanel ? onListKeyDown : undefined}
+              onKeyDown={rowsOpen ? onListKeyDown : undefined}
               // With the sticky bar below as the visible scrollbar, hide the
               // container's own. It stays overflow-x-auto and fully
               // scrollable (wheel, trackpad, drag, and the sync effect); it
