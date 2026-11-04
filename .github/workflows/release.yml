@@ -45,6 +45,7 @@ concurrency:
 jobs:
   decide:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     outputs:
@@ -96,6 +97,7 @@ jobs:
     needs: decide
     if: needs.decide.outputs.version != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -122,6 +124,7 @@ jobs:
   publish:
     needs: [decide, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # The only job that can publish. No checkout, no npm ci: nothing from the
     # repo or its dependency tree runs here.
     permissions:
@@ -173,6 +176,7 @@ jobs:
     needs: decide
     if: needs.decide.outputs.version != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -202,6 +206,7 @@ jobs:
   publish-py:
     needs: [decide, build-py]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # The only job that can publish to PyPI. No checkout, no pip install:
     # nothing from the repo or its dependency tree runs here.
     permissions:
@@ -269,6 +274,7 @@ jobs:
   tag:
     needs: [decide, publish, publish-py]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:

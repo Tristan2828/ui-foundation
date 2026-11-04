@@ -7,6 +7,19 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.59.0 — Headings can stay plain, and release jobs time out
+
+Additive, so a minor; no new dependency, nothing for apps to do.
+
+- **`foldable={false}`** on `<Markdown>` and `RichTextEditor` keeps
+  headings plain (no fold buttons, nothing folded) even when a `foldKey`
+  is given, for a page-level switch. What was folded is remembered for
+  when it's on again. Default `true`.
+- **Release workflows** give every job a `timeout-minutes`, so a hung
+  `release-smoke` can no longer hold the next release in the queue.
+- 4.50.1's heading dash is a proper UTF-8 character on main already;
+  CHANGELOG.md has no other non-UTF-8 bytes.
+
 ## 4.58.0 — A record opened in a dialog over its list
 
 Additive, so a minor; the UI package only. No new dependency. A list read

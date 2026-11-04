@@ -116,6 +116,12 @@ export type RichTextEditorProps = {
    * when it mounts.
    */
   foldKey?: string
+  /**
+   * `false` keeps headings plain, with no fold buttons or shortcuts, even
+   * with a `foldKey`, as on `<Markdown>`. Read once, when it mounts.
+   * Default `true`.
+   */
+  foldable?: boolean
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string
@@ -142,7 +148,7 @@ export function RichTextEditor(props: RichTextEditorProps) {
         </div>
       }
     >
-      <MilkdownEditor {...props} />
+      <MilkdownEditor {...props} foldKey={props.foldable === false ? undefined : props.foldKey} />
     </Suspense>
   )
 }

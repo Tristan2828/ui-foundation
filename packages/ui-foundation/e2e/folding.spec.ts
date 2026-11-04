@@ -157,3 +157,11 @@ test.describe('folding in the rich-text editor', () => {
     await expect(fold(page, 'Harvest')).toBeFocused()
   })
 })
+
+test('foldable={false} keeps headings plain: no fold buttons, every section showing', async ({ page }) => {
+  await page.goto('http://localhost:6180/story.html?id=app-markdown--folding-off')
+  await expect(page.getByText('Three raised beds along the fence.')).toBeVisible()
+  await expect(page.getByText('Every other morning in July and August.')).toBeVisible()
+  await expect(page.locator('[data-slot="fold-button"]')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Watering' })).toBeVisible()
+})

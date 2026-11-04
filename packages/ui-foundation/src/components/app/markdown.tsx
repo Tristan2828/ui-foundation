@@ -301,6 +301,13 @@ export type MarkdownProps = {
    * text is never changed.
    */
   foldKey?: string
+  /**
+   * Set `false` to keep headings plain, with no fold buttons, even when a
+   * `foldKey` is given: a page-level switch (a print view, a short note)
+   * that leaves the key in place. Nothing is folded while it's off, and
+   * what was folded is remembered for when it's on again. Default `true`.
+   */
+  foldable?: boolean
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
@@ -308,10 +315,12 @@ export function Markdown({
   children,
   headingLevel = DEFAULT_HEADING_LEVEL,
   headingFrom = 'hash',
-  foldKey,
+  foldKey: foldKeyProp,
+  foldable = true,
   className,
   ...rest
 }: MarkdownProps) {
+  const foldKey = foldable ? foldKeyProp : undefined
   const textTop = useMemo(() => (headingFrom === 'text' ? textTopHeading(children) : 1), [headingFrom, children])
   const components = useMemo(() => componentsFor(headingLevel, textTop), [headingLevel, textTop])
   const [folded, setFolded] = useFolds(foldKey)
