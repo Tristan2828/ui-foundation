@@ -7,6 +7,33 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.61.0 — A record's notes printed on their own
+
+Additive, so a minor; the UI package only. No new dependency. A record's
+long text (a visit's prep and questions, a guide) prints alone, to take
+along on paper.
+
+- **`print` on an `EntityView` section**: marking any section adds a
+  **Print notes** button to the header (`printLabel` renames it). It
+  prints the marked sections alone under the title and subtitle, from a
+  copy put in `<body>` while the print dialog is open: no sidebar,
+  header bar, rail or buttons, and light paper even in the dark theme.
+  Fields sections print as label/value rows. The browser's own print
+  (Ctrl+P) is unchanged.
+- **On paper, `<Markdown>`** keeps its headings and bullets, prints
+  whole (nothing folded, no fold buttons, task boxes as pictures), and
+  rules its tables all round, never cut off at the scroll box, with
+  each body cell tall enough to write in.
+- **`print: { answerSpace: true }`** leaves room under each item of the
+  section's numbered lists, for questions answered by hand.
+- **`usePrinting()`**: true inside the printed copy, for a section's
+  own content that prints differently from the screen.
+
+**How an app adopts:** mark the sections to print with `print: true`
+(`{ answerSpace: true }` for questions), docs/foundation/add-an-entity.md
+"Notes worth taking on paper". An app's own print rules keyed on its own
+markup keep working.
+
 ## 4.60.0 — Checklists in notes: typed in the editor, ticked where they're read
 
 Additive, so a minor; the UI package only. No new dependency. A task's
