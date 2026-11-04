@@ -29,9 +29,10 @@
 //   copy out of the editor is Markdown.
 // - Ctrl/Cmd+K adds or edits a link (a box at the caret: web and email
 //   addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
-//   in. Ctrl/Cmd+Enter stays the field's save, in a table too. Notion's
-//   block keys (Ctrl+Shift+1 for a heading, +5 for bullets, …:
-//   rich-text-shortcuts.ts).
+//   in. `[] ` at a line's start makes a task item, and Enter in one the
+//   next, unticked (rich-text-tasks.ts). Ctrl/Cmd+Enter stays the field's
+//   save, in a table too. Notion's block keys (Ctrl+Shift+1 for a
+//   heading, +5 for bullets, …: rich-text-shortcuts.ts).
 // - A placeholder in an empty document, and a count of the Markdown's
 //   length as it nears `maxLength`.
 // - A fixed toolbar above the text (rich-text-toolbar.tsx), and a
@@ -103,6 +104,7 @@ import { tableAt, toggleFormat, type FormatId } from './rich-text-formats'
 import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry } from './rich-text-node-views'
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
+import { splitTaskItem, taskInputRule } from './rich-text-tasks'
 import { addRowAtEnd, handleTableKey, runTableAction, type TableAction } from './rich-text-table'
 import type { FormatItem } from './rich-text-format-items'
 import {
@@ -807,6 +809,8 @@ export default function MilkdownEditor({
             if (!view.editable) return false
             if (handleShortcut(view.state, view.dispatch, event)) return true
             if (handleTableKey(view.state, view.dispatch, event)) return true
+            // Enter in a task item: the next one, unticked (rich-text-tasks.ts).
+            if (event.key === 'Enter' && plain && !event.isComposing && splitTaskItem(view.state, view.dispatch)) return true
             // Ctrl/Cmd+Enter in a table is the field's (a save), not
             // Milkdown's "leave the table": taken here, so its keymap never
             // sees it, and left to reach the field.
@@ -825,6 +829,7 @@ export default function MilkdownEditor({
       })
       .use(COMMONMARK)
       .use(gfm)
+      .use(taskInputRule)
       .use(calloutRemark)
       .use(calloutSchema)
       .use(highlightRemark)

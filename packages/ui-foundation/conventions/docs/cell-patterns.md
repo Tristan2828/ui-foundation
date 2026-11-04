@@ -26,15 +26,15 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 565–648
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 650–685
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 687–760
-- [18. Editable value](#18-editable-value) · lines 762–1218
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1034–1119
-  - [In a table's rows](#in-a-tables-rows) · lines 1121–1206
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1208–1218
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1220–1286
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1288–1352
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1354–1422
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1424–1452
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1454–1530
+- [18. Editable value](#18-editable-value) · lines 762–1221
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1037–1122
+  - [In a table's rows](#in-a-tables-rows) · lines 1124–1209
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1211–1221
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1223–1289
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1291–1355
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1357–1425
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1427–1455
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1457–1533
 
 <!-- /index -->
 
@@ -1013,7 +1013,10 @@ const price = editInPlace({
   and Outdent for list items, where there is no Tab. A field with only the
   floating toolbar (`inline` notes) gets the same two in a small "Editor
   tools" strip over its corner while it has focus. A new checklist item
-  shows a "To-do" placeholder and the caret until you type.
+  shows a "To-do" placeholder and the caret until you type. `[] ` (or
+  `[x] `) at a line's start makes it a checklist item, a bulleted item
+  too; Enter in one makes the next, its box unticked, and Enter in an
+  empty one ends the list, as in a bulleted list.
   `toolbar={false}` leaves out the toolbars and the slash menu where a
   value is short and the shortcuts are enough; `toolbar="floating"` keeps
   the floating one and the slash menu without the bar above (an `inline`

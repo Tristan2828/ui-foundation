@@ -176,3 +176,77 @@ test.describe('a new task item', () => {
     await expect(editor(page, 'formats').locator('p[data-placeholder="To-do"]')).toBeVisible()
   })
 })
+
+// Task lists typed (rich-text-tasks.ts): `[] ` at a line's start, Enter
+// for the next box, Enter in an empty one to end the list.
+test.describe('typing a task list', () => {
+  async function newLine(page: Page) {
+    await editor(page, 'formats').locator('p').last().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.press('Enter')
+  }
+
+  test('`[] ` starts one, Enter makes the next box, Enter in an empty box ends it', async ({ page }) => {
+    await page.goto(FEATURES)
+    await newLine(page)
+    await page.keyboard.type('[] Milk')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Eggs')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('After the list.')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n- [ ] Milk\n- [ ] Eggs\n\nAfter the list.\n')
+    await expect(editor(page, 'formats').getByRole('checkbox', { name: 'Done' })).toHaveCount(2)
+    await expect(button(page, 'Task list', field(page, 'formats'))).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('`[x] ` starts a ticked one, and `[] ` in a bulleted item makes it a task', async ({ page }) => {
+    await page.goto(FEATURES)
+    await newLine(page)
+    await page.keyboard.type('[x] Booked')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('- ')
+    await page.keyboard.type('[] Pack')
+    await expect(saved(page, 'formats')).toContainText('- [x] Booked\n')
+    await expect(saved(page, 'formats')).toContainText('- [ ] Pack\n')
+  })
+
+  test('`[] ` in a code block stays text', async ({ page }) => {
+    await page.goto(FEATURES)
+    await newLine(page)
+    await page.keyboard.type('```')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('[] code')
+    await expect(saved(page, 'formats')).toContainText('```\n[] code\n```')
+  })
+
+  test('Enter after a ticked item makes an unticked one', async ({ page }) => {
+    await page.goto(FEATURES)
+    await editor(page, 'tasks').getByText('Done item').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Next item')
+    await expect(saved(page, 'tasks')).toContainText('- [ ] Open item\n- [x] Done item\n- [ ] Next item\n')
+  })
+
+  test('Enter inside a ticked item splits it, the new half unticked', async ({ page }) => {
+    await page.goto(FEATURES)
+    await editor(page, 'tasks').getByText('Done item').click()
+    await page.waitForTimeout(100)
+    // The editor reads a caret moved by End and the arrows from the page's
+    // selectionchange, which lands a moment after each key.
+    await page.keyboard.press('End')
+    await page.waitForTimeout(50)
+    for (let i = 0; i < 'item'.length; i++) {
+      await page.keyboard.press('ArrowLeft')
+      await page.waitForTimeout(50)
+    }
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Enter')
+    await expect(saved(page, 'tasks')).toContainText('- [x] Done')
+    await expect(saved(page, 'tasks')).toContainText('- [ ] item\n')
+  })
+})

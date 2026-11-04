@@ -106,6 +106,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-richtexteditor--heading-levels', mustShow: 'A form with notes' },
   { id: 'app-richtexteditor--wide-table', mustShow: 'wideTable' },
   { id: 'app-markdown--folding', mustShow: 'Fold all' },
+  // Task items ticked where they are read: checkboxes, nested and in a callout.
+  { id: 'app-markdown--tickable-tasks', mustShow: '2/7 done' },
   { id: 'app-richtexteditor--folding', mustShow: 'Fold all' },
   // Allow reminders in every state, on a card (#167).
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
