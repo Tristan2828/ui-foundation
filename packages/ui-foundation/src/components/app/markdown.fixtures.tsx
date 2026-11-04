@@ -186,3 +186,12 @@ function FoldingStory() {
 }
 
 export const Folding: StoryObj<typeof Markdown> = { render: () => <FoldingStory /> }
+
+// `foldable={false}`: the same key and text, headings plain (e2e/folding.spec.ts).
+export const FoldingOff: StoryObj<typeof Markdown> = {
+  render: () => (
+    <Markdown foldKey="story:markdown:folding-off" foldable={false} className="max-w-3xl">
+      {FOLDING_SAMPLE}
+    </Markdown>
+  ),
+}
