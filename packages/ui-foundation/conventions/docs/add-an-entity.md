@@ -3,22 +3,23 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 37–59
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 61–720
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 99–106
-  - Step 2: `npm run gen:api` · lines 107–108
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 109–120
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 121–130
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 131–135
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 136–612
-  - Step 7: Register routes · lines 613–623
-  - Step 8: Add Playwright specs for all three screens · lines 624–702
-  - Step 9: Register the nav entry and route names · lines 703–717
-  - Step 10: `npm run verify`. · lines 718–720
-- [What not to copy](#what-not-to-copy) · lines 722–748
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 750–767
-- [Deleting](#deleting) · lines 769–798
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 800–821
+- [The reference files](#the-reference-files) · lines 38–60
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–743
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 100–107
+  - Step 2: `npm run gen:api` · lines 108–109
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 110–121
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 122–131
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 132–136
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 137–632
+  - Step 7: Register routes · lines 633–646
+  - Step 8: Add Playwright specs for all three screens · lines 647–725
+  - Step 9: Register the nav entry and route names · lines 726–740
+  - Step 10: `npm run verify`. · lines 741–743
+- [Opening a record over its list](#opening-a-record-over-its-list) · lines 745–801
+- [What not to copy](#what-not-to-copy) · lines 803–829
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 831–848
+- [Deleting](#deleting) · lines 850–879
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 881–902
 
 <!-- /index -->
 
@@ -214,14 +215,14 @@ is a filled-in example while the Widgets demo is still here).
    `editInPlace({ kind: 'choice', ... })` with `DateField` as the
    control, `defaultOpen`, `modal={false}`, `onChange={(day) =>
    props.commit(day)}` and `onOpenChange` cancelling on close, as a
-   Select is (Storybook `app/DateField` EditInPlace). The backend column
+   Select is (the fixtures' `app/DateField` EditInPlace). The backend column
    is a SQL `date` (`datetime.date` in the model).
 
    **An image on a record** (a photo of it) is the stored file's id on the
    wire (`string`, nullable), and on the form the foundation's
    `ImageField` in a `Controller` (`z.string().nullable()`): `value` and
    `onChange` are the id, `thumbUrl` the record's saved photo,
-   `onBusyChange` holds the submit while a file uploads (Storybook
+   `onBusyChange` holds the submit while a file uploads (the fixtures'
    `app/ImageField`). Its `upload` is the app's own, one function in the
    gateway that sends the file to the app's endpoint and resolves to
    `{ id, thumbUrl, url }` (the `ImageUploadResult`), rejecting with the
@@ -487,6 +488,25 @@ is a filled-in example while the Widgets demo is still here).
      `headingLevel={2}` for a `RichTextEditor` on a form straight under
      the page's `<h1>`. Text that's imported or pasted from another
      tool (often starting at `##`) also gets `headingFrom="text"`.
+   - **A checklist kept in the text** (`- [ ] item`, `- [x] done`) is
+     ticked where it's read with `<Markdown onTasksChange={save}>`: each
+     box a checkbox named for its item, and a tick hands over the whole
+     text with only that box flipped, for the field's save
+     (`useEdit<Entity>Field`). Without the prop the boxes are pictures
+     and the text stays read-only. A list's "2/5" column counts them
+     with `countTasks(text)` (`{ done, total }`; `total` 0 for none).
+   - **Notes worth taking on paper** (a visit's prep and questions, a
+     guide, a checklist to tick by hand): mark each of those sections
+     `print: true`. The header gets a Print notes button (`printLabel`
+     renames it) that prints the marked sections alone, under the title
+     and subtitle: no rail, no shell, no buttons, light paper in either
+     theme, headings and bullets as written, nothing folded, tables
+     ruled with room in their empty cells. `print: { answerSpace: true }`
+     also leaves space under each item of the section's numbered lists,
+     for questions answered by hand. A section's own content that should
+     print differently (a list of sub-items as plain text) reads
+     `usePrinting()`, true in the printed copy. The browser's own print
+     (Ctrl+P) still prints the whole page.
    - **Quick actions: only the fields the plan's `Quick actions` line
      names**, each a control that saves on its own (cell pattern 17,
      `widget-quick-actions.tsx`). A `yes/no` is a
@@ -621,6 +641,9 @@ is a filled-in example while the Widgets demo is still here).
    belongs to a module already in the nav (its categories, its channels)
    goes in that module's entry's `children`, not a new top-level entry:
    it shows under the module while you're in it.
+   If the plan says records **open over the list** (a board, a list read
+   one record at a time), the view's route is the list route's child
+   instead: see [Opening a record over its list](#opening-a-record-over-its-list).
 8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the
@@ -718,6 +741,64 @@ is a filled-in example while the Widgets demo is still here).
 10. **`npm run verify`.** Fix until it passes. Then stop — do not add
     anything beyond what this list covers; note ideas in the app's
     backlog instead.
+
+## Opening a record over its list
+
+By default a record opens on its own page, `/<entity>/:id`. A list read
+one record at a time (a board's cards, a backlog) can open it in a
+centered dialog over the list instead (4.58): the address is still the
+record's, so it can be copied and shared, but the list stays underneath
+as it was. Only when the plan asks for it; the full page stays the
+default.
+
+```tsx
+// src/App.tsx: the list route wraps its element, and the view becomes its child.
+{
+  path: '<entity>',
+  element: <RecordDialogRoute list={<<Entity>sTableRoute />} label="<Entity>" />,
+  errorElement: <RouteErrorBoundary />,
+  children: [{ path: ':id', element: <<Entity>ViewRoute />, errorElement: <RouteErrorBoundary /> }],
+},
+{ path: '<entity>/new', element: <<Entity>FormRoute /> },        // unchanged siblings
+{ path: '<entity>/:id/edit', element: <<Entity>FormRoute /> },
+
+// The list: a row click, or a link on a card, opens the record over it.
+const openRecord = useOpenRecord()
+<DataTable onRowClick={(row) => openRecord(`/<entity>/${row.id}`)} … />
+<Board renderCard={(item) => <RecordLink to={`/<entity>/${item.id}`}>{item.name}</RecordLink>} … />
+```
+
+- **The history entry decides.** `useOpenRecord`, `<RecordLink>` (a
+  `<Link>`) and `recordDialogState(location)` (for a `<Link>`'s own
+  `state`) put the list's address in the entry's state; the record's
+  route then draws as a dialog over the list. **A deep link** (pasted,
+  bookmarked, reloaded in a new tab) has no such state and **is the full
+  page**, back link and all, as is a record opened from a page other
+  than its list (a link on the home page).
+- **The list stays as it was**: mounted underneath, reading the address
+  it was opened from, so its search, filters, sort, page and scroll are
+  unchanged when the dialog closes.
+- **Closing**: Back, Esc, the backdrop and the dialog's Close all go
+  back to the list's entry (over every record opened inside the dialog,
+  a linked one included). Focus goes back to the row or link that
+  opened it.
+- **Open full page**, in the dialog's bar, swaps the entry for the same
+  address as the full page; Back from there is the list.
+- **The view is unchanged.** `EntityView` sees the dialog: its title
+  names the dialog (`label` names it while loading or on an error), the
+  back link gives way to the dialog's bar, and not found's "Back to …"
+  closes the dialog. Loading, error with Try again, and the plain 404
+  show inside it. A screen that isn't an `EntityView` can read
+  `useRecordDialog()` (null on the full page) for its `close`, as a
+  Delete should, rather than navigating to the list:
+  `onDeleted={() => (dialog ? dialog.close() : navigate('/<entity>'))}`.
+- **Edit** still goes to `/<entity>/:id/edit`, the form's full page.
+- `DataTable`'s `onRowClick` alone makes rows open: a pointer, Enter,
+  ↑/↓ between rows (4.58; it used to need a `detailPanel`). A link or
+  control in a cell keeps its own click.
+- Specs: the package's own (`e2e/record-dialog.spec.ts`) cover the
+  dialog. An app's spec opens a record from the list, checks the
+  address, closes it with Escape, and checks the list's filter survived.
 
 ## What not to copy
 

@@ -34,6 +34,16 @@
 // <KeyStats>) under that, the record's key numbers; `footer`
 // (a <SourceCredit>) after them all, for crediting the data's source.
 //
+// Opened in a dialog over its list (RecordDialogRoute, record-dialog.tsx),
+// the view is the same: its <h1> names the dialog, the back link gives way
+// to the dialog's bar (Open full page, Close), and not found's way out
+// closes the dialog.
+//
+// Printing the notes (entity-view-print.tsx): sections marked `print`
+// (the long text: details, prep, questions) give the header a Print notes
+// button, which prints those sections alone under the title and
+// subtitle, with no rail, shell or buttons, on light paper.
+//
 // Two layouts. `column` (the default): every section in one column capped
 // at max-w-4xl. `rail`, for a record with long content: the page takes the
 // content area's whole width, sections placed `rail` go in a narrow column
@@ -62,10 +72,12 @@ import {
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { PrintNotes, type EntityViewPrintSection } from './entity-view-print'
 import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
 import { EditableValue, LeaveGuard } from './editable-value'
+import { useRecordDialog } from './record-dialog-context'
 
 export type EntityViewField = {
   label: string
@@ -114,6 +126,15 @@ export type EntityViewSection = (
    * long text and long lists. The `column` layout ignores it.
    */
   placement?: EntityViewPlacement
+  /**
+   * The section is part of the record's printed notes: marking any one
+   * adds a Print notes button to the header, which prints the marked
+   * sections alone (their content as shown, read-only, nothing folded)
+   * under the title and subtitle. `{ answerSpace: true }` also leaves
+   * room under each item of the section's numbered lists, to write an
+   * answer by hand (a visit's questions).
+   */
+  print?: boolean | { answerSpace?: boolean }
 }
 
 export type EntityViewPlacement = 'main' | 'rail'
@@ -187,6 +208,8 @@ export type EntityViewProps = {
    * ignores it.
    */
   mobileOrder?: EntityViewMobileOrder
+  /** The Print notes button's words, when a section is marked `print`. Defaults to "Print notes". */
+  printLabel?: string
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
   railLabel?: string
   isLoading: boolean
@@ -427,6 +450,7 @@ export function EntityView({
   layout = 'column',
   mobileOrder = 'rail-first',
   railLabel,
+  printLabel = 'Print notes',
   isLoading,
   error,
   onRetry,
@@ -435,6 +459,9 @@ export function EntityView({
   // Editing in place: one store per view, and the leave-page prompt only
   // while a field is open (or one is always editable).
   const [store] = useState(() => new EditInPlaceStore())
+  // Opened over its list (RecordDialogRoute): the heading names the dialog,
+  // and the dialog's own bar replaces the back link.
+  const dialog = useRecordDialog()
   const editing = useSyncExternalStore(
     store.subscribe,
     () => store.editing,
@@ -455,9 +482,15 @@ export function EntityView({
           <EmptyDescription>{error.message}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button size="sm" variant="outline" nativeButton={false} render={<Link to={back.to} />}>
-            Back to {back.label}
-          </Button>
+          {dialog ? (
+            <Button size="sm" variant="outline" onClick={dialog.close}>
+              Back to {back.label}
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" nativeButton={false} render={<Link to={back.to} />}>
+              Back to {back.label}
+            </Button>
+          )}
         </EmptyContent>
       </Empty>
     )
@@ -467,6 +500,16 @@ export function EntityView({
 
   if (isLoading) return <EntityViewSkeleton layout={layout} mobileOrder={mobileOrder} />
 
+  const printSections: EntityViewPrintSection[] = sections
+    .filter((section) => section.print)
+    .map((section) => ({
+      title: section.title,
+      ...('fields' in section ? { fields: section.fields } : { content: section.content, emptyLabel: section.emptyLabel }),
+      answerSpace: typeof section.print === 'object' && section.print.answerSpace === true,
+    }))
+  const printButton = printSections.length > 0 && (
+    <PrintNotes label={printLabel} title={title} subtitle={subtitle} sections={printSections} />
+  )
   const railSections = sections.filter((section) => section.placement === 'rail')
   const mainSections = sections.filter((section) => section.placement !== 'rail')
   const main = (
@@ -485,11 +528,11 @@ export function EntityView({
       data-layout={layout}
     >
       {editing && <LeaveGuard store={store} />}
-      <BackLink back={back} />
+      {!dialog && <BackLink back={back} />}
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <h1 className="type-page-title break-words text-foreground">
+          <h1 id={dialog?.titleId} className="type-page-title break-words text-foreground">
             {titleEdit ? (
               <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline" className="w-full">
                 {title}
@@ -505,7 +548,12 @@ export function EntityView({
           )}
           {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+        {(actions || printButton) && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {printButton}
+            {actions}
+          </div>
+        )}
       </header>
 
       {/* Always rendered, so a notice that appears or changes later (a

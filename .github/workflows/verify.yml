@@ -13,7 +13,7 @@ permissions:
 jobs:
   verify:
     # The package's gate (codegen, types, lint, deps, build, unit tests,
-    # Storybook accessibility and token checks), then the template's (the
+    # the fixtures harness's accessibility and token checks), then the template's (the
     # same checks an app runs, plus every Playwright screen test) against
     # the package as built.
     runs-on: ubuntu-latest

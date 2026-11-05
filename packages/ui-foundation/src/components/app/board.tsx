@@ -160,7 +160,7 @@ export function Board<T, V extends string>({
     return (
       <div data-slot="board" data-state="loading" role="group" aria-busy="true" aria-label={ariaLabel} className="flex gap-3 overflow-x-auto pb-2">
         {columns.map((column) => (
-          <div key={column.value} className={cn('flex flex-col gap-2 rounded-lg bg-muted p-2', COLUMN_WIDTH)}>
+          <div key={column.value} className={cn('flex flex-col gap-2 rounded-lg bg-muted p-2 [--muted-foreground:var(--table-highlight-muted-foreground)]', COLUMN_WIDTH)}>
             <Skeleton className="h-5 w-24" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -280,7 +280,7 @@ function BoardColumnView<V extends string>({
       data-slot="board-column"
       data-over={over || undefined}
       className={cn(
-        'flex snap-start flex-col gap-2 rounded-lg bg-muted p-2 outline-2 outline-offset-2 outline-transparent data-over:outline-ring',
+        'flex snap-start flex-col gap-2 rounded-lg bg-muted p-2 [--muted-foreground:var(--table-highlight-muted-foreground)] outline-2 outline-offset-2 outline-transparent data-over:outline-ring',
         COLUMN_WIDTH,
       )}
       onDragOver={(event) => {

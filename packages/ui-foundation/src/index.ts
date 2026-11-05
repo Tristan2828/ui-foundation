@@ -21,9 +21,23 @@ export {
   FillInChoice,
   FillInQueue,
   type FillInChoiceProps,
+  type FillInQueueGroup,
   type FillInQueueProgress,
   type FillInQueueProps,
 } from '@/components/app/fill-in-queue'
+export {
+  FillInField,
+  FillInInput,
+  FillInSelect,
+  type FillInFieldKind,
+  type FillInFieldProps,
+  type FillInFieldSpec,
+  type FillInInputKind,
+  type FillInInputProps,
+  type FillInSelectProps,
+  type FillInSuggestion,
+  type FillInValue,
+} from '@/components/app/fill-in-field'
 export {
   Artwork,
   ArtworkTag,
@@ -55,6 +69,21 @@ export {
   type EntityViewProps,
   type EntityViewSection,
 } from '@/components/app/entity-view'
+export { usePrinting } from '@/components/app/print-context'
+export {
+  RecordDialogRoute,
+  RecordLink,
+  type RecordDialogRouteProps,
+  type RecordLinkProps,
+} from '@/components/app/record-dialog'
+export {
+  recordDialogState,
+  useOpenRecord,
+  useRecordDialog,
+  type RecordDialogBackground,
+  type RecordDialogContextValue,
+  type RecordDialogState,
+} from '@/components/app/record-dialog-context'
 export {
   editInPlace,
   type EditControlProps,
@@ -72,6 +101,8 @@ export { ErrorState } from '@/components/app/error-state'
 export { InlineCreate, type InlineCreateProps } from '@/components/app/inline-create'
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
+export { countTasks, toggleTaskAt, type TaskCount } from '@/lib/markdown-tasks'
+export { NotesOutline, type NotesOutlineProps } from '@/components/app/notes-outline'
 export type { HeadingFrom, HeadingLevel } from '@/components/app/prose-look'
 export { MockModeBanner } from '@/components/app/mock-mode-banner'
 export { MultiChoice } from '@/components/app/multi-choice'
@@ -109,9 +140,16 @@ export {
   type LineChartPoint,
   type LineChartProps,
 } from '@/components/app/line-chart'
+export {
+  MultiLineChart,
+  type ChartSeries,
+  type ChartTone,
+  type MultiLineChartProps,
+} from '@/components/app/multi-line-chart'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
+export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
 export { DEFAULT_IMAGE_TYPES, type ImageUpload, type ImageUploadResult } from '@/lib/image-file'
 export { formatPlainDate, type PlainDate } from '@/lib/plain-date'

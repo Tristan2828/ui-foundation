@@ -9,8 +9,8 @@ import { expect, test, type Page } from '@playwright/test'
 // (10), as Add does. Default: without `summary` or `onDuplicate`, every
 // item shows its fields and there's no Duplicate, as before.
 const stories = {
-  default: 'http://localhost:6006/iframe.html?id=app-listeditor--default&viewMode=story',
-  rows: 'http://localhost:6006/iframe.html?id=app-listeditor--rows-that-open&viewMode=story',
+  default: 'http://localhost:6180/story.html?id=app-listeditor--default',
+  rows: 'http://localhost:6180/story.html?id=app-listeditor--rows-that-open',
 }
 
 async function open(page: Page, story: keyof typeof stories, heading: string) {

@@ -108,10 +108,9 @@ copied tokens, and every one drifted:
 An option using a fill the design system can't produce is being judged as
 something the app can't render.
 
-**Render the options from the app's real components.** Storybook is already
-in this repo and is the obvious host: the cards then use the real tokens
-and the real `Badge`, and the winner can be copied straight out. Do this
-rather than hand-writing a standalone HTML page.
+**Render the options from the app's real components** where the pattern
+needs the real tokens and the real `Badge`, so the winner can be copied
+straight out, rather than hand-writing a standalone HTML page.
 
 ## After the pick
 

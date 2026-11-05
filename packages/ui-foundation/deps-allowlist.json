@@ -49,9 +49,6 @@
     "msw",
     "openapi-typescript",
     "openapi-response-validator",
-    "js-yaml",
-    "storybook",
-    "@storybook/react-vite",
-    "@storybook/addon-docs"
+    "js-yaml"
   ]
 }

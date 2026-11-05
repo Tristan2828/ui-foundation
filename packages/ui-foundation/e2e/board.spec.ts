@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test'
 
 // Board (app/Board): moving a card by dragging it and by its Move menu
 // (with the mouse and the keyboard), and a read-only board. Axe and the token check are
-// e2e/storybook-visual.spec.ts's.
-const story = (name: string) => `http://localhost:6006/iframe.html?id=app-board--${name}&viewMode=story`
+// e2e/fixtures-visual.spec.ts's.
+const story = (name: string) => `http://localhost:6180/story.html?id=app-board--${name}`
 
 const column = (page: Page, name: string) => page.getByRole('region', { name: new RegExp(`^${name} \\d+$`) })
 const card = (page: Page, name: string) => page.locator('[data-slot=board-card]', { hasText: name })

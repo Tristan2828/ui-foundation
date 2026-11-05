@@ -29,7 +29,7 @@ function shippedPrimitives() {
   for (const dir of ['../dist/components/ui', '../src/components/ui']) {
     try {
       return readdirSync(new URL(dir, import.meta.url))
-        .filter((file) => /^[a-z0-9-]+\.(js|tsx)$/.test(file) && !file.includes('.stories.'))
+        .filter((file) => /^[a-z0-9-]+\.(js|tsx)$/.test(file) && !file.includes('.fixtures.'))
         .map((file) => file.replace(/\.(js|tsx)$/, ''))
     } catch {
       // Not there — try the next location.
@@ -130,7 +130,6 @@ export default function uiFoundation(options = {}) {
     // session's in-progress files fail another session's verify.
     globalIgnores([
       'dist',
-      'storybook-static',
       'test-results',
       'playwright-report',
       'public/mockServiceWorker.js',

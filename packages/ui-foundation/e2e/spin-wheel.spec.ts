@@ -3,8 +3,8 @@ import { expect, test, type Page } from '@playwright/test'
 // SpinWheel (app/SpinWheel): a spin picks the item its `random` lands on,
 // stops with the pointer inside that slice, and says so; reduced motion
 // gives the result at once; an empty wheel can't spin. Axe and the token
-// check are e2e/storybook-visual.spec.ts's.
-const story = (name: string) => `http://localhost:6006/iframe.html?id=app-spinwheel--${name}&viewMode=story`
+// check are e2e/fixtures-visual.spec.ts's.
+const story = (name: string) => `http://localhost:6180/story.html?id=app-spinwheel--${name}`
 
 // The slice under the pointer's tip, read from the page as drawn.
 async function sliceUnderPointer(page: Page): Promise<string | null> {

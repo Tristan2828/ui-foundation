@@ -4,9 +4,9 @@ import { expect, test, type Page } from '@playwright/test'
 // a real browser: the switch, the URL and the remembered pick, the grid's
 // columns from the table's width, groups and paging in every layout, and
 // every state. Axe and the token check on the stories at rest, in both
-// themes, are e2e/storybook-visual.spec.ts's COMPOSITE_STORIES.
+// themes, are e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
 const story = (id: string, query = '') =>
-  `http://localhost:6006/iframe.html?id=app-datatable-layouts--${id}&viewMode=story&globals=theme:light${query}`
+  `http://localhost:6180/story.html?id=app-datatable-layouts--${id}&theme=light${query}`
 
 const layoutSwitch = (page: Page) => page.getByRole('group', { name: 'Layout' })
 const root = (page: Page) => page.locator('[data-layout]')

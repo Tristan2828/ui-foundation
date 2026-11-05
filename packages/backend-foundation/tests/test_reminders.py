@@ -169,7 +169,9 @@ async def test_the_registered_job_reads_the_model_it_was_given(
 ) -> None:
     models: list[object] = []
 
-    async def send_due_reminders(_: AsyncSession, now: datetime | None = None, *, model: object = None) -> None:
+    async def send_due_reminders(
+        _: AsyncSession, now: datetime | None = None, *, model: object = None, **hooks: object
+    ) -> None:
         models.append(model)
 
     monkeypatch.setattr(reminders, "send_due_reminders", send_due_reminders)
@@ -181,6 +183,160 @@ async def test_the_registered_job_reads_the_model_it_was_given(
         jobs.JOBS.clear()
         jobs.JOBS.update(before)
     assert models == [AppReminder]
+
+
+# ------------------------------------------------------------- senders
+
+
+@pytest.fixture
+def reported(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, str]]:
+    calls: list[tuple[str, str]] = []
+
+    def report_error(exc: BaseException, context: object = None) -> None:
+        calls.append((getattr(context, "tags", {}).get("channel", ""), str(exc)))
+
+    monkeypatch.setattr(reminders, "report_error", report_error)
+    return calls
+
+
+async def test_extra_senders_go_beside_push_with_a_result_each(
+    session: AsyncSession, sent: list[Sent], reported: list[tuple[str, str]]
+) -> None:
+    emailed: list[str] = []
+
+    async def send_email(_: AsyncSession, reminder: Reminder) -> None:
+        emailed.append(reminder.title)
+
+    async def send_alert(_: AsyncSession, reminder: Reminder) -> reminders.ChannelResult:
+        raise ConnectionError("alert service down")
+
+    session.add(_reminder())
+    await session.commit()
+    run = await reminders.run_due_reminders(
+        session, now=WEDNESDAY_0730_LOCAL, senders={"email": send_email, "alert": send_alert}
+    )
+
+    assert emailed == ["Stretch"] and [call.title for call in sent] == ["Stretch"]
+    [item] = run.sent
+    assert item.on == date(2026, 10, 21)
+    assert item.results == {
+        "push": reminders.ChannelResult("sent", detail="2 sent"),
+        "email": reminders.ChannelResult("sent"),
+        "alert": reminders.ChannelResult("failed", error="alert service down"),
+    }
+    # A failed channel is reported, and the reminder is still done for the day.
+    assert reported == [("alert", "alert service down")]
+    stored = await session.get(Reminder, item.reminder_id)
+    assert stored is not None and stored.last_sent_on == date(2026, 10, 21)
+    assert run.summary() == "1 due: 2 sent; email: 1 sent; alert: 1 failed"
+
+
+async def test_each_reminder_picks_its_channels(
+    session: AsyncSession, sent: list[Sent], reported: list[tuple[str, str]]
+) -> None:
+    emailed: list[str] = []
+
+    async def send_email(_: AsyncSession, reminder: Reminder) -> None:
+        emailed.append(reminder.title)
+
+    picks = {"Email only": ["email"], "Both": ["push", "email", "push"], "Unknown": ["pager"]}
+    for title in picks:
+        session.add(_reminder(title=title))
+    await session.commit()
+
+    summary = await reminders.send_due_reminders(
+        session,
+        now=WEDNESDAY_0730_LOCAL,
+        senders={"email": send_email},
+        channels=lambda reminder: picks[reminder.title],
+    )
+    assert emailed == ["Email only", "Both"]
+    # Push once, even when named twice.
+    assert [call.title for call in sent] == ["Both"]
+    assert reported == [("pager", "Reminder 3 on pager: No sender for channel 'pager'.")]
+    assert summary == "3 due: 2 sent; email: 2 sent; pager: 1 failed"
+
+
+async def test_push_without_a_device_is_skipped_and_without_push_isnt_counted(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch, reported: list[tuple[str, str]]
+) -> None:
+    async def no_devices(*_: object, **__: object) -> push.PushResult:
+        return push.PushResult()
+
+    async def send_email(_: AsyncSession, reminder: Reminder) -> reminders.ChannelResult:
+        return reminders.ChannelResult("skipped", detail="no address")
+
+    monkeypatch.setattr(push, "send_push", no_devices)
+    session.add(_reminder())
+    await session.commit()
+    run = await reminders.run_due_reminders(session, now=WEDNESDAY_0730_LOCAL, senders={"email": send_email})
+    assert run.sent[0].results["push"] == reminders.ChannelResult("skipped", detail="No device subscribed.")
+    assert run.summary() == "1 due: 0 sent; email: 1 skipped"
+    assert reported == []
+
+    session.add(_reminder(title="Email only", days="wed"))
+    await session.commit()
+    emailed = await reminders.send_due_reminders(
+        session, now=WEDNESDAY_0730_LOCAL, senders={"email": send_email}, channels=lambda _: ["email"]
+    )
+    assert emailed == "1 due: email: 1 skipped"
+
+
+async def test_on_sent_sees_the_results_before_the_stamp_is_committed(
+    session: AsyncSession, sent: list[Sent], reported: list[tuple[str, str]]
+) -> None:
+    seen: list[tuple[str, date | None, dict[str, str]]] = []
+
+    async def on_sent(_: AsyncSession, reminder: Reminder, results: dict[str, reminders.ChannelResult]) -> None:
+        seen.append((reminder.title, reminder.last_sent_on, {name: r.status for name, r in results.items()}))
+        if reminder.title == "Breaks":
+            raise ValueError("the app's hook broke")
+
+    session.add(_reminder())
+    session.add(_reminder(title="Breaks"))
+    await session.commit()
+    assert await reminders.send_due_reminders(session, now=WEDNESDAY_0730_LOCAL, on_sent=on_sent) == "2 due: 4 sent"
+    assert seen == [("Stretch", None, {"push": "sent"}), ("Breaks", None, {"push": "sent"})]
+    # A hook that raises is reported, and the reminder is still stamped:
+    # otherwise it would go out again every minute of its grace.
+    assert reported == [("on_sent", "the app's hook broke")]
+    stamped = (await session.exec(select(Reminder).where(Reminder.title == "Breaks"))).one()
+    assert stamped.last_sent_on == date(2026, 10, 21)
+
+
+async def test_a_sender_named_push_replaces_the_packages(session: AsyncSession, sent: list[Sent]) -> None:
+    async def own_push(_: AsyncSession, reminder: Reminder) -> None:
+        return None
+
+    session.add(_reminder())
+    await session.commit()
+    run = await reminders.run_due_reminders(session, now=WEDNESDAY_0730_LOCAL, senders={"push": own_push})
+    assert sent == [] and run.sent[0].results == {"push": reminders.ChannelResult("sent")}
+
+
+async def test_the_registered_job_passes_its_senders_on(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[dict[str, object]] = []
+
+    async def send_due_reminders(_: AsyncSession, now: datetime | None = None, **options: object) -> None:
+        calls.append(options)
+
+    async def send_email(_: AsyncSession, reminder: Reminder) -> None:
+        return None
+
+    def channels(_: object) -> list[str]:
+        return ["email"]
+
+    monkeypatch.setattr(reminders, "send_due_reminders", send_due_reminders)
+    before = dict(jobs.JOBS)
+    try:
+        reminders.register(senders={"email": send_email}, channels=channels)
+        await jobs.JOBS[reminders.JOB_NAME].run(session)
+    finally:
+        jobs.JOBS.clear()
+        jobs.JOBS.update(before)
+    assert calls == [{"model": None, "senders": {"email": send_email}, "channels": channels, "on_sent": None}]
 
 
 def test_push_and_reminder_tables_are_registered_only_when_used() -> None:

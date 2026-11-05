@@ -6,13 +6,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 // and in both themes, and images in <Markdown> kept inside the text's
 // width. The stories: src/components/app/image-field.stories.tsx and
 // markdown.stories.tsx.
-const STORYBOOK_URL = 'http://localhost:6006'
+const HARNESS_URL = 'http://localhost:6180'
 
 function story(id: string, theme: 'light' | 'dark' = 'light') {
-  return `${STORYBOOK_URL}/iframe.html?id=${id}&viewMode=story&globals=theme:${theme}`
+  return `${HARNESS_URL}/story.html?id=${id}&theme=${theme}`
 }
 
-// As e2e/storybook-visual.spec.ts: a story preview isn't a page.
+// As e2e/fixtures-visual.spec.ts: a story preview isn't a page.
 function axe(page: Page) {
   return new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
 }

@@ -3,6 +3,7 @@
 // e2e/fill-in-queue.spec.ts's.
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { FillInField, type FillInFieldSpec } from '../src/components/app/fill-in-field'
 import { FillInChoice, FillInQueue, type FillInQueueProps } from '../src/components/app/fill-in-queue'
 import { nextFillInKey, resolveFillInIndex } from '../src/components/app/fill-in-queue-index'
 
@@ -84,6 +85,25 @@ describe('FillInQueue', () => {
     expect(render(props())).not.toMatch(/<button[^>]*disabled=""[^>]*>Save and next<\/button>/)
   })
 
+  it("names the record's group above it, with its count, and lists each group's count under the bar", () => {
+    const html = render(
+      props({
+        progress: { done: 3, total: 10 },
+        groups: [
+          { id: 'a', label: 'Money', progress: { done: 1, total: 4 } },
+          { id: 'b', label: 'House', progress: { done: 2, total: 6 } },
+        ],
+        getGroup: (item) => (item.id === 1 ? 'b' : 'a'),
+      }),
+    )
+    expect(html).toMatch(/data-slot="fill-in-queue-group"[^>]*>.*House.*2 of 6 filled/)
+    expect(html).toMatch(/data-slot="fill-in-queue-groups"[^>]*>.*Money 1 of 4.*House 2 of 6/)
+    // One group counted: no list, only its line on the record.
+    const one = render(props({ groups: [{ id: 'b', label: 'House', progress: { done: 2, total: 6 } }], getGroup: () => 'b' }))
+    expect(one).not.toContain('fill-in-queue-groups')
+    expect(one).toContain('fill-in-queue-group"')
+  })
+
   it('has a loading, an error and an empty state', () => {
     expect(render(props({ loading: true }))).toContain('data-state="loading"')
     const failed = render(props({ error: { kind: 'network', message: 'Offline' }, onRetry: () => {} }))
@@ -125,5 +145,37 @@ describe('FillInChoice', () => {
     )
     expect(html).toMatch(/data-suggested="true"[^>]*border-dashed|border-dashed[^>]*data-suggested="true"/)
     expect(html).toContain('Suggested: Small (from similar projects)')
+  })
+})
+
+describe('FillInField', () => {
+  const draw = (field: FillInFieldSpec, value: string | number | null = null) =>
+    renderToStaticMarkup(<FillInField field={field} value={value} onChange={() => {}} />)
+  const few = [
+    { value: 'a', label: 'Alpha' },
+    { value: 'b', label: 'Beta' },
+  ]
+
+  it('draws a short choice as a row of toggles, a long one as a select', () => {
+    expect(draw({ name: 'x', label: 'Pick', kind: 'choice', choices: few })).toContain('data-slot="fill-in-choice"')
+    const many = Array.from({ length: 10 }, (_, i) => ({ value: i, label: `Item ${i}` }))
+    const html = draw({ name: 'x', label: 'Paid from', kind: 'reference', choices: many })
+    expect(html).toContain('data-slot="fill-in-select"')
+    expect(html).toContain('Pick one')
+  })
+
+  it('draws money with its symbol and a suggestion to use, the value as typed', () => {
+    const html = draw({ name: 'price', label: 'Price', kind: 'money', suggestion: { value: 249, note: 'last seen' } }, 12.5)
+    expect(html).toContain('data-slot="fill-in-input"')
+    expect(html).toContain('>$<')
+    expect(html).toContain('value="12.5"')
+    expect(html).toContain('Use $249.00')
+    expect(html).toContain('(last seen)')
+  })
+
+  it('draws text, a number and a date by kind', () => {
+    expect(draw({ name: 'n', label: 'Model', kind: 'text' }, 'X1')).toMatch(/<input[^>]*value="X1"/)
+    expect(draw({ name: 'n', label: 'Count', kind: 'number' }, 3)).toMatch(/type="number"[^>]*value="3"|value="3"[^>]*type="number"/)
+    expect(draw({ name: 'd', label: 'Due', kind: 'date' }, '2026-09-02')).toContain('Sep 2, 2026')
   })
 })

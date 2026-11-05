@@ -44,6 +44,17 @@ export const PROSE = {
 } as const
 
 /**
+ * A heading's fold button (`foldKey`), before its words, the line's height
+ * so it sits on the first line of a heading that wraps. Its chevron points
+ * down while the section shows and right while it's folded.
+ */
+export const FOLD_BUTTON =
+  '-ml-1 flex h-[1lh] w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50'
+
+/** A heading with a fold button: the button and the words side by side, the look on both. */
+export const FOLD_HEADING = 'flex items-start gap-1'
+
+/**
  * On the text's container: when it has a band (a `#` or `##`, marked
  * `data-band`, whatever element its `headingLevel` makes it), everything
  * else is inset by the band's 12px padding, so the text lines up with the

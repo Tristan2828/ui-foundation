@@ -6,8 +6,8 @@ import { expect, test, type Page } from '@playwright/test'
 // even when its `to` opens a list on a saved view. The browser tab's title
 // comes from the nav, and from a record's view inside the shell in either
 // order (the rules themselves: tests/use-document-title.test.ts).
-// Axe in both themes is e2e/storybook-visual.spec.ts's COMPOSITE_STORIES.
-const story = (id: string) => `http://localhost:6006/iframe.html?id=app-appshell--${id}&viewMode=story`
+// Axe in both themes is e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
+const story = (id: string) => `http://localhost:6180/story.html?id=app-appshell--${id}`
 
 async function open(page: Page, id: string) {
   await page.setViewportSize({ width: 1280, height: 800 })

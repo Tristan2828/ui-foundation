@@ -6,10 +6,10 @@ import { expectDataViewsLoaded } from '../src/testing'
 // real browser: `width="content"` (issue #104), editing in its rows
 // with InlineCreate (issue #105), and rows grouped under headings with a
 // PillFilter and no header row (issue #135). Axe and the token check on the stories
-// at rest, in both themes, are e2e/storybook-visual.spec.ts's
+// at rest, in both themes, are e2e/fixtures-visual.spec.ts's
 // COMPOSITE_STORIES; a cell open is checked here.
 const story = (id: string, theme: 'light' | 'dark' = 'light') =>
-  `http://localhost:6006/iframe.html?id=app-datatable--${id}&viewMode=story&globals=theme:${theme}`
+  `http://localhost:6180/story.html?id=app-datatable--${id}&theme=${theme}`
 
 const table = (page: Page) => page.locator('[data-width="content"]')
 const width = async (page: Page) => (await table(page).boundingBox())!.width
@@ -313,7 +313,7 @@ test.describe('DataTable highlightRow (#156)', () => {
 
 // `totals` (issue #225): a footer row of sums under the columns they add
 // up. Axe and the token check at rest, in both themes, are
-// storybook-visual's.
+// fixtures-visual's.
 test.describe('DataTable totals (#225)', () => {
   const totalsRow = (page: Page) => page.locator('tfoot [data-slot="table-totals"]')
   // The story's own table, never another one on the page.

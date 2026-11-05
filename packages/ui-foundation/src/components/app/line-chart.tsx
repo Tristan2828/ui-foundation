@@ -12,7 +12,12 @@
 //
 // The picture is for the eye: a screen reader gets the figure's name,
 // a summary (first, last, lowest, highest, the target) and a table of
-// every point, all visually hidden. The four states: a skeleton at
+// every point, all visually hidden.
+//
+// A `projection` (4.51) carries the line on past its last point, dashed in
+// the same colour: where a balance may go, not where it went. It shares
+// the plot's x and y ranges, so the target and the projection meet where
+// they would. The four states: a skeleton at
 // `height` while loading, one quiet line with no points, a dot (no line)
 // for one point, and the chart.
 import { cn } from 'cn'
@@ -28,6 +33,12 @@ export type LineChartProps = {
   points: readonly LineChartPoint[]
   /** A dashed line at a value to reach or stay under: `{ y: 99, label: 'Buy at' }`. */
   target?: { y: number; label: string }
+  /**
+   * Where the line may go next, drawn dashed on from its last point:
+   * `{ label: 'Projected', points }`, oldest first, each after the last of
+   * `points`. The mark is only ever on `points`.
+   */
+  projection?: { label: string; points: readonly LineChartPoint[] }
   /** Which point to mark with a dot and its value: the lowest, the highest or the latest. */
   mark?: LineChartMark
   /** A value as shown: `usd`. Defaults to the number as the browser writes it. */
@@ -58,6 +69,7 @@ export function LineChart({
   label,
   points,
   target,
+  projection,
   mark,
   formatY = defaultY,
   formatX = defaultX,
@@ -87,11 +99,14 @@ export function LineChart({
     )
   }
 
-  const layout = chartLayout(points, target?.y, mark)
+  const ahead = projection?.points ?? []
+  const layout = { ...chartLayout([...points, ...ahead], target?.y), markIndex: chartLayout(points, undefined, mark).markIndex }
+  const projected = ahead.length > 0 ? layout.places.slice(points.length - 1) : []
+  const lastX = ahead.length > 0 ? ahead[ahead.length - 1].x : points[points.length - 1].x
   const values = points.map((point) => point.y)
   const lowest = values.indexOf(Math.min(...values))
   const highest = values.indexOf(Math.max(...values))
-  const line = layout.places.map((place) => `${place.x * 100},${place.y * 100}`).join(' ')
+  const line = layout.places.slice(0, points.length).map((place) => `${place.x * 100},${place.y * 100}`).join(' ')
   const marked = layout.markIndex === undefined ? undefined : layout.places[layout.markIndex]
   const single = points.length === 1 ? layout.places[0] : undefined
   const dot = marked ?? single
@@ -100,6 +115,7 @@ export function LineChart({
     points.length === 1 ? `One point: ${describe(0)}` : `From ${describe(0)} to ${describe(points.length - 1)}`,
     points.length > 2 && `lowest ${describe(lowest)}`,
     points.length > 2 && `highest ${describe(highest)}`,
+    projection && ahead.length > 0 && `${projection.label} ${formatY(ahead[ahead.length - 1].y)} on ${formatX(lastX)}`,
     target && `${target.label} ${formatY(target.y)}`,
   ]
     .filter(Boolean)
@@ -143,6 +159,24 @@ export function LineChart({
             />
           </svg>
         )}
+        {projected.length > 1 && (
+          <svg
+            data-slot="line-chart-projection"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="absolute inset-0 size-full overflow-visible text-info-text"
+          >
+            <polyline
+              points={projected.map((place) => `${place.x * 100},${place.y * 100}`).join(' ')}
+              fill="none"
+              strokeWidth={2}
+              strokeDasharray="6 4"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              className="stroke-current"
+            />
+          </svg>
+        )}
         {dot && (
           <>
             <span
@@ -167,7 +201,7 @@ export function LineChart({
       </div>
       <div aria-hidden="true" className="flex justify-between gap-3 type-caption text-muted-foreground tabular-nums">
         <span>{formatX(points[0].x)}</span>
-        {points.length > 1 && <span>{formatX(points[points.length - 1].x)}</span>}
+        {(points.length > 1 || ahead.length > 0) && <span>{formatX(lastX)}</span>}
       </div>
       <figcaption className="sr-only">{summary}</figcaption>
       <table className="sr-only">
@@ -183,6 +217,14 @@ export function LineChart({
             <tr key={index}>
               <th scope="row">{formatX(point.x)}</th>
               <td>{formatY(point.y)}</td>
+            </tr>
+          ))}
+          {ahead.map((point, index) => (
+            <tr key={`ahead-${index}`}>
+              <th scope="row">{formatX(point.x)}</th>
+              <td>
+                {formatY(point.y)} ({projection!.label})
+              </td>
             </tr>
           ))}
         </tbody>

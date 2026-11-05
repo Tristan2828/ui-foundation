@@ -7,6 +7,283 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.61.0 — A record's notes printed on their own
+
+Additive, so a minor; the UI package only. No new dependency. A record's
+long text (a visit's prep and questions, a guide) prints alone, to take
+along on paper.
+
+- **`print` on an `EntityView` section**: marking any section adds a
+  **Print notes** button to the header (`printLabel` renames it). It
+  prints the marked sections alone under the title and subtitle, from a
+  copy put in `<body>` while the print dialog is open: no sidebar,
+  header bar, rail or buttons, and light paper even in the dark theme.
+  Fields sections print as label/value rows. The browser's own print
+  (Ctrl+P) is unchanged.
+- **On paper, `<Markdown>`** keeps its headings and bullets, prints
+  whole (nothing folded, no fold buttons, task boxes as pictures), and
+  rules its tables all round, never cut off at the scroll box, with
+  each body cell tall enough to write in.
+- **`print: { answerSpace: true }`** leaves room under each item of the
+  section's numbered lists, for questions answered by hand.
+- **`usePrinting()`**: true inside the printed copy, for a section's
+  own content that prints differently from the screen.
+
+**How an app adopts:** mark the sections to print with `print: true`
+(`{ answerSpace: true }` for questions), docs/foundation/add-an-entity.md
+"Notes worth taking on paper". An app's own print rules keyed on its own
+markup keep working.
+
+## 4.60.0 — Checklists in notes: typed in the editor, ticked where they're read
+
+Additive, so a minor; the UI package only. No new dependency. A task's
+checklist can live in its notes as Markdown task items (`- [ ] item`,
+`- [x] done`), edited and ticked without a field of its own.
+
+- **`[] ` at a line's start** in `RichTextEditor` makes it a checklist
+  item (`[x] ` a ticked one), on a plain line or in a bulleted item.
+  Enter makes the next item, **its box unticked**: before, Enter after
+  a ticked item made another ticked one. Enter in an empty item ends the
+  list, as in a bulleted one. The toolbar's Task list button, Block+4
+  and `/todo` are unchanged.
+- **`onTasksChange` on `<Markdown>`**: the text's task boxes become
+  checkboxes, each named for its item, reachable with Tab and ticked
+  with a click or Space, without opening an editor. A tick calls it with
+  the whole text, only that item's `[ ]`/`[x]` flipped, for the app to
+  save. Without it (the default) the boxes stay pictures.
+- **`countTasks(markdown)`** → `{ done, total }`, for a list's "2/5"
+  column; nested items count, plain items and code blocks don't.
+  **`toggleTaskAt(markdown, offset)`** is the flip `<Markdown>` uses.
+- `<Markdown>`'s nested task items now indent under their parent, and a
+  loose item's second paragraph lines up with its words.
+
+**How an app adopts:** nothing to change. To tick a record's checklist
+on its page, pass the field's save as `onTasksChange`
+(docs/foundation/add-an-entity.md, the Markdown long text).
+
+## 4.59.0 — Headings can stay plain, and release jobs time out
+
+Additive, so a minor; no new dependency, nothing for apps to do.
+
+- **`foldable={false}`** on `<Markdown>` and `RichTextEditor` keeps
+  headings plain (no fold buttons, nothing folded) even when a `foldKey`
+  is given, for a page-level switch. What was folded is remembered for
+  when it's on again. Default `true`.
+- **Release workflows** give every job a `timeout-minutes`, so a hung
+  `release-smoke` can no longer hold the next release in the queue.
+- 4.50.1's heading dash is a proper UTF-8 character on main already;
+  CHANGELOG.md has no other non-UTF-8 bytes.
+
+## 4.58.0 — A record opened in a dialog over its list
+
+Additive, so a minor; the UI package only. No new dependency. A list read
+one record at a time (a board's cards, a backlog) can open a record in a
+centered dialog over itself instead of going to the record's page, the
+address staying the record's (docs/foundation/add-an-entity.md "Opening
+a record over its list").
+
+- **`RecordDialogRoute`**: the list route's element, with the record's
+  route as its child. Opened from the list, the record is a dialog over
+  it; the list stays mounted at the address it was opened from (its
+  search, filters, sort and page unchanged). Back, Esc, the backdrop and
+  Close go back to the list, focus back on what opened it. The dialog's
+  bar has **Open full page**. A deep link, or a record opened from
+  another page, is the full page.
+- **`useOpenRecord`**, **`<RecordLink>`** and **`recordDialogState`**
+  open a record over the list (a row click, a card's link, a `<Link>`'s
+  `state`); **`useRecordDialog`** gives a screen inside the dialog its
+  `close` (null on the full page).
+- **`EntityView`** in a dialog: its title names the dialog, the back
+  link gives way to the dialog's bar, and not found's way out closes the
+  dialog. Unchanged on its page.
+- **`DataTable`'s `onRowClick` works without a `detailPanel`**: the rows
+  take a pointer, Enter and ↑/↓. Before, it only did anything alongside
+  a panel.
+
+To take it: nothing. To use it, follow the new add-an-entity section.
+
+## 4.57.0 — Reminders on more channels than push
+
+Additive, so a minor; the backend package only. No new dependency. An
+app wanted reminders by email (and later a phone-alert app) as well as Web
+Push, without copying the send-reminders job to do it: the job is the one
+place that decides a reminder is due and stamps it once.
+
+- **`senders` on `reminders.register()`** (and `send_due_reminders`):
+  channels beyond Web Push by name, `{"email": send_email}`. A sender is
+  `async (session, reminder)`; it returns `None` when sent or a
+  `ChannelResult` (`"sent"`, `"failed"` with its `error`, or `"skipped"`),
+  and an exception it raises is a failed result. A sender named `"push"`
+  replaces the package's.
+- **`channels`**: picks each reminder's channels (`"push"` and the
+  senders' names), from a column of the app's. Left out, every reminder
+  goes on every channel.
+- **`on_sent`**: `async (session, reminder, results)`, called before the
+  reminder's stamp is committed, so a last-sent time per channel lands in
+  the same commit.
+- **Per-channel results**: `run_due_reminders` (the same arguments)
+  returns a `RemindersRun`, each due reminder's id, day and
+  `ChannelResult` by channel; `send_due_reminders` returns its summary,
+  which reads as before for push alone (`"1 due: 2 sent"`) and adds each
+  other channel (`"; email: 1 sent, 1 failed"`).
+- **A failed channel** doesn't stop the others; it goes to error
+  reporting (tagged with the channel), and the reminder is still done for
+  the day, so a channel that's down isn't retried every minute. Push with
+  no device subscribed is `"skipped"`.
+- **Fix:** with two reminders due in the same minute, the job's commit of
+  the first expired the second (the jobs runner's session expires on
+  commit), so reading it failed. The job reloads a reminder before using
+  it.
+- **Docs:** `reminders.md` "Channels beyond push".
+
+**How an app adopts:** bump both packages and run `ui-foundation sync`.
+Push-only apps change nothing. To add a channel, write its sender in the
+app and pass it, with `channels` if each reminder picks its own and
+`on_sent` to store per-channel results:
+`reminders.register(model=MyReminder, senders={"email": send_email},
+channels=..., on_sent=...)`. A new channel's key and outbound host are the
+app's own settings.
+
+## 4.56.0 — Fixtures replace Storybook
+
+No export changes, so a minor. The package's browser tests no longer run
+on Storybook: a small page of the package's own (`e2e/harness/`, built by
+Vite) renders each component state by id, and the same checks run against
+it (axe in both themes and at the large density, token colours, glyph
+contrast, density and every behaviour spec). Nothing an app imports is
+affected, and the three Storybook dev dependencies are gone.
+
+- **`*.stories.tsx` are now `*.fixtures.tsx`**, typed by a local
+  `Meta`/`StoryObj` (`src/fixtures/types.ts`); ids are unchanged
+  (`app-board--default`).
+- **`npm run harness`** serves an index of every fixture, with a theme and
+  density picker, on :6180; `story.html?id=...&theme=dark&density=large`
+  opens one. `playwright.harness.config.ts` replaces
+  `playwright.storybook.config.ts`; `npm run verify` runs it.
+- **Docs:** the synced docs say "the package's fixtures" where they said
+  Storybook, and `column-options.md` drops its Storybook step.
+
+**How an app adopts:** bump, run `ui-foundation sync` (only docs change),
+run `verify`. Nothing else.
+
+## 4.55.0 — Group icons, and a row click that isn't the panel
+
+Additive, so a minor. No new dependency. A list grouped by a choice field
+wanted the field's own visual in its heading, and a list with a side panel
+wanted a click on a row to open the record's page, with the panel behind a
+button of the app's.
+
+- **`icon` on a grouping's options**: a node that leads the option's
+  heading (and its card layouts' headings), hidden from assistive tech, so
+  the heading says it in words and in the same visual the cells use.
+- **`onRowClick` with `detailPanel`**: a click on a row (or Enter on it)
+  runs it with the row instead of picking the row for the panel. A link or
+  control inside the row keeps its own click.
+- **`detailRow` and `onDetailRowChange`**: the row the panel shows,
+  controlled by its row id (null for none), so a control of the app's own
+  (a button in a row) opens it. Up and down, Escape and Close work as before.
+
+**How an app adopts:** nothing changes until a prop is passed. To open a
+page on a row click, pass `onRowClick={(row) => navigate(...)}` and open the
+panel from a button that sets `detailRow`.
+
+## 4.54.0 — Folding notes by headings, and NotesOutline
+
+Additive, so a minor. No new dependency. A long note (tens of thousands of
+characters, a dozen `#` sections) wanted structure without changing how
+it's stored.
+
+- **`foldKey` on `<Markdown>` and `RichTextEditor`**: each heading at the
+  text's top level gets a button that folds what's under it, to the next
+  heading of its level or higher. What's folded is remembered on this
+  device under the key (localStorage) and shared by everything given the
+  same key; the Markdown, and what the editor saves, never change. In the
+  editor, Ctrl/Cmd+Alt+[ folds the section the caret is in and
+  Ctrl/Cmd+Alt+] opens the heading it's on; the caret put inside a folded
+  section opens it.
+- **`NotesOutline`**: a text's headings (the top two levels by default,
+  `depth`) as a list to jump with, with Fold all and Open all, beside a
+  `<Markdown>` or editor given the same `foldKey`. A jump opens the
+  sections around the heading and lands on its fold button.
+
+**How an app adopts:** pass `foldKey` (named for the app and the record,
+`"my-app:task:84:notes"`) to the notes' `<Markdown>` and editor, and put
+`NotesOutline` with the same key and the notes' Markdown beside long
+notes. Without `foldKey` nothing changes.
+
+## 4.53.0 — FillInQueue: rows for every kind of value, fields as data, and groups
+
+Additive, so a minor. `FillInQueue` (4.42) had only `FillInChoice`, a
+row of toggle buttons; a page filling in records of several kinds (an
+app's every module) needs a row for text, numbers, money and dates, a
+way to draw a field it only knows as data, and a record's source.
+
+- **`FillInInput`**: one text, long text, number, money (the currency's
+  symbol before it) or date (`DateField`) value, labelled, with a
+  suggestion as a dashed "Use $249.00" button under it.
+- **`FillInSelect`**: one value from a list too long for buttons (a
+  reference to another record), as a Select, with the same suggestion.
+- **`FillInField`**: a field as an API describes it (`{ name, label,
+  kind, choices, suggestion }`; `FillInFieldSpec`) drawn as the row its
+  kind calls for: `FillInChoice` for up to nine choices, `FillInSelect`
+  for more, `FillInInput` for the rest. Numbers keep their text as typed
+  ("1." on the way to "1.5").
+- **`groups` and `getGroup` on `FillInQueue`**: a record's source (icon,
+  label, its own "3 of 12 filled") above its heading; with more than one
+  group counted, each one's count under the bar.
+
+**How an app adopts:** nothing to change. A fill-in screen can draw
+fields from data with `FillInField` and name sources with `groups`
+(`design-language.md` "Filling in what's missing").
+
+## 4.52.0 — EmojiField: pick one emoji on a form
+
+Additive, so a minor. No new dependency.
+
+- **`EmojiField`**: one emoji, as a field like `DateField`. A button
+  showing the choice opens a popup with a search box and a curated set of
+  about a hundred emoji in groups (morning, body, food, home, work, play,
+  outside, symbols), each with an accessible name and search keywords. The
+  value is the emoji itself, or `''` for none; `clearable` adds Clear. It
+  is not the whole of Unicode: a joined emoji can still be typed or pasted
+  into a plain text field.
+
+**How an app adopts:** import `EmojiField` from the package and use it in
+a `Controller` where a text input took an emoji.
+
+## 4.51.0 — Charts: a projection on LineChart, and MultiLineChart
+
+Additive, so a minor. An app with balances over time wanted where they
+may go next and several values on one plot.
+
+- **`LineChart`'s `projection`**: `{ label, points }` carries the line
+  on past its last point, dashed in the same colour, sharing the plot's
+  ranges with the target. The mark stays on the measured points; a screen
+  reader gets the projection's end in the summary and its rows in the
+  table.
+- **`MultiLineChart`**: several series on one plot, one x and one y
+  range, each in a text tone (`info`, `success`, `warning`, `destructive`
+  or `muted`) and solid or `dashed`, with an optional dashed target and a
+  legend naming each series with its latest value. The same four states
+  as `LineChart`; a screen reader gets a summary and a table with a column
+  per series. Exported with `ChartSeries` and `ChartTone`.
+- `design-language.md` "A value over time" covers both.
+
+**How an app adopts:** nothing to change. Use `projection` or
+`MultiLineChart` where a screen needs them.
+
+## 4.50.1 — Board: the empty-column line clears 4.5:1
+
+A fix, no API change. A column with no cards shows its `empty` line as
+`text-muted-foreground` on the column's muted fill, which measured 4.34:1
+in light, under AA. The columns now redefine `--muted-foreground` as
+`--table-highlight-muted-foreground` (as 4.49.0 did for the picked row;
+the usual grey in dark), so the line, the footer and the count read at
+4.5:1. A new `EmptyColumns` story puts the line under axe in both themes.
+
+**How an app adopts:** nothing. An app that darkened the empty line itself
+can drop it.
+
 ## 4.50.0 — The notes editor: Full screen and Indent/Outdent for floating-toolbar fields
 
 Additive, so a minor. 4.48.0's Full screen, Indent and Outdent sat on the

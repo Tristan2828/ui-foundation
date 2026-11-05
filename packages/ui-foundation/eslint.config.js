@@ -18,7 +18,7 @@ const INTERNAL_BOUNDARIES = [
 ]
 
 export default defineConfig([
-  globalIgnores(['dist', 'storybook-static', 'test-results', '.claude/worktrees']),
+  globalIgnores(['dist', 'harness-dist', 'test-results', '.claude/worktrees']),
   {
     ...baseConfig(),
     rules: {
@@ -30,6 +30,12 @@ export default defineConfig([
     // shadcn-generated primitives: shadcn's convention exports a component
     // alongside its `*Variants` helper — a false positive for fast-refresh.
     files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
+    // Fixtures export states (and their helpers) for the harness, not
+    // components for fast refresh.
+    files: ['src/**/*.fixtures.tsx', 'e2e/harness/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {

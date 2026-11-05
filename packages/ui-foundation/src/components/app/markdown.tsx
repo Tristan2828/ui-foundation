@@ -38,19 +38,41 @@
 //
 // `==words==` is highlighted words (amber, or `=={green}words==`: yellow,
 // green, red): a <mark> on the colour's wash (src/lib/markdown-highlight.ts).
-import { useEffect, useMemo, useRef, type ComponentProps } from 'react'
+//
+// With `foldKey`, each heading at the text's top level has a button before
+// it that folds its section away (src/lib/markdown-fold.ts), remembered on
+// this device under the key and shared with an editor or NotesOutline
+// given the same one. The text itself is never changed.
+//
+// Printed (EntityView's Print notes, PrintingContext), it's the whole
+// text: nothing folded, no fold buttons, task boxes as glyphs.
+//
+// A task item (`- [ ] to do`, `- [x] done`) shows its box as a glyph
+// with its state in words: read-only text has nothing to tick. With
+// `onTasksChange`, each box is a real checkbox, named for its item's
+// words, that ticks or unticks the item in the text and hands the whole
+// new text over to save (src/lib/markdown-tasks.ts): only that item's
+// `[ ]` or `[x]` changes, the rest stays exactly as written.
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
+import type { PluggableList } from 'unified'
 import remarkGfm from 'remark-gfm'
 import { cn } from 'cn'
-import { ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
+import { ChevronDownIcon, ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useFolds } from '@/hooks/fold-store'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
+import { rehypeFold, toggleFold } from '@/lib/markdown-fold'
 import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
+import { toggleTaskAt } from '@/lib/markdown-tasks'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
   CALLOUT_BOX,
   CALLOUT_LOOK,
   DEFAULT_HEADING_LEVEL,
+  FOLD_BUTTON,
+  FOLD_HEADING,
   headingBand,
   headingClass,
   headingTag,
@@ -59,6 +81,7 @@ import {
   type HeadingFrom,
   type HeadingLevel,
 } from './prose-look'
+import { usePrinting } from './print-context'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 
 const REMARK_PLUGINS = [remarkGfm, remarkCallouts, remarkHighlights]
@@ -86,7 +109,7 @@ function omitNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
 // sideways: a tab stop and a named region only while the table overflows
 // it. Watched again after each render, so a header row with new words
 // renames it.
-function NotesTable(props: ComponentProps<'table'>) {
+function NotesTable({ hidden, ...props }: ComponentProps<'table'>) {
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const box = boxRef.current
@@ -96,18 +119,116 @@ function NotesTable(props: ComponentProps<'table'>) {
     return () => region.destroy()
   })
   return (
-    <Table {...props} containerRef={boxRef} containerClassName={cn('rounded-lg border border-border', TABLE_SCROLL_FOCUS)} />
+    <Table
+      {...props}
+      containerRef={boxRef}
+      // Folded away, the box goes with the table.
+      containerClassName={cn('rounded-lg border border-border', TABLE_SCROLL_FOCUS, hidden && 'hidden')}
+    />
   )
+}
+
+// Ticks a task item by where it starts in the text: given only with
+// `onTasksChange`. Each task item hands its box its own start and words.
+const TaskToggleContext = createContext<((offset: number) => void) | null>(null)
+const TaskItemContext = createContext<{ offset: number; name: string } | null>(null)
+
+// The little of the syntax tree read for a task item's box.
+type HastNode = {
+  type: string
+  tagName?: string
+  value?: string
+  children?: HastNode[]
+  position?: { start: { offset?: number } }
+}
+
+// An item's own words, for its checkbox's name: its nested lists left
+// out, so a parent is named for itself and not its children too.
+function itemText(node: HastNode | undefined): string {
+  if (!node) return ''
+  if (node.type === 'text') return node.value ?? ''
+  if (node.tagName === 'ul' || node.tagName === 'ol') return ''
+  return (node.children ?? []).map(itemText).join('')
+}
+
+// A task item's box: a real checkbox when ticking is on (named for its
+// item, so a screen reader hears "Buy milk, checkbox, checked"), the
+// glyph otherwise.
+function TaskBox({ checked }: { checked: boolean }) {
+  const toggle = useContext(TaskToggleContext)
+  const item = useContext(TaskItemContext)
+  if (toggle && item)
+    return (
+      <Checkbox
+        checked={checked}
+        onCheckedChange={() => toggle(item.offset)}
+        // Ticking is all it does: a click never reaches whatever the text
+        // sits in (a card that opens the record, a field that edits).
+        onClick={(event) => event.stopPropagation()}
+        aria-label={item.name || (checked ? 'Done' : 'Not done')}
+        data-slot="task-box"
+        className="mr-2 inline-flex align-[-0.1875rem]"
+      />
+    )
+  return checked ? (
+    <SquareCheckIcon role="img" aria-label="Done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-foreground" />
+  ) : (
+    <SquareIcon role="img" aria-label="Not done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-muted-foreground" />
+  )
+}
+
+// Folds a section by its heading's id: given only with `foldKey`.
+const FoldContext = createContext<((id: string) => void) | null>(null)
+
+type HeadingProps = ComponentProps<'h1'> & {
+  'data-fold-id'?: string
+  'data-foldable'?: string
+  'data-folded'?: string
+  'data-fold-label'?: string
 }
 
 // A heading by its Markdown level: the element the page's outline gives
 // it (headingTag), the look its level has. The text's colour first, so a
-// level's own (`###`'s muted label) wins.
+// level's own (`###`'s muted label) wins. With `foldKey`, a top-level one
+// (marked by rehypeFold) sits beside its fold button, the look on the two
+// together; one with nothing under it keeps the button's room, so its
+// words line up with the others'.
 function heading(level: number, top: HeadingLevel, textTop: number): Components['h1'] {
   const Tag = headingTag(level, top, textTop)
-  return (props) => (
-    <Tag {...omitNode(props)} data-band={headingBand(level) || undefined} className={cn('text-foreground', headingClass(level))} />
-  )
+  return function Heading(props) {
+    const toggle = useContext(FoldContext)
+    const {
+      'data-fold-id': foldId,
+      'data-foldable': foldable,
+      'data-folded': folded,
+      'data-fold-label': label,
+      hidden,
+      ...rest
+    } = omitNode(props) as HeadingProps
+    const look = cn('text-foreground', headingClass(level))
+    const band = headingBand(level) || undefined
+    if (!toggle || foldId === undefined) return <Tag {...rest} hidden={hidden} data-band={band} className={look} />
+    const open = folded !== 'true'
+    return (
+      <div data-fold-id={foldId} hidden={hidden} data-band={band} className={cn(FOLD_HEADING, look)}>
+        {foldable === 'true' ? (
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-label={label || 'Section'}
+            data-slot="fold-button"
+            className={FOLD_BUTTON}
+            onClick={() => toggle(foldId)}
+          >
+            <ChevronDownIcon aria-hidden="true" className={cn('size-4 transition-transform', !open && '-rotate-90')} />
+          </button>
+        ) : (
+          <span aria-hidden="true" className="-ml-1 w-5 shrink-0" />
+        )}
+        <Tag {...rest} className="min-w-0 flex-1" />
+      </div>
+    )
+  }
 }
 
 // Everything but the headings, which follow `headingLevel` (componentsFor).
@@ -137,20 +258,30 @@ const COMPONENTS: Components = {
   ol: (props) => <ol {...omitNode(props)} className="flex list-decimal flex-col gap-1 pl-6" />,
   li: (props) => {
     const { className, ...rest } = omitNode(props)
-    return <li {...rest} className={cn(className?.includes('task-list-item') && '-ml-6 list-none')} />
+    const task = className?.includes('task-list-item')
+    // A task item's box hangs where a bullet would; a list under it starts
+    // at its words, and so does a loose item's next paragraph.
+    const item = (
+      <li
+        {...rest}
+        className={cn(task && '-ml-6 list-none [&>ol]:pl-12 [&>p:not(:first-child)]:pl-6 [&>ul]:pl-12')}
+      />
+    )
+    const node = props.node as HastNode | undefined
+    const offset = node?.position?.start.offset
+    if (!task || offset === undefined) return item
+    // A loose item's words are its first paragraph; what's under it isn't its name.
+    const first = node?.children?.find((child) => child.tagName === 'p')
+    const name = itemText(first ?? node).replace(/\s+/g, ' ').trim()
+    return <TaskItemContext.Provider value={{ offset, name }}>{item}</TaskItemContext.Provider>
   },
-  // A GitHub task-list box (`- [x] done`). Read-only, so a glyph with its
-  // state in words, never a checkbox someone will try to tick.
-  input: ({ checked }) =>
-    checked ? (
-      <SquareCheckIcon role="img" aria-label="Done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-foreground" />
-    ) : (
-      <SquareIcon role="img" aria-label="Not done" className="mr-2 inline-block size-4 align-[-0.1875rem] text-muted-foreground" />
-    ),
+  // A GitHub task-list box (`- [x] done`): a glyph, or a checkbox with
+  // `onTasksChange` (TaskBox).
+  input: ({ checked }) => <TaskBox checked={Boolean(checked)} />,
   blockquote: (props) => (
     <blockquote {...omitNode(props)} className="flex flex-col gap-3 border-l-2 border-border pl-4 text-muted-foreground" />
   ),
-  hr: () => <hr className={PROSE.rule} />,
+  hr: ({ hidden }) => <hr hidden={hidden} className={PROSE.rule} />,
   // Highlighted words (remarkHighlights marks them): the colour's wash.
   mark: (props) => {
     const { children, ...rest } = omitNode(props)
@@ -170,7 +301,7 @@ const COMPONENTS: Components = {
     const look = CALLOUT_LOOK[kind]
     const Icon = look.icon
     return (
-      <div role="note" data-callout={kind} className={cn(CALLOUT_BOX, look.box)}>
+      <div role="note" data-callout={kind} hidden={rest.hidden} className={cn(CALLOUT_BOX, look.box)}>
         <Icon aria-hidden="true" className={cn('mt-0.5 size-4 shrink-0', look.tint)} />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <span className="sr-only">{look.label}: </span>
@@ -233,6 +364,33 @@ export type MarkdownProps = {
    * itself is never rewritten.
    */
   headingFrom?: HeadingFrom
+  /**
+   * Folds the text by its headings: each heading at its top level gets a
+   * button that folds what's under it (to the next heading of its level
+   * or higher). What's folded is remembered on this device under this key
+   * (name it for the app and the record: `"my-app:task:84:notes"`), and
+   * shared with a RichTextEditor or NotesOutline given the same key. The
+   * text is never changed.
+   */
+  foldKey?: string
+  /**
+   * Set `false` to keep headings plain, with no fold buttons, even when a
+   * `foldKey` is given: a page-level switch (a print view, a short note)
+   * that leaves the key in place. Nothing is folded while it's off, and
+   * what was folded is remembered for when it's on again. Default `true`.
+   */
+  foldable?: boolean
+  /**
+   * Lets the text's task items be ticked where they're read: each
+   * `- [ ]` and `- [x]` box becomes a checkbox, named for its item, and
+   * ticking one calls this with the whole text, that item's box flipped
+   * and nothing else changed, for the app to save. The tick shows at
+   * once and a second one builds on it, until `children` changes (pass
+   * the saved text back in). Return the save's promise: if it rejects,
+   * the boxes go back to `children`. Without it (the default) the boxes
+   * are pictures and the text stays read-only.
+   */
+  onTasksChange?: (markdown: string) => void | Promise<unknown>
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
@@ -240,20 +398,53 @@ export function Markdown({
   children,
   headingLevel = DEFAULT_HEADING_LEVEL,
   headingFrom = 'hash',
+  foldKey: foldKeyProp,
+  foldable = true,
+  onTasksChange: onTasksChangeProp,
   className,
   ...rest
 }: MarkdownProps) {
+  // On paper (EntityView's Print notes): every heading plain and open,
+  // every task box a picture.
+  const printing = usePrinting()
+  const onTasksChange = printing ? undefined : onTasksChangeProp
+  const foldKey = foldable && !printing ? foldKeyProp : undefined
   const textTop = useMemo(() => (headingFrom === 'text' ? textTopHeading(children) : 1), [headingFrom, children])
   const components = useMemo(() => componentsFor(headingLevel, textTop), [headingLevel, textTop])
+  const [folded, setFolded] = useFolds(foldKey)
+  const rehypePlugins = useMemo<PluggableList>(() => (foldKey === undefined ? [] : [[rehypeFold, { folded }]]), [foldKey, folded])
+  const toggle = useCallback((id: string) => setFolded(toggleFold(folded, id)), [folded, setFolded])
+  // Ticks not yet back as `children`: shown, and built on by the next
+  // tick, so two quick ticks on a slow save both land. Kept while
+  // `children` is the text they started from or one of their own saves
+  // coming back; dropped when it's anything else, or a save fails.
+  const [pending, setPending] = useState<{ base: string; text: string; sent: string[] } | null>(null)
+  const live = pending && (pending.base === children || pending.sent.includes(children)) ? pending : null
+  const shown = live ? live.text : children
+  const tickTask = useCallback(
+    (offset: number) => {
+      const next = toggleTaskAt(shown, offset)
+      setPending({ base: live ? live.base : children, text: next, sent: [...(live ? live.sent : []), next] })
+      const saving = onTasksChange?.(next)
+      if (saving && typeof saving.then === 'function')
+        saving.then(undefined, () => setPending((current) => (current?.sent.includes(next) ? null : current)))
+    },
+    [onTasksChange, children, shown, live],
+  )
   return (
     <div
       data-slot="markdown"
+      data-fold-scope={foldKey}
       {...rest}
       className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', PROSE_INSET, className)}
     >
-      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
-        {children}
-      </ReactMarkdown>
+      <FoldContext.Provider value={foldKey === undefined ? null : toggle}>
+        <TaskToggleContext.Provider value={onTasksChange ? tickTask : null}>
+          <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={rehypePlugins} components={components}>
+            {onTasksChange ? shown : children}
+          </ReactMarkdown>
+        </TaskToggleContext.Provider>
+      </FoldContext.Provider>
     </div>
   )
 }

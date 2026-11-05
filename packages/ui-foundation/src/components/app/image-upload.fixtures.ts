@@ -22,7 +22,7 @@ export function failingUpload(ms = 600, message = 'Storage is full. Free some sp
   return () => new Promise((_resolve, reject) => setTimeout(() => reject({ kind: 'server', message }), ms))
 }
 
-/** A record's saved photo, served from a path as an app's files are (.storybook/public). */
+/** A record's saved photo, served from a path as an app's files are (e2e/harness/public). */
 export const SAVED_PHOTO = '/sample-photo.svg'
 
 /** A photo far wider than any record's column. */

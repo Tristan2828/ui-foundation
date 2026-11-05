@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test'
 // story: `editInPlace`'s `inline` over RichTextEditor's `inline` and
 // `toolbar="floating"`. Notes holds "Pack the **shared** shelves first."
 // and "Then the desks."; Next steps is empty. Each save takes 300ms.
-const INLINE = 'http://localhost:6006/iframe.html?id=app-richtexteditor--inline&viewMode=story'
+const INLINE = 'http://localhost:6180/story.html?id=app-richtexteditor--inline'
 
 const region = (page: Page, name: string) => page.getByRole('region', { name, exact: true })
 const notes = (page: Page) => region(page, 'Notes').getByRole('textbox', { name: 'Notes' })
@@ -14,7 +14,7 @@ const menu = (page: Page) => page.getByRole('listbox', { name: 'Blocks' })
 
 async function openInline(page: Page, theme?: 'light' | 'dark') {
   await page.setViewportSize({ width: 1280, height: 900 })
-  await page.goto(theme ? `${INLINE}&globals=theme:${theme}` : INLINE)
+  await page.goto(theme ? `${INLINE}&theme=${theme}` : INLINE)
   await expect(notes(page)).toBeVisible()
 }
 

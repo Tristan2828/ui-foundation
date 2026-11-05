@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test'
 
 // FillInQueue and FillInChoice (app/FillInQueue): picking by a click and by
 // a number key, Save and next, Skip wrapping round, a refused save, and the
-// empty queue. Axe and the token check are e2e/storybook-visual.spec.ts's.
-const story = (name: string) => `http://localhost:6006/iframe.html?id=app-fillinqueue--${name}&viewMode=story`
+// empty queue. Axe and the token check are e2e/fixtures-visual.spec.ts's.
+const story = (name: string) => `http://localhost:6180/story.html?id=app-fillinqueue--${name}`
 
 const record = (page: Page) => page.locator('[data-slot=fill-in-queue-record]')
 const save = (page: Page) => page.getByRole('button', { name: 'Save and next' })
@@ -107,4 +107,33 @@ test('the States story has a loading, an empty and an error state', async ({ pag
   await expect(page.getByText('Every project has an effort')).toBeVisible()
   await expect(page.getByText("Couldn't reach the server.")).toBeVisible()
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
+})
+
+test("FillInField: a record's group, money with a suggestion, a long list, and the next group's record", async ({ page }) => {
+  await page.goto(story('fields'))
+  await expect(record(page).getByRole('heading')).toHaveText('New desk chair')
+  await expect(record(page).getByText('Money', { exact: true })).toBeVisible()
+  await expect(page.getByText('Money 0 of 1')).toBeVisible()
+  await expect(save(page)).toBeDisabled()
+
+  const price = page.getByRole('textbox', { name: 'Price' })
+  await page.getByRole('button', { name: 'Use $249.00' }).click()
+  await expect(price).toHaveValue('249')
+  await expect(page.getByRole('button', { name: 'Use $249.00' })).toBeDisabled()
+  // Typed as written, "1." on the way to "1.5".
+  await price.fill('1.')
+  await expect(price).toHaveValue('1.')
+  await price.fill('1.5')
+
+  await page.getByRole('combobox', { name: 'Paid from' }).click()
+  await page.getByRole('option', { name: 'Account 11' }).click()
+  await expect(page.getByRole('combobox', { name: 'Paid from' })).toHaveText(/Account 11/)
+
+  await save(page).click()
+  await expect(record(page).getByRole('heading')).toHaveText('Smoke alarm')
+  await expect(record(page).getByText('House', { exact: true })).toBeVisible()
+  await expect(page.getByText('Money 1 of 1')).toBeVisible()
+  await record(page).focus()
+  await page.keyboard.press('2')
+  await expect(page.getByRole('group', { name: 'Area' }).getByRole('button', { name: /Hall/ })).toHaveAttribute('aria-pressed', 'true')
 })

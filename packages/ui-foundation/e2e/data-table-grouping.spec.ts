@@ -8,10 +8,10 @@ import { expect, test, type Page } from '@playwright/test'
 // URL, remembered and set by a saved view; then the panel: a click, Enter,
 // ↑/↓, Escape and Close, a title link picking instead of leaving, and the
 // phone's bottom sheet. Axe on the stories at rest is
-// e2e/storybook-visual.spec.ts's; the open panel and a folded heading are
+// e2e/fixtures-visual.spec.ts's; the open panel and a folded heading are
 // checked here, in both themes.
 const story = (id: string, query = '', theme: 'light' | 'dark' = 'light') =>
-  `http://localhost:6006/iframe.html?id=app-datatable-grouping--${id}&viewMode=story&globals=theme:${theme}${query}`
+  `http://localhost:6180/story.html?id=app-datatable-grouping--${id}&theme=${theme}${query}`
 
 const groupMenu = (page: Page) => page.locator('[data-slot="data-table-group-menu"]')
 const headings = (page: Page) => page.locator('[data-slot="table-group-heading"] button[aria-expanded]')
@@ -191,5 +191,30 @@ test.describe('DataTable detail panel', () => {
       expect(results.passes.find((rule) => rule.id === 'color-contrast')?.nodes.length).toBeGreaterThan(0)
       expect(results.violations).toEqual([])
     }
+  })
+})
+
+test.describe('DataTable row click and a controlled panel', () => {
+  const panel = (page: Page) => page.getByRole('complementary', { name: 'Chore' })
+
+  test('a row click runs onRowClick; the panel opens from a control in the row', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('chores-with-quick-look'))
+    await page.getByRole('button', { name: 'Quick look: Rake the leaves' }).click()
+    await expect(panel(page)).toContainText('Front lawn first, then the path.')
+    await expect(row(page, 'Rake the leaves')).toHaveAttribute('aria-selected', 'true')
+    await panel(page).getByRole('button', { name: 'Close' }).click()
+    await expect(panel(page)).toHaveCount(0)
+
+    await row(page, 'Rake the leaves').getByRole('cell', { name: 'Garden' }).click()
+    await expect(page.getByText("A chore's page")).toBeVisible()
+  })
+
+  test('a title link keeps its own navigation, and Status headings lead with an icon', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('chores-with-quick-look'))
+    await expect(page.locator('[data-slot="table-group-heading"] svg').first()).toBeVisible()
+    await page.getByRole('link', { name: 'Oil the hinges' }).click()
+    await expect(page.getByText("A chore's page")).toBeVisible()
   })
 })

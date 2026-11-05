@@ -6,8 +6,8 @@ import { expect, test, type Page } from '@playwright/test'
 // choice survives a reload, a blocked localStorage still folds for the
 // page's life, and axe passes folded and open in both themes. The header's
 // link to an outside address (#248) opens in a new tab. The token
-// and glyph checks at rest are e2e/storybook-visual.spec.ts's.
-const STORY = 'http://localhost:6006/iframe.html?id=app-widgetcard--collapsible&viewMode=story'
+// and glyph checks at rest are e2e/fixtures-visual.spec.ts's.
+const STORY = 'http://localhost:6180/story.html?id=app-widgetcard--collapsible'
 
 const card = (page: Page, title: string) => page.getByRole('region', { name: title })
 const toggle = (page: Page, title: string) => card(page, title).getByRole('button', { name: title, exact: true })
@@ -82,7 +82,7 @@ test('a header link to an outside address opens in a new tab, named by its label
 
 for (const theme of ['light', 'dark'] as const) {
   test(`zero axe violations, open and folded (${theme})`, async ({ page }) => {
-    await page.goto(`${STORY}&globals=theme:${theme}`)
+    await page.goto(`${STORY}&theme=${theme}`)
     await expect(page.getByText('Fix the gate latch')).toBeVisible()
     const axe = () => new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region']).analyze()
     expect((await axe()).violations).toEqual([])

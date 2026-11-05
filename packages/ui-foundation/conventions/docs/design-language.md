@@ -3,24 +3,25 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 33–61
-- [The three badge styles](#the-three-badge-styles) · lines 63–80
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 82–111
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 113–126
-- [Logos and brand marks](#logos-and-brand-marks) · lines 128–172
-- [Categorical colour](#categorical-colour) · lines 174–244
-- [Typography](#typography) · lines 246–337
-  - [Written text (notes)](#written-text-notes) · lines 277–337
-- [Density](#density) · lines 339–396
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 398–512
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 514–583
-- [Notices](#notices) · lines 585–613
-- [A value over time](#a-value-over-time) · lines 615–648
-- [A list as a board](#a-list-as-a-board) · lines 650–701
-- [A list as cards](#a-list-as-cards) · lines 703–749
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 751–773
-- [Picking at random](#picking-at-random) · lines 775–806
-- [Filling in what's missing](#filling-in-whats-missing) · lines 808–858
+- [Semantic tones](#semantic-tones) · lines 34–62
+- [The three badge styles](#the-three-badge-styles) · lines 64–81
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 83–112
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 114–127
+- [Logos and brand marks](#logos-and-brand-marks) · lines 129–173
+- [Categorical colour](#categorical-colour) · lines 175–245
+- [Typography](#typography) · lines 247–338
+  - [Written text (notes)](#written-text-notes) · lines 278–338
+- [Density](#density) · lines 340–397
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 399–513
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 515–584
+- [Notices](#notices) · lines 586–614
+- [A value over time](#a-value-over-time) · lines 616–694
+  - [Several values over time](#several-values-over-time) · lines 657–694
+- [A list as a board](#a-list-as-a-board) · lines 696–747
+- [A list as cards](#a-list-as-cards) · lines 749–795
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 797–819
+- [Picking at random](#picking-at-random) · lines 821–852
+- [Filling in what's missing](#filling-in-whats-missing) · lines 854–921
 
 <!-- /index -->
 
@@ -56,7 +57,7 @@ shade in both themes, because it always carries white text and the page
 behind it never enters the calculation.
 
 Measured ratios (WCAG 2.x, sRGB) are recorded next to each primitive in
-the package's `styles/theme.css`, and its `e2e/storybook-visual.spec.ts` re-checks all
+the package's `styles/theme.css`, and its `e2e/fixtures-visual.spec.ts` re-checks all
 twelve tone/style combinations with axe against the rendered DOM in both
 themes. **A new tone or style is not done until it appears in that story.**
 
@@ -115,7 +116,7 @@ Two rules that keep this honest:
 An icon that carries meaning on its own (a stage circle, a category's
 icon, a pressed flag) must clear WCAG's **3:1 non-text minimum** against
 the background behind it, in both themes. axe measures text only, so the
-package's Storybook has a glyph check of its own: every `<svg>` in its
+package's fixtures have a glyph check of its own: every `<svg>` in its
 design-language stories, its ink (with any opacity modifier painted over
 its background) against what's behind it. Every `*-text` tone, every
 category slot and `muted-foreground` clear it as they are. An opacity
@@ -234,7 +235,7 @@ Five things about them:
 - **The glyph check re-measures them.** All twelve clear the 3:1
   non-text minimum in both themes, on the page and on a card (recorded in
   `theme.css`). axe checks text contrast, not icon contrast, so the
-  package's Storybook glyph check draws an icon in each slot on both
+  package's fixtures glyph check draws an icon in each slot on both
   surfaces (`patterns/CategoricalColour`) and fails a change that takes
   one below 3:1. Its `SideBySide` story shows both themes at once, under
   normal vision and simulated deuteranopia and protanopia.
@@ -388,8 +389,8 @@ set, not a `DataTable` prop:
   doesn't change. The selectors are in `styles/theme.css`. A composite
   reaches `compact` with the `density-compact:` variant (`styles/index.css`:
   any ancestor with `data-density="compact"`), the way `WidgetCard` and
-  `ModuleCard` do; an app's own card can use it too. Storybook's
-  Density toolbar shows any story at a density, and `patterns/Density`
+  `ModuleCard` do; an app's own card can use it too. the package's
+  fixtures page shows any fixture at a density, and `patterns/Density`
   shows the primitives, `DataTable`, the sidebar and the hub cards at
   each. Its checks
   measure that every step changes what it should, and that the default
@@ -506,7 +507,7 @@ const layout = useWidgetLayout('my-app:hub', Object.keys(HUB_CARDS))
   equal columns that wraps (the class above: one column on a phone, as
   many 288px-or-wider columns as fit). Each card is as tall as its rows;
   it doesn't stretch to its tallest neighbour.
-- Storybook's `app/WidgetCard` shows three widgets on a page and every
+- The fixtures' `app/WidgetCard` shows three widgets on a page and every
   one in each state, a folded summary in each state and an accordion,
   and `app/WidgetLayoutSheet` a hub with its Customize sheet; its checks run axe and the token and glyph checks in
   both themes and at `large`.
@@ -576,7 +577,7 @@ const { data, isLoading, error, refetch } = useProjectsSummaryQuery()
   own page. The row scrolls inside itself and the page never does. A
   desktop shows the cards either way, so don't render your own row
   beside a strip hidden on a phone.
-- Storybook's `app/ModuleCard` shows a hub with a strip and a widget,
+- The fixtures' `app/ModuleCard` shows a hub with a strip and a widget,
   every state, both at `compact`, and both again as a row of chips (Row,
   Row states); its checks run axe and the token and glyph checks in both
   themes and at `large`, measure the strip at a desktop and a phone
@@ -602,7 +603,7 @@ under its own header.
   swaps the tone's own icon for a better one (a lock for read-only).
 - **A wash, not a fill:** the tone at 10% (20% in dark) with `foreground`
   text and the tone's `*-text` icon. The message reads as body text, so
-  nothing inside it is muted. Storybook's `app/Notice` measures every
+  nothing inside it is muted. The fixtures' `app/Notice` measures every
   tone with axe and the glyph check in both themes.
 - **One or two sentences and at most one action**: what the state means
   and what to do about it. More than that belongs in a section.
@@ -644,8 +645,53 @@ or `'last'`) with its value.
   named by `label`, with a summary (first, last, lowest, highest, the
   target) and a table of every point. Give it the same `formatY` and
   `formatX` the page uses for those values elsewhere.
-- One series and a few dozen points. Several series, zoom or tooltips
-  are a request for the foundation, not a hand-drawn chart in the app.
+- **A projection** (4.51): `projection={{ label: 'Projected', points }}`
+  carries the line on past its last point, dashed in the same colour, for
+  where a value may go (a balance at a rate of return), never for what was
+  measured. Its points come after the last of `points`; the mark stays on
+  `points`, and a screen reader gets the projection's end in the summary
+  and its rows in the table, each named by `label`.
+- One series and a few dozen points. Zoom or tooltips are a request for
+  the foundation, not a hand-drawn chart in the app.
+
+### Several values over time
+
+`MultiLineChart` (4.51) puts several series on one plot, sharing one x
+and one y range: a net worth beside its assets and what's owed, or a
+balance's history beside low, middle and high projections.
+
+```tsx
+<MultiLineChart
+  label="Net worth over time"
+  series={[
+    { label: 'Assets', tone: 'success', points: assets },
+    { label: 'Owed', tone: 'destructive', points: owed },
+    { label: 'Net worth', points: netWorth },
+  ]}
+  target={{ y: 1_500_000, label: 'Target' }}
+  formatY={usd}
+  formatX={month}
+  isLoading={isLoading}
+/>
+```
+
+- **Tones, not colours:** each series takes a text tone (`info`, the
+  default, `success`, `warning`, `destructive` or `muted`), each clearing
+  3:1 on a card in both themes. Pick by meaning where there is one (what's
+  owed in `destructive`); otherwise keep the series that matters most in
+  `info` and the rest `muted`.
+- **`dashed` is for what wasn't measured:** a projection or a plan. A
+  projection that starts at the last measured point should repeat that
+  point as its first, so the lines meet.
+- **A legend under the plot** names each series with its latest value,
+  so colour never carries the meaning alone. The target is a dashed
+  `success-text` line, as on `LineChart`.
+- **It owns its states** as `LineChart` does: a skeleton, one quiet line
+  when no series has a point, a dot for a series of one point.
+- **A screen reader gets a summary** (each series from first to last
+  value, and the target) and a table with a column per series.
+- Up to four or five series. More than that, or bars and stacked areas,
+  are a request for the foundation.
 
 ## A list as a board
 
@@ -856,3 +902,20 @@ size"); the list stays where a record is edited one field at a time.
 - A refused save keeps the record and says why under the buttons, not
   in a toast. It owns its states: skeletons, `ErrorState`, and the
   empty queue, which is the good news ("Every project has a size").
+- **Other kinds of value** (4.53): `FillInInput` is the row for text,
+  long text, a number, money (the currency's symbol before it) or a date
+  (`DateField`), and `FillInSelect` for a list too long for buttons (a
+  reference to another record). Each has the label above and a
+  suggestion under it as a dashed "Use $249.00" button, never filled in
+  for the person.
+- **Fields as data:** `FillInField` takes a field as an API describes it
+  (`{ name, label, kind, choices, suggestion }`, `kind` one of choice,
+  reference, text, longText, number, money, date) and draws the row its
+  kind calls for: `FillInChoice` for up to nine choices, `FillInSelect`
+  for more, `FillInInput` for the rest. Its value is a choice's value, a
+  number for number and money, text otherwise, null for none. For a page
+  that draws records it doesn't know in advance.
+- **Records from several places:** `groups` (`{ id, label, icon,
+  progress }`) and `getGroup` name a record's source above its heading,
+  with that group's own count; with more than one group counted, each
+  one's count is listed under the bar.

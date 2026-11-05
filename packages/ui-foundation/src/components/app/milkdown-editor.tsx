@@ -29,9 +29,10 @@
 //   copy out of the editor is Markdown.
 // - Ctrl/Cmd+K adds or edits a link (a box at the caret: web and email
 //   addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
-//   in. Ctrl/Cmd+Enter stays the field's save, in a table too. Notion's
-//   block keys (Ctrl+Shift+1 for a heading, +5 for bullets, …:
-//   rich-text-shortcuts.ts).
+//   in. `[] ` at a line's start makes a task item, and Enter in one the
+//   next, unticked (rich-text-tasks.ts). Ctrl/Cmd+Enter stays the field's
+//   save, in a table too. Notion's block keys (Ctrl+Shift+1 for a
+//   heading, +5 for bullets, …: rich-text-shortcuts.ts).
 // - A placeholder in an empty document, and a count of the Markdown's
 //   length as it nears `maxLength`.
 // - A fixed toolbar above the text (rich-text-toolbar.tsx), and a
@@ -47,6 +48,9 @@
 //   With `upload`, an image pasted, dropped or picked with the toolbar's
 //   Image button is uploaded through it and goes in as `![](url)`
 //   (rich-text-image-upload.ts); a refusal or a failed upload is a toast.
+// - `foldKey`: the text folds by its headings, as <Markdown> does
+//   (rich-text-fold.ts), remembered on this device and shared with
+//   NotesOutline; the document never changes.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
 import {
@@ -90,13 +94,17 @@ import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/mark
 import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes } from '@/lib/markdown-highlight'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
-import { DEFAULT_HEADING_LEVEL, headingBand, headingClass, headingTag, type HeadingLevel } from './prose-look'
+import { foldStore, listenForOtherTabs } from '@/hooks/fold-store'
+import { toggleFold } from '@/lib/markdown-fold'
+import { DEFAULT_HEADING_LEVEL, FOLD_BUTTON, FOLD_HEADING, headingBand, headingClass, headingTag, type HeadingLevel } from './prose-look'
+import { foldPlugin, foldSpecOf, setFolds, type FoldSpec } from './rich-text-fold'
 import type { RichTextEditorProps } from './rich-text-editor'
 import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
 import { tableAt, toggleFormat, type FormatId } from './rich-text-formats'
 import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry } from './rich-text-node-views'
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
+import { splitTaskItem, taskInputRule } from './rich-text-tasks'
 import { addRowAtEnd, handleTableKey, runTableAction, type TableAction } from './rich-text-table'
 import type { FormatItem } from './rich-text-format-items'
 import {
@@ -213,15 +221,69 @@ function htmlToText(fragment: Fragment): Fragment {
 
 // A heading: the element `headingLevel` gives its level, the look its
 // level has. Marked as a band for PROSE_INSET (`#` and `##`).
-function headingView(node: ProseNode, top: HeadingLevel, textTop: number): NodeView {
+//
+// With `foldKey` (`onFold`), it sits beside its fold button, as in
+// <Markdown>: the look on the two together, the button out of the tab
+// order (Ctrl/Cmd+Alt+[ and ] and NotesOutline are the keyboard's way),
+// kept invisible where there's nothing under the heading to fold, or the
+// heading isn't at the top level.
+function headingView(
+  node: ProseNode,
+  top: HeadingLevel,
+  textTop: number,
+  decorations: readonly Decoration[],
+  onFold?: (id: string) => void,
+): NodeView {
   const level = Number(node.attrs.level)
-  const dom = document.createElement(headingTag(level, top, textTop))
-  dom.className = headingClass(level)
+  const heading = document.createElement(headingTag(level, top, textTop))
+  const sameLevel = (next: ProseNode) => next.type === node.type && next.attrs.level === node.attrs.level
+  if (!onFold) {
+    heading.className = headingClass(level)
+    if (headingBand(level)) heading.dataset.band = ''
+    return { dom: heading, contentDOM: heading, update: sameLevel }
+  }
+  const dom = document.createElement('div')
+  dom.className = cn(FOLD_HEADING, headingClass(level))
   if (headingBand(level)) dom.dataset.band = ''
+  heading.className = 'min-w-0 flex-1'
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.tabIndex = -1
+  button.contentEditable = 'false'
+  button.dataset.slot = 'fold-button'
+  const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  chevron.setAttribute('viewBox', '0 0 24 24')
+  chevron.setAttribute('aria-hidden', 'true')
+  chevron.innerHTML =
+    '<path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />'
+  button.append(chevron)
+  dom.append(button, heading)
+  let spec: FoldSpec | null = null
+  const render = (decorations: readonly Decoration[]) => {
+    spec = foldSpecOf(decorations)
+    button.className = cn(FOLD_BUTTON, !spec?.foldable && 'invisible')
+    chevron.setAttribute('class', cn('size-4 transition-transform', spec?.folded && '-rotate-90'))
+    button.setAttribute('aria-expanded', String(!spec?.folded))
+    button.setAttribute('aria-label', spec?.label || 'Section')
+    if (spec) dom.dataset.foldId = spec.id
+    else delete dom.dataset.foldId
+  }
+  render(decorations)
+  // A press keeps the caret where it is.
+  button.addEventListener('mousedown', (event) => event.preventDefault())
+  button.addEventListener('click', () => {
+    if (spec?.foldable) onFold(spec.id)
+  })
   return {
     dom,
-    contentDOM: dom,
-    update: (next) => next.type === node.type && next.attrs.level === node.attrs.level,
+    contentDOM: heading,
+    update: (next, decorations) => {
+      if (!sameLevel(next)) return false
+      render(decorations)
+      return true
+    },
+    stopEvent: (event) => button.contains(event.target as Node),
+    ignoreMutation: (mutation) => mutation.type !== 'selection' && !heading.contains(mutation.target),
   }
 }
 
@@ -353,6 +415,7 @@ export default function MilkdownEditor({
   imageMaxSize,
   headingLevel = DEFAULT_HEADING_LEVEL,
   headingFrom = 'hash',
+  foldKey,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -541,6 +604,15 @@ export default function MilkdownEditor({
     }
 
     openLinkRef.current = openLink
+
+    // Folding by headings, with `foldKey` (read once, when it mounts):
+    // the fold store is the state, the plugin draws it.
+    const folds =
+      foldKey === undefined
+        ? []
+        : [$prose(() => foldPlugin({ initial: foldStore.get(foldKey), onChange: (folded) => foldStore.set(foldKey, folded) }))]
+    const onFold = foldKey === undefined ? undefined : (id: string) => foldStore.set(foldKey, toggleFold(foldStore.get(foldKey), id))
+    let stopFolds = () => {}
 
     // Paste, copy, the editor's own keys and the placeholder.
     const slashing = $prose(() => slashPlugin())
@@ -737,6 +809,8 @@ export default function MilkdownEditor({
             if (!view.editable) return false
             if (handleShortcut(view.state, view.dispatch, event)) return true
             if (handleTableKey(view.state, view.dispatch, event)) return true
+            // Enter in a task item: the next one, unticked (rich-text-tasks.ts).
+            if (event.key === 'Enter' && plain && !event.isComposing && splitTaskItem(view.state, view.dispatch)) return true
             // Ctrl/Cmd+Enter in a table is the field's (a save), not
             // Milkdown's "leave the table": taken here, so its keymap never
             // sees it, and left to reach the field.
@@ -745,7 +819,7 @@ export default function MilkdownEditor({
           },
           nodeViews: {
             // The level when it mounts, as with defaultValue.
-            heading: (node) => headingView(node, headingLevel, textTop),
+            heading: (node, _view, _getPos, decorations) => headingView(node, headingLevel, textTop, decorations, onFold),
             callout: (node, _view, getPos) => calloutView(node, getPos, registry),
             table: (node, view, getPos) => tableView(node, view, getPos, registry),
             list_item: (node, view, getPos) =>
@@ -755,6 +829,7 @@ export default function MilkdownEditor({
       })
       .use(COMMONMARK)
       .use(gfm)
+      .use(taskInputRule)
       .use(calloutRemark)
       .use(calloutSchema)
       .use(highlightRemark)
@@ -766,6 +841,7 @@ export default function MilkdownEditor({
       .use(imageUploads)
       .use(imageInput)
       .use(input)
+      .use(folds)
 
     void make.create().then((editor) => {
       if (cancelled) {
@@ -778,10 +854,15 @@ export default function MilkdownEditor({
       setEditorView(view)
       setEditorState(view.state)
       if (autoFocus) editor.action((ctx) => ctx.get(editorViewCtx).focus())
+      if (foldKey !== undefined) {
+        listenForOtherTabs()
+        stopFolds = foldStore.subscribe(foldKey, () => view.dispatch(setFolds(view.state, foldStore.get(foldKey))))
+      }
     })
 
     return () => {
       cancelled = true
+      stopFolds()
       setEditorState(null)
       setEditorView(null)
       const editor = editorRef.current
@@ -974,6 +1055,7 @@ export default function MilkdownEditor({
         )}
         <div
           ref={rootRef}
+          data-fold-scope={foldKey}
           className={cn(
             !inline && 'min-h-24 px-2.5 py-2',
             // Full screen: the text scrolls under the toolbar, in a column to read.
