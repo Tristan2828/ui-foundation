@@ -1421,3 +1421,34 @@ test.describe('table scroll', () => {
     await expect(narrow).not.toHaveAttribute('role')
   })
 })
+
+// An edit form's field: the form holds the value and passes it back as
+// `defaultValue`; the record loads after the editor has mounted (the
+// editor's chunk already cached, as on a second Edit).
+test.describe('a value that arrives later', () => {
+  const LATE = 'http://localhost:6180/story.html?id=app-richtexteditor--late-value'
+
+  test('a value loaded after it mounts shows; its own edits keep the caret; a reset clears it', async ({ page }) => {
+    await page.goto(LATE)
+    const box = editor(page, 'lateValue')
+    await expect(box).toBeVisible()
+    await expect(box).toHaveText('')
+    await page.getByRole('button', { name: 'Load' }).click()
+    await expect(box.locator('strong')).toHaveText('notes')
+    await expect(saved(page, 'lateValue')).toHaveText('Loaded **notes**.')
+
+    // Typing goes back as the value without reopening the editor: focus
+    // and the caret stay, so every key lands in order where it's typed.
+    await box.getByText('Loaded').click()
+    await expect(box).toBeFocused()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('Home')
+    await page.keyboard.type('Freshly ')
+    await expect(box).toBeFocused()
+    await expect(saved(page, 'lateValue')).toHaveText('Freshly Loaded **notes**.')
+
+    await page.getByRole('button', { name: 'Reset' }).click()
+    await expect(box).toHaveText('')
+    await expect(saved(page, 'lateValue')).toHaveText('')
+  })
+})

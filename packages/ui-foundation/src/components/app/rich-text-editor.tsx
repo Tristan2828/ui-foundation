@@ -25,10 +25,16 @@
 // With `foldKey`, the text folds by its headings (NotesOutline lists them
 // beside it), the Markdown untouched.
 //
+// `defaultValue` is read when it mounts, then followed: a new value the
+// editor didn't report itself (a form's loaded record arriving after the
+// editor, a reset) replaces the text, as if it opened with it. Its own
+// edits, coming back as the value, change nothing, so the caret stays
+// where it is. A caller that never feeds `onChange` back keeps its text.
+//
 // The editor (Milkdown) is loaded on first use, so a page that only reads
 // Markdown never downloads it. Until it arrives, a placeholder the size of
 // the field shows.
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
@@ -39,7 +45,11 @@ const MilkdownEditor = lazy(() => import('./milkdown-editor'))
 export type RichTextEditorProps = {
   /** The editable element's id, for a label's `htmlFor` or a test. */
   id?: string
-  /** The Markdown it opens with. Read once, when it mounts (uncontrolled). */
+  /**
+   * The Markdown it opens with. A later value the editor didn't report
+   * (a record loaded after it mounted, a reset) replaces the text; the
+   * value it reported, passed back, changes nothing.
+   */
   defaultValue: string
   /** The Markdown to save, after every edit: untouched blocks as originally written. */
   onChange: (markdown: string) => void
@@ -130,7 +140,27 @@ export type RichTextEditorProps = {
   'aria-invalid'?: boolean
 }
 
+// When the editor opens again: each time `defaultValue` changes to
+// Markdown it didn't report. Adjusted while rendering (React's "storing
+// information from previous renders"), so the new text never shows a
+// frame late.
+function useOpenings(defaultValue: string) {
+  const [seen, setSeen] = useState(defaultValue)
+  const [reported, setReported] = useState(defaultValue)
+  const [opening, setOpening] = useState(0)
+  if (defaultValue !== seen) {
+    setSeen(defaultValue)
+    if (defaultValue !== reported) {
+      setReported(defaultValue)
+      setOpening(opening + 1)
+    }
+  }
+  return { opening, report: setReported }
+}
+
 export function RichTextEditor(props: RichTextEditorProps) {
+  const { opening, report } = useOpenings(props.defaultValue)
+  const { onChange } = props
   return (
     <Suspense
       fallback={
@@ -148,7 +178,15 @@ export function RichTextEditor(props: RichTextEditorProps) {
         </div>
       }
     >
-      <MilkdownEditor {...props} foldKey={props.foldable === false ? undefined : props.foldKey} />
+      <MilkdownEditor
+        key={opening}
+        {...props}
+        onChange={(markdown) => {
+          report(markdown)
+          onChange(markdown)
+        }}
+        foldKey={props.foldable === false ? undefined : props.foldKey}
+      />
     </Suspense>
   )
 }

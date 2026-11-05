@@ -348,3 +348,33 @@ function FoldingStory() {
 }
 
 export const Folding: StoryObj<typeof RichTextEditor> = { render: () => <FoldingStory /> }
+
+// An edit form's field: the value held by the form and passed back as
+// `defaultValue`, the record loaded only after the editor has mounted
+// (the Load button), then reset (e2e/rich-text-editor.spec.ts "a value
+// that arrives later").
+function LateValueStory() {
+  const labelId = useId()
+  const [value, setValue] = useState('')
+  return (
+    <div className="flex max-w-xl flex-col gap-2" data-fixture="lateValue">
+      <span id={labelId} className="type-label text-foreground">
+        lateValue
+      </span>
+      <RichTextEditor aria-labelledby={labelId} defaultValue={value} onChange={setValue} />
+      <div className="flex gap-2">
+        <button type="button" className="rounded-md border border-border px-2 py-1" onClick={() => setValue('Loaded **notes**.\n')}>
+          Load
+        </button>
+        <button type="button" className="rounded-md border border-border px-2 py-1" onClick={() => setValue('')}>
+          Reset
+        </button>
+      </div>
+      <pre data-testid="saved-lateValue" className="sr-only">
+        {value}
+      </pre>
+    </div>
+  )
+}
+
+export const LateValue: StoryObj<typeof RichTextEditor> = { render: () => <LateValueStory /> }
