@@ -117,3 +117,27 @@ export const Projection: StoryObj = {
     </div>
   ),
 }
+
+// `levels` (4.64): a value that is one of a few named steps, held until
+// the next change. A confidence that rose twice, then dropped a step.
+const CONFIDENCE = ['Very low', 'Low', 'Low-moderate', 'Moderate', 'High']
+const ASSESSED: LineChartPoint[] = [
+  { x: '2026-06-02', y: 0 },
+  { x: '2026-07-21', y: 3 },
+  { x: '2026-09-29', y: 4 },
+  { x: '2026-10-20', y: 3 },
+]
+
+export const Levels: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Levels</h1>
+      <OnCard title="Confidence">
+        <LineChart label="Confidence over time" points={ASSESSED} levels={CONFIDENCE} mark="last" formatX={day} />
+      </OnCard>
+      <OnCard title="One level">
+        <LineChart label="Confidence, one point" points={ASSESSED.slice(0, 1)} levels={CONFIDENCE} formatX={day} height={120} />
+      </OnCard>
+    </div>
+  ),
+}

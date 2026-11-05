@@ -17,12 +17,19 @@
 // A `projection` (4.51) carries the line on past its last point, dashed in
 // the same colour: where a balance may go, not where it went. It shares
 // the plot's x and y ranges, so the target and the projection meet where
-// they would. The four states: a skeleton at
+// they would.
+//
+// `levels` (4.64) is for a value that is one of a few named steps (a
+// confidence, Very low to High): each y is its step's index. The steps
+// are named down the plot's left with a faint rule at each, the range is
+// every step, and the line holds each value until the next point, then
+// steps. A value reads by its name, in the summary and the table too,
+// unless `formatY` says otherwise. The four states: a skeleton at
 // `height` while loading, one quiet line with no points, a dot (no line)
 // for one point, and the chart.
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
-import { chartLayout, type LineChartMark, type LineChartPoint } from '@/lib/line-chart-layout'
+import { chartLayout, steppedPlaces, type LineChartMark, type LineChartPoint } from '@/lib/line-chart-layout'
 
 export type { LineChartMark, LineChartPoint } from '@/lib/line-chart-layout'
 
@@ -41,6 +48,12 @@ export type LineChartProps = {
   projection?: { label: string; points: readonly LineChartPoint[] }
   /** Which point to mark with a dot and its value: the lowest, the highest or the latest. */
   mark?: LineChartMark
+  /**
+   * Named steps, lowest first: `['Very low', 'Low', 'Moderate', 'High']`.
+   * Each point's y is its step's index. The steps are named on the plot's
+   * left, the range is all of them, and the line steps (4.64).
+   */
+  levels?: readonly string[]
   /** A value as shown: `usd`. Defaults to the number as the browser writes it. */
   formatY?: (y: number) => string
   /** A point's x as shown: `formatPlainDate`. Defaults to x as given. */
@@ -71,13 +84,15 @@ export function LineChart({
   target,
   projection,
   mark,
-  formatY = defaultY,
+  levels,
+  formatY: formatYGiven,
   formatX = defaultX,
   height = 160,
   isLoading = false,
   emptyMessage = 'No points yet',
   className,
 }: LineChartProps) {
+  const formatY = formatYGiven ?? (levels ? (y: number) => levels[Math.round(y)] ?? String(y) : defaultY)
   if (isLoading) {
     return (
       <div data-slot="line-chart" data-state="loading" aria-busy="true" className={cn('min-w-0', className)}>
@@ -100,13 +115,19 @@ export function LineChart({
   }
 
   const ahead = projection?.points ?? []
-  const layout = { ...chartLayout([...points, ...ahead], target?.y), markIndex: chartLayout(points, undefined, mark).markIndex }
+  const steps = levels && levels.length > 0 ? levels.length : undefined
+  const layout = {
+    ...chartLayout([...points, ...ahead], target?.y, undefined, steps),
+    markIndex: chartLayout(points, undefined, mark).markIndex,
+  }
+  const toLine = (places: readonly { x: number; y: number }[]) =>
+    (steps ? steppedPlaces(places) : places).map((place) => `${place.x * 100},${place.y * 100}`).join(' ')
   const projected = ahead.length > 0 ? layout.places.slice(points.length - 1) : []
   const lastX = ahead.length > 0 ? ahead[ahead.length - 1].x : points[points.length - 1].x
   const values = points.map((point) => point.y)
   const lowest = values.indexOf(Math.min(...values))
   const highest = values.indexOf(Math.max(...values))
-  const line = layout.places.slice(0, points.length).map((place) => `${place.x * 100},${place.y * 100}`).join(' ')
+  const line = toLine(layout.places.slice(0, points.length))
   const marked = layout.markIndex === undefined ? undefined : layout.places[layout.markIndex]
   const single = points.length === 1 ? layout.places[0] : undefined
   const dot = marked ?? single
@@ -122,8 +143,41 @@ export function LineChart({
     .join('; ')
 
   return (
-    <figure data-slot="line-chart" data-state="success" aria-label={label} className={cn('flex min-w-0 flex-col gap-1.5', className)}>
+    <figure
+      data-slot="line-chart"
+      data-state="success"
+      aria-label={label}
+      className={cn('grid min-w-0 gap-x-2 gap-y-1.5', steps ? 'grid-cols-[auto_minmax(0,1fr)]' : 'grid-cols-1', className)}
+    >
+      {steps && (
+        <div aria-hidden="true" data-slot="line-chart-levels" className="relative" style={{ height }}>
+          {levels!.map((name, index) => (
+            <span
+              key={name}
+              className="absolute right-0 -translate-y-1/2 type-caption whitespace-nowrap text-muted-foreground"
+              style={{ top: percent(layout.levelYs![index]) }}
+            >
+              {name}
+            </span>
+          ))}
+          {/* Holds the column's width: the names above are placed absolutely. */}
+          <span className="invisible flex h-0 flex-col overflow-hidden type-caption whitespace-nowrap">
+            {levels!.map((name) => (
+              <span key={name}>{name}</span>
+            ))}
+          </span>
+        </div>
+      )}
       <div aria-hidden="true" className="relative border-b border-border" style={{ height }}>
+        {steps &&
+          layout.levelYs!.map((y, index) => (
+            <span
+              key={index}
+              data-slot="line-chart-level-rule"
+              className="absolute inset-x-0 border-t border-dashed border-border"
+              style={{ top: percent(y) }}
+            />
+          ))}
         {target && layout.targetY !== undefined && (
           <>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible text-success-text">
@@ -167,7 +221,7 @@ export function LineChart({
             className="absolute inset-0 size-full overflow-visible text-info-text"
           >
             <polyline
-              points={projected.map((place) => `${place.x * 100},${place.y * 100}`).join(' ')}
+              points={toLine(projected)}
               fill="none"
               strokeWidth={2}
               strokeDasharray="6 4"
@@ -199,11 +253,11 @@ export function LineChart({
           </>
         )}
       </div>
-      <div aria-hidden="true" className="flex justify-between gap-3 type-caption text-muted-foreground tabular-nums">
+      <div aria-hidden="true" className={cn('flex justify-between gap-3 type-caption text-muted-foreground tabular-nums', steps && 'col-start-2')}>
         <span>{formatX(points[0].x)}</span>
         {(points.length > 1 || ahead.length > 0) && <span>{formatX(lastX)}</span>}
       </div>
-      <figcaption className="sr-only">{summary}</figcaption>
+      <figcaption className="sr-only">{steps ? `${summary}; one of ${levels!.join(', ')}` : summary}</figcaption>
       <table className="sr-only">
         <caption>{label}</caption>
         <thead>

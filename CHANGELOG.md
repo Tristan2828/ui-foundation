@@ -7,6 +7,24 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.64.0 — LineChart levels: a value that is one of a few named steps
+
+A new prop. The UI package only; no new dependency. Nothing for an app to
+change.
+
+- **`LineChart` takes `levels`**, the names of a few steps, lowest
+  first (`['Very low', 'Low', 'Moderate', 'High']`), for a value that is
+  one of them and holds until it changes: a confidence, a severity, a
+  stage. Each point's y is its step's index. The steps are named down the
+  plot's left with a faint dashed rule at each; the range is every step,
+  whatever the values, so a move of one step looks like one step, not the
+  plot's whole height; and the line holds each value until the next point,
+  then steps. Values read by their names in the mark, the summary and the
+  table unless `formatY` is given, and the summary lists the steps.
+  Without `levels`, nothing changes. A new `app/LineChart` story, Levels,
+  runs through axe and the glyph check in both themes.
+  design-language.md "A value over time".
+
 ## 4.63.3 — A HEIC with no type; a folded card ends at its header
 
 Fixes found in an app. The UI package only; no new dependency. Nothing
