@@ -14,6 +14,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test as base, type Page, type Request, type Response } from '@playwright/test'
 import { navPathname, navTargets, type NavEntry } from '../components/app/app-shell-nav'
+import { PALETTE_STORAGE_KEY, type PaletteName } from '../lib/palettes'
 import type { MswOverride } from '../mocks/override'
 
 export type { MswHandle, MswOverride } from '../mocks/override'
@@ -227,6 +228,47 @@ export type A11ySuiteOptions = {
    * the check in one file that passes the whole nav.
    */
   checkSidebar?: boolean
+  /**
+   * For an app with a palette (`<FoundationProviders palette>`), which is
+   * dark only: the palettes to check instead of light and dark, each saved
+   * as the device's choice before the page loads. Pass the app's default on
+   * every spec and all of `PALETTES` on one (the shell's).
+   */
+  palettes?: readonly PaletteName[]
+}
+
+/** One look a suite checks: light or dark, or (for an app with a palette) one palette, always dark. */
+type A11yTheme = { label: string; colorScheme: 'light' | 'dark'; palette?: PaletteName }
+
+function a11yThemes(palettes: readonly PaletteName[] | undefined): A11yTheme[] {
+  if (palettes?.length) return palettes.map((palette) => ({ label: palette, colorScheme: 'dark', palette }))
+  return [
+    { label: 'light', colorScheme: 'light' },
+    { label: 'dark', colorScheme: 'dark' },
+  ]
+}
+
+/** Puts the page in a theme: the OS colour scheme, and the palette saved as this device's choice before any script runs. */
+async function applyTheme(page: Page, theme: A11yTheme): Promise<void> {
+  await page.emulateMedia({ colorScheme: theme.colorScheme })
+  if (theme.palette) {
+    await page.addInitScript(
+      ([key, value]) => {
+        try {
+          window.localStorage.setItem(key, value)
+        } catch {
+          // Storage blocked: the app falls back to its default palette.
+        }
+      },
+      [PALETTE_STORAGE_KEY, theme.palette] as const,
+    )
+  }
+}
+
+/** The theme is on the page: its class on <html>, and its palette. */
+async function expectTheme(page: Page, theme: A11yTheme): Promise<void> {
+  await expect(page.locator('html')).toHaveClass(theme.colorScheme)
+  if (theme.palette) await expect(page.locator('html')).toHaveAttribute('data-palette', theme.palette)
 }
 
 // A page's share of the one discovering test's time: load, data, axe.
@@ -249,9 +291,9 @@ export async function expectDataViewsLoaded(page: Page, { success = true }: { su
   await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
 }
 
-async function expectNavPageAccessible(page: Page, route: string, colorScheme: 'light' | 'dark') {
+async function expectNavPageAccessible(page: Page, route: string, theme: A11yTheme) {
   await page.goto(route)
-  await expect(page.locator('html')).toHaveClass(colorScheme)
+  await expectTheme(page, theme)
   // Wait for data, not the loading skeleton, so the real UI is checked. A
   // nav page may have no data view, or only an empty one, so none has to
   // show data.
@@ -268,7 +310,8 @@ async function expectNavPageAccessible(page: Page, route: string, colorScheme: '
  * one file keeps the whole-sidebar check. axe's
  * color-contrast rule against the rendered dark DOM is also what keeps the
  * dark-mode tokens readable. The theme follows the OS setting, so
- * emulateMedia switches it.
+ * emulateMedia switches it. An app with a palette passes `palettes`, and
+ * each is checked (dark) in place of light and dark.
  */
 export function defineA11ySuite({
   formRoutes,
@@ -276,6 +319,7 @@ export function defineA11ySuite({
   loggedOutRoutes = [],
   nav,
   checkSidebar = true,
+  palettes,
 }: A11ySuiteOptions): void {
   // Each `to` as given, query string and all, so a page that opens on a
   // saved view is checked on it.
@@ -290,16 +334,16 @@ export function defineA11ySuite({
     })
   }
 
-  for (const colorScheme of ['light', 'dark'] as const) {
-    test.describe(`accessibility (${colorScheme})`, () => {
+  for (const theme of a11yThemes(palettes)) {
+    test.describe(`accessibility (${theme.label})`, () => {
       test.beforeEach(async ({ page }) => {
-        await page.emulateMedia({ colorScheme })
+        await applyTheme(page, theme)
       })
 
       if (listed) {
         for (const route of listed) {
           test(`nav page ${route} has zero axe violations`, async ({ page }) => {
-            await expectNavPageAccessible(page, route, colorScheme)
+            await expectNavPageAccessible(page, route, theme)
           })
         }
       } else {
@@ -308,7 +352,7 @@ export function defineA11ySuite({
           // One test for every page: its time grows with the app.
           test.setTimeout(testInfo.timeout + routes.length * NAV_PAGE_BUDGET_MS)
           for (const route of routes) {
-            await test.step(route, () => expectNavPageAccessible(page, route, colorScheme))
+            await test.step(route, () => expectNavPageAccessible(page, route, theme))
           }
         })
       }
@@ -395,6 +439,8 @@ export type DataEnvironmentBannerSuiteOptions = {
    * (production data, so no banner).
    */
   dataLabel?: string | null
+  /** For an app with a palette: the palettes to check the banner in, in place of light and dark (as for `defineA11ySuite`). */
+  palettes?: readonly PaletteName[]
 }
 
 // The banner names the label as data: "dev" → "Dev data".
@@ -430,6 +476,7 @@ export function defineDataEnvironmentBannerSuite({
   routes,
   mockMode = process.env.VITE_API !== 'real',
   dataLabel = process.env.DATA_LABEL?.trim() || null,
+  palettes,
 }: DataEnvironmentBannerSuiteOptions): void {
   const banner = (page: Page) => page.getByRole('status').filter({ hasText: "changes here don't reach production" })
 
@@ -476,13 +523,13 @@ export function defineDataEnvironmentBannerSuite({
     expect(await fill(banner(page))).not.toBe(await fill(page.getByRole('status').filter({ hasText: 'Mock data' })))
   })
 
-  for (const colorScheme of ['light', 'dark'] as const) {
-    test(`the data-environment banner has zero axe violations (${colorScheme})`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme })
+  for (const theme of a11yThemes(palettes)) {
+    test(`the data-environment banner has zero axe violations (${theme.label})`, async ({ page }) => {
+      await applyTheme(page, theme)
       await forceLabel(page)
       for (const route of routes) {
         await gotoWithDataLabel(page, route)
-        await expect(page.locator('html')).toHaveClass(colorScheme)
+        await expectTheme(page, theme)
         await expect(banner(page)).toBeVisible()
         await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
         await test.step(route, () => expectNoAxeViolations(page))

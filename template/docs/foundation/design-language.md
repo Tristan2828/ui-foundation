@@ -3,28 +3,28 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 37–95
-- [Glow](#glow) · lines 97–115
-- [Semantic tones](#semantic-tones) · lines 117–145
-- [The three badge styles](#the-three-badge-styles) · lines 147–164
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 166–195
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 197–210
-- [Logos and brand marks](#logos-and-brand-marks) · lines 212–256
-- [Categorical colour](#categorical-colour) · lines 258–328
-- [Shapes and sizes](#shapes-and-sizes) · lines 330–351
-- [Typography](#typography) · lines 353–447
-  - [Written text (notes)](#written-text-notes) · lines 387–447
-- [Density](#density) · lines 449–506
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 508–622
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 624–693
-- [Notices](#notices) · lines 695–723
-- [A value over time](#a-value-over-time) · lines 725–803
-  - [Several values over time](#several-values-over-time) · lines 766–803
-- [A list as a board](#a-list-as-a-board) · lines 805–856
-- [A list as cards](#a-list-as-cards) · lines 858–904
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 906–928
-- [Picking at random](#picking-at-random) · lines 930–961
-- [Filling in what's missing](#filling-in-whats-missing) · lines 963–1030
+- [Palettes](#palettes) · lines 37–103
+- [Glow](#glow) · lines 105–123
+- [Semantic tones](#semantic-tones) · lines 125–153
+- [The three badge styles](#the-three-badge-styles) · lines 155–172
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 174–203
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 205–218
+- [Logos and brand marks](#logos-and-brand-marks) · lines 220–264
+- [Categorical colour](#categorical-colour) · lines 266–336
+- [Shapes and sizes](#shapes-and-sizes) · lines 338–359
+- [Typography](#typography) · lines 361–455
+  - [Written text (notes)](#written-text-notes) · lines 395–455
+- [Density](#density) · lines 457–514
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 516–630
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 632–701
+- [Notices](#notices) · lines 703–731
+- [A value over time](#a-value-over-time) · lines 733–811
+  - [Several values over time](#several-values-over-time) · lines 774–811
+- [A list as a board](#a-list-as-a-board) · lines 813–864
+- [A list as cards](#a-list-as-cards) · lines 866–912
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 914–936
+- [Picking at random](#picking-at-random) · lines 938–969
+- [Filling in what's missing](#filling-in-whats-missing) · lines 971–1038
 
 <!-- /index -->
 
@@ -93,6 +93,14 @@ wear it too. An installed app's colours follow it with
 The package's `e2e/fixtures-visual.spec.ts` runs every primitive,
 composite and tone story through axe in each palette, and measures every
 glyph and categorical slot against each palette's page and card.
+
+**An app's own axe specs** check its palettes instead of light and dark:
+`defineA11ySuite({ …, palettes: ['indigo-cyan'] })` (and
+`defineDataEnvironmentBannerSuite`'s `palettes`) saves each as the
+device's choice before the page loads and checks it dark. Pass the app's
+default on every spec and `PALETTES` on the one that covers the shell.
+Without `palettes`, a palette app's light run fails: there is no light
+theme to find.
 
 ## Glow
 

@@ -7,6 +7,24 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.63.1 — The a11y suites check palettes
+
+A fix for apps that take 4.63.0's palettes. The UI package only; no new
+dependency.
+
+- **`defineA11ySuite` and `defineDataEnvironmentBannerSuite` take
+  `palettes`.** A palette forces the dark theme, so their light run
+  (which waits for `<html class="light">`) failed on every page of an app
+  with one. Given `palettes`, each suite checks those palettes, dark,
+  instead of light and dark: each is saved as the device's choice before
+  the page loads, and the test waits for its `data-palette` on `<html>`.
+  Tests are named `accessibility (<palette>)`. Without it, nothing
+  changes. design-language.md "Palettes".
+
+**An app with a palette:** pass `palettes: ['<its default>']` to each
+`defineA11ySuite` call and to `defineDataEnvironmentBannerSuite`, and
+`palettes: PALETTES` on the spec that covers the shell.
+
 ## 4.63.0 — The shared UI style: palettes, sizes, glow
 
 The shared style guide, in three parts, for every app. Additive in its
