@@ -22,6 +22,12 @@
 // Image button is uploaded through the app's own storage and goes in as
 // `![](url)`; while it uploads, a placeholder shows where it will go.
 //
+// A table's columns fit their words. Grips on its column and row (or a
+// right-click, or Shift+F10, in a cell) open menus to insert, move,
+// delete, align, sort and colour; a header column and cell colours are
+// kept as Markdown already writes them (src/lib/markdown-table.ts).
+// `tableLook` picks compact (the default) or boxed, as on <Markdown>.
+//
 // With `foldKey`, the text folds by its headings (NotesOutline lists them
 // beside it), the Markdown untouched.
 //
@@ -32,7 +38,7 @@ import { lazy, Suspense } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
-import type { HeadingFrom, HeadingLevel } from './prose-look'
+import type { HeadingFrom, HeadingLevel, TableLook } from './prose-look'
 
 const MilkdownEditor = lazy(() => import('./milkdown-editor'))
 
@@ -122,6 +128,13 @@ export type RichTextEditorProps = {
    * Default `true`.
    */
   foldable?: boolean
+  /**
+   * How tables look: `'compact'` (the default), a full grid of hairlines
+   * with tight cells and the header row on the heading band, or
+   * `'boxed'`, a rounded box with roomier cells, a muted header row and
+   * zebra rows. The same on <Markdown>. Either way columns fit their words.
+   */
+  tableLook?: TableLook
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string

@@ -22,6 +22,11 @@
 // sit: `#` and `##` on a tinted band, `###` a small uppercase label, and
 // the text under them lined up with the words in the band (prose-look.ts).
 //
+// A table's columns fit their words (a cell wraps at 18rem; a right-
+// aligned column, numbers, never wraps), in one of two looks
+// (`tableLook`, as on RichTextEditor: styles/index.css "Tables in written
+// text"). A cell whose whole text is one highlight is painted in it, and
+// a first column of bold cells is row headers (src/lib/markdown-table.ts).
 // A table wider than the text scrolls sideways, and while it does, its
 // box is a tab stop, named for its columns, that the arrow keys scroll
 // (prose-table-scroll.ts). Its cells wrap first, so that's only a table
@@ -60,11 +65,11 @@ import remarkGfm from 'remark-gfm'
 import { cn } from 'cn'
 import { ChevronDownIcon, ExternalLinkIcon, SquareCheckIcon, SquareIcon } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useFolds } from '@/hooks/fold-store'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
 import { rehypeFold, toggleFold } from '@/lib/markdown-fold'
 import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
+import { rehypeTables } from '@/lib/markdown-table'
 import { toggleTaskAt } from '@/lib/markdown-tasks'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
@@ -80,6 +85,7 @@ import {
   PROSE_INSET,
   type HeadingFrom,
   type HeadingLevel,
+  type TableLook,
 } from './prose-look'
 import { usePrinting } from './print-context'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
@@ -105,10 +111,9 @@ function omitNode<T extends { node?: unknown }>(props: T): Omit<T, 'node'> {
   return rest
 }
 
-// A GFM table in the package's own table, in its box that scrolls
-// sideways: a tab stop and a named region only while the table overflows
-// it. Watched again after each render, so a header row with new words
-// renames it.
+// A GFM table in its box that scrolls sideways: a tab stop and a named
+// region only while the table overflows it. Watched again after each
+// render, so a header row with new words renames it.
 function NotesTable({ hidden, ...props }: ComponentProps<'table'>) {
   const boxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -119,12 +124,10 @@ function NotesTable({ hidden, ...props }: ComponentProps<'table'>) {
     return () => region.destroy()
   })
   return (
-    <Table
-      {...props}
-      containerRef={boxRef}
-      // Folded away, the box goes with the table.
-      containerClassName={cn('rounded-lg border border-border', TABLE_SCROLL_FOCUS, hidden && 'hidden')}
-    />
+    // Folded away, the box goes with the table. Its look: styles/index.css.
+    <div ref={boxRef} data-slot="table-container" className={cn('prose-table', TABLE_SCROLL_FOCUS, hidden && 'hidden')}>
+      <table {...props} />
+    </div>
   )
 }
 
@@ -321,16 +324,9 @@ const COMPONENTS: Components = {
     const { alt, ...rest } = omitNode(props)
     return <img {...rest} alt={alt ?? ''} loading="lazy" className="h-auto max-w-full rounded-md" />
   },
-  // GFM tables use the package's own table, zebra stripes and density
-  // tokens included, so a table in the notes reads like every other table.
+  // GFM tables: drawn by styles/index.css "Tables in written text"
+  // (rehypeTables marks coloured cells and row headers).
   table: (props) => <NotesTable {...omitNode(props)} />,
-  thead: (props) => <TableHeader {...omitNode(props)} className="bg-muted" />,
-  tbody: (props) => <TableBody {...omitNode(props)} />,
-  tr: (props) => <TableRow {...omitNode(props)} />,
-  // Notes' cells wrap (a cell can hold a sentence) and have a line
-  // between columns, so a wide table still reads column by column.
-  th: (props) => <TableHead {...omitNode(props)} className="border-r border-border whitespace-normal last:border-r-0" />,
-  td: (props) => <TableCell {...omitNode(props)} className="border-r border-border whitespace-normal last:border-r-0" />,
 }
 
 // The components for each `headingLevel` and level that takes it (`#`,
@@ -391,6 +387,11 @@ export type MarkdownProps = {
    * are pictures and the text stays read-only.
    */
   onTasksChange?: (markdown: string) => void | Promise<unknown>
+  /**
+   * How tables look: `'compact'` (the default) or `'boxed'`, as on
+   * RichTextEditor. Either way columns fit their words.
+   */
+  tableLook?: TableLook
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
@@ -401,6 +402,7 @@ export function Markdown({
   foldKey: foldKeyProp,
   foldable = true,
   onTasksChange: onTasksChangeProp,
+  tableLook = 'compact',
   className,
   ...rest
 }: MarkdownProps) {
@@ -412,7 +414,10 @@ export function Markdown({
   const textTop = useMemo(() => (headingFrom === 'text' ? textTopHeading(children) : 1), [headingFrom, children])
   const components = useMemo(() => componentsFor(headingLevel, textTop), [headingLevel, textTop])
   const [folded, setFolded] = useFolds(foldKey)
-  const rehypePlugins = useMemo<PluggableList>(() => (foldKey === undefined ? [] : [[rehypeFold, { folded }]]), [foldKey, folded])
+  const rehypePlugins = useMemo<PluggableList>(
+    () => (foldKey === undefined ? [rehypeTables] : [rehypeTables, [rehypeFold, { folded }]]),
+    [foldKey, folded],
+  )
   const toggle = useCallback((id: string) => setFolded(toggleFold(folded, id)), [folded, setFolded])
   // Ticks not yet back as `children`: shown, and built on by the next
   // tick, so two quick ticks on a slow save both land. Kept while
@@ -434,6 +439,7 @@ export function Markdown({
   return (
     <div
       data-slot="markdown"
+      data-table-look={tableLook}
       data-fold-scope={foldKey}
       {...rest}
       className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', PROSE_INSET, className)}

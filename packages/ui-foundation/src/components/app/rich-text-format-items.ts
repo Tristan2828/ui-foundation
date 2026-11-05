@@ -76,7 +76,7 @@ export const FORMAT_GROUPS: FormatItem[][] = [
     { id: 'codeBlock', label: 'Code block', icon: SquareCodeIcon, keys: 'Block+8' },
     { id: 'divider', label: 'Divider', icon: MinusIcon, hint: 'or type ---' },
   ],
-  [{ id: 'table', label: 'Table', icon: TableIcon }],
+  [{ id: 'table', label: 'Table', icon: TableIcon, hint: 'its grips edit it', action: true }],
   [{ id: 'link', label: 'Link', icon: LinkIcon, keys: 'Mod+K' }],
 ]
 

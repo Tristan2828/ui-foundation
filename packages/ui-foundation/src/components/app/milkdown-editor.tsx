@@ -19,11 +19,16 @@
 //   task-list item renders a real checkbox that toggles it.
 // - Callouts (`> [!NOTE]`, src/lib/markdown-callout.ts): a node of their
 //   own, drawn as <Markdown> draws them, the icon a menu of kinds.
-// - Tables in a box that scrolls sideways (a tab stop the arrow keys
-//   scroll while it does: rich-text-node-views.ts), with Notion's "add a row" and
-//   "add a column" bars, Tab in the last cell adding a row and Enter going
-//   down a column (rich-text-table.ts); the toolbar's Table menu does the
-//   rest.
+// - Tables whose columns fit their words, in a box that scrolls sideways
+//   (a tab stop the arrow keys scroll while it does: rich-text-node-views.ts),
+//   in one of two looks (`tableLook`: styles/index.css "Tables in written
+//   text"). Notion's "add a row" and "add a column" bars, and its grips: one
+//   on the column and one on the row the pointer or the caret is in, each
+//   a menu to insert, move, delete, align, sort and colour
+//   (rich-text-table-grips.tsx); right-click or Shift+F10 in a cell opens
+//   the cell's. Tab in the last cell adds a row and Enter goes down a
+//   column (rich-text-table.ts). Colours and a header column are kept as
+//   Markdown writes them (src/lib/markdown-table.ts).
 // - Edited blocks are written in the document's own bullet and rule marks.
 // - Markdown pasted as plain text arrives formatted (still no HTML), and a
 //   copy out of the editor is Markdown.
@@ -91,7 +96,7 @@ import { acceptAttribute } from '@/lib/image-file'
 import { linkHref, linkRefusal } from '@/lib/link-href'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
-import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes } from '@/lib/markdown-highlight'
+import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes, type HighlightColor } from '@/lib/markdown-highlight'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
 import { foldStore, listenForOtherTabs } from '@/hooks/fold-store'
@@ -105,7 +110,8 @@ import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry }
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
 import { splitTaskItem, taskInputRule } from './rich-text-tasks'
-import { addRowAtEnd, handleTableKey, runTableAction, type TableAction } from './rich-text-table'
+import { addRowAtEnd, colorTableCells, handleTableKey, runTableAction, tableLook as tableLookPlugin, type TableAction, type TableColorScope } from './rich-text-table'
+import { TABLE_MENU_EVENT, TableGrips, type TableCell } from './rich-text-table-grips'
 import type { FormatItem } from './rich-text-format-items'
 import {
   applySlash,
@@ -192,6 +198,10 @@ const highlightSchema = $markSchema('highlight', () => ({
     },
   },
 }))
+
+// A table's cell colours and header column, drawn from the Markdown that
+// keeps them (rich-text-table.ts tableLook).
+const tableDecorations = $prose(() => tableLookPlugin())
 
 // Milkdown's image node wants a string title, and remark reads an image
 // with none (`![alt](url)`, nearly every one) as a `null` title: the node
@@ -416,6 +426,7 @@ export default function MilkdownEditor({
   headingLevel = DEFAULT_HEADING_LEVEL,
   headingFrom = 'hash',
   foldKey,
+  tableLook = 'compact',
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -809,6 +820,16 @@ export default function MilkdownEditor({
             if (!view.editable) return false
             if (handleShortcut(view.state, view.dispatch, event)) return true
             if (handleTableKey(view.state, view.dispatch, event)) return true
+            // Shift+F10 or the menu key in a table: the cell's menu, from its grips.
+            if (((event.key === 'F10' && event.shiftKey) || event.key === 'ContextMenu') && isInTable(view.state)) {
+              const at = view.domAtPos(view.state.selection.from).node
+              const frame = (at instanceof Element ? at : at.parentElement)?.closest('[data-slot=rich-text-table]')
+              if (frame) {
+                event.preventDefault()
+                frame.dispatchEvent(new CustomEvent(TABLE_MENU_EVENT))
+                return true
+              }
+            }
             // Enter in a task item: the next one, unticked (rich-text-tasks.ts).
             if (event.key === 'Enter' && plain && !event.isComposing && splitTaskItem(view.state, view.dispatch)) return true
             // Ctrl/Cmd+Enter in a table is the field's (a save), not
@@ -834,6 +855,7 @@ export default function MilkdownEditor({
       .use(calloutSchema)
       .use(highlightRemark)
       .use(highlightSchema)
+      .use(tableDecorations)
       .use(imageTitles)
       .use(history)
       .use(changes)
@@ -919,9 +941,28 @@ export default function MilkdownEditor({
   // (ProseMirror puts the caret back where it was as it takes it).
   const textElement = () => editorView?.dom ?? null
 
-  // A Table menu item, on the caret's table (the menu gives focus back).
-  const runTable = (action: TableAction) => {
-    if (editorView) runTableAction(editorView.state, editorView.dispatch, action)
+  // A grip's menu item, on the cell it was opened for: the caret into
+  // that cell, the action, and focus back in the text.
+  const caretInto = (getPos: () => number | undefined, cell: TableCell): boolean => {
+    if (!editorView) return false
+    const pos = getPos()
+    const table = pos === undefined ? null : editorView.state.doc.nodeAt(pos)
+    if (pos === undefined || table?.type.name !== 'table') return false
+    const map = TableMap.get(table)
+    if (cell.row >= map.height || cell.column >= map.width) return false
+    const at = pos + 1 + map.map[cell.row * map.width + cell.column] + 1
+    editorView.dispatch(editorView.state.tr.setSelection(TextSelection.near(editorView.state.doc.resolve(at))))
+    return true
+  }
+  const runTableAt = (getPos: () => number | undefined, cell: TableCell, action: TableAction) => {
+    if (!editorView || !caretInto(getPos, cell)) return
+    runTableAction(editorView.state, editorView.dispatch, action)
+    editorView.focus()
+  }
+  const colorTableAt = (getPos: () => number | undefined, cell: TableCell, scope: TableColorScope, color: HighlightColor | null) => {
+    if (!editorView || !caretInto(getPos, cell)) return
+    colorTableCells(editorView.state, editorView.dispatch, scope, color)
+    editorView.focus()
   }
 
   // A callout's menu: its kind changed, or the callout taken away (its
@@ -1008,6 +1049,7 @@ export default function MilkdownEditor({
       <div
         ref={setField}
         data-slot="rich-text-editor"
+        data-table-look={tableLook}
         data-full-screen={fullScreen || undefined}
         onKeyDown={leaveFullScreen}
         className={cn(
@@ -1030,7 +1072,6 @@ export default function MilkdownEditor({
             // and its id, aren't in the page (axe: aria-valid-attr-value).
             controls={editorState ? editableId : undefined}
             onFormat={runFormat}
-            onTable={runTable}
             onImage={upload ? pickImages : undefined}
             onFullScreen={toggleFullScreen}
             fullScreen={fullScreen}
@@ -1091,14 +1132,6 @@ export default function MilkdownEditor({
             // its line, are left alone.)
             '[&_img[src]]:inline-block [&_img[src]]:h-auto [&_img[src]]:max-w-full [&_img[src]]:rounded-md [&_img[src]]:align-bottom',
             '[&_img.ProseMirror-selectednode]:outline-2 [&_img.ProseMirror-selectednode]:outline-offset-2 [&_img.ProseMirror-selectednode]:outline-ring',
-            // A table: a header row on the muted fill, a line between every
-            // cell, cells that wrap and never shrink to nothing; selected
-            // cells (a drag across them) tinted.
-            '[&_table]:w-full [&_table]:border-collapse',
-            '[&_:is(td,th)]:min-w-28 [&_:is(td,th)]:border-r [&_:is(td,th)]:border-b [&_:is(td,th)]:border-border [&_:is(td,th)]:px-(--table-cell-px) [&_:is(td,th)]:py-(--table-cell-py) [&_:is(td,th)]:align-top',
-            '[&_:is(td,th):last-child]:border-r-0 [&_tr:last-child>td]:border-b-0',
-            '[&_th]:bg-muted [&_th]:text-left [&_th]:type-label',
-            '[&_.selectedCell]:bg-info/15',
             // Raw HTML from the text: shown as its characters, never as markup.
             '[&_span[data-type=html]]:rounded [&_span[data-type=html]]:bg-muted [&_span[data-type=html]]:px-1 [&_span[data-type=html]]:font-mono [&_span[data-type=html]]:text-foreground',
             // The placeholder, in an empty document only (a decoration).
@@ -1130,6 +1163,24 @@ export default function MilkdownEditor({
               widget.column,
               `${widget.key}-column`,
             ),
+            editorView &&
+              createPortal(
+                <TableGrips
+                  view={editorView}
+                  state={editorState}
+                  getPos={widget.getPos}
+                  frame={widget.frame}
+                  box={widget.box}
+                  table={widget.table}
+                  readOnly={readOnly}
+                  focused={focused}
+                  onAction={(cell, action) => runTableAt(widget.getPos, cell, action)}
+                  onColor={(cell, scope, color) => colorTableAt(widget.getPos, cell, scope, color)}
+                  text={textElement}
+                />,
+                widget.grips,
+                `${widget.key}-grips`,
+              ),
           ]
         })}
         {slashOpen && slash && editorView && (
