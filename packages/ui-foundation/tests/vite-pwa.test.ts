@@ -79,6 +79,15 @@ describe('pwaFiles', () => {
     expect(readPng(built.files.get('icons/apple-touch-icon.png')!.source as Buffer).width).toBe(180)
   })
 
+  it('takes its colours from the app’s palette when it names one', () => {
+    const built = pwaFiles({ name: 'Homebase', palette: 'indigo-cyan' })
+    expect(manifest(built)).toMatchObject({ theme_color: '#6682f5', background_color: '#13161b' })
+    expect(letterSvg('H', '#6682f5', '#090f25')).toBe(built.files.get('icons/icon.svg')!.source)
+    // An app's own colour still wins over its palette's.
+    expect(manifest(pwaFiles({ name: 'Homebase', palette: 'violet', themeColor: '#123456' })).theme_color).toBe('#123456')
+    expect(() => pwaFiles({ name: 'Homebase', palette: 'tangerine' as 'violet' })).toThrow(/tangerine/)
+  })
+
   it('serves the worker with the icon’s address, and no fetch handler', () => {
     const worker = text(pwaFiles({ name: 'App' }, '/app/'), 'push-sw.js')
     expect(worker).toContain("const ICON = '/app/icons/icon-192.png'")

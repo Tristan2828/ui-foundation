@@ -16,6 +16,7 @@ import { useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { AuthContext, type AuthContextValue } from '@/auth/auth-context'
 import { Button } from '@/components/ui/button'
+import { PaletteProvider } from '@/components/app/palette-provider'
 import { AppShell, type AppShellVersion, type BottomBarItem } from './app-shell'
 import type { NavEntry } from './app-shell-nav'
 import { EntityView } from './entity-view'
@@ -32,7 +33,9 @@ import { EntityView } from './entity-view'
 // title from the nav and from a record's view (Home, WithView…, #186),
 // the app's logo beside its title and alone on the rail (WithLogo…,
 // #211), a module's pages under its entry (Nested…, #239), and the
-// phone's bottom bar (BottomBar, #240; e2e/app-shell-bottom-bar.spec.ts).
+// phone's bottom bar (BottomBar, #240; e2e/app-shell-bottom-bar.spec.ts),
+// and an app with a palette, fixed or picked (WithPalette…,
+// e2e/palettes.spec.ts).
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -187,6 +190,7 @@ function Shell({
   sidebarOpen = true,
   view,
   logo,
+  palette,
 }: {
   nav: NavEntry[]
   path: string
@@ -197,6 +201,8 @@ function Shell({
   logo?: boolean
   /** /projects/:id is a project's EntityView. */
   view?: ShellView
+  /** An app with a palette (Indigo and Cyan): 'fixed', or 'picker' to offer all four. */
+  palette?: 'fixed' | 'picker'
 }) {
   const router = createMemoryRouter(
     [
@@ -220,10 +226,17 @@ function Shell({
     ],
     { initialEntries: [path] },
   )
-  return (
+  const shell = (
     <AuthContext.Provider value={SIGNED_IN}>
       <RouterProvider router={router} />
     </AuthContext.Provider>
+  )
+  return palette ? (
+    <PaletteProvider palette="indigo-cyan" picker={palette === 'picker'}>
+      {shell}
+    </PaletteProvider>
+  ) : (
+    shell
   )
 }
 
@@ -303,3 +316,9 @@ const BOTTOM_BAR: BottomBarItem[] = [
 ]
 
 export const BottomBar: Story = { args: { nav: NESTED, path: '/media/channels/3', bottomBar: BOTTOM_BAR } }
+
+// An app with a palette (design-language.md "Palettes"): no light/dark
+// toggle in the header; with the picker, the palette menu in its place.
+// Open them with `palette=indigo-cyan`, as FoundationProviders forces dark.
+export const WithPalette: Story = { args: { nav: SECTIONS, path: '/projects/7', palette: 'fixed' } }
+export const WithPalettePicker: Story = { args: { nav: SECTIONS, path: '/projects/7', palette: 'picker' } }

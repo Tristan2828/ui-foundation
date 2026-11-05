@@ -18,7 +18,8 @@
 //
 // Colours default to the package's tokens (styles/theme.css: --primary,
 // --primary-foreground, --background), converted to hex as a manifest
-// needs. An app that changed its tokens passes its own.
+// needs, or to its palette's with `palette` (the one FoundationProviders
+// names). An app that changed its tokens passes its own.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -34,7 +35,10 @@ const HEX = /^#[0-9a-f]{6}$/i
 
 /** The value of `--name` in theme.css's :root block, var() followed. */
 export function themeToken(css, name, seen = new Set()) {
-  const root = css.slice(css.indexOf(':root'), css.indexOf('.dark'))
+  // The first :root block, to its closing brace: a comment inside it may
+  // name other selectors (.dark, a palette's), so it can't end at one.
+  const start = css.indexOf(':root {')
+  const root = css.slice(start, css.indexOf('\n}', start))
   const match = new RegExp(`--${name}:\\s*([^;]+);`).exec(root)
   if (!match) throw new Error(`pwa: no --${name} in the theme.`)
   const value = match[1].trim()
@@ -71,12 +75,22 @@ export function oklchToHex(value) {
   return `#${linear.map((x) => toByte(x).toString(16).padStart(2, '0')).join('')}`
 }
 
-function colour(value, token) {
+// A palette's own colours for each token pwa() reads (styles/theme.css's
+// --palette-<name>-* primitives, already #rrggbb).
+const PALETTE_PARTS = { primary: 'accent', 'primary-foreground': 'on-accent', background: 'background' }
+
+function colour(value, token, palette) {
   if (value !== undefined) {
     if (!HEX.test(value)) throw new Error(`pwa: ${token} must be #rrggbb, not ${value}.`)
     return value.toLowerCase()
   }
-  return oklchToHex(themeToken(fs.readFileSync(THEME_CSS, 'utf8'), token))
+  const css = fs.readFileSync(THEME_CSS, 'utf8')
+  if (palette !== undefined) {
+    const hex = themeToken(css, `palette-${palette}-${PALETTE_PARTS[token]}`)
+    if (!HEX.test(hex)) throw new Error(`pwa: no palette "${palette}" in the theme.`)
+    return hex.toLowerCase()
+  }
+  return oklchToHex(themeToken(css, token))
 }
 
 // ---------------------------------------------------------------- icons
@@ -145,9 +159,9 @@ export function pwaFiles(options, base = '/', root = process.cwd()) {
   if (!options?.name?.trim()) throw new Error('pwa: `name` is required (the app as the Home Screen names it).')
   const name = options.name.trim()
   const shortName = options.shortName?.trim() || name
-  const theme = colour(options.themeColor, 'primary')
-  const onTheme = colour(options.themeForegroundColor, 'primary-foreground')
-  const background = colour(options.backgroundColor, 'background')
+  const theme = colour(options.themeColor, 'primary', options.palette)
+  const onTheme = colour(options.themeForegroundColor, 'primary-foreground', options.palette)
+  const background = colour(options.backgroundColor, 'background', options.palette)
   const at = (file) => `${base}${file}`
 
   /** @type {Map<string, { type: string, source: string | Buffer }>} */

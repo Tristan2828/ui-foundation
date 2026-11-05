@@ -3,25 +3,26 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 34–62
-- [The three badge styles](#the-three-badge-styles) · lines 64–81
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 83–112
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 114–127
-- [Logos and brand marks](#logos-and-brand-marks) · lines 129–173
-- [Categorical colour](#categorical-colour) · lines 175–245
-- [Typography](#typography) · lines 247–338
-  - [Written text (notes)](#written-text-notes) · lines 278–338
-- [Density](#density) · lines 340–397
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 399–513
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 515–584
-- [Notices](#notices) · lines 586–614
-- [A value over time](#a-value-over-time) · lines 616–694
-  - [Several values over time](#several-values-over-time) · lines 657–694
-- [A list as a board](#a-list-as-a-board) · lines 696–747
-- [A list as cards](#a-list-as-cards) · lines 749–795
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 797–819
-- [Picking at random](#picking-at-random) · lines 821–852
-- [Filling in what's missing](#filling-in-whats-missing) · lines 854–921
+- [Palettes](#palettes) · lines 35–93
+- [Semantic tones](#semantic-tones) · lines 95–123
+- [The three badge styles](#the-three-badge-styles) · lines 125–142
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 144–173
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 175–188
+- [Logos and brand marks](#logos-and-brand-marks) · lines 190–234
+- [Categorical colour](#categorical-colour) · lines 236–306
+- [Typography](#typography) · lines 308–399
+  - [Written text (notes)](#written-text-notes) · lines 339–399
+- [Density](#density) · lines 401–458
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 460–574
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 576–645
+- [Notices](#notices) · lines 647–675
+- [A value over time](#a-value-over-time) · lines 677–755
+  - [Several values over time](#several-values-over-time) · lines 718–755
+- [A list as a board](#a-list-as-a-board) · lines 757–808
+- [A list as cards](#a-list-as-cards) · lines 810–856
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 858–880
+- [Picking at random](#picking-at-random) · lines 882–913
+- [Filling in what's missing](#filling-in-whats-missing) · lines 915–982
 
 <!-- /index -->
 
@@ -30,6 +31,66 @@ its own: color that carries meaning, checked for contrast in both themes.
 Tokens and styles here **grow freely**, in the foundation package, so every
 app gets them: they do not wait for a second app to need them. New
 composites don't grow that way; they are built against a real app's screen.
+
+## Palettes
+
+A palette is an app's own dark look: its surfaces, text, accent and a
+second colour, chosen once for every app the foundation serves. There
+are four, in the order they were ranked:
+
+| Name | `palette` | Accent | Second colour |
+|---|---|---|---|
+| Indigo and Cyan | `indigo-cyan` | indigo, the only accent that passes 4.5:1 on cards | cyan |
+| Indigo and Rose | `indigo-rose` | indigo-violet | rose |
+| Graphite and Periwinkle | `graphite-periwinkle` | periwinkle on neutral grey | lilac |
+| Violet | `violet` | violet | magenta |
+
+**How an app picks one.** `<FoundationProviders palette="indigo-cyan">`
+names the app's default. Add `palettePicker` and the app shell's header
+offers all four (with swatches); the one picked is remembered on that
+device, and a new device starts on the default. `usePalette()` reads the
+palette on screen. Without `palette`, nothing changes: light and dark
+follow the system, with the toggle in the header.
+
+**A palette is dark only.** With one, the theme is forced dark and the
+shell has no light/dark toggle. The light theme stays for apps without a
+palette. Printed notes still print light: the print override beats a
+palette's block.
+
+**Where it lives.** `styles/theme.css`: each palette's colours as
+primitives (`--palette-<name>-*`, ratios beside them), and one block per
+palette, `.dark[data-palette="<name>"]`, that sets only what differs from
+`.dark`. `data-palette` goes on `<html>`, so popups portaled to `<body>`
+wear it too. An installed app's colours follow it with
+`pwa({ palette })`.
+
+**Why some tokens aren't the guide's colour as written.**
+
+- **The focus ring is the accent** (4.24 to 5.25:1 on the page), not the
+  guide's accent deep, which measured 2.30 to 2.91, under the 3:1 a focus
+  indicator needs.
+- **Links are accent light** (`--link`, 8.5:1 or more). The accent fails
+  4.5:1 as small text on Indigo and Rose and on Violet, and on every
+  palette's cards but Indigo and Cyan, so it is never small text: it is
+  the ring, the primary fill and the active item's tint. The `link`
+  Button variant is `text-link` for the same reason.
+- **The status colours are text shades.** The guide's success, warning
+  and danger are `--success-text`, `--warning-text` and
+  `--destructive-text` (soft badges, icons, coloured words). Solid fills
+  keep the deeper shades with white text: white on the guide's success
+  green measures 1.80. Info keeps its blue.
+- **Violet's text on its accent** is `#110823`, a shade darker than the
+  guide's `#130925`, which measured 4.496:1 (under 4.5).
+- **Danger text** is `#df7a72`, a shade lighter than the guide's
+  `#dc726a`, which measured 4.37 on Graphite's raised surface and 4.46 on
+  an outline button's fill (an invalid image field's message).
+- **Field borders** (`--input`, the guide's strong border) measure 2.5 to
+  2.9 against the page, under 3:1. It is already the lightest grey each
+  palette has, so it is kept as designed; axe doesn't check borders.
+
+The package's `e2e/fixtures-visual.spec.ts` runs every primitive,
+composite and tone story through axe in each palette, and measures every
+glyph and categorical slot against each palette's page and card.
 
 ## Semantic tones
 

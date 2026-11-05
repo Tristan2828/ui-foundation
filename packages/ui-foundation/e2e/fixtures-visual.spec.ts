@@ -54,6 +54,8 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 // <WidgetCard> is every hub page's widget: its header link, a row's tone
 // badge, muted note and switch, and the compact error, in every state.
 const COMPOSITE_STORIES = [
+  // Every Button variant: the link one reads in --link, never the accent.
+  { id: 'ui-button--variants', mustShow: 'Secondary' },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--features', mustShow: 'characters over the limit' },
@@ -304,6 +306,20 @@ function storyUrlById(id: string, theme: 'light' | 'dark', density?: 'large') {
   return `${HARNESS_URL}/story.html?id=${id}&${query}`
 }
 
+// The four palettes (styles/theme.css, design-language.md "Palettes"):
+// each is dark only, so each runs once, on top of the dark theme.
+const PALETTES = ['indigo-cyan', 'indigo-rose', 'graphite-periwinkle', 'violet'] as const
+type Palette = (typeof PALETTES)[number]
+
+function paletteUrl(id: string, palette: Palette) {
+  return `${HARNESS_URL}/story.html?id=${id}&theme=dark&palette=${palette}`
+}
+
+async function expectPalette(page: import('@playwright/test').Page, palette: Palette) {
+  await expect(page.locator('html')).toHaveClass(/dark/)
+  await expect(page.locator('html')).toHaveAttribute('data-palette', palette)
+}
+
 function storyUrl(name: string, theme: 'light' | 'dark') {
   return storyUrlById(`ui-${name}--default`, theme)
 }
@@ -368,6 +384,30 @@ test.describe('stories have zero axe violations in dark mode', () => {
       const results = await analyzeStory(page)
       expect(results.violations).toEqual([])
     })
+  }
+})
+
+// Every primitive, composite and tone story again in each palette: a
+// palette remaps the surfaces, text, accent and status shades, so each
+// answers for its own contrast (the ratios beside its primitives in
+// theme.css are what this re-measures against the rendered DOM).
+test.describe('stories have zero axe violations in each palette', () => {
+  const stories = [
+    ...PRIMITIVES.map((name) => ({ id: `ui-${name}--default`, mustShow: undefined as string | undefined })),
+    ...COMPOSITE_STORIES,
+    ...TONE_STORY_IDS.map((id) => ({ id, mustShow: 'outline-success' })),
+  ]
+  for (const palette of PALETTES) {
+    for (const { id, mustShow } of stories) {
+      test(`${id} is accessible (${palette})`, async ({ page }) => {
+        await page.goto(paletteUrl(id, palette))
+        await expectPalette(page, palette)
+        if (mustShow) await expect(page.getByText(mustShow)).toBeVisible()
+        else await expect(page.locator('#root')).toBeVisible()
+        const results = await analyzeStory(page)
+        expect(results.violations).toEqual([])
+      })
+    }
   }
 })
 
@@ -774,12 +814,17 @@ async function glyphContrasts(page: import('@playwright/test').Page) {
   })
 }
 
-test.describe('glyphs clear the 3:1 non-text minimum in both themes', () => {
+test.describe('glyphs clear the 3:1 non-text minimum in both themes and each palette', () => {
   for (const { id, open, shows = '[data-open]', name } of GLYPH_STORIES) {
-    for (const theme of ['light', 'dark'] as const) {
+    for (const theme of ['light', 'dark', ...PALETTES] as const) {
       test(`${id}${name ? ` ${name}` : ''} (${theme})`, async ({ page }) => {
-        await page.goto(storyUrlById(id, theme))
-        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        if (theme === 'light' || theme === 'dark') {
+          await page.goto(storyUrlById(id, theme))
+          if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        } else {
+          await page.goto(paletteUrl(id, theme))
+          await expectPalette(page, theme)
+        }
         await open?.(page)
         await expect(page.locator(open ? `${shows} svg` : '#root svg').first()).toBeVisible()
         const glyphs = await glyphContrasts(page)
@@ -792,14 +837,19 @@ test.describe('glyphs clear the 3:1 non-text minimum in both themes', () => {
 })
 
 // The categorical slots: each resolves to its own colour on both surfaces,
-// in both themes. A slot whose token is missing (in one theme, or from
+// in both themes and each palette. A slot whose token is missing (in one theme, or from
 // index.css's Tailwind colours) leaves its glyph the label's colour, which
 // the glyph check above would pass.
 test.describe('categorical slots', () => {
-  for (const theme of ['light', 'dark'] as const) {
+  for (const theme of ['light', 'dark', ...PALETTES] as const) {
     test(`all twelve are distinct colours on the page and on a card (${theme})`, async ({ page }) => {
-      await page.goto(storyUrlById('patterns-categoricalcolour--default', theme))
-      if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      if (theme === 'light' || theme === 'dark') {
+        await page.goto(storyUrlById('patterns-categoricalcolour--default', theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      } else {
+        await page.goto(paletteUrl('patterns-categoricalcolour--default', theme))
+        await expectPalette(page, theme)
+      }
       for (const surface of ['background', 'card']) {
         const list = page.locator(`[data-surface="${surface}"]`)
         await expect(list.locator('li')).toHaveCount(12)

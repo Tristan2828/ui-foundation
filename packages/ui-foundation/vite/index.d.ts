@@ -31,7 +31,13 @@ export type PwaOptions = {
   /** A shorter one for under the icon. Defaults to `name`; its first letter is the SVG icon's. */
   shortName?: string
   description?: string
-  /** `#rrggbb`. Defaults to the package's `--primary` token. */
+  /**
+   * The app's palette, the same one FoundationProviders names: the colours
+   * below default to its accent, its text on the accent and its background
+   * instead of the light theme's.
+   */
+  palette?: 'indigo-cyan' | 'indigo-rose' | 'graphite-periwinkle' | 'violet'
+  /** `#rrggbb`. Defaults to the package's `--primary` token (or the palette's accent). */
   themeColor?: string
   /** The letter's colour on the SVG icon, `#rrggbb`. Defaults to `--primary-foreground`. */
   themeForegroundColor?: string
