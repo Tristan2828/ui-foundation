@@ -5,11 +5,12 @@ import { expect, test, type Page } from '@playwright/test'
 // and opens the print dialog (stubbed here, counting calls); on paper the
 // copy is all there is (no rail, no shell, no buttons), folded text is
 // whole, tables are ruled with room in their cells, numbered questions
-// have space under them, and a dark screen still prints light. The copy
+// have space under them, and a dark screen still prints light, in a
+// palette too. The copy
 // goes when the dialog closes (afterprint).
 const STORY = 'http://localhost:6180/story.html?id=app-entityview--print-notes'
 
-async function open(page: Page, theme: 'light' | 'dark' = 'light') {
+async function open(page: Page, theme: 'light' | 'dark' = 'light', palette?: string) {
   await page.addInitScript(() => {
     const w = window as unknown as { printCalls: number }
     w.printCalls = 0
@@ -17,7 +18,7 @@ async function open(page: Page, theme: 'light' | 'dark' = 'light') {
       w.printCalls += 1
     }
   })
-  await page.goto(`${STORY}&theme=${theme}`)
+  await page.goto(`${STORY}&theme=${theme}${palette ? `&palette=${palette}` : ''}`)
   await expect(page.getByRole('heading', { level: 1, name: 'Check-up' })).toBeVisible()
 }
 
@@ -84,8 +85,10 @@ test('on paper: tables are ruled with room to write, questions have space under 
   expect(await prepItem.evaluate((el) => parseFloat(getComputedStyle(el).paddingBottom))).toBe(0)
 })
 
-test('a dark screen prints light', async ({ page }) => {
-  await open(page, 'dark')
+for (const palette of [undefined, 'indigo-cyan', 'violet']) {
+test(`a dark screen prints light${palette ? ` (palette ${palette})` : ''}`, async ({ page }) => {
+  await open(page, 'dark', palette)
+  if (palette) await expect(page.locator('html')).toHaveAttribute('data-palette', palette)
   const before = await page.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor)
   await page.getByRole('button', { name: 'Print notes' }).click()
   await page.emulateMedia({ media: 'print' })
@@ -99,4 +102,15 @@ test('a dark screen prints light', async ({ page }) => {
   })
   expect(paper.background).not.toBe(before)
   expect(paper.background).toBe(paper.white)
+  // Its text is the light theme's too, not the palette's.
+  const ink = await copy(page).evaluate((el) => {
+    const probe = document.createElement('div')
+    probe.style.color = 'var(--black)'
+    el.append(probe)
+    const black = getComputedStyle(probe).color
+    probe.remove()
+    return { color: getComputedStyle(el).color, black }
+  })
+  expect(ink.color).toBe(ink.black)
 })
+}

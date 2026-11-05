@@ -237,7 +237,7 @@ export function ModuleCard({
     <Card
       data-slot="module-card"
       data-state={state}
-      className={cn('relative h-full min-w-0 gap-0 py-0', mobile === 'row' && 'max-md:hidden', className)}
+      className={cn('glow-edge relative h-full min-w-0 gap-0 py-0', mobile === 'row' && 'max-md:hidden', className)}
     >
       {href !== undefined ? (
         <a href={href} target="_blank" rel="noreferrer" {...bandProps}>

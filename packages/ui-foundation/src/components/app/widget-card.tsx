@@ -180,7 +180,7 @@ export function WidgetCard({
       data-collapsed={collapsed || undefined}
       className={cn('min-w-0 self-start', className)}
     >
-      <Card className="density-compact:[--card-spacing:--spacing(3)]">
+      <Card className="glow-edge density-compact:[--card-spacing:--spacing(3)]">
         <CardHeader
           onClick={onHeaderClick}
           className={cn('flex items-center justify-between gap-3', inAccordion && 'cursor-pointer select-none')}
@@ -338,7 +338,11 @@ function WidgetListSkeleton({ rows }: { rows: number }) {
     <div data-state="loading" className="flex flex-col divide-y divide-border">
       <span className="sr-only">Loading</span>
       {Array.from({ length: rows }, (_, row) => (
-        <div key={row} className={ROW_CLASS}>
+        <div key={row} className={cn(ROW_CLASS, 'type-body')}>
+          {/* One line of type-body, so the row is a loaded row's height. */}
+          <span aria-hidden="true" className="-mr-3 w-0 overflow-hidden">
+            &nbsp;
+          </span>
           <Skeleton className={cn('h-4', SKELETON_WIDTHS[row % SKELETON_WIDTHS.length])} />
           <Skeleton className="ml-auto h-4 w-12" />
         </div>

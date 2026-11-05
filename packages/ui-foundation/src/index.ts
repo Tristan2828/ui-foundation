@@ -230,6 +230,8 @@ export {
 } from '@/hooks/use-session-clock'
 export { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion'
 export { useMuted } from '@/hooks/use-muted'
+export { usePalette, type PaletteState } from '@/hooks/use-palette'
+export { PALETTE_LABELS, PALETTE_STORAGE_KEY, PALETTES, isPaletteName, type PaletteName } from '@/lib/palettes'
 export {
   createPushController,
   usePushPermission,

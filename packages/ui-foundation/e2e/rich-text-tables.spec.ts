@@ -161,9 +161,14 @@ test.describe('rich-text tables', () => {
     await expect(table(page, 'markedTable').locator('td[data-color=green]')).toHaveText('$12.49')
   })
 
-  for (const theme of ['light', 'dark'] as const) {
+  // Light, dark, and dark in each palette (design-language.md "Palettes"):
+  // a palette remaps the heading band, the grid's borders and the washes' page.
+  const PALETTES = ['indigo-cyan', 'indigo-rose', 'graphite-periwinkle', 'violet']
+  for (const theme of ['light', 'dark', ...PALETTES] as const) {
     test(`both looks, coloured cells and row headers, a grip's menu open: zero axe violations (${theme})`, async ({ page }) => {
-      await page.goto(`${TABLES}&theme=${theme}`)
+      const query = PALETTES.includes(theme) ? `theme=dark&palette=${theme}` : `theme=${theme}`
+      await page.goto(`${TABLES}&${query}`)
+      if (PALETTES.includes(theme)) await expect(page.locator('html')).toHaveAttribute('data-palette', theme)
       await expect(table(page, 'markedTable')).toBeVisible()
       await cell(page, 'markedTable', 1, 2).hover()
       await columnGrip(page, 'markedTable').click()

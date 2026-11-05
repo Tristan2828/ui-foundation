@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import './harness.css'
 import { fixtures } from './registry'
-import { DENSITIES, THEMES, setGlobals } from './set-globals'
+import { DENSITIES, PALETTE_OPTIONS, THEMES, setGlobals } from './set-globals'
 
 // Every fixture, grouped by title, each a link to its own page. The theme and
 // density chosen here apply to this page and to the links.
@@ -32,11 +32,12 @@ function Select({ label, value, options, onChange }: {
 
 function Index() {
   const [theme, setTheme] = useState(params.get('theme') === 'dark' ? 'dark' : 'light')
+  const [palette, setPalette] = useState(params.get('palette') ?? 'none')
   const [density, setDensity] = useState(params.get('density') ?? 'default')
-  setGlobals(new URLSearchParams({ theme, density }))
+  setGlobals(new URLSearchParams({ theme, palette, density }))
   const groups = new Map<string, typeof fixtures>()
   for (const fixture of fixtures) groups.set(fixture.title, [...(groups.get(fixture.title) ?? []), fixture])
-  const href = (id: string) => `story.html?id=${id}&theme=${theme}&density=${density}`
+  const href = (id: string) => `story.html?id=${id}&theme=${theme}&palette=${palette}&density=${density}`
   return (
     <main className="mx-auto max-w-4xl p-6">
       <h1 className="text-2xl font-semibold">Fixtures</h1>
@@ -45,6 +46,7 @@ function Index() {
       </p>
       <div className="mt-4 flex gap-4 text-sm">
         <Select label="Theme" value={theme} options={THEMES} onChange={setTheme} />
+        <Select label="Palette" value={palette} options={PALETTE_OPTIONS} onChange={setPalette} />
         <Select label="Density" value={density} options={DENSITIES} onChange={setDensity} />
       </div>
       {[...groups].map(([title, items]) => (

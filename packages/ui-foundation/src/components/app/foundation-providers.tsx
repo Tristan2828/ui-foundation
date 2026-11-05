@@ -4,12 +4,14 @@ import { createQueryClient } from '@/api/query-client'
 import { AuthProvider } from '@/auth/use-auth'
 import { MockModeBanner } from '@/components/app/mock-mode-banner'
 import { ThemeProvider } from '@/components/theme-provider'
+import { PaletteProvider } from '@/components/app/palette-provider'
+import type { PaletteName } from '@/lib/palettes'
 import { ErrorReportingProvider } from '@/error-reporting/error-reporting-provider'
 import { resolveErrorReporting, type ErrorReportingOptions } from '@/error-reporting/reporter'
 import { browserStaleChunkReload } from '@/lib/stale-chunk-reload'
 
 // Everything an app's root needs around its router, in the order that
-// works: the theme outermost, the mock-mode banner above the router so it
+// works: the theme outermost (and the palette, which forces it dark), the mock-mode banner above the router so it
 // shows on every route (/login included), and AuthProvider inside
 // QueryClientProvider because it queries /auth/me through TanStack Query.
 // An app's DataEnvironmentBanner goes first among the children, before its
@@ -20,6 +22,8 @@ export function FoundationProviders({
   mockMode,
   queryClient,
   errorReporting,
+  palette,
+  palettePicker = false,
   children,
 }: {
   /** Whether the API is served by MSW — the app's own IS_MOCK_MODE. */
@@ -33,19 +37,33 @@ export function FoundationProviders({
    * report holds and never holds. `{ release }` names the build.
    */
   errorReporting?: boolean | ErrorReportingOptions
+  /**
+   * The app's palette (design-language.md "Palettes"). With one, the app
+   * is always dark in that palette and the shell has no light/dark
+   * toggle; printed notes still print light. Without, light and dark
+   * follow the system, as before.
+   */
+  palette?: PaletteName
+  /**
+   * With `palette`: the shell offers all four palettes, and the one picked
+   * is remembered on this device. A new device starts on `palette`.
+   */
+  palettePicker?: boolean
   children: ReactNode
 }) {
   const [client] = useState(() => queryClient ?? createQueryClient())
   const reporting = resolveErrorReporting(errorReporting)
   useEffect(() => browserStaleChunkReload().install(window), [])
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem forcedTheme={palette ? 'dark' : undefined}>
+      <PaletteProvider palette={palette} picker={palettePicker}>
       <MockModeBanner active={mockMode} />
       <QueryClientProvider client={client}>
         <AuthProvider>
           {reporting ? <ErrorReportingProvider options={reporting}>{children}</ErrorReportingProvider> : children}
         </AuthProvider>
       </QueryClientProvider>
+      </PaletteProvider>
     </ThemeProvider>
   )
 }

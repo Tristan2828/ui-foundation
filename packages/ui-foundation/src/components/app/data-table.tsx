@@ -1415,7 +1415,7 @@ function Cards<TData extends Record<string, unknown>>({
       )}
     >
       {items.map((row) => (
-        <li key={row.id} data-slot="data-table-card" className="min-w-0">
+        <li key={row.id} data-slot="data-table-card" className="min-w-0 *:data-[slot=card]:glow-edge">
           {layout.renderCard(row.original)}
         </li>
       ))}

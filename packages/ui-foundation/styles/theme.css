@@ -112,7 +112,97 @@
   --category-12-400: oklch(0.648 0.232 337);
   --blue-500: oklch(0.488 0.243 264.376);
 
-  --radius-base: 0.625rem;
+  /*
+   * Palette primitives (design-language.md "Palettes"). A palette is an
+   * app's own dark look: these four were chosen for the shared style
+   * guide, and an app names one (FoundationProviders' `palette`). Each is
+   * the guide's colours as written, with one change: Violet's text on its
+   * accent was #130925 (4.496:1, just under 4.5) and is #110823 (4.54:1).
+   * The semantic blocks under `.dark[data-palette]`, at the end of this
+   * file, map them onto the tokens components use. Ratios are against the
+   * palette's own background (bg), card and raised surfaces (WCAG 2.x,
+   * sRGB), listed 1 Indigo and Cyan / 2 Indigo and Rose / 3 Graphite and
+   * Periwinkle / 4 Violet:
+   *
+   *   text           on bg 15.0 / 15.3 / 15.0 / 15.0, on card 13.4 / 13.9 / 13.4 / 13.4
+   *   dim            on bg 7.47 / 7.42 / 7.54 / 7.47, on raised 5.87 / 6.06 / 5.79 / 5.87
+   *   accent         on bg 5.25 / 4.33 / 4.87 / 4.24, on card 4.68 / 3.94 / 4.32 / 3.78:
+   *                  never small text (2 and 4 fail); the ring and fills only
+   *   on-accent      on accent 5.49 / 4.51 / 5.28 / 4.54
+   *   accent-light   on bg 10.3 / 9.65 / 10.4 / 8.53, on card 9.16 / 8.77 / 9.19 / 7.61: links
+   *   strong-border  on bg 2.79 / 2.53 / 2.89 / 2.79: under 3:1, the guide's
+   *                  lightest grey, kept as designed (axe doesn't check borders)
+   *   second         on card 9.47 / 5.85 / 5.08 / 4.79
+   */
+  --palette-indigo-cyan-background: #13161b;
+  --palette-indigo-cyan-panel: #1c2129;
+  --palette-indigo-cyan-raised: #252b35;
+  --palette-indigo-cyan-border: #38414d;
+  --palette-indigo-cyan-strong-border: #535f6f;
+  --palette-indigo-cyan-text: #e7eaee;
+  --palette-indigo-cyan-dim: #a0a7b1;
+  --palette-indigo-cyan-accent: #6682f5;
+  --palette-indigo-cyan-accent-light: #b2c1fa;
+  --palette-indigo-cyan-accent-deep: #224cf1;
+  --palette-indigo-cyan-on-accent: #090f25;
+  --palette-indigo-cyan-second: #6dd4ee;
+
+  --palette-indigo-rose-background: #101219;
+  --palette-indigo-rose-panel: #181c28;
+  --palette-indigo-rose-raised: #202534;
+  --palette-indigo-rose-border: #32394e;
+  --palette-indigo-rose-strong-border: #4c5570;
+  --palette-indigo-rose-text: #e6e8ef;
+  --palette-indigo-rose-dim: #9da3b4;
+  --palette-indigo-rose-accent: #6868f3;
+  --palette-indigo-rose-accent-light: #b4b4f9;
+  --palette-indigo-rose-accent-deep: #2626ed;
+  --palette-indigo-rose-on-accent: #090925;
+  --palette-indigo-rose-second: #ec6f8e;
+
+  --palette-graphite-periwinkle-background: #171717;
+  --palette-graphite-periwinkle-panel: #222222;
+  --palette-graphite-periwinkle-raised: #2d2d2d;
+  --palette-graphite-periwinkle-border: #424242;
+  --palette-graphite-periwinkle-strong-border: #616161;
+  --palette-graphite-periwinkle-text: #ebebeb;
+  --palette-graphite-periwinkle-dim: #a8a8a8;
+  --palette-graphite-periwinkle-accent: #7f75f0;
+  --palette-graphite-periwinkle-accent-light: #c3bff8;
+  --palette-graphite-periwinkle-accent-deep: #4435e9;
+  --palette-graphite-periwinkle-on-accent: #0b0925;
+  --palette-graphite-periwinkle-second: #a97bea;
+
+  --palette-violet-background: #13161b;
+  --palette-violet-panel: #1c2129;
+  --palette-violet-raised: #252b35;
+  --palette-violet-border: #38414d;
+  --palette-violet-strong-border: #535f6f;
+  --palette-violet-text: #e7eaee;
+  --palette-violet-dim: #a0a7b1;
+  --palette-violet-accent: #905ceb;
+  --palette-violet-accent-light: #c1a4f4;
+  --palette-violet-accent-deep: #651ce3;
+  --palette-violet-on-accent: #110823;
+  --palette-violet-second: #c363e4;
+
+  /*
+   * The status colours every palette shares, as TEXT shades (--*-text):
+   * soft badges, icons, coloured words. Never fills: white on the success
+   * shade measures 1.80, so solid fills keep the deeper -500/-700 shades
+   * above, with white text. On bg / card / raised, the lowest palette:
+   *   success 9.95 / 8.83 / 7.64, warning 9.03 / 8.02 / 6.94,
+   *   danger 6.12 / 5.44 / 4.70.
+   * Danger is a shade lighter than the guide's #dc726a, which measured
+   * 4.37 on Graphite's raised surface and 4.46 on an outline button's fill.
+   */
+  --palette-success: #66d69a;
+  --palette-warning: #e0b152;
+  --palette-danger: #df7a72;
+
+  /* 9px (the shared style guide): buttons and cards on --radius, fields
+     on --radius-md (about 7px). */
+  --radius-base: 0.5625rem;
 
   /*
    * Typography roles (conventions/docs/design-language.md "Typography").
@@ -123,14 +213,17 @@
    * The values are what the package and template already used, so moving
    * onto a role changes nothing visible.
    */
-  --type-page-title-size: 1.125rem; /* was text-lg font-semibold */
-  --type-page-title-leading: 1.75rem;
+  --type-page-title-size: 1.75rem; /* 28px, the shared style guide's */
+  --type-page-title-leading: 1.2;
   --type-page-title-weight: 600;
   --type-section-title-size: 1rem;
   --type-section-title-leading: 1.5rem;
   --type-section-title-weight: 600;
+  /* Headings draw in a little (the page and section titles, and written
+     text's # and ##); labels and body keep the font's own spacing. */
+  --type-heading-tracking: -0.02em;
   --type-body-size: 0.875rem; /* text-sm: tables, forms, most UI text */
-  --type-body-leading: 1.25rem;
+  --type-body-leading: 1.5;
   --type-body-weight: 400;
   --type-label-size: 0.875rem; /* column headers, field labels */
   --type-label-leading: 1.25rem;
@@ -166,8 +259,26 @@
    * The default is what the table always had.
    */
   --table-cell-px: 0.5rem;
-  --table-cell-py: 0.5rem;
-  --table-head-height: 2.5rem;
+  /* Compact rows by default (the shared style guide, chosen from the
+     review screenshots on 2026-11-04): 4px around the line, a 32px
+     header. data-density="compact" keeps them so and tightens a hub's
+     cards; comfortable opens them up. */
+  --table-cell-py: 0.25rem;
+  --table-head-height: 2rem;
+  /*
+   * Glow (the shared style guide), drawn only under a palette (index.css's
+   * `palette:` variant and glow-edge): the accent as one soft layer, from
+   * --primary, so each palette's glow is its own accent.
+   *   --primary-glow   a primary button on hover, keyboard focus and press:
+   *                    38px blur, 2px spread, 38%
+   *   --edge-glow      a hovered hub tile, widget or card: a softer halo
+   *                    beside its accent edge
+   *   --thumb-glow     a slider's thumb
+   */
+  --primary-glow: 0 0 38px 2px color-mix(in srgb, var(--primary) 38%, transparent);
+  --edge-glow: 0 0 18px 0 color-mix(in srgb, var(--primary) 28%, transparent);
+  --thumb-glow: 0 0 10px 2px color-mix(in srgb, var(--primary) 50%, transparent);
+
   /* The small size of Button and Toggle (and the calendar's weekdays):
      between text-xs and text-sm, so it has a token of its own for the
      large density to scale. */
@@ -258,6 +369,16 @@
   --chart-3: var(--gray-600);
   --chart-4: var(--gray-700);
   --chart-5: var(--gray-900);
+  /* A palette's second colour (a neighbouring hue): a chart's fourth
+     series, anything that needs a colour beside the accent. Without a
+     palette it is a grey, as the charts are. */
+  --accent-second: var(--gray-700);
+  /* A card (the shared style guide): a soft shadow under its border, and
+     its header a tinted bar. The shadow is 30% in dark, where the guide
+     set it, and lighter on white. Text on the bar: foreground and muted
+     foreground as on --muted. */
+  --card-shadow: 0 6px 14px oklch(0 0 0 / 8%);
+  --card-header: color-mix(in srgb, var(--muted) 60%, var(--card));
   --radius: var(--radius-base);
   --sidebar: var(--gray-50);
   --sidebar-foreground: var(--black);
@@ -270,7 +391,7 @@
 }
 
 [data-density="compact"] {
-  --table-cell-py: 0.25rem;
+  --table-cell-py: 0.25rem; /* the default's, since the default is compact */
   --table-head-height: 2rem;
 }
 
@@ -307,14 +428,12 @@
   --text-xl: 1.5625rem; /* 20 → 25px */
   --text-2xl: 1.875rem; /* 24 → 30px */
   --control-text-sm: 1rem; /* 12.8 → 16px */
-  --radius: 0.75rem; /* 10 → 12px, so larger controls keep their shape */
+  --radius: 0.6875rem; /* 9 → 11px, so larger controls keep their shape */
 
-  --type-page-title-size: 1.375rem;
-  --type-page-title-leading: 2.125rem;
+  --type-page-title-size: 2.1875rem; /* 28 → 35px */
   --type-section-title-size: 1.25rem;
   --type-section-title-leading: 1.875rem;
   --type-body-size: 1.125rem;
-  --type-body-leading: 1.625rem;
   --type-label-size: 1.125rem;
   --type-label-leading: 1.625rem;
   --type-caption-size: 0.9375rem;
@@ -398,6 +517,9 @@
   --chart-3: var(--gray-600);
   --chart-4: var(--gray-700);
   --chart-5: var(--gray-900);
+  --accent-second: var(--gray-700);
+  --card-shadow: 0 6px 14px oklch(0 0 0 / 30%);
+  --card-header: color-mix(in srgb, var(--muted) 60%, var(--card));
   --sidebar: var(--gray-950);
   --sidebar-foreground: var(--gray-50);
   --sidebar-primary: var(--blue-500);
@@ -406,4 +528,192 @@
   --sidebar-accent-foreground: var(--gray-50);
   --sidebar-border: var(--white-a10);
   --sidebar-ring: var(--gray-500);
+}
+
+/*
+ * Palettes (design-language.md "Palettes"): an app's own dark look.
+ * FoundationProviders' `palette` puts data-palette on <html> and forces
+ * the dark theme, so a block below always sits on top of .dark and sets
+ * only what differs from it. The solid fills (--destructive, --success,
+ * --warning, --info, each with white -foreground), --info-text, the
+ * highlight washes and the categorical slots stay .dark's.
+ *
+ *   --ring is the accent (4.24 to 5.25 on the page), not the guide's
+ *     accent deep (2.30 to 2.91, under the 3:1 a focus ring needs).
+ *   --link is accent light: the accent fails 4.5 as small text on 2 and 4.
+ *   --*-text are the shared status shades; the fills are unchanged.
+ *   --sidebar-accent, the active and hovered item, is a soft accent tint
+ *     on the panel (16%): text on it 10.8 / 11.6 / 10.9 / 11.2, dim 5.35
+ *     at the least.
+ *   Derived in .dark and resolved with these values, since both blocks
+ *     apply to <html>: --table-stripe (dim on it 6.86 at the
+ *     least), --table-highlight (dim 6.30), --heading-band (text 7.79).
+ *   --rule is the strong border (2.53 to 2.89; .dark's was 2.54).
+ *
+ * Printed notes still print light: index.css's print override is more
+ * specific than these blocks (tests: entity-view-print.spec.ts).
+ */
+
+.dark[data-palette="indigo-cyan"] {
+  --background: var(--palette-indigo-cyan-background);
+  --foreground: var(--palette-indigo-cyan-text);
+  --card: var(--palette-indigo-cyan-panel);
+  --card-foreground: var(--palette-indigo-cyan-text);
+  --popover: var(--palette-indigo-cyan-panel);
+  --popover-foreground: var(--palette-indigo-cyan-text);
+  --primary: var(--palette-indigo-cyan-accent);
+  --primary-foreground: var(--palette-indigo-cyan-on-accent);
+  --secondary: var(--palette-indigo-cyan-raised);
+  --secondary-foreground: var(--palette-indigo-cyan-text);
+  --muted: var(--palette-indigo-cyan-raised);
+  --muted-foreground: var(--palette-indigo-cyan-dim);
+  --accent: var(--palette-indigo-cyan-raised);
+  --accent-foreground: var(--palette-indigo-cyan-text);
+  --accent-second: var(--palette-indigo-cyan-second);
+  --destructive-text: var(--palette-danger);
+  --success-text: var(--palette-success);
+  --warning-text: var(--palette-warning);
+  --link: var(--palette-indigo-cyan-accent-light);
+  --heading-bar: var(--palette-indigo-cyan-accent-light);
+  --rule: var(--palette-indigo-cyan-strong-border);
+  --table-highlight-muted-foreground: var(--palette-indigo-cyan-dim);
+  --border: var(--palette-indigo-cyan-border);
+  --input: var(--palette-indigo-cyan-strong-border);
+  --ring: var(--palette-indigo-cyan-accent);
+  --chart-1: var(--palette-indigo-cyan-accent-light);
+  --chart-2: var(--palette-indigo-cyan-accent);
+  --chart-3: var(--palette-indigo-cyan-accent-deep);
+  --chart-4: var(--palette-indigo-cyan-second);
+  --chart-5: var(--palette-indigo-cyan-border);
+  --sidebar: var(--palette-indigo-cyan-panel);
+  --sidebar-foreground: var(--palette-indigo-cyan-text);
+  --sidebar-primary: var(--palette-indigo-cyan-accent);
+  --sidebar-primary-foreground: var(--palette-indigo-cyan-on-accent);
+  --sidebar-accent: color-mix(in srgb, var(--palette-indigo-cyan-accent) 16%, var(--palette-indigo-cyan-panel));
+  --sidebar-accent-foreground: var(--palette-indigo-cyan-text);
+  --sidebar-border: var(--palette-indigo-cyan-border);
+  --sidebar-ring: var(--palette-indigo-cyan-accent);
+}
+
+.dark[data-palette="indigo-rose"] {
+  --background: var(--palette-indigo-rose-background);
+  --foreground: var(--palette-indigo-rose-text);
+  --card: var(--palette-indigo-rose-panel);
+  --card-foreground: var(--palette-indigo-rose-text);
+  --popover: var(--palette-indigo-rose-panel);
+  --popover-foreground: var(--palette-indigo-rose-text);
+  --primary: var(--palette-indigo-rose-accent);
+  --primary-foreground: var(--palette-indigo-rose-on-accent);
+  --secondary: var(--palette-indigo-rose-raised);
+  --secondary-foreground: var(--palette-indigo-rose-text);
+  --muted: var(--palette-indigo-rose-raised);
+  --muted-foreground: var(--palette-indigo-rose-dim);
+  --accent: var(--palette-indigo-rose-raised);
+  --accent-foreground: var(--palette-indigo-rose-text);
+  --accent-second: var(--palette-indigo-rose-second);
+  --destructive-text: var(--palette-danger);
+  --success-text: var(--palette-success);
+  --warning-text: var(--palette-warning);
+  --link: var(--palette-indigo-rose-accent-light);
+  --heading-bar: var(--palette-indigo-rose-accent-light);
+  --rule: var(--palette-indigo-rose-strong-border);
+  --table-highlight-muted-foreground: var(--palette-indigo-rose-dim);
+  --border: var(--palette-indigo-rose-border);
+  --input: var(--palette-indigo-rose-strong-border);
+  --ring: var(--palette-indigo-rose-accent);
+  --chart-1: var(--palette-indigo-rose-accent-light);
+  --chart-2: var(--palette-indigo-rose-accent);
+  --chart-3: var(--palette-indigo-rose-accent-deep);
+  --chart-4: var(--palette-indigo-rose-second);
+  --chart-5: var(--palette-indigo-rose-border);
+  --sidebar: var(--palette-indigo-rose-panel);
+  --sidebar-foreground: var(--palette-indigo-rose-text);
+  --sidebar-primary: var(--palette-indigo-rose-accent);
+  --sidebar-primary-foreground: var(--palette-indigo-rose-on-accent);
+  --sidebar-accent: color-mix(in srgb, var(--palette-indigo-rose-accent) 16%, var(--palette-indigo-rose-panel));
+  --sidebar-accent-foreground: var(--palette-indigo-rose-text);
+  --sidebar-border: var(--palette-indigo-rose-border);
+  --sidebar-ring: var(--palette-indigo-rose-accent);
+}
+
+.dark[data-palette="graphite-periwinkle"] {
+  --background: var(--palette-graphite-periwinkle-background);
+  --foreground: var(--palette-graphite-periwinkle-text);
+  --card: var(--palette-graphite-periwinkle-panel);
+  --card-foreground: var(--palette-graphite-periwinkle-text);
+  --popover: var(--palette-graphite-periwinkle-panel);
+  --popover-foreground: var(--palette-graphite-periwinkle-text);
+  --primary: var(--palette-graphite-periwinkle-accent);
+  --primary-foreground: var(--palette-graphite-periwinkle-on-accent);
+  --secondary: var(--palette-graphite-periwinkle-raised);
+  --secondary-foreground: var(--palette-graphite-periwinkle-text);
+  --muted: var(--palette-graphite-periwinkle-raised);
+  --muted-foreground: var(--palette-graphite-periwinkle-dim);
+  --accent: var(--palette-graphite-periwinkle-raised);
+  --accent-foreground: var(--palette-graphite-periwinkle-text);
+  --accent-second: var(--palette-graphite-periwinkle-second);
+  --destructive-text: var(--palette-danger);
+  --success-text: var(--palette-success);
+  --warning-text: var(--palette-warning);
+  --link: var(--palette-graphite-periwinkle-accent-light);
+  --heading-bar: var(--palette-graphite-periwinkle-accent-light);
+  --rule: var(--palette-graphite-periwinkle-strong-border);
+  --table-highlight-muted-foreground: var(--palette-graphite-periwinkle-dim);
+  --border: var(--palette-graphite-periwinkle-border);
+  --input: var(--palette-graphite-periwinkle-strong-border);
+  --ring: var(--palette-graphite-periwinkle-accent);
+  --chart-1: var(--palette-graphite-periwinkle-accent-light);
+  --chart-2: var(--palette-graphite-periwinkle-accent);
+  --chart-3: var(--palette-graphite-periwinkle-accent-deep);
+  --chart-4: var(--palette-graphite-periwinkle-second);
+  --chart-5: var(--palette-graphite-periwinkle-border);
+  --sidebar: var(--palette-graphite-periwinkle-panel);
+  --sidebar-foreground: var(--palette-graphite-periwinkle-text);
+  --sidebar-primary: var(--palette-graphite-periwinkle-accent);
+  --sidebar-primary-foreground: var(--palette-graphite-periwinkle-on-accent);
+  --sidebar-accent: color-mix(in srgb, var(--palette-graphite-periwinkle-accent) 16%, var(--palette-graphite-periwinkle-panel));
+  --sidebar-accent-foreground: var(--palette-graphite-periwinkle-text);
+  --sidebar-border: var(--palette-graphite-periwinkle-border);
+  --sidebar-ring: var(--palette-graphite-periwinkle-accent);
+}
+
+.dark[data-palette="violet"] {
+  --background: var(--palette-violet-background);
+  --foreground: var(--palette-violet-text);
+  --card: var(--palette-violet-panel);
+  --card-foreground: var(--palette-violet-text);
+  --popover: var(--palette-violet-panel);
+  --popover-foreground: var(--palette-violet-text);
+  --primary: var(--palette-violet-accent);
+  --primary-foreground: var(--palette-violet-on-accent);
+  --secondary: var(--palette-violet-raised);
+  --secondary-foreground: var(--palette-violet-text);
+  --muted: var(--palette-violet-raised);
+  --muted-foreground: var(--palette-violet-dim);
+  --accent: var(--palette-violet-raised);
+  --accent-foreground: var(--palette-violet-text);
+  --accent-second: var(--palette-violet-second);
+  --destructive-text: var(--palette-danger);
+  --success-text: var(--palette-success);
+  --warning-text: var(--palette-warning);
+  --link: var(--palette-violet-accent-light);
+  --heading-bar: var(--palette-violet-accent-light);
+  --rule: var(--palette-violet-strong-border);
+  --table-highlight-muted-foreground: var(--palette-violet-dim);
+  --border: var(--palette-violet-border);
+  --input: var(--palette-violet-strong-border);
+  --ring: var(--palette-violet-accent);
+  --chart-1: var(--palette-violet-accent-light);
+  --chart-2: var(--palette-violet-accent);
+  --chart-3: var(--palette-violet-accent-deep);
+  --chart-4: var(--palette-violet-second);
+  --chart-5: var(--palette-violet-border);
+  --sidebar: var(--palette-violet-panel);
+  --sidebar-foreground: var(--palette-violet-text);
+  --sidebar-primary: var(--palette-violet-accent);
+  --sidebar-primary-foreground: var(--palette-violet-on-accent);
+  --sidebar-accent: color-mix(in srgb, var(--palette-violet-accent) 16%, var(--palette-violet-panel));
+  --sidebar-accent-foreground: var(--palette-violet-text);
+  --sidebar-border: var(--palette-violet-border);
+  --sidebar-ring: var(--palette-violet-accent);
 }

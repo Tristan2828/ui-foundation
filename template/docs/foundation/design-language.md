@@ -3,25 +3,28 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Semantic tones](#semantic-tones) · lines 34–62
-- [The three badge styles](#the-three-badge-styles) · lines 64–81
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 83–112
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 114–127
-- [Logos and brand marks](#logos-and-brand-marks) · lines 129–173
-- [Categorical colour](#categorical-colour) · lines 175–245
-- [Typography](#typography) · lines 247–338
-  - [Written text (notes)](#written-text-notes) · lines 278–338
-- [Density](#density) · lines 340–397
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 399–513
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 515–584
-- [Notices](#notices) · lines 586–614
-- [A value over time](#a-value-over-time) · lines 616–694
-  - [Several values over time](#several-values-over-time) · lines 657–694
-- [A list as a board](#a-list-as-a-board) · lines 696–747
-- [A list as cards](#a-list-as-cards) · lines 749–795
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 797–819
-- [Picking at random](#picking-at-random) · lines 821–852
-- [Filling in what's missing](#filling-in-whats-missing) · lines 854–921
+- [Palettes](#palettes) · lines 37–95
+- [Glow](#glow) · lines 97–115
+- [Semantic tones](#semantic-tones) · lines 117–145
+- [The three badge styles](#the-three-badge-styles) · lines 147–164
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 166–195
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 197–210
+- [Logos and brand marks](#logos-and-brand-marks) · lines 212–256
+- [Categorical colour](#categorical-colour) · lines 258–328
+- [Shapes and sizes](#shapes-and-sizes) · lines 330–351
+- [Typography](#typography) · lines 353–447
+  - [Written text (notes)](#written-text-notes) · lines 387–447
+- [Density](#density) · lines 449–506
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 508–622
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 624–693
+- [Notices](#notices) · lines 695–723
+- [A value over time](#a-value-over-time) · lines 725–803
+  - [Several values over time](#several-values-over-time) · lines 766–803
+- [A list as a board](#a-list-as-a-board) · lines 805–856
+- [A list as cards](#a-list-as-cards) · lines 858–904
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 906–928
+- [Picking at random](#picking-at-random) · lines 930–961
+- [Filling in what's missing](#filling-in-whats-missing) · lines 963–1030
 
 <!-- /index -->
 
@@ -30,6 +33,86 @@ its own: color that carries meaning, checked for contrast in both themes.
 Tokens and styles here **grow freely**, in the foundation package, so every
 app gets them: they do not wait for a second app to need them. New
 composites don't grow that way; they are built against a real app's screen.
+
+## Palettes
+
+A palette is an app's own dark look: its surfaces, text, accent and a
+second colour, chosen once for every app the foundation serves. There
+are four, in the order they were ranked:
+
+| Name | `palette` | Accent | Second colour |
+|---|---|---|---|
+| Indigo and Cyan | `indigo-cyan` | indigo, the only accent that passes 4.5:1 on cards | cyan |
+| Indigo and Rose | `indigo-rose` | indigo-violet | rose |
+| Graphite and Periwinkle | `graphite-periwinkle` | periwinkle on neutral grey | lilac |
+| Violet | `violet` | violet | magenta |
+
+**How an app picks one.** `<FoundationProviders palette="indigo-cyan">`
+names the app's default. Add `palettePicker` and the app shell's header
+offers all four (with swatches); the one picked is remembered on that
+device, and a new device starts on the default. `usePalette()` reads the
+palette on screen. Without `palette`, nothing changes: light and dark
+follow the system, with the toggle in the header.
+
+**A palette is dark only.** With one, the theme is forced dark and the
+shell has no light/dark toggle. The light theme stays for apps without a
+palette. Printed notes still print light: the print override beats a
+palette's block.
+
+**Where it lives.** `styles/theme.css`: each palette's colours as
+primitives (`--palette-<name>-*`, ratios beside them), and one block per
+palette, `.dark[data-palette="<name>"]`, that sets only what differs from
+`.dark`. `data-palette` goes on `<html>`, so popups portaled to `<body>`
+wear it too. An installed app's colours follow it with
+`pwa({ palette })`.
+
+**Why some tokens aren't the guide's colour as written.**
+
+- **The focus ring is the accent** (4.24 to 5.25:1 on the page), not the
+  guide's accent deep, which measured 2.30 to 2.91, under the 3:1 a focus
+  indicator needs.
+- **Links are accent light** (`--link`, 8.5:1 or more). The accent fails
+  4.5:1 as small text on Indigo and Rose and on Violet, and on every
+  palette's cards but Indigo and Cyan, so it is never small text: it is
+  the ring, the primary fill and the active item's tint. The `link`
+  Button variant is `text-link` for the same reason.
+- **The status colours are text shades.** The guide's success, warning
+  and danger are `--success-text`, `--warning-text` and
+  `--destructive-text` (soft badges, icons, coloured words). Solid fills
+  keep the deeper shades with white text: white on the guide's success
+  green measures 1.80. Info keeps its blue.
+- **Violet's text on its accent** is `#110823`, a shade darker than the
+  guide's `#130925`, which measured 4.496:1 (under 4.5).
+- **Danger text** is `#df7a72`, a shade lighter than the guide's
+  `#dc726a`, which measured 4.37 on Graphite's raised surface and 4.46 on
+  an outline button's fill (an invalid image field's message).
+- **Field borders** (`--input`, the guide's strong border) measure 2.5 to
+  2.9 against the page, under 3:1. It is already the lightest grey each
+  palette has, so it is kept as designed; axe doesn't check borders.
+
+The package's `e2e/fixtures-visual.spec.ts` runs every primitive,
+composite and tone story through axe in each palette, and measures every
+glyph and categorical slot against each palette's page and card.
+
+## Glow
+
+Under a palette only, from `--primary` so each palette glows in its own
+accent; an app without a palette never gets it. Everything else stays
+flat: no glow at the top of the page.
+
+- **The primary button** (Button's default variant) on hover, keyboard
+  focus and press: one soft layer of the accent (`--primary-glow`: 38px
+  blur, 2px spread, 38%), and on hover a shine sweeping across once
+  (650ms). Under reduced motion, no shine and no shrink. Secondary,
+  outline, ghost and destructive buttons never glow.
+- **A hovered card**: its edge turns the accent with a soft halo
+  (`--edge-glow`), through the `glow-edge` utility. `ModuleCard`,
+  `WidgetCard` and `Board`'s cards carry it, and a `DataTable` card
+  layout's `Card`s; an app's own card takes the class.
+- **A slider's thumb** (`ui/slider`): a small halo (`--thumb-glow`).
+
+For anything else of an app's own, `palette:` is the variant
+(`palette:hover:shadow-(--primary-glow)`).
 
 ## Semantic tones
 
@@ -244,6 +327,29 @@ If you find yourself wanting a thirteenth, that is a sign the column should
 be showing a shape or a label rather than more colours: there is no more
 room that stays readable.
 
+## Shapes and sizes
+
+The shared style guide's, the same in every app with or without a
+palette:
+
+- **Radius 9px** (`--radius-base`): buttons and cards on `--radius`,
+  fields on `--radius-md` (about 7px).
+- **Buttons** 36px tall with 16px sides, semibold (`sm` 32px, `lg` 40px,
+  the icon sizes to match). A press shrinks the button to 96%, not under
+  reduced motion.
+- **Fields** (input, select, input group, a multi-pick's box) 36px,
+  outlined. **Checkbox** 18px, a 5px radius, solid when checked, a small
+  press pop.
+- **Cards** a hairline border with a soft shadow (`--card-shadow`: 30% in
+  dark, lighter on white), 16px padding, 14px between their parts. A
+  card's header, when it comes first, is a tinted bar flush with the top
+  (`--card-header`), as on every `WidgetCard` and `EntityView` section.
+- **Badges** are pills; the default is a soft tint of the accent
+  (`variant="solid"` is the filled one). The tone styles are unchanged.
+- **Behind a dialog or sheet**, the page is dimmed and blurred.
+- **Motion** is quick: 120ms with the standard easing, for every
+  transition that doesn't name its own.
+
 ## Typography
 
 Six roles cover every screen. Each is one class that sets size, line
@@ -251,13 +357,16 @@ height and weight together, from tokens in the package's `styles/theme.css`:
 
 | Class | For | Size / weight |
 |---|---|---|
-| `type-page-title` | the screen's one `<h1>` (a table's title, a form's title) | 18px / 600 |
+| `type-page-title` | the screen's one `<h1>` (a table's title, a form's title) | 28px / 600, line 1.2 |
 | `type-section-title` | a heading inside a screen (a form section, a card group) | 16px / 600 |
-| `type-body` | running text, table cells, form text, the pagination summary | 14px / 400 |
+| `type-body` | running text, table cells, form text, the pagination summary | 14px / 400, line 1.5 |
 | `type-label` | column headers, field labels, a small heading over a group | 14px / 500 |
 | `type-caption` | counts, metadata, helper text under a field | 12px / 400 |
 | `type-numeric` | the one live number on a card (`ModuleCard`'s count), in tabular figures | 22px / 500 |
 
+- **Headings draw in a little:** the page and section titles, and written
+  text's `#` and `##`, take -0.02em letter spacing. Labels stay normal
+  case at 14px medium (small caps at 12px read too small).
 - **Use a role instead of size and weight classes,** not as well as them.
   `type-page-title` replaces `text-lg font-semibold`. Combining a role with
   `text-sm`, `font-medium` or `leading-*` makes two classes set the same
@@ -351,8 +460,8 @@ set, not a `DataTable` prop:
 
 | `data-density` | Changes | Table cell padding (vertical) | Header height | For |
 |---|---|---|---|---|
-| `compact` | table rows, and a hub's cards (`WidgetCard`, `WidgetList` rows, `ModuleCard`) | 4px | 32px | wide tables people scan, many rows per screen; a dense hub |
-| *(unset)* | — | 8px | 40px | the default |
+| *(unset)* | — | 4px | 32px | the default: compact rows, as the shared style guide has them |
+| `compact` | a hub's cards (`WidgetCard`, `WidgetList` rows, `ModuleCard`); table rows stay the default's | 4px | 32px | a dense hub |
 | `comfortable` | table rows only | 12px | 48px | short tables, or rows people read rather than scan |
 | `large` | **everything**: type, spacing, control heights, icons, the sidebar, table rows | 12px | 56px | a screen read from a distance: a TV used as the desktop monitor, with a mouse and keyboard |
 

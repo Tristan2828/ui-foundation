@@ -1,4 +1,4 @@
-import { ChevronRightIcon, LogOutIcon, MoonIcon, SunIcon } from 'lucide-react'
+import { ChevronRightIcon, LogOutIcon, MoonIcon, PaletteIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
@@ -21,8 +21,19 @@ import type { IconComponent } from '@/components/app/icon-component'
 import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
 import { useShellDocumentTitle } from '@/hooks/use-document-title'
+import { usePalette } from '@/hooks/use-palette'
+import { isPaletteName, PALETTE_LABELS, PALETTES, type PaletteName } from '@/lib/palettes'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Sidebar,
@@ -130,6 +141,63 @@ function CloseMobileSidebarOnNavigate() {
     setOpenMobile(false)
   }, [key, setOpenMobile])
   return null
+}
+
+// The header's look control: an app with a palette is always dark, so it
+// has no light/dark toggle, and with the picker on it gets the palette
+// menu in its place (design-language.md "Palettes").
+function LookControl() {
+  const { palette, picker } = usePalette()
+  if (!palette) return <ThemeToggle />
+  return picker ? <PalettePicker palette={palette} /> : null
+}
+
+// Each palette's swatch is its own background with its accent and second
+// colour on it, read from the palette primitives, so the menu shows all
+// four whichever is on screen.
+function PaletteSwatch({ name }: { name: PaletteName }) {
+  const colour = (part: string) => `var(--palette-${name}-${part})`
+  return (
+    <span
+      aria-hidden
+      className="flex h-4 w-7 shrink-0 items-center justify-center gap-0.5 rounded-sm border border-border"
+      style={{ background: colour('background') }}
+    >
+      <span className="size-2 rounded-full" style={{ background: colour('accent') }} />
+      <span className="size-2 rounded-full" style={{ background: colour('second') }} />
+    </span>
+  )
+}
+
+function PalettePicker({ palette }: { palette: PaletteName }) {
+  const { setPalette } = usePalette()
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon-sm" aria-label={`Palette: ${PALETTE_LABELS[palette]}`} />}
+      >
+        <PaletteIcon />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Palette on this device</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={palette}
+            onValueChange={(next) => {
+              if (isPaletteName(next)) setPalette(next)
+            }}
+          >
+            {PALETTES.map((name) => (
+              <DropdownMenuRadioItem key={name} value={name}>
+                <PaletteSwatch name={name} />
+                {PALETTE_LABELS[name]}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 function ThemeToggle() {
@@ -431,7 +499,7 @@ export function AppShell({
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
             <SidebarTrigger />
             <div className="flex-1" />
-            <ThemeToggle />
+            <LookControl />
           </header>
           <div className={cn('flex-1 p-6', bottomBar?.length && BOTTOM_BAR_PADDING)}>
             <Outlet />

@@ -227,7 +227,7 @@ export function Board<T, V extends string>({
                       }
                     : undefined
                 }
-                className={cn('gap-2 px-3 py-3', onMove && 'cursor-grab active:cursor-grabbing')}
+                className={cn('glow-edge gap-2 px-3 py-3', onMove && 'cursor-grab active:cursor-grabbing')}
               >
                 <div className="flex items-start gap-2">
                   <div className="flex min-w-0 flex-1 flex-col gap-2">{renderCard(item)}</div>
