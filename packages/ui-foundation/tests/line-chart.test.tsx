@@ -5,7 +5,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { LineChart } from '../src/components/app/line-chart'
-import { chartLayout } from '../src/lib/line-chart-layout'
+import { chartLayout, steppedPlaces } from '../src/lib/line-chart-layout'
 
 const DAYS = [
   { x: '2026-10-01', y: 120 },
@@ -44,6 +44,32 @@ describe('chartLayout', () => {
   it('puts one point, or equal values, mid-plot', () => {
     expect(chartLayout([{ x: '2026-10-01', y: 50 }]).places).toEqual([{ x: 0.5, y: 0.5 }])
     expect(chartLayout([{ x: 1, y: 0 }, { x: 2, y: 0 }]).places.map((place) => place.y)).toEqual([0.5, 0.5])
+  })
+})
+
+describe('chartLayout with levels', () => {
+  it('spans every level whatever the values, lowest level at the bottom', () => {
+    const layout = chartLayout([{ x: 1, y: 3 }, { x: 2, y: 4 }], undefined, undefined, 5)
+    expect(layout.domain.min).toBeLessThan(0)
+    expect(layout.domain.max).toBeGreaterThan(4)
+    const ys = layout.levelYs!
+    expect(ys).toHaveLength(5)
+    expect(ys[0]).toBeGreaterThan(ys[4])
+    expect(layout.places[1].y).toBeCloseTo(ys[4])
+  })
+
+  it('has no level heights without levels', () => {
+    expect(chartLayout(DAYS).levelYs).toBeUndefined()
+  })
+
+  it('steps: holds each value until the next point', () => {
+    expect(steppedPlaces([{ x: 0, y: 1 }, { x: 0.5, y: 0.2 }, { x: 1, y: 0.6 }])).toEqual([
+      { x: 0, y: 1 },
+      { x: 0.5, y: 1 },
+      { x: 0.5, y: 0.2 },
+      { x: 1, y: 0.2 },
+      { x: 1, y: 0.6 },
+    ])
   })
 })
 
@@ -87,5 +113,26 @@ describe('<LineChart>', () => {
       ['2026-10-02', '$100.00'],
       ['2026-10-05', '$110.00'],
     ])
+  })
+
+  it('levels: each step named on the plot, the values read by name', () => {
+    const LEVELS = ['Very low', 'Low', 'Moderate', 'High']
+    const html = renderToStaticMarkup(
+      <LineChart
+        label="Confidence over time"
+        levels={LEVELS}
+        points={[{ x: '2026-06-02', y: 0 }, { x: '2026-07-21', y: 2 }, { x: '2026-09-29', y: 3 }]}
+        mark="last"
+      />,
+    )
+    expect(html).toContain('data-slot="line-chart-levels"')
+    expect([...html.matchAll(/data-slot="line-chart-level-rule"/g)]).toHaveLength(4)
+    for (const name of LEVELS) expect(html).toContain(`>${name}</span>`)
+    // Stepped: five places for three points.
+    const line = html.match(/<polyline points="([^"]*)"/)![1]
+    expect(line.split(' ')).toHaveLength(5)
+    expect(html).toContain('From Very low on 2026-06-02 to High on 2026-09-29')
+    expect(html).toContain('one of Very low, Low, Moderate, High')
+    expect(html).toContain('<td>Moderate</td>')
   })
 })

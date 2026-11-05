@@ -18,13 +18,13 @@
 - [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 516–630
 - [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 632–701
 - [Notices](#notices) · lines 703–731
-- [A value over time](#a-value-over-time) · lines 733–811
-  - [Several values over time](#several-values-over-time) · lines 774–811
-- [A list as a board](#a-list-as-a-board) · lines 813–864
-- [A list as cards](#a-list-as-cards) · lines 866–912
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 914–936
-- [Picking at random](#picking-at-random) · lines 938–969
-- [Filling in what's missing](#filling-in-whats-missing) · lines 971–1038
+- [A value over time](#a-value-over-time) · lines 733–819
+  - [Several values over time](#several-values-over-time) · lines 782–819
+- [A list as a board](#a-list-as-a-board) · lines 821–872
+- [A list as cards](#a-list-as-cards) · lines 874–920
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 922–944
+- [Picking at random](#picking-at-random) · lines 946–977
+- [Filling in what's missing](#filling-in-whats-missing) · lines 979–1046
 
 <!-- /index -->
 
@@ -768,6 +768,14 @@ or `'last'`) with its value.
   measured. Its points come after the last of `points`; the mark stays on
   `points`, and a screen reader gets the projection's end in the summary
   and its rows in the table, each named by `label`.
+- **Levels** (4.64): for a value that is one of a few named steps and
+  holds until it changes (a confidence, a severity, a stage), pass
+  `levels`, lowest first, and give each point its step's index as y:
+  `levels={['Very low', 'Low', 'Moderate', 'High']}`. The steps are named
+  down the plot's left, the range is all of them (so one step looks like
+  one step), and the line steps instead of sloping. Values read by name
+  in the mark, the summary and the table; don't pass `formatY` unless the
+  names need more.
 - One series and a few dozen points. Zoom or tooltips are a request for
   the foundation, not a hand-drawn chart in the app.
 

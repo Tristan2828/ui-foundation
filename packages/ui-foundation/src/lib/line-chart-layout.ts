@@ -20,6 +20,8 @@ export type ChartLayout = {
   targetY?: number
   /** Which point the mark is on, if any. */
   markIndex?: number
+  /** With levels: each level's height, lowest level first. */
+  levelYs?: number[]
 }
 
 // A point's position along x: a number as it is, a day or a timestamp as
@@ -32,11 +34,20 @@ function along(x: string | number): number {
 // never runs along the plot's edge.
 const PAD = 0.1
 
-export function chartLayout(points: readonly LineChartPoint[], target?: number, mark?: LineChartMark): ChartLayout {
+// `levels` (4.64): the count of named steps a value is one of (a
+// confidence, Very low to High), each value its step's index. The range is
+// then every step, whatever the values, so a move from one step to the
+// next looks as big as it is, not the plot's whole height.
+export function chartLayout(
+  points: readonly LineChartPoint[],
+  target?: number,
+  mark?: LineChartMark,
+  levels?: number,
+): ChartLayout {
   const values = points.map((point) => point.y)
   const all = target === undefined ? values : [...values, target]
-  let min = Math.min(...all)
-  let max = Math.max(...all)
+  let min = levels ? 0 : Math.min(...all)
+  let max = levels ? levels - 1 : Math.max(...all)
   // One value (or all the same): a band around it, so the line sits mid-plot.
   const spread = max - min || Math.abs(max) || 1
   min -= spread * PAD
@@ -64,7 +75,15 @@ export function chartLayout(points: readonly LineChartPoint[], target?: number, 
     domain: { min, max },
     targetY: target === undefined ? undefined : height(target),
     markIndex,
+    levelYs: levels ? Array.from({ length: levels }, (_, index) => height(index)) : undefined,
   }
+}
+
+// A line that holds each value until the next point, then steps to it:
+// for values that change on a day and stay (a confidence), not drift.
+// Places in, polyline places out.
+export function steppedPlaces(places: readonly { x: number; y: number }[]): { x: number; y: number }[] {
+  return places.flatMap((place, index) => (index === 0 ? [place] : [{ x: place.x, y: places[index - 1].y }, place]))
 }
 
 export type SeriesLayout = {
