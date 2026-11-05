@@ -259,8 +259,26 @@
    * The default is what the table always had.
    */
   --table-cell-px: 0.5rem;
-  --table-cell-py: 0.5rem;
-  --table-head-height: 2.5rem;
+  /* Compact rows by default (the shared style guide, chosen from the
+     review screenshots on 2026-11-04): 4px around the line, a 32px
+     header. data-density="compact" keeps them so and tightens a hub's
+     cards; comfortable opens them up. */
+  --table-cell-py: 0.25rem;
+  --table-head-height: 2rem;
+  /*
+   * Glow (the shared style guide), drawn only under a palette (index.css's
+   * `palette:` variant and glow-edge): the accent as one soft layer, from
+   * --primary, so each palette's glow is its own accent.
+   *   --primary-glow   a primary button on hover, keyboard focus and press:
+   *                    38px blur, 2px spread, 38%
+   *   --edge-glow      a hovered hub tile, widget or card: a softer halo
+   *                    beside its accent edge
+   *   --thumb-glow     a slider's thumb
+   */
+  --primary-glow: 0 0 38px 2px color-mix(in srgb, var(--primary) 38%, transparent);
+  --edge-glow: 0 0 18px 0 color-mix(in srgb, var(--primary) 28%, transparent);
+  --thumb-glow: 0 0 10px 2px color-mix(in srgb, var(--primary) 50%, transparent);
+
   /* The small size of Button and Toggle (and the calendar's weekdays):
      between text-xs and text-sm, so it has a token of its own for the
      large density to scale. */
@@ -373,7 +391,7 @@
 }
 
 [data-density="compact"] {
-  --table-cell-py: 0.25rem;
+  --table-cell-py: 0.25rem; /* the default's, since the default is compact */
   --table-head-height: 2rem;
 }
 

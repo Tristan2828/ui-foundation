@@ -20,6 +20,11 @@
    composite's own rows and padding tighten under data-density="compact"
    on any ancestor, the way the table's tokens do. `density-compact:py-1`.
    Text never shrinks under it. */
+/* Under a palette only (FoundationProviders' `palette`, data-palette on
+   <html>): the shared style guide's glow, which an app without one never
+   gets. `palette:hover:shadow-(--primary-glow)`. */
+@custom-variant palette (&:where([data-palette] *));
+
 @custom-variant density-compact (&:where([data-density="compact"], [data-density="compact"] *));
 
 @theme inline {
@@ -154,6 +159,52 @@
   font-size: var(--type-heading-3-size);
   line-height: var(--type-heading-3-leading);
   font-weight: var(--type-heading-3-weight);
+}
+
+/* A hovered hub tile, widget or card, under a palette: its edge turns the
+   accent and a soft halo of it shows (--edge-glow). On an element that
+   draws its edge with ring-1 and its shadow with shadow-* (Card does), it
+   recolours the ring and adds the halo to the shadow it already has.
+   ModuleCard, WidgetCard and Board's cards carry it; a DataTable card
+   layout's cards get it with `*:data-[slot=card]:glow-edge` on the
+   item. */
+@utility glow-edge {
+  transition-property: box-shadow;
+  transition-duration: var(--default-transition-duration);
+  transition-timing-function: var(--default-transition-timing-function);
+  &:where([data-palette] *):hover {
+    --tw-ring-color: color-mix(in srgb, var(--primary) 75%, var(--border));
+    --tw-shadow: var(--card-shadow, 0 0 #0000), var(--edge-glow);
+  }
+}
+
+/* A primary button's shine under a palette: a light band sweeping across
+   on hover (650ms), once. Not under reduced motion, and never on another
+   variant. In components, so a button's own position utility still wins. */
+@layer components {
+  [data-palette] [data-slot="button"][data-variant="default"] {
+    position: relative;
+    overflow: hidden;
+  }
+  [data-palette] [data-slot="button"][data-variant="default"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--white) 40%, transparent) 50%, transparent 65%);
+    transform: translateX(-130%);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    [data-palette] [data-slot="button"][data-variant="default"]:hover::after {
+      animation: button-shine 650ms ease-out;
+    }
+  }
+}
+
+@keyframes button-shine {
+  to {
+    transform: translateX(130%);
+  }
 }
 
 @layer base {

@@ -15,10 +15,12 @@ const PRIMITIVES = [
   'checkbox',
   'empty',
   'input',
+  'progress',
   'separator',
   'sheet',
   'sidebar',
   'skeleton',
+  'slider',
   'spinner',
   'switch',
   'table',
@@ -630,7 +632,8 @@ test.describe('primitives paint only token colours', () => {
 // Density is tokens, not a prop (styles/theme.css), so nothing type-checks
 // that data-density reaches the cells. This measures it: in the Densities
 // story, each step must make both the header and the body rows taller.
-test('table density tokens change row height: compact < default < comfortable', async ({ page }) => {
+// The default rows are compact (theme.css), so compact keeps them.
+test('table density tokens change row height: compact = default < comfortable < large', async ({ page }) => {
   await page.goto(storyUrlById('ui-table--densities', 'light'))
   const heights = async (density: string, part: 'th' | 'td') =>
     page
@@ -644,7 +647,7 @@ test('table density tokens change row height: compact < default < comfortable', 
       await heights('default', part),
       await heights('comfortable', part),
     ]
-    expect(compact, `${part}: compact vs default`).toBeLessThan(standard)
+    expect(compact, `${part}: compact vs default`).toBeCloseTo(standard, 1)
     expect(standard, `${part}: default vs comfortable`).toBeLessThan(comfortable)
     expect(comfortable, `${part}: comfortable vs large`).toBeLessThan(await heights('large', part))
   }

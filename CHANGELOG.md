@@ -7,6 +7,54 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.63.0 — The shared UI style: palettes, sizes, glow
+
+The shared style guide, in three parts, for every app. Additive in its
+API, so a minor, but **every screen changes size**: 36px buttons and
+fields, 28px page titles, compact table rows. The UI package only; no new
+dependency.
+
+- **Palettes.** Four dark looks: `indigo-cyan`, `indigo-rose`,
+  `graphite-periwinkle`, `violet`. `<FoundationProviders palette="…">`
+  names the app's default and forces the dark theme (the header's
+  light/dark toggle goes; printed notes still print light), and
+  `palettePicker` puts a palette menu in its place, remembered on the
+  device. `usePalette()`, `PALETTES`, `PALETTE_LABELS`, `isPaletteName`,
+  type `PaletteName`. `pwa({ palette })` takes the installed app's
+  colours from it. In a palette the focus ring is the accent, links are
+  accent light, and the status colours are text shades (fills keep their
+  deeper shades). Two colours are a shade off the guide, to pass 4.5:1:
+  Violet's text on its accent and the shared danger text
+  (design-language.md "Palettes").
+- **Sizes and shapes**, with or without a palette: radius 9px (fields
+  about 7px); buttons 36px with 16px sides, semibold, a press that shrinks
+  to 96% (`sm` 32, `lg` 40, the icon sizes to match); inputs, selects and
+  input groups 36px; an 18px checkbox; cards with a border, a soft shadow
+  and a tinted header bar when a `CardHeader` comes first; a pill badge
+  whose default is a soft accent tint (`variant="solid"` is the old
+  filled one); a stronger blur behind dialogs and sheets; a 28px page
+  title, headings at -0.02em, body text at line 1.5; 120ms transitions.
+- **Compact table rows by default**: 4px around the line, a 32px header.
+  `data-density="compact"` keeps them so and still tightens a hub's cards.
+- **Glow, under a palette only**: the primary button glows on hover,
+  keyboard focus and press, with a shine across it on hover (not under
+  reduced motion); hub tiles (`ModuleCard`), widgets (`WidgetCard`),
+  `Board` cards and a `DataTable` card layout's `Card`s get an accent edge
+  on hover (`glow-edge`, a utility an app's own cards can take); a
+  slider's thumb glows. The `palette:` variant is the app's own way in.
+- **`ui/slider` and `ui/progress` ship in the package** (shadcn's, the
+  thumb glowing in a palette, the bar 4px). An app with its own copies
+  deletes them and imports the package's; lint insists.
+- The `link` variants of Button and Badge read in `--link`, never the
+  accent.
+
+To take it: bump, `npx ui-foundation sync`, then look over your own
+screens for what the 36px controls and 28px titles push out of place
+(toolbars that line a button up with a fixed-height element, chips).
+With a palette, pass `palette` (and `palettePicker`) to
+`FoundationProviders`, and run your axe specs in it (with the theme forced
+dark, a light and a dark run are the same).
+
 ## 4.62.0 — Tables in notes: columns that fit, grips, two looks
 
 Additive, so a minor; the UI package only. No new dependency, and

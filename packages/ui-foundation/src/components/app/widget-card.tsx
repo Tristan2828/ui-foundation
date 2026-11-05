@@ -180,7 +180,7 @@ export function WidgetCard({
       data-collapsed={collapsed || undefined}
       className={cn('min-w-0 self-start', className)}
     >
-      <Card className="density-compact:[--card-spacing:--spacing(3)]">
+      <Card className="glow-edge density-compact:[--card-spacing:--spacing(3)]">
         <CardHeader
           onClick={onHeaderClick}
           className={cn('flex items-center justify-between gap-3', inAccordion && 'cursor-pointer select-none')}

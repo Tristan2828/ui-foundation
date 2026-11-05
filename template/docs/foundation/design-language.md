@@ -3,27 +3,28 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 36–94
-- [Semantic tones](#semantic-tones) · lines 96–124
-- [The three badge styles](#the-three-badge-styles) · lines 126–143
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 145–174
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 176–189
-- [Logos and brand marks](#logos-and-brand-marks) · lines 191–235
-- [Categorical colour](#categorical-colour) · lines 237–307
-- [Shapes and sizes](#shapes-and-sizes) · lines 309–330
-- [Typography](#typography) · lines 332–426
-  - [Written text (notes)](#written-text-notes) · lines 366–426
-- [Density](#density) · lines 428–485
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 487–601
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 603–672
-- [Notices](#notices) · lines 674–702
-- [A value over time](#a-value-over-time) · lines 704–782
-  - [Several values over time](#several-values-over-time) · lines 745–782
-- [A list as a board](#a-list-as-a-board) · lines 784–835
-- [A list as cards](#a-list-as-cards) · lines 837–883
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 885–907
-- [Picking at random](#picking-at-random) · lines 909–940
-- [Filling in what's missing](#filling-in-whats-missing) · lines 942–1009
+- [Palettes](#palettes) · lines 37–95
+- [Glow](#glow) · lines 97–115
+- [Semantic tones](#semantic-tones) · lines 117–145
+- [The three badge styles](#the-three-badge-styles) · lines 147–164
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 166–195
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 197–210
+- [Logos and brand marks](#logos-and-brand-marks) · lines 212–256
+- [Categorical colour](#categorical-colour) · lines 258–328
+- [Shapes and sizes](#shapes-and-sizes) · lines 330–351
+- [Typography](#typography) · lines 353–447
+  - [Written text (notes)](#written-text-notes) · lines 387–447
+- [Density](#density) · lines 449–506
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 508–622
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 624–693
+- [Notices](#notices) · lines 695–723
+- [A value over time](#a-value-over-time) · lines 725–803
+  - [Several values over time](#several-values-over-time) · lines 766–803
+- [A list as a board](#a-list-as-a-board) · lines 805–856
+- [A list as cards](#a-list-as-cards) · lines 858–904
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 906–928
+- [Picking at random](#picking-at-random) · lines 930–961
+- [Filling in what's missing](#filling-in-whats-missing) · lines 963–1030
 
 <!-- /index -->
 
@@ -92,6 +93,26 @@ wear it too. An installed app's colours follow it with
 The package's `e2e/fixtures-visual.spec.ts` runs every primitive,
 composite and tone story through axe in each palette, and measures every
 glyph and categorical slot against each palette's page and card.
+
+## Glow
+
+Under a palette only, from `--primary` so each palette glows in its own
+accent; an app without a palette never gets it. Everything else stays
+flat: no glow at the top of the page.
+
+- **The primary button** (Button's default variant) on hover, keyboard
+  focus and press: one soft layer of the accent (`--primary-glow`: 38px
+  blur, 2px spread, 38%), and on hover a shine sweeping across once
+  (650ms). Under reduced motion, no shine and no shrink. Secondary,
+  outline, ghost and destructive buttons never glow.
+- **A hovered card**: its edge turns the accent with a soft halo
+  (`--edge-glow`), through the `glow-edge` utility. `ModuleCard`,
+  `WidgetCard` and `Board`'s cards carry it, and a `DataTable` card
+  layout's `Card`s; an app's own card takes the class.
+- **A slider's thumb** (`ui/slider`): a small halo (`--thumb-glow`).
+
+For anything else of an app's own, `palette:` is the variant
+(`palette:hover:shadow-(--primary-glow)`).
 
 ## Semantic tones
 
@@ -439,8 +460,8 @@ set, not a `DataTable` prop:
 
 | `data-density` | Changes | Table cell padding (vertical) | Header height | For |
 |---|---|---|---|---|
-| `compact` | table rows, and a hub's cards (`WidgetCard`, `WidgetList` rows, `ModuleCard`) | 4px | 32px | wide tables people scan, many rows per screen; a dense hub |
-| *(unset)* | — | 8px | 40px | the default |
+| *(unset)* | — | 4px | 32px | the default: compact rows, as the shared style guide has them |
+| `compact` | a hub's cards (`WidgetCard`, `WidgetList` rows, `ModuleCard`); table rows stay the default's | 4px | 32px | a dense hub |
 | `comfortable` | table rows only | 12px | 48px | short tables, or rows people read rather than scan |
 | `large` | **everything**: type, spacing, control heights, icons, the sidebar, table rows | 12px | 56px | a screen read from a distance: a TV used as the desktop monitor, with a mouse and keyboard |
 

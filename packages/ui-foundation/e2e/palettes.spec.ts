@@ -76,3 +76,54 @@ test('the link button reads in the palette’s link colour, not its accent', asy
   })
   expect(colour).toBe(expected)
 })
+
+// The glow (the shared style guide), under a palette only: the primary
+// button on hover and keyboard focus, never another variant; a hovered
+// widget's edge; a slider's thumb. Without a palette, none of it.
+const shadow = (locator: import('@playwright/test').Locator) => locator.evaluate((el) => getComputedStyle(el).boxShadow)
+const glows = (value: string) => /\b38px 2px\b/.test(value)
+
+test('a primary button glows on hover and focus in a palette, and not without one', async ({ page }) => {
+  await page.goto('http://localhost:6180/story.html?id=ui-button--variants&theme=dark&palette=indigo-cyan')
+  const primary = page.getByRole('button', { name: 'Primary' })
+  const secondary = page.getByRole('button', { name: 'Secondary' })
+  expect(glows(await shadow(primary))).toBe(false)
+  await primary.hover()
+  await expect.poll(() => shadow(primary).then(glows)).toBe(true)
+  await secondary.hover()
+  await expect.poll(() => shadow(secondary).then(glows)).toBe(false)
+  await primary.focus()
+  await page.keyboard.press('Shift+Tab')
+  await page.keyboard.press('Tab')
+  await expect.poll(() => shadow(primary).then(glows)).toBe(true)
+
+  await page.goto('http://localhost:6180/story.html?id=ui-button--variants&theme=dark')
+  await page.getByRole('button', { name: 'Primary' }).hover()
+  await page.waitForTimeout(200)
+  expect(glows(await shadow(page.getByRole('button', { name: 'Primary' })))).toBe(false)
+})
+
+test('a hovered widget’s edge turns the accent in a palette', async ({ page }) => {
+  const edge = async (query: string) => {
+    await page.goto(`http://localhost:6180/story.html?id=app-widgetcard--default&${query}`)
+    const card = page.locator('[data-slot=widget-card] [data-slot=card]').first()
+    await expect(card).toBeVisible()
+    const before = await shadow(card)
+    await card.hover()
+    await page.waitForTimeout(300)
+    return { before, after: await shadow(card) }
+  }
+  const inPalette = await edge('theme=dark&palette=violet')
+  expect(inPalette.after).not.toBe(inPalette.before)
+  const plain = await edge('theme=dark')
+  expect(plain.after).toBe(plain.before)
+})
+
+test('a slider’s thumb glows in a palette', async ({ page }) => {
+  await page.goto('http://localhost:6180/story.html?id=ui-slider--default&theme=dark&palette=indigo-rose')
+  const thumb = page.locator('[data-slot=slider-thumb]').first()
+  await expect(thumb).toBeVisible()
+  expect(await shadow(thumb)).toMatch(/10px 2px/)
+  await page.goto('http://localhost:6180/story.html?id=ui-slider--default&theme=dark')
+  expect(await shadow(page.locator('[data-slot=slider-thumb]').first())).not.toMatch(/10px 2px/)
+})
