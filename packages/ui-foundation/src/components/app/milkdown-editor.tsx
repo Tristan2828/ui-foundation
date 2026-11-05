@@ -870,8 +870,9 @@ export default function MilkdownEditor({
       if (editor) void editor.destroy()
       root.replaceChildren()
     }
-    // Made once per mount: later changes to defaultValue are ignored, as
-    // with any uncontrolled input. Attributes and read-only follow below.
+    // Made once per mount. A new defaultValue the editor didn't report
+    // remounts it (RichTextEditor's key), so it isn't read here.
+    // Attributes and read-only follow below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
