@@ -7,6 +7,25 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.63.3 — A HEIC with no type; a folded card ends at its header
+
+Fixes found in an app. The UI package only; no new dependency. Nothing
+for an app to change.
+
+- **A `.heic` or `.heif` with an empty type is judged by its name.**
+  Windows and some Android pickers hand over a HEIC photo with an empty
+  `File.type`, so `ImageField` and the rich-text editor's upload refused
+  it even where `image/heic` (or `image/*`) is accepted. With no type, a
+  `.heic` or `.heif` name now counts as `image/heic` or `image/heif`,
+  and the file is accepted or refused exactly as a typed one would be.
+  Any other file with no type is still refused.
+- **A folded WidgetCard ends at its header.** Folded (by `collapsible`
+  or a `WidgetCardGroup` accordion, `accordion="mobile"` on a phone
+  among them), a card kept its bottom padding under the header, an empty
+  strip, because the hidden body still counted as its last child. A
+  folded card now drops that padding and the header's bottom border. A
+  check on WidgetLayoutSheet's Default story at phone width.
+
 ## 4.63.2 — Two palette fixes: invalid fields, crowded headers
 
 Fixes found applying 4.63.0 to an app. The UI package only; no new

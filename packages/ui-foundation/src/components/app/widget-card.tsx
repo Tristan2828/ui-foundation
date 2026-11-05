@@ -180,10 +180,18 @@ export function WidgetCard({
       data-collapsed={collapsed || undefined}
       className={cn('min-w-0 self-start', className)}
     >
-      <Card className="glow-edge density-compact:[--card-spacing:--spacing(3)]">
+      {/* Folded, the card ends at its header. Card drops its bottom padding
+          only when the header is its last child, and the hidden body still
+          is one, so the fold says so itself (and the header's own bottom
+          border, the line above the body, goes with it). */}
+      <Card className={cn('glow-edge density-compact:[--card-spacing:--spacing(3)]', collapsed && 'pb-0')}>
         <CardHeader
           onClick={onHeaderClick}
-          className={cn('flex items-center justify-between gap-3', inAccordion && 'cursor-pointer select-none')}
+          className={cn(
+            'flex items-center justify-between gap-3',
+            inAccordion && 'cursor-pointer select-none',
+            collapsed && 'border-b-0',
+          )}
         >
           <Heading id={headingId} className="flex min-w-0 items-center gap-2 type-section-title text-foreground">
             {Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}

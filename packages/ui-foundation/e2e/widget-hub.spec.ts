@@ -4,7 +4,8 @@ import { expect, test, type Page } from '@playwright/test'
 // A hub's folded summaries, accordion and Customize sheet (#263):
 // WidgetCard's `summary` in each state on Folded summary, WidgetCardGroup
 // holding one card open on Accordion (and only on a phone with
-// `accordion="mobile"`, on WidgetLayoutSheet's Default), and the sheet
+// `accordion="mobile"`, on WidgetLayoutSheet's Default, where a folded
+// card ends at its header), and the sheet
 // ordering and hiding cards from the keyboard, the focus staying on the
 // button pressed, remembered after a reload and undone by Reset. Axe runs
 // on each in both themes; the token and glyph checks at rest are
@@ -109,6 +110,26 @@ test.describe('accordion="mobile"', () => {
     await page.setViewportSize({ width: 1280, height: 800 })
     await expect(card(page, 'Waiting on').getByRole('button', { name: 'Waiting on', exact: true })).toHaveCount(0)
     await expect(page.getByText('Parts arrive')).toBeVisible()
+  })
+
+  test('a folded card on a phone ends at its header, with no strip under it', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(story('app-widgetlayoutsheet--default'))
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await expect(chevron(page, 'Waiting on')).toHaveAttribute('aria-expanded', 'false')
+    for (const title of ['Waiting on', 'Saved links']) {
+      const folded = card(page, title)
+      const box = await folded.locator('[data-slot="card"]').boundingBox()
+      const header = await folded.locator('[data-slot="card-header"]').boundingBox()
+      expect(box && header && Math.abs(box.y + box.height - (header.y + header.height))).toBeLessThanOrEqual(1)
+    }
+    // Opened, the body and the padding under it are back.
+    await chevron(page, 'Waiting on').click()
+    await expect(page.getByText('Parts arrive')).toBeVisible()
+    const box = await card(page, 'Waiting on').locator('[data-slot="card"]').boundingBox()
+    const header = await card(page, 'Waiting on').locator('[data-slot="card-header"]').boundingBox()
+    expect(box!.y + box!.height - (header!.y + header!.height)).toBeGreaterThan(16)
   })
 })
 

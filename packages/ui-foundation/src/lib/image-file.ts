@@ -72,6 +72,20 @@ function accepts(accept: readonly string[], type: string): boolean {
   return accept.some((allowed) => allowed === type || (allowed.endsWith('/*') && type.startsWith(allowed.slice(0, -1))))
 }
 
+// Some pickers (Windows, some Android) hand over a HEIC or HEIF photo with
+// an empty `type`. Then the name's extension stands in for it, so the file
+// is judged as if it had been typed.
+const TYPES_BY_EXTENSION: Record<string, string> = {
+  heic: 'image/heic',
+  heif: 'image/heif',
+}
+
+function fileType(file: { type: string; name?: string }): string {
+  if (file.type || !file.name) return file.type
+  const extension = file.name.split('.').at(-1)?.toLowerCase()
+  return (file.name.includes('.') && extension && TYPES_BY_EXTENSION[extension]) || ''
+}
+
 /** The `accept` attribute for a file input: `image/jpeg,image/png,image/webp`. */
 export function acceptAttribute(accept: readonly string[] = DEFAULT_IMAGE_TYPES): string {
   return accept.join(',')
@@ -79,16 +93,21 @@ export function acceptAttribute(accept: readonly string[] = DEFAULT_IMAGE_TYPES)
 
 /**
  * Why a file can't be uploaded, as a sentence to show under the field, or
- * null when it can: a type not accepted, or over the size limit.
+ * null when it can: a type not accepted, or over the size limit. A file
+ * with an empty type is judged by its name's extension (`.heic`, `.heif`).
  */
-export function imageRefusal(file: Pick<File, 'type' | 'size'>, rules: ImageFileRules = {}): string | null {
+export function imageRefusal(
+  file: Pick<File, 'type' | 'size'> & { name?: string },
+  rules: ImageFileRules = {},
+): string | null {
   const accept = rules.accept ?? DEFAULT_IMAGE_TYPES
-  if (!accepts(accept, file.type)) {
+  const type = fileType(file)
+  if (!accepts(accept, type)) {
     const wanted = listOr(accept.map(typeName))
     const choose = accept.length === 1 && accept[0] === 'image/*' ? 'Choose an image.' : `Choose a ${wanted} image.`
     // A type with a name people know is named; any other file that isn't
     // an image is just that.
-    const named = TYPE_NAMES[file.type] ?? (file.type.startsWith('image/') ? typeName(file.type) : null)
+    const named = TYPE_NAMES[type] ?? (type.startsWith('image/') ? typeName(type) : null)
     return named ? `That file is ${article(named)} ${named}. ${choose}` : `That file isn't an image. ${choose}`
   }
   if (rules.maxSize !== undefined && file.size > rules.maxSize) {
