@@ -168,6 +168,98 @@
     }
 }
 
+/* Tables in written text (<Markdown> and the rich-text editor; each puts
+   its table in a `.prose-table` box that scrolls sideways). Columns fit
+   their content: the table is only as wide as its words, a cell wraps at
+   18rem, and a right-aligned column (numbers) never wraps and uses
+   tabular figures. Two looks, set by `tableLook` on either renderer
+   (`data-table-look` on an ancestor):
+   - compact, the default: a full grid of hairlines, tight cells, the
+     header row on the heading band;
+   - boxed: a rounded box, roomier cells, the header row on the muted
+     fill, zebra rows (as DataTable's).
+   Row headers (a header column: src/lib/markdown-table.ts) sit on the
+   muted fill, semibold. A coloured cell (its whole text one highlight)
+   is painted in that wash, its words' own wash dropped. Unlayered, so a
+   mark's utility classes inside don't outrank it. */
+.prose-table {
+  width: fit-content;
+  /* The space it's in, less its own margins (the text's inset beside a
+     heading band): 100% would push it past the text by them. */
+  max-width: 100%;
+  max-width: -webkit-fill-available;
+  max-width: stretch;
+  overflow-x: auto;
+  /* Holds what's absolutely placed inside (a link's screen-reader text),
+     so it scrolls with the table instead of widening the page. */
+  position: relative;
+}
+.prose-table > table {
+  width: auto;
+  border-collapse: collapse;
+}
+.prose-table :is(td, th) {
+  min-width: 3rem;
+  max-width: 18rem;
+  padding: 0.25rem var(--table-cell-px);
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: break-word;
+  border: 1px solid var(--border);
+  font-weight: var(--type-body-weight);
+}
+.prose-table th {
+  text-align: start;
+}
+.prose-table :is(td, th):is([style*="right"], [align="right"]) {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.prose-table th:not([scope="row"], [data-row-header]) {
+  background: var(--heading-band);
+  font-weight: 600;
+}
+.prose-table :is(th[scope="row"], [data-row-header]):not([data-color]) {
+  background: var(--muted);
+}
+.prose-table :is(th[scope="row"], [data-row-header]) {
+  font-weight: 600;
+}
+[data-table-look="boxed"] .prose-table {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+[data-table-look="boxed"] .prose-table :is(td, th) {
+  padding: var(--table-cell-py) 0.75rem;
+  border-width: 0 1px 1px 0;
+}
+[data-table-look="boxed"] .prose-table tr > :last-child {
+  border-right-width: 0;
+}
+[data-table-look="boxed"] .prose-table tr:last-child > * {
+  border-bottom-width: 0;
+}
+[data-table-look="boxed"] .prose-table th:not([scope="row"], [data-row-header]) {
+  background: var(--muted);
+  font-weight: var(--type-label-weight);
+}
+/* Zebra: <Markdown>'s body rows (after its <thead>), or the editor's,
+   whose header row is its only <tbody>'s first. */
+[data-table-look="boxed"] .prose-table :is(thead + tbody > tr:nth-child(even), tbody:only-child > tr:nth-child(odd):not(:first-child)) > :not([data-color], th[scope="row"], [data-row-header]) {
+  background: var(--table-stripe);
+}
+.prose-table :is(td, th)[data-color="amber"] { background: var(--highlight-amber); }
+.prose-table :is(td, th)[data-color="yellow"] { background: var(--highlight-yellow); }
+.prose-table :is(td, th)[data-color="green"] { background: var(--highlight-green); }
+.prose-table :is(td, th)[data-color="red"] { background: var(--highlight-red); }
+.prose-table [data-color] mark {
+  background: transparent;
+}
+/* Cells picked by dragging across them, in the editor. */
+.prose-table .selectedCell {
+  background: var(--table-highlight);
+}
+
 /* Printed notes (EntityView's Print notes, src/components/app/entity-view-print.tsx).
    While its copy is in <body>, paper shows that copy alone: the app beside
    it (shell, header, rail, dialogs) is left off, and the copy is in the

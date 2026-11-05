@@ -7,6 +7,42 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.62.0 — Tables in notes: columns that fit, grips, two looks
+
+Additive, so a minor; the UI package only. No new dependency, and
+nothing new is written into the Markdown. Tables in `RichTextEditor` and
+`<Markdown>` look better, fit their words and are edited from their own
+menus.
+
+- **Columns fit their words.** A table is as wide as its text, never
+  stretched across the field: a cell wraps at about 18rem, and a
+  right-aligned column (numbers) never wraps and uses tabular figures.
+- **Two looks, `tableLook`** on both renderers: `'compact'` (the default),
+  a full grid of hairlines with tight cells and the header row on the
+  heading band, or `'boxed'`, a rounded box with roomier cells, a muted
+  header row and zebra rows. Type `TableLook`.
+- **Grips, Notion's way**: hovering a cell (or the caret in one) puts a
+  grip on its column and on its row. The column's menu inserts, moves
+  and deletes columns, aligns the column, sorts the rows by it, turns
+  the header column on (the first column) and colours the column; the
+  row's inserts, moves, deletes and colours the row. A right-click, or
+  Shift+F10 (or the menu key) with the caret in a cell, opens the cell's
+  menu: its colour, its row's and its column's items. Each is one undo
+  step.
+- **Kept as Markdown already writes it**: a coloured cell is its whole
+  text in a highlight (`=={green}$4.99==`, the four highlight washes),
+  painted in both renderers; a header column is a first column of bold
+  cells, drawn as row headers (`<th scope="row">` in `<Markdown>`).
+  Sorting rewrites the rows' order (Ctrl+Z puts it back), numbers by
+  value. An empty cell can't hold a colour.
+- **The toolbar's Table menu is gone**: its Table button only puts a
+  table in (also `/table`); the grips and the cell's menu do the rest.
+
+For an app: nothing to change. Tables already in notes keep their
+Markdown and get the compact look; pass `tableLook="boxed"` to both
+renderers for the other. An app that styled `[data-slot=table-container]`
+or a notes table's cells should check them.
+
 ## 4.61.1 — A rich-text field shows a value that arrives after it
 
 A fix, so a patch; the UI package only. No new dependency, nothing to

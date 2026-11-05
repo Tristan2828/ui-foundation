@@ -585,17 +585,31 @@ beside either, given the same key, with Fold all and Open all; a jump
 opens the sections around the heading and focuses its button. Find in
 page doesn't see folded text (`hidden="until-found"` would; DEFERRED).
 
-**Tables (3.21)** (`rich-text-table.ts`, `rich-text-table-menu.tsx`): the
-node view puts a table in a box that scrolls sideways, with Notion's
-"add a row" and "add a column" bars (mouse shortcuts, out of the tab
-order). Tab in the last cell adds a row; Enter goes down a column and out
-of the table from its last row (Milkdown's Enter left the table from any
-row); Ctrl/Cmd+Enter is the field's save, not Milkdown's "leave the
-table". The toolbar's Table menu (Base UI's menu, shadcn's
-`dropdown-menu`) inserts a table, rows and columns, aligns a column and
-deletes. What GFM can't store isn't offered: the header row can't be
-deleted or have a row put above it, a table keeps one row and one column,
-there are no column widths and no line breaks inside a cell.
+**Tables (3.21; grips and looks 4.62)** (`rich-text-table.ts`,
+`rich-text-table-grips.tsx`, `src/lib/markdown-table.ts`, styles/index.css
+"Tables in written text"): the node view puts a table in a box that
+scrolls sideways, as wide as its columns' words, with Notion's "add a
+row" and "add a column" bars and grips (mouse shortcuts, out of the tab
+order). The grips sit on the hovered (or caret's) column and row, each a
+menu (Base UI's, shadcn's `dropdown-menu`): insert, move and delete rows
+and columns, align a column, sort the rows by it, the header column, and
+colours. A right-click or Shift+F10 in a cell opens the cell's menu, the
+keyboard's way in. Tab in the last cell adds a row; Enter goes down a
+column and out of the table from its last row; Ctrl/Cmd+Enter is the
+field's save. The toolbar's Table button only inserts one.
+
+What GFM can't store isn't offered: the header row can't be deleted,
+moved or have a row put above it, there are no column widths and no line
+breaks inside a cell. What it can store is reused rather than adding
+syntax (the developer's choice, 2026-11-04): a cell's colour is its whole
+text in one highlight (`=={green}$4.99==`), a header column is a first
+column of bold cells, and a sort rewrites the rows (what the editor shows
+is what it saves; one undo step). Both renderers read them with the same
+rule (`cellColor`, `isHeaderColumn`): <Markdown> through `rehypeTables`
+(cells marked `data-color`, row headers as `<th scope="row">`), the editor
+through decorations. Two looks, `tableLook`: compact (a full grid, the
+header on the heading band; the default) and boxed (roomier, a muted
+header, zebra rows), the same CSS for both renderers.
 
 **Shortcuts (3.21)** (`rich-text-shortcuts.ts`) are Notion's where it has
 one: Ctrl+Shift+0 to 6 and 8 turn the line into text, a heading, a list

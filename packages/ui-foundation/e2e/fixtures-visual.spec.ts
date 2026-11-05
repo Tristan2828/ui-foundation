@@ -276,13 +276,14 @@ const GLYPH_STORIES: {
     open: (page) => page.getByRole('button', { name: 'Note callout: change its kind' }).click(),
     shows: '[data-slot=dropdown-menu-content]',
   },
-  // The Table menu's, on the popover surface.
+  // A table cell's menu (Shift+F10), its colour swatches included, on the popover surface.
   {
     id: 'app-richtexteditor--features',
     name: 'table menu',
     open: async (page) => {
       await page.locator('[data-fixture="table"] td').first().click()
-      await page.locator('[data-fixture="table"]').getByRole('button', { name: 'Table', exact: true }).click()
+      await page.waitForTimeout(100)
+      await page.keyboard.press('Shift+F10')
     },
     shows: '[data-slot=dropdown-menu-content]',
   },

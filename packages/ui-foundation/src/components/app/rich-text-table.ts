@@ -1,7 +1,15 @@
-// What the rich-text editor can do to a table: rows and columns added and
-// deleted, a column's alignment, the whole table deleted, and its keys.
+// What the rich-text editor can do to a table: rows and columns added,
+// deleted and moved, a column's alignment, the rows sorted by a column,
+// cells coloured, a header column, the whole table deleted, and its keys.
 // Plain ProseMirror commands over prosemirror-tables and Milkdown's gfm
 // schema, so each is one undo step.
+//
+// Sorting rewrites the rows' order: what the editor shows is what it
+// saves, so a sort is an edit like any other (Ctrl+Z puts them back).
+// Colours and the header column are stored as Markdown already writes
+// them (src/lib/markdown-table.ts): a coloured cell is its whole text in
+// one highlight, a header column is its first cells in bold. The table's
+// decorations (tableLook) draw them.
 //
 // What GFM can't store, the editor doesn't offer: a table always keeps its
 // header row and at least one row under it, and at least one column, so
@@ -13,8 +21,12 @@
 // Tab in the last cell adds a row; Enter goes to the cell below, and out
 // of the table from its last row; Shift+Enter does nothing (a line break
 // can't be stored inside a cell).
-import type { Node as ProseNode } from '@milkdown/kit/prose/model'
-import { TextSelection, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
+import { closeHistory } from '@milkdown/kit/prose/history'
+import { Fragment, type Node as ProseNode } from '@milkdown/kit/prose/model'
+import { Plugin, PluginKey, TextSelection, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
+import { Decoration, DecorationSet } from '@milkdown/kit/prose/view'
+import { isHighlightColor, type HighlightColor } from '@/lib/markdown-highlight'
+import { cellColor, compareCells, isHeaderColumn, type CellRun } from '@/lib/markdown-table'
 import {
   addColumnAfter,
   addColumnBefore,
@@ -39,6 +51,13 @@ export type TableAction =
   | 'deleteRow'
   | 'deleteColumn'
   | 'deleteTable'
+  | 'moveRowUp'
+  | 'moveRowDown'
+  | 'moveColumnLeft'
+  | 'moveColumnRight'
+  | 'sortAscending'
+  | 'sortDescending'
+  | 'headerColumn'
 
 export type ColumnAlignment = 'left' | 'center' | 'right'
 
@@ -68,6 +87,19 @@ export function tableActionEnabled(state: EditorState, action: TableAction): boo
       return top > 0 && bottom - top < map.height - 1
     case 'deleteColumn':
       return right - left < map.width
+    case 'moveRowUp':
+      return top > 1
+    case 'moveRowDown':
+      return top > 0 && bottom < map.height
+    case 'moveColumnLeft':
+      return left > 0
+    case 'moveColumnRight':
+      return right < map.width
+    case 'sortAscending':
+    case 'sortDescending':
+      return map.height > 2
+    case 'headerColumn':
+      return map.height > 1
     default:
       return true
   }
@@ -93,10 +125,205 @@ export function runTableAction(state: EditorState, dispatch: Dispatch, action: T
       return deleteColumn(state, dispatch)
     case 'deleteTable':
       return deleteTable(state, dispatch)
+    case 'moveRowUp':
+    case 'moveRowDown':
+      return moveRow(state, dispatch, action === 'moveRowUp' ? -1 : 1)
+    case 'moveColumnLeft':
+    case 'moveColumnRight':
+      return moveColumn(state, dispatch, action === 'moveColumnLeft' ? -1 : 1)
+    case 'sortAscending':
+    case 'sortDescending':
+      return sortRows(state, dispatch, action === 'sortAscending' ? 1 : -1)
+    case 'headerColumn':
+      return toggleHeaderColumn(state, dispatch)
     default:
       return false
   }
 }
+
+// The table rebuilt from its rows, in place of the old one, and the caret
+// into the cell at `row`, `column` of the new one. Its own undo step,
+// never merged with the edit before it (two sorts in a row undo one at a time).
+function replaceRows(state: EditorState, dispatch: Dispatch, rows: ProseNode[], row: number, column: number): boolean {
+  const { table, tableStart } = selectedRect(state)
+  const next = table.copy(Fragment.from(rows))
+  const tr = state.tr.replaceWith(tableStart - 1, tableStart - 1 + table.nodeSize, next)
+  const map = TableMap.get(next)
+  tr.setSelection(TextSelection.near(tr.doc.resolve(tableStart + map.map[row * map.width + column] + 1)))
+  dispatch(closeHistory(tr.scrollIntoView()))
+  return true
+}
+
+const rowsOf = (table: ProseNode) => {
+  const rows: ProseNode[] = []
+  table.forEach((row) => rows.push(row))
+  return rows
+}
+
+// The caret's row swapped with the one above or below (never the header
+// row: GFM's first row is always the header).
+function moveRow(state: EditorState, dispatch: Dispatch, by: -1 | 1): boolean {
+  const { table, top, left } = selectedRect(state)
+  const rows = rowsOf(table)
+  const to = top + by
+  ;[rows[top], rows[to]] = [rows[to], rows[top]]
+  return replaceRows(state, dispatch, rows, to, left)
+}
+
+// The caret's column swapped with the one left or right of it, in every
+// row; each cell keeps its alignment, so the column's moves with it.
+function moveColumn(state: EditorState, dispatch: Dispatch, by: -1 | 1): boolean {
+  const { table, top, left } = selectedRect(state)
+  const to = left + by
+  const rows = rowsOf(table).map((row) => {
+    const cells: ProseNode[] = []
+    row.forEach((cell) => cells.push(cell))
+    ;[cells[left], cells[to]] = [cells[to], cells[left]]
+    return row.copy(Fragment.from(cells))
+  })
+  return replaceRows(state, dispatch, rows, top, to)
+}
+
+// The body rows in the order of the caret's column (numbers by value,
+// then words, empty cells last), the header row kept first. Rows that
+// tie keep their order. The caret goes to the column's header.
+function sortRows(state: EditorState, dispatch: Dispatch, direction: 1 | -1): boolean {
+  const { table, left } = selectedRect(state)
+  const [header, ...body] = rowsOf(table)
+  const text = (row: ProseNode) => row.child(left).textContent
+  const sorted = body
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => compareCells(text(a.row), text(b.row)) * direction || a.index - b.index)
+    .map(({ row }) => row)
+  return replaceRows(state, dispatch, [header, ...sorted], 0, left)
+}
+
+// A cell's text as runs, with their highlight and bold (markdown-table.ts).
+function runsOf(cell: ProseNode): CellRun[] {
+  const runs: CellRun[] = []
+  cell.descendants((node) => {
+    if (!node.isText) return true
+    const highlight = node.marks.find((mark) => mark.type.name === 'highlight')
+    const color = highlight ? (isHighlightColor(highlight.attrs.color) ? highlight.attrs.color : 'amber') : null
+    runs.push({ text: node.text ?? '', color, bold: node.marks.some((mark) => mark.type.name === 'strong') })
+    return false
+  })
+  return runs
+}
+
+// Each body row's first cell, and where it starts in the document.
+function firstCells(table: ProseNode, tableStart: number): { cell: ProseNode; pos: number }[] {
+  const cells: { cell: ProseNode; pos: number }[] = []
+  table.forEach((row, offset, index) => {
+    if (index > 0 && row.firstChild) cells.push({ cell: row.firstChild, pos: tableStart + offset + 1 })
+  })
+  return cells
+}
+
+/** Whether the caret's table has a header column (its first cells bold). */
+export function headerColumnOn(state: EditorState): boolean {
+  if (!isInTable(state)) return false
+  const { table, tableStart } = selectedRect(state)
+  return isHeaderColumn(firstCells(table, tableStart).map(({ cell }) => runsOf(cell)))
+}
+
+// The header column on (each body row's first cell bolded) or off (unbolded).
+function toggleHeaderColumn(state: EditorState, dispatch: Dispatch): boolean {
+  const { table, tableStart } = selectedRect(state)
+  const strong = state.schema.marks.strong
+  const on = headerColumnOn(state)
+  const tr = state.tr
+  for (const { cell, pos } of firstCells(table, tableStart)) {
+    const from = pos + 1
+    const to = pos + cell.nodeSize - 1
+    if (on) tr.removeMark(from, to, strong)
+    else if (cell.textContent.trim()) tr.addMark(from, to, strong.create())
+  }
+  if (tr.docChanged) dispatch(closeHistory(tr))
+  return true
+}
+
+/** What a colour is put on: the caret's cell, its whole row, or its column's body cells. */
+export type TableColorScope = 'cell' | 'row' | 'column'
+
+/** Whether a colour can go on that scope where the caret is (never the header row's cells). */
+export function tableColorEnabled(state: EditorState, scope: TableColorScope): boolean {
+  if (!isInTable(state)) return false
+  const { map, top } = selectedRect(state)
+  return scope === 'column' ? map.height > 1 : top > 0
+}
+
+/** The cell colour where the caret is, or null (none, or the header row). */
+export function cellColorAt(state: EditorState): HighlightColor | null {
+  if (!isInTable(state)) return null
+  const { table, map, left, top } = selectedRect(state)
+  const cell = table.nodeAt(map.map[top * map.width + left])
+  return cell ? cellColor(runsOf(cell)) : null
+}
+
+/**
+ * Colours cells: each one's whole text put in that highlight (`null`
+ * takes the highlight off). An empty cell stays as it is: a highlight
+ * needs words.
+ */
+export function colorTableCells(state: EditorState, dispatch: Dispatch, scope: TableColorScope, color: HighlightColor | null): boolean {
+  if (!tableColorEnabled(state, scope)) return false
+  const { map, table, tableStart, top, bottom, left, right } = selectedRect(state)
+  const highlight = state.schema.marks.highlight
+  const rows = scope === 'column' ? [1, map.height] : [top, bottom]
+  const columns = scope === 'row' ? [0, map.width] : [left, right]
+  const tr = state.tr
+  for (let row = rows[0]; row < rows[1]; row++) {
+    for (let column = columns[0]; column < columns[1]; column++) {
+      const offset = map.map[row * map.width + column]
+      const cell = table.nodeAt(offset)!
+      const from = tableStart + offset + 1
+      const to = tableStart + offset + cell.nodeSize - 1
+      tr.removeMark(from, to, highlight)
+      if (color && cell.textContent.trim()) tr.addMark(from, to, highlight.create({ color }))
+    }
+  }
+  if (tr.docChanged) dispatch(closeHistory(tr))
+  return true
+}
+
+// The decorations that draw what the Markdown keeps: a coloured cell's
+// wash (`data-color`) and a header column's first cells (`data-row-header`),
+// styled in styles/index.css ("Tables in written text").
+function tableDecorations(doc: ProseNode): DecorationSet {
+  const decorations: Decoration[] = []
+  doc.descendants((node, pos) => {
+    if (node.type.name !== 'table') return node.isBlock && !node.isTextblock
+    const tableStart = pos + 1
+    node.forEach((row, rowOffset) => {
+      row.forEach((cell, cellOffset) => {
+        const color = cellColor(runsOf(cell))
+        const at = tableStart + rowOffset + 1 + cellOffset
+        if (color) decorations.push(Decoration.node(at, at + cell.nodeSize, { 'data-color': color }))
+      })
+    })
+    const firsts = firstCells(node, tableStart)
+    if (isHeaderColumn(firsts.map(({ cell }) => runsOf(cell))))
+      for (const { cell, pos: at } of firsts) decorations.push(Decoration.node(at, at + cell.nodeSize, { 'data-row-header': '' }))
+    return false
+  })
+  return DecorationSet.create(doc, decorations)
+}
+
+const tableLookKey = new PluginKey<DecorationSet>('tableLook')
+
+/** The plugin that draws cell colours and a header column (tableDecorations). */
+export function tableLook(): Plugin {
+  return new Plugin<DecorationSet>({
+    key: tableLookKey,
+    state: {
+      init: (_config, state) => tableDecorations(state.doc),
+      apply: (tr, previous) => (tr.docChanged ? tableDecorations(tr.doc) : previous),
+    },
+    props: { decorations: (state) => tableLookKey.getState(state) },
+  })
+}
+
 
 // A row of empty cells, each aligned as its column is, above or below the
 // caret's rows (or at the end: `'end'`), and the caret into it in the

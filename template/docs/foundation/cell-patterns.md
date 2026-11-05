@@ -26,15 +26,15 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 565–648
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 650–685
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 687–760
-- [18. Editable value](#18-editable-value) · lines 762–1221
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1037–1122
-  - [In a table's rows](#in-a-tables-rows) · lines 1124–1209
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1211–1221
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1223–1289
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1291–1355
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1357–1425
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1427–1455
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1457–1533
+- [18. Editable value](#18-editable-value) · lines 762–1226
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1042–1127
+  - [In a table's rows](#in-a-tables-rows) · lines 1129–1214
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1216–1226
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1228–1294
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1296–1360
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1362–1430
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1432–1460
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1462–1538
 
 <!-- /index -->
 
@@ -1002,8 +1002,13 @@ const price = editInPlace({
   is GitHub's `> [!NOTE]` (note, tip, important, warning, caution), its
   icon a menu of kinds. In a table, Tab in the last cell adds a row,
   Enter goes down a column (and out from the last row), bars under and
-  beside it add a row or a column, and the toolbar's Table menu inserts
-  rows and columns, aligns a column and deletes. Selected words can be
+  beside it add a row or a column, and a grip on the hovered column and
+  row opens its menu: insert, move and delete, align, sort (rewriting the
+  rows), a header column (its first cells bold) and cell colours (a
+  cell's whole text in a highlight); a right-click or Shift+F10 in a cell
+  opens the cell's. Columns fit their words. `tableLook="boxed"` (on the
+  editor and on `<Markdown>`) gives a roomier boxed table with zebra rows
+  instead of the compact grid. Selected words can be
   highlighted in four colours (amber, yellow, green, red) from the
   toolbars' Highlight menu or with "/highlight", and un-highlighted;
   they're saved as `==words==` (`=={green}words==` for the others), plain

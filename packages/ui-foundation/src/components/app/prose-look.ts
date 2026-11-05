@@ -137,3 +137,11 @@ export const CALLOUT_LOOK: Record<CalloutKind, CalloutLook> = {
 
 /** The box every callout shares: the icon in a column, the text beside it. */
 export const CALLOUT_BOX = 'flex gap-2.5 rounded-lg border px-3 py-2.5'
+
+/**
+ * How a table in written text looks (styles/index.css "Tables in written
+ * text"): `compact`, a full grid with tight cells and the header row on
+ * the heading band, or `boxed`, a rounded box, roomier cells, a muted
+ * header row and zebra rows.
+ */
+export type TableLook = 'compact' | 'boxed'

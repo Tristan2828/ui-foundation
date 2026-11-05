@@ -1,7 +1,8 @@
 // The rich-text editor's fixed toolbar: one row of pressed/not-pressed
 // buttons above the text, each a format and its keyboard shortcut, a
-// Table menu (rich-text-table-menu.tsx), and, when the editor uploads
-// images, an Image button (a plain button: it opens the file picker).
+// Table button that inserts one (a table's own grips edit it:
+// rich-text-table-grips.tsx), and, when the editor uploads images, an
+// Image button (a plain button: it opens the file picker).
 //
 // - One tab stop (ARIA's toolbar pattern): Tab reaches the last button
 //   used, the arrow keys, Home and End move along the row.
@@ -23,9 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FORMAT_GROUPS, FORMAT_ITEMS, type FormatItem } from './rich-text-format-items'
 import { formatOn, type FormatId } from './rich-text-formats'
 import { ariaKeys, isApple, shownKeys } from './rich-text-shortcuts'
-import type { TableAction } from './rich-text-table'
 import { RichTextHighlightMenu } from './rich-text-highlight-menu'
-import { RichTextTableMenu } from './rich-text-table-menu'
 
 // Which buttons a toolbar has: every format (the fixed one), or the ones
 // that apply to selected words (the floating one).
@@ -61,22 +60,20 @@ export type FormatButtonsProps = {
   readOnly: boolean
   /** A button pressed: run the format on the editor and give it focus back. */
   onFormat: (id: FormatId) => void
-  /** A Table menu item picked (only the fixed toolbar has the menu). */
-  onTable?: (action: TableAction) => void
   /** The Image button pressed: pick images to upload. No button without it. */
   onImage?: () => void
   /** The Full screen button pressed. No button without it. */
   onFullScreen?: () => void
   /** Whether the editor is full screen now (the button's state). */
   fullScreen?: boolean
-  /** The editable element, for the Table menu to give focus back to. */
+  /** The editable element, for the Highlight menu to give focus back to. */
   text?: () => HTMLElement | null
 }
 
 // A toolbar's row of buttons: one tab stop, the last one used (ARIA's
 // toolbar pattern); the arrow keys, Home and End move along the row. The
 // toolbar's element (`role="toolbar"`, its name) is the caller's.
-export function FormatButtons({ formats, state, readOnly, onFormat, onTable, onImage, onFullScreen, fullScreen = false, text = () => null }: FormatButtonsProps) {
+export function FormatButtons({ formats, state, readOnly, onFormat, onImage, onFullScreen, fullScreen = false, text = () => null }: FormatButtonsProps) {
   const apple = isApple()
   const compact = useCompact()
   const groups = SETS[formats].map((group) => group.filter((item) => compact || !item.touch)).filter((group) => group.length > 0)
@@ -115,23 +112,6 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onTable, onI
           {groupIndex > 0 && <Separator orientation="vertical" className="mx-1 h-5 self-center" />}
           {group.map((item) => {
             const index = items.indexOf(item)
-            if (item.id === 'table')
-              return (
-                <RichTextTableMenu
-                  key={item.id}
-                  ref={(element: HTMLButtonElement | null) => {
-                    buttons.current[index] = element
-                  }}
-                  state={state}
-                  readOnly={readOnly}
-                  tabIndex={index === current ? 0 : -1}
-                  onFocus={() => setCurrent(index)}
-                  onKeyDown={onKeyDown}
-                  onInsert={() => onFormat('table')}
-                  onAction={(action) => onTable?.(action)}
-                  text={text}
-                />
-              )
             if (item.id === 'highlight')
               return (
                 <RichTextHighlightMenu
@@ -168,7 +148,8 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onTable, onI
                         variant="ghost"
                         size="icon-sm"
                         aria-label={item.label}
-                        disabled={readOnly}
+                        // A table goes in only outside one.
+                        disabled={readOnly || (item.id === 'table' && state !== null && formatOn(state, 'table'))}
                         tabIndex={index === current ? 0 : -1}
                         onMouseDown={(event) => event.preventDefault()}
                         onFocus={() => setCurrent(index)}
@@ -281,21 +262,19 @@ export interface RichTextToolbarProps {
   controls?: string
   /** A button pressed: run the format on the editor and give it focus back. */
   onFormat: (id: FormatId) => void
-  /** A Table menu item picked: run it on the editor and give it focus back. */
-  onTable: (action: TableAction) => void
   /** The Image button pressed (only when the editor uploads images). */
   onImage?: () => void
   /** The Full screen button pressed. No button without it. */
   onFullScreen?: () => void
   /** Whether the editor is full screen now. */
   fullScreen?: boolean
-  /** The editable element, for the Table menu to give focus back to. */
+  /** The editable element, for the Highlight menu to give focus back to. */
   text: () => HTMLElement | null
   /** The toolbar's element, for Alt+F10 to reach it from the text. */
   ref?: Ref<HTMLDivElement>
 }
 
-export function RichTextToolbar({ state, readOnly, controls, onFormat, onTable, onImage, onFullScreen, fullScreen, text, ref }: RichTextToolbarProps) {
+export function RichTextToolbar({ state, readOnly, controls, onFormat, onImage, onFullScreen, fullScreen, text, ref }: RichTextToolbarProps) {
   return (
     <div
       ref={ref}
@@ -305,7 +284,7 @@ export function RichTextToolbar({ state, readOnly, controls, onFormat, onTable, 
       data-slot="rich-text-toolbar"
       className="flex flex-wrap items-center gap-0.5 border-b border-input px-1 py-1"
     >
-      <FormatButtons formats="all" state={state} readOnly={readOnly} onFormat={onFormat} onTable={onTable} onImage={onImage} onFullScreen={onFullScreen} fullScreen={fullScreen} text={text} />
+      <FormatButtons formats="all" state={state} readOnly={readOnly} onFormat={onFormat} onImage={onImage} onFullScreen={onFullScreen} fullScreen={fullScreen} text={text} />
     </div>
   )
 }
