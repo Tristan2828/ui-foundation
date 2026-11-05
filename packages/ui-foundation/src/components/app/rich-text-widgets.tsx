@@ -7,8 +7,8 @@
 //   the tab order.
 // - A table's bars add a column at its right and a row at its end, shown
 //   while the pointer is over the table or the caret is in it. Mouse
-//   shortcuts as well: Tab in the last cell adds a row, and the toolbar's
-//   Table menu does both.
+//   shortcuts as well: Tab in the last cell adds a row, and a cell's menu
+//   (its grips, or Shift+F10: rich-text-table-grips.tsx) does both.
 //
 // Each gives focus back to the text when it's done.
 import { PlusIcon } from 'lucide-react'

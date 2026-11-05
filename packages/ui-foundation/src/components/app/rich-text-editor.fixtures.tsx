@@ -86,6 +86,7 @@ function Labelled({
   headingLevel,
   headingFrom,
   foldKey,
+  tableLook,
 }: {
   label: string
   markdown: string
@@ -98,6 +99,7 @@ function Labelled({
   headingLevel?: RichTextEditorProps['headingLevel']
   headingFrom?: RichTextEditorProps['headingFrom']
   foldKey?: string
+  tableLook?: RichTextEditorProps['tableLook']
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
@@ -121,6 +123,7 @@ function Labelled({
         headingLevel={headingLevel}
         headingFrom={headingFrom}
         foldKey={foldKey}
+        tableLook={tableLook}
       />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
@@ -251,10 +254,10 @@ export const HeadingLevels: StoryObj<typeof RichTextEditor> = {
 // stop, a region named for its columns, and the arrow keys scroll it. The
 // one under it fits, so its box is neither, until enough columns are
 // added that it scrolls too (e2e/rich-text-editor.spec.ts "table scroll").
-const WIDE_TABLE = `| Item | Size | Colour | Material | Weight | Supplier | Ordered | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Shelf | Large | Grey | Pine | 12kg | Northwind | March | Two boxes |
-| Lamp | Small | White | Steel | 2kg | Southgate | April | Bulb extra |
+const WIDE_TABLE = `| Item | Size | Colour | Material | Weight | Supplier | Ordered | Warehouse | Condition | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Shelf | Large | Grey | Pine | 12kg | Northwind | March | Riverside | Unopened | Two boxes |
+| Lamp | Small | White | Steel | 2kg | Southgate | April | Hillcrest | Assembled | Bulb extra |
 
 After the wide table.
 `
@@ -348,6 +351,44 @@ function FoldingStory() {
 }
 
 export const Folding: StoryObj<typeof RichTextEditor> = { render: () => <FoldingStory /> }
+
+// Tables (e2e/rich-text-tables.spec.ts): one to edit through its grips in
+// each look, and the same text as <Markdown> reads it, a coloured cell
+// (its whole text one highlight) and a header column (its first cells
+// bold) included. Contrast-checked in both themes there.
+const PRICE_TABLE = `| Item | Store | Size | Price |
+| --- | --- | --- | ---: |
+| Olive oil | Corner shop | 1 L | $12.49 |
+| Rice | Market | 2 kg | $8.99 |
+| Oats | Corner shop | 1 kg | $4.29 |
+
+After the table.
+`
+
+const MARKED_TABLE = `| Item | Size | Price | Note |
+| --- | --- | ---: | --- |
+| **Olive oil** | 1 L | =={green}$12.49== | Store brand tastes the same, and it keeps for months in a cool cupboard |
+| **Rice** | 2 kg | =={red}$8.99== | Only ==partly highlighted== words |
+| **Oats** | 1 kg | $4.29 | =={amber}Buy two== |
+`
+
+export const Tables: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-3xl flex-col gap-6">
+      <Labelled label="compactTable" markdown={PRICE_TABLE} />
+      <Labelled label="boxedTable" markdown={PRICE_TABLE} tableLook="boxed" />
+      <Labelled label="markedTable" markdown={MARKED_TABLE} />
+      <section className="flex flex-col gap-2" data-fixture="markdownCompact">
+        <h2 className="type-label">markdownCompact</h2>
+        <Markdown>{MARKED_TABLE}</Markdown>
+      </section>
+      <section className="flex flex-col gap-2" data-fixture="markdownBoxed">
+        <h2 className="type-label">markdownBoxed</h2>
+        <Markdown tableLook="boxed">{MARKED_TABLE}</Markdown>
+      </section>
+    </div>
+  ),
+}
 
 // An edit form's field: the value held by the form and passed back as
 // `defaultValue`, the record loaded only after the editor has mounted

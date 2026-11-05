@@ -1,6 +1,7 @@
 // The rich-text editor's own node views: how a callout and a table are
 // drawn in the text. Each has a slot outside the editable content (a
-// callout's icon, a table's "add a row"/"add a column" bars) where the
+// callout's icon, a table's "add a row"/"add a column" bars and its grips'
+// layer) where the
 // editor renders React (rich-text-widgets.tsx, through a portal), and
 // ProseMirror leaves alone: events there are the widget's, and changes to
 // it aren't read back as edits.
@@ -14,7 +15,18 @@ import { TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 /** A slot a node view has, for the editor to render its widget into. */
 export type Widget =
   | { type: 'callout'; key: string; slot: HTMLElement; kind: CalloutKind; getPos: () => number | undefined }
-  | { type: 'table'; key: string; slot: HTMLElement; column: HTMLElement; getPos: () => number | undefined }
+  | {
+      type: 'table'
+      key: string
+      slot: HTMLElement
+      column: HTMLElement
+      /** The layer the grips are placed in (rich-text-table-grips.tsx), over the whole frame. */
+      grips: HTMLElement
+      frame: HTMLElement
+      box: HTMLElement
+      table: HTMLTableElement
+      getPos: () => number | undefined
+    }
 
 // Each slot's key for its portal, for as long as the node view lives.
 let made = 0
@@ -114,9 +126,10 @@ function scrollKey(box: HTMLElement, event: KeyboardEvent): boolean {
 const PRESS_MS = 1000
 
 /**
- * A table: in a box that scrolls sideways when it's wider than the text,
- * with an "add a column" bar along its right and an "add a row" bar under
- * it (widgets), Notion's way. While it scrolls, the box is a tab stop and
+ * A table: in a box as wide as its columns' words that scrolls sideways
+ * when it's wider than the text, with an "add a column" bar along its
+ * right, an "add a row" bar under it and a layer over it for its grips
+ * (widgets), Notion's way. While it scrolls, the box is a tab stop and
  * a region named for its columns (prose-table-scroll.ts), which the arrow
  * keys, Home and End scroll; a click in it still puts the caret in the
  * cell clicked.
@@ -129,17 +142,20 @@ export function tableView(
 ): NodeView {
   const dom = document.createElement('div')
   dom.dataset.slot = 'rich-text-table'
-  dom.className = 'group/table grid grid-cols-[minmax(0,1fr)_auto] gap-1'
+  // As wide as the table (its columns fit their words), never wider than the text.
+  dom.className = 'group/table relative grid w-fit max-w-full grid-cols-[minmax(0,auto)_auto] gap-1'
   const scroll = document.createElement('div')
-  scroll.className = cn('overflow-x-auto rounded-lg border border-border', TABLE_SCROLL_FOCUS)
+  // Its look: styles/index.css "Tables in written text".
+  scroll.className = cn('prose-table', TABLE_SCROLL_FOCUS)
   const table = document.createElement('table')
   const contentDOM = document.createElement('tbody')
   table.append(contentDOM)
   scroll.append(table)
   const column = slot('flex w-5')
   const row = slot('col-start-1 flex h-5')
-  dom.append(scroll, column, row)
-  registry.set({ type: 'table', key: nextKey(), slot: row, column, getPos })
+  const grips = slot('pointer-events-none absolute inset-0')
+  dom.append(scroll, column, row, grips)
+  registry.set({ type: 'table', key: nextKey(), slot: row, column, grips, frame: dom, box: scroll, table, getPos })
   const region = watchTableScroll(scroll, table, columnsOf(node))
 
   // A press in the box is the text's: a click in a cell puts the caret
@@ -197,7 +213,7 @@ export function tableView(
       region.setColumns(columnsOf(next))
       return true
     },
-    stopEvent: (event) => row.contains(event.target as Node) || column.contains(event.target as Node),
+    stopEvent: (event) => row.contains(event.target as Node) || column.contains(event.target as Node) || grips.contains(event.target as Node),
     ignoreMutation: outside(contentDOM),
     destroy: () => {
       released()

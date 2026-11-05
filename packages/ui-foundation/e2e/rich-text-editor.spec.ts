@@ -940,11 +940,13 @@ test.describe('tables', () => {
   const table = (page: Page) => editor(page, 'table').locator('table')
   const rows = (page: Page) => table(page).locator('tr')
   const cell = (page: Page, row: number, column: number) => rows(page).nth(row).locator('th, td').nth(column)
-  const menuButton = (page: Page) =>
+  const tableButton = (page: Page) =>
     page.locator('[data-fixture="table"]').getByRole('toolbar', { name: 'Formatting' }).getByRole('button', { name: 'Table', exact: true })
+  // The caret's cell menu (Shift+F10), and an item in it.
   const pick = async (page: Page, name: string) => {
-    await menuButton(page).click()
+    await page.keyboard.press('Shift+F10')
     await page.getByRole('menu').getByRole(/^(Left|Center|Right)$/.test(name) ? 'menuitemradio' : 'menuitem', { name, exact: true }).click()
+    await expect(page.getByRole('menu')).toHaveCount(0)
   }
 
   async function caretIn(page: Page, row: number, column: number) {
@@ -988,7 +990,7 @@ test.describe('tables', () => {
     await expect(saved(page, 'table')).toContainText(/\| Top +\| 1/)
   })
 
-  test('the Table menu adds rows and columns, aligns a column, and deletes', async ({ page }) => {
+  test("a cell's menu adds rows and columns, aligns a column, and deletes", async ({ page }) => {
     await caretIn(page, 1, 0)
     await pick(page, 'Insert row below')
     await expect(rows(page)).toHaveCount(4)
@@ -1006,23 +1008,24 @@ test.describe('tables', () => {
     await expect(saved(page, 'table')).not.toContainText('|')
   })
 
-  test('in the header row, the row can\'t be deleted or have one put above it; outside a table, only Insert table', async ({ page }) => {
+  test("in the header row, the row can't be deleted, moved or have one put above it; the toolbar's Table only puts one in outside a table", async ({
+    page,
+  }) => {
     await caretIn(page, 0, 0)
-    await menuButton(page).click()
+    await expect(tableButton(page)).toBeDisabled()
+    await page.keyboard.press('Shift+F10')
     const menu = page.getByRole('menu')
     await expect(menu.getByRole('menuitem', { name: 'Delete row' })).toHaveAttribute('aria-disabled', 'true')
     await expect(menu.getByRole('menuitem', { name: 'Insert row above' })).toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Move row down' })).toHaveAttribute('aria-disabled', 'true')
     await expect(menu.getByRole('menuitem', { name: 'Insert row below' })).not.toHaveAttribute('aria-disabled', 'true')
-    await expect(menu.getByRole('menuitem', { name: 'Insert table' })).toHaveAttribute('aria-disabled', 'true')
     await page.keyboard.press('Escape')
     await expect(menu).toHaveCount(0)
-    await expect(menuButton(page)).toBeFocused()
+    await expect(editor(page, 'table')).toBeFocused()
     await editor(page, 'table').getByText('After the table.').click()
     await page.waitForTimeout(100)
-    await menuButton(page).click()
-    await expect(menu.getByRole('menuitem', { name: 'Insert table' })).not.toHaveAttribute('aria-disabled', 'true')
-    await expect(menu.getByRole('menuitem', { name: 'Delete table' })).toHaveAttribute('aria-disabled', 'true')
-    await menu.getByRole('menuitem', { name: 'Insert table' }).click()
+    await expect(tableButton(page)).toBeEnabled()
+    await tableButton(page).click()
     await expect(editor(page, 'table').locator('table')).toHaveCount(2)
   })
 
@@ -1040,10 +1043,10 @@ test.describe('tables', () => {
   })
 
   for (const theme of ['light', 'dark'] as const) {
-    test(`the caret in a table and its menu open, zero axe violations (${theme})`, async ({ page }) => {
+    test(`the caret in a table and its cell menu open, zero axe violations (${theme})`, async ({ page }) => {
       await page.goto(`${FEATURES}&theme=${theme}`)
       await caretIn(page, 1, 0)
-      await menuButton(page).click()
+      await page.keyboard.press('Shift+F10')
       await expect(page.getByRole('menu')).toBeVisible()
       const results = await new AxeBuilder({ page })
         .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
@@ -1408,14 +1411,15 @@ test.describe('table scroll', () => {
     const narrow = editorTableBox(page, 'narrowTable')
     await expect(narrow).toBeVisible()
     await expect(narrow).not.toHaveAttribute('tabindex')
-    for (let i = 0; i < 5; i++) {
+    // Empty columns are narrow (columns fit their words): nine of them.
+    for (let i = 0; i < 9; i++) {
       await narrow.hover()
       await fixture.getByRole('button', { name: 'Add a column' }).click()
     }
     await expect(narrow).toHaveAttribute('tabindex', '0')
     await expect(narrow).toHaveAttribute('role', 'region')
     await expect(narrow).toHaveAttribute('aria-label', 'Table, scrolls sideways: Item, Count')
-    for (let i = 0; i < 5; i++) await page.keyboard.press('ControlOrMeta+z')
+    for (let i = 0; i < 9; i++) await page.keyboard.press('ControlOrMeta+z')
     await expect(fixture.locator('tr').first().locator('th')).toHaveCount(2)
     await expect(narrow).not.toHaveAttribute('tabindex')
     await expect(narrow).not.toHaveAttribute('role')
