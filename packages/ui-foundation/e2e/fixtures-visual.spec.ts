@@ -58,6 +58,8 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 const COMPOSITE_STORIES = [
   // Every Button variant: the link one reads in --link, never the accent.
   { id: 'ui-button--variants', mustShow: 'Secondary' },
+  // Invalid fields with their typed values, on a card (4.63.2).
+  { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--features', mustShow: 'characters over the limit' },

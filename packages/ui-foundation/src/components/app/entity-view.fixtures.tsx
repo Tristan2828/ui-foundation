@@ -536,6 +536,36 @@ function HeaderSlotsInRouter() {
 
 export const HeaderSlots: StoryObj = { render: () => <HeaderSlotsInRouter /> }
 
+// --- Many actions -----------------------------------------------------------
+// A record with eight header actions at 36px: the title keeps its room and
+// the actions wrap under one another, right-aligned (4.63.2; before, they
+// took the whole row and left the title 0px wide).
+
+function ManyActionsRecord() {
+  const labels = ['Print notes', 'Step back', 'Advance', 'Save as version', 'Compare with…', 'Print', 'Edit', 'Delete']
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Projects' }}
+      title="Office move"
+      subtitle="Phase 1 · Pack · V2"
+      actions={labels.map((label) => (
+        <Button key={label} variant="outline">
+          {label}
+        </Button>
+      ))}
+      sections={[{ title: 'Details', content: <p>In progress</p> }]}
+    />
+  )
+}
+
+function ManyActionsInRouter() {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <ManyActionsRecord /> }]))
+  return <RouterProvider router={router} />
+}
+
+export const ManyActions: StoryObj = { render: () => <ManyActionsInRouter /> }
+
 // --- Printing the notes ---------------------------------------------------
 // A visit's page with its prep and questions marked `print`: the header
 // gets Print notes, and paper shows those two sections alone under the

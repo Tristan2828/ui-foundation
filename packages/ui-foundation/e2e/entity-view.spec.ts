@@ -429,3 +429,17 @@ test.describe('EntityView, notice and footer (#158, #159)', () => {
     )
   })
 })
+
+// Eight header actions at 36px: the title keeps at least 16rem beside them
+// (it was squeezed to 0px, a letter per line) and the actions wrap.
+test('many header actions wrap beside the title instead of squeezing it', async ({ page }) => {
+  await open(page, 'many-actions', 1024)
+  const title = (await page.getByRole('heading', { level: 1, name: 'Office move' }).boundingBox())!
+  expect(title.width).toBeGreaterThanOrEqual(256)
+  expect(title.height).toBeLessThan(60)
+  const tops = await header(page)
+    .getByRole('button')
+    .evaluateAll((buttons) => new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size)
+  expect(tops).toBeGreaterThan(1)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
