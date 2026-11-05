@@ -26,6 +26,23 @@ describe('imageRefusal', () => {
     expect(imageRefusal({ type: 'text/plain', size: 1 }, { accept: ['image/*'] })).toBe("That file isn't an image. Choose an image.")
   })
 
+  it('judges a file with an empty type by its .heic or .heif name, as if it were typed', () => {
+    const heic = ['image/heic', 'image/heif']
+    expect(imageRefusal({ type: '', name: 'photo.heic', size: 1 }, { accept: heic })).toBeNull()
+    expect(imageRefusal({ type: '', name: 'PHOTO.HEIF', size: 1 }, { accept: heic })).toBeNull()
+    expect(imageRefusal({ type: '', name: 'photo.heic', size: 1 }, { accept: ['image/*'] })).toBeNull()
+    // Same answer as a typed image/heic where HEIC isn't accepted.
+    expect(imageRefusal({ type: '', name: 'photo.heic', size: 1 })).toBe(imageRefusal({ type: 'image/heic', size: 1 }))
+    expect(imageRefusal({ type: '', name: 'photo.heic', size: 9 * MB }, { accept: heic, maxSize: MB })).toBe(
+      'That image is 9 MB. The limit is 1 MB.',
+    )
+  })
+
+  it('still refuses a file with an empty type and any other name', () => {
+    expect(imageRefusal({ type: '', name: 'notes.txt', size: 1 }, { accept: ['image/*'] })).toBe("That file isn't an image. Choose an image.")
+    expect(imageRefusal({ type: '', name: 'heic', size: 1 }, { accept: ['image/heic'] })).toBe("That file isn't an image. Choose a HEIC image.")
+  })
+
   it('refuses a file over the size limit, with both sizes in words', () => {
     expect(imageRefusal({ type: 'image/jpeg', size: 12.4 * MB }, { maxSize: 5 * MB })).toBe('That image is 12 MB. The limit is 5 MB.')
     expect(imageRefusal({ type: 'image/jpeg', size: 5 * MB }, { maxSize: 5 * MB })).toBeNull()
