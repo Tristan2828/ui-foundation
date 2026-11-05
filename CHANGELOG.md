@@ -43,6 +43,21 @@ Markdown and get the compact look; pass `tableLook="boxed"` to both
 renderers for the other. An app that styled `[data-slot=table-container]`
 or a notes table's cells should check them.
 
+## 4.61.1 — A rich-text field shows a value that arrives after it
+
+A fix, so a patch; the UI package only. No new dependency, nothing to
+change in an app.
+
+- **`RichTextEditor` follows `defaultValue`.** It read its Markdown once,
+  when it mounted, so an edit form whose record loaded just after the
+  editor (the editor's code already cached, as on a second Edit) showed
+  an empty field while the form still held the text. Now a new
+  `defaultValue` the editor didn't report itself (a loaded record, a
+  reset) replaces the text. Its own edits passed back as the value change
+  nothing, so typing keeps its caret, and a caller that never passes
+  `onChange` back keeps its text. An app that remounted the editor to get
+  around this (a `key` on it) can drop that.
+
 ## 4.61.0 — A record's notes printed on their own
 
 Additive, so a minor; the UI package only. No new dependency. A record's
