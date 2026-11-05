@@ -7,6 +7,24 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.63.2 — Two palette fixes: invalid fields, crowded headers
+
+Fixes found applying 4.63.0 to an app. The UI package only; no new
+dependency. Nothing for an app to change.
+
+- **An invalid field's typed text stays readable under a palette.** An
+  invalid `Field` turns its text the danger shade, and the value in its
+  `Input`, `Textarea` or `Select` inherited it: 4.28:1 on a palette's
+  input fill, under 4.5. Under a palette those controls keep
+  `text-foreground`; the label, border, ring and message stay danger. A
+  new `ui/Input` story, Invalid with values, runs through axe in every
+  palette.
+- **EntityView's header keeps room for the title.** Its actions were
+  `shrink-0`, so a record with many of them (eight, at 36px) took the
+  whole row and left the title 0px wide, a letter per line. The title now
+  keeps at least 16rem beside them, and the actions wrap, right-aligned.
+  A new `app/EntityView` story, Many actions, with its own check.
+
 ## 4.63.1 — The a11y suites check palettes
 
 A fix for apps that take 4.63.0's palettes. The UI package only; no new

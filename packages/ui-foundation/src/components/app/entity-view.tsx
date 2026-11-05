@@ -531,7 +531,11 @@ export function EntityView({
       {!dialog && <BackLink back={back} />}
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
+        {/* The title keeps at least 16rem beside the actions, which wrap
+            under one another (right-aligned) rather than squeeze it: at
+            36px buttons a record with many actions (eight) took the whole
+            row and left the title 0px wide, a letter per line (4.63.2). */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:min-w-64">
           <h1 id={dialog?.titleId} className="type-page-title break-words text-foreground">
             {titleEdit ? (
               <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline" className="w-full">
@@ -549,7 +553,7 @@ export function EntityView({
           {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
         </div>
         {(actions || printButton) && (
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
             {printButton}
             {actions}
           </div>
