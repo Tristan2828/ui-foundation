@@ -8,7 +8,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        // The default is a soft tint of the accent (the shared style
+        // guide's badge); `solid` is the old filled look.
+        default: "bg-primary/12 text-foreground dark:bg-primary/20 dark:text-link [a]:hover:bg-primary/20",
+        solid: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
         secondary:
           "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive:
@@ -41,7 +44,7 @@ const badgeVariants = cva(
           "bg-destructive/15 text-destructive-text dark:bg-destructive/20",
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-link underline-offset-4 hover:underline",
       },
     },
     defaultVariants: {

@@ -656,11 +656,12 @@ test('table density tokens change row height: compact < default < comfortable', 
 // and be larger at large. The pixel values are what the primitives had
 // before density reached them: a change to one is a change for every app.
 const TODAY: Record<string, { width?: number; height?: number; fontSize?: number }> = {
-  button: { height: 32 },
+  // 36px buttons and fields, an 18px checkbox: the shared style guide's.
+  button: { height: 36 },
   icon: { width: 16, height: 16 },
-  input: { height: 32 },
+  input: { height: 36 },
   body: { fontSize: 14 },
-  checkbox: { width: 16, height: 16 },
+  checkbox: { width: 18, height: 18 },
   switch: { width: 32, height: 18.4 },
   badge: { height: 20 },
 }
@@ -697,14 +698,16 @@ test('compact density tightens the hub cards; the default keeps their size', asy
       const height = (selector: string) => sample.querySelector(selector)!.getBoundingClientRect().height
       const widget = sample.querySelector('[data-slot=widget-card] [data-slot=card]')!
       return {
-        widgetPadding: parseFloat(getComputedStyle(widget).paddingTop),
+        // The bottom: the top is the header's tinted bar, flush with the edge.
+        widgetPadding: parseFloat(getComputedStyle(widget).paddingBottom),
         row: height('[data-slot=widget-list-item]'),
         band: height('[data-slot=module-card-band]'),
         body: height('[data-slot=module-card-body]'),
         rowText: parseFloat(getComputedStyle(sample.querySelector('[data-slot=widget-list-item]')!).fontSize),
       }
     })
-  const today = { widgetPadding: 16, row: 37, band: 36, body: 66, rowText: 14 }
+  // Rows and the body are a pixel taller since body text's line is 1.5.
+  const today = { widgetPadding: 16, row: 38, band: 36, body: 67, rowText: 14 }
   for (const density of ['default', 'comfortable']) {
     const got = await measure(density)
     for (const [key, value] of Object.entries(today)) {

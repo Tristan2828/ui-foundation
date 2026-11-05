@@ -200,7 +200,9 @@
   --palette-warning: #e0b152;
   --palette-danger: #df7a72;
 
-  --radius-base: 0.625rem;
+  /* 9px (the shared style guide): buttons and cards on --radius, fields
+     on --radius-md (about 7px). */
+  --radius-base: 0.5625rem;
 
   /*
    * Typography roles (conventions/docs/design-language.md "Typography").
@@ -211,14 +213,17 @@
    * The values are what the package and template already used, so moving
    * onto a role changes nothing visible.
    */
-  --type-page-title-size: 1.125rem; /* was text-lg font-semibold */
-  --type-page-title-leading: 1.75rem;
+  --type-page-title-size: 1.75rem; /* 28px, the shared style guide's */
+  --type-page-title-leading: 1.2;
   --type-page-title-weight: 600;
   --type-section-title-size: 1rem;
   --type-section-title-leading: 1.5rem;
   --type-section-title-weight: 600;
+  /* Headings draw in a little (the page and section titles, and written
+     text's # and ##); labels and body keep the font's own spacing. */
+  --type-heading-tracking: -0.02em;
   --type-body-size: 0.875rem; /* text-sm: tables, forms, most UI text */
-  --type-body-leading: 1.25rem;
+  --type-body-leading: 1.5;
   --type-body-weight: 400;
   --type-label-size: 0.875rem; /* column headers, field labels */
   --type-label-leading: 1.25rem;
@@ -350,6 +355,12 @@
      series, anything that needs a colour beside the accent. Without a
      palette it is a grey, as the charts are. */
   --accent-second: var(--gray-700);
+  /* A card (the shared style guide): a soft shadow under its border, and
+     its header a tinted bar. The shadow is 30% in dark, where the guide
+     set it, and lighter on white. Text on the bar: foreground and muted
+     foreground as on --muted. */
+  --card-shadow: 0 6px 14px oklch(0 0 0 / 8%);
+  --card-header: color-mix(in srgb, var(--muted) 60%, var(--card));
   --radius: var(--radius-base);
   --sidebar: var(--gray-50);
   --sidebar-foreground: var(--black);
@@ -399,14 +410,12 @@
   --text-xl: 1.5625rem; /* 20 → 25px */
   --text-2xl: 1.875rem; /* 24 → 30px */
   --control-text-sm: 1rem; /* 12.8 → 16px */
-  --radius: 0.75rem; /* 10 → 12px, so larger controls keep their shape */
+  --radius: 0.6875rem; /* 9 → 11px, so larger controls keep their shape */
 
-  --type-page-title-size: 1.375rem;
-  --type-page-title-leading: 2.125rem;
+  --type-page-title-size: 2.1875rem; /* 28 → 35px */
   --type-section-title-size: 1.25rem;
   --type-section-title-leading: 1.875rem;
   --type-body-size: 1.125rem;
-  --type-body-leading: 1.625rem;
   --type-label-size: 1.125rem;
   --type-label-leading: 1.625rem;
   --type-caption-size: 0.9375rem;
@@ -491,6 +500,8 @@
   --chart-4: var(--gray-700);
   --chart-5: var(--gray-900);
   --accent-second: var(--gray-700);
+  --card-shadow: 0 6px 14px oklch(0 0 0 / 30%);
+  --card-header: color-mix(in srgb, var(--muted) 60%, var(--card));
   --sidebar: var(--gray-950);
   --sidebar-foreground: var(--gray-50);
   --sidebar-primary: var(--blue-500);

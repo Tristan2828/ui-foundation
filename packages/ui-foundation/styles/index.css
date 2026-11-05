@@ -54,6 +54,7 @@
     --color-info-foreground: var(--info-foreground);
     --color-info-text: var(--info-text);
     --color-link: var(--link);
+    --color-card-header: var(--card-header);
     --color-highlight-amber: var(--highlight-amber);
     --color-highlight-yellow: var(--highlight-yellow);
     --color-highlight-green: var(--highlight-green);
@@ -94,6 +95,10 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+    /* Motion (the shared style guide): quick, standard easing, for every
+       transition-* utility that doesn't name its own duration. */
+    --default-transition-duration: 120ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Typography roles: one class sets size, line height and weight together,
@@ -102,11 +107,13 @@
   font-size: var(--type-page-title-size);
   line-height: var(--type-page-title-leading);
   font-weight: var(--type-page-title-weight);
+  letter-spacing: var(--type-heading-tracking);
 }
 @utility type-section-title {
   font-size: var(--type-section-title-size);
   line-height: var(--type-section-title-leading);
   font-weight: var(--type-section-title-weight);
+  letter-spacing: var(--type-heading-tracking);
 }
 @utility type-body {
   font-size: var(--type-body-size);
@@ -135,11 +142,13 @@
   font-size: var(--type-heading-1-size);
   line-height: var(--type-heading-1-leading);
   font-weight: var(--type-heading-1-weight);
+  letter-spacing: var(--type-heading-tracking);
 }
 @utility type-heading-2 {
   font-size: var(--type-heading-2-size);
   line-height: var(--type-heading-2-leading);
   font-weight: var(--type-heading-2-weight);
+  letter-spacing: var(--type-heading-tracking);
 }
 @utility type-heading-3 {
   font-size: var(--type-heading-3-size);

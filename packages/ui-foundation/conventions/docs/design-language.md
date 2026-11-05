@@ -3,26 +3,27 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 35–93
-- [Semantic tones](#semantic-tones) · lines 95–123
-- [The three badge styles](#the-three-badge-styles) · lines 125–142
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 144–173
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 175–188
-- [Logos and brand marks](#logos-and-brand-marks) · lines 190–234
-- [Categorical colour](#categorical-colour) · lines 236–306
-- [Typography](#typography) · lines 308–399
-  - [Written text (notes)](#written-text-notes) · lines 339–399
-- [Density](#density) · lines 401–458
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 460–574
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 576–645
-- [Notices](#notices) · lines 647–675
-- [A value over time](#a-value-over-time) · lines 677–755
-  - [Several values over time](#several-values-over-time) · lines 718–755
-- [A list as a board](#a-list-as-a-board) · lines 757–808
-- [A list as cards](#a-list-as-cards) · lines 810–856
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 858–880
-- [Picking at random](#picking-at-random) · lines 882–913
-- [Filling in what's missing](#filling-in-whats-missing) · lines 915–982
+- [Palettes](#palettes) · lines 36–94
+- [Semantic tones](#semantic-tones) · lines 96–124
+- [The three badge styles](#the-three-badge-styles) · lines 126–143
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 145–174
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 176–189
+- [Logos and brand marks](#logos-and-brand-marks) · lines 191–235
+- [Categorical colour](#categorical-colour) · lines 237–307
+- [Shapes and sizes](#shapes-and-sizes) · lines 309–330
+- [Typography](#typography) · lines 332–426
+  - [Written text (notes)](#written-text-notes) · lines 366–426
+- [Density](#density) · lines 428–485
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 487–601
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 603–672
+- [Notices](#notices) · lines 674–702
+- [A value over time](#a-value-over-time) · lines 704–782
+  - [Several values over time](#several-values-over-time) · lines 745–782
+- [A list as a board](#a-list-as-a-board) · lines 784–835
+- [A list as cards](#a-list-as-cards) · lines 837–883
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 885–907
+- [Picking at random](#picking-at-random) · lines 909–940
+- [Filling in what's missing](#filling-in-whats-missing) · lines 942–1009
 
 <!-- /index -->
 
@@ -305,6 +306,29 @@ If you find yourself wanting a thirteenth, that is a sign the column should
 be showing a shape or a label rather than more colours: there is no more
 room that stays readable.
 
+## Shapes and sizes
+
+The shared style guide's, the same in every app with or without a
+palette:
+
+- **Radius 9px** (`--radius-base`): buttons and cards on `--radius`,
+  fields on `--radius-md` (about 7px).
+- **Buttons** 36px tall with 16px sides, semibold (`sm` 32px, `lg` 40px,
+  the icon sizes to match). A press shrinks the button to 96%, not under
+  reduced motion.
+- **Fields** (input, select, input group, a multi-pick's box) 36px,
+  outlined. **Checkbox** 18px, a 5px radius, solid when checked, a small
+  press pop.
+- **Cards** a hairline border with a soft shadow (`--card-shadow`: 30% in
+  dark, lighter on white), 16px padding, 14px between their parts. A
+  card's header, when it comes first, is a tinted bar flush with the top
+  (`--card-header`), as on every `WidgetCard` and `EntityView` section.
+- **Badges** are pills; the default is a soft tint of the accent
+  (`variant="solid"` is the filled one). The tone styles are unchanged.
+- **Behind a dialog or sheet**, the page is dimmed and blurred.
+- **Motion** is quick: 120ms with the standard easing, for every
+  transition that doesn't name its own.
+
 ## Typography
 
 Six roles cover every screen. Each is one class that sets size, line
@@ -312,13 +336,16 @@ height and weight together, from tokens in the package's `styles/theme.css`:
 
 | Class | For | Size / weight |
 |---|---|---|
-| `type-page-title` | the screen's one `<h1>` (a table's title, a form's title) | 18px / 600 |
+| `type-page-title` | the screen's one `<h1>` (a table's title, a form's title) | 28px / 600, line 1.2 |
 | `type-section-title` | a heading inside a screen (a form section, a card group) | 16px / 600 |
-| `type-body` | running text, table cells, form text, the pagination summary | 14px / 400 |
+| `type-body` | running text, table cells, form text, the pagination summary | 14px / 400, line 1.5 |
 | `type-label` | column headers, field labels, a small heading over a group | 14px / 500 |
 | `type-caption` | counts, metadata, helper text under a field | 12px / 400 |
 | `type-numeric` | the one live number on a card (`ModuleCard`'s count), in tabular figures | 22px / 500 |
 
+- **Headings draw in a little:** the page and section titles, and written
+  text's `#` and `##`, take -0.02em letter spacing. Labels stay normal
+  case at 14px medium (small caps at 12px read too small).
 - **Use a role instead of size and weight classes,** not as well as them.
   `type-page-title` replaces `text-lg font-semibold`. Combining a role with
   `text-sm`, `font-medium` or `leading-*` makes two classes set the same
