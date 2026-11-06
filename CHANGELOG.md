@@ -34,7 +34,12 @@ dependency. Nothing for an app to change unless it opts in.
   turns it on; an app opts in when its lists all say how they open.
 - add-an-entity.md's "Opening a record over its list" is now **"How a
   list opens a record"**, with the five kinds and when each fits; the
-  entity plan's List screen says which a list uses. New RecordDialog
+  entity plan's List screen says which a list uses. A new subsection,
+  **"The record view"**, gives every record one shape, the same in a
+  dialog and on its page: the title, a summary line and badges edited in
+  place, Delete and the record's own commands in the header (no Edit), a
+  strip of key numbers, then the facts in the rail beside long text, every
+  value edited in place. The entity plan's View screen points at it. New RecordDialog
   stories (Dialog only, its deep link and from another page, Rows open
   their page) with specs, and Dialog only's deep link through axe in
   both themes. Focus coming back from a dialog lands on the row's own

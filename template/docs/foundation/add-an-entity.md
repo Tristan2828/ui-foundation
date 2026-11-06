@@ -3,23 +3,24 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 38–60
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–747
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 104–111
-  - Step 2: `npm run gen:api` · lines 112–113
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 114–125
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 126–135
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 136–140
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 141–636
-  - Step 7: Register routes · lines 637–650
-  - Step 8: Add Playwright specs for all three screens · lines 651–729
-  - Step 9: Register the nav entry and route names · lines 730–744
-  - Step 10: `npm run verify`. · lines 745–747
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 749–825
-- [What not to copy](#what-not-to-copy) · lines 827–853
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 855–872
-- [Deleting](#deleting) · lines 874–903
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 905–926
+- [The reference files](#the-reference-files) · lines 39–61
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 63–748
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 105–112
+  - Step 2: `npm run gen:api` · lines 113–114
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 115–126
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 127–136
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 137–141
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 142–637
+  - Step 7: Register routes · lines 638–651
+  - Step 8: Add Playwright specs for all three screens · lines 652–730
+  - Step 9: Register the nav entry and route names · lines 731–745
+  - Step 10: `npm run verify`. · lines 746–748
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 750–852
+  - [The record view](#the-record-view) · lines 828–852
+- [What not to copy](#what-not-to-copy) · lines 854–880
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 882–899
+- [Deleting](#deleting) · lines 901–930
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 932–953
 
 <!-- /index -->
 
@@ -823,6 +824,32 @@ plan allows it.
 - Specs: the package's own (`e2e/record-dialog.spec.ts`) cover the
   dialog. An app's spec opens a record from the list, checks the
   address, closes it with Escape, and checks the list's filter survived.
+
+### The record view
+
+Every record a list opens is an `EntityView`, the same one in a dialog
+and on its page, and every one has the same shape, so a change to the
+view reaches them all. A record uses the parts it has, in this order:
+
+- **Header**: the title, edited in place (`titleEdit`); under it a
+  one-line summary field, edited in place (`subtitle`: a goal, a
+  description); beside it the status as a quick action (a picker saved
+  at once) and other status-like fields as badges, edited in place.
+  `actions` holds Delete (soft, with Undo) and the record's own commands
+  (Run, Print), never Edit.
+- **Strip**: the record's key numbers and ratings (`strip`, a
+  `KeyStats`), each edited in place where it's shown.
+- **Sections**: with long text (notes, a body) `layout="rail"` and
+  `mobileOrder="main-first"`: the label/value facts in the rail, the long
+  text in the main column, folded by its headings (`foldKey`) with an
+  Outline for a long one and Print notes (`print`). Without long text,
+  one column. Every value edited in place (`edit`), a sub-item list
+  included (`editInPlace({ kind: 'list' })`).
+- **A big record's own parts** (a drawing, a player, a checklist of
+  documents) are sections in the view, not a screen of their own.
+
+Edit and its form page stay only for a field the view can't edit in
+place yet; the plan says which, and the gap is raised for the package.
 
 ## What not to copy
 

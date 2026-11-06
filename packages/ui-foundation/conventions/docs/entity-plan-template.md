@@ -148,10 +148,12 @@ per list; delete the section if there are none.
 
 ## View screen
 
-The read-only page for one record (`/<entity>/:id`), opened by clicking
-its title in the table. Edit and Delete live in its header, so the table
-has no row actions. Every field it shows renders as its table cell does,
-except the quick actions, if any.
+One record (`/<entity>/:id`), opened from its list as the List screen
+says: the same view in a dialog or on its page. Its shape is the one in
+add-an-entity.md "The record view": values edited in place, Delete in its
+header, and no Edit unless a field can't be edited in place, so the
+table has no row actions. Every field it shows renders as its table cell
+does, except the quick actions, if any.
 
 - Title: the field that names a record, shown as the page heading and
   linked from the table: `title`.
