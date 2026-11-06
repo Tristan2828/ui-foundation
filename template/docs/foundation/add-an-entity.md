@@ -4,22 +4,22 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 38–60
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–743
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 100–107
-  - Step 2: `npm run gen:api` · lines 108–109
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 110–121
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 122–131
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 132–136
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 137–632
-  - Step 7: Register routes · lines 633–646
-  - Step 8: Add Playwright specs for all three screens · lines 647–725
-  - Step 9: Register the nav entry and route names · lines 726–740
-  - Step 10: `npm run verify`. · lines 741–743
-- [Opening a record over its list](#opening-a-record-over-its-list) · lines 745–801
-- [What not to copy](#what-not-to-copy) · lines 803–829
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 831–848
-- [Deleting](#deleting) · lines 850–879
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 881–902
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 62–747
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 104–111
+  - Step 2: `npm run gen:api` · lines 112–113
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 114–125
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 126–135
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 136–140
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 141–636
+  - Step 7: Register routes · lines 637–650
+  - Step 8: Add Playwright specs for all three screens · lines 651–729
+  - Step 9: Register the nav entry and route names · lines 730–744
+  - Step 10: `npm run verify`. · lines 745–747
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 749–825
+- [What not to copy](#what-not-to-copy) · lines 827–853
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 855–872
+- [Deleting](#deleting) · lines 874–903
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 905–926
 
 <!-- /index -->
 
@@ -84,6 +84,10 @@ is a filled-in example while the Widgets demo is still here).
   written before the view existed has neither: ask the developer whether
   to add them before step 1. The reference files build the table *with* a
   view, where Edit and Delete live, so the table has no row actions.
+- **The plan's List screen says how a row opens its record**: a dialog,
+  a dialog only, its page, the panel, or edited in its rows (`DataTable`'s
+  `opens`, [How a list opens a record](#how-a-list-opens-a-record)). A
+  plan that doesn't say: ask the developer before step 1.
 - **`Screens: list, edited in the row`** is a small entity with no view
   and no form: build the contract, gateway, mocks and table as below, but
   no view, form or `/new`, `/:id`, `/:id/edit` routes. Its table follows
@@ -641,9 +645,9 @@ is a filled-in example while the Widgets demo is still here).
    belongs to a module already in the nav (its categories, its channels)
    goes in that module's entry's `children`, not a new top-level entry:
    it shows under the module while you're in it.
-   If the plan says records **open over the list** (a board, a list read
-   one record at a time), the view's route is the list route's child
-   instead: see [Opening a record over its list](#opening-a-record-over-its-list).
+   If the plan says records **open in a dialog** over the list (`opens`
+   kind `dialog` or `dialog-only`), the view's route is the list route's
+   child instead: see [How a list opens a record](#how-a-list-opens-a-record).
 8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the
@@ -742,48 +746,72 @@ is a filled-in example while the Widgets demo is still here).
     anything beyond what this list covers; note ideas in the app's
     backlog instead.
 
-## Opening a record over its list
+## How a list opens a record
 
-By default a record opens on its own page, `/<entity>/:id`. A list read
-one record at a time (a board's cards, a backlog) can open it in a
-centered dialog over the list instead (4.58): the address is still the
-record's, so it can be copied and shared, but the list stays underneath
-as it was. Only when the plan asks for it; the full page stays the
-default.
+Every list opens its records one of a few ways, and says which on its
+`DataTable` with `opens` (4.65), so a change to how the foundation opens
+a record reaches every list on the next upgrade. With
+`uiFoundation({ requireTableOpens: true })` in `eslint.config.js` (the
+template has it), a `DataTable` without `opens` fails lint. The plan
+picks one per list (`docs/entities/<entity>.md` "List screen"):
+
+| `opens.kind` | The record opens | Use it for |
+| --- | --- | --- |
+| `dialog` | in a dialog over the list, with Open full page; the record also has its page | most records |
+| `dialog-only` | in a dialog over the list, and has no page of its own | a small record with no notes, where a page would only repeat the dialog |
+| `page` | on its own page, `/<entity>/:id` | a record too big for a dialog: a drawing, an ordered sub-list, long writing |
+| `panel` | in the panel beside the list (`detailPanel`) | reading records one after another |
+| `rows` | nowhere: every value is edited in its row (cell pattern 18) | a record of a field or two |
+
+Whichever it is, the record edits in place (cell pattern 18, EntityView's
+`edit`) rather than through an Edit button and a form page, wherever the
+plan allows it.
 
 ```tsx
-// src/App.tsx: the list route wraps its element, and the view becomes its child.
+// The list: `to` is the record's absolute address.
+<DataTable opens={{ kind: 'dialog', to: (row) => `/<entity>/${row.id}` }} … />
+<DataTable opens={{ kind: 'rows' }} … />
+
+// src/App.tsx, for `dialog` and `dialog-only`: the list route wraps its
+// element, and the view becomes its child.
 {
   path: '<entity>',
   element: <RecordDialogRoute list={<<Entity>sTableRoute />} label="<Entity>" />,
+  // dialog-only: <RecordDialogRoute fullPage={false} … />
   errorElement: <RouteErrorBoundary />,
   children: [{ path: ':id', element: <<Entity>ViewRoute />, errorElement: <RouteErrorBoundary /> }],
 },
 { path: '<entity>/new', element: <<Entity>FormRoute /> },        // unchanged siblings
-{ path: '<entity>/:id/edit', element: <<Entity>FormRoute /> },
 
-// The list: a row click, or a link on a card, opens the record over it.
-const openRecord = useOpenRecord()
-<DataTable onRowClick={(row) => openRecord(`/<entity>/${row.id}`)} … />
+// A list that isn't a DataTable (a board's cards): a link that opens over it.
 <Board renderCard={(item) => <RecordLink to={`/<entity>/${item.id}`}>{item.name}</RecordLink>} … />
 ```
 
-- **The history entry decides.** `useOpenRecord`, `<RecordLink>` (a
-  `<Link>`) and `recordDialogState(location)` (for a `<Link>`'s own
-  `state`) put the list's address in the entry's state; the record's
-  route then draws as a dialog over the list. **A deep link** (pasted,
-  bookmarked, reloaded in a new tab) has no such state and **is the full
-  page**, back link and all, as is a record opened from a page other
-  than its list (a link on the home page).
+- **The row opens it**: a click on the row, Enter on it, ↑/↓ between
+  rows. So does a click on a link in the row to the record's own address
+  (the name cell can stay a plain `<Link>`), and in a card layout a click
+  on a card's link to it; a modified click still opens that link in a new
+  tab. Other links and controls in a row keep their own click.
+  `onRowClick`, when given, wins over `opens`.
+- **The history entry decides dialog or page.** `opens`, `useOpenRecord`,
+  `<RecordLink>` (a `<Link>`) and `recordDialogState(location)` (for a
+  `<Link>`'s own `state`) put the list's address in the entry's state;
+  the record's route then draws as a dialog over the list. **A deep link**
+  (pasted, bookmarked, reloaded in a new tab) has no such state and **is
+  the full page**, back link and all, as is a record opened from a page
+  other than its list (a link on the home page). With `fullPage={false}`
+  there is no page: a deep link or a link from another page opens the
+  dialog over its list, at the list's plain address.
 - **The list stays as it was**: mounted underneath, reading the address
   it was opened from, so its search, filters, sort, page and scroll are
   unchanged when the dialog closes.
 - **Closing**: Back, Esc, the backdrop and the dialog's Close all go
   back to the list's entry (over every record opened inside the dialog,
-  a linked one included). Focus goes back to the row or link that
-  opened it.
-- **Open full page**, in the dialog's bar, swaps the entry for the same
-  address as the full page; Back from there is the list.
+  a linked one included). Focus goes back to the row, on its own link
+  when it has one, or the link that opened it.
+- **Open full page**, in the dialog's bar (not with `fullPage={false}`),
+  swaps the entry for the same address as the full page; Back from there
+  is the list.
 - **The view is unchanged.** `EntityView` sees the dialog: its title
   names the dialog (`label` names it while loading or on an error), the
   back link gives way to the dialog's bar, and not found's "Back to …"
@@ -792,10 +820,6 @@ const openRecord = useOpenRecord()
   `useRecordDialog()` (null on the full page) for its `close`, as a
   Delete should, rather than navigating to the list:
   `onDeleted={() => (dialog ? dialog.close() : navigate('/<entity>'))}`.
-- **Edit** still goes to `/<entity>/:id/edit`, the form's full page.
-- `DataTable`'s `onRowClick` alone makes rows open: a pointer, Enter,
-  ↑/↓ between rows (4.58; it used to need a `detailPanel`). A link or
-  control in a cell keeps its own click.
 - Specs: the package's own (`e2e/record-dialog.spec.ts`) cover the
   dialog. An app's spec opens a record from the list, checks the
   address, closes it with Escape, and checks the list's filter survived.

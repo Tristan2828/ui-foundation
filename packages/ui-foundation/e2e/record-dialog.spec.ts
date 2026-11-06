@@ -68,7 +68,9 @@ test('the keyboard: Enter on a row opens it, Tab stays inside, Esc gives focus b
 
   await page.keyboard.press('Escape')
   await expect(dialog(page)).toHaveCount(0)
-  await expect(row).toBeFocused()
+  // Back in the row: on its own link, the first thing in it that takes focus.
+  await expect.poll(() => row.evaluate((element) => element.contains(document.activeElement))).toBe(true)
+  await expect(row.getByRole('link', { name: 'Fix the gate latch' })).toBeFocused()
 })
 
 test('Open full page swaps the dialog for the page, and Back goes to the list', async ({ page }) => {
@@ -147,4 +149,53 @@ test("Esc while editing in place gives up the edit, and only the next one closes
   await page.keyboard.press('Escape')
   await expect(dialog(page)).toHaveCount(0)
   await expect(address(page)).toHaveText('/projects?q=re')
+})
+
+// DataTable's `opens`: the row's own link (its name) opens the record the
+// same way the row does; a modified click still gets the full page.
+test("a click on the row's own link opens the dialog, not the page", async ({ page }) => {
+  await page.goto(story('default'))
+  await page.getByRole('link', { name: 'Fix the gate latch' }).click()
+  await expect(page.getByRole('dialog', { name: 'Fix the gate latch' })).toBeVisible()
+  await expect(address(page)).toHaveText('/projects/2')
+})
+
+test('rows that open their page go to it, with no dialog', async ({ page }) => {
+  await page.goto(story('opens-page'))
+  await page.getByRole('row').filter({ hasText: 'Repaint the fence' }).getByRole('cell').nth(1).click()
+  await expect(address(page)).toHaveText('/projects/1')
+  await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Projects' })).toBeVisible()
+})
+
+// `fullPage={false}`: a record with no page of its own, only the dialog.
+test('a dialog only record has no Open full page', async ({ page }) => {
+  await page.goto(story('dialog-only'))
+  await openFromRow(page, 'Repaint the fence')
+  await expect(dialog(page).getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+  await expect(dialog(page).getByRole('link', { name: 'Open full page' })).toHaveCount(0)
+  await dialog(page).getByRole('button', { name: 'Close' }).click()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects')
+})
+
+test('a deep link to a dialog only record opens the dialog over its list', async ({ page }) => {
+  await page.goto(story('dialog-only-deep-link'))
+  await expect(page.getByRole('dialog', { name: 'Repaint the fence' })).toBeVisible()
+  await expect(address(page)).toHaveText('/projects/1')
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects', includeHidden: true })).toHaveCount(1)
+  await dialog(page).getByRole('button', { name: 'Close' }).click()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects')
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
+})
+
+test('a dialog only record opened from another page opens over its list', async ({ page }) => {
+  await page.goto(story('dialog-only-from-another-page'))
+  await page.getByRole('link', { name: 'Repaint the fence' }).click()
+  await expect(page.getByRole('dialog', { name: 'Repaint the fence' })).toBeVisible()
+  await dialog(page).getByRole('button', { name: 'Close' }).click()
+  await expect(address(page)).toHaveText('/projects')
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
 })

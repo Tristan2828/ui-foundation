@@ -50,6 +50,8 @@ export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export {
   DataTable,
   type DataTableCardLayout,
+  type DataTableOpens,
+  type DataTableOpensKind,
   type DataTableGrouping,
   type DataTableProps,
   type DataTableTotals,

@@ -7,6 +7,39 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.65.0 — Every list says how it opens a record
+
+New props and an opt-in lint rule. The UI package only; no new
+dependency. Nothing for an app to change unless it opts in.
+
+- **`DataTable` takes `opens`**: how a row opens its record, one of the
+  foundation's ways. `{ kind: 'dialog', to }` opens it in a dialog over
+  the list (the record also has its full page), `{ kind: 'dialog-only',
+  to }` the same with no page of its own, `{ kind: 'page', to }` its own
+  page, `{ kind: 'panel' }` the `detailPanel`, and `{ kind: 'rows' }`
+  nothing (every value edited in its row). A click on the row, Enter on
+  it, and a click on a link in the row to the record's own address (the
+  name cell, kept a plain `<Link>`) open it; so does a click on a card's
+  link to it in a card layout. A modified click still opens the link in
+  a new tab; other links and controls keep their own click; `onRowClick`
+  wins when given. It reads the router through its contexts, so a table
+  outside a router still renders.
+- **`RecordDialogRoute` takes `fullPage`** (true by default). `false` is a
+  record with no page, only the dialog: no Open full page, and its
+  address opened any other way (a deep link, a link from another page)
+  is the dialog over its list.
+- **`uiFoundation({ requireTableOpens: true })`** makes a `DataTable`
+  without `opens` a lint error (`TABLE_OPENS`, exported), so a change to
+  how the foundation opens a record reaches every list. The template
+  turns it on; an app opts in when its lists all say how they open.
+- add-an-entity.md's "Opening a record over its list" is now **"How a
+  list opens a record"**, with the five kinds and when each fits; the
+  entity plan's List screen says which a list uses. New RecordDialog
+  stories (Dialog only, its deep link and from another page, Rows open
+  their page) with specs, and Dialog only's deep link through axe in
+  both themes. Focus coming back from a dialog lands on the row's own
+  link when it has one.
+
 ## 4.64.0 — LineChart levels: a value that is one of a few named steps
 
 A new prop. The UI package only; no new dependency. Nothing for an app to

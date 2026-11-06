@@ -1533,6 +1533,6 @@ const { grouping, setGrouping, ...table } = useTableUrlState(FILTERS, MULTI, VIE
   announced as the link it is). Without `detailPanel` rows behave as they
   always have: the title link opens the record's page, or, with
   `onRowClick`, the row opens the record (a dialog over the list:
-  add-an-entity.md "Opening a record over its list").
+  add-an-entity.md "How a list opens a record").
 - **The table layout's alone:** a card layout's cards don't open the
   panel.

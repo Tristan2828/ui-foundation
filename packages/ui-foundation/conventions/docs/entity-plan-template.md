@@ -121,6 +121,11 @@ per list; delete the section if there are none.
 
 ## List screen
 
+- Opens a record: one of `dialog` (a dialog over the list, with its full
+  page), `dialog-only` (a small record with no notes: no page of its
+  own), `page` (too big for a dialog: say why), `panel`, or `rows`
+  (edited in its rows, no view). add-an-entity.md "How a list opens a
+  record".
 - Default sort:
 - Page size: 10 unless there's a reason.
 - Saved views (optional; delete if none): one row per view, a button

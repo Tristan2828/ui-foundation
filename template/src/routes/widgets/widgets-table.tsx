@@ -228,6 +228,7 @@ export function WidgetsTableRoute() {
       <CategoryNamesContext.Provider value={names}>
         <DataTable
           columns={columns}
+          opens={{ kind: 'page', to: (widget) => `/widgets/${widget.id}` }}
           data={widgetsQuery.data?.items ?? []}
           total={widgetsQuery.data?.total ?? 0}
           page={page}

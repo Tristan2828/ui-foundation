@@ -64,6 +64,16 @@ export const NO_BARE_FETCH = {
     'Do not call fetch directly. All server state goes through TanStack Query, which calls src/api/gateway/, which builds on the foundation gateway entry point.',
 }
 
+// Every list says how its rows open their records (DataTable's `opens`:
+// a dialog, a dialog only, its page, the panel, or edited in its rows), so
+// a change to how the foundation opens a record reaches every list. On in
+// an app with `uiFoundation({ requireTableOpens: true })`.
+export const TABLE_OPENS = {
+  selector: "JSXOpeningElement[name.name='DataTable']:not(:has(JSXAttribute[name.name='opens']))",
+  message:
+    "Say how this list opens a record: DataTable's `opens` (dialog, dialog-only, page, panel or rows). See add-an-entity.md \"How a list opens a record\".",
+}
+
 // The rules every TypeScript file gets, before any boundary rule.
 export function baseConfig() {
   return {
@@ -121,7 +131,8 @@ function appImportPatterns({ allowGateway }) {
 
 /**
  * The lint config for an app built on the foundation.
- * @param {{ ignores?: string[] }} [options] extra paths to ignore, on top of build output and generated files
+ * @param {{ ignores?: string[], requireTableOpens?: boolean }} [options] `ignores`: extra paths to ignore, on top
+ *   of build output and generated files; `requireTableOpens`: every DataTable must say how it opens a record (`opens`)
  */
 export default function uiFoundation(options = {}) {
   return defineConfig([
@@ -140,7 +151,12 @@ export default function uiFoundation(options = {}) {
     {
       ...baseConfig(),
       rules: {
-        'no-restricted-syntax': ['error', ...TOKEN_SYNTAX_RULES, NO_BARE_FETCH],
+        'no-restricted-syntax': [
+          'error',
+          ...TOKEN_SYNTAX_RULES,
+          NO_BARE_FETCH,
+          ...(options.requireTableOpens ? [TABLE_OPENS] : []),
+        ],
         'no-restricted-imports': ['error', { patterns: appImportPatterns({ allowGateway: false }) }],
       },
     },

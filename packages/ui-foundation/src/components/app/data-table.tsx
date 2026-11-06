@@ -9,7 +9,22 @@
 // pagination tree-shakeable and independently swappable, which buys nothing
 // here: every row model is manual (the server sorts and pages), so this
 // table never uses TanStack's own sorted/paginated row models at all.
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
+import {
+  UNSAFE_LocationContext as LocationContext,
+  UNSAFE_NavigationContext as NavigationContext,
+  type Location,
+  type Navigator,
+} from 'react-router'
 import { flexRender } from '@tanstack/react-table'
 import type { CellData, RowData, TableFeatures } from '@tanstack/react-table'
 import { cn } from 'cn'
@@ -45,6 +60,7 @@ import type { ArtworkAspect } from './artwork'
 import { EditInPlaceContext } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { LeaveGuard } from './editable-value'
+import { recordDialogState } from './record-dialog-context'
 import type { IconComponent } from './icon-component'
 import { groupByValues, groupRuns, type GroupRun, type RowGroup } from './table-groups'
 import {
@@ -175,6 +191,23 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
   grouping?: string
   onGroupingChange?: (grouping: string) => void
   /**
+   * How a row opens its record: one of the foundation's ways, the same for
+   * every list (add-an-entity.md "How a list opens a record"). A dialog over
+   * the list (`dialog`: the record also has its full page; `dialog-only`:
+   * it has none, its route a `RecordDialogRoute` with `fullPage={false}`),
+   * its own page (`page`), the panel beside the list (`panel`, with
+   * `detailPanel`), or nothing to open, every value edited in its row
+   * (`rows`). `to` is the record's absolute address.
+   *
+   * A click on the row or Enter on it opens the record, and so does a click
+   * on a link in the row to that same address (the title's), so a name cell
+   * can stay a plain link: a modified click still opens it in a new tab.
+   * Other links and controls keep their own click. In a card layout, a
+   * click on a card's link to the record opens it the same way.
+   * `onRowClick`, when given, wins over it.
+   */
+  opens?: DataTableOpens<TData>
+  /**
    * A record read beside the list without leaving it. Clicking a row (its
    * title link too; a modified click still opens the link) or Enter on it
    * selects it and opens this panel: beside the table on a wide screen
@@ -268,6 +301,26 @@ export type DataTableGrouping<TData> = {
   value: (row: TData) => string | readonly string[] | null | undefined
   /** The heading over rows with no value, last: "Not set" unless set ("No category"). */
   emptyLabel?: string
+}
+
+/**
+ * How a list's rows open their records (`opens`): a dialog over the list
+ * with the record's full page behind it, a dialog only, its own page, the
+ * panel beside the list, or nothing to open (edited in its rows).
+ */
+export type DataTableOpens<TData> =
+  | { kind: 'dialog' | 'dialog-only' | 'page'; to: (row: TData) => string }
+  | { kind: 'panel' }
+  | { kind: 'rows' }
+
+export type DataTableOpensKind = DataTableOpens<unknown>['kind']
+
+// Whether a link is to `to` (its path and query), the record the row opens.
+function linksTo(link: Element, to: string): boolean {
+  if (!(link instanceof HTMLAnchorElement)) return false
+  const target = new URL(to, link.href)
+  const href = new URL(link.href)
+  return href.origin === target.origin && href.pathname === target.pathname && href.search === target.search
 }
 
 /** One of DataTable's card layouts (`layouts`). */
@@ -717,6 +770,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   groupings,
   grouping: groupingProp,
   onGroupingChange,
+  opens,
   detailPanel,
   onRowClick: onRowClickProp,
   detailRow,
@@ -732,6 +786,22 @@ export function DataTable<TData extends Record<string, unknown>>({
     if (layoutProp === undefined) setOwnLayout(next)
     onLayoutChange?.(next)
   }
+
+  // `opens`: the record a row opens, and opening it. Read through the
+  // router's contexts, not its hooks, so a table outside a router (a
+  // fixture, a widget) still renders; there, nothing opens.
+  const navigation = useContext(NavigationContext) as { navigator: Navigator } | null
+  const routerLocation = useContext(LocationContext) as { location: Location } | null
+  const opensTo = opens && 'to' in opens ? opens : null
+  const openRecord =
+    opensTo && navigation && routerLocation
+      ? (row: TData) => {
+          const to = opensTo.to(row)
+          if (opensTo.kind === 'page') void navigation.navigator.push(to)
+          else void navigation.navigator.push(to, recordDialogState(routerLocation.location))
+        }
+      : undefined
+  const openRow = onRowClickProp ?? openRecord
 
   // The grouping on (`groupings`), the menu's own state for a table that
   // doesn't pass `grouping`.
@@ -882,8 +952,8 @@ export function DataTable<TData extends Record<string, unknown>>({
       )
     : rows.map((row) => ({ key: row.id, rowId: row.id }))
   // Rows that open on a click or Enter: picked for the panel, or the app's
-  // own `onRowClick` (a record's page, or a dialog over the list).
-  const rowsOpen = Boolean(detailPanel || onRowClickProp)
+  // own `onRowClick`, or the record `opens` names (a dialog or its page).
+  const rowsOpen = Boolean(detailPanel || openRow)
   const selectedRow = detailPanel && selection ? rows.find((row) => row.id === selection.rowId) : undefined
   // The place marked picked: where it was picked, or (regrouped since) the
   // row's first place. None while its group is folded.
@@ -908,19 +978,33 @@ export function DataTable<TData extends Record<string, unknown>>({
     // the row through React, not the DOM: it's that control's.
     if (!event.currentTarget.contains(target)) return
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    const row = rows.find((candidate) => candidate.id === place.rowId)
     const control = target.closest(ROW_CONTROL_SELECTOR)
     if (control && event.currentTarget.contains(control)) {
-      if (!control.matches('a[href]') || onRowClickProp) return
+      if (!control.matches('a[href]')) return
+      // A link keeps its click, unless it's the panel's row (a title link
+      // picks the row) or the record `opens` names (the title, again).
+      const ownLink = !onRowClickProp && opensTo && row ? linksTo(control, opensTo.to(row.original)) : false
+      if (onRowClickProp || (openRecord && !ownLink)) return
       // In the capture phase, so react-router's Link sees it prevented and
       // doesn't navigate.
       event.preventDefault()
     }
-    if (onRowClickProp) {
-      const row = rows.find((candidate) => candidate.id === place.rowId)
-      if (row) onRowClickProp(row.original)
+    if (openRow) {
+      if (row) openRow(row.original)
       return
     }
     setSelection(place)
+  }
+  // A card layout's card: a click on its link to the record `opens` names
+  // opens it the same way a row does (a dialog over the list, say).
+  const onCardClick = (event: React.MouseEvent<HTMLElement>, row: TData) => {
+    if (!openRecord || !opensTo || onRowClickProp) return
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    const link = (event.target as Element).closest('a[href]')
+    if (!link || !event.currentTarget.contains(link) || !linksTo(link, opensTo.to(row))) return
+    event.preventDefault()
+    openRecord(row)
   }
   const onListKeyDown = (event: React.KeyboardEvent<HTMLTableElement>) => {
     const target = event.target as HTMLElement
@@ -942,9 +1026,9 @@ export function DataTable<TData extends Record<string, unknown>>({
       const place = places.find((candidate) => candidate.key === target.dataset.rowKey)
       if (!place) return
       event.preventDefault()
-      if (onRowClickProp) {
+      if (openRow) {
         const row = rows.find((candidate) => candidate.id === place.rowId)
-        if (row) onRowClickProp(row.original)
+        if (row) openRow(row.original)
         return
       }
       setSelection(place)
@@ -1090,6 +1174,7 @@ export function DataTable<TData extends Record<string, unknown>>({
               onToggleFold={toggleFold}
               groupSummary={groupSummary}
               groupIcons={groupIcons}
+              onCardClick={onCardClick}
             />
           ) : (
             <Table
@@ -1398,6 +1483,7 @@ function Cards<TData extends Record<string, unknown>>({
   onToggleFold,
   groupSummary,
   groupIcons,
+  onCardClick,
 }: {
   layout: DataTableCardLayout<TData>
   runs: (GroupRun<CardRow<TData>> & { foldable: boolean })[] | null
@@ -1406,6 +1492,7 @@ function Cards<TData extends Record<string, unknown>>({
   onToggleFold: (key: string) => void
   groupSummary?: (rows: TData[], group: RowGroup) => ReactNode
   groupIcons?: ReadonlyMap<string, ReactNode>
+  onCardClick: (event: React.MouseEvent<HTMLElement>, row: TData) => void
 }) {
   const list = (items: readonly CardRow<TData>[]) => (
     <ul
@@ -1415,7 +1502,13 @@ function Cards<TData extends Record<string, unknown>>({
       )}
     >
       {items.map((row) => (
-        <li key={row.id} data-slot="data-table-card" className="min-w-0 *:data-[slot=card]:glow-edge">
+        <li
+          key={row.id}
+          data-slot="data-table-card"
+          className="min-w-0 *:data-[slot=card]:glow-edge"
+          // In the capture phase, so the card's own link sees it prevented.
+          onClickCapture={(event) => onCardClick(event, row.original)}
+        >
           {layout.renderCard(row.original)}
         </li>
       ))}
