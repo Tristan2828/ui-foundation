@@ -1,14 +1,15 @@
 // A long text with sections to fold, for the Folding stories of <Markdown>
-// and the rich-text editor (e2e/folding.spec.ts). Each story opens with
+// and the rich-text editor (e2e/folding.spec.ts). Its `#` and `##` are
+// toggle headings; its `###`s are plain, so they never fold. Each story opens with
 // "Watering" folded when nothing is folded yet, so a folded heading is on
 // screen for axe in both themes, and a reload keeps what was folded.
 import { foldStore } from '@/hooks/fold-store'
 
-export const FOLDING_SAMPLE = `# Garden plan
+export const FOLDING_SAMPLE = `# Garden plan {toggle="true"}
 
 What goes where this year, and when.
 
-## Beds
+## Beds {toggle="true"}
 
 Three raised beds along the fence.
 
@@ -23,19 +24,19 @@ Compost in March, a mulch of leaves in November.
 | North | Beans |
 | South | Tomatoes |
 
-## Watering
+## Watering {toggle="true"}
 
 Every other morning in July and August.
 
 > [!TIP]
 > Water the roots, not the leaves.
 
-## Harvest
+## Harvest {toggle="true"}
 
 - Beans from July
 - Tomatoes from August
 
-# Shopping list
+# Shopping list {toggle="true"}
 
 - Seeds
 - Twine

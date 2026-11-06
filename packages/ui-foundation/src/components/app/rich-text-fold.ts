@@ -32,7 +32,9 @@ export const foldPluginKey = new PluginKey<FoldState>('fold')
 /** The fold plan of a document's top-level blocks. */
 export function docFoldPlan(doc: ProseNode, folded?: ReadonlySet<string>): FoldPlan {
   const blocks: (FoldHeadingInput | null)[] = []
-  doc.forEach((node) => blocks.push(node.type.name === 'heading' ? { level: Number(node.attrs.level), text: node.textContent } : null))
+  doc.forEach((node) =>
+    blocks.push(node.type.name === 'heading' ? { level: Number(node.attrs.level), text: node.textContent, toggle: Boolean(node.attrs.toggle) } : null),
+  )
   return foldPlan(blocks, folded)
 }
 

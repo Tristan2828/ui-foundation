@@ -105,18 +105,27 @@ test.describe('folding in the rich-text editor', () => {
     expect(await saved(page).textContent()).toBe(FOLDING_SAMPLE.replace('Twine', 'Twine and labels'))
   })
 
-  test('Ctrl+Alt+[ folds the section the caret is in, Ctrl+Alt+] opens it', async ({ page }) => {
+  test('Ctrl+Alt+[ folds the toggle section the caret is in, Ctrl+Alt+] opens it', async ({ page }) => {
+    // Under the plain Soil, in the toggle Beds: Beds folds.
     await text(page).getByText('Compost in March').click()
     await page.waitForTimeout(100)
     await page.keyboard.press('ControlOrMeta+Alt+BracketLeft')
-    await expect(fold(page, 'Soil')).toHaveAttribute('aria-expanded', 'false')
+    await expect(fold(page, 'Beds')).toHaveAttribute('aria-expanded', 'false')
     await expect(text(page).getByText('Compost in March')).toBeHidden()
-    // The caret went to Soil's heading, which still shows.
+    // The caret went to Beds' heading, which still shows.
     await page.keyboard.type('!')
-    await expect(saved(page)).toContainText('### Soil!')
+    await expect(saved(page)).toContainText('## Beds! {toggle="true"}')
     await page.keyboard.press('Backspace')
     await page.keyboard.press('ControlOrMeta+Alt+BracketRight')
     await expect(text(page).getByText('Compost in March')).toBeVisible()
+  })
+
+  test('a plain heading has no fold button and no marker; only toggle headings fold', async ({ page }) => {
+    await expect(text(page).getByRole('heading', { name: 'Soil' })).toBeVisible()
+    await expect(fold(page, 'Soil')).toHaveCount(0)
+    await expect(fold(page, 'Layout')).toHaveCount(0)
+    await expect(fold(page, 'Beds')).toHaveCount(1)
+    await expect(text(page)).not.toContainText('{toggle')
   })
 
   test('the caret put inside a folded section opens it (an undo there)', async ({ page }) => {
@@ -156,6 +165,14 @@ test.describe('folding in the rich-text editor', () => {
     await expect(fold(page, 'Garden plan')).toHaveAttribute('aria-expanded', 'true')
     await expect(fold(page, 'Harvest')).toBeFocused()
   })
+})
+
+test('<Markdown>: a plain heading has no fold button and no marker', async ({ page }) => {
+  await page.goto(MARKDOWN)
+  await expect(page.getByRole('heading', { name: 'Soil' })).toBeVisible()
+  await expect(fold(page, 'Soil')).toHaveCount(0)
+  await expect(fold(page, 'Beds')).toHaveCount(1)
+  await expect(page.getByText('{toggle')).toHaveCount(0)
 })
 
 test('foldable={false} keeps headings plain: no fold buttons, every section showing', async ({ page }) => {

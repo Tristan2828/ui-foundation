@@ -15,12 +15,12 @@
   - Step 8: Add Playwright specs for all three screens · lines 652–730
   - Step 9: Register the nav entry and route names · lines 731–745
   - Step 10: `npm run verify`. · lines 746–748
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 750–852
-  - [The record view](#the-record-view) · lines 828–852
-- [What not to copy](#what-not-to-copy) · lines 854–880
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 882–899
-- [Deleting](#deleting) · lines 901–930
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 932–953
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 750–853
+  - [The record view](#the-record-view) · lines 828–853
+- [What not to copy](#what-not-to-copy) · lines 855–881
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 883–900
+- [Deleting](#deleting) · lines 902–931
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 933–954
 
 <!-- /index -->
 
@@ -841,7 +841,8 @@ view reaches them all. A record uses the parts it has, in this order:
   `KeyStats`), each edited in place where it's shown.
 - **Sections**: with long text (notes, a body) `layout="rail"` and
   `mobileOrder="main-first"`: the label/value facts in the rail, the long
-  text in the main column, folded by its headings (`foldKey`) with an
+  text in the main column, folded by its toggle headings (`foldKey`;
+  `## Safety {toggle="true"}`, the only headings that fold) with an
   Outline for a long one and Print notes (`print`). Without long text,
   one column. Every value edited in place (`edit`), a sub-item list
   included (`editInPlace({ kind: 'list' })`).

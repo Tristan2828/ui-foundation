@@ -7,6 +7,36 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.66.0 — Toggle headings: only the headings you choose fold
+
+A change to what folds, in the UI package only; no new dependency. An
+app that folds notes (`foldKey`) sees no fold buttons until someone makes
+a heading a toggle one; nothing in its data has to change.
+
+- **Toggle headings**, Notion's: a heading that folds what's under it. In
+  the Markdown it's Notion's own attribute at the heading's end,
+  `## Safety {toggle="true"}`, so a chat that writes Notion's Markdown
+  writes one, and a plain heading stays plain Markdown. `<Markdown>` and
+  the editor never show the marker; it isn't part of the heading's words,
+  so a heading's fold id (`2:Safety`) is the same plain or toggle.
+- **Only toggle headings fold.** With `foldKey`, a plain heading has no
+  fold button and no room kept for one, and hides nothing, even when its
+  id was stored as folded before; it still ends the sections above it.
+  Every heading in a text written before 4.66.0 is plain.
+  `NotesOutline` still lists every heading, plain or toggle, and shows
+  Fold all and Open all only when a toggle heading has something to fold.
+- **Making one in the editor:** the slash menu has Toggle heading 1, 2
+  and 3 after the plain headings (`/toggle`); `>## ` at a line's start
+  makes a toggle `##` (`># ` and `>### ` likewise); the fixed toolbar's
+  Toggle heading turns the heading the caret is in into a toggle one and
+  back, its level kept (a line that isn't a heading becomes a toggle
+  `##`). Heading 1 to 3 make a plain heading.
+- `foldable={false}` (4.59.0) stays: it hides the fold buttons on toggle
+  headings too, a page-level switch.
+- No new exports. The Folding stories' `#` and `##` are toggle headings and their `###`s
+  plain, with specs for both kinds, the `>## ` shortcut, the slash
+  items, the toolbar button and the round trip (`toggleHeadings`).
+
 ## 4.65.0 — Every list says how it opens a record
 
 New props and an opt-in lint rule. The UI package only; no new

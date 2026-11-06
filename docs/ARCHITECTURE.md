@@ -571,8 +571,15 @@ kinds (a React widget portaled into the node view's slot,
 **Folding by headings (4.54)** (`src/lib/markdown-fold.ts`,
 `rich-text-fold.ts`, `notes-outline.tsx`, `src/hooks/fold-store.ts`):
 `foldKey` on `<Markdown>` and the editor puts a fold button before each
-top-level heading; it folds the blocks after it up to the next heading of
-its level or higher. Folding is the reader's, never the text's: what's
+top-level toggle heading; it folds the blocks after it up to the next
+heading of its level or higher. Since 4.66 only a toggle heading folds
+(`src/lib/markdown-toggle.ts`, `rich-text-toggle-heading.ts`): Notion's
+`{toggle="true"}` at a heading's end, taken off by a remark plugin as it's
+read (so its fold id is the same plain or toggle) and written back by the
+editor's heading schema, which carries a `toggle` attribute. A plain
+heading has no button and hides nothing, even with its id stored as
+folded, but still ends the sections above it and is still in the
+outline. Folding is the reader's, never the text's: what's
 folded is a set of heading ids (level and words, `2:Beds`, numbered when
 repeated) kept in localStorage under the key, so the Markdown and the
 merge never see it. `<Markdown>` hides a section's blocks with a rehype

@@ -28,8 +28,11 @@
 // kept as Markdown already writes them (src/lib/markdown-table.ts).
 // `tableLook` picks compact (the default) or boxed, as on <Markdown>.
 //
-// With `foldKey`, the text folds by its headings (NotesOutline lists them
-// beside it), the Markdown untouched.
+// With `foldKey`, the text folds by its toggle headings (NotesOutline
+// lists every heading beside it), the Markdown untouched. A toggle heading
+// is `## Safety {toggle="true"}` in the Markdown: typed as `>## `, picked
+// from the slash menu (Toggle heading 1 to 3) or made from the heading the
+// caret is in with the toolbar's Toggle heading. Plain is the default.
 //
 // `defaultValue` is read when it mounts, then followed: a new value the
 // editor didn't report itself (a form's loaded record arriving after the
@@ -122,9 +125,10 @@ export type RichTextEditorProps = {
    */
   headingFrom?: HeadingFrom
   /**
-   * Folds the text by its headings, as `<Markdown>`'s `foldKey` does: each
-   * heading at the text's top level has a button that folds what's under
-   * it, Ctrl/Cmd+Alt+[ folds the section the caret is in and
+   * Folds the text by its toggle headings, as `<Markdown>`'s `foldKey`
+   * does: each toggle heading (`## Safety {toggle="true"}`) at the text's
+   * top level has a button that folds what's under it (a plain heading
+   * never folds), Ctrl/Cmd+Alt+[ folds the section the caret is in and
    * Ctrl/Cmd+Alt+] opens the heading it's on, and the caret moving into a
    * folded section opens it. Remembered on this device under this key,
    * and shared with `<Markdown>` and NotesOutline given the same one.

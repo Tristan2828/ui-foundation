@@ -590,7 +590,7 @@ Rate each from 0 to 10.
 | Getting out of the car | | | |
 `
 
-const QUESTIONS = `# Questions
+const QUESTIONS = `# Questions {toggle="true"}
 
 In priority order.
 
