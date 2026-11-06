@@ -44,10 +44,12 @@
 // `==words==` is highlighted words (amber, or `=={green}words==`: yellow,
 // green, red): a <mark> on the colour's wash (src/lib/markdown-highlight.ts).
 //
-// With `foldKey`, each heading at the text's top level has a button before
+// With `foldKey`, each toggle heading (`## Safety {toggle="true"}`,
+// src/lib/markdown-toggle.ts) at the text's top level has a button before
 // it that folds its section away (src/lib/markdown-fold.ts), remembered on
 // this device under the key and shared with an editor or NotesOutline
-// given the same one. The text itself is never changed.
+// given the same one. A plain heading never folds. The text itself is
+// never changed; a toggle heading's marker is never shown.
 //
 // Printed (EntityView's Print notes, PrintingContext), it's the whole
 // text: nothing folded, no fold buttons, task boxes as glyphs.
@@ -70,6 +72,7 @@ import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-
 import { rehypeFold, toggleFold } from '@/lib/markdown-fold'
 import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
 import { rehypeTables } from '@/lib/markdown-table'
+import { remarkToggleHeadings } from '@/lib/markdown-toggle'
 import { toggleTaskAt } from '@/lib/markdown-tasks'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
@@ -90,7 +93,7 @@ import {
 import { usePrinting } from './print-context'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 
-const REMARK_PLUGINS = [remarkGfm, remarkCallouts, remarkHighlights]
+const REMARK_PLUGINS = [remarkGfm, remarkCallouts, remarkHighlights, remarkToggleHeadings]
 
 const HIGHLIGHT_WASH = {
   amber: 'bg-highlight-amber',
@@ -188,14 +191,16 @@ type HeadingProps = ComponentProps<'h1'> & {
   'data-foldable'?: string
   'data-folded'?: string
   'data-fold-label'?: string
+  'data-toggle'?: string
 }
 
 // A heading by its Markdown level: the element the page's outline gives
 // it (headingTag), the look its level has. The text's colour first, so a
-// level's own (`###`'s muted label) wins. With `foldKey`, a top-level one
-// (marked by rehypeFold) sits beside its fold button, the look on the two
-// together; one with nothing under it keeps the button's room, so its
-// words line up with the others'.
+// level's own (`###`'s muted label) wins. With `foldKey`, a top-level
+// toggle heading (marked by rehypeFold) sits beside its fold button, the
+// look on the two together; one with nothing under it keeps the button's
+// room, so its words line up with the others'. A plain heading is drawn
+// plain, with no button and no room for one.
 function heading(level: number, top: HeadingLevel, textTop: number): Components['h1'] {
   const Tag = headingTag(level, top, textTop)
   return function Heading(props) {
@@ -205,12 +210,15 @@ function heading(level: number, top: HeadingLevel, textTop: number): Components[
       'data-foldable': foldable,
       'data-folded': folded,
       'data-fold-label': label,
+      'data-toggle': isToggle,
       hidden,
       ...rest
     } = omitNode(props) as HeadingProps
     const look = cn('text-foreground', headingClass(level))
     const band = headingBand(level) || undefined
     if (!toggle || foldId === undefined) return <Tag {...rest} hidden={hidden} data-band={band} className={look} />
+    // Plain: still found by its fold id (NotesOutline's jump), never folded.
+    if (isToggle !== 'true') return <Tag {...rest} data-fold-id={foldId} hidden={hidden} data-band={band} className={look} />
     const open = folded !== 'true'
     return (
       <div data-fold-id={foldId} hidden={hidden} data-band={band} className={cn(FOLD_HEADING, look)}>
@@ -361,9 +369,10 @@ export type MarkdownProps = {
    */
   headingFrom?: HeadingFrom
   /**
-   * Folds the text by its headings: each heading at its top level gets a
-   * button that folds what's under it (to the next heading of its level
-   * or higher). What's folded is remembered on this device under this key
+   * Folds the text by its toggle headings: each toggle heading
+   * (`## Safety {toggle="true"}`) at its top level gets a button that
+   * folds what's under it (to the next heading of its level or higher).
+   * A plain heading never folds. What's folded is remembered on this device under this key
    * (name it for the app and the record: `"my-app:task:84:notes"`), and
    * shared with a RichTextEditor or NotesOutline given the same key. The
    * text is never changed.

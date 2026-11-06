@@ -53,7 +53,10 @@
 //   With `upload`, an image pasted, dropped or picked with the toolbar's
 //   Image button is uploaded through it and goes in as `![](url)`
 //   (rich-text-image-upload.ts); a refusal or a failed upload is a toast.
-// - `foldKey`: the text folds by its headings, as <Markdown> does
+// - Toggle headings (`## Safety {toggle="true"}`, rich-text-toggle-heading.ts):
+//   a heading's `toggle` attribute, typed as `>## `, picked from the slash
+//   menu or the toolbar. A plain heading is the default.
+// - `foldKey`: the text folds by its toggle headings, as <Markdown> does
 //   (rich-text-fold.ts), remembered on this device and shared with
 //   NotesOutline; the document never changes.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
@@ -73,6 +76,7 @@ import type { MilkdownPlugin } from '@milkdown/kit/ctx'
 import { history } from '@milkdown/kit/plugin/history'
 import {
   commands,
+  headingSchema,
   inputRules,
   keymap,
   markInputRules,
@@ -110,6 +114,7 @@ import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry }
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
 import { splitTaskItem, taskInputRule } from './rich-text-tasks'
+import { toggleHeadingInputRule, toggleHeadingRemark, withToggle } from './rich-text-toggle-heading'
 import { addRowAtEnd, colorTableCells, handleTableKey, runTableAction, tableLook as tableLookPlugin, type TableAction, type TableColorScope } from './rich-text-table'
 import { TABLE_MENU_EVENT, TableGrips, type TableCell } from './rich-text-table-grips'
 import type { FormatItem } from './rich-text-format-items'
@@ -232,11 +237,12 @@ function htmlToText(fragment: Fragment): Fragment {
 // A heading: the element `headingLevel` gives its level, the look its
 // level has. Marked as a band for PROSE_INSET (`#` and `##`).
 //
-// With `foldKey` (`onFold`), it sits beside its fold button, as in
-// <Markdown>: the look on the two together, the button out of the tab
-// order (Ctrl/Cmd+Alt+[ and ] and NotesOutline are the keyboard's way),
-// kept invisible where there's nothing under the heading to fold, or the
-// heading isn't at the top level.
+// With `foldKey` (`onFold`), a toggle heading sits beside its fold button,
+// as in <Markdown>: the look on the two together, the button out of the
+// tab order (Ctrl/Cmd+Alt+[ and ] and NotesOutline are the keyboard's
+// way), kept invisible where there's nothing under the heading to fold,
+// or the heading isn't at the top level. A plain heading has no button
+// and no room for one; its fold id still marks it, for NotesOutline.
 function headingView(
   node: ProseNode,
   top: HeadingLevel,
@@ -246,13 +252,30 @@ function headingView(
 ): NodeView {
   const level = Number(node.attrs.level)
   const heading = document.createElement(headingTag(level, top, textTop))
-  const sameLevel = (next: ProseNode) => next.type === node.type && next.attrs.level === node.attrs.level
-  if (!onFold) {
+  const sameLevel = (next: ProseNode) =>
+    next.type === node.type && next.attrs.level === node.attrs.level && Boolean(next.attrs.toggle) === Boolean(node.attrs.toggle)
+  if (node.attrs.toggle) heading.dataset.toggle = ''
+  if (!onFold || !node.attrs.toggle) {
     heading.className = headingClass(level)
     if (headingBand(level)) heading.dataset.band = ''
-    return { dom: heading, contentDOM: heading, update: sameLevel }
+    const mark = (decorations: readonly Decoration[]) => {
+      const spec = onFold ? foldSpecOf(decorations) : null
+      if (spec) heading.dataset.foldId = spec.id
+      else delete heading.dataset.foldId
+    }
+    mark(decorations)
+    return {
+      dom: heading,
+      contentDOM: heading,
+      update: (next, decorations) => {
+        if (!sameLevel(next)) return false
+        mark(decorations)
+        return true
+      },
+    }
   }
   const dom = document.createElement('div')
+  dom.dataset.toggle = ''
   dom.className = cn(FOLD_HEADING, headingClass(level))
   if (headingBand(level)) dom.dataset.band = ''
   heading.className = 'min-w-0 flex-1'
@@ -786,6 +809,8 @@ export default function MilkdownEditor({
           ...markdownStyle(original),
           handlers: { ...options.handlers, callout: calloutHandler as never, highlight: highlightHandler as never },
         }))
+        // Headings carry `toggle` (rich-text-toggle-heading.ts).
+        ctx.update(headingSchema.key, withToggle)
         ctx.update(editorViewOptionsCtx, (options) => ({
           ...options,
           editable: () => !latest.current.readOnly,
@@ -851,6 +876,8 @@ export default function MilkdownEditor({
       .use(COMMONMARK)
       .use(gfm)
       .use(taskInputRule)
+      .use(toggleHeadingRemark)
+      .use(toggleHeadingInputRule)
       .use(calloutRemark)
       .use(calloutSchema)
       .use(highlightRemark)

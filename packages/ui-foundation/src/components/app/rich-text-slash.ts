@@ -9,7 +9,7 @@
 // list, a quote or a code block.
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
-import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, type FormatItem } from './rich-text-format-items'
+import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, TOGGLE_HEADING_VARIANTS, type FormatItem } from './rich-text-format-items'
 import { toggleFormat, type FormatId } from './rich-text-formats'
 
 /** Where the "/" that opened the menu is, while it's open. */
@@ -92,6 +92,9 @@ const KEYWORDS: Partial<Record<FormatId, string[]>> = {
   heading1: ['h1', 'title', 'heading'],
   heading2: ['h2', 'subheading', 'heading'],
   heading3: ['h3', 'heading'],
+  toggleHeading1: ['toggle', 'fold', 'collapse', 'heading'],
+  toggleHeading2: ['toggle', 'fold', 'collapse', 'heading'],
+  toggleHeading3: ['toggle', 'fold', 'collapse', 'heading'],
   bullets: ['ul', 'unordered', 'bullet'],
   numbers: ['ol', 'ordered', 'number'],
   tasks: ['todo', 'checkbox', 'checklist'],
@@ -110,11 +113,12 @@ const KEYWORDS: Partial<Record<FormatId, string[]>> = {
   'highlight-red': ['highlight', 'mark', 'marker', 'colour', 'color'],
 }
 
-// The menu's items: the blocks, in the toolbar's order. The kinds of
-// callout past the default, and the highlights, only once something's
-// typed ("/warn"), so
-// the list "/" opens with stays short.
+// The menu's items: the blocks, in the toolbar's order, the toggle
+// headings after the plain ones (the toolbar's one Toggle heading isn't
+// here). The kinds of callout past the default, and the highlights, only
+// once something's typed ("/warn"), so the list "/" opens with stays short.
 const BLOCKS = FORMAT_GROUPS.flat().filter((item) => KEYWORDS[item.id])
+BLOCKS.splice(BLOCKS.findIndex((item) => item.id === 'heading3') + 1, 0, ...TOGGLE_HEADING_VARIANTS)
 
 /** The blocks matching what's typed after the "/": in the name, or the start of a keyword. */
 export function slashItems(query: string): FormatItem[] {

@@ -1,9 +1,11 @@
 // Folding a text by its headings (`foldKey` on <Markdown> and the
-// rich-text editor, and NotesOutline beside them). A heading at the top
-// level of the text folds everything after it up to the next heading of
-// its level or higher: a `##` folds its paragraphs and its `###`s, and
-// stops at the next `##` or `#`. Headings inside a quote or a callout
-// don't fold.
+// rich-text editor, and NotesOutline beside them). A toggle heading
+// (markdown-toggle.ts) at the top level of the text folds everything after
+// it up to the next heading of its level or higher: a `##` folds its
+// paragraphs and its `###`s, and stops at the next `##` or `#`. A plain
+// heading never folds, though it still ends the sections above it, and
+// NotesOutline still lists it. Headings inside a quote or a callout don't
+// fold.
 //
 // Folding is the reader's, never the text's: what's folded is a set of
 // heading ids, kept on the device (src/hooks/fold-store.ts), and the
@@ -15,9 +17,10 @@
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
+import { takeToggleMarker } from './markdown-toggle'
 
-/** A top-level heading, by its level (1 for `#`) and its words. */
-export type FoldHeadingInput = { level: number; text: string }
+/** A top-level heading, by its level (1 for `#`), its words and whether it's a toggle heading (the only kind that folds). */
+export type FoldHeadingInput = { level: number; text: string; toggle?: boolean }
 
 /** A top-level heading as folding sees it. */
 export type FoldHeading = FoldHeadingInput & {
@@ -25,7 +28,9 @@ export type FoldHeading = FoldHeadingInput & {
   id: string
   /** Its index among the text's top-level blocks. */
   index: number
-  /** It has something under it to fold. */
+  /** A toggle heading: the only kind with a fold button. */
+  toggle: boolean
+  /** A toggle heading with something under it to fold. */
   foldable: boolean
   /** The ids of the headings it sits under, outermost first. */
   parents: string[]
@@ -56,9 +61,11 @@ export function foldPlan(blocks: readonly (FoldHeadingInput | null)[], folded: R
   const open: FoldHeading[] = []
   blocks.forEach((block, index) => {
     if (block) while (open.length > 0 && open[open.length - 1].level >= block.level) open.pop()!.end = index
-    if (open.some((heading) => folded.has(heading.id))) hidden.add(index)
+    // A plain heading's id in `folded` (folded before it was plain) hides nothing.
+    if (open.some((heading) => heading.toggle && folded.has(heading.id))) hidden.add(index)
     // Anything after a heading, before one of its level or higher, is its section.
-    if (open.length > 0) open[open.length - 1].foldable = true
+    const last = open[open.length - 1]
+    if (last?.toggle) last.foldable = true
     if (!block) return
     const text = words(block.text)
     const base = `${block.level}:${text}`
@@ -69,6 +76,7 @@ export function foldPlan(blocks: readonly (FoldHeadingInput | null)[], folded: R
       text,
       id: count === 1 ? base : `${base}#${count}`,
       index,
+      toggle: block.toggle === true,
       foldable: false,
       parents: open.map((one) => one.id),
       end: blocks.length,
@@ -96,9 +104,12 @@ export function mdText(node: MdFoldNode): string {
 
 /** The top-level blocks of an mdast root, as foldPlan takes them. */
 export function mdBlocks(root: MdFoldNode): (FoldHeadingInput | null)[] {
-  return (root.children ?? []).map((node) =>
-    node.type === 'heading' && node.depth ? { level: node.depth, text: mdText(node) } : null,
-  )
+  return (root.children ?? []).map((node) => {
+    if (node.type !== 'heading' || !node.depth) return null
+    // Read here without remarkToggleHeadings: the marker is still in its words.
+    const { text, toggle } = takeToggleMarker(mdText(node))
+    return { level: node.depth, text, toggle }
+  })
 }
 
 const parser = unified().use(remarkParse).use(remarkGfm)
@@ -174,7 +185,8 @@ export function rehypeFold(options: { folded: ReadonlySet<string> }) {
     const blocks = at.map((index) => {
       const node = children[index]
       const level = node.type === 'element' ? HEADING.exec(node.tagName ?? '')?.[1] : undefined
-      return level ? { level: Number(level), text: hastText(node) } : null
+      // remarkToggleHeadings marked it, its marker gone.
+      return level ? { level: Number(level), text: hastText(node), toggle: node.properties?.dataToggle === 'true' } : null
     })
     const plan = foldPlan(blocks, options.folded)
     for (const heading of plan.headings) {
@@ -183,6 +195,7 @@ export function rehypeFold(options: { folded: ReadonlySet<string> }) {
         ...node.properties,
         dataFoldId: heading.id,
         dataFoldLabel: heading.text,
+        dataToggle: String(heading.toggle),
         dataFoldable: String(heading.foldable),
         dataFolded: String(heading.foldable && options.folded.has(heading.id)),
       }

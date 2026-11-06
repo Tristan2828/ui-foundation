@@ -24,6 +24,8 @@ export type FormatId =
   | 'heading1'
   | 'heading2'
   | 'heading3'
+  | ToggleHeadingFormat
+  | 'toggleHeading'
   | 'bullets'
   | 'numbers'
   | 'tasks'
@@ -33,6 +35,12 @@ export type FormatId =
   | 'divider'
   | 'table'
   | 'link'
+
+/**
+ * A toggle heading of each level (the slash menu's). `toggleHeading`, the
+ * toolbar's, turns the heading the caret is in into a toggle one or back.
+ */
+export type ToggleHeadingFormat = 'toggleHeading1' | 'toggleHeading2' | 'toggleHeading3'
 
 /** Words highlighted in each colour. `highlight` is the toolbar's menu of them. */
 export type HighlightFormat = `highlight-${HighlightColor}`
@@ -53,6 +61,13 @@ export function calloutKindOf(id: FormatId): CalloutKind | null {
 }
 
 const HEADING_LEVEL: Partial<Record<FormatId, number>> = { heading1: 1, heading2: 2, heading3: 3 }
+const TOGGLE_LEVEL: Partial<Record<FormatId, number>> = { toggleHeading1: 1, toggleHeading2: 2, toggleHeading3: 3 }
+
+// The heading the caret's line is, if it's one, and whether it's a toggle.
+function headingHere(state: EditorState): { level: number; toggle: boolean } | null {
+  const parent = state.selection.$from.parent
+  return parent.type.name === 'heading' ? { level: Number(parent.attrs.level), toggle: Boolean(parent.attrs.toggle) } : null
+}
 
 type Dispatch = (tr: Transaction) => void
 
@@ -130,8 +145,9 @@ export function formatOn(state: EditorState, id: FormatId): boolean {
   const mark = MARKS[id]
   if (mark) return markOn(state, schema.marks[mark])
   const parent = state.selection.$from.parent
-  const level = HEADING_LEVEL[id]
-  if (level) return parent.type.name === 'heading' && parent.attrs.level === level
+  const level = HEADING_LEVEL[id] ?? TOGGLE_LEVEL[id]
+  if (level) return parent.type.name === 'heading' && parent.attrs.level === level && Boolean(parent.attrs.toggle) === (id in TOGGLE_LEVEL)
+  if (id === 'toggleHeading') return Boolean(headingHere(state)?.toggle)
   if (id === 'highlight') return highlightColor(state) !== null
   const color = highlightColorOf(id)
   if (color) return highlightColor(state) === color
@@ -202,8 +218,17 @@ export function toggleFormat(state: EditorState, dispatch: Dispatch, id: FormatI
   if (id === 'outdent') return liftListItem(schema.nodes.list_item)(state, dispatch)
   const on = formatOn(state, id)
   const paragraph = schema.nodes.paragraph
-  const level = HEADING_LEVEL[id]
-  if (level) return on ? setBlockType(paragraph)(state, dispatch) : setBlockType(schema.nodes.heading, { level })(state, dispatch)
+  const level = HEADING_LEVEL[id] ?? TOGGLE_LEVEL[id]
+  if (level) {
+    if (on) return setBlockType(paragraph)(state, dispatch)
+    return setBlockType(schema.nodes.heading, { level, toggle: id in TOGGLE_LEVEL })(state, dispatch)
+  }
+  // The toolbar's Toggle heading: a heading turned toggle or plain, its
+  // level kept; any other line a toggle `##`.
+  if (id === 'toggleHeading') {
+    const here = headingHere(state)
+    return setBlockType(schema.nodes.heading, { level: here?.level ?? 2, toggle: !here?.toggle })(state, dispatch)
+  }
   const kind = calloutKindOf(id)
   if (kind) return toggleCallout(state, dispatch, kind)
   switch (id) {

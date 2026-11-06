@@ -1,7 +1,8 @@
 // A long text's headings as a list to jump with, beside <Markdown> or the
 // rich-text editor given the same `foldKey`: each heading a button that
 // opens its section (and any it sits under) and brings it into view, with
-// Fold all and Open all above. The text's top-level headings, as folding
+// Fold all and Open all above (when a toggle heading has something to
+// fold). Every top-level heading is listed, plain or toggle, as folding
 // sees them (src/lib/markdown-fold.ts); the deepest levels are left out
 // (`depth`), so a long text's outline stays a list of its parts.
 //
@@ -77,14 +78,16 @@ export function NotesOutline({
 
   return (
     <nav aria-label={ariaLabel} data-slot="notes-outline" className={cn('flex min-w-0 flex-col gap-2', className)}>
-      <div className="flex flex-wrap gap-1">
-        <Button size="xs" variant="outline" disabled={allFolded} onClick={() => setFolded(foldable)}>
-          Fold all
-        </Button>
-        <Button size="xs" variant="outline" disabled={!anyFolded} onClick={() => setFolded(new Set())}>
-          Open all
-        </Button>
-      </div>
+      {foldable.size > 0 && (
+        <div className="flex flex-wrap gap-1">
+          <Button size="xs" variant="outline" disabled={allFolded} onClick={() => setFolded(foldable)}>
+            Fold all
+          </Button>
+          <Button size="xs" variant="outline" disabled={!anyFolded} onClick={() => setFolded(new Set())}>
+            Open all
+          </Button>
+        </div>
+      )}
       <ul className="flex flex-col">
         {listed.map((heading) => {
           const isFolded = heading.foldable && folded.has(heading.id)

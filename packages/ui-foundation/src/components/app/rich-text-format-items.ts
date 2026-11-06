@@ -19,6 +19,7 @@ import {
   ItalicIcon,
   LinkIcon,
   ListChecksIcon,
+  ListCollapseIcon,
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
@@ -31,7 +32,7 @@ import {
 import { CALLOUT_KINDS } from '@/lib/markdown-callout'
 import { CALLOUT_LOOK } from './prose-look'
 import { HIGHLIGHT_COLORS } from '@/lib/markdown-highlight'
-import type { CalloutFormat, FormatId, HighlightFormat } from './rich-text-formats'
+import type { CalloutFormat, FormatId, HighlightFormat, ToggleHeadingFormat } from './rich-text-formats'
 
 export type FormatItem = {
   id: FormatId
@@ -62,6 +63,7 @@ export const FORMAT_GROUPS: FormatItem[][] = [
     { id: 'heading1', label: 'Heading 1', icon: Heading1Icon, keys: 'Block+1' },
     { id: 'heading2', label: 'Heading 2', icon: Heading2Icon, keys: 'Block+2' },
     { id: 'heading3', label: 'Heading 3', icon: Heading3Icon, keys: 'Block+3' },
+    { id: 'toggleHeading', label: 'Toggle heading', icon: ListCollapseIcon, hint: 'folds what is under it; or type >## ' },
   ],
   [
     { id: 'tasks', label: 'Task list', icon: ListChecksIcon, keys: 'Block+4', hint: 'tick an item: Mod+Shift+Enter' },
@@ -82,6 +84,18 @@ export const FORMAT_GROUPS: FormatItem[][] = [
 
 /** Every format by its id. */
 export const FORMAT_ITEMS = new Map(FORMAT_GROUPS.flat().map((item) => [item.id, item]))
+
+/**
+ * A toggle heading of each level, for the slash menu, beside the plain
+ * headings: "Toggle heading 2". On the toolbar, Toggle heading turns the
+ * caret's heading into one.
+ */
+export const TOGGLE_HEADING_VARIANTS: FormatItem[] = ([1, 2, 3] as const).map((level) => ({
+  id: `toggleHeading${level}` as ToggleHeadingFormat,
+  label: `Toggle heading ${level}`,
+  icon: [Heading1Icon, Heading2Icon, Heading3Icon][level - 1],
+  hint: `or type >${'#'.repeat(level)} `,
+}))
 
 /**
  * A callout of each kind but the default, for the slash menu: "Warning

@@ -118,6 +118,22 @@ test.describe('rich-text round trip', () => {
     await expect(editor(page, 'headings').locator('ul li')).toHaveText('first item')
     await expect(saved(page, 'headings')).toContainText('\n\n- first item\n')
   })
+
+  test('>## at a line\'s start makes a toggle heading (># and >### likewise); ## stays plain', async ({ page }) => {
+    await caretAtEnd(page, 'headings')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('>## ', { delay: 50 })
+    await page.keyboard.type('Toggled')
+    await expect(saved(page, 'headings')).toContainText('\n\n## Toggled {toggle="true"}\n')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('>### ', { delay: 50 })
+    await page.keyboard.type('Smaller')
+    await expect(saved(page, 'headings')).toContainText('\n\n### Smaller {toggle="true"}\n')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('## ', { delay: 50 })
+    await page.keyboard.type('Plain')
+    await expect(saved(page, 'headings')).toContainText('\n\n## Plain\n')
+  })
 })
 
 // What the editor does beyond formatting, on the Features story: paste
@@ -303,7 +319,7 @@ test.describe('toolbar', () => {
   test('one row of named buttons, each with its shortcut, one tab stop', async ({ page }) => {
     const bar = toolbar(page, 'formats')
     const labels = [
-      'Bold', 'Italic', 'Strikethrough', 'Code', 'Highlight', 'Heading 1', 'Heading 2', 'Heading 3',
+      'Bold', 'Italic', 'Strikethrough', 'Code', 'Highlight', 'Heading 1', 'Heading 2', 'Heading 3', 'Toggle heading',
       'Task list', 'Bulleted list', 'Numbered list', 'Quote', 'Callout', 'Code block', 'Divider', 'Table', 'Link', 'Full screen',
     ]
     await expect(bar.getByRole('button')).toHaveCount(labels.length)
@@ -386,6 +402,24 @@ test.describe('toolbar', () => {
     await expect(first()).not.toContainText('```')
   })
 
+  test('Toggle heading turns a heading into a toggle one and back, its level kept; a plain line becomes a toggle ##', async ({ page }) => {
+    const first = () => saved(page, 'formats')
+    await caretInFirstLine(page)
+    await button(page, 'Toggle heading').click()
+    await expect(first()).toContainText('## Format me here. {toggle="true"}')
+    await expect(button(page, 'Toggle heading')).toHaveAttribute('aria-pressed', 'true')
+    await expect(button(page, 'Heading 2')).toHaveAttribute('aria-pressed', 'false')
+    // Heading 3 makes it a plain ###.
+    await button(page, 'Heading 3').click()
+    await expect(first()).toContainText('### Format me here.\n')
+    await expect(first()).not.toContainText('toggle')
+    await button(page, 'Toggle heading').click()
+    await expect(first()).toContainText('### Format me here. {toggle="true"}')
+    await button(page, 'Toggle heading').click()
+    await expect(first()).not.toContainText('toggle')
+    await expect(button(page, 'Heading 3')).toHaveAttribute('aria-pressed', 'true')
+  })
+
   test('lists: bulleted, then numbered, then tasks, then plain again', async ({ page }) => {
     const text = () => saved(page, 'formats')
     await caretInFirstLine(page)
@@ -415,7 +449,7 @@ test.describe('toolbar', () => {
 
   test('read-only, every button is disabled but Full screen (reading is what it is for)', async ({ page }) => {
     const buttons = toolbar(page, 'readOnly').getByRole('button')
-    await expect(buttons).toHaveCount(18)
+    await expect(buttons).toHaveCount(19)
     for (const one of await buttons.all()) {
       if ((await one.getAttribute('aria-label')) === 'Full screen') await expect(one).toBeEnabled()
       else await expect(one).toBeDisabled()
@@ -624,7 +658,8 @@ test.describe('slash menu', () => {
   const menu = (page: Page) => page.getByRole('listbox', { name: 'Blocks' })
   const option = (page: Page, name: string) => menu(page).getByRole('option', { name, exact: true })
   const BLOCKS = [
-    'Heading 1', 'Heading 2', 'Heading 3', 'Task list', 'Bulleted list', 'Numbered list',
+    'Heading 1', 'Heading 2', 'Heading 3', 'Toggle heading 1', 'Toggle heading 2', 'Toggle heading 3',
+    'Task list', 'Bulleted list', 'Numbered list',
     'Quote', 'Callout', 'Code block', 'Divider', 'Table',
   ]
 
@@ -675,6 +710,15 @@ test.describe('slash menu', () => {
     await page.keyboard.type('todo')
     await expect(menu(page).getByRole('option')).toHaveCount(1)
     await expect(option(page, 'Task list')).toBeVisible()
+  })
+
+  test('"/toggle" lists the toggle headings; a pick makes one, written with its marker', async ({ page }) => {
+    await newLine(page)
+    await page.keyboard.type('/toggle')
+    await expect(menu(page).getByRole('option')).toHaveText(['Toggle heading 1', 'Toggle heading 2', 'Toggle heading 3'])
+    await option(page, 'Toggle heading 2').click()
+    await page.keyboard.type('Folds')
+    await expect(saved(page, 'formats')).toContainText('Third line.\n\n## Folds {toggle="true"}')
   })
 
   test('the arrow keys move the highlight, round the ends; Tab picks too', async ({ page }) => {

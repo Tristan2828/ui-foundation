@@ -12,6 +12,11 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "# Title\n\nIntro paragraph.\n\n## Second level\n\nText under it.\n\n### Third level\n\nMore text.\n",
     editorWrites: "# Title\n\nIntro paragraph.\n\n## Second level\n\nText under it.\n\n### Third level\n\nMore text.\n",
   },
+  // Toggle headings (4.66): the marker is kept, and a plain heading stays plain.
+  toggleHeadings: {
+    markdown: '# Plan {toggle="true"}\n\nIntro.\n\n## Safety {toggle="true"}\n\nGloves on.\n\n## Plain\n\nNot a toggle.\n\n### **Bold** words {toggle="true"}\n\nUnder it.\n',
+    editorWrites: '# Plan {toggle="true"}\n\nIntro.\n\n## Safety {toggle="true"}\n\nGloves on.\n\n## Plain\n\nNot a toggle.\n\n### **Bold** words {toggle="true"}\n\nUnder it.\n',
+  },
   nestedLists: {
     markdown: "- One\n- Two\n  - Two point one\n  - Two point two\n    - Deep\n- Three\n\n1. First\n2. Second\n   1. Nested ordered\n   2. Another\n3. Third\n",
     editorWrites: "- One\n- Two\n  - Two point one\n  - Two point two\n    - Deep\n- Three\n\n1. First\n2. Second\n   1. Nested ordered\n   2. Another\n3. Third\n",
