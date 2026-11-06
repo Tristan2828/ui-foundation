@@ -121,6 +121,11 @@ per list; delete the section if there are none.
 
 ## List screen
 
+- Opens a record: one of `dialog` (a dialog over the list, with its full
+  page), `dialog-only` (a small record with no notes: no page of its
+  own), `page` (too big for a dialog: say why), `panel`, or `rows`
+  (edited in its rows, no view). add-an-entity.md "How a list opens a
+  record".
 - Default sort:
 - Page size: 10 unless there's a reason.
 - Saved views (optional; delete if none): one row per view, a button
@@ -143,10 +148,12 @@ per list; delete the section if there are none.
 
 ## View screen
 
-The read-only page for one record (`/<entity>/:id`), opened by clicking
-its title in the table. Edit and Delete live in its header, so the table
-has no row actions. Every field it shows renders as its table cell does,
-except the quick actions, if any.
+One record (`/<entity>/:id`), opened from its list as the List screen
+says: the same view in a dialog or on its page. Its shape is the one in
+add-an-entity.md "The record view": values edited in place, Delete in its
+header, and no Edit unless a field can't be edited in place, so the
+table has no row actions. Every field it shows renders as its table cell
+does, except the quick actions, if any.
 
 - Title: the field that names a record, shown as the page heading and
   linked from the table: `title`.

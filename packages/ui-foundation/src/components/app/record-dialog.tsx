@@ -1,5 +1,5 @@
 // A record opened in a centered dialog over its list, instead of going to
-// the record's page (add-an-entity.md "Opening a record over its list").
+// the record's page (add-an-entity.md "How a list opens a record").
 //
 // RecordDialogRoute is the list route's element, and the record's route is
 // its child:
@@ -20,6 +20,12 @@
 // - a deep link (pasted, bookmarked, a new tab) has no state and is the
 //   full page, as is a record opened over a list other than its own
 //   (a link on the home page).
+//
+// `fullPage={false}` is a record with no page of its own (a dialog only:
+// a small record with no notes, where a page would only repeat the
+// dialog). There's no Open full page, and a deep link or a link from
+// another page opens the dialog over its own list, at the list's plain
+// address.
 //
 // Inside, the record's route renders as it always does. EntityView sees
 // the dialog (useRecordDialog): its heading names the dialog, its back link
@@ -52,9 +58,16 @@ export type RecordDialogRouteProps = {
   label: string
   /** Extra classes on the dialog's popup (its width, say: `sm:max-w-5xl`). */
   className?: string
+  /**
+   * False: the record has no full page, only this dialog (DataTable's
+   * `opens` kind `dialog-only`). No Open full page, and its address opened
+   * any other way (a deep link, a link from another page) is the dialog
+   * over the list. True by default.
+   */
+  fullPage?: boolean
 }
 
-export function RecordDialogRoute({ list, label, className }: RecordDialogRouteProps) {
+export function RecordDialogRoute({ list, label, className, fullPage = true }: RecordDialogRouteProps) {
   const location = useLocation()
   const navigationType = useNavigationType()
   const navigate = useNavigate()
@@ -64,7 +77,14 @@ export function RecordDialogRoute({ list, label, className }: RecordDialogRouteP
   const opened = backgroundOf(location.state)
   // Over its own list only: opened from anywhere else, the list under it
   // would be a page the user wasn't on.
-  const background = opened && opened.pathname === listPath ? opened : null
+  // With no full page, a record opened any other way is the dialog over
+  // the list's plain address, with nothing to go back over.
+  const background =
+    opened && opened.pathname === listPath
+      ? opened
+      : !fullPage && outlet !== null
+        ? { pathname: listPath, search: '', hash: '', depth: 0 }
+        : null
   const open = outlet !== null && background !== null
 
   // The list sees the address it was opened from, not the record's, so
@@ -120,16 +140,18 @@ export function RecordDialogRoute({ list, label, className }: RecordDialogRouteP
             className,
           )}
         >
-          <div className="flex items-center justify-between gap-2 border-b px-2 py-2">
+          <div className={cn('flex items-center gap-2 border-b px-2 py-2', fullPage ? 'justify-between' : 'justify-end')}>
             {/* A link, not a button: it goes to an address (and opens in a new tab on Ctrl/Cmd+click). */}
-            <Link
-              to={{ pathname: location.pathname, search: location.search, hash: location.hash }}
-              replace
-              className={buttonVariants({ variant: 'ghost', size: 'sm' })}
-            >
-              <Maximize2Icon aria-hidden="true" />
-              Open full page
-            </Link>
+            {fullPage && (
+              <Link
+                to={{ pathname: location.pathname, search: location.search, hash: location.hash }}
+                replace
+                className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+              >
+                <Maximize2Icon aria-hidden="true" />
+                Open full page
+              </Link>
+            )}
             <DialogClose render={<Button variant="ghost" size="icon-sm" />}>
               <XIcon aria-hidden="true" />
               <span className="sr-only">Close</span>

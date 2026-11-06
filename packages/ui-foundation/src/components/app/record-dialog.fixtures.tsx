@@ -10,7 +10,7 @@ import { editInPlace } from './edit-in-place'
 import { EntityView } from './entity-view'
 import { Markdown } from './markdown'
 import { RecordDialogRoute, RecordLink } from './record-dialog'
-import { recordDialogState, useOpenRecord } from './record-dialog-context'
+import { recordDialogState } from './record-dialog-context'
 
 // A list whose records open in a dialog over it (RecordDialogRoute), in a
 // memory router: /projects is the list (a search kept in `?q=`, a table
@@ -22,6 +22,11 @@ import { recordDialogState, useOpenRecord } from './record-dialog-context'
 // loads. Owner is edited in place (its Esc is the field's, not the
 // dialog's). Open, Loading and Not found start with a record open over the
 // list, the list's entry before it, so Back closes it.
+// The Dialog only stories are the same list with `fullPage={false}` (no
+// page behind the dialog: a deep link opens it over the list), and Rows
+// open their page has `opens` kind `page`. The name cell is a plain link
+// to the record: `opens` makes a click on it open the record as the row
+// does.
 // e2e/record-dialog.spec.ts drives it; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
@@ -37,8 +42,20 @@ const PROJECTS: Project[] = [
 const NOT_FOUND: AppError = { kind: 'notfound', message: "This project doesn't exist, or isn't yours." }
 const BROKEN: AppError = { kind: 'server', message: 'The server had a problem. Try again in a moment.' }
 
+type Opens = 'dialog' | 'dialog-only' | 'page'
+
 const COLUMNS: LegacyColumnDef<Project, unknown>[] = [
-  { id: 'name', accessorKey: 'name', header: 'Name', enableSorting: false },
+  {
+    id: 'name',
+    accessorKey: 'name',
+    header: 'Name',
+    enableSorting: false,
+    cell: ({ row }) => (
+      <Link to={`/projects/${row.original.id}`} className="type-label underline">
+        {row.original.name}
+      </Link>
+    ),
+  },
   {
     id: 'status',
     accessorKey: 'status',
@@ -50,9 +67,8 @@ const COLUMNS: LegacyColumnDef<Project, unknown>[] = [
 
 const noop = () => {}
 
-function ProjectList() {
+function ProjectList({ opens }: { opens: Opens }) {
   const [params, setParams] = useSearchParams()
-  const openRecord = useOpenRecord()
   const q = params.get('q') ?? ''
   const rows = PROJECTS.filter((project) => project.name.toLowerCase().includes(q.toLowerCase()))
   return (
@@ -70,7 +86,7 @@ function ProjectList() {
         isLoading={false}
         emptyTitle="No projects match"
         getRowId={(row) => String(row.id)}
-        onRowClick={(row) => openRecord(`/projects/${row.id}`)}
+        opens={{ kind: opens, to: (row) => `/projects/${row.id}` }}
         toolbar={
           <Input
             className="w-64"
@@ -195,7 +211,15 @@ function Layout() {
   )
 }
 
-function Projects({ initialEntries, initialIndex }: { initialEntries: InitialEntry[]; initialIndex?: number }) {
+function Projects({
+  initialEntries,
+  initialIndex,
+  opens = 'dialog',
+}: {
+  initialEntries: InitialEntry[]
+  initialIndex?: number
+  opens?: Opens
+}) {
   const [router] = useState(() =>
     createMemoryRouter(
       [
@@ -206,7 +230,9 @@ function Projects({ initialEntries, initialIndex }: { initialEntries: InitialEnt
             { index: true, element: <Home /> },
             {
               path: 'projects',
-              element: <RecordDialogRoute list={<ProjectList />} label="Project" />,
+              element: (
+                <RecordDialogRoute list={<ProjectList opens={opens} />} label="Project" fullPage={opens !== 'dialog-only'} />
+              ),
               children: [{ path: ':id', element: <ProjectView /> }],
             },
           ],
@@ -261,4 +287,24 @@ export const FullPage: Story = {
 export const FromAnotherPage: Story = {
   name: 'Opened from another page',
   render: () => <Projects initialEntries={['/']} />,
+}
+
+export const DialogOnly: Story = {
+  name: 'Dialog only',
+  render: () => <Projects initialEntries={['/projects']} opens="dialog-only" />,
+}
+
+export const DialogOnlyDeepLink: Story = {
+  name: 'Dialog only, a deep link',
+  render: () => <Projects initialEntries={['/projects/1']} opens="dialog-only" />,
+}
+
+export const DialogOnlyFromAnotherPage: Story = {
+  name: 'Dialog only, opened from another page',
+  render: () => <Projects initialEntries={['/']} opens="dialog-only" />,
+}
+
+export const OpensPage: Story = {
+  name: 'Rows open their page',
+  render: () => <Projects initialEntries={['/projects']} opens="page" />,
 }
