@@ -235,7 +235,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   the value at rest, and `inline` (4.20, #183) draws it as the read view
   (no box; `RichTextEditor`'s `inline` and `toolbar="floating"`). ProseMirror marks every Esc handled, so the editor
   says which ones none of its menus used (`escape-passthrough.ts`).
-  Since 4.71 the plain kinds come ready-made (`inPlace.*`,
+  Since 4.72 the plain kinds come ready-made (`inPlace.*`,
   `edit-in-place-presets.tsx`): each preset is an ordinary `EditInPlace`
   carrying its control, its check (as its `schema`) and its look at rest
   (`shown`), and `inPlace.fields` edits several fields as one value with

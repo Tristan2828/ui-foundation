@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.71.0 — Edit-in-place presets, a link field, fields edited as one, lists grouped and filtered
+## 4.72.0 — Edit-in-place presets, a link field, fields edited as one, lists grouped and filtered
 
 The UI package only; additive, no new dependency. Nothing changes for an
 app until it uses one of these; every existing `editInPlace` field and
