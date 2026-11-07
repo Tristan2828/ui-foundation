@@ -86,10 +86,14 @@ export type EntityViewField = {
    * and an empty array all count as empty and show `emptyLabel` instead,
    * so `{tags.map(...)}` or `{email}` can be passed as they are.
    */
-  value: ReactNode
+  value?: ReactNode
   /** What an empty value reads as: the plan's "not set" label. Defaults to "Not set". */
   emptyLabel?: string
-  /** Editable in place: `editInPlace({...})`. Unmarked, the value is read-only. */
+  /**
+   * Editable in place: `editInPlace({...})`, or a ready-made `inPlace`
+   * preset, whose `shown` is the value when `value` is left out.
+   * Unmarked, the value is read-only.
+   */
   edit?: EditInPlace
 }
 
@@ -263,16 +267,18 @@ const FIELD_ROW = {
 }
 
 function FieldRow({ field, inRail }: { field: EntityViewField; inRail: boolean }) {
+  // A preset shows its own value unless the screen gives one.
+  const value = field.value !== undefined ? field.value : field.edit?.shown
   return (
     <div className={cn('flex flex-col gap-1 py-3 first:pt-0 last:pb-0', FIELD_ROW[inRail ? 'rail' : 'page'])}>
       <dt className="type-label text-muted-foreground">{field.label}</dt>
       <dd className="min-w-0 type-body break-words text-foreground">
         {field.edit ? (
           <EditableValue label={field.label} edit={field.edit}>
-            {orEmptyLabel(field.value, field.emptyLabel)}
+            {orEmptyLabel(value, field.emptyLabel)}
           </EditableValue>
         ) : (
-          orEmptyLabel(field.value, field.emptyLabel)
+          orEmptyLabel(value, field.emptyLabel)
         )}
       </dd>
     </div>
@@ -504,7 +510,14 @@ export function EntityView({
     .filter((section) => section.print)
     .map((section) => ({
       title: section.title,
-      ...('fields' in section ? { fields: section.fields } : { content: section.content, emptyLabel: section.emptyLabel }),
+      ...('fields' in section
+        ? {
+            fields: section.fields.map((field) => ({
+              label: field.label,
+              value: field.value !== undefined ? field.value : field.edit?.shown,
+            })),
+          }
+        : { content: section.content, emptyLabel: section.emptyLabel }),
       answerSpace: typeof section.print === 'object' && section.print.answerSpace === true,
     }))
   const printButton = printSections.length > 0 && (

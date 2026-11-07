@@ -99,6 +99,23 @@ export {
   type EditListAddProps,
   type EditListItemProps,
 } from '@/components/app/edit-in-place'
+export {
+  inPlace,
+  type InPlaceDateConfig,
+  type InPlaceFieldsOptions,
+  type InPlaceLinkConfig,
+  type InPlaceLinkValue,
+  type InPlaceMoneyConfig,
+  type InPlaceNumberConfig,
+  type InPlaceOption,
+  type InPlacePart,
+  type InPlaceRecord,
+  type InPlaceReferenceConfig,
+  type InPlaceSaved,
+  type InPlaceSelectConfig,
+  type InPlaceTextConfig,
+} from '@/components/app/edit-in-place-presets'
+export { linkHost, linkHref, linkRule } from '@/lib/link-href'
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
 export { ErrorState } from '@/components/app/error-state'
@@ -160,6 +177,7 @@ export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
 export {
   ChoiceCell,
   LinkCell,
+  LinkOut,
   NameCell,
   type ChoiceCellProps,
   type LinkCellProps,

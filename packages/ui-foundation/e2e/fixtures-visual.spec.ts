@@ -90,6 +90,13 @@ const COMPOSITE_STORIES = [
   // FillInField's rows by kind (money with a suggestion, a date, a long list), and a record's group.
   { id: 'app-fillinqueue--fields', mustShow: 'New desk chair' },
   { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
+  // The edit-in-place presets at rest: a money value, a select's badge, a
+  // reference, a pair read as one, links by label and by host.
+  { id: 'app-editinplacepresets--presets', mustShow: '$1,234.56' },
+  { id: 'app-editinplacepresets--fields-as-one', mustShow: 'Hours and budget' },
+  { id: 'app-editinplacepresets--links', mustShow: 'docs.example.com' },
+  // A list in place under group headings, and its filter beside it.
+  { id: 'app-editablelist--grouped-and-filtered', mustShow: 'By room' },
   // A record open in a dialog over its list, and the dialog's loading and not-found states.
   { id: 'app-recorddialog--open', mustShow: 'after a dry day' },
   { id: 'app-recorddialog--loading', mustShow: 'Open full page' },

@@ -112,3 +112,143 @@ for (const theme of ['light', 'dark'] as const) {
     }
   })
 }
+
+// A list grouped by one of its items' fields, and the same list filtered
+// (app/EditableList GroupedAndFiltered): a move swaps an item with the
+// next one shown, a group's Add puts the new item in that group, and
+// Duplicate copies an item right after it. Both sections are the same
+// saved list, so each shows the other's changes.
+const grouped = 'http://localhost:6180/story.html?id=app-editablelist--grouped-and-filtered'
+
+async function openGrouped(page: Page, theme: 'light' | 'dark' = 'light') {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(`${grouped}&theme=${theme}`)
+  await expect(page.getByRole('heading', { level: 1, name: 'Spring clean' })).toBeVisible()
+}
+
+const texts = (list: Locator) => list.getByRole('listitem').allInnerTexts()
+
+test('grouped: each group lists its own items, and a move stays inside the group', async ({ page }) => {
+  await openGrouped(page)
+  const kitchen = page.getByRole('list', { name: 'By room: Kitchen' })
+  const garage = page.getByRole('list', { name: 'By room: Garage' })
+  await expect(kitchen.getByRole('listitem')).toHaveCount(3)
+  await expect(garage.getByRole('listitem')).toHaveCount(2)
+  // Hallway is named in the order, so it shows with no items and its Add.
+  await expect(page.getByRole('group', { name: 'Hallway' })).toContainText('No tasks')
+
+  // Task 3 (Fix the tap) is Kitchen's second: up swaps it with Kitchen's
+  // first, past Garage's Sweep out between them in the list.
+  await kitchen.getByRole('button', { name: 'Move task 3 up' }).click()
+  await expect(kitchen.getByRole('listitem').first()).toContainText('Fix the tap')
+  await expect(page.getByRole('button', { name: 'Move task 1 down' })).toBeFocused()
+  expect(await texts(page.getByRole('list', { name: 'Every task' }))).toEqual([
+    'Fix the tap (Kitchen)',
+    'Sweep out (Garage)',
+    'Paint the skirting (Kitchen)',
+    'Hang the shelves (Garage)',
+    'Clear the worktop (Kitchen)',
+  ])
+  // The first of a group can't go up, though another group's item is above it in the list.
+  await expect(garage.getByRole('button', { name: 'Move task 2 up' })).toBeDisabled()
+})
+
+test("grouped: a group's Add puts the new item in that group; Duplicate copies right after", async ({ page }) => {
+  await openGrouped(page)
+  await page.getByRole('button', { name: 'Add task to Hallway' }).click()
+  const adding = page.getByRole('textbox', { name: 'Task 6 text' })
+  await expect(adding).toBeFocused()
+  await adding.fill('Mop the floor')
+  await page.keyboard.press('Enter')
+  const hallway = page.getByRole('list', { name: 'By room: Hallway' })
+  await expect(hallway.getByRole('listitem')).toHaveText(['Mop the floor'])
+  await page.keyboard.press('Escape')
+
+  const garage = page.getByRole('list', { name: 'By room: Garage' })
+  await garage.getByRole('button', { name: 'Duplicate task 4' }).click()
+  await expect(garage.getByRole('listitem')).toHaveCount(3)
+  expect(await texts(garage)).toEqual(['Sweep out', 'Hang the shelves', 'Hang the shelves'])
+  await expect(page.getByRole('button', { name: 'Duplicate task 4' })).toBeFocused()
+})
+
+test('filtered: hidden items stay in the list; a move passes over them', async ({ page }) => {
+  await openGrouped(page)
+  const every = page.getByRole('list', { name: 'Every task' })
+  await page.getByRole('button', { name: 'Hide done' }).click()
+  expect(await texts(every)).toEqual(['Paint the skirting (Kitchen)', 'Fix the tap (Kitchen)', 'Hang the shelves (Garage)'])
+  // Fix the tap (entry 3) up swaps with Paint the skirting (entry 1),
+  // over Sweep out (hidden) between them, which keeps its place.
+  await every.getByRole('button', { name: 'Move entry 3 up' }).click()
+  await expect(every.getByRole('listitem').first()).toContainText('Fix the tap')
+  await page.getByRole('button', { name: 'Hide done' }).click()
+  expect(await texts(every)).toEqual([
+    'Fix the tap (Kitchen)',
+    'Sweep out (Garage)',
+    'Paint the skirting (Kitchen)',
+    'Hang the shelves (Garage)',
+    'Clear the worktop (Kitchen)',
+  ])
+})
+
+// The form's own react-hook-form row in place (app/EditableList FormRows):
+// it registers its fields on the form it's handed, the schema's refusal
+// and the server's 422 at steps.<n>.text show on the text box, and not
+// again under the row.
+const formRows = 'http://localhost:6180/story.html?id=app-editablelist--form-rows'
+
+async function openFormRows(page: Page, theme: 'light' | 'dark' = 'light') {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(`${formRows}&theme=${theme}`)
+  await expect(page.getByRole('heading', { level: 1, name: 'Shed roof' })).toBeVisible()
+  return page.getByRole('region', { name: 'Steps', exact: true })
+}
+
+test("form rows: the row is the form's, its refusals on its own field", async ({ page }) => {
+  const steps = await openFormRows(page)
+  await steps.getByRole('button', { name: 'Edit step 1' }).click()
+  const text = page.getByRole('textbox', { name: 'Step 1 text' })
+  await expect(text).toBeFocused()
+  await expect(text).toHaveValue('Strip the old felt')
+
+  await text.fill('')
+  await page.keyboard.press('Enter')
+  const field = text.locator('xpath=ancestor::*[@data-slot="field"][1]')
+  await expect(field).toContainText('A step needs its words')
+  await expect(steps.getByText('A step needs its words')).toHaveCount(1)
+  await expect(text).toHaveAttribute('aria-invalid', 'true')
+
+  await text.fill('Strip it!')
+  await page.keyboard.press('Enter')
+  await expect(field).toContainText('No exclamation marks in a step')
+  await expect(steps.getByText('No exclamation marks in a step')).toHaveCount(1)
+  await expect(text).toHaveValue('Strip it!')
+
+  await text.fill('Strip it')
+  await page.getByRole('textbox', { name: 'Step 1 minutes' }).fill('40')
+  await page.keyboard.press('Enter')
+  await expect(steps.getByRole('listitem').first()).toContainText('Strip it · 40 min')
+})
+
+test('form rows: Add uses the same row, its draft saved at the end', async ({ page }) => {
+  const steps = await openFormRows(page)
+  await steps.getByRole('button', { name: 'Add step' }).click()
+  const text = page.getByRole('textbox', { name: 'Step 3 text' })
+  await expect(text).toBeFocused()
+  await text.fill('Nail the edges')
+  await page.keyboard.press('Enter')
+  await expect(steps.getByRole('listitem').nth(2)).toContainText('Nail the edges · 10 min')
+})
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`grouped headings and a refused form row pass axe (${theme})`, async ({ page }) => {
+    const axe = () => new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region']).analyze()
+    await openGrouped(page, theme)
+    expect((await axe()).violations).toEqual([])
+    const steps = await openFormRows(page, theme)
+    await steps.getByRole('button', { name: 'Edit step 1' }).click()
+    await page.getByRole('textbox', { name: 'Step 1 text' }).fill('')
+    await page.keyboard.press('Enter')
+    await expect(steps.getByText('A step needs its words')).toBeVisible()
+    expect((await axe()).violations).toEqual([])
+  })
+}

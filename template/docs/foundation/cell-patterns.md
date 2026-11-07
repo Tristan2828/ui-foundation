@@ -3,39 +3,42 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 67–86
-- [1. Plain text](#1-plain-text) · lines 88–95
-- [2. Icon + label](#2-icon--label) · lines 97–120
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 122–135
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 137–214
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 162–214
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 216–229
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 231–243
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 245–266
-- [8. Date, relative](#8-date-relative) · lines 268–305
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 307–355
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 325–355
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 357–407
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 375–407
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 409–449
-- [12. Boolean](#12-boolean) · lines 451–481
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 483–519
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 503–519
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 521–538
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 540–649
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 566–649
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 651–686
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 688–761
-- [18. Editable value](#18-editable-value) · lines 763–1228
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1044–1129
-  - [In a table's rows](#in-a-tables-rows) · lines 1131–1216
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1218–1228
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1230–1296
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1298–1362
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1364–1432
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1434–1462
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1464–1540
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1542–1565
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 70–89
+- [1. Plain text](#1-plain-text) · lines 91–98
+- [2. Icon + label](#2-icon--label) · lines 100–123
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 125–138
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 140–217
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 165–217
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 219–232
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 234–246
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 248–269
+- [8. Date, relative](#8-date-relative) · lines 271–308
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 310–358
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 328–358
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 360–410
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 378–410
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 412–452
+- [12. Boolean](#12-boolean) · lines 454–484
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 486–522
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 506–522
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 524–541
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 543–652
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 569–652
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 654–689
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 691–764
+- [18. Editable value](#18-editable-value) · lines 766–1401
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1051–1107
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1109–1141
+  - [A link and its label](#a-link-and-its-label) · lines 1143–1167
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1169–1302
+  - [In a table's rows](#in-a-tables-rows) · lines 1304–1389
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1391–1401
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1403–1469
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1471–1535
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1537–1605
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1607–1635
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1637–1713
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1715–1738
 
 <!-- /index -->
 
@@ -775,9 +778,11 @@ The rule behind every part of it: **nothing typed is ever lost.**
 **Which values.** Only those the plan's "View screen" names under `Edit
 in place`; read-only is the default, and a value not named renders
 exactly as it did. Text, long text, a single choice (optional ones with
-their "not set" option), an integer or a rating, a yes/no, a single or
-multi reference, and a sub-record list (its own rules, under "A list of
-sub-items" below). Never a computed field. The view's Edit button and
+their "not set" option), an integer or a rating, money, a date, a link
+and its label, a yes/no, a single or multi reference, two fields that
+must agree (edited as one), and a sub-record list (its own rules, under
+"A list of sub-items" below). The plain ones are one line each with the
+`inPlace` presets ("Presets" below). Never a computed field. The view's Edit button and
 the form stay.
 
 **At rest: says it's editable without shouting.** The value reads as it
@@ -980,7 +985,9 @@ const price = editInPlace({
 
 - **One control per field, shared with the form** (`<entity>-fields.tsx`):
   each takes `value`/`onChange` and `readOnly`, and the form wraps it in a
-  `Controller`. Never a second, in-place-only control.
+  `Controller`. Never a second, in-place-only control of the app's own: a
+  plain box, number, money, day, list or reference uses the package's
+  `inPlace` preset instead (below).
 - **Long text written as Markdown edits as rich text** (`RichTextEditor`):
   formatted where it's read, saved as Markdown with every block the person
   didn't touch kept exactly as written. On the form too, so it's one
@@ -1041,6 +1048,124 @@ const price = editInPlace({
   Keep it to the fields the plan names, and leave the form for everything
   else.
 
+### Presets: one line per field
+
+For a value whose control is a plain one (a text box, a number, money, a
+day, a fixed list, another record), the package's **`inPlace` presets**
+carry the control, its check and how the value reads at rest, so the
+field is one line and there is nothing to wrap:
+
+```tsx
+import { inPlace } from '@tristan2828/ui-foundation'
+
+const editField = useEditProjectField(project.id)           // optimistic: false, toastOnError: false
+const save = (change: Partial<ProjectUpdate>) => editField.mutateAsync(change)
+fields: [
+  { label: 'Code', edit: inPlace.text({ value: project.code, maxLength: 8, save: (code) => save({ code }) }) },
+  { label: 'Hours', edit: inPlace.number({ value: project.hours, min: 0, max: 200, unit: 'h', save: (hours) => save({ hours }) }) },
+  { label: 'Budget', edit: inPlace.money({ value: project.budget, save: (budget) => save({ budget }) }) },
+  { label: 'Due', edit: inPlace.date({ value: project.due, required: true, save: (due) => save({ due }) }) },
+  { label: 'Priority', edit: inPlace.select({ value: project.priority, options: PRIORITY_OPTIONS,
+      render: (priority, label) => <Badge variant={PRIORITY_BADGE[priority]}>{label}</Badge>,
+      save: (priority) => save({ priority }) }) },
+  { label: 'Category', edit: inPlace.reference({ value: project.categoryId, label: categoryName,
+      search: (text) => searchCategories(text), save: (categoryId) => save({ categoryId }) }) },
+]
+// The title: <EntityView titleEdit={{ label: 'Name', ...inPlace.text({ value: project.name, required: true, save: … }) }} />
+// A badge: <EditableValue label="Priority" edit={priority} layout="inline" /> (its children default to the preset's look)
+```
+
+- **The field gives no `value`**: the preset's `shown` is what the view
+  shows (and prints), `null` reading as the field's "Not set". Pass
+  `value` or `shown` only to draw it some other way (a link to the record).
+- **What each saves, and checks first** (its message under the field,
+  nothing sent):
+
+  | Preset | At rest | Saves | Refuses |
+  |---|---|---|---|
+  | `text` | the text | it trimmed; blank is `null` | blank when `required`, past `maxLength` |
+  | `number` | `1,234 h` (`unit`) | a number; blank is `null` | not a number, under `min`, over `max`, a fraction with `integer` |
+  | `money` | `$1,234.56` (`currency`, `locale`) | the API's decimal string, two places (`"1234.50"`), built from the digits, never a float; `$` and commas typed are fine | a third decimal, words, under `min` (0 by default), over `max` |
+  | `date` | `Sep 2, 2026` | `'YYYY-MM-DD'`; Clear is `null` | Clear when `required` |
+  | `select` | the option's label, or its `render` (a badge) | the option's value; "Not set" is `null` | "Not set" isn't offered when `required` |
+  | `reference` | the record's `label` (the view's lookup by id) | the picked record's id | "Not set" isn't offered when `required` |
+
+- **They save the way their kind does** (the table above): `text`,
+  `number` and `money` on Enter or leaving them, `date`, `select` and
+  `reference` on the pick (the list opens with the field).
+  `required: true` types the save without `null`.
+- **`reference` searches through the app.** The package knows no
+  endpoint: `search(text)` is the app's (its gateway's search by name,
+  `''` when the list opens), called a pause after typing stops; a
+  rejection reads as nothing found. Names come from the searches and from
+  `label`, so the saved record's name shows before any search answers.
+- **Keep the app's own control when it has one.** A field whose control
+  is the form's own (a rich-text editor, a multi picker, an icon select,
+  anything in `<entity>-fields.tsx` beyond a plain box) stays
+  `editInPlace({ kind, control, ... })`; the rule "one control per field,
+  shared with the form" is for those. A preset is the package's control,
+  and the form can use the same plain box.
+
+### Several fields edited as one
+
+Two (or more) of a record's fields that only make sense together (a
+model and an effort that must agree, a range's low and high) edit as one
+value and save in one PATCH: `inPlace.fields`.
+
+```tsx
+{ label: 'Model and effort', edit: inPlace.fields({
+  value: { model: run.model, effort: run.effort },               // keyed by the record's field names
+  fields: {
+    model: { kind: 'select', label: 'Model', required: true, options: MODEL_OPTIONS },
+    effort: { kind: 'select', label: 'Effort', required: true, options: EFFORT_OPTIONS },
+  },
+  rule: ({ model, effort }) => (effort === 'max' && model !== 'large' ? 'Max effort needs the large model' : null),
+  save: ({ model, effort }) => editField.mutateAsync({ model, effort }),
+}) }
+```
+
+- **Each part is a preset's control** (`kind` and its options, as in the
+  table above, with its own `label`), side by side under a small caption
+  of its label, and stacked when the row is narrow. At rest the parts
+  read joined by " · " ("Small · Low"), or as `shown`.
+- **Nothing saves until they agree.** Picking a part doesn't save it:
+  the pair saves on leaving it or Ctrl/Cmd+Enter (and on Enter too when
+  every part is typed into: numbers, money, text). Esc gives up both.
+- **Where a refusal shows.** A part's own check ("Budget: Enter an
+  amount") and a 422 naming its field (`fieldErrors.model`) show under
+  that part, which is `aria-invalid`. The `rule`'s message, or a refusal
+  naming none of them, shows under the pair, with every part invalid.
+- Built from `editInPlace` options any field can use: `fieldErrors`
+  (which of the value's fields a refusal is about) and `errorsOnFields`
+  (the control shows them, so they aren't repeated under it); the
+  control gets them as `errors`.
+
+### A link and its label
+
+A link stored as an address and an optional label (`docsUrl` and
+`docsLabel`): `inPlace.link`, its value `{ url, label }` mapped to and
+from the app's own fields.
+
+```tsx
+{ label: 'Docs', edit: inPlace.link({
+  value: { url: project.docsUrl, label: project.docsLabel },
+  save: ({ url, label }) => editField.mutateAsync({ docsUrl: url, docsLabel: label }),
+}) }
+```
+
+- **At rest** it's `LinkCell`'s link (`LinkOut`): the label if it has
+  one, else the address's host (`docs.example.com`), in the link tone,
+  opening in a new tab with `noopener noreferrer` and saying so to a
+  screen reader. No address reads as "Not set" (or `emptyLabel`). A
+  stored address the box would refuse reads as text, never a link. A
+  click on the link follows it; the pencil edits.
+- **Open**, two boxes, URL and Label (optional); Enter in either or
+  leaving saves both. The address is checked by **`linkRule`**, the rule
+  `LinkCell` uses (exported, over `linkHref`): `example.com` gains
+  `https://`, another scheme (`javascript:`) or a space is refused on the
+  URL box. A label with no address is refused ("Add the address, or
+  clear the label"); both blank saves `{ url: null, label: null }`.
+
 ### A list of sub-items
 
 A sub-record list (a checklist, a list of links) on a `content` section,
@@ -1088,6 +1213,54 @@ Checklist is the reference (`checklist` in `widgetEdits`). It's built on
   plus `items` (to stop at a limit), `disabled` (a change is saving) and
   `onProblem(message)` (an upload refused, under the list). Each item
   then reads, edits, moves and removes like a checklist's.
+- **Grouped by one of its items' fields** (`groupBy`, a checklist by
+  room): each group under its own heading (`type-label`, muted), with its
+  own rows, buttons and Add ("Add task to Kitchen", whose `newItem` is
+  given the group's key). A move swaps the item with its group's next
+  one, never into another group, and the first of a group can't go up.
+  `order` names the groups in order and shows each even when empty (so
+  its Add is there); others follow as their first item comes.
+- **Filtered** (`filter`, the view's "Hide done"): only the items it
+  keeps show; the others stay in the list as they are, and a move swaps
+  with the next item shown, over the hidden ones. A new item the filter
+  drops goes out of sight once it's saved. Grouped or filtered, the list
+  still saves as one, in its own order.
+- **Duplicate** (`duplicate: (item) => copy`), as on the form's
+  `ListEditor`: a Duplicate button beside Remove ("Duplicate item 2")
+  puts the copy right after the item, saved as a move is. Leave out
+  what a copy mustn't share (a saved id).
+- **A refusal about an item's field shows on that field.** Give the
+  list its field `name` (`checklist`): a 422 at `checklist.2.text`, like
+  the list schema's issue at `[2, 'text']`, reaches item 2's row as
+  `props.errors.text`. With `errorsOnFields`, the row shows them on its
+  fields and the line under the row keeps only a message about no one
+  field; without it they still show under the row, as before.
+- **The form's own react-hook-form row** (`itemForm: true`, with
+  `name`): `renderItem` gets `form`, a form holding the list under
+  `name` with the draft at the item's index, so the row the form's
+  `ListEditor` renders (``form.register(`checklist.${index}.text`)``, a
+  `Controller` on `form.control`, errors read from
+  `form.formState.errors`) works here unchanged, and its every change is
+  the item's draft. Refusals are set on that form (`setError`), so they
+  show where the form shows them. No form of the app's own per item.
+
+```tsx
+const rooms = editInPlace<Task>({
+  kind: 'list',
+  name: 'tasks',                                            // the record's field: 422s land on the item's fields
+  value: house.tasks,
+  save: (change) => editField.mutateAsync((current) => ({ tasks: change(current.tasks) })),
+  groupBy: { key: (task) => task.room, label: (room) => ROOM_LABELS[room], order: ROOMS },
+  filter: hideDone ? (task) => !task.done : undefined,
+  duplicate: ({ id: _id, ...task }) => ({ ...task, done: false }),
+  newItem: (room) => ({ text: '', room: room ?? ROOMS[0], done: false }),
+  itemName: (index) => `task ${index + 1}`,
+  addLabel: 'Add task',
+  itemForm: true,                                           // renderItem gets the form's own `form`
+  renderShown: (task) => <TaskLine task={task} />,
+  renderItem: ({ form, index }) => <TaskRowFields form={form!} index={index} />, // the form's row, as on the form
+})
+```
 
 ```tsx
 const checklist = editInPlace<ChecklistItem>({

@@ -49,6 +49,13 @@ export type EditFieldConfig = {
   autosave?: boolean
   /** Always open: the control is the value, with no click to open. Autosaves. */
   alwaysEditable?: boolean
+  /**
+   * Which of the value's own fields a refusal is about: given the schema's
+   * error (`{ issues }`) or the save's rejection (the AppError), the
+   * message for each field it names, keyed by the field's path inside the
+   * value (`text`, `effort`). `null` or `{}` when it names none.
+   */
+  fieldErrors?: (cause: unknown) => Record<string, string> | null
 }
 
 export type EditFieldState = { status: 'closed' } | OpenFieldState
@@ -63,6 +70,8 @@ export type OpenFieldState = {
   error: string | null
   /** A problem the control reports itself (rich text that can't save as it stands). */
   problem: string | null
+  /** The refusal's messages for the value's own fields (`fieldErrors`), shown on those fields. */
+  fieldErrors?: Record<string, string> | null
   /**
    * An autosaving field's save: in flight (the control stays editable),
    * or done with nothing typed since. Absent otherwise.
@@ -92,6 +101,12 @@ export function messageOf(error: unknown): string {
 }
 
 type InFlight = { promise: Promise<boolean>; draft: unknown }
+
+// The refusal's messages for the value's own fields, or null for none.
+function fieldErrorsOf(config: EditFieldConfig | undefined, cause: unknown): Record<string, string> | undefined {
+  const found = config?.fieldErrors?.(cause)
+  return found && Object.keys(found).length > 0 ? found : undefined
+}
 
 export class EditInPlaceStore {
   private configs = new Map<string, () => EditFieldConfig>()
@@ -291,11 +306,12 @@ export class EditInPlaceStore {
     }
     const parsed = config.schema ? config.schema.safeParse(open.draft) : { success: true as const, data: open.draft }
     if (!parsed.success) {
-      this.set(key, { ...open, error: parsed.error.issues[0]?.message ?? 'Check this value.' })
+      const fieldErrors = fieldErrorsOf(config, parsed.error)
+      this.set(key, { ...open, error: parsed.error.issues[0]?.message ?? 'Check this value.', fieldErrors })
       return Promise.resolve(false)
     }
 
-    this.set(key, { ...open, status: 'saving', error: null })
+    this.set(key, { ...open, status: 'saving', error: null, fieldErrors: undefined })
     const save = config
       .save(parsed.data)
       .then(
@@ -304,7 +320,7 @@ export class EditInPlaceStore {
           return true
         },
         (error: unknown) => {
-          this.set(key, { ...open, status: 'open', error: messageOf(error) })
+          this.set(key, { ...open, status: 'open', error: messageOf(error), fieldErrors: fieldErrorsOf(config, error) })
           return false
         },
       )
@@ -380,12 +396,13 @@ export class EditInPlaceStore {
     }
     const parsed = config.schema ? config.schema.safeParse(state.draft) : { success: true as const, data: state.draft }
     if (!parsed.success) {
-      this.set(key, { ...state, error: parsed.error.issues[0]?.message ?? 'Check this value.' })
+      const fieldErrors = fieldErrorsOf(config, parsed.error)
+      this.set(key, { ...state, error: parsed.error.issues[0]?.message ?? 'Check this value.', fieldErrors })
       return Promise.resolve(false)
     }
 
     const sent = state.draft
-    this.set(key, { ...state, error: null, autosave: 'saving' })
+    this.set(key, { ...state, error: null, fieldErrors: undefined, autosave: 'saving' })
     const promise = config
       .save(parsed.data)
       .then(
@@ -393,13 +410,13 @@ export class EditInPlaceStore {
           const now = this.state(key)
           if (now.status === 'open') {
             const status = isEqual(now.draft, sent) ? 'saved' : this.queued.has(key) ? 'saving' : undefined
-            this.set(key, { ...now, initial: sent, error: null, autosave: status })
+            this.set(key, { ...now, initial: sent, error: null, fieldErrors: undefined, autosave: status })
           }
           return true
         },
         (error: unknown) => {
           const now = this.state(key)
-          if (now.status === 'open') this.set(key, { ...now, error: messageOf(error), autosave: undefined })
+          if (now.status === 'open') this.set(key, { ...now, error: messageOf(error), fieldErrors: fieldErrorsOf(config, error), autosave: undefined })
           return false
         },
       )
