@@ -499,6 +499,17 @@ test.describe('semantic tones meet contrast in both themes', () => {
 const COLOR_PROPERTIES = ['backgroundColor', 'color', 'borderTopColor', 'fill'] as const
 
 async function offTokenColors(page: import('@playwright/test').Page) {
+  // A colour read mid-transition (a popover's button fading in) is a blend
+  // of two tokens, not a token: let running animations finish first. A
+  // looping one (a spinner) never finishes, so it isn't waited for.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  )
   return page.evaluate((properties) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')!
