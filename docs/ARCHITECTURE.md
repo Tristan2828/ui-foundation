@@ -235,6 +235,15 @@ src/main.tsx                           FoundationProviders (theme, query client,
   the value at rest, and `inline` (4.20, #183) draws it as the read view
   (no box; `RichTextEditor`'s `inline` and `toolbar="floating"`). ProseMirror marks every Esc handled, so the editor
   says which ones none of its menus used (`escape-passthrough.ts`).
+  Since 4.71 the plain kinds come ready-made (`inPlace.*`,
+  `edit-in-place-presets.tsx`): each preset is an ordinary `EditInPlace`
+  carrying its control, its check (as its `schema`) and its look at rest
+  (`shown`), and `inPlace.fields` edits several fields as one value with
+  a rule across them. A refusal can name the value's own fields
+  (`fieldErrors`), which the store keeps beside the message, so a pair's
+  part, a link's URL box or a list item's field shows its own; a list
+  item can be the form's react-hook-form row (`itemForm`: a form of the
+  list for the open item, whose changes are its draft).
 
 Every boundary is enforced mechanically: see the Hard Rules in
 [`conventions/AGENTS.md`](../packages/ui-foundation/conventions/AGENTS.md),

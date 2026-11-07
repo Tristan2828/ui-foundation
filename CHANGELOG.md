@@ -7,6 +7,72 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.71.0 — Edit-in-place presets, a link field, fields edited as one, lists grouped and filtered
+
+The UI package only; additive, no new dependency. Nothing changes for an
+app until it uses one of these; every existing `editInPlace` field and
+list works as before.
+
+- **`inPlace` presets**, one per kind of control: `inPlace.text`,
+  `.number` (`min`, `max`, `integer`, `unit`), `.date`, `.money` (two
+  decimals, saved as the API's decimal string `"1234.50"`, shown as
+  `$1,234.56`), `.select` (a fixed list, `render` for a badge) and
+  `.reference` (another record, searched as you type through the app's
+  own `search(text)`). Each carries its control, its check (the message
+  under the field, nothing sent) and how the value reads at rest, so a
+  field is one line: `{ label: 'Budget', edit: inPlace.money({ value,
+  save }) }`. `EntityViewField.value` and `EditableValue`'s `children`
+  are optional now and default to the edit's new `shown`.
+- **`inPlace.link`**: a link's address and an optional label, edited as
+  two boxes, URL and Label, and saved as one `{ url, label }` the app maps
+  to its own fields. At rest it's `LinkCell`'s link (now exported as
+  `LinkOut`): the label, else the address's host, opening in a new tab
+  with `noopener noreferrer`. The address is checked by **`linkRule`**,
+  LinkCell's rule, exported with `linkHref` and `linkHost`; LinkCell
+  uses the same one.
+- **`inPlace.fields`**: two or more fields edited as one value and saved
+  in one PATCH, with a `rule` across them (a model and an effort that
+  must agree). Each part is a preset's control under its own label; a
+  part's own check, or a 422 naming its field, shows on that part, and the
+  rule's message on the pair. It's built on two new `editInPlace` options
+  any field can use: `fieldErrors` (which of the value's fields a refusal
+  is about) and `errorsOnFields`; a control gets them as `errors`.
+- **Lists in place** (`editInPlace({ kind: 'list' })`) gain:
+  - `groupBy` (`key`, `label`, `order`): items under headings, each group
+    its own rows, moves (within the group) and Add (`newItem(group)`);
+  - `filter`: only some items shown, the rest kept as they are, a move
+    swapping with the next one shown;
+  - `duplicate`: ListEditor's Duplicate button, the copy saved right
+    after the item;
+  - `name` (the list's field on the record): a 422 at
+    `checklist.2.text` reaches item 2's row as `errors.text`, shown on
+    that field with `errorsOnFields` rather than under the row;
+  - `itemForm`: the row gets `form`, a react-hook-form form of the list
+    with the draft in it, so the form's own row (`form.register`, a
+    `Controller`, `formState.errors`) works in place unchanged, its
+    refusals set on it.
+- **Checks**: unit tests for every preset's check and look, a pair's
+  part errors, `linkRule` and `linkHost`; `e2e/edit-in-place-presets.spec.ts`
+  edits each preset, the pair and the link, with axe on their open and
+  refused states in both themes; `e2e/editable-list.spec.ts` covers the
+  grouped, filtered, duplicated and react-hook-form lists. The fixtures
+  `app/EditInPlacePresets` and `app/EditableList` "Grouped And Filtered"
+  run through axe and the token check in both themes and every palette.
+- cell-patterns.md pattern 18 "Presets", "Several fields edited as one",
+  "A link and its label" and "A list of sub-items"; design-language.md
+  "Values edited in place"; add-an-entity.md's edit-in-place step.
+
+**For apps:** Homebase drops its per-module wrappers
+(`health-edits.tsx` and Finance's copy) for `inPlace.*` one-liners where
+the control is a plain box, number, money, date, select or reference;
+replaces its two-select `multi` editInPlace for the model and effort with
+`inPlace.fields` and the rule; replaces the `LinkCell` it shows instead of
+editing a link with `inPlace.link`; and retires the four list-in-place
+stopgaps from its E1 pass: a grouped or filtered list (`groupBy`,
+`filter`), the one-form-per-item bridge (`itemForm` with `name`), its own
+duplicate (`duplicate`), and item refusals shown under the list (`name`
+with `errorsOnFields`). To take it: bump and run `sync`; no other change.
+
 ## 4.70.0 — Links in the editor open on a click
 
 The UI package only; no new dependency, no prop to set.
