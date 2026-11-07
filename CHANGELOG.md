@@ -70,6 +70,25 @@ instructions are now written from its entities (below).
 - Check what a chat is now told on connect: an app with soft-deleting
   entities no longer says nothing can be deleted.
 
+## 4.70.0 — Links in the editor open on a click
+
+The UI package only; no new dependency, no prop to set.
+
+- **A click on a link in `RichTextEditor` opens it in a new tab**, as the
+  read view's links do (`noopener`). Notes that are always the editor
+  (`alwaysEditable`, `inline`) used to place the caret in a link and
+  never follow it. A tap on a phone opens it too, and a read-only editor
+  opens it in a new tab rather than this one.
+- Only a plain click with nothing selected: a drag over a link's words
+  selects them, Shift+click extends the selection, and Alt+click is left
+  alone. The address goes through `linkHref` again, so a link that came in
+  with the Markdown and isn't a web, email or on-site address
+  (`javascript:`) stays text.
+- To edit a link's words, put the caret in them from the keyboard or drag
+  over them; Ctrl/Cmd+K edits its address, as before. Links in the editor
+  show a pointer cursor.
+- cell-patterns.md "Always editable". An app whose own tests click into a
+  link to put the caret there should place it from the keyboard instead.
 ## 4.69.0 — ColorSwatch, a colour stored as data
 
 The UI package only; additive, no new dependency. Nothing changes for an

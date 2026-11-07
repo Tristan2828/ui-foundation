@@ -32,8 +32,10 @@
 // - Edited blocks are written in the document's own bullet and rule marks.
 // - Markdown pasted as plain text arrives formatted (still no HTML), and a
 //   copy out of the editor is Markdown.
-// - Ctrl/Cmd+K adds or edits a link (a box at the caret: web and email
-//   addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
+// - A click on a link opens it in a new tab, as the read view's links do,
+//   so notes that are always the editor still follow their links
+//   (followLink). Ctrl/Cmd+K adds or edits a link (a box at the caret: web
+//   and email addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
 //   in. `[] ` at a line's start makes a task item, and Enter in one the
 //   next, unticked (rich-text-tasks.ts). Ctrl/Cmd+Enter stays the field's
 //   save, in a table too. Notion's block keys (Ctrl+Shift+1 for a
@@ -412,6 +414,27 @@ function linkTarget(state: EditorState): LinkTarget {
   return target
 }
 
+// A plain click (or a tap) on a link opens it in a new tab, the way the
+// read view's links open (markdown.tsx), so notes that are always the
+// editor still work as notes. Not when the click chose words (a drag ends
+// in a click too), extends the selection (Shift) or is Alt's; the address
+// goes through linkHref again, so a link that came in with the Markdown
+// can't run code (`javascript:`) either: that one stays text to click
+// into. Read-only too, where the browser would otherwise follow it in this
+// tab. To edit a link's words, put the caret in them from the keyboard or
+// drag over them; Ctrl/Cmd+K edits its address.
+function followLink(view: EditorView, event: MouseEvent): boolean {
+  if (event.button !== 0 || event.shiftKey || event.altKey) return false
+  const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
+  if (!anchor || !view.dom.contains(anchor)) return false
+  if (!view.state.selection.empty) return false
+  const href = linkHref(anchor.getAttribute('href') ?? '')
+  if (!href) return false
+  event.preventDefault()
+  window.open(href, '_blank', 'noopener,noreferrer')
+  return true
+}
+
 // Sets (or, with `href` empty, removes) the link on the target. With
 // nothing selected and no link there, the address goes in as the link's
 // own text.
@@ -729,6 +752,8 @@ export default function MilkdownEditor({
                 if (!inFloating(event.relatedTarget as Node | null)) setFocused(false)
                 return false
               },
+              // A click on a link follows it (followLink).
+              click: (view, event) => followLink(view, event),
               // The floating toolbar waits for the mouse to be up: a drag
               // is still choosing the words.
               mousedown: (_view, event) => {
@@ -1149,7 +1174,7 @@ export default function MilkdownEditor({
             '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
             // Headings, callouts and tables are drawn by their node views;
             // these are the elements Milkdown draws itself.
-            '[&_a]:text-link [&_a]:underline [&_a]:decoration-link/40 [&_a]:underline-offset-4',
+            '[&_a]:cursor-pointer [&_a]:text-link [&_a]:underline [&_a]:decoration-link/40 [&_a]:underline-offset-4',
             '[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:text-muted-foreground',
             '[&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:font-mono',
             '[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-muted [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:font-mono',

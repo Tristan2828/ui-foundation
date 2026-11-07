@@ -212,15 +212,49 @@ test.describe('editing features', () => {
   })
 
   test('on a link, Ctrl/Cmd+K edits it, and Remove link takes it off', async ({ page }) => {
-    await editor(page, 'links').getByText('setup guide').click()
+    // A click on the link would open it, so the caret goes in from the
+    // keyboard: the start of "See the setup guide", then into "setup".
+    await editor(page, 'links').locator('p').first().click({ position: { x: 2, y: 8 } })
     await page.waitForTimeout(100)
-    await page.keyboard.press('ArrowLeft')
+    await page.keyboard.press('Home')
+    for (let i = 0; i < 'See the se'.length; i++) await page.keyboard.press('ArrowRight')
+    await page.waitForTimeout(100)
     await page.keyboard.press('ControlOrMeta+k')
     const box = page.getByRole('dialog', { name: 'Edit link' })
     await expect(box.getByRole('textbox', { name: 'Link address' })).toHaveValue('https://example.com/setup')
     await box.getByRole('button', { name: 'Remove link' }).click()
     await expect(box).toHaveCount(0)
     await expect(saved(page, 'links')).toContainText('See the setup guide for details.')
+  })
+
+  test('a click on a link opens it in a new tab; the text is left as it was', async ({ page }) => {
+    await page.context().route('https://example.com/**', (route) => route.fulfill({ body: 'opened' }))
+    const before = await saved(page, 'links').textContent()
+    const opened = page.waitForEvent('popup')
+    await editor(page, 'links').getByRole('link', { name: 'setup guide' }).click()
+    const tab = await opened
+    expect(tab.url()).toBe('https://example.com/setup')
+    // This page stays where it was, and nothing was typed or saved.
+    expect(page.url()).toBe(FEATURES)
+    await page.waitForTimeout(400)
+    expect(await saved(page, 'links').textContent()).toBe(before)
+  })
+
+  test('a link opens only on a plain click: not on Shift+click or a drag over its words', async ({ page }) => {
+    let popups = 0
+    page.on('popup', () => popups++)
+    const link = editor(page, 'links').getByRole('link', { name: 'setup guide' })
+    await editor(page, 'links').locator('p').first().click({ position: { x: 2, y: 8 } })
+    await page.waitForTimeout(100)
+    await link.click({ modifiers: ['Shift'] })
+    const box = (await link.boundingBox())!
+    await page.mouse.move(box.x + 2, box.y + box.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(box.x + box.width - 2, box.y + box.height / 2, { steps: 5 })
+    await page.mouse.up()
+    await page.waitForTimeout(300)
+    expect(popups).toBe(0)
+    await expect(link).toHaveCSS('cursor', 'pointer')
   })
 
   test('an address that could run code is refused; Esc closes the box', async ({ page }) => {
