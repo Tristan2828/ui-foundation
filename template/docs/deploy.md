@@ -217,7 +217,11 @@ address below answers 404.
   point at other entities). A field only an importer or another script
   may write goes in its `script_only`: chats read it, and `create` and
   `update` refuse it (`docs/foundation/add-an-entity.md` "Fields only a
-  script writes").
+  script writes"). Its `description`, the long texts a chat edits in
+  part (`text_edits`, the `edit_text` tool), the app's own server
+  instructions (`register_instructions`) and a note appended to answers
+  (`register_answer_note`) are in add-an-entity.md "What a chat is told
+  about an entity" (4.70).
 - **Addresses** are the records' pages in the app, so a link copied from
   a screen works as it is: `/widgets/3`, or the full link with the app's
   host. An entity whose pages sit under a section gives its `McpEntity` a
@@ -228,7 +232,7 @@ address below answers 404.
   module gives the entity an `api_path` (`api_path="/api/media/channels"`
   reads `/api/media/channels/3`). Two entities can't share a path or an
   API path; the backend refuses to start if they do.
-- **The log:** every create, update, delete and restore is a row in `mcp_audit_log`: the
+- **The log:** every create, update (an `edit_text` included), delete and restore is a row in `mcp_audit_log`: the
   user, the chat, the time, the entity and record, and the changed fields
   before and after (JSON, as the API names them; the whole record for a
   delete or restore). Nothing prunes it.

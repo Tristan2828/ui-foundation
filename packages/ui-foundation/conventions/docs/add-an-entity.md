@@ -3,25 +3,26 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 40–62
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 64–749
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 106–113
-  - Step 2: `npm run gen:api` · lines 114–115
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 116–127
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 128–137
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 138–142
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 143–638
-  - Step 7: Register routes · lines 639–652
-  - Step 8: Add Playwright specs for all three screens · lines 653–731
-  - Step 9: Register the nav entry and route names · lines 732–746
-  - Step 10: `npm run verify`. · lines 747–749
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 751–854
-  - [The record view](#the-record-view) · lines 829–854
-- [What not to copy](#what-not-to-copy) · lines 856–882
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 884–901
-- [Deleting](#deleting) · lines 903–932
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 934–955
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 957–966
+- [The reference files](#the-reference-files) · lines 41–63
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–752
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
+  - Step 2: `npm run gen:api` · lines 115–116
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–639
+  - Step 7: Register routes · lines 640–655
+  - Step 8: Add Playwright specs for all three screens · lines 656–734
+  - Step 9: Register the nav entry and route names · lines 735–749
+  - Step 10: `npm run verify`. · lines 750–752
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 754–892
+  - [The record view](#the-record-view) · lines 867–892
+- [What not to copy](#what-not-to-copy) · lines 894–920
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 922–939
+- [Deleting](#deleting) · lines 941–970
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 972–993
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 995–1004
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1007–1046
 
 <!-- /index -->
 
@@ -1001,3 +1002,45 @@ question isn't handed purchases and comics too. The tool's description
 lists each group's entities, and `group` is offered only when some entity
 has one; an unknown group is a refusal naming the ones there are. An
 entity with no group is searched only when no group is given.
+
+
+## What a chat is told about an entity
+
+Four more things an app sets for AI chats (4.70), each in
+`backend/app/mcp_entities.py`:
+
+- **`description`** on the `McpEntity`: what the entity is, in a sentence
+  (`description="A purchase: what was bought, where and for how much"`).
+  It's shown beside the entity's name in the `search`, `list` and
+  `create` tools, so a chat picks the right one.
+- **`text_edits`**: the wire names of its long-text fields (notes, a body)
+  that a chat changes in part with the `edit_text` tool
+  (`text_edits=("notes",)`): `old` and `new` replace one passage, which
+  must be found exactly once (missing, or found twice, is a refusal that
+  says so and saves nothing), or `append` adds text on a new line at the
+  end. It saves and logs as `update` does, so a long note isn't sent back
+  whole to change a line. Each must be a text field of `update_schema`
+  and not `script_only`; the backend refuses to start otherwise.
+- **The server's instructions** a chat gets when it connects:
+  `register_entities(ENTITIES, instructions="…")` (or
+  `register_instructions("…")`) adds the app's own words after the
+  built-in ones; `register_instructions("…", replace=True)` sends only
+  the app's. The built-in ones are written from the entities: which can
+  be deleted (soft only, with restore; "Nothing can be deleted" only when
+  none can) and which texts `edit_text` changes.
+- **An answer note**, `register_answer_note(note)`: a function given the
+  caller, the tool's name, its arguments and the entities whose records
+  the answer shows, which returns text appended to the answer after a
+  blank line, or `None`. Plain or async. It runs after every answer (not
+  a refusal); one that raises is reported and left out, and the answer
+  stands.
+
+```python
+def note(caller, tool, arguments, entities):
+    if any(e.group == "health" for e in entities):
+        return "Health records are the person's own notes, not medical advice."
+    return None
+
+register_entities(ENTITIES, instructions="Amounts are in the account's currency.")
+register_answer_note(note)
+```
