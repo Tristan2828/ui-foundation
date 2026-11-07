@@ -3,41 +3,42 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 69–88
-- [1. Plain text](#1-plain-text) · lines 90–97
-- [2. Icon + label](#2-icon--label) · lines 99–122
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 124–137
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 139–216
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 164–216
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 218–231
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 233–245
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 247–268
-- [8. Date, relative](#8-date-relative) · lines 270–307
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 309–357
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 327–357
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 359–409
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 377–409
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 411–451
-- [12. Boolean](#12-boolean) · lines 453–483
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 485–521
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 505–521
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 523–540
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 542–651
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 568–651
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 653–688
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 690–763
-- [18. Editable value](#18-editable-value) · lines 765–1399
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1049–1105
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1107–1139
-  - [A link and its label](#a-link-and-its-label) · lines 1141–1165
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1167–1300
-  - [In a table's rows](#in-a-tables-rows) · lines 1302–1387
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1389–1399
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1401–1467
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1469–1533
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1535–1603
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1605–1633
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1635–1711
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 70–89
+- [1. Plain text](#1-plain-text) · lines 91–98
+- [2. Icon + label](#2-icon--label) · lines 100–123
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 125–138
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 140–217
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 165–217
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 219–232
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 234–246
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 248–269
+- [8. Date, relative](#8-date-relative) · lines 271–308
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 310–358
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 328–358
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 360–410
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 378–410
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 412–452
+- [12. Boolean](#12-boolean) · lines 454–484
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 486–522
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 506–522
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 524–541
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 543–652
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 569–652
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 654–689
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 691–764
+- [18. Editable value](#18-editable-value) · lines 766–1401
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1051–1107
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1109–1141
+  - [A link and its label](#a-link-and-its-label) · lines 1143–1167
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1169–1302
+  - [In a table's rows](#in-a-tables-rows) · lines 1304–1389
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1391–1401
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1403–1469
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1471–1535
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1537–1605
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1607–1635
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1637–1713
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1715–1738
 
 <!-- /index -->
 
@@ -917,8 +918,9 @@ to open, and it never closes. Ctrl/Cmd+Enter or Esc saves now and leaves
 the caret where it is. It sits beside the one open value rather than
 being it: opening another value leaves it alone. Don't give its control
 `autoFocus`. The cost: at rest the page shows the editor, not the read
-view, so a link in the notes is edited there, not followed, and the
-editor loads on every visit. Use it where the notes are what the page is
+view, and the editor loads on every visit. A click on a link in the
+notes still opens it in a new tab (4.70.0); its words are edited from the
+keyboard or by dragging over them, and Ctrl/Cmd+K edits its address. Use it where the notes are what the page is
 for; elsewhere `autosave` alone keeps the read view at rest.
 
 **Edited where it's read (`inline: true`, implies `alwaysEditable`)**,
@@ -1709,3 +1711,28 @@ const { grouping, setGrouping, ...table } = useTableUrlState(FILTERS, MULTI, VIE
   add-an-entity.md "How a list opens a record").
 - **The table layout's alone:** a card layout's cards don't open the
   panel.
+
+## 24. A stored colour beside its name
+
+A colour the user stored as data (a label's colour, a paint's hex): a
+`ColorSwatch`, its name always beside it. design-language.md "A stored
+colour" has the why.
+
+```tsx
+import { ColorSwatch } from '@tristan2828/ui-foundation'
+
+{ id: 'color', header: 'Colour',
+  cell: ({ row }) => <ColorSwatch color={row.original.color} label={row.original.colorName ?? row.original.color ?? 'No colour'} /> }
+```
+
+- **The label is required**: the colour's name, else the value (the hex),
+  else "No colour". The swatch is decorative; the word carries it.
+- **A missing or invalid value** draws the empty swatch, a dashed ring,
+  and never paints. Validate on the form with `storedColor`.
+- **In a badge** (a label shown as a tag): `size="sm"` inside the
+  `Badge`, which sizes it like the badge's icons (pattern 3).
+- **A colour picked from a few** is a categorical slot, a tinted glyph
+  (design-language.md "Categorical colour"), not a stored hex.
+
+The package's fixture `app/ColorSwatch` "In a table" renders it; its
+checks measure the ring at 3:1 in both themes and every palette.

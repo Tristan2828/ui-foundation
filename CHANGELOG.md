@@ -7,6 +7,55 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.70.0 — Links in the editor open on a click
+
+The UI package only; no new dependency, no prop to set.
+
+- **A click on a link in `RichTextEditor` opens it in a new tab**, as the
+  read view's links do (`noopener`). Notes that are always the editor
+  (`alwaysEditable`, `inline`) used to place the caret in a link and
+  never follow it. A tap on a phone opens it too, and a read-only editor
+  opens it in a new tab rather than this one.
+- Only a plain click with nothing selected: a drag over a link's words
+  selects them, Shift+click extends the selection, and Alt+click is left
+  alone. The address goes through `linkHref` again, so a link that came in
+  with the Markdown and isn't a web, email or on-site address
+  (`javascript:`) stays text.
+- To edit a link's words, put the caret in them from the keyboard or drag
+  over them; Ctrl/Cmd+K edits its address, as before. Links in the editor
+  show a pointer cursor.
+- cell-patterns.md "Always editable". An app whose own tests click into a
+  link to put the caret there should place it from the keyboard instead.
+## 4.69.0 — ColorSwatch, a colour stored as data
+
+The UI package only; additive, no new dependency. Nothing changes for an
+app until it uses it.
+
+- **`ColorSwatch`** (`color`, `label`, `size`): a small swatch filled with
+  a colour the user stored (a paint's hex, a label's colour), beside its
+  name. The fill is an inline style from the prop, so the ESLint token
+  rule needs no exception. The swatch is `aria-hidden`, and `label` is a
+  required string, so the colour is never the only way to tell.
+- **The value is validated**: a hex in 3, 4, 6 or 8 digits, the `#`
+  optional. A missing or invalid one draws the empty swatch, a dashed ring
+  with no fill, and paints nothing. **`storedColor(value)`** is the same
+  check (the colour normalised, or `null`), for a form's schema.
+- **The ring is `border-muted-foreground`**, measured at 3:1 or more
+  against the page, a card, a muted surface, a table row and a Badge's
+  wash in light, dark and all four palettes (lowest 3.69:1). `--border`
+  and `--input` fall under it.
+- **Sizes**: `default` 16px (a cell's icon), `sm` 12px (a Badge's icon).
+- **Checks**: the fixtures `app/ColorSwatch` run through axe and the token
+  check in both themes and every palette. A new check measures each
+  swatch's ring against what's behind it. The token check exempts only a
+  swatch's background, and only while it equals the swatch's own
+  `data-color`.
+- design-language.md "A stored colour"; cell-patterns.md pattern 24.
+
+**For apps:** Homebase replaces `src/modules/house/shared/finish-swatch.tsx`
+with `ColorSwatch` (the paint's name as `label`), and its form's hex check
+with `storedColor`.
+
 ## 4.68.1 — expectDataViewsLoaded on a phone with a ModuleStrip row
 
 A fix in the UI package's `testing` export only; no new dependency, nothing
