@@ -636,7 +636,7 @@ test.describe('primitives paint only token colours', () => {
 // that data-density reaches the cells. This measures it: in the Densities
 // story, each step must make both the header and the body rows taller.
 // The default rows are compact (theme.css), so compact keeps them.
-test('table density tokens change row height: compact = default < comfortable < large', async ({ page }) => {
+test('table density tokens change row height: compact = default < regular rows < comfortable < large', async ({ page }) => {
   await page.goto(storyUrlById('ui-table--densities', 'light'))
   const heights = async (density: string, part: 'th' | 'td') =>
     page
@@ -650,8 +650,12 @@ test('table density tokens change row height: compact = default < comfortable < 
       await heights('default', part),
       await heights('comfortable', part),
     ]
+    const regular = await heights('regular rows', part)
     expect(compact, `${part}: compact vs default`).toBeCloseTo(standard, 1)
-    expect(standard, `${part}: default vs comfortable`).toBeLessThan(comfortable)
+    expect(standard, `${part}: default vs regular rows`).toBeLessThan(regular)
+    expect(regular, `${part}: regular rows vs comfortable`).toBeLessThan(comfortable)
+    // A data-density nearer the cells wins over the device's rows.
+    expect(await heights('compact in regular rows', part), `${part}: compact inside regular rows`).toBeCloseTo(standard, 1)
     expect(comfortable, `${part}: comfortable vs large`).toBeLessThan(await heights('large', part))
   }
 })

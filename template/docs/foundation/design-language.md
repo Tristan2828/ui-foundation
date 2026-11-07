@@ -3,28 +3,29 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 37–103
-- [Glow](#glow) · lines 105–123
-- [Semantic tones](#semantic-tones) · lines 125–153
-- [The three badge styles](#the-three-badge-styles) · lines 155–172
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 174–203
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 205–218
-- [Logos and brand marks](#logos-and-brand-marks) · lines 220–264
-- [Categorical colour](#categorical-colour) · lines 266–336
-- [Shapes and sizes](#shapes-and-sizes) · lines 338–359
-- [Typography](#typography) · lines 361–455
-  - [Written text (notes)](#written-text-notes) · lines 395–455
-- [Density](#density) · lines 457–514
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 516–630
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 632–701
-- [Notices](#notices) · lines 703–731
-- [A value over time](#a-value-over-time) · lines 733–819
-  - [Several values over time](#several-values-over-time) · lines 782–819
-- [A list as a board](#a-list-as-a-board) · lines 821–872
-- [A list as cards](#a-list-as-cards) · lines 874–920
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 922–944
-- [Picking at random](#picking-at-random) · lines 946–977
-- [Filling in what's missing](#filling-in-whats-missing) · lines 979–1046
+- [Palettes](#palettes) · lines 38–104
+- [Glow](#glow) · lines 106–124
+- [Semantic tones](#semantic-tones) · lines 126–154
+- [The three badge styles](#the-three-badge-styles) · lines 156–173
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 175–204
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 206–219
+- [Logos and brand marks](#logos-and-brand-marks) · lines 221–265
+- [Categorical colour](#categorical-colour) · lines 267–337
+- [Shapes and sizes](#shapes-and-sizes) · lines 339–360
+- [Typography](#typography) · lines 362–456
+  - [Written text (notes)](#written-text-notes) · lines 396–456
+- [Density](#density) · lines 458–544
+  - [Rows on this device](#rows-on-this-device) · lines 517–544
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 546–660
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 662–731
+- [Notices](#notices) · lines 733–761
+- [A value over time](#a-value-over-time) · lines 763–849
+  - [Several values over time](#several-values-over-time) · lines 812–849
+- [A list as a board](#a-list-as-a-board) · lines 851–902
+- [A list as cards](#a-list-as-cards) · lines 904–950
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 952–974
+- [Picking at random](#picking-at-random) · lines 976–1007
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1009–1076
 
 <!-- /index -->
 
@@ -512,6 +513,35 @@ set, not a `DataTable` prop:
   each. Its checks
   measure that every step changes what it should, and that the default
   keeps today's sizes.
+
+### Rows on this device
+
+An app can let each device choose its table rows: `rowsPicker` on
+`FoundationProviders` adds **Rows on this device** to the shell's look
+menu (under the palettes, or a menu of its own beside the light/dark
+toggle in an app without a palette).
+
+```tsx
+<FoundationProviders palette="indigo-cyan" palettePicker rowsPicker …>
+```
+
+| Rows | Table cell padding (vertical) | Header height |
+|---|---|---|
+| Compact *(the default)* | 4px | 32px |
+| Regular | 8px | 40px, the size before 4.63 |
+
+- The choice is kept in this device's `localStorage`
+  (`ui-foundation:rows`), like the palette, so a phone and a laptop can
+  differ. A new device starts compact; without `rowsPicker` every device
+  is compact and a saved choice is ignored.
+- It rides on `<html>` as `data-rows="regular"`, so every table follows it
+  with no prop: `DataTable`, the `Table` primitive and tables in notes. A
+  `data-density` on a nearer ancestor still wins, so a hub's
+  `data-density="compact"` wrapper keeps its tables compact.
+- Regular is not `comfortable` (12px, 48px): the names are different
+  sizes. `useRows()` reads the choice, for a screen that must know it.
+- Content inside cells (an inline editor, a button, a badge) must fit both
+  heights; check a cell like that at both.
 
 ## Widget cards (hub pages)
 

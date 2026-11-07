@@ -46,7 +46,9 @@ export const Default: Story = {
 // The four densities side by side. Density is a token set, not a prop:
 // data-density on any ancestor retunes the cells' padding and the header
 // height (styles/theme.css); large also grows the text. e2e/fixtures-visual.spec.ts
-// measures that the rows really do differ.
+// measures that the rows really do differ. Regular rows (a device's pick in
+// the shell's look menu, data-rows on <html>) sit between the default and
+// comfortable; a data-density inside them still wins.
 export const Densities: Story = {
   render: () => (
     <div className="flex flex-col gap-6">
@@ -56,6 +58,16 @@ export const Densities: Story = {
           <SampleTable caption={`Widgets (${density})`} />
         </section>
       ))}
+      <section data-rows="regular">
+        <p className="type-label mb-2 text-muted-foreground">regular rows (data-rows)</p>
+        <SampleTable caption="Widgets (regular rows)" />
+      </section>
+      <section data-rows="regular">
+        <div data-density="compact">
+          <p className="type-label mb-2 text-muted-foreground">compact inside regular rows</p>
+          <SampleTable caption="Widgets (compact in regular rows)" />
+        </div>
+      </section>
     </div>
   ),
 }
