@@ -5,6 +5,7 @@ import { AuthProvider } from '@/auth/use-auth'
 import { MockModeBanner } from '@/components/app/mock-mode-banner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { PaletteProvider } from '@/components/app/palette-provider'
+import { RowsProvider } from '@/components/app/rows-provider'
 import type { PaletteName } from '@/lib/palettes'
 import { ErrorReportingProvider } from '@/error-reporting/error-reporting-provider'
 import { resolveErrorReporting, type ErrorReportingOptions } from '@/error-reporting/reporter'
@@ -24,6 +25,7 @@ export function FoundationProviders({
   errorReporting,
   palette,
   palettePicker = false,
+  rowsPicker = false,
   children,
 }: {
   /** Whether the API is served by MSW — the app's own IS_MOCK_MODE. */
@@ -49,6 +51,12 @@ export function FoundationProviders({
    * is remembered on this device. A new device starts on `palette`.
    */
   palettePicker?: boolean
+  /**
+   * The shell's look menu offers the table rows, Compact (the default) or
+   * Regular, remembered on this device (design-language.md "Density",
+   * "Rows on this device"). Off, every device is compact.
+   */
+  rowsPicker?: boolean
   children: ReactNode
 }) {
   const [client] = useState(() => queryClient ?? createQueryClient())
@@ -57,12 +65,14 @@ export function FoundationProviders({
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem forcedTheme={palette ? 'dark' : undefined}>
       <PaletteProvider palette={palette} picker={palettePicker}>
+      <RowsProvider picker={rowsPicker}>
       <MockModeBanner active={mockMode} />
       <QueryClientProvider client={client}>
         <AuthProvider>
           {reporting ? <ErrorReportingProvider options={reporting}>{children}</ErrorReportingProvider> : children}
         </AuthProvider>
       </QueryClientProvider>
+      </RowsProvider>
       </PaletteProvider>
     </ThemeProvider>
   )

@@ -17,6 +17,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { AuthContext, type AuthContextValue } from '@/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { PaletteProvider } from '@/components/app/palette-provider'
+import { RowsProvider } from '@/components/app/rows-provider'
 import { AppShell, type AppShellVersion, type BottomBarItem } from './app-shell'
 import type { NavEntry } from './app-shell-nav'
 import { EntityView } from './entity-view'
@@ -191,6 +192,7 @@ function Shell({
   view,
   logo,
   palette,
+  rows = false,
 }: {
   nav: NavEntry[]
   path: string
@@ -203,6 +205,8 @@ function Shell({
   view?: ShellView
   /** An app with a palette (Indigo and Cyan): 'fixed', or 'picker' to offer all four. */
   palette?: 'fixed' | 'picker'
+  /** Offers the table rows in the look menu (RowsProvider's picker). */
+  rows?: boolean
 }) {
   const router = createMemoryRouter(
     [
@@ -227,9 +231,11 @@ function Shell({
     { initialEntries: [path] },
   )
   const shell = (
-    <AuthContext.Provider value={SIGNED_IN}>
-      <RouterProvider router={router} />
-    </AuthContext.Provider>
+    <RowsProvider picker={rows}>
+      <AuthContext.Provider value={SIGNED_IN}>
+        <RouterProvider router={router} />
+      </AuthContext.Provider>
+    </RowsProvider>
   )
   return palette ? (
     <PaletteProvider palette="indigo-cyan" picker={palette === 'picker'}>
@@ -322,3 +328,11 @@ export const BottomBar: Story = { args: { nav: NESTED, path: '/media/channels/3'
 // Open them with `palette=indigo-cyan`, as FoundationProviders forces dark.
 export const WithPalette: Story = { args: { nav: SECTIONS, path: '/projects/7', palette: 'fixed' } }
 export const WithPalettePicker: Story = { args: { nav: SECTIONS, path: '/projects/7', palette: 'picker' } }
+
+// The rows picker (design-language.md "Density"): Rows on this device in
+// the palette's menu, or, without a palette, a menu of its own beside the
+// light/dark toggle. e2e/palettes.spec.ts.
+export const WithPalettePickerAndRows: Story = {
+  args: { nav: SECTIONS, path: '/projects/7', palette: 'picker', rows: true },
+}
+export const WithRowsPicker: Story = { args: { nav: SECTIONS, path: '/projects/7', rows: true } }

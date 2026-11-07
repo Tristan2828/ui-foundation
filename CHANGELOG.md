@@ -7,6 +7,27 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.68.0 — Rows on this device
+
+The UI package only; additive, no new dependency. An app that doesn't set
+`rowsPicker` sees no change: every table stays compact.
+
+- **`rowsPicker` on `FoundationProviders`**: the shell's look menu offers
+  **Rows on this device**, Compact (the default: 4px cells, a 32px header)
+  or Regular (8px, 40px, the size before 4.63). It sits under the palettes
+  in an app with `palettePicker`, or in a menu of its own beside the
+  light/dark toggle. The choice is kept in `localStorage`
+  (`ui-foundation:rows`), so each device has its own.
+- It rides on `<html>` as `data-rows="regular"`, so every table follows it
+  with no prop: `DataTable`, the `Table` primitive and tables in notes. A
+  `data-density` on a nearer ancestor still wins (a hub's compact wrapper).
+- `useRows()`, `ROWS`, `ROWS_LABELS`, `ROWS_STORAGE_KEY` and `isRowsName`
+  are exported. The palette's store now shares its code with the rows'
+  (`lib/device-choice.ts`); its behaviour is unchanged.
+- design-language.md "Density", "Rows on this device". To take it: add
+  `rowsPicker` beside `palettePicker`, and check any cell with an inline
+  editor or a button at both heights.
+
 ## 4.67.1 — Zebra rows in compact tables in notes
 
 A fix in the UI package's CSS only; no new dependency, nothing for an app

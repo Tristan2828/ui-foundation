@@ -1,4 +1,4 @@
-import { ChevronRightIcon, LogOutIcon, MoonIcon, PaletteIcon, SunIcon } from 'lucide-react'
+import { ChevronRightIcon, LogOutIcon, MoonIcon, PaletteIcon, Rows3Icon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
@@ -22,7 +22,9 @@ import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
 import { useShellDocumentTitle } from '@/hooks/use-document-title'
 import { usePalette } from '@/hooks/use-palette'
+import { useRows } from '@/hooks/use-rows'
 import { isPaletteName, PALETTE_LABELS, PALETTES, type PaletteName } from '@/lib/palettes'
+import { isRowsName, ROWS, ROWS_LABELS } from '@/lib/rows'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,6 +34,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -144,12 +147,20 @@ function CloseMobileSidebarOnNavigate() {
 }
 
 // The header's look control: an app with a palette is always dark, so it
-// has no light/dark toggle, and with the picker on it gets the palette
-// menu in its place (design-language.md "Palettes").
+// has no light/dark toggle, and with the picker on it gets the look menu
+// in its place (design-language.md "Palettes"). With the rows picker the
+// same menu offers the table rows (design-language.md "Density"); an app
+// without a palette keeps its toggle beside it.
 function LookControl() {
   const { palette, picker } = usePalette()
-  if (!palette) return <ThemeToggle />
-  return picker ? <PalettePicker palette={palette} /> : null
+  const rows = useRows()
+  const pickPalette = palette && picker ? palette : null
+  return (
+    <>
+      {!palette && <ThemeToggle />}
+      {(pickPalette || rows.picker) && <LookMenu palette={pickPalette} />}
+    </>
+  )
 }
 
 // Each palette's swatch is its own background with its accent and second
@@ -169,32 +180,61 @@ function PaletteSwatch({ name }: { name: PaletteName }) {
   )
 }
 
-function PalettePicker({ palette }: { palette: PaletteName }) {
+// `palette` is null when only the rows are offered: the trigger is then
+// the rows' own.
+function LookMenu({ palette }: { palette: PaletteName | null }) {
   const { setPalette } = usePalette()
+  const { rows, picker: pickRows, setRows } = useRows()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="icon-sm" aria-label={`Palette: ${PALETTE_LABELS[palette]}`} />}
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={palette ? `Palette: ${PALETTE_LABELS[palette]}` : `Rows: ${ROWS_LABELS[rows]}`}
+          />
+        }
       >
-        <PaletteIcon />
+        {palette ? <PaletteIcon /> : <Rows3Icon />}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Palette on this device</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={palette}
-            onValueChange={(next) => {
-              if (isPaletteName(next)) setPalette(next)
-            }}
-          >
-            {PALETTES.map((name) => (
-              <DropdownMenuRadioItem key={name} value={name}>
-                <PaletteSwatch name={name} />
-                {PALETTE_LABELS[name]}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
+        {palette && (
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Palette on this device</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={palette}
+              onValueChange={(next) => {
+                if (isPaletteName(next)) setPalette(next)
+              }}
+            >
+              {PALETTES.map((name) => (
+                <DropdownMenuRadioItem key={name} value={name}>
+                  <PaletteSwatch name={name} />
+                  {PALETTE_LABELS[name]}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuGroup>
+        )}
+        {palette && pickRows && <DropdownMenuSeparator />}
+        {pickRows && (
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Rows on this device</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={rows}
+              onValueChange={(next) => {
+                if (isRowsName(next)) setRows(next)
+              }}
+            >
+              {ROWS.map((name) => (
+                <DropdownMenuRadioItem key={name} value={name}>
+                  {ROWS_LABELS[name]}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuGroup>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

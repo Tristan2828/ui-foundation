@@ -390,6 +390,17 @@
   --sidebar-ring: var(--gray-400);
 }
 
+/*
+ * Regular rows, a device's pick in the shell's look menu (lib/rows.ts,
+ * FoundationProviders' rowsPicker): RowsProvider puts data-rows on <html>.
+ * The size every table had before 4.63. A data-density on a nearer
+ * ancestor still wins, since it is declared closer to the cells.
+ */
+[data-rows="regular"] {
+  --table-cell-py: 0.5rem;
+  --table-head-height: 2.5rem;
+}
+
 [data-density="compact"] {
   --table-cell-py: 0.25rem; /* the default's, since the default is compact */
   --table-head-height: 2rem;

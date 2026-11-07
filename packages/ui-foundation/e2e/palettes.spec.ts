@@ -62,6 +62,53 @@ test('a saved choice is ignored without the picker, and an unknown one falls bac
   await expect(html(page)).toHaveAttribute('data-palette', 'indigo-cyan')
 })
 
+// Rows on this device (lib/rows.ts): compact until a device picks Regular,
+// which rides on <html> as data-rows and retunes every table's cells; the
+// choice survives a reload. Measured on the tokens the cells read.
+const cellPadding = (page: Page) =>
+  page.evaluate(() => parseFloat(getComputedStyle(document.body).getPropertyValue('--table-cell-py')))
+
+test('the rows picker sits under the palettes and remembers Regular on this device', async ({ page }) => {
+  await open(page, 'with-palette-picker-and-rows')
+  await expect(html(page)).not.toHaveAttribute('data-rows')
+  expect(await cellPadding(page)).toBe(0.25)
+
+  await page.getByRole('button', { name: 'Palette: Indigo and Cyan' }).click()
+  await expect(page.getByText('Rows on this device')).toBeVisible()
+  await expect(page.getByRole('menuitemradio', { name: 'Compact' })).toBeChecked()
+  await page.getByRole('menuitemradio', { name: 'Regular' }).click()
+  await expect(html(page)).toHaveAttribute('data-rows', 'regular')
+  expect(await cellPadding(page)).toBe(0.5)
+  expect(await page.evaluate(() => localStorage.getItem('ui-foundation:rows'))).toBe('regular')
+  // The palette is untouched.
+  await expect(html(page)).toHaveAttribute('data-palette', 'indigo-cyan')
+
+  await page.reload()
+  await expect(html(page)).toHaveAttribute('data-rows', 'regular')
+  await page.getByRole('button', { name: 'Palette: Indigo and Cyan' }).click()
+  await page.getByRole('menuitemradio', { name: 'Compact' }).click()
+  await expect(html(page)).not.toHaveAttribute('data-rows')
+  expect(await cellPadding(page)).toBe(0.25)
+})
+
+test('without a palette the rows get a menu of their own beside the toggle', async ({ page }) => {
+  await open(page, 'with-rows-picker', 'theme=light')
+  await expect(page.getByRole('button', { name: 'Toggle dark mode' })).toBeVisible()
+  await page.getByRole('button', { name: 'Rows: Compact' }).click()
+  await expect(page.getByText('Palette on this device')).toHaveCount(0)
+  await page.getByRole('menuitemradio', { name: 'Regular' }).click()
+  await expect(html(page)).toHaveAttribute('data-rows', 'regular')
+  await expect(page.getByRole('button', { name: 'Rows: Regular' })).toBeVisible()
+})
+
+test('a saved Regular is ignored without the rows picker', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ui-foundation:rows', 'regular'))
+  await open(page, 'with-palette-picker')
+  await expect(html(page)).not.toHaveAttribute('data-rows')
+  await page.getByRole('button', { name: 'Palette: Indigo and Cyan' }).click()
+  await expect(page.getByText('Rows on this device')).toHaveCount(0)
+})
+
 test('the link button reads in the palette’s link colour, not its accent', async ({ page }) => {
   await page.goto('http://localhost:6180/story.html?id=ui-button--variants&theme=dark&palette=indigo-rose')
   await expect(html(page)).toHaveAttribute('data-palette', 'indigo-rose')
