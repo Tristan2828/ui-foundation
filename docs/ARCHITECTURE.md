@@ -143,7 +143,11 @@ src/main.tsx                           FoundationProviders (theme, query client,
   one registry of entities (`app/mcp_entities.py`) and call the entities' own router
   functions, so the API's validation and per-user scoping apply. Delete is soft only
   (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
-  is logged. Stdlib only, by decision (#132): no MCP SDK.
+  is logged. Stdlib only, by decision (#132): no MCP SDK. What a chat is told
+  is the foundation's too (4.71): the server instructions are written from the
+  registry (what can be deleted, which texts `edit_text` changes) with the app's
+  own after them (`register_instructions`), and an app's `register_answer_note`
+  appends to answers, so apps don't patch the router.
 - **Scheduled jobs** (4.7, #136) run inside the app's one process
   (`foundation_backend.jobs`): `register_job`, started from the lifespan when
   `JOBS_ENABLED`. A Postgres advisory lock keeps a job to one run at a
@@ -177,6 +181,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `EditableValue` edits where it's shown, and `InlineCreate` creates from
   a name in the toolbar. `width="content"` sizes a table of a few short
   columns to them on a wide screen.
+- **A record over a page** (4.58, 4.71): `RecordDialogRoute` draws a
+  route's children in a dialog over its `list`, the history entry's state
+  saying dialog or page. The list can be a sibling route (`listPath`:
+  `/things/list` under `/things/12`), and a parent record's page can be
+  the `list` of its sub-records (`fullPage={false}`, so a reload is the
+  dialog over the parent again).
 - **Tables** keep page, sort and filters in the URL (`useTableUrlState`,
   including `setFilters`/`applyView` for saved views). A saved view can
   name its columns (`DataTable`'s `visibleColumns`); they apply while the

@@ -7,6 +7,69 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.71.0 — Records over any list or parent page; MCP instructions, descriptions, text edits and answer notes
+
+Both packages; additive, no new dependency, no migration. An app that
+changes nothing sees one difference: the MCP server's built-in
+instructions are now written from its entities (below).
+
+**UI package: `RecordDialogRoute`**
+
+- **`listPath`: a list that isn't the record's parent route.** A list at
+  `/things/list` opens `/things/12` in the dialog over it, the list still
+  drawn behind; Esc, Close and Back go to `/things/list` as it was; a deep
+  link or reload of `/things/12` is the record's full page. The route the
+  two share wraps them, and the list's own route has no element:
+  `{ path: 'things', element: <RecordDialogRoute list={<ThingsList />} listPath="list" label="Thing" />, children: [{ path: 'list' }, { path: ':id', element: <ThingView /> }] }`.
+  Without `listPath` nothing changes (the nested pattern).
+- **A sub-record over its parent's page**, documented and covered: the
+  parent's page is the `list`, the sub-record its child, `fullPage={false}`.
+  `/parents/7/children/31` opens over `/parents/7`, Esc goes back to it,
+  and a reload is the dialog over the parent again. The sub-record's view
+  is its ordinary `EntityView`. Keep the parent's other routes (its
+  `edit`) siblings, not children.
+- Fixtures `app/RecordDialog` "List at its own path" (open, deep link)
+  and "Sub-records" (open, deep link); `e2e/record-dialog.spec.ts` has five
+  new tests, axe in both themes on the two open stories.
+  add-an-entity.md "How a list opens a record".
+
+**Backend package: MCP**
+
+- **`register_instructions(text, replace=False)`** (or
+  `register_entities(ENTITIES, instructions=...)`): the app's own server
+  instructions, after the built-in ones (or instead, with `replace=True`).
+  The built-in line about deleting is written from the registered
+  entities: "Nothing can be deleted" only when none has `delete`/`restore`,
+  otherwise which ones can, soft only with restore.
+  `routers.mcp.INSTRUCTIONS` is deprecated: an app that still assigns it
+  keeps sending its text until it moves to `register_instructions`.
+- **`McpEntity.description`**: a sentence on what the entity is, shown
+  beside its name in `search`, `list` and `create`.
+- **`McpEntity.text_edits` and the `edit_text` tool**: for each long-text
+  field named, a chat replaces one passage (`old` → `new`; refused, saving
+  nothing, when `old` is missing or found more than once) or appends text
+  on a new line. Saved and logged as `update`. `check_entities` refuses a
+  name that isn't a text field of `update_schema`, or is `script_only`.
+- **`register_answer_note(note)`**: `note(caller, tool, arguments,
+  entities)` (plain or async), given the entities whose records the
+  answer shows, returns text appended to the answer, or `None`. Not called
+  on a refusal; one that raises is reported and left out.
+- The template's Widget has a `description` and `text_edits=("description",)`
+  (tests/test_mcp.py over HTTP). add-an-entity.md "What a chat is told
+  about an entity"; deploy.md "AI chats (MCP)".
+
+**For apps**
+
+- To take it: bump both packages; nothing else is required.
+- **Homebase** deletes its stopgaps: the nested route for one log's
+  records and the list route that couldn't open `/x/:id` (use `listPath`),
+  the missing sub-record dialog (the parent page as `list`), the patch of
+  `routers.mcp.INSTRUCTIONS` (`register_instructions`), the
+  `<field>Replace`/`<field>Append` wrappers (`text_edits`), and the
+  `call_tool` wrapper that appends a note (`register_answer_note`).
+- Check what a chat is now told on connect: an app with soft-deleting
+  entities no longer says nothing can be deleted.
+
 ## 4.70.0 — Links in the editor open on a click
 
 The UI package only; no new dependency, no prop to set.

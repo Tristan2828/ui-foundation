@@ -20,16 +20,25 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from foundation_backend import config, rate_window
 from foundation_backend.db import get_session
 from foundation_backend.error_reporting import ErrorContext, report_error, scrub
+from foundation_backend.mcp import server_instructions
 from foundation_backend.mcp_tools import Caller, ToolError, call_tool, tool_definitions
 from foundation_backend.routers.oauth import authenticate_bearer, public_base, require_enabled
 
 PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
 MAX_BODY_BYTES = 1_000_000
-INSTRUCTIONS = (
+# Deprecated (4.71): the instructions are mcp.server_instructions(), built
+# from the registered entities and the app's register_instructions. Kept so
+# an app that assigned its own text here still sends it until it moves to
+# register_instructions; left as it is, it's ignored.
+_UNCHANGED = INSTRUCTIONS = (
     "Records are addressed /<entity>/<id>. Use search or list to find them and fetch to read one. "
     "create and update are checked like the app's own forms: if a field is refused, the answer says why. "
     "Nothing can be deleted."
 )
+
+
+def _instructions() -> str:
+    return INSTRUCTIONS if INSTRUCTIONS is not _UNCHANGED else server_instructions()
 
 router = APIRouter(include_in_schema=False, dependencies=[Depends(require_enabled)])
 
@@ -79,7 +88,7 @@ async def _handle(message: Any, caller: Caller, session: AsyncSession) -> dict[s
                 "protocolVersion": wanted if wanted in PROTOCOL_VERSIONS else PROTOCOL_VERSIONS[0],
                 "capabilities": {"tools": {"listChanged": False}},
                 "serverInfo": {"name": "app-records", "version": "1.0.0"},
-                "instructions": INSTRUCTIONS,
+                "instructions": _instructions(),
             },
         }
     if method == "ping":

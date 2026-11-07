@@ -527,9 +527,9 @@ async def test_requests_are_rate_limited_per_connection(
 # ---------------------------------------------------------------- tools
 
 
-async def test_the_tools_are_the_seven_and_only_delete_is_destructive(web: AsyncClient, token: str) -> None:
+async def test_the_tools_are_the_eight_and_only_delete_is_destructive(web: AsyncClient, token: str) -> None:
     tools = (await rpc(web, token, "tools/list")).json()["result"]["tools"]
-    assert [t["name"] for t in tools] == ["fetch", "search", "list", "create", "update", "delete", "restore"]
+    assert [t["name"] for t in tools] == ["fetch", "search", "list", "create", "update", "edit_text", "delete", "restore"]
     assert tools == tool_definitions()
     for tool in tools:
         assert tool["inputSchema"]["type"] == "object"
@@ -539,7 +539,37 @@ async def test_the_tools_are_the_seven_and_only_delete_is_destructive(web: Async
     create = next(t for t in tools if t["name"] == "create")
     assert "availableFrom" in create["description"]
     assert "widget-categories" not in create["inputSchema"]["properties"]["entity"]["enum"]
-    assert [t["annotations"]["readOnlyHint"] for t in tools] == [True, True, True, False, False, False, False]
+    assert [t["annotations"]["readOnlyHint"] for t in tools] == [True, True, True, False, False, False, False, False]
+    # The entity's own description, beside its name.
+    assert "widgets: A thing in the catalogue" in next(t for t in tools if t["name"] == "list")["description"]
+
+
+async def test_initialize_says_what_can_be_deleted(web: AsyncClient, token: str) -> None:
+    instructions = (await rpc(web, token, "initialize", {})).json()["result"]["instructions"]
+    # Widgets delete softly, so never "nothing can be deleted".
+    assert "Nothing can be deleted" not in instructions
+    assert "Only these can be deleted: widgets." in instructions
+    assert "(widgets.description), use edit_text" in instructions
+
+
+async def test_edit_text_changes_part_of_the_description_and_logs_it(
+    web: AsyncClient, token: str, session: AsyncSession
+) -> None:
+    await call(web, token, "update", {"url": "/widgets/1", "fields": {"description": "Quiet clicks. Blue."}})
+    text, is_error = await call(
+        web, token, "edit_text", {"url": "/widgets/1", "field": "description", "old": "Blue.", "new": "Grey."}
+    )
+    assert not is_error and text.startswith("Updated widget /widgets/1. Changed description.")
+    text, is_error = await call(web, token, "edit_text", {"url": "/widgets/1", "field": "description", "append": "USB-C."})
+    assert not is_error
+    widget = await session.get(Widget, 1)
+    assert widget is not None and widget.description == "Quiet clicks. Grey.\nUSB-C."
+    entries = (await session.exec(select(McpAuditEntry))).all()
+    assert [e.action for e in entries] == ["update", "update", "update"]
+    assert json.loads(entries[1].after) == {"description": "Quiet clicks. Grey."}
+
+    text, is_error = await call(web, token, "edit_text", {"url": "/widgets/1", "field": "description", "old": "Red", "new": "x"})
+    assert is_error and "old wasn't found in description" in text
 
 
 async def test_fetch_reads_a_record_with_its_related_titles(web: AsyncClient, token: str) -> None:
@@ -861,7 +891,7 @@ async def test_an_entity_that_does_not_delete_softly_gets_no_delete_tool(
 ) -> None:
     _only_one_entity_deletes(monkeypatch)
     tools = (await rpc(web, token, "tools/list")).json()["result"]["tools"]
-    assert [t["name"] for t in tools] == ["fetch", "search", "list", "create", "update"]
+    assert [t["name"] for t in tools] == ["fetch", "search", "list", "create", "update", "edit_text"]
     for name in ("delete", "restore"):
         assert (await rpc(web, token, "tools/call", {"name": name, "arguments": {"url": "/widgets/1"}})).json()["error"]["code"] == -32602
     widget = await session.get(Widget, 1)

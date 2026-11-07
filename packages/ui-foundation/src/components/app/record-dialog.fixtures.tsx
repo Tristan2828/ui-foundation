@@ -27,6 +27,11 @@ import { recordDialogState } from './record-dialog-context'
 // open their page has `opens` kind `page`. The name cell is a plain link
 // to the record: `opens` makes a click on it open the record as the row
 // does.
+// The List at its own path stories have the list at /projects/list and the
+// record at /projects/:id, siblings under one RecordDialogRoute with
+// `listPath="list"`. The Sub-records stories are a project's page with its
+// tasks, each opening at /projects/:id/tasks/:taskId in the dialog over the
+// project's page (`fullPage={false}`: a reload is the dialog again).
 // e2e/record-dialog.spec.ts drives it; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
@@ -67,13 +72,16 @@ const COLUMNS: LegacyColumnDef<Project, unknown>[] = [
 
 const noop = () => {}
 
-function ProjectList({ opens }: { opens: Opens }) {
+function ProjectList({ opens, listAt = '/projects' }: { opens: Opens; listAt?: string }) {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const rows = PROJECTS.filter((project) => project.name.toLowerCase().includes(q.toLowerCase()))
   return (
     <div className="flex flex-col gap-6">
       <h1 className="type-page-title">Projects</h1>
+      <p className="type-caption text-muted-foreground">
+        The list is at <span data-testid="list-at">{listAt}</span>
+      </p>
       <DataTable<Project>
         columns={COLUMNS}
         data={rows}
@@ -138,7 +146,7 @@ function useProject(id: string | undefined) {
   }
 }
 
-function ProjectView() {
+function ProjectView({ listAt = '/projects', tasks = false }: { listAt?: string; tasks?: boolean }) {
   const { id } = useParams()
   const { project, error, isLoading, retry } = useProject(id)
   const [owner, setOwner] = useState('Ada Lovelace')
@@ -166,7 +174,7 @@ function ProjectView() {
       isLoading={isLoading}
       error={error}
       onRetry={retry}
-      back={{ to: '/projects', label: 'Projects' }}
+      back={{ to: listAt, label: 'Projects' }}
       sections={[
         {
           title: 'Details',
@@ -180,7 +188,62 @@ function ProjectView() {
           ],
         },
         { title: 'Notes', content: project?.notes && <Markdown>{project.notes}</Markdown>, emptyLabel: 'No notes' },
+        ...(tasks && project ? [{ title: 'Tasks', content: <TaskList projectId={project.id} /> }] : []),
       ]}
+    />
+  )
+}
+
+// A project's sub-records, its tasks: each opens over the project's page.
+type Task = { id: number; projectId: number; name: string; done: boolean }
+
+const TASKS: Task[] = [
+  { id: 11, projectId: 1, name: 'Sand the boards', done: true },
+  { id: 12, projectId: 1, name: 'Buy the paint', done: false },
+  { id: 21, projectId: 2, name: 'Order a new latch', done: false },
+]
+
+const TASK_COLUMNS: LegacyColumnDef<Task, unknown>[] = [
+  { id: 'name', accessorKey: 'name', header: 'Task', enableSorting: false },
+  {
+    id: 'done',
+    accessorKey: 'done',
+    header: 'Done',
+    enableSorting: false,
+    cell: ({ row }) => (row.original.done ? 'Yes' : 'No'),
+  },
+]
+
+function TaskList({ projectId }: { projectId: number }) {
+  const rows = TASKS.filter((task) => task.projectId === projectId)
+  return (
+    <DataTable<Task>
+      columns={TASK_COLUMNS}
+      data={rows}
+      total={rows.length}
+      page={1}
+      pageSize={25}
+      onPageChange={noop}
+      sorting={[]}
+      onSortingChange={noop}
+      isLoading={false}
+      emptyTitle="No tasks yet"
+      getRowId={(row) => String(row.id)}
+      opens={{ kind: 'dialog-only', to: (row) => `/projects/${row.projectId}/tasks/${row.id}` }}
+    />
+  )
+}
+
+function TaskView() {
+  const { id, taskId } = useParams()
+  const task = TASKS.find((candidate) => String(candidate.id) === taskId && String(candidate.projectId) === id)
+  return (
+    <EntityView
+      title={task?.name}
+      isLoading={false}
+      error={task ? null : NOT_FOUND}
+      back={{ to: `/projects/${id}`, label: 'Project' }}
+      sections={[{ title: 'Details', fields: [{ label: 'Done', value: task && (task.done ? 'Yes' : 'No') }] }]}
     />
   )
 }
@@ -211,33 +274,58 @@ function Layout() {
   )
 }
 
+// How the routes are laid out: the record a child of its list (`nested`,
+// the default), the list a sibling at /projects/list (`sibling`), or a
+// project's page whose tasks open over it (`sub-records`).
+type Shape = 'nested' | 'sibling' | 'sub-records'
+
+function projectRoutes(shape: Shape, opens: Opens) {
+  if (shape === 'sub-records')
+    return [
+      {
+        path: 'projects/:id',
+        element: <RecordDialogRoute list={<ProjectView tasks />} label="Task" fullPage={false} />,
+        children: [{ path: 'tasks/:taskId', element: <TaskView /> }],
+      },
+    ]
+  if (shape === 'sibling')
+    return [
+      {
+        path: 'projects',
+        element: (
+          <RecordDialogRoute
+            list={<ProjectList opens={opens} listAt="/projects/list" />}
+            listPath="list"
+            label="Project"
+            fullPage={opens !== 'dialog-only'}
+          />
+        ),
+        children: [{ path: 'list' }, { path: ':id', element: <ProjectView listAt="/projects/list" /> }],
+      },
+    ]
+  return [
+    {
+      path: 'projects',
+      element: <RecordDialogRoute list={<ProjectList opens={opens} />} label="Project" fullPage={opens !== 'dialog-only'} />,
+      children: [{ path: ':id', element: <ProjectView /> }],
+    },
+  ]
+}
+
 function Projects({
   initialEntries,
   initialIndex,
   opens = 'dialog',
+  shape = 'nested',
 }: {
   initialEntries: InitialEntry[]
   initialIndex?: number
   opens?: Opens
+  shape?: Shape
 }) {
   const [router] = useState(() =>
     createMemoryRouter(
-      [
-        {
-          path: '/',
-          element: <Layout />,
-          children: [
-            { index: true, element: <Home /> },
-            {
-              path: 'projects',
-              element: (
-                <RecordDialogRoute list={<ProjectList opens={opens} />} label="Project" fullPage={opens !== 'dialog-only'} />
-              ),
-              children: [{ path: ':id', element: <ProjectView /> }],
-            },
-          ],
-        },
-      ],
+      [{ path: '/', element: <Layout />, children: [{ index: true, element: <Home /> }, ...projectRoutes(shape, opens)] }],
       { initialEntries, initialIndex },
     ),
   )
@@ -249,9 +337,9 @@ function Projects({
 }
 
 // The list's entry, then the record opened over it.
-const openOver = (id: string, search = ''): InitialEntry[] => {
-  const list = { pathname: '/projects', search, hash: '' }
-  return [list, { pathname: `/projects/${id}`, state: recordDialogState({ ...list, state: null }) }]
+const openOver = (id: string, search = '', listAt = '/projects', record = `/projects/${id}`): InitialEntry[] => {
+  const list = { pathname: listAt, search, hash: '' }
+  return [list, { pathname: record, state: recordDialogState({ ...list, state: null }) }]
 }
 
 const meta: Meta<typeof Projects> = {
@@ -307,4 +395,36 @@ export const DialogOnlyFromAnotherPage: Story = {
 export const OpensPage: Story = {
   name: 'Rows open their page',
   render: () => <Projects initialEntries={['/projects']} opens="page" />,
+}
+
+export const ListAtItsOwnPath: Story = {
+  name: 'List at its own path',
+  render: () => <Projects initialEntries={['/projects/list']} shape="sibling" />,
+}
+
+export const ListAtItsOwnPathOpen: Story = {
+  name: 'List at its own path, open',
+  render: () => <Projects initialEntries={openOver('1', '?q=re', '/projects/list')} initialIndex={1} shape="sibling" />,
+}
+
+export const ListAtItsOwnPathDeepLink: Story = {
+  name: 'List at its own path, a deep link',
+  render: () => <Projects initialEntries={['/projects/1']} shape="sibling" />,
+}
+
+export const SubRecords: Story = {
+  name: 'Sub-records',
+  render: () => <Projects initialEntries={['/projects/1']} shape="sub-records" />,
+}
+
+export const SubRecordOpen: Story = {
+  name: 'Sub-record, open',
+  render: () => (
+    <Projects initialEntries={openOver('1', '', '/projects/1', '/projects/1/tasks/12')} initialIndex={1} shape="sub-records" />
+  ),
+}
+
+export const SubRecordDeepLink: Story = {
+  name: 'Sub-record, a deep link',
+  render: () => <Projects initialEntries={['/projects/1/tasks/12']} shape="sub-records" />,
 }
