@@ -11,7 +11,8 @@ import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 // loaded; All states is a strip in each state (loading, failed, with and
 // without a number, a place with no slot); Compact is Default under
 // data-density="compact"; Row and Row states are Default and All states
-// with `mobile="row"`, one sideways row of chips on a phone. Axe, the
+// with `mobile="row"`, one sideways row of chips on a phone; Row page is
+// the strip alone on a page, for defineA11ySuite. Axe, the
 // token check and the glyph check
 // measure each in both themes, and Default at the large density too
 // (e2e/fixtures-visual.spec.ts); e2e/module-card.spec.ts measures the
@@ -214,3 +215,17 @@ export const Compact: StoryObj = {
 export const Row: StoryObj = { render: () => <Hub mobile="row" /> }
 
 export const RowStates: StoryObj = { name: 'Row states', render: () => <AllStatesPage mobile="row" /> }
+
+// A hub reduced to what `defineA11ySuite` needs of a page (a <main>, one
+// heading) and nothing else with a data state, so the only visible
+// `data-state="success"` on a phone is a chip: the card beside it is hidden.
+// e2e/a11y-suite.spec.ts runs the suite on it at a phone's width.
+export const RowPage: StoryObj = {
+  name: 'Row page',
+  render: () => (
+    <main className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Home</h1>
+      <Strip label="Places" mobile="row" />
+    </main>
+  ),
+}

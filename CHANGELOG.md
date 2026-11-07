@@ -37,6 +37,34 @@ app until it uses it.
 with `ColorSwatch` (the paint's name as `label`), and its form's hex check
 with `storedColor`.
 
+## 4.68.1 — expectDataViewsLoaded on a phone with a ModuleStrip row
+
+A fix in the UI package's `testing` export only; no new dependency, nothing
+for an app to change.
+
+- **Fixed: `expectDataViewsLoaded` waited for a hidden element.** It waits
+  for the first `[data-state="success"]` to be visible. A page with
+  `<ModuleStrip mobile="row">` renders, in each place, a `ModuleCard` and
+  its chip, both with `data-state`, and shows one by viewport. On a phone
+  the card is hidden and comes first in the document, so the wait never
+  ended and every view check on such a page failed (`defineA11ySuite`'s
+  `viewRoutes` and its nav pages, at a phone's width). It now waits for the
+  first *visible* match.
+- **Why the helper, not the card.** The card and its chip are both always
+  in the DOM and CSS alone hides one, so no `data-state` can be dropped
+  from either: the card's is what `ModuleCard`'s own tests and a desktop
+  page's checks read, the chip's what a phone's read. Anything that waits
+  on `data-state` has to ask for the visible one. Nothing else changes:
+  `WidgetCard`, the hub's accordion, `DataTable` and `EntityView` keep
+  their `data-state`, and the "none still loading" check is unchanged.
+- Covered by `e2e/a11y-suite.spec.ts`: `defineA11ySuite` run on a new
+  fixture page (`app/ModuleCard` "Row page") at a phone's width and at a
+  desktop's.
+- **For apps:** Homebase moves Training's pages from their own loop in
+  `e2e/a11y-health.spec.ts` back into `viewRoutes`. To take it: bump; no
+  other change. An app that worked around this with its own loop can fold
+  those pages back into `viewRoutes`.
+
 ## 4.68.0 — Rows on this device
 
 The UI package only; additive, no new dependency. An app that doesn't set
