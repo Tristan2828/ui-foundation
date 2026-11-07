@@ -7,6 +7,36 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.69.0 — ColorSwatch, a colour stored as data
+
+The UI package only; additive, no new dependency. Nothing changes for an
+app until it uses it.
+
+- **`ColorSwatch`** (`color`, `label`, `size`): a small swatch filled with
+  a colour the user stored (a paint's hex, a label's colour), beside its
+  name. The fill is an inline style from the prop, so the ESLint token
+  rule needs no exception. The swatch is `aria-hidden`, and `label` is a
+  required string, so the colour is never the only way to tell.
+- **The value is validated**: a hex in 3, 4, 6 or 8 digits, the `#`
+  optional. A missing or invalid one draws the empty swatch, a dashed ring
+  with no fill, and paints nothing. **`storedColor(value)`** is the same
+  check (the colour normalised, or `null`), for a form's schema.
+- **The ring is `border-muted-foreground`**, measured at 3:1 or more
+  against the page, a card, a muted surface, a table row and a Badge's
+  wash in light, dark and all four palettes (lowest 3.69:1). `--border`
+  and `--input` fall under it.
+- **Sizes**: `default` 16px (a cell's icon), `sm` 12px (a Badge's icon).
+- **Checks**: the fixtures `app/ColorSwatch` run through axe and the token
+  check in both themes and every palette. A new check measures each
+  swatch's ring against what's behind it. The token check exempts only a
+  swatch's background, and only while it equals the swatch's own
+  `data-color`.
+- design-language.md "A stored colour"; cell-patterns.md pattern 24.
+
+**For apps:** Homebase replaces `src/modules/house/shared/finish-swatch.tsx`
+with `ColorSwatch` (the paint's name as `label`), and its form's hex check
+with `storedColor`.
+
 ## 4.68.0 — Rows on this device
 
 The UI package only; additive, no new dependency. An app that doesn't set

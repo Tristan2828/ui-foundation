@@ -3,38 +3,39 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 66–85
-- [1. Plain text](#1-plain-text) · lines 87–94
-- [2. Icon + label](#2-icon--label) · lines 96–119
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 121–134
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 136–213
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 161–213
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 215–228
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 230–242
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 244–265
-- [8. Date, relative](#8-date-relative) · lines 267–304
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 306–354
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 324–354
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 356–406
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 374–406
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 408–448
-- [12. Boolean](#12-boolean) · lines 450–480
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 482–518
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 502–518
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 520–537
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 539–648
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 565–648
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 650–685
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 687–760
-- [18. Editable value](#18-editable-value) · lines 762–1226
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1042–1127
-  - [In a table's rows](#in-a-tables-rows) · lines 1129–1214
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1216–1226
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1228–1294
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1296–1360
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1362–1430
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1432–1460
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1462–1538
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 67–86
+- [1. Plain text](#1-plain-text) · lines 88–95
+- [2. Icon + label](#2-icon--label) · lines 97–120
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 122–135
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 137–214
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 162–214
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 216–229
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 231–243
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 245–266
+- [8. Date, relative](#8-date-relative) · lines 268–305
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 307–355
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 325–355
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 357–407
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 375–407
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 409–449
+- [12. Boolean](#12-boolean) · lines 451–481
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 483–519
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 503–519
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 521–538
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 540–649
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 566–649
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 651–686
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 688–761
+- [18. Editable value](#18-editable-value) · lines 763–1227
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1043–1128
+  - [In a table's rows](#in-a-tables-rows) · lines 1130–1215
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1217–1227
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1229–1295
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1297–1361
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1363–1431
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1433–1461
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1463–1539
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1541–1564
 
 <!-- /index -->
 
@@ -1536,3 +1537,28 @@ const { grouping, setGrouping, ...table } = useTableUrlState(FILTERS, MULTI, VIE
   add-an-entity.md "How a list opens a record").
 - **The table layout's alone:** a card layout's cards don't open the
   panel.
+
+## 24. A stored colour beside its name
+
+A colour the user stored as data (a label's colour, a paint's hex): a
+`ColorSwatch`, its name always beside it. design-language.md "A stored
+colour" has the why.
+
+```tsx
+import { ColorSwatch } from '@tristan2828/ui-foundation'
+
+{ id: 'color', header: 'Colour',
+  cell: ({ row }) => <ColorSwatch color={row.original.color} label={row.original.colorName ?? row.original.color ?? 'No colour'} /> }
+```
+
+- **The label is required**: the colour's name, else the value (the hex),
+  else "No colour". The swatch is decorative; the word carries it.
+- **A missing or invalid value** draws the empty swatch, a dashed ring,
+  and never paints. Validate on the form with `storedColor`.
+- **In a badge** (a label shown as a tag): `size="sm"` inside the
+  `Badge`, which sizes it like the badge's icons (pattern 3).
+- **A colour picked from a few** is a categorical slot, a tinted glyph
+  (design-language.md "Categorical colour"), not a stored hex.
+
+The package's fixture `app/ColorSwatch` "In a table" renders it; its
+checks measure the ring at 3:1 in both themes and every palette.
