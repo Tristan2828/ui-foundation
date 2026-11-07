@@ -26,15 +26,15 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 565–648
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 650–685
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 687–760
-- [18. Editable value](#18-editable-value) · lines 762–1226
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1042–1127
-  - [In a table's rows](#in-a-tables-rows) · lines 1129–1214
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1216–1226
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1228–1294
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1296–1360
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1362–1430
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1432–1460
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1462–1538
+- [18. Editable value](#18-editable-value) · lines 762–1227
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1043–1128
+  - [In a table's rows](#in-a-tables-rows) · lines 1130–1215
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1217–1227
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1229–1295
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1297–1361
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1363–1431
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1433–1461
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1463–1539
 
 <!-- /index -->
 
@@ -912,8 +912,9 @@ to open, and it never closes. Ctrl/Cmd+Enter or Esc saves now and leaves
 the caret where it is. It sits beside the one open value rather than
 being it: opening another value leaves it alone. Don't give its control
 `autoFocus`. The cost: at rest the page shows the editor, not the read
-view, so a link in the notes is edited there, not followed, and the
-editor loads on every visit. Use it where the notes are what the page is
+view, and the editor loads on every visit. A click on a link in the
+notes still opens it in a new tab (4.69.0); its words are edited from the
+keyboard or by dragging over them, and Ctrl/Cmd+K edits its address. Use it where the notes are what the page is
 for; elsewhere `autosave` alone keeps the read view at rest.
 
 **Edited where it's read (`inline: true`, implies `alwaysEditable`)**,
