@@ -282,9 +282,16 @@ const NAV_PAGE_BUDGET_MS = 10_000
  * locator that matches each of them: Playwright's strict mode refuses
  * `expect(page.locator('[data-state="success"]')).toBeVisible()` as soon
  * as two match. Use it before reading or scanning a screen.
+ *
+ * It waits on the first *visible* data view. A responsive component can
+ * render two elements that both carry `data-state` and show one of them by
+ * viewport: a `ModuleStrip mobile="row"` puts each `ModuleCard` (hidden on a
+ * phone) beside its chip (hidden from `md` up). The card comes first in the
+ * document, so on a phone `.first()` alone is the hidden one and the wait
+ * never ended.
  */
 export async function expectDataViewsLoaded(page: Page, { success = true }: { success?: boolean } = {}): Promise<void> {
-  if (success) await expect(page.locator('[data-state="success"]').first()).toBeVisible()
+  if (success) await expect(page.locator('[data-state="success"]').filter({ visible: true }).first()).toBeVisible()
   // A data view renders its skeleton from its first paint, so once the
   // screen is up every one of them is either loading or settled.
   else await expect(page.getByRole('main').first()).toBeVisible()
