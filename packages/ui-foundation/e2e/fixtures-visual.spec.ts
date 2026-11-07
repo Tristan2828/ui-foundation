@@ -504,7 +504,23 @@ test.describe('semantic tones meet contrast in both themes', () => {
 // modifier is still the token's colour.
 const COLOR_PROPERTIES = ['backgroundColor', 'color', 'borderTopColor', 'fill'] as const
 
+// A colour mid-transition (a button's 120ms hover or focus fill, as a
+// popup opens and moves focus) is a blend of two tokens, which is no token,
+// so the check waits for every transition and animation that ends to end.
+// One that never ends (a spinner, a skeleton's pulse) is left running.
+async function settled(page: import('@playwright/test').Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  )
+}
+
 async function offTokenColors(page: import('@playwright/test').Page) {
+  await settled(page)
   return page.evaluate((properties) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')!
