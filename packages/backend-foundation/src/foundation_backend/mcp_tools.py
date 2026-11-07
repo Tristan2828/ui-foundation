@@ -1,8 +1,9 @@
 """The MCP tools (issue #132), generated from `ENTITIES` (app/mcp_entities.py).
 
 fetch(url), search(query, group), list(entity, filters), create(entity, fields),
-update(url, fields), and, for entities that delete softly only (issue #137),
-delete(url) and restore(url). Never a delete that can't be undone. Every answer is text a chat can read;
+update(url, fields), edit_text(url, field, old/new or append) for the long
+texts an entity names in `text_edits` (4.71), and, for entities that delete
+softly only (issue #137), delete(url) and restore(url). Never a delete that can't be undone. Every answer is text a chat can read;
 a refusal (an unknown record, a field the API would reject) is raised as
 `ToolError` and goes back as a tool result marked as an error, with the
 field errors in words, so the chat can fix its call and try again.
@@ -14,10 +15,15 @@ changed fields before and after (the whole record, for a delete or restore).
 A field the entity marks `script_only` (set by an importer, never a chat) is
 read like any other, but refused by create and update and left out of their
 descriptions.
+
+An app's answer note (`register_answer_note`, 4.71) is appended to every
+answer, given the entities the answer showed (`_shown`).
 """
 
+import inspect
 import json
 import re
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -28,7 +34,8 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ValidationError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from foundation_backend.mcp import ENTITIES, ListArgs, McpEntity
+from foundation_backend.error_reporting import ErrorContext, report_error
+from foundation_backend.mcp import ANSWER_NOTES, ENTITIES, ListArgs, McpEntity
 from foundation_backend.models import McpAuditEntry, User
 from foundation_backend.schemas import CamelModel
 
@@ -58,6 +65,17 @@ class Caller:
 
 
 # ---------------------------------------------------------------- helpers
+
+# The entities whose records the answer being made shows, for the answer
+# note: set by call_tool, added to by each tool as it shows records.
+_SHOWN: ContextVar[list[McpEntity] | None] = ContextVar("mcp_shown", default=None)
+
+
+def _shown(entity: McpEntity) -> None:
+    shown = _SHOWN.get()
+    if shown is not None and entity not in shown:
+        shown.append(entity)
+
 
 
 def _entity(name: Any) -> McpEntity:
@@ -235,6 +253,7 @@ async def _audit(
 async def tool_fetch(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
     entity, record_id = _parse_address(args.get("url"))
     record = await _record(session, caller.user, entity, record_id)
+    _shown(entity)
     return await _render(session, caller.user, entity, _dump(entity, record))
 
 
@@ -267,6 +286,7 @@ async def tool_search(session: AsyncSession, caller: Caller, args: dict[str, Any
             session, caller.user, ListArgs(offset=0, limit=SEARCH_PER_ENTITY, sort=None, search=query.strip(), filters={})
         )
         if items:
+            _shown(entity)
             more = f" (showing {len(items)} of {total}; use list to see more)" if total > len(items) else ""
             lines = [_list_line(entity, _dump(entity, item)) for item in items]
             sections.append(f"{entity.name}{more}:\n" + "\n".join(lines))
@@ -306,6 +326,7 @@ async def tool_list(session: AsyncSession, caller: Caller, args: dict[str, Any])
     )
     if not items:
         return f"No {entity.name} match." if total == 0 else f"No {entity.name} at offset {offset}; there are {total}."
+    _shown(entity)
     head = f"{entity.name} {offset + 1}–{offset + len(items)} of {total}:"
     return "\n".join([head, *(_list_line(entity, _dump(entity, item)) for item in items)])
 
@@ -333,6 +354,7 @@ async def tool_create(session: AsyncSession, caller: Caller, args: dict[str, Any
     # The router committed, which expired the user the later reads scope by.
     await session.refresh(caller.user)
     data = _dump(entity, created)
+    _shown(entity)
     text = await _render(session, caller.user, entity, data)
     await _audit(session, caller, "create", entity, data["id"], None, data)
     return f"Created {entity.singular} {_address(entity, data['id'])}.\n\n{text}"
@@ -346,7 +368,20 @@ async def tool_update(session: AsyncSession, caller: Caller, args: dict[str, Any
     if not fields:
         raise ToolError("fields is empty; name at least one field to change.")
     record = await _record(session, caller.user, entity, record_id)
-    before_all = _dump(entity, record)
+    return await _save_update(session, caller, entity, record_id, _dump(entity, record), fields)
+
+
+async def _save_update(
+    session: AsyncSession,
+    caller: Caller,
+    entity: McpEntity,
+    record_id: int,
+    before_all: dict[str, Any],
+    fields: dict[str, Any],
+) -> str:
+    """update's save, from the record as read (`before_all`): validated as
+    the API's PATCH, saved by the entity's function, audited."""
+    assert entity.update is not None and entity.update_schema is not None
     payload = _validate(entity.update_schema, fields, entity.script_only)
     try:
         updated = await entity.update(session, caller.user, record_id, payload)
@@ -355,6 +390,7 @@ async def tool_update(session: AsyncSession, caller: Caller, args: dict[str, Any
     await session.refresh(caller.user)
     after_all = _dump(entity, updated)
     changed = [key for key in after_all if after_all[key] != before_all.get(key)]
+    _shown(entity)
     text = await _render(session, caller.user, entity, after_all)
     await _audit(
         session,
@@ -369,12 +405,55 @@ async def tool_update(session: AsyncSession, caller: Caller, args: dict[str, Any
     return f"Updated {entity.singular} {_address(entity, record_id)}. {summary}\n\n{text}"
 
 
+async def tool_edit_text(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
+    """One long text changed in part: `old` replaced by `new` (old found
+    exactly once), or `append` added on a new line after the text."""
+    entity, record_id = _parse_address(args.get("url"))
+    name = args.get("field")
+    if not entity.text_edits or entity.update is None:
+        raise ToolError(f"{entity.name} has no text edit_text can change.")
+    if not isinstance(name, str) or name not in entity.text_edits:
+        raise ToolError(f"field must be one of: {', '.join(entity.text_edits)}.")
+    old, new, append = args.get("old"), args.get("new"), args.get("append")
+    replacing = old is not None or new is not None
+    if replacing == (append is not None):
+        raise ToolError("Give either old and new (to replace a passage) or append (to add to the end), not both.")
+    record = await _record(session, caller.user, entity, record_id)
+    before_all = _dump(entity, record)
+    current = before_all.get(name) or ""
+    if not isinstance(current, str):
+        raise ToolError(f"{name} isn't text.")
+    if replacing:
+        if not isinstance(old, str) or not old:
+            raise ToolError("old must be the exact text to replace, as fetch shows it.")
+        if not isinstance(new, str):
+            raise ToolError("new must be text (empty to remove the passage).")
+        found = current.count(old)
+        if found == 0:
+            raise ToolError(
+                f"Nothing was saved: old wasn't found in {name}. It must match the current text exactly, "
+                "spaces and line breaks included; fetch the record to see it."
+            )
+        if found > 1:
+            raise ToolError(
+                f"Nothing was saved: old is in {name} {found} times. Give more of the text around it, "
+                "so it matches once."
+            )
+        text = current.replace(old, new, 1)
+    else:
+        if not isinstance(append, str) or not append:
+            raise ToolError("append must be the text to add.")
+        text = append if not current else current + ("" if current.endswith("\n") else "\n") + append
+    return await _save_update(session, caller, entity, record_id, before_all, {name: text})
+
+
 async def tool_delete(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
     entity, record_id = _parse_address(args.get("url"))
     if entity.delete is None or entity.restore is None:
         raise ToolError(f"{entity.name} can't be deleted through MCP.")
     record = await _record(session, caller.user, entity, record_id)
     whole = _dump(entity, record)
+    _shown(entity)
     await entity.delete(session, caller.user, record_id)
     await session.refresh(caller.user)
     await _audit(session, caller, "delete", entity, record_id, whole, whole)
@@ -397,6 +476,7 @@ async def tool_restore(session: AsyncSession, caller: Caller, args: dict[str, An
         raise ToolError(f"No deleted {entity.singular} at {_address(entity, record_id)}.") from exc
     await session.refresh(caller.user)
     data = _dump(entity, restored)
+    _shown(entity)
     text = await _render(session, caller.user, entity, data)
     await _audit(session, caller, "restore", entity, record_id, data, data)
     return f"Restored {entity.singular} {_address(entity, record_id)}.\n\n{text}"
@@ -439,6 +519,11 @@ def _describe_fields(schema: type[BaseModel], only_required: bool, script_only: 
     return "; ".join(parts)
 
 
+def _about(entities: list[McpEntity]) -> str:
+    """The entities' own descriptions (McpEntity.description), a sentence each."""
+    return " ".join(f"{e.name}: {e.description.strip().rstrip('.')}." for e in entities if e.description.strip())
+
+
 def _search_definition(names: list[str], read_only: dict[str, Any]) -> dict[str, Any]:
     """search, with a `group` argument when any entity has a group."""
     description = "Find records whose title contains some text, across every entity: " + ", ".join(names) + "."
@@ -453,7 +538,7 @@ def _search_definition(names: list[str], read_only: dict[str, Any]) -> dict[str,
     return {
         "name": "search",
         "title": "Search records",
-        "description": description,
+        "description": f"{description} {_about(list(ENTITIES.values()))}".strip(),
         "inputSchema": {"type": "object", "properties": properties, "required": ["query"]},
         "annotations": {**read_only, "title": "Search records"},
     }
@@ -465,6 +550,7 @@ def tool_definitions() -> list[dict[str, Any]]:
     changeable = [e for e in ENTITIES.values() if e.update is not None and e.update_schema is not None]
     deletable = [e for e in ENTITIES.values() if e.delete is not None and e.restore is not None]
     filterable = [e for e in ENTITIES.values() if e.filters is not None]
+    editable = [e for e in changeable if e.text_edits]
     read_only = {"readOnlyHint": True, "openWorldHint": False}
     write = {"readOnlyHint": False, "destructiveHint": False, "openWorldHint": False}
     tools: list[dict[str, Any]] = [
@@ -488,6 +574,8 @@ def tool_definitions() -> list[dict[str, Any]]:
             "title": "List records",
             "description": (
                 "Page through one entity's records, optionally filtered, sorted and searched by title. "
+                + _about(list(ENTITIES.values()))
+                + " "
                 + " ".join(
                     f"{e.name} filters: {_describe_fields(e.filters, True)}." for e in filterable if e.filters is not None
                 )
@@ -517,6 +605,8 @@ def tool_definitions() -> list[dict[str, Any]]:
                 "description": (
                     "Create a record, checked exactly as the app's own form is. If a field is refused the "
                     "answer says which and why; nothing is saved. "
+                    + _about(creatable)
+                    + " "
                     + " ".join(
                         f"{e.name}: {_describe_fields(e.create_schema, False, e.script_only)}."
                         for e in creatable
@@ -542,6 +632,7 @@ def tool_definitions() -> list[dict[str, Any]]:
                 "description": (
                     "Change some fields of a record; fields left out keep their value. Checked as the app's "
                     "own form is. "
+                    + ("To change part of a long text, use edit_text instead. " if editable else "")
                     + " ".join(
                         f"{e.name}: {_describe_fields(e.update_schema, True, e.script_only)}."
                         for e in changeable
@@ -557,6 +648,36 @@ def tool_definitions() -> list[dict[str, Any]]:
                     "required": ["url", "fields"],
                 },
                 "annotations": {**write, "idempotentHint": True, "title": "Change a record"},
+            }
+        )
+    if editable:
+        texts = "; ".join(f"{e.name}: {', '.join(e.text_edits)}" for e in editable)
+        tools.append(
+            {
+                "name": "edit_text",
+                "title": "Edit a long text",
+                "description": (
+                    "Change part of a record's long text without sending all of it: replace one passage "
+                    "(old, exactly as fetch shows it and found only once, with new), or append text on a new "
+                    "line after the end (start it with a blank line for a new paragraph). Checked and saved "
+                    "as update is. Texts: " + texts + "."
+                ),
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "url": {"type": "string", "description": f"The record's address ({_address_forms()})."},
+                        "field": {
+                            "type": "string",
+                            "enum": list(dict.fromkeys(name for e in editable for name in e.text_edits)),
+                            "description": "The text to change.",
+                        },
+                        "old": {"type": "string", "description": "The passage to replace, found exactly once."},
+                        "new": {"type": "string", "description": "What replaces it (empty removes it)."},
+                        "append": {"type": "string", "description": "Text to add after the end, instead of old and new."},
+                    },
+                    "required": ["url", "field"],
+                },
+                "annotations": {**write, "idempotentHint": False, "title": "Edit a long text"},
             }
         )
     if deletable:
@@ -608,6 +729,7 @@ HANDLERS = {
     "list": tool_list,
     "create": tool_create,
     "update": tool_update,
+    "edit_text": tool_edit_text,
     "delete": tool_delete,
     "restore": tool_restore,
 }
@@ -618,5 +740,38 @@ async def call_tool(session: AsyncSession, caller: Caller, name: str, args: dict
     handler = HANDLERS.get(name)
     if handler is None or name not in {tool["name"] for tool in tool_definitions()}:
         return None
-    text: str = await handler(session, caller, args)
-    return text
+    shown: list[McpEntity] = []
+    token = _SHOWN.set(shown)
+    try:
+        text: str = await handler(session, caller, args)
+    finally:
+        _SHOWN.reset(token)
+    note = await _note(caller, name, args, tuple(shown))
+    return f"{text}\n\n{note}" if note else text
+
+
+async def _note(caller: Caller, name: str, args: dict[str, Any], shown: tuple[McpEntity, ...]) -> str | None:
+    """The app's answer note (register_answer_note), or None. One that
+    raises is reported and left out: the answer stands, and so does
+    whatever the tool saved."""
+    hook = ANSWER_NOTES.note
+    if hook is None:
+        return None
+    try:
+        note = hook(caller, name, args, shown)
+        if inspect.isawaitable(note):
+            note = await note
+    except Exception as exc:
+        report_error(
+            exc,
+            ErrorContext(
+                source="server",
+                route="/mcp",
+                method="POST",
+                status=500,
+                user_id=caller.user_id,
+                tags={"mcp_tool": name, "mcp_answer_note": "failed"},
+            ),
+        )
+        return None
+    return note.strip() or None if isinstance(note, str) else None

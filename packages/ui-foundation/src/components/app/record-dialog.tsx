@@ -27,6 +27,25 @@
 // another page opens the dialog over its own list, at the list's plain
 // address.
 //
+// A list that isn't the record's parent route (`listPath`, 4.71): the
+// list at /things/list, the record at /things/12, siblings. The route the
+// two share wraps them, its `list` drawn at `listPath` (whose own route
+// has no element) and every other child the record:
+//
+//   { path: 'things', element: <RecordDialogRoute list={<ThingsList />} listPath="list" label="Thing" />,
+//     children: [{ path: 'list' }, { path: ':id', element: <ThingView /> }] }
+//
+// Opened from the list, /things/12 is the dialog over /things/list, and
+// closing goes back to it; a deep link is the full page, as above.
+//
+// A sub-record over its parent's page (4.71) is the same route one level
+// down: the parent's page is the `list`, the sub-record its child, and
+// `fullPage={false}`, so a reload of /parents/7/children/31 is the dialog
+// over the parent again:
+//
+//   { path: 'parents/:id', element: <RecordDialogRoute list={<ParentView />} label="Document" fullPage={false} />,
+//     children: [{ path: 'children/:childId', element: <ChildView /> }] }
+//
 // Inside, the record's route renders as it always does. EntityView sees
 // the dialog (useRecordDialog): its heading names the dialog, its back link
 // gives way to the dialog's own bar, and not found's way out closes the
@@ -65,22 +84,37 @@ export type RecordDialogRouteProps = {
    * over the list. True by default.
    */
   fullPage?: boolean
+  /**
+   * Where the list lives when it isn't this route's own address: a child
+   * route of this one with no element (`'list'` for `/things/list`), or
+   * an absolute path under it. This route's other children are its
+   * records (`/things/12`), drawn over the list when opened from it. Left
+   * out, the list is this route's own address and its children are the
+   * records (the nested pattern).
+   */
+  listPath?: string
 }
 
-export function RecordDialogRoute({ list, label, className, fullPage = true }: RecordDialogRouteProps) {
+// Two paths are the same address, give or take a trailing slash.
+const samePath = (a: string, b: string) => a.replace(/\/+$/, '') === b.replace(/\/+$/, '')
+
+export function RecordDialogRoute({ list, label, className, fullPage = true, listPath: listAt }: RecordDialogRouteProps) {
   const location = useLocation()
   const navigationType = useNavigationType()
   const navigate = useNavigate()
-  const outlet = useOutlet()
+  const childOutlet = useOutlet()
   const titleId = useId()
-  const listPath = useResolvedPath('.').pathname
+  const listPath = useResolvedPath(listAt ?? '.').pathname
+  // With `listPath`, its own (element-less) child is the list, not a record.
+  const atList = listAt !== undefined && samePath(location.pathname, listPath)
+  const outlet = atList ? null : childOutlet
   const opened = backgroundOf(location.state)
   // Over its own list only: opened from anywhere else, the list under it
   // would be a page the user wasn't on.
   // With no full page, a record opened any other way is the dialog over
   // the list's plain address, with nothing to go back over.
   const background =
-    opened && opened.pathname === listPath
+    opened && samePath(opened.pathname, listPath)
       ? opened
       : !fullPage && outlet !== null
         ? { pathname: listPath, search: '', hash: '', depth: 0 }
@@ -108,6 +142,9 @@ export function RecordDialogRoute({ list, label, className, fullPage = true }: R
 
   // The record's full page: a deep link, or "Open full page".
   if (outlet !== null && !open) return outlet
+  // `listPath` given and this route's own address (no index route): there
+  // is no list here to draw.
+  if (listAt !== undefined && outlet === null && !atList) return null
 
   return (
     <>

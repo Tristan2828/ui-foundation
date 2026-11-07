@@ -3,25 +3,26 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 40–62
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 64–755
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 106–113
-  - Step 2: `npm run gen:api` · lines 114–115
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 116–127
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 128–137
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 138–142
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 143–644
-  - Step 7: Register routes · lines 645–658
-  - Step 8: Add Playwright specs for all three screens · lines 659–737
-  - Step 9: Register the nav entry and route names · lines 738–752
-  - Step 10: `npm run verify`. · lines 753–755
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 757–860
-  - [The record view](#the-record-view) · lines 835–860
-- [What not to copy](#what-not-to-copy) · lines 862–888
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 890–907
-- [Deleting](#deleting) · lines 909–938
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 940–961
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 963–972
+- [The reference files](#the-reference-files) · lines 41–63
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–758
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
+  - Step 2: `npm run gen:api` · lines 115–116
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–645
+  - Step 7: Register routes · lines 646–661
+  - Step 8: Add Playwright specs for all three screens · lines 662–740
+  - Step 9: Register the nav entry and route names · lines 741–755
+  - Step 10: `npm run verify`. · lines 756–758
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 760–898
+  - [The record view](#the-record-view) · lines 873–898
+- [What not to copy](#what-not-to-copy) · lines 900–926
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 928–945
+- [Deleting](#deleting) · lines 947–976
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 978–999
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1001–1010
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1013–1052
 
 <!-- /index -->
 
@@ -655,7 +656,9 @@ is a filled-in example while the Widgets demo is still here).
    it shows under the module while you're in it.
    If the plan says records **open in a dialog** over the list (`opens`
    kind `dialog` or `dialog-only`), the view's route is the list route's
-   child instead: see [How a list opens a record](#how-a-list-opens-a-record).
+   child instead (or, for a list at `/<entity>/list`, its sibling under
+   `listPath`; a sub-record opens over its parent's page the same way):
+   see [How a list opens a record](#how-a-list-opens-a-record).
 8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the
@@ -793,6 +796,41 @@ plan allows it.
 
 // A list that isn't a DataTable (a board's cards): a link that opens over it.
 <Board renderCard={(item) => <RecordLink to={`/<entity>/${item.id}`}>{item.name}</RecordLink>} … />
+```
+
+**A list that isn't the record's parent route** (4.71: the list at
+`/<entity>/list`, the record at `/<entity>/:id`): the route the two share
+wraps them, with `listPath`. The list's own route has no element (the
+`list` prop draws it), and every other child is a record. Opened from
+the list, the record is the dialog over it; closing goes back to
+`/<entity>/list`; a deep link is the full page, as above.
+
+```tsx
+{
+  path: '<entity>',
+  element: <RecordDialogRoute list={<<Entity>sTableRoute />} listPath="list" label="<Entity>" />,
+  children: [{ path: 'list' }, { path: ':id', element: <<Entity>ViewRoute /> }],
+},
+```
+
+**A sub-record over its parent's page** (4.71: a parent's documents,
+`/<parents>/7/<children>/31`): the same dialog one level down. The
+parent's page is the `list`, the sub-record its child, and
+`fullPage={false}`, so a reload of the sub-record's address is the dialog
+over the parent again. The parent's table of sub-records says
+`` opens={{ kind: 'dialog-only', to: (row) => `/<parents>/${row.parentId}/<children>/${row.id}` }} ``,
+and the sub-record's view is its ordinary `EntityView` (`back` to the
+parent). Keep the parent's other routes (its `edit`) siblings of
+`<parents>/:id`, not its children: every child of the route is drawn in
+the dialog.
+
+```tsx
+{
+  path: '<parents>/:id',
+  element: <RecordDialogRoute list={<<Parent>ViewRoute />} label="<Child>" fullPage={false} />,
+  children: [{ path: '<children>/:childId', element: <<Child>ViewRoute /> }],
+},
+{ path: '<parents>/:id/edit', element: <<Parent>FormRoute /> },   // a sibling, not a child
 ```
 
 - **The row opens it**: a click on the row, Enter on it, ↑/↓ between
@@ -970,3 +1008,45 @@ question isn't handed purchases and comics too. The tool's description
 lists each group's entities, and `group` is offered only when some entity
 has one; an unknown group is a refusal naming the ones there are. An
 entity with no group is searched only when no group is given.
+
+
+## What a chat is told about an entity
+
+Four more things an app sets for AI chats (4.71), each in
+`backend/app/mcp_entities.py`:
+
+- **`description`** on the `McpEntity`: what the entity is, in a sentence
+  (`description="A purchase: what was bought, where and for how much"`).
+  It's shown beside the entity's name in the `search`, `list` and
+  `create` tools, so a chat picks the right one.
+- **`text_edits`**: the wire names of its long-text fields (notes, a body)
+  that a chat changes in part with the `edit_text` tool
+  (`text_edits=("notes",)`): `old` and `new` replace one passage, which
+  must be found exactly once (missing, or found twice, is a refusal that
+  says so and saves nothing), or `append` adds text on a new line at the
+  end. It saves and logs as `update` does, so a long note isn't sent back
+  whole to change a line. Each must be a text field of `update_schema`
+  and not `script_only`; the backend refuses to start otherwise.
+- **The server's instructions** a chat gets when it connects:
+  `register_entities(ENTITIES, instructions="…")` (or
+  `register_instructions("…")`) adds the app's own words after the
+  built-in ones; `register_instructions("…", replace=True)` sends only
+  the app's. The built-in ones are written from the entities: which can
+  be deleted (soft only, with restore; "Nothing can be deleted" only when
+  none can) and which texts `edit_text` changes.
+- **An answer note**, `register_answer_note(note)`: a function given the
+  caller, the tool's name, its arguments and the entities whose records
+  the answer shows, which returns text appended to the answer after a
+  blank line, or `None`. Plain or async. It runs after every answer (not
+  a refusal); one that raises is reported and left out, and the answer
+  stands.
+
+```python
+def note(caller, tool, arguments, entities):
+    if any(e.group == "health" for e in entities):
+        return "Health records are the person's own notes, not medical advice."
+    return None
+
+register_entities(ENTITIES, instructions="Amounts are in the account's currency.")
+register_answer_note(note)
+```

@@ -120,6 +120,10 @@ ENTITIES: dict[str, McpEntity] = {
             update=_update_widget,
             delete=_delete_widget,
             restore=_restore_widget,
+            # Shown beside the entity's name in the tools (4.71).
+            description="A thing in the catalogue: its status, price, category and tags",
+            # A chat changes part of the description (edit_text) instead of resending it.
+            text_edits=("description",),
         ),
         McpEntity(
             name="widget-categories",

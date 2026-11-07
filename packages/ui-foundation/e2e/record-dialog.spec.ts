@@ -199,3 +199,75 @@ test('a dialog only record opened from another page opens over its list', async 
   await expect(address(page)).toHaveText('/projects')
   await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible()
 })
+
+// `listPath`: the list at /projects/list, the record a sibling at /projects/:id.
+test('a list at its own path opens the record over it, and closing goes back to the list', async ({ page }) => {
+  await page.goto(story('list-at-its-own-path'))
+  await expect(address(page)).toHaveText('/projects/list')
+  await page.getByRole('textbox', { name: 'Search projects' }).fill('fence')
+  await openFromRow(page, 'Repaint the fence')
+  await expect(address(page)).toHaveText('/projects/1')
+  await expect(page.getByRole('dialog', { name: 'Repaint the fence' })).toBeVisible()
+  // The list is still drawn behind it, at its own address and filter.
+  await expect(page.getByTestId('list-at')).toHaveText('/projects/list')
+  await expect(page.getByRole('textbox', { name: 'Search projects', includeHidden: true })).toHaveValue('fence')
+
+  await page.keyboard.press('Escape')
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects/list?q=fence')
+  await expect(page.getByRole('textbox', { name: 'Search projects' })).toHaveValue('fence')
+
+  await openFromRow(page, 'Repaint the fence')
+  await dialog(page).getByRole('button', { name: 'Close' }).click()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects/list?q=fence')
+})
+
+test('a list at its own path: Back closes the dialog, Open full page gives the page', async ({ page }) => {
+  await page.goto(story('list-at-its-own-path-open'))
+  await expect(page.getByRole('dialog', { name: 'Repaint the fence' })).toBeVisible()
+  await back(page)
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects/list?q=re')
+
+  await page.goto(story('list-at-its-own-path-open'))
+  await dialog(page).getByRole('link', { name: 'Open full page' }).click()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects/1')
+  await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects/list')
+})
+
+test('a list at its own path: a deep link to the record is its full page', async ({ page }) => {
+  await page.goto(story('list-at-its-own-path-deep-link'))
+  await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toHaveCount(0)
+})
+
+// A sub-record over its parent's page: /projects/1/tasks/12 over /projects/1.
+test("a sub-record opens over its parent's page, at its own address, and Esc goes back to the parent", async ({ page }) => {
+  await page.goto(story('sub-records'))
+  await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+  await openFromRow(page, 'Buy the paint')
+  await expect(address(page)).toHaveText('/projects/1/tasks/12')
+  await expect(page.getByRole('dialog', { name: 'Buy the paint' })).toBeVisible()
+  // No page of its own, so no Open full page; the parent stays behind it.
+  await expect(dialog(page).getByRole('link', { name: 'Open full page' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence', includeHidden: true })).toHaveCount(1)
+
+  await page.keyboard.press('Escape')
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects/1')
+  await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+})
+
+test("a reload of a sub-record's address is the dialog over its parent again", async ({ page }) => {
+  await page.goto(story('sub-record-deep-link'))
+  await expect(page.getByRole('dialog', { name: 'Buy the paint' })).toBeVisible()
+  await expect(address(page)).toHaveText('/projects/1/tasks/12')
+  await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence', includeHidden: true })).toHaveCount(1)
+  await dialog(page).getByRole('button', { name: 'Close' }).click()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects/1')
+  await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+})
