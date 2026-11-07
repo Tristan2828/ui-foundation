@@ -4,6 +4,7 @@
 // editable-value.tsx, and a list's in editable-list.tsx. Design language:
 // cell-patterns.md "Editable value" and "Editable list".
 import { createContext, type ReactNode } from 'react'
+import type { FieldValues, UseFormReturn } from 'react-hook-form'
 import type { EditInPlaceStore } from './edit-in-place-store'
 
 /** What an editable value's control is given. Spread what applies onto the form's own control. */
@@ -35,6 +36,12 @@ export type EditControlProps<TDraft> = {
    * Give it to RichTextEditor's `inline` (with `toolbar="floating"`).
    */
   inline?: boolean
+  /**
+   * A refusal's messages about the value's own fields (`fieldErrors`),
+   * keyed by each field's path inside the value (`text`, `effort`). Show
+   * each on its field (`aria-invalid`, the message under it).
+   */
+  errors?: Readonly<Record<string, string>>
 }
 
 /**
@@ -53,7 +60,7 @@ type SafeParseResult<TValue> =
   | { success: true; data: TValue }
   | { success: false; error: { issues: readonly { message: string; path?: readonly PropertyKey[] }[] } }
 
-/** A field marked editable. Make one with `editInPlace({...})`. */
+/** A field marked editable. Make one with `editInPlace({...})`, or a ready-made one with `inPlace`. */
 export type EditInPlace = {
   kind: EditKind
   value: unknown
@@ -64,6 +71,9 @@ export type EditInPlace = {
   autosave?: boolean
   alwaysEditable?: boolean
   inline?: boolean
+  shown?: ReactNode
+  fieldErrors?: (cause: unknown) => Record<string, string> | null
+  errorsOnFields?: boolean
 }
 
 export type EditInPlaceOptions<TDraft, TValue> = {
@@ -112,6 +122,24 @@ export type EditInPlaceOptions<TDraft, TValue> = {
    * shows the editor's `placeholder`, not the view's "Not set".
    */
   inline?: boolean
+  /**
+   * How the value reads at rest, for a field that gives no `value` of its
+   * own (EntityView's field, EditableValue's children). The `inPlace`
+   * presets set it. `null` reads as the field's "Not set".
+   */
+  shown?: ReactNode
+  /**
+   * Which of the value's own fields a refusal is about, for a value made of
+   * several (a pair saved as one): given the schema's error (`{ issues }`)
+   * or the save's rejection (the AppError), each field's message keyed by
+   * its path inside the value. The control gets them as `errors`.
+   */
+  fieldErrors?: (cause: unknown) => Record<string, string> | null
+  /**
+   * The control shows `errors` on its own fields, so a refusal about one
+   * of them isn't repeated under the control; one about none still shows there.
+   */
+  errorsOnFields?: boolean
 }
 
 /** What a list item's fields are given while it's edited: a control's props, plus where the item is. */
@@ -120,6 +148,16 @@ export type EditListItemProps<TItem> = EditControlProps<TItem> & {
   index: number
   /** The item being added at the end, not one already in the list. */
   isNew: boolean
+  /**
+   * With the list's `itemForm`: a react-hook-form form holding the list
+   * under its `name`, the draft at `index`, so the form's own row works
+   * here unchanged (`form.register('checklist.2.text')` for item 2, a
+   * `Controller` on `form.control`, its errors in `form.formState.errors`).
+   * Every change to it is the item's draft.
+   */
+  form?: UseFormReturn<FieldValues>
+  /** With `groupBy`: the group the item being added goes in (what its "Add" was under). */
+  group?: string
 }
 
 /** What a list's own `add` is given: how to put new items at the end, saved as the list's other changes are. */
@@ -162,8 +200,12 @@ export type EditInPlaceListOptions<TItem> = {
   renderItem: (props: EditListItemProps<TItem>) => ReactNode
   /** How the item reads when it isn't being edited. Its own controls (a done box) keep working. */
   renderShown: (item: TItem, index: number) => ReactNode
-  /** A blank item, what "Add" starts from. Not needed with `add`; one or the other is. */
-  newItem?: () => TItem
+  /**
+   * A blank item, what "Add" starts from. Not needed with `add`; one or
+   * the other is. With `groupBy`, each group has its own Add, given that
+   * group's key (`(room) => ({ text: '', room })`).
+   */
+  newItem?: (group?: string) => TItem
   /**
    * In place of "Add" and its blank item: what adds items, such as a file
    * upload or a picker, e.g. a button that uploads, then calls
@@ -189,15 +231,69 @@ export type EditInPlaceListOptions<TItem> = {
    * Rejects with the AppError; a 422's message shows where the change was made.
    */
   save: (change: (current: TItem[]) => TItem[]) => Promise<unknown>
+  /**
+   * Shows the items under headings, by one of their fields (a room, a
+   * day): each group its own list with its own move buttons (an item moves
+   * past the group's next item, never into another group) and its own Add.
+   * The list still saves as one, in its own order.
+   */
+  groupBy?: {
+    /** The item's group. */
+    key: (item: TItem) => string
+    /** The group's heading. Defaults to its key. */
+    label?: (key: string) => string
+    /**
+     * The groups in this order, each shown even with no items (so its Add
+     * is there). Groups not named follow, in the order their first item comes.
+     */
+    order?: readonly string[]
+  }
+  /**
+   * Shows only the items this keeps (the view's filter, a pill's value).
+   * The others stay in the list as they are: a move passes over them, a
+   * save keeps them. A new item that this drops goes out of sight once saved.
+   */
+  filter?: (item: TItem, index: number) => boolean
+  /**
+   * Puts a Duplicate button beside Remove ("Duplicate item 2"), as on the
+   * form's ListEditor: the copy this makes of an item goes right after it,
+   * saved as a move is. Leave out what a copy mustn't share (a saved id).
+   */
+  duplicate?: (item: TItem) => TItem
+  /**
+   * The list's field name on the record (`checklist`). A refusal from the
+   * server about an item's field (a 422 at `checklist.2.text`) is then
+   * given to that item's row as `errors.text`. Needed by `itemForm`.
+   */
+  name?: string
+  /**
+   * The row shows `props.errors` on its own fields (the schema's and the
+   * server's), so they aren't repeated under the row; a message about no
+   * one field still shows there. Implied by `itemForm`.
+   */
+  errorsOnFields?: boolean
+  /**
+   * The row is the form's react-hook-form row: `renderItem` gets `form`, a
+   * form of the list under `name`, so the row registers its fields as on
+   * the form and shows their errors (the schema's and a 422's, set on it
+   * with `setError`) as the form does. No form of the app's own per item.
+   */
+  itemForm?: boolean
 }
 
 /** A list marked editable in place. Make one with `editInPlace({ kind: 'list', ... })`. */
-export type EditInPlaceList = Omit<EditInPlaceListOptions<unknown>, 'renderItem' | 'renderShown' | 'schema' | 'save' | 'add'> & {
+export type EditInPlaceList = Omit<
+  EditInPlaceListOptions<unknown>,
+  'renderItem' | 'renderShown' | 'schema' | 'save' | 'add' | 'groupBy' | 'filter' | 'duplicate'
+> & {
   add?: (props: EditListAddProps<unknown>) => ReactNode
   renderItem: (props: EditListItemProps<unknown>) => ReactNode
   renderShown: (item: unknown, index: number) => ReactNode
   schema?: { safeParse: (value: unknown) => SafeParseResult<unknown[]> }
   save: (change: (current: unknown[]) => unknown[]) => Promise<unknown>
+  groupBy?: { key: (item: unknown) => string; label?: (key: string) => string; order?: readonly string[] }
+  filter?: (item: unknown, index: number) => boolean
+  duplicate?: (item: unknown) => unknown
 }
 
 /** Marks a list editable in place: its items added, edited, removed and moved on the view. */

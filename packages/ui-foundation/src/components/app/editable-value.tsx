@@ -59,8 +59,8 @@ export type EditableValueProps = {
   /** The field's label: the control's accessible name, and the edit button's ("Edit Name"). */
   label: string
   edit: EditInPlace
-  /** The value as the view shows it. */
-  children: ReactNode
+  /** The value as the view shows it. Defaults to the edit's `shown` (an `inPlace` preset's). */
+  children?: ReactNode
   /** `inline` in a heading or beside badges, `block` in a field row (default). */
   layout?: 'inline' | 'block'
   className?: string
@@ -273,7 +273,7 @@ export function EditableField({
         {/* Muted text (a "Not set", a placeholder) reads as foreground on
             the hover and focus background: muted on bg-muted is under 4.5:1. */}
         <span className="min-w-0 flex-1 group-hover/editable:[&_.text-muted-foreground]:text-foreground group-has-[[data-edit]:focus-visible]/editable:[&_.text-muted-foreground]:text-foreground">
-          {children}
+          {children !== undefined ? children : edit.shown}
         </span>
         <Button
           ref={editButton}
@@ -295,6 +295,10 @@ export function EditableField({
   const open = state.status === 'closed' ? { status: 'open' as const, draft: edit.value, error: null, autosave: undefined, revision: 0 } : state
   const saving = open.status === 'saving'
   const autosaving = open.autosave === 'saving'
+  const fieldErrors = 'fieldErrors' in open ? (open.fieldErrors ?? undefined) : undefined
+  // A refusal about one of the value's own fields shows on that field when
+  // the control says it shows them; anything else shows under the control.
+  const lineError = edit.errorsOnFields && fieldErrors ? null : open.error
   return (
     <span
       ref={container}
@@ -319,6 +323,7 @@ export function EditableField({
         describedBy={describedBy}
         onProblem={(problem) => store.report(key, problem)}
         inline={Boolean(edit.inline)}
+        errors={saving ? undefined : fieldErrors}
       />
       <span id={describedBy} className="type-body">
         {autosave ? (
@@ -326,7 +331,7 @@ export function EditableField({
           // "Saving…" while a save is in flight, "Saved" once nothing typed
           // is waiting, and a refusal's reason above it.
           <>
-            {open.error && <FieldError className="type-caption">{open.error}</FieldError>}
+            {lineError && <FieldError className="type-caption">{lineError}</FieldError>}
             <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
               {autosaving ? (
                 <>
@@ -350,7 +355,7 @@ export function EditableField({
             Saving…
           </span>
         ) : (
-          open.error && <FieldError className="type-caption">{open.error}</FieldError>
+          lineError && <FieldError className="type-caption">{lineError}</FieldError>
         )}
       </span>
     </span>

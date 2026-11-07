@@ -15,7 +15,7 @@ import type { ReactNode } from 'react'
 import { ExternalLinkIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { linkHref, linkRefusal } from '@/lib/link-href'
+import { linkHref, linkRule } from '@/lib/link-href'
 import { editInPlace, type EditInPlaceOptions } from './edit-in-place'
 import { EditableValue } from './editable-value'
 
@@ -153,18 +153,27 @@ export type LinkCellProps = {
 
 // A web or email address (`example.com` gains https://), blank for none.
 // Another scheme (`javascript:`) or a space inside the address is refused
-// before anything is sent.
-const LINK_RULE: Schema<string | null> = {
-  safeParse: (value: unknown) => {
-    const typed = String(value ?? '')
-    const href = linkHref(typed)
-    if (href === '') return { success: true, data: null }
-    if (href === null) {
-      const message = linkRefusal(typed) === 'whitespace' ? 'An address has no spaces' : 'Use a web or email address'
-      return { success: false, error: { issues: [{ message }] } }
-    }
-    return { success: true, data: href }
-  },
+// before anything is sent: `linkRule`, shared with `inPlace.link`.
+const LINK_RULE: Schema<string | null> = linkRule
+
+/**
+ * A link out of the app as LinkCell shows one at rest: the link tone,
+ * underlined, an external-link mark, opening in a new tab (said to a
+ * screen reader). `href` must be one `linkHref` returned.
+ */
+export function LinkOut({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-sm text-link underline underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      {children}
+      <ExternalLinkIcon aria-hidden="true" className="ml-0.5 inline size-3 align-baseline" />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  )
 }
 
 function shownLinkText(href: string, linkText: LinkCellProps['linkText']) {
@@ -206,16 +215,7 @@ export function LinkCell({ label, value, save, linkText, emptyLabel = 'Not set',
       {!value ? (
         <span className="text-muted-foreground">{emptyLabel}</span>
       ) : href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-sm text-link underline underline-offset-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          {shownLinkText(href, linkText)}
-          <ExternalLinkIcon aria-hidden="true" className="ml-0.5 inline size-3 align-baseline" />
-          <span className="sr-only"> (opens in a new tab)</span>
-        </a>
+        <LinkOut href={href}>{shownLinkText(href, linkText)}</LinkOut>
       ) : (
         value
       )}

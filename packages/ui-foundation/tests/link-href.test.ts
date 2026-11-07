@@ -1,7 +1,7 @@
 // linkHref (src/lib/link-href.ts): the address a link in the rich-text
 // editor gets from what was typed.
 import { describe, expect, it } from 'vitest'
-import { linkHref, linkRefusal } from '../src/lib/link-href'
+import { linkHost, linkHref, linkRefusal, linkRule } from '../src/lib/link-href'
 
 describe('linkHref', () => {
   it('keeps a web, email or phone address as typed', () => {
@@ -64,5 +64,22 @@ describe('linkHref', () => {
 
   it('reads empty as "remove the link"', () => {
     expect(linkHref('   ')).toBe('')
+  })
+})
+
+describe('linkRule and linkHost (LinkCell, inPlace.link)', () => {
+  it('saves what linkHref keeps, null for a blank box, and says why it refuses', () => {
+    expect(linkRule.safeParse('example.com')).toEqual({ success: true, data: 'https://example.com' })
+    expect(linkRule.safeParse('  ')).toEqual({ success: true, data: null })
+    expect(linkRule.safeParse(null)).toEqual({ success: true, data: null })
+    expect(linkRule.safeParse('javascript:alert(1)')).toEqual({ success: false, error: { issues: [{ message: 'Use a web or email address' }] } })
+    expect(linkRule.safeParse('https://a b')).toEqual({ success: false, error: { issues: [{ message: 'An address has no spaces' }] } })
+  })
+
+  it('names a link by its host, an email link by its address', () => {
+    expect(linkHost('https://docs.example.com/a/b?c=1')).toBe('docs.example.com')
+    expect(linkHost('http://example.com:8080/')).toBe('example.com:8080')
+    expect(linkHost('mailto:me@example.com')).toBe('me@example.com')
+    expect(linkHost('/widgets/3')).toBe('/widgets/3')
   })
 })
