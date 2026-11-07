@@ -616,7 +616,7 @@ rule (`cellColor`, `isHeaderColumn`): <Markdown> through `rehypeTables`
 (cells marked `data-color`, row headers as `<th scope="row">`), the editor
 through decorations. Two looks, `tableLook`: compact (a full grid, the
 header on the heading band; the default) and boxed (roomier, a muted
-header, zebra rows), the same CSS for both renderers.
+header), both with zebra rows, the same CSS for both renderers.
 
 **Shortcuts (3.21)** (`rich-text-shortcuts.ts`) are Notion's where it has
 one: Ctrl+Shift+0 to 6 and 8 turn the line into text, a heading, a list

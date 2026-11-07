@@ -7,6 +7,22 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.67.1 — Zebra rows in compact tables in notes
+
+A fix in the UI package's CSS only; no new dependency, nothing for an app
+to change.
+
+- **Fixed: a table in notes striped only in the boxed look.** Since 4.62.0
+  the compact look (the default, for `<Markdown>` and `RichTextEditor`)
+  put its header row on the heading band and left every body row bare, so
+  only the first row was tinted; before 4.62.0 notes tables were zebra
+  striped like DataTable. Both looks now stripe their body rows with
+  `--table-stripe`. A coloured cell keeps its wash, a row header its muted
+  fill, and a cell picked by dragging in the editor keeps its highlight on
+  a striped row (in boxed too, where the stripe used to cover it).
+- DataTable's stripe is unchanged: it was never affected.
+- An app that styled `.prose-table` rows itself should check its tables.
+
 ## 4.67.0 — Search one group of entities
 
 The backend package only (`ui-foundation-backend`); additive, no new
