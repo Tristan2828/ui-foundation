@@ -3,29 +3,30 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 38–104
-- [Glow](#glow) · lines 106–124
-- [Semantic tones](#semantic-tones) · lines 126–154
-- [The three badge styles](#the-three-badge-styles) · lines 156–173
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 175–204
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 206–219
-- [Logos and brand marks](#logos-and-brand-marks) · lines 221–265
-- [Categorical colour](#categorical-colour) · lines 267–337
-- [Shapes and sizes](#shapes-and-sizes) · lines 339–360
-- [Typography](#typography) · lines 362–456
-  - [Written text (notes)](#written-text-notes) · lines 396–456
-- [Density](#density) · lines 458–544
-  - [Rows on this device](#rows-on-this-device) · lines 517–544
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 546–660
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 662–731
-- [Notices](#notices) · lines 733–761
-- [A value over time](#a-value-over-time) · lines 763–849
-  - [Several values over time](#several-values-over-time) · lines 812–849
-- [A list as a board](#a-list-as-a-board) · lines 851–902
-- [A list as cards](#a-list-as-cards) · lines 904–950
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 952–974
-- [Picking at random](#picking-at-random) · lines 976–1007
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1009–1076
+- [Palettes](#palettes) · lines 39–105
+- [Glow](#glow) · lines 107–125
+- [Semantic tones](#semantic-tones) · lines 127–155
+- [The three badge styles](#the-three-badge-styles) · lines 157–174
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 176–205
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 207–220
+- [Logos and brand marks](#logos-and-brand-marks) · lines 222–266
+- [Categorical colour](#categorical-colour) · lines 268–338
+- [Shapes and sizes](#shapes-and-sizes) · lines 340–361
+- [Typography](#typography) · lines 363–457
+  - [Written text (notes)](#written-text-notes) · lines 397–457
+- [Density](#density) · lines 459–545
+  - [Rows on this device](#rows-on-this-device) · lines 518–545
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 547–661
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 663–732
+- [Notices](#notices) · lines 734–762
+- [A value over time](#a-value-over-time) · lines 764–850
+  - [Several values over time](#several-values-over-time) · lines 813–850
+- [A list as a board](#a-list-as-a-board) · lines 852–903
+- [A list as cards](#a-list-as-cards) · lines 905–951
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 953–975
+- [Picking at random](#picking-at-random) · lines 977–1008
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1010–1077
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1079–1104
 
 <!-- /index -->
 
@@ -1074,3 +1075,30 @@ size"); the list stays where a record is edited one field at a time.
   progress }`) and `getGroup` name a record's source above its heading,
   with that group's own count; with more than one group counted, each
   one's count is listed under the bar.
+
+## Values edited in place: the presets' looks
+
+The `inPlace` presets (cell pattern 18, "Presets") draw a value the same
+way everywhere it's edited in place, so a record's view reads alike
+across apps. Their fixture is `app/EditInPlacePresets`, axe-checked in
+both themes and every palette.
+
+- **Money** reads as the currency formats it, `$1,234.56`, two decimals
+  always; its box has the symbol before it (an `InputGroup` addon in the
+  muted text tone), as `FillInInput`'s money does.
+- **A number with a unit** reads `12 h`, the unit after a space; its box
+  has the unit after it, in the same addon tone.
+- **A date** reads `Sep 2, 2026` (`dateStyle: 'medium'`), never shifted
+  by the time zone.
+- **A select** reads as its option's label, or as the app's `render`
+  (a badge in its tone), the same on the trigger and in the list.
+- **A link** reads as its label, else the address's host, in `--link`,
+  underlined, with the external-link mark: `LinkOut`, LinkCell's look.
+- **Several fields edited as one** read at rest as their values joined
+  by " · " (`Small · Low`). Open, each part has its label over it in
+  `type-caption text-muted-foreground`, and a part's refusal under it in
+  the destructive text tone, as a form field's; the pair's own refusal is
+  under them all.
+- **A list in place under group headings** heads each group in
+  `type-label text-muted-foreground` (an `<h3>` under the section's
+  title), with `gap-4` between groups and the list's own `gap-2` inside.

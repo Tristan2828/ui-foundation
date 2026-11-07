@@ -4,24 +4,24 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 40–62
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 64–749
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 64–755
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 106–113
   - Step 2: `npm run gen:api` · lines 114–115
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 116–127
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 128–137
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 138–142
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 143–638
-  - Step 7: Register routes · lines 639–652
-  - Step 8: Add Playwright specs for all three screens · lines 653–731
-  - Step 9: Register the nav entry and route names · lines 732–746
-  - Step 10: `npm run verify`. · lines 747–749
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 751–854
-  - [The record view](#the-record-view) · lines 829–854
-- [What not to copy](#what-not-to-copy) · lines 856–882
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 884–901
-- [Deleting](#deleting) · lines 903–932
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 934–955
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 957–966
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 143–644
+  - Step 7: Register routes · lines 645–658
+  - Step 8: Add Playwright specs for all three screens · lines 659–737
+  - Step 9: Register the nav entry and route names · lines 738–752
+  - Step 10: `npm run verify`. · lines 753–755
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 757–860
+  - [The record view](#the-record-view) · lines 835–860
+- [What not to copy](#what-not-to-copy) · lines 862–888
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 890–907
+- [Deleting](#deleting) · lines 909–938
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 940–961
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 963–972
 
 <!-- /index -->
 
@@ -546,7 +546,13 @@ is a filled-in example while the Widgets demo is still here).
      ids as a set; a field the plan marks `small` is `MultiPick`, on the
      form too, every option loaded once, and saves each click itself:
      `value` is the record's, `onPick` the single-field save as a
-     function of the record, cell pattern 18 "A small set"). A field gets `edit`, a `content` section gets `edit`,
+     function of the record, cell pattern 18 "A small set"). A plain
+     text, number, money, date, single choice or single reference whose
+     form control is a plain box (no control of the entity's own) can be
+     the package's preset instead, one line with no control to wrap:
+     `{ label, edit: inPlace.money({ value, save }) }` (cell pattern 18,
+     "Presets"); a link with a label is `inPlace.link`, and two fields
+     that must agree are `inPlace.fields` with its `rule`. A field gets `edit`, a `content` section gets `edit`,
      the title gets `titleEdit={{ label, ...edit }}`, and a header badge
      wraps itself in `<EditableValue label edit layout="inline">`. The
      shown value stays exactly as before. A sub-record list the line
