@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.72.0 — Records over any list or parent page; MCP instructions, descriptions, text edits and answer notes
+## 4.71.0 — Records over any list or parent page; MCP instructions, descriptions, text edits and answer notes
 
 Both packages; additive, no new dependency, no migration. An app that
 changes nothing sees one difference: the MCP server's built-in

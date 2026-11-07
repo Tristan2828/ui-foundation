@@ -2,7 +2,7 @@
 
 fetch(url), search(query, group), list(entity, filters), create(entity, fields),
 update(url, fields), edit_text(url, field, old/new or append) for the long
-texts an entity names in `text_edits` (4.72), and, for entities that delete
+texts an entity names in `text_edits` (4.71), and, for entities that delete
 softly only (issue #137), delete(url) and restore(url). Never a delete that can't be undone. Every answer is text a chat can read;
 a refusal (an unknown record, a field the API would reject) is raised as
 `ToolError` and goes back as a tool result marked as an error, with the
@@ -16,7 +16,7 @@ A field the entity marks `script_only` (set by an importer, never a chat) is
 read like any other, but refused by create and update and left out of their
 descriptions.
 
-An app's answer note (`register_answer_note`, 4.72) is appended to every
+An app's answer note (`register_answer_note`, 4.71) is appended to every
 answer, given the entities the answer showed (`_shown`).
 """
 

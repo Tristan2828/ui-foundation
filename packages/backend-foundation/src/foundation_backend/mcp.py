@@ -12,7 +12,7 @@ marked, not removed, and `restore` brings it back. An entity that deletes for
 good gets no delete tool, so a chat that read planted instructions can't
 destroy data a backup alone would return.
 
-Beyond the entities (4.72), an app can add to the server's instructions
+Beyond the entities (4.71), an app can add to the server's instructions
 (`register_instructions`, or `register_entities(..., instructions=...)`)
 and append a note to the tools' answers (`register_answer_note`).
 """
