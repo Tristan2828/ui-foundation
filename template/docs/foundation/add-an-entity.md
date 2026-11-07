@@ -3,24 +3,25 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 39–61
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 63–748
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 105–112
-  - Step 2: `npm run gen:api` · lines 113–114
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 115–126
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 127–136
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 137–141
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 142–637
-  - Step 7: Register routes · lines 638–651
-  - Step 8: Add Playwright specs for all three screens · lines 652–730
-  - Step 9: Register the nav entry and route names · lines 731–745
-  - Step 10: `npm run verify`. · lines 746–748
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 750–853
-  - [The record view](#the-record-view) · lines 828–853
-- [What not to copy](#what-not-to-copy) · lines 855–881
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 883–900
-- [Deleting](#deleting) · lines 902–931
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 933–954
+- [The reference files](#the-reference-files) · lines 40–62
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 64–749
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 106–113
+  - Step 2: `npm run gen:api` · lines 114–115
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 116–127
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 128–137
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 138–142
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 143–638
+  - Step 7: Register routes · lines 639–652
+  - Step 8: Add Playwright specs for all three screens · lines 653–731
+  - Step 9: Register the nav entry and route names · lines 732–746
+  - Step 10: `npm run verify`. · lines 747–749
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 751–854
+  - [The record view](#the-record-view) · lines 829–854
+- [What not to copy](#what-not-to-copy) · lines 856–882
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 884–901
+- [Deleting](#deleting) · lines 903–932
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 934–955
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 957–966
 
 <!-- /index -->
 
@@ -952,3 +953,14 @@ the next run would create the record a second time.
 - Don't use it for a field the server works out itself (`computed`) or
   one that's never on the request: those aren't in the create or update
   schema to begin with.
+
+## Searching one part of the app
+
+An app built of parts (modules, areas) gives each entity's `McpEntity` a
+`group`, the part's name in lowercase words joined by -
+(`group="health"`). `search` then takes an optional `group` and looks only
+in that group's entities, so a chat that searches "band" for a health
+question isn't handed purchases and comics too. The tool's description
+lists each group's entities, and `group` is offered only when some entity
+has one; an unknown group is a refusal naming the ones there are. An
+entity with no group is searched only when no group is given.

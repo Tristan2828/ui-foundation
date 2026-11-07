@@ -1,6 +1,6 @@
 """The MCP tools (issue #132), generated from `ENTITIES` (app/mcp_entities.py).
 
-fetch(url), search(query), list(entity, filters), create(entity, fields),
+fetch(url), search(query, group), list(entity, filters), create(entity, fields),
 update(url, fields), and, for entities that delete softly only (issue #137),
 delete(url) and restore(url). Never a delete that can't be undone. Every answer is text a chat can read;
 a refusal (an unknown record, a field the API would reject) is raised as
@@ -244,13 +244,24 @@ def _list_line(entity: McpEntity, data: dict[str, Any]) -> str:
     return f"- {data[entity.title]} — {_address(entity, data['id'])}{suffix}"
 
 
+def _groups() -> list[str]:
+    """The groups the registered entities name, in their order."""
+    return list(dict.fromkeys(e.group for e in ENTITIES.values() if e.group))
+
+
 async def tool_search(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
     query = args.get("query")
     if not isinstance(query, str) or not query.strip():
         raise ToolError("query must be some text to look for.")
+    group = args.get("group")
+    if group is not None:
+        groups = _groups()
+        if group not in groups:
+            allowed = ", ".join(groups) or "none (no entity has a group)"
+            raise ToolError(f"group must be one of: {allowed}.")
     sections = []
     for entity in ENTITIES.values():
-        if not entity.searchable:
+        if not entity.searchable or (group is not None and entity.group != group):
             continue
         items, total = await entity.list(
             session, caller.user, ListArgs(offset=0, limit=SEARCH_PER_ENTITY, sort=None, search=query.strip(), filters={})
@@ -259,7 +270,10 @@ async def tool_search(session: AsyncSession, caller: Caller, args: dict[str, Any
             more = f" (showing {len(items)} of {total}; use list to see more)" if total > len(items) else ""
             lines = [_list_line(entity, _dump(entity, item)) for item in items]
             sections.append(f"{entity.name}{more}:\n" + "\n".join(lines))
-    return "\n\n".join(sections) if sections else f"Nothing matches {query.strip()!r}."
+    if sections:
+        return "\n\n".join(sections)
+    where = f" in {group}" if group is not None else ""
+    return f"Nothing{where} matches {query.strip()!r}."
 
 
 async def tool_list(session: AsyncSession, caller: Caller, args: dict[str, Any]) -> str:
@@ -425,6 +439,26 @@ def _describe_fields(schema: type[BaseModel], only_required: bool, script_only: 
     return "; ".join(parts)
 
 
+def _search_definition(names: list[str], read_only: dict[str, Any]) -> dict[str, Any]:
+    """search, with a `group` argument when any entity has a group."""
+    description = "Find records whose title contains some text, across every entity: " + ", ".join(names) + "."
+    properties: dict[str, Any] = {"query": {"type": "string", "description": "Text to look for."}}
+    groups = _groups()
+    if groups:
+        in_group = "; ".join(
+            f"{g}: " + ", ".join(e.name for e in ENTITIES.values() if e.group == g and e.searchable) for g in groups
+        )
+        description += f" Give a group to look in its entities only ({in_group})."
+        properties["group"] = {"type": "string", "enum": groups, "description": "Look only in this group's entities."}
+    return {
+        "name": "search",
+        "title": "Search records",
+        "description": description,
+        "inputSchema": {"type": "object", "properties": properties, "required": ["query"]},
+        "annotations": {**read_only, "title": "Search records"},
+    }
+
+
 def tool_definitions() -> list[dict[str, Any]]:
     names = list(ENTITIES)
     creatable = [e for e in ENTITIES.values() if e.create is not None and e.create_schema is not None]
@@ -448,17 +482,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
             "annotations": {**read_only, "title": "Fetch a record"},
         },
-        {
-            "name": "search",
-            "title": "Search records",
-            "description": "Find records whose title contains some text, across every entity: " + ", ".join(names) + ".",
-            "inputSchema": {
-                "type": "object",
-                "properties": {"query": {"type": "string", "description": "Text to look for."}},
-                "required": ["query"],
-            },
-            "annotations": {**read_only, "title": "Search records"},
-        },
+        _search_definition(names, read_only),
         {
             "name": "list",
             "title": "List records",

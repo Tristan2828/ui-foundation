@@ -79,6 +79,11 @@ class McpEntity:
     # an API grouped by module. Empty means /api/<name>. Read only from a
     # pasted address, so a copied request URL works too.
     api_path: str = ""
+    # The part of the app the entity belongs to ("health" for an app built
+    # of modules): `search` takes it as `group`, to look in that group's
+    # entities only. Lowercase words joined by -. Empty means none, and
+    # such an entity is searched only when no group is asked for.
+    group: str = ""
 
     @property
     def page_path(self) -> str:
@@ -90,6 +95,7 @@ class McpEntity:
 
 
 _PATH = re.compile(r"^(/[a-z0-9][a-z0-9-]*)+$")
+_GROUP = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 
 def _check_path(entity: McpEntity, option: str, value: str, example: str) -> None:
@@ -127,7 +133,8 @@ def check_entities(entities: Mapping[str, McpEntity]) -> None:
     a malformed path, two entities with the same page path or API path, a
     page path under /api, which is where the API's form of an address
     starts, or an API path outside it. And a `script_only` name that isn't
-    a field a chat could otherwise write, or that create requires."""
+    a field a chat could otherwise write, or that create requires, and a
+    `group` that isn't lowercase words joined by -."""
     pages: dict[str, str] = {}
     apis: dict[str, str] = {}
     for key, entity in entities.items():
@@ -148,6 +155,10 @@ def check_entities(entities: Mapping[str, McpEntity]) -> None:
             raise ValueError(f"MCP entities {apis[api]!r} and {entity.name!r} share the API address {api}/<id>.")
         apis[api] = entity.name
         _check_script_only(entity)
+        if entity.group and not _GROUP.match(entity.group):
+            raise ValueError(
+                f"MCP entity {entity.name!r}: group {entity.group!r} must be lowercase words joined by - (e.g. health)."
+            )
 
 
 # The registered entities, by name: what the tools offer. One dict for the

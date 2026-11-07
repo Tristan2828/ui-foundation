@@ -7,6 +7,21 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.67.0 — Search one group of entities
+
+The backend package only (`ui-foundation-backend`); additive, no new
+dependency. An app that sets no `group` sees no change.
+
+- **`McpEntity.group`**: the part of the app an entity belongs to
+  (`group="health"`), lowercase words joined by -. The backend refuses to
+  start on one that isn't.
+- **`search` takes an optional `group`** and looks only in that group's
+  entities. It's offered (an `enum` of the groups, and each group's
+  entities in the tool's description) only when some entity has a group.
+  An unknown group is a refusal naming the ones there are; nothing found
+  is "Nothing in <group> matches '<query>'."
+- add-an-entity.md "Searching one part of the app".
+
 ## 4.66.0 — Toggle headings: only the headings you choose fold
 
 A change to what folds, in the UI package only; no new dependency. An

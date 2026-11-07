@@ -173,3 +173,42 @@ async def test_an_error_in_an_entity_is_a_failed_tool_naming_it(session: AsyncSe
     text = answer["result"]["content"][0]["text"]
     assert text == "The fetch tool failed with an error in the app: AttributeError: 'NoteOut' object has no attribute 'shelf'"
     assert len(reported) == 1 and isinstance(reported[0][0], AttributeError) and reported[0][1] == 1
+
+
+TASK = replace(NOTE, name="tasks", singular="task", group="work")
+DIARY = replace(NOTE, name="diary", singular="entry", group="home")
+
+
+async def test_search_looks_in_one_group_when_given_one(session: AsyncSession, caller: Caller) -> None:
+    register_entities({"notes": NOTE, "tasks": TASK, "diary": DIARY})
+    everywhere = await call_tool(session, caller, "search", {"query": "garden"})
+    assert everywhere is not None and {"notes:", "tasks:", "diary:"} <= set(everywhere.splitlines())
+    in_work = await call_tool(session, caller, "search", {"query": "garden", "group": "work"})
+    assert in_work is not None and in_work.splitlines()[0] == "tasks:"
+    assert "notes:" not in in_work and "diary:" not in in_work
+    nothing = await call_tool(session, caller, "search", {"query": "zebra", "group": "home"})
+    assert nothing == "Nothing in home matches 'zebra'."
+
+
+async def test_an_unknown_group_is_a_refusal_naming_the_ones_there_are(session: AsyncSession, caller: Caller) -> None:
+    register_entities({"notes": NOTE, "tasks": TASK, "diary": DIARY})
+    with pytest.raises(ToolError, match="group must be one of: work, home."):
+        await call_tool(session, caller, "search", {"query": "garden", "group": "health"})
+    register_entities({"notes": NOTE})
+    with pytest.raises(ToolError, match="no entity has a group"):
+        await call_tool(session, caller, "search", {"query": "garden", "group": "work"})
+
+
+def test_search_offers_group_only_when_an_entity_has_one() -> None:
+    register_entities({"notes": NOTE})
+    search = next(t for t in tool_definitions() if t["name"] == "search")
+    assert "group" not in search["inputSchema"]["properties"]
+    register_entities({"notes": NOTE, "tasks": TASK, "diary": DIARY})
+    search = next(t for t in tool_definitions() if t["name"] == "search")
+    assert search["inputSchema"]["properties"]["group"]["enum"] == ["work", "home"]
+    assert "(work: tasks; home: diary)" in search["description"]
+
+
+def test_check_entities_refuses_a_group_that_isnt_a_slug() -> None:
+    with pytest.raises(ValueError, match="group 'Health'"):
+        check_entities({"notes": replace(NOTE, group="Health")})
