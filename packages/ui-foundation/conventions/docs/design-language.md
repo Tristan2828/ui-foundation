@@ -3,29 +3,30 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 38–104
-- [Glow](#glow) · lines 106–124
-- [Semantic tones](#semantic-tones) · lines 126–154
-- [The three badge styles](#the-three-badge-styles) · lines 156–173
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 175–204
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 206–219
-- [Logos and brand marks](#logos-and-brand-marks) · lines 221–265
-- [Categorical colour](#categorical-colour) · lines 267–337
-- [Shapes and sizes](#shapes-and-sizes) · lines 339–360
-- [Typography](#typography) · lines 362–456
-  - [Written text (notes)](#written-text-notes) · lines 396–456
-- [Density](#density) · lines 458–544
-  - [Rows on this device](#rows-on-this-device) · lines 517–544
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 546–660
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 662–731
-- [Notices](#notices) · lines 733–761
-- [A value over time](#a-value-over-time) · lines 763–849
-  - [Several values over time](#several-values-over-time) · lines 812–849
-- [A list as a board](#a-list-as-a-board) · lines 851–902
-- [A list as cards](#a-list-as-cards) · lines 904–950
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 952–974
-- [Picking at random](#picking-at-random) · lines 976–1007
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1009–1076
+- [Palettes](#palettes) · lines 39–105
+- [Glow](#glow) · lines 107–125
+- [Semantic tones](#semantic-tones) · lines 127–155
+- [The three badge styles](#the-three-badge-styles) · lines 157–174
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 176–205
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 207–220
+- [Logos and brand marks](#logos-and-brand-marks) · lines 222–266
+- [Categorical colour](#categorical-colour) · lines 268–338
+- [A stored colour](#a-stored-colour) · lines 340–388
+- [Shapes and sizes](#shapes-and-sizes) · lines 390–411
+- [Typography](#typography) · lines 413–507
+  - [Written text (notes)](#written-text-notes) · lines 447–507
+- [Density](#density) · lines 509–595
+  - [Rows on this device](#rows-on-this-device) · lines 568–595
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 597–711
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 713–782
+- [Notices](#notices) · lines 784–812
+- [A value over time](#a-value-over-time) · lines 814–900
+  - [Several values over time](#several-values-over-time) · lines 863–900
+- [A list as a board](#a-list-as-a-board) · lines 902–953
+- [A list as cards](#a-list-as-cards) · lines 955–1001
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1003–1025
+- [Picking at random](#picking-at-random) · lines 1027–1058
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1060–1127
 
 <!-- /index -->
 
@@ -335,6 +336,56 @@ Five things about them:
 If you find yourself wanting a thirteenth, that is a sign the column should
 be showing a shape or a label rather than more colours: there is no more
 room that stays readable.
+
+## A stored colour
+
+A colour the user stored as data (a paint's hex, a label's colour, a
+calendar's colour) is not a design decision, so no token can hold it,
+and the token rule rightly forbids writing a hex into code. Show it with
+**`ColorSwatch`**: a small swatch filled with the stored value, beside its
+name.
+
+```tsx
+import { ColorSwatch } from '@tristan2828/ui-foundation'
+
+<ColorSwatch color={paint.colorHex} label={paint.name} />                  // 16px: a cell, a list, a line of text
+<Badge variant="outline"><ColorSwatch size="sm" color={label.color} label={label.name} /></Badge>  // 12px, a Badge's icon size
+<ColorSwatch color={null} label="No colour" />                             // the empty swatch
+```
+
+- **The value is validated.** Only a hex (`#rgb`, `#rgba`, `#rrggbb`,
+  `#rrggbbaa`, the `#` optional, as some APIs store labels' colours) is
+  painted. Anything else, missing, blank, a typo, a CSS keyword, draws
+  the **empty swatch**: a dashed ring with no fill. `storedColor(value)`
+  is the same check, returning the colour normalised (`'C0392B'` →
+  `'#c0392b'`) or `null`: use it in a form's schema so a bad value never
+  saves. Store colours as hex; another format shows as empty.
+- **The ring is `border-muted-foreground`**, and it is what keeps any
+  stored colour visible: a white on a white card, a near-black in dark
+  mode. It clears the 3:1 non-text minimum against the page, a card, a
+  muted surface, a table row and a Badge's wash, in light, dark and every
+  palette (lowest 3.69:1, light, inside a secondary Badge). `--border`
+  and `--input` don't (2.5 to 2.9:1), so never draw a stored colour with
+  them or with no ring.
+- **Never the colour alone.** The swatch is `aria-hidden`, and `label` is
+  a required string, so a swatch can't be written without its name: the
+  colour's name, or what it labels. Where the record has no name for the
+  colour, the label is the value itself (the hex), or "No colour". A long
+  name stays on one line, cut, its whole text in a tooltip.
+- **The fill is the one colour that isn't a token.** The swatch's
+  `backgroundColor` is an inline style from the prop, which the ESLint
+  token rule allows (it forbids hex *literals* in a `style`). The
+  fixtures' token check exempts exactly that: a swatch's background while
+  it equals its own `data-color`. Nothing else may paint a stored colour,
+  and a stored colour never paints text, a surface or a border: a
+  colour the user picked from a few is a categorical slot (above), not a
+  hex.
+
+The package's fixtures render it (`app/ColorSwatch`: on each surface,
+invalid and missing, in a Badge, in a `DataTable`, a long name, every
+palette side by side), with axe, the token check and the ring's ratio
+measured in light, dark and every palette. Cell pattern 24 is it in a
+column.
 
 ## Shapes and sizes
 

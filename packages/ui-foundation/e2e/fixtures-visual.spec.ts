@@ -69,6 +69,12 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
   { id: 'app-countlink--default', mustShow: 'Move house' },
+  // <ColorSwatch>: a stored colour beside its name, its ring on every surface (Roadmap 17).
+  { id: 'app-colorswatch--default', mustShow: 'On a muted surface' },
+  { id: 'app-colorswatch--invalid-and-missing', mustShow: 'Typed wrong' },
+  { id: 'app-colorswatch--in-a-badge', mustShow: 'secondary' },
+  { id: 'app-colorswatch--in-a-table', mustShow: 'Errands' },
+  { id: 'app-colorswatch--long-name', mustShow: 'A name longer than its column' },
   { id: 'app-emojifield--default', mustShow: 'Routine emoji' },
   { id: 'app-emojifield--open', mustShow: 'Morning and sleep' },
   // <Board>: a list as columns of cards, every app's second view of a list.
@@ -501,7 +507,23 @@ test.describe('semantic tones meet contrast in both themes', () => {
 // modifier is still the token's colour.
 const COLOR_PROPERTIES = ['backgroundColor', 'color', 'borderTopColor', 'fill'] as const
 
+// A colour mid-transition (a button's 120ms hover or focus fill, as a
+// popup opens and moves focus) is a blend of two tokens, which is no token,
+// so the check waits for every transition and animation that ends to end.
+// One that never ends (a spinner, a skeleton's pulse) is left running.
+async function settled(page: import('@playwright/test').Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  )
+}
+
 async function offTokenColors(page: import('@playwright/test').Page) {
+  await settled(page)
   return page.evaluate((properties) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')!
@@ -582,14 +604,32 @@ async function offTokenColors(page: import('@playwright/test').Page) {
       return ['no custom properties found in any stylesheet — the check would be vacuous']
     }
 
+    // A stored colour as the browser computes it, to compare like with like.
+    const storedFill = (value: string) => {
+      const probe = document.createElement('span')
+      probe.style.backgroundColor = value
+      document.body.append(probe)
+      const computed = getComputedStyle(probe).backgroundColor
+      probe.remove()
+      return probe.style.backgroundColor ? computed : null
+    }
+
     const offenders: string[] = []
     const root = document.querySelector('#root')
     if (!root) return ['#root not found — the story did not render']
     for (const element of [root, ...Array.from(root.querySelectorAll('*'))]) {
       const style = getComputedStyle(element as Element)
+      // The one colour that isn't a token: a ColorSwatch's fill, the user's
+      // stored colour (data, not design). Exempt only that element's
+      // background, and only while it is exactly the value it carries in
+      // data-color; its ring and everything around it are still checked.
+      const stored = (element as HTMLElement).matches?.('[data-slot=color-swatch][data-color]')
+        ? storedFill((element as HTMLElement).dataset.color!)
+        : null
       for (const property of properties) {
         const raw = style[property as 'color']
         if (!raw || raw === 'none') continue
+        if (property === 'backgroundColor' && stored !== null && raw === stored) continue
         const rgb = toRgb(raw)
         if (rgb && !allowed.has(rgb)) {
           offenders.push(`<${element.tagName.toLowerCase()}> ${property}: ${raw} -> ${rgb}`)
@@ -776,8 +816,14 @@ test('typography roles resolve to their tokens', async ({ page }) => {
 // contrast ratio. Colours go through the same canvas as the token check,
 // so any colour space resolves; a translucent ink (an opacity modifier) is
 // painted over its background first, so the ratio is of what's on screen.
-async function glyphContrasts(page: import('@playwright/test').Page) {
-  return page.evaluate(() => {
+// `target` measures something other than an icon the same way: a
+// ColorSwatch's ring (its border colour, against what's behind the swatch,
+// since the swatch's own fill is the stored colour).
+type InkTarget = { selector: string; ink: 'color' | 'borderTopColor'; behind: 'self' | 'parent' }
+const GLYPH: InkTarget = { selector: 'svg', ink: 'color', behind: 'self' }
+
+async function glyphContrasts(page: import('@playwright/test').Page, target: InkTarget = GLYPH) {
+  return page.evaluate(({ selector, ink: inkProperty, behind }) => {
     const canvas = document.createElement('canvas')
     canvas.width = 1
     canvas.height = 1
@@ -819,16 +865,16 @@ async function glyphContrasts(page: import('@playwright/test').Page) {
       return ['rgb(255, 255, 255)', ...layers]
     }
     // The page, not only the story's root: a popup is portaled to <body>.
-    const visible = Array.from(document.body.querySelectorAll('svg')).filter((svg) => svg.checkVisibility())
+    const visible = Array.from(document.body.querySelectorAll(selector)).filter((svg) => svg.checkVisibility())
     return visible.map((svg) => {
-      const backgrounds = backgroundsBehind(svg)
-      const ink = getComputedStyle(svg).color
+      const backgrounds = backgroundsBehind(behind === 'parent' ? svg.parentElement! : svg)
+      const ink = getComputedStyle(svg)[inkProperty]
       const [a, b] = [luminance(paint(...backgrounds, ink)), luminance(paint(...backgrounds))]
       const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
       const where = svg.closest('[aria-label]')?.getAttribute('aria-label') ?? svg.closest('li, td, th')?.textContent
       return { glyph: `${svg.getAttribute('class')} in "${where}"`, ratio: Math.round(ratio * 100) / 100 }
     })
-  })
+  }, target)
 }
 
 test.describe('glyphs clear the 3:1 non-text minimum in both themes and each palette', () => {
@@ -851,6 +897,60 @@ test.describe('glyphs clear the 3:1 non-text minimum in both themes and each pal
       })
     }
   }
+})
+
+// A ColorSwatch's ring is what keeps a stored colour visible whatever it is
+// (white on a white card, near-black in dark mode), so it must clear the
+// 3:1 non-text minimum against whatever is behind the swatch: the page, a
+// card, a muted surface, a table row, a Badge's wash, in light, dark and
+// every palette. The fill is the user's data and isn't measured.
+const SWATCH_STORIES = [
+  'app-colorswatch--default',
+  'app-colorswatch--invalid-and-missing',
+  'app-colorswatch--in-a-badge',
+  'app-colorswatch--in-a-table',
+  'app-colorswatch--long-name',
+]
+const SWATCH_RING: InkTarget = { selector: '[data-slot=color-swatch]', ink: 'borderTopColor', behind: 'parent' }
+
+test.describe('a stored colour', () => {
+  for (const id of SWATCH_STORIES) {
+    for (const theme of ['light', 'dark', ...PALETTES] as const) {
+      test(`${id}: the swatch's ring clears 3:1 against what's behind it (${theme})`, async ({ page }) => {
+        if (theme === 'light' || theme === 'dark') {
+          await page.goto(storyUrlById(id, theme))
+          if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+        } else {
+          await page.goto(paletteUrl(id, theme))
+          await expectPalette(page, theme)
+        }
+        await expect(page.locator('[data-slot=color-swatch]').first()).toBeVisible()
+        const rings = await glyphContrasts(page, SWATCH_RING)
+        if (process.env.PRINT_GLYPHS) console.log(id, theme, JSON.stringify(rings))
+        expect(rings.length).toBeGreaterThan(0)
+        expect(rings.filter(({ ratio }) => ratio < 3)).toEqual([])
+      })
+    }
+  }
+
+  test('is filled with a valid stored colour, hidden, beside its name; a bad one paints nothing', async ({ page }) => {
+    await page.goto(storyUrlById('app-colorswatch--default', 'light'))
+    const brick = page.locator('[data-slot=color-swatch][data-color="#c0392b"]').first()
+    await expect(brick).toHaveCSS('background-color', 'rgb(192, 57, 43)')
+    await expect(brick).toHaveAttribute('aria-hidden', 'true')
+    await expect(brick.locator('xpath=following-sibling::span')).toHaveText('Brick red')
+    // Stored without its #, still drawn.
+    await expect(page.locator('[data-slot=color-swatch][data-color="#e9c46a"]').first()).toHaveCSS('background-color', 'rgb(233, 196, 106)')
+
+    await page.goto(storyUrlById('app-colorswatch--invalid-and-missing', 'light'))
+    const empty = page.locator('[data-slot=color-swatch]')
+    await expect(empty).toHaveCount(6)
+    for (const swatch of await empty.all()) {
+      await expect(swatch).toHaveAttribute('data-empty', '')
+      await expect(swatch).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+      await expect(swatch).toHaveCSS('border-top-style', 'dashed')
+    }
+  })
 })
 
 // The categorical slots: each resolves to its own colour on both surfaces,
