@@ -228,7 +228,8 @@
    - compact, the default: a full grid of hairlines, tight cells, the
      header row on the heading band;
    - boxed: a rounded box, roomier cells, the header row on the muted
-     fill, zebra rows (as DataTable's).
+     fill.
+   Both stripe their body rows (zebra, as DataTable's).
    Row headers (a header column: src/lib/markdown-table.ts) sit on the
    muted fill, semibold. A coloured cell (its whole text one highlight)
    is painted in that wash, its words' own wash dropped. Unlayered, so a
@@ -294,9 +295,12 @@
   background: var(--muted);
   font-weight: var(--type-label-weight);
 }
-/* Zebra: <Markdown>'s body rows (after its <thead>), or the editor's,
-   whose header row is its only <tbody>'s first. */
-[data-table-look="boxed"] .prose-table :is(thead + tbody > tr:nth-child(even), tbody:only-child > tr:nth-child(odd):not(:first-child)) > :not([data-color], th[scope="row"], [data-row-header]) {
+/* Zebra, in both looks: <Markdown>'s body rows (after its <thead>), or
+   the editor's, whose header row is its only <tbody>'s first. Until
+   4.67.1 only boxed striped, so a compact table (the default) had its
+   header row tinted and nothing else. A cell picked by dragging keeps its
+   highlight (below) on a striped row. */
+.prose-table :is(thead + tbody > tr:nth-child(even), tbody:only-child > tr:nth-child(odd):not(:first-child)) > :not([data-color], th[scope="row"], [data-row-header], .selectedCell) {
   background: var(--table-stripe);
 }
 .prose-table :is(td, th)[data-color="amber"] { background: var(--highlight-amber); }

@@ -148,6 +148,32 @@ test.describe('rich-text tables', () => {
     await expect(cell(page, 'compactTable', 2, 1)).toHaveCSS('border-left-width', '1px')
   })
 
+  // Until 4.67.1 only boxed striped: a compact table (the default) had its
+  // header row on the band and every body row bare.
+  test('compact stripes its body rows too, in the editor and in <Markdown>, the header row on the band', async ({ page }) => {
+    const background = (locator: ReturnType<Page['locator']>) =>
+      locator.evaluate((element) => getComputedStyle(element).backgroundColor)
+    const stripe = await page.evaluate(() => {
+      const probe = document.createElement('div')
+      probe.style.background = 'var(--table-stripe)'
+      document.body.append(probe)
+      const value = getComputedStyle(probe).backgroundColor
+      probe.remove()
+      return value
+    })
+    // The editor: rows 1 and 3 are body rows 1 and 3 (bare), row 2 striped.
+    expect(await background(cell(page, 'compactTable', 1, 1))).not.toEqual(stripe)
+    expect(await background(cell(page, 'compactTable', 2, 1))).toEqual(stripe)
+    expect(await background(cell(page, 'compactTable', 3, 1))).not.toEqual(stripe)
+    expect(await background(cell(page, 'compactTable', 0, 1))).not.toEqual(stripe)
+    // <Markdown>: its body's even rows, a coloured cell keeping its wash.
+    const read = fixture(page, 'markdownCompact').locator('tbody tr')
+    const plainCell = (row: number) => read.nth(row).locator('td:not([data-color])').first()
+    expect(await background(plainCell(0))).not.toEqual(stripe)
+    expect(await background(plainCell(1))).toEqual(stripe)
+    expect(await background(fixture(page, 'markdownCompact').locator('td[data-color=red]'))).not.toEqual(stripe)
+  })
+
   test('<Markdown> reads the same table: coloured cells, row headers, words only partly highlighted left alone', async ({ page }) => {
     const read = fixture(page, 'markdownCompact').locator('table')
     await expect(read.locator('th[scope=row]')).toHaveText(['Olive oil', 'Rice', 'Oats'])
