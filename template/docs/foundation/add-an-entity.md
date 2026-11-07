@@ -792,7 +792,7 @@ plan allows it.
 <Board renderCard={(item) => <RecordLink to={`/<entity>/${item.id}`}>{item.name}</RecordLink>} … />
 ```
 
-**A list that isn't the record's parent route** (4.70: the list at
+**A list that isn't the record's parent route** (4.72: the list at
 `/<entity>/list`, the record at `/<entity>/:id`): the route the two share
 wraps them, with `listPath`. The list's own route has no element (the
 `list` prop draws it), and every other child is a record. Opened from
@@ -807,7 +807,7 @@ the list, the record is the dialog over it; closing goes back to
 },
 ```
 
-**A sub-record over its parent's page** (4.70: a parent's documents,
+**A sub-record over its parent's page** (4.72: a parent's documents,
 `/<parents>/7/<children>/31`): the same dialog one level down. The
 parent's page is the `list`, the sub-record its child, and
 `fullPage={false}`, so a reload of the sub-record's address is the dialog
@@ -1006,7 +1006,7 @@ entity with no group is searched only when no group is given.
 
 ## What a chat is told about an entity
 
-Four more things an app sets for AI chats (4.70), each in
+Four more things an app sets for AI chats (4.72), each in
 `backend/app/mcp_entities.py`:
 
 - **`description`** on the `McpEntity`: what the entity is, in a sentence

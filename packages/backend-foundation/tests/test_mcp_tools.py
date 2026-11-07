@@ -214,7 +214,7 @@ def test_check_entities_refuses_a_group_that_isnt_a_slug() -> None:
         check_entities({"notes": replace(NOTE, group="Health")})
 
 
-# ------------------------------------------- 4.70: instructions, descriptions, text edits, notes
+# ------------------------------------------- 4.72: instructions, descriptions, text edits, notes
 
 
 class MemoOut(CamelModel):

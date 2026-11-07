@@ -144,7 +144,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   functions, so the API's validation and per-user scoping apply. Delete is soft only
   (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
   is logged. Stdlib only, by decision (#132): no MCP SDK. What a chat is told
-  is the foundation's too (4.70): the server instructions are written from the
+  is the foundation's too (4.72): the server instructions are written from the
   registry (what can be deleted, which texts `edit_text` changes) with the app's
   own after them (`register_instructions`), and an app's `register_answer_note`
   appends to answers, so apps don't patch the router.
@@ -181,7 +181,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `EditableValue` edits where it's shown, and `InlineCreate` creates from
   a name in the toolbar. `width="content"` sizes a table of a few short
   columns to them on a wide screen.
-- **A record over a page** (4.58, 4.70): `RecordDialogRoute` draws a
+- **A record over a page** (4.58, 4.72): `RecordDialogRoute` draws a
   route's children in a dialog over its `list`, the history entry's state
   saying dialog or page. The list can be a sibling route (`listPath`:
   `/things/list` under `/things/12`), and a parent record's page can be

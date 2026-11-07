@@ -26,7 +26,7 @@ from foundation_backend.routers.oauth import authenticate_bearer, public_base, r
 
 PROTOCOL_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
 MAX_BODY_BYTES = 1_000_000
-# Deprecated (4.70): the instructions are mcp.server_instructions(), built
+# Deprecated (4.72): the instructions are mcp.server_instructions(), built
 # from the registered entities and the app's register_instructions. Kept so
 # an app that assigned its own text here still sends it until it moves to
 # register_instructions; left as it is, it's ignored.

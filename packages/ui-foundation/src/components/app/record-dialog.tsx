@@ -27,7 +27,7 @@
 // another page opens the dialog over its own list, at the list's plain
 // address.
 //
-// A list that isn't the record's parent route (`listPath`, 4.70): the
+// A list that isn't the record's parent route (`listPath`, 4.72): the
 // list at /things/list, the record at /things/12, siblings. The route the
 // two share wraps them, its `list` drawn at `listPath` (whose own route
 // has no element) and every other child the record:
@@ -38,7 +38,7 @@
 // Opened from the list, /things/12 is the dialog over /things/list, and
 // closing goes back to it; a deep link is the full page, as above.
 //
-// A sub-record over its parent's page (4.70) is the same route one level
+// A sub-record over its parent's page (4.72) is the same route one level
 // down: the parent's page is the `list`, the sub-record its child, and
 // `fullPage={false}`, so a reload of /parents/7/children/31 is the dialog
 // over the parent again:

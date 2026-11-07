@@ -221,7 +221,7 @@ address below answers 404.
   part (`text_edits`, the `edit_text` tool), the app's own server
   instructions (`register_instructions`) and a note appended to answers
   (`register_answer_note`) are in add-an-entity.md "What a chat is told
-  about an entity" (4.70).
+  about an entity" (4.72).
 - **Addresses** are the records' pages in the app, so a link copied from
   a screen works as it is: `/widgets/3`, or the full link with the app's
   host. An entity whose pages sit under a section gives its `McpEntity` a
