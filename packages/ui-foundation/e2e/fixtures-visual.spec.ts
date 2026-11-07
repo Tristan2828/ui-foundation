@@ -89,6 +89,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-recorddialog--loading', mustShow: 'Open full page' },
   { id: 'app-recorddialog--not-found', mustShow: 'Back to Projects' },
   { id: 'app-recorddialog--dialog-only-deep-link', mustShow: 'after a dry day' },
+  // A list at its own path (`listPath`) with a record open over it, and a sub-record over its parent's page.
+  { id: 'app-recorddialog--list-at-its-own-path-open', mustShow: 'after a dry day' },
+  { id: 'app-recorddialog--sub-record-open', mustShow: 'Buy the paint' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },

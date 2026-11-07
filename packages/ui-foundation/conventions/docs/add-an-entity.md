@@ -649,7 +649,9 @@ is a filled-in example while the Widgets demo is still here).
    it shows under the module while you're in it.
    If the plan says records **open in a dialog** over the list (`opens`
    kind `dialog` or `dialog-only`), the view's route is the list route's
-   child instead: see [How a list opens a record](#how-a-list-opens-a-record).
+   child instead (or, for a list at `/<entity>/list`, its sibling under
+   `listPath`; a sub-record opens over its parent's page the same way):
+   see [How a list opens a record](#how-a-list-opens-a-record).
 8. **Add Playwright specs for all three screens**, one test per state
    (`loading`, `empty`, `error`, `validation`, `success`), forced through
    MSW overrides — `forceMswOverride`, `waitForMswReady` and the
@@ -787,6 +789,41 @@ plan allows it.
 
 // A list that isn't a DataTable (a board's cards): a link that opens over it.
 <Board renderCard={(item) => <RecordLink to={`/<entity>/${item.id}`}>{item.name}</RecordLink>} … />
+```
+
+**A list that isn't the record's parent route** (4.70: the list at
+`/<entity>/list`, the record at `/<entity>/:id`): the route the two share
+wraps them, with `listPath`. The list's own route has no element (the
+`list` prop draws it), and every other child is a record. Opened from
+the list, the record is the dialog over it; closing goes back to
+`/<entity>/list`; a deep link is the full page, as above.
+
+```tsx
+{
+  path: '<entity>',
+  element: <RecordDialogRoute list={<<Entity>sTableRoute />} listPath="list" label="<Entity>" />,
+  children: [{ path: 'list' }, { path: ':id', element: <<Entity>ViewRoute /> }],
+},
+```
+
+**A sub-record over its parent's page** (4.70: a parent's documents,
+`/<parents>/7/<children>/31`): the same dialog one level down. The
+parent's page is the `list`, the sub-record its child, and
+`fullPage={false}`, so a reload of the sub-record's address is the dialog
+over the parent again. The parent's table of sub-records says
+`` opens={{ kind: 'dialog-only', to: (row) => `/<parents>/${row.parentId}/<children>/${row.id}` }} ``,
+and the sub-record's view is its ordinary `EntityView` (`back` to the
+parent). Keep the parent's other routes (its `edit`) siblings of
+`<parents>/:id`, not its children: every child of the route is drawn in
+the dialog.
+
+```tsx
+{
+  path: '<parents>/:id',
+  element: <RecordDialogRoute list={<<Parent>ViewRoute />} label="<Child>" fullPage={false} />,
+  children: [{ path: '<children>/:childId', element: <<Child>ViewRoute /> }],
+},
+{ path: '<parents>/:id/edit', element: <<Parent>FormRoute /> },   // a sibling, not a child
 ```
 
 - **The row opens it**: a click on the row, Enter on it, ↑/↓ between

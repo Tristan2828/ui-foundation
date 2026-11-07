@@ -212,3 +212,224 @@ def test_search_offers_group_only_when_an_entity_has_one() -> None:
 def test_check_entities_refuses_a_group_that_isnt_a_slug() -> None:
     with pytest.raises(ValueError, match="group 'Health'"):
         check_entities({"notes": replace(NOTE, group="Health")})
+
+
+# ------------------------------------------- 4.70: instructions, descriptions, text edits, notes
+
+
+class MemoOut(CamelModel):
+    id: int
+    title: str
+    body: str | None
+
+
+class MemoUpdate(CamelModel):
+    title: str | None = None
+    body: str | None = None
+    pinned: bool | None = None
+
+
+MEMOS: dict[int, MemoOut] = {}
+
+
+async def _get_memo(_session: AsyncSession, _user: User, record_id: int) -> MemoOut:
+    if record_id not in MEMOS:
+        raise HTTPException(status_code=404)
+    return MEMOS[record_id]
+
+
+async def _list_memos(_session: AsyncSession, _user: User, args: ListArgs) -> tuple[list[Any], int]:
+    found = [m for m in MEMOS.values() if not args.search or args.search.lower() in m.title.lower()]
+    return found[args.offset : args.offset + args.limit], len(found)
+
+
+async def _update_memo(_session: AsyncSession, _user: User, record_id: int, payload: MemoUpdate) -> MemoOut:
+    memo = MEMOS[record_id]
+    MEMOS[record_id] = memo.model_copy(update=payload.model_dump(exclude_unset=True, exclude={"pinned"}))
+    return MEMOS[record_id]
+
+
+async def _gone(_session: AsyncSession, _user: User, _record_id: int) -> None:
+    return None
+
+
+MEMO = McpEntity(
+    name="memos",
+    singular="memo",
+    out=MemoOut,
+    title="title",
+    get=_get_memo,
+    list=_list_memos,
+    update_schema=MemoUpdate,
+    update=_update_memo,
+    text_edits=("body",),
+)
+
+
+@pytest.fixture(autouse=True)
+def memos() -> Iterator[None]:
+    MEMOS.clear()
+    MEMOS[1] = MemoOut(id=1, title="Plan", body="Buy paint.\nSand the boards.\nPaint twice.")
+    yield
+    mcp.register_instructions("")
+    mcp.register_answer_note(None)
+
+
+@pytest.fixture
+async def writer(session: AsyncSession) -> Caller:
+    # Writes audit and refresh the user, so it must be the session's own.
+    user = await session.get(User, 1)
+    assert user is not None
+    return Caller(user=user, client_id="chat")
+
+
+def test_the_built_in_instructions_say_what_can_be_deleted() -> None:
+    register_entities({"notes": NOTE})
+    assert "Nothing can be deleted." in mcp.server_instructions()
+    # Never "nothing" when an entity deletes softly: which ones, and restore.
+    soft = replace(MEMO, delete=_gone, restore=_get_memo)
+    register_entities({"memos": soft})
+    text = mcp.server_instructions()
+    assert "Nothing can be deleted" not in text
+    assert "delete marks a record deleted and restore brings it back" in text
+    register_entities({"notes": NOTE, "memos": soft})
+    text = mcp.server_instructions()
+    assert "Only these can be deleted: memos." in text and "Nothing can be deleted" not in text
+    # And which long texts edit_text changes.
+    assert "(memos.body), use edit_text" in text
+
+
+async def test_initialize_sends_the_apps_instructions_after_the_built_in_ones(session: AsyncSession, caller: Caller) -> None:
+    async def instructions() -> str:
+        message = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+        answer = await mcp_router._handle(message, caller, session)
+        assert answer is not None
+        text: str = answer["result"]["instructions"]
+        return text
+
+    register_entities({"notes": NOTE}, instructions="Notes are the household's shared notes.")
+    text = await instructions()
+    assert text.startswith("Records are addressed") and text.endswith("\n\nNotes are the household's shared notes.")
+    mcp.register_instructions("Only this.", replace=True)
+    assert await instructions() == "Only this."
+    mcp.register_instructions("")
+    assert await instructions() == mcp.built_in_instructions()
+
+
+async def test_an_app_that_still_assigns_INSTRUCTIONS_keeps_its_text(
+    session: AsyncSession, caller: Caller, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    register_entities({"notes": NOTE})
+    monkeypatch.setattr(mcp_router, "INSTRUCTIONS", "An app's own words.")
+    message = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+    answer = await mcp_router._handle(message, caller, session)
+    assert answer is not None and answer["result"]["instructions"] == "An app's own words."
+
+
+def test_an_entitys_description_is_in_the_tool_descriptions() -> None:
+    register_entities({"notes": replace(NOTE, description="A note: a title and whether it's pinned"), "memos": MEMO})
+    tools = {tool["name"]: tool for tool in tool_definitions()}
+    for name in ("search", "list"):
+        assert "notes: A note: a title and whether it's pinned." in tools[name]["description"]
+    # No description, no sentence.
+    assert "memos:" not in tools["list"]["description"]
+
+
+def test_check_entities_refuses_text_edits_that_arent_writable_text() -> None:
+    with pytest.raises(ValueError, match="text_edits 'pinned' isn't a text field"):
+        check_entities({"memos": replace(MEMO, text_edits=("pinned",))})
+    with pytest.raises(ValueError, match="text_edits 'notes' isn't a text field"):
+        check_entities({"memos": replace(MEMO, text_edits=("notes",))})
+    with pytest.raises(ValueError, match="needs update"):
+        check_entities({"notes": replace(NOTE, text_edits=("title",))})
+    with pytest.raises(ValueError, match="is script_only"):
+        check_entities({"memos": replace(MEMO, script_only=("body",))})
+
+
+def test_edit_text_is_offered_only_for_an_entity_with_text_edits() -> None:
+    register_entities({"memos": replace(MEMO, text_edits=())})
+    assert "edit_text" not in {tool["name"] for tool in tool_definitions()}
+    register_entities({"memos": MEMO})
+    edit = next(tool for tool in tool_definitions() if tool["name"] == "edit_text")
+    assert edit["inputSchema"]["properties"]["field"]["enum"] == ["body"]
+    assert "memos: body" in edit["description"]
+
+
+async def test_edit_text_replaces_one_passage(session: AsyncSession, writer: Caller) -> None:
+    register_entities({"memos": MEMO})
+    args = {"url": "/memos/1", "field": "body", "old": "Paint twice.", "new": "Two coats."}
+    answer = await call_tool(session, writer, "edit_text", args)
+    assert answer is not None and answer.startswith("Updated memo /memos/1. Changed body.")
+    assert MEMOS[1].body == "Buy paint.\nSand the boards.\nTwo coats."
+
+
+async def test_edit_text_refuses_old_text_missing_or_found_twice(session: AsyncSession, writer: Caller) -> None:
+    register_entities({"memos": MEMO})
+    before = MEMOS[1].body
+    with pytest.raises(ToolError, match="old wasn't found in body"):
+        await call_tool(session, writer, "edit_text", {"url": "/memos/1", "field": "body", "old": "Varnish", "new": "x"})
+    with pytest.raises(ToolError, match="old is in body 2 times"):
+        await call_tool(session, writer, "edit_text", {"url": "/memos/1", "field": "body", "old": "aint", "new": "x"})
+    with pytest.raises(ToolError, match="either old and new"):
+        await call_tool(session, writer, "edit_text", {"url": "/memos/1", "field": "body", "old": "a", "append": "b"})
+    with pytest.raises(ToolError, match="field must be one of: body"):
+        await call_tool(session, writer, "edit_text", {"url": "/memos/1", "field": "title", "append": "b"})
+    assert MEMOS[1].body == before
+
+
+async def test_edit_text_appends_on_a_new_line(session: AsyncSession, writer: Caller) -> None:
+    register_entities({"memos": MEMO})
+    await call_tool(session, writer, "edit_text", {"url": "/memos/1", "field": "body", "append": "Clean the brushes."})
+    assert MEMOS[1].body == "Buy paint.\nSand the boards.\nPaint twice.\nClean the brushes."
+    MEMOS[1] = MEMOS[1].model_copy(update={"body": None})
+    await call_tool(session, writer, "edit_text", {"url": "/memos/1", "field": "body", "append": "Start over."})
+    assert MEMOS[1].body == "Start over."
+
+
+async def test_an_answer_note_is_given_the_call_and_the_entities_shown(session: AsyncSession, caller: Caller) -> None:
+    calls: list[tuple[str, dict[str, Any], tuple[str, ...]]] = []
+
+    def note(who: Caller, tool: str, arguments: dict[str, Any], entities: tuple[McpEntity, ...]) -> str | None:
+        assert who is caller
+        calls.append((tool, arguments, tuple(e.name for e in entities)))
+        return "Memos are kept a year." if any(e.name == "memos" for e in entities) else None
+
+    register_entities({"notes": NOTE, "memos": MEMO})
+    mcp.register_answer_note(note)
+    fetched = await call_tool(session, caller, "fetch", {"url": "/memos/1"})
+    assert fetched is not None and fetched.endswith("Paint twice.\n\nMemos are kept a year.")
+    listed = await call_tool(session, caller, "list", {"entity": "notes"})
+    assert listed is not None and "kept a year" not in listed
+    await call_tool(session, caller, "search", {"query": "plan"})
+    assert calls == [
+        ("fetch", {"url": "/memos/1"}, ("memos",)),
+        ("list", {"entity": "notes"}, ("notes",)),
+        ("search", {"query": "plan"}, ("notes", "memos")),
+    ]
+
+
+async def test_an_answer_note_can_be_async_and_a_failing_one_is_left_out(
+    session: AsyncSession, caller: Caller, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def later(*_: Any) -> str:
+        return "From an async note."
+
+    register_entities({"memos": MEMO})
+    mcp.register_answer_note(later)
+    fetched = await call_tool(session, caller, "fetch", {"url": "/memos/1"})
+    assert fetched is not None and fetched.endswith("\n\nFrom an async note.")
+
+    reported: list[BaseException] = []
+    monkeypatch.setattr(mcp_tools, "report_error", lambda exc, _context: reported.append(exc))
+
+    def broken(*_: Any) -> str:
+        raise RuntimeError("note failed")
+
+    mcp.register_answer_note(broken)
+    fetched = await call_tool(session, caller, "fetch", {"url": "/memos/1"})
+    assert fetched is not None and fetched.endswith("Paint twice.")
+    assert len(reported) == 1 and str(reported[0]) == "note failed"
+    # A refused call gets no note.
+    mcp.register_answer_note(later)
+    with pytest.raises(ToolError):
+        await call_tool(session, caller, "fetch", {"url": "/memos/9"})
