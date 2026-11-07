@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactElement } from 'react'
+import { Controller, type FieldValues, type UseFormReturn } from 'react-hook-form'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { PaperclipIcon } from 'lucide-react'
+import { z } from 'zod'
+import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field } from '@/components/ui/field'
+import { Field, FieldError } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewSection } from './entity-view'
@@ -200,6 +203,190 @@ function FilesInRouter() {
   return <RouterProvider router={router} />
 }
 
+// A list grouped by one of its items' fields (rooms), and one filtered
+// (hide what's done): each group has its own rows, moves and Add, and the
+// list still saves as one, in its own order. Duplicate copies an item
+// right after it. e2e/editable-list.spec.ts moves, adds and duplicates.
+
+type RoomTask = { text: string; room: string; done: boolean }
+
+function useSaved<T>(initial: T[], refuse?: (list: T[]) => AppError | null) {
+  const [items, setItems] = useState(initial)
+  const latest = useRef(initial)
+  const save = (change: (current: T[]) => T[]) =>
+    new Promise<void>((resolve, reject) =>
+      setTimeout(() => {
+        const next = change(latest.current)
+        const refused = refuse?.(next)
+        if (refused) return reject(refused)
+        latest.current = next
+        setItems(next)
+        resolve()
+      }, 100),
+    )
+  return { items, save }
+}
+
+type RoomTaskRowProps = {
+  value: RoomTask
+  onChange: (task: RoomTask) => void
+  disabled: boolean
+  invalid: boolean
+  describedBy: string
+  index: number
+}
+
+function roomTaskRow(name: string) {
+  return ({ value, onChange, disabled, invalid, describedBy, index }: RoomTaskRowProps) => (
+    <Field data-invalid={invalid} className="min-w-0 flex-1">
+      <Input
+        value={value.text}
+        readOnly={disabled}
+        aria-invalid={invalid || undefined}
+        aria-label={`${name} ${index + 1} text`}
+        aria-describedby={describedBy}
+        onChange={(event) => onChange({ ...value, text: event.target.value })}
+      />
+    </Field>
+  )
+}
+
+function GroupedRecord() {
+  const tasks = useSaved<RoomTask>([
+    { text: 'Paint the skirting', room: 'Kitchen', done: false },
+    { text: 'Sweep out', room: 'Garage', done: true },
+    { text: 'Fix the tap', room: 'Kitchen', done: false },
+    { text: 'Hang the shelves', room: 'Garage', done: false },
+    { text: 'Clear the worktop', room: 'Kitchen', done: true },
+  ])
+  const [hideDone, setHideDone] = useState(false)
+  const byRoom = editInPlace<RoomTask>({
+    kind: 'list',
+    value: tasks.items,
+    save: tasks.save,
+    groupBy: { key: (task) => task.room, order: ['Kitchen', 'Garage', 'Hallway'] },
+    duplicate: (task) => ({ ...task, done: false }),
+    newItem: (room) => ({ text: '', room: room ?? 'Kitchen', done: false }),
+    itemName: (index) => `task ${index + 1}`,
+    addLabel: 'Add task',
+    renderShown: (task) => <span className={task.done ? 'text-muted-foreground line-through' : undefined}>{task.text}</span>,
+    renderItem: roomTaskRow('Task'),
+  })
+  const every = editInPlace<RoomTask>({
+    kind: 'list',
+    value: tasks.items,
+    save: tasks.save,
+    filter: hideDone ? (task) => !task.done : undefined,
+    newItem: () => ({ text: '', room: 'Hallway', done: false }),
+    itemName: (index) => `entry ${index + 1}`,
+    addLabel: 'Add entry',
+    renderShown: (task) => (
+      <span className={task.done ? 'text-muted-foreground line-through' : undefined}>
+        {task.text} <span className="type-caption text-muted-foreground">({task.room})</span>
+      </span>
+    ),
+    renderItem: roomTaskRow('Entry'),
+  })
+  const sections: EntityViewSection[] = [
+    { title: 'By room', content: null, emptyLabel: 'No tasks', edit: byRoom },
+    {
+      title: 'Every task',
+      content: (
+        <div>
+          <Button type="button" variant="outline" size="sm" aria-pressed={hideDone} onClick={() => setHideDone((now) => !now)}>
+            Hide done
+          </Button>
+        </div>
+      ),
+      emptyLabel: 'Nothing left to do',
+      edit: every,
+    },
+  ]
+  return <EntityView isLoading={false} back={{ to: '/', label: 'Projects' }} title="Spring clean" sections={sections} />
+}
+
+// A list item that is the form's own react-hook-form row (`itemForm`):
+// it registers its text and its minutes as the form's ListEditor row
+// does, and shows its errors from `form.formState.errors`. The list's
+// schema refuses an empty text, and the "server" refuses a text with
+// "!" in it as a 422 at `steps.<n>.text`: both show on the text box,
+// not under the row. e2e/editable-list.spec.ts checks both.
+
+type Step = { text: string; minutes: number }
+
+const STEPS_SCHEMA = z.array(z.object({ text: z.string().trim().min(1, 'A step needs its words'), minutes: z.number().min(1) }))
+
+// The form's row, written for react-hook-form, shared with the form.
+function StepFields({ form, index, disabled }: { form: UseFormReturn<FieldValues>; index: number; disabled?: boolean }) {
+  const steps = form.formState.errors.steps as { text?: { message?: string } }[] | undefined
+  const error = steps?.[index]?.text
+  return (
+    <>
+      <Field data-invalid={Boolean(error)} className="min-w-0 flex-1">
+        <Input
+          aria-label={`Step ${index + 1} text`}
+          aria-invalid={Boolean(error) || undefined}
+          readOnly={disabled}
+          {...form.register(`steps.${index}.text`)}
+        />
+        <FieldError errors={[error]} />
+      </Field>
+      <Controller
+        control={form.control}
+        name={`steps.${index}.minutes`}
+        render={({ field }) => (
+          <Input
+            className="w-20"
+            inputMode="numeric"
+            aria-label={`Step ${index + 1} minutes`}
+            readOnly={disabled}
+            value={String(field.value ?? '')}
+            onChange={(event) => field.onChange(Number(event.target.value) || 0)}
+          />
+        )}
+      />
+    </>
+  )
+}
+
+function FormRowsRecord() {
+  const steps = useSaved<Step>(
+    [
+      { text: 'Strip the old felt', minutes: 30 },
+      { text: 'Lay the new felt', minutes: 45 },
+    ],
+    (list) => {
+      const at = list.findIndex((step) => step.text.includes('!'))
+      if (at === -1) return null
+      return { kind: 'validation', message: 'Validation failed', fieldErrors: { [`steps.${at}.text`]: ['No exclamation marks in a step'] } }
+    },
+  )
+  const list = editInPlace<Step>({
+    kind: 'list',
+    name: 'steps',
+    itemForm: true,
+    value: steps.items,
+    schema: STEPS_SCHEMA,
+    save: steps.save,
+    newItem: () => ({ text: '', minutes: 10 }),
+    itemName: (index) => `step ${index + 1}`,
+    addLabel: 'Add step',
+    renderShown: (step) => (
+      <span>
+        {step.text} <span className="type-caption text-muted-foreground">· {step.minutes} min</span>
+      </span>
+    ),
+    renderItem: ({ form, index, disabled }) => <StepFields form={form!} index={index} disabled={disabled} />,
+  })
+  const sections: EntityViewSection[] = [{ title: 'Steps', content: null, emptyLabel: 'No steps', edit: list }]
+  return <EntityView isLoading={false} back={{ to: '/', label: 'Projects' }} title="Shed roof" sections={sections} />
+}
+
+function InRouter({ Record }: { Record: () => ReactElement }) {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <Record /> }]))
+  return <RouterProvider router={router} />
+}
+
 const meta: Meta = {
   title: 'app/EditableList',
   parameters: { controls: { disable: true }, layout: 'fullscreen' },
@@ -210,3 +397,7 @@ export default meta
 export const ItemRows: StoryObj = { render: () => <RowsInRouter /> }
 
 export const AddedByUpload: StoryObj = { render: () => <FilesInRouter /> }
+
+export const GroupedAndFiltered: StoryObj = { render: () => <InRouter Record={GroupedRecord} /> }
+
+export const FormRows: StoryObj = { render: () => <InRouter Record={FormRowsRecord} /> }
