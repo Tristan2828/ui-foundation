@@ -377,8 +377,8 @@ const HEAT = [
 - **Text on a fill takes its own foreground.** Pair the two as above: the
   right text colour depends on the step and the theme. `text-foreground`
   or muted text on a fill fails. It measures 4.71:1 at the least.
-- **Neighbours can touch.** Neighbouring steps are at least ΔE 18.9 apart
-  (the perceived difference) and 12.9 under simulated deuteranopia and
+- **Neighbours can touch.** Neighbouring steps are at least ΔE 17.8 apart
+  (the perceived difference) and 12.6 under simulated deuteranopia and
   protanopia, the common red-green deficiencies. A thin `stroke-card`
   between shapes still helps, since a boundary is easier to see than a
   shade.

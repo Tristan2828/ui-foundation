@@ -19,7 +19,7 @@ app until it uses the new classes. The foundation had categorical slots
   for light and dark; every palette takes dark's.
 - **Measured:** each step clears 3:1 against the card and the page in
   light, dark and every palette; text on a fill clears 4.5:1; neighbours
-  are at least ΔE 18.9 apart, and 12.9 under simulated deuteranopia and
+  are at least ΔE 17.8 apart, and 12.6 under simulated deuteranopia and
   protanopia; each step is darker than the last, in both themes.
 - **Rules:** design-language.md "Heat scale": ordered values only, not
   status and not categories; opaque; the value also shown as text or a
