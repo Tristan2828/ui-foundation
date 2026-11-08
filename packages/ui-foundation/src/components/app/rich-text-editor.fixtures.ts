@@ -37,8 +37,8 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
   // on its line (a page line), one inline. Nothing about them is written
   // differently.
   pageLinks: {
-    markdown: "Notes for the move.\n\n[Safety Cheat Sheet](/tasks/84/pages/3)\n\nThe [packing list](/tasks/84/pages/5) is a page too.\n\nLast line.\n",
-    editorWrites: "Notes for the move.\n\n[Safety Cheat Sheet](/tasks/84/pages/3)\n\nThe [packing list](/tasks/84/pages/5) is a page too.\n\nLast line.\n",
+    markdown: "Notes for the move.\n\n[Getting Started](/notes/12/pages/3)\n\nThe [packing list](/notes/12/pages/5) is a page too.\n\nLast line.\n",
+    editorWrites: "Notes for the move.\n\n[Getting Started](/notes/12/pages/3)\n\nThe [packing list](/notes/12/pages/5) is a page too.\n\nLast line.\n",
   },
   referenceLinks: {
     markdown: "A [reference link][ref] here.\n\n[ref]: https://example.com/ref\n\nA closing paragraph.\n",

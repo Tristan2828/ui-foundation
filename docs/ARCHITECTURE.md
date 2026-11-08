@@ -641,7 +641,7 @@ header), both with zebra rows, the same CSS for both renderers.
 `rich-text-page-links.ts`, `page-trail.tsx`): child pages in notes, to any
 depth, without blocks. The developer ruled out a block editor, drag
 handles and any change to how notes are stored (2026-11-07), so a page is
-an ordinary Markdown link, `[Title](/tasks/84/pages/3)`, and the merge
+an ordinary Markdown link, `[Title](/notes/12/pages/3)`, and the merge
 needs nothing. The app answers `pageLink(href)` (title, removed,
 `onRestore`) for each link, or `null`; the package never knows where
 pages live or whose they are, so a page's own note takes the same props.

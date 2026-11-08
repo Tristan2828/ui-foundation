@@ -14,7 +14,7 @@ import type { PageLinkInfo } from '../src/lib/page-link'
 import { crumbsToFold } from '../src/lib/page-trail'
 
 const PAGES: Record<string, PageLinkInfo> = {
-  '/pages/3': { title: 'Safety Cheat Sheet' },
+  '/pages/3': { title: 'Getting Started' },
   '/pages/9': { title: 'Old plan', removed: true, onRestore: () => {} },
   '/pages/11': { removed: true },
 }
@@ -22,11 +22,11 @@ const pageLink = (href: string) => PAGES[href] ?? null
 
 describe('<Markdown> page links', () => {
   it('draws a page alone in its paragraph as a page line, opening in this tab', () => {
-    const html = renderToStaticMarkup(<Markdown pageLink={pageLink}>{'[Safety](/pages/3)\n'}</Markdown>)
+    const html = renderToStaticMarkup(<Markdown pageLink={pageLink}>{'[Getting Started](/pages/3)\n'}</Markdown>)
     expect(html).toContain('<p data-page-line="" class="page-line">')
     expect(html).toMatch(/<a href="\/pages\/3" data-slot="page-link" class="page-link"><svg aria-hidden="true"[^>]*class="page-link-icon"/)
     // The app's title, not the words as written (a renamed page reads renamed).
-    expect(html).toContain('Safety Cheat Sheet</a>')
+    expect(html).toContain('Getting Started</a>')
     expect(html).not.toContain('target="_blank"')
   })
 
@@ -45,7 +45,7 @@ describe('<Markdown> page links', () => {
   })
 
   it('leaves every link the app doesn’t mark as it was', () => {
-    const text = '[Safety](/pages/3) and [docs](https://example.com/docs)\n'
+    const text = '[Getting Started](/pages/3) and [docs](https://example.com/docs)\n'
     const plain = renderToStaticMarkup(<Markdown>{text}</Markdown>)
     const marked = renderToStaticMarkup(<Markdown pageLink={() => null}>{text}</Markdown>)
     expect(marked).toBe(plain)
@@ -65,17 +65,17 @@ describe('page links in the saved Markdown', () => {
   it('an edit elsewhere keeps every page link byte for byte', () => {
     const edited = editorWrites.replace('Last line.', 'Last line, edited.').replace('Notes for the move.', 'Notes for the house move.')
     const merged = mergeMarkdown(markdown, editorWrites, edited)
-    expect(merged).toContain('\n\n[Safety Cheat Sheet](/tasks/84/pages/3)\n\n')
-    expect(merged).toContain('The [packing list](/tasks/84/pages/5) is a page too.')
+    expect(merged).toContain('\n\n[Getting Started](/notes/12/pages/3)\n\n')
+    expect(merged).toContain('The [packing list](/notes/12/pages/5) is a page too.')
     expect(merged).toBe(markdown.replace('Last line.', 'Last line, edited.').replace('Notes for the move.', 'Notes for the house move.'))
   })
 
   it('a page link written its own way (a title, angle brackets) is kept as written when untouched', () => {
-    const original = 'Intro.\n\n[Plan](</tasks/84/pages/3> "The plan")\n\nOutro.\n'
+    const original = 'Intro.\n\n[Plan](</notes/12/pages/3> "The plan")\n\nOutro.\n'
     // What the editor would write for that line on load.
-    const baseline = 'Intro.\n\n[Plan](/tasks/84/pages/3 "The plan")\n\nOutro.\n'
+    const baseline = 'Intro.\n\n[Plan](/notes/12/pages/3 "The plan")\n\nOutro.\n'
     const merged = mergeMarkdown(original, baseline, baseline.replace('Outro.', 'Outro, edited.'))
-    expect(merged).toBe('Intro.\n\n[Plan](</tasks/84/pages/3> "The plan")\n\nOutro, edited.\n')
+    expect(merged).toBe('Intro.\n\n[Plan](</notes/12/pages/3> "The plan")\n\nOutro, edited.\n')
   })
 })
 
@@ -111,11 +111,11 @@ describe('PageTrail', () => {
 
   it('links every crumb but the last, which is the page you are on', () => {
     const html = renderToStaticMarkup(
-      <PageTrail crumbs={[{ label: 'Tasks', href: '/tasks' }, { label: 'Move', href: '/tasks/84' }, { label: 'Safety' }]} />,
+      <PageTrail crumbs={[{ label: 'Notes', href: '/notes' }, { label: 'Plan', href: '/notes/12' }, { label: 'Getting Started' }]} />,
     )
     expect(html).toContain('aria-label="Breadcrumb"')
-    expect(html).toContain('href="/tasks"')
-    expect(html).toContain('href="/tasks/84"')
-    expect(html).toMatch(/aria-current="page"[^>]*>Safety</)
+    expect(html).toContain('href="/notes"')
+    expect(html).toContain('href="/notes/12"')
+    expect(html).toMatch(/aria-current="page"[^>]*>Getting Started</)
   })
 })

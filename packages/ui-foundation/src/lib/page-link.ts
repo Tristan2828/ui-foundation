@@ -3,7 +3,7 @@
 // package never knows where pages live or how they nest: the app answers
 // `pageLink(href)` for each link's address, and only it can make one
 // (`onCreatePage`). The Markdown is never changed by any of this: a page
-// link is an ordinary Markdown link, `[Safety Cheat Sheet](/tasks/84/pages/3)`.
+// link is an ordinary Markdown link, `[Getting Started](/notes/12/pages/3)`.
 //
 // Drawn by <Markdown> (markdown.tsx) and the rich-text editor
 // (rich-text-page-links.ts), in the same look (styles/index.css "Page

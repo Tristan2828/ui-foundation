@@ -15,7 +15,7 @@ changes for an app until it passes the new props: notes and every link
 in them render and save as before.
 
 Child pages in notes, to any depth, without blocks: a page is an
-ordinary Markdown link, `[Safety Cheat Sheet](/tasks/84/pages/3)`, so
+ordinary Markdown link, `[Getting Started](/notes/12/pages/3)`, so
 notes stay Markdown as written and `RichTextEditor` keeps Milkdown and
 its block-by-block merge. The app keeps the pages; the package only draws
 and makes the links, and never knows where pages live or how deep.

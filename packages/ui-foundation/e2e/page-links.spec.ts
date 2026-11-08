@@ -30,7 +30,7 @@ test.describe('page links, read', () => {
   })
 
   test('a page alone on its line is a page line; a click opens it in this tab', async ({ page }) => {
-    const link = page.getByRole('link', { name: 'Safety Cheat Sheet' })
+    const link = page.getByRole('link', { name: 'Getting Started' })
     await expect(link).toHaveAttribute('href', '/pages/3')
     await expect(link).not.toHaveAttribute('target', /.+/)
     await expect(page.locator('p.page-line')).toHaveCount(3)
@@ -71,7 +71,7 @@ test.describe('page links, edited', () => {
   })
 
   test('a click on a page link opens it in this tab', async ({ page }) => {
-    await notes(page).getByText('Safety Cheat Sheet').click()
+    await notes(page).getByText('Getting Started').click()
     await expect(page.getByTestId('page-screen')).toHaveText('Page at /pages/3')
   })
 
@@ -94,16 +94,16 @@ test.describe('page links, edited', () => {
     await page.keyboard.press('Enter')
     const title = page.getByRole('textbox', { name: 'Page title' })
     await expect(title).toBeFocused()
-    await title.fill('Ladder checks')
+    await title.fill('Release checklist')
     await page.keyboard.press('Enter')
     await expect(page.getByRole('button', { name: 'Creating…' })).toBeDisabled()
-    await expect(saved(page)).toContainText('[Ladder checks](/pages/100)')
-    expect((await saved(page).textContent())!).toBe(`${before}\n[Ladder checks](/pages/100)\n`)
+    await expect(saved(page)).toContainText('[Release checklist](/pages/100)')
+    expect((await saved(page).textContent())!).toBe(`${before}\n[Release checklist](/pages/100)\n`)
     await expect(notes(page)).toBeFocused()
     await expect(notes(page).locator('p.page-line')).toHaveCount(3)
     // What's typed next isn't part of the link.
     await page.keyboard.type(' x')
-    await expect(saved(page)).toContainText('[Ladder checks](/pages/100) x')
+    await expect(saved(page)).toContainText('[Release checklist](/pages/100) x')
   })
 
   test('a refused page leaves the text as it was and says why in the box', async ({ page }) => {
@@ -147,15 +147,15 @@ test.describe('page trail', () => {
     const short = page.getByRole('navigation', { name: 'One level', exact: true })
     // (The page itself is shadcn's disabled role="link": not an <a>.)
     await expect(short.locator('a[href]')).toHaveCount(2)
-    await expect(short.getByRole('link', { name: 'Tasks' })).toHaveAttribute('href', '/tasks')
-    await expect(short.locator('[aria-current=page]')).toHaveText('Safety Cheat Sheet')
+    await expect(short.getByRole('link', { name: 'Notes' })).toHaveAttribute('href', '/notes')
+    await expect(short.locator('[aria-current=page]')).toHaveText('Getting Started')
     await expect(short.getByRole('button', { name: /more pages?/ })).toHaveCount(0)
     // However deep, every crumb is either shown or in the menu.
     const deep = page.getByRole('navigation', { name: 'Five levels deep', exact: true })
     const more = deep.getByRole('button', { name: /^Show \d+ more pages?$/ })
     const folded = (await more.count()) ? Number((await more.getAttribute('aria-label'))!.match(/\d+/)![0]) : 0
     await expect(deep.locator('a[href]')).toHaveCount(6 - folded)
-    await expect(deep.locator('[aria-current=page]')).toHaveText('Checks before every climb')
+    await expect(deep.locator('[aria-current=page]')).toHaveText('First steps for everyone new')
   })
 
   test('folds the middle into a menu when it doesn’t fit, keeping the first and the page', async ({ page }) => {
@@ -163,14 +163,14 @@ test.describe('page trail', () => {
     const narrow = page.getByRole('navigation', { name: 'Five levels deep, narrow' })
     const more = narrow.getByRole('button', { name: /^Show \d+ more pages?$/ })
     await expect(more).toBeVisible()
-    await expect(narrow.getByRole('link', { name: 'Tasks' })).toBeVisible()
-    await expect(narrow.locator('[aria-current=page]')).toHaveText('Checks before every climb')
+    await expect(narrow.getByRole('link', { name: 'Notes' })).toBeVisible()
+    await expect(narrow.locator('[aria-current=page]')).toHaveText('First steps for everyone new')
     // On one line: nothing wraps.
     const list = narrow.locator('[data-slot=breadcrumb-list]')
     const box = (await list.boundingBox())!
     expect(box.height).toBeLessThan(32)
     await more.click()
-    await expect(page.getByRole('menuitem', { name: 'Move house' })).toHaveAttribute('href', '/tasks/84')
+    await expect(page.getByRole('menuitem', { name: 'Project plan' })).toHaveAttribute('href', '/notes/12')
   })
 
   test('at a phone’s width the deep trail folds too, and the page itself is cut short', async ({ page }) => {

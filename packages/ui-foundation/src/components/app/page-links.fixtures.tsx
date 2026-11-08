@@ -16,7 +16,7 @@ import { RichTextEditor } from './rich-text-editor'
 type Page = { title: string; removed?: boolean; restorable?: boolean }
 
 const PAGES: Record<string, Page> = {
-  '/pages/3': { title: 'Safety Cheat Sheet' },
+  '/pages/3': { title: 'Getting Started' },
   '/pages/5': { title: 'Packing list' },
   '/pages/9': { title: 'Old plan', removed: true, restorable: true },
   '/pages/11': { title: 'Lost notes', removed: true },
@@ -24,7 +24,7 @@ const PAGES: Record<string, Page> = {
 
 const READ = `Notes for the move.
 
-[Safety Cheat Sheet](/pages/3)
+[Getting Started](/pages/3)
 
 The [packing list](/pages/5) is a page too, and the [docs](https://example.com/docs) aren't.
 
@@ -35,7 +35,7 @@ The [packing list](/pages/5) is a page too, and the [docs](https://example.com/d
 
 const EDIT = `Notes for the move.
 
-[Safety Cheat Sheet](/pages/3)
+[Getting Started](/pages/3)
 
 The [packing list](/pages/5) is a page too.
 
@@ -130,13 +130,13 @@ function EditStory() {
 }
 
 const DEEP: PageCrumb[] = [
-  { label: 'Tasks', href: '/tasks' },
-  { label: 'Move house', href: '/tasks/84' },
-  { label: 'Safety Cheat Sheet', href: '/pages/3' },
-  { label: 'Ladders', href: '/pages/4' },
-  { label: 'Extension ladders over four metres', href: '/pages/6' },
-  { label: 'Footing', href: '/pages/7' },
-  { label: 'Checks before every climb' },
+  { label: 'Notes', href: '/notes' },
+  { label: 'Project plan', href: '/notes/12' },
+  { label: 'Getting Started', href: '/pages/3' },
+  { label: 'Setup', href: '/pages/4' },
+  { label: 'Installing on a shared laptop with a long name', href: '/pages/6' },
+  { label: 'Accounts', href: '/pages/7' },
+  { label: 'First steps for everyone new' },
 ]
 
 function TrailStory() {
@@ -144,7 +144,7 @@ function TrailStory() {
     <div className="flex max-w-3xl flex-col gap-6">
       <section className="flex flex-col gap-1">
         <h2 className="type-caption text-muted-foreground">One level</h2>
-        <PageTrail aria-label="One level" crumbs={[DEEP[0], DEEP[1], { label: 'Safety Cheat Sheet' }]} />
+        <PageTrail aria-label="One level" crumbs={[DEEP[0], DEEP[1], { label: 'Getting Started' }]} />
       </section>
       <section className="flex flex-col gap-1">
         <h2 className="type-caption text-muted-foreground">Five levels deep</h2>

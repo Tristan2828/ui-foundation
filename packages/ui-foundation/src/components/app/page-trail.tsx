@@ -1,5 +1,5 @@
 // The way back from a page: the record it belongs to, each page above it,
-// and the page itself (`Tasks › Move house › Safety › Gloves`), as a
+// and the page itself (`Notes › Project plan › Getting Started › Setup`), as a
 // breadcrumb (shadcn's Breadcrumb). Pages nest to any depth, so a trail
 // can be any length: when it doesn't fit on one line, the crumbs after the
 // first are folded into a "…" menu, from the top down, until it does; the

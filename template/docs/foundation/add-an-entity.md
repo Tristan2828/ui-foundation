@@ -507,7 +507,7 @@ is a filled-in example while the Widgets demo is still here).
      notes linking to pages under it, to any depth): the app keeps the
      pages (a table, an API, a screen per page); the foundation only
      draws and makes the links. A page is linked by an ordinary Markdown
-     link, `[Safety Cheat Sheet](/tasks/84/pages/3)`, so the notes stay
+     link, `[Getting Started](/notes/12/pages/3)`, so the notes stay
      Markdown and nothing about how they're stored changes. Give
      `<Markdown>` and `RichTextEditor` the same `pageLink={(href) => …}`:
      return `{ title, removed, onRestore }` for an address that is one of
