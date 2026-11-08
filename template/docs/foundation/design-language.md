@@ -3,31 +3,32 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 40–106
-- [Glow](#glow) · lines 108–126
-- [Semantic tones](#semantic-tones) · lines 128–156
-- [The three badge styles](#the-three-badge-styles) · lines 158–175
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 177–206
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 208–221
-- [Logos and brand marks](#logos-and-brand-marks) · lines 223–267
-- [Categorical colour](#categorical-colour) · lines 269–339
-- [A stored colour](#a-stored-colour) · lines 341–389
-- [Shapes and sizes](#shapes-and-sizes) · lines 391–412
-- [Typography](#typography) · lines 414–520
-  - [Written text (notes)](#written-text-notes) · lines 448–520
-- [Density](#density) · lines 522–608
-  - [Rows on this device](#rows-on-this-device) · lines 581–608
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 610–724
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 726–795
-- [Notices](#notices) · lines 797–825
-- [A value over time](#a-value-over-time) · lines 827–913
-  - [Several values over time](#several-values-over-time) · lines 876–913
-- [A list as a board](#a-list-as-a-board) · lines 915–966
-- [A list as cards](#a-list-as-cards) · lines 968–1014
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1016–1038
-- [Picking at random](#picking-at-random) · lines 1040–1071
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1073–1140
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1142–1167
+- [Palettes](#palettes) · lines 41–108
+- [Glow](#glow) · lines 110–128
+- [Semantic tones](#semantic-tones) · lines 130–158
+- [The three badge styles](#the-three-badge-styles) · lines 160–177
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 179–208
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 210–223
+- [Logos and brand marks](#logos-and-brand-marks) · lines 225–269
+- [Categorical colour](#categorical-colour) · lines 271–341
+- [Heat scale](#heat-scale) · lines 343–404
+- [A stored colour](#a-stored-colour) · lines 406–454
+- [Shapes and sizes](#shapes-and-sizes) · lines 456–477
+- [Typography](#typography) · lines 479–585
+  - [Written text (notes)](#written-text-notes) · lines 513–585
+- [Density](#density) · lines 587–673
+  - [Rows on this device](#rows-on-this-device) · lines 646–673
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 675–789
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 791–860
+- [Notices](#notices) · lines 862–890
+- [A value over time](#a-value-over-time) · lines 892–978
+  - [Several values over time](#several-values-over-time) · lines 941–978
+- [A list as a board](#a-list-as-a-board) · lines 980–1031
+- [A list as cards](#a-list-as-cards) · lines 1033–1079
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1081–1103
+- [Picking at random](#picking-at-random) · lines 1105–1136
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1138–1205
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1207–1232
 
 <!-- /index -->
 
@@ -95,7 +96,8 @@ wear it too. An installed app's colours follow it with
 
 The package's `e2e/fixtures-visual.spec.ts` runs every primitive,
 composite and tone story through axe in each palette, and measures every
-glyph and categorical slot against each palette's page and card.
+glyph, categorical slot and heat step against each palette's page and
+card.
 
 **An app's own axe specs** check its palettes instead of light and dark:
 `defineA11ySuite({ …, palettes: ['indigo-cyan'] })` (and
@@ -337,6 +339,69 @@ Five things about them:
 If you find yourself wanting a thirteenth, that is a sign the column should
 be showing a shape or a label rather than more colours: there is no more
 room that stays readable.
+
+## Heat scale
+
+For values that have an **order**: how much, how often, how hot. A heat
+map, a calendar shaded by activity, a grid of counts. Five steps from
+cold to hot, `--heat-1` through `--heat-5`. Tailwind gives each one as
+`fill-heat-1` (a shape), `bg-heat-1` (a cell) and `text-heat-1-foreground`
+(text on that cell).
+
+**Use it only for ordered values.** A value that's good or bad is a tone
+(hot is not "bad" here, and red here says nothing about danger). A value
+that's only different from its neighbours is a categorical slot: the scale
+would claim one category is more than another. Beside tone badges, keep
+heat out of the same column.
+
+An app sorts its values into the five steps itself, on rules it writes
+down (thresholds, or an even split of the range), and maps each to whole
+class names:
+
+```tsx
+const HEAT = [
+  { fill: 'fill-heat-1', cell: 'bg-heat-1 text-heat-1-foreground' },
+  { fill: 'fill-heat-2', cell: 'bg-heat-2 text-heat-2-foreground' },
+  { fill: 'fill-heat-3', cell: 'bg-heat-3 text-heat-3-foreground' },
+  { fill: 'fill-heat-4', cell: 'bg-heat-4 text-heat-4-foreground' },
+  { fill: 'fill-heat-5', cell: 'bg-heat-5 text-heat-5-foreground' },
+] as const
+
+<path className={`${HEAT[step - 1].fill} stroke-card`} d={shape} />
+<td className={HEAT[step - 1].cell}>{count}</td>
+```
+
+- **Opaque, at full strength.** Each step clears 3:1 against the card and
+  the page in light, dark and every palette, so a shape stands out with
+  no outline. An opacity modifier (`bg-heat-3/50`) gives that up.
+- **Text on a fill takes its own foreground.** Pair the two as above: the
+  right text colour depends on the step and the theme. `text-foreground`
+  or muted text on a fill fails. It measures 4.71:1 at the least.
+- **Neighbours can touch.** Neighbouring steps are at least ΔE 17.8 apart
+  (the perceived difference) and 12.6 under simulated deuteranopia and
+  protanopia, the common red-green deficiencies. A thin `stroke-card`
+  between shapes still helps, since a boundary is easier to see than a
+  shade.
+- **The order holds without hue.** Each step is darker than the one before
+  it in both themes, so the scale also reads in greyscale. Hot is always
+  the red end, which in the dark themes means it is the darker end too.
+- **Never colour alone.** Show the value too, in the cell, a tooltip or
+  a legend of the steps. A shape holding a value needs a name for screen
+  readers.
+- **Nothing to show is not step 1.** Step 1 is the coldest *value*. No data
+  stays `fill-muted` or an empty state, so "none" and "cold" don't look
+  alike.
+- **Five steps, not more.** Past five, neighbours stop being readable as
+  different. Bin the values rather than interpolating between steps.
+
+The package's fixtures render it (`patterns/HeatScale`). Its Default story
+runs through axe and the token check in light and dark, axe in every
+palette too, and a check that measures every step, as a fill and as a
+cell, against the page and a card in each. `tests/heat-scale.test.ts`
+holds the distance between neighbours, the order of lightness and every
+step against every palette's card and raised surface. `SideBySide` shows
+both themes at once, under normal vision and simulated deuteranopia and
+protanopia.
 
 ## A stored colour
 

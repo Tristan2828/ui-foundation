@@ -110,6 +110,38 @@
   --category-11-400: oklch(0.823 0.163 119);
   --category-12-700: oklch(0.423 0.181 337); /* magenta */
   --category-12-400: oklch(0.648 0.232 337);
+  /*
+   * The heat scale (design-language.md "Heat scale"). Five steps from cold
+   * to hot, for values that have an order: a heat map, a calendar of how
+   * much. Not status (tones) and not categories (the slots above).
+   *
+   * Opaque fills, unlike the slots: each step has its own --heat-N-foreground
+   * for text on it. Lightness falls at every step in both themes, so the
+   * order survives in greyscale and for colour-blind readers, and hue runs
+   * blue, teal, gold, orange, red, so the cold half and the hot half never
+   * meet (blue against yellow survives red-green colour blindness).
+   *
+   * Measured from these values (tests/heat-scale.test.ts holds neighbours to
+   * ΔE 15, 10 under simulated deuteranopia and protanopia, and every step to
+   * 3:1 on every card):
+   *   neighbours        light ΔE 20.9 to 34.2, deuteranopia/protanopia 13.1 or more
+   *                     dark  ΔE 17.8 to 34.6, deuteranopia/protanopia 12.6 or more
+   *   on white          3.33 / 3.55 / 4.20 / 6.34 / 10.47 (3.06 at the least on --muted)
+   *   on dark's card    11.5 / 8.60 / 7.39 / 5.52 / 4.46
+   *   on palette cards  3.96 at the least (step 5, Graphite); 3.43 on its raised surface
+   *   text on the fill  4.71 at the least: black on steps 1-3 in light, white
+   *                     on 4 and 5, black on every step in dark
+   */
+  --heat-1-700: oklch(0.645 0.13 262); /* blue */
+  --heat-1-400: oklch(0.85 0.08 240);
+  --heat-2-700: oklch(0.614 0.104 188); /* teal */
+  --heat-2-400: oklch(0.758 0.085 185);
+  --heat-3-700: oklch(0.584 0.114 97); /* gold */
+  --heat-3-400: oklch(0.725 0.148 98);
+  --heat-4-700: oklch(0.5 0.133 47); /* orange */
+  --heat-4-400: oklch(0.661 0.13 47);
+  --heat-5-700: oklch(0.388 0.15 20); /* red */
+  --heat-5-400: oklch(0.615 0.16 20); /* a purer red goes nearly black under protanopia */
   --blue-500: oklch(0.488 0.243 264.376);
 
   /*
@@ -349,6 +381,17 @@
   --category-10: var(--category-10-700);
   --category-11: var(--category-11-700);
   --category-12: var(--category-12-700);
+  /* The heat scale: an opaque fill, with its own text colour. */
+  --heat-1: var(--heat-1-700);
+  --heat-1-foreground: var(--black);
+  --heat-2: var(--heat-2-700);
+  --heat-2-foreground: var(--black);
+  --heat-3: var(--heat-3-700);
+  --heat-3-foreground: var(--black);
+  --heat-4: var(--heat-4-700);
+  --heat-4-foreground: var(--white);
+  --heat-5: var(--heat-5-700);
+  --heat-5-foreground: var(--white);
   /* The zebra stripe (table.tsx: bg-muted/40 on even rows) mixed onto the
      page, opaque: what a pinned table cell paints on an even row, so it
      matches the row without letting scrolled columns show through. Mixed
@@ -517,6 +560,17 @@
   --category-10: var(--category-10-400);
   --category-11: var(--category-11-400);
   --category-12: var(--category-12-400);
+  /* The heat scale: lighter steps to clear the dark surfaces, black text on all. */
+  --heat-1: var(--heat-1-400);
+  --heat-1-foreground: var(--black);
+  --heat-2: var(--heat-2-400);
+  --heat-2-foreground: var(--black);
+  --heat-3: var(--heat-3-400);
+  --heat-3-foreground: var(--black);
+  --heat-4: var(--heat-4-400);
+  --heat-4-foreground: var(--black);
+  --heat-5: var(--heat-5-400);
+  --heat-5-foreground: var(--black);
   --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
   --table-highlight: color-mix(in srgb, var(--info) 20%, var(--background));
   --table-highlight-muted-foreground: var(--gray-400); /* the usual muted: not var(--muted-foreground), which the row redefines from this */
@@ -547,7 +601,7 @@
  * the dark theme, so a block below always sits on top of .dark and sets
  * only what differs from it. The solid fills (--destructive, --success,
  * --warning, --info, each with white -foreground), --info-text, the
- * highlight washes and the categorical slots stay .dark's.
+ * highlight washes, the categorical slots and the heat scale stay .dark's.
  *
  *   --ring is the accent (4.24 to 5.25 on the page), not the guide's
  *     accent deep (2.30 to 2.91, under the 3:1 a focus ring needs).

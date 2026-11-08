@@ -94,6 +94,8 @@ const COMPOSITE_STORIES = [
   // FillInField's rows by kind (money with a suggestion, a date, a long list), and a record's group.
   { id: 'app-fillinqueue--fields', mustShow: 'New desk chair' },
   { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
+  // The heat scale's five steps as fills and as cells holding their own text.
+  { id: 'patterns-heatscale--default', mustShow: 'On a card' },
   // The edit-in-place presets at rest: a money value, a select's badge, a
   // reference, a pair read as one, links by label and by host.
   { id: 'app-editinplacepresets--presets', mustShow: '$1,234.56' },
@@ -830,7 +832,7 @@ test('typography roles resolve to their tokens', async ({ page }) => {
 // `target` measures something other than an icon the same way: a
 // ColorSwatch's ring (its border colour, against what's behind the swatch,
 // since the swatch's own fill is the stored colour).
-type InkTarget = { selector: string; ink: 'color' | 'borderTopColor'; behind: 'self' | 'parent' }
+type InkTarget = { selector: string; ink: 'color' | 'borderTopColor' | 'fill' | 'backgroundColor'; behind: 'self' | 'parent' }
 const GLYPH: InkTarget = { selector: 'svg', ink: 'color', behind: 'self' }
 
 async function glyphContrasts(page: import('@playwright/test').Page, target: InkTarget = GLYPH) {
@@ -986,6 +988,44 @@ test.describe('categorical slots', () => {
         )
         expect(new Set(colours.map(({ glyph }) => glyph)).size).toBe(12)
         for (const { glyph, label } of colours) expect(glyph).not.toBe(label)
+      }
+    })
+  }
+})
+
+// The heat scale: every step, as `fill-heat-*` and as `bg-heat-*`, resolves to
+// its own colour and clears 3:1 against the page and a card, in both themes and
+// each palette. Axe (COMPOSITE_STORIES above) reads the text on the cells; it
+// doesn't measure a shape, and a step whose token is missing paints nothing,
+// which passes it.
+const HEAT_FILL: InkTarget = { selector: '[data-heat-fill]', ink: 'fill', behind: 'parent' }
+const HEAT_CELL: InkTarget = { selector: '[data-heat-cell]', ink: 'backgroundColor', behind: 'parent' }
+
+test.describe('heat scale', () => {
+  for (const theme of ['light', 'dark', ...PALETTES] as const) {
+    test(`all five steps are distinct and clear 3:1 on the page and on a card (${theme})`, async ({ page }) => {
+      if (theme === 'light' || theme === 'dark') {
+        await page.goto(storyUrlById('patterns-heatscale--default', theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      } else {
+        await page.goto(paletteUrl('patterns-heatscale--default', theme))
+        await expectPalette(page, theme)
+      }
+      for (const target of [HEAT_FILL, HEAT_CELL]) {
+        const steps = await glyphContrasts(page, target)
+        if (process.env.PRINT_GLYPHS) console.log('heat', theme, target.ink, JSON.stringify(steps))
+        expect(steps).toHaveLength(10)
+        expect(steps.filter(({ ratio }) => ratio < 3)).toEqual([])
+      }
+      for (const surface of ['background', 'card']) {
+        const list = page.locator(`[data-surface="${surface}"]`)
+        const fills = await list.locator('[data-heat-fill]').evaluateAll((rects) => rects.map((rect) => getComputedStyle(rect).fill))
+        const cells = await list.locator('[data-heat-cell]').evaluateAll((items) =>
+          items.map((li) => ({ background: getComputedStyle(li).backgroundColor, text: getComputedStyle(li).color })),
+        )
+        expect(new Set(fills).size).toBe(5)
+        expect(cells.map(({ background }) => background)).toEqual(fills)
+        for (const { background, text } of cells) expect(text).not.toBe(background)
       }
     })
   }
