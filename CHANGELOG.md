@@ -7,6 +7,37 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.75.0 — Group headings pinned while scrolling, and a note on the phone chip
+
+The UI package only; additive, no new dependency. Nothing changes for an
+app until it passes one of the new props.
+
+- **`stickyGroupHeadings`** on `DataTable`: while the rows are grouped
+  (`groupBy` or a grouping), each heading sticks below the column header
+  while its group scrolls, and the column header is pinned above it (with
+  `header={false}`, the heading sits at the very top). Where it sticks is
+  measured, so a header that wraps and every density work. When the
+  columns fit, they stick to the page's scroll. When they're wider than
+  their box, the table scrolls both ways in a box no taller than the
+  screen and they stick to that. Focus moved to a row clears them. The
+  table layout's alone, and an ungrouped table is unchanged.
+- **`noteOnChip`** on `ModuleCard`: the card's `note` on its chip in a
+  `ModuleStrip mobile="row"`, after the number, on the chip's one line
+  and cut off past 96px, so the chips keep one height. It stays while the
+  number loads and goes on an error, as on the card.
+- **Checks**: `e2e/data-table-grouping.spec.ts` reads the pinned bands
+  from the real layout at every density, at a desktop's and a phone's
+  width, on the page's scroll and in the table's own box, sideways
+  included; `e2e/module-card.spec.ts` measures the chips with notes. The
+  `app/DataTable` Sticky groups stories and `app/ModuleCard` Row notes run
+  through axe and the token check in both themes.
+- cell-patterns.md pattern 21; design-language.md "A row of chips on a
+  phone".
+
+**For apps:** to take it, bump and run `sync`; no other change. Pass
+`stickyGroupHeadings` to a grouped table, and keep `overflow` off its
+ancestors: one with `overflow-hidden` becomes what the headings stick to.
+
 ## 4.74.0 — A heat scale for ordered values
 
 The UI package only; additive, no new dependency. Nothing changes for an

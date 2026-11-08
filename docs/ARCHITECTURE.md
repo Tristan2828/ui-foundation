@@ -202,7 +202,14 @@ src/main.tsx                           FoundationProviders (theme, query client,
 - **Grouped rows** (4.8, #135): `DataTable`'s `groupBy` heads runs of
   rows in the server's order (`byDay` for feeds and logs), one `<tbody>`
   per group with a row header, and `PillFilter` is a quick filter as
-  pills, its value in the URL like the others.
+  pills, its value in the URL like the others. `stickyGroupHeadings`
+  (4.75) pins the heading and the column header with plain
+  `position: sticky`. The table's `overflow-x-auto` box would catch them
+  (it counts as scrolling on both axes), so the mode follows a measurement:
+  columns that fit make the box `overflow-x-clip`, which leaves the page's
+  scroll to stick to; wider ones bound it to the screen and it scrolls
+  both ways. The alternative, moving the cells from a scroll listener,
+  stutters on a phone.
 - **Timed screens** (4.16, #163–#166): `SessionView` is a modal over the
   whole viewport (Base UI's dialog popup with its own classes, not
   `DialogContent` overridden), with optional real fullscreen of the whole

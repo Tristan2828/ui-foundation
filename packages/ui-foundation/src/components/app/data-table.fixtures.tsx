@@ -22,6 +22,8 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   toolbar, a delete in the pinned last column. Saves take ~0.4s; a name
 //   another category has is refused the way a server's 422 is. "Elsewhere"
 //   is a link that leaves the page, for the leave prompt.
+// - Sticky groups (three stories): `stickyGroupHeadings` on a list that fits,
+//   one with no header row, and one wider than its box.
 // - Grouped: a feed under day headings (`groupBy: byDay`), no header row,
 //   and a PillFilter in the toolbar, its value and the page in the URL.
 //   Six rows a page, so This week's group carries on to page 2. Today is
@@ -575,6 +577,82 @@ function FeedInRouter({ path }: { path: string }) {
   return <RouterProvider router={router} />
 }
 
+// --- group headings pinned while scrolling ------------------------------------
+
+type DayEntry = { id: number; title: string; area: string; detail: string; minutes: number; day: string }
+
+const ENTRY_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday']
+const ENTRIES: DayEntry[] = Array.from({ length: 48 }, (_, index) => ({
+  id: index + 1,
+  title: `Entry ${index + 1}`,
+  area: ['Kitchen', 'Garden', 'Garage'][index % 3],
+  detail: 'A longer description that takes up its own wide column',
+  minutes: 5 + (index % 7) * 5,
+  day: ENTRY_DAYS[Math.floor(index / 12)],
+}))
+
+const ENTRY_COLUMNS: LegacyColumnDef<DayEntry, unknown>[] = [
+  { id: 'title', header: 'Entry', cell: ({ row }) => row.original.title },
+  { id: 'area', header: 'Area', cell: ({ row }) => row.original.area },
+  { id: 'minutes', header: 'Time', meta: { align: 'right' }, cell: ({ row }) => `${row.original.minutes} m` },
+  {
+    id: 'actions',
+    header: 'Actions',
+    meta: { align: 'center' },
+    cell: ({ row }) => (
+      <Button variant="outline" size="sm" aria-label={`Open ${row.original.title}`}>
+        Open
+      </Button>
+    ),
+  },
+]
+
+const WIDE_ENTRY_COLUMNS: LegacyColumnDef<DayEntry, unknown>[] = [
+  ...ENTRY_COLUMNS.slice(0, 3),
+  ...['First note', 'Second note', 'Third note'].map(
+    (header): LegacyColumnDef<DayEntry, unknown> => ({
+      id: header,
+      header,
+      cell: ({ row }) => <span className="inline-block w-96">{row.original.detail}</span>,
+    }),
+  ),
+  ENTRY_COLUMNS[3],
+]
+
+function StickyGroupsTable({
+  wide = false,
+  header,
+  pinFirstColumn,
+}: {
+  wide?: boolean
+  header?: boolean
+  pinFirstColumn?: boolean
+}) {
+  return (
+    <main className="flex flex-col gap-4 p-6">
+      <h1 className="type-page-title text-foreground">Entries</h1>
+      <DataTable<DayEntry>
+        stickyGroupHeadings
+        groupBy={(row) => ({ key: row.day, label: row.day })}
+        groupSummary={(rows) => `${rows.length} entries`}
+        columns={wide ? WIDE_ENTRY_COLUMNS : ENTRY_COLUMNS}
+        header={header}
+        pinFirstColumn={pinFirstColumn}
+        data={ENTRIES}
+        total={ENTRIES.length}
+        page={1}
+        pageSize={ENTRIES.length}
+        onPageChange={noop}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        getRowId={(row) => String(row.id)}
+        emptyTitle="Nothing logged yet"
+      />
+    </main>
+  )
+}
+
 // --- several tables on one page ------------------------------------------------
 
 function ReadTable({ title, rows, isLoading }: { title: string; rows: Category[]; isLoading: boolean }) {
@@ -625,6 +703,12 @@ export const ContentWidth: StoryObj = { render: () => <ContentWidthTable /> }
 export const EditInTheRows: StoryObj = { render: () => <InRouter /> }
 
 export const Grouped: StoryObj = { render: () => <FeedInRouter path="/" /> }
+
+export const StickyGroups: StoryObj = { render: () => <StickyGroupsTable /> }
+
+export const StickyGroupsNoHeader: StoryObj = { render: () => <StickyGroupsTable header={false} /> }
+
+export const StickyGroupsWide: StoryObj = { render: () => <StickyGroupsTable wide pinFirstColumn /> }
 
 export const Highlighted: StoryObj = { render: () => <HighlightedTable /> }
 

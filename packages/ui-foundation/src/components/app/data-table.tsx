@@ -171,6 +171,16 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   groupSummary?: (rows: TData[], group: RowGroup) => ReactNode
   /**
+   * While rows are grouped (`groupBy` or a grouping), pins each heading
+   * below the column header while its group scrolls past, and pins the
+   * column header above it. When the columns fit, they stick to whatever
+   * scrolls the page. When they don't, the table scrolls both ways inside
+   * a box no taller than the screen, and they stick to that. The table
+   * layout's alone: a card layout's headings scroll with their cards.
+   * Ungrouped, it changes nothing.
+   */
+  stickyGroupHeadings?: boolean
+  /**
    * The fields the rows can be grouped by, picked in a Group menu at the
    * end of the toolbar: None (the default, the table as it is without
    * this), then each of these. Choice fields: each group is one of the
@@ -629,6 +639,28 @@ const alignClass = (align: 'center' | 'right' | undefined) => align && ALIGN_CLA
 
 const GROUP_HEADING_CLASS = 'h-auto bg-background pt-4 pb-1.5 align-bottom'
 
+// `stickyGroupHeadings`. An `overflow-x-auto` box scrolls on both axes as far
+// as `position: sticky` is concerned, so a cell inside it sticks to that box
+// and never to the page. When the columns fit, the box only clips, which
+// leaves the page's scroll to stick to. When they don't, the box has to
+// scroll sideways, so it's bounded to the screen and scrolls down too.
+// `isolate` keeps these z-indexes inside the table.
+const STICKY_PAGE_SCROLL_CLASS = 'isolate overflow-x-clip'
+const STICKY_OWN_SCROLL_CLASS = 'isolate max-h-dvh overflow-auto'
+
+// Collapsed borders stay where the row was, so a stuck cell draws its rule
+// as an inset shadow and its row's border comes off. Above the pinned
+// columns (z-10): the column header over the headings over the rows. A
+// cell's sticky bounds are the whole table, not its group, so a heading isn't
+// pushed off by the next: the next slides over it, later in the DOM and opaque.
+const STICKY_RULE_CLASS = 'shadow-[inset_0_-1px_0_0_var(--border)]'
+const STICKY_HEAD_CELL_CLASS = `sticky top-0 z-30 bg-background ${STICKY_RULE_CLASS}`
+const STICKY_GROUP_HEADING_CLASS = `sticky top-(--data-table-head-height) z-20 pt-2 ${STICKY_RULE_CLASS}`
+
+// What focus scrolls to clears the stuck header and heading (3rem covers a
+// heading's height, large density included).
+const STICKY_FOCUS_CLASS = '[&_tbody_*]:scroll-mt-[calc(var(--data-table-head-height)+--spacing(12))]'
+
 // A grouping's heading (`groupings`) is a button that folds its rows: the
 // label, then the count, a chevron that turns when folded.
 const GROUP_TOGGLE_CLASS =
@@ -736,6 +768,37 @@ function useBottomScrollbar(
   return { barRef, isOverflowing, scrollWidth }
 }
 
+// `stickyGroupHeadings`: whether the columns are wider than their box, which
+// picks what the headings stick to, and the column header's measured height,
+// which is where they stick (a header can wrap, or be hidden, so it isn't
+// always --table-head-height). A layout effect, so the first paint is right.
+// The table's width, not the box's scrollWidth: it reads the same in either
+// mode, and a scrollbar the bounded box draws can't flip the answer back.
+function useStickyHeadings(containerRef: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
+  const [scrollsSideways, setScrollsSideways] = useState(false)
+  const [headHeight, setHeadHeight] = useState(0)
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    const contentTable = container?.querySelector('table')
+    const head = contentTable?.querySelector('thead')
+    if (!enabled || !container || !contentTable || !head) return
+
+    const measure = () => {
+      setScrollsSideways(contentTable.getBoundingClientRect().width > container.getBoundingClientRect().width + 0.5)
+      setHeadHeight(head.getBoundingClientRect().height)
+    }
+    measure()
+
+    const resizeObserver = new ResizeObserver(measure)
+    resizeObserver.observe(container)
+    resizeObserver.observe(contentTable)
+    return () => resizeObserver.disconnect()
+  }, [containerRef, enabled])
+
+  return { scrollsSideways, headHeight }
+}
+
 export function DataTable<TData extends Record<string, unknown>>({
   columns,
   data,
@@ -760,6 +823,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   width = 'full',
   groupBy,
   groupSummary,
+  stickyGroupHeadings = false,
   header: showHeader = true,
   highlightRow,
   totals,
@@ -929,6 +993,8 @@ export function DataTable<TData extends Record<string, unknown>>({
     : groupBy
       ? groupRuns(rows, (row) => groupBy(row.original)).map((run) => ({ ...run, foldable: false }))
       : null
+  const stickyGroups = stickyGroupHeadings && runs !== null && !cardLayout
+  const { scrollsSideways, headHeight } = useStickyHeadings(containerRef, stickyGroups && isSuccessView)
   const allFolded = runs !== null && runs.length > 0 && runs.every((run) => folded.has(run.key))
   const toggleFold = (key: string) => {
     if (!activeGrouping) return
@@ -1181,6 +1247,10 @@ export function DataTable<TData extends Record<string, unknown>>({
               data-state="success"
               containerRef={containerRef}
               onKeyDown={rowsOpen ? onListKeyDown : undefined}
+              className={cn(stickyGroups && STICKY_FOCUS_CLASS)}
+              style={
+                stickyGroups ? ({ '--data-table-head-height': `${headHeight}px` } as CSSProperties) : undefined
+              }
               // With the sticky bar below as the visible scrollbar, hide the
               // container's own. It stays overflow-x-auto and fully
               // scrollable (wheel, trackpad, drag, and the sync effect); it
@@ -1193,9 +1263,10 @@ export function DataTable<TData extends Record<string, unknown>>({
                 // serves a phone-width rule, and an 80rem table area never
                 // is one.
                 width === 'content' && '@7xl/data-table:[container-type:normal]',
+                stickyGroups && (scrollsSideways ? STICKY_OWN_SCROLL_CLASS : STICKY_PAGE_SCROLL_CLASS),
               )}
             >
-              <TableHeader className={cn(!showHeader && '[&_tr]:border-0')}>
+              <TableHeader className={cn((!showHeader || stickyGroups) && '[&_tr]:border-0')}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header, index) => {
@@ -1236,6 +1307,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                             pinLastColumn &&
                               index === headerGroup.headers.length - 1 &&
                               PINNED_LAST_COLUMN_CLASS,
+                            stickyGroups && showHeader && STICKY_HEAD_CELL_CLASS,
                             alignClass(header.column.columnDef.meta?.align),
                           )}
                           aria-sort={
@@ -1277,9 +1349,16 @@ export function DataTable<TData extends Record<string, unknown>>({
                           fill every open heading: it's never a row to pick. */}
                       <TableRow
                         data-slot="table-group-heading"
-                        className="hover:bg-transparent has-aria-expanded:bg-transparent"
+                        className={cn(
+                          'hover:bg-transparent has-aria-expanded:bg-transparent',
+                          stickyGroups && 'border-b-0',
+                        )}
                       >
-                        <TableHead scope="rowgroup" colSpan={visibleColumnCount} className={GROUP_HEADING_CLASS}>
+                        <TableHead
+                          scope="rowgroup"
+                          colSpan={visibleColumnCount}
+                          className={cn(GROUP_HEADING_CLASS, stickyGroups && STICKY_GROUP_HEADING_CLASS)}
+                        >
                           {/* Sticky, so the label stays in view while a wide
                               table scrolls sideways. */}
                           <span className="sticky left-(--table-cell-px) inline-flex items-baseline gap-2">
