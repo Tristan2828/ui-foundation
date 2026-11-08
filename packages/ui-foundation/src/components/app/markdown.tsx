@@ -54,6 +54,13 @@
 // Printed (EntityView's Print notes, PrintingContext), it's the whole
 // text: nothing folded, no fold buttons, task boxes as glyphs.
 //
+// With `pageLink`, a link the app says is one of its pages (a child page
+// of the record, or of a page, to any depth: src/lib/page-link.ts) is a
+// page link: the page icon and the page's title, opening the page in this
+// tab. Alone in its paragraph, it's a page line, a row of its own. A page
+// the app reports removed shows "Page removed", with Restore when the app
+// gives one. Every other link is as it was; the text is never changed.
+//
 // A task item (`- [ ] to do`, `- [x] done`) shows its box as a glyph
 // with its state in words: read-only text has nothing to tick. With
 // `onTasksChange`, each box is a real checkbox, named for its item's
@@ -74,6 +81,7 @@ import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
 import { rehypeTables } from '@/lib/markdown-table'
 import { remarkToggleHeadings } from '@/lib/markdown-toggle'
 import { toggleTaskAt } from '@/lib/markdown-tasks'
+import type { PageLinkResolver } from '@/lib/page-link'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import {
   CALLOUT_BOX,
@@ -90,6 +98,7 @@ import {
   type HeadingLevel,
   type TableLook,
 } from './prose-look'
+import { PageLinkView } from './page-link'
 import { usePrinting } from './print-context'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 
@@ -183,6 +192,52 @@ function TaskBox({ checked }: { checked: boolean }) {
   )
 }
 
+// Says which links are the app's pages: given only with `pageLink`.
+const PageLinkContext = createContext<PageLinkResolver | null>(null)
+
+type HastElement = HastNode & { properties?: { href?: unknown } }
+
+// The address of the one link a paragraph holds and nothing else (spaces
+// aside), or null: a page line, when the app says it's a page.
+function soleLinkHref(node: HastElement | undefined): string | null {
+  const children = (node?.children ?? []).filter((child) => !(child.type === 'text' && !(child.value ?? '').trim()))
+  const only = children.length === 1 ? (children[0] as HastElement) : null
+  const href = only?.tagName === 'a' ? only.properties?.href : undefined
+  return typeof href === 'string' && href ? href : null
+}
+
+// A link: a page link when the app says its address is one of its pages,
+// else an ordinary one, opening in a new tab.
+function MarkdownLink(props: ComponentProps<'a'> & { node?: unknown }) {
+  const resolve = useContext(PageLinkContext)
+  const { href, children, ...rest } = omitNode(props)
+  if (!href) return <span>{children}</span>
+  const info = resolve?.(href)
+  if (info) return <PageLinkView href={href} info={info} words={itemText(props.node as HastNode | undefined)}>{children}</PageLinkView>
+  return (
+    <a
+      {...rest}
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={PROSE.link}
+    >
+      {children}
+      <ExternalLinkIcon aria-hidden="true" className="ml-0.5 inline size-3 align-baseline" />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  )
+}
+
+// A paragraph: a page line when all it holds is a page link.
+function MarkdownParagraph(props: ComponentProps<'p'> & { node?: unknown }) {
+  const resolve = useContext(PageLinkContext)
+  const rest = omitNode(props)
+  const href = resolve ? soleLinkHref(props.node as HastElement | undefined) : null
+  if (href && resolve?.(href)) return <p {...rest} data-page-line="" className="page-line" />
+  return <p {...rest} />
+}
+
 // Folds a section by its heading's id: given only with `foldKey`.
 const FoldContext = createContext<((id: string) => void) | null>(null)
 
@@ -244,23 +299,8 @@ function heading(level: number, top: HeadingLevel, textTop: number): Components[
 
 // Everything but the headings, which follow `headingLevel` (componentsFor).
 const COMPONENTS: Components = {
-  a: (props) => {
-    const { href, children, ...rest } = omitNode(props)
-    if (!href) return <span>{children}</span>
-    return (
-      <a
-        {...rest}
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className={PROSE.link}
-      >
-        {children}
-        <ExternalLinkIcon aria-hidden="true" className="ml-0.5 inline size-3 align-baseline" />
-        <span className="sr-only"> (opens in a new tab)</span>
-      </a>
-    )
-  },
+  a: MarkdownLink,
+  p: MarkdownParagraph,
   // A list can mix plain and task items (`- a` then `- [ ] b` is one
   // list): each task item drops its own bullet, the rest keep theirs. Its
   // box is inline, so a loose list's item (its text in a <p>) lays out
@@ -401,6 +441,17 @@ export type MarkdownProps = {
    * RichTextEditor. Either way columns fit their words.
    */
   tableLook?: TableLook
+  /**
+   * Which links are the app's own pages (src/lib/page-link.ts): called
+   * with each link's address, it returns what the app knows of that page
+   * (its title, whether it's removed, how to restore it), or `null` for
+   * an ordinary link. A page link shows the page icon and the page's
+   * title and opens the page in this tab; alone in a paragraph it's a row
+   * of its own. A removed page shows "Page removed" and, with
+   * `onRestore`, a Restore button. The Markdown is never changed. Pages
+   * may nest to any depth: the package never asks whose page it is.
+   */
+  pageLink?: PageLinkResolver
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
@@ -412,6 +463,7 @@ export function Markdown({
   foldable = true,
   onTasksChange: onTasksChangeProp,
   tableLook = 'compact',
+  pageLink,
   className,
   ...rest
 }: MarkdownProps) {
@@ -453,6 +505,7 @@ export function Markdown({
       {...rest}
       className={cn('flex min-w-0 flex-col gap-3 type-body text-foreground break-words', PROSE_INSET, className)}
     >
+      <PageLinkContext.Provider value={pageLink ?? null}>
       <FoldContext.Provider value={foldKey === undefined ? null : toggle}>
         <TaskToggleContext.Provider value={onTasksChange ? tickTask : null}>
           <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={rehypePlugins} components={components}>
@@ -460,6 +513,7 @@ export function Markdown({
           </ReactMarkdown>
         </TaskToggleContext.Provider>
       </FoldContext.Provider>
+      </PageLinkContext.Provider>
     </div>
   )
 }

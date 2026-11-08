@@ -395,3 +395,66 @@
     padding-bottom: 0;
   }
 }
+
+/* Page links in written text (<Markdown> and the rich-text editor): a
+   link the app marks as one of its pages (`pageLink`,
+   src/lib/page-link.ts). The page icon, then the title in the text's own
+   colour, medium weight, still underlined (so it's told from the words
+   around it without colour: axe's link-in-text-block). A paragraph that
+   holds only one is a page line, a row that tints on hover. A removed
+   page is muted and struck through, "Page removed" beside it. <Markdown>
+   draws `.page-link` itself; in the editor the link is Milkdown's <a>,
+   its words wrapped in a `.page-link-text` decoration. Unlayered, so the
+   editor's utility classes on every <a> don't outrank it. */
+.page-link,
+.ProseMirror a:has(> .page-link-text) {
+  color: var(--foreground);
+  font-weight: 500;
+  text-decoration-line: underline;
+  text-decoration-color: var(--muted-foreground);
+  text-underline-offset: 4px;
+}
+.page-link:hover,
+.ProseMirror a:has(> .page-link-text):hover {
+  text-decoration-color: currentColor;
+}
+.page-link-icon {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.25rem;
+  vertical-align: -0.1875rem;
+  color: var(--muted-foreground);
+}
+.page-line {
+  margin-inline: -0.375rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: calc(var(--radius) - 2px);
+}
+.page-line:hover {
+  background-color: var(--muted);
+}
+.page-link-removed,
+.ProseMirror a:has(> .page-link-text[data-removed]) {
+  color: var(--muted-foreground);
+  text-decoration-line: none;
+}
+.page-link-removed .page-link-title,
+.page-link-text[data-removed] {
+  text-decoration-line: line-through;
+}
+.page-removed-note {
+  margin-inline: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+.page-removed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: 0.5rem;
+  vertical-align: middle;
+}
+.page-removed .page-removed-note {
+  margin-inline: 0;
+}

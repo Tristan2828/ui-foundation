@@ -61,8 +61,13 @@
 // - `foldKey`: the text folds by its toggle headings, as <Markdown> does
 //   (rich-text-fold.ts), remembered on this device and shared with
 //   NotesOutline; the document never changes.
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+// - `pageLink`: links the app marks as its pages drawn as page links
+//   (rich-text-page-links.ts), opened in this tab; `onCreatePage`: "/page"
+//   and Turn into page make one through the app and link it (a title box,
+//   PageForm). The Markdown stays a plain link.
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
+import { useInRouterContext, useNavigate } from 'react-router'
 import {
   defaultValueCtx,
   Editor,
@@ -100,6 +105,18 @@ import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent } from '@/components/ui/popover'
 import { acceptAttribute } from '@/lib/image-file'
 import { linkHref, linkRefusal } from '@/lib/link-href'
+import type { PageLinkResolver } from '@/lib/page-link'
+import { messageOf } from './edit-in-place-store'
+import { restorePage } from './page-restore'
+import {
+  insertPageLink,
+  pageLinkInfo,
+  pageLinksPlugin,
+  pendingPagePlugin,
+  refreshPageLinks,
+  setPendingPage,
+  type PageSpan,
+} from './rich-text-page-links'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
 import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes, type HighlightColor } from '@/lib/markdown-highlight'
@@ -119,7 +136,6 @@ import { splitTaskItem, taskInputRule } from './rich-text-tasks'
 import { toggleHeadingInputRule, toggleHeadingRemark, withToggle } from './rich-text-toggle-heading'
 import { addRowAtEnd, colorTableCells, handleTableKey, runTableAction, tableLook as tableLookPlugin, type TableAction, type TableColorScope } from './rich-text-table'
 import { TABLE_MENU_EVENT, TableGrips, type TableCell } from './rich-text-table-grips'
-import type { FormatItem } from './rich-text-format-items'
 import {
   applySlash,
   closeSlash,
@@ -127,6 +143,7 @@ import {
   slashOptionId,
   slashPlugin,
   slashQuery,
+  type SlashItem,
   type SlashQuery,
 } from './rich-text-slash'
 import { RichTextSlashMenu } from './rich-text-slash-menu'
@@ -423,16 +440,48 @@ function linkTarget(state: EditorState): LinkTarget {
 // into. Read-only too, where the browser would otherwise follow it in this
 // tab. To edit a link's words, put the caret in them from the keyboard or
 // drag over them; Ctrl/Cmd+K edits its address.
-function followLink(view: EditorView, event: MouseEvent): boolean {
+//
+// A page link (`pageLink`) opens its page in this tab instead (`open`:
+// the router's, when there is one), and a removed page's link opens
+// nothing.
+function followLink(
+  view: EditorView,
+  event: MouseEvent,
+  pages: { resolve: PageLinkResolver | undefined; open: (href: string) => void },
+): boolean {
   if (event.button !== 0 || event.shiftKey || event.altKey) return false
   const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
   if (!anchor || !view.dom.contains(anchor)) return false
   if (!view.state.selection.empty) return false
-  const href = linkHref(anchor.getAttribute('href') ?? '')
+  const written = anchor.getAttribute('href') ?? ''
+  const page = pageLinkInfo(pages.resolve, written)
+  if (page) {
+    event.preventDefault()
+    if (page.removed) return false
+    const href = linkHref(written)
+    if (!href) return false
+    pages.open(href)
+    return true
+  }
+  const href = linkHref(written)
   if (!href) return false
   event.preventDefault()
   window.open(href, '_blank', 'noopener,noreferrer')
   return true
+}
+
+// The router's navigate, handed to the editor's callbacks: rendered only
+// inside a router, so an editor outside one still works (a page link
+// then loads the page).
+function NavigateBridge({ targetRef }: { targetRef: RefObject<((href: string) => void) | null> }) {
+  const navigate = useNavigate()
+  useEffect(() => {
+    targetRef.current = (href) => void navigate(href)
+    return () => {
+      targetRef.current = null
+    }
+  }, [navigate, targetRef])
+  return null
 }
 
 // Sets (or, with `href` empty, removes) the link on the target. With
@@ -451,8 +500,21 @@ function applyLink(view: EditorView, target: LinkTarget, href: string) {
   view.dispatch(tr.scrollIntoView())
 }
 
-type LinkBox = LinkTarget & {
-  anchor: { getBoundingClientRect: () => DOMRect; contextElement: Element }
+type BoxAnchor = { getBoundingClientRect: () => DOMRect; contextElement: Element }
+
+type LinkBox = LinkTarget & { anchor: BoxAnchor }
+
+// The new page's title box: what it starts with (the selected words, or
+// nothing after "/page"), placed at the start of where the link will go.
+type PageBox = { title: string; anchor: BoxAnchor }
+
+// A box's place: a point in the text.
+function anchorAt(view: EditorView, pos: number): BoxAnchor {
+  const point = view.coordsAtPos(pos)
+  return {
+    getBoundingClientRect: () => new DOMRect(point.left, point.top, 0, point.bottom - point.top),
+    contextElement: view.dom,
+  }
 }
 
 export default function MilkdownEditor({
@@ -473,6 +535,8 @@ export default function MilkdownEditor({
   headingFrom = 'hash',
   foldKey,
   tableLook = 'compact',
+  pageLink,
+  onCreatePage,
   className,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
@@ -482,6 +546,14 @@ export default function MilkdownEditor({
   const rootRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<Editor | null>(null)
   const [linkBox, setLinkBox] = useState<LinkBox | null>(null)
+  // The new page's title box, and whether the app is making the page.
+  const [pageBox, setPageBox] = useState<PageBox | null>(null)
+  const [pageBusy, setPageBusy] = useState(false)
+  // Opens the title box: from the slash menu's keys (set up once) too.
+  const startPageRef = useRef<(view: EditorView, span: PageSpan, title: string) => void>(() => {})
+  // The router's navigate, for a page link's click (NavigateBridge).
+  const navigateRef = useRef<((href: string) => void) | null>(null)
+  const inRouter = useInRouterContext()
   const [length, setLength] = useState(defaultValue.length)
   // The editor's state after each change, for the toolbar's pressed buttons.
   const [editorState, setEditorState] = useState<EditorState | null>(null)
@@ -503,16 +575,16 @@ export default function MilkdownEditor({
   // new query starts again from the first).
   const [slashActive, setSlashActive] = useState({ key: '', index: 0 })
   // The open slash menu, for the editor's keys (set up once).
-  const slashMenuRef = useRef<{ key: string; span: SlashQuery; items: FormatItem[]; index: number } | null>(null)
+  const slashMenuRef = useRef<{ key: string; span: SlashQuery; items: SlashItem[]; index: number } | null>(null)
   // Opens the link box: made with the editor, used by the toolbar's Link.
   const openLinkRef = useRef<(view: EditorView) => void>(() => {})
   // The node views' slots (a callout's icon, a table's bars), each
   // rendered into through a portal.
   const [widgets, setWidgets] = useState<Widget[]>([])
   // The latest props, for the editor's callbacks, which are set up once.
-  const latest = useRef({ onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize })
+  const latest = useRef({ onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize, pageLink, onCreatePage })
   useEffect(() => {
-    latest.current = { onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize }
+    latest.current = { onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize, pageLink, onCreatePage }
   })
   // Whether focus is on the floating toolbar, or in a menu opened from it
   // (the Highlight menu's popup is in a portal).
@@ -564,7 +636,7 @@ export default function MilkdownEditor({
   // The slash menu: open while a "/" typed at a line's start is followed
   // by something some block answers to, and the field has focus.
   const slash = menus && !readOnly && focused && editorState ? slashQuery(editorState) : null
-  const slashMatches = slash ? slashItems(slash.query) : []
+  const slashMatches = slash ? slashItems(slash.query, { page: Boolean(onCreatePage) }) : []
   const slashOpen = slash !== null && slashMatches.length > 0
   const slashMenuKey = slash ? `${slash.from}:${slash.query}` : ''
   const slashIndex = slashActive.key === slashMenuKey ? Math.min(slashActive.index, slashMatches.length - 1) : 0
@@ -650,14 +722,7 @@ export default function MilkdownEditor({
     const openLink = (view: EditorView) => {
       if (!view.editable) return
       const target = linkTarget(view.state)
-      const point = view.coordsAtPos(target.from)
-      setLinkBox({
-        ...target,
-        anchor: {
-          getBoundingClientRect: () => new DOMRect(point.left, point.top, 0, point.bottom - point.top),
-          contextElement: view.dom,
-        },
-      })
+      setLinkBox({ ...target, anchor: anchorAt(view, target.from) })
     }
 
     openLinkRef.current = openLink
@@ -673,6 +738,13 @@ export default function MilkdownEditor({
 
     // Paste, copy, the editor's own keys and the placeholder.
     const slashing = $prose(() => slashPlugin())
+
+    // Page links, drawn from the app's `pageLink`; and where a page being
+    // made will be linked.
+    const pageLinks = $prose(() =>
+      pageLinksPlugin({ resolve: () => latest.current.pageLink, restore: restorePage, editable: () => !latest.current.readOnly }),
+    )
+    const pendingPages = $prose(() => pendingPagePlugin())
 
     // Images pasted or dropped, uploaded through the app's `upload`; with
     // none given, a paste or drop is left to the handlers after this one,
@@ -753,7 +825,11 @@ export default function MilkdownEditor({
                 return false
               },
               // A click on a link follows it (followLink).
-              click: (view, event) => followLink(view, event),
+              click: (view, event) =>
+                followLink(view, event, {
+                  resolve: latest.current.pageLink,
+                  open: (href) => (navigateRef.current ? navigateRef.current(href) : window.location.assign(href)),
+                }),
               // The floating toolbar waits for the mouse to be up: a drag
               // is still choosing the words.
               mousedown: (_view, event) => {
@@ -856,7 +932,9 @@ export default function MilkdownEditor({
               }
               if ((event.key === 'Enter' || event.key === 'Tab') && plain) {
                 event.preventDefault()
-                applySlash(view, menu.span, menu.items[menu.index].id)
+                const item = menu.items[menu.index]
+                if (item.id === 'page') startPageRef.current(view, menu.span, '')
+                else applySlash(view, menu.span, item.id)
                 return true
               }
               // Esc closes the menu only: the field's own Esc (editing in
@@ -912,6 +990,8 @@ export default function MilkdownEditor({
       .use(history)
       .use(changes)
       .use(slashing)
+      .use(pageLinks)
+      .use(pendingPages)
       .use(imageUploads)
       .use(imageInput)
       .use(input)
@@ -949,6 +1029,12 @@ export default function MilkdownEditor({
     // Attributes and read-only follow below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // The page links follow the app's answers (a page renamed, removed or
+  // restored): redrawn only when those have changed.
+  useEffect(() => {
+    if (editorView) refreshPageLinks(editorView, pageLink, !readOnly)
+  })
 
   // Read-only and the ARIA attributes follow their props.
   useEffect(() => {
@@ -1062,6 +1148,7 @@ export default function MilkdownEditor({
       focused &&
       !selecting &&
       linkBox === null &&
+      pageBox === null &&
       selection &&
       !selection.empty &&
       !(selection instanceof NodeSelection) &&
@@ -1091,6 +1178,63 @@ export default function MilkdownEditor({
   useEffect(() => {
     slashMenuRef.current = slashOpen && slash ? { key: slashMenuKey, span: slash, items: slashMatches, index: slashIndex } : null
   })
+
+  // The new page's title box: opened for the "/page" typed (left as it is
+  // until the page is made) or the words selected, which the link will
+  // replace. The span is kept in step with the text meanwhile.
+  const startPage = (view: EditorView, span: PageSpan, title: string) => {
+    if (!view.editable || !latest.current.onCreatePage) return
+    view.dispatch(setPendingPage(closeSlash(view.state), { from: span.from, to: span.to }))
+    setPageBox({ title, anchor: anchorAt(view, span.from) })
+  }
+  useEffect(() => {
+    startPageRef.current = startPage
+  })
+  // Selected words in one block (a double-click takes the space after a
+  // word too: the link gets the words, the spaces stay).
+  const selectionInOneBlock = Boolean(editorState && editorState.selection.$from.sameParent(editorState.selection.$to))
+  const pageFromSelection = () => {
+    if (!editorView) return
+    const { from, to } = editorView.state.selection
+    const text = editorView.state.doc.textBetween(from, to)
+    const start = from + (text.length - text.trimStart().length)
+    const end = Math.max(start, to - (text.length - text.trimEnd().length))
+    startPage(editorView, { from: start, to: end }, text.replace(/\s+/g, ' ').trim())
+  }
+  // Closed without a page: the text as it was, the caret back in it.
+  const closePage = () => {
+    setPageBox(null)
+    setPageBusy(false)
+    if (editorView) {
+      editorView.dispatch(setPendingPage(editorView.state.tr, null))
+      editorView.focus()
+    }
+  }
+  // The app makes the page; its link goes in once it has. A refusal is
+  // the box's to show (in the gateway's words): the text isn't touched.
+  const createPage = async (title: string): Promise<string | null> => {
+    const create = latest.current.onCreatePage
+    if (!create) return "Pages can't be made here."
+    setPageBusy(true)
+    let href: string | null
+    try {
+      href = linkHref(await create(title))
+    } catch (error) {
+      setPageBusy(false)
+      return messageOf(error)
+    }
+    setPageBusy(false)
+    if (!href) return "The new page's address can't be linked."
+    const view = editorRef.current?.action((ctx) => ctx.get(editorViewCtx))
+    if (!view || !insertPageLink(view, title, href)) {
+      toast.error(`${title} was made, but its link couldn't go in here. Add it with Ctrl+K.`)
+      setPageBox(null)
+      return null
+    }
+    setPageBox(null)
+    view.focus()
+    return null
+  }
 
   const closeLink = () => {
     setLinkBox(null)
@@ -1245,7 +1389,7 @@ export default function MilkdownEditor({
             items={slashMatches}
             active={slashIndex}
             onHighlight={(index) => setSlashActive({ key: slashMenuKey, index })}
-            onPick={(format) => applySlash(editorView, slash, format)}
+            onPick={(item) => (item === 'page' ? startPage(editorView, slash, '') : applySlash(editorView, slash, item))}
           />
         )}
         {toolsOpen && (
@@ -1272,6 +1416,7 @@ export default function MilkdownEditor({
             field={field}
             controls={editableId}
             onFormat={runFormat}
+            onPage={onCreatePage && selectionInOneBlock ? pageFromSelection : undefined}
             onDismiss={() => setDismissed({ from: editorState.selection.from, to: editorState.selection.to })}
             onReturn={returnToText}
             onBlur={(event) => {
@@ -1299,6 +1444,10 @@ export default function MilkdownEditor({
             : `${length.toLocaleString()} of ${maxLength.toLocaleString()} characters`}
         </p>
       )}
+      {inRouter && <NavigateBridge targetRef={navigateRef} />}
+      <Popover open={pageBox !== null} onOpenChange={(open) => !open && !pageBusy && closePage()}>
+        {pageBox && <PageForm box={pageBox} busy={pageBusy} onCreate={createPage} />}
+      </Popover>
       <Popover open={linkBox !== null} onOpenChange={(open) => !open && closeLink()}>
         {linkBox && (
           <LinkForm
@@ -1383,6 +1532,79 @@ function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => v
             Remove link
           </Button>
         )}
+      </div>
+    </PopoverContent>
+  )
+}
+
+// The new page's title box: the title (the selected words to start with),
+// and Create page. While the app makes the page it waits, its controls
+// held; a refusal shows under the title, in the gateway's words, and the
+// text is left as it was. Enter creates; Esc is the popover's, and closes
+// it (not while the app is still working).
+function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCreate: (title: string) => Promise<string | null> }) {
+  const [typed, setTyped] = useState(box.title)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = useId()
+  const errorId = `${inputId}-error`
+
+  const create = () => {
+    const title = typed.replace(/\s+/g, ' ').trim()
+    if (!title) {
+      setError('Give the page a title.')
+      return
+    }
+    setError(null)
+    void onCreate(title).then((refused) => {
+      if (refused) {
+        setError(refused)
+        inputRef.current?.focus()
+      }
+    })
+  }
+
+  const onKeyDown = (event: ReactKeyboardEvent) => {
+    if (event.key === 'Enter' && event.target === inputRef.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      if (!busy) create()
+    }
+  }
+
+  return (
+    <PopoverContent
+      anchor={box.anchor}
+      align="start"
+      aria-label="New page"
+      initialFocus={inputRef}
+      finalFocus={false}
+      className="w-80"
+      data-rich-text-menu=""
+      data-slot="page-form"
+      onKeyDown={onKeyDown}
+    >
+      <Field data-invalid={error ? true : undefined}>
+        <FieldLabel htmlFor={inputId}>Page title</FieldLabel>
+        <Input
+          ref={inputRef}
+          id={inputId}
+          value={typed}
+          autoComplete="off"
+          readOnly={busy}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          onChange={(event) => {
+            setTyped(event.target.value)
+            setError(null)
+          }}
+        />
+        {error && <FieldError id={errorId}>{error}</FieldError>}
+      </Field>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={create} disabled={busy}>
+          {busy ? 'Creating…' : 'Create page'}
+        </Button>
       </div>
     </PopoverContent>
   )

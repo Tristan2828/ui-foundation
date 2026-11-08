@@ -13,21 +13,21 @@
 - [Categorical colour](#categorical-colour) · lines 269–339
 - [A stored colour](#a-stored-colour) · lines 341–389
 - [Shapes and sizes](#shapes-and-sizes) · lines 391–412
-- [Typography](#typography) · lines 414–508
-  - [Written text (notes)](#written-text-notes) · lines 448–508
-- [Density](#density) · lines 510–596
-  - [Rows on this device](#rows-on-this-device) · lines 569–596
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 598–712
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 714–783
-- [Notices](#notices) · lines 785–813
-- [A value over time](#a-value-over-time) · lines 815–901
-  - [Several values over time](#several-values-over-time) · lines 864–901
-- [A list as a board](#a-list-as-a-board) · lines 903–954
-- [A list as cards](#a-list-as-cards) · lines 956–1002
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1004–1026
-- [Picking at random](#picking-at-random) · lines 1028–1059
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1061–1128
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1130–1155
+- [Typography](#typography) · lines 414–520
+  - [Written text (notes)](#written-text-notes) · lines 448–520
+- [Density](#density) · lines 522–608
+  - [Rows on this device](#rows-on-this-device) · lines 581–608
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 610–724
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 726–795
+- [Notices](#notices) · lines 797–825
+- [A value over time](#a-value-over-time) · lines 827–913
+  - [Several values over time](#several-values-over-time) · lines 876–913
+- [A list as a board](#a-list-as-a-board) · lines 915–966
+- [A list as cards](#a-list-as-cards) · lines 968–1014
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1016–1038
+- [Picking at random](#picking-at-random) · lines 1040–1071
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1073–1140
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1142–1167
 
 <!-- /index -->
 
@@ -493,6 +493,18 @@ of its kind's tone behind ordinary text, with the icon in the tone's text
 shade: note `info`, tip `success`, important category slot 2, warning
 `warning`, caution `destructive`. The package draws all of it; an app
 only renders `<Markdown>` or the editor.
+
+A page link (a link the app marks as one of its pages, `pageLink`) is the
+page icon in `--muted-foreground`, then the title in the text's own
+colour at medium weight, underlined in `--muted-foreground` (the colour
+of the words around it, so the underline is what tells it apart). Alone
+on its line it's a page line, a row that tints `--muted` on hover. A
+removed page is muted and struck through, "Page removed" beside it in
+the caption size, with an outline `xs` Restore button. Both renderers
+draw it from the same CSS (styles/index.css "Page links in written
+text"). The trail back from a page, `PageTrail`, is shadcn's Breadcrumb:
+crumbs in `--muted-foreground`, the page itself in `--foreground`, on
+one line, the middle folded into a "…" menu when it doesn't fit.
 
 Highlighted words (`==words==` in the Markdown) have four colour tokens:
 `--highlight-amber` (the default), `--highlight-yellow`,

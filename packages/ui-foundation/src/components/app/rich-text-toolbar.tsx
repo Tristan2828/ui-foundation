@@ -16,7 +16,7 @@
 //   showing: rich-text-floating-toolbar.tsx).
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import type { EditorState } from '@milkdown/kit/prose/state'
-import { ImageIcon, Maximize2Icon, Minimize2Icon } from 'lucide-react'
+import { FileTextIcon, ImageIcon, Maximize2Icon, Minimize2Icon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Toggle } from '@/components/ui/toggle'
@@ -60,6 +60,8 @@ export type FormatButtonsProps = {
   readOnly: boolean
   /** A button pressed: run the format on the editor and give it focus back. */
   onFormat: (id: FormatId) => void
+  /** The Page button pressed: the selected words become a new page's link. No button without it. */
+  onPage?: () => void
   /** The Image button pressed: pick images to upload. No button without it. */
   onImage?: () => void
   /** The Full screen button pressed. No button without it. */
@@ -73,15 +75,16 @@ export type FormatButtonsProps = {
 // A toolbar's row of buttons: one tab stop, the last one used (ARIA's
 // toolbar pattern); the arrow keys, Home and End move along the row. The
 // toolbar's element (`role="toolbar"`, its name) is the caller's.
-export function FormatButtons({ formats, state, readOnly, onFormat, onImage, onFullScreen, fullScreen = false, text = () => null }: FormatButtonsProps) {
+export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onImage, onFullScreen, fullScreen = false, text = () => null }: FormatButtonsProps) {
   const apple = isApple()
   const compact = useCompact()
   const groups = SETS[formats].map((group) => group.filter((item) => compact || !item.touch)).filter((group) => group.length > 0)
   const items = groups.flat()
-  // The Image and Full screen buttons, last in the row, after the formats.
-  const imageIndex = onImage ? items.length : -1
-  const fullScreenIndex = onFullScreen ? items.length + (onImage ? 1 : 0) : -1
-  const count = items.length + (onImage ? 1 : 0) + (onFullScreen ? 1 : 0)
+  // The Page, Image and Full screen buttons, last in the row, after the formats.
+  const pageIndex = onPage ? items.length : -1
+  const imageIndex = onImage ? items.length + (onPage ? 1 : 0) : -1
+  const fullScreenIndex = onFullScreen ? items.length + (onPage ? 1 : 0) + (onImage ? 1 : 0) : -1
+  const count = items.length + (onPage ? 1 : 0) + (onImage ? 1 : 0) + (onFullScreen ? 1 : 0)
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
   // The one button Tab reaches: the last one used.
   const [current, setCurrent] = useState(0)
@@ -194,6 +197,34 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onImage, onF
           })}
         </Fragment>
       ))}
+      {onPage && (
+        <>
+          <Separator orientation="vertical" className="mx-1 h-5 self-center" />
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  ref={(element: HTMLButtonElement | null) => {
+                    buttons.current[pageIndex] = element
+                  }}
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Turn into page"
+                  disabled={readOnly}
+                  tabIndex={pageIndex === current ? 0 : -1}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onFocus={() => setCurrent(pageIndex)}
+                  onKeyDown={onKeyDown}
+                  onClick={onPage}
+                />
+              }
+            >
+              <FileTextIcon />
+            </TooltipTrigger>
+            <TooltipContent>Turn into page · a new page named for the words, linked here</TooltipContent>
+          </Tooltip>
+        </>
+      )}
       {onImage && (
         <>
           <Separator orientation="vertical" className="mx-1 h-5 self-center" />

@@ -7,6 +7,58 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.73.0 — Page links in notes, "/page", and PageTrail
+
+The UI package only; additive, no new dependency besides shadcn's
+`breadcrumb` primitive (added with the pinned CLI, on Base UI). Nothing
+changes for an app until it passes the new props: notes and every link
+in them render and save as before.
+
+Child pages in notes, to any depth, without blocks: a page is an
+ordinary Markdown link, `[Getting Started](/notes/12/pages/3)`, so
+notes stay Markdown as written and `RichTextEditor` keeps Milkdown and
+its block-by-block merge. The app keeps the pages; the package only draws
+and makes the links, and never knows where pages live or how deep.
+
+- **`pageLink?: (href) => PageLinkInfo | null`** on `<Markdown>` and
+  `RichTextEditor`. For a link the app marks as a page (`{ title?,
+  removed?, onRestore? }`), it draws a page link: the page icon and the
+  title (the app's title on `<Markdown>`, the words as written in the
+  editor), opening in this tab through the router. Alone in a paragraph
+  it's a page line, a row of its own. A removed page shows "Page removed"
+  and, with `onRestore`, a Restore button (a refusal is a toast in the
+  gateway's words). Every other link is unchanged. The editor draws all
+  of it with decorations: the Markdown is never touched, and the look
+  follows the app's answers as they change.
+- **`onCreatePage?: (title) => Promise<href>`** on `RichTextEditor`:
+  "/page" in the slash menu, and Turn into page on the floating toolbar
+  for selected words, open a title box (the selected words to start
+  with), await the app's new page and put in `[title](href)` where the
+  "/page" or the words were, as one undo step. A rejection shows in the
+  box (`messageOf`) and leaves the text as it was.
+- **`PageTrail`** (`crumbs: { label, href? }[]`): the record, every page
+  above, and the page itself, on one line. When it doesn't fit, the
+  crumbs after the first fold into a "…" menu until it does, the page's
+  own name cut short on a phone.
+- New exports: `PageTrail`, `PageCrumb`, `PageTrailProps`,
+  `PageLinkInfo`, `PageLinkResolver`, `CreatePage`; and
+  `@tristan2828/ui-foundation/ui/breadcrumb`.
+- **Checks**: unit tests for page links in `<Markdown>`, a page link
+  byte for byte after an edit elsewhere (mergeMarkdown, and the
+  `pageLinks` fixture through the real editor's round trip), the slash
+  menu's Page item and the trail's folding; `e2e/page-links.spec.ts`
+  follows, restores and makes pages (a refusal included) and folds the
+  trail at desktop and phone widths. The `app/PageLinks` fixtures (read,
+  edited, trail) run through axe and the token check in both themes.
+- add-an-entity.md "Pages in the notes" (the recipe); design-language.md
+  "Written text" (the look).
+
+**For apps:** to link pages from a record's notes, pass the same
+`pageLink` to its `<Markdown>` and `RichTextEditor` (built from the
+record's pages, already loaded), `onCreatePage` to the editor, and put
+`PageTrail` on the page's screen. A page's own notes take the same
+props. To take it: bump and run `sync`; no other change.
+
 ## 4.72.0 — Edit-in-place presets, a link field, fields edited as one, lists grouped and filtered
 
 The UI package only; additive, no new dependency. Nothing changes for an

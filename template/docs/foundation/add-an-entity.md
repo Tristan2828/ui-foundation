@@ -4,25 +4,25 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 41–63
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–758
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–782
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
   - Step 2: `npm run gen:api` · lines 115–116
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–645
-  - Step 7: Register routes · lines 646–661
-  - Step 8: Add Playwright specs for all three screens · lines 662–740
-  - Step 9: Register the nav entry and route names · lines 741–755
-  - Step 10: `npm run verify`. · lines 756–758
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 760–898
-  - [The record view](#the-record-view) · lines 873–898
-- [What not to copy](#what-not-to-copy) · lines 900–926
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 928–945
-- [Deleting](#deleting) · lines 947–976
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 978–999
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1001–1010
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1013–1052
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–669
+  - Step 7: Register routes · lines 670–685
+  - Step 8: Add Playwright specs for all three screens · lines 686–764
+  - Step 9: Register the nav entry and route names · lines 765–779
+  - Step 10: `npm run verify`. · lines 780–782
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 784–922
+  - [The record view](#the-record-view) · lines 897–922
+- [What not to copy](#what-not-to-copy) · lines 924–950
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 952–969
+- [Deleting](#deleting) · lines 971–1000
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1002–1023
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1025–1034
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1037–1076
 
 <!-- /index -->
 
@@ -502,6 +502,30 @@ is a filled-in example while the Widgets demo is still here).
      (`useEdit<Entity>Field`). Without the prop the boxes are pictures
      and the text stays read-only. A list's "2/5" column counts them
      with `countTasks(text)` (`{ done, total }`; `total` 0 for none).
+   - **Pages in the notes** (a record's notes linking to pages of their
+     own, each a title and its own Markdown at its own URL, and a page's
+     notes linking to pages under it, to any depth): the app keeps the
+     pages (a table, an API, a screen per page); the foundation only
+     draws and makes the links. A page is linked by an ordinary Markdown
+     link, `[Getting Started](/notes/12/pages/3)`, so the notes stay
+     Markdown and nothing about how they're stored changes. Give
+     `<Markdown>` and `RichTextEditor` the same `pageLink={(href) => …}`:
+     return `{ title, removed, onRestore }` for an address that is one of
+     the app's pages (look it up in the record's pages, already loaded),
+     `null` for any other link. A page link shows the page icon and the
+     page's title and opens it in this tab; alone on its line it's a row
+     of its own; a removed page (soft-deleted) shows "Page removed" and,
+     with `onRestore` (the app's undelete, returning its promise),
+     Restore. Give the editor `onCreatePage={(title) => createPage(title).then((page) => pagePath(page))}`
+     too: "/page" (and Turn into page on selected words) asks for a
+     title, awaits the new page's address and puts in the link; a
+     rejection shows in the title box in the gateway's words and leaves
+     the text as it was. The page's own screen puts `PageTrail` above its
+     title (`crumbs`: the list, the record, every page above this one,
+     then this one, last, with no `href`): it folds the middle into a "…"
+     menu when it doesn't fit. A page's notes take the same two props, so
+     nothing assumes one level: the app decides where a new page lives
+     (under the record, or under the page whose note it's in).
    - **Notes worth taking on paper** (a visit's prep and questions, a
      guide, a checklist to tick by hand): mark each of those sections
      `print: true`. The header gets a Print notes button (`printLabel`

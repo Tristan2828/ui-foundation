@@ -637,6 +637,30 @@ through decorations. Two looks, `tableLook`: compact (a full grid, the
 header on the heading band; the default) and boxed (roomier, a muted
 header), both with zebra rows, the same CSS for both renderers.
 
+**Page links (4.73)** (`src/lib/page-link.ts`, `page-link.tsx`,
+`rich-text-page-links.ts`, `page-trail.tsx`): child pages in notes, to any
+depth, without blocks. The developer ruled out a block editor, drag
+handles and any change to how notes are stored (2026-11-07), so a page is
+an ordinary Markdown link, `[Title](/notes/12/pages/3)`, and the merge
+needs nothing. The app answers `pageLink(href)` (title, removed,
+`onRestore`) for each link, or `null`; the package never knows where
+pages live or whose they are, so a page's own note takes the same props.
+`<Markdown>` draws a page link through its `a` and `p` components; the
+editor with decorations only (the icon a widget inside the link's mark,
+the page-line look a node decoration, "Page removed" and Restore a widget
+after it), redrawn when the app's answers change (a signature of them,
+compared on each render, so an inline `pageLink` doesn't loop). A click on
+a page link navigates in this tab (the router's `navigate`, through a
+bridge rendered only inside a router), unlike other links. `onCreatePage`
+adds "/page" to the slash menu and Turn into page to the floating
+toolbar: a title box (`PageForm`), the app's promise, then the link
+replaces the "/page" typed or the words selected, the span kept in step
+by a plugin meanwhile; a refusal is the box's message (`messageOf`) and
+the text is untouched. `PageTrail` is shadcn's Breadcrumb on one line: an
+unseen copy measures each crumb, and `crumbsToFold` folds from the second
+crumb down into a "…" menu until it fits, the first and the page itself
+always shown.
+
 **Shortcuts (3.21)** (`rich-text-shortcuts.ts`) are Notion's where it has
 one: Ctrl+Shift+0 to 6 and 8 turn the line into text, a heading, a list
 or a code block, and Ctrl/Cmd+Shift+S strikes through. On a Mac they're
