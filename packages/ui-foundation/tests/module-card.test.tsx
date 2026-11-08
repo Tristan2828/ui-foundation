@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import { ModuleCard, ModuleStrip } from '../src/components/app/module-card'
+import { ModuleCard, ModuleStrip, type ModuleCardProps } from '../src/components/app/module-card'
 
 const render = (node: ReactNode) => renderToStaticMarkup(<MemoryRouter>{node}</MemoryRouter>)
 
@@ -66,5 +66,28 @@ describe('ModuleStrip', () => {
     )
     expect(html).toMatch(/^<nav aria-label="Places"/)
     expect(html.match(/<li/g)).toHaveLength(2)
+  })
+
+  const chip = (card: Pick<ModuleCardProps, 'note' | 'noteOnChip' | 'isLoading' | 'error'>) => {
+    const html = render(
+      <ModuleStrip aria-label="Places" mobile="row">
+        <ModuleCard title="Projects" icon={ListTodoIcon} to="/projects" value={5} note="open" {...card} />
+      </ModuleStrip>,
+    )
+    return html.match(/<a [^>]*data-slot="module-card-chip".*?<\/a>/)?.[0] ?? ''
+  }
+
+  it('leaves the note off the phone chip unless the card says otherwise', () => {
+    expect(chip({})).not.toContain('open')
+    expect(chip({ noteOnChip: true })).toMatch(/data-slot="module-card-chip-note"[^>]*>open</)
+  })
+
+  it('keeps the chip note while loading and drops it on an error, as the card does', () => {
+    expect(chip({ noteOnChip: true, isLoading: true })).toContain('module-card-chip-note')
+    expect(chip({ noteOnChip: true, error: { kind: 'network', message: 'x' } })).not.toContain('module-card-chip-note')
+  })
+
+  it('draws nothing for noteOnChip without a note', () => {
+    expect(chip({ noteOnChip: true, note: undefined })).not.toContain('module-card-chip-note')
   })
 })

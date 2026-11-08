@@ -19,16 +19,16 @@
 - [Density](#density) · lines 587–673
   - [Rows on this device](#rows-on-this-device) · lines 646–673
 - [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 675–789
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 791–860
-- [Notices](#notices) · lines 862–890
-- [A value over time](#a-value-over-time) · lines 892–978
-  - [Several values over time](#several-values-over-time) · lines 941–978
-- [A list as a board](#a-list-as-a-board) · lines 980–1031
-- [A list as cards](#a-list-as-cards) · lines 1033–1079
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1081–1103
-- [Picking at random](#picking-at-random) · lines 1105–1136
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1138–1205
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1207–1232
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 791–868
+- [Notices](#notices) · lines 870–898
+- [A value over time](#a-value-over-time) · lines 900–986
+  - [Several values over time](#several-values-over-time) · lines 949–986
+- [A list as a board](#a-list-as-a-board) · lines 988–1039
+- [A list as cards](#a-list-as-cards) · lines 1041–1087
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1089–1111
+- [Picking at random](#picking-at-random) · lines 1113–1144
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1146–1213
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1215–1240
 
 <!-- /index -->
 
@@ -847,15 +847,23 @@ const { data, isLoading, error, refetch } = useProjectsSummaryQuery()
   hub's widgets should start on the first screen, or there are more
   places than six tiles: below the sidebar's breakpoint the strip is one
   row that scrolls sideways, a chip per place with its icon in its slot's
-  colour, its name and its number (no note, no action). While the number
-  loads, a small skeleton; on an error, a muted dash ("Couldn't load" to
+  colour, its name and its number (no action, and no note unless the card
+  sets `noteOnChip`). While the number loads, a small skeleton; on an
+  error, a muted dash ("Couldn't load" to
   a screen reader), with Retry left to the desktop card and the place's
   own page. The row scrolls inside itself and the page never does. A
   desktop shows the cards either way, so don't render your own row
   beside a strip hidden on a phone.
+- **`noteOnChip`** puts a card's `note` on its chip, after the number,
+  for a word or two the number means little without ("5 new"). A rule of
+  the card, so a strip can show it on the chips that need it. It stays on
+  the chip's one line in caption type, cut off with an ellipsis past 96px
+  (the whole note is still read out), so every chip keeps its height and
+  a long note can't take over the row. It stays while the number loads,
+  so the chip doesn't change width, and goes on an error, as on the card.
 - The fixtures' `app/ModuleCard` shows a hub with a strip and a widget,
   every state, both at `compact`, and both again as a row of chips (Row,
-  Row states); its checks run axe and the token and glyph checks in both
+  Row states, Row notes); its checks run axe and the token and glyph checks in both
   themes and at `large`, measure the strip at a desktop and a phone
   width, and run axe on the chips at a phone's.
 

@@ -35,10 +35,10 @@
   - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1391–1401
 - [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1403–1469
 - [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1471–1535
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1537–1605
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1607–1635
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1637–1713
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1715–1738
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1537–1618
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1620–1648
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1650–1726
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1728–1751
 
 <!-- /index -->
 
@@ -1583,6 +1583,19 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   in the group's own `<tbody>`), so a screen reader names a cell's group
   as it names its column. It stays in view while a wide table scrolls
   sideways.
+- **`stickyGroupHeadings`** pins the headings while their groups scroll,
+  for a list long enough that "which day is this?" gets lost: each
+  heading sticks below the column header, which is pinned with it (with
+  `header={false}`, at the very top), until the next group's slides
+  over it. It works under `groupBy` and a grouping alike, and does nothing
+  to a table that isn't grouped or to a card layout. When the columns fit
+  (a feed, most lists on a phone) they stick to the page's own scroll.
+  When they're wider than the screen the table has to scroll sideways, and
+  a box that scrolls sideways is what sticky cells stick to, so the table
+  becomes a box no taller than the screen and scrolls both ways inside
+  it. An ancestor of your own with `overflow` set (a card with
+  `overflow-hidden`, say) takes the place of the page: leave it off such a
+  table's ancestors.
 - **`header={false}`** for a list-like table whose columns explain
   themselves (a thumbnail with a title block, then actions). The header
   row takes no room but stays in the table, so the columns keep their

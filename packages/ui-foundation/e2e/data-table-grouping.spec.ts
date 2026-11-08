@@ -218,3 +218,121 @@ test.describe('DataTable row click and a controlled panel', () => {
     await expect(page.getByText("A chore's page")).toBeVisible()
   })
 })
+
+// `stickyGroupHeadings`, app/DataTable's Sticky groups stories, read from the
+// real layout: which cell is on top where the pinned bands sit, at every
+// density, at a desktop's width and a phone's.
+test.describe('DataTable stickyGroupHeadings', () => {
+  const stickyStory = (id: string, density?: string) =>
+    `http://localhost:6180/story.html?id=app-datatable--${id}&theme=light${density ? `&density=${density}` : ''}`
+
+  // Scrolls so the group's sixth row is at the top of whatever scrolls, then
+  // reports where the pinned bands are, and what's on top at the heading.
+  const measure = (page: Page, day: string, sixthRow: string) =>
+    page.evaluate(
+      async ({ day, sixthRow }) => {
+        const rowOf = [...document.querySelectorAll('tbody tr')].find((row) => row.textContent?.includes(sixthRow))!
+        rowOf.scrollIntoView({ block: 'start' })
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+        const container = document.querySelector('[data-slot="table-container"]') as HTMLElement
+        const ownScroll = container.scrollHeight > container.clientHeight
+        const headingOf = (text: string) =>
+          [...document.querySelectorAll('[data-slot="table-group-heading"] th')].find((cell) =>
+            cell.textContent?.includes(text),
+          ) as HTMLElement
+        const heading = headingOf(day).getBoundingClientRect()
+        const head = document.querySelector('thead th')!.getBoundingClientRect()
+        const hit = document.elementFromPoint(heading.x + 40, heading.y + heading.height / 2)
+        return {
+          top: ownScroll ? container.getBoundingClientRect().top : 0,
+          headTop: head.top,
+          headBottom: head.bottom,
+          headingTop: heading.top,
+          headingBottom: heading.bottom,
+          onTop: hit?.closest('[data-slot="table-group-heading"]')?.textContent ?? '',
+          ownScroll,
+          overflowX: getComputedStyle(container).overflowX,
+          pageScrollsSideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+        }
+      },
+      { day, sixthRow },
+    )
+
+  for (const viewport of [
+    { name: 'a desktop', width: 1280, height: 600 },
+    { name: 'a phone', width: 390, height: 600 },
+  ]) {
+    test.describe(`at ${viewport.name}'s width`, () => {
+      test.use({ viewport: { width: viewport.width, height: viewport.height } })
+
+      for (const density of [undefined, 'compact', 'comfortable', 'large']) {
+        test(`the heading pins under the column header on the page's scroll (${density ?? 'default'})`, async ({ page }) => {
+          await page.goto(stickyStory('sticky-groups', density))
+          await expect(page.getByText('Thursday')).toBeVisible()
+          // Tuesday's rows are 13 to 24.
+          const at = await measure(page, 'Tuesday', 'Entry 18')
+          // At large on a phone these four columns no longer fit, so the
+          // table takes its own box there.
+          const overflows = viewport.width < 768 && density === 'large'
+          expect(at.ownScroll).toBe(overflows)
+          expect(at.overflowX).toBe(overflows ? 'auto' : 'clip')
+          expect(at.headTop).toBeCloseTo(at.top, 0)
+          expect(at.headingTop).toBeCloseTo(at.headBottom, 0)
+          // Tuesday's has slid over Monday's, which is still there beneath it.
+          expect(at.onTop).toContain('Tuesday')
+          expect(at.pageScrollsSideways).toBe(false)
+        })
+      }
+
+      test('with no header row the heading pins at the very top', async ({ page }) => {
+        await page.goto(stickyStory('sticky-groups-no-header'))
+        await expect(page.getByText('Thursday')).toBeVisible()
+        const at = await measure(page, 'Wednesday', 'Entry 30')
+        expect(at.headingTop).toBeCloseTo(0, 0)
+        expect(at.onTop).toContain('Wednesday')
+      })
+
+      for (const density of [undefined, 'large']) {
+        test(`a table wider than its box scrolls in a box of its own, and pins inside it (${density ?? 'default'})`, async ({ page }) => {
+          await page.goto(stickyStory('sticky-groups-wide', density))
+          await expect(page.getByText('Thursday')).toBeVisible()
+          const at = await measure(page, 'Tuesday', 'Entry 18')
+          expect(at.ownScroll).toBe(true)
+          expect(at.overflowX).toBe('auto')
+          expect(at.headTop).toBeCloseTo(at.top, 0)
+          expect(at.headingTop).toBeCloseTo(at.headBottom, 0)
+          expect(at.onTop).toContain('Tuesday')
+          expect(at.pageScrollsSideways).toBe(false)
+          const box = await page.locator('[data-slot="table-container"]').boundingBox()
+          expect(box!.height).toBeLessThanOrEqual(viewport.height)
+
+          // Sideways too: the label stays in view, over the pinned column.
+          await page.locator('[data-slot="table-container"]').evaluate((element) => {
+            element.scrollLeft = 300
+          })
+          const label = page.locator('[data-slot="table-group-heading"]').filter({ hasText: 'Tuesday' }).getByText('Tuesday')
+          const labelBox = await label.boundingBox()
+          expect(labelBox!.x).toBeGreaterThanOrEqual(0)
+          expect(labelBox!.x).toBeLessThan(viewport.width / 2)
+        })
+      }
+
+      test('focus moved to a row clears the pinned bands', async ({ page }) => {
+        await page.goto(stickyStory('sticky-groups'))
+        await expect(page.getByText('Thursday')).toBeVisible()
+        const at = await measure(page, 'Tuesday', 'Entry 18')
+        const button = page.getByRole('button', { name: 'Open Entry 18', exact: true })
+        await button.focus()
+        const box = await button.boundingBox()
+        expect(box!.y).toBeGreaterThanOrEqual(at.headingBottom - 1)
+      })
+    })
+  }
+
+  test('a table that does not ask scrolls as before', async ({ page }) => {
+    await page.goto(`http://localhost:6180/story.html?id=app-datatable--grouped&theme=light`)
+    await expect(page.getByText('Earlier this week')).toBeVisible()
+    expect(await page.locator('[data-slot="table-container"]').evaluate((element) => getComputedStyle(element).overflowX)).toBe('auto')
+    expect(await page.locator('[data-slot="table-group-heading"] th').first().evaluate((element) => getComputedStyle(element).position)).toBe('static')
+  })
+})

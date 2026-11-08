@@ -140,8 +140,46 @@ test.describe('mobile="row" on a phone', () => {
     expect(await pageScrollsSideways(page)).toBe(false)
   })
 
+  test('noteOnChip: the note on one line, cut off, every chip the same height', async ({ page }) => {
+    await page.goto(story('row-notes'))
+    const strip = page.getByRole('navigation', { name: 'Places', exact: true })
+    await expect(strip.getByRole('link', { name: 'Workouts 2 due today', exact: true })).toBeVisible()
+    const chips = strip.locator('[data-slot=module-card-chip]')
+    const boxes = await chips.evaluateAll((all) => all.map((chip) => chip.getBoundingClientRect().toJSON()))
+    for (const box of boxes) {
+      expect(box.top).toBeCloseTo(boxes[0].top, 0)
+      expect(box.height).toBe(44)
+    }
+    const notes = await strip.locator('[data-slot=module-card-chip-note]').evaluateAll((all) =>
+      all.map((note) => {
+        const element = note as HTMLElement
+        const lineHeight = parseFloat(getComputedStyle(element).lineHeight)
+        return { text: element.textContent, width: element.offsetWidth, full: element.scrollWidth, height: element.offsetHeight, lineHeight }
+      }),
+    )
+    expect(notes).toHaveLength(7)
+    for (const note of notes) {
+      expect(note.width).toBeLessThanOrEqual(96)
+      expect(note.height).toBeLessThanOrEqual(Math.ceil(note.lineHeight))
+    }
+    // The longest is cut off rather than widening its chip; the whole of it
+    // is still read out.
+    const cut = notes.find((note) => note.text === 'Opens its own app')
+    expect(cut!.full).toBeGreaterThan(cut!.width)
+    await expect(strip.getByRole('link', { name: /^Reading Opens its own app/ })).toBeVisible()
+    expect(await pageScrollsSideways(page)).toBe(false)
+  })
+
+  test('noteOnChip: the note stays while loading and goes on an error', async ({ page }) => {
+    await page.goto(story('row-notes'))
+    const loading = page.getByRole('navigation', { name: 'Places (loading)' })
+    await expect(loading.locator('[data-slot=module-card-chip-note]')).toHaveCount(3)
+    const failed = page.getByRole('navigation', { name: 'Places (error)' })
+    await expect(failed.locator('[data-slot=module-card-chip-note]')).toHaveCount(0)
+  })
+
   for (const theme of ['light', 'dark'] as const) {
-    for (const name of ['row', 'row-states']) {
+    for (const name of ['row', 'row-states', 'row-notes']) {
       test(`${name}: zero axe violations (${theme})`, async ({ page }) => {
         await page.goto(story(name, theme))
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)

@@ -11,7 +11,8 @@ import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 // loaded; All states is a strip in each state (loading, failed, with and
 // without a number, a place with no slot); Compact is Default under
 // data-density="compact"; Row and Row states are Default and All states
-// with `mobile="row"`, one sideways row of chips on a phone; Row page is
+// with `mobile="row"`, one sideways row of chips on a phone; Row notes is
+// that row with each card's `noteOnChip`, in every state; Row page is
 // the strip alone on a page, for defineA11ySuite. Axe, the
 // token check and the glyph check
 // measure each in both themes, and Default at the large density too
@@ -215,6 +216,28 @@ export const Compact: StoryObj = {
 export const Row: StoryObj = { render: () => <Hub mobile="row" /> }
 
 export const RowStates: StoryObj = { name: 'Row states', render: () => <AllStatesPage mobile="row" /> }
+
+const withChipNotes = (places: ModuleCardProps[]) => places.map((place) => ({ ...place, noteOnChip: true }))
+
+export const RowNotes: StoryObj = {
+  name: 'Row notes',
+  render: () => (
+    <main className="flex flex-col gap-4">
+      <h1 className="type-page-title text-foreground">Home</h1>
+      <Strip label="Places" mobile="row" places={withChipNotes(PLACES)} />
+      <Strip
+        label="Places (loading)"
+        mobile="row"
+        places={withChipNotes(FIRST_THREE).map((place) => ({ ...place, isLoading: true }))}
+      />
+      <Strip
+        label="Places (error)"
+        mobile="row"
+        places={withChipNotes(FIRST_THREE).map((place) => ({ ...place, error: ERROR, onRetry: () => {} }))}
+      />
+    </main>
+  ),
+}
 
 // A hub reduced to what `defineA11ySuite` needs of a page (a <main>, one
 // heading) and nothing else with a data state, so the only visible

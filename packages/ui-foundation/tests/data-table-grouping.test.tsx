@@ -207,3 +207,29 @@ describe('DataTable group icons', () => {
     expect(render({ groupings: iconGroupings })).not.toContain('data-icon')
   })
 })
+
+describe('stickyGroupHeadings', () => {
+  const byStatus = (chore: Chore) => ({ key: chore.status, label: chore.status })
+
+  it('pins the column header and each heading while grouped', () => {
+    const html = render({ groupBy: byStatus, stickyGroupHeadings: true })
+    expect(html).toContain('--data-table-head-height:0px')
+    expect(html).toContain('overflow-x-clip')
+    expect(html).not.toContain('overflow-x-auto')
+    expect(html.match(/<th[^>]*scope="rowgroup"[^>]*>/g)?.every((cell) => cell.includes('sticky top-('))).toBe(true)
+    expect(html).toMatch(/<th[^>]*sticky top-0[^>]*>/)
+  })
+
+  it('changes nothing for a grouped table that does not ask', () => {
+    const html = render({ groupBy: byStatus })
+    expect(html).toContain('overflow-x-auto')
+    expect(html).not.toContain('overflow-x-clip')
+    expect(html).not.toContain('--data-table-head-height')
+    expect(html).not.toContain('sticky top-')
+  })
+
+  it('changes nothing while the table is not grouped', () => {
+    expect(render({ stickyGroupHeadings: true })).toBe(render())
+    expect(render({ groupings, stickyGroupHeadings: true })).toBe(render({ groupings }))
+  })
+})

@@ -144,6 +144,10 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
   { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
+  // Group headings pinned while scrolling: columns that fit, no header row, wide.
+  { id: 'app-datatable--sticky-groups', mustShow: 'Thursday' },
+  { id: 'app-datatable--sticky-groups-no-header', mustShow: 'Thursday' },
+  { id: 'app-datatable--sticky-groups-wide', mustShow: 'Thursday' },
   // DataTable's card layouts (#252): a feed's grid and compact list under
   // day headings, and covers with a round Read button and a placeholder.
   { id: 'app-datatable-layouts--feed', mustShow: 'Earlier this week' },
@@ -203,6 +207,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-modulecard--compact', mustShow: 'beds planted' },
   { id: 'app-modulecard--row', mustShow: 'beds planted' },
   { id: 'app-modulecard--row-states', mustShow: 'No slot: a plain band' },
+  { id: 'app-modulecard--row-notes', mustShow: 'Home' },
   // <SessionView> is a timed screen's whole viewport: its header controls
   // and a timer's own (the big digits, the status line, a pressed toggle).
   { id: 'app-sessionview--timer', mustShow: '1:00' },

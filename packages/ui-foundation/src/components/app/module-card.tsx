@@ -29,6 +29,8 @@
 // renders its chip beside its card, one shown at each width. The row
 // scrolls inside itself and is `relative`, so a chip's sr-only text
 // (absolutely placed) scrolls with it instead of widening the page.
+// `noteOnChip` adds the note after the number, on the chip's one line and
+// cut off at a fixed width, so a long note can't crowd the row.
 import { Children, createContext, useContext, useId, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
 import { AlertCircleIcon, ExternalLinkIcon } from 'lucide-react'
@@ -62,6 +64,13 @@ export type ModuleCardProps = ModuleCardPlace & {
   value?: number | string
   /** A few words under the number: "open", "due today", "Opens its own app". */
   note?: string
+  /**
+   * Shows `note` on the phone chip too, after the number (`ModuleStrip
+   * mobile="row"`): for a word or two the number means little without.
+   * One line, cut off with an ellipsis past 96px; gone on an error, as on
+   * the card.
+   */
+  noteOnChip?: boolean
   /** One link at the foot of the card (hidden on a phone, where the tile is the link). */
   action?: ModuleCardLink
   /** True while the number loads. */
@@ -170,8 +179,9 @@ function ModuleChip({
   to,
   href,
   value,
+  note,
   state,
-}: Pick<ModuleCardProps, 'title' | 'icon' | 'category' | 'to' | 'href' | 'value'> & {
+}: Pick<ModuleCardProps, 'title' | 'icon' | 'category' | 'to' | 'href' | 'value' | 'note'> & {
   state: 'loading' | 'error' | 'success'
 }) {
   const content = (
@@ -182,6 +192,11 @@ function ModuleChip({
       />
       {title}
       <ChipValue state={state} value={value} />
+      {note && state !== 'error' && (
+        <span data-slot="module-card-chip-note" title={note} className="max-w-24 truncate type-caption text-muted-foreground">
+          {note}
+        </span>
+      )}
     </>
   )
   const chipProps = { 'data-slot': 'module-card-chip', 'data-state': state, className: cn(CHIP_CLASS, 'md:hidden') }
@@ -205,6 +220,7 @@ export function ModuleCard({
   href,
   value,
   note,
+  noteOnChip = false,
   action,
   isLoading = false,
   error,
@@ -312,7 +328,7 @@ export function ModuleCard({
   return (
     <>
       {card}
-      <ModuleChip title={title} icon={Icon} category={category} to={to} href={href} value={value} state={state} />
+      <ModuleChip title={title} icon={Icon} category={category} to={to} href={href} value={value} note={noteOnChip ? note : undefined} state={state} />
     </>
   )
 }
@@ -324,7 +340,7 @@ export interface ModuleStripProps {
   children: ReactNode
   /**
    * On a phone: three columns of `tiles` (the default), or one `row` of
-   * chips (icon, name, number) that scrolls sideways, below the sidebar's
+   * chips (icon, name, number, and the note with `noteOnChip`) that scrolls sideways, below the sidebar's
    * breakpoint. A desktop shows the cards either way.
    */
   mobile?: ModuleStripMobile
