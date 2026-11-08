@@ -7,6 +7,32 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.74.0 — A heat scale for ordered values
+
+The UI package only; additive, no new dependency. Nothing changes for an
+app until it uses the new classes. The foundation had categorical slots
+(unordered) and greys for charts, but nothing for values with an order.
+
+- **`--heat-1` to `--heat-5`**, five opaque steps from cold (blue) to hot
+  (red), as `fill-heat-*` and `bg-heat-*`, each with
+  `--heat-*-foreground` (`text-heat-*-foreground`) for text on it. Values
+  for light and dark; every palette takes dark's.
+- **Measured:** each step clears 3:1 against the card and the page in
+  light, dark and every palette; text on a fill clears 4.5:1; neighbours
+  are at least ΔE 18.9 apart, and 12.9 under simulated deuteranopia and
+  protanopia; each step is darker than the last, in both themes.
+- **Rules:** design-language.md "Heat scale": ordered values only, not
+  status and not categories; opaque; the value also shown as text or a
+  legend; no data is not step 1.
+- **Checks:** `patterns/HeatScale` runs through axe and the token check
+  in light, dark and every palette; a new check measures every step, as
+  a fill and as a cell, on the page and a card. `tests/heat-scale.test.ts`
+  holds the distances and contrasts from the values in `theme.css`.
+
+**How an app adopts:** bump, run `ui-foundation sync` (only docs change)
+and `verify`. To use it, map your values to the five steps with whole
+class names, as design-language.md "Heat scale" shows.
+
 ## 4.73.0 — Page links in notes, "/page", and PageTrail
 
 The UI package only; additive, no new dependency besides shadcn's
