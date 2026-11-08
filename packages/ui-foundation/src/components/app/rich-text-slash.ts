@@ -9,6 +9,7 @@
 // list, a quote or a code block.
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
+import { FileTextIcon } from 'lucide-react'
 import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, TOGGLE_HEADING_VARIANTS, type FormatItem } from './rich-text-format-items'
 import { toggleFormat, type FormatId } from './rich-text-formats'
 
@@ -52,7 +53,7 @@ export function slashQuery(state: EditorState): SlashQuery | null {
   return open ? queryAt(state, open.from) : null
 }
 
-/** The transaction that closes the menu, leaving what was typed as text (Esc). */
+/** The transaction that closes the menu, leaving what was typed as text (Esc, or the page's title box opening). */
 export function closeSlash(state: EditorState): Transaction {
   return state.tr.setMeta(slashKey, 'close')
 }
@@ -120,16 +121,30 @@ const KEYWORDS: Partial<Record<FormatId, string[]>> = {
 const BLOCKS = FORMAT_GROUPS.flat().filter((item) => KEYWORDS[item.id])
 BLOCKS.splice(BLOCKS.findIndex((item) => item.id === 'heading3') + 1, 0, ...TOGGLE_HEADING_VARIANTS)
 
-/** The blocks matching what's typed after the "/": in the name, or the start of a keyword. */
-export function slashItems(query: string): FormatItem[] {
+/** A slash menu item: a block, or the new page (only with the app's `onCreatePage`). */
+export type SlashItem = Omit<FormatItem, 'id'> & { id: FormatId | 'page' }
+
+// A page of its own, linked from here (src/lib/page-link.ts): last, since
+// it's the only item that leaves the editor (a title box, then the app).
+const PAGE_ITEM: SlashItem = { id: 'page', label: 'Page', icon: FileTextIcon }
+const PAGE_KEYWORDS = ['page', 'subpage', 'child', 'link', 'new']
+
+/**
+ * The blocks matching what's typed after the "/": in the name, or the
+ * start of a keyword. With `page`, the new page too.
+ */
+export function slashItems(query: string, options: { page?: boolean } = {}): SlashItem[] {
   const typed = query.trim().toLowerCase()
-  if (!typed) return BLOCKS
+  const page = options.page && (!typed || 'page'.includes(typed) || PAGE_KEYWORDS.some((word) => word.startsWith(typed))) ? [PAGE_ITEM] : []
+  if (!typed) return [...BLOCKS, ...page]
   const blocks = [...BLOCKS]
   blocks.splice(BLOCKS.findIndex((item) => item.id === 'callout') + 1, 0, ...CALLOUT_VARIANTS)
   blocks.push(...HIGHLIGHT_VARIANTS)
-  return blocks.filter(
+  const matches: SlashItem[] = blocks.filter(
     (item) => item.label.toLowerCase().includes(typed) || KEYWORDS[item.id]!.some((word) => word.startsWith(typed)),
   )
+  // "/page" puts the page first: it's what was asked for by name.
+  return typed.length >= 2 && 'page'.startsWith(typed) ? [...page, ...matches] : [...matches, ...page]
 }
 
 /**

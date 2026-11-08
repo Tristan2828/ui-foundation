@@ -12,9 +12,7 @@
 import { useLayoutEffect, useState } from 'react'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { cn } from 'cn'
-import type { FormatItem } from './rich-text-format-items'
-import type { FormatId } from './rich-text-formats'
-import { slashOptionId } from './rich-text-slash'
+import { slashOptionId, type SlashItem } from './rich-text-slash'
 
 // Its gap from the caret's line.
 const GAP = 4
@@ -39,11 +37,11 @@ export interface RichTextSlashMenuProps {
   at: number
   /** The field's element it's placed against (positioned: `relative`). */
   field: HTMLElement | null
-  items: FormatItem[]
+  items: SlashItem[]
   /** The highlighted item: Enter picks it. */
   active: number
   onHighlight: (index: number) => void
-  onPick: (id: FormatId) => void
+  onPick: (id: SlashItem['id']) => void
 }
 
 export function RichTextSlashMenu({ id, view, at, field, items, active, onHighlight, onPick }: RichTextSlashMenuProps) {

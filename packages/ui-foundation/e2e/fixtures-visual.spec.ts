@@ -62,6 +62,10 @@ const COMPOSITE_STORIES = [
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
+  // Page links read and edited (removed, Restore), and PageTrail folded (4.73).
+  { id: 'app-pagelinks--read', mustShow: 'Lost notes' },
+  { id: 'app-pagelinks--edit', mustShow: 'Type / and pick Page' },
+  { id: 'app-pagelinks--trail', mustShow: 'Five levels deep, narrow' },
   { id: 'app-richtexteditor--features', mustShow: 'characters over the limit' },
   { id: 'app-stagecircle--default', mustShow: 'In progress' },
   { id: 'app-banners--default', mustShow: 'Dev data:' },

@@ -34,6 +34,14 @@
 // from the slash menu (Toggle heading 1 to 3) or made from the heading the
 // caret is in with the toolbar's Toggle heading. Plain is the default.
 //
+// With `pageLink`, links the app marks as its pages (src/lib/page-link.ts)
+// draw as page links, as on <Markdown>: the page icon, a row of their own
+// when alone in a paragraph, "Page removed" with Restore. A click opens the
+// page in this tab. With `onCreatePage`, "/page" (or Turn into page on
+// selected words) asks for a title, has the app make the page, and puts
+// in `[title](href)`. Pages may nest to any depth: a page's own note takes
+// the same props. The Markdown stays plain links.
+//
 // `defaultValue` is read when it mounts, then followed: a new value the
 // editor didn't report itself (a form's loaded record arriving after the
 // editor, a reset) replaces the text, as if it opened with it. Its own
@@ -47,6 +55,7 @@ import { lazy, Suspense, useState } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
+import type { CreatePage, PageLinkResolver } from '@/lib/page-link'
 import type { HeadingFrom, HeadingLevel, TableLook } from './prose-look'
 
 const MilkdownEditor = lazy(() => import('./milkdown-editor'))
@@ -149,6 +158,27 @@ export type RichTextEditorProps = {
    * zebra rows. The same on <Markdown>. Either way columns fit their words.
    */
   tableLook?: TableLook
+  /**
+   * Which links are the app's own pages, as on `<Markdown>`
+   * (src/lib/page-link.ts): each link's address in, what the app knows of
+   * the page (title, removed, `onRestore`) or `null` out. A page link
+   * shows the page icon and its words in the page-link look, a row of its
+   * own when alone in a paragraph; a click opens it in this tab (through
+   * the router when there is one). A removed page is struck through, with
+   * "Page removed" and, given `onRestore`, Restore. The Markdown is never
+   * changed. Called again on each render, so pass the app's latest data.
+   */
+  pageLink?: PageLinkResolver
+  /**
+   * Lets the text make pages: "/page" in the slash menu, and Turn into
+   * page on selected words, ask for a title (the selected words to start
+   * with), call this with it, and once it resolves to the new page's
+   * address put `[title](href)` where the "/page" or the words were. While
+   * it's pending the title box waits; a rejection is shown in the box in
+   * the gateway's words and the text is left as it was. Where the page
+   * lives (under this record, or under a page, any depth) is the app's.
+   */
+  onCreatePage?: CreatePage
   className?: string
   /** The field's label. A rich-text area must have one: this, or `aria-labelledby`. */
   'aria-label'?: string

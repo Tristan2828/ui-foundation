@@ -33,6 +33,13 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "See the [setup guide](https://example.com/setup) and [titled](https://example.com \"Title\").\n\nAn autolink <https://example.com/auto> and a bare https://example.com/bare one.\n",
     editorWrites: "See the [setup guide](https://example.com/setup) and [titled](https://example.com \"Title\").\n\nAn autolink <https://example.com/auto> and a bare <https://example.com/bare> one.\n",
   },
+  // Page links (4.73): ordinary links an app marks as its pages, one alone
+  // on its line (a page line), one inline. Nothing about them is written
+  // differently.
+  pageLinks: {
+    markdown: "Notes for the move.\n\n[Safety Cheat Sheet](/tasks/84/pages/3)\n\nThe [packing list](/tasks/84/pages/5) is a page too.\n\nLast line.\n",
+    editorWrites: "Notes for the move.\n\n[Safety Cheat Sheet](/tasks/84/pages/3)\n\nThe [packing list](/tasks/84/pages/5) is a page too.\n\nLast line.\n",
+  },
   referenceLinks: {
     markdown: "A [reference link][ref] here.\n\n[ref]: https://example.com/ref\n\nA closing paragraph.\n",
     editorWrites: "A [reference link](https://example.com/ref) here.\n\nA closing paragraph.\n",

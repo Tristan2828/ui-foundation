@@ -71,6 +71,8 @@ export interface RichTextFloatingToolbarProps {
   controls: string
   /** A button pressed: run the format on the editor and give it focus back. */
   onFormat: (id: FormatId) => void
+  /** The Page button pressed (the words become a new page's link). No button without it. */
+  onPage?: () => void
   /** Esc: hide it until the selection changes. */
   onDismiss: () => void
   /** Esc or Tab: focus back to the text. */
@@ -87,6 +89,7 @@ export function RichTextFloatingToolbar({
   field,
   controls,
   onFormat,
+  onPage,
   onDismiss,
   onReturn,
   onBlur,
@@ -141,7 +144,7 @@ export function RichTextFloatingToolbar({
       onKeyDown={onKeyDown}
       onBlur={onBlur}
     >
-      <FormatButtons formats="selection" state={state} readOnly={false} onFormat={onFormat} />
+      <FormatButtons formats="selection" state={state} readOnly={false} onFormat={onFormat} onPage={onPage} />
     </div>
   )
 }
