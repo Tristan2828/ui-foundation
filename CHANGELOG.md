@@ -7,6 +7,40 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.79.0 — Column widths in rich text tables
+
+The UI package only; additive, no new dependency and no prop to set (the
+backend package's version moves with it, unchanged).
+
+- **Drag a column's edge in `RichTextEditor`.** Pointing at a column's
+  right edge shows a line; dragging it resizes that column alone, so the
+  table grows or shrinks, with the width in a label beside it. The edge
+  catches within 10px of 96, 160, 256 and 384 (`M · 160 px`), and 56 is
+  the minimum. One drag is one undo step. Double-click the edge to fit
+  the column to its words again.
+- **The menus** (a column's grip, right-click, Shift+F10) have Narrower,
+  Wider, Fit to content and Fit all columns, which is how the keyboard
+  resizes.
+- **Kept in the Markdown** as one comment after the table, naming its
+  columns, and only when a column has a width:
+  `<!-- table widths: Item=140, Cost=72 -->`. The table itself stays plain
+  GFM. `<Markdown>` and the editor read the comment and never show it;
+  GitHub and other renderers hide it as a comment. It's the one piece of
+  HTML the editor writes (any other HTML is still shown as its characters).
+  A column moved, added or deleted in the editor stays right, as does a
+  row added or sorted. Outside the editor, a column moved keeps its width,
+  a new column and a renamed one fit their words, and a width for a column
+  that's gone is ignored. A blank or repeated header is written by place
+  (`#3=72`), and a header that isn't plain words is quoted.
+- **Where it shows:** the editor, `<Markdown>` and print, where widths
+  scale to the page rather than run off it. Columns adding up to more than
+  the text scroll sideways, as wide tables already did. Below 768px columns
+  fit their words as before, and a phone has no handle and no width items.
+
+An app that reads notes itself (a search, a plain-text preview, an AI
+connector) sees the comment as a line of text after the table: worth
+checking it doesn't show up in a preview.
+
 ## 4.78.0 — A month and day with no year
 
 The UI package only; additive, no new dependency. Nothing changes for an

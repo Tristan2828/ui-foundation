@@ -15,22 +15,22 @@
 - [Depth ramps](#depth-ramps) · lines 408–486
 - [A stored colour](#a-stored-colour) · lines 488–536
 - [Shapes and sizes](#shapes-and-sizes) · lines 538–559
-- [Typography](#typography) · lines 561–671
-  - [Written text (notes)](#written-text-notes) · lines 595–671
-- [Density](#density) · lines 673–759
-  - [Rows on this device](#rows-on-this-device) · lines 732–759
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 761–875
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 877–954
-- [Notices](#notices) · lines 956–984
-- [A value over time](#a-value-over-time) · lines 986–1072
-  - [Several values over time](#several-values-over-time) · lines 1035–1072
-- [A list as a board](#a-list-as-a-board) · lines 1074–1125
-- [A list as cards](#a-list-as-cards) · lines 1127–1173
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1175–1197
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1199–1243
-- [Picking at random](#picking-at-random) · lines 1245–1276
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1278–1345
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1347–1372
+- [Typography](#typography) · lines 561–681
+  - [Written text (notes)](#written-text-notes) · lines 595–681
+- [Density](#density) · lines 683–769
+  - [Rows on this device](#rows-on-this-device) · lines 742–769
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 771–885
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 887–964
+- [Notices](#notices) · lines 966–994
+- [A value over time](#a-value-over-time) · lines 996–1082
+  - [Several values over time](#several-values-over-time) · lines 1045–1082
+- [A list as a board](#a-list-as-a-board) · lines 1084–1135
+- [A list as cards](#a-list-as-cards) · lines 1137–1183
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1185–1207
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1209–1253
+- [Picking at random](#picking-at-random) · lines 1255–1286
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1288–1355
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1357–1382
 
 <!-- /index -->
 
@@ -626,6 +626,16 @@ another tool often has no `#` and starts at `##`; `headingFrom="text"`
 puts the text's own highest heading at `headingLevel` instead, the rest
 keeping their distance from it (the editor reads it from the text it
 opens with). The text isn't rewritten.
+
+A column in a written table can have a width: dragged at its right edge
+in `RichTextEditor` (the edge catches on 96, 160, 256 and 384px, 56px at
+least), a column's menu has Narrower, Wider, Fit to content and Fit all
+columns, and a double-click on the edge fits it again. The width is kept
+in the Markdown as a comment after the table, naming its columns
+(`<!-- table widths: Item=140, Cost=72 -->`), which `<Markdown>` and the
+editor read and never show. A column named nowhere fits its words. A
+phone ignores the widths and can't set them; on paper they scale to the
+page.
 
 A table wider than the text scrolls sideways. While it does, its box is a
 tab stop and a region named "Table, scrolls sideways: " and its first

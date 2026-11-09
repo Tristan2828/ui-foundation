@@ -6,7 +6,8 @@
 // Safe by default, and kept that way on purpose:
 // - Raw HTML is never rendered. react-markdown escapes it, so `<b>` in the
 //   text shows as the characters `<b>`, never as markup, and nothing the
-//   author typed silently disappears. Never add rehype-raw.
+//   author typed silently disappears. Never add rehype-raw. The one thing
+//   taken out is a table's widths comment, read as its column widths.
 // - URLs go through react-markdown's default urlTransform, which drops
 //   `javascript:` and other unsafe protocols. A link left with no URL
 //   renders as its text.
@@ -27,6 +28,9 @@
 // (`tableLook`, as on RichTextEditor: styles/index.css "Tables in written
 // text"). A cell whose whole text is one highlight is painted in it, and
 // a first column of bold cells is row headers (src/lib/markdown-table.ts).
+// A column the rich-text editor set a width for keeps it, from the comment
+// after the table (src/lib/markdown-table-widths.ts); on a phone columns
+// still fit their words, and on paper the widths scale to the page.
 // A table wider than the text scrolls sideways, and while it does, its
 // box is a tab stop, named for its columns, that the arrow keys scroll
 // (prose-table-scroll.ts). Its cells wrap first, so that's only a table
@@ -88,6 +92,7 @@ import { rehypeFold, toggleFold } from '@/lib/markdown-fold'
 import { rehypeInline } from '@/lib/markdown-inline'
 import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
 import { rehypeTables } from '@/lib/markdown-table'
+import { remarkTableWidths } from '@/lib/markdown-table-widths'
 import { remarkToggleHeadings } from '@/lib/markdown-toggle'
 import { toggleTaskAt } from '@/lib/markdown-tasks'
 import type { PageLinkResolver } from '@/lib/page-link'
@@ -111,7 +116,7 @@ import { PageLinkView } from './page-link'
 import { usePrinting } from './print-context'
 import { headerTexts, TABLE_SCROLL_FOCUS, watchTableScroll } from './prose-table-scroll'
 
-const REMARK_PLUGINS = [remarkGfm, remarkCallouts, remarkHighlights, remarkToggleHeadings]
+const REMARK_PLUGINS = [remarkGfm, remarkCallouts, remarkHighlights, remarkToggleHeadings, remarkTableWidths]
 
 const HIGHLIGHT_WASH = {
   amber: 'bg-highlight-amber',

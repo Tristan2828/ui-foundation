@@ -10,7 +10,9 @@
 // - No HTML in, ever. The preset's "preserve empty line" plugin is left
 //   out: it writes an empty paragraph as a raw `<br />`. Raw HTML already
 //   in the text shows as its characters (an uneditable chip, Milkdown's
-//   html node), and HTML pasted as such a chip becomes plain text.
+//   html node), and HTML pasted as such a chip becomes plain text. The
+//   one thing it writes is the comment after a table that keeps its column
+//   widths (src/lib/markdown-table-widths.ts).
 // - Headings render from <h3>, like <Markdown>: the page owns <h1> and
 //   <h2>. `headingLevel` moves them to where the field sits in the page's
 //   outline, as it does <Markdown>'s; only the element moves, never the
@@ -26,7 +28,10 @@
 //   on the column and one on the row the pointer or the caret is in, each
 //   a menu to insert, move, delete, align, sort and colour
 //   (rich-text-table-grips.tsx); right-click or Shift+F10 in a cell opens
-//   the cell's. Tab in the last cell adds a row and Enter goes down a
+//   the cell's. A column's right edge drags to a width (double-click:
+//   back to fit its words), and the menus hold Narrower, Wider and Fit to
+//   content; none of that on a phone, which fits columns to their words.
+//   Tab in the last cell adds a row and Enter goes down a
 //   column (rich-text-table.ts). Colours and a header column are kept as
 //   Markdown writes them (src/lib/markdown-table.ts).
 // - Edited blocks are written in the document's own bullet and rule marks.
@@ -91,7 +96,8 @@ import {
   remarkPreserveEmptyLinePlugin,
   schema,
 } from '@milkdown/kit/preset/commonmark'
-import { gfm } from '@milkdown/kit/preset/gfm'
+import type { NodeParserSpec } from '@milkdown/kit/transformer'
+import { gfm, tableCellSchema, tableHeaderSchema, tableSchema } from '@milkdown/kit/preset/gfm'
 import { Fragment, Slice, type Node as ProseNode } from '@milkdown/kit/prose/model'
 import { NodeSelection, Plugin, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
 import { isInTable, TableMap } from '@milkdown/kit/prose/tables'
@@ -119,6 +125,7 @@ import {
 } from './rich-text-page-links'
 import { passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
+import { formatTableWidths, remarkTableWidths } from '@/lib/markdown-table-widths'
 import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes, type HighlightColor } from '@/lib/markdown-highlight'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
@@ -134,7 +141,7 @@ import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlac
 import { handleShortcut } from './rich-text-shortcuts'
 import { splitTaskItem, taskInputRule } from './rich-text-tasks'
 import { toggleHeadingInputRule, toggleHeadingRemark, withToggle } from './rich-text-toggle-heading'
-import { addRowAtEnd, colorTableCells, handleTableKey, runTableAction, tableLook as tableLookPlugin, type TableAction, type TableColorScope } from './rich-text-table'
+import { addRowAtEnd, colorTableCells, fitAllColumns, handleTableKey, previewColumnWidth, runTableAction, setColumnWidth, tableLook as tableLookPlugin, tableWidthsOf, type TableAction, type TableColorScope } from './rich-text-table'
 import { TABLE_MENU_EVENT, TableGrips, type TableCell } from './rich-text-table-grips'
 import {
   applySlash,
@@ -226,6 +233,39 @@ const highlightSchema = $markSchema('highlight', () => ({
 // A table's cell colours and header column, drawn from the Markdown that
 // keeps them (rich-text-table.ts tableLook).
 const tableDecorations = $prose(() => tableLookPlugin())
+
+// A table's column widths: read from the comment after it onto its cells
+// (remarkTableWidths), and written back as that comment after the table,
+// the one piece of HTML the editor writes (src/lib/markdown-table-widths.ts).
+const tableWidthsRemark = $remark('remarkTableWidths', () => remarkTableWidths)
+const tableWithWidths = tableSchema.extendSchema((previous) => (ctx) => {
+  const base = previous(ctx)
+  return {
+    ...base,
+    toMarkdown: {
+      match: base.toMarkdown.match,
+      runner: (state, node) => {
+        base.toMarkdown.runner(state, node)
+        const { headers, widths } = tableWidthsOf(node)
+        const comment = formatTableWidths(headers, widths)
+        if (comment) state.addNode('html', undefined, comment)
+      },
+    },
+  }
+})
+// Milkdown's own cell reader, with the width the comment put on the cell.
+const readCell: NodeParserSpec['runner'] = (state, node, type) => {
+  const attrs = { alignment: node.align as string, colwidth: typeof node.columnWidth === 'number' ? [node.columnWidth] : null }
+  state.openNode(type, attrs).openNode(state.schema.nodes.paragraph).next(node.children).closeNode().closeNode()
+}
+const cellWithWidth = tableCellSchema.extendSchema((previous) => (ctx) => {
+  const base = previous(ctx)
+  return { ...base, parseMarkdown: { match: base.parseMarkdown.match, runner: readCell } }
+})
+const headerWithWidth = tableHeaderSchema.extendSchema((previous) => (ctx) => {
+  const base = previous(ctx)
+  return { ...base, parseMarkdown: { match: base.parseMarkdown.match, runner: readCell } }
+})
 
 // Milkdown's image node wants a string title, and remark reads an image
 // with none (`![alt](url)`, nearly every one) as a `null` title: the node
@@ -986,6 +1026,10 @@ export default function MilkdownEditor({
       .use(highlightRemark)
       .use(highlightSchema)
       .use(tableDecorations)
+      .use(tableWidthsRemark)
+      .use(tableWithWidths)
+      .use(cellWithWidth)
+      .use(headerWithWidth)
       .use(imageTitles)
       .use(history)
       .use(changes)
@@ -1102,6 +1146,20 @@ export default function MilkdownEditor({
     if (!editorView || !caretInto(getPos, cell)) return
     colorTableCells(editorView.state, editorView.dispatch, scope, color)
     editorView.focus()
+  }
+
+  // A column's width from its edge or menu (`null`: automatic), `'all'`
+  // every column automatic.
+  const widthTableAt = (getPos: () => number | undefined, column: number, width: number | null | 'all') => {
+    const pos = getPos()
+    if (!editorView || pos === undefined) return
+    if (width === 'all') fitAllColumns(editorView.state, editorView.dispatch, pos)
+    else setColumnWidth(editorView.state, editorView.dispatch, pos, column, width)
+  }
+  const previewTableWidth = (getPos: () => number | undefined, column: number, width: number | null) => {
+    const tablePos = getPos()
+    if (!editorView || tablePos === undefined) return
+    previewColumnWidth(editorView.state, editorView.dispatch, width === null ? null : { tablePos, column, width })
   }
 
   // A callout's menu: its kind changed, or the callout taken away (its
@@ -1373,6 +1431,8 @@ export default function MilkdownEditor({
                   focused={focused}
                   onAction={(cell, action) => runTableAt(widget.getPos, cell, action)}
                   onColor={(cell, scope, color) => colorTableAt(widget.getPos, cell, scope, color)}
+                  onWidth={(column, width) => widthTableAt(widget.getPos, column, width)}
+                  onPreviewWidth={(column, width) => previewTableWidth(widget.getPos, column, width)}
                   text={textElement}
                 />,
                 widget.grips,

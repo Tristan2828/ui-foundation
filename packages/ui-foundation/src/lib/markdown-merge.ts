@@ -25,9 +25,13 @@
 // - Guard: the result must mean exactly what the editor shows. If it
 //   wouldn't (two blocks fusing, say), the merge throws instead of saving
 //   something else; the draft stays on screen.
+// - A table and the comment after it that keeps its column widths
+//   (markdown-table-widths.ts) are one block: a width changed in the editor
+//   is an edit to the table, and an unchanged one keeps the comment as written.
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
+import { widthsAfterTable } from './markdown-table-widths'
 
 type MdNode = {
   type: string
@@ -141,18 +145,26 @@ function blocks(markdown: string): Block[] {
   const children = tree.children ?? []
   const definitions = new Map<string, MdNode>()
   for (const child of children) if (child.type === 'definition') definitions.set(String(child.identifier), child)
-  return children.map((child) => {
+  const out: Block[] = []
+  for (let index = 0; index < children.length; index++) {
+    const child = children[index]
+    // A table's widths are part of it: the comment is taken with the table.
+    const widths = child.type === 'table' ? widthsAfterTable(child, children[index + 1]) : null
+    const last = widths ? children[++index] : child
     const start = child.position?.start.offset ?? 0
-    const end = child.position?.end.offset ?? 0
-    return {
+    const end = last.position?.end.offset ?? 0
+    const key = meaning(child, definitions)
+    out.push({
       type: child.type,
       start,
       end,
       source: markdown.slice(start, end),
-      key: JSON.stringify(meaning(child, definitions)),
+      // Tables with no width set read as they always have.
+      key: JSON.stringify(widths?.some((width) => width !== null) ? [key, widths] : key),
       content: content(child, definitions),
-    }
-  })
+    })
+  }
+  return out
 }
 
 // Longest common subsequence by meaning: which `to` block is which `from`
