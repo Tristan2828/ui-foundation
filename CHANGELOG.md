@@ -7,6 +7,67 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.78.0 — A month and day with no year
+
+The UI package only; additive, no new dependency. Nothing changes for an
+app until it uses the new field (the backend package's version moves with
+it, unchanged).
+
+- **`MonthDayField`**: a form control for a day that comes round every
+  year, with no year. Its value is `'MM-DD'` (`'03-14'`), or `''` for not
+  set. A button showing the day ("Mar 14"), like `DateField`'s, opening a
+  picker: the twelve months, then the month's days, 1 to its last in rows
+  of seven (no weekdays: a yearless day has none). Only real days are
+  offered, February running to the 29th. Props: `id`, `value`,
+  `onChange`, `placeholder` ("Pick a day"), `clearable`, `invalid`,
+  `readOnly`, `defaultOpen`, `modal`, `onOpenChange`, `format`
+  (`{ month, day }`, default `{ month: 'short', day: 'numeric' }`),
+  `locale`, `className` and the `aria-*` labels. The arrow keys move
+  through either grid, Home and End go to its ends, Page Up and Page Down
+  change the month (keeping the day where the month has it), Enter picks
+  and Esc closes. Every target is at least 36px, and the picker is 300px
+  wide, so it fits a 320px phone. A stored value that isn't a day
+  (`'02-30'`, older free text) shows on the button as written, nothing
+  picked.
+- **`inPlace.monthDay({ value, save, required?, format?, locale?, placeholder? })`**:
+  the preset for editing one in place. The picker opens with the field
+  and a day picked saves; choosing another month doesn't. Clear saves
+  `null` unless `required`. It refuses a day the month can't have
+  ("February has 29 days") and anything not `'MM-DD'` ("Pick a month and
+  day"), before anything is sent, and reads at rest as "Mar 14" (a value
+  that isn't a day reads as written). `monthDay` is also a part kind for
+  `inPlace.fields`, for a yearly range saved as one; the package adds no
+  rule across the two, since a range can run over New Year.
+- **`formatMonthDay(value, format?, locale?)`**, **`isMonthDay(value)`**,
+  **`monthDayProblem(value, locale?)`** and the type **`MonthDay`**: the
+  day in the locale's order, never a year; whether it's a real day; and
+  why not, or `null`. New types: `MonthDayFieldProps`,
+  `InPlaceMonthDayConfig`.
+- **What an app must do to use it:** for a field held as `'MM-DD'`, put
+  `type: string` with
+  `pattern: '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'` in
+  `openapi.yaml`, and have the backend refuse a day the month can't have
+  (the pattern lets `02-30` through) as a 422 on the field. On the form,
+  swap the text box for `MonthDayField` in a `Controller`, with
+  `.refine((v) => v === '' || isMonthDay(v), …)` in the schema; in the
+  table and the view, show `formatMonthDay(value)`; editing in place,
+  `inPlace.monthDay`. Stored text in another shape (`3/14`) needs a
+  migration to `'MM-DD'`; until then it shows as written and is refused
+  until a day is picked. `add-an-entity.md` step 6 ("A `month-day`") and
+  the plan template's `month-day` type say the same.
+- **Checks**: `e2e/month-day-field.spec.ts` picks by mouse and keyboard,
+  counts February's 29 days and April's 30, shows a stored `02-30` refused
+  and replaced, measures the picker and its targets at 320px, edits in
+  place (a pick saves, Esc gives up, Clear unsets, a required one has no
+  Clear, a pair saves together) and runs axe on the open picker in both
+  themes. `tests/month-day.test.ts` holds which values are days and how
+  they read; `tests/edit-in-place-presets.test.tsx` the preset's checks.
+  The four `app/MonthDayField` stories run through axe and the token check
+  in both themes.
+- cell-patterns.md pattern 18 "Presets" (the `monthDay` row, and a yearly
+  range in "Several fields edited as one"); add-an-entity.md step 6; the
+  entity-plan template's `month-day` type.
+
 ## 4.77.0 — Markdown on one line, headings pinned below a page's bar, and depth ramps
 
 The UI package only; additive, no new dependency. Nothing changes for an

@@ -1,6 +1,6 @@
 // Ready-made fields for editing in place (cell-patterns.md "Editable
-// value", "Presets"): `inPlace.text`, `.number`, `.date`, `.money`,
-// `.select`, `.reference`, `.link`, and `.fields` for two or more values
+// value", "Presets"): `inPlace.text`, `.number`, `.date`, `.monthDay`,
+// `.money`, `.select`, `.reference`, `.link`, and `.fields` for two or more values
 // edited and saved as one. Each carries its own control, its check (run
 // before anything is sent, its message under the field) and how the value
 // reads at rest (`shown`, which EntityView and EditableValue show when
@@ -19,8 +19,10 @@ import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { linkHost, linkRule } from '@/lib/link-href'
+import { formatMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
 import { formatPlainDate, type PlainDate } from '@/lib/plain-date'
 import { DateField } from './date-field'
+import { MonthDayField } from './month-day-field'
 import type { EditControlProps, EditInPlace } from './edit-in-place'
 import { NONE, Parts, ReferencePicker } from './edit-in-place-controls'
 import { LinkOut } from './row-edit-cells'
@@ -105,6 +107,19 @@ export type InPlaceDateConfig<TRequired extends boolean = boolean> = {
   placeholder?: string
 }
 
+/**
+ * A month and day with no year, `'MM-DD'` (MonthDayField): something that
+ * comes round every year. Not `required`: Clear saves `null`. February 29
+ * is a day; a stored `'02-30'` is refused ("February has 29 days").
+ */
+export type InPlaceMonthDayConfig<TRequired extends boolean = boolean> = {
+  required?: TRequired
+  /** How the day reads. Defaults to `{ month: 'short', day: 'numeric' }` ("Mar 14"). */
+  format?: Pick<Intl.DateTimeFormatOptions, 'month' | 'day'>
+  locale?: string
+  placeholder?: string
+}
+
 /** One option of a select: its value and its words. */
 export type InPlaceOption<T> = { value: T; label: string }
 
@@ -157,6 +172,7 @@ export type InPlacePart =
   | ({ kind: 'number'; label: string } & InPlaceNumberConfig)
   | ({ kind: 'money'; label: string } & InPlaceMoneyConfig)
   | ({ kind: 'date'; label: string } & InPlaceDateConfig)
+  | ({ kind: 'monthDay'; label: string } & InPlaceMonthDayConfig)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- each part's own option type; checked where it's written
   | ({ kind: 'select'; label: string } & InPlaceSelectConfig<any>)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- as above
@@ -340,6 +356,46 @@ function dateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainDate> 
   }
 }
 
+function monthDayKind(config: InPlaceMonthDayConfig): Kind<MonthDay | null, MonthDay> {
+  return {
+    editKind: 'choice',
+    toDraft: (value) => value ?? '',
+    check: (draft) => {
+      if (draft === '') return config.required ? { ok: false, message: REQUIRED } : { ok: true, value: null }
+      const problem = monthDayProblem(draft, config.locale)
+      return problem ? { ok: false, message: problem } : { ok: true, value: draft }
+    },
+    // A stored value that isn't a day of the year reads as written.
+    show: (value) => (value ? formatMonthDay(value, config.format, config.locale) || value : null),
+    control: (props, alone) => (
+      <MonthDayField
+        id={props.id}
+        value={props.value}
+        // Alone, a pick saves and the picker opens with the field; closing
+        // it with nothing picked gives up (a pick has already saved by then).
+        onChange={alone ? (day) => props.commit(day) : props.onChange}
+        clearable={!config.required}
+        placeholder={config.placeholder}
+        format={config.format}
+        locale={config.locale}
+        invalid={props.invalid}
+        readOnly={props.disabled}
+        defaultOpen={alone}
+        modal={alone ? false : undefined}
+        onOpenChange={
+          alone
+            ? (open) => {
+                if (!open) props.cancel()
+              }
+            : undefined
+        }
+        aria-label={props.label}
+        aria-describedby={props.describedBy}
+      />
+    ),
+  }
+}
+
 function selectKind<T extends string | number>(config: InPlaceSelectConfig<T>): Kind<T | null, T | null> {
   const labelOf = (value: T) => config.options.find((option) => option.value === value)?.label ?? String(value)
   const shownOf = (value: T) => (config.render ? config.render(value, labelOf(value)) : labelOf(value))
@@ -440,6 +496,8 @@ function kindOf(part: InPlacePart): AnyKind {
       return moneyKind(part)
     case 'date':
       return dateKind(part)
+    case 'monthDay':
+      return monthDayKind(part)
     case 'select':
       return selectKind(part)
     case 'reference':
@@ -636,6 +694,16 @@ export const inPlace = {
   /** A plain day (`'YYYY-MM-DD'`) in DateField's calendar, which opens with the field; a pick saves. */
   date<R extends boolean = false>(options: Common<PlainDate | null | undefined, InPlaceSaved<PlainDate, R>> & InPlaceDateConfig<R>) {
     return single(dateKind(options), { ...options, value: options.value || null } as Common<PlainDate | null, never>)
+  },
+  /**
+   * A month and day with no year (`'MM-DD'`, every year's March 14) in
+   * MonthDayField's picker, which opens with the field; a pick saves.
+   * Reads as "Mar 14"; February 29 is a day, February 30 is refused.
+   */
+  monthDay<R extends boolean = false>(
+    options: Common<MonthDay | null | undefined, InPlaceSaved<MonthDay, R>> & InPlaceMonthDayConfig<R>,
+  ) {
+    return single(monthDayKind(options), { ...options, value: options.value || null } as Common<MonthDay | null, never>)
   },
   /** One of a fixed list; its list opens with the field and a pick saves. */
   select<T extends string | number, R extends boolean = false>(

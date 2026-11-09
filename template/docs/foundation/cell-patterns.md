@@ -26,19 +26,19 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 598–681
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 683–718
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 720–793
-- [18. Editable value](#18-editable-value) · lines 795–1430
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1080–1136
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1138–1170
-  - [A link and its label](#a-link-and-its-label) · lines 1172–1196
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1198–1331
-  - [In a table's rows](#in-a-tables-rows) · lines 1333–1418
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1420–1430
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1432–1498
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1500–1564
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1566–1664
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1666–1694
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1696–1772
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1774–1797
+- [18. Editable value](#18-editable-value) · lines 795–1436
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1080–1138
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1140–1176
+  - [A link and its label](#a-link-and-its-label) · lines 1178–1202
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1204–1337
+  - [In a table's rows](#in-a-tables-rows) · lines 1339–1424
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1426–1436
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1438–1504
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1506–1570
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1572–1670
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1672–1700
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1702–1778
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1780–1803
 
 <!-- /index -->
 
@@ -1094,6 +1094,7 @@ fields: [
   { label: 'Hours', edit: inPlace.number({ value: project.hours, min: 0, max: 200, unit: 'h', save: (hours) => save({ hours }) }) },
   { label: 'Budget', edit: inPlace.money({ value: project.budget, save: (budget) => save({ budget }) }) },
   { label: 'Due', edit: inPlace.date({ value: project.due, required: true, save: (due) => save({ due }) }) },
+  { label: 'Renews on', edit: inPlace.monthDay({ value: project.renewsOn, save: (renewsOn) => save({ renewsOn }) }) },
   { label: 'Priority', edit: inPlace.select({ value: project.priority, options: PRIORITY_OPTIONS,
       render: (priority, label) => <Badge variant={PRIORITY_BADGE[priority]}>{label}</Badge>,
       save: (priority) => save({ priority }) }) },
@@ -1116,12 +1117,13 @@ fields: [
   | `number` | `1,234 h` (`unit`) | a number; blank is `null` | not a number, under `min`, over `max`, a fraction with `integer` |
   | `money` | `$1,234.56` (`currency`, `locale`) | the API's decimal string, two places (`"1234.50"`), built from the digits, never a float; `$` and commas typed are fine | a third decimal, words, under `min` (0 by default), over `max` |
   | `date` | `Sep 2, 2026` | `'YYYY-MM-DD'`; Clear is `null` | Clear when `required` |
+  | `monthDay` | `Mar 14` (`format`, `locale`); a stored value that isn't a day, as written | `'MM-DD'`, no year; February 29 is a day; Clear is `null` | Clear when `required`, a day the month can't have ("February has 29 days") |
   | `select` | the option's label, or its `render` (a badge) | the option's value; "Not set" is `null` | "Not set" isn't offered when `required` |
   | `reference` | the record's `label` (the view's lookup by id) | the picked record's id | "Not set" isn't offered when `required` |
 
 - **They save the way their kind does** (the table above): `text`,
-  `number` and `money` on Enter or leaving them, `date`, `select` and
-  `reference` on the pick (the list opens with the field).
+  `number` and `money` on Enter or leaving them, `date`, `monthDay`,
+  `select` and `reference` on the pick (the list opens with the field).
   `required: true` types the save without `null`.
 - **`reference` searches through the app.** The package knows no
   endpoint: `search(text)` is the app's (its gateway's search by name,
@@ -1157,6 +1159,10 @@ value and save in one PATCH: `inPlace.fields`.
   table above, with its own `label`), side by side under a small caption
   of its label, and stacked when the row is narrow. At rest the parts
   read joined by " · " ("Small · Low"), or as `shown`.
+- **A yearly range** is two `monthDay` parts (`{ kind: 'monthDay',
+  label: 'From' }`, `'By'`). The package sets no rule across them: a
+  range can run over New Year (Nov 1 to Feb 28), so "by after from" is
+  the app's `rule` if it holds for its data.
 - **Nothing saves until they agree.** Picking a part doesn't save it:
   the pair saves on leaving it or Ctrl/Cmd+Enter (and on Enter too when
   every part is typed into: numbers, money, text). Esc gives up both.
