@@ -7,6 +7,53 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.76.0 — Tabs in EntityView, a mark beside the title, rail fields beside their labels
+
+The UI package only; additive, no new dependency besides shadcn's `tabs`
+primitive (added with the pinned CLI, on Base UI). Nothing changes for an
+app until it passes one of the new props: a view with none of them
+renders exactly as before.
+
+- **`tab`** on an `EntityViewSection` (#303), main sections only: any
+  main section with one adds a tab list to the top of the main column,
+  one tab per name in the order the sections first give it, showing only
+  the selected tab's sections. Sections with no `tab` stay above the
+  list; rail sections ignore it and always show; on a phone with
+  `mobileOrder="main-first"` the tabs come before the rail. The selected
+  tab is `?tab=<slug>` (the entry replaced, its state kept, so a record
+  in a dialog stays one); the first tab is the bare address, and an
+  unknown slug opens the first. Arrow keys, Home and End move and select;
+  each tab is 44px tall on touch; a long list scrolls sideways on its
+  own. Every tab's sections stay mounted, so a field open in place keeps
+  what was typed across a switch. Loading, not found and error are as
+  they were. `entityViewTabSlug(name)` gives a tab's slug, to link to it.
+- **`leading`** on `EntityView`: a mark or avatar left of the title,
+  top-aligned, with the title, subtitle and badges beside it at every
+  width.
+- **`railFields="beside"`** on `EntityView` (`EntityViewRailFields`,
+  default `stacked`): in the rail layout, each rail field's label to the
+  left of its value, falling back to stacked where the rail's list is
+  under 18rem.
+- **`ui/tabs`**: shadcn's Tabs, now shipped as
+  `@tristan2828/ui-foundation/ui/tabs`.
+- **Checks**: `e2e/entity-view-tabs.spec.ts` (tabs at desktop and phone
+  widths, in both layouts, by keyboard and by address, a field open in
+  place across a switch, 44px on touch; the mark's place; labels beside
+  and their fallback at 320px), `tests/entity-view-tabs.test.tsx`; the
+  `app/EntityView` Tabs, Tabs column, Leading, Leading a mark and Rail
+  fields beside stories run through axe and the token check in both
+  themes and every palette.
+- add-an-entity.md "The record view" (when tabs are worth it: three or
+  more groups of long content; Notes outside them); design-language.md
+  "A record's tabs, mark and rail".
+
+**For apps:** to take it, bump and run `sync`; no other change. To use
+tabs, add `tab` to the main sections to group. An app that already ships
+its own `src/components/ui/tabs.tsx` deletes it and imports
+`@tristan2828/ui-foundation/ui/tabs` (lint now rejects importing `@/components/ui/tabs`).
+A record view that already uses `?tab=` for something else renames it
+before adding tabs.
+
 ## 4.75.0 — Group headings pinned while scrolling, and a note on the phone chip
 
 The UI package only; additive, no new dependency. Nothing changes for an

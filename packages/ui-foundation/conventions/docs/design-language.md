@@ -3,32 +3,33 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 41–108
-- [Glow](#glow) · lines 110–128
-- [Semantic tones](#semantic-tones) · lines 130–158
-- [The three badge styles](#the-three-badge-styles) · lines 160–177
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 179–208
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 210–223
-- [Logos and brand marks](#logos-and-brand-marks) · lines 225–269
-- [Categorical colour](#categorical-colour) · lines 271–341
-- [Heat scale](#heat-scale) · lines 343–404
-- [A stored colour](#a-stored-colour) · lines 406–454
-- [Shapes and sizes](#shapes-and-sizes) · lines 456–477
-- [Typography](#typography) · lines 479–585
-  - [Written text (notes)](#written-text-notes) · lines 513–585
-- [Density](#density) · lines 587–673
-  - [Rows on this device](#rows-on-this-device) · lines 646–673
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 675–789
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 791–868
-- [Notices](#notices) · lines 870–898
-- [A value over time](#a-value-over-time) · lines 900–986
-  - [Several values over time](#several-values-over-time) · lines 949–986
-- [A list as a board](#a-list-as-a-board) · lines 988–1039
-- [A list as cards](#a-list-as-cards) · lines 1041–1087
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1089–1111
-- [Picking at random](#picking-at-random) · lines 1113–1144
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1146–1213
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1215–1240
+- [Palettes](#palettes) · lines 42–109
+- [Glow](#glow) · lines 111–129
+- [Semantic tones](#semantic-tones) · lines 131–159
+- [The three badge styles](#the-three-badge-styles) · lines 161–178
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 180–209
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 211–224
+- [Logos and brand marks](#logos-and-brand-marks) · lines 226–270
+- [Categorical colour](#categorical-colour) · lines 272–342
+- [Heat scale](#heat-scale) · lines 344–405
+- [A stored colour](#a-stored-colour) · lines 407–455
+- [Shapes and sizes](#shapes-and-sizes) · lines 457–478
+- [Typography](#typography) · lines 480–586
+  - [Written text (notes)](#written-text-notes) · lines 514–586
+- [Density](#density) · lines 588–674
+  - [Rows on this device](#rows-on-this-device) · lines 647–674
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 676–790
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 792–869
+- [Notices](#notices) · lines 871–899
+- [A value over time](#a-value-over-time) · lines 901–987
+  - [Several values over time](#several-values-over-time) · lines 950–987
+- [A list as a board](#a-list-as-a-board) · lines 989–1040
+- [A list as cards](#a-list-as-cards) · lines 1042–1088
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1090–1112
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1114–1158
+- [Picking at random](#picking-at-random) · lines 1160–1191
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1193–1260
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1262–1287
 
 <!-- /index -->
 
@@ -1109,6 +1110,52 @@ row under the header, across the page at every width.
   more is a section's label/value rows.
 - **`subtitle`** is the line under the title: what the record is for,
   in muted body type, editable in place like any value.
+
+## A record's tabs, mark and rail
+
+Three opt-ins on `EntityView` (4.76), each for a record that needs it;
+a record without them is as it was.
+
+```tsx
+<EntityView
+  layout="rail"
+  mobileOrder="main-first"
+  leading={<img src={photo} alt="" className="size-12 rounded-full object-cover" />}
+  railFields="beside"
+  sections={[
+    { title: 'Summary', placement: 'rail', fields },
+    { title: 'Notes', content: <Markdown>{notes}</Markdown> },
+    { title: 'Steps', tab: 'Steps', content: steps },
+    { title: 'Where it applies', tab: 'Used in', content: uses },
+    { title: 'Why this order', tab: 'Reasoning', content: reasoning },
+  ]}
+  … />
+```
+
+- **Tabs** (`tab` on a main section): a line tab list at the top of
+  the main column, under the strip and any sections with no tab, one
+  tab per name in the order the sections first give it. The selected
+  tab has foreground text and a 2px underline, the others muted text;
+  the list's own bottom border runs the column's width. On a phone each
+  tab is 44px tall, and a list wider than the column scrolls sideways on
+  its own, never the page. Arrow keys move between tabs and select
+  (Home, End), and Tab goes on into the panel. The address holds the
+  selected tab (`?tab=used-in`, `entityViewTabSlug`), replaced rather
+  than pushed, so Back leaves the record, not the tab. Every tab's
+  sections stay mounted, so a value open in place survives a switch.
+  Short tab names, one or two words; no counts or icons in them yet.
+- **A mark or avatar** (`leading`): left of the title, top-aligned,
+  with the title, subtitle and badges beside it at every width. 40 to
+  64px (`size-10` to `size-16`): an avatar round (`rounded-full`), a
+  mark or cover in a rounded square (`rounded-lg`). Decorative, since
+  the title names the record (`alt=""`, `aria-hidden`); initials in
+  foreground on `bg-muted`, an icon in muted foreground on the card
+  with its border. "Logos and brand marks" above holds for a logo here.
+- **Rail fields beside** (`railFields="beside"`): the label in a 6 to
+  7rem column left of its value, baseline-aligned, rows a little tighter
+  than stacked. Where the rail's list is under 18rem (a phone narrower
+  than ~350px) it stacks as before, and once the rail stacks full width
+  the label column widens to the page's.
 
 ## Picking at random
 

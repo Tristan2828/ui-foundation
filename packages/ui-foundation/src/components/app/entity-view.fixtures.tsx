@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
 import { useRef, useState } from 'react'
-import { createMemoryRouter, RouterProvider } from 'react-router'
+import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
+import { PackageIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -8,7 +9,13 @@ import { Input } from '@/components/ui/input'
 import type { AppError } from '@/api/contracts'
 import { editInPlace } from './edit-in-place'
 import { EditableValue } from './editable-value'
-import { EntityView, type EntityViewLayout, type EntityViewMobileOrder, type EntityViewSection } from './entity-view'
+import {
+  EntityView,
+  type EntityViewLayout,
+  type EntityViewMobileOrder,
+  type EntityViewRailFields,
+  type EntityViewSection,
+} from './entity-view'
 import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { Notice } from './notice'
@@ -26,7 +33,8 @@ import { SourceCredit } from './source-credit'
 // text saved as it's typed: notes that are the editor, and a summary that
 // opens on a click. Rail, main first is the rail layout with
 // `mobileOrder="main-first"`: the same at a desktop width, Notes straight
-// after the header on a phone.
+// after the header on a phone. Tabs, Leading and Rail fields beside are
+// 4.76's opt-ins, measured in e2e/entity-view-tabs.spec.ts.
 
 // Long enough to scroll past a rail, with a table wider than the column
 // layout's 896px (it scrolls sideways there) but not than the rail
@@ -75,7 +83,15 @@ function useOwner() {
   return { owner, owners }
 }
 
-function Record({ layout, mobileOrder }: { layout: EntityViewLayout; mobileOrder?: EntityViewMobileOrder }) {
+function Record({
+  layout,
+  mobileOrder,
+  railFields,
+}: {
+  layout: EntityViewLayout
+  mobileOrder?: EntityViewMobileOrder
+  railFields?: EntityViewRailFields
+}) {
   const { owner, owners } = useOwner()
   const sections: EntityViewSection[] = [
     {
@@ -114,6 +130,7 @@ function Record({ layout, mobileOrder }: { layout: EntityViewLayout; mobileOrder
     <EntityView
       layout={layout}
       mobileOrder={mobileOrder}
+      railFields={railFields}
       isLoading={false}
       back={{ to: '/', label: 'Projects' }}
       title="Office move"
@@ -124,9 +141,19 @@ function Record({ layout, mobileOrder }: { layout: EntityViewLayout; mobileOrder
   )
 }
 
-function InRouter({ layout, mobileOrder }: { layout: EntityViewLayout; mobileOrder?: EntityViewMobileOrder }) {
+function InRouter({
+  layout,
+  mobileOrder,
+  railFields,
+}: {
+  layout: EntityViewLayout
+  mobileOrder?: EntityViewMobileOrder
+  railFields?: EntityViewRailFields
+}) {
   const [router] = useState(() =>
-    createMemoryRouter([{ path: '/', element: <Record layout={layout} mobileOrder={mobileOrder} /> }]),
+    createMemoryRouter([
+      { path: '/', element: <Record layout={layout} mobileOrder={mobileOrder} railFields={railFields} /> },
+    ]),
   )
   return <RouterProvider router={router} />
 }
@@ -160,6 +187,117 @@ function LoadingRail() {
 }
 
 export const RailLoading: StoryObj = { render: () => <LoadingRail /> }
+
+// Rail fields beside: `railFields="beside"`, each rail label to the left of
+// its value (an issue tracker's sidebar), stacked again on a small phone.
+export const RailFieldsBeside: StoryObj = {
+  name: 'Rail fields beside',
+  render: () => <InRouter layout="rail" railFields="beside" />,
+}
+
+// --- Tabs -------------------------------------------------------------------
+// A how-to record whose main column is grouped under tabs (#303): Overview
+// has no tab and stays above the list; Steps, Used in and Reasoning are
+// tabs, the second with two sections. The rail always shows. The selected
+// tab is `?tab=`: the story's memory router starts at the harness page's
+// own `tab` (so e2e can open a deep link) and prints its address under the
+// view. Owner, in Steps' Details, edits in place inside a tab.
+
+function TabsRecord({ layout }: { layout: EntityViewLayout }) {
+  const { owner, owners } = useOwner()
+  const location = useLocation()
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Summary',
+      placement: 'rail',
+      fields: [
+        { label: 'Floor', value: 'Third' },
+        { label: 'Starts', value: 'Mar 2, 2026' },
+        { label: 'Reviewed', value: null, emptyLabel: 'Never' },
+      ],
+    },
+    { title: 'Overview', content: <p>How a team packs its desks the Friday before it moves.</p> },
+    {
+      title: 'Steps',
+      tab: 'Steps',
+      content: (
+        <Markdown>
+          {`1. Empty the shared shelves first.\n2. Pack each desk into labelled boxes.\n3. Leave the fragile boxes open until the movers check them.`}
+        </Markdown>
+      ),
+    },
+    {
+      title: 'Details',
+      tab: 'Steps',
+      fields: [
+        { label: 'Owner', value: owner, edit: owners },
+        { label: 'Takes', value: 'About two hours' },
+      ],
+    },
+    {
+      title: 'Where it applies',
+      tab: 'Used in',
+      content: (
+        <ul className="flex list-disc flex-col gap-1 pl-5">
+          <li>Week 1: Finance</li>
+          <li>Week 2: Design</li>
+          <li>Week 3: Support</li>
+        </ul>
+      ),
+    },
+    {
+      title: 'Exceptions',
+      tab: 'Used in',
+      content: null,
+      emptyLabel: 'No exceptions',
+    },
+    {
+      title: 'Why this order',
+      tab: 'Reasoning',
+      content: <Markdown>{NOTES}</Markdown>,
+    },
+  ]
+  return (
+    <>
+      <EntityView
+        layout={layout}
+        mobileOrder="main-first"
+        isLoading={false}
+        back={{ to: '/', label: 'Guides' }}
+        title="Packing a desk"
+        badges={<Badge variant="outline">Current</Badge>}
+        actions={<Button variant="outline">Delete</Button>}
+        strip={
+          <KeyStats
+            stats={[
+              { label: 'Steps', value: '3' },
+              { label: 'Teams', value: '3' },
+              { label: 'Takes', value: '2h' },
+            ]}
+          />
+        }
+        sections={sections}
+      />
+      <p data-testid="address" className="mt-6 type-caption text-muted-foreground">
+        Page at {location.pathname + location.search}
+      </p>
+    </>
+  )
+}
+
+function TabsInRouter({ layout }: { layout: EntityViewLayout }) {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '/', element: <TabsRecord layout={layout} /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const Tabs: StoryObj = { render: () => <TabsInRouter layout="rail" /> }
+
+export const TabsColumn: StoryObj = { name: 'Tabs, column', render: () => <TabsInRouter layout="column" /> }
 
 // --- A notice and a footer ------------------------------------------------
 
@@ -535,6 +673,68 @@ function HeaderSlotsInRouter() {
 }
 
 export const HeaderSlots: StoryObj = { render: () => <HeaderSlotsInRouter /> }
+
+// --- Leading -----------------------------------------------------------------
+// `leading`, left of the title: a person's initials as an avatar
+// (Leading), and an icon as a record's mark beside a long title (Leading,
+// a mark), with a subtitle, badges and actions, so the header's wrapping
+// is seen with it at a phone's width too.
+
+function AvatarRecord() {
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'People' }}
+      title="Ada Lovelace"
+      leading={
+        <span
+          aria-hidden="true"
+          className="flex size-12 items-center justify-center rounded-full bg-muted type-section-title text-foreground"
+        >
+          AL
+        </span>
+      }
+      subtitle="Facilities lead, third floor"
+      badges={<Badge variant="outline">Mover</Badge>}
+      actions={<Button variant="outline">Delete</Button>}
+      sections={[{ title: 'Notes', content: <p>Keeps the floor plan.</p> }]}
+    />
+  )
+}
+
+function MarkRecord() {
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Projects' }}
+      title="Office move with a long name that wraps onto a second line on a phone"
+      leading={
+        <span className="flex size-10 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground">
+          <PackageIcon aria-hidden="true" className="size-5" />
+        </span>
+      }
+      badges={<Badge variant="outline">In progress</Badge>}
+      actions={
+        <>
+          <Button variant="outline">Print</Button>
+          <Button variant="outline">Delete</Button>
+        </>
+      }
+      sections={[{ title: 'Notes', content: <p>Measure twice, cut once.</p> }]}
+    />
+  )
+}
+
+function LeadingInRouter({ mark }: { mark?: boolean }) {
+  const [router] = useState(() =>
+    createMemoryRouter([{ path: '/', element: mark ? <MarkRecord /> : <AvatarRecord /> }]),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const Leading: StoryObj = { render: () => <LeadingInRouter /> }
+
+export const LeadingMark: StoryObj = { name: 'Leading, a mark', render: () => <LeadingInRouter mark /> }
 
 // --- Many actions -----------------------------------------------------------
 // A record with eight header actions at 36px: the title keeps its room and

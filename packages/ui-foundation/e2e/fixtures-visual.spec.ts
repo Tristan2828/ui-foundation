@@ -119,6 +119,14 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--print-notes', mustShow: 'Climbing the stairs' },
   // A notice across the page and a source credit under both columns.
   { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },
+  // Tabs over the main column (#303), in both layouts: the line list, its
+  // selected and muted tabs; a mark and an avatar left of the title; rail
+  // labels beside their values (4.76).
+  { id: 'app-entityview--tabs', mustShow: 'Empty the shared shelves first.' },
+  { id: 'app-entityview--tabs-column', mustShow: 'Empty the shared shelves first.' },
+  { id: 'app-entityview--leading', mustShow: 'Facilities lead, third floor' },
+  { id: 'app-entityview--leading-mark', mustShow: 'Measure twice, cut once.' },
+  { id: 'app-entityview--rail-fields-beside', mustShow: 'No budget yet' },
   // <Notice>: every tone's wash, on the page and on a card.
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
