@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { BookOpenIcon, BriefcaseIcon, FileTextIcon, HeartIcon, HouseIcon, MusicIcon, PlaneIcon, Trash2Icon, VideoIcon, WalletIcon, type LucideIcon } from 'lucide-react'
+import { cn } from 'cn'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { createMemoryRouter, Link, RouterProvider } from 'react-router'
 import type { AppError } from '@/api/contracts'
@@ -22,8 +23,9 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   toolbar, a delete in the pinned last column. Saves take ~0.4s; a name
 //   another category has is refused the way a server's 422 is. "Elsewhere"
 //   is a link that leaves the page, for the leave prompt.
-// - Sticky groups (three stories): `stickyGroupHeadings` on a list that fits,
-//   one with no header row, and one wider than its box.
+// - Sticky groups (five stories): `stickyGroupHeadings` on a list that fits,
+//   one with no header row, and one wider than its box; then the first and
+//   the wide one below a bar the page pins (`stickyTop`), taller on a phone.
 // - Grouped: a feed under day headings (`groupBy: byDay`), no header row,
 //   and a PillFilter in the toolbar, its value and the page in the URL.
 //   Six rows a page, so This week's group carries on to page 2. Today is
@@ -623,16 +625,31 @@ function StickyGroupsTable({
   wide = false,
   header,
   pinFirstColumn,
+  pageBar = false,
 }: {
   wide?: boolean
   header?: boolean
   pinFirstColumn?: boolean
+  pageBar?: boolean
 }) {
+  const title = <h1 className="type-page-title text-foreground">Entries</h1>
   return (
-    <main className="flex flex-col gap-4 p-6">
-      <h1 className="type-page-title text-foreground">Entries</h1>
+    // With `pageBar`, the page pins a bar of its own, taller on a phone (its
+    // height a variable set per breakpoint), and the table sits below it.
+    <main className={cn('flex flex-col gap-4 p-6', pageBar && 'pt-0 [--page-bar:3.5rem] md:[--page-bar:3rem]')}>
+      {pageBar ? (
+        <div
+          data-testid="page-bar"
+          className="sticky top-0 z-40 -mx-6 flex h-(--page-bar) items-center border-b border-border bg-background px-6"
+        >
+          {title}
+        </div>
+      ) : (
+        title
+      )}
       <DataTable<DayEntry>
         stickyGroupHeadings
+        stickyTop={pageBar ? 'var(--page-bar)' : undefined}
         groupBy={(row) => ({ key: row.day, label: row.day })}
         groupSummary={(rows) => `${rows.length} entries`}
         columns={wide ? WIDE_ENTRY_COLUMNS : ENTRY_COLUMNS}
@@ -709,6 +726,10 @@ export const StickyGroups: StoryObj = { render: () => <StickyGroupsTable /> }
 export const StickyGroupsNoHeader: StoryObj = { render: () => <StickyGroupsTable header={false} /> }
 
 export const StickyGroupsWide: StoryObj = { render: () => <StickyGroupsTable wide pinFirstColumn /> }
+
+export const StickyGroupsBelowABar: StoryObj = { render: () => <StickyGroupsTable pageBar /> }
+
+export const StickyGroupsWideBelowABar: StoryObj = { render: () => <StickyGroupsTable wide pinFirstColumn pageBar /> }
 
 export const Highlighted: StoryObj = { render: () => <HighlightedTable /> }
 

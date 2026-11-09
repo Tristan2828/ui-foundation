@@ -61,6 +61,14 @@
 // the app reports removed shows "Page removed", with Restore when the app
 // gives one. Every other link is as it was; the text is never changed.
 //
+// With `inline`, it's a one-line value's Markdown (a table cell, a card's
+// line): bold, italic, code and links on one run of words, in the font and
+// colour of wherever it sits, with no block margins, so a row it's in
+// keeps its height. Blocks written in it become their words, joined so
+// they still read (a list's items with " · ", a table's rows as
+// `Header: value` pairs: src/lib/markdown-inline.ts). A link's click and
+// Enter stay its own: they never reach a row or card it sits in.
+//
 // A task item (`- [ ] to do`, `- [x] done`) shows its box as a glyph
 // with its state in words: read-only text has nothing to tick. With
 // `onTasksChange`, each box is a real checkbox, named for its item's
@@ -77,6 +85,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useFolds } from '@/hooks/fold-store'
 import { CALLOUT_KINDS, remarkCallouts, type CalloutKind } from '@/lib/markdown-callout'
 import { rehypeFold, toggleFold } from '@/lib/markdown-fold'
+import { rehypeInline } from '@/lib/markdown-inline'
 import { isHighlightColor, remarkHighlights } from '@/lib/markdown-highlight'
 import { rehypeTables } from '@/lib/markdown-table'
 import { remarkToggleHeadings } from '@/lib/markdown-toggle'
@@ -237,6 +246,43 @@ function MarkdownParagraph(props: ComponentProps<'p'> & { node?: unknown }) {
   if (href && resolve?.(href)) return <p {...rest} data-page-line="" className="page-line" />
   return <p {...rest} />
 }
+
+// A link in `inline` text: an ordinary link, opening in a new tab, whose
+// click and Enter never reach what the text sits in (a row that opens
+// its record, a card), so following it doesn't also open the row.
+function InlineLink(props: ComponentProps<'a'> & { node?: unknown }) {
+  const { href, children, ...rest } = omitNode(props)
+  if (!href) return <>{children}</>
+  return (
+    <a
+      {...rest}
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={PROSE.link}
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
+      }}
+    >
+      {children}
+      <ExternalLinkIcon aria-hidden="true" className="ml-0.5 inline size-3 align-baseline" />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  )
+}
+
+// `inline`: only what `rehypeInline` keeps, in the text's own font and colour.
+// Code is the mono face alone, no wash: in the cell's own colour a wash
+// would fail contrast (muted text on --muted is 4.34:1), and a row's own
+// fill (the stripe, a hover, a pick) is already behind it. The face has
+// taller metrics than the text's, so it adds no height to the line
+// (`leading-[0]`).
+const INLINE_COMPONENTS: Components = {
+  a: InlineLink,
+  code: (props) => <code {...omitNode(props)} className="font-mono text-[0.9em] leading-[0]" />,
+}
+const INLINE_REHYPE: PluggableList = [rehypeInline]
 
 // Folds a section by its heading's id: given only with `foldKey`.
 const FoldContext = createContext<((id: string) => void) | null>(null)
@@ -452,10 +498,38 @@ export type MarkdownProps = {
    * may nest to any depth: the package never asks whose page it is.
    */
   pageLink?: PageLinkResolver
+  /**
+   * For a one-line value (a table cell, a card's line, a summary): a
+   * `<span>` of one run of words, in the font and colour of wherever it
+   * sits, with no block margins, so a row it's in keeps its height. Bold,
+   * italic, code and links keep their marks; every other mark is its
+   * words. A list, table or other block written in it still reads: a
+   * list's items joined with " · ", a table's rows as `Header: value`
+   * pairs. A link's click and Enter never reach the row or card it sits
+   * in. The headings, folding, tasks, table and page-link props don't
+   * apply. Default `false`.
+   */
+  inline?: boolean
   className?: string
 } & Omit<ComponentProps<'div'>, 'children'>
 
-export function Markdown({
+const BLOCK_ONLY = ['headingLevel', 'headingFrom', 'foldKey', 'foldable', 'onTasksChange', 'tableLook', 'pageLink'] as const
+
+export function Markdown({ inline = false, ...props }: MarkdownProps) {
+  if (!inline) return <BlockMarkdown {...props} />
+  const { children, className, ...rest } = props
+  // The block text's own props mean nothing on one line: none reach the span.
+  for (const key of BLOCK_ONLY) delete (rest as Record<string, unknown>)[key]
+  return (
+    <span data-slot="markdown" data-inline="" {...(rest as ComponentProps<'span'>)} className={cn('min-w-0 break-words', className)}>
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={INLINE_REHYPE} components={INLINE_COMPONENTS}>
+        {children}
+      </ReactMarkdown>
+    </span>
+  )
+}
+
+function BlockMarkdown({
   children,
   headingLevel = DEFAULT_HEADING_LEVEL,
   headingFrom = 'hash',
@@ -466,7 +540,7 @@ export function Markdown({
   pageLink,
   className,
   ...rest
-}: MarkdownProps) {
+}: Omit<MarkdownProps, 'inline'>) {
   // On paper (EntityView's Print notes): every heading plain and open,
   // every task box a picture.
   const printing = usePrinting()

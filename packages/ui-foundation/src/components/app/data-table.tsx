@@ -181,6 +181,16 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   stickyGroupHeadings?: boolean
   /**
+   * With `stickyGroupHeadings`: how far from the top of the screen the
+   * pinned header and headings sit, for a page with a bar of its own pinned
+   * to the top. Any CSS length (`'3.5rem'`, `'var(--page-bar-height)'`),
+   * resolved at the table, so a variable the page sets per breakpoint gives
+   * a phone and a desktop their own offset. When the columns are wider than
+   * their box, the box is that much shorter than the screen instead, so it
+   * fits below the bar. Without it, they sit at the very top (`0px`).
+   */
+  stickyTop?: string
+  /**
    * The fields the rows can be grouped by, picked in a Group menu at the
    * end of the toolbar: None (the default, the table as it is without
    * this), then each of these. Choice fields: each group is one of the
@@ -646,7 +656,7 @@ const GROUP_HEADING_CLASS = 'h-auto bg-background pt-4 pb-1.5 align-bottom'
 // scroll sideways, so it's bounded to the screen and scrolls down too.
 // `isolate` keeps these z-indexes inside the table.
 const STICKY_PAGE_SCROLL_CLASS = 'isolate overflow-x-clip'
-const STICKY_OWN_SCROLL_CLASS = 'isolate max-h-dvh overflow-auto'
+const STICKY_OWN_SCROLL_CLASS = 'isolate max-h-[calc(100dvh-var(--data-table-sticky-top))] overflow-auto'
 
 // Collapsed borders stay where the row was, so a stuck cell draws its rule
 // as an inset shadow and its row's border comes off. Above the pinned
@@ -654,12 +664,18 @@ const STICKY_OWN_SCROLL_CLASS = 'isolate max-h-dvh overflow-auto'
 // cell's sticky bounds are the whole table, not its group, so a heading isn't
 // pushed off by the next: the next slides over it, later in the DOM and opaque.
 const STICKY_RULE_CLASS = 'shadow-[inset_0_-1px_0_0_var(--border)]'
-const STICKY_HEAD_CELL_CLASS = `sticky top-0 z-30 bg-background ${STICKY_RULE_CLASS}`
-const STICKY_GROUP_HEADING_CLASS = `sticky top-(--data-table-head-height) z-20 pt-2 ${STICKY_RULE_CLASS}`
+//
+// `stickyTop` moves both down by --data-table-pin-top: the app's offset on the
+// page's scroll, none in a box of the table's own (that box's top is its own,
+// and the box is shortened by the offset instead).
+const STICKY_HEAD_CELL_CLASS = `sticky top-(--data-table-pin-top) z-30 bg-background ${STICKY_RULE_CLASS}`
+const STICKY_GROUP_HEADING_CLASS =
+  `sticky top-[calc(var(--data-table-pin-top)+var(--data-table-head-height))] z-20 pt-2 ${STICKY_RULE_CLASS}`
 
 // What focus scrolls to clears the stuck header and heading (3rem covers a
 // heading's height, large density included).
-const STICKY_FOCUS_CLASS = '[&_tbody_*]:scroll-mt-[calc(var(--data-table-head-height)+--spacing(12))]'
+const STICKY_FOCUS_CLASS =
+  '[&_tbody_*]:scroll-mt-[calc(var(--data-table-pin-top)+var(--data-table-head-height)+--spacing(12))]'
 
 // A grouping's heading (`groupings`) is a button that folds its rows: the
 // label, then the count, a chevron that turns when folded.
@@ -824,6 +840,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   groupBy,
   groupSummary,
   stickyGroupHeadings = false,
+  stickyTop = '0px',
   header: showHeader = true,
   highlightRow,
   totals,
@@ -1248,8 +1265,14 @@ export function DataTable<TData extends Record<string, unknown>>({
               containerRef={containerRef}
               onKeyDown={rowsOpen ? onListKeyDown : undefined}
               className={cn(stickyGroups && STICKY_FOCUS_CLASS)}
-              style={
-                stickyGroups ? ({ '--data-table-head-height': `${headHeight}px` } as CSSProperties) : undefined
+              containerStyle={
+                stickyGroups
+                  ? ({
+                      '--data-table-head-height': `${headHeight}px`,
+                      '--data-table-sticky-top': stickyTop,
+                      '--data-table-pin-top': scrollsSideways ? '0px' : stickyTop,
+                    } as CSSProperties)
+                  : undefined
               }
               // With the sticky bar below as the visible scrollbar, hide the
               // container's own. It stays overflow-x-auto and fully

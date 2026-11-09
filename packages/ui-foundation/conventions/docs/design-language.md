@@ -3,33 +3,34 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 42–109
-- [Glow](#glow) · lines 111–129
-- [Semantic tones](#semantic-tones) · lines 131–159
-- [The three badge styles](#the-three-badge-styles) · lines 161–178
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 180–209
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 211–224
-- [Logos and brand marks](#logos-and-brand-marks) · lines 226–270
-- [Categorical colour](#categorical-colour) · lines 272–342
-- [Heat scale](#heat-scale) · lines 344–405
-- [A stored colour](#a-stored-colour) · lines 407–455
-- [Shapes and sizes](#shapes-and-sizes) · lines 457–478
-- [Typography](#typography) · lines 480–586
-  - [Written text (notes)](#written-text-notes) · lines 514–586
-- [Density](#density) · lines 588–674
-  - [Rows on this device](#rows-on-this-device) · lines 647–674
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 676–790
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 792–869
-- [Notices](#notices) · lines 871–899
-- [A value over time](#a-value-over-time) · lines 901–987
-  - [Several values over time](#several-values-over-time) · lines 950–987
-- [A list as a board](#a-list-as-a-board) · lines 989–1040
-- [A list as cards](#a-list-as-cards) · lines 1042–1088
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1090–1112
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1114–1158
-- [Picking at random](#picking-at-random) · lines 1160–1191
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1193–1260
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1262–1287
+- [Palettes](#palettes) · lines 43–110
+- [Glow](#glow) · lines 112–130
+- [Semantic tones](#semantic-tones) · lines 132–160
+- [The three badge styles](#the-three-badge-styles) · lines 162–179
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 181–210
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 212–225
+- [Logos and brand marks](#logos-and-brand-marks) · lines 227–271
+- [Categorical colour](#categorical-colour) · lines 273–343
+- [Heat scale](#heat-scale) · lines 345–406
+- [Depth ramps](#depth-ramps) · lines 408–486
+- [A stored colour](#a-stored-colour) · lines 488–536
+- [Shapes and sizes](#shapes-and-sizes) · lines 538–559
+- [Typography](#typography) · lines 561–671
+  - [Written text (notes)](#written-text-notes) · lines 595–671
+- [Density](#density) · lines 673–759
+  - [Rows on this device](#rows-on-this-device) · lines 732–759
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 761–875
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 877–954
+- [Notices](#notices) · lines 956–984
+- [A value over time](#a-value-over-time) · lines 986–1072
+  - [Several values over time](#several-values-over-time) · lines 1035–1072
+- [A list as a board](#a-list-as-a-board) · lines 1074–1125
+- [A list as cards](#a-list-as-cards) · lines 1127–1173
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1175–1197
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1199–1243
+- [Picking at random](#picking-at-random) · lines 1245–1276
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1278–1345
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1347–1372
 
 <!-- /index -->
 
@@ -404,6 +405,86 @@ step against every palette's card and raised surface. `SideBySide` shows
 both themes at once, under normal vision and simulated deuteranopia and
 protanopia.
 
+## Depth ramps
+
+For **depth within one category**: the levels of one kind of thing, where
+the category stays the same and only how deep, how specific or how far
+in changes. A category's subcategories in a chart (Food, then Groceries,
+then Produce), nesting levels of one tree, a stacked bar of one
+category's parts. Every categorical slot has five steps, shallow to deep,
+`--category-N-depth-1` through `--category-N-depth-5`, given by Tailwind
+as `fill-category-N-depth-M` (a shape), `bg-category-N-depth-M` (a cell)
+and `text-category-N-depth-M-foreground` (text on that cell).
+
+**Which to use:**
+
+| The values are | Use |
+|---|---|
+| different from each other, in no order | the slot itself, `text-category-N` (a glyph's tint) |
+| one category's levels, shallow to deep | its depth ramp, `bg-category-N-depth-M` |
+| amounts in an order, with no category | the heat scale, `bg-heat-M` |
+| good or bad | a tone |
+
+- **One ramp per category, its slot's.** A record whose category is slot 3
+  draws its levels from slot 3's ramp, so the depth reads as "more of the
+  same thing". Two categories side by side each keep their own ramp. A
+  ramp's hue stays within about 20° of its slot's, so a step never reads
+  as another slot, but steps of two neighbouring slots' ramps can come
+  close (orange and brown, blue and navy): tell categories apart by their
+  slot's own glyph and name, not by a ramp step alone.
+- **Depth, not amount.** A ramp says "a level of this", never "more of
+  this is worse". A count or a total over many categories is the heat
+  scale; a status is a tone.
+- **Opaque, at full strength.** Each step clears 3:1 against the card and
+  the page in light, dark and every palette (3.03:1 at the least, light
+  on `--muted`), so a shape stands out with no outline. An opacity
+  modifier (`bg-category-3-depth-2/50`) gives that up.
+- **Text on a fill takes its own foreground.** Which text colour is right
+  depends on the step and the theme: pair the two as below. It measures
+  4.55:1 at the least.
+- **Neighbours are closer than the heat scale's, so keep a boundary.**
+  Neighbouring steps are at least ΔE 17.7 apart in light and 13.9 in
+  dark (blue's; every slot but blue and navy 17.4 or more), and 10.3
+  under simulated deuteranopia and protanopia. Five steps of one hue that
+  each clear 3:1 on the card only have so much lightness to share, dark's
+  band most of all. A `stroke-card` or a 1px gap between shapes, as a
+  stacked bar's segments have, makes each boundary easy to see.
+- **The order holds without hue.** Each step is darker than the one before
+  it in both themes, so a ramp also reads in greyscale. In the dark
+  themes step 1 is near white and step 5 the slot's deepest, still 3:1
+  on the card.
+- **Never colour alone.** Name the level too, in the cell, a tooltip or
+  a legend, and give a shape holding one a name for screen readers.
+- **Five steps, not more.** Deeper nesting than five shares step 5, or
+  starts again with a label saying so; don't interpolate between steps.
+
+An app maps a slot's levels to whole class names, as the heat scale's
+steps are mapped: Tailwind only generates classes it finds written out.
+
+```tsx
+// Slot 3's ramp, shallow to deep.
+const GREEN_DEPTH = [
+  { fill: 'fill-category-3-depth-1', cell: 'bg-category-3-depth-1 text-category-3-depth-1-foreground' },
+  { fill: 'fill-category-3-depth-2', cell: 'bg-category-3-depth-2 text-category-3-depth-2-foreground' },
+  { fill: 'fill-category-3-depth-3', cell: 'bg-category-3-depth-3 text-category-3-depth-3-foreground' },
+  { fill: 'fill-category-3-depth-4', cell: 'bg-category-3-depth-4 text-category-3-depth-4-foreground' },
+  { fill: 'fill-category-3-depth-5', cell: 'bg-category-3-depth-5 text-category-3-depth-5-foreground' },
+] as const
+
+<rect className={`${GREEN_DEPTH[level - 1].fill} stroke-card`} />
+<td className={GREEN_DEPTH[level - 1].cell}>{name}</td>
+```
+
+The package's fixtures render every ramp (`patterns/DepthRamps`). Its
+Default story runs through axe and the token check in light and dark, axe
+in every palette too, and a check that measures every step of every
+slot, as a fill and as a cell, against the page and a card in each.
+`tests/depth-ramps.test.ts` holds the distance between neighbours (17 in
+light, 13.5 in dark, 10 with deuteranopia and protanopia), the order of
+lightness, text on every fill and every step against every palette's card
+and raised surface. `SideBySide` shows both themes at once, under normal
+vision and simulated deuteranopia and protanopia.
+
 ## A stored colour
 
 A colour the user stored as data (a paint's hex, a label's colour, a
@@ -512,6 +593,10 @@ height and weight together, from tokens in the package's `styles/theme.css`:
   a role on one: its built-in size classes would then compete with the role.
 
 ### Written text (notes)
+
+A one-line value written as Markdown (a cell, a card's line) is
+`<Markdown inline>` instead: no headings or blocks, the font and colour
+of where it sits (cell-patterns.md, pattern 1).
 
 Long text written as Markdown (`<Markdown>` and `RichTextEditor`) has its
 own three heading roles, so `#`, `##` and `###` in a note never look

@@ -317,6 +317,78 @@ test.describe('DataTable stickyGroupHeadings', () => {
         })
       }
 
+      // `stickyTop`: the page pins a bar of its own (3.5rem on a phone, 3rem
+      // from md), and the bands sit below it, never under it.
+      test('below a bar the page pins, the bands sit under the bar', async ({ page }) => {
+        await page.goto(stickyStory('sticky-groups-below-a-bar'))
+        await expect(page.getByText('Thursday')).toBeVisible()
+        await page.evaluate(() => {
+          const row = [...document.querySelectorAll('tbody tr')].find((r) => r.textContent?.includes('Entry 18'))!
+          // At the top of the screen, under the bar: Tuesday's heading has
+          // scrolled up to where it pins.
+          row.scrollIntoView({ block: 'start' })
+        })
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+        const bar = (await page.getByTestId('page-bar').boundingBox())!
+        expect(bar.y).toBeCloseTo(0, 0)
+        expect(bar.height).toBeCloseTo(viewport.width < 768 ? 56 : 48, 0)
+        const head = (await page.locator('thead th').first().boundingBox())!
+        expect(head.y).toBeCloseTo(bar.y + bar.height, 0)
+        const heading = page.locator('[data-slot="table-group-heading"]').filter({ hasText: 'Tuesday' }).locator('th')
+        const headingBox = (await heading.boundingBox())!
+        expect(headingBox.y).toBeCloseTo(head.y + head.height, 0)
+        // What's on top just under the bar is the column header, not a row.
+        const onTop = await page.evaluate((y) => document.elementFromPoint(60, y)?.closest('thead, [data-slot="table-group-heading"]')?.tagName ?? '', bar.height + 4)
+        expect(onTop).toBe('THEAD')
+      })
+
+      test('below a bar, a table wider than its box fits its box under the bar', async ({ page }) => {
+        await page.goto(stickyStory('sticky-groups-wide-below-a-bar'))
+        await expect(page.getByText('Thursday')).toBeVisible()
+        const bar = (await page.getByTestId('page-bar').boundingBox())!
+        const box = page.locator('[data-slot="table-container"]')
+        expect((await box.boundingBox())!.height).toBeLessThanOrEqual(viewport.height - bar.height + 0.5)
+        // Scrolled to below the bar, then inside: the bands pin to the box's
+        // top, not the bar's offset again.
+        const at = await page.evaluate(async (barHeight) => {
+          const row = [...document.querySelectorAll('tbody tr')].find((r) => r.textContent?.includes('Entry 18'))!
+          row.scrollIntoView({ block: 'start' })
+          window.scrollBy(0, -barHeight)
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+          const container = document.querySelector('[data-slot="table-container"]') as HTMLElement
+          const heading = [...document.querySelectorAll('[data-slot="table-group-heading"] th')].find((cell) => cell.textContent?.includes('Tuesday'))!.getBoundingClientRect()
+          const head = document.querySelector('thead th')!.getBoundingClientRect()
+          const hit = document.elementFromPoint(heading.x + 40, heading.y + heading.height / 2)
+          return {
+            boxTop: container.getBoundingClientRect().top,
+            ownScroll: container.scrollHeight > container.clientHeight,
+            headTop: head.top,
+            headBottom: head.bottom,
+            headingTop: heading.top,
+            onTop: hit?.closest('[data-slot="table-group-heading"]')?.textContent ?? '',
+            pageScrollsSideways: document.documentElement.scrollWidth > window.innerWidth + 1,
+          }
+        }, bar.height)
+        expect(at.ownScroll).toBe(true)
+        expect(at.boxTop).toBeCloseTo(bar.height, 0)
+        expect(at.headTop).toBeCloseTo(at.boxTop, 0)
+        expect(at.headingTop).toBeCloseTo(at.headBottom, 0)
+        expect(at.onTop).toContain('Tuesday')
+        expect(at.pageScrollsSideways).toBe(false)
+      })
+
+      test('below a bar, focus moved to a row clears the bar and the pinned bands', async ({ page }) => {
+        await page.goto(stickyStory('sticky-groups-below-a-bar'))
+        await expect(page.getByText('Thursday')).toBeVisible()
+        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+        const button = page.getByRole('button', { name: 'Open Entry 18', exact: true })
+        await button.focus()
+        const bar = (await page.getByTestId('page-bar').boundingBox())!
+        const head = (await page.locator('thead th').first().boundingBox())!
+        const box = (await button.boundingBox())!
+        expect(box.y).toBeGreaterThanOrEqual(bar.y + bar.height + head.height + 20)
+      })
+
       test('focus moved to a row clears the pinned bands', async ({ page }) => {
         await page.goto(stickyStory('sticky-groups'))
         await expect(page.getByText('Thursday')).toBeVisible()
