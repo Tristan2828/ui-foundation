@@ -4,41 +4,41 @@
 ## Index
 
 - [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 70–89
-- [1. Plain text](#1-plain-text) · lines 91–98
-- [2. Icon + label](#2-icon--label) · lines 100–123
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 125–138
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 140–217
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 165–217
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 219–232
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 234–246
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 248–269
-- [8. Date, relative](#8-date-relative) · lines 271–308
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 310–358
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 328–358
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 360–410
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 378–410
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 412–452
-- [12. Boolean](#12-boolean) · lines 454–484
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 486–522
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 506–522
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 524–541
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 543–652
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 569–652
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 654–689
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 691–764
-- [18. Editable value](#18-editable-value) · lines 766–1401
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1051–1107
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1109–1141
-  - [A link and its label](#a-link-and-its-label) · lines 1143–1167
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1169–1302
-  - [In a table's rows](#in-a-tables-rows) · lines 1304–1389
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1391–1401
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1403–1469
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1471–1535
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1537–1618
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1620–1648
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1650–1726
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1728–1751
+- [1. Plain text](#1-plain-text) · lines 91–127
+- [2. Icon + label](#2-icon--label) · lines 129–152
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 154–167
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 169–246
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 194–246
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 248–261
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 263–275
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 277–298
+- [8. Date, relative](#8-date-relative) · lines 300–337
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 339–387
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 357–387
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 389–439
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 407–439
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 441–481
+- [12. Boolean](#12-boolean) · lines 483–513
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 515–551
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 535–551
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 553–570
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 572–681
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 598–681
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 683–718
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 720–793
+- [18. Editable value](#18-editable-value) · lines 795–1430
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1080–1136
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1138–1170
+  - [A link and its label](#a-link-and-its-label) · lines 1172–1196
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1198–1331
+  - [In a table's rows](#in-a-tables-rows) · lines 1333–1418
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1420–1430
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1432–1498
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1500–1564
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1566–1664
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1666–1694
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1696–1772
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1774–1797
 
 <!-- /index -->
 
@@ -96,6 +96,35 @@ otherwise have to make themselves.
 
 Always offer a plain-text option when exploring a column — in practice it
 gets picked about as often as the visual ones.
+
+**Markdown in a one-line value.** A short field the app lets people write
+Markdown in (a summary, a status note, a title with a link) shows in a
+cell, a card's line or a caption with `<Markdown inline>`, not the block
+`<Markdown>`:
+
+```tsx
+<span className="text-muted-foreground">
+  <Markdown inline>{row.original.summary}</Markdown>
+</span>
+```
+
+- Bold, italic, code and links keep their marks; every other mark shows
+  as its words (a strikethrough or a highlight as plain words).
+- It's a `<span>` in the font and colour of where it sits, with no block
+  margins, so the row stays as tall as a plain-text one. Code is the mono
+  face alone, with no wash, so it can't add height or fail contrast on a
+  muted cell.
+- Blocks written in it still read on one line: paragraphs joined with a
+  space; a list's items with " · " (numbered ones with their numbers, a
+  done task with ✓, one to do with ☐); a table's rows as `Header: value`
+  pairs (`Size: S, Price: $4 · Size: L, Price: $6`); a heading, quote or
+  rule as " · "; a callout led by its kind ("Warning: …"); an image as its
+  alt text.
+- A link opens in a new tab, and its click and Enter stay its own: they
+  never reach the row or the card it sits in, even a card of the app's
+  own with an `onClick`.
+- It's for one line. Long text is notes, the block `<Markdown>` on the
+  record's view.
 
 ## 2. Icon + label
 
@@ -1596,6 +1625,23 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   it. An ancestor of your own with `overflow` set (a card with
   `overflow-hidden`, say) takes the place of the page: leave it off such a
   table's ancestors.
+- **`stickyTop`**, with `stickyGroupHeadings`, for a page that pins a bar
+  of its own to the top (a page header, a filter bar): how far down the
+  header and headings pin, so they sit under the bar and never behind it.
+  Any CSS length, resolved at the table, so a variable the page sets per
+  breakpoint gives a phone its own offset:
+
+  ```tsx
+  <main className="[--page-bar:3.5rem] md:[--page-bar:3rem]">
+    <div className="sticky top-0 z-40 h-(--page-bar) bg-background">…</div>
+    <DataTable stickyGroupHeadings stickyTop="var(--page-bar)" … />
+  </main>
+  ```
+
+  When the columns are wider than their box, the box is that much shorter
+  than the screen instead, so once the page is scrolled to it, it fits
+  under the bar and its header pins at its own top. Focus moved to a row
+  clears the bar too. Give the bar a `z-index` above the table's (`z-40`).
 - **`header={false}`** for a list-like table whose columns explain
   themselves (a thumbnail with a title block, then actions). The header
   row takes no room but stays in the table, so the columns keep their

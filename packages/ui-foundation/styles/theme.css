@@ -142,6 +142,153 @@
   --heat-4-400: oklch(0.661 0.13 47);
   --heat-5-700: oklch(0.388 0.15 20); /* red */
   --heat-5-400: oklch(0.615 0.16 20); /* a purer red goes nearly black under protanopia */
+  /*
+   * Depth ramps (design-language.md "Depth ramps"). Five steps for each
+   * categorical slot, shallow to deep, for depth within one category: a
+   * category's subcategories in a chart, nesting levels of one kind, a
+   * stacked bar of one category's parts. Opaque fills like the heat scale,
+   * each with its own --category-N-depth-M-foreground for text on it.
+   * Lightness falls at every step in both themes, so the order survives in
+   * greyscale; hue stays within about 20 degrees of the slot's, with chroma
+   * and hue bent a little to push neighbours apart (the developer's pick B,
+   * 2026-11-09). Every palette takes dark's.
+   *
+   * Why the gaps are smaller than the heat scale's: every step clears 3:1
+   * on the card, which leaves light a lightness band of about oklch 0.18 to
+   * 0.65 and dark 0.58 to 1, and five steps of one hue have to fit in it.
+   *
+   * Measured from these values (tests/depth-ramps.test.ts holds neighbours
+   * to ΔE 17 in light and 13.5 in dark, 10 under simulated deuteranopia and
+   * protanopia, and every step to 3:1 on every card):
+   *   neighbours        light ΔE 17.7 or more; dark 13.9 or more (blue; navy
+   *                     15.3, every other slot 17.4 or more); 10.3 or more
+   *                     with deuteranopia or protanopia in both
+   *   on its card       3.03 at the least (light, on --muted); 3.17 in dark
+   *                     (on Graphite's raised surface)
+   *   text on the fill  4.55 at the least: in light, black on step 1 (and
+   *                     step 2 of blue, gold and lime), white on the rest;
+   *                     black on every step in dark
+   */
+  --category-1-depth-1-700: oklch(0.636 0.107 221); /* blue */
+  --category-1-depth-1-400: oklch(0.941 0.03 228);
+  --category-1-depth-2-700: oklch(0.616 0.199 255);
+  --category-1-depth-2-400: oklch(0.836 0.118 219);
+  --category-1-depth-3-700: oklch(0.495 0.22 264);
+  --category-1-depth-3-400: oklch(0.728 0.16 238);
+  --category-1-depth-4-700: oklch(0.311 0.131 268);
+  --category-1-depth-4-400: oklch(0.659 0.071 253);
+  --category-1-depth-5-700: oklch(0.177 0.025 268);
+  --category-1-depth-5-400: oklch(0.577 0.025 273);
+  --category-2-depth-1-700: oklch(0.644 0.025 34); /* orange */
+  --category-2-depth-1-400: oklch(0.967 0.025 73);
+  --category-2-depth-2-700: oklch(0.556 0.126 28);
+  --category-2-depth-2-400: oklch(0.859 0.122 76);
+  --category-2-depth-3-700: oklch(0.536 0.122 63);
+  --category-2-depth-3-400: oklch(0.726 0.184 53);
+  --category-2-depth-4-700: oklch(0.433 0.031 69);
+  --category-2-depth-4-400: oklch(0.706 0.105 31);
+  --category-2-depth-5-700: oklch(0.181 0.041 63);
+  --category-2-depth-5-400: oklch(0.579 0.025 36);
+  --category-3-depth-1-700: oklch(0.641 0.025 168); /* green */
+  --category-3-depth-1-400: oklch(0.981 0.025 173);
+  --category-3-depth-2-700: oklch(0.513 0.091 176);
+  --category-3-depth-2-400: oklch(0.854 0.14 165);
+  --category-3-depth-3-700: oklch(0.493 0.162 141);
+  --category-3-depth-3-400: oklch(0.834 0.219 132);
+  --category-3-depth-4-700: oklch(0.302 0.101 143);
+  --category-3-depth-4-400: oklch(0.632 0.138 131);
+  --category-3-depth-5-700: oklch(0.176 0.025 137);
+  --category-3-depth-5-400: oklch(0.574 0.025 136);
+  --category-4-depth-1-700: oklch(0.646 0.025 292); /* purple */
+  --category-4-depth-1-400: oklch(0.937 0.025 296);
+  --category-4-depth-2-700: oklch(0.573 0.123 284);
+  --category-4-depth-2-400: oklch(0.813 0.102 297);
+  --category-4-depth-3-700: oklch(0.461 0.219 299);
+  --category-4-depth-3-400: oklch(0.665 0.19 289);
+  --category-4-depth-4-700: oklch(0.263 0.115 306);
+  --category-4-depth-4-400: oklch(0.622 0.132 329);
+  --category-4-depth-5-700: oklch(0.176 0.025 324);
+  --category-4-depth-5-400: oklch(0.58 0.025 329);
+  --category-5-depth-1-700: oklch(0.647 0.026 27); /* pink */
+  --category-5-depth-1-400: oklch(0.956 0.025 344);
+  --category-5-depth-2-700: oklch(0.575 0.141 21);
+  --category-5-depth-2-400: oklch(0.826 0.114 350);
+  --category-5-depth-3-700: oklch(0.386 0.157 28);
+  --category-5-depth-3-400: oklch(0.664 0.208 343);
+  --category-5-depth-4-700: oklch(0.36 0.132 348);
+  --category-5-depth-4-400: oklch(0.637 0.253 13);
+  --category-5-depth-5-700: oklch(0.182 0.031 349);
+  --category-5-depth-5-400: oklch(0.606 0.243 30);
+  --category-6-depth-1-700: oklch(0.645 0.038 78); /* brown */
+  --category-6-depth-1-400: oklch(0.966 0.025 74);
+  --category-6-depth-2-700: oklch(0.556 0.119 72);
+  --category-6-depth-2-400: oklch(0.842 0.118 80);
+  --category-6-depth-3-700: oklch(0.535 0.105 35);
+  --category-6-depth-3-400: oklch(0.735 0.184 54);
+  --category-6-depth-4-700: oklch(0.321 0.109 36);
+  --category-6-depth-4-400: oklch(0.714 0.1 32);
+  --category-6-depth-5-700: oklch(0.178 0.026 36);
+  --category-6-depth-5-400: oklch(0.579 0.025 37);
+  --category-7-depth-1-700: oklch(0.641 0.025 206); /* teal */
+  --category-7-depth-1-400: oklch(0.979 0.027 163);
+  --category-7-depth-2-700: oklch(0.527 0.089 200);
+  --category-7-depth-2-400: oklch(0.875 0.131 162);
+  --category-7-depth-3-700: oklch(0.507 0.111 160);
+  --category-7-depth-3-400: oklch(0.849 0.143 201);
+  --category-7-depth-4-700: oklch(0.342 0.066 167);
+  --category-7-depth-4-400: oklch(0.65 0.111 194);
+  --category-7-depth-5-700: oklch(0.177 0.026 162);
+  --category-7-depth-5-400: oklch(0.574 0.025 202);
+  --category-8-depth-1-700: oklch(0.647 0.025 5); /* red */
+  --category-8-depth-1-400: oklch(0.951 0.026 50);
+  --category-8-depth-2-700: oklch(0.571 0.136 13);
+  --category-8-depth-2-400: oklch(0.812 0.108 42);
+  --category-8-depth-3-700: oklch(0.363 0.144 9);
+  --category-8-depth-3-400: oklch(0.662 0.183 47);
+  --category-8-depth-4-700: oklch(0.342 0.094 47);
+  --category-8-depth-4-400: oklch(0.622 0.251 25);
+  --category-8-depth-5-700: oklch(0.179 0.027 48);
+  --category-8-depth-5-400: oklch(0.598 0.164 4);
+  --category-9-depth-1-700: oklch(0.642 0.037 108); /* gold */
+  --category-9-depth-1-400: oklch(0.994 0.025 108);
+  --category-9-depth-2-700: oklch(0.589 0.122 99);
+  --category-9-depth-2-400: oklch(0.866 0.122 108);
+  --category-9-depth-3-700: oklch(0.538 0.071 63);
+  --category-9-depth-3-400: oklch(0.823 0.17 80);
+  --category-9-depth-4-700: oklch(0.343 0.074 68);
+  --category-9-depth-4-400: oklch(0.631 0.121 72);
+  --category-9-depth-5-700: oklch(0.181 0.032 62);
+  --category-9-depth-5-400: oklch(0.578 0.025 68);
+  --category-10-depth-1-700: oklch(0.646 0.027 303); /* navy */
+  --category-10-depth-1-400: oklch(0.944 0.026 267);
+  --category-10-depth-2-700: oklch(0.575 0.126 291);
+  --category-10-depth-2-400: oklch(0.812 0.093 266);
+  --category-10-depth-3-700: oklch(0.441 0.219 294);
+  --category-10-depth-3-400: oklch(0.668 0.176 274);
+  --category-10-depth-4-700: oklch(0.357 0.104 257);
+  --category-10-depth-4-400: oklch(0.599 0.108 301);
+  --category-10-depth-5-700: oklch(0.178 0.025 265);
+  --category-10-depth-5-400: oklch(0.579 0.025 302);
+  --category-11-depth-1-700: oklch(0.643 0.035 104); /* lime */
+  --category-11-depth-1-400: oklch(0.986 0.026 136);
+  --category-11-depth-2-700: oklch(0.576 0.119 98);
+  --category-11-depth-2-400: oklch(0.842 0.132 143);
+  --category-11-depth-3-700: oklch(0.55 0.093 137);
+  --category-11-depth-3-400: oklch(0.803 0.179 113);
+  --category-11-depth-4-700: oklch(0.413 0.033 130);
+  --category-11-depth-4-400: oklch(0.627 0.126 96);
+  --category-11-depth-5-700: oklch(0.179 0.025 141);
+  --category-11-depth-5-400: oklch(0.579 0.027 102);
+  --category-12-depth-1-700: oklch(0.646 0.025 353); /* magenta */
+  --category-12-depth-1-400: oklch(0.968 0.025 321);
+  --category-12-depth-2-700: oklch(0.566 0.139 0);
+  --category-12-depth-2-400: oklch(0.865 0.121 325);
+  --category-12-depth-3-700: oklch(0.531 0.219 317);
+  --category-12-depth-3-400: oklch(0.702 0.218 317);
+  --category-12-depth-4-700: oklch(0.319 0.129 325);
+  --category-12-depth-4-400: oklch(0.681 0.116 354);
+  --category-12-depth-5-700: oklch(0.177 0.025 314);
+  --category-12-depth-5-400: oklch(0.58 0.026 0);
   --blue-500: oklch(0.488 0.243 264.376);
 
   /*
@@ -392,6 +539,127 @@
   --heat-4-foreground: var(--white);
   --heat-5: var(--heat-5-700);
   --heat-5-foreground: var(--white);
+  /* Depth ramps: opaque fills, each with its own text colour. */
+  --category-1-depth-1: var(--category-1-depth-1-700);
+  --category-1-depth-1-foreground: var(--black);
+  --category-1-depth-2: var(--category-1-depth-2-700);
+  --category-1-depth-2-foreground: var(--black);
+  --category-1-depth-3: var(--category-1-depth-3-700);
+  --category-1-depth-3-foreground: var(--white);
+  --category-1-depth-4: var(--category-1-depth-4-700);
+  --category-1-depth-4-foreground: var(--white);
+  --category-1-depth-5: var(--category-1-depth-5-700);
+  --category-1-depth-5-foreground: var(--white);
+  --category-2-depth-1: var(--category-2-depth-1-700);
+  --category-2-depth-1-foreground: var(--black);
+  --category-2-depth-2: var(--category-2-depth-2-700);
+  --category-2-depth-2-foreground: var(--white);
+  --category-2-depth-3: var(--category-2-depth-3-700);
+  --category-2-depth-3-foreground: var(--white);
+  --category-2-depth-4: var(--category-2-depth-4-700);
+  --category-2-depth-4-foreground: var(--white);
+  --category-2-depth-5: var(--category-2-depth-5-700);
+  --category-2-depth-5-foreground: var(--white);
+  --category-3-depth-1: var(--category-3-depth-1-700);
+  --category-3-depth-1-foreground: var(--black);
+  --category-3-depth-2: var(--category-3-depth-2-700);
+  --category-3-depth-2-foreground: var(--white);
+  --category-3-depth-3: var(--category-3-depth-3-700);
+  --category-3-depth-3-foreground: var(--white);
+  --category-3-depth-4: var(--category-3-depth-4-700);
+  --category-3-depth-4-foreground: var(--white);
+  --category-3-depth-5: var(--category-3-depth-5-700);
+  --category-3-depth-5-foreground: var(--white);
+  --category-4-depth-1: var(--category-4-depth-1-700);
+  --category-4-depth-1-foreground: var(--black);
+  --category-4-depth-2: var(--category-4-depth-2-700);
+  --category-4-depth-2-foreground: var(--white);
+  --category-4-depth-3: var(--category-4-depth-3-700);
+  --category-4-depth-3-foreground: var(--white);
+  --category-4-depth-4: var(--category-4-depth-4-700);
+  --category-4-depth-4-foreground: var(--white);
+  --category-4-depth-5: var(--category-4-depth-5-700);
+  --category-4-depth-5-foreground: var(--white);
+  --category-5-depth-1: var(--category-5-depth-1-700);
+  --category-5-depth-1-foreground: var(--black);
+  --category-5-depth-2: var(--category-5-depth-2-700);
+  --category-5-depth-2-foreground: var(--white);
+  --category-5-depth-3: var(--category-5-depth-3-700);
+  --category-5-depth-3-foreground: var(--white);
+  --category-5-depth-4: var(--category-5-depth-4-700);
+  --category-5-depth-4-foreground: var(--white);
+  --category-5-depth-5: var(--category-5-depth-5-700);
+  --category-5-depth-5-foreground: var(--white);
+  --category-6-depth-1: var(--category-6-depth-1-700);
+  --category-6-depth-1-foreground: var(--black);
+  --category-6-depth-2: var(--category-6-depth-2-700);
+  --category-6-depth-2-foreground: var(--white);
+  --category-6-depth-3: var(--category-6-depth-3-700);
+  --category-6-depth-3-foreground: var(--white);
+  --category-6-depth-4: var(--category-6-depth-4-700);
+  --category-6-depth-4-foreground: var(--white);
+  --category-6-depth-5: var(--category-6-depth-5-700);
+  --category-6-depth-5-foreground: var(--white);
+  --category-7-depth-1: var(--category-7-depth-1-700);
+  --category-7-depth-1-foreground: var(--black);
+  --category-7-depth-2: var(--category-7-depth-2-700);
+  --category-7-depth-2-foreground: var(--white);
+  --category-7-depth-3: var(--category-7-depth-3-700);
+  --category-7-depth-3-foreground: var(--white);
+  --category-7-depth-4: var(--category-7-depth-4-700);
+  --category-7-depth-4-foreground: var(--white);
+  --category-7-depth-5: var(--category-7-depth-5-700);
+  --category-7-depth-5-foreground: var(--white);
+  --category-8-depth-1: var(--category-8-depth-1-700);
+  --category-8-depth-1-foreground: var(--black);
+  --category-8-depth-2: var(--category-8-depth-2-700);
+  --category-8-depth-2-foreground: var(--white);
+  --category-8-depth-3: var(--category-8-depth-3-700);
+  --category-8-depth-3-foreground: var(--white);
+  --category-8-depth-4: var(--category-8-depth-4-700);
+  --category-8-depth-4-foreground: var(--white);
+  --category-8-depth-5: var(--category-8-depth-5-700);
+  --category-8-depth-5-foreground: var(--white);
+  --category-9-depth-1: var(--category-9-depth-1-700);
+  --category-9-depth-1-foreground: var(--black);
+  --category-9-depth-2: var(--category-9-depth-2-700);
+  --category-9-depth-2-foreground: var(--black);
+  --category-9-depth-3: var(--category-9-depth-3-700);
+  --category-9-depth-3-foreground: var(--white);
+  --category-9-depth-4: var(--category-9-depth-4-700);
+  --category-9-depth-4-foreground: var(--white);
+  --category-9-depth-5: var(--category-9-depth-5-700);
+  --category-9-depth-5-foreground: var(--white);
+  --category-10-depth-1: var(--category-10-depth-1-700);
+  --category-10-depth-1-foreground: var(--black);
+  --category-10-depth-2: var(--category-10-depth-2-700);
+  --category-10-depth-2-foreground: var(--white);
+  --category-10-depth-3: var(--category-10-depth-3-700);
+  --category-10-depth-3-foreground: var(--white);
+  --category-10-depth-4: var(--category-10-depth-4-700);
+  --category-10-depth-4-foreground: var(--white);
+  --category-10-depth-5: var(--category-10-depth-5-700);
+  --category-10-depth-5-foreground: var(--white);
+  --category-11-depth-1: var(--category-11-depth-1-700);
+  --category-11-depth-1-foreground: var(--black);
+  --category-11-depth-2: var(--category-11-depth-2-700);
+  --category-11-depth-2-foreground: var(--black);
+  --category-11-depth-3: var(--category-11-depth-3-700);
+  --category-11-depth-3-foreground: var(--white);
+  --category-11-depth-4: var(--category-11-depth-4-700);
+  --category-11-depth-4-foreground: var(--white);
+  --category-11-depth-5: var(--category-11-depth-5-700);
+  --category-11-depth-5-foreground: var(--white);
+  --category-12-depth-1: var(--category-12-depth-1-700);
+  --category-12-depth-1-foreground: var(--black);
+  --category-12-depth-2: var(--category-12-depth-2-700);
+  --category-12-depth-2-foreground: var(--white);
+  --category-12-depth-3: var(--category-12-depth-3-700);
+  --category-12-depth-3-foreground: var(--white);
+  --category-12-depth-4: var(--category-12-depth-4-700);
+  --category-12-depth-4-foreground: var(--white);
+  --category-12-depth-5: var(--category-12-depth-5-700);
+  --category-12-depth-5-foreground: var(--white);
   /* The zebra stripe (table.tsx: bg-muted/40 on even rows) mixed onto the
      page, opaque: what a pinned table cell paints on an even row, so it
      matches the row without letting scrolled columns show through. Mixed
@@ -571,6 +839,127 @@
   --heat-4-foreground: var(--black);
   --heat-5: var(--heat-5-400);
   --heat-5-foreground: var(--black);
+  /* Depth ramps: lighter steps to clear the dark surfaces, black text on all. */
+  --category-1-depth-1: var(--category-1-depth-1-400);
+  --category-1-depth-1-foreground: var(--black);
+  --category-1-depth-2: var(--category-1-depth-2-400);
+  --category-1-depth-2-foreground: var(--black);
+  --category-1-depth-3: var(--category-1-depth-3-400);
+  --category-1-depth-3-foreground: var(--black);
+  --category-1-depth-4: var(--category-1-depth-4-400);
+  --category-1-depth-4-foreground: var(--black);
+  --category-1-depth-5: var(--category-1-depth-5-400);
+  --category-1-depth-5-foreground: var(--black);
+  --category-2-depth-1: var(--category-2-depth-1-400);
+  --category-2-depth-1-foreground: var(--black);
+  --category-2-depth-2: var(--category-2-depth-2-400);
+  --category-2-depth-2-foreground: var(--black);
+  --category-2-depth-3: var(--category-2-depth-3-400);
+  --category-2-depth-3-foreground: var(--black);
+  --category-2-depth-4: var(--category-2-depth-4-400);
+  --category-2-depth-4-foreground: var(--black);
+  --category-2-depth-5: var(--category-2-depth-5-400);
+  --category-2-depth-5-foreground: var(--black);
+  --category-3-depth-1: var(--category-3-depth-1-400);
+  --category-3-depth-1-foreground: var(--black);
+  --category-3-depth-2: var(--category-3-depth-2-400);
+  --category-3-depth-2-foreground: var(--black);
+  --category-3-depth-3: var(--category-3-depth-3-400);
+  --category-3-depth-3-foreground: var(--black);
+  --category-3-depth-4: var(--category-3-depth-4-400);
+  --category-3-depth-4-foreground: var(--black);
+  --category-3-depth-5: var(--category-3-depth-5-400);
+  --category-3-depth-5-foreground: var(--black);
+  --category-4-depth-1: var(--category-4-depth-1-400);
+  --category-4-depth-1-foreground: var(--black);
+  --category-4-depth-2: var(--category-4-depth-2-400);
+  --category-4-depth-2-foreground: var(--black);
+  --category-4-depth-3: var(--category-4-depth-3-400);
+  --category-4-depth-3-foreground: var(--black);
+  --category-4-depth-4: var(--category-4-depth-4-400);
+  --category-4-depth-4-foreground: var(--black);
+  --category-4-depth-5: var(--category-4-depth-5-400);
+  --category-4-depth-5-foreground: var(--black);
+  --category-5-depth-1: var(--category-5-depth-1-400);
+  --category-5-depth-1-foreground: var(--black);
+  --category-5-depth-2: var(--category-5-depth-2-400);
+  --category-5-depth-2-foreground: var(--black);
+  --category-5-depth-3: var(--category-5-depth-3-400);
+  --category-5-depth-3-foreground: var(--black);
+  --category-5-depth-4: var(--category-5-depth-4-400);
+  --category-5-depth-4-foreground: var(--black);
+  --category-5-depth-5: var(--category-5-depth-5-400);
+  --category-5-depth-5-foreground: var(--black);
+  --category-6-depth-1: var(--category-6-depth-1-400);
+  --category-6-depth-1-foreground: var(--black);
+  --category-6-depth-2: var(--category-6-depth-2-400);
+  --category-6-depth-2-foreground: var(--black);
+  --category-6-depth-3: var(--category-6-depth-3-400);
+  --category-6-depth-3-foreground: var(--black);
+  --category-6-depth-4: var(--category-6-depth-4-400);
+  --category-6-depth-4-foreground: var(--black);
+  --category-6-depth-5: var(--category-6-depth-5-400);
+  --category-6-depth-5-foreground: var(--black);
+  --category-7-depth-1: var(--category-7-depth-1-400);
+  --category-7-depth-1-foreground: var(--black);
+  --category-7-depth-2: var(--category-7-depth-2-400);
+  --category-7-depth-2-foreground: var(--black);
+  --category-7-depth-3: var(--category-7-depth-3-400);
+  --category-7-depth-3-foreground: var(--black);
+  --category-7-depth-4: var(--category-7-depth-4-400);
+  --category-7-depth-4-foreground: var(--black);
+  --category-7-depth-5: var(--category-7-depth-5-400);
+  --category-7-depth-5-foreground: var(--black);
+  --category-8-depth-1: var(--category-8-depth-1-400);
+  --category-8-depth-1-foreground: var(--black);
+  --category-8-depth-2: var(--category-8-depth-2-400);
+  --category-8-depth-2-foreground: var(--black);
+  --category-8-depth-3: var(--category-8-depth-3-400);
+  --category-8-depth-3-foreground: var(--black);
+  --category-8-depth-4: var(--category-8-depth-4-400);
+  --category-8-depth-4-foreground: var(--black);
+  --category-8-depth-5: var(--category-8-depth-5-400);
+  --category-8-depth-5-foreground: var(--black);
+  --category-9-depth-1: var(--category-9-depth-1-400);
+  --category-9-depth-1-foreground: var(--black);
+  --category-9-depth-2: var(--category-9-depth-2-400);
+  --category-9-depth-2-foreground: var(--black);
+  --category-9-depth-3: var(--category-9-depth-3-400);
+  --category-9-depth-3-foreground: var(--black);
+  --category-9-depth-4: var(--category-9-depth-4-400);
+  --category-9-depth-4-foreground: var(--black);
+  --category-9-depth-5: var(--category-9-depth-5-400);
+  --category-9-depth-5-foreground: var(--black);
+  --category-10-depth-1: var(--category-10-depth-1-400);
+  --category-10-depth-1-foreground: var(--black);
+  --category-10-depth-2: var(--category-10-depth-2-400);
+  --category-10-depth-2-foreground: var(--black);
+  --category-10-depth-3: var(--category-10-depth-3-400);
+  --category-10-depth-3-foreground: var(--black);
+  --category-10-depth-4: var(--category-10-depth-4-400);
+  --category-10-depth-4-foreground: var(--black);
+  --category-10-depth-5: var(--category-10-depth-5-400);
+  --category-10-depth-5-foreground: var(--black);
+  --category-11-depth-1: var(--category-11-depth-1-400);
+  --category-11-depth-1-foreground: var(--black);
+  --category-11-depth-2: var(--category-11-depth-2-400);
+  --category-11-depth-2-foreground: var(--black);
+  --category-11-depth-3: var(--category-11-depth-3-400);
+  --category-11-depth-3-foreground: var(--black);
+  --category-11-depth-4: var(--category-11-depth-4-400);
+  --category-11-depth-4-foreground: var(--black);
+  --category-11-depth-5: var(--category-11-depth-5-400);
+  --category-11-depth-5-foreground: var(--black);
+  --category-12-depth-1: var(--category-12-depth-1-400);
+  --category-12-depth-1-foreground: var(--black);
+  --category-12-depth-2: var(--category-12-depth-2-400);
+  --category-12-depth-2-foreground: var(--black);
+  --category-12-depth-3: var(--category-12-depth-3-400);
+  --category-12-depth-3-foreground: var(--black);
+  --category-12-depth-4: var(--category-12-depth-4-400);
+  --category-12-depth-4-foreground: var(--black);
+  --category-12-depth-5: var(--category-12-depth-5-400);
+  --category-12-depth-5-foreground: var(--black);
   --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
   --table-highlight: color-mix(in srgb, var(--info) 20%, var(--background));
   --table-highlight-muted-foreground: var(--gray-400); /* the usual muted: not var(--muted-foreground), which the row redefines from this */
@@ -601,7 +990,8 @@
  * the dark theme, so a block below always sits on top of .dark and sets
  * only what differs from it. The solid fills (--destructive, --success,
  * --warning, --info, each with white -foreground), --info-text, the
- * highlight washes, the categorical slots and the heat scale stay .dark's.
+ * highlight washes, the categorical slots, the heat scale and the depth
+ * ramps stay .dark's.
  *
  *   --ring is the accent (4.24 to 5.25 on the page), not the guide's
  *     accent deep (2.30 to 2.91, under the 3:1 a focus ring needs).

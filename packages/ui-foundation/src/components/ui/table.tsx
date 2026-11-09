@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "cn"
 
-// `containerRef`/`containerClassName` are this repo's patch to the upstream
+// `containerRef`/`containerClassName`/`containerStyle` are this repo's patch to the upstream
 // primitive. Upstream wraps the <table> in a scroll container that nothing
 // outside can reach, so anything keyed to the scroll viewport — a sticky
 // scrollbar, a pinned column, an IntersectionObserver — had to find that
@@ -15,16 +15,19 @@ function Table({
   className,
   containerRef,
   containerClassName,
+  containerStyle,
   ...props
 }: React.ComponentProps<"table"> & {
   containerRef?: React.Ref<HTMLDivElement>
   containerClassName?: string
+  containerStyle?: React.CSSProperties
 }) {
   return (
     <div
       ref={containerRef}
       data-slot="table-container"
       className={cn("relative w-full overflow-x-auto", containerClassName)}
+      style={containerStyle}
     >
       <table
         data-slot="table"

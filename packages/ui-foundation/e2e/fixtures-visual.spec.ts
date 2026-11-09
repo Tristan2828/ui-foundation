@@ -61,6 +61,8 @@ const COMPOSITE_STORIES = [
   // Invalid fields with their typed values, on a card (4.63.2).
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
+  // One-line values (`inline`) in a table's cells and a card's lines.
+  { id: 'app-markdown--inline', mustShow: 'Waiting on the landlord' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
   // Page links read and edited (removed, Restore), and PageTrail folded (4.73).
   { id: 'app-pagelinks--read', mustShow: 'Lost notes' },
@@ -96,6 +98,8 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-categoricalcolour--default', mustShow: 'On a card' },
   // The heat scale's five steps as fills and as cells holding their own text.
   { id: 'patterns-heatscale--default', mustShow: 'On a card' },
+  // Every slot's depth ramp, as fills and as cells holding their own text.
+  { id: 'patterns-depthramps--default', mustShow: 'On a card' },
   // The edit-in-place presets at rest: a money value, a select's badge, a
   // reference, a pair read as one, links by label and by host.
   { id: 'app-editinplacepresets--presets', mustShow: '$1,234.56' },
@@ -156,6 +160,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--sticky-groups', mustShow: 'Thursday' },
   { id: 'app-datatable--sticky-groups-no-header', mustShow: 'Thursday' },
   { id: 'app-datatable--sticky-groups-wide', mustShow: 'Thursday' },
+  { id: 'app-datatable--sticky-groups-below-a-bar', mustShow: 'Thursday' },
+  { id: 'app-datatable--sticky-groups-wide-below-a-bar', mustShow: 'Thursday' },
   // DataTable's card layouts (#252): a feed's grid and compact list under
   // day headings, and covers with a round Read button and a placeholder.
   { id: 'app-datatable-layouts--feed', mustShow: 'Earlier this week' },
@@ -1037,6 +1043,45 @@ test.describe('heat scale', () => {
           items.map((li) => ({ background: getComputedStyle(li).backgroundColor, text: getComputedStyle(li).color })),
         )
         expect(new Set(fills).size).toBe(5)
+        expect(cells.map(({ background }) => background)).toEqual(fills)
+        for (const { background, text } of cells) expect(text).not.toBe(background)
+      }
+    })
+  }
+})
+
+// The depth ramps, as the heat scale above: every step of every slot, as
+// `fill-category-N-depth-M` and as `bg-category-N-depth-M`, resolves to its own
+// colour and clears 3:1 against the page and a card, in both themes and each
+// palette. Axe (COMPOSITE_STORIES) reads the text on the cells.
+const DEPTH_FILL: InkTarget = { selector: '[data-depth-fill]', ink: 'fill', behind: 'parent' }
+const DEPTH_CELL: InkTarget = { selector: '[data-depth-cell]', ink: 'backgroundColor', behind: 'parent' }
+
+test.describe('depth ramps', () => {
+  for (const theme of ['light', 'dark', ...PALETTES] as const) {
+    test(`every step of every slot is distinct and clears 3:1 on the page and on a card (${theme})`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 })
+      if (theme === 'light' || theme === 'dark') {
+        await page.goto(storyUrlById('patterns-depthramps--default', theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      } else {
+        await page.goto(paletteUrl('patterns-depthramps--default', theme))
+        await expectPalette(page, theme)
+      }
+      for (const target of [DEPTH_FILL, DEPTH_CELL]) {
+        const steps = await glyphContrasts(page, target)
+        if (process.env.PRINT_GLYPHS) console.log('depth', theme, target.ink, JSON.stringify(steps))
+        expect(steps).toHaveLength(120)
+        expect(steps.filter(({ ratio }) => ratio < 3)).toEqual([])
+      }
+      for (const surface of ['background', 'card']) {
+        const list = page.locator(`[data-surface="${surface}"]`)
+        const fills = await list.locator('[data-depth-fill]').evaluateAll((rects) => rects.map((rect) => getComputedStyle(rect).fill))
+        const cells = await list.locator('[data-depth-cell]').evaluateAll((items) =>
+          items.map((li) => ({ background: getComputedStyle(li).backgroundColor, text: getComputedStyle(li).color })),
+        )
+        expect(fills).toHaveLength(60)
+        for (let slot = 0; slot < 12; slot++) expect(new Set(fills.slice(slot * 5, slot * 5 + 5)).size).toBe(5)
         expect(cells.map(({ background }) => background)).toEqual(fills)
         for (const { background, text } of cells) expect(text).not.toBe(background)
       }

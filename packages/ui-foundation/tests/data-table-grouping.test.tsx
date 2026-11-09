@@ -216,8 +216,16 @@ describe('stickyGroupHeadings', () => {
     expect(html).toContain('--data-table-head-height:0px')
     expect(html).toContain('overflow-x-clip')
     expect(html).not.toContain('overflow-x-auto')
-    expect(html.match(/<th[^>]*scope="rowgroup"[^>]*>/g)?.every((cell) => cell.includes('sticky top-('))).toBe(true)
-    expect(html).toMatch(/<th[^>]*sticky top-0[^>]*>/)
+    expect(html.match(/<th[^>]*scope="rowgroup"[^>]*>/g)?.every((cell) => cell.includes('sticky top-[calc(var(--data-table-pin-top)+var(--data-table-head-height))]'))).toBe(true)
+    expect(html).toMatch(/<th[^>]*sticky top-\(--data-table-pin-top\)[^>]*>/)
+    // With no stickyTop they pin at the very top.
+    expect(html).toContain('--data-table-pin-top:0px')
+  })
+
+  it("pins them stickyTop down on the page, for a bar of the page's own", () => {
+    const html = render({ groupBy: byStatus, stickyGroupHeadings: true, stickyTop: 'var(--page-bar)' })
+    expect(html).toContain('--data-table-sticky-top:var(--page-bar)')
+    expect(html).toContain('--data-table-pin-top:var(--page-bar)')
   })
 
   it('changes nothing for a grouped table that does not ask', () => {

@@ -7,6 +7,64 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.77.0 — Markdown on one line, headings pinned below a page's bar, and depth ramps
+
+The UI package only; additive, no new dependency. Nothing changes for an
+app until it passes one of the new props or uses the new classes (the
+backend package's version moves with it, unchanged).
+
+- **`inline`** on `<Markdown>`: a one-line value's Markdown (a table cell,
+  a card's line, a summary) as a `<span>` of one run of words, in the font
+  and colour of wherever it sits, with no block margins, so a row it's in
+  keeps its height. Bold, italic, code and links keep their marks; every
+  other mark is its words. A list or table written in it still reads: a
+  list's items joined with " · " (numbers and task states kept), a
+  table's rows as `Header: value` pairs, paragraphs with a space. A link
+  opens in a new tab, and its click and Enter never reach the row or card
+  it sits in.
+- **`stickyTop`** on `DataTable`, with `stickyGroupHeadings`: how far from
+  the top the pinned header and headings sit, for a page with a bar of its
+  own pinned to the top. Any CSS length, resolved at the table, so a
+  variable set per breakpoint gives a phone its own offset. A table wider
+  than its box gets a box that much shorter than the screen instead, so it
+  fits under the bar. Focus moved to a row clears the bar too.
+- **Depth ramps**: five steps for each of the twelve categorical slots,
+  shallow to deep, `--category-N-depth-1` to `--category-N-depth-5`, as
+  `fill-category-N-depth-M` and `bg-category-N-depth-M`, each with
+  `--category-N-depth-M-foreground` (`text-category-N-depth-M-foreground`).
+  Values for light and dark; every palette takes dark's. Measured:
+  each step clears 3:1 against the card and the page in light, dark and
+  every palette; text on a fill clears 4.5:1; neighbours are at least
+  ΔE 17.7 apart in light and 13.9 in dark (blue; navy 15.3, every other
+  slot 17.4 or more), and 10.3 under simulated deuteranopia and
+  protanopia; each step is darker than the last. Dark's gaps are smaller
+  than the heat scale's because five steps of one hue that each clear 3:1
+  on the dark cards have only the lightness band from about oklch 0.58 to
+  1 to share.
+- **Checks**: `e2e/markdown-inline.spec.ts` measures rows holding inline
+  Markdown against a plain one at every density, at a desktop's and a
+  phone's width, and clicks and presses Enter on links in a row and in a
+  card with its own `onClick`; `tests/markdown-inline.test.tsx` holds what
+  each block reads as. `e2e/data-table-grouping.spec.ts` reads the pinned
+  bands below a page's bar (3.5rem on a phone, 3rem from md), on the
+  page's scroll and in the table's own box. `patterns/DepthRamps` runs
+  through axe and the token check in light, dark and every palette, and a
+  check measures every step as a fill and a cell on the page and a card;
+  `tests/depth-ramps.test.ts` holds the distances and contrasts from the
+  values in `theme.css`. The `app/Markdown` Inline and `app/DataTable`
+  Sticky groups below a bar stories run through axe and the token check
+  in both themes.
+- cell-patterns.md pattern 1 ("Markdown in a one-line value") and pattern
+  21 (`stickyTop`); design-language.md "Depth ramps" and a line in
+  "Written text (notes)".
+
+**For apps:** to take it, bump and run `ui-foundation sync` (only docs
+change) and `verify`; no other change. To use them: pass `inline` to a
+`<Markdown>` in a cell or a card's line; pass `stickyTop` (a length or
+`var(--your-bar-height)`) beside `stickyGroupHeadings` on a page that pins
+a bar of its own, and give that bar a `z-index` above the table's
+(`z-40`); map a category's levels to its ramp's whole class names, as
+design-language.md "Depth ramps" shows.
 ## 4.76.0 — Tabs in EntityView, a mark beside the title, rail fields beside their labels
 
 The UI package only; additive, no new dependency besides shadcn's `tabs`

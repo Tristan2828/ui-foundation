@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
+import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { useState } from 'react'
+import { DataTable } from './data-table'
 import { FOLDING_SAMPLE, startFolded } from './folding.fixtures'
 import { SAVED_PHOTO, WIDE_PHOTO } from './image-upload.fixtures'
 import { countTasks } from '@/lib/markdown-tasks'
@@ -278,3 +280,72 @@ export const TasksSavedSlowly: StoryObj<typeof Markdown> = {
     </div>
   ),
 }
+
+// `inline`: one-line values in a table's cells, each row as tall as the
+// plain one (Chores), in the cell's own font and colour (Notes is muted).
+// A list, a table and two paragraphs written in a value still read. A
+// row click opens it ("Opened: …"), as does a click on the card of the
+// app's own below; a link in either opens only the link.
+// e2e/markdown-inline.spec.ts.
+type Chore = { id: number; chore: string; notes: string }
+const CHORES: Chore[] = [
+  { id: 1, chore: 'Plain', notes: 'Waiting on the landlord' },
+  { id: 2, chore: 'Marks', notes: '**Due Friday**, *maybe sooner*: see [the lease](https://example.com/lease), clause `4.2`' },
+  { id: 3, chore: 'A list', notes: '- milk\n- eggs\n- [x] bread' },
+  { id: 4, chore: 'A table', notes: '| Size | Price |\n| --- | ---: |\n| S | $4 |\n| L | $6 |' },
+  { id: 5, chore: 'Paragraphs', notes: '# Heading\n\nFirst thought.\n\nSecond, with *emphasis*.' },
+]
+const CHORE_COLUMNS: LegacyColumnDef<Chore, unknown>[] = [
+  { accessorKey: 'chore', header: 'Chore' },
+  {
+    accessorKey: 'notes',
+    header: 'Notes',
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">
+        <Markdown inline>{row.original.notes}</Markdown>
+      </span>
+    ),
+  },
+]
+const noop = () => {}
+
+function InlineStory() {
+  const [opened, setOpened] = useState('nothing yet')
+  return (
+    <div className="flex max-w-3xl flex-col gap-6">
+      <DataTable<Chore>
+        columns={CHORE_COLUMNS}
+        data={CHORES}
+        total={CHORES.length}
+        page={1}
+        pageSize={CHORES.length}
+        onPageChange={noop}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        getRowId={(row) => String(row.id)}
+        onRowClick={(row) => setOpened(row.chore)}
+        emptyTitle="No chores"
+      />
+      <p className="type-body text-foreground" data-testid="opened">
+        Opened: {opened}
+      </p>
+      {/* A card of the app's own that opens on a click anywhere in it (its
+          keyboard way in would be a link of its own, as a row's title is). */}
+      <div
+        data-testid="clickable-card"
+        onClick={() => setOpened('the card')}
+        className="flex cursor-pointer flex-col gap-1 rounded-lg border border-border bg-card p-4 text-card-foreground"
+      >
+        <span className="type-section-title">
+          <Markdown inline>{'A card title with **bold** and `code`'}</Markdown>
+        </span>
+        <span className="type-caption text-muted-foreground">
+          <Markdown inline>{'A caption line, *muted*, with a [link](https://example.com)'}</Markdown>
+        </span>
+      </div>
+    </div>
+  )
+}
+
+export const Inline: StoryObj<typeof Markdown> = { render: () => <InlineStory /> }
