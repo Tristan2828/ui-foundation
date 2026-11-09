@@ -17,6 +17,12 @@
 // deleted or have a row put above it). Alignment is per column, as the
 // Markdown writes it (`:---:`).
 //
+// A column's width is on its cells (`colwidth`), kept in the Markdown as a
+// comment after the table (src/lib/markdown-table-widths.ts). Moves and
+// sorts carry it with the cells, and prosemirror-tables' fixTables gives a
+// new row's cells their column's width. One drag is one undo step: while
+// it runs the width is a decoration only (previewColumnWidth).
+//
 // Keys (handleTableKey), on top of Milkdown's Tab/Shift+Tab between cells:
 // Tab in the last cell adds a row; Enter goes to the cell below, and out
 // of the table from its last row; Shift+Enter does nothing (a line break
@@ -60,6 +66,9 @@ export type TableAction =
   | 'headerColumn'
 
 export type ColumnAlignment = 'left' | 'center' | 'right'
+
+/** A column being dragged to a width: the table's position, the column and the width so far. */
+export type ColumnDrag = { tablePos: number; column: number; width: number }
 
 const ALIGN: Partial<Record<TableAction, ColumnAlignment>> = {
   alignLeft: 'left',
@@ -288,18 +297,23 @@ export function colorTableCells(state: EditorState, dispatch: Dispatch, scope: T
 }
 
 // The decorations that draw what the Markdown keeps: a coloured cell's
-// wash (`data-color`) and a header column's first cells (`data-row-header`),
-// styled in styles/index.css ("Tables in written text").
-function tableDecorations(doc: ProseNode): DecorationSet {
+// wash (`data-color`), a header column's first cells (`data-row-header`)
+// and a column's width (`data-column-width`, or the width it's being
+// dragged to), styled in styles/index.css ("Tables in written text").
+function tableDecorations(doc: ProseNode, drag: ColumnDrag | null): DecorationSet {
   const decorations: Decoration[] = []
   doc.descendants((node, pos) => {
     if (node.type.name !== 'table') return node.isBlock && !node.isTextblock
     const tableStart = pos + 1
     node.forEach((row, rowOffset) => {
-      row.forEach((cell, cellOffset) => {
+      row.forEach((cell, cellOffset, column) => {
         const color = cellColor(runsOf(cell))
         const at = tableStart + rowOffset + 1 + cellOffset
         if (color) decorations.push(Decoration.node(at, at + cell.nodeSize, { 'data-color': color }))
+        const width = drag && drag.tablePos === pos && drag.column === column ? drag.width : widthOf(cell)
+        if (width !== null) {
+          decorations.push(Decoration.node(at, at + cell.nodeSize, { 'data-column-width': String(width), style: `--column-width: ${width}px` }))
+        }
       })
     })
     const firsts = firstCells(node, tableStart)
@@ -310,18 +324,95 @@ function tableDecorations(doc: ProseNode): DecorationSet {
   return DecorationSet.create(doc, decorations)
 }
 
-const tableLookKey = new PluginKey<DecorationSet>('tableLook')
+type TableLookState = { set: DecorationSet; drag: ColumnDrag | null }
 
-/** The plugin that draws cell colours and a header column (tableDecorations). */
+const tableLookKey = new PluginKey<TableLookState>('tableLook')
+
+/** The plugin that draws cell colours, a header column and column widths (tableDecorations). */
 export function tableLook(): Plugin {
-  return new Plugin<DecorationSet>({
+  return new Plugin<TableLookState>({
     key: tableLookKey,
     state: {
-      init: (_config, state) => tableDecorations(state.doc),
-      apply: (tr, previous) => (tr.docChanged ? tableDecorations(tr.doc) : previous),
+      init: (_config, state) => ({ set: tableDecorations(state.doc, null), drag: null }),
+      apply: (tr, previous) => {
+        const meta = tr.getMeta(tableLookKey) as ColumnDrag | null | undefined
+        if (meta === undefined && !tr.docChanged) return previous
+        // A change to the text ends a drag's preview (its table may have moved).
+        const drag = meta === undefined ? null : meta
+        return { set: tableDecorations(tr.doc, drag), drag }
+      },
     },
-    props: { decorations: (state) => tableLookKey.getState(state) },
+    props: { decorations: (state) => tableLookKey.getState(state)?.set },
   })
+}
+
+/** Shows a column at a width while it's dragged, changing nothing; `null` ends it. */
+export function previewColumnWidth(state: EditorState, dispatch: Dispatch, drag: ColumnDrag | null) {
+  dispatch(state.tr.setMeta(tableLookKey, drag).setMeta('addToHistory', false))
+}
+
+/** A column's width (`null`: automatic), set on its cells. One undo step. */
+export function setColumnWidth(state: EditorState, dispatch: Dispatch, tablePos: number, column: number, width: number | null): boolean {
+  const table = state.doc.nodeAt(tablePos)
+  if (table?.type.name !== 'table') return false
+  const map = TableMap.get(table)
+  if (column >= map.width) return false
+  const tr = state.tr
+  writeColumnWidth(tr, table, tablePos, map, column, width)
+  if (tr.docChanged) dispatch(closeHistory(tr))
+  else previewColumnWidth(state, dispatch, null)
+  return true
+}
+
+/** Every column back to automatic. One undo step. */
+export function fitAllColumns(state: EditorState, dispatch: Dispatch, tablePos: number): boolean {
+  const table = state.doc.nodeAt(tablePos)
+  if (table?.type.name !== 'table') return false
+  const map = TableMap.get(table)
+  const tr = state.tr
+  for (let column = 0; column < map.width; column++) writeColumnWidth(tr, table, tablePos, map, column, null)
+  if (tr.docChanged) dispatch(closeHistory(tr))
+  return true
+}
+
+function writeColumnWidth(tr: Transaction, table: ProseNode, tablePos: number, map: TableMap, column: number, width: number | null) {
+  const colwidth = width === null ? null : [width]
+  for (let row = 0; row < map.height; row++) {
+    const at = map.map[row * map.width + column]
+    const cell = table.nodeAt(at)!
+    if (widthOf(cell) !== width) tr.setNodeMarkup(tablePos + 1 + at, undefined, { ...cell.attrs, colwidth })
+  }
+}
+
+const widthOf = (cell: ProseNode | null | undefined): number | null => (cell?.attrs.colwidth as number[] | null | undefined)?.[0] ?? null
+
+/** The caret's column's width, or null when it's automatic. */
+export function columnWidthAt(state: EditorState): number | null {
+  if (!isInTable(state)) return null
+  const { map, table, left } = selectedRect(state)
+  return widthOf(table.nodeAt(map.map[left]))
+}
+
+/** Whether the caret's table has a column with a width set. */
+export function tableHasWidths(state: EditorState): boolean {
+  if (!isInTable(state)) return false
+  const header = selectedRect(state).table.firstChild
+  let found = false
+  header?.forEach((cell) => {
+    if (widthOf(cell) !== null) found = true
+  })
+  return found
+}
+
+/** A table node's header texts and their widths, for its comment. */
+export function tableWidthsOf(table: ProseNode): { headers: string[]; widths: (number | null)[] } {
+  const headers: string[] = []
+  const widths: (number | null)[] = []
+  table.firstChild?.forEach((cell) => {
+    headers.push(cell.textContent)
+    widths.push(widthOf(cell))
+  })
+  return { headers, widths }
 }
 
 

@@ -390,6 +390,48 @@ export const Tables: StoryObj<typeof RichTextEditor> = {
   ),
 }
 
+// Column widths (e2e/rich-text-table-widths.spec.ts): a table to drag in each
+// look, one that already has widths, and those widths as <Markdown> reads
+// them, in a note narrower than they add up to in the last.
+const PLAIN_WIDTHS = `| Item | Store | Size | Note |
+| --- | --- | --- | --- |
+| Olive oil | Corner shop | 1 L | Keeps for months in a cool cupboard |
+| Rice | Market | 2 kg | Store brand |
+`
+
+const SIZED_WIDTHS = `| Item | Cost | Note |
+| --- | ---: | --- |
+| Olive oil | $12.49 | Keeps for months in a cool cupboard, and the store brand tastes the same |
+| Rice | $8.99 | Rinse it first |
+
+<!-- table widths: Item=200, Note=320 -->
+`
+
+const WIDE_WIDTHS = `| Item | Note | Where |
+| --- | --- | --- |
+| Olive oil | Notes that run on across the whole column | Corner shop |
+
+<!-- table widths: Item=300, Note=420, Where=300 -->
+`
+
+export const TableWidths: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-3xl flex-col gap-6">
+      <Labelled label="plain" markdown={PLAIN_WIDTHS} />
+      <Labelled label="boxed" markdown={PLAIN_WIDTHS} tableLook="boxed" />
+      <Labelled label="sized" markdown={SIZED_WIDTHS} />
+      <section className="flex flex-col gap-2" data-fixture="reading">
+        <h2 className="type-label">reading</h2>
+        <Markdown>{SIZED_WIDTHS}</Markdown>
+      </section>
+      <section className="flex max-w-md flex-col gap-2" data-fixture="wide" data-print-notes="">
+        <h2 className="type-label">wide</h2>
+        <Markdown>{WIDE_WIDTHS}</Markdown>
+      </section>
+    </div>
+  ),
+}
+
 // An edit form's field: the value held by the form and passed back as
 // `defaultValue`, the record loaded only after the editor has mounted
 // (the Load button), then reset (e2e/rich-text-editor.spec.ts "a value

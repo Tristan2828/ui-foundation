@@ -5,7 +5,8 @@
 //   ==amber, the default==  =={yellow}yellow==  =={green}green==  =={red}red==
 //
 // It's plain text where nothing reads it (the marks show), and no HTML:
-// <Markdown> never renders raw HTML, and the editor never writes any.
+// <Markdown> never renders raw HTML, and the editor writes none but a
+// table's widths comment (markdown-table-widths.ts).
 // remark has no highlight, so these plugins read the marks from the text
 // nodes of a parsed document: `remarkHighlights` for <Markdown> (a `mark`
 // element with `data-color`) and `remarkHighlightNodes` for the rich-text

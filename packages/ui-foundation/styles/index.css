@@ -360,6 +360,10 @@
    - boxed: a rounded box, roomier cells, the header row on the muted
      fill.
    Both stripe their body rows (zebra, as DataTable's).
+   A column with a set width (src/lib/markdown-table-widths.ts) is exactly
+   that wide, its words wrapping inside it, from a phone's width up; on a
+   phone columns still fit their words. On paper the widths are only
+   preferences, so the table shrinks to the page rather than run off it.
    Row headers (a header column: src/lib/markdown-table.ts) sit on the
    muted fill, semibold. A coloured cell (its whole text one highlight)
    is painted in that wash, its words' own wash dropped. Unlayered, so a
@@ -396,6 +400,16 @@
 .prose-table :is(td, th):is([style*="right"], [align="right"]) {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+@media (min-width: 768px) {
+  .prose-table :is(td, th)[data-column-width] {
+    box-sizing: border-box;
+    width: var(--column-width);
+    min-width: var(--column-width);
+    max-width: var(--column-width);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 .prose-table th:not([scope="row"], [data-row-header]) {
   background: var(--heading-band);
@@ -506,6 +520,19 @@
   }
   [data-print-notes] table {
     border-collapse: collapse;
+  }
+  /* Paper can't scroll: the widths are what the columns would like, and
+     the table takes the page's width when they add up to more. */
+  [data-print-notes] [data-slot="table-container"] > table {
+    max-width: 100%;
+  }
+  [data-print-notes] [data-slot="table-container"] :is(td, th)[data-column-width] {
+    box-sizing: border-box;
+    width: var(--column-width);
+    min-width: 0;
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   [data-print-notes] tr {
     break-inside: avoid;

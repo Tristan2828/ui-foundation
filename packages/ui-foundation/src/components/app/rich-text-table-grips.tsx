@@ -8,10 +8,18 @@
 // column's items. The grips are mouse shortcuts, out of the tab order;
 // the keyboard has the cell's menu.
 //
+// A column's width: its right edge, within a few pixels of the pointer,
+// shows a line to drag (the width in a label beside it; the edge catches
+// on the four sizes, markdown-table-widths.ts). Only that column changes,
+// so the table grows or shrinks. A double-click puts it back to fitting
+// its words. The menus have Narrower, Wider, Fit to content and Fit all
+// columns. On a phone there's none of it: a phone fits columns to their
+// words, so a width set there couldn't be seen.
+//
 // Rendered into the table node view's grip layer (rich-text-node-views.ts)
 // through a portal. A menu acts on the cell it was opened for, then gives
 // focus back to the text with the caret in that cell.
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { TextSelection, type EditorState } from '@milkdown/kit/prose/state'
 import { selectedRect, TableMap } from '@milkdown/kit/prose/tables'
 import type { EditorView } from '@milkdown/kit/prose/view'
@@ -29,8 +37,12 @@ import {
   BetweenHorizontalStartIcon,
   BetweenVerticalEndIcon,
   BetweenVerticalStartIcon,
+  ChevronsLeftRightIcon,
+  ChevronsRightLeftIcon,
+  Columns3Icon,
   GripHorizontalIcon,
   GripVerticalIcon,
+  MoveHorizontalIcon,
   PanelLeftIcon,
   Trash2Icon,
   type LucideIcon,
@@ -48,12 +60,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { HIGHLIGHT_COLORS, type HighlightColor } from '@/lib/markdown-highlight'
+import { catchColumnWidth, clampColumnWidth, MAX_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from '@/lib/markdown-table-widths'
 import { tableAt } from './rich-text-formats'
 import {
   cellColorAt,
   columnAlignment,
+  columnWidthAt,
   headerColumnOn,
+  tableHasWidths,
   tableActionEnabled,
   tableColorEnabled,
   type ColumnAlignment,
@@ -119,6 +135,10 @@ export interface TableGripsProps {
   onAction: (cell: TableCell, action: TableAction) => void
   /** Colours a cell, its row or its column (null: no colour). */
   onColor: (cell: TableCell, scope: TableColorScope, color: HighlightColor | null) => void
+  /** Sets a column's width (null: automatic), or every column automatic (`'all'`). */
+  onWidth: (column: number, width: number | null | 'all') => void
+  /** Shows a column at a width while it's dragged, changing nothing (null: stop). */
+  onPreviewWidth: (column: number, width: number | null) => void
   /** The editable element, where focus goes when a menu closes. */
   text: () => HTMLElement | null
 }
@@ -142,7 +162,30 @@ function stateAt(state: EditorState, tablePos: number, cell: TableCell): EditorS
   return state.apply(state.tr.setSelection(TextSelection.near(state.doc.resolve(at))))
 }
 
-export function TableGrips({ view, state, getPos, frame, box, table, readOnly, focused, onAction, onColor, text }: TableGripsProps) {
+// How far either side of a column's right edge the pointer can be to take it.
+const EDGE_REACH = 6
+// How much Narrower and Wider change a column.
+const WIDTH_STEP = 16
+
+// The column whose right edge is nearest a point within the table, if one's in reach.
+function edgeAt(table: HTMLTableElement, box: HTMLElement, x: number, y: number): number | null {
+  const area = table.getBoundingClientRect()
+  const scroll = box.getBoundingClientRect()
+  if (y < area.top || y > area.bottom || x > scroll.right + EDGE_REACH) return null
+  const cells = Array.from(table.rows[0]?.cells ?? [])
+  let best: number | null = null
+  let nearest = EDGE_REACH + 1
+  cells.forEach((cell, column) => {
+    const off = Math.abs(cell.getBoundingClientRect().right - x)
+    if (off < nearest) {
+      nearest = off
+      best = column
+    }
+  })
+  return best
+}
+
+export function TableGrips({ view, state, getPos, frame, box, table, readOnly, focused, onAction, onColor, onWidth, onPreviewWidth, text }: TableGripsProps) {
   const [hover, setHover] = useState<TableCell | null>(null)
   const [open, setOpen] = useState<Menu | null>(null)
   const [target, setTarget] = useState<TableCell | null>(null)
@@ -150,6 +193,12 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
   const [, setLayout] = useState(0)
   const columnGrip = useRef<HTMLButtonElement>(null)
   const rowGrip = useRef<HTMLButtonElement>(null)
+  // A column's right edge: the one under the pointer, or the one being dragged.
+  const [edge, setEdge] = useState<number | null>(null)
+  const [drag, setDrag] = useState<{ column: number; label: string } | null>(null)
+  const dragging = useRef(false)
+  const edgeHandle = useRef<HTMLDivElement>(null)
+  const phone = useIsMobile()
 
   const tablePos = getPos()
   // The caret's cell, when it's in this table.
@@ -170,8 +219,12 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
     const onMove = (event: PointerEvent) => {
       const cell = cellOf(table, event.target)
       if (cell) setHover((now) => (now && now.row === cell.row && now.column === cell.column ? now : cell))
+      if (!dragging.current && event.pointerType === 'mouse') setEdge(edgeAt(table, box, event.clientX, event.clientY))
     }
-    const onLeave = () => setHover(null)
+    const onLeave = () => {
+      setHover(null)
+      if (!dragging.current) setEdge(null)
+    }
     const onLayout = () => setLayout((n) => n + 1)
     const onMenu = () => {
       const now = caretRef.current
@@ -233,6 +286,27 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
     rowButton.style.top = `${line.top - origin.top + line.height / 2}px`
   })
 
+  // The edge's handle, on the column's right edge and as tall as the table
+  // (or the box's width of it). While dragged it stays with the pointer's
+  // column, even past the box's side.
+  useLayoutEffect(() => {
+    const handle = edgeHandle.current
+    if (!handle) return
+    const cell = edge === null ? undefined : table.rows[0]?.cells[edge]
+    if (!cell) {
+      handle.hidden = true
+      return
+    }
+    const origin = frame.getBoundingClientRect()
+    const scroll = box.getBoundingClientRect()
+    const area = table.getBoundingClientRect()
+    const right = cell.getBoundingClientRect().right
+    handle.hidden = !dragging.current && right > scroll.right + 1
+    handle.style.left = `${Math.min(right, scroll.right) - origin.left}px`
+    handle.style.top = `${area.top - origin.top}px`
+    handle.style.height = `${area.height}px`
+  })
+
   if (readOnly || tablePos === undefined || !state) return null
 
   const at = (cell: TableCell | null) => (cell ? stateAt(state, tablePos, cell) : null)
@@ -261,6 +335,47 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
   const color = (scope: TableColorScope, value: HighlightColor | null) => {
     const cell = menuCell
     if (cell) later(() => onColor(cell, scope, value))
+  }
+
+  const widthOf = (column: number) => table.rows[0]?.cells[column]?.getBoundingClientRect().width ?? MIN_COLUMN_WIDTH
+
+  // Dragging a column's right edge: a preview until the button comes up,
+  // then one edit (one undo step). A press that doesn't move changes nothing.
+  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (edge === null || event.button !== 0) return
+    event.preventDefault()
+    const handle = event.currentTarget
+    const column = edge
+    const startX = event.clientX
+    const startWidth = widthOf(column)
+    let width: number | null = null
+    handle.setPointerCapture(event.pointerId)
+    dragging.current = true
+    const stop = () => {
+      dragging.current = false
+      handle.removeEventListener('pointermove', move)
+      handle.removeEventListener('pointerup', up)
+      handle.removeEventListener('pointercancel', cancel)
+      setDrag(null)
+    }
+    const move = (next: PointerEvent) => {
+      const caught = catchColumnWidth(startWidth + next.clientX - startX)
+      width = caught.width
+      onPreviewWidth(column, width)
+      setDrag({ column, label: caught.size ? `${caught.size} · ${width} px` : `${width} px` })
+    }
+    const up = () => {
+      stop()
+      if (width === null) onPreviewWidth(column, null)
+      else onWidth(column, width)
+    }
+    const cancel = () => {
+      stop()
+      onPreviewWidth(column, null)
+    }
+    handle.addEventListener('pointermove', move)
+    handle.addEventListener('pointerup', up)
+    handle.addEventListener('pointercancel', cancel)
   }
 
   const items = (list: Item[]) =>
@@ -297,6 +412,14 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
     )
   }
 
+  const setWidth = there ? columnWidthAt(there) : null
+  const anyWidth = there ? tableHasWidths(there) : false
+  const shownWidth = (column: number) => setWidth ?? Math.round(widthOf(column))
+  const resize = (column: number, by: number) => {
+    const width = clampColumnWidth(shownWidth(column) + by)
+    later(() => onWidth(column, width))
+  }
+
   const columnItems = (withColor: boolean, label?: string) => (
     <>
       <DropdownMenuGroup>
@@ -304,6 +427,30 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
         {items(COLUMN_ITEMS)}
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
+      {!phone && menuCell && (
+        <>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Width: {setWidth === null ? 'fit to content' : `${setWidth} px`}</DropdownMenuLabel>
+            <DropdownMenuItem disabled={shownWidth(menuCell.column) <= MIN_COLUMN_WIDTH} onClick={() => resize(menuCell.column, -WIDTH_STEP)}>
+              <ChevronsRightLeftIcon aria-hidden="true" />
+              Narrower
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={shownWidth(menuCell.column) >= MAX_COLUMN_WIDTH} onClick={() => resize(menuCell.column, WIDTH_STEP)}>
+              <ChevronsLeftRightIcon aria-hidden="true" />
+              Wider
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={setWidth === null} onClick={() => later(() => onWidth(menuCell.column, null))}>
+              <MoveHorizontalIcon aria-hidden="true" />
+              Fit to content
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!anyWidth} onClick={() => later(() => onWidth(menuCell.column, 'all'))}>
+              <Columns3Icon aria-hidden="true" />
+              Fit all columns
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+        </>
+      )}
       <DropdownMenuGroup>
         <DropdownMenuLabel>Align column</DropdownMenuLabel>
         <DropdownMenuRadioGroup
@@ -357,6 +504,27 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
 
   return (
     <>
+      {!phone && (
+        <div
+          ref={edgeHandle}
+          hidden
+          aria-hidden="true"
+          data-slot="rich-text-table-column-edge"
+          className="pointer-events-auto absolute z-10 flex w-3 -translate-x-1/2 cursor-col-resize touch-none justify-center"
+          onPointerDown={startDrag}
+          onDoubleClick={() => edge !== null && onWidth(edge, null)}
+        >
+          <span className="h-full w-0.5 bg-primary" />
+          {drag && (
+            <span
+              data-slot="rich-text-table-column-size"
+              className="absolute bottom-full mb-1 rounded-sm bg-primary px-1.5 font-mono text-xs whitespace-nowrap text-primary-foreground tabular-nums"
+            >
+              {drag.label}
+            </span>
+          )}
+        </div>
+      )}
       <DropdownMenu open={open === 'column' || open === 'cell'} onOpenChange={openMenu('column')}>
         <DropdownMenuTrigger
           tabIndex={-1}
