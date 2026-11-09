@@ -4,25 +4,25 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 41–63
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–782
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–802
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
   - Step 2: `npm run gen:api` · lines 115–116
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–669
-  - Step 7: Register routes · lines 670–685
-  - Step 8: Add Playwright specs for all three screens · lines 686–764
-  - Step 9: Register the nav entry and route names · lines 765–779
-  - Step 10: `npm run verify`. · lines 780–782
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 784–933
-  - [The record view](#the-record-view) · lines 897–933
-- [What not to copy](#what-not-to-copy) · lines 935–961
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 963–980
-- [Deleting](#deleting) · lines 982–1011
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1013–1034
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1036–1045
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1048–1087
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–689
+  - Step 7: Register routes · lines 690–705
+  - Step 8: Add Playwright specs for all three screens · lines 706–784
+  - Step 9: Register the nav entry and route names · lines 785–799
+  - Step 10: `npm run verify`. · lines 800–802
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 804–953
+  - [The record view](#the-record-view) · lines 917–953
+- [What not to copy](#what-not-to-copy) · lines 955–981
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 983–1000
+- [Deleting](#deleting) · lines 1002–1031
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1033–1054
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1056–1065
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1068–1107
 
 <!-- /index -->
 
@@ -224,6 +224,26 @@ is a filled-in example while the Widgets demo is still here).
    props.commit(day)}` and `onOpenChange` cancelling on close, as a
    Select is (the fixtures' `app/DateField` EditInPlace). The backend column
    is a SQL `date` (`datetime.date` in the model).
+
+   **A `month-day`** (a day that comes round every year, with no year:
+   when a season starts, a yearly deadline) is `type: string` with
+   `pattern: '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'` in
+   `openapi.yaml`, so the wire, the generated type and the form all hold
+   `'MM-DD'` (`'03-14'`), and `''` on the form for an optional one not set
+   (sent as `null`). It sorts as text in calendar order. On the form it's
+   the foundation's `MonthDayField` in a `Controller` (`clearable` when
+   optional); the schema is the string with
+   `.refine((v) => v === '' || isMonthDay(v), 'Pick a month and day')`
+   (`isMonthDay`: February 29 is a day, February 30 isn't), `min(1, …)`
+   too when required. The table and the view show `formatMonthDay(value)`
+   ("Mar 14"), the not-set label when empty. Editing in place is
+   `inPlace.monthDay({ value, save })` (cell pattern 18, "Presets"). The
+   backend column is `varchar(5)` (`str` in the model) and the router
+   refuses a day the month can't have as a 422 on the field (the pattern
+   alone lets `02-30` through). Values typed before as free text are
+   rewritten to `'MM-DD'` by a migration; one it can't read stays as
+   written, and the field shows it as written with nothing picked, refused
+   until a day is picked.
 
    **An image on a record** (a photo of it) is the stored file's id on the
    wire (`string`, nullable), and on the form the foundation's

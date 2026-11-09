@@ -53,6 +53,8 @@ One or two sentences: what one record is, and who uses the screens.
     check).
   - *From the package, no Widget example:* `date` (a calendar day, no
     time: OpenAPI `format: date`; the foundation's `DateField`; say
+    whether it's optional), `month-day` (a day that comes round every
+    year, no year: `'MM-DD'`; the foundation's `MonthDayField`; say
     whether it's optional).
   - *Not supported yet:* a yes/no that can also be unset (three states),
     file, and anything else.

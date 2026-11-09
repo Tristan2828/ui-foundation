@@ -99,6 +99,42 @@ describe('inPlace.date', () => {
   })
 })
 
+describe('inPlace.monthDay', () => {
+  it('saves MM-DD, February 29 included, or null once cleared', () => {
+    const blooms = inPlace.monthDay({ value: '03-14', save })
+    expect(check(blooms, '02-29')).toEqual({ saves: '02-29' })
+    expect(check(blooms, '')).toEqual({ saves: null })
+    expect(check(inPlace.monthDay({ value: '03-14', save, required: true }), '')).toEqual({ refused: 'Required' })
+    expect(blooms.kind).toBe('choice')
+  })
+
+  it('refuses a day the month doesn’t have, and anything not MM-DD', () => {
+    const blooms = inPlace.monthDay({ value: '03-14', save, locale: 'en-US' })
+    expect(check(blooms, '02-30')).toEqual({ refused: 'February has 29 days' })
+    expect(check(blooms, '11-31')).toEqual({ refused: 'November has 30 days' })
+    expect(check(blooms, '3/14')).toEqual({ refused: 'Pick a month and day' })
+  })
+
+  it('reads as the month and day, with no year; a stored value that isn’t one reads as written', () => {
+    expect(inPlace.monthDay({ value: '03-14', save, locale: 'en-US' }).shown).toBe('Mar 14')
+    expect(inPlace.monthDay({ value: '12-31', save, locale: 'en-GB', format: { month: 'long', day: 'numeric' } }).shown).toBe('31 December')
+    expect(inPlace.monthDay({ value: '02-30', save }).shown).toBe('02-30')
+    expect(inPlace.monthDay({ value: '', save }).shown).toBeNull()
+    expect(inPlace.monthDay({ value: null, save }).shown).toBeNull()
+  })
+
+  it('is a part of fields edited as one, each checked on its own', () => {
+    const season = inPlace.fields({
+      value: { from: '11-01', by: '02-28' },
+      fields: { from: { kind: 'monthDay', label: 'From', required: true }, by: { kind: 'monthDay', label: 'By', required: true } },
+      save,
+    })
+    expect(check(season, { from: '11-01', by: '02-29' })).toEqual({ saves: { from: '11-01', by: '02-29' } })
+    expect(check(season, { from: '11-01', by: '02-30' })).toEqual({ refused: 'By: February has 29 days' })
+    expect(check(season, { from: '', by: '02-28' })).toEqual({ refused: 'From: Required' })
+  })
+})
+
 describe('inPlace.select', () => {
   const options = [
     { value: 'low', label: 'Low' },

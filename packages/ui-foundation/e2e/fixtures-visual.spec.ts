@@ -135,6 +135,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
+  // A month and day with no year (4.78): set, empty and a stored value refused,
+  // open on its days and on its months, and edited in place on a view.
+  { id: 'app-monthdayfield--default', mustShow: 'No end day' },
+  { id: 'app-monthdayfield--open-on-days', mustShow: 'March' },
+  { id: 'app-monthdayfield--open-on-months', mustShow: 'Month' },
+  { id: 'app-monthdayfield--edit-in-place', mustShow: 'Nov 1' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
   { id: 'app-imagefield--default', mustShow: 'Edit plant' },
