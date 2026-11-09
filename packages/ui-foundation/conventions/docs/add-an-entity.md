@@ -15,14 +15,14 @@
   - Step 8: Add Playwright specs for all three screens · lines 686–764
   - Step 9: Register the nav entry and route names · lines 765–779
   - Step 10: `npm run verify`. · lines 780–782
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 784–922
-  - [The record view](#the-record-view) · lines 897–922
-- [What not to copy](#what-not-to-copy) · lines 924–950
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 952–969
-- [Deleting](#deleting) · lines 971–1000
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1002–1023
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1025–1034
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1037–1076
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 784–933
+  - [The record view](#the-record-view) · lines 897–933
+- [What not to copy](#what-not-to-copy) · lines 935–961
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 963–980
+- [Deleting](#deleting) · lines 982–1011
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1013–1034
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1036–1045
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1048–1087
 
 <!-- /index -->
 
@@ -903,7 +903,9 @@ view reaches them all. A record uses the parts it has, in this order:
 - **Header**: the title, edited in place (`titleEdit`); under it a
   one-line summary field, edited in place (`subtitle`: a goal, a
   description); beside it the status as a quick action (a picker saved
-  at once) and other status-like fields as badges, edited in place.
+  at once) and other status-like fields as badges, edited in place. A
+  record with a face or a mark of its own (a person's avatar, a
+  service's logo, a cover) puts it left of all that (`leading`, 4.76).
   `actions` holds Delete (soft, with Undo) and the record's own commands
   (Run, Print), never Edit.
 - **Strip**: the record's key numbers and ratings (`strip`, a
@@ -915,6 +917,15 @@ view reaches them all. A record uses the parts it has, in this order:
   Outline for a long one and Print notes (`print`). Without long text,
   one column. Every value edited in place (`edit`), a sub-item list
   included (`editInPlace({ kind: 'list' })`).
+- **Tabs** (4.76), for a main column with **three or more groups of
+  long content** (the steps, where it's used, the reasoning): a `tab` on
+  each main section groups them under a tab list, the selected one in
+  `?tab=`. Fewer groups stay one scroll, folded by headings. A record's
+  Notes stay outside the tabs, above them, unless they are one tab's
+  content; the rail and the strip never go in a tab.
+- **Rail fields beside their labels** (`railFields="beside"`, 4.76) for
+  a rail of many short facts, so it reads as a list of pairs rather than
+  a column of labels; keep labels to a word or two.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.
 

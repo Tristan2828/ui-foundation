@@ -71,8 +71,10 @@ export {
   type EntityViewMobileOrder,
   type EntityViewPlacement,
   type EntityViewProps,
+  type EntityViewRailFields,
   type EntityViewSection,
 } from '@/components/app/entity-view'
+export { entityViewTabSlug } from '@/lib/entity-view-tab'
 export { usePrinting } from '@/components/app/print-context'
 export {
   RecordDialogRoute,

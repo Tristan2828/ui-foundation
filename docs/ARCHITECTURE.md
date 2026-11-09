@@ -187,6 +187,12 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `/things/list` under `/things/12`), and a parent record's page can be
   the `list` of its sub-records (`fullPage={false}`, so a reload is the
   dialog over the parent again).
+- **A record's tabs** (4.76, #303): a main section's `tab` groups it
+  under `EntityView`'s tab list, the selected tab in `?tab=`, changed by
+  replacing the entry with its state kept, so a record over its list stays
+  the dialog (the list under it sees its own address, so its view's tabs
+  don't follow). Every tab's sections stay mounted, hidden, so the edit
+  in place store sees one set of fields whatever is selected.
 - **Tables** keep page, sort and filters in the URL (`useTableUrlState`,
   including `setFilters`/`applyView` for saved views). A saved view can
   name its columns (`DataTable`'s `visibleColumns`); they apply while the
