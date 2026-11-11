@@ -151,7 +151,7 @@
    * One hue per slot, the slot's own (its --category-N hue), across all five
    * steps in both themes; only lightness and chroma change. Depth is
    * contrast with the page, so a higher step is darker in light and
-   * brighter in dark, and the order survives in greyscale. (Until 4.83 hue
+   * brighter in dark, and the order survives in greyscale. (Until 4.91 hue
    * was bent a little to push neighbours apart, which read as drift, orange
    * to pink and purple to magenta, and dark ran the wrong way, a higher
    * step darker, ending in a step almost grey.) Chroma follows what the
@@ -679,6 +679,11 @@
      6.75:1. In dark the usual muted already clears it (6.61:1). */
   --table-highlight: color-mix(in srgb, var(--info) 10%, var(--background));
   --table-highlight-muted-foreground: var(--gray-600);
+  /* A body row under the pointer (DataTable, 4.83): the muted fill, solid
+     so pinned cells can wear it. Muted text measures 4.34:1 on it, so the
+     row takes --table-highlight-muted-foreground's darker grey (7.0:1).
+     In dark the usual muted clears it (5.9:1); a palette's dim, 5.8. */
+  --table-hover: var(--muted);
   --border: var(--gray-200);
   --input: var(--gray-200);
   --ring: var(--gray-400);
@@ -969,6 +974,7 @@
   --category-12-depth-5-foreground: var(--black);
   --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
   --table-highlight: color-mix(in srgb, var(--info) 20%, var(--background));
+  --table-hover: var(--muted);
   --table-highlight-muted-foreground: var(--gray-400); /* the usual muted: not var(--muted-foreground), which the row redefines from this */
   --border: var(--white-a10);
   --input: var(--white-a15);

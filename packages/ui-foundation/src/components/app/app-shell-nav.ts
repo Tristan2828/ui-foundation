@@ -226,6 +226,40 @@ export function navBackTarget(nav: readonly NavEntry[], pathname: string): { lab
 }
 
 /**
+ * The bar's trail for a page that names none of its own (#N5): the active
+ * entry, after the entry it sits under when it's one of a module's own
+ * pages ("Finance / Accounts"). The entry is the trail's last crumb even
+ * on a page below it. Nothing on a page no entry covers.
+ */
+export function navTrail(nav: readonly NavEntry[], pathname: string): { label: string; href?: string }[] {
+  const item = activeNavItem(nav, pathname)
+  if (!item) return []
+  const parent = navItems(nav).find((other) => childItems(other).includes(item))
+  return parent ? [{ label: parent.label, href: parent.to }, { label: item.label }] : [{ label: item.label }]
+}
+
+/**
+ * Where a phone's back arrow goes once a page has put up a trail of its
+ * own (`usePageTrail`): the closest crumb above the page that links
+ * somewhere, on a page below a nav entry (or one no entry covers), and
+ * otherwise the entry (`navBackTarget`). An entry's own page keeps the
+ * menu button, whatever its trail.
+ */
+export function trailBackTarget(
+  nav: readonly NavEntry[],
+  pathname: string,
+  trail: readonly { label: string; href?: string }[] | null,
+): { label: string; to: string } | undefined {
+  const fromNav = navBackTarget(nav, pathname)
+  if (!fromNav && activeNavItem(nav, pathname)) return undefined
+  const above = trail
+    ?.slice(0, -1)
+    .reverse()
+    .find((crumb) => crumb.href)
+  return above?.href ? { label: above.label, to: above.href } : fromNav
+}
+
+/**
  * One item of `AppShell`'s `bottomBar`, the phone's bar of shortcuts: a
  * page, or one of the nav's sections by its label, which opens a sheet of
  * that section's entries. `label` is a shorter name for the bar

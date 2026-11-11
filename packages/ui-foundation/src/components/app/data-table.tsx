@@ -10,9 +10,11 @@
 // here: every row model is manual (the server sorts and pages), so this
 // table never uses TanStack's own sorted/paginated row models at all.
 import {
+  createContext,
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -55,6 +57,7 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ArtworkAspect } from './artwork'
 import { EditInPlaceContext } from './edit-in-place'
@@ -63,6 +66,23 @@ import { LeaveGuard } from './editable-value'
 import { recordDialogState } from './record-dialog-context'
 import type { IconComponent } from './icon-component'
 import { groupByValues, groupRuns, type GroupRun, type RowGroup } from './table-groups'
+import {
+  ColumnsMenu,
+  PHONE_LIST_CLASS,
+  PhoneRow,
+  PhoneRowsSkeleton,
+  RowActions,
+  ViewAllLink,
+  ViewPills,
+  type DataTableColumnsMenu,
+  type DataTablePhoneRow,
+  type DataTableRowAction,
+  type DataTableView,
+  type DataTableViewAll,
+} from './data-table-tools'
+import { ROW_ACTIONS_COLUMN_ID, visibleFromPick } from './table-columns'
+import { useColumnsPick } from '@/hooks/use-columns-pick'
+import { useIsPhone } from '@/hooks/use-is-phone'
 import {
   Table,
   TableBody,
@@ -93,11 +113,28 @@ declare module '@tanstack/table-core' {
     TValue extends CellData = CellData,
   > {
     align?: 'center' | 'right'
+    /**
+     * Long text on one line (DataTable): cut at `maxWidth` with an ellipsis,
+     * the whole text in a tooltip on hover and on focus (a cut cell takes a
+     * tab stop, so the keyboard reaches it too). Screen readers read it whole.
+     */
+    clip?: boolean
+    /**
+     * The widest the column's content gets, as a CSS length: `'24rem'`
+     * unless set, with `clip` (and never over 60% of the table's area, for
+     * a phone). Without `clip`, the content wraps at it.
+     */
+    maxWidth?: string
+    /**
+     * The column's name in DataTable's Columns menu (`columnsMenu`), for a
+     * column whose `header` isn't a string.
+     */
+    label?: string
   }
   /* eslint-enable @typescript-eslint/no-unused-vars */
 }
 
-export type DataTableProps<TData extends Record<string, unknown>> = {
+export type DataTableProps<TData extends Record<string, unknown>, TView extends DataTableView = DataTableView> = {
   columns: LegacyColumnDef<TData, unknown>[]
   data: TData[]
   total: number
@@ -105,6 +142,14 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
   page: number
   pageSize: number
   onPageChange: (page: number) => void
+  /**
+   * The rows-per-page choices (`[25, 50, 100]`), drawn as a menu in the
+   * pagination bar with `onPageSizeChange`: useTableUrlState's `pageSizes`,
+   * `pageSize` and `setPageSize`, which keep the pick in the URL and on this
+   * device (`pageSizeStorageKey`). Left out, the bar has no menu.
+   */
+  pageSizes?: readonly number[]
+  onPageSizeChange?: (pageSize: number) => void
   sorting: SortingState
   onSortingChange: (sorting: SortingState) => void
   isLoading: boolean
@@ -148,15 +193,23 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   visibleColumns?: readonly string[]
   /**
-   * `full` (the default): the table, its toolbar and its pagination take
-   * the whole width. `content`, for a table of a few short columns: on a
-   * wide screen (a table area of 80rem or more) they take the width the
-   * columns need, never under 36rem, with the row actions right after the
-   * last column. Below that, as `full`. While loading, empty or failed
-   * after a load, it keeps the width it last had, so paging and filtering
-   * don't move it (only the first load can).
+   * `content` (the default, 4.83): the table and its pagination are as wide
+   * as the columns need, at least 36rem (or the whole width, when that's
+   * less), with empty space at the right, so a name stays close to its
+   * values at any screen size; wider than the area, the table scrolls
+   * sideways in it. The toolbar keeps the whole width, so its controls
+   * don't move between lists. While loading, empty or failed after a
+   * load, it keeps the width it last had, so paging and filtering don't
+   * move it (only the first load can). `full`: the table takes the whole
+   * width too (the default before 4.83). A card layout takes the whole
+   * width either way.
    */
   width?: DataTableWidth
+  /**
+   * Zebra stripes on the body rows (every other row tinted), as before
+   * 4.83. Off by default: rows are told apart by the line under each.
+   */
+  striped?: boolean
   /**
    * Rows under headings: each row's group (`byDay(field)` for a feed or a
    * log). Rows keep the server's order, and a heading row spanning every
@@ -299,6 +352,58 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
   onLayoutChange?: (layout: string) => void
   /** The table's own entry in the switch: "Table" with a table icon unless set ("Rows", for a list-like table). */
   tableLayout?: { label?: string; icon?: IconComponent }
+  /**
+   * The list's saved views as pills above the toolbar (the list page
+   * standard, L3): useTableUrlState's views, by id, each with a `label`, in
+   * their order. One is pressed while it's `activeView`; none once the
+   * filters move off every view. Under 48rem they stay on one line that
+   * scrolls sideways. A view with `columns` shows those while it's on, over
+   * the Columns menu's pick.
+   */
+  views?: Readonly<Record<string, TView>>
+  /** The view on: useTableUrlState's `activeView`, or null. */
+  activeView?: string | null
+  /** A pill pressed: useTableUrlState's `applyView` (it gets the view, then its id). */
+  onViewChange?: (view: TView, id: string) => void
+  /** The pills' group name: "Views" unless set. */
+  viewsLabel?: string
+  /**
+   * A Columns menu at the end of the toolbar (L5): a tick for every column
+   * but the first (the name) and the row actions, remembered on this device
+   * under `storageKey`. Until something is ticked it starts from
+   * `visibleColumns` (or every column). While a view with `columns` is on,
+   * the view's columns show and the ticks can't change. A column's name in
+   * the menu is its string `header`, or `meta.label`.
+   */
+  columnsMenu?: DataTableColumnsMenu
+  /**
+   * A row's actions (L9), in a column of their own pinned to the right edge,
+   * its header for screen readers only. One action is its icon (its label
+   * the tooltip and name), two or more a ⋯ menu. A row with none gets an
+   * empty cell. A click on them never opens the row.
+   */
+  rowActions?: (row: TData) => readonly DataTableRowAction[]
+  /**
+   * Under 48rem, a row list in place of the table (L11): the name, the
+   * status at the line's end, and one muted line of the facts that matter.
+   * The whole row is the target, 44px at least, and opens as `opens` says
+   * (a link to the record, so a long press or a modified click works as
+   * links do); rows edited in place (`kind: 'rows'`) open nothing here.
+   * Row actions sit at the row's end. Headings, paging and every state hold;
+   * `totals` is the table's alone. A card layout, when picked, wins.
+   */
+  phoneRow?: DataTablePhoneRow<TData>
+  /**
+   * At most this many rows, with no pagination bar: a record's list of
+   * related records (R8, or RelatedTable). The caller still fetches only
+   * that many; `data` past it isn't shown.
+   */
+  limit?: number
+  /**
+   * With `limit`: a View all link under the rows to the whole list, shown
+   * when there are more than the rows shown.
+   */
+  viewAll?: DataTableViewAll
 }
 
 /** A field DataTable's rows can be grouped by (`groupings`). */
@@ -527,6 +632,92 @@ function GroupMenu<TData>({
   )
 }
 
+// The rows-per-page menu in the pagination bar (`pageSizes`): a radio list
+// that closes on a pick. The button says the size in words of its own
+// ("50 rows", as the list page standard drew it), and the menu says
+// what it is.
+function PageSizeMenu({
+  pageSizes,
+  value,
+  onValueChange,
+}: {
+  pageSizes: readonly number[]
+  value: number
+  onValueChange: (pageSize: number) => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            data-slot="data-table-page-size"
+            aria-label={`${value} rows per page`}
+          />
+        }
+      >
+        {value} rows
+        <ChevronDownIcon aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Rows per page</DropdownMenuLabel>
+          <DropdownMenuRadioGroup value={String(value)} onValueChange={(next) => onValueChange(Number(next))}>
+            {pageSizes.map((size) => (
+              <DropdownMenuRadioItem key={size} value={String(size)} closeOnClick>
+                {size}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+// A cell's text cut to one line (`meta.clip`). Only when it is cut does it
+// take a tab stop and a tooltip with the whole text, on hover and on focus;
+// re-measured on every render (the text may change) and on every resize.
+function ClippedText({ maxWidth, children }: { maxWidth: string; children: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [fullText, setFullText] = useState<string | null>(null)
+  const measure = () => {
+    const element = ref.current
+    if (!element) return
+    const isCut = element.scrollWidth > element.clientWidth + 0.5
+    setFullText(isCut ? element.textContent?.trim() || null : null)
+  }
+  useLayoutEffect(measure)
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    const observer = new ResizeObserver(() => measure())
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+  return (
+    <Tooltip disabled={fullText === null}>
+      <TooltipTrigger
+        render={
+          <span
+            ref={ref}
+            data-slot="data-table-clip"
+            className={CLIP_CLASS}
+            // Never more than 60% of the table's area, so on a phone the
+            // cut column leaves the name and the rest room.
+            style={{ maxWidth: `min(${maxWidth}, 60cqw)` }}
+            tabIndex={fullText === null ? undefined : 0}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent className="max-w-sm break-words whitespace-normal">{fullText}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 // Whether the detail panel (`detailPanel`) fits beside the table, or opens
 // as a bottom sheet. Wide on the server and wherever matchMedia is missing
 // (a test's DOM), so markup never depends on it.
@@ -574,29 +765,46 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
 // The pinned cell gets an opaque background, not `bg-inherit`: the zebra
 // stripe (table.tsx) is a *translucent* color, so inheriting it would let
 // the columns scrolling behind show through at 40% opacity — exactly the
-// bleed-through a solid background avoids. On an even row it's the stripe
-// pre-mixed onto the page (--table-stripe), so the stripe runs the whole
-// row's width (issue #92); `:where()` keeps that rule's specificity at the
-// background's, so the first column's hover below still wins on every row.
-const PINNED_CELL_CLASS =
-  'z-10 bg-background [:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe)'
+// bleed-through a solid background avoids. With `striped`, on an even row
+// it's the stripe pre-mixed onto the page (--table-stripe), so the stripe
+// runs the whole row's width (issue #92); `:where()` keeps that rule's
+// specificity at the background's, so the row's hover below still wins.
+const PINNED_CELL_CLASS = 'z-10 bg-background'
+const PINNED_STRIPED_CELL_CLASS = '[:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe)'
 
-// The pinned first cell carries the hover highlight. --accent is only ~3%
-// off the page background, so a solid left edge marker carries the signal;
-// an inset shadow rather than a border, so nothing reflows.
-const PINNED_COLUMN_CLASS =
-  `sticky left-0 border-r ${PINNED_CELL_CLASS} group-hover/row:bg-accent ` +
-  'group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]'
-
-// The right-edge mirror, opaque for the same reason, but with no hover
-// highlight (issue #103): it holds the row's actions, which name nothing,
-// so lighting it too read as a second selected thing. Only the first
-// column marks the hovered row.
+const PINNED_COLUMN_CLASS = `sticky left-0 border-r ${PINNED_CELL_CLASS}`
 const PINNED_LAST_COLUMN_CLASS = `sticky right-0 border-l ${PINNED_CELL_CLASS}`
 
 // The totals row's label, pinned with the first column (`totals`): the
 // same opaque cell, with no hover, since the row isn't one to pick.
-const PINNED_TOTALS_LABEL_CLASS = `sticky left-0 border-r ${PINNED_CELL_CLASS}`
+const PINNED_TOTALS_LABEL_CLASS = PINNED_COLUMN_CLASS
+
+// `striped` off (the default, 4.83): table.tsx's zebra taken back off the
+// body (tailwind-merge drops its even-row tint for this one), so rows are
+// told apart by the line under each.
+const UNSTRIPED_BODY_CLASS = '[&_tr:nth-child(even)]:bg-transparent'
+
+// A body row under the pointer (4.83): every cell, pinned ones included,
+// in --table-hover (solid, so a pinned cell can wear it), with a bar in
+// --primary on the first cell, so it reads without colour too; an inset
+// shadow rather than a border, so nothing reflows. On a cell, not the row,
+// so it covers a stripe and a pinned cell's opaque background alike
+// (`.row:hover > td` outranks both). Muted text on it takes the darker grey
+// a highlighted row's does (theme.css --table-hover). table.tsx's own row
+// hover comes off: it would sit under the cells' tint anyway. A row that
+// opens a record adds the hand cursor (SELECTABLE_ROW_CLASS); one edited in
+// place keeps the arrow. A highlighted or picked row keeps its own look.
+const HOVER_ROW_CLASS =
+  'hover:bg-transparent hover:[--muted-foreground:var(--table-highlight-muted-foreground)] ' +
+  'hover:[&>td]:bg-(--table-hover) hover:[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary)]'
+// Its bar and a focused row's ring, both on the first cell's shadow.
+const HOVER_FOCUSED_ROW_CLASS =
+  'focus-visible:hover:[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary),inset_0_2px_0_0_var(--ring),inset_0_-2px_0_0_var(--ring)]'
+
+// A column's `meta.clip`: one line, cut at `meta.maxWidth` with an ellipsis.
+const DEFAULT_CLIP_WIDTH = '24rem'
+const CLIP_CLASS =
+  'block truncate rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
 
 // A pinned first column's content, capped below md at 45% of the table's
 // scroll area (`cqw`: the container is an inline-size query container)
@@ -605,21 +813,11 @@ const PINNED_TOTALS_LABEL_CLASS = `sticky left-0 border-r ${PINNED_CELL_CLASS}`
 // Wider screens are unchanged: the column sizes to its content.
 const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-normal max-md:break-words'
 
-// Hover highlights the pinned cell, not the whole row. A row-level hover
-// cannot be made consistent against the zebra stripe: `tr:nth-child(even)`
-// is specificity (0,2,1) and `tr:hover` is (0,2,0), so the stripe wins and
-// even rows stay unlit — odd rows highlight, even rows don't.
-// `hover:bg-transparent` drops table.tsx's own `hover:bg-muted/50` via
-// tailwind-merge so no row hover is attempted at all. The pinned cell is
-// the better target anyway: it names the row, it sits on an opaque
-// background so it reads identically on striped and unstriped rows, and it
-// stays on screen when the table is scrolled right.
-const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
-
 // `highlightRow`: the wash on every cell, so it covers the zebra stripe
 // (on the row) and the pinned cells' opaque backgrounds (on the cell, and
-// one class weaker than this), while a pinned cell's hover still wins. A
-// bar on the first cell, as hover's is, so it reads without colour too.
+// one class weaker than this); hover leaves it as it is, so "next up" never
+// reads as the pointer's row. A bar in info-text on the first cell, as
+// hover's is in --primary, so it reads without colour too.
 // Inside, muted text takes the darker grey the wash needs (theme.css).
 const HIGHLIGHTED_ROW_CLASS =
   '[--muted-foreground:var(--table-highlight-muted-foreground)] [&>td]:bg-(--table-highlight) ' +
@@ -709,13 +907,14 @@ const DETAIL_ASIDE_CLASS =
 type RowPlace = { key: string; rowId: string }
 const EMPTY_KEYS: ReadonlySet<string> = new Set()
 
-// `width="content"`: from a table area 80rem wide, as wide as the columns
-// need (`w-fit` over the table's own `w-full`), at least 36rem, or the
-// width it last had loaded while it shows another state
-// (--data-table-last-width), at most the area. Narrower, no change.
+// `width="content"`: the table and its pagination (not the toolbar) as wide
+// as the columns need (`w-fit` over the table's own `w-full`), at least
+// 36rem, or the width it last had loaded while it shows another state
+// (--data-table-last-width), and never wider than the area: `min()` keeps
+// the minimum from pushing past a phone's width, since a min-width
+// outranks a max-width.
 const CONTENT_WIDTH_CLASS =
-  '@7xl/data-table:w-fit @7xl/data-table:max-w-full ' +
-  '@7xl/data-table:min-w-[max(--spacing(144),var(--data-table-last-width,0px))]'
+  'w-fit max-w-full min-w-[min(100%,max(--spacing(144),var(--data-table-last-width,0px)))]'
 
 // A second horizontal scrollbar, stuck to the viewport's bottom edge. The
 // real one sits directly under the last row, which on a full page is
@@ -815,13 +1014,37 @@ function useStickyHeadings(containerRef: React.RefObject<HTMLDivElement | null>,
   return { scrollsSideways, headHeight }
 }
 
-export function DataTable<TData extends Record<string, unknown>>({
+// `rowActions`: the column DataTable adds for them, pinned last. Its cell
+// reads the app's function through context, so the column stays the same
+// object between renders (a new one would remount every cell, and close a
+// menu that's open).
+const RowActionsContext = createContext<((row: never) => readonly DataTableRowAction[]) | undefined>(undefined)
+
+function RowActionsCell({ row }: { row: { original: unknown } }) {
+  const getActions = useContext(RowActionsContext) as ((row: unknown) => readonly DataTableRowAction[]) | undefined
+  return <RowActions actions={getActions?.(row.original) ?? []} />
+}
+
+const ROW_ACTIONS_COLUMN = {
+  id: ROW_ACTIONS_COLUMN_ID,
+  enableSorting: false,
+  header: () => <span className="sr-only">Actions</span>,
+  cell: RowActionsCell,
+  meta: { align: 'right' as const },
+}
+
+// The cell under the actions' column: as narrow as its button.
+const ROW_ACTIONS_CELL_CLASS = 'w-px py-0'
+
+export function DataTable<TData extends Record<string, unknown>, TView extends DataTableView = DataTableView>({
   columns,
   data,
   total,
   page,
   pageSize,
   onPageChange,
+  pageSizes,
+  onPageSizeChange,
   sorting,
   onSortingChange,
   isLoading,
@@ -836,7 +1059,8 @@ export function DataTable<TData extends Record<string, unknown>>({
   pinLastColumn,
   enableSortingRemoval,
   visibleColumns,
-  width = 'full',
+  width = 'content',
+  striped = false,
   groupBy,
   groupSummary,
   stickyGroupHeadings = false,
@@ -857,7 +1081,16 @@ export function DataTable<TData extends Record<string, unknown>>({
   detailRow,
   onDetailRowChange,
   detailLabel = 'Details',
-}: DataTableProps<TData>) {
+  views,
+  activeView = null,
+  onViewChange,
+  viewsLabel = 'Views',
+  columnsMenu,
+  rowActions,
+  phoneRow,
+  limit,
+  viewAll,
+}: DataTableProps<TData, TView>) {
   // The switch's own state, for a table that doesn't pass `layout`.
   const [ownLayout, setOwnLayout] = useState('table')
   const requestedLayout = layoutProp ?? ownLayout
@@ -931,19 +1164,43 @@ export function DataTable<TData extends Record<string, unknown>>({
   )
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
+
+  // The columns showing: a view's while it's on, else the Columns menu's
+  // pick, else the app's `visibleColumns`. The first column always shows.
+  const leafIds = leafColumnIds(columns)
+  const fixedColumns = leafIds.slice(0, 1)
+  const viewColumns = activeView !== null ? views?.[activeView]?.columns : undefined
+  const [columnsPick, setColumnsPick] = useColumnsPick(columnsMenu?.storageKey)
+  const shownColumns =
+    viewColumns ?? (columnsMenu && columnsPick ? visibleFromPick(leafIds, columnsPick, fixedColumns) : visibleColumns)
+
+  // `rowActions`: their column, last.
+  const hasRowActions = Boolean(rowActions)
+  const tableColumns = useMemo(
+    () => (hasRowActions ? [...columns, ROW_ACTIONS_COLUMN as unknown as LegacyColumnDef<TData, unknown>] : columns),
+    [columns, hasRowActions],
+  )
+  const pinLast = Boolean(pinLastColumn || hasRowActions)
+
+  // `limit`: a capped list shows that many rows and no pagination bar.
+  const shownData = limit === undefined ? data : data.slice(0, limit)
+
+  // `phoneRow`: a row list in place of the table under 48rem.
+  const isPhone = useIsPhone()
+
   // TanStack treats a column missing from this map as visible, so every
   // column gets an entry once a list is given.
   // While grouped, the grouped column is hidden: its value is the heading.
   const columnVisibility = {
-    ...(visibleColumns
-      ? Object.fromEntries(leafColumnIds(columns).map((id) => [id, visibleColumns.includes(id)]))
+    ...(shownColumns
+      ? Object.fromEntries(leafIds.map((id) => [id, fixedColumns.includes(id) || shownColumns.includes(id)]))
       : {}),
     ...(activeGrouping ? { [activeGrouping.id]: false } : {}),
   }
 
   const table = useLegacyTable({
-    data,
-    columns,
+    data: shownData,
+    columns: tableColumns,
     getRowId: getRowId as ((row: TData, index: number) => string) | undefined,
     state: {
       sorting,
@@ -978,20 +1235,24 @@ export function DataTable<TData extends Record<string, unknown>>({
 
   // `width="content"`: the width the table last had loaded, kept while it
   // shows another state.
+  // A card layout's grid takes the whole width whatever `width` says.
+  const showPhoneRows = Boolean(phoneRow) && isPhone && !cardLayout
+  const fitsColumns = width === 'content' && !cardLayout && !showPhoneRows
   const root = useRef<HTMLDivElement>(null)
+  const body = useRef<HTMLDivElement>(null)
   const [lastWidth, setLastWidth] = useState<number | null>(null)
   useLayoutEffect(() => {
-    const element = root.current
-    if (width !== 'content' || !isSuccessView || !element) return
+    const element = body.current
+    if (!fitsColumns || !isSuccessView || !element) return
     const observer = new ResizeObserver(() => setLastWidth(Math.round(element.getBoundingClientRect().width)))
     observer.observe(element)
     return () => observer.disconnect()
-  }, [width, isSuccessView])
+  }, [fitsColumns, isSuccessView])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const { barRef, isOverflowing, scrollWidth } = useBottomScrollbar(
     containerRef,
-    Boolean(pinFirstColumn) && isSuccessView && !cardLayout,
+    Boolean(pinFirstColumn) && isSuccessView && !cardLayout && !showPhoneRows,
   )
 
   const rows = table.getRowModel().rows
@@ -1124,10 +1385,12 @@ export function DataTable<TData extends Record<string, unknown>>({
   // One body row, the same in a plain table and a grouped one.
   const renderRow = (row: Row, key: string = row.id) => {
     const isSelected = Boolean(detailPanel) && key === selectedKey
+    const isHighlighted = Boolean(highlightRow?.(row.original))
+    const hovers = !isHighlighted && !isSelected
     return (
     <TableRow
       key={key}
-      data-highlighted={highlightRow?.(row.original) || undefined}
+      data-highlighted={isHighlighted || undefined}
       {...(rowsOpen
         ? {
             'data-row-key': key,
@@ -1137,49 +1400,128 @@ export function DataTable<TData extends Record<string, unknown>>({
           }
         : {})}
       className={cn(
-        pinFirstColumn && ROW_GROUP_CLASS,
-        highlightRow?.(row.original) && HIGHLIGHTED_ROW_CLASS,
+        'hover:bg-transparent',
+        hovers && HOVER_ROW_CLASS,
+        isHighlighted && HIGHLIGHTED_ROW_CLASS,
         rowsOpen && SELECTABLE_ROW_CLASS,
+        rowsOpen && hovers && HOVER_FOCUSED_ROW_CLASS,
         isSelected && SELECTED_ROW_CLASS,
       )}
     >
-      {row.getVisibleCells().map((cell, index) => (
-        <TableCell
-          key={cell.id}
-          className={cn(
-            pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
-            pinLastColumn && index === row.getVisibleCells().length - 1 && PINNED_LAST_COLUMN_CLASS,
-            alignClass(cell.column.columnDef.meta?.align),
-          )}
-        >
-          {pinFirstColumn && index === 0 ? (
-            <div className={PINNED_FIRST_CONTENT_CLASS}>
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </div>
-          ) : (
-            flexRender(cell.column.columnDef.cell, cell.getContext())
-          )}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell, index) => {
+        const meta = cell.column.columnDef.meta
+        const value = flexRender(cell.column.columnDef.cell, cell.getContext())
+        const shown = meta?.clip ? (
+          <ClippedText maxWidth={meta.maxWidth ?? DEFAULT_CLIP_WIDTH}>{value}</ClippedText>
+        ) : meta?.maxWidth ? (
+          <div className="whitespace-normal break-words" style={{ maxWidth: meta.maxWidth }}>
+            {value}
+          </div>
+        ) : (
+          value
+        )
+        const isPinnedFirst = pinFirstColumn && index === 0
+        const isPinnedLast = pinLast && index === row.getVisibleCells().length - 1
+        return (
+          <TableCell
+            key={cell.id}
+            className={cn(
+              isPinnedFirst && PINNED_COLUMN_CLASS,
+              isPinnedLast && PINNED_LAST_COLUMN_CLASS,
+              (isPinnedFirst || isPinnedLast) && striped && PINNED_STRIPED_CELL_CLASS,
+              alignClass(meta?.align),
+              cell.column.id === ROW_ACTIONS_COLUMN_ID && ROW_ACTIONS_CELL_CLASS,
+            )}
+          >
+            {isPinnedFirst ? <div className={PINNED_FIRST_CONTENT_CLASS}>{shown}</div> : shown}
+          </TableCell>
+        )
+      })}
     </TableRow>
     )
   }
 
+  // `columnsMenu`: every column but the first and the actions, by name.
+  const menuColumns = columnsMenu
+    ? table
+        .getAllLeafColumns()
+        .filter((column) => column.id !== ROW_ACTIONS_COLUMN_ID && !fixedColumns.includes(column.id))
+        .map((column) => {
+          const header = column.columnDef.header
+          return { id: column.id, label: column.columnDef.meta?.label ?? (typeof header === 'string' ? header : column.id) }
+        })
+    : []
+
+  // `views`: the pills, in the views' order.
+  const viewEntries = views ? Object.entries(views) : []
+
+  // A record a phone row opens: its address, and what a plain tap does.
+  const phoneTarget = (row: Row) => {
+    const href = opensTo
+      ? navigation
+        ? navigation.navigator.createHref(opensTo.to(row.original))
+        : opensTo.to(row.original)
+      : undefined
+    const onOpen = openRow
+      ? () => openRow(row.original)
+      : detailPanel
+        ? () => setSelection({ key: row.id, rowId: row.id })
+        : undefined
+    return { href, onOpen }
+  }
+  const phoneList = (items: readonly Row[]) => (
+    <ul role="list" className={PHONE_LIST_CLASS}>
+      {items.map((row) => (
+        <PhoneRow
+          key={row.id}
+          row={row.original}
+          phoneRow={phoneRow as DataTablePhoneRow<TData>}
+          highlighted={Boolean(highlightRow?.(row.original))}
+          actions={rowActions ? <RowActions actions={rowActions(row.original)} /> : undefined}
+          {...phoneTarget(row)}
+        />
+      ))}
+    </ul>
+  )
+
+  const viewAllTotal = viewAll?.total ?? total
+  // The row list a phone gets has no columns to pick.
+  const showColumnsMenu = Boolean(columnsMenu) && !showPhoneRows
+
   const content = (
     <div
       ref={root}
-      className={cn('flex flex-col gap-4', width === 'content' && CONTENT_WIDTH_CLASS)}
+      className="flex flex-col gap-4"
       data-width={width}
       data-layout={layouts?.length ? currentLayout : undefined}
-      style={
-        width === 'content' && !isSuccessView && lastWidth !== null
-          ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
-          : undefined
-      }
     >
-      {layouts?.length || groupings?.length ? (
+      {viewEntries.length > 0 ? (
+        <ViewPills
+          label={viewsLabel}
+          views={viewEntries.map(([id, view]) => ({ id, label: view.label ?? id }))}
+          value={activeView}
+          onValueChange={(id) => {
+            const view = views?.[id]
+            if (view) onViewChange?.(view, id)
+          }}
+        />
+      ) : null}
+      {layouts?.length || groupings?.length || showColumnsMenu ? (
         <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-          <div className="min-w-0 flex-1">{toolbar}</div>
+          {/* A basis, so on a phone the toolbar takes its own line and the
+              menus wrap under it rather than squeezing it to its content. */}
+          <div className="min-w-0 flex-1 basis-72">{toolbar}</div>
+          {showColumnsMenu ? (
+            <ColumnsMenu
+              label={columnsMenu?.label}
+              columns={menuColumns}
+              visible={shownColumns ?? leafIds}
+              fixed={fixedColumns}
+              pick={columnsPick}
+              onPickChange={setColumnsPick}
+              setByView={viewColumns !== undefined}
+            />
+          ) : null}
           {groupings?.length ? (
             <div className="flex items-center gap-2">
               {activeGrouping && (
@@ -1205,11 +1547,25 @@ export function DataTable<TData extends Record<string, unknown>>({
         toolbar
       )}
 
+      {/* The table, its states and its pagination: what `width="content"`
+          fits to the columns, the toolbar above keeping the whole width. */}
+      <div
+        ref={body}
+        data-slot="data-table-body"
+        className={cn('flex flex-col gap-4', fitsColumns && CONTENT_WIDTH_CLASS)}
+        style={
+          fitsColumns && !isSuccessView && lastWidth !== null
+            ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
+            : undefined
+        }
+      >
       {error ? (
         <ErrorState error={error} onRetry={onRetry} />
       ) : isLoading || isPastLastPage ? (
         cardLayout ? (
           <CardsSkeleton layout={cardLayout} />
+        ) : showPhoneRows ? (
+          <PhoneRowsSkeleton />
         ) : (
           <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
         )
@@ -1259,6 +1615,40 @@ export function DataTable<TData extends Record<string, unknown>>({
               groupIcons={groupIcons}
               onCardClick={onCardClick}
             />
+          ) : showPhoneRows ? (
+            <div data-state="success" data-slot="data-table-phone-rows" className="flex flex-col gap-4">
+              {runs
+                ? runs.map((run, runIndex) => {
+                    const isFolded = folded.has(run.key)
+                    return (
+                      <section
+                        key={`${runIndex}:${run.key}`}
+                        data-slot="table-group"
+                        data-folded={isFolded || undefined}
+                        className="flex flex-col gap-2"
+                      >
+                        <h2 data-slot="table-group-heading" className="flex items-baseline gap-2 px-1">
+                          <GroupLabel
+                            run={run}
+                            icon={groupIcons?.get(run.key)}
+                            isFolded={isFolded}
+                            onToggle={() => toggleFold(run.key)}
+                          />
+                          {groupSummary && (
+                            <span className="type-caption text-muted-foreground tabular-nums">
+                              {groupSummary(
+                                run.rows.map((row) => row.original),
+                                { key: run.key, label: run.label },
+                              )}
+                            </span>
+                          )}
+                        </h2>
+                        {!isFolded && phoneList(run.rows)}
+                      </section>
+                    )
+                  })
+                : phoneList(rows)}
+            </div>
           ) : (
             <Table
               data-state="success"
@@ -1279,13 +1669,12 @@ export function DataTable<TData extends Record<string, unknown>>({
               // scrollable (wheel, trackpad, drag, and the sync effect); it
               // just no longer draws a bar directly under the last row.
               containerClassName={cn(
-                pinFirstColumn &&
-                  '@container [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
                 // A size container has no width of its own to give, so
-                // `width="content"` couldn't fit the table. Its query only
-                // serves a phone-width rule, and an 80rem table area never
-                // is one.
-                width === 'content' && '@7xl/data-table:[container-type:normal]',
+                // `width="content"` couldn't fit the table: there the
+                // pinned column's `cqw` measures the table's area
+                // (`@container/data-table`) instead.
+                pinFirstColumn && width !== 'content' && '@container',
+                pinFirstColumn && '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
                 stickyGroups && (scrollsSideways ? STICKY_OWN_SCROLL_CLASS : STICKY_PAGE_SCROLL_CLASS),
               )}
             >
@@ -1327,7 +1716,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                           className={cn(
                             !showHeader && HIDDEN_HEAD_CLASS,
                             pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
-                            pinLastColumn &&
+                            pinLast &&
                               index === headerGroup.headers.length - 1 &&
                               PINNED_LAST_COLUMN_CLASS,
                             stickyGroups && showHeader && STICKY_HEAD_CELL_CLASS,
@@ -1367,6 +1756,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                       key={`${runIndex}:${run.key}`}
                       data-slot="table-group"
                       data-folded={isFolded || undefined}
+                      className={cn(!striped && UNSTRIPED_BODY_CLASS)}
                     >
                       {/* The row's own has-aria-expanded tint (table.tsx) would
                           fill every open heading: it's never a row to pick. */}
@@ -1412,7 +1802,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                   )
                 })
               ) : (
-                <TableBody>{rows.map((row) => renderRow(row))}</TableBody>
+                <TableBody className={cn(!striped && UNSTRIPED_BODY_CLASS)}>{rows.map((row) => renderRow(row))}</TableBody>
               )}
               {totals && (
                 // After every group's body, so it totals the table, not the
@@ -1423,7 +1813,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                     {visibleLeafColumns.map((column, index) => {
                       const className = cn(
                         pinFirstColumn && index === 0 && PINNED_TOTALS_LABEL_CLASS,
-                        pinLastColumn && index === visibleColumnCount - 1 && PINNED_LAST_COLUMN_CLASS,
+                        pinLast && index === visibleColumnCount - 1 && PINNED_LAST_COLUMN_CLASS,
                         alignClass(column.columnDef.meta?.align),
                       )
                       return index === 0 ? (
@@ -1446,7 +1836,7 @@ export function DataTable<TData extends Record<string, unknown>>({
             </Table>
           )}
 
-          {pinFirstColumn && isOverflowing && !cardLayout && (
+          {pinFirstColumn && isOverflowing && !cardLayout && !showPhoneRows && (
             <div
               ref={barRef}
               aria-hidden="true"
@@ -1458,13 +1848,21 @@ export function DataTable<TData extends Record<string, unknown>>({
             </div>
           )}
 
-          <div className="flex items-center justify-between">
+          {viewAll && limit !== undefined && viewAllTotal > rows.length ? (
+            <ViewAllLink viewAll={viewAll} total={viewAllTotal} navigator={navigation?.navigator} />
+          ) : null}
+
+          {limit === undefined && (
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2" data-slot="data-table-pagination">
             <p className="type-body text-muted-foreground">
               {total === 0 ? 0 : (page - 1) * pageSize + 1}
               {'–'}
               {Math.min(page * pageSize, total)} of {total}
             </p>
             <div className="flex items-center gap-2">
+              {pageSizes && pageSizes.length > 1 && onPageSizeChange ? (
+                <PageSizeMenu pageSizes={pageSizes} value={pageSize} onValueChange={onPageSizeChange} />
+              ) : null}
               <Button
                 variant="outline"
                 size="icon-sm"
@@ -1488,13 +1886,16 @@ export function DataTable<TData extends Record<string, unknown>>({
               </Button>
             </div>
           </div>
+          )}
         </DetailFrame>
       )}
+      </div>
     </div>
   )
 
   return (
     <EditInPlaceContext.Provider value={store}>
+      <RowActionsContext.Provider value={rowActions as ((row: never) => readonly DataTableRowAction[]) | undefined}>
       {editing && <LeaveGuard store={store} />}
       {width === 'content' ? <div className="@container/data-table">{content}</div> : content}
       {detailPanel && (
@@ -1514,6 +1915,7 @@ export function DataTable<TData extends Record<string, unknown>>({
           </SheetContent>
         </Sheet>
       )}
+      </RowActionsContext.Provider>
     </EditInPlaceContext.Provider>
   )
 }

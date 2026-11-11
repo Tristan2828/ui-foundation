@@ -99,10 +99,13 @@ import { PrintNotes, type EntityViewPrintSection } from './entity-view-print'
 import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
+import { editRowClass, onEditRowClick } from './edit-row'
 import { EditableValue, LeaveGuard } from './editable-value'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH, isEmptyValue } from '@/lib/empty-value'
 import { useRecordDialog } from './record-dialog-context'
+import { PageTrail, type PageCrumb } from './page-trail'
+import { usePageTrail } from './page-trail-context'
 import { entityViewTabSlug } from '@/lib/entity-view-tab'
 
 export type EntityViewField = {
@@ -309,13 +312,28 @@ export type EntityViewProps = {
   /** A `notfound` error (including another user's record) shows "Not found" and a way back, never a retry. */
   error?: AppError | null
   onRetry?: () => void
-  /** The entity's list: a link above the title, and the not-found state's way out. */
-  back: { to: string; label: string }
+  /**
+   * The entity's list: a link above the title, and the not-found state's
+   * way out. With `trail` (#R2), the crumbs above the record, from the top
+   * down ("Finance", "Accounts"), the record's title follows them as the
+   * page's own crumb and the trail takes the link's place: in AppShell's
+   * bar (`usePageTrail`, #N5), or, outside the shell, above the title
+   * (PageTrail). A record in a dialog shows neither: the dialog's bar
+   * is its way back.
+   */
+  back: { to: string; label: string; trail?: readonly PageCrumb[] }
 }
 
 // The view's empty text and whether fields cards fold their empty ones,
 // for every section without threading them through each layout.
 const EmptyContext = createContext<{ text: string; fold: boolean }>({ text: EMPTY_DASH, fold: false })
+
+// The record's trail (#R2): the crumbs above it, then its own title
+// once it has loaded; the list's crumb is the last until then.
+function recordTrail(back: EntityViewProps['back'], title: string | undefined): PageCrumb[] | null {
+  if (!back.trail) return null
+  return title ? [...back.trail, { label: title }] : [...back.trail]
+}
 
 function BackLink({ back }: { back: EntityViewProps['back'] }) {
   return (
@@ -356,12 +374,22 @@ type FieldPlace = keyof typeof FIELD_ROW
 
 function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace }) {
   const value = fieldValue(field)
+  // An editable row is the target as a whole (4.88, F15/F18): the list's
+  // row hover, its pencil at the end, a chevron on a phone.
+  const editable = Boolean(field.edit)
   return (
-    <div className={cn('flex flex-col gap-1 py-3 first:pt-0 last:pb-0', FIELD_ROW[place])}>
+    <div
+      className={cn(
+        'flex flex-col gap-1 py-3 first:pt-0 last:pb-0',
+        FIELD_ROW[place],
+        editable && cn(editRowClass, '-mx-2 px-2 first:pt-2 last:pb-2'),
+      )}
+      onClick={editable ? onEditRowClick : undefined}
+    >
       <dt className="type-label text-muted-foreground">{field.label}</dt>
       <dd className="min-w-0 type-body break-words text-foreground">
         {field.edit ? (
-          <EditableValue label={field.label} edit={field.edit}>
+          <EditableValue label={field.label} edit={field.edit} look="row">
             <OrEmpty value={value} emptyLabel={field.emptyLabel} />
           </EditableValue>
         ) : (
@@ -693,6 +721,10 @@ export function EntityView({
     () => store.editing,
   )
   useDocumentTitle(isLoading || error || documentTitle === false ? undefined : (documentTitle ?? title))
+  const trail = recordTrail(back, isLoading || error ? undefined : (title ?? (documentTitle || undefined)))
+  // In the shell, the trail goes up in its bar; a dialog leaves the bar
+  // to the list under it.
+  const inShell = usePageTrail(dialog ? null : trail)
 
   if (error?.kind === 'notfound') {
     // A record that doesn't exist and one that belongs to another user are
@@ -768,7 +800,8 @@ export function EntityView({
       data-layout={layout}
     >
       {editing && <LeaveGuard store={store} />}
-      {!dialog && <BackLink back={back} />}
+      {!dialog && !trail && <BackLink back={back} />}
+      {!dialog && trail && !inShell && <PageTrail crumbs={trail} />}
 
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         {/* The title keeps at least 16rem beside the actions, which wrap

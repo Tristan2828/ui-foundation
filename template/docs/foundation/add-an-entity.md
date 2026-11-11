@@ -3,27 +3,29 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 42–64
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 66–807
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 108–115
-  - Step 2: `npm run gen:api` · lines 116–117
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 118–129
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 130–139
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 140–144
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 145–694
-  - Step 7: Register routes · lines 695–710
-  - Step 8: Add Playwright specs for all three screens · lines 711–789
-  - Step 9: Register the nav entry and route names · lines 790–804
-  - Step 10: `npm run verify`. · lines 805–807
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 809–1024
-  - [The record view](#the-record-view) · lines 958–997
-  - [Dialogs](#dialogs) · lines 999–1024
-- [What not to copy](#what-not-to-copy) · lines 1026–1052
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1054–1071
-- [Deleting](#deleting) · lines 1073–1102
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1104–1125
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1127–1136
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1139–1178
+- [The reference files](#the-reference-files) · lines 44–66
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–832
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
+  - Step 2: `npm run gen:api` · lines 118–119
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 132–141
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–719
+  - Step 7: Register routes · lines 720–735
+  - Step 8: Add Playwright specs for all three screens · lines 736–814
+  - Step 9: Register the nav entry and route names · lines 815–829
+  - Step 10: `npm run verify`. · lines 830–832
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 834–1144
+  - [The record view](#the-record-view) · lines 983–1022
+  - [Forms](#forms) · lines 1024–1076
+  - [Dialogs](#dialogs) · lines 1078–1103
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1105–1144
+- [What not to copy](#what-not-to-copy) · lines 1146–1172
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1174–1191
+- [Deleting](#deleting) · lines 1193–1224
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1226–1247
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1249–1258
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1261–1300
 
 <!-- /index -->
 
@@ -98,8 +100,8 @@ is a filled-in example while the Widgets demo is still here).
   cell pattern 18, "In a table's rows": each field's cell an
   `EditableValue` over the shared control from `<entity>-fields.tsx` and
   `useEdit<Entity>Field`, `InlineCreate` in the toolbar for create, a
-  delete row action with its confirm dialog, and `width="content"` if the
-  plan's List screen says so. There's no reference file in the template
+  delete row action with its confirm dialog, and `width="full"` only if
+  the plan's List screen says so. There's no reference file in the template
   for this shape; the pattern's code is the reference. Its specs: each
   cell kind saves, a refusal stays in its cell, one cell at a time, the
   leave prompt, create (Enter, a blank name, a taken one), delete, and
@@ -219,11 +221,15 @@ is a filled-in example while the Widgets demo is still here).
    it's the foundation's `DateField` in a `Controller` (`clearable` when
    optional); the schema is the string (`z.string().min(1, …)` when
    required). The table and the view show `formatPlainDate(value)`
-   ("Sep 2, 2026"), the not-set label when empty. Editing in place is
-   `editInPlace({ kind: 'choice', ... })` with `DateField` as the
-   control, `defaultOpen`, `modal={false}`, `onChange={(day) =>
-   props.commit(day)}` and `onOpenChange` cancelling on close, as a
-   Select is (the fixtures' `app/DateField` EditInPlace). The backend column
+   ("Sep 2, 2026"), the not-set label when empty. `DateField` is typed
+   (4.88): a box that reads "3/14", "Mar 14", "2026-03-14" or "today",
+   with the calendar on its button, and something unreadable says "Try a
+   date like 3/14 or Mar 14" and gives `''`. Editing in place is
+   `inPlace.date({ value, save })`: Enter or leaving saves the day typed,
+   a day picked in the calendar saves at once. (`typing={false}` is the
+   button alone; in place then `editInPlace({ kind: 'choice', ... })` with
+   `defaultOpen`, `modal={false}` and `onChange={(day) => props.commit(day)}`,
+   the fixtures' `app/DateField` EditInPlace.) The backend column
    is a SQL `date` (`datetime.date` in the model).
 
    **A `month-day`** (a day that comes round every year, with no year:
@@ -376,7 +382,10 @@ is a filled-in example while the Widgets demo is still here).
      `<SecondaryFilters>`, as the template does with Extra Categories,
      Progress and In Stock. Pass it each filter that's on as an
      `ActiveFilter` (its chip text and how to take it off) and an
-     `onClear` that clears them all in one `setFilters` call.
+     `onClear` that clears them all in one `setFilters` call. A list on
+     the list page standard uses `FilterBar` for all of it, with
+     `views`, `columnsMenu`, `rowActions` and `phoneRow` on the
+     DataTable (cell-patterns.md 25).
    - `src/routes/widgets/widget-view.tsx` →
      `src/routes/<entity>/<entity>-view.tsx` — thin consumer of the
      foundation's `<EntityView>`. Swap the title, badges and sections for
@@ -398,13 +407,15 @@ is a filled-in example while the Widgets demo is still here).
      file.
    - `src/routes/widgets/delete-widget-action.tsx` →
      `src/routes/<entity>/delete-<entity>-action.tsx` (Delete in the
-     view's header: the confirm dialog, then `onDeleted` leaves for the
-     list; its own file, a fast-refresh hazard otherwise)
+     view's header: the foundation's `DeleteAction` with the entity's
+     delete and restore mutations, then `onDeleted` leaves for the list;
+     its own file, a fast-refresh hazard otherwise)
    - `src/routes/widgets/widget-form.tsx` →
      `src/routes/<entity>/<entity>-form.tsx` — thin consumer of the
      foundation's `<EntityForm>` (its `danger` slot takes an edit-only
-     delete). Swap the zod schema and fields. Every way out lands on a
-     view (below).
+     delete). Swap the zod schema and fields, each `Field` with its
+     `size` and the required ones' `<FieldLabel required>` ("Forms"
+     below). Every way out lands on a view (below).
 
    **The view** is the read-only page for one record, at `/<entity>/:id`
    (apart from the plan's quick actions and fields edited in place, if it
@@ -421,6 +432,20 @@ is a filled-in example while the Widgets demo is still here).
      in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
      label="Delete" tone="destructive"`, the dialog's trigger through
      `render`).
+   - **The way back is a trail.** `back={{ to: '/widgets', label:
+     'Widgets', trail: [{ label: 'Inventory', href: '/inventory' }, {
+     label: 'Widgets', href: '/widgets' }] }}`: the crumbs above the
+     record, from the module down to its list; the record's title follows
+     them. In `AppShell` it is the trail in the bar ("The sidebar and the
+     phone's bar" in design-language.md), and the page has no back link;
+     on a phone the header's back arrow goes to the list. Without `trail`
+     the view keeps its "← Widgets" link. `to` and `label` are still the
+     not-found state's way out. Any other page below a nav entry (a
+     record's sub-page, a step of a task) names its trail with
+     `usePageTrail([...crumbs, { label: 'This page' }])` in place of a
+     back link. Once the record has loaded, call
+     `useRecentRecord({ title, to: `/widgets/${id}`, detail: 'Widget' })`
+     too, so search lists it before you type.
    - **The browser tab** reads the record's title once it loads
      ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
      puts the nav's ("Widgets · <app>") back while loading, on an error
@@ -996,6 +1021,60 @@ view reaches them all. A record uses the parts it has, in this order:
 Edit and its form page stay only for a field the view can't edit in
 place yet; the plan says which, and the gap is raised for the package.
 
+### Forms
+
+Every create and edit form is an `EntityForm` (a page) or a `FormDialog`
+(up to about eight fields, over its list), and every one has the same
+shape (4.85):
+
+- **One column, short fields sharing a row.** Give each `Field` its
+  `size` and the form lays the rows out itself, from the order: `s` a
+  number or a short code, `m` a date, a status, a choice of two to four
+  or a rating, `l` a name or a pick of a record, and no `size` (`full`)
+  for long text, a list or anything that needs the row. Consecutive short
+  fields share a row, up to three, as wide as their sizes; a long one
+  takes one short partner (Series and Number). `<Field solo>` keeps a
+  short one alone where a pairing would read wrong. Under 48rem every
+  field takes its own row but two dates or two numbers (`DateField` says
+  so itself; a date picker of your own with `kind="date"`). Never a hand-made
+  `sm:grid-cols-2` row.
+- **Order:** required first, the status next, long text last.
+- **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
+  on the control it names). Nothing on an optional field: never
+  "(optional)".
+- **Labels** above the box, sentence case ("My rating"). Help text
+  (`FieldDescription`) only where the label can't say it, one short line.
+  A placeholder only for a format the box needs (`https://`), never an
+  example that looks like a value.
+- **Messages say what to do**, in the app's voice: "Give it a title",
+  "Enter a full address, starting https://", never "Title is required".
+- **A status** is an `OptionSelect` with the same `render` (its badge) as
+  its cell and the record: `inPlace.select`'s `{ value, label }` options.
+- **The controls** (4.88): a choice of two to four short options is
+  `ChoiceButtons` (`inPlace.choice` in place), five or more an
+  `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",
+  "today") with the calendar on its button. A single reference is
+  `ReferenceCombobox` (`inPlace.reference` in place), several are
+  `MultiReference`, and a set the app loads whole (tags, a few dozen
+  records from its list query) is `MultiPick`, whose chips wrap and which
+  shows 30 before "Show all". Where a missing record stops the form, give
+  the reference `onCreate(name)`: open the other entity's `FormDialog`
+  with the name filled in, and resolve with the record it saves (or
+  `null` on Cancel).
+- **Cards** (`<FormSection title>`) only on a form of eight fields or
+  more, never in a dialog; a short form is one run of fields. Sub-record
+  editors (`ListEditor`) sit in a card of their own.
+- **Pass `dirty={formState.isDirty}` and `errors={formState.errors}`.**
+  With `dirty`, leaving (a link, Back, the sidebar, Cancel) asks "Discard
+  your changes?" first and a reload asks the browser; navigating while
+  `isSubmitting` (the save's own move to the record) doesn't. With
+  `errors`, a refused Add moves to the first problem and the bar says
+  "2 to fix". Both come free; the form draws a failed save as a `Notice`
+  with Try again in its bar, which sticks to the window's bottom on a long
+  form.
+- **The words:** "New book", "Add book" (the word Add on every create
+  form), and the toast after it "Added The Long Walk".
+
 ### Dialogs
 
 Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
@@ -1023,6 +1102,47 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
 - **Always a dialog, never a side panel**, except a phone's filters
   (a bottom sheet of controls for the list behind it).
 
+### Toasts and feedback
+
+What the app says after something happens (the dialogs and feedback
+standard, 4.90). The rule: **a toast is for what happened out of
+sight.** What happened where the person is looking says so there.
+
+| What happened | What says so |
+| --- | --- |
+| A delete (soft: with Undo) | `DeleteAction`'s toast, "Deleted The Long Walk" |
+| A record made, landing on its own page | a toast, "Added The Long Walk" |
+| An edit in place, a quick action, a toggle | the value itself and its "Saved" (cell pattern 18). **Never a toast** |
+| An action that failed, its button still there | `ActionError` beside the button: the reason and Try again |
+| An action that failed after its page was left | a toast that stays until it's closed (`useAction` does this) |
+| A job that takes a while | `JobStatus` beside its button: "Checking 3 of 12…", then the result stays |
+| A job that finished after its page was left | a toast (`useAction`'s `doneAway`) |
+| A list or record still loading | skeletons, after 300ms (`Skeleton`'s `delay`; `DataTable`'s are) |
+| The server can't be reached | `OfflineNotice` across the top (`AppShell` has it) |
+
+- **One delete: `DeleteAction`.** `name`, `kind` (`soft` or `hard`),
+  `onDelete`, and for a soft one `onRestore`. Its confirm asks "Delete
+  <name>?" and says "It goes to Deleted, and Restore brings it back." or
+  "This can't be undone."; the button is the filled destructive one; a
+  failed delete keeps the dialog open with the reason. A row's delete is
+  the same component (`size="sm"`), or `trigger={null}` with
+  `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
+  `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
+  Never a delete without a confirm, never a hand-written dialog.
+- **A toast's words come from `notify.done(verb, name, { undo })`**: the
+  verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when
+  given, then says "Restored The Long Walk". Never "X deleted", never
+  "Book deleted". Toasts last 4 seconds, Undo's too.
+- **An error stays beside what failed**: `const save = useAction(mutation)`,
+  `save.run(…)` on the button (`disabled={save.pending}`, a `Spinner` in
+  it), `<ActionError action={save} />` next to it. Never
+  `toast.error` from a screen: `notify.failed` is the fallback
+  `useAction` uses when the component is gone.
+- **Where a toast shows**: top centre on a laptop; at the bottom on a
+  phone, above the shell's bottom bar and a form's stuck bar
+  (`--toast-bottom-offset`). The shell's `Toaster` does this; never a
+  `<Toaster>` of the app's own.
+
 ## What not to copy
 
 - `widget-quick-actions.tsx`, its `quick action: …` specs and
@@ -1034,8 +1154,8 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
   the in-place a11y block unless the plan has an `Edit in place` line,
   and then only for the fields it names.
 
-- `width="content"` on `DataTable` unless the plan's List screen says
-  `Width: content` (the Widgets table is wide and leaves it out).
+- `width="full"` on `DataTable` unless the plan's List screen says
+  `Width: full` (`content`, the default, is right for almost every list).
 - The saved-views row in `widgets-table.tsx` (`VIEWS`, the "Saved views"
   button group and `visibleColumns`) unless the plan's List screen lists
   saved views. When it does, copy it: `useTableUrlState`'s third argument
@@ -1091,13 +1211,15 @@ soft one; copy it.
   - *Contract, gateway, mocks:* `restore<Entity>` in `openapi.yaml`, the
     gateway's `restore<Entity>`, a `useRestore<Entity>Mutation`, and mocks
     that move the record aside (`deletedWidgets` in `src/mocks/data.ts`).
-  - *Screens:* the delete dialog says it can be undone, and the success
-    toast carries an Undo that restores (`delete-widget-action.tsx`).
+  - *Screens:* `DeleteAction kind="soft"`: the dialog says it can be
+    undone, and the toast "Deleted <name>" carries an Undo that restores
+    (`onRestore`; `delete-widget-action.tsx`).
   - *MCP:* give the entity's `McpEntity` `delete` and `restore` (and add
     `deleted` to its filters). Chats then get `delete(url)`, marked
     destructive so the chat asks before each call, and `restore(url)`.
     Both are logged with the whole record.
-- **Hard-deleted:** `DELETE` removes the row. Give the entity no `delete`
+- **Hard-deleted:** `DELETE` removes the row. The screens use
+  `DeleteAction kind="hard"`: "This can't be undone.", and no Undo. Give the entity no `delete`
   in `mcp_entities.py`: a chat that read planted instructions would
   destroy data that only a backup returns.
 

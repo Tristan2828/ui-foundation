@@ -21,10 +21,17 @@
 // - Keyboard: the filter box first; Down goes to the chips, Left/Right
 //   (Home/End) move along them, Up goes back to the box, and Space or
 //   Enter toggles a chip.
+// - Every multi-pick (4.88, the form standard's F13): the chips wrap at
+//   every width, under the filter box. Past `limit` options (30) it shows
+//   the picked ones and the first 30, then "Show all N"; a filter searches
+//   them all. The options can be the app's list of records (its query's
+//   rows as `{ id, label }`, `loading` while it loads), so a link to
+//   several other records uses it too.
 import { CheckIcon } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { cn } from 'cn'
+import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
@@ -69,6 +76,13 @@ export type MultiPickProps<Id extends string | number> = {
   placeholder?: string
   /** Shown when there are no options at all. */
   emptyText?: string
+  /**
+   * How many options show before "Show all N": past it, the picked ones
+   * and the first `limit`. Defaults to 30. A filter always searches them all.
+   */
+  limit?: number
+  /** The options are still loading (the app's query of its records): "Loading…" in place of the chips. */
+  loading?: boolean
   /** Shown, not changeable. */
   readOnly?: boolean
   className?: string
@@ -90,11 +104,14 @@ export function MultiPick<Id extends string | number>({
   id,
   placeholder = 'Filter',
   emptyText = 'No options.',
+  limit = 30,
+  loading = false,
   readOnly = false,
   className,
 }: MultiPickProps<Id>) {
   const key = useId()
   const [filter, setFilter] = useState('')
+  const [showAll, setShowAll] = useState(false)
   const [pending, setPending] = useState<ReadonlyMap<Id, Pending>>(() => new Map())
   const [refused, setRefused] = useState<ReadonlyMap<Id, string>>(() => new Map())
   const filterBox = useRef<HTMLInputElement>(null)
@@ -156,7 +173,11 @@ export function MultiPick<Id extends string | number>({
   }
 
   const needle = filter.trim().toLowerCase()
-  const visible = needle ? options.filter((option) => option.label.toLowerCase().includes(needle)) : options
+  const matching = needle ? options.filter((option) => option.label.toLowerCase().includes(needle)) : options
+  // A long set: the first `limit`, and any picked one past them, in the options' order.
+  const capped = !needle && !showAll && options.length > limit
+  const visible = capped ? matching.filter((option, index) => index < limit || isPicked(option.id)) : matching
+  const hidden = options.length - visible.length
 
   // Down from the box: into the chips, at the one the group would tab to.
   const onFilterKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -191,7 +212,11 @@ export function MultiPick<Id extends string | number>({
         readOnly={readOnly}
         className="max-w-xs"
       />
-      {visible.length === 0 ? (
+      {loading ? (
+        <p role="status" className="type-caption text-muted-foreground">
+          Loading…
+        </p>
+      ) : visible.length === 0 ? (
         <p className="type-caption text-muted-foreground">{options.length === 0 ? emptyText : 'No matches.'}</p>
       ) : (
         <ToggleGroup
@@ -205,7 +230,8 @@ export function MultiPick<Id extends string | number>({
           onKeyDown={onChipsKeyDown}
           aria-label={label}
           aria-describedby={describedBy}
-          className="flex-wrap"
+          // Wraps at every width; a chip longer than the row ends in "…".
+          className="w-full max-w-full min-w-0 flex-wrap"
         >
           {visible.map((option) => {
             const picked = isPicked(option.id)
@@ -217,13 +243,15 @@ export function MultiPick<Id extends string | number>({
                 onPressedChange={(next) => toggle(option, next)}
                 aria-busy={saving || undefined}
                 aria-describedby={refused.has(option.id) ? errorId(option.id) : undefined}
+                title={option.label}
+                className="max-w-full min-w-0"
               >
                 {option.icon && (
                   <span aria-hidden="true" className="inline-flex shrink-0">
                     {option.icon}
                   </span>
                 )}
-                {option.label}
+                <span className="min-w-0 truncate">{option.label}</span>
                 {/* Always there, so nothing moves: saving, or picked. */}
                 <span aria-hidden="true" className="inline-flex size-3.5 shrink-0 items-center justify-center">
                   {saving ? (
@@ -236,6 +264,18 @@ export function MultiPick<Id extends string | number>({
             )
           })}
         </ToggleGroup>
+      )}
+      {!loading && capped && hidden > 0 && (
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          className="h-auto w-fit p-0"
+          aria-label={`Show all ${options.length} ${label}`}
+          onClick={() => setShowAll(true)}
+        >
+          Show all {options.length}
+        </Button>
       )}
       {refused.size > 0 && (
         <FieldError className="type-caption flex flex-col gap-0.5">

@@ -17,10 +17,11 @@
 //   their Esc); the next one closes the panel.
 import { useState, type ReactNode } from 'react'
 import { SlidersHorizontalIcon, XIcon } from 'lucide-react'
+import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { useIsMobile } from '@/hooks/use-mobile'
+import { useIsPhone } from '@/hooks/use-is-phone'
 
 /** A filter that's on: its chip's text ("In stock: No") and how to take it off. */
 export type ActiveFilter = {
@@ -38,10 +39,12 @@ export type SecondaryFiltersProps = {
   onClear: () => void
   /** The button's text. */
   label?: string
+  /** On the wrapper of the button and the chips (`contents`, to put them in a row of the parent's). */
+  className?: string
 }
 
-export function SecondaryFilters({ children, active, onClear, label = 'Filters' }: SecondaryFiltersProps) {
-  const isMobile = useIsMobile()
+export function SecondaryFilters({ children, active, onClear, label = 'Filters', className }: SecondaryFiltersProps) {
+  const isMobile = useIsPhone()
   const [open, setOpen] = useState(false)
   const count = active.length
 
@@ -81,7 +84,7 @@ export function SecondaryFilters({ children, active, onClear, label = 'Filters' 
   )
 
   return (
-    <div data-slot="secondary-filters" className="flex flex-wrap items-center gap-2">
+    <div data-slot="secondary-filters" className={cn('flex flex-wrap items-center gap-2', className)}>
       {isMobile ? (
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger render={trigger} />

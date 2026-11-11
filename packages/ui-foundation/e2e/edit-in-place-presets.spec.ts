@@ -68,10 +68,17 @@ test('money: reads as dollars, takes what was typed with a $ and commas, and sho
   await expect(budget).toHaveValue('20000')
 })
 
-test('date: the calendar opens with the field and a pick saves', async ({ page }) => {
+test('date: typed (Enter saves), or picked from the calendar on its button (a pick saves)', async ({ page }) => {
   await open(page, 'presets')
   await expect(row(page, 'Due')).toContainText('Sep 2, 2026')
   await page.getByRole('button', { name: 'Edit Due' }).click()
+  const box = page.getByRole('textbox', { name: 'Due' })
+  await expect(box).toBeFocused()
+  await box.fill('9/5/2026')
+  await box.press('Enter')
+  await expect(row(page, 'Due')).toContainText('Sep 5, 2026')
+  await page.getByRole('button', { name: 'Edit Due' }).click()
+  await row(page, 'Due').getByRole('button', { name: 'Open calendar' }).click()
   const calendar = page.locator('[data-slot="date-field-calendar"]')
   await expect(calendar).toBeVisible()
   await calendar.getByRole('button', { name: /September 9th, 2026/ }).click()

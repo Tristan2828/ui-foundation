@@ -58,6 +58,12 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 const COMPOSITE_STORIES = [
   // Every Button variant: the link one reads in --link, never the accent.
   { id: 'ui-button--variants', mustShow: 'Secondary' },
+  // The dialogs and feedback standard (4.90): every toast tone held open,
+  // a delete's confirm, and an action's error, a job's lines and the
+  // offline bar together.
+  { id: 'ui-toast--all-tones', mustShow: 'Deleted Harbor Light' },
+  { id: 'app-deleteaction--open', mustShow: 'It goes to Deleted, and Restore brings it back.' },
+  { id: 'app-feedback--all-states', mustShow: 'Checked 12 · 2 deals' },
   // Invalid fields with their typed values, on a card (4.63.2).
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
@@ -123,12 +129,19 @@ const COMPOSITE_STORIES = [
   // FormDialog: open, and with a failed save's Notice (4.82).
   { id: 'app-formdialog--default', mustShow: 'Add book' },
   { id: 'app-formdialog--failed-save', mustShow: "Couldn't add the book" },
+  // EntityForm in the form standard: rows by size, required marks, a status's badge,
+  // sections as cards, and a failed save's Notice (4.85).
+  { id: 'app-entityform--default', mustShow: 'Add book' },
+  { id: 'app-entityform--sections', mustShow: 'What it is' },
+  { id: 'app-entityform--failed-save', mustShow: "Couldn't add the book" },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
+  // A record's trail above its title, outside AppShell (4.87, R2).
+  { id: 'app-entityview--record-trail', mustShow: 'Timber and sheet goods' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
   { id: 'app-entityview--print-notes', mustShow: 'Climbing the stairs' },
@@ -141,6 +154,25 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--tabs-column', mustShow: 'Empty the shared shelves first.' },
   { id: 'app-entityview--leading', mustShow: 'Facilities lead, third floor' },
   { id: 'app-entityview--leading-mark', mustShow: 'Measure twice, cut once.' },
+  // The page standards' small parts: several values in a cell (+N), a list's
+  // header, a record's timeline, what needs you, how fresh a number is, and a
+  // part with nothing yet.
+  { id: 'app-valuelist--default', mustShow: 'Example capsule B' },
+  { id: 'app-valuelist--icons', mustShow: '+1' },
+  { id: 'app-listheader--default', mustShow: 'Change log' },
+  { id: 'app-listheader--showing-deleted', mustShow: 'Back to the list' },
+  { id: 'app-timeline--default', mustShow: 'Show all 7' },
+  { id: 'app-timeline--in-a-narrow-card', mustShow: 'Show all 7' },
+  { id: 'app-timeline--few-entries', mustShow: 'Nothing yet' },
+  { id: 'app-needsyou--default', mustShow: 'Needs you today' },
+  { id: 'app-freshness--default', mustShow: 'Projection from' },
+  { id: 'app-partempty--default', mustShow: 'Add the first line' },
+  { id: 'app-partempty--in-widget-cards', mustShow: 'Add the first line' },
+  // The overview standard (O1, O4): tiles with a part's detail open, a part
+  // loading and failing, and the hub's card in the same anatomy.
+  { id: 'app-overviewpage--default', mustShow: 'Everyday account' },
+  { id: 'app-overviewpage--states', mustShow: "Couldn't reach the server." },
+  { id: 'app-overviewpage--card-anatomy', mustShow: 'Add a plan' },
   { id: 'app-entityview--rail-fields-stacked', mustShow: 'No budget yet' },
   // The record standard (4.81): badges on the title's line, Print notes and
   // Delete as icons, the strip's icons, folded empties and the dash.
@@ -150,6 +182,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
+  // The form standard's controls (4.88): choice buttons, typed dates, a
+  // reference with Create, a long multi-pick, and a record's rows edited in place.
+  { id: 'app-datefield--typed', mustShow: '2026-09-02' },
+  { id: 'app-formcontrols--form', mustShow: 'Show all 40' },
+  { id: 'app-formcontrols--edit-in-place', mustShow: 'The Quiet Harbour' },
   // A month and day with no year (4.78): set, empty and a stored value refused,
   // open on its days and on its months, and edited in place on a view.
   { id: 'app-monthdayfield--default', mustShow: 'No end day' },
@@ -192,6 +229,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   // A highlighted row's wash, with muted text inside it (#156).
   { id: 'app-datatable--highlighted', mustShow: 'Health' },
+  // A list's look (4.83): no stripes, content width, Notes cut to one
+  // line, the rows-per-page menu; and the striped, full-width opt-ins.
+  { id: 'app-datatable--list-look', mustShow: '1–50 of 120' },
+  { id: 'app-datatable--list-look-in-rows', mustShow: '1–50 of 120' },
+  { id: 'app-datatable--list-look-striped', mustShow: '1–50 of 120' },
   // A list of sub-records, and one whose items open to edit, with Duplicate (#222).
   { id: 'app-listeditor--default', mustShow: 'Pack for the trip' },
   { id: 'app-listeditor--rows-that-open', mustShow: 'Romanian deadlift' },
@@ -200,6 +242,10 @@ const COMPOSITE_STORIES = [
   // The Group menu at None, rows grouped by a multi-value field (folding
   // headings, counts, summaries), the list with a detail panel, and a
   // record's goal and key numbers in its header.
+  // The table tools: views, FilterBar, Columns, row actions, a capped related list.
+  { id: 'app-datatable-tools--list-tools', mustShow: 'Needs a look' },
+  { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
+  { id: 'app-datatable-tools--related', mustShow: 'View all 19' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
@@ -223,6 +269,8 @@ const COMPOSITE_STORIES = [
   // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
   { id: 'app-appshell--standard', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-rail', mustShow: 'Page at /finance/accounts/3' },
+  { id: 'app-appshell--standard-trail', mustShow: 'Bills and the paycheck' },
+  { id: 'app-appshell--standard-search', mustShow: 'Page at /finance/budget' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
@@ -273,6 +321,14 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  // Each toast's icon in its tone on the popover surface (4.90), and the
+  // offline bar's, an action error's and a job's (the spinner and check).
+  {
+    id: 'ui-toast--all-tones',
+    open: (page) => page.locator('[data-sonner-toast]').nth(4).waitFor(),
+    shows: '[data-sonner-toaster]',
+  },
+  { id: 'app-feedback--all-states' },
   // The ring's arc, the step bar's filled steps, the star in each shape.
   { id: 'patterns-scales--default' },
   { id: 'app-banners--default' },

@@ -14,18 +14,21 @@
 //
 // `dirty` (react-hook-form's `formState.isDirty`) makes Esc, the close
 // button, a click outside and Cancel ask "Discard your changes?" first.
+// As a list's `new` route, `dirty` also guards leaving by a link, Back or
+// the sidebar (FormLeaveGuard, 4.85), as EntityForm's does.
 // A failed save is a Notice above the buttons with Try again, which
 // submits again unless `onRetry` says otherwise; what was typed stays.
 //
 // The form is the app's: its fields, its schema and its react-hook-form
 // wiring, as with EntityForm. This draws the chrome around them.
-import { useId, useRef, type FormEvent, type ReactNode } from 'react'
+import { useId, useLayoutEffect, useRef, type FormEvent, type ReactNode } from 'react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { FieldGroup } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
+import { FormLeaveGuard } from './form-leave-guard'
 import { Notice } from './notice'
 import { useNewRecordDialog } from './record-dialog-context'
 
@@ -74,12 +77,22 @@ export function FormDialog({
   const form = useRef<HTMLFormElement>(null)
   const formId = useId()
   const isOpen = open ?? route !== null
+  // The route guard lets through the dialog's own close (it has asked
+  // already) and the save's move to the new record.
+  const leaving = useRef(false)
+  const submitting = useRef(isSubmitting)
+  useLayoutEffect(() => {
+    submitting.current = isSubmitting
+  })
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(next) => {
         if (onOpenChange) onOpenChange(next)
-        else if (!next) route?.close()
+        else if (!next) {
+          leaving.current = true
+          route?.close()
+        }
       }}
     >
       <DialogContent size="form" dirty={dirty} data-slot="form-dialog" className={cn('gap-0 p-0', className)}>
@@ -131,6 +144,9 @@ export function FormDialog({
           </div>
         </form>
       </DialogContent>
+      {route && open === undefined && (
+        <FormLeaveGuard dirty={dirty} letThrough={() => leaving.current || submitting.current} />
+      )}
     </Dialog>
   )
 }

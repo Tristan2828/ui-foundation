@@ -7,6 +7,9 @@
 export {
   AppShell,
   type AppShellProps,
+  type AppShellSearch,
+  type RecentRecord,
+  type SearchRecord,
   type AppShellVersion,
   type BottomBarItem,
   type NavEntry,
@@ -60,9 +63,23 @@ export {
   type DataTableWidth,
   type SortingState,
 } from '@/components/app/data-table'
+export {
+  type DataTableColumnsMenu,
+  type DataTablePhoneRow,
+  type DataTableRowAction,
+  type DataTableView,
+  type DataTableViewAll,
+} from '@/components/app/data-table-tools'
+export { RelatedTable, type RelatedTableProps } from '@/components/app/related-table'
 export { type RowGroup } from '@/components/app/table-groups'
 export { byDay, type ByDayOptions } from '@/lib/group-by-day'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
+export { countFormErrors } from '@/lib/form-errors'
+export { FormSection, type FormSectionProps } from '@/components/app/form-section'
+export { OptionSelect, type OptionSelectOption, type OptionSelectProps } from '@/components/app/option-select'
+export { ChoiceButtons, type ChoiceButtonsOption, type ChoiceButtonsProps } from '@/components/app/choice-buttons'
+export { ReferenceCombobox, type ReferenceComboboxProps, type ReferenceRecord } from '@/components/app/reference-combobox'
+export { fieldRows, type FieldKind, type FieldRowItem, type FieldRowPlace, type FieldSize } from '@/lib/field-rows'
 export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
 export { IconAction, type IconActionProps } from '@/components/app/icon-action'
 export {
@@ -95,6 +112,15 @@ export {
   type RecordDialogState,
 } from '@/components/app/record-dialog-context'
 export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
+// The dialogs and feedback standard (4.90): one delete, toasts' words, an
+// action's error beside it, a job's progress, and the offline bar.
+export { DeleteAction, type DeleteActionProps, type DeleteKind } from '@/components/app/delete-action'
+export { notify, doneMessage, pastTense, type NotifyDoneOptions } from '@/components/app/notify'
+export { useAction, type ActionOutcome, type ActionState, type UseActionOptions } from '@/hooks/use-action'
+export { ActionError, type ActionErrorProps } from '@/components/app/action-error'
+export { JobStatus, type JobProgress, type JobStatusProps } from '@/components/app/job-status'
+export { OfflineNotice, type OfflineNoticeProps } from '@/components/app/offline-notice'
+export { useOffline } from '@/lib/connection'
 export {
   editInPlace,
   type EditControlProps,
@@ -126,11 +152,14 @@ export {
 export { linkHost, linkHref, linkRule } from '@/lib/link-href'
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
+export { editRowClass, onEditRowClick, SAVED_FOR_MS } from '@/components/app/edit-row'
 export { ErrorState } from '@/components/app/error-state'
 export { InlineCreate, type InlineCreateProps } from '@/components/app/inline-create'
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
 export { PageTrail, type PageCrumb, type PageTrailProps } from '@/components/app/page-trail'
+export { usePageTrail } from '@/components/app/page-trail-context'
+export { useRecentRecord } from '@/hooks/use-recent-record'
 export type { CreatePage, PageLinkInfo, PageLinkResolver } from '@/lib/page-link'
 export { countTasks, toggleTaskAt, type TaskCount } from '@/lib/markdown-tasks'
 export { NotesOutline, type NotesOutlineProps } from '@/components/app/notes-outline'
@@ -145,6 +174,14 @@ export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 export { PillFilter, type PillFilterOption, type PillFilterProps } from '@/components/app/pill-filter'
 export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
+export {
+  FilterBar,
+  FilterSelect,
+  type FilterBarProps,
+  type FilterBarSearch,
+  type FilterSelectOption,
+  type FilterSelectProps,
+} from '@/components/app/filter-bar'
 export {
   SessionStage,
   SessionView,
@@ -163,6 +200,18 @@ export {
   type StageCircleTone,
 } from '@/components/app/stage-circle'
 export { Notice, type NoticeProps, type NoticeTone } from '@/components/app/notice'
+export { ValueList, type ValueListItem, type ValueListProps } from '@/components/app/value-list'
+export {
+  ListHeader,
+  type ListHeaderAction,
+  type ListHeaderLink,
+  type ListHeaderProps,
+} from '@/components/app/list-header'
+export { Timeline, type TimelineItem, type TimelineProps } from '@/components/app/timeline'
+export { NeedsYou, type NeedsYouItem, type NeedsYouProps, type NeedsYouTone } from '@/components/app/needs-you'
+export { Freshness, type FreshnessProps } from '@/components/app/freshness'
+export { isStale } from '@/lib/freshness'
+export { PartEmpty, type PartEmptyAction, type PartEmptyProps, type PartEmptyState } from '@/components/app/part-empty'
 export { SourceCredit, type Source, type SourceCreditProps } from '@/components/app/source-credit'
 export { ProgressRing, type ProgressRingProps } from '@/components/app/progress-ring'
 export {
@@ -184,7 +233,14 @@ export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
 export { DEFAULT_IMAGE_TYPES, type ImageUpload, type ImageUploadResult } from '@/lib/image-file'
-export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
+export {
+  formatPlainDate,
+  parsePlainDate,
+  plainDateExamples,
+  unreadableDateMessage,
+  type ParsePlainDateOptions,
+  type PlainDate,
+} from '@/lib/plain-date'
 export { formatMonthDay, isMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
 export {
   ChoiceCell,
@@ -215,6 +271,7 @@ export {
   type WidgetCardProps,
   type WidgetListItemProps,
 } from '@/components/app/widget-card'
+export { OverviewPage, type OverviewPageProps, type OverviewPart } from '@/components/app/overview-page'
 export { WidgetLayoutSheet, type WidgetLayoutSheetProps } from '@/components/app/widget-layout-sheet'
 export { ThemeProvider } from '@/components/theme-provider'
 

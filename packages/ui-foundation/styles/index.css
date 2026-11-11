@@ -615,3 +615,84 @@
 .page-removed .page-removed-note {
   margin-inline: 0;
 }
+
+/* Forms (4.85, the form standard; field.tsx and entity-form.tsx).
+   Compact: controls inside a FieldGroup and on a form's bar read
+   --control-height (Input, SelectTrigger, InputGroup, the combobox's chips
+   box and a default Button), 32px, or 40px under 48rem or on a touch
+   screen, for the finger. Anywhere else they keep their 36px. Each is a
+   calc of --spacing, resolved here, so the large density grows it. */
+[data-slot="field-group"],
+[data-slot="entity-form-bar"],
+[data-slot="form-dialog-bar"] {
+  --control-height: calc(var(--spacing) * 8);
+}
+@media (width < 48rem), (pointer: coarse) {
+  [data-slot="field-group"],
+  [data-slot="entity-form-bar"],
+  [data-slot="form-dialog-bar"] {
+    --control-height: calc(var(--spacing) * 10);
+  }
+}
+
+/* Short fields side by side (FieldGroup's layOut sets --field-share and
+   --field-gaps on each field of a shared row; lib/field-rows.ts): its
+   share of what the row's gaps leave. A hair under, so rounding never
+   pushes the last one onto the next line. Under 48rem every field takes
+   the row but two dates or two numbers. */
+/* Everything else in a group takes the row, as it did when the group was
+   a column (a button, a fieldset, a line of text). In the base layer, so
+   a width utility on the child still wins. */
+@layer base {
+  [data-slot="field-group"] > * {
+    width: 100%;
+    min-width: 0;
+  }
+}
+[data-slot="field-group"] > [data-field-row] {
+  flex: 0 0 auto;
+  width: calc((100% - var(--field-gaps) * var(--spacing) * 3) * var(--field-share) - 0.05px);
+}
+@media (width < 48rem) {
+  [data-slot="field-group"] > [data-field-row] {
+    width: 100%;
+  }
+  [data-slot="field-group"] > [data-field-row][data-phone-pair] {
+    width: calc((100% - var(--spacing) * 3) / 2 - 0.05px);
+  }
+}
+
+/* EntityForm's bar, stuck to the bottom of the window while the form is
+   taller than it. Above the shell's bottom bar on a phone, which then
+   has the safe area under it already. */
+[data-slot="entity-form-bar"] {
+  bottom: var(--form-bar-bottom, 0px);
+  padding-bottom: calc(var(--spacing) * 3 + var(--form-bar-safe-area, env(safe-area-inset-bottom)));
+}
+@media (width < 48rem) {
+  :root:has([data-slot="app-shell-bottom-bar"]) {
+    --form-bar-bottom: calc(var(--spacing) * 16 + 1px + env(safe-area-inset-bottom));
+    --form-bar-safe-area: 0px;
+  }
+}
+
+/* Toasts on a phone sit at the bottom (4.90, ui/sonner.tsx), above
+   whatever is pinned there: EntityForm's stuck bar sets
+   --toast-bottom-offset itself; failing that, the shell's bottom bar is
+   the room to clear, or the phone's safe area. */
+:root {
+  --toast-bottom-base: env(safe-area-inset-bottom, 0px);
+  /* The tones' text shades, resolved here: sonner's toaster declares its
+     own --success-text, --info-text and --warning-text, which would win
+     inside it. A custom property's var() resolves where it's declared,
+     so these carry the theme's and the palette's values in. */
+  --toast-icon-success: var(--success-text);
+  --toast-icon-info: var(--info-text);
+  --toast-icon-warning: var(--warning-text);
+  --toast-icon-error: var(--destructive-text);
+}
+@media (width < 48rem) {
+  :root:has([data-slot="app-shell-bottom-bar"]) {
+    --toast-bottom-base: calc(var(--spacing) * 16 + 1px + env(safe-area-inset-bottom));
+  }
+}

@@ -28,9 +28,11 @@ import { AuthContext, type AuthContextValue } from '@/auth/auth-context'
 import { Button } from '@/components/ui/button'
 import { PaletteProvider } from '@/components/app/palette-provider'
 import { RowsProvider } from '@/components/app/rows-provider'
-import { AppShell, type AppShellVersion, type BottomBarItem } from './app-shell'
+import { AppShell, type AppShellSearch, type AppShellVersion, type BottomBarItem, type SearchRecord } from './app-shell'
 import type { NavEntry } from './app-shell-nav'
 import { EntityView } from './entity-view'
+import { usePageTrail } from './page-trail-context'
+import { clearRecentRecords, rememberRecentRecord } from '@/lib/search-palette'
 
 // AppShell's sidebar: a flat nav (one "Navigation" group) and a nav with
 // sections (a labelled group per module). Each story opens on a page below
@@ -49,7 +51,11 @@ import { EntityView } from './entity-view'
 // e2e/palettes.spec.ts). The navigation standard (Standard…,
 // e2e/app-shell-standard.spec.ts): headings among a module's pages, the
 // current entry's bar, counts, a Tools section at the sidebar's foot, the
-// phone's back arrow and an area's sheet as tiles.
+// phone's back arrow and an area's sheet as tiles. The trail in the bar
+// and search (StandardTrail…, StandardSearch…,
+// e2e/app-shell-trail-search.spec.ts): a record's trail from EntityView,
+// a page's own from usePageTrail, the nav entry's otherwise, and the
+// palette over the nav's pages and made-up records.
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -253,6 +259,71 @@ function ProjectView({ loaded: loadedAtFirst, documentTitle }: { loaded: boolean
 
 type ShellView = { loaded: boolean; documentTitle?: string | false }
 
+// An account's record, its trail above it (#R2): Finance, Accounts, then
+// its own title, in the shell's bar.
+function AccountView() {
+  return (
+    <EntityView
+      title="Everyday checking"
+      subtitle="Bills and the paycheck"
+      isLoading={false}
+      back={{
+        to: '/finance/accounts',
+        label: 'Accounts',
+        trail: [
+          { label: 'Finance', href: '/finance' },
+          { label: 'Accounts', href: '/finance/accounts' },
+        ],
+      }}
+      sections={[{ title: 'Account', fields: [{ label: 'Bank', value: 'Example Bank' }] }]}
+    />
+  )
+}
+
+// A page below a record, naming its own trail (#N5): on a phone its back
+// arrow goes to the record, the trail's closest crumb above it.
+function StatementPage() {
+  usePageTrail([
+    { label: 'Finance', href: '/finance' },
+    { label: 'Accounts', href: '/finance/accounts' },
+    { label: 'Everyday checking', href: '/finance/accounts/3' },
+    { label: 'March statement' },
+  ])
+  return <p>The March statement</p>
+}
+
+// Made-up records for the palette, by kind, the way an app's search
+// endpoint returns them: the closest title first.
+const RECORDS: SearchRecord[] = [
+  { title: 'Everyday checking', to: '/finance/accounts/3', kind: 'Accounts', detail: 'Finance' },
+  { title: 'Emergency savings', to: '/finance/accounts/4', kind: 'Accounts', detail: 'Finance' },
+  { title: 'Desk lamp', to: '/finance/shopping/12', kind: 'Planned purchases', detail: 'Finance' },
+  { title: 'Fix the gate latch', to: '/tasks/31', kind: 'Tasks' },
+  { title: 'Plan the garden', to: '/tasks/32', kind: 'Tasks' },
+  { title: 'The Long Walk', to: '/books/8', kind: 'Books' },
+  { title: 'Paper Atlas', to: '/books/9', kind: 'Books' },
+]
+
+const findRecords: AppShellSearch['findRecords'] = (query) =>
+  new Promise((resolve) => {
+    const text = query.toLowerCase()
+    setTimeout(() => resolve(RECORDS.filter((record) => record.title.toLowerCase().includes(text))), 120)
+  })
+
+const SEARCH: Record<'records' | 'pages' | 'failing', AppShellSearch> = {
+  records: { placeholder: 'Search Example', findRecords },
+  pages: { placeholder: 'Search Example' },
+  failing: { placeholder: 'Search Example', findRecords: () => Promise.reject(new Error('Search is down')) },
+}
+
+// The records "opened lately" on this device, as useRecentRecord leaves them.
+function seedRecent(seed: boolean) {
+  clearRecentRecords()
+  if (!seed) return
+  for (const record of [...RECORDS.slice(0, 3)].reverse())
+    rememberRecentRecord({ title: record.title, to: record.to, detail: record.kind })
+}
+
 // A made-up app mark, drawn the way an app's own is: an icon component
 // that sizes by class, passes aria-hidden on and fills with currentColor.
 function ExampleLogo({ className, ...rest }: { className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }) {
@@ -273,6 +344,9 @@ function Shell({
   logo,
   palette,
   rows = false,
+  search,
+  recent = false,
+  trail = false,
 }: {
   nav: NavEntry[]
   path: string
@@ -287,7 +361,15 @@ function Shell({
   palette?: 'fixed' | 'picker'
   /** Offers the table rows in the look menu (RowsProvider's picker). */
   rows?: boolean
+  /** Search in the bar: over made-up records, over the pages only, or a search that fails. */
+  search?: 'records' | 'pages' | 'failing'
+  /** Seeds three records as opened lately (and clears them without). */
+  recent?: boolean
+  /** /finance/accounts/:id is an account's EntityView with a trail, and its statements a page naming its own. */
+  trail?: boolean
 }) {
+  // Once, before the palette can read them.
+  useState(() => seedRecent(recent))
   const router = createMemoryRouter(
     [
       {
@@ -300,10 +382,17 @@ function Shell({
             defaultSidebarOpen={sidebarOpen}
             version={version}
             bottomBar={bottomBar}
+            search={search ? SEARCH[search] : undefined}
           />
         ),
         children: [
           ...(view ? [{ path: 'projects/:id', element: <ProjectView {...view} /> }] : []),
+          ...(trail
+            ? [
+                { path: 'finance/accounts/:id', element: <AccountView /> },
+                { path: 'finance/accounts/:id/statements/:statement', element: <StatementPage /> },
+              ]
+            : []),
           { path: '*', element: <p>Page at {path}</p> },
         ],
       },
@@ -427,3 +516,27 @@ export const StandardRail: Story = {
 }
 export const StandardOnEntry: Story = { args: { nav: STANDARD, path: '/finance/accounts', bottomBar: STANDARD_BAR } }
 export const StandardNoBar: Story = { args: { nav: STANDARD, path: '/finance/accounts/3' } }
+
+// The trail in the bar (#N5, #R2) and search (#N6). A record's trail from
+// EntityView, a page's own (usePageTrail), and the nav entry's on a page
+// that names none; the palette over the nav's pages and made-up records,
+// with three opened lately, over the pages only, and with a search that
+// fails.
+export const StandardTrail: Story = {
+  args: { nav: STANDARD, path: '/finance/accounts/3', bottomBar: STANDARD_BAR, search: 'records', trail: true },
+}
+export const StandardTrailPage: Story = {
+  args: { nav: STANDARD, path: '/finance/accounts/3/statements/9', bottomBar: STANDARD_BAR, search: 'records', trail: true },
+}
+export const StandardTrailFromNav: Story = {
+  args: { nav: STANDARD, path: '/finance/budget', bottomBar: STANDARD_BAR, search: 'records' },
+}
+export const StandardSearch: Story = {
+  args: { nav: STANDARD, path: '/finance/budget', bottomBar: STANDARD_BAR, search: 'records', recent: true },
+}
+export const StandardSearchPages: Story = {
+  args: { nav: STANDARD, path: '/finance/budget', bottomBar: STANDARD_BAR, search: 'pages' },
+}
+export const StandardSearchFailing: Story = {
+  args: { nav: STANDARD, path: '/finance/budget', bottomBar: STANDARD_BAR, search: 'failing' },
+}

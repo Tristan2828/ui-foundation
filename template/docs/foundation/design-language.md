@@ -3,36 +3,38 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 45–112
-- [Glow](#glow) · lines 114–132
-- [Semantic tones](#semantic-tones) · lines 134–162
-- [The three badge styles](#the-three-badge-styles) · lines 164–181
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 183–212
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 214–227
-- [Logos and brand marks](#logos-and-brand-marks) · lines 229–273
-- [Categorical colour](#categorical-colour) · lines 275–345
-- [Heat scale](#heat-scale) · lines 347–408
-- [Depth ramps](#depth-ramps) · lines 410–493
-- [A stored colour](#a-stored-colour) · lines 495–543
-- [Shapes and sizes](#shapes-and-sizes) · lines 545–566
-- [Typography](#typography) · lines 568–688
-  - [Written text (notes)](#written-text-notes) · lines 602–688
-- [Density](#density) · lines 690–776
-  - [Rows on this device](#rows-on-this-device) · lines 749–776
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 778–892
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 894–971
-- [Notices](#notices) · lines 973–1001
-- [A value over time](#a-value-over-time) · lines 1003–1089
-  - [Several values over time](#several-values-over-time) · lines 1052–1089
-- [A list as a board](#a-list-as-a-board) · lines 1091–1142
-- [A list as cards](#a-list-as-cards) · lines 1144–1190
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1192–1221
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1223–1261
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1263–1308
-- [Picking at random](#picking-at-random) · lines 1310–1341
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1343–1410
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1412–1437
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1439–1485
+- [Palettes](#palettes) · lines 47–114
+- [Glow](#glow) · lines 116–134
+- [Semantic tones](#semantic-tones) · lines 136–164
+- [The three badge styles](#the-three-badge-styles) · lines 166–183
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 185–214
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 216–229
+- [Logos and brand marks](#logos-and-brand-marks) · lines 231–275
+- [Categorical colour](#categorical-colour) · lines 277–347
+- [Heat scale](#heat-scale) · lines 349–410
+- [Depth ramps](#depth-ramps) · lines 412–490
+- [A stored colour](#a-stored-colour) · lines 492–540
+- [Shapes and sizes](#shapes-and-sizes) · lines 542–563
+- [Typography](#typography) · lines 565–685
+  - [Written text (notes)](#written-text-notes) · lines 599–685
+- [Density](#density) · lines 687–780
+  - [Rows on this device](#rows-on-this-device) · lines 753–780
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 782–896
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 898–975
+- [Notices](#notices) · lines 977–1005
+- [A value over time](#a-value-over-time) · lines 1007–1093
+  - [Several values over time](#several-values-over-time) · lines 1056–1093
+- [A list as a board](#a-list-as-a-board) · lines 1095–1146
+- [A list as cards](#a-list-as-cards) · lines 1148–1194
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1196–1225
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1227–1270
+- [An overview page](#an-overview-page) · lines 1272–1335
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1336–1374
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1376–1421
+- [Picking at random](#picking-at-random) · lines 1423–1454
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1456–1523
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1525–1550
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1552–1625
 
 <!-- /index -->
 
@@ -708,6 +710,13 @@ set, not a `DataTable` prop:
 
 - `compact` and `comfortable` change padding only. Text keeps
   `type-body`, so compact never drops below a readable size.
+- **Forms are compact at every density but `large`** (4.85): inside a
+  `FieldGroup` (every `EntityForm`, `FormDialog` and `FormSection`) the
+  inputs, selects, combobox boxes and default buttons are 32px, the
+  compact table's row, with 14px between fields; under 48rem or on a
+  touch screen 40px, for the finger. They read `--control-height`, which
+  `FieldGroup` and the forms' bars set from `--spacing`, so `large` grows
+  them as it grows everything. Outside a form a control keeps its 36px.
 - On a hub, `compact` takes a `WidgetCard`'s padding from 16px to 12px,
   a `WidgetList` row from 36px to 32px (6px around its line) and a
   `ModuleCard`'s band and body by 4px each. On a phone a compact row is
@@ -1220,6 +1229,115 @@ row under the header, across the page at every width.
 - **`subtitle`** is the line under the title: what the record is for,
   in muted body type, editable in place like any value.
 
+## Parts of the page standards
+
+Six small parts the list, record and overview standards share. Each is
+generic and standalone: an app (or a later foundation release) wires it
+into a table, a record or an overview.
+
+- **`ValueList`: several values in a cell.** `<ValueList items={[{ label }]} max={2} />`
+  shows two values on one line and the rest as `+N`, every folded value in
+  its tooltip (the `+N` is a button, so a keyboard and a tap reach it). A
+  value is a chip by default, or the app's own `node` (an icon, a
+  `ColorSwatch`) with its `label` as the plain text. An empty cell is a
+  muted dash that reads "None".
+- **`ListHeader`: a list's header.** The title (the page's h1) with its
+  `count`, `newAction` alone beside it, and one ⋯ menu for the rest. One
+  related link in `links` stays a button; two or more fold into ⋯ with
+  `more` (the page's own actions). `deleted={{ shown, onShownChange }}` adds
+  "Show deleted" as the menu's last item and, while it's on, an info
+  `Notice` with "Back to the list" in a `role="status"` region that is
+  always there. It holds no state: the app keeps `shown`.
+- **`Timeline`: a record's dated history.** `items` newest first
+  (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
+  column on the left, a dot and a thin line, the entry on the right with
+  its `kind` as a muted line under it and `edit` (the entry's own
+  control) at its end. The first `initial` (5) show, then "Show all N";
+  under 24rem of its own width the date moves above its entry. Empty
+  reads `emptyText` ("Nothing yet").
+- **`NeedsYou`: what waits on the user.** `items={[{ text, to, tone? }]}`:
+  one region at the top of an overview, a warning wash with the `*-text`
+  icon, each line a link; `tone: 'destructive'` for an overdue one.
+  Nothing renders for an empty list.
+- **`Freshness`: how old a number is.** `<Freshness label="Balances entered"
+  at="2026-08-02" staleAfter="2026-11-02" />` reads "Balances entered Aug
+  2" in caption type and the muted tone, and once `staleAfter` has passed
+  the warning tone with a warning icon and ", out of date" for a screen
+  reader. The app owns the rule (entered plus 90 days); this only compares.
+  A plain `'YYYY-MM-DD'` day is never shifted by the time zone.
+- **`PartEmpty` and `WidgetCard`'s `empty`: a part with nothing yet.**
+  `empty={{ text?, action }}` draws "Nothing here yet" and one outline
+  button (a link `to`, or `onClick`) in place of the card's plain
+  `emptyMessage` line, the foundation's `Empty` at card size.
+
+Every one is measured with axe and the glyph check in both themes
+(fixtures `app/ValueList`, `ListHeader`, `Timeline`, `NeedsYou`,
+`Freshness`, `PartEmpty`).
+
+## An overview page
+
+The overview standard (4.89): a module's first page when it has three
+or more lists, saying how things stand and what waits on the user, each
+part one click from its list. `OverviewPage` draws the whole page; the
+hub's `WidgetCard`s take the same card anatomy, so a hub and an overview
+read alike.
+
+```tsx
+<OverviewPage
+  title="Household"
+  stats={<KeyStats stats={[{ label: 'Savings', value: '$24,800', icon: LandmarkIcon }]} />}
+  needs={[{ text: 'Balances are three months old', to: '/accounts' }]}
+  parts={[
+    {
+      id: 'savings',
+      title: 'Savings',
+      icon: LandmarkIcon,
+      to: '/accounts',
+      value: '$24,800',
+      line: '+$1,120 since August',
+      freshness: { label: 'Balances entered', at: entered, staleAfter: addDays(entered, 90) },
+      detail: <WidgetList>…</WidgetList>,
+      isLoading,
+      error,
+      onRetry: refetch,
+    },
+    { id: 'budget', title: 'Budget', icon: WalletIcon, to: '/budget',
+      empty: { action: { label: 'Add the first line', to: '/budget/new' } } },
+  ]}
+/>
+```
+
+- **The top:** the title (the page's h1, `actions` at its end), then
+  `stats` (a `KeyStats` strip of three to five numbers), then `NeedsYou`
+  from `needs`, which draws nothing when nothing waits. Collect `needs`
+  from what each part says about itself.
+- **From 48rem up, tiles.** One per part, at least 170px, as many as fit:
+  the icon and title, `value` in the numeric type, and `freshness`. A
+  tile is a button (`aria-expanded`, `aria-controls` the detail); a click
+  opens its part's detail below the grid, one at a time, and a second
+  click or Escape inside the detail closes it, focus back on the tile.
+  `defaultOpen` names a part open at first.
+- **The detail is a `WidgetCard`:** the title as a link to `to` with a
+  chevron, `value`, `line`, the app's `detail` (a few `WidgetList` rows,
+  a small `LineChart`) and `freshness`.
+- **Under 48rem, an accordion.** The same cards in a `WidgetCardGroup`,
+  each folded to one line with its value; opening one folds the others.
+- **Each part owns its states:** `isLoading` (a skeleton in the tile and
+  the card), `error` with `onRetry` (a dash in the tile, the compact
+  `ErrorState` in the card), and `empty` (a part with nothing yet: "Nothing
+  yet" in the tile, `PartEmpty` and its one way to start in the card). An
+  empty part stays on the page: hiding it makes the part forgotten.
+- **One card anatomy on a hub** (`WidgetCard`): `to` makes the title the
+  link with a chevron (in place of the header's `link`), `value` the
+  headline in the numeric type, `line` one muted line under it, and
+  `freshness` the `Freshness` line at the body's end, after the
+  children. A folded card shows `value` when it has no `summary`. All
+  optional: a card without them is drawn as before, and its folding on a
+  phone is unchanged.
+
+Measured with axe and the glyph check in both themes and every palette
+(fixture `app/OverviewPage`); `e2e/overview-page.spec.ts` clicks the
+tiles, Escape and the accordion.
 ## A record's header and empty values
 
 The record page standard (4.81): the same header on every record, the
@@ -1439,8 +1557,10 @@ both themes and every palette.
 ## The sidebar and the phone's bar
 
 `AppShell`'s navigation (4.80), all set in the app's `nav` and
-`bottomBar`; an app that sets none of it looks as it did, except the
-current entry's bar and the phone's back arrow, which every app gets.
+`bottomBar`, and (4.87) the trail and search in the bar; an app that
+sets none of it looks as it did, except the current entry's bar, the
+phone's back arrow and the nav entry's name in the bar, which every app
+gets.
 
 ```tsx
 const nav: NavEntry[] = [
@@ -1483,3 +1603,28 @@ const bottomBar: BottomBarItem[] = [
   one tile per entry, the icon in `--link` over the label, bordered,
   44px tall at least; the tile holding the page has a `--primary`
   border. The entries' own pages are left to the module.
+- **The trail in the bar** (`usePageTrail`, `EntityView`'s
+  `back.trail`): between the menu button and the search box, from 48rem
+  up, `PageTrail` at 14px: every crumb but the last a
+  link in the muted text tone, the page itself in the foreground, a `›`
+  between them, the middle folded into "…" when it doesn't fit. A page
+  that names none shows its nav entry's ("Finance › Accounts" for one of
+  Finance's pages, "Home" on the hub). On a phone the trail is hidden and
+  the back arrow goes to its closest crumb above the page that links.
+  It replaces a page's own back link; the bar sits outside `<main>`, so
+  the page's links are still the only ones in it.
+- **Search in the bar** (`search={{ placeholder, findRecords, recent }}`):
+  a box from 48rem up, 14rem wide (16rem from 64rem), bordered in
+  `--input` on the page's background, the placeholder in the muted
+  tone and the shortcut (Ctrl K, ⌘K on a Mac) in a `kbd` at its end; a
+  search button on a phone. Both, and the shortcut, open a palette: a
+  dialog 32rem wide at 12% from the top, the field over a list of
+  options under caption headings in the muted tone. Before typing:
+  Recent (the records opened lately on this device, `useRecentRecord`),
+  then the nav's first pages. Typing: Pages (a module's own named
+  "Finance · Accounts", the closest name first), then the app's records
+  under their `kind`, a `detail` in the caption size at the end. The
+  highlighted option has `bg-muted`, its detail in the foreground; a
+  spinner while records are found, "Couldn't search records" (the pages
+  still listed) when the search fails, "Nothing found for …" when
+  nothing matches.

@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.83.0 — Depth ramps that hold one hue, and run the right way in dark
+## 4.91.0 — Depth ramps that hold one hue, and run the right way in dark
 
 The UI package only; no API change, no new dependency (the backend
 package's version moves with it, unchanged). 4.77.0's depth ramps had
@@ -61,6 +61,354 @@ rather than `text-category-N-depth-M-foreground`, should switch to the
 foreground token (light's step 2 of blue, gold and lime is now white
 text).
 
+## 4.90.0 — Dialogs and feedback: one delete, toasts, an action's error, a job's progress, offline
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Two looks change with no prop, in
+every app: toast icons are in their tone, and on a phone toasts sit at the
+bottom, above the shell's bottom bar and a form's stuck bar. Skeletons now
+wait 300ms before they show.
+
+- **`DeleteAction`** (D1): the one delete, for a record's header and a
+  table's row. `name`, `kind` (`soft` or `hard`), `onDelete`, `onRestore`,
+  `onDeleted`. The confirm asks "Delete <name>?" and says "It goes to
+  Deleted, and Restore brings it back." or "This can't be undone."; Cancel,
+  then the filled destructive button with a spinner while it works. A
+  failed delete stays open with the reason and Try again. Done: "Deleted
+  <name>", with Undo for a soft one, then "Restored <name>". `verb="Retire"`
+  (and `verbDone`) for other words; `trigger` is the icon (default),
+  `"button"`, an element, or `null` with `open`/`onOpenChange` for a row's
+  menu.
+- **The toaster** (D5): icons in `--success-text`, `--destructive-text`,
+  `--info-text` and `--warning-text` (3:1 on the popover in both themes and
+  all four palettes); top centre from 48rem, bottom centre under it,
+  offset by `--toast-bottom-offset` (EntityForm's bar) or the shell's
+  bottom bar (`--toast-bottom-base`). 4 seconds, Undo too.
+- **`useAction`, `ActionError`, `notify`** (D6): `useAction(mutation)`
+  gives `run` (never rejects: `{ ok, value }` or `{ ok: false, error }`),
+  `pending`, `error` and `retry`; `<ActionError action={…} />` draws the
+  error as a destructive `Notice` with Try again beside the button. If
+  the component is gone when it fails, the error is a toast that stays
+  until closed (`notify.failed`). `notify.done(verb, name, { undo })`
+  writes "Deleted <name>" the same way everywhere.
+- **`Skeleton delay`** (D7): nothing for 300ms, then the shape, keeping
+  its room meanwhile; `delay={0}` shows it at once. `DataTable`'s loading
+  state is made of these, so it waits too.
+- **`JobStatus`** (D8): "Checking 3 of 12…" with a spinner beside the
+  button, then the result line, which stays. `useAction`'s `doneAway`
+  toasts the result only when the page was left before it finished.
+- **`OfflineNotice`** (D9): "You're offline. Changes won't save until
+  you're back." across the top of `AppShell` while the browser is offline
+  or a request got no answer at all; gone when a request gets one
+  (`safeFetch` reports each; a cancelled request says nothing).
+  `useOffline()` reads the same state.
+- **The doc rule for toasts** (D10): add-an-entity.md "Toasts and
+  feedback" (a toast only for what happened out of sight, the words, the
+  delete) and cell pattern 18 ("No toast, ever" after an edit in place).
+- The template's Delete is `DeleteAction` now.
+
+To take it: replace each hand-written delete dialog with `DeleteAction`
+(add-an-entity.md "Toasts and feedback"), write toasts with `notify.done`
+("Deleted X", not "X deleted"), and move each "Couldn't …" toast from a
+screen to `useAction` and `ActionError` beside its button. Drop any toast
+after an edit in place. A test that expected "X deleted" now reads
+"Deleted X"; one that waits for a skeleton needs a mock delay over 300ms;
+a delete refused with a 422 now shows the server's own reason in the
+dialog.
+
+## 4.89.0 — An overview page, and one card anatomy for a hub's widgets
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Nothing changes on a page that doesn't
+use the new export or props.
+
+- **`OverviewPage`** (O1): `<OverviewPage title needs parts stats? />`,
+  where a part is `{ id, title, icon?, to, value?, line?, freshness?,
+  detail?, empty?, isLoading?, error?, onRetry? }`. The title, a
+  `KeyStats` strip, `NeedsYou` from `needs`, then from 48rem a grid of
+  tiles (at least 170px, as many as fit); a click opens the part's detail
+  below the grid, one at a time (`aria-expanded`, Escape closes it), the
+  detail headed by its title as a link to `to`. Under 48rem the parts are
+  an accordion, one line each with its value. Types `OverviewPart` and
+  `OverviewPageProps`.
+- **One card anatomy in `WidgetCard`** (O4): new optional `to` (the title
+  as a link with a chevron), `value`, `line` and `freshness`, so the hub's
+  widgets and an overview's parts read alike. A folded card's summary
+  defaults to `value`. Its folding on a phone is unchanged.
+
+To take it: build a module's overview with `OverviewPage`
+(`docs/foundation/design-language.md` "An overview page"), and move a
+hub's widgets to `to`, `value`, `line` and `freshness` where they have a
+headline.
+
+## 4.88.0 — The form standard's controls, on the form and in place
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Three looks change with no prop:
+`DateField` is a box you type in, with the calendar on its button;
+`inPlace.date` is the same box (Enter saves; a day picked in the calendar
+still saves at once); and an editable field row on `EntityView` is the
+target as a whole, with the list's row hover and, on a phone, a chevron.
+
+- **`ChoiceButtons`** (F10): two to four short options as a row of
+  joined buttons (Base UI's toggle group, single), with OptionSelect's
+  `{ value, label }` options and `render`; `clearable` lets the picked one
+  be pressed off. In place: `inPlace.choice({ options, ... })`, or
+  `inPlace.select({ look: 'buttons' })`; a press saves.
+  `inPlace.select` itself now draws `OptionSelect`.
+- **A date you can type** (F12): `DateField` reads "3/14", "3/14/26",
+  "Mar 14", "14 Mar", "2026-03-14", "today", "yesterday" and "tomorrow"
+  (`parsePlainDate`, the locale's order for 3/4), and shows the day back
+  as it's formatted. Something it can't read says "Try a date like 3/14
+  or Mar 14" under the box once it's left, and gives `''`, so a form
+  never keeps the day it had. `typing={false}` is the button alone, as
+  before; `onPick` and `onProblem` serve editing in place. DateField
+  marks itself `data-kind="date"`, so its Field needs no `kind="date"`.
+- **`MultiPick` for every multi-pick** (F13): its chips wrap at every
+  width (a chip longer than the row ends in "…"), under the filter box.
+  Past 30 options (`limit`) it shows the picked ones and the first 30,
+  then "Show all N"; a filter searches them all. `loading` for options
+  that come from the app's query of its records.
+- **Create from a reference picker** (F14): `onCreate(name)` on the new
+  `ReferenceCombobox` (the single reference on a form, also what
+  `inPlace.reference` draws), on `inPlace.reference` and on
+  `MultiReference`. Create "name" ends the list when what's typed names
+  no record; the app opens its small create form (a `FormDialog`) with
+  the name filled in and resolves with the saved record, which is then
+  picked (and, in place, saved; the field stays open meanwhile).
+- **The rail row's hover** (F15): `EditableValue look="row"` (EntityView's
+  field rows use it): the row wears `--table-hover` and the 3px
+  `--primary` bar, as a list row does, its label readable on the tint,
+  the pencil at its end, and a click anywhere on it opens the value.
+  `editRowClass` and `onEditRowClick` give a field list of your own the
+  same. The header strip and the title keep the value-sized tint.
+- **A brief Saved** (F16): once a save lands, "✓ Saved" shows beside the
+  value for two seconds (`role="status"`, `SAVED_FOR_MS`).
+- **A phone's edit in place** (F18): under 48rem or on a touch screen a
+  row has no pencil but a chevron, is 44px tall at least, and opens the
+  control in the row as on a laptop.
+
+To take it: replace hand-made single-reference comboboxes with
+`ReferenceCombobox`, a select of two to four short options with
+`ChoiceButtons` (or `inPlace.choice`), and drop `kind="date"` from a
+DateField's Field. A test that clicked a DateField's button ("Pick a
+date") now types in its box (`getByRole('textbox', { name })`), or opens
+the calendar with "Open calendar"; a test that read a row's text exactly
+right after a save now also meets "Saved". Give `onCreate` where a
+missing record stops the form today.
+
+## 4.87.0 — The trail and search in AppShell's bar
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). The record standard's R2 and the
+navigation standard's N5 and N6 (design-language.md "The sidebar and the
+phone's bar"). Two things change with no prop, in every app: the bar
+shows the current page's nav entry ("Finance › Accounts"; "Home" on the
+hub), and the bar now sits outside `<main>`, so the page's own links are
+the only ones `getByRole('main')` finds (the trail names the same
+places).
+
+- **A record's trail** (R2). `EntityView back={{ to, label, trail }}`:
+  `trail` is the crumbs above the record (the module, its list); the
+  record's title follows them. In `AppShell` it goes up in the bar and
+  the page loses its back link; outside the shell it is drawn above the
+  title in the link's place; in a dialog, neither. Without `trail` the
+  back link stays, as before.
+- **The trail in the bar** (N5). `usePageTrail([...crumbs])` puts any
+  page's trail between the menu button and the search box, from 48rem
+  up; a page with none shows its nav entry's. On a phone the back arrow
+  (4.80's N7) now goes to the trail's closest crumb above the page
+  ("‹ Everyday checking" on a statement under it), and an entry's own
+  page still keeps the menu button. `PageTrail`'s `crumbs` takes a
+  readonly array, and its last crumb, the page itself, is now text
+  marked `aria-current="page"` rather than shadcn's disabled
+  `role="link"`: a test that found it with `getByRole('link')` finds it
+  with `locator('[aria-current=page]')`, and a test that clicks a
+  sidebar entry by name (`getByRole('link', { name: 'Home' })`) no
+  longer meets a second "Home" in the bar.
+- **Search in the bar** (N6). `AppShell search={{ placeholder,
+  findRecords, recent }}`: a box (a button on a phone) and Ctrl K (⌘K)
+  open a palette that finds the nav's pages by name and, with
+  `findRecords(query, { signal })`, the app's records
+  (`SearchRecord`: `{ title, to, kind?, detail? }`), listed under their
+  `kind`; the arrows move, Enter opens. Before typing it lists the
+  records opened lately on this device: call
+  `useRecentRecord({ title, to, detail })` on a record's view once it
+  loads. They're forgotten on logout. `recent: false` lists none.
+
+To take it: in each record's view, swap the back link for `back.trail`
+and add `useRecentRecord`; on other inner pages, drop the back link for
+`usePageTrail`. Pass `search` to `AppShell` with a `findRecords` that
+calls the app's search endpoint through its gateway, mapping each hit
+to `{ title, to, kind, detail }`. An app's e2e test that found the
+header's buttons inside `getByRole('main')` looks for them on the page
+instead (the template has none).
+## 4.86.0 — A list's tools in DataTable: views, filters, columns, row actions, a phone's rows; a capped related list
+
+The UI package only; additive, no new dependency, no export removed or
+renamed (the backend package's version moves with it, unchanged). Nothing
+changes on a list until it opts in. The list page standard's L3, L4, L5,
+L9 and L11, and the record page standard's R8 (cell patterns 25 and 26):
+
+- **Saved views as pills** (L3): `<DataTable views={VIEWS}
+  activeView={activeView} onViewChange={applyView} />` draws a
+  `PillFilter` above the toolbar from useTableUrlState's views, in order,
+  the view on pressed. Under 48rem it stays one line that scrolls
+  sideways. `TableView` takes a `label` for its pill. A view with
+  `columns` shows them while it's on (over `visibleColumns` and the
+  Columns menu), so `visibleColumns={activeView ? …}` is no longer needed.
+- **`FilterBar`** (L4): `search`, the two `primary` filters and the rest
+  behind Filters (`secondary`, `active`, `onClear`; SecondaryFilters
+  underneath). Below 48rem search and Filters share a line and every
+  filter is in Filters' bottom sheet (`primaryActive` for the primary
+  ones' chips, `onClearAll`). **`FilterSelect`**: a single-choice filter
+  that names itself, "Any status" off and "Status: Active" on.
+  **`MultiChoice label`**: "Rooms: Hall +1" in place of a chip per pick.
+  `SecondaryFilters` and `PillFilter` take a `className`.
+- **A Columns menu** (L5): `columnsMenu={{ storageKey }}`, a button at the
+  end of the toolbar with a tick for every column but the first and the
+  actions, remembered on this device as `{ order, hidden }` (every id in
+  order, so reordering can come later on the same value; a column added
+  since shows). `meta.label` names a column whose header isn't a string.
+- **Row actions** (L9): `rowActions={(row) => [{ label, icon, onSelect,
+  tone, disabled }]}`, in a column pinned to the right edge with its
+  header for screen readers only. One action is its icon (`IconAction`),
+  two or more a ⋯ menu. A click on them never opens the row.
+- **A phone's row list** (L11): `phoneRow={{ title, status, facts }}`
+  draws, under 48rem, a row list in place of the table: the name, the
+  status at the line's end, a muted line of the facts. The whole row is
+  the target (44px at least), a link to the record `opens` names; row
+  actions at its end. Headings, paging and the states hold.
+- **A capped related list** (R8): `RelatedTable` (10 rows unless `limit`
+  says, no pagination, no sort buttons, `opens` required) and `viewAll={{
+  to, total?, label? }}`, a "View all 19" link when there are more. On a
+  DataTable of your own: `limit` and `viewAll`.
+
+**Upgrading a list:** replace the hand-written views row with `views`,
+the toolbar's captions and Selects with `FilterBar` and `FilterSelect`, a
+hand-made Actions column (and `pinLastColumn`) with `rowActions`, and name
+the two facts for `phoneRow`. The template's Widgets list is unchanged.
+
+## 4.85.0 — The form standard in EntityForm, Field and FieldLabel
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Two looks change with no prop, on every
+form (anything in a `FieldGroup`: `EntityForm`, `FormDialog`, a login
+form): controls are 32px, not 36px (40px under 48rem or on a touch
+screen), with 14px between fields, not 20px, and `EntityForm`'s buttons
+stick to the bottom of the window on a long form.
+
+- **Short fields share a row** (F1). `<Field size="s" | "m" | "l">`:
+  consecutive short fields share a row, up to three, as wide as their
+  sizes (1, 1.4 and 2.6 parts); a long one takes one short partner.
+  `<Field solo>` keeps one alone, and a Field with no size takes its row,
+  as before. Under 48rem each takes its own row but two dates or two
+  numbers (`kind="date"` for a date picker of your own). Laid out by
+  `FieldGroup` from the order, so a Field in your own component counts.
+- **`FormSection`** (F2): a group of fields in a card, as a record's
+  section is drawn; only on a form of eight fields or more, never in a
+  dialog.
+- **`<FieldLabel required>`** (F3): an asterisk in the destructive text
+  tone, hidden from screen readers, and `aria-required` on the control
+  where its role takes it (not a date picker's button, which axe refuses).
+  Drop every "(optional)".
+- **Compact forms** (F4): above. Axe in both themes and all four
+  palettes covers the new stories.
+- **Add finds the problem** (F5): a refused submit moves to the first
+  invalid field (opening a fold around it), and the bar says "2 to fix".
+  Pass `errors={formState.errors}` to count them; `firstInvalid` picks
+  another field to move to.
+- **A failed save is a `Notice` with Try again** (F6), in the bar above
+  the buttons, instead of `ErrorState`'s dashed box. `onRetry` defaults
+  to submitting again.
+- **The bar sticks** (F7) to the window's bottom while the form is
+  taller than it, above the shell's bottom bar on a phone, with two wide
+  buttons there; it sets `--toast-bottom-offset` on `<html>`.
+- **`EntityForm dirty`** (F8): with something typed, a link, Back, the
+  sidebar or Cancel asks "Discard your changes?" (`DiscardChangesDialog`)
+  and a reload asks the browser. The save's own move to the new record
+  doesn't ask (it happens while `isSubmitting`). Needs a data router.
+  `FormDialog` as a list's `new` route takes the same guard.
+- **`OptionSelect`** (F11): one of a fixed list on a form, drawn with
+  `render` (a status's badge) on the trigger and in the list, with the
+  same `{ value, label }` options as `inPlace.select`.
+
+To take it: in each form, give short fields their `size`, mark required
+labels `required`, drop "(optional)", and pass `dirty` and `errors` to
+`EntityForm` (add-an-entity.md "Forms"). A test that types and then
+leaves a form now meets "Discard your changes?" first.
+
+## 4.84.0 — Six parts for the list, record and overview standards
+
+The UI package only; additive, no new dependency and nothing to change in
+an app (the backend package's version moves with it, unchanged). Six
+standalone components and one prop; none is wired into `DataTable`,
+`EntityView` or `AppShell` yet, so an app adopts them where it wants them.
+
+- **`ValueList`** (list standard L8): several values in a cell, two on
+  one line and the rest as `+N` with every one in a tooltip.
+  `<ValueList items={[{ label }]} max={2} />`; a value is a chip, or the
+  app's own icon through `node`.
+- **`ListHeader`** (L12): a list's title with its count, New alone, and
+  one ⋯ menu for related links (two or more), the page's own actions and
+  "Show deleted", with the notice and "Back to the list" while it's on.
+- **`Timeline`** (record standard R7): a record's dated history, dates in
+  a column on the left, the first five and "Show all N", the date above
+  its entry under 24rem.
+- **`NeedsYou`** (overview standard O2): a warning-toned list of what
+  waits on the user, each line a link, nothing when empty.
+- **`Freshness`** (O3): "Balances entered Aug 2" in the muted caption,
+  in the warning tone with an icon once `staleAfter` has passed.
+  `isStale` is exported for the same rule.
+- **`PartEmpty`** and **`WidgetCard`'s `empty`** (O5): "Nothing here yet"
+  and one button, in place of the card's plain `emptyMessage`. `empty` is
+  optional; a card without it reads as before.
+
+Design language: `docs/foundation/design-language.md` "Parts of the page
+standards".
+## 4.83.0 — A list's look: row hover, no stripes, content width, long text, rows per page
+
+The UI package only; no new dependency, no export removed or renamed (the
+backend package's version moves with it, unchanged). Two defaults change
+how every `DataTable` looks, so an app sees this release without touching
+its code: read the first two items.
+
+- **No zebra stripes by default.** Rows are told apart by the line under
+  each. `striped` brings the stripes back. Tables in notes keep theirs.
+- **`width` defaults to `content`**, and `content` now holds at every
+  width, not only from an 80rem table area: the table and its pagination
+  are as wide as the columns need (at least 36rem, or the whole width when
+  that's less), with empty space at the right, while the toolbar keeps the
+  whole width so its controls don't move between lists. A table wider
+  than its area scrolls sideways in it, as before. `width="full"` is the
+  old default; a card layout always takes the whole width.
+- **The whole row lights on hover**: every cell, pinned ones included, in
+  the new `--table-hover` token (the muted fill), with a 3px `--primary`
+  bar on the first cell. It used to light only a pinned first cell, and a
+  table with no pinned column showed nothing. Rows that open a record get
+  the hand cursor; rows edited in place (`opens={{ kind: 'rows' }}`) get
+  the highlight and keep the arrow. `highlightRow`'s row and the panel's
+  picked row keep their own look. Muted text in the hovered row takes the
+  darker grey (axe in light and dark).
+- **`meta: { clip: true, maxWidth: '24rem' }`** on a column: long text on
+  one line, cut with an ellipsis at `maxWidth` (24rem unless set, never
+  over 60% of the table's area), the whole text in a tooltip on hover and
+  on focus (a cut cell takes a tab stop). `maxWidth` alone wraps the
+  column at that width.
+- **Rows per page**: `pageSizes` and `onPageSizeChange` on `DataTable`
+  draw a menu in the pagination bar. `useTableUrlState` takes
+  `pageSizes` (`[25, 50, 100]` unless set), `defaultPageSize` (50) and
+  `pageSizeStorageKey`, and returns `pageSize`, `pageSizes` and
+  `setPageSize`: the pick is in the URL (`?size=`), remembered on this
+  device under the key, and returns to page 1. A size that isn't one of
+  the choices is ignored. The list page standard named the storage key as
+  a `DataTable` prop; it's the hook's because the app's query needs the
+  page size before the table renders.
+
+To keep a list as it was: `striped` and `width="full"` on its
+`DataTable`. To adopt rows per page: pass the hook's `pageSize` to the
+list's query instead of a constant, and its `pageSizes`/`setPageSize` to
+the table (cell pattern 24).
 ## 4.82.0 — Dialog sizes, a guard on what's typed, and FormDialog
 
 The UI package only; additive, no new dependency (the backend package's

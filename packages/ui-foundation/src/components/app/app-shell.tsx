@@ -1,6 +1,6 @@
 import { ChevronLeftIcon, ChevronRightIcon, LogOutIcon, MoonIcon, PaletteIcon, Rows3Icon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
 import { BottomBar, BOTTOM_BAR_PADDING } from '@/components/app/app-shell-bottom-bar'
@@ -9,10 +9,11 @@ import {
   childItems,
   childrenOpen,
   isNavItemGroup,
-  navBackTarget,
   navGroups,
   navPageLabel,
   navTooltip,
+  navTrail,
+  trailBackTarget,
   withChildren,
   type BottomBarItem,
   type NavEntry,
@@ -22,12 +23,16 @@ import {
 } from '@/components/app/app-shell-nav'
 import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
+import { PageTrail, type PageCrumb } from '@/components/app/page-trail'
+import { PageTrailContext, type PageTrailSlot } from '@/components/app/page-trail-context'
+import { SearchPalette, type AppShellSearch } from '@/components/app/search-palette'
 import type { IconComponent } from '@/components/app/icon-component'
 import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
 import { useShellDocumentTitle } from '@/hooks/use-document-title'
 import { usePalette } from '@/hooks/use-palette'
 import { useRows } from '@/hooks/use-rows'
+import { clearRecentRecords } from '@/lib/search-palette'
 import { isPaletteName, PALETTE_LABELS, PALETTES, type PaletteName } from '@/lib/palettes'
 import { isRowsName, ROWS, ROWS_LABELS } from '@/lib/rows'
 import { cn } from 'cn'
@@ -63,10 +68,12 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { OfflineNotice } from '@/components/app/offline-notice'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 export type { BottomBarItem, NavChild, NavEntry, NavItem, NavItemGroup, NavSection } from '@/components/app/app-shell-nav'
 export type { AppShellVersion } from '@/components/app/app-shell-version'
+export type { AppShellSearch, RecentRecord, SearchRecord } from '@/components/app/search-palette'
 
 export type AppShellProps = {
   /**
@@ -134,6 +141,15 @@ export type AppShellProps = {
    * takes its place. The shell pads its content so nothing sits under the bar.
    */
   bottomBar?: readonly BottomBarItem[]
+  /**
+   * Search in the header (#N6): a box ("Search", or `placeholder`) from
+   * md up and a button on a phone, both opening a palette (Ctrl K, ⌘K on
+   * a Mac) that finds the nav's pages by name and, with `findRecords`,
+   * the app's records, listed under their kinds; Enter opens the one
+   * highlighted. Before you type it lists the records opened lately
+   * (`useRecentRecord`), `recent` of them. No search, no box.
+   */
+  search?: AppShellSearch
 }
 
 // Must match SIDEBAR_COOKIE_NAME in ../ui/sidebar.tsx, which writes the
@@ -514,6 +530,7 @@ export function AppShell({
   defaultSidebarOpen = true,
   version,
   bottomBar,
+  search,
 }: AppShellProps) {
   const { user, status, error, retry, logout } = useAuth()
   const location = useLocation()
@@ -524,6 +541,14 @@ export function AppShell({
   // component then renders starts a second navigation that wins.
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   useShellDocumentTitle(title, navPageLabel(nav, location.pathname))
+  // The trail a page put up (usePageTrail, #N5), for the bar.
+  const [pageTrail, setPageTrail] = useState<{ owner: object; crumbs: readonly PageCrumb[] } | null>(null)
+  const set = useCallback((owner: object, crumbs: readonly PageCrumb[]) => setPageTrail({ owner, crumbs }), [])
+  const clear = useCallback(
+    (owner: object) => setPageTrail((current) => (current?.owner === owner ? null : current)),
+    [],
+  )
+  const trailSlot = useMemo<PageTrailSlot>(() => ({ set, clear }), [set, clear])
 
   if (status === 'loading') {
     return <AppShellSkeleton />
@@ -552,7 +577,9 @@ export function AppShell({
   }
 
   const activeTo = activeNavTo(nav, location.pathname)
-  const back = navBackTarget(nav, location.pathname)
+  const ownTrail = pageTrail?.crumbs ?? null
+  const back = trailBackTarget(nav, location.pathname, ownTrail)
+  const trail = ownTrail ?? navTrail(nav, location.pathname)
   const groups = navGroups(nav)
   const renderGroup = (group: NavGroup, groupIndex: number) =>
     group.collapsible && group.label !== undefined ? (
@@ -618,6 +645,9 @@ export function AppShell({
                 <Button variant="ghost" size="icon-sm" aria-label="Log out"
                   onClick={() => {
                     setIsLoggingOut(true)
+                    // The records opened lately are this person's: the
+                    // next to sign in on this device doesn't see them.
+                    clearRecentRecords()
                     // A failed request still ends the session on screen
                     // (AuthProvider), so this stays a deliberate logout: a
                     // clean /login, never the previous user's page as `from`.
@@ -630,12 +660,18 @@ export function AppShell({
             </SidebarFooter>
           </Sidebar>
         </nav>
-        {/* min-w-0: <SidebarInset> is a flex item beside <Sidebar> with
-            the default min-width:auto, which floors it at its content's
-            width — so a wide table grew the whole page sideways instead of
-            scrolling inside its own container, and a right-pinned column
-            sat off-screen. Passed via className: sidebar.tsx is shadcn's. */}
-        <SidebarInset className="min-w-0">
+        {/* The column beside the sidebar: the bar, then the page in
+            <main>. The bar is outside <main>: it holds the trail,
+            whose crumbs name the same places as a page's own links, and a
+            test (or a screen reader's landmark list) that looks in the
+            page for "Projects" should find the page's, not the bar's.
+            min-w-0: it is a flex item beside <Sidebar> with the default
+            min-width:auto, which floors it at its content's width — so a
+            wide table grew the whole page sideways instead of scrolling
+            inside its own container, and a right-pinned column sat
+            off-screen. */}
+        <PageTrailContext.Provider value={trailSlot}>
+        <div data-slot="app-shell-column" className="flex w-full min-w-0 flex-1 flex-col bg-background">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
             {/* On a phone, a page below a nav entry gets a way back up to
                 it (#N7): "‹ Accounts" on a record. With a bottom bar to get
@@ -644,19 +680,31 @@ export function AppShell({
                 every width from md up, keep the menu button. */}
             {back && <PhoneBack back={back} />}
             <SidebarTrigger className={cn(back && bottomBar?.length && 'max-md:hidden')} />
-            <div className="flex-1" />
+            {/* The trail (#N5), from md up: the page's own (usePageTrail,
+                EntityView's back.trail), or its nav entry's. A phone has
+                the back arrow instead. */}
+            <div data-slot="app-shell-trail" className="min-w-0 flex-1">
+              {trail.length > 0 && <PageTrail crumbs={trail} aria-label="You are here" className="max-md:hidden" />}
+            </div>
+            {search && <SearchPalette search={search} nav={nav} />}
             <LookControl />
           </header>
-          <div className={cn('flex-1 p-6', bottomBar?.length && BOTTOM_BAR_PADDING)}>
-            <Outlet />
-          </div>
-        </SidebarInset>
+          {/* "You're offline", over every page while the server can't be reached (4.90). */}
+          <OfflineNotice />
+          <SidebarInset className="min-w-0">
+            <div className={cn('flex-1 p-6', bottomBar?.length && BOTTOM_BAR_PADDING)}>
+              <Outlet />
+            </div>
+          </SidebarInset>
+        </div>
+        </PageTrailContext.Provider>
         {bottomBar && bottomBar.length > 0 && <BottomBar items={bottomBar} nav={nav} activeTo={activeTo} />}
       </SidebarProvider>
-      {/* top-center, not sonner's bottom-right default: that sat on
-          DataTable's pagination buttons, which are bottom-right too.
-          top-right would collide with the theme toggle instead. */}
-      <Toaster position="top-center" />
+      {/* Top centre, and at the bottom on a phone above its bars (4.90,
+          ui/sonner.tsx): not sonner's bottom-right default, which sat on
+          DataTable's pagination buttons; top-right would collide with
+          the theme toggle. */}
+      <Toaster />
     </TooltipProvider>
   )
 }
