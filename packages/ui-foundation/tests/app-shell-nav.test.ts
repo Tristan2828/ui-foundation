@@ -16,6 +16,8 @@ import {
   navPageLabel,
   navPathname,
   navTargets,
+  navTrail,
+  trailBackTarget,
   type NavEntry,
   type NavItem,
 } from '../src/components/app/app-shell-nav'
@@ -245,5 +247,51 @@ describe('navBackTarget', () => {
     expect(navBackTarget(sectioned, '/tasks/')).toBeUndefined()
     expect(navBackTarget(sectioned, '/')).toBeUndefined()
     expect(navBackTarget(sectioned, '/elsewhere')).toBeUndefined()
+  })
+})
+
+describe('navTrail', () => {
+  const finance: NavItem = {
+    to: '/finance',
+    label: 'Finance',
+    icon: ListIcon,
+    children: [{ label: 'Money', items: [{ to: '/finance/accounts', label: 'Accounts', icon: TagIcon }] }],
+  }
+  const nav: NavEntry[] = [home, { label: 'Home and money', items: [finance] }]
+
+  it("is the entry, after its module's when it's one of the module's pages", () => {
+    expect(navTrail(nav, '/finance/accounts')).toEqual([{ label: 'Finance', href: '/finance' }, { label: 'Accounts' }])
+    expect(navTrail(nav, '/finance/accounts/3')).toEqual([{ label: 'Finance', href: '/finance' }, { label: 'Accounts' }])
+    expect(navTrail(nav, '/finance')).toEqual([{ label: 'Finance' }])
+  })
+
+  it('is Home on the hub, and nothing off the nav', () => {
+    expect(navTrail(nav, '/')).toEqual([{ label: 'Home' }])
+    expect(navTrail([tasks], '/reading')).toEqual([])
+  })
+})
+
+describe('trailBackTarget', () => {
+  const trail = [{ label: 'Tasks', href: '/tasks' }, { label: 'Fix the gate', href: '/tasks/3' }, { label: 'History' }]
+
+  it("is the trail's closest crumb above the page that links somewhere, below an entry", () => {
+    expect(trailBackTarget(sectioned, '/tasks/3/history', trail)).toEqual({ label: 'Fix the gate', to: '/tasks/3' })
+    const unlinked = [{ label: 'Tasks', href: '/tasks' }, { label: 'Fix the gate' }, { label: 'History' }]
+    expect(trailBackTarget(sectioned, '/tasks/3/history', unlinked)).toEqual({ label: 'Tasks', to: '/tasks' })
+  })
+
+  it('is the entry without a trail, or with none that links above the page', () => {
+    expect(trailBackTarget(sectioned, '/tasks/3', null)).toEqual({ label: 'Tasks', to: '/tasks' })
+    expect(trailBackTarget(sectioned, '/tasks/3', [{ label: 'Fix the gate' }])).toEqual({ label: 'Tasks', to: '/tasks' })
+  })
+
+  it("is none on an entry's own page, whatever its trail", () => {
+    expect(trailBackTarget(sectioned, '/tasks', trail)).toBeUndefined()
+  })
+
+  it('follows the trail on a page no entry covers', () => {
+    const reading = [{ label: 'Reading', href: '/reading' }, { label: 'Dune' }]
+    expect(trailBackTarget([tasks], '/reading/2', reading)).toEqual({ label: 'Reading', to: '/reading' })
+    expect(trailBackTarget([tasks], '/reading/2', null)).toBeUndefined()
   })
 })

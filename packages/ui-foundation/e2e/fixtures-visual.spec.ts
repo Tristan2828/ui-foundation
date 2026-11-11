@@ -138,6 +138,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
+  // A record's trail above its title, outside AppShell (4.87, R2).
+  { id: 'app-entityview--record-trail', mustShow: 'Timber and sheet goods' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
   { id: 'app-entityview--print-notes', mustShow: 'Climbing the stairs' },
@@ -255,6 +257,8 @@ const COMPOSITE_STORIES = [
   // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
   { id: 'app-appshell--standard', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-rail', mustShow: 'Page at /finance/accounts/3' },
+  { id: 'app-appshell--standard-trail', mustShow: 'Bills and the paycheck' },
+  { id: 'app-appshell--standard-search', mustShow: 'Page at /finance/budget' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).

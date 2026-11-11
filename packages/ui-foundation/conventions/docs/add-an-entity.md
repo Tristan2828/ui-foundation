@@ -4,28 +4,28 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 44–66
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–814
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–828
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
   - Step 2: `npm run gen:api` · lines 118–119
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 132–141
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–701
-  - Step 7: Register routes · lines 702–717
-  - Step 8: Add Playwright specs for all three screens · lines 718–796
-  - Step 9: Register the nav entry and route names · lines 797–811
-  - Step 10: `npm run verify`. · lines 812–814
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 816–1115
-  - [The record view](#the-record-view) · lines 965–1004
-  - [Forms](#forms) · lines 1006–1047
-  - [Dialogs](#dialogs) · lines 1049–1074
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1076–1115
-- [What not to copy](#what-not-to-copy) · lines 1117–1143
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1145–1162
-- [Deleting](#deleting) · lines 1164–1195
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1197–1218
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1220–1229
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1232–1271
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–715
+  - Step 7: Register routes · lines 716–731
+  - Step 8: Add Playwright specs for all three screens · lines 732–810
+  - Step 9: Register the nav entry and route names · lines 811–825
+  - Step 10: `npm run verify`. · lines 826–828
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 830–1129
+  - [The record view](#the-record-view) · lines 979–1018
+  - [Forms](#forms) · lines 1020–1061
+  - [Dialogs](#dialogs) · lines 1063–1088
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1090–1129
+- [What not to copy](#what-not-to-copy) · lines 1131–1157
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1159–1176
+- [Deleting](#deleting) · lines 1178–1209
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1211–1232
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1234–1243
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1246–1285
 
 <!-- /index -->
 
@@ -428,6 +428,20 @@ is a filled-in example while the Widgets demo is still here).
      in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
      label="Delete" tone="destructive"`, the dialog's trigger through
      `render`).
+   - **The way back is a trail.** `back={{ to: '/widgets', label:
+     'Widgets', trail: [{ label: 'Inventory', href: '/inventory' }, {
+     label: 'Widgets', href: '/widgets' }] }}`: the crumbs above the
+     record, from the module down to its list; the record's title follows
+     them. In `AppShell` it is the trail in the bar ("The sidebar and the
+     phone's bar" in design-language.md), and the page has no back link;
+     on a phone the header's back arrow goes to the list. Without `trail`
+     the view keeps its "← Widgets" link. `to` and `label` are still the
+     not-found state's way out. Any other page below a nav entry (a
+     record's sub-page, a step of a task) names its trail with
+     `usePageTrail([...crumbs, { label: 'This page' }])` in place of a
+     back link. Once the record has loaded, call
+     `useRecentRecord({ title, to: `/widgets/${id}`, detail: 'Widget' })`
+     too, so search lists it before you type.
    - **The browser tab** reads the record's title once it loads
      ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
      puts the nav's ("Widgets · <app>") back while loading, on an error

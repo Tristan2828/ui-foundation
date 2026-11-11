@@ -1000,3 +1000,35 @@ export const RecordStandardLongTitle: StoryObj = {
     <StandardInRouter title="Northwind Lumber and Sheet Goods, the warehouse on the far side of the river" />
   ),
 }
+
+// A record's trail outside AppShell (#R2): back.trail, then the record's
+// own title, drawn above the title in the back link's place. In the shell
+// it goes up in the bar instead (app/AppShell StandardTrail).
+function TrailInRouter() {
+  const [router] = useState(() =>
+    createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <EntityView
+            isLoading={false}
+            title="Northwind Lumber"
+            subtitle="Timber and sheet goods for the workshop"
+            back={{
+              to: '/suppliers',
+              label: 'Suppliers',
+              trail: [
+                { label: 'Workshop', href: '/workshop' },
+                { label: 'Suppliers', href: '/suppliers' },
+              ],
+            }}
+            sections={[{ title: 'Contact', fields: [{ label: 'Phone', value: '555-0100' }] }]}
+          />
+        ),
+      },
+    ]),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const RecordTrail: StoryObj = { name: 'Record trail', render: () => <TrailInRouter /> }
