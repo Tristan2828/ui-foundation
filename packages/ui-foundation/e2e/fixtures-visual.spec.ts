@@ -228,6 +228,10 @@ const COMPOSITE_STORIES = [
   // The Group menu at None, rows grouped by a multi-value field (folding
   // headings, counts, summaries), the list with a detail panel, and a
   // record's goal and key numbers in its header.
+  // The table tools: views, FilterBar, Columns, row actions, a capped related list.
+  { id: 'app-datatable-tools--list-tools', mustShow: 'Needs a look' },
+  { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
+  { id: 'app-datatable-tools--related', mustShow: 'View all 19' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
