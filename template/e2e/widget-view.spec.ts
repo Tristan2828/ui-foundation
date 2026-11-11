@@ -451,7 +451,7 @@ test.describe('widget view', () => {
       // The whole content area: the header reaches the rail's right edge.
       expect(Math.abs(header!.x + header!.width - (details!.x + details!.width))).toBeLessThan(2)
 
-      // Rail fields sit beside their labels (the default since 4.80).
+      // Rail fields sit beside their labels (the default since 4.81).
       const label = await page.locator('dt').getByText('Category', { exact: true }).boundingBox()
       const value = await fieldValue(page, 'Category').boundingBox()
       expect(value!.x).toBeGreaterThan(label!.x + label!.width)

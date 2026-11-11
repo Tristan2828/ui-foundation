@@ -68,10 +68,10 @@
 // `leading`, left of the title: the record's mark or avatar, with the
 // title, subtitle and badges beside it at every width. A rail field's
 // label sits to the left of its value (`railFields`, `beside` by default
-// since 4.80), as in an issue tracker's sidebar, stacked again where the
+// since 4.81), as in an issue tracker's sidebar, stacked again where the
 // rail's list is too narrow for both.
 //
-// The record page standard (4.80): `badges` sit on the title's line,
+// The record page standard (4.81): `badges` sit on the title's line,
 // wrapping under a long title; Print notes is an icon (`IconAction`, its
 // words the tooltip and name); an empty value reads as a dash
 // (`emptyText`), and `emptyFields="fold"` folds each fields card's empty
@@ -279,13 +279,13 @@ export type EntityViewProps = {
    * to "Print notes".
    */
   printLabel?: string
-  /** Print notes as an icon (`icon`, the default since 4.80) or a button with its words (`words`). */
+  /** Print notes as an icon (`icon`, the default since 4.81) or a button with its words (`words`). */
   printLook?: 'icon' | 'words'
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
   railLabel?: string
   /**
    * In the `rail` layout, a rail section's fields: each label to the left
-   * of its value (`beside`, the default since 4.80), falling back to
+   * of its value (`beside`, the default since 4.81), falling back to
    * stacked where the rail is too narrow for both, or above it
    * (`stacked`). Once the rail's sections stack full width on a narrower
    * screen, labels sit beside values either way.

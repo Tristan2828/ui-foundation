@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The record page standard in EntityView (4.80; app/EntityView "Record
+// The record page standard in EntityView (4.81; app/EntityView "Record
 // standard" and "Record standard, long title") in a real browser: the
 // badges on the title's line, Print notes and Delete as icons with their
 // tooltips, the strip's icons, and folded empties opening, edited in

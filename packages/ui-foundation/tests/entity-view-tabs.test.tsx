@@ -85,7 +85,7 @@ describe('EntityView leading and rail fields', () => {
     expect(render(view({}))).not.toContain('entity-view-leading')
   })
 
-  it('lays rail labels beside their values by default (4.80), above them with railFields="stacked"', () => {
+  it('lays rail labels beside their values by default (4.81), above them with railFields="stacked"', () => {
     const sections: EntityViewSection[] = [{ title: 'Summary', placement: 'rail', fields: [{ label: 'Floor', value: 'Third' }] }]
     expect(render(view({ layout: 'rail', sections }))).toContain('@2xs/fields:grid')
     expect(render(view({ layout: 'rail', sections, railFields: 'beside' }))).toContain('@2xs/fields:grid')

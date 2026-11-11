@@ -949,9 +949,9 @@ view reaches them all. A record uses the parts it has, in this order:
   Notes stay outside the tabs, above them, unless they are one tab's
   content; the rail and the strip never go in a tab.
 - **Rail fields beside their labels** (`railFields`, `beside` by
-  default since 4.80), so a rail of short facts reads as a list of pairs
+  default since 4.81), so a rail of short facts reads as a list of pairs
   rather than a column of labels; keep labels to a word or two.
-- **Empty fields folded** (`emptyFields="fold"`, 4.80): each card shows
+- **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
   what's known, then "N empty" opens the rest, still edited in place.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.

@@ -1201,13 +1201,13 @@ row under the header, across the page at every width.
   value in the section title's size and tabular figures, a `hint`
   under it in caption type. One bordered card, the figures side by side,
   wrapping on a phone. A `<dl>`, so each label is read with its value.
-- **An icon with the word** (`icon`, 4.80): the concept's icon at 13px
+- **An icon with the word** (`icon`, 4.81): the concept's icon at 13px
   before the label, in the label's muted tone, one icon per meaning
   across the app (Lucide: a date `CalendarIcon`, next and review on
   `CalendarClockIcon`, when and length `ClockIcon`, a count `HashIcon`,
   status `CircleDotIcon`, price `DollarSignIcon`). The word stays; the
   icon is decorative. Never an icon alone in the strip.
-- **An empty value reads as a dash** (`emptyLabel`, 4.80; "Not set"
+- **An empty value reads as a dash** (`emptyLabel`, 4.81; "Not set"
   before), in body type and muted, read by a screen reader as "Not set".
   Never a blank.
 - **Three to five.** It's what the page is for at a glance; anything
@@ -1217,7 +1217,7 @@ row under the header, across the page at every width.
 
 ## A record's header and empty values
 
-The record page standard (4.80): the same header on every record, the
+The record page standard (4.81): the same header on every record, the
 data on each its own.
 
 ```tsx
@@ -1259,7 +1259,7 @@ data on each its own.
 
 Three settings on `EntityView` (4.76): tabs and a mark, each for a
 record that needs it, and rail fields beside their labels, the default
-since 4.80.
+since 4.81.
 
 ```tsx
 <EntityView
@@ -1295,7 +1295,7 @@ since 4.80.
   the title names the record (`alt=""`, `aria-hidden`); initials in
   foreground on `bg-muted`, an icon in muted foreground on the card
   with its border. "Logos and brand marks" above holds for a logo here.
-- **Rail fields beside** (`railFields`, `beside` by default since 4.80;
+- **Rail fields beside** (`railFields`, `beside` by default since 4.81;
   `stacked` puts each label above its value): the label in a 6 to
   7rem column left of its value, baseline-aligned, rows a little tighter
   than stacked. Where the rail's list is under 18rem (a phone narrower

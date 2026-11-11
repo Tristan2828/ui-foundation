@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 // EntityView's 4.76 opt-ins in a real browser: tabs over the main column
 // (#303; app/EntityView Tabs, Tabs column), the `leading` mark left of
 // the title (Leading) and rail fields beside their labels (Rail, the
-// default since 4.80; Rail fields stacked opts out), each at a desktop's
+// default since 4.81; Rail fields stacked opts out), each at a desktop's
 // and a phone's width. Axe and the token
 // check in both themes are e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
 const story = (id: string, query = '') => `http://localhost:6180/story.html?id=app-entityview--${id}${query}`
@@ -170,7 +170,7 @@ test.describe('EntityView rail fields beside', () => {
     expect(Math.abs(value.x - label.x)).toBeLessThan(2)
   })
 
-  test('railFields="stacked": the rail beside main stacks its labels as before 4.80', async ({ page }) => {
+  test('railFields="stacked": the rail beside main stacks its labels as before 4.81', async ({ page }) => {
     await open(page, 'rail-fields-stacked', 1280)
     const summary = region(page, 'Summary')
     const label = (await summary.locator('dt', { hasText: 'Floor' }).boundingBox())!

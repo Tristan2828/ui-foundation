@@ -209,7 +209,7 @@ function LoadingRail() {
 export const RailLoading: StoryObj = { render: () => <LoadingRail /> }
 
 // Rail fields stacked: `railFields="stacked"`, each rail label above its
-// value, as every rail was before 4.80 made `beside` the default (Rail).
+// value, as every rail was before 4.81 made `beside` the default (Rail).
 export const RailFieldsStacked: StoryObj = {
   name: 'Rail fields stacked',
   render: () => <InRouter layout="rail" railFields="stacked" />,
@@ -865,7 +865,7 @@ function PrintInRouter() {
 
 export const PrintNotes: StoryObj = { name: 'Print notes', render: () => <PrintInRouter /> }
 
-// --- Record standard (4.80) ---------------------------------------------------
+// --- Record standard (4.81) ---------------------------------------------------
 // The record page standard together: the status and a badge on the title's
 // line (a long title pushes them under it: Record standard, long title),
 // the record's own command in words and Print notes and Delete as icons

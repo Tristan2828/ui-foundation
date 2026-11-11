@@ -1,4 +1,4 @@
-// The record page standard in EntityView and KeyStats (4.80), as rendered
+// The record page standard in EntityView and KeyStats (4.81), as rendered
 // markup: badges on the title's line, Print notes as an icon, the dash
 // for an empty value (read as "Not set"), the strip's icons, and
 // `emptyFields="fold"`'s count. The fold opening, the tooltips and the

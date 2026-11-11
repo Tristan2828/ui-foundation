@@ -435,7 +435,7 @@ test.describe('EntityView, notice and footer (#158, #159)', () => {
 test('many header actions wrap beside the title instead of squeezing it', async ({ page }) => {
   await open(page, 'many-actions', 1024)
   // The title's line (the title and its badges) keeps the 16rem; the
-  // <h1> in it is as wide as its words (4.80).
+  // <h1> in it is as wide as its words (4.81).
   const title = (await page.locator('[data-slot="entity-view-title-line"]').boundingBox())!
   expect(title.width).toBeGreaterThanOrEqual(256)
   expect(title.height).toBeLessThan(60)
