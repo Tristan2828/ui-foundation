@@ -114,3 +114,24 @@ test(`a dark screen prints light${palette ? ` (palette ${palette})` : ''}`, asyn
   expect(ink.color).toBe(ink.black)
 })
 }
+
+// Palm LCD, the light palette: the screen is its green, and paper is still
+// white with the light theme's black text, not the LCD's.
+test('the light palette prints white, not its green', async ({ page }) => {
+  await open(page, 'light', 'palm-lcd')
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'palm-lcd')
+  expect(await page.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(201, 209, 178)')
+  await page.getByRole('button', { name: 'Print notes' }).click()
+  await page.emulateMedia({ media: 'print' })
+  const paper = await copy(page).evaluate((el) => {
+    const probe = document.createElement('div')
+    probe.style.backgroundColor = 'var(--white)'
+    probe.style.color = 'var(--black)'
+    el.append(probe)
+    const { backgroundColor: white, color: black } = getComputedStyle(probe)
+    probe.remove()
+    return { background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color, white, black }
+  })
+  expect(paper.background).toBe(paper.white)
+  expect(paper.color).toBe(paper.black)
+})

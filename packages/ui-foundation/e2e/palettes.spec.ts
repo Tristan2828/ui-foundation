@@ -62,6 +62,19 @@ test('a saved choice is ignored without the picker, and an unknown one falls bac
   await expect(html(page)).toHaveAttribute('data-palette', 'indigo-cyan')
 })
 
+// Palm LCD, the light palette an app opts into by name: it forces light,
+// the shell has neither the toggle nor the picker (asked for or not), and a
+// device's saved dark palette doesn't replace it.
+test('the light palette: light, on its green, with no toggle and no picker', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ui-foundation:palette', 'violet'))
+  await open(page, 'with-light-palette', 'theme=light&palette=palm-lcd')
+  await expect(html(page)).toHaveAttribute('data-palette', 'palm-lcd')
+  await expect(html(page)).not.toHaveClass(/dark/)
+  expect(await page.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(201, 209, 178)')
+  await expect(page.getByRole('button', { name: 'Toggle dark mode' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Palette/ })).toHaveCount(0)
+})
+
 // Rows on this device (lib/rows.ts): compact until a device picks Regular,
 // which rides on <html> as data-rows and retunes every table's cells; the
 // choice survives a reload. Measured on the tokens the cells read.
@@ -124,9 +137,10 @@ test('the link button reads in the palette’s link colour, not its accent', asy
   expect(colour).toBe(expected)
 })
 
-// The glow (the shared style guide), under a palette only: the primary
+// The glow (the shared style guide), under a dark palette only: the primary
 // button on hover and keyboard focus, never another variant; a hovered
-// widget's edge; a slider's thumb. Without a palette, none of it.
+// widget's edge; a slider's thumb. Without a palette, none of it, and none
+// under Palm LCD, the light one.
 const shadow = (locator: import('@playwright/test').Locator) => locator.evaluate((el) => getComputedStyle(el).boxShadow)
 const glows = (value: string) => /\b38px 2px\b/.test(value)
 
@@ -173,4 +187,28 @@ test('a slider’s thumb glows in a palette', async ({ page }) => {
   expect(await shadow(thumb)).toMatch(/10px 2px/)
   await page.goto('http://localhost:6180/story.html?id=ui-slider--default&theme=dark')
   expect(await shadow(page.locator('[data-slot=slider-thumb]').first())).not.toMatch(/10px 2px/)
+})
+
+test('nothing glows under the light palette', async ({ page }) => {
+  await page.goto('http://localhost:6180/story.html?id=ui-button--variants&theme=light&palette=palm-lcd')
+  await expect(html(page)).toHaveAttribute('data-palette', 'palm-lcd')
+  const primary = page.getByRole('button', { name: 'Primary' })
+  await primary.hover()
+  await page.waitForTimeout(200)
+  expect(glows(await shadow(primary))).toBe(false)
+  const shine = await primary.evaluate((el) => getComputedStyle(el, '::after').content)
+  expect(shine).toBe('none')
+
+  await page.goto('http://localhost:6180/story.html?id=ui-slider--default&theme=light&palette=palm-lcd')
+  const thumb = page.locator('[data-slot=slider-thumb]').first()
+  await expect(thumb).toBeVisible()
+  expect(await shadow(thumb)).not.toMatch(/10px 2px/)
+
+  await page.goto('http://localhost:6180/story.html?id=app-widgetcard--default&theme=light&palette=palm-lcd')
+  const card = page.locator('[data-slot=widget-card] [data-slot=card]').first()
+  await expect(card).toBeVisible()
+  const before = await shadow(card)
+  await card.hover()
+  await page.waitForTimeout(300)
+  expect(await shadow(card)).toBe(before)
 })

@@ -14,7 +14,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test as base, type Page, type Request, type Response } from '@playwright/test'
 import { navPathname, navTargets, type NavEntry } from '../components/app/app-shell-nav'
-import { PALETTE_STORAGE_KEY, type PaletteName } from '../lib/palettes'
+import { PALETTE_STORAGE_KEY, paletteColorScheme, type AppPaletteName } from '../lib/palettes'
 import type { MswOverride } from '../mocks/override'
 
 export type { MswHandle, MswOverride } from '../mocks/override'
@@ -229,19 +229,21 @@ export type A11ySuiteOptions = {
    */
   checkSidebar?: boolean
   /**
-   * For an app with a palette (`<FoundationProviders palette>`), which is
-   * dark only: the palettes to check instead of light and dark, each saved
-   * as the device's choice before the page loads. Pass the app's default on
-   * every spec and all of `PALETTES` on one (the shell's).
+   * For an app with a palette (`<FoundationProviders palette>`), which
+   * forces its theme: the palettes to check instead of light and dark, each
+   * saved as the device's choice before the page loads and checked in the
+   * theme it forces (dark, or light for `'palm-lcd'`). Pass the app's
+   * default on every spec and, with the picker, all of `PALETTES` on one
+   * (the shell's).
    */
-  palettes?: readonly PaletteName[]
+  palettes?: readonly AppPaletteName[]
 }
 
-/** One look a suite checks: light or dark, or (for an app with a palette) one palette, always dark. */
-type A11yTheme = { label: string; colorScheme: 'light' | 'dark'; palette?: PaletteName }
+/** One look a suite checks: light or dark, or (for an app with a palette) one palette, in the theme it forces. */
+type A11yTheme = { label: string; colorScheme: 'light' | 'dark'; palette?: AppPaletteName }
 
-function a11yThemes(palettes: readonly PaletteName[] | undefined): A11yTheme[] {
-  if (palettes?.length) return palettes.map((palette) => ({ label: palette, colorScheme: 'dark', palette }))
+function a11yThemes(palettes: readonly AppPaletteName[] | undefined): A11yTheme[] {
+  if (palettes?.length) return palettes.map((palette) => ({ label: palette, colorScheme: paletteColorScheme(palette), palette }))
   return [
     { label: 'light', colorScheme: 'light' },
     { label: 'dark', colorScheme: 'dark' },
@@ -318,7 +320,7 @@ async function expectNavPageAccessible(page: Page, route: string, theme: A11yThe
  * color-contrast rule against the rendered dark DOM is also what keeps the
  * dark-mode tokens readable. The theme follows the OS setting, so
  * emulateMedia switches it. An app with a palette passes `palettes`, and
- * each is checked (dark) in place of light and dark.
+ * each is checked (in the theme it forces) in place of light and dark.
  */
 export function defineA11ySuite({
   formRoutes,
@@ -447,7 +449,7 @@ export type DataEnvironmentBannerSuiteOptions = {
    */
   dataLabel?: string | null
   /** For an app with a palette: the palettes to check the banner in, in place of light and dark (as for `defineA11ySuite`). */
-  palettes?: readonly PaletteName[]
+  palettes?: readonly AppPaletteName[]
 }
 
 // The banner names the label as data: "dev" → "Dev data".

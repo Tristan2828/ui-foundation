@@ -16,18 +16,25 @@ const MIN_CVD_DELTA_E = 10
 const MIN_CONTRAST = 3
 const MIN_TEXT_CONTRAST = 4.5
 
-function primitives(shade: '700' | '400'): Map<number, Oklch> {
+// Light's -700 and dark's -400; Palm LCD's are its own (--palette-palm-lcd-heat-N).
+function primitives(shade: '700' | '400' | 'lcd'): Map<number, Oklch> {
   const steps = new Map<number, Oklch>()
+  if (shade === 'lcd') {
+    for (const m of css.matchAll(/--palette-palm-lcd-heat-(\d+):\s*oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)/g))
+      steps.set(Number(m[1]), { l: Number(m[2]), c: Number(m[3]), h: Number(m[4]) })
+    return steps
+  }
   for (const m of css.matchAll(/--heat-(\d+)-(\d+):\s*oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)/g)) {
     if (m[2] !== shade) continue
     steps.set(Number(m[1]), { l: Number(m[3]), c: Number(m[4]), h: Number(m[5]) })
   }
   return steps
 }
+const primitiveName = (n: number, shade: string) => (shade === 'lcd' ? `--palette-palm-lcd-heat-${n}` : `--heat-${n}-${shade}`)
 
-// A semantic block of theme.css: light's is :root's, dark's is .dark's.
-function block(selector: ':root' | '.dark') {
-  const body = [...css.replaceAll('\r\n', '\n').matchAll(/^(:root|\.dark) \{\n([\s\S]*?)^\}/gm)].find((m) => m[1] === selector)
+// A semantic block of theme.css: light's is :root's, dark's is .dark's, Palm LCD's its own.
+function block(selector: ':root' | '.dark' | '[data-palette="palm-lcd"]') {
+  const body = [...css.replaceAll('\r\n', '\n').matchAll(/^(:root|\.dark|\[data-palette="palm-lcd"\]) \{\n([\s\S]*?)^\}/gm)].find((m) => m[1] === selector)
   if (!body) throw new Error(`no ${selector} block`)
   return body[2]
 }
@@ -61,6 +68,12 @@ const THEMES = {
       ),
     } as Record<string, Rgb>,
   },
+  // Palm LCD, the light palette: its own steps on its green.
+  'palm-lcd': {
+    shade: 'lcd',
+    selector: '[data-palette="palm-lcd"]',
+    cards: { 'palm-lcd card': palettePanel('palm-lcd', 'panel'), 'palm-lcd raised': palettePanel('palm-lcd', 'raised') } as Record<string, Rgb>,
+  },
 } as const
 
 describe('heat scale', () => {
@@ -68,7 +81,7 @@ describe('heat scale', () => {
     for (const { shade, selector } of Object.values(THEMES)) {
       expect([...primitives(shade).keys()].sort((a, b) => a - b)).toEqual(STEPS)
       for (const n of STEPS) {
-        expect(block(selector)).toContain(`--heat-${n}: var(--heat-${n}-${shade});`)
+        expect(block(selector)).toContain(`--heat-${n}: var(${primitiveName(n, shade)});`)
         expect(block(selector)).toMatch(new RegExp(`--heat-${n}-foreground: var\\(--(white|black)\\);`))
       }
     }

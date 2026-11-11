@@ -1,19 +1,20 @@
 import { useCallback, useLayoutEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react'
 import { PaletteContext, type PaletteState } from '@/hooks/use-palette'
-import { browserPaletteStore, subscribeToBrowserPaletteStore, type PaletteName, type PaletteStore } from '@/lib/palettes'
+import { browserPaletteStore, isLightPaletteName, subscribeToBrowserPaletteStore, type AppPaletteName, type PaletteStore } from '@/lib/palettes'
 
 /**
  * Puts the palette on <html>. FoundationProviders renders it; an app
  * doesn't. Without `palette` it does nothing, and the app keeps light and
- * dark.
+ * dark. A light palette (`palm-lcd`) takes no picker: the picker's four
+ * are dark, so with one `picker` is ignored and the saved choice is too.
  */
 export function PaletteProvider({
   palette: defaultPalette,
-  picker = false,
+  picker: pickerAsked = false,
   store = browserPaletteStore,
   children,
 }: {
-  palette?: PaletteName
+  palette?: AppPaletteName
   picker?: boolean
   /** For tests; the browser's localStorage by default. */
   store?: PaletteStore
@@ -23,6 +24,7 @@ export function PaletteProvider({
     (listener: () => void) => (store === browserPaletteStore ? subscribeToBrowserPaletteStore(listener) : store.subscribe(listener)),
     [store],
   )
+  const picker = pickerAsked && !isLightPaletteName(defaultPalette)
   const saved = useSyncExternalStore(subscribe, store.get, () => null)
   const palette = defaultPalette ? ((picker && saved) || defaultPalette) : null
 

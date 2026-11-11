@@ -357,8 +357,8 @@ function Shell({
   logo?: boolean
   /** /projects/:id is a project's EntityView. */
   view?: ShellView
-  /** An app with a palette (Indigo and Cyan): 'fixed', or 'picker' to offer all four. */
-  palette?: 'fixed' | 'picker'
+  /** An app with a palette (Indigo and Cyan): 'fixed', or 'picker' to offer all four; or 'palm-lcd', the light one, asking for the picker it never gets. */
+  palette?: 'fixed' | 'picker' | 'palm-lcd'
   /** Offers the table rows in the look menu (RowsProvider's picker). */
   rows?: boolean
   /** Search in the bar: over made-up records, over the pages only, or a search that fails. */
@@ -407,7 +407,7 @@ function Shell({
     </RowsProvider>
   )
   return palette ? (
-    <PaletteProvider palette="indigo-cyan" picker={palette === 'picker'}>
+    <PaletteProvider palette={palette === 'palm-lcd' ? 'palm-lcd' : 'indigo-cyan'} picker={palette !== 'fixed'}>
       {shell}
     </PaletteProvider>
   ) : (
@@ -497,6 +497,9 @@ export const BottomBar: Story = { args: { nav: NESTED, path: '/media/channels/3'
 // Open them with `palette=indigo-cyan`, as FoundationProviders forces dark.
 export const WithPalette: Story = { args: { nav: SECTIONS, path: '/projects/7', palette: 'fixed' } }
 export const WithPalettePicker: Story = { args: { nav: SECTIONS, path: '/projects/7', palette: 'picker' } }
+// Palm LCD, the light palette an app opts into: light, no toggle, and no
+// picker even though it asks for one. Open it with `palette=palm-lcd`.
+export const WithLightPalette: Story = { args: { nav: SECTIONS, path: '/projects/7', palette: 'palm-lcd' } }
 
 // The rows picker (design-language.md "Density"): Rows on this device in
 // the palette's menu, or, without a palette, a menu of its own beside the
