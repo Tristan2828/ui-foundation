@@ -12,30 +12,30 @@
 - [Logos and brand marks](#logos-and-brand-marks) · lines 232–276
 - [Categorical colour](#categorical-colour) · lines 278–348
 - [Heat scale](#heat-scale) · lines 350–411
-- [Depth ramps](#depth-ramps) · lines 413–491
-- [A stored colour](#a-stored-colour) · lines 493–541
-- [Shapes and sizes](#shapes-and-sizes) · lines 543–564
-- [Typography](#typography) · lines 566–686
-  - [Written text (notes)](#written-text-notes) · lines 600–686
-- [Density](#density) · lines 688–781
-  - [Rows on this device](#rows-on-this-device) · lines 754–781
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 783–897
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 899–976
-- [Notices](#notices) · lines 978–1006
-- [A value over time](#a-value-over-time) · lines 1008–1094
-  - [Several values over time](#several-values-over-time) · lines 1057–1094
-- [A list as a board](#a-list-as-a-board) · lines 1096–1147
-- [A list as cards](#a-list-as-cards) · lines 1149–1195
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1197–1226
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1228–1271
-- [A few equal things](#a-few-equal-things) · lines 1273–1318
-- [An overview page](#an-overview-page) · lines 1320–1383
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1384–1422
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1424–1469
-- [Picking at random](#picking-at-random) · lines 1471–1502
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1504–1571
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1573–1598
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1600–1673
+- [Depth ramps](#depth-ramps) · lines 413–496
+- [A stored colour](#a-stored-colour) · lines 498–546
+- [Shapes and sizes](#shapes-and-sizes) · lines 548–569
+- [Typography](#typography) · lines 571–691
+  - [Written text (notes)](#written-text-notes) · lines 605–691
+- [Density](#density) · lines 693–786
+  - [Rows on this device](#rows-on-this-device) · lines 759–786
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 788–902
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 904–981
+- [Notices](#notices) · lines 983–1011
+- [A value over time](#a-value-over-time) · lines 1013–1099
+  - [Several values over time](#several-values-over-time) · lines 1062–1099
+- [A list as a board](#a-list-as-a-board) · lines 1101–1152
+- [A list as cards](#a-list-as-cards) · lines 1154–1200
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1202–1231
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1233–1276
+- [A few equal things](#a-few-equal-things) · lines 1278–1323
+- [An overview page](#an-overview-page) · lines 1325–1388
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1389–1427
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1429–1474
+- [Picking at random](#picking-at-random) · lines 1476–1507
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1509–1576
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1578–1603
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1605–1678
 
 <!-- /index -->
 
@@ -433,10 +433,10 @@ and `text-category-N-depth-M-foreground` (text on that cell).
 - **One ramp per category, its slot's.** A record whose category is slot 3
   draws its levels from slot 3's ramp, so the depth reads as "more of the
   same thing". Two categories side by side each keep their own ramp. A
-  ramp's hue stays within about 20° of its slot's, so a step never reads
-  as another slot, but steps of two neighbouring slots' ramps can come
-  close (orange and brown, blue and navy): tell categories apart by their
-  slot's own glyph and name, not by a ramp step alone.
+  ramp has one hue, its slot's, in all five steps and in both themes: only
+  lightness and chroma change. Steps of two neighbouring slots' ramps can
+  still come close (orange and brown, blue and navy): tell categories apart
+  by their slot's own glyph and name, not by a ramp step alone.
 - **Depth, not amount.** A ramp says "a level of this", never "more of
   this is worse". A count or a total over many categories is the heat
   scale; a status is a tone.
@@ -448,16 +448,18 @@ and `text-category-N-depth-M-foreground` (text on that cell).
   depends on the step and the theme: pair the two as below. It measures
   4.55:1 at the least.
 - **Neighbours are closer than the heat scale's, so keep a boundary.**
-  Neighbouring steps are at least ΔE 17.7 apart in light and 13.9 in
-  dark (blue's; every slot but blue and navy 17.4 or more), and 10.3
-  under simulated deuteranopia and protanopia. Five steps of one hue that
-  each clear 3:1 on the card only have so much lightness to share, dark's
-  band most of all. A `stroke-card` or a 1px gap between shapes, as a
-  stacked bar's segments have, makes each boundary easy to see.
-- **The order holds without hue.** Each step is darker than the one before
-  it in both themes, so a ramp also reads in greyscale. In the dark
-  themes step 1 is near white and step 5 the slot's deepest, still 3:1
-  on the card.
+  Neighbouring steps are at least ΔE 9.6 apart in light and 8.7 in dark,
+  and 6.9 under simulated deuteranopia and protanopia. Five steps of one
+  hue that each clear 3:1 on the card only have so much lightness to
+  share. A `stroke-card` or a 1px gap between shapes, as a stacked bar's
+  segments have, makes each boundary easy to see.
+- **Deeper is more contrast with the page.** In light each step is darker
+  than the one before it, in the dark themes brighter, so a ramp also
+  reads in greyscale. Step 1 is the shallowest, a tint of the hue (lightest
+  step still 3:1 on the card), and step 5 the deepest: nearly black in
+  light, nearly white in dark, never a grey. No step comes within ΔE 6 of
+  the neutral greys (`--muted`, `--muted-foreground`, `--rule`, `--border`,
+  `--input`, the charts' greys), so a step never reads as "no value".
 - **Never colour alone.** Name the level too, in the cell, a tooltip or
   a legend, and give a shape holding one a name for screen readers.
 - **Five steps, not more.** Deeper nesting than five shares step 5, or
@@ -484,11 +486,14 @@ The package's fixtures render every ramp (`patterns/DepthRamps`). Its
 Default story runs through axe and the token check in light and dark, axe
 in every palette too, and a check that measures every step of every
 slot, as a fill and as a cell, against the page and a card in each.
-`tests/depth-ramps.test.ts` holds the distance between neighbours (17 in
-light, 13.5 in dark, 10 with deuteranopia and protanopia), the order of
-lightness, text on every fill and every step against every palette's card
-and raised surface. `SideBySide` shows both themes at once, under normal
-vision and simulated deuteranopia and protanopia.
+`tests/depth-ramps.test.ts` computes from the token values one hue per
+slot, the order of lightness, the distance between neighbours (ΔE 8, and
+6 with deuteranopia and protanopia), the distance from the neutral greys
+(6), text on every fill and every step against every palette's card and
+raised surface, and fails if a change to `theme.css` breaks one.
+`SideBySide` shows both themes at once, each ramp beside its theme's
+muted greys, under normal vision and simulated deuteranopia and
+protanopia.
 
 ## A stored colour
 
