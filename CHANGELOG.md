@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.83.0 — Six parts for the list, record and overview standards
+## 4.84.0 — Six parts for the list, record and overview standards
 
 The UI package only; additive, no new dependency and nothing to change in
 an app (the backend package's version moves with it, unchanged). Six
