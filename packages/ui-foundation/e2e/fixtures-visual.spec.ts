@@ -160,6 +160,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-freshness--default', mustShow: 'Projection from' },
   { id: 'app-partempty--default', mustShow: 'Add the first line' },
   { id: 'app-partempty--in-widget-cards', mustShow: 'Add the first line' },
+  // The overview standard (O1, O4): tiles with a part's detail open, a part
+  // loading and failing, and the hub's card in the same anatomy.
+  { id: 'app-overviewpage--default', mustShow: 'Everyday account' },
+  { id: 'app-overviewpage--states', mustShow: "Couldn't reach the server." },
+  { id: 'app-overviewpage--card-anatomy', mustShow: 'Add a plan' },
   { id: 'app-entityview--rail-fields-stacked', mustShow: 'No budget yet' },
   // The record standard (4.81): badges on the title's line, Print notes and
   // Delete as icons, the strip's icons, folded empties and the dash.
