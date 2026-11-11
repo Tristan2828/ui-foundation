@@ -33,7 +33,7 @@
 - [Picking at random](#picking-at-random) · lines 1357–1388
 - [Filling in what's missing](#filling-in-whats-missing) · lines 1390–1457
 - [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1459–1484
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1486–1532
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1486–1559
 
 <!-- /index -->
 
@@ -1486,8 +1486,10 @@ both themes and every palette.
 ## The sidebar and the phone's bar
 
 `AppShell`'s navigation (4.80), all set in the app's `nav` and
-`bottomBar`; an app that sets none of it looks as it did, except the
-current entry's bar and the phone's back arrow, which every app gets.
+`bottomBar`, and (4.87) the trail and search in the bar; an app that
+sets none of it looks as it did, except the current entry's bar, the
+phone's back arrow and the nav entry's name in the bar, which every app
+gets.
 
 ```tsx
 const nav: NavEntry[] = [
@@ -1530,3 +1532,28 @@ const bottomBar: BottomBarItem[] = [
   one tile per entry, the icon in `--link` over the label, bordered,
   44px tall at least; the tile holding the page has a `--primary`
   border. The entries' own pages are left to the module.
+- **The trail in the bar** (`usePageTrail`, `EntityView`'s
+  `back.trail`): between the menu button and the search box, from 48rem
+  up, `PageTrail` at 14px: every crumb but the last a
+  link in the muted text tone, the page itself in the foreground, a `›`
+  between them, the middle folded into "…" when it doesn't fit. A page
+  that names none shows its nav entry's ("Finance › Accounts" for one of
+  Finance's pages, "Home" on the hub). On a phone the trail is hidden and
+  the back arrow goes to its closest crumb above the page that links.
+  It replaces a page's own back link; the bar sits outside `<main>`, so
+  the page's links are still the only ones in it.
+- **Search in the bar** (`search={{ placeholder, findRecords, recent }}`):
+  a box from 48rem up, 14rem wide (16rem from 64rem), bordered in
+  `--input` on the page's background, the placeholder in the muted
+  tone and the shortcut (Ctrl K, ⌘K on a Mac) in a `kbd` at its end; a
+  search button on a phone. Both, and the shortcut, open a palette: a
+  dialog 32rem wide at 12% from the top, the field over a list of
+  options under caption headings in the muted tone. Before typing:
+  Recent (the records opened lately on this device, `useRecentRecord`),
+  then the nav's first pages. Typing: Pages (a module's own named
+  "Finance · Accounts", the closest name first), then the app's records
+  under their `kind`, a `detail` in the caption size at the end. The
+  highlighted option has `bg-muted`, its detail in the foreground; a
+  spinner while records are found, "Couldn't search records" (the pages
+  still listed) when the search fails, "Nothing found for …" when
+  nothing matches.

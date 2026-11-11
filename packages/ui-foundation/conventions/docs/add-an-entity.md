@@ -4,27 +4,27 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 43–65
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–812
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–826
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 109–116
   - Step 2: `npm run gen:api` · lines 117–118
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 119–130
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 131–140
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 141–145
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–699
-  - Step 7: Register routes · lines 700–715
-  - Step 8: Add Playwright specs for all three screens · lines 716–794
-  - Step 9: Register the nav entry and route names · lines 795–809
-  - Step 10: `npm run verify`. · lines 810–812
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 814–1072
-  - [The record view](#the-record-view) · lines 963–1002
-  - [Forms](#forms) · lines 1004–1045
-  - [Dialogs](#dialogs) · lines 1047–1072
-- [What not to copy](#what-not-to-copy) · lines 1074–1100
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1102–1119
-- [Deleting](#deleting) · lines 1121–1150
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1152–1173
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1175–1184
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1187–1226
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–713
+  - Step 7: Register routes · lines 714–729
+  - Step 8: Add Playwright specs for all three screens · lines 730–808
+  - Step 9: Register the nav entry and route names · lines 809–823
+  - Step 10: `npm run verify`. · lines 824–826
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 828–1086
+  - [The record view](#the-record-view) · lines 977–1016
+  - [Forms](#forms) · lines 1018–1059
+  - [Dialogs](#dialogs) · lines 1061–1086
+- [What not to copy](#what-not-to-copy) · lines 1088–1114
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1116–1133
+- [Deleting](#deleting) · lines 1135–1164
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1166–1187
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1189–1198
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1201–1240
 
 <!-- /index -->
 
@@ -426,6 +426,20 @@ is a filled-in example while the Widgets demo is still here).
      in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
      label="Delete" tone="destructive"`, the dialog's trigger through
      `render`).
+   - **The way back is a trail.** `back={{ to: '/widgets', label:
+     'Widgets', trail: [{ label: 'Inventory', href: '/inventory' }, {
+     label: 'Widgets', href: '/widgets' }] }}`: the crumbs above the
+     record, from the module down to its list; the record's title follows
+     them. In `AppShell` it is the trail in the bar ("The sidebar and the
+     phone's bar" in design-language.md), and the page has no back link;
+     on a phone the header's back arrow goes to the list. Without `trail`
+     the view keeps its "← Widgets" link. `to` and `label` are still the
+     not-found state's way out. Any other page below a nav entry (a
+     record's sub-page, a step of a task) names its trail with
+     `usePageTrail([...crumbs, { label: 'This page' }])` in place of a
+     back link. Once the record has loaded, call
+     `useRecentRecord({ title, to: `/widgets/${id}`, detail: 'Widget' })`
+     too, so search lists it before you type.
    - **The browser tab** reads the record's title once it loads
      ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
      puts the nav's ("Widgets · <app>") back while loading, on an error
