@@ -1191,7 +1191,7 @@ row under the header, across the page at every width.
 ```tsx
 <EntityView
   subtitle={<EditableValue label="Goal" edit={goals} layout="inline">{goal}</EditableValue>}
-  strip={<KeyStats stats={[{ label: 'Done', value: '7', hint: 'of 12' }, { label: 'Next step', value: formatPlainDate(next) }]} />}
+  strip={<KeyStats stats={[{ label: 'Done', icon: HashIcon, value: '7', hint: 'of 12' }, { label: 'Next step', icon: CalendarClockIcon, value: formatPlainDate(next) }]} />}
   … />
 ```
 
@@ -1199,24 +1199,71 @@ row under the header, across the page at every width.
   value in the section title's size and tabular figures, a `hint`
   under it in caption type. One bordered card, the figures side by side,
   wrapping on a phone. A `<dl>`, so each label is read with its value.
-- **An empty value reads as `emptyLabel`** ("Not set"), in body type and
-  muted, never a blank or a dash.
+- **An icon with the word** (`icon`, 4.80): the concept's icon at 13px
+  before the label, in the label's muted tone, one icon per meaning
+  across the app (Lucide: a date `CalendarIcon`, next and review on
+  `CalendarClockIcon`, when and length `ClockIcon`, a count `HashIcon`,
+  status `CircleDotIcon`, price `DollarSignIcon`). The word stays; the
+  icon is decorative. Never an icon alone in the strip.
+- **An empty value reads as a dash** (`emptyLabel`, 4.80; "Not set"
+  before), in body type and muted, read by a screen reader as "Not set".
+  Never a blank.
 - **Three to five.** It's what the page is for at a glance; anything
   more is a section's label/value rows.
 - **`subtitle`** is the line under the title: what the record is for,
   in muted body type, editable in place like any value.
 
+## A record's header and empty values
+
+The record page standard (4.80): the same header on every record, the
+data on each its own.
+
+```tsx
+<EntityView
+  title={name}
+  badges={<><StatusSelect … /><Badge variant="outline">Wholesale</Badge></>}
+  subtitle={summary}
+  actions={<><Button variant="outline"><PlusIcon />New order</Button><DeleteSupplier … /></>}
+  emptyFields="fold"
+  … />
+// Delete: <DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />
+```
+
+- **The title's line**: the title, then the status and badges after it
+  (12px apart, 6px between badges), centred on the title's line; a title
+  too long for both pushes them to the next line, starting under it.
+  `subtitle` is the line below, in muted body type.
+- **Actions**: the record's own commands in words (New visit, Mark
+  done), then the universal ones as `IconAction`s: Print notes
+  (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
+  tone). Each is a square outline button at the header's 36px with its
+  words as both its tooltip and its accessible name. Icon alone is for
+  the universal actions only (Delete, Print notes, Copy link, Pin, Open
+  site, Restore, Open full page, Close, More); everything else keeps its
+  word. `printLook="words"` keeps Print notes as a button with its words.
+- **An empty value** reads as a dash (`emptyText`, default `'—'`), in the
+  muted text tone, read by a screen reader as "Not set": the same on
+  every field, the presets' included. A field's own `emptyLabel` still
+  wins where words say more than a dash ("No budget yet").
+- **Folded empties** (`emptyFields="fold"`): each fields card lists its
+  filled fields, then a muted, underlined "N empty" with a down chevron
+  under them opens the rest in their places, each still edited in place,
+  and reads "Hide empty" (the chevron up) while open. A card with
+  nothing empty has no toggle; one with nothing filled has the toggle
+  alone. A value set elsewhere moves its field into the card at once.
+  The fold is per card and isn't remembered.
+
 ## A record's tabs, mark and rail
 
-Three opt-ins on `EntityView` (4.76), each for a record that needs it;
-a record without them is as it was.
+Three settings on `EntityView` (4.76): tabs and a mark, each for a
+record that needs it, and rail fields beside their labels, the default
+since 4.80.
 
 ```tsx
 <EntityView
   layout="rail"
   mobileOrder="main-first"
   leading={<img src={photo} alt="" className="size-12 rounded-full object-cover" />}
-  railFields="beside"
   sections={[
     { title: 'Summary', placement: 'rail', fields },
     { title: 'Notes', content: <Markdown>{notes}</Markdown> },
@@ -1246,7 +1293,8 @@ a record without them is as it was.
   the title names the record (`alt=""`, `aria-hidden`); initials in
   foreground on `bg-muted`, an icon in muted foreground on the card
   with its border. "Logos and brand marks" above holds for a logo here.
-- **Rail fields beside** (`railFields="beside"`): the label in a 6 to
+- **Rail fields beside** (`railFields`, `beside` by default since 4.80;
+  `stacked` puts each label above its value): the label in a 6 to
   7rem column left of its value, baseline-aligned, rows a little tighter
   than stacked. Where the rail's list is under 18rem (a phone narrower
   than ~350px) it stacks as before, and once the rail stacks full width

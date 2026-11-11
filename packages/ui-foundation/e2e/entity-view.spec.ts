@@ -81,19 +81,19 @@ test.describe('EntityView, rail layout', () => {
     expect(await pageScrollsSideways(page)).toBe(false)
   })
 
-  test('the rail stacks label above value; at full width beside it', async ({ page }) => {
+  test('railFields="stacked": the rail stacks label above value; at full width beside it', async ({ page }) => {
     const owner = async () => {
       const label = (await rail(page).locator('dt').getByText('Owner', { exact: true }).boundingBox())!
       const value = (await rail(page).getByText('Ada Lovelace').boundingBox())!
       return { label, value }
     }
-    await open(page, 'rail', 1280)
+    await open(page, 'rail-fields-stacked', 1280)
     const narrow = await owner()
     expect(narrow.value.y).toBeGreaterThanOrEqual(narrow.label.y + narrow.label.height)
 
     // One column but wider than a phone: the rail's lists are wide enough
     // for a label beside its value again.
-    await open(page, 'rail', 800)
+    await open(page, 'rail-fields-stacked', 800)
     const wide = await owner()
     expect(wide.value.x).toBeGreaterThan(wide.label.x + wide.label.width)
     expect(Math.abs(wide.value.y - wide.label.y)).toBeLessThan(4)

@@ -1,11 +1,12 @@
-// Delete, in the widget view's header: a confirm dialog, then the caller
+// Delete, in the widget view's header, an icon (IconAction): a confirm dialog, then the caller
 // leaves the page (onDeleted), since the record it shows is gone. The
 // dialog stays open on a failed delete, with a toast saying why. The
 // delete is soft (issue #137), so the success toast offers Undo, which
 // restores the widget.
-import { TrashIcon } from 'lucide-react'
+import { Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { IconAction } from '@tristan2828/ui-foundation'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import {
   Dialog,
@@ -30,10 +31,7 @@ export function DeleteWidgetAction({ widget, onDeleted }: { widget: Widget; onDe
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>
-        <TrashIcon className="text-destructive" />
-        Delete
-      </DialogTrigger>
+      <DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete {widget.name}?</DialogTitle>

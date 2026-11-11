@@ -66,13 +66,19 @@
 // switch. With no `tab` on any section, nothing changes.
 //
 // `leading`, left of the title: the record's mark or avatar, with the
-// title, subtitle and badges beside it at every width. `railFields`
-// `beside` puts a rail field's label to the left of its value, as in an
-// issue tracker's sidebar, stacked again where the rail's list is too
-// narrow for both.
-import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from 'react'
+// title, subtitle and badges beside it at every width. A rail field's
+// label sits to the left of its value (`railFields`, `beside` by default
+// since 4.80), as in an issue tracker's sidebar, stacked again where the
+// rail's list is too narrow for both.
+//
+// The record page standard (4.80): `badges` sit on the title's line,
+// wrapping under a long title; Print notes is an icon (`IconAction`, its
+// words the tooltip and name); an empty value reads as a dash
+// (`emptyText`), and `emptyFields="fold"` folds each fields card's empty
+// ones behind an "N empty" toggle, still edited in place once opened.
+import { createContext, useContext, useEffect, useId, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { ArrowLeftIcon, SearchXIcon } from 'lucide-react'
+import { ArrowLeftIcon, ChevronDownIcon, SearchXIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
@@ -94,6 +100,8 @@ import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './ed
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
 import { EditableValue, LeaveGuard } from './editable-value'
+import { EmptyText } from './empty-value'
+import { EMPTY_DASH, isEmptyValue } from '@/lib/empty-value'
 import { useRecordDialog } from './record-dialog-context'
 import { entityViewTabSlug } from '@/lib/entity-view-tab'
 
@@ -105,7 +113,7 @@ export type EntityViewField = {
    * so `{tags.map(...)}` or `{email}` can be passed as they are.
    */
   value?: ReactNode
-  /** What an empty value reads as: the plan's "not set" label. Defaults to "Not set". */
+  /** What an empty value reads as, for this field. Defaults to the view's `emptyText` (a dash). */
   emptyLabel?: string
   /**
    * Editable in place: `editInPlace({...})`, or a ready-made `inPlace`
@@ -189,6 +197,13 @@ export type EntityViewMobileOrder = 'rail-first' | 'main-first'
  */
 export type EntityViewRailFields = 'stacked' | 'beside'
 
+/**
+ * What a fields card does with its empty fields: `show` (the default),
+ * each with the empty text; `fold`, the filled ones first and an
+ * "N empty" toggle that opens the rest, still edited in place.
+ */
+export type EntityViewEmptyFields = 'show' | 'fold'
+
 export type EntityViewProps = {
   /** The record's name or title, the page's <h1>, and the browser tab's once it loads (`documentTitle`). */
   title?: string
@@ -216,12 +231,17 @@ export type EntityViewProps = {
    */
   subtitle?: ReactNode
   /**
-   * A few status-like values beside the title, as `<Badge>`s, or as the
-   * control that changes one when the plan makes it a quick action (a
-   * status `Select`, a yes/no `Switch`).
+   * A few status-like values on the title's line, after it, as `<Badge>`s,
+   * or as the control that changes one when the plan makes it a quick
+   * action (a status `Select`, a yes/no `Switch`). A title too long for
+   * them on its line pushes them to the next; `subtitle` stays below.
    */
   badges?: ReactNode
-  /** The header's actions: an Edit button, a Delete with its confirm dialog. */
+  /**
+   * The header's actions: the record's own commands in words (New visit,
+   * Mark done), then the universal ones as an `<IconAction>` (Delete, with
+   * its confirm dialog, `tone="destructive"`). They follow Print notes.
+   */
   actions?: ReactNode
   /**
    * A state that decides what you do with the record, said before
@@ -253,18 +273,38 @@ export type EntityViewProps = {
    * ignores it.
    */
   mobileOrder?: EntityViewMobileOrder
-  /** The Print notes button's words, when a section is marked `print`. Defaults to "Print notes". */
+  /**
+   * The Print notes action's words, when a section is marked `print`: its
+   * tooltip and accessible name as an icon, its text as `words`. Defaults
+   * to "Print notes".
+   */
   printLabel?: string
+  /** Print notes as an icon (`icon`, the default since 4.80) or a button with its words (`words`). */
+  printLook?: 'icon' | 'words'
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
   railLabel?: string
   /**
-   * In the `rail` layout, a rail section's fields: each label above its
-   * value (`stacked`, the default), or to its left (`beside`), falling back
-   * to stacked where the rail is too narrow for both. Once the rail's
-   * sections stack full width on a narrower screen, labels sit beside
-   * values either way.
+   * In the `rail` layout, a rail section's fields: each label to the left
+   * of its value (`beside`, the default since 4.80), falling back to
+   * stacked where the rail is too narrow for both, or above it
+   * (`stacked`). Once the rail's sections stack full width on a narrower
+   * screen, labels sit beside values either way.
    */
   railFields?: EntityViewRailFields
+  /**
+   * Empty fields in a fields card (the rail's and the main column's):
+   * shown with the empty text (`show`, the default), or folded (`fold`):
+   * the card lists its filled fields, then "N empty" opens the rest in
+   * their places, each still edited in place. A value set elsewhere moves
+   * its field into the card.
+   */
+  emptyFields?: EntityViewEmptyFields
+  /**
+   * What an empty value reads as across the view (a field's or a block's
+   * own `emptyLabel` wins): a dash by default, in the muted tone, read
+   * by a screen reader as "Not set".
+   */
+  emptyText?: string
   isLoading: boolean
   /** A `notfound` error (including another user's record) shows "Not found" and a way back, never a retry. */
   error?: AppError | null
@@ -273,17 +313,9 @@ export type EntityViewProps = {
   back: { to: string; label: string }
 }
 
-const DEFAULT_EMPTY_LABEL = 'Not set'
-
-function isEmptyValue(value: ReactNode) {
-  return (
-    value === null ||
-    value === undefined ||
-    value === false ||
-    value === '' ||
-    (Array.isArray(value) && value.length === 0)
-  )
-}
+// The view's empty text and whether fields cards fold their empty ones,
+// for every section without threading them through each layout.
+const EmptyContext = createContext<{ text: string; fold: boolean }>({ text: EMPTY_DASH, fold: false })
 
 function BackLink({ back }: { back: EntityViewProps['back'] }) {
   return (
@@ -297,13 +329,13 @@ function BackLink({ back }: { back: EntityViewProps['back'] }) {
   )
 }
 
-function orEmptyLabel(value: ReactNode, emptyLabel: string | undefined) {
-  return isEmptyValue(value) ? (
-    <span className="text-muted-foreground">{emptyLabel ?? DEFAULT_EMPTY_LABEL}</span>
-  ) : (
-    value
-  )
+function OrEmpty({ value, emptyLabel }: { value: ReactNode; emptyLabel: string | undefined }) {
+  const empty = useContext(EmptyContext)
+  return isEmptyValue(value) ? <EmptyText text={emptyLabel ?? empty.text} /> : value
 }
+
+// A preset shows its own value unless the screen gives one.
+const fieldValue = (field: EntityViewField) => (field.value !== undefined ? field.value : field.edit?.shown)
 
 // Label beside value from `sm` up; below it (a phone) the label sits
 // above its value, so nothing is squeezed into a narrow second column. In
@@ -323,20 +355,56 @@ const FIELD_ROW = {
 type FieldPlace = keyof typeof FIELD_ROW
 
 function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace }) {
-  // A preset shows its own value unless the screen gives one.
-  const value = field.value !== undefined ? field.value : field.edit?.shown
+  const value = fieldValue(field)
   return (
     <div className={cn('flex flex-col gap-1 py-3 first:pt-0 last:pb-0', FIELD_ROW[place])}>
       <dt className="type-label text-muted-foreground">{field.label}</dt>
       <dd className="min-w-0 type-body break-words text-foreground">
         {field.edit ? (
           <EditableValue label={field.label} edit={field.edit}>
-            {orEmptyLabel(value, field.emptyLabel)}
+            <OrEmpty value={value} emptyLabel={field.emptyLabel} />
           </EditableValue>
         ) : (
-          orEmptyLabel(value, field.emptyLabel)
+          <OrEmpty value={value} emptyLabel={field.emptyLabel} />
         )}
       </dd>
+    </div>
+  )
+}
+
+// A fields card's rows. Folded (`emptyFields="fold"`), the filled fields
+// show and the empty ones wait behind "N empty", which opens them in their
+// places (the card's order kept) and then reads "Hide empty". Whether a
+// field is empty is read on every render, so one filled elsewhere joins
+// the card at once.
+function FieldList({ fields, inRail, place }: { fields: EntityViewField[]; inRail: boolean; place: FieldPlace }) {
+  const empty = useContext(EmptyContext)
+  const [open, setOpen] = useState(false)
+  const listId = useId()
+  const emptyCount = empty.fold ? fields.filter((field) => isEmptyValue(fieldValue(field))).length : 0
+  const shown = emptyCount === 0 || open ? fields : fields.filter((field) => !isEmptyValue(fieldValue(field)))
+  return (
+    <div className="flex flex-col gap-3">
+      {shown.length > 0 && (
+        <dl id={listId} className={cn('flex flex-col divide-y divide-border', inRail && '@container/fields')}>
+          {shown.map((field) => (
+            <FieldRow key={field.label} field={field} place={place} />
+          ))}
+        </dl>
+      )}
+      {emptyCount > 0 && (
+        <button
+          type="button"
+          data-slot="entity-view-empty-toggle"
+          aria-expanded={open}
+          aria-controls={shown.length > 0 ? listId : undefined}
+          onClick={() => setOpen((was) => !was)}
+          className="inline-flex w-fit items-center gap-1 rounded-sm type-label text-muted-foreground underline underline-offset-3 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 pointer-coarse:min-h-11"
+        >
+          {open ? 'Hide empty' : `${emptyCount} empty`}
+          <ChevronDownIcon aria-hidden="true" className={cn('size-3.5 transition-transform', open && 'rotate-180')} />
+        </button>
+      )}
     </div>
   )
 }
@@ -344,13 +412,14 @@ function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace 
 function ViewSection({
   section,
   inRail = false,
-  railFields = 'stacked',
+  railFields = 'beside',
 }: {
   section: EntityViewSection
   inRail?: boolean
   railFields?: EntityViewRailFields
 }) {
   const headingId = useId()
+  const empty = useContext(EmptyContext)
   return (
     <section aria-labelledby={headingId}>
       <Card>
@@ -361,28 +430,24 @@ function ViewSection({
         </CardHeader>
         <CardContent>
           {'fields' in section ? (
-            <dl className={cn('flex flex-col divide-y divide-border', inRail && '@container/fields')}>
-              {section.fields.map((field) => (
-                <FieldRow
-                  key={field.label}
-                  field={field}
-                  place={!inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'}
-                />
-              ))}
-            </dl>
+            <FieldList
+              fields={section.fields}
+              inRail={inRail}
+              place={!inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'}
+            />
           ) : section.edit?.kind === 'list' ? (
             <div className="flex min-w-0 flex-col gap-2 type-body break-words text-foreground">
               {!isEmptyValue(section.content) && section.content}
-              <EditableList label={section.title} edit={section.edit} emptyLabel={section.emptyLabel ?? DEFAULT_EMPTY_LABEL} />
+              <EditableList label={section.title} edit={section.edit} emptyLabel={section.emptyLabel ?? empty.text} />
             </div>
           ) : (
             <div className="min-w-0 type-body break-words text-foreground">
               {section.edit ? (
                 <EditableValue label={section.title} edit={section.edit}>
-                  {orEmptyLabel(section.content, section.emptyLabel)}
+                  <OrEmpty value={section.content} emptyLabel={section.emptyLabel} />
                 </EditableValue>
               ) : (
-                orEmptyLabel(section.content, section.emptyLabel)
+                <OrEmpty value={section.content} emptyLabel={section.emptyLabel} />
               )}
             </div>
           )}
@@ -606,8 +671,11 @@ export function EntityView({
   layout = 'column',
   mobileOrder = 'rail-first',
   railLabel,
-  railFields = 'stacked',
+  railFields = 'beside',
+  emptyFields = 'show',
+  emptyText = EMPTY_DASH,
   printLabel = 'Print notes',
+  printLook = 'icon',
   isLoading,
   error,
   onRetry,
@@ -672,7 +740,7 @@ export function EntityView({
       answerSpace: typeof section.print === 'object' && section.print.answerSpace === true,
     }))
   const printButton = printSections.length > 0 && (
-    <PrintNotes label={printLabel} title={title} subtitle={subtitle} sections={printSections} />
+    <PrintNotes label={printLabel} look={printLook} title={title} subtitle={subtitle} sections={printSections} />
   )
   const railSections = sections.filter((section) => section.placement === 'rail')
   const mainSections = sections.filter((section) => section.placement !== 'rail')
@@ -693,6 +761,7 @@ export function EntityView({
 
   return (
     <EditInPlaceContext.Provider value={store}>
+    <EmptyContext.Provider value={{ text: emptyText, fold: emptyFields === 'fold' }}>
     <div
       className={layout === 'rail' ? RAIL_LAYOUT.page : 'flex max-w-4xl flex-col gap-6'}
       data-state="success"
@@ -713,21 +782,29 @@ export function EntityView({
           </div>
         )}
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <h1 id={dialog?.titleId} className="type-page-title break-words text-foreground">
-            {titleEdit ? (
-              <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline" className="w-full">
-                {title}
-              </EditableValue>
-            ) : (
-              title
+          {/* The title's line: the title, then the status and badges after
+              it, wrapping under a title too long for both. */}
+          <div data-slot="entity-view-title-line" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 id={dialog?.titleId} className="min-w-0 max-w-full type-page-title break-words text-foreground">
+              {titleEdit ? (
+                <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline" className="w-full">
+                  {title}
+                </EditableValue>
+              ) : (
+                title
+              )}
+            </h1>
+            {badges && (
+              <div data-slot="entity-view-badges" className="flex flex-wrap items-center gap-1.5">
+                {badges}
+              </div>
             )}
-          </h1>
+          </div>
           {subtitle && (
             <div data-slot="entity-view-subtitle" className="type-body break-words text-muted-foreground">
               {subtitle}
             </div>
           )}
-          {badges && <div className="flex flex-wrap items-center gap-1.5">{badges}</div>}
         </div>
         </div>
         {(actions || printButton) && (
@@ -772,6 +849,7 @@ export function EntityView({
         </footer>
       )}
     </div>
+    </EmptyContext.Provider>
     </EditInPlaceContext.Provider>
   )
 }

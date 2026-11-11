@@ -2,8 +2,9 @@ import { expect, test, type Page } from '@playwright/test'
 
 // EntityView's 4.76 opt-ins in a real browser: tabs over the main column
 // (#303; app/EntityView Tabs, Tabs column), the `leading` mark left of
-// the title (Leading) and rail fields beside their labels (Rail fields
-// beside), each at a desktop's and a phone's width. Axe and the token
+// the title (Leading) and rail fields beside their labels (Rail, the
+// default since 4.80; Rail fields stacked opts out), each at a desktop's
+// and a phone's width. Axe and the token
 // check in both themes are e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
 const story = (id: string, query = '') => `http://localhost:6180/story.html?id=app-entityview--${id}${query}`
 
@@ -154,7 +155,7 @@ test.describe('EntityView rail fields beside', () => {
 
   for (const width of [1280, 393]) {
     test(`${width}px: each label left of its value, on one line`, async ({ page }) => {
-      await open(page, 'rail-fields-beside', width)
+      await open(page, 'rail', width)
       const { label, value } = await rows(page)
       expect(value.x).toBeGreaterThan(label.x + label.width)
       expect(Math.abs(value.y - label.y)).toBeLessThan(4)
@@ -163,14 +164,14 @@ test.describe('EntityView rail fields beside', () => {
   }
 
   test('320px: too narrow for both, labels above values again', async ({ page }) => {
-    await open(page, 'rail-fields-beside', 320)
+    await open(page, 'rail', 320)
     const { label, value } = await rows(page)
     expect(value.y).toBeGreaterThan(label.y + label.height - 1)
     expect(Math.abs(value.x - label.x)).toBeLessThan(2)
   })
 
-  test('without it, the rail beside main stacks its labels as before', async ({ page }) => {
-    await open(page, 'rail', 1280)
+  test('railFields="stacked": the rail beside main stacks its labels as before 4.80', async ({ page }) => {
+    await open(page, 'rail-fields-stacked', 1280)
     const summary = region(page, 'Summary')
     const label = (await summary.locator('dt', { hasText: 'Floor' }).boundingBox())!
     const value = (await summary.locator('dd', { hasText: 'Third' }).boundingBox())!
