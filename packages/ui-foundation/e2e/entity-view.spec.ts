@@ -81,19 +81,19 @@ test.describe('EntityView, rail layout', () => {
     expect(await pageScrollsSideways(page)).toBe(false)
   })
 
-  test('the rail stacks label above value; at full width beside it', async ({ page }) => {
+  test('railFields="stacked": the rail stacks label above value; at full width beside it', async ({ page }) => {
     const owner = async () => {
       const label = (await rail(page).locator('dt').getByText('Owner', { exact: true }).boundingBox())!
       const value = (await rail(page).getByText('Ada Lovelace').boundingBox())!
       return { label, value }
     }
-    await open(page, 'rail', 1280)
+    await open(page, 'rail-fields-stacked', 1280)
     const narrow = await owner()
     expect(narrow.value.y).toBeGreaterThanOrEqual(narrow.label.y + narrow.label.height)
 
     // One column but wider than a phone: the rail's lists are wide enough
     // for a label beside its value again.
-    await open(page, 'rail', 800)
+    await open(page, 'rail-fields-stacked', 800)
     const wide = await owner()
     expect(wide.value.x).toBeGreaterThan(wide.label.x + wide.label.width)
     expect(Math.abs(wide.value.y - wide.label.y)).toBeLessThan(4)
@@ -434,7 +434,9 @@ test.describe('EntityView, notice and footer (#158, #159)', () => {
 // (it was squeezed to 0px, a letter per line) and the actions wrap.
 test('many header actions wrap beside the title instead of squeezing it', async ({ page }) => {
   await open(page, 'many-actions', 1024)
-  const title = (await page.getByRole('heading', { level: 1, name: 'Office move' }).boundingBox())!
+  // The title's line (the title and its badges) keeps the 16rem; the
+  // <h1> in it is as wide as its words (4.81).
+  const title = (await page.locator('[data-slot="entity-view-title-line"]').boundingBox())!
   expect(title.width).toBeGreaterThanOrEqual(256)
   expect(title.height).toBeLessThan(60)
   const tops = await header(page)
