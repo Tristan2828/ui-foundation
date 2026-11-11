@@ -97,8 +97,8 @@ is a filled-in example while the Widgets demo is still here).
   cell pattern 18, "In a table's rows": each field's cell an
   `EditableValue` over the shared control from `<entity>-fields.tsx` and
   `useEdit<Entity>Field`, `InlineCreate` in the toolbar for create, a
-  delete row action with its confirm dialog, and `width="content"` if the
-  plan's List screen says so. There's no reference file in the template
+  delete row action with its confirm dialog, and `width="full"` only if
+  the plan's List screen says so. There's no reference file in the template
   for this shape; the pattern's code is the reference. Its specs: each
   cell kind saves, a refusal stays in its cell, one cell at a time, the
   leave prompt, create (Enter, a blank name, a taken one), delete, and
@@ -963,8 +963,8 @@ place yet; the plan says which, and the gap is raised for the package.
   the in-place a11y block unless the plan has an `Edit in place` line,
   and then only for the fields it names.
 
-- `width="content"` on `DataTable` unless the plan's List screen says
-  `Width: content` (the Widgets table is wide and leaves it out).
+- `width="full"` on `DataTable` unless the plan's List screen says
+  `Width: full` (`content`, the default, is right for almost every list).
 - The saved-views row in `widgets-table.tsx` (`VIEWS`, the "Saved views"
   button group and `visibleColumns`) unless the plan's List screen lists
   saved views. When it does, copy it: `useTableUrlState`'s third argument

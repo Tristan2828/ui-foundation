@@ -3,42 +3,43 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 70–89
-- [1. Plain text](#1-plain-text) · lines 91–127
-- [2. Icon + label](#2-icon--label) · lines 129–152
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 154–167
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 169–246
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 194–246
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 248–261
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 263–275
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 277–298
-- [8. Date, relative](#8-date-relative) · lines 300–337
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 339–387
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 357–387
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 389–439
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 407–439
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 441–481
-- [12. Boolean](#12-boolean) · lines 483–513
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 515–551
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 535–551
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 553–570
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 572–681
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 598–681
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 683–718
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 720–793
-- [18. Editable value](#18-editable-value) · lines 795–1436
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1080–1138
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1140–1176
-  - [A link and its label](#a-link-and-its-label) · lines 1178–1202
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1204–1337
-  - [In a table's rows](#in-a-tables-rows) · lines 1339–1424
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1426–1436
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1438–1504
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1506–1570
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1572–1670
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1672–1700
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1702–1778
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1780–1803
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 71–90
+- [1. Plain text](#1-plain-text) · lines 92–145
+- [2. Icon + label](#2-icon--label) · lines 147–170
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 172–185
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 187–264
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 212–264
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 266–279
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 281–293
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 295–316
+- [8. Date, relative](#8-date-relative) · lines 318–355
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 357–405
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 375–405
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 407–457
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 425–457
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 459–499
+- [12. Boolean](#12-boolean) · lines 501–531
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 533–569
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 553–569
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 571–588
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 590–699
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 616–699
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 701–736
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 738–811
+- [18. Editable value](#18-editable-value) · lines 813–1456
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1098–1156
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1158–1194
+  - [A link and its label](#a-link-and-its-label) · lines 1196–1220
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1222–1355
+  - [In a table's rows](#in-a-tables-rows) · lines 1357–1442
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1444–1456
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1458–1524
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1526–1590
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1592–1690
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1692–1721
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1723–1761
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1763–1839
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1841–1864
 
 <!-- /index -->
 
@@ -125,6 +126,23 @@ cell, a card's line or a caption with `<Markdown inline>`, not the block
   own with an `onClick`.
 - It's for one line. Long text is notes, the block `<Markdown>` on the
   record's view.
+
+**Long text in a list's column: `meta.clip`.** A column whose values run
+long (a description, a note, a path) is cut to one line, so one long value
+can't make the whole table thousands of pixels wide:
+
+```tsx
+{ id: 'notes', header: 'Notes', meta: { clip: true }, cell: ({ row }) => row.original.notes }
+```
+
+- One line, cut at `meta.maxWidth` (`'24rem'` unless set, and never over
+  60% of the table's area, so a phone keeps room for the name) with an
+  ellipsis.
+- The whole text shows in a tooltip on hover and on focus: a cell that's
+  actually cut takes a tab stop, one that fits takes none. A screen reader
+  reads the whole text either way, and the record shows it too.
+- `meta.maxWidth` alone caps the column and lets its text wrap, for a
+  value worth reading whole in the row.
 
 ## 2. Icon + label
 
@@ -1376,7 +1394,7 @@ column and no edit route.
   (`schema`), and a refusal (a taken name's 422) shows under the box.
 - **Delete** stays a row action: a trash button in a pinned last column
   (`pinLastColumn`), with its confirm dialog.
-- **Few short columns?** `width="content"` (below) keeps the row's cells
+- **Width:** the default, `width="content"` (below), keeps the row's cells
   and its delete together on a wide screen.
 
 ```tsx
@@ -1425,15 +1443,17 @@ entity yet.
 
 ### A table of a few short columns: `width="content"`
 
-On a wide screen a table of three to five short columns (a name, a
-colour, a count, its delete) spreads them across the page, and the
-row's actions end up far from its name. `width="content"` sizes such a
-table to its columns once its area is 80rem or wider, never under 36rem,
-with the toolbar and pagination at the same width. Below 80rem, and on a
-phone, it's the full width as always. While it's loading, empty or
-failed after a load, it keeps the width it last had, so paging and
-filtering don't move it; only the first load can. A table that grows
-wide (many columns) has no reason to opt in.
+On a wide screen a table of a few short columns (a name, a colour, a
+count, its delete) spread across the page puts the row's actions far
+from its name. `width="content"`, the default since 4.80 (it was an
+opt-in from 80rem), sizes the table and its pagination to its columns at
+every width, never under 36rem (or the whole width, when that's less),
+with empty space at the right; the toolbar keeps the whole width, so its
+controls sit in the same place on every list. A table wider than its
+area scrolls sideways inside it. While it's loading, empty or failed
+after a load, it keeps the width it last had, so paging and filtering
+don't move it; only the first load can. `width="full"` takes the whole
+width, the look before 4.80; a card layout always does.
 
 ## 19. Stage circle for an ordered status
 
@@ -1678,10 +1698,11 @@ current one. `DataTable`'s `highlightRow` returns true for it.
 <DataTable highlightRow={(book) => book.id === nextUpId} … />
 ```
 
-- **A wash of info on every cell**, over the zebra stripe and the pinned
-  columns' opaque backgrounds (`--table-highlight`, pre-mixed onto the
-  page), and a bar in `info-text` at the row's start, so it reads without
-  colour too. Still **say why in the row** (a "Next up" word or badge):
+- **A wash of info on every cell**, over a stripe (`striped`) and the
+  pinned columns' opaque backgrounds (`--table-highlight`, pre-mixed onto
+  the page), and a bar in `info-text` at the row's start, so it reads
+  without colour too. The pointer's hover (pattern 24) leaves it as it
+  is, so "next up" never reads as the hovered row. Still **say why in the row** (a "Next up" word or badge):
   the wash says "look here", not what it is.
 - **Muted text inside it is darkened for you.** `muted-foreground`
   measures 4.09:1 on the wash, under 4.5:1, and no lighter wash fixes it
@@ -1698,6 +1719,46 @@ current one. `DataTable`'s `highlightRow` returns true for it.
   (one striped), pinned columns and muted text inside them, under axe and
   the token check in both themes; `e2e/data-table.spec.ts` checks every
   cell wears the wash.
+
+## 24. A list's rows: hover, lines, rows per page
+
+What every `DataTable` does by default since 4.80 (the list page
+standard), and the two choices it leaves an app.
+
+- **The row under the pointer** lights whole: every cell, pinned ones
+  included, in `--table-hover` (the muted fill, solid), with a 3px bar in
+  `--primary` on its first cell. Muted text inside it takes the darker
+  grey a highlighted row's does (4.34:1 would be under 4.5 in light). A
+  row that opens a record (`opens` with a dialog, a page or the panel, or
+  `onRowClick`) takes the hand cursor; a row edited in place
+  (`opens={{ kind: 'rows' }}`) gets the same highlight and keeps the
+  arrow. A highlighted row (pattern 22) and the panel's picked row keep
+  their own look.
+- **No zebra stripes:** rows are told apart by the line under each.
+  `striped` brings the stripes back for an app that wants them. Tables in
+  notes keep theirs (4.67.1).
+- **Rows per page:** a menu in the pagination bar, from
+  `useTableUrlState`, which keeps the pick in the URL (`?size=`) and on
+  this device:
+
+```tsx
+const { page, setPage, pageSize, pageSizes, setPageSize } = useTableUrlState(FILTERS, MULTI, VIEWS, {
+  pageSizeStorageKey: 'my-app:recipes:page-size',   // defaults: pageSizes [25, 50, 100], defaultPageSize 50
+})
+const query = useRecipes({ page, pageSize, ... })
+<DataTable page={page} pageSize={pageSize} onPageChange={setPage}
+  pageSizes={pageSizes} onPageSizeChange={setPageSize} … />
+```
+
+  A pick returns to page 1. A size in the URL or storage that isn't one
+  of `pageSizes` is ignored, so `?size=100000` can't ask the server for
+  everything. Without `pageSizes` and `onPageSizeChange` the bar has no
+  menu, as before.
+- The fixtures' `app/DataTable` ListLook, ListLookInRows and
+  ListLookStriped stories hold all of it (with a `meta.clip` Notes
+  column, pattern 1), under axe and the token check in both themes;
+  `e2e/data-table.spec.ts` "list look" checks the hover on every cell,
+  the cursors, the stripes, the tooltip, the widths and the menu.
 
 ## 23. A Group menu, and a record read beside the list
 

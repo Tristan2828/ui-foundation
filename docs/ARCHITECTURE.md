@@ -179,8 +179,8 @@ src/main.tsx                           FoundationProviders (theme, query client,
 - **A small entity** (3.26) edits in its table's rows: `DataTable` runs
   the same edit-in-place store as a view, so a cell that renders an
   `EditableValue` edits where it's shown, and `InlineCreate` creates from
-  a name in the toolbar. `width="content"` sizes a table of a few short
-  columns to them on a wide screen.
+  a name in the toolbar. `width="content"` (the default since 4.80) sizes
+  a table to its columns.
 - **A record over a page** (4.58, 4.71): `RecordDialogRoute` draws a
   route's children in a dialog over its `list`, the history entry's state
   saying dialog or page. The list can be a sibling route (`listPath`:

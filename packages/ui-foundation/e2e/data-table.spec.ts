@@ -11,9 +11,11 @@ import { expectDataViewsLoaded } from '../src/testing'
 const story = (id: string, theme: 'light' | 'dark' = 'light') =>
   `http://localhost:6180/story.html?id=app-datatable--${id}&theme=${theme}`
 
-const table = (page: Page) => page.locator('[data-width="content"]')
+// The part `width="content"` fits (the table, its states, its pagination),
+// and the whole DataTable, the toolbar's width.
+const table = (page: Page) => page.locator('[data-width="content"] [data-slot="data-table-body"]')
 const width = async (page: Page) => (await table(page).boundingBox())!.width
-const areaWidth = async (page: Page) => (await table(page).locator('..').boundingBox())!.width
+const areaWidth = async (page: Page) => (await page.locator('[data-width="content"]').boundingBox())!.width
 
 test.describe('DataTable width="content"', () => {
   test('on a wide screen, a few short columns take the width they need (at least 36rem), actions beside them', async ({ page }) => {
@@ -37,17 +39,21 @@ test.describe('DataTable width="content"', () => {
     expect(next.x + next.width).toBeLessThanOrEqual(area.x + area.width + 1)
   })
 
-  for (const viewport of [
-    { width: 1280, height: 800 },
-    { width: 393, height: 852 },
-  ]) {
-    test(`at ${viewport.width}px nothing changes: the whole width, as today`, async ({ page }) => {
-      await page.setViewportSize(viewport)
-      await page.goto(story('content-width'))
-      await expect(page.getByRole('cell', { name: 'Finance', exact: true })).toBeVisible()
-      expect(Math.abs((await width(page)) - (await areaWidth(page)))).toBeLessThanOrEqual(1)
-    })
-  }
+  // Since 4.80 at every width, not only from an 80rem table area.
+  test('at 1280px too it takes the width it needs, the toolbar keeping the whole width', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto(story('content-width'))
+    await expect(page.getByRole('cell', { name: 'Finance', exact: true })).toBeVisible()
+    expect(await width(page)).toBeLessThan((await areaWidth(page)) - 100)
+  })
+
+  test('on a phone it is never wider than the page: the table scrolls inside it', async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 852 })
+    await page.goto(story('content-width'))
+    await expect(page.getByRole('cell', { name: 'Finance', exact: true })).toBeVisible()
+    expect(await width(page)).toBeLessThanOrEqual((await areaWidth(page)) + 1)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(393)
+  })
 
   test('loading, empty and error keep the width it had loaded', async ({ page }) => {
     await page.setViewportSize({ width: 2560, height: 900 })
@@ -446,5 +452,130 @@ test.describe('several tables on one page (expectDataViewsLoaded)', () => {
     await expectDataViewsLoaded(page, { success: false })
     expect(await page.locator('[data-state="loading"]').count()).toBe(0)
     expect(await page.locator('[data-state="success"]').count()).toBe(2)
+  })
+})
+
+// A list's look (4.80, the list page standard): the row hover, no stripes
+// unless `striped`, long text on one line (`meta.clip`), content width by
+// default, and rows per page. Axe and the token check at rest in both
+// themes are fixtures-visual's; the hovered row's contrast is checked here.
+test.describe('DataTable list look (4.80)', () => {
+  const recipeRow = (page: Page, name: string) =>
+    page.locator('tbody tr', { has: page.getByRole('link', { name, exact: true }) })
+  const tokenColour = (page: Page, token: string) =>
+    page.evaluate((value) => {
+      const probe = document.createElement('div')
+      probe.style.backgroundColor = value
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).backgroundColor
+      probe.remove()
+      return colour
+    }, `var(${token})`)
+  const backgrounds = (page: Page, name: string) =>
+    recipeRow(page, name)
+      .locator('td')
+      .evaluateAll((tds) => tds.map((td) => getComputedStyle(td).backgroundColor))
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`hover lights every cell of the row, the pinned one too, with a bar at its start (${theme})`, async ({ page }) => {
+      await page.goto(story('list-look', theme))
+      await expect(recipeRow(page, 'Recipe 2')).toBeVisible()
+      const hover = await tokenColour(page, '--table-hover')
+      const before = await backgrounds(page, 'Recipe 2')
+      expect(before).not.toContain(hover)
+      await recipeRow(page, 'Recipe 2').locator('td').nth(2).hover()
+      expect(await backgrounds(page, 'Recipe 2')).toEqual(before.map(() => hover))
+      const bar = await recipeRow(page, 'Recipe 2')
+        .locator('td')
+        .first()
+        .evaluate((td) => getComputedStyle(td).boxShadow)
+      expect(bar).toContain('3px 0px 0px 0px')
+      // Muted text in the hovered row still clears 4.5:1.
+      await recipeRow(page, 'Recipe 4').locator('td').nth(2).hover()
+      const results = await new AxeBuilder({ page }).include('tbody tr:hover').withRules(['color-contrast']).analyze()
+      expect(results.passes.find((rule) => rule.id === 'color-contrast')?.nodes.length).toBeGreaterThan(0)
+      expect(results.violations).toEqual([])
+    })
+  }
+
+  test('the hand cursor on rows that open; the arrow on rows edited in place, with the same highlight', async ({ page }) => {
+    await page.goto(story('list-look'))
+    await expect(recipeRow(page, 'Recipe 1')).toHaveCSS('cursor', 'pointer')
+    await page.goto(story('list-look-in-rows'))
+    await expect(recipeRow(page, 'Recipe 1')).toHaveCSS('cursor', 'auto')
+    const hover = await tokenColour(page, '--table-hover')
+    await recipeRow(page, 'Recipe 1').locator('td').nth(2).hover()
+    const lit = await backgrounds(page, 'Recipe 1')
+    expect(lit).toEqual(lit.map(() => hover))
+  })
+
+  test('no zebra by default; `striped` tints every other row, pinned cell included', async ({ page }) => {
+    await page.goto(story('list-look'))
+    await expect(recipeRow(page, 'Recipe 2')).toBeVisible()
+    const stripe = await tokenColour(page, '--table-stripe')
+    expect(await backgrounds(page, 'Recipe 2')).not.toContain(stripe)
+    expect(await recipeRow(page, 'Recipe 2').evaluate((tr) => getComputedStyle(tr).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
+    await page.goto(story('list-look-striped'))
+    await expect(recipeRow(page, 'Recipe 2')).toBeVisible()
+    expect((await backgrounds(page, 'Recipe 2'))[0]).toBe(stripe)
+    expect(await recipeRow(page, 'Recipe 2').evaluate((tr) => getComputedStyle(tr).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)')
+    expect((await backgrounds(page, 'Recipe 1'))[0]).not.toBe(stripe)
+  })
+
+  test('a clip column stays on one line at 24rem, and its whole text shows on hover and on focus', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(story('list-look'))
+    const cut = recipeRow(page, 'Recipe 1').locator('[data-slot="data-table-clip"]')
+    await expect(cut).toBeVisible()
+    const box = (await cut.boundingBox())!
+    expect(box.width).toBeLessThanOrEqual(24 * 16 + 1)
+    expect(box.height).toBeLessThan(24)
+    const whole = 'Soak the oats overnight, then warm them through with a pinch of salt and top with whatever fruit is in season'
+    const tooltip = page.locator('[data-slot="tooltip-content"]')
+    await cut.hover()
+    await expect(tooltip).toHaveText(whole)
+    await page.mouse.move(0, 0)
+    await expect(tooltip).toHaveCount(0)
+    await cut.focus()
+    await expect(tooltip).toHaveText(whole)
+    // A short note isn't cut: no tab stop, so no tooltip.
+    await expect(recipeRow(page, 'Recipe 2').locator('[data-slot="data-table-clip"]')).not.toHaveAttribute('tabindex')
+  })
+
+  test('content width: the table as wide as its columns, the toolbar the whole width; full opts out', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(story('list-look'))
+    await expect(recipeRow(page, 'Recipe 1')).toBeVisible()
+    const body = (await page.locator('[data-slot="data-table-body"]').boundingBox())!
+    const whole = (await page.locator('[data-width="content"]').boundingBox())!
+    expect(body.width).toBeLessThan(whole.width - 200)
+    await page.goto(story('list-look-striped'))
+    await expect(recipeRow(page, 'Recipe 1')).toBeVisible()
+    const fullBody = (await page.locator('[data-slot="data-table-body"]').boundingBox())!
+    const fullWhole = (await page.locator('[data-width="full"]').boundingBox())!
+    expect(Math.abs(fullBody.width - fullWhole.width)).toBeLessThanOrEqual(1)
+  })
+
+  test('rows per page: 50 to start, a pick shows that many from page 1, and is remembered', async ({ page }) => {
+    await page.goto(story('list-look'))
+    await expect(page.locator('tbody tr')).toHaveCount(50)
+    await page.getByRole('button', { name: 'Next page' }).click()
+    await expect(page.getByText('Page 2 of 3')).toBeVisible()
+    await page.getByRole('button', { name: 'Rows per page: 50' }).click()
+    await page.getByRole('menuitemradio', { name: '25' }).click()
+    await expect(page.locator('tbody tr')).toHaveCount(25)
+    await expect(page.getByText('Page 1 of 5')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Rows per page: 25' })).toBeVisible()
+    await page.reload()
+    await expect(page.locator('tbody tr')).toHaveCount(25)
+  })
+
+  test('on a phone nothing overflows the page, the rows-per-page menu included', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto(story('list-look'))
+    await expect(recipeRow(page, 'Recipe 1')).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
+    const menu = (await page.getByRole('button', { name: 'Rows per page: 50' }).boundingBox())!
+    expect(menu.x + menu.width).toBeLessThanOrEqual(375)
   })
 })
