@@ -3,35 +3,36 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 44–111
-- [Glow](#glow) · lines 113–131
-- [Semantic tones](#semantic-tones) · lines 133–161
-- [The three badge styles](#the-three-badge-styles) · lines 163–180
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 182–211
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 213–226
-- [Logos and brand marks](#logos-and-brand-marks) · lines 228–272
-- [Categorical colour](#categorical-colour) · lines 274–344
-- [Heat scale](#heat-scale) · lines 346–407
-- [Depth ramps](#depth-ramps) · lines 409–487
-- [A stored colour](#a-stored-colour) · lines 489–537
-- [Shapes and sizes](#shapes-and-sizes) · lines 539–560
-- [Typography](#typography) · lines 562–682
-  - [Written text (notes)](#written-text-notes) · lines 596–682
-- [Density](#density) · lines 684–770
-  - [Rows on this device](#rows-on-this-device) · lines 743–770
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 772–886
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 888–965
-- [Notices](#notices) · lines 967–995
-- [A value over time](#a-value-over-time) · lines 997–1083
-  - [Several values over time](#several-values-over-time) · lines 1046–1083
-- [A list as a board](#a-list-as-a-board) · lines 1085–1136
-- [A list as cards](#a-list-as-cards) · lines 1138–1184
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1186–1215
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1217–1255
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1257–1302
-- [Picking at random](#picking-at-random) · lines 1304–1335
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1337–1404
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1406–1431
+- [Palettes](#palettes) · lines 45–112
+- [Glow](#glow) · lines 114–132
+- [Semantic tones](#semantic-tones) · lines 134–162
+- [The three badge styles](#the-three-badge-styles) · lines 164–181
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 183–212
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 214–227
+- [Logos and brand marks](#logos-and-brand-marks) · lines 229–273
+- [Categorical colour](#categorical-colour) · lines 275–345
+- [Heat scale](#heat-scale) · lines 347–408
+- [Depth ramps](#depth-ramps) · lines 410–488
+- [A stored colour](#a-stored-colour) · lines 490–538
+- [Shapes and sizes](#shapes-and-sizes) · lines 540–561
+- [Typography](#typography) · lines 563–683
+  - [Written text (notes)](#written-text-notes) · lines 597–683
+- [Density](#density) · lines 685–771
+  - [Rows on this device](#rows-on-this-device) · lines 744–771
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 773–887
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 889–966
+- [Notices](#notices) · lines 968–996
+- [A value over time](#a-value-over-time) · lines 998–1084
+  - [Several values over time](#several-values-over-time) · lines 1047–1084
+- [A list as a board](#a-list-as-a-board) · lines 1086–1137
+- [A list as cards](#a-list-as-cards) · lines 1139–1185
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1187–1216
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1218–1256
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1258–1303
+- [Picking at random](#picking-at-random) · lines 1305–1336
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1338–1405
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1407–1432
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1434–1480
 
 <!-- /index -->
 
@@ -1429,3 +1430,51 @@ both themes and every palette.
 - **A list in place under group headings** heads each group in
   `type-label text-muted-foreground` (an `<h3>` under the section's
   title), with `gap-4` between groups and the list's own `gap-2` inside.
+
+## The sidebar and the phone's bar
+
+`AppShell`'s navigation (4.80), all set in the app's `nav` and
+`bottomBar`; an app that sets none of it looks as it did, except the
+current entry's bar and the phone's back arrow, which every app gets.
+
+```tsx
+const nav: NavEntry[] = [
+  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  { label: 'Every day', items: [{ to: '/news', label: 'News', icon: NewspaperIcon, count: unread, countLabel: 'unread' }] },
+  { label: 'Home and money', items: [{ to: '/finance', label: 'Finance', icon: WalletIcon, children: [
+    { label: 'Money', items: [accounts, savings] },
+    { label: 'Spending', items: [budget] },
+  ] }] },
+  { label: 'Tools', placement: 'bottom', items: [fillIn, roadmap] },
+]
+const bottomBar: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { group: 'Every day', icon: SunIcon, sheet: 'tiles' },
+]
+```
+
+- **The current entry:** the sidebar's tint and a 3px `--primary` bar
+  at its start, the same mark as a selected or hovered table row, in the
+  sidebar and on the icon rail.
+- **Headings among a module's pages** (a group `{ label, items }` in an
+  entry's `children`): small caption headings in the sidebar's muted
+  text, each heading's pages a list named by it. Use them for a module
+  with more than about six pages, a few words each; the rail's tooltip
+  names the headings ("Finance: Money, Spending").
+- **Counts** (`count`, `countLabel`): a plain number at the entry's end
+  in the muted text tone, never a coloured badge; on the icon rail a dot
+  in `--primary` on the icon. Only on entries that ask you to act
+  (unread, to fill in, new); 0 shows nothing. `countLabel` is what the
+  number counts, read after the entry's name ("News 24 unread").
+- **A section at the foot** (`placement: 'bottom'`): under every other
+  section and `sidebarExtra`, pushed to the sidebar's foot when there's
+  room; for tools rather than modules.
+- **A phone's back arrow:** below 48rem, a page below a nav entry (a
+  record under Accounts) shows "‹ Accounts" in `--link` at the header's
+  start, linking to the entry. With a `bottomBar` it takes the menu
+  button's place; without one the menu button stays beside it. An
+  entry's own page keeps the menu button.
+- **An area's sheet as tiles** (`sheet: 'tiles'`): a three-column grid,
+  one tile per entry, the icon in `--link` over the label, bordered,
+  44px tall at least; the tile holding the page has a `--primary`
+  border. The entries' own pages are left to the module.
