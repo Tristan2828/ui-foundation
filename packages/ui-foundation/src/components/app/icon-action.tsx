@@ -47,7 +47,7 @@ export function IconAction({
           />
         }
       >
-        <Icon aria-hidden="true" className={cn('size-4', tone === 'destructive' && 'text-destructive')} />
+        <Icon aria-hidden="true" className={cn('size-4', tone === 'destructive' && 'text-destructive-text')} />
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>

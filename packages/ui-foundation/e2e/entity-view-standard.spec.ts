@@ -20,18 +20,27 @@ const pageScrollsSideways = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
 
 test.describe('EntityView header', () => {
-  for (const width of [1280, 390]) {
-    test(`${width}px: the status and badge on the title's line, the subtitle under it`, async ({ page }) => {
-      await open(page, 'record-standard', width)
-      const title = await box(page, page.getByRole('heading', { level: 1 }))
-      const active = await box(page, page.getByText('Active', { exact: true }))
-      const subtitle = await box(page, page.getByText('Timber and sheet goods for the workshop'))
-      expect(active.x).toBeGreaterThan(title.x + title.width)
-      expect(Math.abs(active.y + active.height / 2 - (title.y + title.height / 2))).toBeLessThan(4)
-      expect(subtitle.y).toBeGreaterThanOrEqual(title.y + title.height)
-      expect(await pageScrollsSideways(page)).toBe(false)
-    })
-  }
+  test('1280px: the status and badge on the title line, the subtitle under it', async ({ page }) => {
+    await open(page, 'record-standard', 1280)
+    const title = await box(page, page.getByRole('heading', { level: 1 }))
+    const active = await box(page, page.getByText('Active', { exact: true }))
+    const subtitle = await box(page, page.getByText('Timber and sheet goods for the workshop'))
+    expect(active.x).toBeGreaterThan(title.x + title.width)
+    expect(Math.abs(active.y + active.height / 2 - (title.y + title.height / 2))).toBeLessThan(4)
+    expect(subtitle.y).toBeGreaterThanOrEqual(title.y + title.height)
+    expect(await pageScrollsSideways(page)).toBe(false)
+  })
+
+  test('390px: badges too wide beside the title wrap under it, above the subtitle', async ({ page }) => {
+    await open(page, 'record-standard', 390)
+    const title = await box(page, page.getByRole('heading', { level: 1 }))
+    const active = await box(page, page.getByText('Active', { exact: true }))
+    const subtitle = await box(page, page.getByText('Timber and sheet goods for the workshop'))
+    expect(active.y).toBeGreaterThanOrEqual(title.y + title.height - 1)
+    expect(Math.abs(active.x - title.x)).toBeLessThan(2)
+    expect(subtitle.y).toBeGreaterThanOrEqual(active.y + active.height)
+    expect(await pageScrollsSideways(page)).toBe(false)
+  })
 
   test('a long title pushes the badges to the next line', async ({ page }) => {
     await open(page, 'record-standard-long-title', 1280)
