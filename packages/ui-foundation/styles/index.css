@@ -676,3 +676,24 @@
     --form-bar-safe-area: 0px;
   }
 }
+
+/* Toasts on a phone sit at the bottom (4.90, ui/sonner.tsx), above
+   whatever is pinned there: EntityForm's stuck bar sets
+   --toast-bottom-offset itself; failing that, the shell's bottom bar is
+   the room to clear, or the phone's safe area. */
+:root {
+  --toast-bottom-base: env(safe-area-inset-bottom, 0px);
+  /* The tones' text shades, resolved here: sonner's toaster declares its
+     own --success-text, --info-text and --warning-text, which would win
+     inside it. A custom property's var() resolves where it's declared,
+     so these carry the theme's and the palette's values in. */
+  --toast-icon-success: var(--success-text);
+  --toast-icon-info: var(--info-text);
+  --toast-icon-warning: var(--warning-text);
+  --toast-icon-error: var(--destructive-text);
+}
+@media (width < 48rem) {
+  :root:has([data-slot="app-shell-bottom-bar"]) {
+    --toast-bottom-base: calc(var(--spacing) * 16 + 1px + env(safe-area-inset-bottom));
+  }
+}
