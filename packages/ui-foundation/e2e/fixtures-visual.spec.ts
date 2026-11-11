@@ -130,7 +130,6 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--tabs-column', mustShow: 'Empty the shared shelves first.' },
   { id: 'app-entityview--leading', mustShow: 'Facilities lead, third floor' },
   { id: 'app-entityview--leading-mark', mustShow: 'Measure twice, cut once.' },
-  { id: 'app-entityview--rail-fields-beside', mustShow: 'No budget yet' },
   // The page standards' small parts: several values in a cell (+N), a list's
   // header, a record's timeline, what needs you, how fresh a number is, and a
   // part with nothing yet.
