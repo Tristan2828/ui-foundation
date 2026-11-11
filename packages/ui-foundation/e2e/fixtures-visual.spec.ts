@@ -100,6 +100,8 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-heatscale--default', mustShow: 'On a card' },
   // Every slot's depth ramp, as fills and as cells holding their own text.
   { id: 'patterns-depthramps--default', mustShow: 'On a card' },
+  // Each theme's ramps beside its muted greys, under simulated colour vision.
+  { id: 'patterns-depthramps--side-by-side', mustShow: 'Deuteranopia (simulated)' },
   // The edit-in-place presets at rest: a money value, a select's badge, a
   // reference, a pair read as one, links by label and by host.
   { id: 'app-editinplacepresets--presets', mustShow: '$1,234.56' },

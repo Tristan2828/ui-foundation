@@ -7,6 +7,60 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.81.0 — Depth ramps that hold one hue, and run the right way in dark
+
+The UI package only; no API change, no new dependency (the backend
+package's version moves with it, unchanged). 4.77.0's depth ramps had
+three faults, and this release changes their values to fix them. The
+token, class and foreground names are the same.
+
+- **One hue per slot.** A ramp's five steps now share the slot's own hue
+  in both themes, and only lightness and chroma change. Before, hue was
+  bent up to 54° across a ramp to push neighbours apart, which read as
+  drift: orange to pink, purple to magenta, blue to violet.
+- **Dark: a higher step is brighter.** In dark (and every palette, which
+  takes dark's) step 1 was the lightest and step 5 the darkest, so a
+  higher score looked darker against the page. Now deeper is more
+  contrast with the page in both themes: darker in light, brighter in
+  dark. A ramp still reads in greyscale.
+- **No step is nearly grey.** Dark's step 5 was a barely tinted mid grey
+  (oklch chroma 0.025 at lightness 0.58, the charts' own grey nearby). The
+  least any step now has is chroma 0.03, and none comes within ΔE 6 of
+  `--muted`, `--muted-foreground`, `--rule`, `--border`, `--input` or the
+  charts' greys, in light, dark and every palette (8.8 at the least).
+- **Measured** (CIEDE2000, from the values in `theme.css`): neighbouring
+  steps are ΔE 9.6 to 15.7 apart in light and 8.7 to 12.3 in dark, and
+  6.9 or more under simulated deuteranopia and protanopia. They were 17.7
+  and 13.9 at the least: a ramp of one hue has only lightness and chroma
+  to spread over, so the gaps are smaller, and still more than twice the
+  ΔE 4 that tells two steps apart. Every step still clears 3:1 on the
+  page and every card, text on a fill 4.65:1 at the least, axe passes in
+  both themes and every palette.
+- **Text on a fill** in light is now black on step 1 and white on steps
+  2 to 5 of every slot (steps 2 of blue, gold and lime were black); dark
+  is black on every step. `text-category-N-depth-M-foreground` has it
+  right, so an app using the foreground tokens changes nothing.
+- **Checks**: `tests/depth-ramps.test.ts` now computes from the token
+  values that every step shares its slot's hue, that lightness falls in
+  light and rises in dark, that neighbours are at least ΔE 8 apart (6 with
+  deuteranopia and protanopia), that no step is within ΔE 6 of a neutral
+  grey or under chroma 0.03, 3:1 on every card and text contrast, and that
+  the story's text colours are theme.css's. `patterns/DepthRamps` →
+  **SideBySide** shows every slot's ramp in light and dark next to the
+  muted greys of each, under normal vision and simulated colour
+  blindness, and now runs through axe in both themes and every palette
+  and the token check.
+- design-language.md "Depth ramps", and the comment above the values in
+  `theme.css`.
+
+**For apps:** to take it, bump and run `ui-foundation sync` (only docs
+change) and `verify`. A screen using a ramp looks different: in dark a
+higher step is brighter, and any visual baseline (screenshot test) of one
+needs updating. An app that wrote its own text colour on a ramp's fill,
+rather than `text-category-N-depth-M-foreground`, should switch to the
+foreground token (light's step 2 of blue, gold and lime is now white
+text).
+
 ## 4.79.0 — Column widths in rich text tables
 
 The UI package only; additive, no new dependency and no prop to set (the
