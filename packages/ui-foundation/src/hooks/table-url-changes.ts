@@ -8,6 +8,8 @@ type Sort = readonly { id: string; desc: boolean }[]
 export type UrlChanges = Record<string, string | string[] | null>
 
 export type TableView<F extends string, M extends string> = {
+  /** Its pill's word in DataTable's `views` ("Current"); the view's id unless set. */
+  label?: string
   filters?: Partial<Record<F, string>>
   multiFilters?: Partial<Record<M, string[]>>
   sort?: Sort
