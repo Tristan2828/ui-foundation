@@ -63,6 +63,10 @@ export {
 export { type RowGroup } from '@/components/app/table-groups'
 export { byDay, type ByDayOptions } from '@/lib/group-by-day'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
+export { countFormErrors } from '@/lib/form-errors'
+export { FormSection, type FormSectionProps } from '@/components/app/form-section'
+export { OptionSelect, type OptionSelectOption, type OptionSelectProps } from '@/components/app/option-select'
+export { fieldRows, type FieldKind, type FieldRowItem, type FieldRowPlace, type FieldSize } from '@/lib/field-rows'
 export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
 export { IconAction, type IconActionProps } from '@/components/app/icon-action'
 export {

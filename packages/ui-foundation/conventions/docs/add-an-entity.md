@@ -3,27 +3,28 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 42–64
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 66–807
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 108–115
-  - Step 2: `npm run gen:api` · lines 116–117
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 118–129
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 130–139
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 140–144
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 145–694
-  - Step 7: Register routes · lines 695–710
-  - Step 8: Add Playwright specs for all three screens · lines 711–789
-  - Step 9: Register the nav entry and route names · lines 790–804
-  - Step 10: `npm run verify`. · lines 805–807
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 809–1024
-  - [The record view](#the-record-view) · lines 958–997
-  - [Dialogs](#dialogs) · lines 999–1024
-- [What not to copy](#what-not-to-copy) · lines 1026–1052
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1054–1071
-- [Deleting](#deleting) · lines 1073–1102
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1104–1125
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1127–1136
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1139–1178
+- [The reference files](#the-reference-files) · lines 43–65
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–809
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 109–116
+  - Step 2: `npm run gen:api` · lines 117–118
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 119–130
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 131–140
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 141–145
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–696
+  - Step 7: Register routes · lines 697–712
+  - Step 8: Add Playwright specs for all three screens · lines 713–791
+  - Step 9: Register the nav entry and route names · lines 792–806
+  - Step 10: `npm run verify`. · lines 807–809
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 811–1069
+  - [The record view](#the-record-view) · lines 960–999
+  - [Forms](#forms) · lines 1001–1042
+  - [Dialogs](#dialogs) · lines 1044–1069
+- [What not to copy](#what-not-to-copy) · lines 1071–1097
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1099–1116
+- [Deleting](#deleting) · lines 1118–1147
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1149–1170
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1172–1181
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1184–1223
 
 <!-- /index -->
 
@@ -403,8 +404,9 @@ is a filled-in example while the Widgets demo is still here).
    - `src/routes/widgets/widget-form.tsx` →
      `src/routes/<entity>/<entity>-form.tsx` — thin consumer of the
      foundation's `<EntityForm>` (its `danger` slot takes an edit-only
-     delete). Swap the zod schema and fields. Every way out lands on a
-     view (below).
+     delete). Swap the zod schema and fields, each `Field` with its
+     `size` and the required ones' `<FieldLabel required>` ("Forms"
+     below). Every way out lands on a view (below).
 
    **The view** is the read-only page for one record, at `/<entity>/:id`
    (apart from the plan's quick actions and fields edited in place, if it
@@ -995,6 +997,49 @@ view reaches them all. A record uses the parts it has, in this order:
 
 Edit and its form page stay only for a field the view can't edit in
 place yet; the plan says which, and the gap is raised for the package.
+
+### Forms
+
+Every create and edit form is an `EntityForm` (a page) or a `FormDialog`
+(up to about eight fields, over its list), and every one has the same
+shape (4.85):
+
+- **One column, short fields sharing a row.** Give each `Field` its
+  `size` and the form lays the rows out itself, from the order: `s` a
+  number or a short code, `m` a date, a status, a choice of two to four
+  or a rating, `l` a name or a pick of a record, and no `size` (`full`)
+  for long text, a list or anything that needs the row. Consecutive short
+  fields share a row, up to three, as wide as their sizes; a long one
+  takes one short partner (Series and Number). `<Field solo>` keeps a
+  short one alone where a pairing would read wrong. Under 48rem every
+  field takes its own row but two dates or two numbers (a date picker of
+  your own says so with `kind="date"`). Never a hand-made
+  `sm:grid-cols-2` row.
+- **Order:** required first, the status next, long text last.
+- **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
+  on the control it names). Nothing on an optional field: never
+  "(optional)".
+- **Labels** above the box, sentence case ("My rating"). Help text
+  (`FieldDescription`) only where the label can't say it, one short line.
+  A placeholder only for a format the box needs (`https://`), never an
+  example that looks like a value.
+- **Messages say what to do**, in the app's voice: "Give it a title",
+  "Enter a full address, starting https://", never "Title is required".
+- **A status** is an `OptionSelect` with the same `render` (its badge) as
+  its cell and the record: `inPlace.select`'s `{ value, label }` options.
+- **Cards** (`<FormSection title>`) only on a form of eight fields or
+  more, never in a dialog; a short form is one run of fields. Sub-record
+  editors (`ListEditor`) sit in a card of their own.
+- **Pass `dirty={formState.isDirty}` and `errors={formState.errors}`.**
+  With `dirty`, leaving (a link, Back, the sidebar, Cancel) asks "Discard
+  your changes?" first and a reload asks the browser; navigating while
+  `isSubmitting` (the save's own move to the record) doesn't. With
+  `errors`, a refused Add moves to the first problem and the bar says
+  "2 to fix". Both come free; the form draws a failed save as a `Notice`
+  with Try again in its bar, which sticks to the window's bottom on a long
+  form.
+- **The words:** "New book", "Add book" (the word Add on every create
+  form), and the toast after it "Added The Long Walk".
 
 ### Dialogs
 

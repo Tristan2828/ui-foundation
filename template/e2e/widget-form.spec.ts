@@ -150,12 +150,41 @@ test.describe('widget form', () => {
     await expect(page.getByRole('cell', { name: 'Playwright Success Widget', exact: true })).toBeVisible()
   })
 
-  test('cancel: leaving a new widget unsaved goes back to the list', async ({ page }) => {
+  test('cancel: leaving a new widget unsaved asks first, then goes back to the list', async ({ page }) => {
+    await page.goto('/widgets/new')
+    // Nothing typed: nothing asked.
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    await expect(page).toHaveURL('/widgets')
     await page.goto('/widgets/new')
     await page.locator('#widget-name').fill('Never Saved')
     await page.getByRole('button', { name: 'Cancel' }).click()
+    const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
+    await prompt.getByRole('button', { name: 'Keep editing' }).click()
+    await expect(page.locator('#widget-name')).toHaveValue('Never Saved')
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    await prompt.getByRole('button', { name: 'Discard' }).click()
     await expect(page).toHaveURL('/widgets')
     await expect(page.getByRole('cell', { name: 'Never Saved', exact: true })).toHaveCount(0)
+  })
+
+  test('the form standard: required marked, short fields sharing a row, a refused submit counted', async ({ page }) => {
+    await page.goto('/widgets/new')
+    // Available From is a date picker's button, which takes no aria-required (its asterisk still shows).
+    for (const id of ['widget-name', 'widget-category', 'widget-status', 'widget-price']) {
+      await expect(page.locator(`#${id}`)).toHaveAttribute('aria-required', 'true')
+    }
+    await expect(page.locator('#widget-assignee')).not.toHaveAttribute('aria-required')
+    await expect(page.getByText('(optional)')).toHaveCount(0)
+    const top = async (id: string) => Math.round((await page.locator(`[data-slot=field]:has(#${id})`).boundingBox())!.y)
+    const viewport = page.viewportSize()!
+    if (viewport.width >= 768) {
+      expect(await top('widget-available-from')).toBe(await top('widget-status'))
+      expect(await top('widget-price')).toBe(await top('widget-status'))
+    }
+
+    await page.getByRole('button', { name: 'Create widget' }).click()
+    await expect(page.locator('#widget-name')).toBeFocused()
+    await expect(page.locator('[data-slot=entity-form-to-fix]')).toHaveText(/^\d+ to fix$/)
   })
 
   test('multi choice: existing tags are removable chips, and the edited set is what saves', async ({

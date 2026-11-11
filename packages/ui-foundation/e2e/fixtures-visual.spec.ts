@@ -121,6 +121,11 @@ const COMPOSITE_STORIES = [
   // FormDialog: open, and with a failed save's Notice (4.82).
   { id: 'app-formdialog--default', mustShow: 'Add book' },
   { id: 'app-formdialog--failed-save', mustShow: "Couldn't add the book" },
+  // EntityForm in the form standard: rows by size, required marks, a status's badge,
+  // sections as cards, and a failed save's Notice (4.85).
+  { id: 'app-entityform--default', mustShow: 'Add book' },
+  { id: 'app-entityform--sections', mustShow: 'What it is' },
+  { id: 'app-entityform--failed-save', mustShow: "Couldn't add the book" },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },

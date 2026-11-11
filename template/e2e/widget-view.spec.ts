@@ -254,6 +254,8 @@ test.describe('widget view', () => {
     await page.getByRole('button', { name: 'Edit', exact: true }).click()
     await page.locator('#widget-name').fill('Not Saved')
     await page.getByRole('button', { name: 'Cancel' }).click()
+    // Something typed: the form asks first (EntityForm `dirty`).
+    await page.getByRole('dialog', { name: 'Discard your changes?' }).getByRole('button', { name: 'Discard' }).click()
 
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
