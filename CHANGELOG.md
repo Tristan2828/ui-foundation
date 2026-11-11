@@ -56,6 +56,34 @@ labels `required`, drop "(optional)", and pass `dirty` and `errors` to
 `EntityForm` (add-an-entity.md "Forms"). A test that types and then
 leaves a form now meets "Discard your changes?" first.
 
+## 4.84.0 — Six parts for the list, record and overview standards
+
+The UI package only; additive, no new dependency and nothing to change in
+an app (the backend package's version moves with it, unchanged). Six
+standalone components and one prop; none is wired into `DataTable`,
+`EntityView` or `AppShell` yet, so an app adopts them where it wants them.
+
+- **`ValueList`** (list standard L8): several values in a cell, two on
+  one line and the rest as `+N` with every one in a tooltip.
+  `<ValueList items={[{ label }]} max={2} />`; a value is a chip, or the
+  app's own icon through `node`.
+- **`ListHeader`** (L12): a list's title with its count, New alone, and
+  one ⋯ menu for related links (two or more), the page's own actions and
+  "Show deleted", with the notice and "Back to the list" while it's on.
+- **`Timeline`** (record standard R7): a record's dated history, dates in
+  a column on the left, the first five and "Show all N", the date above
+  its entry under 24rem.
+- **`NeedsYou`** (overview standard O2): a warning-toned list of what
+  waits on the user, each line a link, nothing when empty.
+- **`Freshness`** (O3): "Balances entered Aug 2" in the muted caption,
+  in the warning tone with an icon once `staleAfter` has passed.
+  `isStale` is exported for the same rule.
+- **`PartEmpty`** and **`WidgetCard`'s `empty`** (O5): "Nothing here yet"
+  and one button, in place of the card's plain `emptyMessage`. `empty` is
+  optional; a card without it reads as before.
+
+Design language: `docs/foundation/design-language.md` "Parts of the page
+standards".
 ## 4.83.0 — A list's look: row hover, no stripes, content width, long text, rows per page
 
 The UI package only; no new dependency, no export removed or renamed (the

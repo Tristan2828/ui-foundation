@@ -60,6 +60,7 @@ import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
 import type { IconComponent } from '@/components/app/icon-component'
+import { PartEmpty, type PartEmptyState } from '@/components/app/part-empty'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -96,6 +97,13 @@ export interface WidgetCardProps {
   isEmpty: boolean
   /** The empty state's one line: "Nothing waiting". */
   emptyMessage: string
+  /**
+   * A card with nothing yet that offers a way to start (overview standard
+   * O5): `{ text, action }` draws "Nothing here yet" and one button, the
+   * foundation's Empty at card size (PartEmpty), in place of the plain
+   * `emptyMessage` line. `text` defaults to "Nothing here yet".
+   */
+  empty?: PartEmptyState
   /** How many rows the loading skeleton shows: the number the widget usually holds. */
   skeletonRows?: number
   /** A button at the header's end that folds the card to its header, and opens it again. */
@@ -137,6 +145,7 @@ export function WidgetCard({
   onRetry,
   isEmpty,
   emptyMessage,
+  empty,
   skeletonRows = 3,
   collapsible = false,
   defaultCollapsed = false,
@@ -248,9 +257,13 @@ export function WidgetCard({
           ) : state === 'loading' ? (
             <WidgetListSkeleton rows={skeletonRows} />
           ) : state === 'empty' ? (
-            <p data-state="empty" className="py-2 type-body text-muted-foreground">
-              {emptyMessage}
-            </p>
+            empty ? (
+              <PartEmpty {...empty} />
+            ) : (
+              <p data-state="empty" className="py-2 type-body text-muted-foreground">
+                {emptyMessage}
+              </p>
+            )
           ) : (
             children
           )}

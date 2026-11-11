@@ -144,6 +144,20 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--tabs-column', mustShow: 'Empty the shared shelves first.' },
   { id: 'app-entityview--leading', mustShow: 'Facilities lead, third floor' },
   { id: 'app-entityview--leading-mark', mustShow: 'Measure twice, cut once.' },
+  // The page standards' small parts: several values in a cell (+N), a list's
+  // header, a record's timeline, what needs you, how fresh a number is, and a
+  // part with nothing yet.
+  { id: 'app-valuelist--default', mustShow: 'Example capsule B' },
+  { id: 'app-valuelist--icons', mustShow: '+1' },
+  { id: 'app-listheader--default', mustShow: 'Change log' },
+  { id: 'app-listheader--showing-deleted', mustShow: 'Back to the list' },
+  { id: 'app-timeline--default', mustShow: 'Show all 7' },
+  { id: 'app-timeline--in-a-narrow-card', mustShow: 'Show all 7' },
+  { id: 'app-timeline--few-entries', mustShow: 'Nothing yet' },
+  { id: 'app-needsyou--default', mustShow: 'Needs you today' },
+  { id: 'app-freshness--default', mustShow: 'Projection from' },
+  { id: 'app-partempty--default', mustShow: 'Add the first line' },
+  { id: 'app-partempty--in-widget-cards', mustShow: 'Add the first line' },
   { id: 'app-entityview--rail-fields-stacked', mustShow: 'No budget yet' },
   // The record standard (4.81): badges on the title's line, Print notes and
   // Delete as icons, the strip's icons, folded empties and the dash.
