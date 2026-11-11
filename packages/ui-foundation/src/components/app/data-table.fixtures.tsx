@@ -35,7 +35,14 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 // - SeveralTables: two tables on one page, the second loading a moment
 //   after the first has its rows, for the testing helper that waits on
 //   every data view of a page (`expectDataViewsLoaded`).
-// - Highlighted: `highlightRow`, two rows to look at (cell pattern 22).
+// - Highlighted: `highlightRow`, two rows to look at (cell pattern 22),
+//   `striped`, so the wash is measured over a stripe.
+// - ListLook (4.83): a list's defaults: content width, no stripes, the
+//   row hover with the hand cursor (the rows open a page), a Notes column
+//   cut to one line (`meta.clip`), and rows per page (`pageSizes`, through
+//   useTableUrlState, remembered under a storage key). ListLookInRows: the
+//   same rows edited in place (`opens: rows`), so the arrow cursor.
+//   ListLookStriped: `striped` and `width="full"`, the look before 4.83.
 // - Totals: `totals`, sums under Quantity, Price and Target price for
 //   every matching row (eight, over two pages), right-aligned like their
 //   columns (Price sortable, its arrow left of its label), with the first and last
@@ -186,6 +193,7 @@ function HighlightedTable() {
         getRowId={(row) => String(row.id)}
         pinFirstColumn
         pinLastColumn
+        striped
         highlightRow={(row) => NEXT_UP.has(row.id)}
       />
     </div>
@@ -708,6 +716,87 @@ function SeveralTablesPage() {
   )
 }
 
+// --- a list's look (4.83) -------------------------------------------------------
+
+type Recipe = { id: number; name: string; course: string; minutes: number; notes: string }
+
+const COURSES = ['Breakfast', 'Lunch', 'Dinner', 'Dessert']
+const RECIPE_NOTES = [
+  'Soak the oats overnight, then warm them through with a pinch of salt and top with whatever fruit is in season',
+  'Quick',
+  'Roast the vegetables first so they brown, then fold them into the grain with the dressing while still warm',
+  '',
+  'Double the batch and freeze half',
+]
+const RECIPES: Recipe[] = Array.from({ length: 120 }, (_, index) => ({
+  id: index + 1,
+  name: `Recipe ${index + 1}`,
+  course: COURSES[index % COURSES.length]!,
+  minutes: 10 + ((index * 7) % 50),
+  notes: RECIPE_NOTES[index % RECIPE_NOTES.length]!,
+}))
+
+const RECIPE_COLUMNS: LegacyColumnDef<Recipe, unknown>[] = [
+  {
+    id: 'name',
+    header: 'Name',
+    cell: ({ row }) => (
+      <Link to={`/recipes/${row.original.id}`} className="font-medium text-foreground">
+        {row.original.name}
+      </Link>
+    ),
+  },
+  { id: 'course', header: 'Course', cell: ({ row }) => row.original.course },
+  { id: 'minutes', header: 'Minutes', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{row.original.minutes}</span> },
+  {
+    id: 'notes',
+    header: 'Notes',
+    meta: { clip: true },
+    cell: ({ row }) => row.original.notes || <span className="text-muted-foreground">No notes</span>,
+  },
+]
+
+function RecipesTable({ variant }: { variant: 'opens' | 'rows' | 'striped' }) {
+  const { page, setPage, pageSize, pageSizes, setPageSize } = useTableUrlState([], [], {}, {
+    pageSizeStorageKey: `fixtures:recipes-${variant}:page-size`,
+  })
+  const rows = RECIPES.slice((page - 1) * pageSize, page * pageSize)
+  return (
+    <div className="flex flex-col gap-4 p-6">
+      <h1 className="type-page-title text-foreground">Recipes</h1>
+      <DataTable<Recipe>
+        columns={RECIPE_COLUMNS}
+        data={rows}
+        total={RECIPES.length}
+        page={page}
+        pageSize={pageSize}
+        pageSizes={pageSizes}
+        onPageSizeChange={setPageSize}
+        onPageChange={setPage}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        emptyTitle="No recipes yet"
+        getRowId={(row) => String(row.id)}
+        pinFirstColumn
+        opens={variant === 'rows' ? { kind: 'rows' } : { kind: 'page', to: (row) => `/recipes/${row.id}` }}
+        toolbar={<Input className="w-64" placeholder="Search recipes" aria-label="Search recipes" />}
+        {...(variant === 'striped' ? { striped: true, width: 'full' as const } : {})}
+      />
+    </div>
+  )
+}
+
+function RecipesInRouter({ variant }: { variant: 'opens' | 'rows' | 'striped' }) {
+  const [router] = useState(() =>
+    createMemoryRouter([
+      { path: '/', element: <RecipesTable variant={variant} /> },
+      { path: '/recipes/:id', element: <p className="p-6 type-body text-foreground">A recipe's page.</p> },
+    ]),
+  )
+  return <RouterProvider router={router} />
+}
+
 const meta: Meta = {
   title: 'app/DataTable',
   parameters: { controls: { disable: true }, layout: 'fullscreen' },
@@ -738,3 +827,9 @@ export const Totals: StoryObj = { render: () => <TotalsTable /> }
 export const GroupedNoMatches: StoryObj = { render: () => <FeedInRouter path="/?kind=text" /> }
 
 export const SeveralTables: StoryObj = { render: () => <SeveralTablesPage /> }
+
+export const ListLook: StoryObj = { render: () => <RecipesInRouter variant="opens" /> }
+
+export const ListLookInRows: StoryObj = { render: () => <RecipesInRouter variant="rows" /> }
+
+export const ListLookStriped: StoryObj = { render: () => <RecipesInRouter variant="striped" /> }

@@ -35,6 +35,49 @@ standalone components and one prop; none is wired into `DataTable`,
 
 Design language: `docs/foundation/design-language.md` "Parts of the page
 standards".
+## 4.83.0 — A list's look: row hover, no stripes, content width, long text, rows per page
+
+The UI package only; no new dependency, no export removed or renamed (the
+backend package's version moves with it, unchanged). Two defaults change
+how every `DataTable` looks, so an app sees this release without touching
+its code: read the first two items.
+
+- **No zebra stripes by default.** Rows are told apart by the line under
+  each. `striped` brings the stripes back. Tables in notes keep theirs.
+- **`width` defaults to `content`**, and `content` now holds at every
+  width, not only from an 80rem table area: the table and its pagination
+  are as wide as the columns need (at least 36rem, or the whole width when
+  that's less), with empty space at the right, while the toolbar keeps the
+  whole width so its controls don't move between lists. A table wider
+  than its area scrolls sideways in it, as before. `width="full"` is the
+  old default; a card layout always takes the whole width.
+- **The whole row lights on hover**: every cell, pinned ones included, in
+  the new `--table-hover` token (the muted fill), with a 3px `--primary`
+  bar on the first cell. It used to light only a pinned first cell, and a
+  table with no pinned column showed nothing. Rows that open a record get
+  the hand cursor; rows edited in place (`opens={{ kind: 'rows' }}`) get
+  the highlight and keep the arrow. `highlightRow`'s row and the panel's
+  picked row keep their own look. Muted text in the hovered row takes the
+  darker grey (axe in light and dark).
+- **`meta: { clip: true, maxWidth: '24rem' }`** on a column: long text on
+  one line, cut with an ellipsis at `maxWidth` (24rem unless set, never
+  over 60% of the table's area), the whole text in a tooltip on hover and
+  on focus (a cut cell takes a tab stop). `maxWidth` alone wraps the
+  column at that width.
+- **Rows per page**: `pageSizes` and `onPageSizeChange` on `DataTable`
+  draw a menu in the pagination bar. `useTableUrlState` takes
+  `pageSizes` (`[25, 50, 100]` unless set), `defaultPageSize` (50) and
+  `pageSizeStorageKey`, and returns `pageSize`, `pageSizes` and
+  `setPageSize`: the pick is in the URL (`?size=`), remembered on this
+  device under the key, and returns to page 1. A size that isn't one of
+  the choices is ignored. The list page standard named the storage key as
+  a `DataTable` prop; it's the hook's because the app's query needs the
+  page size before the table renders.
+
+To keep a list as it was: `striped` and `width="full"` on its
+`DataTable`. To adopt rows per page: pass the hook's `pageSize` to the
+list's query instead of a constant, and its `pageSizes`/`setPageSize` to
+the table (cell pattern 24).
 ## 4.82.0 — Dialog sizes, a guard on what's typed, and FormDialog
 
 The UI package only; additive, no new dependency (the backend package's

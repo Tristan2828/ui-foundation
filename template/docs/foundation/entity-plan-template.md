@@ -143,9 +143,9 @@ per list; delete the section if there are none.
 | All tasks | none | dueDate asc | |
 | Bugs | kind = bug | dueDate asc | title, severity, assignee, dueDate |
 
-- Width (optional): `content` for a table of a few short columns, so on a
-  wide screen it takes the width they need rather than the whole page
-  (cell pattern 18, "`width="content"`"). Leave it out for the full width.
+- Width (optional): `full` for a table that should take the whole page.
+  Leave it out for the default, as wide as the columns need (cell pattern
+  18, "`width="content"`").
 - Anything else the table must show or do:
 
 ## View screen
