@@ -1,4 +1,4 @@
-import { ChevronRightIcon, LogOutIcon, MoonIcon, PaletteIcon, Rows3Icon, SunIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, LogOutIcon, MoonIcon, PaletteIcon, Rows3Icon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
@@ -6,14 +6,19 @@ import { useAuth } from '@/auth/use-auth'
 import { BottomBar, BOTTOM_BAR_PADDING } from '@/components/app/app-shell-bottom-bar'
 import {
   activeNavTo,
+  childItems,
   childrenOpen,
+  isNavItemGroup,
+  navBackTarget,
   navGroups,
   navPageLabel,
+  navTooltip,
   withChildren,
   type BottomBarItem,
   type NavEntry,
   type NavGroup,
   type NavItem,
+  type NavItemGroup,
 } from '@/components/app/app-shell-nav'
 import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
@@ -26,7 +31,7 @@ import { useRows } from '@/hooks/use-rows'
 import { isPaletteName, PALETTE_LABELS, PALETTES, type PaletteName } from '@/lib/palettes'
 import { isRowsName, ROWS, ROWS_LABELS } from '@/lib/rows'
 import { cn } from 'cn'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +65,7 @@ import {
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
-export type { BottomBarItem, NavEntry, NavItem, NavSection } from '@/components/app/app-shell-nav'
+export type { BottomBarItem, NavChild, NavEntry, NavItem, NavItemGroup, NavSection } from '@/components/app/app-shell-nav'
 export type { AppShellVersion } from '@/components/app/app-shell-version'
 
 export type AppShellProps = {
@@ -90,7 +95,12 @@ export type AppShellProps = {
    * remembered per browser (`defaultOpen` for the first visit); the one
    * holding the current page stays open, and the icon rail shows every
    * section's items. An entry's `children` (a module's own pages) show
-   * under it while you're on one of them.
+   * under it while you're on one of them, under small headings where they
+   * are groups (`{ label, items }`). The current entry has the tint and a
+   * bar at its start; an entry's `count` shows at its end (a dot on the
+   * rail); a section with `placement: 'bottom'` sits at the sidebar's foot.
+   * On a phone, a page below an entry shows a back arrow to it in the
+   * header (design-language.md "The sidebar and the phone's bar").
    */
   nav: readonly NavEntry[]
   /**
@@ -117,9 +127,11 @@ export type AppShellProps = {
    * breakpoint), in thumb reach: at most five, each a page
    * (`{ to, label, icon }`) or a nav section by its label
    * (`{ group: 'Every day', icon }`, with an optional shorter `label`),
-   * which opens a sheet of that section's entries. The item holding the
+   * which opens a sheet of that section's entries (as tiles with
+   * `sheet: 'tiles'`). The item holding the
    * current page is marked. The header's menu button stays, for
-   * everything. The shell pads its content so nothing sits under the bar.
+   * everything, except on a page below a nav entry, where the back arrow
+   * takes its place. The shell pads its content so nothing sits under the bar.
    */
   bottomBar?: readonly BottomBarItem[]
 }
@@ -270,6 +282,70 @@ function VersionEntry({ version }: { version: AppShellVersion }) {
   )
 }
 
+// The current entry's mark (#N2): the sidebar's tint and a 3px bar in
+// the accent at its start, the same mark as a selected or hovered table
+// row, in the sidebar and on the rail.
+const ACTIVE_MARK = 'data-active:shadow-[inset_3px_0_0_0_var(--primary)]'
+
+// An entry's count (#N3): a plain number at its end in the muted tone,
+// read with what it counts; on the icon rail, a dot on the icon.
+function NavCount({ count, countLabel }: { count?: number; countLabel?: string }) {
+  if (!count) return null
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        data-slot="nav-count"
+        className="ml-auto shrink-0 type-caption text-muted-foreground tabular-nums group-data-[collapsible=icon]:hidden"
+      >
+        {count}
+      </span>
+      <span className="sr-only">{countLabel ? `${count} ${countLabel}` : count}</span>
+      <span
+        aria-hidden="true"
+        data-slot="nav-count-dot"
+        className="pointer-events-none absolute top-1 right-1 hidden size-1.5 rounded-full bg-primary group-data-[collapsible=icon]:block"
+      />
+    </>
+  )
+}
+
+function NavSubLink({ item, activeTo }: { item: NavItem; activeTo: string | undefined }) {
+  const { to, label, icon: Icon, count, countLabel } = item
+  const isActive = to === activeTo
+  return (
+    <SidebarMenuSubItem>
+      <SidebarMenuSubButton
+        isActive={isActive}
+        className={ACTIVE_MARK}
+        render={<Link to={to} aria-current={isActive ? 'page' : undefined} />}
+      >
+        <Icon />
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <NavCount count={count} countLabel={countLabel} />
+      </SidebarMenuSubButton>
+    </SidebarMenuSubItem>
+  )
+}
+
+// A heading among a module's pages (#N1): a small label over its pages,
+// a list named by it, so a screen reader hears "Money, list".
+function NavSubGroup({ group, activeTo }: { group: NavItemGroup; activeTo: string | undefined }) {
+  const headingId = useId()
+  return (
+    <li data-slot="nav-sub-group" className="flex flex-col gap-1">
+      <span id={headingId} className="px-2 pt-1.5 type-caption text-sidebar-foreground/70">
+        {group.label}
+      </span>
+      <ul aria-labelledby={headingId} className="flex flex-col gap-1">
+        {group.items.map((item) => (
+          <NavSubLink key={item.to} item={item} activeTo={activeTo} />
+        ))}
+      </ul>
+    </li>
+  )
+}
+
 // One group's entries. A plain Link, not NavLink: NavLink marks every
 // matching entry current, and only the most specific one should be
 // (activeNavTo).
@@ -278,42 +354,37 @@ function VersionEntry({ version }: { version: AppShellVersion }) {
 // as its pages, shown while you're in them (childrenOpen) and otherwise
 // in the page but hidden, as a folded section's are. The icon rail has no
 // room for them: there the entry looks current while one of them is, and
-// its tooltip names them.
+// its tooltip names them (or their headings).
 function NavMenu({ items, activeTo }: { items: readonly NavItem[]; activeTo: string | undefined }) {
   const { state, isMobile } = useSidebar()
   const rail = state === 'collapsed' && !isMobile
   return (
     <SidebarMenu>
       {items.map((item) => {
-        const { to, label, icon: Icon, children } = item
+        const { to, label, icon: Icon, children, count, countLabel } = item
         const isActive = to === activeTo
-        const childActive = children?.some((child) => child.to === activeTo) ?? false
+        const childActive = childItems(item).some((child) => child.to === activeTo)
         return (
           <SidebarMenuItem key={to}>
             <SidebarMenuButton
               isActive={isActive || (rail && childActive)}
-              tooltip={children?.length ? `${label}: ${children.map((child) => child.label).join(', ')}` : label}
+              tooltip={navTooltip(item)}
+              className={cn('relative', ACTIVE_MARK)}
               render={<Link to={to} aria-current={isActive ? 'page' : undefined} />}
             >
               <Icon />
-              <span>{label}</span>
+              <span className="min-w-0 flex-1 truncate">{label}</span>
+              <NavCount count={count} countLabel={countLabel} />
             </SidebarMenuButton>
             {children && children.length > 0 && (
               <SidebarMenuSub hidden={!childrenOpen(item, activeTo)}>
-                {children.map(({ to: childTo, label: childLabel, icon: ChildIcon }) => {
-                  const isChildActive = childTo === activeTo
-                  return (
-                    <SidebarMenuSubItem key={childTo}>
-                      <SidebarMenuSubButton
-                        isActive={isChildActive}
-                        render={<Link to={childTo} aria-current={isChildActive ? 'page' : undefined} />}
-                      >
-                        <ChildIcon />
-                        <span>{childLabel}</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  )
-                })}
+                {children.map((child) =>
+                  isNavItemGroup(child) ? (
+                    <NavSubGroup key={`group:${child.label}`} group={child} activeTo={activeTo} />
+                  ) : (
+                    <NavSubLink key={child.to} item={child} activeTo={activeTo} />
+                  ),
+                )}
               </SidebarMenuSub>
             )}
           </SidebarMenuItem>
@@ -403,6 +474,26 @@ function CollapsibleNavGroup({ group, activeTo }: { group: NavGroup & { label: s
   )
 }
 
+// The phone's back arrow (#N7), below the md breakpoint only: the
+// shell's own way up from a page below a nav entry. Its label is the
+// place it goes, so it reads "Back to Accounts".
+function PhoneBack({ back }: { back: { label: string; to: string } }) {
+  return (
+    <Link
+      to={back.to}
+      data-slot="app-shell-back"
+      aria-label={`Back to ${back.label}`}
+      className={cn(
+        buttonVariants({ variant: 'ghost', size: 'sm' }),
+        '-ml-2 max-w-[60vw] gap-0.5 px-1.5 text-link hover:text-link md:hidden',
+      )}
+    >
+      <ChevronLeftIcon aria-hidden="true" />
+      <span className="truncate">{back.label}</span>
+    </Link>
+  )
+}
+
 function AppShellSkeleton() {
   return (
     <div className="flex h-screen w-full gap-4 p-4" data-state="loading">
@@ -461,6 +552,23 @@ export function AppShell({
   }
 
   const activeTo = activeNavTo(nav, location.pathname)
+  const back = navBackTarget(nav, location.pathname)
+  const groups = navGroups(nav)
+  const renderGroup = (group: NavGroup, groupIndex: number) =>
+    group.collapsible && group.label !== undefined ? (
+      <CollapsibleNavGroup
+        key={`${group.placement ?? 'top'}:${groupIndex}:${group.label}`}
+        group={{ ...group, label: group.label }}
+        activeTo={activeTo}
+      />
+    ) : (
+      <SidebarGroup key={`${group.placement ?? 'top'}:${groupIndex}:${group.label ?? ''}`}>
+        {group.label !== undefined && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+        <SidebarGroupContent>
+          <NavMenu items={group.items} activeTo={activeTo} />
+        </SidebarGroupContent>
+      </SidebarGroup>
+    )
 
   return (
     <TooltipProvider>
@@ -488,23 +596,15 @@ export function AppShell({
               </div>
             </SidebarHeader>
             <SidebarContent>
-              {navGroups(nav).map((group, groupIndex) =>
-                group.collapsible && group.label !== undefined ? (
-                  <CollapsibleNavGroup
-                    key={`${groupIndex}:${group.label}`}
-                    group={{ ...group, label: group.label }}
-                    activeTo={activeTo}
-                  />
-                ) : (
-                  <SidebarGroup key={`${groupIndex}:${group.label ?? ''}`}>
-                    {group.label !== undefined && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
-                    <SidebarGroupContent>
-                      <NavMenu items={group.items} activeTo={activeTo} />
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                ),
-              )}
+              {groups.filter((group) => !group.placement).map(renderGroup)}
               {sidebarExtra}
+              {/* Sections placed at the bottom (#N4): at the sidebar's foot,
+                  under everything else, pushed down by the space above. */}
+              {groups.some((group) => group.placement) && (
+                <div data-slot="nav-foot" className="mt-auto flex flex-col">
+                  {groups.filter((group) => group.placement).map(renderGroup)}
+                </div>
+              )}
             </SidebarContent>
             <SidebarFooter>
               {version && <VersionEntry version={version} />}
@@ -537,7 +637,13 @@ export function AppShell({
             sat off-screen. Passed via className: sidebar.tsx is shadcn's. */}
         <SidebarInset className="min-w-0">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
-            <SidebarTrigger />
+            {/* On a phone, a page below a nav entry gets a way back up to
+                it (#N7): "‹ Accounts" on a record. With a bottom bar to get
+                around by, it takes the menu button's place; without one
+                the menu button stays beside it. Entries' own pages, and
+                every width from md up, keep the menu button. */}
+            {back && <PhoneBack back={back} />}
+            <SidebarTrigger className={cn(back && bottomBar?.length && 'max-md:hidden')} />
             <div className="flex-1" />
             <LookControl />
           </header>
