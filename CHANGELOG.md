@@ -53,6 +53,51 @@ calls the app's search endpoint through its gateway, mapping each hit
 to `{ title, to, kind, detail }`. An app's e2e test that found the
 header's buttons inside `getByRole('main')` looks for them on the page
 instead (the template has none).
+## 4.86.0 — A list's tools in DataTable: views, filters, columns, row actions, a phone's rows; a capped related list
+
+The UI package only; additive, no new dependency, no export removed or
+renamed (the backend package's version moves with it, unchanged). Nothing
+changes on a list until it opts in. The list page standard's L3, L4, L5,
+L9 and L11, and the record page standard's R8 (cell patterns 25 and 26):
+
+- **Saved views as pills** (L3): `<DataTable views={VIEWS}
+  activeView={activeView} onViewChange={applyView} />` draws a
+  `PillFilter` above the toolbar from useTableUrlState's views, in order,
+  the view on pressed. Under 48rem it stays one line that scrolls
+  sideways. `TableView` takes a `label` for its pill. A view with
+  `columns` shows them while it's on (over `visibleColumns` and the
+  Columns menu), so `visibleColumns={activeView ? …}` is no longer needed.
+- **`FilterBar`** (L4): `search`, the two `primary` filters and the rest
+  behind Filters (`secondary`, `active`, `onClear`; SecondaryFilters
+  underneath). Below 48rem search and Filters share a line and every
+  filter is in Filters' bottom sheet (`primaryActive` for the primary
+  ones' chips, `onClearAll`). **`FilterSelect`**: a single-choice filter
+  that names itself, "Any status" off and "Status: Active" on.
+  **`MultiChoice label`**: "Rooms: Hall +1" in place of a chip per pick.
+  `SecondaryFilters` and `PillFilter` take a `className`.
+- **A Columns menu** (L5): `columnsMenu={{ storageKey }}`, a button at the
+  end of the toolbar with a tick for every column but the first and the
+  actions, remembered on this device as `{ order, hidden }` (every id in
+  order, so reordering can come later on the same value; a column added
+  since shows). `meta.label` names a column whose header isn't a string.
+- **Row actions** (L9): `rowActions={(row) => [{ label, icon, onSelect,
+  tone, disabled }]}`, in a column pinned to the right edge with its
+  header for screen readers only. One action is its icon (`IconAction`),
+  two or more a ⋯ menu. A click on them never opens the row.
+- **A phone's row list** (L11): `phoneRow={{ title, status, facts }}`
+  draws, under 48rem, a row list in place of the table: the name, the
+  status at the line's end, a muted line of the facts. The whole row is
+  the target (44px at least), a link to the record `opens` names; row
+  actions at its end. Headings, paging and the states hold.
+- **A capped related list** (R8): `RelatedTable` (10 rows unless `limit`
+  says, no pagination, no sort buttons, `opens` required) and `viewAll={{
+  to, total?, label? }}`, a "View all 19" link when there are more. On a
+  DataTable of your own: `limit` and `viewAll`.
+
+**Upgrading a list:** replace the hand-written views row with `views`,
+the toolbar's captions and Selects with `FilterBar` and `FilterSelect`, a
+hand-made Actions column (and `pinLastColumn`) with `rowActions`, and name
+the two facts for `phoneRow`. The template's Widgets list is unchanged.
 
 ## 4.85.0 — The form standard in EntityForm, Field and FieldLabel
 

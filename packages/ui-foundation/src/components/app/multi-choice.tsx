@@ -29,6 +29,7 @@ export function MultiChoice<T extends string>({
   getLabel = String,
   id,
   placeholder,
+  label,
   'aria-label': ariaLabel,
   'aria-invalid': ariaInvalid,
   className,
@@ -45,6 +46,14 @@ export function MultiChoice<T extends string>({
   /** Id for the text input, so a <FieldLabel htmlFor> labels it. */
   id?: string
   placeholder?: string
+  /**
+   * A toolbar filter that names itself (the list page standard, L4): with
+   * picks it shows "<label>: <first> +N" in place of a chip per pick, so
+   * it stays one line; with none, the `placeholder` ("Any status"). Picks
+   * come off in the list, or with Backspace. Leave it out on a form, where
+   * every pick is its own chip.
+   */
+  label?: string
   /** For use without a visible label (e.g. a table toolbar filter). */
   'aria-label'?: string
   'aria-invalid'?: boolean
@@ -77,7 +86,13 @@ export function MultiChoice<T extends string>({
         <ComboboxValue>
           {(selected: T[]) => (
             <React.Fragment>
-              {selected.map((option) => (
+              {label !== undefined && selected.length > 0 ? (
+                <span data-slot="multi-choice-summary" className="min-w-0 truncate pl-1 type-body text-foreground">
+                  {label}: {getLabel(selected[0] as T)}
+                  {selected.length > 1 && <span className="text-muted-foreground"> +{selected.length - 1}</span>}
+                </span>
+              ) : null}
+              {(label === undefined ? selected : []).map((option) => (
                 // A plain string child, so the chip's remove button is named
                 // "Remove <label>" (combobox.tsx).
                 <ComboboxChip key={option}>{getLabel(option)}</ComboboxChip>

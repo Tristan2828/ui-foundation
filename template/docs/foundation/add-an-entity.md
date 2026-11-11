@@ -4,27 +4,27 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 43–65
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–823
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–826
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 109–116
   - Step 2: `npm run gen:api` · lines 117–118
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 119–130
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 131–140
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 141–145
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–710
-  - Step 7: Register routes · lines 711–726
-  - Step 8: Add Playwright specs for all three screens · lines 727–805
-  - Step 9: Register the nav entry and route names · lines 806–820
-  - Step 10: `npm run verify`. · lines 821–823
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 825–1083
-  - [The record view](#the-record-view) · lines 974–1013
-  - [Forms](#forms) · lines 1015–1056
-  - [Dialogs](#dialogs) · lines 1058–1083
-- [What not to copy](#what-not-to-copy) · lines 1085–1111
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1113–1130
-- [Deleting](#deleting) · lines 1132–1161
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1163–1184
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1186–1195
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1198–1237
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–713
+  - Step 7: Register routes · lines 714–729
+  - Step 8: Add Playwright specs for all three screens · lines 730–808
+  - Step 9: Register the nav entry and route names · lines 809–823
+  - Step 10: `npm run verify`. · lines 824–826
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 828–1086
+  - [The record view](#the-record-view) · lines 977–1016
+  - [Forms](#forms) · lines 1018–1059
+  - [Dialogs](#dialogs) · lines 1061–1086
+- [What not to copy](#what-not-to-copy) · lines 1088–1114
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1116–1133
+- [Deleting](#deleting) · lines 1135–1164
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1166–1187
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1189–1198
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1201–1240
 
 <!-- /index -->
 
@@ -377,7 +377,10 @@ is a filled-in example while the Widgets demo is still here).
      `<SecondaryFilters>`, as the template does with Extra Categories,
      Progress and In Stock. Pass it each filter that's on as an
      `ActiveFilter` (its chip text and how to take it off) and an
-     `onClear` that clears them all in one `setFilters` call.
+     `onClear` that clears them all in one `setFilters` call. A list on
+     the list page standard uses `FilterBar` for all of it, with
+     `views`, `columnsMenu`, `rowActions` and `phoneRow` on the
+     DataTable (cell-patterns.md 25).
    - `src/routes/widgets/widget-view.tsx` →
      `src/routes/<entity>/<entity>-view.tsx` — thin consumer of the
      foundation's `<EntityView>`. Swap the title, badges and sections for
