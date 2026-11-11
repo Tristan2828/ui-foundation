@@ -3,37 +3,38 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 46–151
-- [Glow](#glow) · lines 153–172
-- [Semantic tones](#semantic-tones) · lines 174–202
-- [The three badge styles](#the-three-badge-styles) · lines 204–221
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 223–252
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 254–267
-- [Logos and brand marks](#logos-and-brand-marks) · lines 269–313
-- [Categorical colour](#categorical-colour) · lines 315–385
-- [Heat scale](#heat-scale) · lines 387–448
-- [Depth ramps](#depth-ramps) · lines 450–528
-- [A stored colour](#a-stored-colour) · lines 530–578
-- [Shapes and sizes](#shapes-and-sizes) · lines 580–601
-- [Typography](#typography) · lines 603–723
-  - [Written text (notes)](#written-text-notes) · lines 637–723
-- [Density](#density) · lines 725–818
-  - [Rows on this device](#rows-on-this-device) · lines 791–818
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 820–934
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 936–1013
-- [Notices](#notices) · lines 1015–1043
-- [A value over time](#a-value-over-time) · lines 1045–1131
-  - [Several values over time](#several-values-over-time) · lines 1094–1131
-- [A list as a board](#a-list-as-a-board) · lines 1133–1184
-- [A list as cards](#a-list-as-cards) · lines 1186–1232
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1234–1263
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1265–1308
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1309–1347
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1349–1394
-- [Picking at random](#picking-at-random) · lines 1396–1427
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1429–1496
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1498–1523
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1525–1598
+- [Palettes](#palettes) · lines 47–152
+- [Glow](#glow) · lines 154–173
+- [Semantic tones](#semantic-tones) · lines 175–203
+- [The three badge styles](#the-three-badge-styles) · lines 205–222
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 224–253
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 255–268
+- [Logos and brand marks](#logos-and-brand-marks) · lines 270–314
+- [Categorical colour](#categorical-colour) · lines 316–386
+- [Heat scale](#heat-scale) · lines 388–449
+- [Depth ramps](#depth-ramps) · lines 451–529
+- [A stored colour](#a-stored-colour) · lines 531–579
+- [Shapes and sizes](#shapes-and-sizes) · lines 581–602
+- [Typography](#typography) · lines 604–724
+  - [Written text (notes)](#written-text-notes) · lines 638–724
+- [Density](#density) · lines 726–819
+  - [Rows on this device](#rows-on-this-device) · lines 792–819
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 821–935
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 937–1014
+- [Notices](#notices) · lines 1016–1044
+- [A value over time](#a-value-over-time) · lines 1046–1132
+  - [Several values over time](#several-values-over-time) · lines 1095–1132
+- [A list as a board](#a-list-as-a-board) · lines 1134–1185
+- [A list as cards](#a-list-as-cards) · lines 1187–1233
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1235–1264
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1266–1309
+- [An overview page](#an-overview-page) · lines 1311–1374
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1375–1413
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1415–1460
+- [Picking at random](#picking-at-random) · lines 1462–1493
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1495–1562
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1564–1589
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1591–1664
 
 <!-- /index -->
 
@@ -1306,6 +1307,71 @@ into a table, a record or an overview.
 Every one is measured with axe and the glyph check in both themes
 (fixtures `app/ValueList`, `ListHeader`, `Timeline`, `NeedsYou`,
 `Freshness`, `PartEmpty`).
+
+## An overview page
+
+The overview standard (4.89): a module's first page when it has three
+or more lists, saying how things stand and what waits on the user, each
+part one click from its list. `OverviewPage` draws the whole page; the
+hub's `WidgetCard`s take the same card anatomy, so a hub and an overview
+read alike.
+
+```tsx
+<OverviewPage
+  title="Household"
+  stats={<KeyStats stats={[{ label: 'Savings', value: '$24,800', icon: LandmarkIcon }]} />}
+  needs={[{ text: 'Balances are three months old', to: '/accounts' }]}
+  parts={[
+    {
+      id: 'savings',
+      title: 'Savings',
+      icon: LandmarkIcon,
+      to: '/accounts',
+      value: '$24,800',
+      line: '+$1,120 since August',
+      freshness: { label: 'Balances entered', at: entered, staleAfter: addDays(entered, 90) },
+      detail: <WidgetList>…</WidgetList>,
+      isLoading,
+      error,
+      onRetry: refetch,
+    },
+    { id: 'budget', title: 'Budget', icon: WalletIcon, to: '/budget',
+      empty: { action: { label: 'Add the first line', to: '/budget/new' } } },
+  ]}
+/>
+```
+
+- **The top:** the title (the page's h1, `actions` at its end), then
+  `stats` (a `KeyStats` strip of three to five numbers), then `NeedsYou`
+  from `needs`, which draws nothing when nothing waits. Collect `needs`
+  from what each part says about itself.
+- **From 48rem up, tiles.** One per part, at least 170px, as many as fit:
+  the icon and title, `value` in the numeric type, and `freshness`. A
+  tile is a button (`aria-expanded`, `aria-controls` the detail); a click
+  opens its part's detail below the grid, one at a time, and a second
+  click or Escape inside the detail closes it, focus back on the tile.
+  `defaultOpen` names a part open at first.
+- **The detail is a `WidgetCard`:** the title as a link to `to` with a
+  chevron, `value`, `line`, the app's `detail` (a few `WidgetList` rows,
+  a small `LineChart`) and `freshness`.
+- **Under 48rem, an accordion.** The same cards in a `WidgetCardGroup`,
+  each folded to one line with its value; opening one folds the others.
+- **Each part owns its states:** `isLoading` (a skeleton in the tile and
+  the card), `error` with `onRetry` (a dash in the tile, the compact
+  `ErrorState` in the card), and `empty` (a part with nothing yet: "Nothing
+  yet" in the tile, `PartEmpty` and its one way to start in the card). An
+  empty part stays on the page: hiding it makes the part forgotten.
+- **One card anatomy on a hub** (`WidgetCard`): `to` makes the title the
+  link with a chevron (in place of the header's `link`), `value` the
+  headline in the numeric type, `line` one muted line under it, and
+  `freshness` the `Freshness` line at the body's end, after the
+  children. A folded card shows `value` when it has no `summary`. All
+  optional: a card without them is drawn as before, and its folding on a
+  phone is unchanged.
+
+Measured with axe and the glyph check in both themes and every palette
+(fixture `app/OverviewPage`); `e2e/overview-page.spec.ts` clicks the
+tiles, Escape and the accordion.
 ## A record's header and empty values
 
 The record page standard (4.81): the same header on every record, the

@@ -262,6 +262,7 @@ export {
   type WidgetCardProps,
   type WidgetListItemProps,
 } from '@/components/app/widget-card'
+export { OverviewPage, type OverviewPageProps, type OverviewPart } from '@/components/app/overview-page'
 export { WidgetLayoutSheet, type WidgetLayoutSheetProps } from '@/components/app/widget-layout-sheet'
 export { ThemeProvider } from '@/components/theme-provider'
 

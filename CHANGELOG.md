@@ -44,6 +44,30 @@ which every palette was until now.
 To take it: `npm install @tristan2828/ui-foundation@4.91.0`, then
 `<FoundationProviders palette="palm-lcd">`, `pwa({ palette: 'palm-lcd' })`
 if the app installs, and `palettes: ['palm-lcd']` on its a11y specs.
+## 4.89.0 — An overview page, and one card anatomy for a hub's widgets
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Nothing changes on a page that doesn't
+use the new export or props.
+
+- **`OverviewPage`** (O1): `<OverviewPage title needs parts stats? />`,
+  where a part is `{ id, title, icon?, to, value?, line?, freshness?,
+  detail?, empty?, isLoading?, error?, onRetry? }`. The title, a
+  `KeyStats` strip, `NeedsYou` from `needs`, then from 48rem a grid of
+  tiles (at least 170px, as many as fit); a click opens the part's detail
+  below the grid, one at a time (`aria-expanded`, Escape closes it), the
+  detail headed by its title as a link to `to`. Under 48rem the parts are
+  an accordion, one line each with its value. Types `OverviewPart` and
+  `OverviewPageProps`.
+- **One card anatomy in `WidgetCard`** (O4): new optional `to` (the title
+  as a link with a chevron), `value`, `line` and `freshness`, so the hub's
+  widgets and an overview's parts read alike. A folded card's summary
+  defaults to `value`. Its folding on a phone is unchanged.
+
+To take it: build a module's overview with `OverviewPage`
+(`docs/foundation/design-language.md` "An overview page"), and move a
+hub's widgets to `to`, `value`, `line` and `freshness` where they have a
+headline.
 
 ## 4.88.0 — The form standard's controls, on the form and in place
 
