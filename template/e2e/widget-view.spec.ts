@@ -451,23 +451,25 @@ test.describe('widget view', () => {
       // The whole content area: the header reaches the rail's right edge.
       expect(Math.abs(header!.x + header!.width - (details!.x + details!.width))).toBeLessThan(2)
 
-      // The rail is narrow, so each label sits above its value.
+      // Rail fields sit beside their labels (the default since 4.81).
       const label = await page.locator('dt').getByText('Category', { exact: true }).boundingBox()
       const value = await fieldValue(page, 'Category').boundingBox()
-      expect(value!.y).toBeGreaterThanOrEqual(label!.y + label!.height)
+      expect(value!.x).toBeGreaterThan(label!.x + label!.width)
+      expect(Math.abs(value!.y - label!.y)).toBeLessThan(4)
       const pageOverflows = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
       expect(pageOverflows).toBe(false)
     })
   }
 
-  test('phone width: labels above values, the rail first, nothing scrolls sideways', async ({ page }) => {
+  test('phone width: labels beside values, the rail first, nothing scrolls sideways', async ({ page }) => {
     await page.setViewportSize({ width: 393, height: 851 })
     await page.goto('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
 
     const label = await page.locator('dt').getByText('Category', { exact: true }).boundingBox()
     const value = await fieldValue(page, 'Category').boundingBox()
-    expect(value!.y).toBeGreaterThanOrEqual(label!.y + label!.height)
+    expect(value!.x).toBeGreaterThan(label!.x + label!.width)
+    expect(Math.abs(value!.y - label!.y)).toBeLessThan(4)
 
     const details = await page.getByRole('region', { name: 'Details' }).boundingBox()
     const description = await page.getByRole('region', { name: 'Description' }).boundingBox()

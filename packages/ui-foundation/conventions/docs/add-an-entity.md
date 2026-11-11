@@ -4,25 +4,25 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 41–63
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–802
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–806
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
   - Step 2: `npm run gen:api` · lines 115–116
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–689
-  - Step 7: Register routes · lines 690–705
-  - Step 8: Add Playwright specs for all three screens · lines 706–784
-  - Step 9: Register the nav entry and route names · lines 785–799
-  - Step 10: `npm run verify`. · lines 800–802
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 804–953
-  - [The record view](#the-record-view) · lines 917–953
-- [What not to copy](#what-not-to-copy) · lines 955–981
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 983–1000
-- [Deleting](#deleting) · lines 1002–1031
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1033–1054
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1056–1065
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1068–1107
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–693
+  - Step 7: Register routes · lines 694–709
+  - Step 8: Add Playwright specs for all three screens · lines 710–788
+  - Step 9: Register the nav entry and route names · lines 789–803
+  - Step 10: `npm run verify`. · lines 804–806
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 808–960
+  - [The record view](#the-record-view) · lines 921–960
+- [What not to copy](#what-not-to-copy) · lines 962–988
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 990–1007
+- [Deleting](#deleting) · lines 1009–1038
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1040–1061
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1063–1072
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1075–1114
 
 <!-- /index -->
 
@@ -414,9 +414,12 @@ is a filled-in example while the Widgets demo is still here).
    plan's "View screen" section lists:
 
    - **Title and badges.** The plan's title field is the page's `<h1>`.
-     Its badge fields sit beside it, each the same `Badge` and variant map
-     as its table cell. Edit (a `Button` rendering a `Link` to
-     `/<entity>/:id/edit`) and the delete action go in `actions`.
+     Its badge fields sit on its line, after it (`badges`), each the same
+     `Badge` and variant map as its table cell. Edit (a `Button`
+     rendering a `Link` to `/<entity>/:id/edit`) and the delete action go
+     in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
+     label="Delete" tone="destructive"`, the dialog's trigger through
+     `render`).
    - **The browser tab** reads the record's title once it loads
      ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
      puts the nav's ("Widgets · <app>") back while loading, on an error
@@ -471,9 +474,10 @@ is a filled-in example while the Widgets demo is still here).
      of linked records, a done-count, from the shared lookups in
      `<entity>-format.ts`. Never re-derive one for the view.
    - **An empty value is passed through as it is** (`null`, `''`, or
-     `list.length > 0 && …`), and `EntityView` shows the field's
-     `emptyLabel`, the plan's "not set" label, never a blank. A yes/no is
-     never empty: it reads Yes or No (cell pattern 12).
+     `list.length > 0 && …`), and `EntityView` shows a dash (read as "Not
+     set"), never a blank. A field's `emptyLabel` replaces it only where
+     words say more ("No budget yet"). A yes/no is never empty: it reads
+     Yes or No (cell pattern 12).
    - **A reference links to the referenced record's view** when that
      entity has one: the name, from the same lookup by id the table uses,
      inside `<Link to={`/<other>/${id}`}>`. Without a view, the plain name
@@ -548,8 +552,8 @@ is a filled-in example while the Widgets demo is still here).
      (under the record, or under the page whose note it's in).
    - **Notes worth taking on paper** (a visit's prep and questions, a
      guide, a checklist to tick by hand): mark each of those sections
-     `print: true`. The header gets a Print notes button (`printLabel`
-     renames it) that prints the marked sections alone, under the title
+     `print: true`. The header gets a Print notes icon (`printLabel`
+     renames its tooltip and name) that prints the marked sections alone, under the title
      and subtitle: no rail, no shell, no buttons, light paper in either
      theme, headings and bullets as written, nothing folded, tables
      ruled with room in their empty cells. `print: { answerSpace: true }`
@@ -926,8 +930,9 @@ view reaches them all. A record uses the parts it has, in this order:
   at once) and other status-like fields as badges, edited in place. A
   record with a face or a mark of its own (a person's avatar, a
   service's logo, a cover) puts it left of all that (`leading`, 4.76).
-  `actions` holds Delete (soft, with Undo) and the record's own commands
-  (Run, Print), never Edit.
+  `actions` holds the record's own commands in words (Run, New visit),
+  then Delete (soft, with Undo) as an `IconAction`, never Edit. Print
+  notes is an icon of EntityView's own.
 - **Strip**: the record's key numbers and ratings (`strip`, a
   `KeyStats`), each edited in place where it's shown.
 - **Sections**: with long text (notes, a body) `layout="rail"` and
@@ -943,9 +948,11 @@ view reaches them all. A record uses the parts it has, in this order:
   `?tab=`. Fewer groups stay one scroll, folded by headings. A record's
   Notes stay outside the tabs, above them, unless they are one tab's
   content; the rail and the strip never go in a tab.
-- **Rail fields beside their labels** (`railFields="beside"`, 4.76) for
-  a rail of many short facts, so it reads as a list of pairs rather than
-  a column of labels; keep labels to a word or two.
+- **Rail fields beside their labels** (`railFields`, `beside` by
+  default since 4.81), so a rail of short facts reads as a list of pairs
+  rather than a column of labels; keep labels to a word or two.
+- **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
+  what's known, then "N empty" opens the rest, still edited in place.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.
 
