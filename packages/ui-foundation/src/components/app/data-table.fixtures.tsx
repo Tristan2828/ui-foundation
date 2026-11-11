@@ -37,12 +37,12 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   every data view of a page (`expectDataViewsLoaded`).
 // - Highlighted: `highlightRow`, two rows to look at (cell pattern 22),
 //   `striped`, so the wash is measured over a stripe.
-// - ListLook (4.80): a list's defaults: content width, no stripes, the
+// - ListLook (4.83): a list's defaults: content width, no stripes, the
 //   row hover with the hand cursor (the rows open a page), a Notes column
 //   cut to one line (`meta.clip`), and rows per page (`pageSizes`, through
 //   useTableUrlState, remembered under a storage key). ListLookInRows: the
 //   same rows edited in place (`opens: rows`), so the arrow cursor.
-//   ListLookStriped: `striped` and `width="full"`, the look before 4.80.
+//   ListLookStriped: `striped` and `width="full"`, the look before 4.83.
 // - Totals: `totals`, sums under Quantity, Price and Target price for
 //   every matching row (eight, over two pages), right-aligned like their
 //   columns (Price sortable, its arrow left of its label), with the first and last
@@ -716,7 +716,7 @@ function SeveralTablesPage() {
   )
 }
 
-// --- a list's look (4.80) -------------------------------------------------------
+// --- a list's look (4.83) -------------------------------------------------------
 
 type Recipe = { id: number; name: string; course: string; minutes: number; notes: string }
 

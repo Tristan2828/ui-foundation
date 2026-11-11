@@ -672,7 +672,7 @@
      6.75:1. In dark the usual muted already clears it (6.61:1). */
   --table-highlight: color-mix(in srgb, var(--info) 10%, var(--background));
   --table-highlight-muted-foreground: var(--gray-600);
-  /* A body row under the pointer (DataTable, 4.80): the muted fill, solid
+  /* A body row under the pointer (DataTable, 4.83): the muted fill, solid
      so pinned cells can wear it. Muted text measures 4.34:1 on it, so the
      row takes --table-highlight-muted-foreground's darker grey (7.0:1).
      In dark the usual muted clears it (5.9:1); a palette's dim, 5.8. */

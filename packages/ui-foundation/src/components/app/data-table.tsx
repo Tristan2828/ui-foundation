@@ -169,7 +169,7 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   visibleColumns?: readonly string[]
   /**
-   * `content` (the default, 4.80): the table and its pagination are as wide
+   * `content` (the default, 4.83): the table and its pagination are as wide
    * as the columns need, at least 36rem (or the whole width, when that's
    * less), with empty space at the right, so a name stays close to its
    * values at any screen size; wider than the area, the table scrolls
@@ -177,13 +177,13 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    * don't move between lists. While loading, empty or failed after a
    * load, it keeps the width it last had, so paging and filtering don't
    * move it (only the first load can). `full`: the table takes the whole
-   * width too (the default before 4.80). A card layout takes the whole
+   * width too (the default before 4.83). A card layout takes the whole
    * width either way.
    */
   width?: DataTableWidth
   /**
    * Zebra stripes on the body rows (every other row tinted), as before
-   * 4.80. Off by default: rows are told apart by the line under each.
+   * 4.83. Off by default: rows are told apart by the line under each.
    */
   striped?: boolean
   /**
@@ -703,12 +703,12 @@ const PINNED_LAST_COLUMN_CLASS = `sticky right-0 border-l ${PINNED_CELL_CLASS}`
 // same opaque cell, with no hover, since the row isn't one to pick.
 const PINNED_TOTALS_LABEL_CLASS = PINNED_COLUMN_CLASS
 
-// `striped` off (the default, 4.80): table.tsx's zebra taken back off the
+// `striped` off (the default, 4.83): table.tsx's zebra taken back off the
 // body (tailwind-merge drops its even-row tint for this one), so rows are
 // told apart by the line under each.
 const UNSTRIPED_BODY_CLASS = '[&_tr:nth-child(even)]:bg-transparent'
 
-// A body row under the pointer (4.80): every cell, pinned ones included,
+// A body row under the pointer (4.83): every cell, pinned ones included,
 // in --table-hover (solid, so a pinned cell can wear it), with a bar in
 // --primary on the first cell, so it reads without colour too; an inset
 // shadow rather than a border, so nothing reflows. On a cell, not the row,

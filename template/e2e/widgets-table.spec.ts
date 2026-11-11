@@ -584,9 +584,9 @@ test.describe('widgets table', () => {
     for (const alpha of alphas) expect(alpha).toBe(1)
   })
 
-  // The whole row lights on hover (4.80, the list page standard): every
+  // The whole row lights on hover (4.83, the list page standard): every
   // cell, both pinned ones included, in one solid tint, the same on every
-  // row, with a bar on the first cell only. Before 4.80 only the pinned
+  // row, with a bar on the first cell only. Before 4.83 only the pinned
   // first cell lit, because the zebra stripe outranked a row hover.
   for (const colorScheme of ['light', 'dark'] as const) {
     test(`hovering lights every cell of the row, pinned ones included, with a bar at its start (${colorScheme})`, async ({
@@ -630,7 +630,7 @@ test.describe('widgets table', () => {
     })
   }
 
-  // No zebra stripes on lists (4.80): rows are told apart by the line under
+  // No zebra stripes on lists (4.83): rows are told apart by the line under
   // each, and the pinned columns (opaque, issue #92) match the row.
   for (const colorScheme of ['light', 'dark'] as const) {
     test(`rows carry no stripe, and the pinned columns match them (${colorScheme})`, async ({ page }) => {

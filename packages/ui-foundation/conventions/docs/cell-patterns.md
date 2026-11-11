@@ -1445,7 +1445,7 @@ entity yet.
 
 On a wide screen a table of a few short columns (a name, a colour, a
 count, its delete) spread across the page puts the row's actions far
-from its name. `width="content"`, the default since 4.80 (it was an
+from its name. `width="content"`, the default since 4.83 (it was an
 opt-in from 80rem), sizes the table and its pagination to its columns at
 every width, never under 36rem (or the whole width, when that's less),
 with empty space at the right; the toolbar keeps the whole width, so its
@@ -1453,7 +1453,7 @@ controls sit in the same place on every list. A table wider than its
 area scrolls sideways inside it. While it's loading, empty or failed
 after a load, it keeps the width it last had, so paging and filtering
 don't move it; only the first load can. `width="full"` takes the whole
-width, the look before 4.80; a card layout always does.
+width, the look before 4.83; a card layout always does.
 
 ## 19. Stage circle for an ordered status
 
@@ -1722,7 +1722,7 @@ current one. `DataTable`'s `highlightRow` returns true for it.
 
 ## 24. A list's rows: hover, lines, rows per page
 
-What every `DataTable` does by default since 4.80 (the list page
+What every `DataTable` does by default since 4.83 (the list page
 standard), and the two choices it leaves an app.
 
 - **The row under the pointer** lights whole: every cell, pinned ones

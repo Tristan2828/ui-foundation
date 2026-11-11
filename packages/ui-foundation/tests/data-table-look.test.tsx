@@ -1,4 +1,4 @@
-// DataTable's list look (4.80): no zebra unless `striped`, the hover on
+// DataTable's list look (4.83): no zebra unless `striped`, the hover on
 // every body row but a highlighted one, `width="content"` by default,
 // `meta.clip`/`maxWidth`, and the rows-per-page menu. How they look and
 // behave in a browser (hover colours, the tooltip, the menu, the widths) is

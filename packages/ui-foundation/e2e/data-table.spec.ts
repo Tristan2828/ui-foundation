@@ -39,7 +39,7 @@ test.describe('DataTable width="content"', () => {
     expect(next.x + next.width).toBeLessThanOrEqual(area.x + area.width + 1)
   })
 
-  // Since 4.80 at every width, not only from an 80rem table area.
+  // Since 4.83 at every width, not only from an 80rem table area.
   test('at 1280px too it takes the width it needs, the toolbar keeping the whole width', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto(story('content-width'))
@@ -455,11 +455,11 @@ test.describe('several tables on one page (expectDataViewsLoaded)', () => {
   })
 })
 
-// A list's look (4.80, the list page standard): the row hover, no stripes
+// A list's look (4.83, the list page standard): the row hover, no stripes
 // unless `striped`, long text on one line (`meta.clip`), content width by
 // default, and rows per page. Axe and the token check at rest in both
 // themes are fixtures-visual's; the hovered row's contrast is checked here.
-test.describe('DataTable list look (4.80)', () => {
+test.describe('DataTable list look (4.83)', () => {
   const recipeRow = (page: Page, name: string) =>
     page.locator('tbody tr', { has: page.getByRole('link', { name, exact: true }) })
   const tokenColour = (page: Page, token: string) =>

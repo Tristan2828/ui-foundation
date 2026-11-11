@@ -177,7 +177,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   // A highlighted row's wash, with muted text inside it (#156).
   { id: 'app-datatable--highlighted', mustShow: 'Health' },
-  // A list's look (4.80): no stripes, content width, Notes cut to one
+  // A list's look (4.83): no stripes, content width, Notes cut to one
   // line, the rows-per-page menu; and the striped, full-width opt-ins.
   { id: 'app-datatable--list-look', mustShow: '1–50 of 120' },
   { id: 'app-datatable--list-look-in-rows', mustShow: '1–50 of 120' },
@@ -210,6 +210,9 @@ const COMPOSITE_STORIES = [
   // A module's pages under its entry, open, and on the rail (#239).
   { id: 'app-appshell--nested', mustShow: 'Page at /media/channels/3' },
   { id: 'app-appshell--nested-rail', mustShow: 'Page at /media/channels/3' },
+  // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
+  { id: 'app-appshell--standard', mustShow: 'Page at /finance/accounts/3' },
+  { id: 'app-appshell--standard-rail', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
