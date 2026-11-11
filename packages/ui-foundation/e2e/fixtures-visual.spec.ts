@@ -207,6 +207,9 @@ const COMPOSITE_STORIES = [
   // A module's pages under its entry, open, and on the rail (#239).
   { id: 'app-appshell--nested', mustShow: 'Page at /media/channels/3' },
   { id: 'app-appshell--nested-rail', mustShow: 'Page at /media/channels/3' },
+  // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
+  { id: 'app-appshell--standard', mustShow: 'Page at /finance/accounts/3' },
+  { id: 'app-appshell--standard-rail', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).

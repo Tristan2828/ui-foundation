@@ -59,13 +59,15 @@ test('following a link in the sheet closes it; a link item goes straight to its 
   await expect(bar(page).getByRole('button', { name: 'Collections' })).not.toHaveAttribute('aria-current')
 })
 
-test("the page's content clears the bar, and the header's menu button is still there", async ({ page }) => {
+test("the page's content clears the bar; below an entry the header's back arrow takes the menu button's place", async ({ page }) => {
   await openAtPhoneWidth(page)
   const main = page.locator('[data-slot="sidebar-inset"] > div').last()
   const padding = await main.evaluate((element) => parseFloat(getComputedStyle(element).paddingBottom))
   const height = (await bar(page).boundingBox())!.height
   expect(padding).toBeGreaterThanOrEqual(height + 24)
-  await expect(page.getByRole('button', { name: 'Toggle Sidebar' })).toBeVisible()
+  // /media/channels/3 is below the Channels entry (e2e/app-shell-standard.spec.ts has the rest).
+  await expect(page.getByRole('link', { name: 'Back to Channels' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Toggle Sidebar' })).toBeHidden()
 })
 
 test('at a desktop width there is no bar', async ({ page }) => {
