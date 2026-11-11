@@ -90,7 +90,14 @@ describe('inPlace.date', () => {
     expect(check(due, '2026-10-01')).toEqual({ saves: '2026-10-01' })
     expect(check(due, '')).toEqual({ saves: null })
     expect(check(inPlace.date({ value: '2026-09-02', save, required: true }), '')).toEqual({ refused: 'Required' })
-    expect(due.kind).toBe('choice')
+    // Typed (4.86): Enter saves the day typed, as a one-line field.
+    expect(due.kind).toBe('text')
+    expect(inPlace.date({ value: '2026-09-02', save, typing: false }).kind).toBe('choice')
+  })
+
+  it('refuses a stored value that is no day, with what to type', () => {
+    const due = inPlace.date({ value: '2026-09-02', save })
+    expect(check(due, '2026-02-30')).toEqual({ refused: 'Try a date like 3/14 or Mar 14' })
   })
 
   it('reads as the day, never shifted by the time zone', () => {
@@ -132,6 +139,21 @@ describe('inPlace.monthDay', () => {
     expect(check(season, { from: '11-01', by: '02-29' })).toEqual({ saves: { from: '11-01', by: '02-29' } })
     expect(check(season, { from: '11-01', by: '02-30' })).toEqual({ refused: 'By: February has 29 days' })
     expect(check(season, { from: '', by: '02-28' })).toEqual({ refused: 'From: Required' })
+  })
+})
+
+describe('inPlace.choice', () => {
+  const options = [
+    { value: 'print', label: 'Print' },
+    { value: 'audio', label: 'Audio' },
+  ]
+  it('is a select drawn as buttons: a press saves it, as a pick does', () => {
+    const format = inPlace.choice({ value: 'print', options, save })
+    expect(format.kind).toBe('choice')
+    expect(format.shown).toBe('Print')
+    expect(check(format, 'audio')).toEqual({ saves: 'audio' })
+    expect(check(format, null)).toEqual({ saves: null })
+    expect(check(inPlace.choice({ value: 'print', options, save, required: true }), null)).toEqual({ refused: 'Required' })
   })
 })
 

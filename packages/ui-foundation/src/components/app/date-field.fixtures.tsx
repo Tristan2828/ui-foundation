@@ -9,22 +9,24 @@ import { EntityView } from './entity-view'
 
 // A plain date on a form (required, and optional with Clear) and edited in
 // place on a view, each showing the value it holds, so e2e/date-field.spec.ts
-// can check no time zone moves the day. Axe and the token check run the
-// form in both themes (e2e/fixtures-visual.spec.ts).
+// can check no time zone moves the day. Default and EditInPlace are the
+// button alone (`typing={false}`); Typed is the default since 4.86, a box
+// with the calendar on its button. Axe and the token check run the forms
+// in both themes (e2e/fixtures-visual.spec.ts).
 
-function OnAForm() {
+function OnAForm({ typing = false }: { typing?: boolean }) {
   const [finished, setFinished] = useState<PlainDate>('2026-09-02')
   const [due, setDue] = useState<PlainDate>('')
   return (
     <FieldGroup className="max-w-sm">
       <Field>
         <FieldLabel htmlFor="finished">Finished</FieldLabel>
-        <DateField id="finished" value={finished} onChange={setFinished} />
+        <DateField id="finished" typing={typing} value={finished} onChange={setFinished} locale="en-US" />
         <output data-testid="finished-value">{finished || 'empty'}</output>
       </Field>
       <Field>
         <FieldLabel htmlFor="due">Due</FieldLabel>
-        <DateField id="due" value={due} onChange={setDue} clearable placeholder="No due date" />
+        <DateField id="due" typing={typing} value={due} onChange={setDue} clearable placeholder="No due date" locale="en-US" />
         <output data-testid="due-value">{due || 'empty'}</output>
       </Field>
     </FieldGroup>
@@ -40,6 +42,7 @@ function Record() {
     control: (props) => (
       <DateField
         id={props.id}
+        typing={false}
         value={props.value}
         onChange={(next) => props.commit(next)}
         clearable
@@ -86,3 +89,5 @@ export default meta
 export const Default: StoryObj = { render: () => <OnAForm /> }
 
 export const EditInPlace: StoryObj = { render: () => <InPlace /> }
+
+export const Typed: StoryObj = { render: () => <OnAForm typing /> }

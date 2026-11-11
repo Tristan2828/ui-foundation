@@ -167,6 +167,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
+  // The form standard's controls (4.86): choice buttons, typed dates, a
+  // reference with Create, a long multi-pick, and a record's rows edited in place.
+  { id: 'app-datefield--typed', mustShow: '2026-09-02' },
+  { id: 'app-formcontrols--form', mustShow: 'Show all 40' },
+  { id: 'app-formcontrols--edit-in-place', mustShow: 'The Quiet Harbour' },
   // A month and day with no year (4.78): set, empty and a stored value refused,
   // open on its days and on its months, and edited in place on a view.
   { id: 'app-monthdayfield--default', mustShow: 'No end day' },

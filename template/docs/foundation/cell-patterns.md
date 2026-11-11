@@ -26,20 +26,20 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 616–699
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 701–736
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 738–811
-- [18. Editable value](#18-editable-value) · lines 813–1456
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1098–1156
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1158–1194
-  - [A link and its label](#a-link-and-its-label) · lines 1196–1220
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1222–1355
-  - [In a table's rows](#in-a-tables-rows) · lines 1357–1442
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1444–1456
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1458–1524
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1526–1590
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1592–1690
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1692–1721
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1723–1761
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1763–1839
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1841–1864
+- [18. Editable value](#18-editable-value) · lines 813–1481
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1113–1181
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1183–1219
+  - [A link and its label](#a-link-and-its-label) · lines 1221–1245
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1247–1380
+  - [In a table's rows](#in-a-tables-rows) · lines 1382–1467
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1469–1481
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1483–1549
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1551–1615
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1617–1715
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1717–1746
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1748–1786
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1788–1864
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1866–1889
 
 <!-- /index -->
 
@@ -843,6 +843,16 @@ touch screen the pencil always shows. A click anywhere on the value opens it, ex
 link inside it (a reference to a record with a view, a link in the
 notes), which still navigates.
 
+**In a field list, the row is the target** (4.86, `look="row"`, which
+EntityView's field rows use). The row wears the list's row hover, the
+`--table-hover` tint and the 3px `--primary` bar at its start, as a
+DataTable row does, with its label readable on it and the pencil at its
+end; a click anywhere on the row (its label too) opens the value. Under
+48rem or on a touch screen there's no pencil but a chevron, and the row
+is 44px tall at least; the control still opens in the row. The header's
+strip and the title keep the value-sized tint above. A field list of the
+app's own gets the same with `editRowClass` and `onEditRowClick` on its row.
+
 **Open: the form's control, nothing else.** The same labels, choices and
 pickers as `EntityForm`; the field's label is its accessible name. No
 Save button, no Undo:
@@ -866,9 +876,13 @@ multi field whose options are few (up to about 25) and all loaded (a
 dozen labels, a short tag list) uses `MultiPick` instead, on the form
 and in place: every option a toggle chip with its icon or colour where
 the app draws one (`icon`), the picked ones pressed with a check, and a
-filter box above them, not in front of them. Larger sets, or ones that
-grow with the data, keep `MultiReference` (typing searches the server)
-or `MultiChoice`.
+filter box above them, not in front of them. The chips wrap at every
+width (4.86); past 30 options (`limit`) it shows the picked ones and the
+first 30, then "Show all N", and a filter searches them all. The options
+can be the app's list of records (its query's rows as `{ id, label }`,
+`loading` meanwhile), so links to a few dozen other records use it too.
+Larger sets, or ones that grow with the data, keep `MultiReference`
+(typing searches the server) or `MultiChoice`.
 
 - **The plan says which**, by marking the field `small`; the control
   isn't switched by option count. The two save differently in place
@@ -922,7 +936,8 @@ open.
 
 **Saving: still open, read-only, and says so.** Under the control,
 "Saving…" with a spinner (`role="status"`) until the server agrees, then
-it closes on the saved value. **Not optimistic**: the value only shows as
+it closes on the saved value, with "✓ Saved" beside it for two seconds
+(4.86, `role="status"`). **Not optimistic**: the value only shows as
 saved once it is, and the view shows the record the server returned (a
 side effect included). The rest of the page stays usable.
 
@@ -1113,11 +1128,13 @@ fields: [
   { label: 'Budget', edit: inPlace.money({ value: project.budget, save: (budget) => save({ budget }) }) },
   { label: 'Due', edit: inPlace.date({ value: project.due, required: true, save: (due) => save({ due }) }) },
   { label: 'Renews on', edit: inPlace.monthDay({ value: project.renewsOn, save: (renewsOn) => save({ renewsOn }) }) },
+  { label: 'Format', edit: inPlace.choice({ value: project.format, options: FORMAT_OPTIONS, save: (format) => save({ format }) }) },
   { label: 'Priority', edit: inPlace.select({ value: project.priority, options: PRIORITY_OPTIONS,
       render: (priority, label) => <Badge variant={PRIORITY_BADGE[priority]}>{label}</Badge>,
       save: (priority) => save({ priority }) }) },
   { label: 'Category', edit: inPlace.reference({ value: project.categoryId, label: categoryName,
-      search: (text) => searchCategories(text), save: (categoryId) => save({ categoryId }) }) },
+      search: (text) => searchCategories(text), onCreate: (name) => openNewCategory(name),
+      save: (categoryId) => save({ categoryId }) }) },
 ]
 // The title: <EntityView titleEdit={{ label: 'Name', ...inPlace.text({ value: project.name, required: true, save: … }) }} />
 // A badge: <EditableValue label="Priority" edit={priority} layout="inline" /> (its children default to the preset's look)
@@ -1134,20 +1151,28 @@ fields: [
   | `text` | the text | it trimmed; blank is `null` | blank when `required`, past `maxLength` |
   | `number` | `1,234 h` (`unit`) | a number; blank is `null` | not a number, under `min`, over `max`, a fraction with `integer` |
   | `money` | `$1,234.56` (`currency`, `locale`) | the API's decimal string, two places (`"1234.50"`), built from the digits, never a float; `$` and commas typed are fine | a third decimal, words, under `min` (0 by default), over `max` |
-  | `date` | `Sep 2, 2026` | `'YYYY-MM-DD'`; Clear is `null` | Clear when `required` |
+  | `date` | `Sep 2, 2026` | `'YYYY-MM-DD'`, typed ("3/14", "Mar 14", "today") or picked; an empty box or Clear is `null` | empty when `required`; what it can't read ("Try a date like 3/14 or Mar 14", nothing sent) |
   | `monthDay` | `Mar 14` (`format`, `locale`); a stored value that isn't a day, as written | `'MM-DD'`, no year; February 29 is a day; Clear is `null` | Clear when `required`, a day the month can't have ("February has 29 days") |
   | `select` | the option's label, or its `render` (a badge) | the option's value; "Not set" is `null` | "Not set" isn't offered when `required` |
+  | `choice` | as `select` | as `select`, drawn as ChoiceButtons (two to four short options); pressing the picked one again is `null` | as `select` |
   | `reference` | the record's `label` (the view's lookup by id) | the picked record's id | "Not set" isn't offered when `required` |
 
 - **They save the way their kind does** (the table above): `text`,
-  `number` and `money` on Enter or leaving them, `date`, `monthDay`,
-  `select` and `reference` on the pick (the list opens with the field).
+  `number`, `money` and a typed `date` on Enter or leaving them, a day
+  picked in the date's calendar, `monthDay`, `select`, `choice` and
+  `reference` on the pick (a list opens with the field).
   `required: true` types the save without `null`.
 - **`reference` searches through the app.** The package knows no
   endpoint: `search(text)` is the app's (its gateway's search by name,
   `''` when the list opens), called a pause after typing stops; a
   rejection reads as nothing found. Names come from the searches and from
   `label`, so the saved record's name shows before any search answers.
+  With `onCreate(name)`, Create "name" ends the list when what's typed
+  names no record: the app opens the other entity's `FormDialog` with the
+  name filled in and resolves with the record it saves (`null` on
+  Cancel); the field stays open meanwhile and saves the new record's id.
+  The form's control is the same `ReferenceCombobox`; `MultiReference`
+  takes the same `onCreate`.
 - **Keep the app's own control when it has one.** A field whose control
   is the form's own (a rich-text editor, a multi picker, an icon select,
   anything in `<entity>-fields.tsx` beyond a plain box) stays

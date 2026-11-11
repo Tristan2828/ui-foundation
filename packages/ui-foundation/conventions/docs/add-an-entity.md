@@ -4,27 +4,27 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 43–65
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–809
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–813
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 109–116
   - Step 2: `npm run gen:api` · lines 117–118
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 119–130
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 131–140
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 141–145
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–696
-  - Step 7: Register routes · lines 697–712
-  - Step 8: Add Playwright specs for all three screens · lines 713–791
-  - Step 9: Register the nav entry and route names · lines 792–806
-  - Step 10: `npm run verify`. · lines 807–809
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 811–1069
-  - [The record view](#the-record-view) · lines 960–999
-  - [Forms](#forms) · lines 1001–1042
-  - [Dialogs](#dialogs) · lines 1044–1069
-- [What not to copy](#what-not-to-copy) · lines 1071–1097
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1099–1116
-- [Deleting](#deleting) · lines 1118–1147
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1149–1170
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1172–1181
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1184–1223
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–700
+  - Step 7: Register routes · lines 701–716
+  - Step 8: Add Playwright specs for all three screens · lines 717–795
+  - Step 9: Register the nav entry and route names · lines 796–810
+  - Step 10: `npm run verify`. · lines 811–813
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 815–1084
+  - [The record view](#the-record-view) · lines 964–1003
+  - [Forms](#forms) · lines 1005–1057
+  - [Dialogs](#dialogs) · lines 1059–1084
+- [What not to copy](#what-not-to-copy) · lines 1086–1112
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1114–1131
+- [Deleting](#deleting) · lines 1133–1162
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1164–1185
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1187–1196
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1199–1238
 
 <!-- /index -->
 
@@ -220,11 +220,15 @@ is a filled-in example while the Widgets demo is still here).
    it's the foundation's `DateField` in a `Controller` (`clearable` when
    optional); the schema is the string (`z.string().min(1, …)` when
    required). The table and the view show `formatPlainDate(value)`
-   ("Sep 2, 2026"), the not-set label when empty. Editing in place is
-   `editInPlace({ kind: 'choice', ... })` with `DateField` as the
-   control, `defaultOpen`, `modal={false}`, `onChange={(day) =>
-   props.commit(day)}` and `onOpenChange` cancelling on close, as a
-   Select is (the fixtures' `app/DateField` EditInPlace). The backend column
+   ("Sep 2, 2026"), the not-set label when empty. `DateField` is typed
+   (4.86): a box that reads "3/14", "Mar 14", "2026-03-14" or "today",
+   with the calendar on its button, and something unreadable says "Try a
+   date like 3/14 or Mar 14" and gives `''`. Editing in place is
+   `inPlace.date({ value, save })`: Enter or leaving saves the day typed,
+   a day picked in the calendar saves at once. (`typing={false}` is the
+   button alone; in place then `editInPlace({ kind: 'choice', ... })` with
+   `defaultOpen`, `modal={false}` and `onChange={(day) => props.commit(day)}`,
+   the fixtures' `app/DateField` EditInPlace.) The backend column
    is a SQL `date` (`datetime.date` in the model).
 
    **A `month-day`** (a day that comes round every year, with no year:
@@ -1012,8 +1016,8 @@ shape (4.85):
   fields share a row, up to three, as wide as their sizes; a long one
   takes one short partner (Series and Number). `<Field solo>` keeps a
   short one alone where a pairing would read wrong. Under 48rem every
-  field takes its own row but two dates or two numbers (a date picker of
-  your own says so with `kind="date"`). Never a hand-made
+  field takes its own row but two dates or two numbers (`DateField` says
+  so itself; a date picker of your own with `kind="date"`). Never a hand-made
   `sm:grid-cols-2` row.
 - **Order:** required first, the status next, long text last.
 - **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
@@ -1027,6 +1031,17 @@ shape (4.85):
   "Enter a full address, starting https://", never "Title is required".
 - **A status** is an `OptionSelect` with the same `render` (its badge) as
   its cell and the record: `inPlace.select`'s `{ value, label }` options.
+- **The controls** (4.86): a choice of two to four short options is
+  `ChoiceButtons` (`inPlace.choice` in place), five or more an
+  `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",
+  "today") with the calendar on its button. A single reference is
+  `ReferenceCombobox` (`inPlace.reference` in place), several are
+  `MultiReference`, and a set the app loads whole (tags, a few dozen
+  records from its list query) is `MultiPick`, whose chips wrap and which
+  shows 30 before "Show all". Where a missing record stops the form, give
+  the reference `onCreate(name)`: open the other entity's `FormDialog`
+  with the name filled in, and resolve with the record it saves (or
+  `null` on Cancel).
 - **Cards** (`<FormSection title>`) only on a form of eight fields or
   more, never in a dialog; a short form is one run of fields. Sub-record
   editors (`ListEditor`) sit in a card of their own.

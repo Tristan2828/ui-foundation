@@ -17,7 +17,13 @@
 //   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
 // - `inline`: always editable, and the control is told to look like the
 //   value it edits (`inline` among its props).
-import { CheckIcon, PencilIcon } from 'lucide-react'
+// - Saved (4.86, F16): once a save lands, "✓ Saved" shows beside the value
+//   for two seconds (`role="status"`).
+// - `look="row"` (4.86, F15 and F18): in a record's field list the row is
+//   the target (edit-row.ts): it wears the list's row hover and the pencil
+//   sits at its end; under 48rem or on a touch screen there's a chevron
+//   instead of the pencil. The control still opens in the row.
+import { CheckIcon, ChevronRightIcon, PencilIcon } from 'lucide-react'
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
 import { useBlocker } from 'react-router'
 import { cn } from 'cn'
@@ -27,6 +33,7 @@ import { FieldError } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './edit-in-place'
 import type { EditInPlaceStore } from './edit-in-place-store'
+import { SAVED_FOR_MS } from './edit-row'
 import { escapePassedThrough } from './escape-passthrough'
 
 // What a click on the shown value must leave alone: links navigate,
@@ -47,6 +54,10 @@ const FOCUS_ORDER = [
 // (the leave prompt decides what happens to the draft) or the prompt itself.
 const LEAVING = 'a[href]:not([target="_blank"]), [data-leave-guard]'
 
+// A control holding the field open while something of the app's is in
+// front of it (ReferenceCombobox's create form): leaving doesn't save.
+const HOLD = '[data-edit-hold]'
+
 export type EditableValueProps = {
   /** The field's label: the control's accessible name, and the edit button's ("Edit Name"). */
   label: string
@@ -55,6 +66,13 @@ export type EditableValueProps = {
   children?: ReactNode
   /** `inline` in a heading or beside badges, `block` in a field row (default). */
   layout?: 'inline' | 'block'
+  /**
+   * `value` (the default): hover tints the value itself, as in a header's
+   * strip or a title. `row`: the field list's row is the target and wears
+   * the hover (edit-row.ts's `editRowClass` on it, as EntityView's rows
+   * have); under 48rem or on a touch screen a chevron, not the pencil.
+   */
+  look?: 'value' | 'row'
   className?: string
 }
 
@@ -90,6 +108,7 @@ export function EditableField({
   edit,
   children,
   layout = 'block',
+  look = 'value',
   className,
   trigger,
   reopenAfterKeyboardSave = false,
@@ -115,6 +134,20 @@ export function EditableField({
     () => store.state(key),
     () => store.state(key),
   )
+
+  // "✓ Saved" for a moment once a save lands (saving, then closed).
+  const [justSaved, setJustSaved] = useState(false)
+  const [seenStatus, setSeenStatus] = useState(state.status)
+  if (seenStatus !== state.status) {
+    setSeenStatus(state.status)
+    if (seenStatus === 'saving' && state.status === 'closed') setJustSaved(true)
+    else if (state.status !== 'closed') setJustSaved(false)
+  }
+  useEffect(() => {
+    if (!justSaved) return
+    const timer = window.setTimeout(() => setJustSaved(false), SAVED_FOR_MS)
+    return () => window.clearTimeout(timer)
+  }, [justSaved])
 
   const editButton = useRef<HTMLButtonElement>(null)
   // Holds a trigger (the list's Add): its button is the one the caret goes back to.
@@ -238,6 +271,7 @@ export function EditableField({
     if (!autosave && (event.relatedTarget as Element | null)?.closest(LEAVING)) return
     blurTimer.current = window.setTimeout(() => {
       if (store.state(key).status !== 'open') return
+      if (container.current?.querySelector(HOLD)) return
       void store.commit(key).then(() => {
         if (always) refresh()
       })
@@ -252,20 +286,43 @@ export function EditableField({
           {trigger(start)}
         </span>
       )
+    const row = look === 'row'
     return (
       <span
         data-slot="editable-value"
+        data-look={look}
         onClick={onShownClick}
         className={cn(
-          'group/editable relative -mx-1.5 cursor-text items-start gap-1 rounded-md px-1.5 transition-colors hover:bg-muted has-[[data-edit]:focus-visible]:bg-muted',
+          'group/editable relative cursor-text items-start gap-1',
+          // A row: the row (editRowClass) wears the hover, not the value.
+          !row && '-mx-1.5 rounded-md px-1.5 transition-colors hover:bg-muted has-[[data-edit]:focus-visible]:bg-muted',
           layout === 'block' ? 'flex w-full' : 'inline-flex max-w-full align-top',
           className,
         )}
       >
         {/* Muted text (a "Not set", a placeholder) reads as foreground on
             the hover and focus background: muted on bg-muted is under 4.5:1. */}
-        <span className="min-w-0 flex-1 group-hover/editable:[&_.text-muted-foreground]:text-foreground group-has-[[data-edit]:focus-visible]/editable:[&_.text-muted-foreground]:text-foreground">
+        <span
+          className={cn(
+            'min-w-0 flex-1',
+            !row &&
+              'group-hover/editable:[&_.text-muted-foreground]:text-foreground group-has-[[data-edit]:focus-visible]/editable:[&_.text-muted-foreground]:text-foreground',
+          )}
+        >
           {children !== undefined ? children : edit.shown}
+          {/* Always there, so a screen reader hears "Saved" arrive. */}
+          <span
+            role="status"
+            data-slot="editable-value-saved"
+            className="ml-2 inline-flex items-center gap-1 align-baseline type-caption text-success-text empty:hidden"
+          >
+            {justSaved && (
+              <>
+                <CheckIcon aria-hidden="true" className="size-3.5" />
+                Saved
+              </>
+            )}
+          </span>
         </span>
         <Button
           ref={editButton}
@@ -275,9 +332,20 @@ export function EditableField({
           size="icon-xs"
           aria-label={`Edit ${label}`}
           onClick={start}
-          className="shrink-0 text-muted-foreground opacity-0 group-hover/editable:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+          className={cn(
+            'shrink-0 text-muted-foreground opacity-0 focus-visible:opacity-100 pointer-coarse:opacity-100',
+            row ? 'group-hover/edit-row:opacity-100 hover:bg-transparent max-md:opacity-100' : 'group-hover/editable:opacity-100',
+          )}
         >
-          <PencilIcon />
+          {row ? (
+            <>
+              {/* A phone or a touch screen: a chevron says the row opens. */}
+              <PencilIcon className="max-md:hidden pointer-coarse:hidden" />
+              <ChevronRightIcon className="hidden max-md:block pointer-coarse:block" />
+            </>
+          ) : (
+            <PencilIcon />
+          )}
         </Button>
       </span>
     )
