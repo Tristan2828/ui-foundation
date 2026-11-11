@@ -561,11 +561,11 @@ test.describe('DataTable list look (4.80)', () => {
     await expect(page.locator('tbody tr')).toHaveCount(50)
     await page.getByRole('button', { name: 'Next page' }).click()
     await expect(page.getByText('Page 2 of 3')).toBeVisible()
-    await page.getByRole('button', { name: 'Rows per page: 50' }).click()
+    await page.getByRole('button', { name: '50 rows per page' }).click()
     await page.getByRole('menuitemradio', { name: '25' }).click()
     await expect(page.locator('tbody tr')).toHaveCount(25)
     await expect(page.getByText('Page 1 of 5')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Rows per page: 25' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '25 rows per page' })).toBeVisible()
     await page.reload()
     await expect(page.locator('tbody tr')).toHaveCount(25)
   })
@@ -575,7 +575,7 @@ test.describe('DataTable list look (4.80)', () => {
     await page.goto(story('list-look'))
     await expect(recipeRow(page, 'Recipe 1')).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
-    const menu = (await page.getByRole('button', { name: 'Rows per page: 50' }).boundingBox())!
+    const menu = (await page.getByRole('button', { name: '50 rows per page' }).boundingBox())!
     expect(menu.x + menu.width).toBeLessThanOrEqual(375)
   })
 })

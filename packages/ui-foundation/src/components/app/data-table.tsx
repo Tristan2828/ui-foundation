@@ -558,7 +558,8 @@ function GroupMenu<TData>({
 
 // The rows-per-page menu in the pagination bar (`pageSizes`): a radio list
 // that closes on a pick. The button says the size in words of its own
-// ("50 per page"), and the menu says what it is.
+// ("50 rows", as the list page standard drew it), and the menu says
+// what it is.
 function PageSizeMenu({
   pageSizes,
   value,
@@ -576,11 +577,11 @@ function PageSizeMenu({
             variant="outline"
             size="sm"
             data-slot="data-table-page-size"
-            aria-label={`Rows per page: ${value}`}
+            aria-label={`${value} rows per page`}
           />
         }
       >
-        {value} per page
+        {value} rows
         <ChevronDownIcon aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">

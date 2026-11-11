@@ -179,9 +179,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--highlighted', mustShow: 'Health' },
   // A list's look (4.80): no stripes, content width, Notes cut to one
   // line, the rows-per-page menu; and the striped, full-width opt-ins.
-  { id: 'app-datatable--list-look', mustShow: 'Recipe 1' },
-  { id: 'app-datatable--list-look-in-rows', mustShow: 'Recipe 1' },
-  { id: 'app-datatable--list-look-striped', mustShow: 'Recipe 1' },
+  { id: 'app-datatable--list-look', mustShow: '1–50 of 120' },
+  { id: 'app-datatable--list-look-in-rows', mustShow: '1–50 of 120' },
+  { id: 'app-datatable--list-look-striped', mustShow: '1–50 of 120' },
   // A list of sub-records, and one whose items open to edit, with Duplicate (#222).
   { id: 'app-listeditor--default', mustShow: 'Pack for the trip' },
   { id: 'app-listeditor--rows-that-open', mustShow: 'Romanian deadlift' },

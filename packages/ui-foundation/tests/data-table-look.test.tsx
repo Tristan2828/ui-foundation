@@ -135,7 +135,7 @@ describe('DataTable meta.clip and maxWidth', () => {
 
 describe('DataTable rows per page', () => {
   it('a menu in the bar with pageSizes and onPageSizeChange, none without', () => {
-    expect(render({ pageSizes: [25, 50, 100], onPageSizeChange: noop })).toContain('aria-label="Rows per page: 50"')
+    expect(render({ pageSizes: [25, 50, 100], onPageSizeChange: noop })).toContain('aria-label="50 rows per page"')
     expect(render({ pageSizes: [25, 50, 100] })).not.toContain('data-table-page-size')
     expect(render()).not.toContain('data-table-page-size')
   })
