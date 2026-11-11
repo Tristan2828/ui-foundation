@@ -33,7 +33,7 @@
 - [Picking at random](#picking-at-random) · lines 1357–1388
 - [Filling in what's missing](#filling-in-whats-missing) · lines 1390–1457
 - [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1459–1484
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1486–1532
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1486–1559
 
 <!-- /index -->
 
