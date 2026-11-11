@@ -17,9 +17,9 @@
 //   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
 // - `inline`: always editable, and the control is told to look like the
 //   value it edits (`inline` among its props).
-// - Saved (4.86, F16): once a save lands, "✓ Saved" shows beside the value
+// - Saved (4.88, F16): once a save lands, "✓ Saved" shows beside the value
 //   for two seconds (`role="status"`).
-// - `look="row"` (4.86, F15 and F18): in a record's field list the row is
+// - `look="row"` (4.88, F15 and F18): in a record's field list the row is
 //   the target (edit-row.ts): it wears the list's row hover and the pencil
 //   sits at its end; under 48rem or on a touch screen there's a chevron
 //   instead of the pencil. The control still opens in the row.

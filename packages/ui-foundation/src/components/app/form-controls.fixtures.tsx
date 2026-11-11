@@ -14,7 +14,7 @@ import { MultiPick } from './multi-pick'
 import { MultiReference } from './multi-reference'
 import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 
-// The form and in-place controls of the form standard (4.86, F10 to F18),
+// The form and in-place controls of the form standard (4.88, F10 to F18),
 // on made-up books.
 //
 // - Form: a choice of three as buttons (ChoiceButtons), two typed dates

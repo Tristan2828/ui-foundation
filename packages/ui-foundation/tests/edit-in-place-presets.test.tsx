@@ -90,7 +90,7 @@ describe('inPlace.date', () => {
     expect(check(due, '2026-10-01')).toEqual({ saves: '2026-10-01' })
     expect(check(due, '')).toEqual({ saves: null })
     expect(check(inPlace.date({ value: '2026-09-02', save, required: true }), '')).toEqual({ refused: 'Required' })
-    // Typed (4.86): Enter saves the day typed, as a one-line field.
+    // Typed (4.88): Enter saves the day typed, as a one-line field.
     expect(due.kind).toBe('text')
     expect(inPlace.date({ value: '2026-09-02', save, typing: false }).kind).toBe('choice')
   })

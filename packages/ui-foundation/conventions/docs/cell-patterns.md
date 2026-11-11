@@ -843,7 +843,7 @@ touch screen the pencil always shows. A click anywhere on the value opens it, ex
 link inside it (a reference to a record with a view, a link in the
 notes), which still navigates.
 
-**In a field list, the row is the target** (4.86, `look="row"`, which
+**In a field list, the row is the target** (4.88, `look="row"`, which
 EntityView's field rows use). The row wears the list's row hover, the
 `--table-hover` tint and the 3px `--primary` bar at its start, as a
 DataTable row does, with its label readable on it and the pencil at its
@@ -877,7 +877,7 @@ dozen labels, a short tag list) uses `MultiPick` instead, on the form
 and in place: every option a toggle chip with its icon or colour where
 the app draws one (`icon`), the picked ones pressed with a check, and a
 filter box above them, not in front of them. The chips wrap at every
-width (4.86); past 30 options (`limit`) it shows the picked ones and the
+width (4.88); past 30 options (`limit`) it shows the picked ones and the
 first 30, then "Show all N", and a filter searches them all. The options
 can be the app's list of records (its query's rows as `{ id, label }`,
 `loading` meanwhile), so links to a few dozen other records use it too.
@@ -937,7 +937,7 @@ open.
 **Saving: still open, read-only, and says so.** Under the control,
 "Saving…" with a spinner (`role="status"`) until the server agrees, then
 it closes on the saved value, with "✓ Saved" beside it for two seconds
-(4.86, `role="status"`). **Not optimistic**: the value only shows as
+(4.88, `role="status"`). **Not optimistic**: the value only shows as
 saved once it is, and the view shows the record the server returned (a
 side effect included). The rest of the page stays usable.
 

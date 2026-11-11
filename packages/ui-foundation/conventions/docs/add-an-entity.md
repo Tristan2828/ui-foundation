@@ -221,7 +221,7 @@ is a filled-in example while the Widgets demo is still here).
    optional); the schema is the string (`z.string().min(1, …)` when
    required). The table and the view show `formatPlainDate(value)`
    ("Sep 2, 2026"), the not-set label when empty. `DateField` is typed
-   (4.86): a box that reads "3/14", "Mar 14", "2026-03-14" or "today",
+   (4.88): a box that reads "3/14", "Mar 14", "2026-03-14" or "today",
    with the calendar on its button, and something unreadable says "Try a
    date like 3/14 or Mar 14" and gives `''`. Editing in place is
    `inPlace.date({ value, save })`: Enter or leaving saves the day typed,
@@ -1031,7 +1031,7 @@ shape (4.85):
   "Enter a full address, starting https://", never "Title is required".
 - **A status** is an `OptionSelect` with the same `render` (its badge) as
   its cell and the record: `inPlace.select`'s `{ value, label }` options.
-- **The controls** (4.86): a choice of two to four short options is
+- **The controls** (4.88): a choice of two to four short options is
   `ChoiceButtons` (`inPlace.choice` in place), five or more an
   `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",
   "today") with the calendar on its button. A single reference is

@@ -21,7 +21,7 @@
 // - Keyboard: the filter box first; Down goes to the chips, Left/Right
 //   (Home/End) move along them, Up goes back to the box, and Space or
 //   Enter toggles a chip.
-// - Every multi-pick (4.86, the form standard's F13): the chips wrap at
+// - Every multi-pick (4.88, the form standard's F13): the chips wrap at
 //   every width, under the filter box. Past `limit` options (30) it shows
 //   the picked ones and the first 30, then "Show all N"; a filter searches
 //   them all. The options can be the app's list of records (its query's

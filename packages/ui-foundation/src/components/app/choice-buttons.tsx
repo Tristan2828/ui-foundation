@@ -1,4 +1,4 @@
-// A small choice as a row of buttons (4.86, the form standard's F10): two
+// A small choice as a row of buttons (4.88, the form standard's F10): two
 // to four short options, every one in view and one click away, instead of
 // a select. Five or more, or long words, keep a select (OptionSelect).
 //

@@ -167,7 +167,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
   { id: 'app-datefield--default', mustShow: 'No due date' },
-  // The form standard's controls (4.86): choice buttons, typed dates, a
+  // The form standard's controls (4.88): choice buttons, typed dates, a
   // reference with Create, a long multi-pick, and a record's rows edited in place.
   { id: 'app-datefield--typed', mustShow: '2026-09-02' },
   { id: 'app-formcontrols--form', mustShow: 'Show all 40' },

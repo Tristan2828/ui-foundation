@@ -1,4 +1,4 @@
-// The form and in-place controls' pure parts (4.86, F10 to F18): reading a
+// The form and in-place controls' pure parts (4.88, F10 to F18): reading a
 // typed day, the markup ChoiceButtons, DateField and EditableValue's row
 // look draw, and when Create is offered. Behaviour in a browser (typing,
 // picking, saving, the row hover, a phone's chevron) is

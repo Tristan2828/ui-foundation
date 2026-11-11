@@ -10,7 +10,7 @@ import { EntityView } from './entity-view'
 // A plain date on a form (required, and optional with Clear) and edited in
 // place on a view, each showing the value it holds, so e2e/date-field.spec.ts
 // can check no time zone moves the day. Default and EditInPlace are the
-// button alone (`typing={false}`); Typed is the default since 4.86, a box
+// button alone (`typing={false}`); Typed is the default since 4.88, a box
 // with the calendar on its button. Axe and the token check run the forms
 // in both themes (e2e/fixtures-visual.spec.ts).
 

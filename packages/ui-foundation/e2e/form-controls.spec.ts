@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// The form standard's controls (4.86, F10 to F18), on app/FormControls:
+// The form standard's controls (4.88, F10 to F18), on app/FormControls:
 // a choice as buttons, a typed date, Create from a reference picker (single
 // and multi), a long multi-pick, and the same fields edited in place on a
 // record's rows (the row hover, "✓ Saved", a phone's chevron).

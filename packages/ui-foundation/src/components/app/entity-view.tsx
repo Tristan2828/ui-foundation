@@ -357,7 +357,7 @@ type FieldPlace = keyof typeof FIELD_ROW
 
 function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace }) {
   const value = fieldValue(field)
-  // An editable row is the target as a whole (4.86, F15/F18): the list's
+  // An editable row is the target as a whole (4.88, F15/F18): the list's
   // row hover, its pencil at the end, a chevron on a phone.
   const editable = Boolean(field.edit)
   return (

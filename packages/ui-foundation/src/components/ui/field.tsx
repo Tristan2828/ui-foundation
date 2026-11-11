@@ -54,7 +54,7 @@ function FieldLegend({
 
 // What a Field holds, when it doesn't say (`kind`): a date or a number
 // box keeps its partner on a phone.
-// DateField marks its own box (`data-kind="date"`, 4.86).
+// DateField marks its own box (`data-kind="date"`, 4.88).
 const DATE_CONTROL = "input[type=date], [data-kind=date]"
 const NUMBER_CONTROL = "input[type=number], input[inputmode=numeric], input[inputmode=decimal]"
 
@@ -171,7 +171,7 @@ function Field({
     /**
      * A date or a number: two of a kind stay side by side on a phone.
      * Found by itself for a date or number `<input>` and for DateField
-     * (which marks itself, 4.86); say it for a control of your own.
+     * (which marks itself, 4.88); say it for a control of your own.
      */
     kind?: FieldKind
   }) {

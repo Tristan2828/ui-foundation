@@ -6,7 +6,7 @@
 // `label`, so a pick the current search no longer returns still shows its
 // name.
 //
-// `onCreate` (4.86, the form standard's F14): when what's typed matches no
+// `onCreate` (4.88, the form standard's F14): when what's typed matches no
 // record's name, Create "<typed>" is the list's last item. Picking it
 // calls the app's `onCreate(name)`, which opens its small create form (a
 // FormDialog) with the name filled in and resolves with the new record

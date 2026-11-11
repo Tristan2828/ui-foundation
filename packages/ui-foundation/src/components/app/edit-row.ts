@@ -1,4 +1,4 @@
-// A record's field row as the target of its value edited in place (4.86,
+// A record's field row as the target of its value edited in place (4.88,
 // the form standard's F15 and F18): EditableValue's `look="row"`. The row
 // wears the list's row hover (the `--table-hover` tint and the 3px
 // `--primary` bar at its start, as DataTable's rows do since 4.83), its

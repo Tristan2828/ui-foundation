@@ -3,7 +3,7 @@
 // not set, and it's read as a calendar day, never an instant: nothing here
 // goes through the browser's time zone, so Sep 2 is Sep 2 everywhere.
 //
-// Typed (the default, 4.86's F12): a box that reads "3/14", "Mar 14",
+// Typed (the default, 4.88's F12): a box that reads "3/14", "Mar 14",
 // "2026-03-14" or "today" (`parsePlainDate`), with the package's Calendar
 // on its button. Something it can't read says "Try a date like 3/14 or
 // Mar 14" under the box once it's left, and gives `''`, so a form never
