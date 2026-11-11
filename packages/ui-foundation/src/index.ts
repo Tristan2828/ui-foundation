@@ -163,6 +163,18 @@ export {
   type StageCircleTone,
 } from '@/components/app/stage-circle'
 export { Notice, type NoticeProps, type NoticeTone } from '@/components/app/notice'
+export { ValueList, type ValueListItem, type ValueListProps } from '@/components/app/value-list'
+export {
+  ListHeader,
+  type ListHeaderAction,
+  type ListHeaderLink,
+  type ListHeaderProps,
+} from '@/components/app/list-header'
+export { Timeline, type TimelineItem, type TimelineProps } from '@/components/app/timeline'
+export { NeedsYou, type NeedsYouItem, type NeedsYouProps, type NeedsYouTone } from '@/components/app/needs-you'
+export { Freshness, type FreshnessProps } from '@/components/app/freshness'
+export { isStale } from '@/lib/freshness'
+export { PartEmpty, type PartEmptyAction, type PartEmptyProps, type PartEmptyState } from '@/components/app/part-empty'
 export { SourceCredit, type Source, type SourceCreditProps } from '@/components/app/source-credit'
 export { ProgressRing, type ProgressRingProps } from '@/components/app/progress-ring'
 export {
