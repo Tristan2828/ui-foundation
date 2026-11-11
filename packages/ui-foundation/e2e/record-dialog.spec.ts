@@ -272,7 +272,7 @@ test("a reload of a sub-record's address is the dialog over its parent again", a
   await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
 })
 
-// A new record over its list (`newPath`, 4.80): the `new` route is a
+// A new record over its list (`newPath`, 4.82): the `new` route is a
 // FormDialog over the list, from the list or a deep link, and Add opens
 // the new record over the same list.
 const form = (page: Page) => page.getByRole('dialog', { name: 'New project' })

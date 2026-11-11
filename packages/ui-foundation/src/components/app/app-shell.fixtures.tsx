@@ -1,6 +1,16 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
 import {
   BookOpenIcon,
+  ChartPieIcon,
+  ClipboardPenIcon,
+  LandmarkIcon,
+  MapIcon,
+  NewspaperIcon,
+  PiggyBankIcon,
+  ReceiptIcon,
+  ShoppingCartIcon,
+  SunIcon,
+  TimerIcon,
   HouseIcon,
   HomeIcon,
   LibraryIcon,
@@ -36,7 +46,10 @@ import { EntityView } from './entity-view'
 // #211), a module's pages under its entry (Nested…, #239), and the
 // phone's bottom bar (BottomBar, #240; e2e/app-shell-bottom-bar.spec.ts),
 // and an app with a palette, fixed or picked (WithPalette…,
-// e2e/palettes.spec.ts).
+// e2e/palettes.spec.ts). The navigation standard (Standard…,
+// e2e/app-shell-standard.spec.ts): headings among a module's pages, the
+// current entry's bar, counts, a Tools section at the sidebar's foot, the
+// phone's back arrow and an area's sheet as tiles.
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -145,6 +158,73 @@ const NESTED: NavEntry[] = [
       },
     ],
   },
+]
+
+// The navigation standard: areas of modules, a long module's pages under
+// headings, counts on the entries that ask you to act, and a Tools
+// section at the sidebar's foot. Every name is made up.
+const STANDARD: NavEntry[] = [
+  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  {
+    label: 'Every day',
+    items: [
+      { to: '/tasks', label: 'Tasks', icon: ListChecksIcon },
+      { to: '/news', label: 'News', icon: NewspaperIcon, count: 24, countLabel: 'unread' },
+      { to: '/timers', label: 'Timers', icon: TimerIcon },
+    ],
+  },
+  {
+    label: 'Collections',
+    items: [
+      { to: '/videos', label: 'Videos', icon: PlaySquareIcon, count: 12, countLabel: 'new' },
+      { to: '/books', label: 'Books', icon: BookOpenIcon },
+    ],
+  },
+  {
+    label: 'Home and money',
+    items: [
+      { to: '/house', label: 'House', icon: HouseIcon },
+      {
+        to: '/finance',
+        label: 'Finance',
+        icon: WalletIcon,
+        children: [
+          {
+            label: 'Money',
+            items: [
+              { to: '/finance/accounts', label: 'Accounts', icon: LandmarkIcon },
+              { to: '/finance/savings', label: 'Savings', icon: PiggyBankIcon },
+            ],
+          },
+          {
+            label: 'Spending',
+            items: [
+              { to: '/finance/budget', label: 'Budget', icon: ChartPieIcon },
+              { to: '/finance/shopping', label: 'Shopping list', icon: ShoppingCartIcon },
+            ],
+          },
+          { label: 'Taxes', items: [{ to: '/finance/taxes', label: 'Taxes', icon: ReceiptIcon }] },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Tools',
+    placement: 'bottom',
+    items: [
+      { to: '/fill-in', label: 'Fill in', icon: ClipboardPenIcon, count: 5, countLabel: 'to fill in' },
+      { to: '/roadmap', label: 'Roadmap', icon: MapIcon },
+    ],
+  },
+]
+
+// The phone's bar for it: Home and the three areas, each opening its
+// sheet as tiles.
+const STANDARD_BAR: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { group: 'Every day', icon: SunIcon, sheet: 'tiles' },
+  { group: 'Collections', icon: LibraryIcon, sheet: 'tiles' },
+  { group: 'Home and money', label: 'Household', icon: WalletIcon, sheet: 'tiles' },
 ]
 
 // One project's view, for the tab's title (#186). `loaded` false holds it
@@ -336,3 +416,14 @@ export const WithPalettePickerAndRows: Story = {
   args: { nav: SECTIONS, path: '/projects/7', palette: 'picker', rows: true },
 }
 export const WithRowsPicker: Story = { args: { nav: SECTIONS, path: '/projects/7', rows: true } }
+
+// The navigation standard: on a record below Accounts (Finance's pages
+// under their headings, Accounts marked), on the icon rail, and on a
+// phone, where the record gets a back arrow to Accounts, an entry's own
+// page keeps the menu button, and the areas' sheets are tiles.
+export const Standard: Story = { args: { nav: STANDARD, path: '/finance/accounts/3', bottomBar: STANDARD_BAR } }
+export const StandardRail: Story = {
+  args: { nav: STANDARD, path: '/finance/accounts/3', bottomBar: STANDARD_BAR, sidebarOpen: false },
+}
+export const StandardOnEntry: Story = { args: { nav: STANDARD, path: '/finance/accounts', bottomBar: STANDARD_BAR } }
+export const StandardNoBar: Story = { args: { nav: STANDARD, path: '/finance/accounts/3' } }

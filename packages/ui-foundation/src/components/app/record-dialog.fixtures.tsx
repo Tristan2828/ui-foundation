@@ -34,7 +34,7 @@ import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
 // `listPath="list"`. The Sub-records stories are a project's page with its
 // tasks, each opening at /projects/:id/tasks/:taskId in the dialog over the
 // project's page (`fullPage={false}`: a reload is the dialog again).
-// The New record stories (4.80) have a `new` child route (`newPath`): New
+// The New record stories (4.82) have a `new` child route (`newPath`): New
 // project opens a FormDialog over the list, a deep link to /projects/new
 // too, and Add opens the new project over the list. A name of "fail" is
 // refused. The Rail stories' records use EntityView's `rail` layout, its

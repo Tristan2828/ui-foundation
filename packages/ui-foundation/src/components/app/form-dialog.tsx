@@ -1,4 +1,4 @@
-// A small form in a dialog (4.80): a new record of up to about eight
+// A small form in a dialog (4.82): a new record of up to about eight
 // fields over its list, or any short form a page opens (a weak spot, a
 // quick add). The title and the buttons stay put and the fields scroll
 // between them; 640px wide (DialogContent `size="form"`), the whole screen

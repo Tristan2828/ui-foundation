@@ -46,7 +46,7 @@
 //   { path: 'parents/:id', element: <RecordDialogRoute list={<ParentView />} label="Document" fullPage={false} />,
 //     children: [{ path: 'children/:childId', element: <ChildView /> }] }
 //
-// A new record over its list (4.80, `newPath`): the list's `new` child
+// A new record over its list (4.82, `newPath`): the list's `new` child
 // route (`/widgets/new`) is the create form, drawn as its own FormDialog
 // over the list, always: opened from the list, from anywhere else, or a
 // deep link (a form of up to about 8 fields has no page of its own). It
@@ -58,7 +58,7 @@
 //   { path: 'widgets', element: <RecordDialogRoute list={<WidgetsTableRoute />} label="Widget" newPath="new" />,
 //     children: [{ path: 'new', element: <NewWidgetRoute /> }, { path: ':id', element: <WidgetViewRoute /> }] }
 //
-// The record dialog is 1,120px (DialogContent `size="record"`, 4.80), so
+// The record dialog is 1,120px (DialogContent `size="record"`, 4.82), so
 // an EntityView with `layout="rail"` keeps its rail beside the main
 // column, as on its page; a narrower screen stacks them.
 //

@@ -878,7 +878,7 @@ the dialog.
 { path: '<parents>/:id/edit', element: <<Parent>FormRoute /> },   // a sibling, not a child
 ```
 
-**A new record over its list** (4.80), for a create form of up to about
+**A new record over its list** (4.82), for a create form of up to about
 8 fields (a longer one is its own page, `<entity>/new` beside the list as
 above): the list's `new` child route, named by `newPath`, is a
 `FormDialog` over the list, from the list's New button
@@ -991,7 +991,7 @@ place yet; the plan says which, and the gap is raised for the package.
 
 ### Dialogs
 
-Every dialog is one of three widths, `DialogContent`'s `size` (4.80):
+Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
 
 | `size` | Width | On a phone (under 48rem) | Use it for |
 | --- | --- | --- | --- |

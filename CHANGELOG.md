@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.80.0 — Dialog sizes, a guard on what's typed, and FormDialog
+## 4.82.0 — Dialog sizes, a guard on what's typed, and FormDialog
 
 The UI package only; additive, no new dependency (the backend package's
 version moves with it, unchanged). One look changes with no prop: a
@@ -43,6 +43,44 @@ To take it: nothing is required. A `RecordDialogRoute` with its own
 `className` width (`sm:max-w-5xl`) keeps it; drop it for the standard
 1,120px. Hand-made form dialogs can move to `FormDialog`, and dialogs with
 a width of their own to `size`.
+## 4.80.0 — The navigation standard in AppShell
+
+The UI package only; additive (the backend package's version moves with
+it, unchanged). Two changes every app sees without setting anything: the
+current sidebar entry gets a bar at its start, and on a phone a page
+below a nav entry gets a back arrow in the header.
+
+- **Headings among a module's pages.** An entry's `children` take groups
+  as well as pages (`{ label: 'Money', items: [...] }`): small headings
+  in the sidebar and the phone's list sheet, each group's pages a list
+  named by it. The icon rail's tooltip names the headings ("Finance:
+  Money, Spending, Taxes"). New types `NavItemGroup` and `NavChild`
+  (`NavItem | NavItemGroup`); `NavItem['children']` is now
+  `readonly NavChild[]`.
+- **The current entry's mark:** the tint it had, and a 3px `--primary`
+  bar at its start, the same mark as a selected or hovered table row, in
+  the sidebar and on the rail.
+- **Counts.** `NavItem.count` draws a plain number at the entry's end in
+  the muted tone, a dot on the rail; 0 or none shows nothing.
+  `countLabel` says what it counts for screen readers ('unread' reads
+  "News 24 unread"). Pass it from a query.
+- **A section at the sidebar's foot.** `NavSection.placement: 'bottom'`
+  puts it under every other section and `sidebarExtra`, at the foot when
+  there's room (a Tools group).
+- **A phone's back arrow.** Below the md breakpoint, a page below a nav
+  entry (a record under Accounts) shows "‹ Accounts" at the header's
+  start, linking to the entry. With a `bottomBar` it takes the menu
+  button's place (the bar gets you everywhere else); without one the
+  menu button stays beside it. An entry's own page keeps the menu
+  button. A later release fills it from the page's trail instead.
+- **An area's sheet as tiles.** A `bottomBar` group item with
+  `sheet: 'tiles'` opens its sheet as a three-column grid of the
+  section's entries, icon over label, like a phone's home screen.
+
+An app reading `NavItem['children']` itself (rather than passing it to
+`AppShell`) now gets groups in it too: flatten them with the group's
+`items`. Design language: `docs/foundation/design-language.md` "The
+sidebar and the phone's bar".
 
 ## 4.79.0 — Column widths in rich text tables
 

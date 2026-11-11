@@ -8,8 +8,11 @@ import { describe, expect, it } from 'vitest'
 import {
   activeNavTo,
   bottomBarCurrent,
+  childItems,
   childrenOpen,
+  navBackTarget,
   navGroups,
+  navTooltip,
   navPageLabel,
   navPathname,
   navTargets,
@@ -183,5 +186,64 @@ describe('bottomBarCurrent', () => {
   it('is none off the nav, or for a section the nav lacks', () => {
     expect(bottomBarCurrent(bar, nav, undefined)).toBeUndefined()
     expect(bottomBarCurrent([{ group: 'Missing', icon: ListIcon }], nav, '/tasks')).toBeUndefined()
+  })
+})
+
+// N1: headings among a module's pages.
+describe('children under headings', () => {
+  const accounts: NavItem = { to: '/finance/accounts', label: 'Accounts', icon: TagIcon }
+  const budget: NavItem = { to: '/finance/budget', label: 'Budget', icon: TagIcon }
+  const taxes: NavItem = { to: '/finance/taxes', label: 'Taxes', icon: TagIcon }
+  const finance: NavItem = {
+    to: '/finance',
+    label: 'Finance',
+    icon: ListIcon,
+    children: [{ label: 'Money', items: [accounts] }, { label: 'Spending', items: [budget] }, taxes],
+  }
+  const nav: NavEntry[] = [home, { label: 'Home and money', items: [finance] }]
+
+  it("are the groups' pages, in order, as pages of the nav", () => {
+    expect(childItems(finance)).toEqual([accounts, budget, taxes])
+    expect(navTargets(nav)).toEqual(['/', '/finance', '/finance/accounts', '/finance/budget', '/finance/taxes'])
+    expect(activeNavTo(nav, '/finance/budget/4')).toBe('/finance/budget')
+    expect(childrenOpen(finance, '/finance/accounts')).toBe(true)
+    expect(childrenOpen(finance, '/')).toBe(false)
+    expect(bottomBarCurrent([{ group: 'Home and money', icon: ListIcon }], nav, '/finance/accounts')).toBe(0)
+  })
+
+  it("name the rail's tooltip by heading", () => {
+    expect(navTooltip(finance)).toBe('Finance: Money, Spending, Taxes')
+    expect(navTooltip(home)).toBe('Home')
+  })
+})
+
+// N4: a section at the sidebar's foot.
+describe("placement: 'bottom'", () => {
+  it('puts the section after every other group, keeping the rest in order', () => {
+    const tools = { label: 'Tools', placement: 'bottom' as const, items: [categories] }
+    expect(navGroups([home, tools, { label: 'Tasks', items: [tasks] }])).toStrictEqual([
+      { items: [home] },
+      { label: 'Tasks', items: [tasks] },
+      { label: 'Tools', items: [categories], placement: 'bottom' },
+    ])
+  })
+})
+
+// N7: where a phone's back arrow goes.
+describe('navBackTarget', () => {
+  it('is the current entry on a page below it', () => {
+    expect(navBackTarget(sectioned, '/tasks/3')).toEqual({ label: 'Tasks', to: '/tasks' })
+    expect(navBackTarget(sectioned, '/tasks/categories/2/edit')).toEqual({ label: 'Categories', to: '/tasks/categories' })
+  })
+
+  it("keeps an entry's query string, the view it opens on", () => {
+    expect(navBackTarget([{ ...tasks, to: '/tasks?status=open' }], '/tasks/3')).toEqual({ label: 'Tasks', to: '/tasks?status=open' })
+  })
+
+  it("is none on an entry's own page, or off the nav", () => {
+    expect(navBackTarget(sectioned, '/tasks')).toBeUndefined()
+    expect(navBackTarget(sectioned, '/tasks/')).toBeUndefined()
+    expect(navBackTarget(sectioned, '/')).toBeUndefined()
+    expect(navBackTarget(sectioned, '/elsewhere')).toBeUndefined()
   })
 })

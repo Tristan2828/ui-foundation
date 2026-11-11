@@ -5,7 +5,7 @@ import { cn } from "cn"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
-// The foundation's additions to shadcn's dialog (4.80):
+// The foundation's additions to shadcn's dialog (4.82):
 //
 // - `size` on DialogContent: `confirm` (420px), `form` (640px) and
 //   `record` (1,120px), the three widths every dialog uses. Under 48rem a

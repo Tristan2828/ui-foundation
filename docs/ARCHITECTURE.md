@@ -187,7 +187,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `/things/list` under `/things/12`), and a parent record's page can be
   the `list` of its sub-records (`fullPage={false}`, so a reload is the
   dialog over the parent again).
-- **Dialogs** (4.80): `DialogContent`'s `size` is one of three widths
+- **Dialogs** (4.82): `DialogContent`'s `size` is one of three widths
   (420, 640, 1,120px), written phone first with the laptop's look from
   `md:`, so the base `sm:` classes can't leak into a phone's sheet or full
   screen between 40 and 48rem. Its `dirty` guard lives in `Dialog` (the
