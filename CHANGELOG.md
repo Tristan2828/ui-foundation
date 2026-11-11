@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.86.0 — The trail and search in AppShell's bar
+## 4.87.0 — The trail and search in AppShell's bar
 
 The UI package only; additive, no new dependency (the backend package's
 version moves with it, unchanged). The record standard's R2 and the

@@ -132,7 +132,7 @@ export function PageTrail({ crumbs, 'aria-label': ariaLabel, className }: PageTr
           {/* Text marked as the current page, not shadcn's role="link"
               with aria-disabled: a link that goes nowhere, which a test
               (or a screen reader's list of links) finds beside the
-              sidebar's own "Home" (4.86, the trail in AppShell's bar). */}
+              sidebar's own "Home" (4.87, the trail in AppShell's bar). */}
           <BreadcrumbPage className="block truncate" title={crumb.label} role={undefined} aria-disabled={undefined}>
             {crumb.label}
           </BreadcrumbPage>

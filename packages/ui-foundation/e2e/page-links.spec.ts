@@ -145,7 +145,7 @@ test.describe('page trail', () => {
   test('shows every crumb when there is room, the page itself current', async ({ page }) => {
     await page.goto(STORY('trail'))
     const short = page.getByRole('navigation', { name: 'One level', exact: true })
-    // The page itself is text marked current, not a link of any kind (4.86).
+    // The page itself is text marked current, not a link of any kind (4.87).
     await expect(short.locator('a[href]')).toHaveCount(2)
     await expect(short.getByRole('link', { name: 'Getting Started' })).toHaveCount(0)
     await expect(short.getByRole('link', { name: 'Notes' })).toHaveAttribute('href', '/notes')

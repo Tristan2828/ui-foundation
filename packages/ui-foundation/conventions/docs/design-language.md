@@ -1486,7 +1486,7 @@ both themes and every palette.
 ## The sidebar and the phone's bar
 
 `AppShell`'s navigation (4.80), all set in the app's `nav` and
-`bottomBar`, and (4.86) the trail and search in the bar; an app that
+`bottomBar`, and (4.87) the trail and search in the bar; an app that
 sets none of it looks as it did, except the current entry's bar, the
 phone's back arrow and the nav entry's name in the bar, which every app
 gets.

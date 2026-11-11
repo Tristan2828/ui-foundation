@@ -132,7 +132,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
-  // A record's trail above its title, outside AppShell (4.86, R2).
+  // A record's trail above its title, outside AppShell (4.87, R2).
   { id: 'app-entityview--record-trail', mustShow: 'Timber and sheet goods' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
