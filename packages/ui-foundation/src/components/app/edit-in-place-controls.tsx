@@ -1,11 +1,11 @@
 // The controls behind the `inPlace` presets that hold state or lay out
 // several parts (edit-in-place-presets.tsx), kept in a file of their own
 // so the presets' file exports no components.
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList } from '@/components/ui/combobox'
+import type { ReactNode } from 'react'
 import { FieldError } from '@/components/ui/field'
 import type { EditControlProps, EditKind } from './edit-in-place'
-import type { InPlacePart, InPlaceRecord, InPlaceReferenceConfig } from './edit-in-place-presets'
+import type { InPlacePart, InPlaceReferenceConfig } from './edit-in-place-presets'
+import { ReferenceCombobox } from './reference-combobox'
 
 export type Checked<TValue> = { ok: true; value: TValue } | { ok: false; message: string }
 
@@ -24,9 +24,6 @@ export type Kind<TValue, TDraft> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a part's kind, whatever its value
 export type AnyKind = Kind<any, any>
 
-/** A select's and a combobox's items are strings: the option's position, or this for "Not set". */
-export const NONE = 'none'
-
 function controlAria(props: Pick<EditControlProps<unknown>, 'label' | 'describedBy' | 'invalid'>) {
   return {
     'aria-label': props.label,
@@ -35,87 +32,31 @@ function controlAria(props: Pick<EditControlProps<unknown>, 'label' | 'described
   }
 }
 
-// How long typing pauses before the search runs.
-const SEARCH_DELAY_MS = 200
-
 type ReferencePickerProps<Id extends string | number> = {
   props: EditControlProps<Id | null>
   alone: boolean
   config: InPlaceReferenceConfig<Id>
 }
 
-// The reference's combobox: what's typed searches (through the app's
-// `search`), a pick is the record's id. Names come from the searches and
-// from the saved record's `label`, so a pick the current search no longer
-// returns still shows its name.
+// The reference's combobox (ReferenceCombobox, the form's): alone, its
+// list opens with the field and a pick (or a record created from it) saves.
 export function ReferencePicker<Id extends string | number>({ props, alone, config }: ReferencePickerProps<Id>) {
-  const [text, setText] = useState('')
-  const [found, setFound] = useState<readonly InPlaceRecord<Id>[]>([])
-  const [names] = useState(() => new Map<string, InPlaceRecord<Id>>())
-  if (props.value != null && config.label !== undefined && !names.has(String(props.value)))
-    names.set(String(props.value), { id: props.value, label: config.label })
-  for (const record of found) names.set(String(record.id), record)
-  // The search is the app's, often a new function each render: the
-  // latest is called, and only what's typed starts a search.
-  const search = useRef(config.search)
-  useEffect(() => {
-    search.current = config.search
-  })
-  useEffect(() => {
-    let live = true
-    const timer = setTimeout(
-      () => {
-        search.current(text).then(
-          (records) => {
-            if (live) setFound(records)
-          },
-          () => {
-            if (live) setFound([])
-          },
-        )
-      },
-      text === '' ? 0 : SEARCH_DELAY_MS,
-    )
-    return () => {
-      live = false
-      clearTimeout(timer)
-    }
-  }, [text])
-
-  const picked = props.value == null ? null : String(props.value)
-  const items = [...(config.required ? [] : [NONE]), ...found.map((record) => String(record.id))]
-  const emptyLabel = config.emptyLabel ?? 'Not set'
-  const nameOf = (key: string) => (key === NONE ? '' : (names.get(key)?.label ?? ''))
   return (
-    <Combobox<string>
-      items={items}
-      value={picked}
-      onValueChange={(key) => {
-        if (key == null) return
-        const id = key === NONE ? null : (names.get(key)?.id ?? null)
-        if (alone) props.commit(id)
-        else props.onChange(id)
-      }}
-      // The box showing the pick's own name is no search: the list then
-      // offers everything, not only the one already picked.
-      onInputValueChange={(typed) => setText(picked !== null && typed === nameOf(picked) ? '' : typed)}
-      itemToStringLabel={nameOf}
-      filter={null}
+    <ReferenceCombobox
+      id={props.id}
+      value={props.value}
+      onValueChange={(id) => (alone ? props.commit(id) : props.onChange(id))}
+      search={config.search}
+      label={config.label}
+      required={config.required}
+      emptyLabel={config.emptyLabel}
+      placeholder={config.placeholder}
+      emptyText={config.emptyText}
+      onCreate={config.onCreate}
       readOnly={props.disabled}
       defaultOpen={alone}
-    >
-      <ComboboxInput id={props.id} placeholder={config.placeholder ?? 'Search'} {...controlAria(props)} />
-      <ComboboxContent>
-        <ComboboxEmpty>{config.emptyText ?? 'No matches.'}</ComboboxEmpty>
-        <ComboboxList>
-          {items.map((key) => (
-            <ComboboxItem key={key} value={key}>
-              {key === NONE ? emptyLabel : nameOf(key)}
-            </ComboboxItem>
-          ))}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+      {...controlAria(props)}
+    />
   )
 }
 

@@ -62,6 +62,87 @@ after an edit in place. A test that expected "X deleted" now reads
 a delete refused with a 422 now shows the server's own reason in the
 dialog.
 
+## 4.89.0 — An overview page, and one card anatomy for a hub's widgets
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Nothing changes on a page that doesn't
+use the new export or props.
+
+- **`OverviewPage`** (O1): `<OverviewPage title needs parts stats? />`,
+  where a part is `{ id, title, icon?, to, value?, line?, freshness?,
+  detail?, empty?, isLoading?, error?, onRetry? }`. The title, a
+  `KeyStats` strip, `NeedsYou` from `needs`, then from 48rem a grid of
+  tiles (at least 170px, as many as fit); a click opens the part's detail
+  below the grid, one at a time (`aria-expanded`, Escape closes it), the
+  detail headed by its title as a link to `to`. Under 48rem the parts are
+  an accordion, one line each with its value. Types `OverviewPart` and
+  `OverviewPageProps`.
+- **One card anatomy in `WidgetCard`** (O4): new optional `to` (the title
+  as a link with a chevron), `value`, `line` and `freshness`, so the hub's
+  widgets and an overview's parts read alike. A folded card's summary
+  defaults to `value`. Its folding on a phone is unchanged.
+
+To take it: build a module's overview with `OverviewPage`
+(`docs/foundation/design-language.md` "An overview page"), and move a
+hub's widgets to `to`, `value`, `line` and `freshness` where they have a
+headline.
+
+## 4.88.0 — The form standard's controls, on the form and in place
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Three looks change with no prop:
+`DateField` is a box you type in, with the calendar on its button;
+`inPlace.date` is the same box (Enter saves; a day picked in the calendar
+still saves at once); and an editable field row on `EntityView` is the
+target as a whole, with the list's row hover and, on a phone, a chevron.
+
+- **`ChoiceButtons`** (F10): two to four short options as a row of
+  joined buttons (Base UI's toggle group, single), with OptionSelect's
+  `{ value, label }` options and `render`; `clearable` lets the picked one
+  be pressed off. In place: `inPlace.choice({ options, ... })`, or
+  `inPlace.select({ look: 'buttons' })`; a press saves.
+  `inPlace.select` itself now draws `OptionSelect`.
+- **A date you can type** (F12): `DateField` reads "3/14", "3/14/26",
+  "Mar 14", "14 Mar", "2026-03-14", "today", "yesterday" and "tomorrow"
+  (`parsePlainDate`, the locale's order for 3/4), and shows the day back
+  as it's formatted. Something it can't read says "Try a date like 3/14
+  or Mar 14" under the box once it's left, and gives `''`, so a form
+  never keeps the day it had. `typing={false}` is the button alone, as
+  before; `onPick` and `onProblem` serve editing in place. DateField
+  marks itself `data-kind="date"`, so its Field needs no `kind="date"`.
+- **`MultiPick` for every multi-pick** (F13): its chips wrap at every
+  width (a chip longer than the row ends in "…"), under the filter box.
+  Past 30 options (`limit`) it shows the picked ones and the first 30,
+  then "Show all N"; a filter searches them all. `loading` for options
+  that come from the app's query of its records.
+- **Create from a reference picker** (F14): `onCreate(name)` on the new
+  `ReferenceCombobox` (the single reference on a form, also what
+  `inPlace.reference` draws), on `inPlace.reference` and on
+  `MultiReference`. Create "name" ends the list when what's typed names
+  no record; the app opens its small create form (a `FormDialog`) with
+  the name filled in and resolves with the saved record, which is then
+  picked (and, in place, saved; the field stays open meanwhile).
+- **The rail row's hover** (F15): `EditableValue look="row"` (EntityView's
+  field rows use it): the row wears `--table-hover` and the 3px
+  `--primary` bar, as a list row does, its label readable on the tint,
+  the pencil at its end, and a click anywhere on it opens the value.
+  `editRowClass` and `onEditRowClick` give a field list of your own the
+  same. The header strip and the title keep the value-sized tint.
+- **A brief Saved** (F16): once a save lands, "✓ Saved" shows beside the
+  value for two seconds (`role="status"`, `SAVED_FOR_MS`).
+- **A phone's edit in place** (F18): under 48rem or on a touch screen a
+  row has no pencil but a chevron, is 44px tall at least, and opens the
+  control in the row as on a laptop.
+
+To take it: replace hand-made single-reference comboboxes with
+`ReferenceCombobox`, a select of two to four short options with
+`ChoiceButtons` (or `inPlace.choice`), and drop `kind="date"` from a
+DateField's Field. A test that clicked a DateField's button ("Pick a
+date") now types in its box (`getByRole('textbox', { name })`), or opens
+the calendar with "Open calendar"; a test that read a row's text exactly
+right after a save now also meets "Saved". Give `onCreate` where a
+missing record stops the form today.
+
 ## 4.87.0 — The trail and search in AppShell's bar
 
 The UI package only; additive, no new dependency (the backend package's

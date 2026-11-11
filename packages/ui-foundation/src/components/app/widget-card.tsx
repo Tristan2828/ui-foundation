@@ -49,16 +49,26 @@
 // switch). A trailing control is labelled by the row's text: pass a
 // function and it gets the id to put in `aria-labelledby`.
 //
+// One card anatomy (overview standard O4), shared with OverviewPage's
+// parts so the hub's widgets and an overview's parts read alike: `to`
+// makes the title the link to everything the card sums up, with a
+// chevron after it; `value` is its headline in the numeric type, `line`
+// one muted line under it, and `freshness` how old the number is
+// (Freshness) at the body's end. A folded card shows `value` as its
+// summary when no `summary` is given. All optional: a card without them
+// is drawn as before, and its folding on a phone is unchanged.
+//
 // Under data-density="compact" (#224) the card's padding drops to 12px and
 // a row's to 4px, for a dense hub; text stays at type-body. On a phone a
 // compact row is 44px tall and its link fills that height, so it stays a
 // finger's target.
 import { createContext, useContext, useId, useState, type MouseEvent, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
-import { ChevronDownIcon, ExternalLinkIcon } from 'lucide-react'
+import { ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
+import { Freshness, type FreshnessProps } from '@/components/app/freshness'
 import type { IconComponent } from '@/components/app/icon-component'
 import { PartEmpty, type PartEmptyState } from '@/components/app/part-empty'
 import { Button } from '@/components/ui/button'
@@ -80,6 +90,18 @@ export interface WidgetCardProps {
    * title names the card.
    */
   icon?: IconComponent
+  /**
+   * Makes the title the link to everything the card sums up, with a
+   * chevron after it ("Net worth ›"): the overview standard's one way a
+   * card links its list (O4). Use it in place of `link`, not beside it.
+   */
+  to?: To
+  /** The card's headline: a number or a word or two ("$412,300", "On track"), in the numeric type. */
+  value?: ReactNode
+  /** One muted line under `value`: what it means ("+$6,240 since Aug"). */
+  line?: ReactNode
+  /** How old the number is: Freshness's props, drawn at the body's end. */
+  freshness?: FreshnessProps
   /** The title's heading level: 2 under the page's h1 (the default), deeper under a section. */
   headingLevel?: 2 | 3 | 4 | 5 | 6
   /**
@@ -119,7 +141,7 @@ export interface WidgetCardProps {
   /**
    * One short value shown in the header while the card is folded: a count
    * (`3`), or a word or two (`"Due today"`). A skeleton while loading, a
-   * muted dash on an error. Ignored while open.
+   * muted dash on an error. Ignored while open. Defaults to `value`.
    */
   summary?: ReactNode
   /** What a folded card's summary says when it's empty (`"None"`); nothing when left out. */
@@ -138,6 +160,10 @@ export function WidgetCard({
   id,
   title,
   icon: Icon,
+  to,
+  value,
+  line,
+  freshness,
   headingLevel = 2,
   link,
   isLoading,
@@ -150,11 +176,12 @@ export function WidgetCard({
   collapsible = false,
   defaultCollapsed = false,
   storageKey,
-  summary,
+  summary: ownSummary,
   emptySummary,
   children,
   className,
 }: WidgetCardProps) {
+  const summary = ownSummary ?? value
   const headingId = useId()
   const contentId = useId()
   const summaryId = useId()
@@ -204,7 +231,18 @@ export function WidgetCard({
         >
           <Heading id={headingId} className="flex min-w-0 items-center gap-2 type-section-title text-foreground">
             {Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
-            <span className="truncate">{title}</span>
+            {to !== undefined ? (
+              <Link
+                to={to}
+                data-slot="widget-card-title-link"
+                className="group/title -mx-1 flex min-w-0 items-center gap-0.5 rounded-sm px-1 outline-none hover:text-link focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <span className="truncate underline-offset-4 group-hover/title:underline">{title}</span>
+                <ChevronRightIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground group-hover/title:text-link" />
+              </Link>
+            ) : (
+              <span className="truncate">{title}</span>
+            )}
           </Heading>
           {(link || foldable || summaryShown) && (
             <div className="flex shrink-0 items-center gap-1">
@@ -264,6 +302,21 @@ export function WidgetCard({
                 {emptyMessage}
               </p>
             )
+          ) : value !== undefined || line !== undefined || freshness !== undefined ? (
+            <div data-slot="widget-card-anatomy" className="flex flex-col gap-1.5">
+              {(value !== undefined || line !== undefined) && (
+                <div className="flex flex-col gap-0.5">
+                  {value !== undefined && (
+                    <p data-slot="widget-card-value" className="type-numeric text-foreground">
+                      {value}
+                    </p>
+                  )}
+                  {line !== undefined && <p className="type-body text-muted-foreground">{line}</p>}
+                </div>
+              )}
+              {children}
+              {freshness && <Freshness {...freshness} className={cn('self-start', freshness.className)} />}
+            </div>
           ) : (
             children
           )}
