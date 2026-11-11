@@ -7,6 +7,9 @@
 export {
   AppShell,
   type AppShellProps,
+  type AppShellSearch,
+  type RecentRecord,
+  type SearchRecord,
   type AppShellVersion,
   type BottomBarItem,
   type NavEntry,
@@ -60,6 +63,14 @@ export {
   type DataTableWidth,
   type SortingState,
 } from '@/components/app/data-table'
+export {
+  type DataTableColumnsMenu,
+  type DataTablePhoneRow,
+  type DataTableRowAction,
+  type DataTableView,
+  type DataTableViewAll,
+} from '@/components/app/data-table-tools'
+export { RelatedTable, type RelatedTableProps } from '@/components/app/related-table'
 export { type RowGroup } from '@/components/app/table-groups'
 export { byDay, type ByDayOptions } from '@/lib/group-by-day'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
@@ -138,6 +149,8 @@ export { InlineCreate, type InlineCreateProps } from '@/components/app/inline-cr
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
 export { PageTrail, type PageCrumb, type PageTrailProps } from '@/components/app/page-trail'
+export { usePageTrail } from '@/components/app/page-trail-context'
+export { useRecentRecord } from '@/hooks/use-recent-record'
 export type { CreatePage, PageLinkInfo, PageLinkResolver } from '@/lib/page-link'
 export { countTasks, toggleTaskAt, type TaskCount } from '@/lib/markdown-tasks'
 export { NotesOutline, type NotesOutlineProps } from '@/components/app/notes-outline'
@@ -152,6 +165,14 @@ export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 export { PillFilter, type PillFilterOption, type PillFilterProps } from '@/components/app/pill-filter'
 export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
+export {
+  FilterBar,
+  FilterSelect,
+  type FilterBarProps,
+  type FilterBarSearch,
+  type FilterSelectOption,
+  type FilterSelectProps,
+} from '@/components/app/filter-bar'
 export {
   SessionStage,
   SessionView,

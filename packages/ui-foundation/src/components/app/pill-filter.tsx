@@ -9,6 +9,7 @@
 // with `setFilter`. Built on shadcn's ToggleGroup (Base UI): a group named
 // by `label`, one tab stop, the arrow keys along it, each pill a toggle
 // button with aria-pressed.
+import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 export type PillFilterOption = { value: string; label: string }
@@ -22,6 +23,8 @@ export type PillFilterProps = {
   onValueChange: (value: string) => void
   /** The first pill, which clears the filter. null leaves it out, for a filter that always has a value. */
   allLabel?: string | null
+  /** On the group: `flex-nowrap` (with a scrolling parent) keeps the pills on one line. */
+  className?: string
 }
 
 // The All pill's value inside the group: Base UI's toggles need one that
@@ -34,7 +37,7 @@ const PILL_CLASS =
   'rounded-full px-3 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground ' +
   'aria-pressed:hover:bg-primary/90 aria-pressed:hover:text-primary-foreground'
 
-export function PillFilter({ label, options, value, onValueChange, allLabel = 'All' }: PillFilterProps) {
+export function PillFilter({ label, options, value, onValueChange, allLabel = 'All', className }: PillFilterProps) {
   const pills = allLabel === null ? options : [{ value: ALL, label: allLabel }, ...options]
   const pressed = value === '' && allLabel !== null ? ALL : value
   return (
@@ -43,7 +46,7 @@ export function PillFilter({ label, options, value, onValueChange, allLabel = 'A
       variant="outline"
       size="sm"
       spacing={1}
-      className="flex-wrap"
+      className={cn('flex-wrap', className)}
       value={[pressed]}
       onValueChange={(next) => {
         // [] is the pressed pill pressed again: it stays on.

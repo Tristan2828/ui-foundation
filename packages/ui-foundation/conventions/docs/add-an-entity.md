@@ -4,27 +4,27 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 43–65
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–813
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–830
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 109–116
   - Step 2: `npm run gen:api` · lines 117–118
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 119–130
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 131–140
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 141–145
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–700
-  - Step 7: Register routes · lines 701–716
-  - Step 8: Add Playwright specs for all three screens · lines 717–795
-  - Step 9: Register the nav entry and route names · lines 796–810
-  - Step 10: `npm run verify`. · lines 811–813
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 815–1084
-  - [The record view](#the-record-view) · lines 964–1003
-  - [Forms](#forms) · lines 1005–1057
-  - [Dialogs](#dialogs) · lines 1059–1084
-- [What not to copy](#what-not-to-copy) · lines 1086–1112
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1114–1131
-- [Deleting](#deleting) · lines 1133–1162
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1164–1185
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1187–1196
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1199–1238
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–717
+  - Step 7: Register routes · lines 718–733
+  - Step 8: Add Playwright specs for all three screens · lines 734–812
+  - Step 9: Register the nav entry and route names · lines 813–827
+  - Step 10: `npm run verify`. · lines 828–830
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 832–1101
+  - [The record view](#the-record-view) · lines 981–1020
+  - [Forms](#forms) · lines 1022–1074
+  - [Dialogs](#dialogs) · lines 1076–1101
+- [What not to copy](#what-not-to-copy) · lines 1103–1129
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1131–1148
+- [Deleting](#deleting) · lines 1150–1179
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1181–1202
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1204–1213
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1216–1255
 
 <!-- /index -->
 
@@ -381,7 +381,10 @@ is a filled-in example while the Widgets demo is still here).
      `<SecondaryFilters>`, as the template does with Extra Categories,
      Progress and In Stock. Pass it each filter that's on as an
      `ActiveFilter` (its chip text and how to take it off) and an
-     `onClear` that clears them all in one `setFilters` call.
+     `onClear` that clears them all in one `setFilters` call. A list on
+     the list page standard uses `FilterBar` for all of it, with
+     `views`, `columnsMenu`, `rowActions` and `phoneRow` on the
+     DataTable (cell-patterns.md 25).
    - `src/routes/widgets/widget-view.tsx` →
      `src/routes/<entity>/<entity>-view.tsx` — thin consumer of the
      foundation's `<EntityView>`. Swap the title, badges and sections for
@@ -427,6 +430,20 @@ is a filled-in example while the Widgets demo is still here).
      in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
      label="Delete" tone="destructive"`, the dialog's trigger through
      `render`).
+   - **The way back is a trail.** `back={{ to: '/widgets', label:
+     'Widgets', trail: [{ label: 'Inventory', href: '/inventory' }, {
+     label: 'Widgets', href: '/widgets' }] }}`: the crumbs above the
+     record, from the module down to its list; the record's title follows
+     them. In `AppShell` it is the trail in the bar ("The sidebar and the
+     phone's bar" in design-language.md), and the page has no back link;
+     on a phone the header's back arrow goes to the list. Without `trail`
+     the view keeps its "← Widgets" link. `to` and `label` are still the
+     not-found state's way out. Any other page below a nav entry (a
+     record's sub-page, a step of a task) names its trail with
+     `usePageTrail([...crumbs, { label: 'This page' }])` in place of a
+     back link. Once the record has loaded, call
+     `useRecentRecord({ title, to: `/widgets/${id}`, detail: 'Widget' })`
+     too, so search lists it before you type.
    - **The browser tab** reads the record's title once it loads
      ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
      puts the nav's ("Widgets · <app>") back while loading, on an error

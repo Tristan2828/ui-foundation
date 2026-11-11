@@ -3,43 +3,45 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 71–90
-- [1. Plain text](#1-plain-text) · lines 92–145
-- [2. Icon + label](#2-icon--label) · lines 147–170
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 172–185
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 187–264
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 212–264
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 266–279
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 281–293
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 295–316
-- [8. Date, relative](#8-date-relative) · lines 318–355
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 357–405
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 375–405
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 407–457
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 425–457
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 459–499
-- [12. Boolean](#12-boolean) · lines 501–531
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 533–569
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 553–569
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 571–588
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 590–699
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 616–699
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 701–736
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 738–811
-- [18. Editable value](#18-editable-value) · lines 813–1481
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1113–1181
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1183–1219
-  - [A link and its label](#a-link-and-its-label) · lines 1221–1245
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1247–1380
-  - [In a table's rows](#in-a-tables-rows) · lines 1382–1467
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1469–1481
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1483–1549
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1551–1615
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1617–1715
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1717–1746
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1748–1786
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1788–1864
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1866–1889
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 73–92
+- [1. Plain text](#1-plain-text) · lines 94–147
+- [2. Icon + label](#2-icon--label) · lines 149–172
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 174–187
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 189–266
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 214–266
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 268–281
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 283–295
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 297–318
+- [8. Date, relative](#8-date-relative) · lines 320–357
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 359–407
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 377–407
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 409–459
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 427–459
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 461–501
+- [12. Boolean](#12-boolean) · lines 503–533
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 535–571
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 555–571
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 573–590
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 592–701
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 618–701
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 703–738
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 740–813
+- [18. Editable value](#18-editable-value) · lines 815–1483
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1115–1183
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1185–1221
+  - [A link and its label](#a-link-and-its-label) · lines 1223–1247
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1249–1382
+  - [In a table's rows](#in-a-tables-rows) · lines 1384–1469
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1471–1483
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1485–1551
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1553–1617
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1619–1717
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1719–1748
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1750–1788
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1790–1866
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1868–1891
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1893–1979
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1981–2017
 
 <!-- /index -->
 
@@ -1887,3 +1889,129 @@ import { ColorSwatch } from '@tristan2828/ui-foundation'
 
 The package's fixture `app/ColorSwatch` "In a table" renders it; its
 checks measure the ring at 3:1 in both themes and every palette.
+
+## 25. A list's tools: views, filters, columns, row actions, a phone's rows
+
+The rest of the list page standard (4.86): what sits above a list's rows,
+at the end of each row, and what a phone gets instead of the table. Each
+is a prop or a part; leave it out and the list is as before.
+
+```tsx
+import { DataTable, FilterBar, FilterSelect, MultiChoice } from '@tristan2828/ui-foundation'
+
+const VIEWS = {
+  current: { label: 'Current', filters: { status: 'active' } },
+  review: { label: 'To review', filters: { status: 'watch' }, columns: ['name', 'status', 'notes'] },
+  all: { label: 'All' },
+}
+const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView, applyView, ... } =
+  useTableUrlState(FILTERS, MULTI, VIEWS)
+
+<DataTable
+  views={VIEWS} activeView={activeView} onViewChange={applyView}
+  columnsMenu={{ storageKey: 'my-app:plants:columns' }}
+  rowActions={(plant) => [
+    { label: 'Water', icon: DropletIcon, onSelect: () => water(plant) },
+    { label: 'Delete', icon: Trash2Icon, tone: 'destructive', onSelect: () => remove(plant) },
+  ]}
+  phoneRow={{
+    title: (plant) => plant.name,
+    status: (plant) => <StatusBadge status={plant.status} />,
+    facts: (plant) => [plant.light, `Watered ${plant.watered}`],
+  }}
+  toolbar={
+    <FilterBar
+      search={{ value: filters.search, onChange: (value) => setFilter('search', value), placeholder: 'Search by name' }}
+      primary={<>
+        <FilterSelect label="Status" options={STATUS_OPTIONS} value={filters.status}
+          onValueChange={(value) => setFilter('status', value)} />
+        <MultiChoice label="Rooms" placeholder="Any room" aria-label="Filter by rooms" options={ROOMS}
+          value={multiFilters.rooms} onValueChange={(rooms) => setMultiFilter('rooms', rooms)} />
+      </>}
+      primaryActive={/* the chips of the two, for a phone */}
+      secondary={<>{/* the rest, each a FilterSelect */}</>}
+      active={/* the chips of the rest */}
+      onClear={() => setFilters({ light: '', kind: '' })}
+      onClearAll={() => setFilters({ status: '', light: '', kind: '', rooms: [] })}
+    />
+  }
+  … />
+```
+
+- **Saved views are pills** above the toolbar (L3): useTableUrlState's
+  views, each with its `label`, in order. The view on is pressed; none is
+  once the filters move off every view. Under 48rem they stay on one line
+  that scrolls sideways. Replaces a hand-written row of view buttons; a
+  Deleted view goes in ListHeader's ⋯ menu as Show deleted instead.
+- **The filters** (L4): `FilterBar` holds search, the two filters used
+  most (`primary`), and the rest behind Filters (`secondary`, with their
+  chips, as `SecondaryFilters` draws them). No captions over controls:
+  each names itself. `FilterSelect` says "Any status" while off and
+  "Status: Active" on; `MultiChoice`'s `label` makes it "Rooms: Hall +1"
+  instead of a chip per pick. Below 48rem search and Filters share a line
+  and every filter, primary ones too, is in Filters' bottom sheet, so pass
+  `primaryActive` (their chips) and an `onClearAll` that clears them all
+  in one `setFilters` call.
+- **The Columns menu** (L5) sits at the end of the toolbar: a tick for
+  every column but the first (the name) and the actions, remembered on
+  this device under `storageKey` as every column's id in order and the
+  unticked ones, so a column added later shows. Until something is ticked
+  it starts from `visibleColumns`. While a view with `columns` is on, the
+  view's columns show and the ticks can't change. A column whose `header`
+  isn't a string names itself in the menu with `meta.label`. It isn't
+  shown with the phone's row list.
+- **Row actions** (L9) take a column of their own, pinned to the right
+  edge with its header for screen readers only. One action is its icon,
+  its label the tooltip and accessible name; two or more are a ⋯ menu.
+  A click on them never opens the row. Return `[]` for a row with none.
+  Drop a hand-made Actions column and `pinLastColumn` when moving to it.
+- **A phone gets a row list** (L11) under 48rem: the `title`, the
+  `status` at the line's end and one muted line of the `facts` that matter
+  (two, usually), between dots. The whole row is the target, 44px at
+  least, and opens as `opens` says: a link to the record, so a long press
+  or a modified click works as a link's does. `title` is plain text (the
+  row is already the link). Row actions sit at the row's end; headings,
+  paging and every state hold. A card layout, when picked, wins.
+- The fixtures' `app/DataTable tools` ListTools, ListToolsFiltered and
+  OneRowAction stories hold all of it, under axe and the token check in
+  both themes; `e2e/data-table-tools.spec.ts` checks the pills, the stored
+  pick and a view's columns winning, the ⋯ menu, the 44px rows, the
+  phone's line and sheet.
+
+## 26. A record's related list, capped
+
+A list of records related to this one, in a section of its view (a
+provider's visits, a project's tasks): the ten newest, then View all N to
+the whole list filtered to this record (R8), so a long list doesn't push
+the rest of the record away. With tabs (EntityView's), each such list
+counts as a group.
+
+```tsx
+import { RelatedTable } from '@tristan2828/ui-foundation'
+
+const visits = useVisits({ provider: provider.id, sort: 'date:desc', page: 1, pageSize: 10 })
+<RelatedTable
+  columns={VISIT_COLUMNS}
+  opens={{ kind: 'dialog', to: (visit) => `/health/visits/${visit.id}` }}
+  data={visits.data?.items ?? []}
+  total={visits.data?.total ?? 0}
+  isLoading={visits.isLoading}
+  error={visits.error}
+  onRetry={() => visits.refetch()}
+  emptyTitle="No visits yet"
+  viewAll={{ to: `/health/visits?provider=${provider.id}` }}
+  phoneRow={{ title: (visit) => visit.what, facts: (visit) => [visit.date, visit.kind] }}
+/>
+```
+
+- **`limit`** is 10 unless set; ask the server for that many, newest
+  first. No pagination bar, and the headers aren't sort buttons (View all
+  has the list's own sorting).
+- **View all** shows only when `total` is over the rows shown, its text
+  "View all 19" unless `viewAll.label` says otherwise. It's a link, so a
+  modified click opens a tab.
+- **`opens` is required**, as on any list. Everything else a DataTable
+  takes for its rows (`rowActions`, `phoneRow`, `highlightRow`) works.
+- On a DataTable of your own, `limit` and `viewAll` do the same.
+- The fixture `app/DataTable tools` Related draws a capped list and a
+  short one with no link; the spec follows View all.
