@@ -7,6 +7,48 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.86.0 — The trail and search in AppShell's bar
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). The record standard's R2 and the
+navigation standard's N5 and N6 (design-language.md "The sidebar and the
+phone's bar"). Two things change with no prop, in every app: the bar
+shows the current page's nav entry ("Finance › Accounts"; "Home" on the
+hub), and the bar now sits outside `<main>`, so the page's own links are
+the only ones `getByRole('main')` finds (the trail names the same
+places).
+
+- **A record's trail** (R2). `EntityView back={{ to, label, trail }}`:
+  `trail` is the crumbs above the record (the module, its list); the
+  record's title follows them. In `AppShell` it goes up in the bar and
+  the page loses its back link; outside the shell it is drawn above the
+  title in the link's place; in a dialog, neither. Without `trail` the
+  back link stays, as before.
+- **The trail in the bar** (N5). `usePageTrail([...crumbs])` puts any
+  page's trail between the menu button and the search box, from 48rem
+  up; a page with none shows its nav entry's. On a phone the back arrow
+  (4.80's N7) now goes to the trail's closest crumb above the page
+  ("‹ Everyday checking" on a statement under it), and an entry's own
+  page still keeps the menu button. `PageTrail`'s `crumbs` takes a
+  readonly array.
+- **Search in the bar** (N6). `AppShell search={{ placeholder,
+  findRecords, recent }}`: a box (a button on a phone) and Ctrl K (⌘K)
+  open a palette that finds the nav's pages by name and, with
+  `findRecords(query, { signal })`, the app's records
+  (`SearchRecord`: `{ title, to, kind?, detail? }`), listed under their
+  `kind`; the arrows move, Enter opens. Before typing it lists the
+  records opened lately on this device: call
+  `useRecentRecord({ title, to, detail })` on a record's view once it
+  loads. They're forgotten on logout. `recent: false` lists none.
+
+To take it: in each record's view, swap the back link for `back.trail`
+and add `useRecentRecord`; on other inner pages, drop the back link for
+`usePageTrail`. Pass `search` to `AppShell` with a `findRecords` that
+calls the app's search endpoint through its gateway, mapping each hit
+to `{ title, to, kind, detail }`. An app's e2e test that found the
+header's buttons inside `getByRole('main')` looks for them on the page
+instead (the template has none).
+
 ## 4.85.0 — The form standard in EntityForm, Field and FieldLabel
 
 The UI package only; additive, no new dependency (the backend package's

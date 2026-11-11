@@ -7,6 +7,9 @@
 export {
   AppShell,
   type AppShellProps,
+  type AppShellSearch,
+  type RecentRecord,
+  type SearchRecord,
   type AppShellVersion,
   type BottomBarItem,
   type NavEntry,
@@ -135,6 +138,8 @@ export { InlineCreate, type InlineCreateProps } from '@/components/app/inline-cr
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
 export { PageTrail, type PageCrumb, type PageTrailProps } from '@/components/app/page-trail'
+export { usePageTrail } from '@/components/app/page-trail-context'
+export { useRecentRecord } from '@/hooks/use-recent-record'
 export type { CreatePage, PageLinkInfo, PageLinkResolver } from '@/lib/page-link'
 export { countTasks, toggleTaskAt, type TaskCount } from '@/lib/markdown-tasks'
 export { NotesOutline, type NotesOutlineProps } from '@/components/app/notes-outline'

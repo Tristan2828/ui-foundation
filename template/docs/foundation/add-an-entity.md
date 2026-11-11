@@ -423,6 +423,20 @@ is a filled-in example while the Widgets demo is still here).
      in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
      label="Delete" tone="destructive"`, the dialog's trigger through
      `render`).
+   - **The way back is a trail.** `back={{ to: '/widgets', label:
+     'Widgets', trail: [{ label: 'Inventory', href: '/inventory' }, {
+     label: 'Widgets', href: '/widgets' }] }}`: the crumbs above the
+     record, from the module down to its list; the record's title follows
+     them. In `AppShell` it is the trail in the bar ("The sidebar and the
+     phone's bar" in design-language.md), and the page has no back link;
+     on a phone the header's back arrow goes to the list. Without `trail`
+     the view keeps its "← Widgets" link. `to` and `label` are still the
+     not-found state's way out. Any other page below a nav entry (a
+     record's sub-page, a step of a task) names its trail with
+     `usePageTrail([...crumbs, { label: 'This page' }])` in place of a
+     back link. Once the record has loaded, call
+     `useRecentRecord({ title, to: `/widgets/${id}`, detail: 'Widget' })`
+     too, so search lists it before you type.
    - **The browser tab** reads the record's title once it loads
      ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
      puts the nav's ("Widgets · <app>") back while loading, on an error

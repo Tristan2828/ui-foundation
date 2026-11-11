@@ -35,7 +35,7 @@ export type PageTrailProps = {
    * From the top (the record, or the list it's in) down to the page
    * itself, last. Any number: one is just the page.
    */
-  crumbs: PageCrumb[]
+  crumbs: readonly PageCrumb[]
   /** The trail's name for screen readers. Defaults to "Breadcrumb". */
   'aria-label'?: string
   className?: string
