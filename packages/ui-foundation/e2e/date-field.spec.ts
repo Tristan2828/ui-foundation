@@ -61,6 +61,24 @@ for (const timezoneId of ['Pacific/Honolulu', 'Pacific/Kiritimati']) {
       await expect(due).toHaveText('No due date')
     })
 
+    test('typed: the day typed is the day saved, and the box reads it back', async ({ page }) => {
+      await page.goto(story('typed'))
+      const finished = page.getByRole('textbox', { name: 'Finished' })
+      await expect(finished).toHaveValue('Sep 2, 2026')
+      await finished.fill('9/15')
+      await finished.press('Tab')
+      await expect(page.getByTestId('finished-value')).toHaveText('2026-09-15')
+      await expect(finished).toHaveValue('Sep 15, 2026')
+      await finished.fill('2026-12-31')
+      await finished.press('Enter')
+      await expect(page.getByTestId('finished-value')).toHaveText('2026-12-31')
+      await expect(finished).toHaveValue('Dec 31, 2026')
+      const due = page.getByRole('textbox', { name: 'Due' })
+      await expect(due).toHaveAttribute('placeholder', 'No due date')
+      await due.fill('Jan 1')
+      await expect(page.getByTestId('due-value')).toHaveText(/^\d{4}-01-01$/)
+    })
+
     test('in place: the calendar opens with the field, a pick saves, Esc gives up, Clear unsets', async ({ page }) => {
       await page.goto(story('edit-in-place'))
       const details = page.getByRole('region', { name: 'Details' })

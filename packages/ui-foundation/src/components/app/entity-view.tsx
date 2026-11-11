@@ -99,6 +99,7 @@ import { PrintNotes, type EntityViewPrintSection } from './entity-view-print'
 import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
+import { editRowClass, onEditRowClick } from './edit-row'
 import { EditableValue, LeaveGuard } from './editable-value'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH, isEmptyValue } from '@/lib/empty-value'
@@ -373,12 +374,22 @@ type FieldPlace = keyof typeof FIELD_ROW
 
 function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace }) {
   const value = fieldValue(field)
+  // An editable row is the target as a whole (4.88, F15/F18): the list's
+  // row hover, its pencil at the end, a chevron on a phone.
+  const editable = Boolean(field.edit)
   return (
-    <div className={cn('flex flex-col gap-1 py-3 first:pt-0 last:pb-0', FIELD_ROW[place])}>
+    <div
+      className={cn(
+        'flex flex-col gap-1 py-3 first:pt-0 last:pb-0',
+        FIELD_ROW[place],
+        editable && cn(editRowClass, '-mx-2 px-2 first:pt-2 last:pb-2'),
+      )}
+      onClick={editable ? onEditRowClick : undefined}
+    >
       <dt className="type-label text-muted-foreground">{field.label}</dt>
       <dd className="min-w-0 type-body break-words text-foreground">
         {field.edit ? (
-          <EditableValue label={field.label} edit={field.edit}>
+          <EditableValue label={field.label} edit={field.edit} look="row">
             <OrEmpty value={value} emptyLabel={field.emptyLabel} />
           </EditableValue>
         ) : (
