@@ -3,54 +3,29 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-<<<<<<< HEAD
 - [The reference files](#the-reference-files) · lines 44–66
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–811
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–814
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
   - Step 2: `npm run gen:api` · lines 118–119
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 132–141
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–698
-  - Step 7: Register routes · lines 699–714
-  - Step 8: Add Playwright specs for all three screens · lines 715–793
-  - Step 9: Register the nav entry and route names · lines 794–808
-  - Step 10: `npm run verify`. · lines 809–811
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 813–1111
-  - [The record view](#the-record-view) · lines 962–1001
-  - [Forms](#forms) · lines 1003–1044
-  - [Dialogs](#dialogs) · lines 1046–1071
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1073–1111
-- [What not to copy](#what-not-to-copy) · lines 1113–1139
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1141–1158
-- [Deleting](#deleting) · lines 1160–1191
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1193–1214
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1216–1225
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1228–1267
-=======
-- [The reference files](#the-reference-files) · lines 43–65
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–812
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 109–116
-  - Step 2: `npm run gen:api` · lines 117–118
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 119–130
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 131–140
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 141–145
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–699
-  - Step 7: Register routes · lines 700–715
-  - Step 8: Add Playwright specs for all three screens · lines 716–794
-  - Step 9: Register the nav entry and route names · lines 795–809
-  - Step 10: `npm run verify`. · lines 810–812
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 814–1072
-  - [The record view](#the-record-view) · lines 963–1002
-  - [Forms](#forms) · lines 1004–1045
-  - [Dialogs](#dialogs) · lines 1047–1072
-- [What not to copy](#what-not-to-copy) · lines 1074–1100
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1102–1119
-- [Deleting](#deleting) · lines 1121–1150
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1152–1173
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1175–1184
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1187–1226
->>>>>>> origin/main
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–701
+  - Step 7: Register routes · lines 702–717
+  - Step 8: Add Playwright specs for all three screens · lines 718–796
+  - Step 9: Register the nav entry and route names · lines 797–811
+  - Step 10: `npm run verify`. · lines 812–814
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 816–1115
+  - [The record view](#the-record-view) · lines 965–1004
+  - [Forms](#forms) · lines 1006–1047
+  - [Dialogs](#dialogs) · lines 1049–1074
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1076–1115
+- [What not to copy](#what-not-to-copy) · lines 1117–1143
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1145–1162
+- [Deleting](#deleting) · lines 1164–1195
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1197–1218
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1220–1229
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1232–1271
 
 <!-- /index -->
 
@@ -1122,7 +1097,8 @@ sight.** What happened where the person is looking says so there.
   "This can't be undone."; the button is the filled destructive one; a
   failed delete keeps the dialog open with the reason. A row's delete is
   the same component (`size="sm"`), or `trigger={null}` with
-  `open`/`onOpenChange` from a row's menu. `verb="Retire"` for a retire.
+  `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
+  `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
   Never a delete without a confirm, never a hand-written dialog.
 - **A toast's words come from `notify.done(verb, name, { undo })`**: the
   verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when

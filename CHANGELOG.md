@@ -7,6 +7,61 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.90.0 — Dialogs and feedback: one delete, toasts, an action's error, a job's progress, offline
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Two looks change with no prop, in
+every app: toast icons are in their tone, and on a phone toasts sit at the
+bottom, above the shell's bottom bar and a form's stuck bar. Skeletons now
+wait 300ms before they show.
+
+- **`DeleteAction`** (D1): the one delete, for a record's header and a
+  table's row. `name`, `kind` (`soft` or `hard`), `onDelete`, `onRestore`,
+  `onDeleted`. The confirm asks "Delete <name>?" and says "It goes to
+  Deleted, and Restore brings it back." or "This can't be undone."; Cancel,
+  then the filled destructive button with a spinner while it works. A
+  failed delete stays open with the reason and Try again. Done: "Deleted
+  <name>", with Undo for a soft one, then "Restored <name>". `verb="Retire"`
+  (and `verbDone`) for other words; `trigger` is the icon (default),
+  `"button"`, an element, or `null` with `open`/`onOpenChange` for a row's
+  menu.
+- **The toaster** (D5): icons in `--success-text`, `--destructive-text`,
+  `--info-text` and `--warning-text` (3:1 on the popover in both themes and
+  all four palettes); top centre from 48rem, bottom centre under it,
+  offset by `--toast-bottom-offset` (EntityForm's bar) or the shell's
+  bottom bar (`--toast-bottom-base`). 4 seconds, Undo too.
+- **`useAction`, `ActionError`, `notify`** (D6): `useAction(mutation)`
+  gives `run` (never rejects: `{ ok, value }` or `{ ok: false, error }`),
+  `pending`, `error` and `retry`; `<ActionError action={…} />` draws the
+  error as a destructive `Notice` with Try again beside the button. If
+  the component is gone when it fails, the error is a toast that stays
+  until closed (`notify.failed`). `notify.done(verb, name, { undo })`
+  writes "Deleted <name>" the same way everywhere.
+- **`Skeleton delay`** (D7): nothing for 300ms, then the shape, keeping
+  its room meanwhile; `delay={0}` shows it at once. `DataTable`'s loading
+  state is made of these, so it waits too.
+- **`JobStatus`** (D8): "Checking 3 of 12…" with a spinner beside the
+  button, then the result line, which stays. `useAction`'s `doneAway`
+  toasts the result only when the page was left before it finished.
+- **`OfflineNotice`** (D9): "You're offline. Changes won't save until
+  you're back." across the top of `AppShell` while the browser is offline
+  or a request got no answer at all; gone when a request gets one
+  (`safeFetch` reports each; a cancelled request says nothing).
+  `useOffline()` reads the same state.
+- **The doc rule for toasts** (D10): add-an-entity.md "Toasts and
+  feedback" (a toast only for what happened out of sight, the words, the
+  delete) and cell pattern 18 ("No toast, ever" after an edit in place).
+- The template's Delete is `DeleteAction` now.
+
+To take it: replace each hand-written delete dialog with `DeleteAction`
+(add-an-entity.md "Toasts and feedback"), write toasts with `notify.done`
+("Deleted X", not "X deleted"), and move each "Couldn't …" toast from a
+screen to `useAction` and `ActionError` beside its button. Drop any toast
+after an edit in place. A test that expected "X deleted" now reads
+"Deleted X"; one that waits for a skeleton needs a mock delay over 300ms;
+a delete refused with a 422 now shows the server's own reason in the
+dialog.
+
 ## 4.86.0 — A list's tools in DataTable: views, filters, columns, row actions, a phone's rows; a capped related list
 
 The UI package only; additive, no new dependency, no export removed or

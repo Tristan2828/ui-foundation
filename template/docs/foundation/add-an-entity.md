@@ -3,28 +3,29 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 43–65
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 67–812
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 109–116
-  - Step 2: `npm run gen:api` · lines 117–118
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 119–130
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 131–140
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 141–145
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 146–699
-  - Step 7: Register routes · lines 700–715
-  - Step 8: Add Playwright specs for all three screens · lines 716–794
-  - Step 9: Register the nav entry and route names · lines 795–809
-  - Step 10: `npm run verify`. · lines 810–812
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 814–1072
-  - [The record view](#the-record-view) · lines 963–1002
-  - [Forms](#forms) · lines 1004–1045
-  - [Dialogs](#dialogs) · lines 1047–1072
-- [What not to copy](#what-not-to-copy) · lines 1074–1100
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1102–1119
-- [Deleting](#deleting) · lines 1121–1150
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1152–1173
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1175–1184
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1187–1226
+- [The reference files](#the-reference-files) · lines 44–66
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–814
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
+  - Step 2: `npm run gen:api` · lines 118–119
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 132–141
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–701
+  - Step 7: Register routes · lines 702–717
+  - Step 8: Add Playwright specs for all three screens · lines 718–796
+  - Step 9: Register the nav entry and route names · lines 797–811
+  - Step 10: `npm run verify`. · lines 812–814
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 816–1115
+  - [The record view](#the-record-view) · lines 965–1004
+  - [Forms](#forms) · lines 1006–1047
+  - [Dialogs](#dialogs) · lines 1049–1074
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1076–1115
+- [What not to copy](#what-not-to-copy) · lines 1117–1143
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1145–1162
+- [Deleting](#deleting) · lines 1164–1195
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1197–1218
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1220–1229
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1232–1271
 
 <!-- /index -->
 
@@ -402,8 +403,9 @@ is a filled-in example while the Widgets demo is still here).
      file.
    - `src/routes/widgets/delete-widget-action.tsx` →
      `src/routes/<entity>/delete-<entity>-action.tsx` (Delete in the
-     view's header: the confirm dialog, then `onDeleted` leaves for the
-     list; its own file, a fast-refresh hazard otherwise)
+     view's header: the foundation's `DeleteAction` with the entity's
+     delete and restore mutations, then `onDeleted` leaves for the list;
+     its own file, a fast-refresh hazard otherwise)
    - `src/routes/widgets/widget-form.tsx` →
      `src/routes/<entity>/<entity>-form.tsx` — thin consumer of the
      foundation's `<EntityForm>` (its `danger` slot takes an edit-only
@@ -1071,6 +1073,47 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
 - **Always a dialog, never a side panel**, except a phone's filters
   (a bottom sheet of controls for the list behind it).
 
+### Toasts and feedback
+
+What the app says after something happens (the dialogs and feedback
+standard, 4.90). The rule: **a toast is for what happened out of
+sight.** What happened where the person is looking says so there.
+
+| What happened | What says so |
+| --- | --- |
+| A delete (soft: with Undo) | `DeleteAction`'s toast, "Deleted The Long Walk" |
+| A record made, landing on its own page | a toast, "Added The Long Walk" |
+| An edit in place, a quick action, a toggle | the value itself and its "Saved" (cell pattern 18). **Never a toast** |
+| An action that failed, its button still there | `ActionError` beside the button: the reason and Try again |
+| An action that failed after its page was left | a toast that stays until it's closed (`useAction` does this) |
+| A job that takes a while | `JobStatus` beside its button: "Checking 3 of 12…", then the result stays |
+| A job that finished after its page was left | a toast (`useAction`'s `doneAway`) |
+| A list or record still loading | skeletons, after 300ms (`Skeleton`'s `delay`; `DataTable`'s are) |
+| The server can't be reached | `OfflineNotice` across the top (`AppShell` has it) |
+
+- **One delete: `DeleteAction`.** `name`, `kind` (`soft` or `hard`),
+  `onDelete`, and for a soft one `onRestore`. Its confirm asks "Delete
+  <name>?" and says "It goes to Deleted, and Restore brings it back." or
+  "This can't be undone."; the button is the filled destructive one; a
+  failed delete keeps the dialog open with the reason. A row's delete is
+  the same component (`size="sm"`), or `trigger={null}` with
+  `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
+  `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
+  Never a delete without a confirm, never a hand-written dialog.
+- **A toast's words come from `notify.done(verb, name, { undo })`**: the
+  verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when
+  given, then says "Restored The Long Walk". Never "X deleted", never
+  "Book deleted". Toasts last 4 seconds, Undo's too.
+- **An error stays beside what failed**: `const save = useAction(mutation)`,
+  `save.run(…)` on the button (`disabled={save.pending}`, a `Spinner` in
+  it), `<ActionError action={save} />` next to it. Never
+  `toast.error` from a screen: `notify.failed` is the fallback
+  `useAction` uses when the component is gone.
+- **Where a toast shows**: top centre on a laptop; at the bottom on a
+  phone, above the shell's bottom bar and a form's stuck bar
+  (`--toast-bottom-offset`). The shell's `Toaster` does this; never a
+  `<Toaster>` of the app's own.
+
 ## What not to copy
 
 - `widget-quick-actions.tsx`, its `quick action: …` specs and
@@ -1139,13 +1182,15 @@ soft one; copy it.
   - *Contract, gateway, mocks:* `restore<Entity>` in `openapi.yaml`, the
     gateway's `restore<Entity>`, a `useRestore<Entity>Mutation`, and mocks
     that move the record aside (`deletedWidgets` in `src/mocks/data.ts`).
-  - *Screens:* the delete dialog says it can be undone, and the success
-    toast carries an Undo that restores (`delete-widget-action.tsx`).
+  - *Screens:* `DeleteAction kind="soft"`: the dialog says it can be
+    undone, and the toast "Deleted <name>" carries an Undo that restores
+    (`onRestore`; `delete-widget-action.tsx`).
   - *MCP:* give the entity's `McpEntity` `delete` and `restore` (and add
     `deleted` to its filters). Chats then get `delete(url)`, marked
     destructive so the chat asks before each call, and `restore(url)`.
     Both are logged with the whole record.
-- **Hard-deleted:** `DELETE` removes the row. Give the entity no `delete`
+- **Hard-deleted:** `DELETE` removes the row. The screens use
+  `DeleteAction kind="hard"`: "This can't be undone.", and no Undo. Give the entity no `delete`
   in `mcp_entities.py`: a chat that read planted instructions would
   destroy data that only a backup returns.
 
