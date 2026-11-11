@@ -86,12 +86,15 @@ export {
 } from '@/components/app/record-dialog'
 export {
   recordDialogState,
+  useNewRecordDialog,
   useOpenRecord,
   useRecordDialog,
+  type NewRecordDialogContextValue,
   type RecordDialogBackground,
   type RecordDialogContextValue,
   type RecordDialogState,
 } from '@/components/app/record-dialog-context'
+export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
 export {
   editInPlace,
   type EditControlProps,
