@@ -52,7 +52,9 @@ function AllTonesToasts() {
     toast.info('Prices are checked every morning.', { ...hold, id: 'info' })
     toast.warning('Two books are due back this week.', { ...hold, id: 'warning' })
   }, [])
-  return <Toaster expand />
+  // All five on screen and none mid-fade, so axe never reads a toast
+  // part-way through sonner's entrance or its fade past three.
+  return <Toaster expand visibleToasts={5} toastOptions={{ style: { transition: 'none' } }} />
 }
 
 export const AllTones: Story = { render: () => <AllTonesToasts /> }
