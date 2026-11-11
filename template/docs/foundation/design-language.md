@@ -3,34 +3,35 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 43–110
-- [Glow](#glow) · lines 112–130
-- [Semantic tones](#semantic-tones) · lines 132–160
-- [The three badge styles](#the-three-badge-styles) · lines 162–179
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 181–210
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 212–225
-- [Logos and brand marks](#logos-and-brand-marks) · lines 227–271
-- [Categorical colour](#categorical-colour) · lines 273–343
-- [Heat scale](#heat-scale) · lines 345–406
-- [Depth ramps](#depth-ramps) · lines 408–486
-- [A stored colour](#a-stored-colour) · lines 488–536
-- [Shapes and sizes](#shapes-and-sizes) · lines 538–559
-- [Typography](#typography) · lines 561–681
-  - [Written text (notes)](#written-text-notes) · lines 595–681
-- [Density](#density) · lines 683–769
-  - [Rows on this device](#rows-on-this-device) · lines 742–769
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 771–885
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 887–964
-- [Notices](#notices) · lines 966–994
-- [A value over time](#a-value-over-time) · lines 996–1082
-  - [Several values over time](#several-values-over-time) · lines 1045–1082
-- [A list as a board](#a-list-as-a-board) · lines 1084–1135
-- [A list as cards](#a-list-as-cards) · lines 1137–1183
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1185–1207
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1209–1253
-- [Picking at random](#picking-at-random) · lines 1255–1286
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1288–1355
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1357–1382
+- [Palettes](#palettes) · lines 44–111
+- [Glow](#glow) · lines 113–131
+- [Semantic tones](#semantic-tones) · lines 133–161
+- [The three badge styles](#the-three-badge-styles) · lines 163–180
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 182–211
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 213–226
+- [Logos and brand marks](#logos-and-brand-marks) · lines 228–272
+- [Categorical colour](#categorical-colour) · lines 274–344
+- [Heat scale](#heat-scale) · lines 346–407
+- [Depth ramps](#depth-ramps) · lines 409–487
+- [A stored colour](#a-stored-colour) · lines 489–537
+- [Shapes and sizes](#shapes-and-sizes) · lines 539–560
+- [Typography](#typography) · lines 562–682
+  - [Written text (notes)](#written-text-notes) · lines 596–682
+- [Density](#density) · lines 684–770
+  - [Rows on this device](#rows-on-this-device) · lines 743–770
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 772–886
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 888–965
+- [Notices](#notices) · lines 967–995
+- [A value over time](#a-value-over-time) · lines 997–1083
+  - [Several values over time](#several-values-over-time) · lines 1046–1083
+- [A list as a board](#a-list-as-a-board) · lines 1085–1136
+- [A list as cards](#a-list-as-cards) · lines 1138–1184
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1186–1215
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1217–1255
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1257–1302
+- [Picking at random](#picking-at-random) · lines 1304–1335
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1337–1404
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1406–1431
 
 <!-- /index -->
 

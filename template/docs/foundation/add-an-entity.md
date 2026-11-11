@@ -4,25 +4,25 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 41–63
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–802
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–806
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
   - Step 2: `npm run gen:api` · lines 115–116
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–689
-  - Step 7: Register routes · lines 690–705
-  - Step 8: Add Playwright specs for all three screens · lines 706–784
-  - Step 9: Register the nav entry and route names · lines 785–799
-  - Step 10: `npm run verify`. · lines 800–802
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 804–953
-  - [The record view](#the-record-view) · lines 917–953
-- [What not to copy](#what-not-to-copy) · lines 955–981
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 983–1000
-- [Deleting](#deleting) · lines 1002–1031
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1033–1054
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1056–1065
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1068–1107
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–693
+  - Step 7: Register routes · lines 694–709
+  - Step 8: Add Playwright specs for all three screens · lines 710–788
+  - Step 9: Register the nav entry and route names · lines 789–803
+  - Step 10: `npm run verify`. · lines 804–806
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 808–960
+  - [The record view](#the-record-view) · lines 921–960
+- [What not to copy](#what-not-to-copy) · lines 962–988
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 990–1007
+- [Deleting](#deleting) · lines 1009–1038
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1040–1061
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1063–1072
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1075–1114
 
 <!-- /index -->
 
