@@ -7,6 +7,55 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.85.0 — The form standard in EntityForm, Field and FieldLabel
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Two looks change with no prop, on every
+form (anything in a `FieldGroup`: `EntityForm`, `FormDialog`, a login
+form): controls are 32px, not 36px (40px under 48rem or on a touch
+screen), with 14px between fields, not 20px, and `EntityForm`'s buttons
+stick to the bottom of the window on a long form.
+
+- **Short fields share a row** (F1). `<Field size="s" | "m" | "l">`:
+  consecutive short fields share a row, up to three, as wide as their
+  sizes (1, 1.4 and 2.6 parts); a long one takes one short partner.
+  `<Field solo>` keeps one alone, and a Field with no size takes its row,
+  as before. Under 48rem each takes its own row but two dates or two
+  numbers (`kind="date"` for a date picker of your own). Laid out by
+  `FieldGroup` from the order, so a Field in your own component counts.
+- **`FormSection`** (F2): a group of fields in a card, as a record's
+  section is drawn; only on a form of eight fields or more, never in a
+  dialog.
+- **`<FieldLabel required>`** (F3): an asterisk in the destructive text
+  tone, hidden from screen readers, and `aria-required` on the control
+  where its role takes it (not a date picker's button, which axe refuses).
+  Drop every "(optional)".
+- **Compact forms** (F4): above. Axe in both themes and all four
+  palettes covers the new stories.
+- **Add finds the problem** (F5): a refused submit moves to the first
+  invalid field (opening a fold around it), and the bar says "2 to fix".
+  Pass `errors={formState.errors}` to count them; `firstInvalid` picks
+  another field to move to.
+- **A failed save is a `Notice` with Try again** (F6), in the bar above
+  the buttons, instead of `ErrorState`'s dashed box. `onRetry` defaults
+  to submitting again.
+- **The bar sticks** (F7) to the window's bottom while the form is
+  taller than it, above the shell's bottom bar on a phone, with two wide
+  buttons there; it sets `--toast-bottom-offset` on `<html>`.
+- **`EntityForm dirty`** (F8): with something typed, a link, Back, the
+  sidebar or Cancel asks "Discard your changes?" (`DiscardChangesDialog`)
+  and a reload asks the browser. The save's own move to the new record
+  doesn't ask (it happens while `isSubmitting`). Needs a data router.
+  `FormDialog` as a list's `new` route takes the same guard.
+- **`OptionSelect`** (F11): one of a fixed list on a form, drawn with
+  `render` (a status's badge) on the trigger and in the list, with the
+  same `{ value, label }` options as `inPlace.select`.
+
+To take it: in each form, give short fields their `size`, mark required
+labels `required`, drop "(optional)", and pass `dirty` and `errors` to
+`EntityForm` (add-an-entity.md "Forms"). A test that types and then
+leaves a form now meets "Discard your changes?" first.
+
 ## 4.82.0 — Dialog sizes, a guard on what's typed, and FormDialog
 
 The UI package only; additive, no new dependency (the backend package's

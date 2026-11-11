@@ -148,12 +148,21 @@ export function WidgetFormRoute() {
       submitError={submitError}
       submitLabel={isEdit ? 'Save changes' : 'Create widget'}
       onCancel={() => navigate(isEdit ? `/widgets/${widgetId}` : '/widgets', { replace: true })}
+      // Leaving with something typed asks first; a refused submit moves to
+      // the first problem and counts them ("2 to fix").
+      dirty={form.formState.isDirty}
+      errors={form.formState.errors}
     >
+      {/* The form standard (add-an-entity.md "Forms"): required first,
+          each marked, short fields sized so they share a row (Status,
+          Available From and Price), nothing marked "(optional)". */}
       {/* Name, Status, Price, Description and Extra Categories use the
           controls in widget-fields.tsx, the same ones the view edits in
           place with. */}
       <Field data-invalid={!!form.formState.errors.name}>
-        <FieldLabel htmlFor="widget-name">Name</FieldLabel>
+        <FieldLabel htmlFor="widget-name" required>
+          Name
+        </FieldLabel>
         <Controller
           control={form.control}
           name="name"
@@ -170,7 +179,9 @@ export function WidgetFormRoute() {
       </Field>
 
       <Field data-invalid={!!form.formState.errors.categoryId}>
-        <FieldLabel htmlFor="widget-category">Category</FieldLabel>
+        <FieldLabel htmlFor="widget-category" required>
+          Category
+        </FieldLabel>
         <Controller
           control={form.control}
           name="categoryId"
@@ -230,8 +241,10 @@ export function WidgetFormRoute() {
         <FieldError errors={[form.formState.errors.categoryId]} />
       </Field>
 
-      <Field data-invalid={!!form.formState.errors.status}>
-        <FieldLabel htmlFor="widget-status">Status</FieldLabel>
+      <Field size="m" data-invalid={!!form.formState.errors.status}>
+        <FieldLabel htmlFor="widget-status" required>
+          Status
+        </FieldLabel>
         <Controller
           control={form.control}
           name="status"
@@ -247,8 +260,11 @@ export function WidgetFormRoute() {
         <FieldError errors={[form.formState.errors.status]} />
       </Field>
 
-      <Field data-invalid={!!form.formState.errors.availableFrom}>
-        <FieldLabel htmlFor="widget-available-from">Available From</FieldLabel>
+      {/* A date picker of its own: `kind="date"` keeps it beside another date on a phone. */}
+      <Field size="m" kind="date" data-invalid={!!form.formState.errors.availableFrom}>
+        <FieldLabel htmlFor="widget-available-from" required>
+          Available From
+        </FieldLabel>
         <Controller
           control={form.control}
           name="availableFrom"
@@ -277,19 +293,10 @@ export function WidgetFormRoute() {
         <FieldError errors={[form.formState.errors.availableFrom]} />
       </Field>
 
-      <Field data-invalid={!!form.formState.errors.assigneeEmail}>
-        <FieldLabel htmlFor="widget-assignee">Assignee Email (optional)</FieldLabel>
-        <Input
-          id="widget-assignee"
-          type="email"
-          aria-invalid={!!form.formState.errors.assigneeEmail}
-          {...form.register('assigneeEmail')}
-        />
-        <FieldError errors={[form.formState.errors.assigneeEmail]} />
-      </Field>
-
-      <Field data-invalid={!!form.formState.errors.price}>
-        <FieldLabel htmlFor="widget-price">Price</FieldLabel>
+      <Field size="s" data-invalid={!!form.formState.errors.price}>
+        <FieldLabel htmlFor="widget-price" required>
+          Price
+        </FieldLabel>
         <Controller
           control={form.control}
           name="price"
@@ -305,9 +312,20 @@ export function WidgetFormRoute() {
         <FieldError errors={[form.formState.errors.price]} />
       </Field>
 
+      <Field data-invalid={!!form.formState.errors.assigneeEmail}>
+        <FieldLabel htmlFor="widget-assignee">Assignee Email</FieldLabel>
+        <Input
+          id="widget-assignee"
+          type="email"
+          aria-invalid={!!form.formState.errors.assigneeEmail}
+          {...form.register('assigneeEmail')}
+        />
+        <FieldError errors={[form.formState.errors.assigneeEmail]} />
+      </Field>
+
       <Field data-invalid={!!form.formState.errors.description}>
         {/* A rich-text area is no <input>: the label names it by id. */}
-        <FieldLabel id="widget-description-label" htmlFor="widget-description">
+        <FieldLabel id="widget-description-label" htmlFor="widget-description" required>
           Description
         </FieldLabel>
         <Controller
@@ -347,7 +365,7 @@ export function WidgetFormRoute() {
       </Field>
 
       <Field data-invalid={!!form.formState.errors.extraCategoryIds}>
-        <FieldLabel htmlFor="widget-extra-categories">Extra Categories (optional)</FieldLabel>
+        <FieldLabel htmlFor="widget-extra-categories">Extra Categories</FieldLabel>
         <Controller
           control={form.control}
           name="extraCategoryIds"
@@ -367,7 +385,7 @@ export function WidgetFormRoute() {
           rather than one. Each row's controls are named by position
           ("Item 2 text"), which is also how the row buttons name it. */}
       <FieldSet>
-        <FieldLegend variant="label">Checklist (optional)</FieldLegend>
+        <FieldLegend variant="label">Checklist</FieldLegend>
         <ListEditor
           aria-label="Checklist"
           items={checklist.fields}
@@ -406,7 +424,7 @@ export function WidgetFormRoute() {
           a server 422 at ["body", "pairings", 2, "categoryId"] binds to
           that row's picker. */}
       <FieldSet>
-        <FieldLegend variant="label">Pairings (optional)</FieldLegend>
+        <FieldLegend variant="label">Pairings</FieldLegend>
         <ListEditor
           aria-label="Pairings"
           items={pairings.fields}

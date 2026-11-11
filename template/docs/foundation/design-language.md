@@ -17,22 +17,22 @@
 - [Shapes and sizes](#shapes-and-sizes) · lines 540–561
 - [Typography](#typography) · lines 563–683
   - [Written text (notes)](#written-text-notes) · lines 597–683
-- [Density](#density) · lines 685–771
-  - [Rows on this device](#rows-on-this-device) · lines 744–771
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 773–887
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 889–966
-- [Notices](#notices) · lines 968–996
-- [A value over time](#a-value-over-time) · lines 998–1084
-  - [Several values over time](#several-values-over-time) · lines 1047–1084
-- [A list as a board](#a-list-as-a-board) · lines 1086–1137
-- [A list as cards](#a-list-as-cards) · lines 1139–1185
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1187–1216
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1218–1256
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1258–1303
-- [Picking at random](#picking-at-random) · lines 1305–1336
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1338–1405
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1407–1432
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1434–1480
+- [Density](#density) · lines 685–778
+  - [Rows on this device](#rows-on-this-device) · lines 751–778
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 780–894
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 896–973
+- [Notices](#notices) · lines 975–1003
+- [A value over time](#a-value-over-time) · lines 1005–1091
+  - [Several values over time](#several-values-over-time) · lines 1054–1091
+- [A list as a board](#a-list-as-a-board) · lines 1093–1144
+- [A list as cards](#a-list-as-cards) · lines 1146–1192
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1194–1223
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1225–1263
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1265–1310
+- [Picking at random](#picking-at-random) · lines 1312–1343
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1345–1412
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1414–1439
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1441–1487
 
 <!-- /index -->
 
@@ -703,6 +703,13 @@ set, not a `DataTable` prop:
 
 - `compact` and `comfortable` change padding only. Text keeps
   `type-body`, so compact never drops below a readable size.
+- **Forms are compact at every density but `large`** (4.85): inside a
+  `FieldGroup` (every `EntityForm`, `FormDialog` and `FormSection`) the
+  inputs, selects, combobox boxes and default buttons are 32px, the
+  compact table's row, with 14px between fields; under 48rem or on a
+  touch screen 40px, for the finger. They read `--control-height`, which
+  `FieldGroup` and the forms' bars set from `--spacing`, so `large` grows
+  them as it grows everything. Outside a form a control keeps its 36px.
 - On a hub, `compact` takes a `WidgetCard`'s padding from 16px to 12px,
   a `WidgetList` row from 36px to 32px (6px around its line) and a
   `ModuleCard`'s band and body by 4px each. On a phone a compact row is
