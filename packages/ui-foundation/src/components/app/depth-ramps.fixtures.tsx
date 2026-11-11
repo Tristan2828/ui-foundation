@@ -8,8 +8,9 @@ import { Card, CardContent } from '@/components/ui/card'
 // `fill-category-N-depth-M` and cells filled with `bg-category-N-depth-M`
 // holding their own text. Default shows every ramp on the page and on a
 // card, so the fixtures checks measure each step against both surfaces.
-// SideBySide shows both themes at once, under normal vision and simulated
-// deuteranopia and protanopia.
+// SideBySide shows both themes at once, each ramp beside the muted greys
+// (--muted and --muted-foreground) of its theme, under normal vision and
+// simulated deuteranopia and protanopia.
 //
 // Whole class names, as an app's own step -> class map has them: Tailwind
 // only generates classes it finds written out.
@@ -155,11 +156,15 @@ const meta: Meta = {
 
 export default meta
 
-function Ramps({ surface }: { surface?: string }) {
+// Whole class names, as above: the grid gains a last column for the greys.
+const ROW = 'grid max-w-xl grid-cols-[4.5rem_1fr] items-center gap-2 sm:grid-cols-[4.5rem_8rem_1fr]'
+const ROW_WITH_GREYS = 'grid max-w-xl grid-cols-[4.5rem_1fr_auto] items-center gap-2 sm:grid-cols-[4.5rem_8rem_1fr_auto]'
+
+function Ramps({ surface, greys }: { surface?: string; greys?: boolean }) {
   return (
     <div className="flex flex-col gap-2" data-surface={surface}>
       {RAMPS.map(({ slot, name, steps }) => (
-        <div key={slot} className="grid max-w-xl grid-cols-[4.5rem_1fr] items-center gap-2 sm:grid-cols-[4.5rem_8rem_1fr]">
+        <div key={slot} className={greys ? ROW_WITH_GREYS : ROW}>
           <span className="type-caption">{name}</span>
           <svg aria-hidden="true" viewBox="0 0 100 10" className="hidden h-6 w-full sm:block" preserveAspectRatio="none">
             {steps.map(({ step, fill }, i) => (
@@ -174,6 +179,12 @@ function Ramps({ surface }: { surface?: string }) {
               </li>
             ))}
           </ul>
+          {greys ? (
+            <span aria-hidden="true" className="flex gap-1">
+              <span data-grey="muted" className="size-6 rounded-sm border border-border bg-muted" />
+              <span data-grey="muted-foreground" className="size-6 rounded-sm bg-muted-foreground" />
+            </span>
+          ) : null}
         </div>
       ))}
     </div>
@@ -215,22 +226,25 @@ const VISIONS = [
 
 // Each panel pins its own theme, whichever theme the page is in: each step
 // from its own shade (-700 light, -400 dark), its text as that theme has it
-// (black on every dark step; in light, black on the steps listed here and
-// white on the rest, as theme.css has it).
-const LIGHT_BLACK_TEXT = new Set(['1-1', '1-2', '2-1', '3-1', '4-1', '5-1', '6-1', '7-1', '8-1', '9-1', '9-2', '10-1', '11-1', '11-2', '12-1'])
+// (black on every dark step; in light, black on step 1 of every slot and
+// white on the rest, as theme.css has it: tests/depth-ramps.test.ts checks
+// this against theme.css) and the muted greys it draws beside them.
+const LIGHT_BLACK_TEXT = new Set(['1-1', '2-1', '3-1', '4-1', '5-1', '6-1', '7-1', '8-1', '9-1', '10-1', '11-1', '12-1'])
 function themeStyle(theme: 'light' | 'dark'): CSSProperties {
   const shade = theme === 'light' ? '700' : '400'
   return {
     background: theme === 'light' ? 'var(--white)' : 'var(--black)',
     color: theme === 'light' ? 'var(--black)' : 'var(--gray-50)',
-    ...Object.fromEntries(
-      RAMPS.flatMap(({ slot, steps }) =>
+    ...Object.fromEntries([
+      ['--muted', theme === 'light' ? 'var(--gray-100)' : 'var(--gray-900)'],
+      ['--muted-foreground', theme === 'light' ? 'var(--gray-500)' : 'var(--gray-400)'],
+      ...RAMPS.flatMap(({ slot, steps }) =>
         steps.flatMap(({ step }) => [
           [`--category-${slot}-depth-${step}`, `var(--category-${slot}-depth-${step}-${shade})`],
           [`--category-${slot}-depth-${step}-foreground`, theme === 'light' && !LIGHT_BLACK_TEXT.has(`${slot}-${step}`) ? 'var(--white)' : 'var(--black)'],
         ]),
       ),
-    ),
+    ]),
   }
 }
 
@@ -252,8 +266,10 @@ export const SideBySide: StoryObj = {
           <div className="grid gap-4 xl:grid-cols-2" style={matrix ? { filter: `url(#depth-${id})` } : undefined}>
             {(['light', 'dark'] as const).map((theme) => (
               <div key={theme} className="flex flex-col gap-2 rounded-lg border border-border p-4" style={themeStyle(theme)}>
-                <span className="type-caption opacity-70">{theme === 'light' ? 'Light' : 'Dark'}</span>
-                <Ramps />
+                <span className="type-caption opacity-70">
+                  {theme === 'light' ? 'Light' : 'Dark'}: each ramp, then --muted and --muted-foreground
+                </span>
+                <Ramps greys />
               </div>
             ))}
           </div>
