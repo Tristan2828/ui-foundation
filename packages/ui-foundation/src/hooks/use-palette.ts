@@ -1,17 +1,17 @@
 import { createContext, useContext } from 'react'
-import type { PaletteName } from '@/lib/palettes'
+import type { AppPaletteName, PaletteName } from '@/lib/palettes'
 
 // What PaletteProvider (components/app/palette-provider.tsx, rendered by
 // FoundationProviders) knows about the app's palette.
 
 export type PaletteState = {
   /** The palette on screen, or null for an app without one (light and dark as the system says). */
-  palette: PaletteName | null
+  palette: AppPaletteName | null
   /** The app's own default. */
-  defaultPalette: PaletteName | null
-  /** Whether this app lets a device pick (FoundationProviders' `palettePicker`). */
+  defaultPalette: AppPaletteName | null
+  /** Whether this app lets a device pick (FoundationProviders' `palettePicker`). Never under a light palette. */
   picker: boolean
-  /** Saves `palette` as this device's choice. Does nothing without the picker. */
+  /** Saves `palette`, one of the four dark ones, as this device's choice. Does nothing without the picker. */
   setPalette: (palette: PaletteName) => void
 }
 

@@ -415,17 +415,20 @@ function storyUrlById(id: string, theme: 'light' | 'dark', density?: 'large') {
   return `${HARNESS_URL}/story.html?id=${id}&${query}`
 }
 
-// The four palettes (styles/theme.css, design-language.md "Palettes"):
-// each is dark only, so each runs once, on top of the dark theme.
-const PALETTES = ['indigo-cyan', 'indigo-rose', 'graphite-periwinkle', 'violet'] as const
+// The palettes (styles/theme.css, design-language.md "Palettes"): each
+// forces its theme, so each runs once, in it: the four on top of the dark
+// theme, Palm LCD on top of the light one.
+const PALETTES = ['indigo-cyan', 'indigo-rose', 'graphite-periwinkle', 'violet', 'palm-lcd'] as const
 type Palette = (typeof PALETTES)[number]
+const paletteTheme = (palette: Palette) => (palette === 'palm-lcd' ? 'light' : 'dark')
 
 function paletteUrl(id: string, palette: Palette) {
-  return `${HARNESS_URL}/story.html?id=${id}&theme=dark&palette=${palette}`
+  return `${HARNESS_URL}/story.html?id=${id}&theme=${paletteTheme(palette)}&palette=${palette}`
 }
 
 async function expectPalette(page: import('@playwright/test').Page, palette: Palette) {
-  await expect(page.locator('html')).toHaveClass(/dark/)
+  if (paletteTheme(palette) === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+  else await expect(page.locator('html')).not.toHaveClass(/dark/)
   await expect(page.locator('html')).toHaveAttribute('data-palette', palette)
 }
 

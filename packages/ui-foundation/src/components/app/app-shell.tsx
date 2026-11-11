@@ -173,15 +173,15 @@ function CloseMobileSidebarOnNavigate() {
   return null
 }
 
-// The header's look control: an app with a palette is always dark, so it
-// has no light/dark toggle, and with the picker on it gets the look menu
+// The header's look control: an app with a palette is always dark (or,
+// with a light palette, always light), so it has no light/dark toggle, and with the picker on it gets the look menu
 // in its place (design-language.md "Palettes"). With the rows picker the
 // same menu offers the table rows (design-language.md "Density"); an app
 // without a palette keeps its toggle beside it.
 function LookControl() {
   const { palette, picker } = usePalette()
   const rows = useRows()
-  const pickPalette = palette && picker ? palette : null
+  const pickPalette = picker && isPaletteName(palette) ? palette : null
   return (
     <>
       {!palette && <ThemeToggle />}

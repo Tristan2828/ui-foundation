@@ -7,6 +7,44 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.91.0 — Palm LCD, a light palette an app opts into
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Nothing changes for an app that
+doesn't name the new palette, except one thing: glow (`palette:`,
+`glow-edge`, the primary button's shine) now needs a *dark* palette,
+which every palette was until now.
+
+- **`palette="palm-lcd"`** on `FoundationProviders`: a Palm OS LCD's
+  green surfaces, dark ink text, a dimmed text tone and the LCD's line
+  colour for the dotted rules between rows, all as semantic tokens
+  (design-language.md "Palettes"). It forces the light theme, so the
+  shell has no light/dark toggle. It is never in the picker: an app opts
+  in by naming it, `palettePicker` is ignored beside it, and so is a dark
+  palette a device saved. It has no glow.
+- **The dotted rules** are a colour token only: `--rule` (and `--border`)
+  is the line colour, and the app writes the style itself:
+  `border-b border-dotted border-rule`.
+- **Its own glyphs and fills.** The light theme's categorical slots, heat
+  steps and depth steps measure 1.5 to 3 on the green, so Palm LCD has
+  its own: each clears 3:1 on both greens, at the light theme's ΔE
+  floors. Where the mockup's colours failed, they were darkened: dim text
+  (3.82:1 as drawn, #464e39 at 5.50), and the status words, so they read
+  on their own washes.
+- **New exports:** `LIGHT_PALETTES`, `LIGHT_PALETTE_LABELS`,
+  `isLightPaletteName`, `paletteColorScheme`, and the types
+  `LightPaletteName` and `AppPaletteName` (any palette an app can name).
+  `usePalette()`'s `palette` and `defaultPalette` are now `AppPaletteName`.
+  App code that indexes `PALETTE_LABELS` with one should check
+  `isPaletteName` first.
+- **Checks:** `defineA11ySuite({ palettes: ['palm-lcd'] })` and
+  `defineDataEnvironmentBannerSuite`'s `palettes` check it in light.
+  `pwa({ palette: 'palm-lcd' })` takes the ink and the green.
+
+To take it: `npm install @tristan2828/ui-foundation@4.91.0`, then
+`<FoundationProviders palette="palm-lcd">`, `pwa({ palette: 'palm-lcd' })`
+if the app installs, and `palettes: ['palm-lcd']` on its a11y specs.
+
 ## 4.88.0 — The form standard's controls, on the form and in place
 
 The UI package only; additive, no new dependency (the backend package's

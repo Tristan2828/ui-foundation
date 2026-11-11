@@ -36,7 +36,7 @@ export type PwaOptions = {
    * below default to its accent, its text on the accent and its background
    * instead of the light theme's.
    */
-  palette?: 'indigo-cyan' | 'indigo-rose' | 'graphite-periwinkle' | 'violet'
+  palette?: 'indigo-cyan' | 'indigo-rose' | 'graphite-periwinkle' | 'violet' | 'palm-lcd'
   /** `#rrggbb`. Defaults to the package's `--primary` token (or the palette's accent). */
   themeColor?: string
   /** The letter's colour on the SVG icon, `#rrggbb`. Defaults to `--primary-foreground`. */

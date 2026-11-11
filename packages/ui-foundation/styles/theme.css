@@ -293,7 +293,7 @@
 
   /*
    * Palette primitives (design-language.md "Palettes"). A palette is an
-   * app's own dark look: these four were chosen for the shared style
+   * app's own look: these four dark ones were chosen for the shared style
    * guide, and an app names one (FoundationProviders' `palette`). Each is
    * the guide's colours as written, with one change: Violet's text on its
    * accent was #130925 (4.496:1, just under 4.5) and is #110823 (4.54:1).
@@ -378,6 +378,136 @@
   --palette-success: #66d69a;
   --palette-warning: #e0b152;
   --palette-danger: #df7a72;
+
+  /*
+   * Palm LCD, the one light palette (design-language.md "Palettes"): a
+   * Palm OS LCD's green surface and dark ink, from palm-datebook's mockup
+   * (docs/reference/mockup-2026-11.html). An app opts into it by name; it
+   * forces the light theme, is never in the picker and has no glow. Its
+   * block, `[data-palette="palm-lcd"]`, sits on :root. The mockup's
+   * surface, ink and rule line are kept as written; its dim text #5c6650
+   * measured 3.82 on the surface (under 4.5) and is #464e39, and its
+   * green, rust and blue words are a quarter darker, so they still read on
+   * their own tinted washes. Ratios on the surface (bg, and card: the same
+   * green, as on the device) / on raised:
+   *
+   *   text (ink)     10.1 / 9.16
+   *   dim            5.50 / 5.00; 4.78 on a highlighted row, 4.63 on a
+   *                  `#` heading's band
+   *   dim-strong     6.23 / 5.67, 5.42 on a highlighted row: muted text
+   *                  inside a highlighted or hovered row
+   *   accent (ink)   the primary fill, the ring (10.1), the field border:
+   *                  as on the device, a button pressed on is ink with the
+   *                  green on it (on-accent 10.1)
+   *   link           5.29 / 4.82, the mockup's blue
+   *   success, warning, danger, info text
+   *                  7.00 / 6.37, 7.33 / 6.67, 7.26 / 6.60, 7.18 / 6.53
+   *   rule (line)    1.48: the dotted rule between rows, a colour only.
+   *                  An app writes the style: `border-b border-dotted
+   *                  border-rule`. --border is the same line, so a
+   *                  table's own rows wear it too (axe doesn't check borders)
+   *
+   * Glyphs and fills: the light theme's slots, heat and depth steps are
+   * tuned for white and measure 1.5 to 3 on this green, so Palm LCD has
+   * its own, each clearing 3.1:1 on bg and raised (a 3:1 shape needs to
+   * be darker than oklch 0.56 here): hue within 20 degrees of the
+   * light slot's (25 for the ramps), lightness re-spread to fit, with the
+   * light theme's floors kept (tests/category-slots.test.ts,
+   * heat-scale.test.ts, depth-ramps.test.ts). Every fill takes white text.
+   */
+  --palette-palm-lcd-background: #c9d1b2;
+  --palette-palm-lcd-panel: #c9d1b2;
+  --palette-palm-lcd-raised: #c0c8a6;
+  --palette-palm-lcd-band: #b8c19e;
+  --palette-palm-lcd-border: #a3ad8f;
+  --palette-palm-lcd-text: #1d2416;
+  --palette-palm-lcd-dim: #464e39;
+  --palette-palm-lcd-dim-strong: #3e4631;
+  --palette-palm-lcd-accent: #1d2416;
+  --palette-palm-lcd-on-accent: #c9d1b2;
+  --palette-palm-lcd-link: #2b4f7a;
+  --palette-palm-lcd-second: #2b4f7a;
+  --palette-palm-lcd-success: #1c4426;
+  --palette-palm-lcd-warning: #4a3500;
+  --palette-palm-lcd-danger: #5c2c16;
+  --palette-palm-lcd-info: #203b5c;
+  --palette-palm-lcd-category-1: oklch(0.532 0.243 264); /* blue */
+  --palette-palm-lcd-category-2: oklch(0.299 0.101 38); /* orange */
+  --palette-palm-lcd-category-3: oklch(0.392 0.089 160); /* green */
+  --palette-palm-lcd-category-4: oklch(0.501 0.07 304); /* purple */
+  --palette-palm-lcd-category-5: oklch(0.33 0.134 351); /* pink */
+  --palette-palm-lcd-category-6: oklch(0.526 0.124 55); /* brown */
+  --palette-palm-lcd-category-7: oklch(0.516 0.084 203); /* teal */
+  --palette-palm-lcd-category-8: oklch(0.54 0.204 21); /* red */
+  --palette-palm-lcd-category-9: oklch(0.352 0.071 91); /* gold */
+  --palette-palm-lcd-category-10: oklch(0.317 0.172 283); /* navy */
+  --palette-palm-lcd-category-11: oklch(0.515 0.132 126); /* lime */
+  --palette-palm-lcd-category-12: oklch(0.555 0.231 348); /* magenta */
+  --palette-palm-lcd-heat-1: oklch(0.529 0.256 263);
+  --palette-palm-lcd-heat-2: oklch(0.515 0.069 199);
+  --palette-palm-lcd-heat-3: oklch(0.504 0.122 122);
+  --palette-palm-lcd-heat-4: oklch(0.311 0.069 67);
+  --palette-palm-lcd-heat-5: oklch(0.301 0.125 355);
+  --palette-palm-lcd-category-1-depth-1: oklch(0.518 0.053 197); /* blue */
+  --palette-palm-lcd-category-1-depth-2: oklch(0.507 0.141 250);
+  --palette-palm-lcd-category-1-depth-3: oklch(0.391 0.05 289);
+  --palette-palm-lcd-category-1-depth-4: oklch(0.38 0.262 265);
+  --palette-palm-lcd-category-1-depth-5: oklch(0.235 0.062 286);
+  --palette-palm-lcd-category-2-depth-1: oklch(0.54 0.129 9); /* orange */
+  --palette-palm-lcd-category-2-depth-2: oklch(0.409 0.05 28);
+  --palette-palm-lcd-category-2-depth-3: oklch(0.398 0.087 69);
+  --palette-palm-lcd-category-2-depth-4: oklch(0.239 0.05 94);
+  --palette-palm-lcd-category-2-depth-5: oklch(0.162 0.059 41);
+  --palette-palm-lcd-category-3-depth-1: oklch(0.52 0 168); /* green */
+  --palette-palm-lcd-category-3-depth-2: oklch(0.452 0.099 162);
+  --palette-palm-lcd-category-3-depth-3: oklch(0.442 0.101 116);
+  --palette-palm-lcd-category-3-depth-4: oklch(0.274 0.086 146);
+  --palette-palm-lcd-category-3-depth-5: oklch(0.12 0.05 134);
+  --palette-palm-lcd-category-4-depth-1: oklch(0.529 0.05 317); /* purple */
+  --palette-palm-lcd-category-4-depth-2: oklch(0.496 0.282 264);
+  --palette-palm-lcd-category-4-depth-3: oklch(0.484 0.05 324);
+  --palette-palm-lcd-category-4-depth-4: oklch(0.299 0.178 282);
+  --palette-palm-lcd-category-4-depth-5: oklch(0.126 0.05 348);
+  --palette-palm-lcd-category-5-depth-1: oklch(0.534 0.136 52); /* pink */
+  --palette-palm-lcd-category-5-depth-2: oklch(0.523 0.212 356);
+  --palette-palm-lcd-category-5-depth-3: oklch(0.512 0.131 52);
+  --palette-palm-lcd-category-5-depth-4: oklch(0.501 0.237 323);
+  --palette-palm-lcd-category-5-depth-5: oklch(0.12 0.05 7);
+  --palette-palm-lcd-category-6-depth-1: oklch(0.523 0.05 103); /* brown */
+  --palette-palm-lcd-category-6-depth-2: oklch(0.415 0.109 50);
+  --palette-palm-lcd-category-6-depth-3: oklch(0.405 0.161 10);
+  --palette-palm-lcd-category-6-depth-4: oklch(0.394 0.098 53);
+  --palette-palm-lcd-category-6-depth-5: oklch(0.188 0.076 14);
+  --palette-palm-lcd-category-7-depth-1: oklch(0.52 0 206); /* teal */
+  --palette-palm-lcd-category-7-depth-2: oklch(0.422 0.071 202);
+  --palette-palm-lcd-category-7-depth-3: oklch(0.412 0.128 139);
+  --palette-palm-lcd-category-7-depth-4: oklch(0.402 0.07 189);
+  --palette-palm-lcd-category-7-depth-5: oklch(0.18 0.04 162);
+  --palette-palm-lcd-category-8-depth-1: oklch(0.554 0.229 344); /* red */
+  --palette-palm-lcd-category-8-depth-2: oklch(0.541 0.177 38);
+  --palette-palm-lcd-category-8-depth-3: oklch(0.524 0.223 344);
+  --palette-palm-lcd-category-8-depth-4: oklch(0.512 0.109 72);
+  --palette-palm-lcd-category-8-depth-5: oklch(0.18 0.071 25);
+  --palette-palm-lcd-category-9-depth-1: oklch(0.519 0.06 133); /* gold */
+  --palette-palm-lcd-category-9-depth-2: oklch(0.503 0.103 85);
+  --palette-palm-lcd-category-9-depth-3: oklch(0.468 0.086 38);
+  --palette-palm-lcd-category-9-depth-4: oklch(0.278 0.057 92);
+  --palette-palm-lcd-category-9-depth-5: oklch(0.176 0.062 41);
+  --palette-palm-lcd-category-10-depth-1: oklch(0.52 0 303); /* navy */
+  --palette-palm-lcd-category-10-depth-2: oklch(0.509 0.144 266);
+  --palette-palm-lcd-category-10-depth-3: oklch(0.448 0.217 319);
+  --palette-palm-lcd-category-10-depth-4: oklch(0.437 0.058 235);
+  --palette-palm-lcd-category-10-depth-5: oklch(0.148 0.101 267);
+  --palette-palm-lcd-category-11-depth-1: oklch(0.52 0.05 129); /* lime */
+  --palette-palm-lcd-category-11-depth-2: oklch(0.51 0.108 73);
+  --palette-palm-lcd-category-11-depth-3: oklch(0.498 0.108 161);
+  --palette-palm-lcd-category-11-depth-4: oklch(0.406 0.086 106);
+  --palette-palm-lcd-category-11-depth-5: oklch(0.165 0.05 137);
+  --palette-palm-lcd-category-12-depth-1: oklch(0.558 0.251 331); /* magenta */
+  --palette-palm-lcd-category-12-depth-2: oklch(0.54 0.217 25);
+  --palette-palm-lcd-category-12-depth-3: oklch(0.529 0.05 333);
+  --palette-palm-lcd-category-12-depth-4: oklch(0.34 0.182 300);
+  --palette-palm-lcd-category-12-depth-5: oklch(0.121 0.05 339);
 
   /* 9px (the shared style guide): buttons and cards on --radius, fields
      on --radius-md (about 7px). */
@@ -993,7 +1123,8 @@
 /*
  * Palettes (design-language.md "Palettes"): an app's own dark look.
  * FoundationProviders' `palette` puts data-palette on <html> and forces
- * the dark theme, so a block below always sits on top of .dark and sets
+ * the dark theme (Palm LCD, the light one, is at the end of this file),
+ * so a block below always sits on top of .dark and sets
  * only what differs from it. The solid fills (--destructive, --success,
  * --warning, --info, each with white -foreground), --info-text, the
  * highlight washes, the categorical slots, the heat scale and the depth
@@ -1177,4 +1308,201 @@
   --sidebar-accent-foreground: var(--palette-violet-text);
   --sidebar-border: var(--palette-violet-border);
   --sidebar-ring: var(--palette-violet-accent);
+}
+
+/*
+ * Palm LCD (design-language.md "Palettes"), the light palette an app opts
+ * into by name: FoundationProviders forces the light theme with it, so this
+ * block sits on :root and sets only what differs from it. The solid fills
+ * (--destructive, --success, --warning, --info, each with white
+ * -foreground) and the highlight washes stay :root's; the categorical
+ * slots, heat scale and depth ramps are its own (white text on every
+ * fill); --table-stripe, --table-highlight, --table-hover and
+ * --card-header resolve from these values, as under .dark. The ratios are
+ * beside its primitives above. No glow: index.css draws it under a dark
+ * palette only.
+ */
+[data-palette="palm-lcd"] {
+  --background: var(--palette-palm-lcd-background);
+  --foreground: var(--palette-palm-lcd-text);
+  --card: var(--palette-palm-lcd-panel);
+  --card-foreground: var(--palette-palm-lcd-text);
+  --popover: var(--palette-palm-lcd-panel);
+  --popover-foreground: var(--palette-palm-lcd-text);
+  --primary: var(--palette-palm-lcd-accent);
+  --primary-foreground: var(--palette-palm-lcd-on-accent);
+  --secondary: var(--palette-palm-lcd-raised);
+  --secondary-foreground: var(--palette-palm-lcd-text);
+  --muted: var(--palette-palm-lcd-raised);
+  --muted-foreground: var(--palette-palm-lcd-dim);
+  --accent: var(--palette-palm-lcd-raised);
+  --accent-foreground: var(--palette-palm-lcd-text);
+  --accent-second: var(--palette-palm-lcd-second);
+  --destructive-text: var(--palette-palm-lcd-danger);
+  --success-text: var(--palette-palm-lcd-success);
+  --warning-text: var(--palette-palm-lcd-warning);
+  --info-text: var(--palette-palm-lcd-info);
+  --link: var(--palette-palm-lcd-link);
+  --heading-bar: var(--palette-palm-lcd-link);
+  --rule: var(--palette-palm-lcd-border);
+  --heading-band: var(--palette-palm-lcd-band);
+  --table-highlight-muted-foreground: var(--palette-palm-lcd-dim-strong);
+  --border: var(--palette-palm-lcd-border);
+  --input: var(--palette-palm-lcd-accent);
+  --ring: var(--palette-palm-lcd-accent);
+  --chart-1: var(--palette-palm-lcd-border);
+  --chart-2: var(--palette-palm-lcd-dim);
+  --chart-3: var(--palette-palm-lcd-link);
+  --chart-4: var(--palette-palm-lcd-second);
+  --chart-5: var(--palette-palm-lcd-text);
+  --sidebar: var(--palette-palm-lcd-panel);
+  --sidebar-foreground: var(--palette-palm-lcd-text);
+  --sidebar-primary: var(--palette-palm-lcd-accent);
+  --sidebar-primary-foreground: var(--palette-palm-lcd-on-accent);
+  --sidebar-accent: var(--palette-palm-lcd-raised);
+  --sidebar-accent-foreground: var(--palette-palm-lcd-text);
+  --sidebar-border: var(--palette-palm-lcd-border);
+  --sidebar-ring: var(--palette-palm-lcd-accent);
+  --category-1: var(--palette-palm-lcd-category-1);
+  --category-2: var(--palette-palm-lcd-category-2);
+  --category-3: var(--palette-palm-lcd-category-3);
+  --category-4: var(--palette-palm-lcd-category-4);
+  --category-5: var(--palette-palm-lcd-category-5);
+  --category-6: var(--palette-palm-lcd-category-6);
+  --category-7: var(--palette-palm-lcd-category-7);
+  --category-8: var(--palette-palm-lcd-category-8);
+  --category-9: var(--palette-palm-lcd-category-9);
+  --category-10: var(--palette-palm-lcd-category-10);
+  --category-11: var(--palette-palm-lcd-category-11);
+  --category-12: var(--palette-palm-lcd-category-12);
+  --heat-1: var(--palette-palm-lcd-heat-1);
+  --heat-1-foreground: var(--white);
+  --heat-2: var(--palette-palm-lcd-heat-2);
+  --heat-2-foreground: var(--white);
+  --heat-3: var(--palette-palm-lcd-heat-3);
+  --heat-3-foreground: var(--white);
+  --heat-4: var(--palette-palm-lcd-heat-4);
+  --heat-4-foreground: var(--white);
+  --heat-5: var(--palette-palm-lcd-heat-5);
+  --heat-5-foreground: var(--white);
+  --category-1-depth-1: var(--palette-palm-lcd-category-1-depth-1);
+  --category-1-depth-1-foreground: var(--white);
+  --category-1-depth-2: var(--palette-palm-lcd-category-1-depth-2);
+  --category-1-depth-2-foreground: var(--white);
+  --category-1-depth-3: var(--palette-palm-lcd-category-1-depth-3);
+  --category-1-depth-3-foreground: var(--white);
+  --category-1-depth-4: var(--palette-palm-lcd-category-1-depth-4);
+  --category-1-depth-4-foreground: var(--white);
+  --category-1-depth-5: var(--palette-palm-lcd-category-1-depth-5);
+  --category-1-depth-5-foreground: var(--white);
+  --category-2-depth-1: var(--palette-palm-lcd-category-2-depth-1);
+  --category-2-depth-1-foreground: var(--white);
+  --category-2-depth-2: var(--palette-palm-lcd-category-2-depth-2);
+  --category-2-depth-2-foreground: var(--white);
+  --category-2-depth-3: var(--palette-palm-lcd-category-2-depth-3);
+  --category-2-depth-3-foreground: var(--white);
+  --category-2-depth-4: var(--palette-palm-lcd-category-2-depth-4);
+  --category-2-depth-4-foreground: var(--white);
+  --category-2-depth-5: var(--palette-palm-lcd-category-2-depth-5);
+  --category-2-depth-5-foreground: var(--white);
+  --category-3-depth-1: var(--palette-palm-lcd-category-3-depth-1);
+  --category-3-depth-1-foreground: var(--white);
+  --category-3-depth-2: var(--palette-palm-lcd-category-3-depth-2);
+  --category-3-depth-2-foreground: var(--white);
+  --category-3-depth-3: var(--palette-palm-lcd-category-3-depth-3);
+  --category-3-depth-3-foreground: var(--white);
+  --category-3-depth-4: var(--palette-palm-lcd-category-3-depth-4);
+  --category-3-depth-4-foreground: var(--white);
+  --category-3-depth-5: var(--palette-palm-lcd-category-3-depth-5);
+  --category-3-depth-5-foreground: var(--white);
+  --category-4-depth-1: var(--palette-palm-lcd-category-4-depth-1);
+  --category-4-depth-1-foreground: var(--white);
+  --category-4-depth-2: var(--palette-palm-lcd-category-4-depth-2);
+  --category-4-depth-2-foreground: var(--white);
+  --category-4-depth-3: var(--palette-palm-lcd-category-4-depth-3);
+  --category-4-depth-3-foreground: var(--white);
+  --category-4-depth-4: var(--palette-palm-lcd-category-4-depth-4);
+  --category-4-depth-4-foreground: var(--white);
+  --category-4-depth-5: var(--palette-palm-lcd-category-4-depth-5);
+  --category-4-depth-5-foreground: var(--white);
+  --category-5-depth-1: var(--palette-palm-lcd-category-5-depth-1);
+  --category-5-depth-1-foreground: var(--white);
+  --category-5-depth-2: var(--palette-palm-lcd-category-5-depth-2);
+  --category-5-depth-2-foreground: var(--white);
+  --category-5-depth-3: var(--palette-palm-lcd-category-5-depth-3);
+  --category-5-depth-3-foreground: var(--white);
+  --category-5-depth-4: var(--palette-palm-lcd-category-5-depth-4);
+  --category-5-depth-4-foreground: var(--white);
+  --category-5-depth-5: var(--palette-palm-lcd-category-5-depth-5);
+  --category-5-depth-5-foreground: var(--white);
+  --category-6-depth-1: var(--palette-palm-lcd-category-6-depth-1);
+  --category-6-depth-1-foreground: var(--white);
+  --category-6-depth-2: var(--palette-palm-lcd-category-6-depth-2);
+  --category-6-depth-2-foreground: var(--white);
+  --category-6-depth-3: var(--palette-palm-lcd-category-6-depth-3);
+  --category-6-depth-3-foreground: var(--white);
+  --category-6-depth-4: var(--palette-palm-lcd-category-6-depth-4);
+  --category-6-depth-4-foreground: var(--white);
+  --category-6-depth-5: var(--palette-palm-lcd-category-6-depth-5);
+  --category-6-depth-5-foreground: var(--white);
+  --category-7-depth-1: var(--palette-palm-lcd-category-7-depth-1);
+  --category-7-depth-1-foreground: var(--white);
+  --category-7-depth-2: var(--palette-palm-lcd-category-7-depth-2);
+  --category-7-depth-2-foreground: var(--white);
+  --category-7-depth-3: var(--palette-palm-lcd-category-7-depth-3);
+  --category-7-depth-3-foreground: var(--white);
+  --category-7-depth-4: var(--palette-palm-lcd-category-7-depth-4);
+  --category-7-depth-4-foreground: var(--white);
+  --category-7-depth-5: var(--palette-palm-lcd-category-7-depth-5);
+  --category-7-depth-5-foreground: var(--white);
+  --category-8-depth-1: var(--palette-palm-lcd-category-8-depth-1);
+  --category-8-depth-1-foreground: var(--white);
+  --category-8-depth-2: var(--palette-palm-lcd-category-8-depth-2);
+  --category-8-depth-2-foreground: var(--white);
+  --category-8-depth-3: var(--palette-palm-lcd-category-8-depth-3);
+  --category-8-depth-3-foreground: var(--white);
+  --category-8-depth-4: var(--palette-palm-lcd-category-8-depth-4);
+  --category-8-depth-4-foreground: var(--white);
+  --category-8-depth-5: var(--palette-palm-lcd-category-8-depth-5);
+  --category-8-depth-5-foreground: var(--white);
+  --category-9-depth-1: var(--palette-palm-lcd-category-9-depth-1);
+  --category-9-depth-1-foreground: var(--white);
+  --category-9-depth-2: var(--palette-palm-lcd-category-9-depth-2);
+  --category-9-depth-2-foreground: var(--white);
+  --category-9-depth-3: var(--palette-palm-lcd-category-9-depth-3);
+  --category-9-depth-3-foreground: var(--white);
+  --category-9-depth-4: var(--palette-palm-lcd-category-9-depth-4);
+  --category-9-depth-4-foreground: var(--white);
+  --category-9-depth-5: var(--palette-palm-lcd-category-9-depth-5);
+  --category-9-depth-5-foreground: var(--white);
+  --category-10-depth-1: var(--palette-palm-lcd-category-10-depth-1);
+  --category-10-depth-1-foreground: var(--white);
+  --category-10-depth-2: var(--palette-palm-lcd-category-10-depth-2);
+  --category-10-depth-2-foreground: var(--white);
+  --category-10-depth-3: var(--palette-palm-lcd-category-10-depth-3);
+  --category-10-depth-3-foreground: var(--white);
+  --category-10-depth-4: var(--palette-palm-lcd-category-10-depth-4);
+  --category-10-depth-4-foreground: var(--white);
+  --category-10-depth-5: var(--palette-palm-lcd-category-10-depth-5);
+  --category-10-depth-5-foreground: var(--white);
+  --category-11-depth-1: var(--palette-palm-lcd-category-11-depth-1);
+  --category-11-depth-1-foreground: var(--white);
+  --category-11-depth-2: var(--palette-palm-lcd-category-11-depth-2);
+  --category-11-depth-2-foreground: var(--white);
+  --category-11-depth-3: var(--palette-palm-lcd-category-11-depth-3);
+  --category-11-depth-3-foreground: var(--white);
+  --category-11-depth-4: var(--palette-palm-lcd-category-11-depth-4);
+  --category-11-depth-4-foreground: var(--white);
+  --category-11-depth-5: var(--palette-palm-lcd-category-11-depth-5);
+  --category-11-depth-5-foreground: var(--white);
+  --category-12-depth-1: var(--palette-palm-lcd-category-12-depth-1);
+  --category-12-depth-1-foreground: var(--white);
+  --category-12-depth-2: var(--palette-palm-lcd-category-12-depth-2);
+  --category-12-depth-2-foreground: var(--white);
+  --category-12-depth-3: var(--palette-palm-lcd-category-12-depth-3);
+  --category-12-depth-3-foreground: var(--white);
+  --category-12-depth-4: var(--palette-palm-lcd-category-12-depth-4);
+  --category-12-depth-4-foreground: var(--white);
+  --category-12-depth-5: var(--palette-palm-lcd-category-12-depth-5);
+  --category-12-depth-5-foreground: var(--white);
 }

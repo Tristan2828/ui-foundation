@@ -6,6 +6,11 @@
 // palette rides on <html> as data-palette, so popups portaled to <body>
 // wear it too, and styles/theme.css's `.dark[data-palette]` blocks do the
 // rest (components/app/palette-provider.tsx, hooks/use-palette.ts).
+//
+// The light palettes (LIGHT_PALETTES, so far one: Palm LCD) are opt-in: an
+// app gets one only by naming it as `palette`. It forces the light theme,
+// it is never in the picker, and it has no glow. Its block is
+// `[data-palette="<name>"]` on top of :root.
 
 import { browserStorage, createDeviceChoiceStore, otherTabsSubscriber, type DeviceChoiceStore, type StorageLike } from '@/lib/device-choice'
 
@@ -26,6 +31,28 @@ export const PALETTE_STORAGE_KEY = 'ui-foundation:palette'
 
 export function isPaletteName(value: unknown): value is PaletteName {
   return typeof value === 'string' && (PALETTES as readonly string[]).includes(value)
+}
+
+/** The light palettes, which an app opts into by name: never in the picker (design-language.md "Palettes"). */
+export const LIGHT_PALETTES = ['palm-lcd'] as const
+
+export type LightPaletteName = (typeof LIGHT_PALETTES)[number]
+
+/** Each light palette's name as a person reads it. */
+export const LIGHT_PALETTE_LABELS: Record<LightPaletteName, string> = {
+  'palm-lcd': 'Palm LCD',
+}
+
+/** Any palette an app can name: one of the four dark ones, or a light one. */
+export type AppPaletteName = PaletteName | LightPaletteName
+
+export function isLightPaletteName(value: unknown): value is LightPaletteName {
+  return typeof value === 'string' && (LIGHT_PALETTES as readonly string[]).includes(value)
+}
+
+/** The theme a palette forces: light for a light palette, dark for the four. */
+export function paletteColorScheme(palette: AppPaletteName): 'light' | 'dark' {
+  return isLightPaletteName(palette) ? 'light' : 'dark'
 }
 
 export type PaletteStore = DeviceChoiceStore<PaletteName>
