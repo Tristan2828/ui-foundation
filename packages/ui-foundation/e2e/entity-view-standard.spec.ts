@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // The record page standard in EntityView (4.80; app/EntityView "Record
 // standard" and "Record standard, long title") in a real browser: the
@@ -14,7 +14,7 @@ async function open(page: Page, id: string, width: number) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 }
 
-const box = async (page: Page, locator: ReturnType<Page['locator']>) => (await locator.boundingBox())!
+const box = async (locator: Locator) => (await locator.boundingBox())!
 const region = (page: Page, name: string) => page.getByRole('region', { name, exact: true })
 const pageScrollsSideways = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
@@ -22,9 +22,9 @@ const pageScrollsSideways = (page: Page) =>
 test.describe('EntityView header', () => {
   test('1280px: the status and badge on the title line, the subtitle under it', async ({ page }) => {
     await open(page, 'record-standard', 1280)
-    const title = await box(page, page.getByRole('heading', { level: 1 }))
-    const active = await box(page, page.getByText('Active', { exact: true }))
-    const subtitle = await box(page, page.getByText('Timber and sheet goods for the workshop'))
+    const title = await box(page.getByRole('heading', { level: 1 }))
+    const active = await box(page.getByText('Active', { exact: true }))
+    const subtitle = await box(page.getByText('Timber and sheet goods for the workshop'))
     expect(active.x).toBeGreaterThan(title.x + title.width)
     expect(Math.abs(active.y + active.height / 2 - (title.y + title.height / 2))).toBeLessThan(4)
     expect(subtitle.y).toBeGreaterThanOrEqual(title.y + title.height)
@@ -33,9 +33,9 @@ test.describe('EntityView header', () => {
 
   test('390px: badges too wide beside the title wrap under it, above the subtitle', async ({ page }) => {
     await open(page, 'record-standard', 390)
-    const title = await box(page, page.getByRole('heading', { level: 1 }))
-    const active = await box(page, page.getByText('Active', { exact: true }))
-    const subtitle = await box(page, page.getByText('Timber and sheet goods for the workshop'))
+    const title = await box(page.getByRole('heading', { level: 1 }))
+    const active = await box(page.getByText('Active', { exact: true }))
+    const subtitle = await box(page.getByText('Timber and sheet goods for the workshop'))
     expect(active.y).toBeGreaterThanOrEqual(title.y + title.height - 1)
     expect(Math.abs(active.x - title.x)).toBeLessThan(2)
     expect(subtitle.y).toBeGreaterThanOrEqual(active.y + active.height)
@@ -44,8 +44,8 @@ test.describe('EntityView header', () => {
 
   test('a long title pushes the badges to the next line', async ({ page }) => {
     await open(page, 'record-standard-long-title', 1280)
-    const title = await box(page, page.getByRole('heading', { level: 1 }))
-    const active = await box(page, page.getByText('Active', { exact: true }))
+    const title = await box(page.getByRole('heading', { level: 1 }))
+    const active = await box(page.getByText('Active', { exact: true }))
     expect(active.y).toBeGreaterThanOrEqual(title.y + title.height - 1)
     expect(Math.abs(active.x - title.x)).toBeLessThan(2)
   })
@@ -55,7 +55,7 @@ test.describe('EntityView header', () => {
     for (const name of ['Print notes', 'Delete']) {
       const button = page.getByRole('button', { name, exact: true })
       await expect(button).toHaveText('')
-      const size = await box(page, button)
+      const size = await box(button)
       expect(Math.round(size.width)).toBe(Math.round(size.height))
       await button.hover()
       await expect(page.getByText(name, { exact: true }).last()).toBeVisible()
@@ -74,8 +74,8 @@ test.describe('EntityView header', () => {
   test('the strip draws each icon before its word, 13px', async ({ page }) => {
     await open(page, 'record-standard', 1280)
     const label = page.locator('[data-slot="key-stats"] dt', { hasText: 'Last order' })
-    const icon = await box(page, label.locator('svg'))
-    const words = await box(page, label)
+    const icon = await box(label.locator('svg'))
+    const words = await box(label)
     expect(Math.round(icon.width)).toBe(13)
     expect(icon.x).toBeLessThan(words.x + 2)
   })
