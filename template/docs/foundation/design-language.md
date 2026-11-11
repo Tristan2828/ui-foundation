@@ -3,35 +3,36 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 44–111
-- [Glow](#glow) · lines 113–131
-- [Semantic tones](#semantic-tones) · lines 133–161
-- [The three badge styles](#the-three-badge-styles) · lines 163–180
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 182–211
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 213–226
-- [Logos and brand marks](#logos-and-brand-marks) · lines 228–272
-- [Categorical colour](#categorical-colour) · lines 274–344
-- [Heat scale](#heat-scale) · lines 346–407
-- [Depth ramps](#depth-ramps) · lines 409–487
-- [A stored colour](#a-stored-colour) · lines 489–537
-- [Shapes and sizes](#shapes-and-sizes) · lines 539–560
-- [Typography](#typography) · lines 562–682
-  - [Written text (notes)](#written-text-notes) · lines 596–682
-- [Density](#density) · lines 684–770
-  - [Rows on this device](#rows-on-this-device) · lines 743–770
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 772–886
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 888–965
-- [Notices](#notices) · lines 967–995
-- [A value over time](#a-value-over-time) · lines 997–1083
-  - [Several values over time](#several-values-over-time) · lines 1046–1083
-- [A list as a board](#a-list-as-a-board) · lines 1085–1136
-- [A list as cards](#a-list-as-cards) · lines 1138–1184
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1186–1208
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1210–1254
-- [Picking at random](#picking-at-random) · lines 1256–1287
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1289–1356
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1358–1383
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1385–1431
+- [Palettes](#palettes) · lines 45–112
+- [Glow](#glow) · lines 114–132
+- [Semantic tones](#semantic-tones) · lines 134–162
+- [The three badge styles](#the-three-badge-styles) · lines 164–181
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 183–212
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 214–227
+- [Logos and brand marks](#logos-and-brand-marks) · lines 229–273
+- [Categorical colour](#categorical-colour) · lines 275–345
+- [Heat scale](#heat-scale) · lines 347–408
+- [Depth ramps](#depth-ramps) · lines 410–488
+- [A stored colour](#a-stored-colour) · lines 490–538
+- [Shapes and sizes](#shapes-and-sizes) · lines 540–561
+- [Typography](#typography) · lines 563–683
+  - [Written text (notes)](#written-text-notes) · lines 597–683
+- [Density](#density) · lines 685–771
+  - [Rows on this device](#rows-on-this-device) · lines 744–771
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 773–887
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 889–966
+- [Notices](#notices) · lines 968–996
+- [A value over time](#a-value-over-time) · lines 998–1084
+  - [Several values over time](#several-values-over-time) · lines 1047–1084
+- [A list as a board](#a-list-as-a-board) · lines 1086–1137
+- [A list as cards](#a-list-as-cards) · lines 1139–1185
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1187–1209
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1211–1254
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1256–1300
+- [Picking at random](#picking-at-random) · lines 1302–1333
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1335–1402
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1404–1429
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1431–1477
 
 <!-- /index -->
 
@@ -1206,6 +1207,51 @@ row under the header, across the page at every width.
   more is a section's label/value rows.
 - **`subtitle`** is the line under the title: what the record is for,
   in muted body type, editable in place like any value.
+
+## Parts of the page standards
+
+Six small parts the list, record and overview standards share. Each is
+generic and standalone: an app (or a later foundation release) wires it
+into a table, a record or an overview.
+
+- **`ValueList`: several values in a cell.** `<ValueList items={[{ label }]} max={2} />`
+  shows two values on one line and the rest as `+N`, every folded value in
+  its tooltip (the `+N` is a button, so a keyboard and a tap reach it). A
+  value is a chip by default, or the app's own `node` (an icon, a
+  `ColorSwatch`) with its `label` as the plain text. An empty cell is a
+  muted dash that reads "None".
+- **`ListHeader`: a list's header.** The title (the page's h1) with its
+  `count`, `newAction` alone beside it, and one ⋯ menu for the rest. One
+  related link in `links` stays a button; two or more fold into ⋯ with
+  `more` (the page's own actions). `deleted={{ shown, onShownChange }}` adds
+  "Show deleted" as the menu's last item and, while it's on, an info
+  `Notice` with "Back to the list" in a `role="status"` region that is
+  always there. It holds no state: the app keeps `shown`.
+- **`Timeline`: a record's dated history.** `items` newest first
+  (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
+  column on the left, a dot and a thin line, the entry on the right with
+  its `kind` as a muted line under it and `edit` (the entry's own
+  control) at its end. The first `initial` (5) show, then "Show all N";
+  under 24rem of its own width the date moves above its entry. Empty
+  reads `emptyText` ("Nothing yet").
+- **`NeedsYou`: what waits on the user.** `items={[{ text, to, tone? }]}`:
+  one region at the top of an overview, a warning wash with the `*-text`
+  icon, each line a link; `tone: 'destructive'` for an overdue one.
+  Nothing renders for an empty list.
+- **`Freshness`: how old a number is.** `<Freshness label="Balances entered"
+  at="2026-08-02" staleAfter="2026-11-02" />` reads "Balances entered Aug
+  2" in caption type and the muted tone, and once `staleAfter` has passed
+  the warning tone with a warning icon and ", out of date" for a screen
+  reader. The app owns the rule (entered plus 90 days); this only compares.
+  A plain `'YYYY-MM-DD'` day is never shifted by the time zone.
+- **`PartEmpty` and `WidgetCard`'s `empty`: a part with nothing yet.**
+  `empty={{ text?, action }}` draws "Nothing here yet" and one outline
+  button (a link `to`, or `onClick`) in place of the card's plain
+  `emptyMessage` line, the foundation's `Empty` at card size.
+
+Every one is measured with axe and the glyph check in both themes
+(fixtures `app/ValueList`, `ListHeader`, `Timeline`, `NeedsYou`,
+`Freshness`, `PartEmpty`).
 
 ## A record's tabs, mark and rail
 
