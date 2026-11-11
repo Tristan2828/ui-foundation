@@ -15,17 +15,17 @@
   - Step 8: Add Playwright specs for all three screens · lines 736–814
   - Step 9: Register the nav entry and route names · lines 815–829
   - Step 10: `npm run verify`. · lines 830–832
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 834–1144
-  - [The record view](#the-record-view) · lines 983–1022
-  - [Forms](#forms) · lines 1024–1076
-  - [Dialogs](#dialogs) · lines 1078–1103
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1105–1144
-- [What not to copy](#what-not-to-copy) · lines 1146–1172
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1174–1191
-- [Deleting](#deleting) · lines 1193–1224
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1226–1247
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1249–1258
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1261–1300
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 834–1150
+  - [The record view](#the-record-view) · lines 983–1028
+  - [Forms](#forms) · lines 1030–1082
+  - [Dialogs](#dialogs) · lines 1084–1109
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1111–1150
+- [What not to copy](#what-not-to-copy) · lines 1152–1178
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1180–1197
+- [Deleting](#deleting) · lines 1199–1230
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1232–1253
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1255–1264
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1267–1306
 
 <!-- /index -->
 
@@ -1015,6 +1015,12 @@ view reaches them all. A record uses the parts it has, in this order:
   rather than a column of labels; keep labels to a word or two.
 - **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
   what's known, then "N empty" opens the rest, still edited in place.
+- **A few equal things** (a plan's phases, a price at each store, a
+  handful of options) are one `EqualItems` (4.92) in a section, one look
+  per set: `cards` for little to say about each, `table` for things
+  compared on the same values, `featured` when one is current or best,
+  `panels` when each has several details (design-language.md "A few
+  equal things"). Never hand-made cards or a grid of their own.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.
 

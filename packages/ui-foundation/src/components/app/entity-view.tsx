@@ -104,6 +104,7 @@ import { EditableValue, LeaveGuard } from './editable-value'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH, isEmptyValue } from '@/lib/empty-value'
 import { useRecordDialog } from './record-dialog-context'
+import { FIELD_LABEL, FIELD_ROW, FIELD_ROW_BASE, FIELD_VALUE } from './field-rows'
 import { PageTrail, type PageCrumb } from './page-trail'
 import { usePageTrail } from './page-trail-context'
 import { entityViewTabSlug } from '@/lib/entity-view-tab'
@@ -355,21 +356,6 @@ function OrEmpty({ value, emptyLabel }: { value: ReactNode; emptyLabel: string |
 // A preset shows its own value unless the screen gives one.
 const fieldValue = (field: EntityViewField) => (field.value !== undefined ? field.value : field.edit?.shown)
 
-// Label beside value from `sm` up; below it (a phone) the label sits
-// above its value, so nothing is squeezed into a narrow second column. In
-// the rail the list's own width decides instead (a container query on the
-// <dl>): label above value in the narrow rail, beside it once the rail's
-// sections stack full width under the header.
-// `railFields="beside"` (4.76) puts them side by side in the rail too,
-// from an 18rem list (a rail card beside the main column is ~19rem
-// inside), with a narrower label column, and stacked below that.
-const FIELD_ROW = {
-  page: 'sm:grid sm:grid-cols-[minmax(--spacing(32),--spacing(48))_1fr] sm:gap-6',
-  rail: '@lg/fields:grid @lg/fields:grid-cols-[minmax(--spacing(32),--spacing(48))_1fr] @lg/fields:gap-6',
-  railBeside:
-    '@2xs/fields:grid @2xs/fields:grid-cols-[minmax(--spacing(24),--spacing(28))_minmax(0,1fr)] @2xs/fields:items-baseline @2xs/fields:gap-4 @2xs/fields:py-2.5 @lg/fields:grid-cols-[minmax(--spacing(32),--spacing(48))_1fr] @lg/fields:gap-6',
-}
-
 type FieldPlace = keyof typeof FIELD_ROW
 
 function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace }) {
@@ -380,14 +366,14 @@ function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace 
   return (
     <div
       className={cn(
-        'flex flex-col gap-1 py-3 first:pt-0 last:pb-0',
+        FIELD_ROW_BASE,
         FIELD_ROW[place],
         editable && cn(editRowClass, '-mx-2 px-2 first:pt-2 last:pb-2'),
       )}
       onClick={editable ? onEditRowClick : undefined}
     >
-      <dt className="type-label text-muted-foreground">{field.label}</dt>
-      <dd className="min-w-0 type-body break-words text-foreground">
+      <dt className={FIELD_LABEL}>{field.label}</dt>
+      <dd className={FIELD_VALUE}>
         {field.edit ? (
           <EditableValue label={field.label} edit={field.edit} look="row">
             <OrEmpty value={value} emptyLabel={field.emptyLabel} />

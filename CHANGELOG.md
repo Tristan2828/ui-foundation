@@ -7,6 +7,41 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.92.0 — A few equal things: EqualItems, one data shape in four looks
+
+The UI package only; additive, no new dependency and nothing to change in
+an app (the backend package's version moves with it, unchanged). Record
+page standard R10.
+
+- **`EqualItems`**: a small set of equal, related things inside a record
+  (a plan's phases, a price at each store, a handful of options).
+  `<EqualItems label="Phases" items={[{ id, title, state, fields: [{ label, value }] }]} look="cards" />`,
+  with `look` one of:
+  - `cards` (the default): a row of equal cards that wraps, one column on
+    a phone, each its title, its state as a badge and its fields as short
+    label/value lines;
+  - `table`: one compact row per item, the title as the row header, a
+    column per field label, a dash where an item has none;
+  - `featured`: the item `featuredId` names in full, the others as
+    toggles that open in place (several at once; `defaultOpenIds`), each
+    a button in a heading, never navigation;
+  - `panels`: a panel per item side by side, every detail labelled,
+    stacked on a phone.
+  `state` is words (a neutral outline badge) or `{ label, tone }` with
+  `info`, `success`, `warning` or `destructive`. Also `headingLevel`,
+  `titleColumn`, `stateColumn`, `emptyText` ("Nothing yet") and
+  `noFieldsText` ("No details"), and the types `EqualItem`,
+  `EqualItemField`, `EqualItemState`, `EqualItemTone`, `EqualItemsLook`
+  and `EqualItemsProps`.
+- EntityView's label/value row classes moved to `field-rows.ts`, shared
+  with `EqualItems`; EntityView looks the same.
+- Docs: design-language.md "A few equal things" (when to use each look)
+  and add-an-entity.md "The record view".
+
+To take it: bump to `^4.92.0` (and `ui-foundation-backend==4.92.0`), run
+`ui-foundation sync` (the docs change), and replace any hand-made cards or
+grid of a record's phases, stores or options with `EqualItems`.
+
 ## 4.90.0 — Dialogs and feedback: one delete, toasts, an action's error, a job's progress, offline
 
 The UI package only; additive, no new dependency (the backend package's

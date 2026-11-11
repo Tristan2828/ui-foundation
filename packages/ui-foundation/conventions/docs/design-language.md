@@ -3,38 +3,39 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 47–114
-- [Glow](#glow) · lines 116–134
-- [Semantic tones](#semantic-tones) · lines 136–164
-- [The three badge styles](#the-three-badge-styles) · lines 166–183
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 185–214
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 216–229
-- [Logos and brand marks](#logos-and-brand-marks) · lines 231–275
-- [Categorical colour](#categorical-colour) · lines 277–347
-- [Heat scale](#heat-scale) · lines 349–410
-- [Depth ramps](#depth-ramps) · lines 412–490
-- [A stored colour](#a-stored-colour) · lines 492–540
-- [Shapes and sizes](#shapes-and-sizes) · lines 542–563
-- [Typography](#typography) · lines 565–685
-  - [Written text (notes)](#written-text-notes) · lines 599–685
-- [Density](#density) · lines 687–780
-  - [Rows on this device](#rows-on-this-device) · lines 753–780
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 782–896
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 898–975
-- [Notices](#notices) · lines 977–1005
-- [A value over time](#a-value-over-time) · lines 1007–1093
-  - [Several values over time](#several-values-over-time) · lines 1056–1093
-- [A list as a board](#a-list-as-a-board) · lines 1095–1146
-- [A list as cards](#a-list-as-cards) · lines 1148–1194
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1196–1225
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1227–1270
-- [An overview page](#an-overview-page) · lines 1272–1335
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1336–1374
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1376–1421
-- [Picking at random](#picking-at-random) · lines 1423–1454
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1456–1523
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1525–1550
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1552–1625
+- [Palettes](#palettes) · lines 48–115
+- [Glow](#glow) · lines 117–135
+- [Semantic tones](#semantic-tones) · lines 137–165
+- [The three badge styles](#the-three-badge-styles) · lines 167–184
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 186–215
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 217–230
+- [Logos and brand marks](#logos-and-brand-marks) · lines 232–276
+- [Categorical colour](#categorical-colour) · lines 278–348
+- [Heat scale](#heat-scale) · lines 350–411
+- [Depth ramps](#depth-ramps) · lines 413–491
+- [A stored colour](#a-stored-colour) · lines 493–541
+- [Shapes and sizes](#shapes-and-sizes) · lines 543–564
+- [Typography](#typography) · lines 566–686
+  - [Written text (notes)](#written-text-notes) · lines 600–686
+- [Density](#density) · lines 688–781
+  - [Rows on this device](#rows-on-this-device) · lines 754–781
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 783–897
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 899–976
+- [Notices](#notices) · lines 978–1006
+- [A value over time](#a-value-over-time) · lines 1008–1094
+  - [Several values over time](#several-values-over-time) · lines 1057–1094
+- [A list as a board](#a-list-as-a-board) · lines 1096–1147
+- [A list as cards](#a-list-as-cards) · lines 1149–1195
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1197–1226
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1228–1271
+- [A few equal things](#a-few-equal-things) · lines 1273–1318
+- [An overview page](#an-overview-page) · lines 1320–1383
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1384–1422
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1424–1469
+- [Picking at random](#picking-at-random) · lines 1471–1502
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1504–1571
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1573–1598
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1600–1673
 
 <!-- /index -->
 
@@ -1268,6 +1269,53 @@ into a table, a record or an overview.
 Every one is measured with axe and the glyph check in both themes
 (fixtures `app/ValueList`, `ListHeader`, `Timeline`, `NeedsYou`,
 `Freshness`, `PartEmpty`).
+
+## A few equal things
+
+`EqualItems` (4.92, record standard R10): a small set of equal, related
+things inside a record (a plan's phases, the stores a price is compared
+at, a handful of options), one data shape in four looks. A record picks
+one look per set; a fifth is asked for first.
+
+```tsx
+<EqualItems
+  label="Phases"
+  look="featured"
+  featuredId={currentPhaseId}
+  items={phases.map((phase) => ({
+    id: String(phase.id),
+    title: phase.name,
+    state: { label: 'Current', tone: 'info' },
+    fields: [{ label: 'Weeks', value: phase.weeks }, { label: 'Focus', value: phase.focus }],
+  }))}
+/>
+```
+
+| `look` | Draws | Use it when |
+|---|---|---|
+| `cards` (the default) | a row of equal cards that wraps, one column on a phone; label and value on one line, no rules | a few things with little to say about each |
+| `table` | one compact row per item, the title as its row header, a column per field label (first-seen order), a dash where an item has none; scrolls sideways in its own box on a phone | things compared on the same values (a price at each store) |
+| `featured` | the item `featuredId` names in full, in a card with the accent border, then the rest as toggles that open in place | one is current or best (a program's phases) |
+| `panels` | a panel per item side by side, its title and state in a muted band, every detail labelled above its value; stacked on a phone | each has several details and must read as separate |
+
+- **A state is a badge**, the outline style in its tone (`state: 'Planned'`
+  is the neutral one; `{ label, tone }` with `info`, `success`, `warning`
+  or `destructive`). Most states stay neutral ("Mapping an enum to tones").
+- **A field is the record's row**: the label in label type and muted, the
+  value in body type; an empty value is the record's dash, read as "Not
+  set". `featured` uses the rail's beside rows (field-rows.ts).
+- **Featured's toggles** are buttons inside headings at the items' level:
+  Enter or Space opens one, Tab moves to the next, several can be open,
+  `aria-expanded` says which. Never a link; `defaultOpenIds` opens some at
+  first.
+- **Empty**: no items reads `emptyText` ("Nothing yet"), an item with no
+  fields `noFieldsText` ("No details"). `label` names the set for a screen
+  reader (the list's name, the table's caption); titles are `h3` under a
+  section's `h2` (`headingLevel`).
+
+Measured with axe, the token check and the glyph check in both themes and
+every palette (fixtures `app/EqualItems`), and from the keyboard and at a
+phone's width in `e2e/equal-items.spec.ts`.
 
 ## An overview page
 
