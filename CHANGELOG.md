@@ -30,7 +30,12 @@ places).
   (4.80's N7) now goes to the trail's closest crumb above the page
   ("‹ Everyday checking" on a statement under it), and an entry's own
   page still keeps the menu button. `PageTrail`'s `crumbs` takes a
-  readonly array.
+  readonly array, and its last crumb, the page itself, is now text
+  marked `aria-current="page"` rather than shadcn's disabled
+  `role="link"`: a test that found it with `getByRole('link')` finds it
+  with `locator('[aria-current=page]')`, and a test that clicks a
+  sidebar entry by name (`getByRole('link', { name: 'Home' })`) no
+  longer meets a second "Home" in the bar.
 - **Search in the bar** (N6). `AppShell search={{ placeholder,
   findRecords, recent }}`: a box (a button on a phone) and Ctrl K (⌘K)
   open a palette that finds the nav's pages by name and, with
