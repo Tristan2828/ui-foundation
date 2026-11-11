@@ -26,20 +26,20 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 616–699
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 701–736
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 738–811
-- [18. Editable value](#18-editable-value) · lines 813–1456
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1098–1156
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1158–1194
-  - [A link and its label](#a-link-and-its-label) · lines 1196–1220
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1222–1355
-  - [In a table's rows](#in-a-tables-rows) · lines 1357–1442
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1444–1456
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1458–1524
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1526–1590
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1592–1690
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1692–1721
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1723–1761
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1763–1839
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1841–1864
+- [18. Editable value](#18-editable-value) · lines 813–1462
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1104–1162
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1164–1200
+  - [A link and its label](#a-link-and-its-label) · lines 1202–1226
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1228–1361
+  - [In a table's rows](#in-a-tables-rows) · lines 1363–1448
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1450–1462
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1464–1530
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1532–1596
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1598–1696
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1698–1727
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1729–1767
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1769–1845
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1847–1870
 
 <!-- /index -->
 
@@ -821,6 +821,12 @@ Categories, with the controls in `widget-fields.tsx`, the same ones the
 form uses.
 
 The rule behind every part of it: **nothing typed is ever lost.**
+
+**No toast, ever.** An edit in place says what happened where it
+happened: "Saving…" and "Saved" beside the value, a refusal's reason
+under it. A toast after one would repeat what the person just watched
+(add-an-entity.md "Toasts and feedback": a toast is for what happened
+out of sight).
 
 **Which values.** Only those the plan's "View screen" names under `Edit
 in place`; read-only is the default, and a value not named renders

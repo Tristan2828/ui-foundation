@@ -63,6 +63,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { OfflineNotice } from '@/components/app/offline-notice'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 export type { BottomBarItem, NavChild, NavEntry, NavItem, NavItemGroup, NavSection } from '@/components/app/app-shell-nav'
@@ -647,16 +648,19 @@ export function AppShell({
             <div className="flex-1" />
             <LookControl />
           </header>
+          {/* "You're offline", over every page while the server can't be reached (4.90). */}
+          <OfflineNotice />
           <div className={cn('flex-1 p-6', bottomBar?.length && BOTTOM_BAR_PADDING)}>
             <Outlet />
           </div>
         </SidebarInset>
         {bottomBar && bottomBar.length > 0 && <BottomBar items={bottomBar} nav={nav} activeTo={activeTo} />}
       </SidebarProvider>
-      {/* top-center, not sonner's bottom-right default: that sat on
-          DataTable's pagination buttons, which are bottom-right too.
-          top-right would collide with the theme toggle instead. */}
-      <Toaster position="top-center" />
+      {/* Top centre, and at the bottom on a phone above its bars (4.90,
+          ui/sonner.tsx): not sonner's bottom-right default, which sat on
+          DataTable's pagination buttons; top-right would collide with
+          the theme toggle. */}
+      <Toaster />
     </TooltipProvider>
   )
 }

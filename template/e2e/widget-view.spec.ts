@@ -266,10 +266,11 @@ test.describe('widget view', () => {
     await page.getByRole('button', { name: 'Delete' }).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByText('Delete Fountain Pen?')).toBeVisible()
+    await expect(dialog.getByText('It goes to Deleted, and Restore brings it back.')).toBeVisible()
     await dialog.getByRole('button', { name: 'Delete' }).click()
 
     await expect(page).toHaveURL('/widgets')
-    await expect(page.getByText('Fountain Pen deleted')).toBeVisible()
+    await expect(page.getByText('Deleted Fountain Pen')).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
   })
@@ -282,7 +283,7 @@ test.describe('widget view', () => {
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Undo' }).click()
-    await expect(page.getByText('Fountain Pen restored')).toBeVisible()
+    await expect(page.getByText('Restored Fountain Pen')).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
   })
 
@@ -304,11 +305,12 @@ test.describe('widget view', () => {
     await page.getByRole('button', { name: 'Delete' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click()
 
-    // toAppError() gives every 422 the same generic message; the specifics
-    // are fieldErrors, and a delete has no field to bind them to.
-    await expect(page.getByText('Validation failed')).toBeVisible()
-    // The dialog stays open on error (only success closes it).
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+    // The server's reason, beside the button in the dialog (DeleteAction's
+    // Notice), with Try again; the dialog stays open (only success closes it).
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByText('cannot delete a widget with active assignments')).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Try again' })).toBeVisible()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
   })
