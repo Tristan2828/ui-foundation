@@ -18,7 +18,22 @@ export type TableUrlStateOptions = {
    * useTableLayout remembers a layout. Without one it lives only in the URL.
    */
   groupStorageKey?: string
+  /**
+   * The rows-per-page choices, for DataTable's `pageSizes`: `[25, 50, 100]`
+   * unless set. A size from the URL or storage that isn't one of them is
+   * ignored.
+   */
+  pageSizes?: readonly number[]
+  /** The rows per page until one is picked: 50 unless set (one of `pageSizes`). */
+  defaultPageSize?: number
+  /**
+   * Where the rows per page are remembered on this device, one key per table
+   * (`"my-app:tasks:page-size"`). Without one the pick lives only in the URL.
+   */
+  pageSizeStorageKey?: string
 }
+
+const DEFAULT_PAGE_SIZES = [25, 50, 100] as const
 
 // A table's page, sort and filters, kept in the URL query string
 // (`?page=2&sort=name:asc&search=mouse&tags=fragile&tags=bulky`) instead of
@@ -35,6 +50,11 @@ export type TableUrlStateOptions = {
 // counts as active); pass that view's `columns` to DataTable. A view is
 // pressed with applyView().
 //
+// `pageSize` is the rows per page, for the query and DataTable: `?size=` in
+// the URL, then the one remembered under `pageSizeStorageKey`, then
+// `defaultPageSize`; `setPageSize` (DataTable's `onPageSizeChange`) picks
+// one and returns to page 1. `pageSizes` is the menu's choices.
+//
 // `grouping` is DataTable's: a grouping's id, or '' for None. It's
 // `?group=` in the URL, then the one remembered under `groupStorageKey`,
 // then None. Like the sort it doesn't change which rows are shown, so it
@@ -46,19 +66,18 @@ export function useTableUrlState<F extends string, M extends string = never, V e
   filterNames: readonly F[],
   multiFilterNames: readonly M[] = [],
   views: Readonly<Record<V, TableView<NoInfer<F>, NoInfer<M>>>> = {} as Record<V, TableView<F, M>>,
-  { groupStorageKey }: TableUrlStateOptions = {},
+  {
+    groupStorageKey,
+    pageSizes = DEFAULT_PAGE_SIZES,
+    defaultPageSize = 50,
+    pageSizeStorageKey,
+  }: TableUrlStateOptions = {},
 ) {
   const [params, setParams] = useSearchParams()
+  const rememberedPageSize = useRemembered(pageSizeStorageKey)
+  const pageSize = resolvePageSize(pageSizes, params.get('size'), rememberedPageSize, defaultPageSize)
 
-  const subscribe = useCallback(
-    (listener: () => void) => (groupStorageKey === undefined ? () => {} : browserStore.subscribe(groupStorageKey, listener)),
-    [groupStorageKey],
-  )
-  const rememberedGrouping = useSyncExternalStore(
-    subscribe,
-    () => (groupStorageKey === undefined ? null : browserStore.get(groupStorageKey)),
-    () => null,
-  )
+  const rememberedGrouping = useRemembered(groupStorageKey)
   const grouping = params.get('group') ?? rememberedGrouping ?? ''
   const rememberGrouping = (next: string) => {
     if (groupStorageKey !== undefined) browserStore.set(groupStorageKey, next)
@@ -91,6 +110,12 @@ export function useTableUrlState<F extends string, M extends string = never, V e
     multiFilters,
     activeView,
     grouping,
+    pageSize,
+    pageSizes,
+    setPageSize: (next: number) => {
+      if (pageSizeStorageKey !== undefined) browserStore.set(pageSizeStorageKey, String(next))
+      update({ size: next === defaultPageSize ? null : String(next), page: null })
+    },
     setGrouping: (next: string) => {
       rememberGrouping(next)
       update({ group: next || null })
@@ -114,4 +139,31 @@ export function useTableUrlState<F extends string, M extends string = never, V e
       update(viewToUrlChanges(filterNames, multiFilterNames, view))
     },
   }
+}
+
+// A value remembered on this device under `key`, or null (none, or no key).
+function useRemembered(key: string | undefined) {
+  const subscribe = useCallback(
+    (listener: () => void) => (key === undefined ? () => {} : browserStore.subscribe(key, listener)),
+    [key],
+  )
+  return useSyncExternalStore(
+    subscribe,
+    () => (key === undefined ? null : browserStore.get(key)),
+    () => null,
+  )
+}
+
+/** The rows per page: the URL's if it's one of the choices, then the remembered one, then the default. */
+export function resolvePageSize(
+  pageSizes: readonly number[],
+  fromUrl: string | null,
+  remembered: string | null,
+  defaultPageSize: number,
+): number {
+  for (const candidate of [fromUrl, remembered]) {
+    const size = candidate === null ? NaN : Number(candidate)
+    if (pageSizes.includes(size)) return size
+  }
+  return defaultPageSize
 }

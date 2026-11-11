@@ -55,6 +55,7 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { ArtworkAspect } from './artwork'
 import { EditInPlaceContext } from './edit-in-place'
@@ -93,6 +94,18 @@ declare module '@tanstack/table-core' {
     TValue extends CellData = CellData,
   > {
     align?: 'center' | 'right'
+    /**
+     * Long text on one line (DataTable): cut at `maxWidth` with an ellipsis,
+     * the whole text in a tooltip on hover and on focus (a cut cell takes a
+     * tab stop, so the keyboard reaches it too). Screen readers read it whole.
+     */
+    clip?: boolean
+    /**
+     * The widest the column's content gets, as a CSS length: `'24rem'`
+     * unless set, with `clip` (and never over 60% of the table's area, for
+     * a phone). Without `clip`, the content wraps at it.
+     */
+    maxWidth?: string
   }
   /* eslint-enable @typescript-eslint/no-unused-vars */
 }
@@ -105,6 +118,14 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
   page: number
   pageSize: number
   onPageChange: (page: number) => void
+  /**
+   * The rows-per-page choices (`[25, 50, 100]`), drawn as a menu in the
+   * pagination bar with `onPageSizeChange`: useTableUrlState's `pageSizes`,
+   * `pageSize` and `setPageSize`, which keep the pick in the URL and on this
+   * device (`pageSizeStorageKey`). Left out, the bar has no menu.
+   */
+  pageSizes?: readonly number[]
+  onPageSizeChange?: (pageSize: number) => void
   sorting: SortingState
   onSortingChange: (sorting: SortingState) => void
   isLoading: boolean
@@ -148,15 +169,23 @@ export type DataTableProps<TData extends Record<string, unknown>> = {
    */
   visibleColumns?: readonly string[]
   /**
-   * `full` (the default): the table, its toolbar and its pagination take
-   * the whole width. `content`, for a table of a few short columns: on a
-   * wide screen (a table area of 80rem or more) they take the width the
-   * columns need, never under 36rem, with the row actions right after the
-   * last column. Below that, as `full`. While loading, empty or failed
-   * after a load, it keeps the width it last had, so paging and filtering
-   * don't move it (only the first load can).
+   * `content` (the default, 4.83): the table and its pagination are as wide
+   * as the columns need, at least 36rem (or the whole width, when that's
+   * less), with empty space at the right, so a name stays close to its
+   * values at any screen size; wider than the area, the table scrolls
+   * sideways in it. The toolbar keeps the whole width, so its controls
+   * don't move between lists. While loading, empty or failed after a
+   * load, it keeps the width it last had, so paging and filtering don't
+   * move it (only the first load can). `full`: the table takes the whole
+   * width too (the default before 4.83). A card layout takes the whole
+   * width either way.
    */
   width?: DataTableWidth
+  /**
+   * Zebra stripes on the body rows (every other row tinted), as before
+   * 4.83. Off by default: rows are told apart by the line under each.
+   */
+  striped?: boolean
   /**
    * Rows under headings: each row's group (`byDay(field)` for a feed or a
    * log). Rows keep the server's order, and a heading row spanning every
@@ -527,6 +556,92 @@ function GroupMenu<TData>({
   )
 }
 
+// The rows-per-page menu in the pagination bar (`pageSizes`): a radio list
+// that closes on a pick. The button says the size in words of its own
+// ("50 rows", as the list page standard drew it), and the menu says
+// what it is.
+function PageSizeMenu({
+  pageSizes,
+  value,
+  onValueChange,
+}: {
+  pageSizes: readonly number[]
+  value: number
+  onValueChange: (pageSize: number) => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            data-slot="data-table-page-size"
+            aria-label={`${value} rows per page`}
+          />
+        }
+      >
+        {value} rows
+        <ChevronDownIcon aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Rows per page</DropdownMenuLabel>
+          <DropdownMenuRadioGroup value={String(value)} onValueChange={(next) => onValueChange(Number(next))}>
+            {pageSizes.map((size) => (
+              <DropdownMenuRadioItem key={size} value={String(size)} closeOnClick>
+                {size}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+// A cell's text cut to one line (`meta.clip`). Only when it is cut does it
+// take a tab stop and a tooltip with the whole text, on hover and on focus;
+// re-measured on every render (the text may change) and on every resize.
+function ClippedText({ maxWidth, children }: { maxWidth: string; children: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [fullText, setFullText] = useState<string | null>(null)
+  const measure = () => {
+    const element = ref.current
+    if (!element) return
+    const isCut = element.scrollWidth > element.clientWidth + 0.5
+    setFullText(isCut ? element.textContent?.trim() || null : null)
+  }
+  useLayoutEffect(measure)
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    const observer = new ResizeObserver(() => measure())
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+  return (
+    <Tooltip disabled={fullText === null}>
+      <TooltipTrigger
+        render={
+          <span
+            ref={ref}
+            data-slot="data-table-clip"
+            className={CLIP_CLASS}
+            // Never more than 60% of the table's area, so on a phone the
+            // cut column leaves the name and the rest room.
+            style={{ maxWidth: `min(${maxWidth}, 60cqw)` }}
+            tabIndex={fullText === null ? undefined : 0}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent className="max-w-sm break-words whitespace-normal">{fullText}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 // Whether the detail panel (`detailPanel`) fits beside the table, or opens
 // as a bottom sheet. Wide on the server and wherever matchMedia is missing
 // (a test's DOM), so markup never depends on it.
@@ -574,29 +689,46 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
 // The pinned cell gets an opaque background, not `bg-inherit`: the zebra
 // stripe (table.tsx) is a *translucent* color, so inheriting it would let
 // the columns scrolling behind show through at 40% opacity — exactly the
-// bleed-through a solid background avoids. On an even row it's the stripe
-// pre-mixed onto the page (--table-stripe), so the stripe runs the whole
-// row's width (issue #92); `:where()` keeps that rule's specificity at the
-// background's, so the first column's hover below still wins on every row.
-const PINNED_CELL_CLASS =
-  'z-10 bg-background [:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe)'
+// bleed-through a solid background avoids. With `striped`, on an even row
+// it's the stripe pre-mixed onto the page (--table-stripe), so the stripe
+// runs the whole row's width (issue #92); `:where()` keeps that rule's
+// specificity at the background's, so the row's hover below still wins.
+const PINNED_CELL_CLASS = 'z-10 bg-background'
+const PINNED_STRIPED_CELL_CLASS = '[:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe)'
 
-// The pinned first cell carries the hover highlight. --accent is only ~3%
-// off the page background, so a solid left edge marker carries the signal;
-// an inset shadow rather than a border, so nothing reflows.
-const PINNED_COLUMN_CLASS =
-  `sticky left-0 border-r ${PINNED_CELL_CLASS} group-hover/row:bg-accent ` +
-  'group-hover/row:shadow-[inset_3px_0_0_0_var(--primary)]'
-
-// The right-edge mirror, opaque for the same reason, but with no hover
-// highlight (issue #103): it holds the row's actions, which name nothing,
-// so lighting it too read as a second selected thing. Only the first
-// column marks the hovered row.
+const PINNED_COLUMN_CLASS = `sticky left-0 border-r ${PINNED_CELL_CLASS}`
 const PINNED_LAST_COLUMN_CLASS = `sticky right-0 border-l ${PINNED_CELL_CLASS}`
 
 // The totals row's label, pinned with the first column (`totals`): the
 // same opaque cell, with no hover, since the row isn't one to pick.
-const PINNED_TOTALS_LABEL_CLASS = `sticky left-0 border-r ${PINNED_CELL_CLASS}`
+const PINNED_TOTALS_LABEL_CLASS = PINNED_COLUMN_CLASS
+
+// `striped` off (the default, 4.83): table.tsx's zebra taken back off the
+// body (tailwind-merge drops its even-row tint for this one), so rows are
+// told apart by the line under each.
+const UNSTRIPED_BODY_CLASS = '[&_tr:nth-child(even)]:bg-transparent'
+
+// A body row under the pointer (4.83): every cell, pinned ones included,
+// in --table-hover (solid, so a pinned cell can wear it), with a bar in
+// --primary on the first cell, so it reads without colour too; an inset
+// shadow rather than a border, so nothing reflows. On a cell, not the row,
+// so it covers a stripe and a pinned cell's opaque background alike
+// (`.row:hover > td` outranks both). Muted text on it takes the darker grey
+// a highlighted row's does (theme.css --table-hover). table.tsx's own row
+// hover comes off: it would sit under the cells' tint anyway. A row that
+// opens a record adds the hand cursor (SELECTABLE_ROW_CLASS); one edited in
+// place keeps the arrow. A highlighted or picked row keeps its own look.
+const HOVER_ROW_CLASS =
+  'hover:bg-transparent hover:[--muted-foreground:var(--table-highlight-muted-foreground)] ' +
+  'hover:[&>td]:bg-(--table-hover) hover:[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary)]'
+// Its bar and a focused row's ring, both on the first cell's shadow.
+const HOVER_FOCUSED_ROW_CLASS =
+  'focus-visible:hover:[&>td:first-child]:shadow-[inset_3px_0_0_0_var(--primary),inset_0_2px_0_0_var(--ring),inset_0_-2px_0_0_var(--ring)]'
+
+// A column's `meta.clip`: one line, cut at `meta.maxWidth` with an ellipsis.
+const DEFAULT_CLIP_WIDTH = '24rem'
+const CLIP_CLASS =
+  'block truncate rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
 
 // A pinned first column's content, capped below md at 45% of the table's
 // scroll area (`cqw`: the container is an inline-size query container)
@@ -605,21 +737,11 @@ const PINNED_TOTALS_LABEL_CLASS = `sticky left-0 border-r ${PINNED_CELL_CLASS}`
 // Wider screens are unchanged: the column sizes to its content.
 const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-normal max-md:break-words'
 
-// Hover highlights the pinned cell, not the whole row. A row-level hover
-// cannot be made consistent against the zebra stripe: `tr:nth-child(even)`
-// is specificity (0,2,1) and `tr:hover` is (0,2,0), so the stripe wins and
-// even rows stay unlit — odd rows highlight, even rows don't.
-// `hover:bg-transparent` drops table.tsx's own `hover:bg-muted/50` via
-// tailwind-merge so no row hover is attempted at all. The pinned cell is
-// the better target anyway: it names the row, it sits on an opaque
-// background so it reads identically on striped and unstriped rows, and it
-// stays on screen when the table is scrolled right.
-const ROW_GROUP_CLASS = 'group/row hover:bg-transparent'
-
 // `highlightRow`: the wash on every cell, so it covers the zebra stripe
 // (on the row) and the pinned cells' opaque backgrounds (on the cell, and
-// one class weaker than this), while a pinned cell's hover still wins. A
-// bar on the first cell, as hover's is, so it reads without colour too.
+// one class weaker than this); hover leaves it as it is, so "next up" never
+// reads as the pointer's row. A bar in info-text on the first cell, as
+// hover's is in --primary, so it reads without colour too.
 // Inside, muted text takes the darker grey the wash needs (theme.css).
 const HIGHLIGHTED_ROW_CLASS =
   '[--muted-foreground:var(--table-highlight-muted-foreground)] [&>td]:bg-(--table-highlight) ' +
@@ -709,13 +831,14 @@ const DETAIL_ASIDE_CLASS =
 type RowPlace = { key: string; rowId: string }
 const EMPTY_KEYS: ReadonlySet<string> = new Set()
 
-// `width="content"`: from a table area 80rem wide, as wide as the columns
-// need (`w-fit` over the table's own `w-full`), at least 36rem, or the
-// width it last had loaded while it shows another state
-// (--data-table-last-width), at most the area. Narrower, no change.
+// `width="content"`: the table and its pagination (not the toolbar) as wide
+// as the columns need (`w-fit` over the table's own `w-full`), at least
+// 36rem, or the width it last had loaded while it shows another state
+// (--data-table-last-width), and never wider than the area: `min()` keeps
+// the minimum from pushing past a phone's width, since a min-width
+// outranks a max-width.
 const CONTENT_WIDTH_CLASS =
-  '@7xl/data-table:w-fit @7xl/data-table:max-w-full ' +
-  '@7xl/data-table:min-w-[max(--spacing(144),var(--data-table-last-width,0px))]'
+  'w-fit max-w-full min-w-[min(100%,max(--spacing(144),var(--data-table-last-width,0px)))]'
 
 // A second horizontal scrollbar, stuck to the viewport's bottom edge. The
 // real one sits directly under the last row, which on a full page is
@@ -822,6 +945,8 @@ export function DataTable<TData extends Record<string, unknown>>({
   page,
   pageSize,
   onPageChange,
+  pageSizes,
+  onPageSizeChange,
   sorting,
   onSortingChange,
   isLoading,
@@ -836,7 +961,8 @@ export function DataTable<TData extends Record<string, unknown>>({
   pinLastColumn,
   enableSortingRemoval,
   visibleColumns,
-  width = 'full',
+  width = 'content',
+  striped = false,
   groupBy,
   groupSummary,
   stickyGroupHeadings = false,
@@ -978,15 +1104,18 @@ export function DataTable<TData extends Record<string, unknown>>({
 
   // `width="content"`: the width the table last had loaded, kept while it
   // shows another state.
+  // A card layout's grid takes the whole width whatever `width` says.
+  const fitsColumns = width === 'content' && !cardLayout
   const root = useRef<HTMLDivElement>(null)
+  const body = useRef<HTMLDivElement>(null)
   const [lastWidth, setLastWidth] = useState<number | null>(null)
   useLayoutEffect(() => {
-    const element = root.current
-    if (width !== 'content' || !isSuccessView || !element) return
+    const element = body.current
+    if (!fitsColumns || !isSuccessView || !element) return
     const observer = new ResizeObserver(() => setLastWidth(Math.round(element.getBoundingClientRect().width)))
     observer.observe(element)
     return () => observer.disconnect()
-  }, [width, isSuccessView])
+  }, [fitsColumns, isSuccessView])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const { barRef, isOverflowing, scrollWidth } = useBottomScrollbar(
@@ -1124,10 +1253,12 @@ export function DataTable<TData extends Record<string, unknown>>({
   // One body row, the same in a plain table and a grouped one.
   const renderRow = (row: Row, key: string = row.id) => {
     const isSelected = Boolean(detailPanel) && key === selectedKey
+    const isHighlighted = Boolean(highlightRow?.(row.original))
+    const hovers = !isHighlighted && !isSelected
     return (
     <TableRow
       key={key}
-      data-highlighted={highlightRow?.(row.original) || undefined}
+      data-highlighted={isHighlighted || undefined}
       {...(rowsOpen
         ? {
             'data-row-key': key,
@@ -1137,30 +1268,42 @@ export function DataTable<TData extends Record<string, unknown>>({
           }
         : {})}
       className={cn(
-        pinFirstColumn && ROW_GROUP_CLASS,
-        highlightRow?.(row.original) && HIGHLIGHTED_ROW_CLASS,
+        'hover:bg-transparent',
+        hovers && HOVER_ROW_CLASS,
+        isHighlighted && HIGHLIGHTED_ROW_CLASS,
         rowsOpen && SELECTABLE_ROW_CLASS,
+        rowsOpen && hovers && HOVER_FOCUSED_ROW_CLASS,
         isSelected && SELECTED_ROW_CLASS,
       )}
     >
-      {row.getVisibleCells().map((cell, index) => (
-        <TableCell
-          key={cell.id}
-          className={cn(
-            pinFirstColumn && index === 0 && PINNED_COLUMN_CLASS,
-            pinLastColumn && index === row.getVisibleCells().length - 1 && PINNED_LAST_COLUMN_CLASS,
-            alignClass(cell.column.columnDef.meta?.align),
-          )}
-        >
-          {pinFirstColumn && index === 0 ? (
-            <div className={PINNED_FIRST_CONTENT_CLASS}>
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </div>
-          ) : (
-            flexRender(cell.column.columnDef.cell, cell.getContext())
-          )}
-        </TableCell>
-      ))}
+      {row.getVisibleCells().map((cell, index) => {
+        const meta = cell.column.columnDef.meta
+        const value = flexRender(cell.column.columnDef.cell, cell.getContext())
+        const shown = meta?.clip ? (
+          <ClippedText maxWidth={meta.maxWidth ?? DEFAULT_CLIP_WIDTH}>{value}</ClippedText>
+        ) : meta?.maxWidth ? (
+          <div className="whitespace-normal break-words" style={{ maxWidth: meta.maxWidth }}>
+            {value}
+          </div>
+        ) : (
+          value
+        )
+        const isPinnedFirst = pinFirstColumn && index === 0
+        const isPinnedLast = pinLastColumn && index === row.getVisibleCells().length - 1
+        return (
+          <TableCell
+            key={cell.id}
+            className={cn(
+              isPinnedFirst && PINNED_COLUMN_CLASS,
+              isPinnedLast && PINNED_LAST_COLUMN_CLASS,
+              (isPinnedFirst || isPinnedLast) && striped && PINNED_STRIPED_CELL_CLASS,
+              alignClass(meta?.align),
+            )}
+          >
+            {isPinnedFirst ? <div className={PINNED_FIRST_CONTENT_CLASS}>{shown}</div> : shown}
+          </TableCell>
+        )
+      })}
     </TableRow>
     )
   }
@@ -1168,14 +1311,9 @@ export function DataTable<TData extends Record<string, unknown>>({
   const content = (
     <div
       ref={root}
-      className={cn('flex flex-col gap-4', width === 'content' && CONTENT_WIDTH_CLASS)}
+      className="flex flex-col gap-4"
       data-width={width}
       data-layout={layouts?.length ? currentLayout : undefined}
-      style={
-        width === 'content' && !isSuccessView && lastWidth !== null
-          ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
-          : undefined
-      }
     >
       {layouts?.length || groupings?.length ? (
         <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
@@ -1205,6 +1343,18 @@ export function DataTable<TData extends Record<string, unknown>>({
         toolbar
       )}
 
+      {/* The table, its states and its pagination: what `width="content"`
+          fits to the columns, the toolbar above keeping the whole width. */}
+      <div
+        ref={body}
+        data-slot="data-table-body"
+        className={cn('flex flex-col gap-4', fitsColumns && CONTENT_WIDTH_CLASS)}
+        style={
+          fitsColumns && !isSuccessView && lastWidth !== null
+            ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
+            : undefined
+        }
+      >
       {error ? (
         <ErrorState error={error} onRetry={onRetry} />
       ) : isLoading || isPastLastPage ? (
@@ -1279,13 +1429,12 @@ export function DataTable<TData extends Record<string, unknown>>({
               // scrollable (wheel, trackpad, drag, and the sync effect); it
               // just no longer draws a bar directly under the last row.
               containerClassName={cn(
-                pinFirstColumn &&
-                  '@container [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
                 // A size container has no width of its own to give, so
-                // `width="content"` couldn't fit the table. Its query only
-                // serves a phone-width rule, and an 80rem table area never
-                // is one.
-                width === 'content' && '@7xl/data-table:[container-type:normal]',
+                // `width="content"` couldn't fit the table: there the
+                // pinned column's `cqw` measures the table's area
+                // (`@container/data-table`) instead.
+                pinFirstColumn && width !== 'content' && '@container',
+                pinFirstColumn && '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
                 stickyGroups && (scrollsSideways ? STICKY_OWN_SCROLL_CLASS : STICKY_PAGE_SCROLL_CLASS),
               )}
             >
@@ -1367,6 +1516,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                       key={`${runIndex}:${run.key}`}
                       data-slot="table-group"
                       data-folded={isFolded || undefined}
+                      className={cn(!striped && UNSTRIPED_BODY_CLASS)}
                     >
                       {/* The row's own has-aria-expanded tint (table.tsx) would
                           fill every open heading: it's never a row to pick. */}
@@ -1412,7 +1562,7 @@ export function DataTable<TData extends Record<string, unknown>>({
                   )
                 })
               ) : (
-                <TableBody>{rows.map((row) => renderRow(row))}</TableBody>
+                <TableBody className={cn(!striped && UNSTRIPED_BODY_CLASS)}>{rows.map((row) => renderRow(row))}</TableBody>
               )}
               {totals && (
                 // After every group's body, so it totals the table, not the
@@ -1458,13 +1608,16 @@ export function DataTable<TData extends Record<string, unknown>>({
             </div>
           )}
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2" data-slot="data-table-pagination">
             <p className="type-body text-muted-foreground">
               {total === 0 ? 0 : (page - 1) * pageSize + 1}
               {'–'}
               {Math.min(page * pageSize, total)} of {total}
             </p>
             <div className="flex items-center gap-2">
+              {pageSizes && pageSizes.length > 1 && onPageSizeChange ? (
+                <PageSizeMenu pageSizes={pageSizes} value={pageSize} onValueChange={onPageSizeChange} />
+              ) : null}
               <Button
                 variant="outline"
                 size="icon-sm"
@@ -1490,6 +1643,7 @@ export function DataTable<TData extends Record<string, unknown>>({
           </div>
         </DetailFrame>
       )}
+      </div>
     </div>
   )
 
