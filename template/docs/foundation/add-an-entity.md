@@ -3,26 +3,27 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 41–63
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–802
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
-  - Step 2: `npm run gen:api` · lines 115–116
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–689
-  - Step 7: Register routes · lines 690–705
-  - Step 8: Add Playwright specs for all three screens · lines 706–784
-  - Step 9: Register the nav entry and route names · lines 785–799
-  - Step 10: `npm run verify`. · lines 800–802
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 804–953
-  - [The record view](#the-record-view) · lines 917–953
-- [What not to copy](#what-not-to-copy) · lines 955–981
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 983–1000
-- [Deleting](#deleting) · lines 1002–1031
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1033–1054
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1056–1065
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1068–1107
+- [The reference files](#the-reference-files) · lines 42–64
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 66–807
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 108–115
+  - Step 2: `npm run gen:api` · lines 116–117
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 118–129
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 130–139
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 140–144
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 145–694
+  - Step 7: Register routes · lines 695–710
+  - Step 8: Add Playwright specs for all three screens · lines 711–789
+  - Step 9: Register the nav entry and route names · lines 790–804
+  - Step 10: `npm run verify`. · lines 805–807
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 809–1024
+  - [The record view](#the-record-view) · lines 958–997
+  - [Dialogs](#dialogs) · lines 999–1024
+- [What not to copy](#what-not-to-copy) · lines 1026–1052
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1054–1071
+- [Deleting](#deleting) · lines 1073–1102
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1104–1125
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1127–1136
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1139–1178
 
 <!-- /index -->
 
@@ -414,9 +415,12 @@ is a filled-in example while the Widgets demo is still here).
    plan's "View screen" section lists:
 
    - **Title and badges.** The plan's title field is the page's `<h1>`.
-     Its badge fields sit beside it, each the same `Badge` and variant map
-     as its table cell. Edit (a `Button` rendering a `Link` to
-     `/<entity>/:id/edit`) and the delete action go in `actions`.
+     Its badge fields sit on its line, after it (`badges`), each the same
+     `Badge` and variant map as its table cell. Edit (a `Button`
+     rendering a `Link` to `/<entity>/:id/edit`) and the delete action go
+     in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
+     label="Delete" tone="destructive"`, the dialog's trigger through
+     `render`).
    - **The browser tab** reads the record's title once it loads
      ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
      puts the nav's ("Widgets · <app>") back while loading, on an error
@@ -471,9 +475,10 @@ is a filled-in example while the Widgets demo is still here).
      of linked records, a done-count, from the shared lookups in
      `<entity>-format.ts`. Never re-derive one for the view.
    - **An empty value is passed through as it is** (`null`, `''`, or
-     `list.length > 0 && …`), and `EntityView` shows the field's
-     `emptyLabel`, the plan's "not set" label, never a blank. A yes/no is
-     never empty: it reads Yes or No (cell pattern 12).
+     `list.length > 0 && …`), and `EntityView` shows a dash (read as "Not
+     set"), never a blank. A field's `emptyLabel` replaces it only where
+     words say more ("No budget yet"). A yes/no is never empty: it reads
+     Yes or No (cell pattern 12).
    - **A reference links to the referenced record's view** when that
      entity has one: the name, from the same lookup by id the table uses,
      inside `<Link to={`/<other>/${id}`}>`. Without a view, the plain name
@@ -548,8 +553,8 @@ is a filled-in example while the Widgets demo is still here).
      (under the record, or under the page whose note it's in).
    - **Notes worth taking on paper** (a visit's prep and questions, a
      guide, a checklist to tick by hand): mark each of those sections
-     `print: true`. The header gets a Print notes button (`printLabel`
-     renames it) that prints the marked sections alone, under the title
+     `print: true`. The header gets a Print notes icon (`printLabel`
+     renames its tooltip and name) that prints the marked sections alone, under the title
      and subtitle: no rail, no shell, no buttons, light paper in either
      theme, headings and bullets as written, nothing folded, tables
      ruled with room in their empty cells. `print: { answerSpace: true }`
@@ -877,6 +882,42 @@ the dialog.
 { path: '<parents>/:id/edit', element: <<Parent>FormRoute /> },   // a sibling, not a child
 ```
 
+**A new record over its list** (4.82), for a create form of up to about
+8 fields (a longer one is its own page, `<entity>/new` beside the list as
+above): the list's `new` child route, named by `newPath`, is a
+`FormDialog` over the list, from the list's New button
+(`<RecordLink to="/<entity>/new">` or `useOpenRecord()`) and from a deep
+link alike. Closing goes back to the list as a record's dialog does, and
+after the save `useNewRecordDialog().openRecord(to)` opens the new record
+over the same list, in the form's history entry.
+
+```tsx
+{
+  path: '<entity>',
+  element: <RecordDialogRoute list={<<Entity>sTableRoute />} label="<Entity>" newPath="new" />,
+  children: [
+    { path: 'new', element: <New<Entity>Route /> },
+    { path: ':id', element: <<Entity>ViewRoute /> },
+  ],
+},
+
+// New<Entity>Route: the form's own fields and react-hook-form, in FormDialog (no `open`).
+const created = useNewRecordDialog()
+<FormDialog
+  title="New <entity>"
+  submitLabel="Add <entity>"
+  onSubmit={form.handleSubmit(async (values) => {
+    const saved = await create.mutateAsync(values)
+    created?.openRecord(`/<entity>/${saved.id}`)
+  })}
+  isSubmitting={create.isPending}
+  submitError={create.error}
+  dirty={form.formState.isDirty}
+>
+  …fields…
+</FormDialog>
+```
+
 - **The row opens it**: a click on the row, Enter on it, ↑/↓ between
   rows. So does a click on a link in the row to the record's own address
   (the name cell can stay a plain `<Link>`), and in a card layout a click
@@ -926,8 +967,9 @@ view reaches them all. A record uses the parts it has, in this order:
   at once) and other status-like fields as badges, edited in place. A
   record with a face or a mark of its own (a person's avatar, a
   service's logo, a cover) puts it left of all that (`leading`, 4.76).
-  `actions` holds Delete (soft, with Undo) and the record's own commands
-  (Run, Print), never Edit.
+  `actions` holds the record's own commands in words (Run, New visit),
+  then Delete (soft, with Undo) as an `IconAction`, never Edit. Print
+  notes is an icon of EntityView's own.
 - **Strip**: the record's key numbers and ratings (`strip`, a
   `KeyStats`), each edited in place where it's shown.
 - **Sections**: with long text (notes, a body) `layout="rail"` and
@@ -943,14 +985,43 @@ view reaches them all. A record uses the parts it has, in this order:
   `?tab=`. Fewer groups stay one scroll, folded by headings. A record's
   Notes stay outside the tabs, above them, unless they are one tab's
   content; the rail and the strip never go in a tab.
-- **Rail fields beside their labels** (`railFields="beside"`, 4.76) for
-  a rail of many short facts, so it reads as a list of pairs rather than
-  a column of labels; keep labels to a word or two.
+- **Rail fields beside their labels** (`railFields`, `beside` by
+  default since 4.81), so a rail of short facts reads as a list of pairs
+  rather than a column of labels; keep labels to a word or two.
+- **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
+  what's known, then "N empty" opens the rest, still edited in place.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.
 
 Edit and its form page stay only for a field the view can't edit in
 place yet; the plan says which, and the gap is raised for the package.
+
+### Dialogs
+
+Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
+
+| `size` | Width | On a phone (under 48rem) | Use it for |
+| --- | --- | --- | --- |
+| `confirm` | 420px | a sheet from the bottom, the buttons full width, the action above Cancel | a question with two answers: a delete, "Discard your changes?" |
+| `form` | 640px | the whole screen, the title and buttons pinned | a small form (`FormDialog`, which is this size) |
+| `record` | 1,120px | full width, the rail under the main column | a record over its list (`RecordDialogRoute`, which is this size) |
+
+- **Never a width of its own** (`sm:max-w-…` on `DialogContent`). A
+  confirm's buttons go in `DialogFooter`, Cancel first, so the phone's
+  sheet stacks the action on top.
+- **A dialog with something typed asks before it closes**:
+  `DialogContent dirty` (react-hook-form's `formState.isDirty`) makes Esc,
+  ✕, a click outside and Cancel ask "Discard your changes?" first;
+  nothing typed, nothing asked. Closing it from code after a save
+  (`open={false}`) never asks. `DiscardChangesDialog` is that prompt on
+  its own, for any other way of leaving with something unsaved.
+- **A form in a dialog is a `FormDialog`**: the title, the fields
+  scrolling between it and the pinned Cancel and Add, a failed save as a
+  destructive `Notice` above the buttons with Try again, and `dirty`.
+  Opened from a page with `open`/`onOpenChange`; as a list's `new` route
+  with neither (above).
+- **Always a dialog, never a side panel**, except a phone's filters
+  (a bottom sheet of controls for the list behind it).
 
 ## What not to copy
 

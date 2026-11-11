@@ -115,6 +115,15 @@ const COMPOSITE_STORIES = [
   // A list at its own path (`listPath`) with a record open over it, and a sub-record over its parent's page.
   { id: 'app-recorddialog--list-at-its-own-path-open', mustShow: 'after a dry day' },
   { id: 'app-recorddialog--sub-record-open', mustShow: 'Sand the boards' },
+  // A new record's form over its list (`newPath`), and a record's rail beside it at 1,120px (4.82).
+  { id: 'app-recorddialog--new-record-open', mustShow: 'Add project' },
+  { id: 'app-recorddialog--rail-beside', mustShow: 'after a dry day' },
+  // FormDialog: open, and with a failed save's Notice (4.82).
+  { id: 'app-formdialog--default', mustShow: 'Add book' },
+  { id: 'app-formdialog--failed-save', mustShow: "Couldn't add the book" },
+  // A confirm (420px) and the discard prompt (4.82).
+  { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
+  { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
@@ -130,7 +139,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--tabs-column', mustShow: 'Empty the shared shelves first.' },
   { id: 'app-entityview--leading', mustShow: 'Facilities lead, third floor' },
   { id: 'app-entityview--leading-mark', mustShow: 'Measure twice, cut once.' },
-  { id: 'app-entityview--rail-fields-beside', mustShow: 'No budget yet' },
+  { id: 'app-entityview--rail-fields-stacked', mustShow: 'No budget yet' },
+  // The record standard (4.81): badges on the title's line, Print notes and
+  // Delete as icons, the strip's icons, folded empties and the dash.
+  { id: 'app-entityview--record-standard', mustShow: 'Timber and sheet goods' },
+  { id: 'app-entityview--record-standard-long-title', mustShow: 'far side of the river' },
   // <Notice>: every tone's wash, on the page and on a card.
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
@@ -269,6 +282,9 @@ const GLYPH_STORIES: {
   // Each tone's icon on its own wash, and the source credit's link marks.
   { id: 'app-notice--default' },
   { id: 'app-entityview--notice-and-footer' },
+  // The strip's concept icons, Print notes and Delete as icons, and the
+  // folded empties' chevron (4.81).
+  { id: 'app-entityview--record-standard' },
   // The bells on the button, in the on notice and the blocked one.
   { id: 'app-allowreminders--default' },
   { id: 'patterns-cellpatterns--pressed-icon-in-a-cell' },

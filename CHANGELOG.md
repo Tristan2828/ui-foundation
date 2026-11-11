@@ -50,6 +50,101 @@ To keep a list as it was: `striped` and `width="full"` on its
 `DataTable`. To adopt rows per page: pass the hook's `pageSize` to the
 list's query instead of a constant, and its `pageSizes`/`setPageSize` to
 the table (cell pattern 24).
+## 4.82.0 — Dialog sizes, a guard on what's typed, and FormDialog
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). One look changes with no prop: a
+record opened in a dialog over its list is 1,120px wide, was 896px.
+
+- **Three dialog widths.** `DialogContent size="confirm" | "form" |
+  "record"`: 420, 640 and 1,120px. Left out, a dialog is 384px as before.
+- **A confirm on a phone is a bottom sheet.** Under 48rem a
+  `size="confirm"` dialog sits across the bottom with its
+  `DialogFooter`'s buttons full width and 40px, the action above Cancel
+  (keep Cancel first in the footer). A `size="form"` dialog is the whole
+  screen.
+- **A dialog that guards what's typed.** `DialogContent dirty`: while
+  it's true, Esc, the close button, a click outside and any `DialogClose`
+  ask "Discard your changes?" (Keep editing, Discard) first. Closing from
+  code (`open={false}` after a save) never asks. The prompt is its own
+  export, `DiscardChangesDialog` (from `/ui/dialog`), for any other way of
+  leaving with something unsaved; a value edited in place uses it too.
+- **`FormDialog`**: a small form in a dialog, 640px, the title and the
+  Cancel and submit buttons pinned while the fields scroll, the whole
+  screen on a phone with two wide buttons, a failed save as a destructive
+  `Notice` above the buttons with Try again, and `dirty`.
+- **A new record over its list.** `RecordDialogRoute newPath="new"`: the
+  list's `new` child route is a `FormDialog` over the list (from the list
+  or a deep link), closing goes back, and
+  `useNewRecordDialog().openRecord(to)` opens the saved record over the
+  same list. See add-an-entity.md "How a list opens a record".
+- **The record dialog is 1,120px** (`size="record"`), so an `EntityView`
+  with `layout="rail"` keeps its rail beside the main column, as on its
+  page; under 56rem of room the rail goes under, as before.
+
+To take it: nothing is required. A `RecordDialogRoute` with its own
+`className` width (`sm:max-w-5xl`) keeps it; drop it for the standard
+1,120px. Hand-made form dialogs can move to `FormDialog`, and dialogs with
+a width of their own to `size`.
+## 4.81.0 — The record page standard in EntityView
+
+The UI package only; no new dependency (the backend package's version
+moves with it, unchanged). New props are additive, but **four defaults
+change what every record looks like** with no code change: read "Visible
+changes" before upgrading.
+
+New:
+
+- **`IconAction`**: a command as its icon alone, an outline square
+  button at the header's 36px (`size="sm"`: 32px), its `label` both the
+  tooltip and the accessible name, `tone="destructive"` for Delete. It
+  takes every `Button` prop, so it is a dialog's trigger as is:
+  `<DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />`.
+  For the universal actions only (Delete, Print notes, Copy link, Pin, Open
+  site, Restore, More); a record's own commands stay in words.
+- **`KeyStat.icon`**: the concept's icon (an `IconComponent`) at 13px
+  before a strip label's word, in its muted tone, decorative.
+- **`EntityView emptyFields="fold"`**: each fields card (rail or main)
+  lists its filled fields, then "N empty" opens the rest in their places,
+  still edited in place; open, it reads "Hide empty". A value set
+  elsewhere moves its field into the card. Default `show`.
+- **`EntityView emptyText`**: what an empty value reads as across the
+  view (a field's or block's own `emptyLabel` still wins). Default `'—'`.
+- **`EntityView printLook`**: `icon` (the default) or `words`, the old
+  Print notes button. Also the types `EntityViewEmptyFields` and
+  `IconActionProps`.
+
+Visible changes:
+
+- **`badges` move onto the title's line**, after the title, wrapping
+  under a title too long for both; `subtitle` is now under them both
+  (before: title, subtitle, then badges).
+- **Print notes is an icon**, its words the tooltip and name. A test that
+  finds it by role and name (`getByRole('button', { name: 'Print notes' })`)
+  still does; one reading its text doesn't. `printLook="words"` keeps the
+  old button.
+- **`railFields` defaults to `beside`** (it was `stacked`): every rail's
+  labels sit left of their values, stacked again where the rail's list is
+  under 18rem. A test measuring a rail label above its value fails; pass
+  `railFields="stacked"` for the old look.
+- **An empty value reads as a dash** (it read "Not set"), in the muted
+  tone, read by a screen reader as "Not set", in `EntityView` (the
+  `inPlace` presets' fields included) and `KeyStats`. A field's own
+  `emptyLabel` reads as before. A test expecting the text "Not set" on a
+  record now finds "—" (and "Not set" only as hidden text).
+
+How an app adopts it:
+
+1. Bump `@tristan2828/ui-foundation` to `^4.81.0` (and
+   `ui-foundation-backend==4.81.0`) and run `ui-foundation sync` (the docs change).
+2. Look at a record with badges, a rail and empty fields at a desktop
+   and a phone width. Update e2e that measured stacked rail labels or
+   read "Not set" or "Print notes" as text, or opt out per view
+   (`railFields="stacked"`, `emptyText="Not set"`, `printLook="words"`).
+3. Move each record's Delete to `IconAction` (the template's
+   `delete-widget-action.tsx` shows it), and add `icon` to the strip's
+   stats and `emptyFields="fold"` where the plan says so.
+
 ## 4.80.0 — The navigation standard in AppShell
 
 The UI package only; additive (the backend package's version moves with

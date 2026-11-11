@@ -1,14 +1,34 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
 import { useRef, useState } from 'react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
-import { PackageIcon } from 'lucide-react'
+import {
+  CalendarClockIcon,
+  CalendarIcon,
+  CircleDotIcon,
+  HashIcon,
+  PackageIcon,
+  PlusIcon,
+  Trash2Icon,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import type { AppError } from '@/api/contracts'
 import { editInPlace } from './edit-in-place'
+import { inPlace } from './edit-in-place-presets'
 import { EditableValue } from './editable-value'
+import { IconAction } from './icon-action'
 import {
   EntityView,
   type EntityViewLayout,
@@ -188,11 +208,11 @@ function LoadingRail() {
 
 export const RailLoading: StoryObj = { render: () => <LoadingRail /> }
 
-// Rail fields beside: `railFields="beside"`, each rail label to the left of
-// its value (an issue tracker's sidebar), stacked again on a small phone.
-export const RailFieldsBeside: StoryObj = {
-  name: 'Rail fields beside',
-  render: () => <InRouter layout="rail" railFields="beside" />,
+// Rail fields stacked: `railFields="stacked"`, each rail label above its
+// value, as every rail was before 4.81 made `beside` the default (Rail).
+export const RailFieldsStacked: StoryObj = {
+  name: 'Rail fields stacked',
+  render: () => <InRouter layout="rail" railFields="stacked" />,
 }
 
 // --- Tabs -------------------------------------------------------------------
@@ -844,3 +864,139 @@ function PrintInRouter() {
 }
 
 export const PrintNotes: StoryObj = { name: 'Print notes', render: () => <PrintInRouter /> }
+
+// --- Record standard (4.81) ---------------------------------------------------
+// The record page standard together: the status and a badge on the title's
+// line (a long title pushes them under it: Record standard, long title),
+// the record's own command in words and Print notes and Delete as icons
+// (`IconAction`, a tooltip and a name each), the strip's labels with their
+// concept's icon, rail labels beside values (the default), and
+// `emptyFields="fold"`: each card lists its filled fields, then "N empty"
+// opens the rest, edited in place. An empty value reads as a dash.
+// "Add the phone" in Notes sets Phone from elsewhere, so it joins its
+// card. e2e/entity-view-standard.spec.ts measures it.
+
+function useText(initial: string | null) {
+  const [value, setValue] = useState<string | null>(initial)
+  const edit = inPlace.text({
+    value,
+    save: (next) => new Promise((resolve) => setTimeout(() => resolve(setValue(next)), 200)),
+  })
+  return [value, setValue, edit] as const
+}
+
+function DeleteAction({ name }: { name: string }) {
+  return (
+    <Dialog>
+      <DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {name}?</DialogTitle>
+          <DialogDescription>You can undo this right after.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button variant="destructive" />}>Delete</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function StandardRecord({ title }: { title: string }) {
+  const [, , rep] = useText('Sam Example')
+  const [, setPhone, phone] = useText(null)
+  const [, , fax] = useText(null)
+  const [, , website] = useText(null)
+  const [, , terms] = useText('Net 30')
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Notes',
+      print: true,
+      content: (
+        <div className="flex flex-col gap-3">
+          <Markdown>Delivers on Tuesdays. Call ahead for anything longer than eight feet.</Markdown>
+          <div>
+            <Button size="sm" variant="outline" onClick={() => setPhone('555-0100')}>
+              <PlusIcon />
+              Add the phone
+            </Button>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Supplier',
+      placement: 'rail',
+      fields: [
+        { label: 'Kind', value: 'Wholesale' },
+        { label: 'Account rep', edit: rep },
+        { label: 'Terms', edit: terms },
+        { label: 'Tax ID', value: null },
+      ],
+    },
+    {
+      title: 'Contact',
+      placement: 'rail',
+      fields: [
+        { label: 'Phone', edit: phone },
+        { label: 'Fax', edit: fax },
+        { label: 'Website', edit: website },
+        { label: 'Address', value: 'Dock 4, 12 Example Way' },
+      ],
+    },
+  ]
+  return (
+    <EntityView
+      layout="rail"
+      emptyFields="fold"
+      isLoading={false}
+      back={{ to: '/', label: 'Suppliers' }}
+      title={title}
+      subtitle="Timber and sheet goods for the workshop"
+      badges={
+        <>
+          <Badge variant="outline-success">Active</Badge>
+          <Badge variant="outline">Wholesale</Badge>
+        </>
+      }
+      strip={
+        <KeyStats
+          stats={[
+            { label: 'Last order', icon: CalendarIcon, value: 'Oct 28' },
+            { label: 'Next delivery', icon: CalendarClockIcon, value: 'Nov 14' },
+            { label: 'Orders', icon: HashIcon, value: '23' },
+            { label: 'Open', icon: CircleDotIcon, value: null },
+          ]}
+        />
+      }
+      actions={
+        <>
+          <Button variant="outline">
+            <PlusIcon />
+            New order
+          </Button>
+          <DeleteAction name={title} />
+        </>
+      }
+      sections={sections}
+    />
+  )
+}
+
+function StandardInRouter({ title }: { title: string }) {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <StandardRecord title={title} /> }]))
+  return <RouterProvider router={router} />
+}
+
+export const RecordStandard: StoryObj = {
+  name: 'Record standard',
+  render: () => <StandardInRouter title="Northwind Lumber" />,
+}
+
+export const RecordStandardLongTitle: StoryObj = {
+  name: 'Record standard, long title',
+  render: () => (
+    <StandardInRouter title="Northwind Lumber and Sheet Goods, the warehouse on the far side of the river" />
+  ),
+}

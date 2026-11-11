@@ -64,8 +64,10 @@ export { type RowGroup } from '@/components/app/table-groups'
 export { byDay, type ByDayOptions } from '@/lib/group-by-day'
 export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
 export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
+export { IconAction, type IconActionProps } from '@/components/app/icon-action'
 export {
   EntityView,
+  type EntityViewEmptyFields,
   type EntityViewField,
   type EntityViewLayout,
   type EntityViewMobileOrder,
@@ -84,12 +86,15 @@ export {
 } from '@/components/app/record-dialog'
 export {
   recordDialogState,
+  useNewRecordDialog,
   useOpenRecord,
   useRecordDialog,
+  type NewRecordDialogContextValue,
   type RecordDialogBackground,
   type RecordDialogContextValue,
   type RecordDialogState,
 } from '@/components/app/record-dialog-context'
+export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
 export {
   editInPlace,
   type EditControlProps,
