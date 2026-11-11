@@ -32,6 +32,108 @@ To take it: build a module's overview with `OverviewPage`
 hub's widgets to `to`, `value`, `line` and `freshness` where they have a
 headline.
 
+## 4.88.0 — The form standard's controls, on the form and in place
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Three looks change with no prop:
+`DateField` is a box you type in, with the calendar on its button;
+`inPlace.date` is the same box (Enter saves; a day picked in the calendar
+still saves at once); and an editable field row on `EntityView` is the
+target as a whole, with the list's row hover and, on a phone, a chevron.
+
+- **`ChoiceButtons`** (F10): two to four short options as a row of
+  joined buttons (Base UI's toggle group, single), with OptionSelect's
+  `{ value, label }` options and `render`; `clearable` lets the picked one
+  be pressed off. In place: `inPlace.choice({ options, ... })`, or
+  `inPlace.select({ look: 'buttons' })`; a press saves.
+  `inPlace.select` itself now draws `OptionSelect`.
+- **A date you can type** (F12): `DateField` reads "3/14", "3/14/26",
+  "Mar 14", "14 Mar", "2026-03-14", "today", "yesterday" and "tomorrow"
+  (`parsePlainDate`, the locale's order for 3/4), and shows the day back
+  as it's formatted. Something it can't read says "Try a date like 3/14
+  or Mar 14" under the box once it's left, and gives `''`, so a form
+  never keeps the day it had. `typing={false}` is the button alone, as
+  before; `onPick` and `onProblem` serve editing in place. DateField
+  marks itself `data-kind="date"`, so its Field needs no `kind="date"`.
+- **`MultiPick` for every multi-pick** (F13): its chips wrap at every
+  width (a chip longer than the row ends in "…"), under the filter box.
+  Past 30 options (`limit`) it shows the picked ones and the first 30,
+  then "Show all N"; a filter searches them all. `loading` for options
+  that come from the app's query of its records.
+- **Create from a reference picker** (F14): `onCreate(name)` on the new
+  `ReferenceCombobox` (the single reference on a form, also what
+  `inPlace.reference` draws), on `inPlace.reference` and on
+  `MultiReference`. Create "name" ends the list when what's typed names
+  no record; the app opens its small create form (a `FormDialog`) with
+  the name filled in and resolves with the saved record, which is then
+  picked (and, in place, saved; the field stays open meanwhile).
+- **The rail row's hover** (F15): `EditableValue look="row"` (EntityView's
+  field rows use it): the row wears `--table-hover` and the 3px
+  `--primary` bar, as a list row does, its label readable on the tint,
+  the pencil at its end, and a click anywhere on it opens the value.
+  `editRowClass` and `onEditRowClick` give a field list of your own the
+  same. The header strip and the title keep the value-sized tint.
+- **A brief Saved** (F16): once a save lands, "✓ Saved" shows beside the
+  value for two seconds (`role="status"`, `SAVED_FOR_MS`).
+- **A phone's edit in place** (F18): under 48rem or on a touch screen a
+  row has no pencil but a chevron, is 44px tall at least, and opens the
+  control in the row as on a laptop.
+
+To take it: replace hand-made single-reference comboboxes with
+`ReferenceCombobox`, a select of two to four short options with
+`ChoiceButtons` (or `inPlace.choice`), and drop `kind="date"` from a
+DateField's Field. A test that clicked a DateField's button ("Pick a
+date") now types in its box (`getByRole('textbox', { name })`), or opens
+the calendar with "Open calendar"; a test that read a row's text exactly
+right after a save now also meets "Saved". Give `onCreate` where a
+missing record stops the form today.
+
+## 4.87.0 — The trail and search in AppShell's bar
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). The record standard's R2 and the
+navigation standard's N5 and N6 (design-language.md "The sidebar and the
+phone's bar"). Two things change with no prop, in every app: the bar
+shows the current page's nav entry ("Finance › Accounts"; "Home" on the
+hub), and the bar now sits outside `<main>`, so the page's own links are
+the only ones `getByRole('main')` finds (the trail names the same
+places).
+
+- **A record's trail** (R2). `EntityView back={{ to, label, trail }}`:
+  `trail` is the crumbs above the record (the module, its list); the
+  record's title follows them. In `AppShell` it goes up in the bar and
+  the page loses its back link; outside the shell it is drawn above the
+  title in the link's place; in a dialog, neither. Without `trail` the
+  back link stays, as before.
+- **The trail in the bar** (N5). `usePageTrail([...crumbs])` puts any
+  page's trail between the menu button and the search box, from 48rem
+  up; a page with none shows its nav entry's. On a phone the back arrow
+  (4.80's N7) now goes to the trail's closest crumb above the page
+  ("‹ Everyday checking" on a statement under it), and an entry's own
+  page still keeps the menu button. `PageTrail`'s `crumbs` takes a
+  readonly array, and its last crumb, the page itself, is now text
+  marked `aria-current="page"` rather than shadcn's disabled
+  `role="link"`: a test that found it with `getByRole('link')` finds it
+  with `locator('[aria-current=page]')`, and a test that clicks a
+  sidebar entry by name (`getByRole('link', { name: 'Home' })`) no
+  longer meets a second "Home" in the bar.
+- **Search in the bar** (N6). `AppShell search={{ placeholder,
+  findRecords, recent }}`: a box (a button on a phone) and Ctrl K (⌘K)
+  open a palette that finds the nav's pages by name and, with
+  `findRecords(query, { signal })`, the app's records
+  (`SearchRecord`: `{ title, to, kind?, detail? }`), listed under their
+  `kind`; the arrows move, Enter opens. Before typing it lists the
+  records opened lately on this device: call
+  `useRecentRecord({ title, to, detail })` on a record's view once it
+  loads. They're forgotten on logout. `recent: false` lists none.
+
+To take it: in each record's view, swap the back link for `back.trail`
+and add `useRecentRecord`; on other inner pages, drop the back link for
+`usePageTrail`. Pass `search` to `AppShell` with a `findRecords` that
+calls the app's search endpoint through its gateway, mapping each hit
+to `{ title, to, kind, detail }`. An app's e2e test that found the
+header's buttons inside `getByRole('main')` looks for them on the page
+instead (the template has none).
 ## 4.86.0 — A list's tools in DataTable: views, filters, columns, row actions, a phone's rows; a capped related list
 
 The UI package only; additive, no new dependency, no export removed or

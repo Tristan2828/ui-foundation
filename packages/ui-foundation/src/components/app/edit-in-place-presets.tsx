@@ -1,6 +1,6 @@
 // Ready-made fields for editing in place (cell-patterns.md "Editable
 // value", "Presets"): `inPlace.text`, `.number`, `.date`, `.monthDay`,
-// `.money`, `.select`, `.reference`, `.link`, and `.fields` for two or more values
+// `.money`, `.select`, `.choice`, `.reference`, `.link`, and `.fields` for two or more values
 // edited and saved as one. Each carries its own control, its check (run
 // before anything is sent, its message under the field) and how the value
 // reads at rest (`shown`, which EntityView and EditableValue show when
@@ -17,14 +17,15 @@ import type { ReactNode } from 'react'
 import type { AppError } from '@/api/contracts'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { linkHost, linkRule } from '@/lib/link-href'
 import { formatMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
-import { formatPlainDate, type PlainDate } from '@/lib/plain-date'
+import { formatPlainDate, unreadableDateMessage, type PlainDate } from '@/lib/plain-date'
+import { ChoiceButtons } from './choice-buttons'
 import { DateField } from './date-field'
 import { MonthDayField } from './month-day-field'
+import { OptionSelect } from './option-select'
 import type { EditControlProps, EditInPlace } from './edit-in-place'
-import { NONE, Parts, ReferencePicker } from './edit-in-place-controls'
+import { Parts, ReferencePicker } from './edit-in-place-controls'
 import { LinkOut } from './row-edit-cells'
 
 // ─── One kind of control ────────────────────────────────────────────────
@@ -98,9 +99,16 @@ export type InPlaceMoneyConfig<TRequired extends boolean = boolean> = {
   placeholder?: string
 }
 
-/** A plain day, `'YYYY-MM-DD'` (DateField). Not `required`: Clear saves `null`. */
+/**
+ * A plain day, `'YYYY-MM-DD'` (DateField). Typed by default ("3/14",
+ * "Mar 14", "today"), with the calendar on its button; Enter or leaving
+ * saves, a day picked in the calendar saves at once. Not `required`:
+ * emptying the box (or Clear) saves `null`.
+ */
 export type InPlaceDateConfig<TRequired extends boolean = boolean> = {
   required?: TRequired
+  /** `false`: DateField's button alone, its calendar opening with the field and a pick saving. */
+  typing?: boolean
   /** How the day reads. Defaults to `{ dateStyle: 'medium' }`. */
   format?: Intl.DateTimeFormatOptions
   locale?: string
@@ -123,9 +131,17 @@ export type InPlaceMonthDayConfig<TRequired extends boolean = boolean> = {
 /** One option of a select: its value and its words. */
 export type InPlaceOption<T> = { value: T; label: string }
 
-/** One of a fixed list. Not `required`: the list starts with "Not set", which saves `null`. */
+/**
+ * One of a fixed list. Not `required`: the list starts with "Not set",
+ * which saves `null` (as buttons, pressing the picked one again does).
+ */
 export type InPlaceSelectConfig<T extends string | number, TRequired extends boolean = boolean> = {
   required?: TRequired
+  /**
+   * `select` (the default): OptionSelect, its list opening with the field.
+   * `buttons`: ChoiceButtons, for two to four short options; a press saves.
+   */
+  look?: 'select' | 'buttons'
   /** Every option, in the order the list shows them. */
   options: readonly InPlaceOption<T>[]
   /** How an option reads, at rest, on the trigger and in the list (a badge). Defaults to its label. */
@@ -154,6 +170,14 @@ export type InPlaceReferenceConfig<Id extends string | number, TRequired extends
   placeholder?: string
   /** What the list says when nothing matches. Defaults to "No matches." */
   emptyText?: string
+  /**
+   * Offers Create "<typed text>" as the list's last item when what's typed
+   * matches no record's name. Called with the typed name: the app opens its
+   * small create form (a FormDialog) with the name filled in, and resolves
+   * with the record once it's saved, which is then picked (and, in place,
+   * saved); `null` if the form was cancelled.
+   */
+  onCreate?: (name: string) => Promise<InPlaceRecord<Id> | null>
 }
 
 /** A link: its address and an optional label, as the app maps them to its own fields. */
@@ -319,6 +343,7 @@ function moneyKind(config: InPlaceMoneyConfig): Kind<string | number | null, str
 }
 
 function dateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainDate> {
+  if (config.typing !== false) return typedDateKind(config)
   return {
     editKind: 'choice',
     toDraft: (value) => value ?? '',
@@ -349,6 +374,39 @@ function dateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainDate> 
               }
             : undefined
         }
+        aria-label={props.label}
+        aria-describedby={props.describedBy}
+      />
+    ),
+  }
+}
+
+// Typed: Enter (a one-line field's key) or leaving saves the day typed; a
+// day picked in the calendar saves at once. Something unreadable is the
+// field's problem, so it isn't saved.
+function typedDateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainDate> {
+  return {
+    editKind: 'text',
+    toDraft: (value) => value ?? '',
+    check: (draft) => {
+      if (draft === '') return config.required ? { ok: false, message: REQUIRED } : { ok: true, value: null }
+      return formatPlainDate(draft) === '' ? { ok: false, message: unreadableDateMessage(config.locale) } : { ok: true, value: draft }
+    },
+    show: (value) => (value ? formatPlainDate(value, config.format, config.locale) || value : null),
+    control: (props, alone) => (
+      <DateField
+        id={props.id}
+        value={props.value}
+        onChange={props.onChange}
+        onPick={alone ? (day) => props.commit(day) : props.onChange}
+        onProblem={props.onProblem}
+        clearable={!config.required}
+        placeholder={config.placeholder}
+        format={config.format}
+        locale={config.locale}
+        invalid={props.invalid}
+        readOnly={props.disabled}
+        modal={false}
         aria-label={props.label}
         aria-describedby={props.describedBy}
       />
@@ -399,55 +457,52 @@ function monthDayKind(config: InPlaceMonthDayConfig): Kind<MonthDay | null, Mont
 function selectKind<T extends string | number>(config: InPlaceSelectConfig<T>): Kind<T | null, T | null> {
   const labelOf = (value: T) => config.options.find((option) => option.value === value)?.label ?? String(value)
   const shownOf = (value: T) => (config.render ? config.render(value, labelOf(value)) : labelOf(value))
-  const keyOf = (value: T | null) => {
-    const at = value == null ? -1 : config.options.findIndex((option) => option.value === value)
-    return at === -1 ? null : String(at)
-  }
-  const valueOf = (key: string | null): T | null => (key === null || key === NONE ? null : (config.options[Number(key)]?.value ?? null))
   const emptyLabel = config.emptyLabel ?? 'Not set'
   return {
     editKind: 'choice',
     toDraft: (value) => value,
     check: (draft) => (draft == null && config.required ? { ok: false, message: REQUIRED } : { ok: true, value: draft }),
     show: (value) => (value == null ? null : shownOf(value)),
-    control: (props, alone) => (
-      <Select
-        value={keyOf(props.value) ?? (config.required ? null : NONE)}
-        onValueChange={(key) => {
-          if (key === null) return
-          const picked = valueOf(key as string)
-          if (alone) props.commit(picked)
-          else props.onChange(picked)
-        }}
-        disabled={props.disabled}
-        defaultOpen={alone}
-        modal={false}
-        onOpenChange={
-          alone
-            ? (open) => {
-                if (!open) props.cancel()
-              }
-            : undefined
-        }
-      >
-        <SelectTrigger id={props.id} className="min-w-40" {...controlAria(props)}>
-          <SelectValue placeholder={config.placeholder ?? 'Pick one'}>
-            {(key: string | null) => {
-              const value = valueOf(key)
-              return value == null ? (key === NONE ? emptyLabel : (config.placeholder ?? 'Pick one')) : shownOf(value)
-            }}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {!config.required && <SelectItem value={NONE}>{emptyLabel}</SelectItem>}
-          {config.options.map((option, index) => (
-            <SelectItem key={String(option.value)} value={String(index)}>
-              {shownOf(option.value)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    ),
+    control: (props, alone) => {
+      const pick = (picked: T | null) => (alone ? props.commit(picked) : props.onChange(picked))
+      if (config.look === 'buttons')
+        return (
+          <ChoiceButtons
+            id={props.id}
+            options={config.options}
+            value={props.value}
+            onValueChange={pick}
+            render={config.render}
+            clearable={!config.required}
+            disabled={props.disabled}
+            {...controlAria(props)}
+          />
+        )
+      return (
+        <OptionSelect
+          id={props.id}
+          options={config.options}
+          value={props.value}
+          onValueChange={pick}
+          render={config.render}
+          required={config.required}
+          emptyLabel={emptyLabel}
+          placeholder={config.placeholder}
+          disabled={props.disabled}
+          defaultOpen={alone}
+          modal={false}
+          onOpenChange={
+            alone
+              ? (open) => {
+                  if (!open) props.cancel()
+                }
+              : undefined
+          }
+          className="w-auto min-w-40"
+          {...controlAria(props)}
+        />
+      )
+    },
   }
 }
 
@@ -705,13 +760,28 @@ export const inPlace = {
   ) {
     return single(monthDayKind(options), { ...options, value: options.value || null } as Common<MonthDay | null, never>)
   },
-  /** One of a fixed list; its list opens with the field and a pick saves. */
+  /**
+   * One of a fixed list; its list opens with the field and a pick saves.
+   * `look: 'buttons'` draws it as ChoiceButtons (`inPlace.choice`).
+   */
   select<T extends string | number, R extends boolean = false>(
     options: Common<T | null | undefined, InPlaceSaved<T, R>> & InPlaceSelectConfig<T, R>,
   ) {
     return single(selectKind(options), { ...options, value: options.value ?? null } as Common<T | null, never>)
   },
-  /** Another record, searched as you type through the app's `search`; a pick saves its id. */
+  /**
+   * Two to four short options as a row of buttons (ChoiceButtons); a press
+   * saves. `inPlace.select` with `look: 'buttons'`.
+   */
+  choice<T extends string | number, R extends boolean = false>(
+    options: Common<T | null | undefined, InPlaceSaved<T, R>> & Omit<InPlaceSelectConfig<T, R>, 'look'>,
+  ) {
+    return single(selectKind({ ...options, look: 'buttons' }), { ...options, value: options.value ?? null } as Common<T | null, never>)
+  },
+  /**
+   * Another record, searched as you type through the app's `search`; a
+   * pick saves its id. With `onCreate`, Create "<typed>" makes one.
+   */
   reference<Id extends string | number, R extends boolean = false>(
     options: Common<Id | null | undefined, InPlaceSaved<Id, R>> & InPlaceReferenceConfig<Id, R>,
   ) {

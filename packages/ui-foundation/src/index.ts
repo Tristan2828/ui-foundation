@@ -7,6 +7,9 @@
 export {
   AppShell,
   type AppShellProps,
+  type AppShellSearch,
+  type RecentRecord,
+  type SearchRecord,
   type AppShellVersion,
   type BottomBarItem,
   type NavEntry,
@@ -74,6 +77,8 @@ export { EntityForm, type EntityFormProps } from '@/components/app/entity-form'
 export { countFormErrors } from '@/lib/form-errors'
 export { FormSection, type FormSectionProps } from '@/components/app/form-section'
 export { OptionSelect, type OptionSelectOption, type OptionSelectProps } from '@/components/app/option-select'
+export { ChoiceButtons, type ChoiceButtonsOption, type ChoiceButtonsProps } from '@/components/app/choice-buttons'
+export { ReferenceCombobox, type ReferenceComboboxProps, type ReferenceRecord } from '@/components/app/reference-combobox'
 export { fieldRows, type FieldKind, type FieldRowItem, type FieldRowPlace, type FieldSize } from '@/lib/field-rows'
 export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
 export { IconAction, type IconActionProps } from '@/components/app/icon-action'
@@ -138,11 +143,14 @@ export {
 export { linkHost, linkHref, linkRule } from '@/lib/link-href'
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
+export { editRowClass, onEditRowClick, SAVED_FOR_MS } from '@/components/app/edit-row'
 export { ErrorState } from '@/components/app/error-state'
 export { InlineCreate, type InlineCreateProps } from '@/components/app/inline-create'
 export { FoundationProviders } from '@/components/app/foundation-providers'
 export { Markdown, type MarkdownProps } from '@/components/app/markdown'
 export { PageTrail, type PageCrumb, type PageTrailProps } from '@/components/app/page-trail'
+export { usePageTrail } from '@/components/app/page-trail-context'
+export { useRecentRecord } from '@/hooks/use-recent-record'
 export type { CreatePage, PageLinkInfo, PageLinkResolver } from '@/lib/page-link'
 export { countTasks, toggleTaskAt, type TaskCount } from '@/lib/markdown-tasks'
 export { NotesOutline, type NotesOutlineProps } from '@/components/app/notes-outline'
@@ -216,7 +224,14 @@ export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
 export { DEFAULT_IMAGE_TYPES, type ImageUpload, type ImageUploadResult } from '@/lib/image-file'
-export { formatPlainDate, type PlainDate } from '@/lib/plain-date'
+export {
+  formatPlainDate,
+  parsePlainDate,
+  plainDateExamples,
+  unreadableDateMessage,
+  type ParsePlainDateOptions,
+  type PlainDate,
+} from '@/lib/plain-date'
 export { formatMonthDay, isMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
 export {
   ChoiceCell,
