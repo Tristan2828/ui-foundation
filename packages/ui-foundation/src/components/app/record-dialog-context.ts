@@ -66,3 +66,25 @@ export const RecordDialogContext = createContext<RecordDialogContextValue | null
 export function useRecordDialog(): RecordDialogContextValue | null {
   return useContext(RecordDialogContext)
 }
+
+export type NewRecordDialogContextValue = {
+  /** Closes the new record's form: back to the list, as Back does. */
+  close: () => void
+  /**
+   * After the save: the new record, over the same list (this entry
+   * replaced, so Back from it is the list). `open('/widgets/12')`.
+   */
+  openRecord: (to: string) => void
+}
+
+export const NewRecordDialogContext = createContext<NewRecordDialogContextValue | null>(null)
+
+/**
+ * Inside RecordDialogRoute's `newPath` route (`/widgets/new`): its `close`
+ * and `openRecord`. FormDialog reads it to open itself over the list with
+ * no `open` of its own; the route's form calls `openRecord` once it has
+ * saved. `null` anywhere else.
+ */
+export function useNewRecordDialog(): NewRecordDialogContextValue | null {
+  return useContext(NewRecordDialogContext)
+}

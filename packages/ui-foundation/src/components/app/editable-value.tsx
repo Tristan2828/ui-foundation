@@ -22,15 +22,7 @@ import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, use
 import { useBlocker } from 'react-router'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { DiscardChangesDialog } from '@/components/ui/dialog'
 import { FieldError } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './edit-in-place'
@@ -428,33 +420,19 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
   }, [dirty, store])
 
   return (
-    <Dialog
+    <DiscardChangesDialog
       open={blocker.state === 'blocked' && (!savesOnLeave || saveFailed)}
-      onOpenChange={(open) => {
-        if (open) return
+      description="A field you're editing hasn't been saved. Leaving now loses what you typed."
+      data-leave-guard=""
+      onKeepEditing={() => {
         setSaveFailed(false)
         if (blocker.state === 'blocked') blocker.reset()
       }}
-    >
-      <DialogContent showCloseButton={false} data-leave-guard="">
-        <DialogHeader>
-          <DialogTitle>Discard your changes?</DialogTitle>
-          <DialogDescription>A field you're editing hasn't been saved. Leaving now loses what you typed.</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Keep editing</DialogClose>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              store.discard()
-              setSaveFailed(false)
-              if (blocker.state === 'blocked') blocker.proceed()
-            }}
-          >
-            Discard
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      onDiscard={() => {
+        store.discard()
+        setSaveFailed(false)
+        if (blocker.state === 'blocked') blocker.proceed()
+      }}
+    />
   )
 }
