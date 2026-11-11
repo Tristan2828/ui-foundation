@@ -584,74 +584,56 @@ test.describe('widgets table', () => {
     for (const alpha of alphas) expect(alpha).toBe(1)
   })
 
-  // The last column is pinned too (the In Stock switch, standing in for row
-  // actions), but only the first marks the hovered row (issue #103): the
-  // last names nothing, so lighting it read as a second selected thing.
+  // The whole row lights on hover (4.83, the list page standard): every
+  // cell, both pinned ones included, in one solid tint, the same on every
+  // row, with a bar on the first cell only. Before 4.83 only the pinned
+  // first cell lit, because the zebra stripe outranked a row hover.
   for (const colorScheme of ['light', 'dark'] as const) {
-    test(`hovering highlights the first pinned cell only, identically on striped and unstriped rows (${colorScheme})`, async ({
+    test(`hovering lights every cell of the row, pinned ones included, with a bar at its start (${colorScheme})`, async ({
       page,
       isMobile,
     }) => {
-      // Hover is a pointer affordance; a touch device has no hover state to
-      // assert. The pinned column itself is still covered on mobile by the
-      // horizontal-scroll test above.
+      // Hover is a pointer affordance; a touch device has no hover state.
       test.skip(!!isMobile, 'no hover on a touch device')
-      // The zebra stripe is `tr:nth-child(even)` at specificity (0,2,1) and
-      // beats any `tr:hover` rule at (0,2,0), so a whole-row hover lights the
-      // odd rows and leaves the even ones striped and unlit. The highlight
-      // therefore lives on the pinned cell, which sits on an opaque
-      // background regardless of the stripe and reads the same on every row.
       await page.emulateMedia({ colorScheme })
       await page.setViewportSize({ width: 800, height: 720 })
       await page.goto('/widgets')
       await expect(page.locator('html')).toHaveClass(colorScheme)
       await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
 
-      const style = (el: Element) => ({
-        background: getComputedStyle(el).backgroundColor,
-        boxShadow: getComputedStyle(el).boxShadow,
-      })
+      const styles = (rowIndex: number) =>
+        page
+          .locator('tbody tr')
+          .nth(rowIndex)
+          .locator('td')
+          .evaluateAll((cells) => cells.map((cell) => ({ background: getComputedStyle(cell).backgroundColor, boxShadow: getComputedStyle(cell).boxShadow })))
       const read = async (rowIndex: number) => {
-        const row = page.locator('tbody tr').nth(rowIndex)
-        const nameCell = row.locator('td').first()
-        const lastCell = row.locator('td').last()
-        const idle = await nameCell.evaluate(style)
-        const lastIdle = await lastCell.evaluate(style)
-        await row.getByRole('cell').nth(1).hover()
-        return {
-          idle,
-          hovered: await nameCell.evaluate(style),
-          lastIdle,
-          lastHovered: await lastCell.evaluate(style),
-        }
+        const idle = await styles(rowIndex)
+        await page.locator('tbody tr').nth(rowIndex).getByRole('cell').nth(1).hover()
+        return { idle, hovered: await styles(rowIndex) }
       }
 
-      const oddRow = await read(0) // unstriped
-      const evenRow = await read(1) // striped
-
-      for (const { idle, hovered, lastIdle, lastHovered } of [oddRow, evenRow]) {
-        // The first pinned cell reacts to the hover...
-        expect(hovered.background).not.toBe(idle.background)
-        // ...stays fully opaque, so scrolled columns can't bleed through...
-        expect(hovered.background).not.toMatch(/\/\s*[\d.]+\s*\)$/)
-        // ...and carries the inset left-edge marker.
-        expect(hovered.boxShadow).toContain('inset')
-        // The last pinned cell doesn't: no tint, no edge marker.
-        expect(lastHovered).toEqual(lastIdle)
-        expect(lastHovered.boxShadow).toBe('none')
+      const rows = [await read(0), await read(1)]
+      for (const { idle, hovered } of rows) {
+        const tint = hovered[0].background
+        // Every cell in the one tint, and it changed from rest...
+        expect(hovered.map((cell) => cell.background)).toEqual(hovered.map(() => tint))
+        expect(tint).not.toBe(idle[0].background)
+        // ...opaque, so scrolled columns can't bleed through the pinned ones...
+        expect(tint).not.toMatch(/\/\s*[\d.]+\s*\)$|^rgba\(.*,\s*[\d.]+\)$/)
+        // ...and the bar on the first cell, none on the pinned last.
+        expect(hovered[0].boxShadow).toContain('inset')
+        expect(hovered.at(-1)!.boxShadow).toBe('none')
       }
-
-      // The regression itself: the highlight must not depend on which side of
-      // the zebra stripe a row falls on.
-      expect(evenRow.hovered.background).toBe(oddRow.hovered.background)
+      // The same on either side of where a stripe used to fall.
+      expect(rows[1].hovered[0].background).toBe(rows[0].hovered[0].background)
     })
   }
 
-  // Issue #92: the stripe used to stop at the pinned cells, which stayed
-  // the page's colour on every row. On an even row they now paint the
-  // stripe pre-mixed onto the page, opaque, so the row reads as one band.
+  // No zebra stripes on lists (4.83): rows are told apart by the line under
+  // each, and the pinned columns (opaque, issue #92) match the row.
   for (const colorScheme of ['light', 'dark'] as const) {
-    test(`the zebra stripe runs through the pinned columns (${colorScheme})`, async ({ page }) => {
+    test(`rows carry no stripe, and the pinned columns match them (${colorScheme})`, async ({ page }) => {
       await page.emulateMedia({ colorScheme })
       await page.setViewportSize({ width: 800, height: 720 })
       await page.goto('/widgets')
@@ -683,8 +665,10 @@ test.describe('widgets table', () => {
         expect(close(first, middle), `row ${rowIndex}: pinned first ${first} vs ${middle}`).toBe(true)
         expect(close(last, middle), `row ${rowIndex}: pinned last ${last} vs ${middle}`).toBe(true)
       }
-      // And the even row really is striped, apart from the odd one.
-      expect(close((await seen(0))[1], (await seen(1))[1])).toBe(false)
+      // The second row looks like the first: no stripe.
+      expect(close((await seen(0))[1], (await seen(1))[1])).toBe(true)
+      // The line under each row stays.
+      expect(await page.locator('tbody tr').first().evaluate((row) => getComputedStyle(row).borderBottomWidth)).toBe('1px')
       // Still opaque, so scrolled columns can't show through.
       const pinned = await page.locator('tbody tr').nth(1).locator('td').first().evaluate((el) => getComputedStyle(el).backgroundColor)
       expect(pinned).not.toMatch(/\/\s*[\d.]+\s*\)$|^rgba\(.*,\s*0\)$/)
