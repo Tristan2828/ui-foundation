@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.82.0 — Depth ramps that hold one hue, and run the right way in dark
+## 4.83.0 — Depth ramps that hold one hue, and run the right way in dark
 
 The UI package only; no API change, no new dependency (the backend
 package's version moves with it, unchanged). 4.77.0's depth ramps had
@@ -61,6 +61,42 @@ rather than `text-category-N-depth-M-foreground`, should switch to the
 foreground token (light's step 2 of blue, gold and lime is now white
 text).
 
+## 4.82.0 — Dialog sizes, a guard on what's typed, and FormDialog
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). One look changes with no prop: a
+record opened in a dialog over its list is 1,120px wide, was 896px.
+
+- **Three dialog widths.** `DialogContent size="confirm" | "form" |
+  "record"`: 420, 640 and 1,120px. Left out, a dialog is 384px as before.
+- **A confirm on a phone is a bottom sheet.** Under 48rem a
+  `size="confirm"` dialog sits across the bottom with its
+  `DialogFooter`'s buttons full width and 40px, the action above Cancel
+  (keep Cancel first in the footer). A `size="form"` dialog is the whole
+  screen.
+- **A dialog that guards what's typed.** `DialogContent dirty`: while
+  it's true, Esc, the close button, a click outside and any `DialogClose`
+  ask "Discard your changes?" (Keep editing, Discard) first. Closing from
+  code (`open={false}` after a save) never asks. The prompt is its own
+  export, `DiscardChangesDialog` (from `/ui/dialog`), for any other way of
+  leaving with something unsaved; a value edited in place uses it too.
+- **`FormDialog`**: a small form in a dialog, 640px, the title and the
+  Cancel and submit buttons pinned while the fields scroll, the whole
+  screen on a phone with two wide buttons, a failed save as a destructive
+  `Notice` above the buttons with Try again, and `dirty`.
+- **A new record over its list.** `RecordDialogRoute newPath="new"`: the
+  list's `new` child route is a `FormDialog` over the list (from the list
+  or a deep link), closing goes back, and
+  `useNewRecordDialog().openRecord(to)` opens the saved record over the
+  same list. See add-an-entity.md "How a list opens a record".
+- **The record dialog is 1,120px** (`size="record"`), so an `EntityView`
+  with `layout="rail"` keeps its rail beside the main column, as on its
+  page; under 56rem of room the rail goes under, as before.
+
+To take it: nothing is required. A `RecordDialogRoute` with its own
+`className` width (`sm:max-w-5xl`) keeps it; drop it for the standard
+1,120px. Hand-made form dialogs can move to `FormDialog`, and dialogs with
+a width of their own to `size`.
 ## 4.81.0 — The record page standard in EntityView
 
 The UI package only; no new dependency (the backend package's version

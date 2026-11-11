@@ -151,7 +151,7 @@
    * One hue per slot, the slot's own (its --category-N hue), across all five
    * steps in both themes; only lightness and chroma change. Depth is
    * contrast with the page, so a higher step is darker in light and
-   * brighter in dark, and the order survives in greyscale. (Until 4.82 hue
+   * brighter in dark, and the order survives in greyscale. (Until 4.83 hue
    * was bent a little to push neighbours apart, which read as drift, orange
    * to pink and purple to magenta, and dark ran the wrong way, a higher
    * step darker, ending in a step almost grey.) Chroma follows what the

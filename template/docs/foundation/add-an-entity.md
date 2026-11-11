@@ -3,26 +3,27 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 41–63
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 65–806
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 107–114
-  - Step 2: `npm run gen:api` · lines 115–116
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 117–128
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 129–138
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 139–143
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 144–693
-  - Step 7: Register routes · lines 694–709
-  - Step 8: Add Playwright specs for all three screens · lines 710–788
-  - Step 9: Register the nav entry and route names · lines 789–803
-  - Step 10: `npm run verify`. · lines 804–806
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 808–960
-  - [The record view](#the-record-view) · lines 921–960
-- [What not to copy](#what-not-to-copy) · lines 962–988
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 990–1007
-- [Deleting](#deleting) · lines 1009–1038
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1040–1061
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1063–1072
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1075–1114
+- [The reference files](#the-reference-files) · lines 42–64
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 66–807
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 108–115
+  - Step 2: `npm run gen:api` · lines 116–117
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 118–129
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 130–139
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 140–144
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 145–694
+  - Step 7: Register routes · lines 695–710
+  - Step 8: Add Playwright specs for all three screens · lines 711–789
+  - Step 9: Register the nav entry and route names · lines 790–804
+  - Step 10: `npm run verify`. · lines 805–807
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 809–1024
+  - [The record view](#the-record-view) · lines 958–997
+  - [Dialogs](#dialogs) · lines 999–1024
+- [What not to copy](#what-not-to-copy) · lines 1026–1052
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1054–1071
+- [Deleting](#deleting) · lines 1073–1102
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1104–1125
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1127–1136
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1139–1178
 
 <!-- /index -->
 
@@ -881,6 +882,42 @@ the dialog.
 { path: '<parents>/:id/edit', element: <<Parent>FormRoute /> },   // a sibling, not a child
 ```
 
+**A new record over its list** (4.82), for a create form of up to about
+8 fields (a longer one is its own page, `<entity>/new` beside the list as
+above): the list's `new` child route, named by `newPath`, is a
+`FormDialog` over the list, from the list's New button
+(`<RecordLink to="/<entity>/new">` or `useOpenRecord()`) and from a deep
+link alike. Closing goes back to the list as a record's dialog does, and
+after the save `useNewRecordDialog().openRecord(to)` opens the new record
+over the same list, in the form's history entry.
+
+```tsx
+{
+  path: '<entity>',
+  element: <RecordDialogRoute list={<<Entity>sTableRoute />} label="<Entity>" newPath="new" />,
+  children: [
+    { path: 'new', element: <New<Entity>Route /> },
+    { path: ':id', element: <<Entity>ViewRoute /> },
+  ],
+},
+
+// New<Entity>Route: the form's own fields and react-hook-form, in FormDialog (no `open`).
+const created = useNewRecordDialog()
+<FormDialog
+  title="New <entity>"
+  submitLabel="Add <entity>"
+  onSubmit={form.handleSubmit(async (values) => {
+    const saved = await create.mutateAsync(values)
+    created?.openRecord(`/<entity>/${saved.id}`)
+  })}
+  isSubmitting={create.isPending}
+  submitError={create.error}
+  dirty={form.formState.isDirty}
+>
+  …fields…
+</FormDialog>
+```
+
 - **The row opens it**: a click on the row, Enter on it, ↑/↓ between
   rows. So does a click on a link in the row to the record's own address
   (the name cell can stay a plain `<Link>`), and in a card layout a click
@@ -958,6 +995,33 @@ view reaches them all. A record uses the parts it has, in this order:
 
 Edit and its form page stay only for a field the view can't edit in
 place yet; the plan says which, and the gap is raised for the package.
+
+### Dialogs
+
+Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
+
+| `size` | Width | On a phone (under 48rem) | Use it for |
+| --- | --- | --- | --- |
+| `confirm` | 420px | a sheet from the bottom, the buttons full width, the action above Cancel | a question with two answers: a delete, "Discard your changes?" |
+| `form` | 640px | the whole screen, the title and buttons pinned | a small form (`FormDialog`, which is this size) |
+| `record` | 1,120px | full width, the rail under the main column | a record over its list (`RecordDialogRoute`, which is this size) |
+
+- **Never a width of its own** (`sm:max-w-…` on `DialogContent`). A
+  confirm's buttons go in `DialogFooter`, Cancel first, so the phone's
+  sheet stacks the action on top.
+- **A dialog with something typed asks before it closes**:
+  `DialogContent dirty` (react-hook-form's `formState.isDirty`) makes Esc,
+  ✕, a click outside and Cancel ask "Discard your changes?" first;
+  nothing typed, nothing asked. Closing it from code after a save
+  (`open={false}`) never asks. `DiscardChangesDialog` is that prompt on
+  its own, for any other way of leaving with something unsaved.
+- **A form in a dialog is a `FormDialog`**: the title, the fields
+  scrolling between it and the pinned Cancel and Add, a failed save as a
+  destructive `Notice` above the buttons with Try again, and `dirty`.
+  Opened from a page with `open`/`onOpenChange`; as a list's `new` route
+  with neither (above).
+- **Always a dialog, never a side panel**, except a phone's filters
+  (a bottom sheet of controls for the list behind it).
 
 ## What not to copy
 
