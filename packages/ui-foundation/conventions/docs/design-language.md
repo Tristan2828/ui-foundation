@@ -12,29 +12,29 @@
 - [Logos and brand marks](#logos-and-brand-marks) · lines 231–275
 - [Categorical colour](#categorical-colour) · lines 277–347
 - [Heat scale](#heat-scale) · lines 349–410
-- [Depth ramps](#depth-ramps) · lines 412–490
-- [A stored colour](#a-stored-colour) · lines 492–540
-- [Shapes and sizes](#shapes-and-sizes) · lines 542–563
-- [Typography](#typography) · lines 565–685
-  - [Written text (notes)](#written-text-notes) · lines 599–685
-- [Density](#density) · lines 687–780
-  - [Rows on this device](#rows-on-this-device) · lines 753–780
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 782–896
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 898–975
-- [Notices](#notices) · lines 977–1005
-- [A value over time](#a-value-over-time) · lines 1007–1093
-  - [Several values over time](#several-values-over-time) · lines 1056–1093
-- [A list as a board](#a-list-as-a-board) · lines 1095–1146
-- [A list as cards](#a-list-as-cards) · lines 1148–1194
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1196–1225
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1227–1270
-- [An overview page](#an-overview-page) · lines 1272–1335
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1336–1374
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1376–1421
-- [Picking at random](#picking-at-random) · lines 1423–1454
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1456–1523
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1525–1550
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1552–1625
+- [Depth ramps](#depth-ramps) · lines 412–495
+- [A stored colour](#a-stored-colour) · lines 497–545
+- [Shapes and sizes](#shapes-and-sizes) · lines 547–568
+- [Typography](#typography) · lines 570–690
+  - [Written text (notes)](#written-text-notes) · lines 604–690
+- [Density](#density) · lines 692–785
+  - [Rows on this device](#rows-on-this-device) · lines 758–785
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 787–901
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 903–980
+- [Notices](#notices) · lines 982–1010
+- [A value over time](#a-value-over-time) · lines 1012–1098
+  - [Several values over time](#several-values-over-time) · lines 1061–1098
+- [A list as a board](#a-list-as-a-board) · lines 1100–1151
+- [A list as cards](#a-list-as-cards) · lines 1153–1199
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1201–1230
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1232–1275
+- [An overview page](#an-overview-page) · lines 1277–1340
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1341–1379
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1381–1426
+- [Picking at random](#picking-at-random) · lines 1428–1459
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1461–1528
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1530–1555
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1557–1630
 
 <!-- /index -->
 
