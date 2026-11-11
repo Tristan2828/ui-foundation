@@ -4,13 +4,15 @@ import { createMemoryRouter, Link, Outlet, RouterProvider, useLocation, useParam
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { DataTable } from './data-table'
 import { editInPlace } from './edit-in-place'
 import { EntityView } from './entity-view'
+import { FormDialog } from './form-dialog'
 import { Markdown } from './markdown'
 import { RecordDialogRoute, RecordLink } from './record-dialog'
-import { recordDialogState } from './record-dialog-context'
+import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
 
 // A list whose records open in a dialog over it (RecordDialogRoute), in a
 // memory router: /projects is the list (a search kept in `?q=`, a table
@@ -32,10 +34,17 @@ import { recordDialogState } from './record-dialog-context'
 // `listPath="list"`. The Sub-records stories are a project's page with its
 // tasks, each opening at /projects/:id/tasks/:taskId in the dialog over the
 // project's page (`fullPage={false}`: a reload is the dialog again).
+// The New record stories (4.80) have a `new` child route (`newPath`): New
+// project opens a FormDialog over the list, a deep link to /projects/new
+// too, and Add opens the new project over the list. A name of "fail" is
+// refused. The Rail stories' records use EntityView's `rail` layout, its
+// rail beside the main column at the dialog's 1,120px.
 // e2e/record-dialog.spec.ts drives it; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
 type Project = { id: number; name: string; status: 'Planned' | 'Active' | 'Done'; notes: string }
+
+// Mutable: a project added in the New record stories joins the list.
 
 const PROJECTS: Project[] = [
   { id: 1, name: 'Repaint the fence', status: 'Active', notes: 'Two coats, the second **after a dry day**.' },
@@ -72,7 +81,7 @@ const COLUMNS: LegacyColumnDef<Project, unknown>[] = [
 
 const noop = () => {}
 
-function ProjectList({ opens, listAt = '/projects' }: { opens: Opens; listAt?: string }) {
+function ProjectList({ opens, listAt = '/projects', canCreate = false }: { opens: Opens; listAt?: string; canCreate?: boolean }) {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const rows = PROJECTS.filter((project) => project.name.toLowerCase().includes(q.toLowerCase()))
@@ -106,6 +115,11 @@ function ProjectList({ opens, listAt = '/projects' }: { opens: Opens; listAt?: s
         }
       />
       <nav aria-label="Other projects" className="flex flex-wrap gap-2">
+        {canCreate && (
+          <RecordLink to="/projects/new" className="type-label underline">
+            New project
+          </RecordLink>
+        )}
         <RecordLink to="/projects/99" className="type-label underline">
           A deleted project
         </RecordLink>
@@ -146,7 +160,7 @@ function useProject(id: string | undefined) {
   }
 }
 
-function ProjectView({ listAt = '/projects', tasks = false }: { listAt?: string; tasks?: boolean }) {
+function ProjectView({ listAt = '/projects', tasks = false, rail = false }: { listAt?: string; tasks?: boolean; rail?: boolean }) {
   const { id } = useParams()
   const { project, error, isLoading, retry } = useProject(id)
   const [owner, setOwner] = useState('Ada Lovelace')
@@ -175,9 +189,11 @@ function ProjectView({ listAt = '/projects', tasks = false }: { listAt?: string;
       error={error}
       onRetry={retry}
       back={{ to: listAt, label: 'Projects' }}
+      layout={rail ? 'rail' : undefined}
       sections={[
         {
           title: 'Details',
+          placement: rail ? 'rail' : undefined,
           fields: [
             { label: 'Status', value: project?.status },
             { label: 'Owner', value: owner, edit: owners },
@@ -248,6 +264,57 @@ function TaskView() {
   )
 }
 
+// The `new` route's form: a FormDialog with no `open`, opened by the route.
+function NewProject() {
+  const route = useNewRecordDialog()
+  const [name, setName] = useState('')
+  const [missing, setMissing] = useState(false)
+  const [error, setError] = useState<AppError | null>(null)
+  const [saving, setSaving] = useState(false)
+  return (
+    <FormDialog
+      title="New project"
+      submitLabel="Add project"
+      isSubmitting={saving}
+      submitError={error}
+      dirty={name !== ''}
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (!name.trim()) {
+          setMissing(true)
+          return
+        }
+        setSaving(true)
+        setError(null)
+        setTimeout(() => {
+          setSaving(false)
+          if (name.trim() === 'fail') {
+            setError(BROKEN)
+            return
+          }
+          const project: Project = { id: PROJECTS.length + 1, name: name.trim(), status: 'Planned', notes: '' }
+          PROJECTS.push(project)
+          route?.openRecord(`/projects/${project.id}`)
+        }, 150)
+      }}
+    >
+      <Field data-invalid={missing || undefined}>
+        <FieldLabel htmlFor="new-project-name">Name</FieldLabel>
+        <Input
+          id="new-project-name"
+          value={name}
+          aria-invalid={missing || undefined}
+          onChange={(event) => {
+            setName(event.target.value)
+            setMissing(false)
+          }}
+        />
+        {missing && <FieldError>Give it a name</FieldError>}
+      </Field>
+    </FormDialog>
+  )
+}
+
 function Home() {
   return (
     <div className="flex flex-col gap-4">
@@ -277,9 +344,20 @@ function Layout() {
 // How the routes are laid out: the record a child of its list (`nested`,
 // the default), the list a sibling at /projects/list (`sibling`), or a
 // project's page whose tasks open over it (`sub-records`).
-type Shape = 'nested' | 'sibling' | 'sub-records'
+type Shape = 'nested' | 'sibling' | 'sub-records' | 'new'
 
-function projectRoutes(shape: Shape, opens: Opens) {
+function projectRoutes(shape: Shape, opens: Opens, rail: boolean) {
+  if (shape === 'new')
+    return [
+      {
+        path: 'projects',
+        element: <RecordDialogRoute list={<ProjectList opens={opens} canCreate />} label="Project" newPath="new" />,
+        children: [
+          { path: 'new', element: <NewProject /> },
+          { path: ':id', element: <ProjectView rail={rail} /> },
+        ],
+      },
+    ]
   if (shape === 'sub-records')
     return [
       {
@@ -307,7 +385,7 @@ function projectRoutes(shape: Shape, opens: Opens) {
     {
       path: 'projects',
       element: <RecordDialogRoute list={<ProjectList opens={opens} />} label="Project" fullPage={opens !== 'dialog-only'} />,
-      children: [{ path: ':id', element: <ProjectView /> }],
+      children: [{ path: ':id', element: <ProjectView rail={rail} /> }],
     },
   ]
 }
@@ -317,15 +395,17 @@ function Projects({
   initialIndex,
   opens = 'dialog',
   shape = 'nested',
+  rail = false,
 }: {
   initialEntries: InitialEntry[]
   initialIndex?: number
   opens?: Opens
   shape?: Shape
+  rail?: boolean
 }) {
   const [router] = useState(() =>
     createMemoryRouter(
-      [{ path: '/', element: <Layout />, children: [{ index: true, element: <Home /> }, ...projectRoutes(shape, opens)] }],
+      [{ path: '/', element: <Layout />, children: [{ index: true, element: <Home /> }, ...projectRoutes(shape, opens, rail)] }],
       { initialEntries, initialIndex },
     ),
   )
@@ -427,4 +507,24 @@ export const SubRecordOpen: Story = {
 export const SubRecordDeepLink: Story = {
   name: 'Sub-record, a deep link',
   render: () => <Projects initialEntries={['/projects/1/tasks/12']} shape="sub-records" />,
+}
+
+export const NewRecord: Story = {
+  name: 'New record',
+  render: () => <Projects initialEntries={['/projects']} shape="new" />,
+}
+
+export const NewRecordOpen: Story = {
+  name: 'New record, open',
+  render: () => <Projects initialEntries={openOver('new')} initialIndex={1} shape="new" />,
+}
+
+export const NewRecordDeepLink: Story = {
+  name: 'New record, a deep link',
+  render: () => <Projects initialEntries={['/projects/new']} shape="new" />,
+}
+
+export const RailBeside: Story = {
+  name: 'Rail beside',
+  render: () => <Projects initialEntries={openOver('1')} initialIndex={1} rail />,
 }

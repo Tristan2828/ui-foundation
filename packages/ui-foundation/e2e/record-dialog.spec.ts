@@ -271,3 +271,99 @@ test("a reload of a sub-record's address is the dialog over its parent again", a
   await expect(address(page)).toHaveText('/projects/1')
   await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
 })
+
+// A new record over its list (`newPath`, 4.80): the `new` route is a
+// FormDialog over the list, from the list or a deep link, and Add opens
+// the new record over the same list.
+const form = (page: Page) => page.getByRole('dialog', { name: 'New project' })
+
+test('New project opens the form over the list; Add opens the new record over it', async ({ page }) => {
+  await page.goto(story('new-record'))
+  await page.getByRole('textbox', { name: 'Search projects' }).fill('a')
+  await page.getByRole('link', { name: 'New project' }).click()
+  await expect(address(page)).toHaveText('/projects/new')
+  await expect(form(page)).toBeVisible()
+  // One dialog: the form, with no record dialog round it.
+  await expect(page.getByRole('dialog')).toHaveCount(1)
+  await expect(page.getByRole('textbox', { name: 'Search projects', includeHidden: true })).toHaveValue('a')
+
+  await form(page).getByRole('button', { name: 'Add project' }).click()
+  await expect(form(page).getByText('Give it a name')).toBeVisible()
+  await form(page).getByRole('textbox', { name: 'Name' }).fill('Paint the shed')
+  await form(page).getByRole('button', { name: 'Add project' }).click()
+
+  await expect(address(page)).toHaveText('/projects/5')
+  await expect(page.getByRole('dialog', { name: 'Paint the shed' })).toBeVisible()
+  // The form's entry was replaced: Close (and Back) is the list as it was.
+  await dialog(page).getByRole('button', { name: 'Close' }).click()
+  await expect(dialog(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects?q=a')
+  await expect(page.getByRole('row').filter({ hasText: 'Paint the shed' })).toHaveCount(1)
+})
+
+for (const how of ['Escape', 'Cancel', 'Back'] as const) {
+  test(`${how} closes the new record's form, back to the list`, async ({ page }) => {
+    await page.goto(story('new-record-open'))
+    await expect(form(page)).toBeVisible()
+    if (how === 'Escape') await page.keyboard.press('Escape')
+    else if (how === 'Cancel') await form(page).getByRole('button', { name: 'Cancel' }).click()
+    else await back(page)
+    await expect(form(page)).toHaveCount(0)
+    await expect(address(page)).toHaveText('/projects')
+  })
+}
+
+test("with a name typed, closing the new record's form asks first", async ({ page }) => {
+  await page.goto(story('new-record-open'))
+  await form(page).getByRole('textbox', { name: 'Name' }).fill('Paint the shed')
+  await page.keyboard.press('Escape')
+  const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
+  await expect(prompt).toBeVisible()
+  await prompt.getByRole('button', { name: 'Keep editing' }).click()
+  await expect(address(page)).toHaveText('/projects/new')
+  await form(page).getByRole('button', { name: 'Close' }).click()
+  await prompt.getByRole('button', { name: 'Discard' }).click()
+  await expect(form(page)).toHaveCount(0)
+  await expect(address(page)).toHaveText('/projects')
+})
+
+test("a deep link to the new record's form is the form over the list", async ({ page }) => {
+  await page.goto(story('new-record-deep-link'))
+  await expect(form(page)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Projects', includeHidden: true })).toHaveCount(1)
+  await page.keyboard.press('Escape')
+  await expect(address(page)).toHaveText('/projects')
+  await expect(page.getByRole('row').filter({ hasText: 'Repaint the fence' })).toBeVisible()
+})
+
+test('a failed save keeps the form open with the reason', async ({ page }) => {
+  await page.goto(story('new-record-open'))
+  await form(page).getByRole('textbox', { name: 'Name' }).fill('fail')
+  await form(page).getByRole('button', { name: 'Add project' }).click()
+  await expect(form(page).locator('[data-slot=notice]')).toContainText('The server had a problem')
+  await expect(address(page)).toHaveText('/projects/new')
+})
+
+// R9: the record dialog is 1,120px, so a rail layout keeps its rail beside.
+test('the record dialog is 1,120px and its rail sits beside the main column', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(story('rail-beside'))
+  await expect(dialog(page).getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+  await page.waitForTimeout(200)
+  expect(Math.round((await dialog(page).boundingBox())!.width)).toBe(1120)
+  const rail = (await dialog(page).getByRole('complementary').boundingBox())!
+  const notes = (await dialog(page).getByRole('heading', { name: 'Notes' }).boundingBox())!
+  expect(rail.x).toBeGreaterThan(notes.x + notes.width)
+  expect(Math.abs(rail.y - notes.y)).toBeLessThan(40)
+})
+
+test('on a phone the record dialog keeps its margin and the rail goes under', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto(story('rail-beside'))
+  await expect(dialog(page).getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
+  await page.waitForTimeout(200)
+  expect(Math.round((await dialog(page).boundingBox())!.width)).toBe(375 - 32)
+  const rail = (await dialog(page).getByRole('complementary').boundingBox())!
+  const notes = (await dialog(page).getByRole('heading', { name: 'Notes' }).boundingBox())!
+  expect(Math.abs(rail.x - notes.x)).toBeLessThan(40)
+})

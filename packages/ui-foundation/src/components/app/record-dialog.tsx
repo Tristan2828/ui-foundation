@@ -46,6 +46,22 @@
 //   { path: 'parents/:id', element: <RecordDialogRoute list={<ParentView />} label="Document" fullPage={false} />,
 //     children: [{ path: 'children/:childId', element: <ChildView /> }] }
 //
+// A new record over its list (4.80, `newPath`): the list's `new` child
+// route (`/widgets/new`) is the create form, drawn as its own FormDialog
+// over the list, always: opened from the list, from anywhere else, or a
+// deep link (a form of up to about 8 fields has no page of its own). It
+// has no record dialog round it; FormDialog opens itself from the
+// route's context (useNewRecordDialog), closing goes back as a record's
+// dialog does, and `openRecord` after the save swaps the entry for the new
+// record over the same list:
+//
+//   { path: 'widgets', element: <RecordDialogRoute list={<WidgetsTableRoute />} label="Widget" newPath="new" />,
+//     children: [{ path: 'new', element: <NewWidgetRoute /> }, { path: ':id', element: <WidgetViewRoute /> }] }
+//
+// The record dialog is 1,120px (DialogContent `size="record"`, 4.80), so
+// an EntityView with `layout="rail"` keeps its rail beside the main
+// column, as on its page; a narrower screen stacks them.
+//
 // Inside, the record's route renders as it always does. EntityView sees
 // the dialog (useRecordDialog): its heading names the dialog, its back link
 // gives way to the dialog's own bar, and not found's way out closes the
@@ -65,7 +81,13 @@ import { cn } from 'cn'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog'
 import { escapePassedThrough } from './escape-passthrough'
-import { backgroundOf, recordDialogState, RecordDialogContext } from './record-dialog-context'
+import {
+  backgroundOf,
+  NewRecordDialogContext,
+  recordDialogState,
+  RecordDialogContext,
+  type RecordDialogBackground,
+} from './record-dialog-context'
 
 export type RecordDialogRouteProps = {
   /** The list's own element (the table route), drawn under an open record. */
@@ -75,7 +97,7 @@ export type RecordDialogRouteProps = {
    * loads, fails or isn't found. Once it loads, its title names the dialog.
    */
   label: string
-  /** Extra classes on the dialog's popup (its width, say: `sm:max-w-5xl`). */
+  /** Extra classes on the dialog's popup. It's 1,120px (`size="record"`) by default. */
   className?: string
   /**
    * False: the record has no full page, only this dialog (DataTable's
@@ -93,18 +115,35 @@ export type RecordDialogRouteProps = {
    * records (the nested pattern).
    */
   listPath?: string
+  /**
+   * The child route that creates a record (`'new'` for `/widgets/new`):
+   * drawn over the list with no record dialog round it, its element a
+   * FormDialog, which opens itself (useNewRecordDialog). Left out, every
+   * child is a record.
+   */
+  newPath?: string
 }
 
 // Two paths are the same address, give or take a trailing slash.
 const samePath = (a: string, b: string) => a.replace(/\/+$/, '') === b.replace(/\/+$/, '')
 
-export function RecordDialogRoute({ list, label, className, fullPage = true, listPath: listAt }: RecordDialogRouteProps) {
+export function RecordDialogRoute({
+  list,
+  label,
+  className,
+  fullPage = true,
+  listPath: listAt,
+  newPath: newAt,
+}: RecordDialogRouteProps) {
   const location = useLocation()
   const navigationType = useNavigationType()
   const navigate = useNavigate()
   const childOutlet = useOutlet()
   const titleId = useId()
   const listPath = useResolvedPath(listAt ?? '.').pathname
+  // Resolved from the list's address: `/widgets/new` beside `/widgets/12`.
+  const newPathname = useResolvedPath(newAt === undefined ? '.' : `${listPath}/${newAt}`).pathname
+  const atNew = newAt !== undefined && samePath(location.pathname, newPathname)
   // With `listPath`, its own (element-less) child is the list, not a record.
   const atList = listAt !== undefined && samePath(location.pathname, listPath)
   const outlet = atList ? null : childOutlet
@@ -113,20 +152,23 @@ export function RecordDialogRoute({ list, label, className, fullPage = true, lis
   // would be a page the user wasn't on.
   // With no full page, a record opened any other way is the dialog over
   // the list's plain address, with nothing to go back over.
+  // The new record's form is always over the list.
+  const plainList: RecordDialogBackground = { pathname: listPath, search: '', hash: '', depth: 0 }
   const background =
     opened && samePath(opened.pathname, listPath)
       ? opened
-      : !fullPage && outlet !== null
-        ? { pathname: listPath, search: '', hash: '', depth: 0 }
+      : (!fullPage || atNew) && outlet !== null
+        ? plainList
         : null
-  const open = outlet !== null && background !== null
+  const over = outlet !== null && background !== null
+  const open = over && !atNew
 
   // The list sees the address it was opened from, not the record's, so
   // its URL state (filters, sort, page) stays as it was under the dialog.
   const { pathname, search, hash } = background ?? location
   const listLocation = useMemo(
-    () => ({ pathname, search, hash, state: null, key: open ? 'record-dialog-list' : location.key }),
-    [pathname, search, hash, open, location.key],
+    () => ({ pathname, search, hash, state: null, key: over ? 'record-dialog-list' : location.key }),
+    [pathname, search, hash, over, location.key],
   )
   const listContext = useMemo(() => ({ location: listLocation, navigationType }), [listLocation, navigationType])
 
@@ -139,9 +181,18 @@ export function RecordDialogRoute({ list, label, className, fullPage = true, lis
     } else void navigate(-depth)
   }, [navigate, location.key, depth, pathname, search, hash])
   const dialog = useMemo(() => ({ titleId, close }), [titleId, close])
+  // After the save: the new record over the same list, in this entry.
+  const created = useMemo(
+    () => ({
+      close,
+      openRecord: (to: string) =>
+        void navigate(to, { replace: true, state: { recordDialog: { pathname, search, hash, depth } } }),
+    }),
+    [close, navigate, pathname, search, hash, depth],
+  )
 
   // The record's full page: a deep link, or "Open full page".
-  if (outlet !== null && !open) return outlet
+  if (outlet !== null && !over) return outlet
   // `listPath` given and this route's own address (no index route): there
   // is no list here to draw.
   if (listAt !== undefined && outlet === null && !atList) return null
@@ -149,6 +200,7 @@ export function RecordDialogRoute({ list, label, className, fullPage = true, lis
   return (
     <>
       <LocationContext.Provider value={listContext}>{list}</LocationContext.Provider>
+      {atNew && <NewRecordDialogContext.Provider value={created}>{outlet}</NewRecordDialogContext.Provider>}
       <Dialog
         open={open}
         onOpenChange={(next, details) => {
@@ -172,10 +224,8 @@ export function RecordDialogRoute({ list, label, className, fullPage = true, lis
           aria-labelledby={titleId}
           aria-label={label}
           data-slot="record-dialog"
-          className={cn(
-            'flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl data-closed:hidden',
-            className,
-          )}
+          size="record"
+          className={cn('gap-0 overflow-hidden p-0 data-closed:hidden', className)}
         >
           <div className={cn('flex items-center gap-2 border-b px-2 py-2', fullPage ? 'justify-between' : 'justify-end')}>
             {/* A link, not a button: it goes to an address (and opens in a new tab on Ctrl/Cmd+click). */}

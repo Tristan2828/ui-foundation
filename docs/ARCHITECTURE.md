@@ -187,6 +187,16 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `/things/list` under `/things/12`), and a parent record's page can be
   the `list` of its sub-records (`fullPage={false}`, so a reload is the
   dialog over the parent again).
+- **Dialogs** (4.80): `DialogContent`'s `size` is one of three widths
+  (420, 640, 1,120px), written phone first with the laptop's look from
+  `md:`, so the base `sm:` classes can't leak into a phone's sheet or full
+  screen between 40 and 48rem. Its `dirty` guard lives in `Dialog` (the
+  Root): the content reports dirty through a context, the Root's
+  `onOpenChange` cancels a close and asks (`DiscardChangesDialog`), and
+  Discard closes through Base UI's `actionsRef.close()`, so controlled and
+  uncontrolled dialogs both close. `FormDialog` is the form's chrome in a
+  `size="form"` dialog; as `RecordDialogRoute`'s `newPath` route it opens
+  itself from `NewRecordDialogContext`, with no record dialog round it.
 - **A record's tabs** (4.76, #303): a main section's `tab` groups it
   under `EntityView`'s tab list, the selected tab in `?tab=`, changed by
   replacing the entry with its state kept, so a record over its list stays

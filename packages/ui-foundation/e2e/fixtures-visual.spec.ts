@@ -115,6 +115,15 @@ const COMPOSITE_STORIES = [
   // A list at its own path (`listPath`) with a record open over it, and a sub-record over its parent's page.
   { id: 'app-recorddialog--list-at-its-own-path-open', mustShow: 'after a dry day' },
   { id: 'app-recorddialog--sub-record-open', mustShow: 'Sand the boards' },
+  // A new record's form over its list (`newPath`), and a record's rail beside it at 1,120px (4.80).
+  { id: 'app-recorddialog--new-record-open', mustShow: 'Add project' },
+  { id: 'app-recorddialog--rail-beside', mustShow: 'after a dry day' },
+  // FormDialog: open, and with a failed save's Notice (4.80).
+  { id: 'app-formdialog--default', mustShow: 'Add book' },
+  { id: 'app-formdialog--failed-save', mustShow: "Couldn't add the book" },
+  // A confirm (420px) and the discard prompt (4.80).
+  { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
+  { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
