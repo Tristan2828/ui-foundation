@@ -26,22 +26,22 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 618–701
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 703–738
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 740–813
-- [18. Editable value](#18-editable-value) · lines 815–1483
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1115–1183
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1185–1221
-  - [A link and its label](#a-link-and-its-label) · lines 1223–1247
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1249–1382
-  - [In a table's rows](#in-a-tables-rows) · lines 1384–1469
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1471–1483
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1485–1551
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1553–1617
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1619–1717
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1719–1748
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1750–1788
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1790–1866
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1868–1891
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1893–1979
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1981–2017
+- [18. Editable value](#18-editable-value) · lines 815–1489
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1121–1189
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1191–1227
+  - [A link and its label](#a-link-and-its-label) · lines 1229–1253
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1255–1388
+  - [In a table's rows](#in-a-tables-rows) · lines 1390–1475
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1477–1489
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1491–1557
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1559–1623
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1625–1723
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1725–1754
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1756–1794
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1796–1872
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1874–1897
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1899–1985
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1987–2023
 
 <!-- /index -->
 
@@ -823,6 +823,12 @@ Categories, with the controls in `widget-fields.tsx`, the same ones the
 form uses.
 
 The rule behind every part of it: **nothing typed is ever lost.**
+
+**No toast, ever.** An edit in place says what happened where it
+happened: "Saving…" and "Saved" beside the value, a refusal's reason
+under it. A toast after one would repeat what the person just watched
+(add-an-entity.md "Toasts and feedback": a toast is for what happened
+out of sight).
 
 **Which values.** Only those the plan's "View screen" names under `Edit
 in place`; read-only is the default, and a value not named renders

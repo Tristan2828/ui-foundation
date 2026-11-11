@@ -58,6 +58,12 @@ const TONE_STORY_IDS = ['ui-badge--all-tones']
 const COMPOSITE_STORIES = [
   // Every Button variant: the link one reads in --link, never the accent.
   { id: 'ui-button--variants', mustShow: 'Secondary' },
+  // The dialogs and feedback standard (4.90): every toast tone held open,
+  // a delete's confirm, and an action's error, a job's lines and the
+  // offline bar together.
+  { id: 'ui-toast--all-tones', mustShow: 'Deleted Harbor Light' },
+  { id: 'app-deleteaction--open', mustShow: 'It goes to Deleted, and Restore brings it back.' },
+  { id: 'app-feedback--all-states', mustShow: 'Checked 12 · 2 deals' },
   // Invalid fields with their typed values, on a card (4.63.2).
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
@@ -313,6 +319,14 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  // Each toast's icon in its tone on the popover surface (4.90), and the
+  // offline bar's, an action error's and a job's (the spinner and check).
+  {
+    id: 'ui-toast--all-tones',
+    open: (page) => page.locator('[data-sonner-toast]').nth(4).waitFor(),
+    shows: '[data-sonner-toaster]',
+  },
+  { id: 'app-feedback--all-states' },
   // The ring's arc, the step bar's filled steps, the star in each shape.
   { id: 'patterns-scales--default' },
   { id: 'app-banners--default' },

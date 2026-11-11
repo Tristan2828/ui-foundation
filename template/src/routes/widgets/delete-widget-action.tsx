@@ -1,78 +1,29 @@
-// Delete, in the widget view's header, an icon (IconAction): a confirm dialog, then the caller
-// leaves the page (onDeleted), since the record it shows is gone. The
-// dialog stays open on a failed delete, with a toast saying why. The
-// delete is soft (issue #137), so the success toast offers Undo, which
-// restores the widget.
-import { Trash2Icon } from 'lucide-react'
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { IconAction } from '@tristan2828/ui-foundation'
-import { Button } from '@tristan2828/ui-foundation/ui/button'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@tristan2828/ui-foundation/ui/dialog'
-import { Spinner } from '@tristan2828/ui-foundation/ui/spinner'
+// Delete, in the widget view's header: the foundation's DeleteAction (the
+// dialogs and feedback standard D1). An icon opens the confirm, which
+// says the delete is soft ("It goes to Deleted, and Restore brings it
+// back."); a failed delete keeps it open with the reason and Try again.
+// Once it's deleted, the caller leaves the page (onDeleted) and the toast
+// "Deleted <name>" offers Undo, which restores the widget.
+import { DeleteAction } from '@tristan2828/ui-foundation'
 import type { components } from '@/api/schema'
 import { useDeleteWidgetMutation, useRestoreWidgetMutation } from './use-widgets'
 
 type Widget = components['schemas']['Widget']
 
 export function DeleteWidgetAction({ widget, onDeleted }: { widget: Widget; onDeleted: () => void }) {
-  const [open, setOpen] = useState(false)
   const deleteWidget = useDeleteWidgetMutation()
   const restoreWidget = useRestoreWidgetMutation()
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete {widget.name}?</DialogTitle>
-          <DialogDescription>You can undo this right after.</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-          <Button
-            variant="destructive"
-            disabled={deleteWidget.isPending}
-            onClick={() => {
-              deleteWidget.mutate(widget.id, {
-                onSuccess: () => {
-                  toast.success(`${widget.name} deleted`, {
-                    action: {
-                      label: 'Undo',
-                      // mutateAsync, not mutate's callbacks: this component is
-                      // gone (onDeleted left the page) by the time Undo is clicked,
-                      // and a mutation's callbacks don't run for an unmounted one.
-                      onClick: () => {
-                        restoreWidget
-                          .mutateAsync(widget.id)
-                          .then(() => toast.success(`${widget.name} restored`))
-                          .catch((error: Error) => toast.error(error.message))
-                      },
-                    },
-                  })
-                  setOpen(false)
-                  onDeleted()
-                },
-                onError: (error) => {
-                  toast.error(error.message)
-                },
-              })
-            }}
-          >
-            {deleteWidget.isPending && <Spinner className="size-4" />}
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DeleteAction
+      name={widget.name}
+      kind="soft"
+      // mutateAsync, not mutate's callbacks: the view is gone (onDeleted
+      // left the page) by the time Undo is pressed, and a mutation's
+      // callbacks don't run for an unmounted one.
+      onDelete={() => deleteWidget.mutateAsync(widget.id)}
+      onRestore={() => restoreWidget.mutateAsync(widget.id)}
+      onDeleted={onDeleted}
+    />
   )
 }

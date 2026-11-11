@@ -3,18 +3,26 @@
 // AppError{kind:'network'} instead of letting a raw fetch error escape. This
 // is the anti-corruption layer's error seam (docs/ARCHITECTURE.md).
 import { apiFetch, type ApiResponse } from "../transport";
+import { reportAnswered, reportUnreachable } from "../../lib/connection";
 import type { AppError } from "../contracts";
 import type { components } from "../schema";
 
 type ValidationErrorBody = components["schemas"]["ValidationErrorBody"];
 type HTTPErrorBody = components["schemas"]["HTTPErrorBody"];
 
+// Each request also tells the connection store (lib/connection.ts) whether
+// it got an answer, for OfflineNotice. A request cancelled on purpose (an
+// AbortSignal: a query superseded or unmounted) says nothing either way.
 export async function safeFetch(path: string, init?: RequestInit): Promise<ApiResponse> {
+  let response: ApiResponse;
   try {
-    return await apiFetch(path, init);
-  } catch {
+    response = await apiFetch(path, init);
+  } catch (error) {
+    if (!(error instanceof DOMException && error.name === "AbortError")) reportUnreachable();
     throw networkError();
   }
+  reportAnswered();
+  return response;
 }
 
 /**
