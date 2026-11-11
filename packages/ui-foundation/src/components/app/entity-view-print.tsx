@@ -18,6 +18,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { PrinterIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { IconAction } from './icon-action'
 import { PrintingContext } from './print-context'
 
 /** What a section marked to print gives the printed copy. */
@@ -82,11 +83,14 @@ function PrintedNotes({ title, subtitle, sections }: { title?: string; subtitle?
  */
 export function PrintNotes({
   label,
+  look = 'icon',
   title,
   subtitle,
   sections,
 }: {
   label: string
+  /** An icon with `label` as its tooltip and name (the default), or a button with its words. */
+  look?: 'icon' | 'words'
   title?: string
   subtitle?: ReactNode
   sections: EntityViewPrintSection[]
@@ -104,10 +108,14 @@ export function PrintNotes({
   }, [printing])
   return (
     <>
-      <Button variant="outline" onClick={() => setPrinting((count) => count + 1)}>
-        <PrinterIcon />
-        {label}
-      </Button>
+      {look === 'icon' ? (
+        <IconAction icon={PrinterIcon} label={label} onClick={() => setPrinting((count) => count + 1)} />
+      ) : (
+        <Button variant="outline" onClick={() => setPrinting((count) => count + 1)}>
+          <PrinterIcon />
+          {label}
+        </Button>
+      )}
       {printing > 0 && <PrintedNotes title={title} subtitle={subtitle} sections={sections} />}
     </>
   )

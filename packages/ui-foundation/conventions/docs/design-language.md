@@ -3,35 +3,36 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 44–111
-- [Glow](#glow) · lines 113–131
-- [Semantic tones](#semantic-tones) · lines 133–161
-- [The three badge styles](#the-three-badge-styles) · lines 163–180
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 182–211
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 213–226
-- [Logos and brand marks](#logos-and-brand-marks) · lines 228–272
-- [Categorical colour](#categorical-colour) · lines 274–344
-- [Heat scale](#heat-scale) · lines 346–407
-- [Depth ramps](#depth-ramps) · lines 409–487
-- [A stored colour](#a-stored-colour) · lines 489–537
-- [Shapes and sizes](#shapes-and-sizes) · lines 539–560
-- [Typography](#typography) · lines 562–682
-  - [Written text (notes)](#written-text-notes) · lines 596–682
-- [Density](#density) · lines 684–770
-  - [Rows on this device](#rows-on-this-device) · lines 743–770
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 772–886
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 888–965
-- [Notices](#notices) · lines 967–995
-- [A value over time](#a-value-over-time) · lines 997–1083
-  - [Several values over time](#several-values-over-time) · lines 1046–1083
-- [A list as a board](#a-list-as-a-board) · lines 1085–1136
-- [A list as cards](#a-list-as-cards) · lines 1138–1184
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1186–1208
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1210–1254
-- [Picking at random](#picking-at-random) · lines 1256–1287
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1289–1356
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1358–1383
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1385–1431
+- [Palettes](#palettes) · lines 45–112
+- [Glow](#glow) · lines 114–132
+- [Semantic tones](#semantic-tones) · lines 134–162
+- [The three badge styles](#the-three-badge-styles) · lines 164–181
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 183–212
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 214–227
+- [Logos and brand marks](#logos-and-brand-marks) · lines 229–273
+- [Categorical colour](#categorical-colour) · lines 275–345
+- [Heat scale](#heat-scale) · lines 347–408
+- [Depth ramps](#depth-ramps) · lines 410–488
+- [A stored colour](#a-stored-colour) · lines 490–538
+- [Shapes and sizes](#shapes-and-sizes) · lines 540–561
+- [Typography](#typography) · lines 563–683
+  - [Written text (notes)](#written-text-notes) · lines 597–683
+- [Density](#density) · lines 685–771
+  - [Rows on this device](#rows-on-this-device) · lines 744–771
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 773–887
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 889–966
+- [Notices](#notices) · lines 968–996
+- [A value over time](#a-value-over-time) · lines 998–1084
+  - [Several values over time](#several-values-over-time) · lines 1047–1084
+- [A list as a board](#a-list-as-a-board) · lines 1086–1137
+- [A list as cards](#a-list-as-cards) · lines 1139–1185
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1187–1216
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1218–1256
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1258–1303
+- [Picking at random](#picking-at-random) · lines 1305–1336
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1338–1405
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1407–1432
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1434–1480
 
 <!-- /index -->
 
@@ -1192,7 +1193,7 @@ row under the header, across the page at every width.
 ```tsx
 <EntityView
   subtitle={<EditableValue label="Goal" edit={goals} layout="inline">{goal}</EditableValue>}
-  strip={<KeyStats stats={[{ label: 'Done', value: '7', hint: 'of 12' }, { label: 'Next step', value: formatPlainDate(next) }]} />}
+  strip={<KeyStats stats={[{ label: 'Done', icon: HashIcon, value: '7', hint: 'of 12' }, { label: 'Next step', icon: CalendarClockIcon, value: formatPlainDate(next) }]} />}
   … />
 ```
 
@@ -1200,24 +1201,71 @@ row under the header, across the page at every width.
   value in the section title's size and tabular figures, a `hint`
   under it in caption type. One bordered card, the figures side by side,
   wrapping on a phone. A `<dl>`, so each label is read with its value.
-- **An empty value reads as `emptyLabel`** ("Not set"), in body type and
-  muted, never a blank or a dash.
+- **An icon with the word** (`icon`, 4.81): the concept's icon at 13px
+  before the label, in the label's muted tone, one icon per meaning
+  across the app (Lucide: a date `CalendarIcon`, next and review on
+  `CalendarClockIcon`, when and length `ClockIcon`, a count `HashIcon`,
+  status `CircleDotIcon`, price `DollarSignIcon`). The word stays; the
+  icon is decorative. Never an icon alone in the strip.
+- **An empty value reads as a dash** (`emptyLabel`, 4.81; "Not set"
+  before), in body type and muted, read by a screen reader as "Not set".
+  Never a blank.
 - **Three to five.** It's what the page is for at a glance; anything
   more is a section's label/value rows.
 - **`subtitle`** is the line under the title: what the record is for,
   in muted body type, editable in place like any value.
 
+## A record's header and empty values
+
+The record page standard (4.81): the same header on every record, the
+data on each its own.
+
+```tsx
+<EntityView
+  title={name}
+  badges={<><StatusSelect … /><Badge variant="outline">Wholesale</Badge></>}
+  subtitle={summary}
+  actions={<><Button variant="outline"><PlusIcon />New order</Button><DeleteSupplier … /></>}
+  emptyFields="fold"
+  … />
+// Delete: <DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />
+```
+
+- **The title's line**: the title, then the status and badges after it
+  (12px apart, 6px between badges), centred on the title's line; a title
+  too long for both pushes them to the next line, starting under it.
+  `subtitle` is the line below, in muted body type.
+- **Actions**: the record's own commands in words (New visit, Mark
+  done), then the universal ones as `IconAction`s: Print notes
+  (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
+  tone). Each is a square outline button at the header's 36px with its
+  words as both its tooltip and its accessible name. Icon alone is for
+  the universal actions only (Delete, Print notes, Copy link, Pin, Open
+  site, Restore, Open full page, Close, More); everything else keeps its
+  word. `printLook="words"` keeps Print notes as a button with its words.
+- **An empty value** reads as a dash (`emptyText`, default `'—'`), in the
+  muted text tone, read by a screen reader as "Not set": the same on
+  every field, the presets' included. A field's own `emptyLabel` still
+  wins where words say more than a dash ("No budget yet").
+- **Folded empties** (`emptyFields="fold"`): each fields card lists its
+  filled fields, then a muted, underlined "N empty" with a down chevron
+  under them opens the rest in their places, each still edited in place,
+  and reads "Hide empty" (the chevron up) while open. A card with
+  nothing empty has no toggle; one with nothing filled has the toggle
+  alone. A value set elsewhere moves its field into the card at once.
+  The fold is per card and isn't remembered.
+
 ## A record's tabs, mark and rail
 
-Three opt-ins on `EntityView` (4.76), each for a record that needs it;
-a record without them is as it was.
+Three settings on `EntityView` (4.76): tabs and a mark, each for a
+record that needs it, and rail fields beside their labels, the default
+since 4.81.
 
 ```tsx
 <EntityView
   layout="rail"
   mobileOrder="main-first"
   leading={<img src={photo} alt="" className="size-12 rounded-full object-cover" />}
-  railFields="beside"
   sections={[
     { title: 'Summary', placement: 'rail', fields },
     { title: 'Notes', content: <Markdown>{notes}</Markdown> },
@@ -1247,7 +1295,8 @@ a record without them is as it was.
   the title names the record (`alt=""`, `aria-hidden`); initials in
   foreground on `bg-muted`, an icon in muted foreground on the card
   with its border. "Logos and brand marks" above holds for a logo here.
-- **Rail fields beside** (`railFields="beside"`): the label in a 6 to
+- **Rail fields beside** (`railFields`, `beside` by default since 4.81;
+  `stacked` puts each label above its value): the label in a 6 to
   7rem column left of its value, baseline-aligned, rows a little tighter
   than stacked. Where the rail's list is under 18rem (a phone narrower
   than ~350px) it stacks as before, and once the rail stacks full width

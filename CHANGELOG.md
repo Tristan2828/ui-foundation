@@ -7,6 +7,65 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.81.0 — The record page standard in EntityView
+
+The UI package only; no new dependency (the backend package's version
+moves with it, unchanged). New props are additive, but **four defaults
+change what every record looks like** with no code change: read "Visible
+changes" before upgrading.
+
+New:
+
+- **`IconAction`**: a command as its icon alone, an outline square
+  button at the header's 36px (`size="sm"`: 32px), its `label` both the
+  tooltip and the accessible name, `tone="destructive"` for Delete. It
+  takes every `Button` prop, so it is a dialog's trigger as is:
+  `<DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />`.
+  For the universal actions only (Delete, Print notes, Copy link, Pin, Open
+  site, Restore, More); a record's own commands stay in words.
+- **`KeyStat.icon`**: the concept's icon (an `IconComponent`) at 13px
+  before a strip label's word, in its muted tone, decorative.
+- **`EntityView emptyFields="fold"`**: each fields card (rail or main)
+  lists its filled fields, then "N empty" opens the rest in their places,
+  still edited in place; open, it reads "Hide empty". A value set
+  elsewhere moves its field into the card. Default `show`.
+- **`EntityView emptyText`**: what an empty value reads as across the
+  view (a field's or block's own `emptyLabel` still wins). Default `'—'`.
+- **`EntityView printLook`**: `icon` (the default) or `words`, the old
+  Print notes button. Also the types `EntityViewEmptyFields` and
+  `IconActionProps`.
+
+Visible changes:
+
+- **`badges` move onto the title's line**, after the title, wrapping
+  under a title too long for both; `subtitle` is now under them both
+  (before: title, subtitle, then badges).
+- **Print notes is an icon**, its words the tooltip and name. A test that
+  finds it by role and name (`getByRole('button', { name: 'Print notes' })`)
+  still does; one reading its text doesn't. `printLook="words"` keeps the
+  old button.
+- **`railFields` defaults to `beside`** (it was `stacked`): every rail's
+  labels sit left of their values, stacked again where the rail's list is
+  under 18rem. A test measuring a rail label above its value fails; pass
+  `railFields="stacked"` for the old look.
+- **An empty value reads as a dash** (it read "Not set"), in the muted
+  tone, read by a screen reader as "Not set", in `EntityView` (the
+  `inPlace` presets' fields included) and `KeyStats`. A field's own
+  `emptyLabel` reads as before. A test expecting the text "Not set" on a
+  record now finds "—" (and "Not set" only as hidden text).
+
+How an app adopts it:
+
+1. Bump `@tristan2828/ui-foundation` to `^4.81.0` (and
+   `ui-foundation-backend==4.81.0`) and run `ui-foundation sync` (the docs change).
+2. Look at a record with badges, a rail and empty fields at a desktop
+   and a phone width. Update e2e that measured stacked rail labels or
+   read "Not set" or "Print notes" as text, or opt out per view
+   (`railFields="stacked"`, `emptyText="Not set"`, `printLook="words"`).
+3. Move each record's Delete to `IconAction` (the template's
+   `delete-widget-action.tsx` shows it), and add `icon` to the strip's
+   stats and `emptyFields="fold"` where the plan says so.
+
 ## 4.80.0 — The navigation standard in AppShell
 
 The UI package only; additive (the backend package's version moves with
