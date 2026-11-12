@@ -4,28 +4,28 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 44–66
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–832
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–848
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
   - Step 2: `npm run gen:api` · lines 118–119
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 132–141
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–719
-  - Step 7: Register routes · lines 720–735
-  - Step 8: Add Playwright specs for all three screens · lines 736–814
-  - Step 9: Register the nav entry and route names · lines 815–829
-  - Step 10: `npm run verify`. · lines 830–832
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 834–1153
-  - [The record view](#the-record-view) · lines 983–1031
-  - [Forms](#forms) · lines 1033–1085
-  - [Dialogs](#dialogs) · lines 1087–1112
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1114–1153
-- [What not to copy](#what-not-to-copy) · lines 1155–1181
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1183–1200
-- [Deleting](#deleting) · lines 1202–1233
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1235–1256
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1258–1267
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1270–1312
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–735
+  - Step 7: Register routes · lines 736–751
+  - Step 8: Add Playwright specs for all three screens · lines 752–830
+  - Step 9: Register the nav entry and route names · lines 831–845
+  - Step 10: `npm run verify`. · lines 846–848
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 850–1169
+  - [The record view](#the-record-view) · lines 999–1047
+  - [Forms](#forms) · lines 1049–1101
+  - [Dialogs](#dialogs) · lines 1103–1128
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1130–1169
+- [What not to copy](#what-not-to-copy) · lines 1171–1197
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1199–1216
+- [Deleting](#deleting) · lines 1218–1249
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1251–1272
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1274–1283
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1286–1328
 
 <!-- /index -->
 
@@ -251,6 +251,22 @@ is a filled-in example while the Widgets demo is still here).
    rewritten to `'MM-DD'` by a migration; one it can't read stays as
    written, and the field shows it as written with nothing picked, refused
    until a day is picked.
+
+   **A `recurrence`** (how something repeats: a chore, a reminder, a
+   task) is the foundation's `Recurrence` schema: copy it from the
+   package's `openapi/foundation.yaml` into `components.schemas` (it's
+   `x-optional`, so `check-contract` holds it to the foundation's shape
+   once it's there) and reference it, nullable when it may not repeat.
+   On the form it's the foundation's `RecurrenceField` in a `Controller`
+   (presets, a phrase read as it's typed, and a preview of the next five);
+   the schema checks it with `recurrenceProblem(value)`, and a phrase the
+   field can't read gives `null`, so a required one is refused. The table
+   shows `formatRecurrence(value)` and a Next column (cell pattern 27);
+   editing in place is `inPlace.recurrence({ value, save })`. The backend
+   column is JSON, read and checked with
+   `foundation_backend.recurrence.Recurrence` (a 422 on the field for a
+   rule it refuses); `next_after` and `occurrences` say when it falls
+   (reminders.md "Repeating reminders").
 
    **An image on a record** (a photo of it) is the stored file's id on the
    wire (`string`, nullable), and on the form the foundation's

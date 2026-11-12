@@ -161,6 +161,20 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `cryptography`, the optional `push` extra, the backend's one crypto
   dependency, by decision on #167), only to the browsers' push services,
   and the `send-reminders` job sends each due row of `reminders`.
+- **Repeating schedules** (4.95, #326) are one rule on both sides: the
+  contract's `Recurrence` (an RFC 5545 RRULE without DTSTART, a start
+  day, times of day, an IANA zone, from completion or not), an
+  `x-optional` component an app's schemas reference. The package's
+  `lib/recurrence.ts` (npm `rrule`) and `foundation_backend.recurrence`
+  (python-dateutil) walk only the days, as midnights with no zone, then
+  put each day's times on them in the zone, so neither library's time
+  zone handling is used and a DST change can't move a time. Both read
+  one fixture (`packages/ui-foundation/tests/fixtures/recurrence-cases.json`).
+  Both libraries check UNTIL only on a day they find, so a rule that can
+  never fall (a 30th of February) is refused before either walks.
+  `RecurrenceField` reads a phrase as it's typed
+  (`lib/recurrence-phrase.ts`); the `send-reminders` job follows a row's
+  `recurrence` occurrence by occurrence (`recurrence.step`).
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps
@@ -331,7 +345,8 @@ production start-up checks, the SPA mount, the routers for `/auth/*`,
 foundation_backend.scripts.<name>`), and since 4.35 (#230) AI chats'
 tools and `/mcp` (`mcp`, `mcp_tools`, `routers.mcp`), the scheduled jobs
 (`jobs`, `routers.jobs`), Web Push and reminders (`push`, `reminders`,
-`routers.push`, the `push` extra), their tables (`mcp_audit_log`,
+`routers.push`, the `push` extra), repeating schedules (`recurrence`,
+`recurrence_models`, 4.95), their tables (`mcp_audit_log`,
 `job_runs`, `push_subscriptions`, `reminders`) and scripts, the Python dependency check
 (`scripts.check_deps`: `backend/pyproject.toml` against
 `deps-allowlist.json`'s `python` list, run by the app's `verify.sh`), the `signed_in` test helper, and
