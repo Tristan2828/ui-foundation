@@ -1,7 +1,12 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import type { ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
+import { PencilIcon, Trash2Icon } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import { EqualItems, type EqualItem, type EqualItemsLook } from './equal-items'
+import { IconAction } from './icon-action'
 
 // A few equal things in a record (R10), all made up: the three phases of a
 // training plan and three options (Basic, Plus, Pro), each in the four
@@ -212,6 +217,114 @@ export const SevenItems: StoryObj = {
     <div className="flex flex-col gap-6">
       {LOOKS.map((look) => (
         <div key={look}>{one(look, SEVEN, `Seven items, ${look}`, { featuredId: 's4' })}</div>
+      ))}
+    </div>
+  ),
+}
+
+// An item's own content and actions (4.94): the stores a price is
+// compared at, each with Edit and Remove at its title line's end (the
+// table's last column). Edit swaps the item's fields for an editor of
+// several fields, as its `content`, and makes it `wide`: the whole row of
+// cards or panels, never the label/value grid's narrow value column. One
+// starts open so every look shows an editor. e2e/equal-items.spec.ts
+// measures the editor's width and uses Edit, Save and Remove.
+type Store = { id: string; name: string; price: string; delivery: string }
+
+const STORES: Store[] = [
+  { id: 'corner', name: 'Corner Hardware', price: '$42.00', delivery: 'Next day' },
+  { id: 'northwind', name: 'Northwind Lumber', price: '$38.50', delivery: '3 days' },
+  { id: 'example', name: 'Example Supply', price: '$40.25', delivery: '' },
+]
+
+function StoreEditor({ store, onSave, onCancel }: { store: Store; onSave: (next: Store) => void; onCancel: () => void }) {
+  const [draft, setDraft] = useState(store)
+  const id = useId()
+  const field = (key: 'name' | 'price' | 'delivery', label: string) => (
+    <Field>
+      <FieldLabel htmlFor={`${id}-${key}`}>{label}</FieldLabel>
+      <Input id={`${id}-${key}`} value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} />
+    </Field>
+  )
+  return (
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSave(draft)
+      }}
+    >
+      <FieldGroup className="sm:flex-row sm:[&>*]:flex-1">
+        {field('name', 'Store')}
+        {field('price', 'Price')}
+        {field('delivery', 'Delivery')}
+      </FieldGroup>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm">
+          Save
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+function StoresWithEditor({ look }: { look: EqualItemsLook }) {
+  const [stores, setStores] = useState(STORES)
+  const [editing, setEditing] = useState<string | null>('northwind')
+  const items: EqualItem[] = stores.map((store) => {
+    const open = editing === store.id
+    return {
+      id: store.id,
+      title: store.name,
+      state: store.id === 'northwind' ? { label: 'Cheapest', tone: 'success' } : undefined,
+      fields: open
+        ? undefined
+        : [
+            { label: 'Price', value: store.price },
+            { label: 'Delivery', value: store.delivery },
+          ],
+      wide: open,
+      content: open && (
+        <StoreEditor
+          store={store}
+          onCancel={() => setEditing(null)}
+          onSave={(next) => {
+            setStores((all) => all.map((one) => (one.id === next.id ? next : one)))
+            setEditing(null)
+          }}
+        />
+      ),
+      actions: (
+        <>
+          <IconAction icon={PencilIcon} label={`Edit ${store.name}`} size="sm" variant="ghost" onClick={() => setEditing(store.id)} />
+          <IconAction
+            icon={Trash2Icon}
+            label={`Remove ${store.name}`}
+            tone="destructive"
+            size="sm"
+            variant="ghost"
+            onClick={() => setStores((all) => all.filter((one) => one.id !== store.id))}
+          />
+        </>
+      ),
+    }
+  })
+  return (
+    <InSection title={`Stores, ${look}`}>
+      <EqualItems look={look} items={items} label={`Stores, ${look}`} featuredId="northwind" defaultOpenIds={['corner']} />
+    </InSection>
+  )
+}
+
+export const ContentAndActions: StoryObj = {
+  name: 'Content and actions',
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {LOOKS.map((look) => (
+        <StoresWithEditor key={look} look={look} />
       ))}
     </div>
   ),

@@ -296,7 +296,11 @@ export function EditableField({
           'group/editable relative cursor-text items-start gap-1',
           // A row: the row (editRowClass) wears the hover, not the value.
           !row && '-mx-1.5 rounded-md px-1.5 transition-colors hover:bg-muted has-[[data-edit]:focus-visible]:bg-muted',
-          layout === 'block' ? 'flex w-full' : 'inline-flex max-w-full align-top',
+          // Inline, the cap is its column plus the 0.75rem the negative
+          // margins give back: a parent sized to its content (a title on
+          // its line) is sized to the margin box, 0.75rem under the box,
+          // and `max-w-full` then wrapped a short value mid-word (4.94).
+          layout === 'block' ? 'flex w-full' : cn('inline-flex align-top', row ? 'max-w-full' : 'max-w-[calc(100%+0.75rem)]'),
           className,
         )}
       >

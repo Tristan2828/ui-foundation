@@ -104,3 +104,68 @@ test.describe('widths', () => {
     }
   })
 })
+
+// An item's own content and actions (app/EqualItems "Content and
+// actions"): the open editor takes the item's full width, never the
+// label/value grid's value column, and Edit, Save and Remove work.
+test.describe('content and actions', () => {
+  const sets = ['cards', 'table', 'featured', 'panels'] as const
+  // The look's own container: a list, a table or a group.
+  const set = (page: import('@playwright/test').Page, look: (typeof sets)[number]) =>
+    page.locator('[data-slot="equal-items"]').nth(sets.indexOf(look))
+
+  for (const width of [1280, 375]) {
+    test(`${width}px: the editor takes the item's full width in every look`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto(story('content-and-actions'))
+      for (const look of sets) {
+        const outer = (await set(page, look).boundingBox())!
+        const editor = (await set(page, look).locator('[data-slot="equal-item-content"] form').boundingBox())!
+        // Inside the item's padding (and the table cell's, or a toggle's
+        // indent), so within 5rem of the set's own width.
+        expect(editor.width, look).toBeGreaterThan(outer.width - 80)
+        expect(editor.x + editor.width, look).toBeLessThanOrEqual(outer.x + outer.width + 1)
+      }
+      expect(await noPageScroll(page)).toBe(true)
+    })
+  }
+
+  test('1280px: the open editor is wide, the others sit side by side under it', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto(story('content-and-actions'))
+    for (const look of ['cards', 'panels'] as const) {
+      const items = set(page, look).locator('[data-slot="equal-item"]')
+      const boxes = await items.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as DOMRect))
+      const list = (await set(page, look).boundingBox())!
+      expect(boxes[1]!.width, look).toBeGreaterThan(list.width - 2)
+      expect(Math.round(boxes[0]!.top), look).toBeLessThan(Math.round(boxes[1]!.top))
+    }
+  })
+
+  test("the actions are the item's own, beside a featured toggle, never inside it", async ({ page }) => {
+    await page.goto(story('content-and-actions'))
+    const table = page.getByRole('table', { name: 'Stores, table' })
+    await expect(table.getByRole('columnheader', { name: 'Actions' })).toHaveCount(1)
+    await expect(table.getByRole('row', { name: /Corner Hardware/ }).getByRole('button', { name: 'Edit Corner Hardware' })).toBeVisible()
+
+    const featured = set(page, 'featured')
+    const toggle = featured.getByRole('button', { name: 'Corner Hardware', exact: true })
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await expect(toggle.getByRole('button')).toHaveCount(0)
+    await expect(featured.getByRole('button', { name: 'Remove Corner Hardware' })).toBeVisible()
+  })
+
+  test('Edit opens the editor in the item, Save shows the new value, Remove takes it out', async ({ page }) => {
+    await page.goto(story('content-and-actions'))
+    const cards = page.getByRole('list', { name: 'Stores, cards' })
+    await cards.getByRole('button', { name: 'Edit Corner Hardware' }).click()
+    const form = cards.getByRole('listitem').filter({ hasText: 'Corner Hardware' }).locator('form')
+    await form.getByLabel('Price').fill('$39.00')
+    await form.getByRole('button', { name: 'Save' }).click()
+    await expect(form).toHaveCount(0)
+    await expect(cards.getByRole('listitem').filter({ hasText: 'Corner Hardware' }).getByText('$39.00')).toBeVisible()
+
+    await cards.getByRole('button', { name: 'Remove Example Supply' }).click()
+    await expect(cards.getByRole('heading', { level: 3 })).toHaveText(['Corner Hardware', 'Northwind Lumber'])
+  })
+})

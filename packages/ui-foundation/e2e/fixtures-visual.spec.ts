@@ -172,6 +172,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-equalitems--no-fields', mustShow: 'No fields, panels' },
   { id: 'app-equalitems--one-item', mustShow: 'One item, panels' },
   { id: 'app-equalitems--seven-items', mustShow: 'Seven items, panels' },
+  { id: 'app-equalitems--content-and-actions', mustShow: 'Stores, panels' },
   { id: 'app-needsyou--default', mustShow: 'Needs you today' },
   { id: 'app-freshness--default', mustShow: 'Projection from' },
   { id: 'app-partempty--default', mustShow: 'Add the first line' },
@@ -186,6 +187,8 @@ const COMPOSITE_STORIES = [
   // Delete as icons, the strip's icons, folded empties and the dash.
   { id: 'app-entityview--record-standard', mustShow: 'Timber and sheet goods' },
   { id: 'app-entityview--record-standard-long-title', mustShow: 'far side of the river' },
+  { id: 'app-entityview--record-standard-editable-title', mustShow: 'Dr. Example' },
+  { id: 'app-entityview--record-standard-editable-long-title', mustShow: 'far side of the river' },
   // <Notice>: every tone's wash, on the page and on a card.
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).

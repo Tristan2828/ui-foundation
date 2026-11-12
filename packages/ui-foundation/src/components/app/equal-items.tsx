@@ -21,7 +21,14 @@
 // value is the record's dash, read as "Not set". It owns its empty states:
 // no items reads `emptyText` ("Nothing yet"), an item with no fields
 // `noFieldsText` ("No details").
-import { useState, type ReactNode } from 'react'
+//
+// An item can carry its own parts too (4.94): `content`, anything of the
+// app's (an editor of several fields, a note, a chart), drawn under its
+// fields at the item's full width, never in the label/value grid; and
+// `actions`, its own buttons (Edit, Remove), at the end of its title line,
+// or the table's last column. `wide` gives an item the whole row in
+// `cards` and `panels`, for content that needs it (an editor open).
+import { Fragment, useState, type ReactNode } from 'react'
 import { ChevronDownIcon } from 'lucide-react'
 import { cn } from 'cn'
 import { Badge } from '@/components/ui/badge'
@@ -64,8 +71,22 @@ export type EqualItem = {
   title: string
   /** A small status, as a badge: words alone are a neutral one. */
   state?: string | EqualItemState
-  /** Its details, in order. None reads as `noFieldsText`. */
+  /** Its details, in order. None (and no `content`) reads as `noFieldsText`. */
   fields?: readonly EqualItemField[]
+  /**
+   * Anything of the app's, under the fields at the item's full width (an
+   * editor of several fields, a note): never squeezed into the label/value
+   * grid. In the `table` look, a row of its own under the item's.
+   */
+  content?: ReactNode
+  /**
+   * The item's own buttons (Edit, Remove), small and named for the item
+   * ("Edit Phase 2"): at the end of its title line, beside a featured
+   * toggle's button (never inside it), or the `table` look's last column.
+   */
+  actions?: ReactNode
+  /** The whole row in the `cards` and `panels` looks (an editor open in it). */
+  wide?: boolean
 }
 
 export type EqualItemsProps = {
@@ -90,6 +111,8 @@ export type EqualItemsProps = {
   titleColumn?: string
   /** For `look="table"`: the state column's heading. Defaults to "Status". */
   stateColumn?: string
+  /** For `look="table"`: the actions column's heading, for screen readers. Defaults to "Actions". */
+  actionsColumn?: string
   /** What no items says. Defaults to "Nothing yet". */
   emptyText?: string
   /** What an item with no fields says. Defaults to "No details". */
@@ -172,13 +195,55 @@ function Fields({
 
 type Level = NonNullable<EqualItemsProps['headingLevel']>
 
+const hasPart = (part: ReactNode) => part !== undefined && part !== null && part !== false
+
+function Actions({ actions, className }: { actions: ReactNode; className?: string }) {
+  if (!hasPart(actions)) return null
+  return (
+    <div data-slot="equal-item-actions" className={cn('flex shrink-0 flex-wrap items-center justify-end gap-1', className)}>
+      {actions}
+    </div>
+  )
+}
+
+// The title and its state, then the item's actions at the line's end.
 function Title({ item, level, className }: { item: EqualItem; level: Level; className?: string }) {
   const Heading = `h${level}` as const
-  return (
-    <div className={cn('flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1', className)}>
+  const withActions = hasPart(item.actions)
+  const heading = (
+    <div className={cn('flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1', withActions ? 'flex-1' : className)}>
       <Heading className="min-w-0 type-body font-semibold break-words text-foreground">{item.title}</Heading>
       <StateBadge state={item.state} />
     </div>
+  )
+  if (!withActions) return heading
+  return (
+    <div className={cn('flex min-w-0 items-start gap-2', className)}>
+      {heading}
+      <Actions actions={item.actions} className="-my-1" />
+    </div>
+  )
+}
+
+// An item's body: its fields, then its own content at full width. Content
+// alone needs no fields, and reads no "No details".
+function Body({
+  item,
+  noFieldsText,
+  rows,
+}: {
+  item: EqualItem
+  noFieldsText: string
+  rows: 'beside' | 'stacked' | 'compact'
+}) {
+  if (!hasPart(item.content)) return <Fields fields={item.fields} noFieldsText={noFieldsText} rows={rows} />
+  return (
+    <>
+      {item.fields && item.fields.length > 0 && <Fields fields={item.fields} noFieldsText={noFieldsText} rows={rows} />}
+      <div data-slot="equal-item-content" className="min-w-0">
+        {item.content}
+      </div>
+    </>
   )
 }
 
@@ -194,10 +259,14 @@ function Cards({ items, label, level, noFieldsText }: LookProps) {
         <li
           key={item.id}
           data-slot="equal-item"
-          className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4 text-card-foreground"
+          data-wide={item.wide ? '' : undefined}
+          className={cn(
+            'flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4 text-card-foreground',
+            item.wide && 'col-span-full',
+          )}
         >
           <Title item={item} level={level} />
-          <Fields fields={item.fields} noFieldsText={noFieldsText} rows="compact" />
+          <Body item={item} noFieldsText={noFieldsText} rows="compact" />
         </li>
       ))}
     </ul>
@@ -214,11 +283,15 @@ function Panels({ items, label, level, noFieldsText }: LookProps) {
         <li
           key={item.id}
           data-slot="equal-item"
-          className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground"
+          data-wide={item.wide ? '' : undefined}
+          className={cn(
+            'flex min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground',
+            item.wide && 'col-span-full',
+          )}
         >
           <Title item={item} level={level} className="border-b border-border bg-muted/40 px-4 py-3" />
-          <div className="px-4 py-3">
-            <Fields fields={item.fields} noFieldsText={noFieldsText} rows="stacked" />
+          <div className="flex flex-col gap-3 px-4 py-3">
+            <Body item={item} noFieldsText={noFieldsText} rows="stacked" />
           </div>
         </li>
       ))}
@@ -233,12 +306,15 @@ function ItemsTable({
   label,
   titleColumn,
   stateColumn,
-}: Omit<LookProps, 'level' | 'noFieldsText'> & { titleColumn: string; stateColumn: string }) {
+  actionsColumn,
+}: Omit<LookProps, 'level' | 'noFieldsText'> & { titleColumn: string; stateColumn: string; actionsColumn: string }) {
   const columns: string[] = []
   for (const item of items) for (const field of item.fields ?? []) if (!columns.includes(field.label)) columns.push(field.label)
   const hasState = items.some((item) => stateOf(item.state))
+  const hasActions = items.some((item) => hasPart(item.actions))
+  const span = 1 + (hasState ? 1 : 0) + columns.length + (hasActions ? 1 : 0)
   return (
-    <div data-slot="equal-items-table" className="rounded-lg border border-border bg-card text-card-foreground">
+    <div data-slot="equal-items-table" className="@container/equal-table rounded-lg border border-border bg-card text-card-foreground">
       <Table>
         <caption className="sr-only">{label}</caption>
         <TableHeader>
@@ -256,28 +332,55 @@ function ItemsTable({
                 {column}
               </TableHead>
             ))}
+            {hasActions && (
+              <TableHead scope="col">
+                <span className="sr-only">{actionsColumn}</span>
+              </TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody className="[&_tr:nth-child(even)]:bg-transparent">
           {items.map((item) => (
-            <TableRow key={item.id} data-slot="equal-item">
-              <TableHead
-                scope="row"
-                className="h-auto min-w-28 py-(--table-cell-py) font-semibold sm:min-w-40 break-words whitespace-normal"
-              >
-                {item.title}
-              </TableHead>
-              {hasState && (
-                <TableCell>
-                  {stateOf(item.state) ? <StateBadge state={item.state} /> : <EmptyText text={EMPTY_DASH} />}
-                </TableCell>
+            <Fragment key={item.id}>
+              <TableRow data-slot="equal-item" className={cn(hasPart(item.content) && 'border-b-0')}>
+                <TableHead
+                  scope="row"
+                  className="h-auto min-w-28 py-(--table-cell-py) font-semibold sm:min-w-40 break-words whitespace-normal"
+                >
+                  {item.title}
+                </TableHead>
+                {hasState && (
+                  <TableCell>
+                    {stateOf(item.state) ? <StateBadge state={item.state} /> : <EmptyText text={EMPTY_DASH} />}
+                  </TableCell>
+                )}
+                {columns.map((column) => (
+                  <TableCell key={column} className="type-body tabular-nums">
+                    <Value value={item.fields?.find((field) => field.label === column)?.value} />
+                  </TableCell>
+                ))}
+                {hasActions && (
+                  <TableCell className="w-0 py-1">
+                    <Actions actions={item.actions} className="flex-nowrap" />
+                  </TableCell>
+                )}
+              </TableRow>
+              {/* The item's own content: a row under its own, as wide as the
+                table's box (not its scroll width, on a phone), held in view
+                while the table scrolls sideways. */}
+              {hasPart(item.content) && (
+                <TableRow data-slot="equal-item-content-row" className="hover:bg-transparent">
+                  <TableCell colSpan={span} className="pt-0 whitespace-normal">
+                    <div
+                      data-slot="equal-item-content"
+                      className="sticky left-(--table-cell-px) w-[calc(100cqw-var(--table-cell-px)*2)] min-w-0"
+                    >
+                      {item.content}
+                    </div>
+                  </TableCell>
+                </TableRow>
               )}
-              {columns.map((column) => (
-                <TableCell key={column} className="type-body tabular-nums">
-                  <Value value={item.fields?.find((field) => field.label === column)?.value} />
-                </TableCell>
-              ))}
-            </TableRow>
+            </Fragment>
           ))}
         </TableBody>
       </Table>
@@ -304,7 +407,7 @@ function Featured({
         className="flex min-w-0 flex-col gap-3 rounded-lg border border-primary bg-card p-4 text-card-foreground"
       >
         <Title item={featured} level={level} />
-        <Fields fields={featured.fields} noFieldsText={noFieldsText} rows="beside" />
+        <Body item={featured} noFieldsText={noFieldsText} rows="beside" />
       </section>
       {rest.length > 0 && (
         <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-card text-card-foreground">
@@ -342,23 +445,27 @@ function FeaturedToggle({
   return (
     <li data-slot="equal-item">
       <Collapsible open={open} onOpenChange={setOpen}>
-        <Heading className="m-0">
-          <CollapsibleTrigger
-            data-slot="equal-item-toggle"
-            className="flex min-h-11 w-full items-center gap-2 px-4 py-2 text-left outline-none hover:bg-muted/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset"
-          >
-            <ChevronDownIcon
-              aria-hidden="true"
-              className={cn('size-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')}
-            />
-            <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="min-w-0 type-body font-semibold break-words text-foreground">{item.title}</span>
-              <StateBadge state={item.state} />
-            </span>
-          </CollapsibleTrigger>
-        </Heading>
-        <CollapsibleContent className="px-4 pt-1 pb-4 pl-10">
-          <Fields fields={item.fields} noFieldsText={noFieldsText} rows="beside" />
+        {/* The item's actions sit beside the toggle, never inside its button. */}
+        <div className="flex min-w-0 items-center">
+          <Heading className="m-0 min-w-0 flex-1">
+            <CollapsibleTrigger
+              data-slot="equal-item-toggle"
+              className="flex min-h-11 w-full items-center gap-2 px-4 py-2 text-left outline-none hover:bg-muted/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset"
+            >
+              <ChevronDownIcon
+                aria-hidden="true"
+                className={cn('size-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')}
+              />
+              <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="min-w-0 type-body font-semibold break-words text-foreground">{item.title}</span>
+                <StateBadge state={item.state} />
+              </span>
+            </CollapsibleTrigger>
+          </Heading>
+          <Actions actions={item.actions} className="pr-4" />
+        </div>
+        <CollapsibleContent className="flex flex-col gap-3 px-4 pt-1 pb-4 pl-10">
+          <Body item={item} noFieldsText={noFieldsText} rows="beside" />
         </CollapsibleContent>
       </Collapsible>
     </li>
@@ -385,7 +492,9 @@ function FeaturedToggle({
  * `cards` for a few things with little to say about each, `table` for
  * things compared on the same values, `featured` when one is current or
  * best, `panels` when each has several details and must read as separate
- * (design-language.md "A few equal things").
+ * (design-language.md "A few equal things"). An item's own `content` (an
+ * editor) goes under its fields at full width, its `actions` (Edit, Remove)
+ * at its title line's end; `wide` gives it the whole row of cards or panels.
  */
 export function EqualItems({
   items,
@@ -396,6 +505,7 @@ export function EqualItems({
   headingLevel = 3,
   titleColumn = 'Name',
   stateColumn = 'Status',
+  actionsColumn = 'Actions',
   emptyText = 'Nothing yet',
   noFieldsText = 'No details',
   className,
@@ -411,7 +521,13 @@ export function EqualItems({
   return (
     <div data-slot="equal-items" data-look={look} className={cn('min-w-0', className)}>
       {look === 'table' ? (
-        <ItemsTable items={items} label={label} titleColumn={titleColumn} stateColumn={stateColumn} />
+        <ItemsTable
+          items={items}
+          label={label}
+          titleColumn={titleColumn}
+          stateColumn={stateColumn}
+          actionsColumn={actionsColumn}
+        />
       ) : look === 'featured' ? (
         <Featured {...shared} featuredId={featuredId} defaultOpenIds={defaultOpenIds} />
       ) : look === 'panels' ? (

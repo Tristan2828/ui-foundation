@@ -15,17 +15,17 @@
   - Step 8: Add Playwright specs for all three screens · lines 736–814
   - Step 9: Register the nav entry and route names · lines 815–829
   - Step 10: `npm run verify`. · lines 830–832
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 834–1150
-  - [The record view](#the-record-view) · lines 983–1028
-  - [Forms](#forms) · lines 1030–1082
-  - [Dialogs](#dialogs) · lines 1084–1109
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1111–1150
-- [What not to copy](#what-not-to-copy) · lines 1152–1178
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1180–1197
-- [Deleting](#deleting) · lines 1199–1230
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1232–1253
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1255–1264
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1267–1306
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 834–1153
+  - [The record view](#the-record-view) · lines 983–1031
+  - [Forms](#forms) · lines 1033–1085
+  - [Dialogs](#dialogs) · lines 1087–1112
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1114–1153
+- [What not to copy](#what-not-to-copy) · lines 1155–1181
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1183–1200
+- [Deleting](#deleting) · lines 1202–1233
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1235–1256
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1258–1267
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1270–1309
 
 <!-- /index -->
 
@@ -1020,7 +1020,10 @@ view reaches them all. A record uses the parts it has, in this order:
   per set: `cards` for little to say about each, `table` for things
   compared on the same values, `featured` when one is current or best,
   `panels` when each has several details (design-language.md "A few
-  equal things"). Never hand-made cards or a grid of their own.
+  equal things"). Never hand-made cards or a grid of their own. An item
+  edited or removed on its own carries its editor as `content` and its
+  Edit and Remove as `actions` (4.94), `wide` while the editor is open;
+  never an editor put in a field's value.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.
 

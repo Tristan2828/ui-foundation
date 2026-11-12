@@ -28,14 +28,14 @@
 - [A list as cards](#a-list-as-cards) · lines 1197–1243
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1245–1274
 - [Parts of the page standards](#parts-of-the-page-standards) · lines 1276–1319
-- [A few equal things](#a-few-equal-things) · lines 1321–1366
-- [An overview page](#an-overview-page) · lines 1368–1431
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1432–1470
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1472–1517
-- [Picking at random](#picking-at-random) · lines 1519–1550
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1552–1619
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1621–1646
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1648–1721
+- [A few equal things](#a-few-equal-things) · lines 1321–1405
+- [An overview page](#an-overview-page) · lines 1407–1470
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1471–1509
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1511–1556
+- [Picking at random](#picking-at-random) · lines 1558–1589
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1591–1658
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1660–1685
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1687–1760
 
 <!-- /index -->
 
@@ -1361,9 +1361,48 @@ one look per set; a fifth is asked for first.
   reader (the list's name, the table's caption); titles are `h3` under a
   section's `h2` (`headingLevel`).
 
+**An item's own content and actions** (4.94). When an item holds more
+than label/value rows (an editor of several fields, a note, a chart), it
+carries them itself, never as a field's value, where the label/value grid
+squeezes them into its narrow value column:
+
+```tsx
+items={stores.map((store) => ({
+  id: store.id,
+  title: store.name,
+  fields: editing === store.id ? undefined : [{ label: 'Price', value: store.price }],
+  content: editing === store.id && <StoreEditor store={store} onDone={stopEditing} />,
+  wide: editing === store.id,
+  actions: (
+    <>
+      <IconAction icon={PencilIcon} label={`Edit ${store.name}`} size="sm" variant="ghost" onClick={() => edit(store.id)} />
+      <IconAction icon={Trash2Icon} label={`Remove ${store.name}`} tone="destructive" size="sm" variant="ghost" onClick={() => remove(store.id)} />
+    </>
+  ),
+}))}
+```
+
+- **`content`** goes under the item's fields at the item's full width (in
+  `table`, a row of its own under the item's, as wide as the table's box
+  and held in view while a phone scrolls the table sideways). An item with
+  content and no fields reads no "No details".
+- **`actions`** are the item's own buttons, at the end of its title line;
+  in `featured` beside the toggle, never inside its button; in `table` a
+  last column, named `actionsColumn` ("Actions") for a screen reader. Icon
+  actions (`IconAction`, a tooltip and a name each) named for the item
+  ("Edit Corner Hardware"), as the record standard's header draws them.
+  A Remove that loses data asks first, as any delete does
+  (add-an-entity.md "Deleting").
+- **`wide`** gives the item the whole row of `cards` or `panels`, for
+  content that needs it: set it while the item's editor is open. The
+  items keep their order; the others wrap around it.
+- **Editing one item swaps its fields for its editor** (the content), then
+  back on Save or Cancel. The set's other items stay as they are.
+
 Measured with axe, the token check and the glyph check in both themes and
-every palette (fixtures `app/EqualItems`), and from the keyboard and at a
-phone's width in `e2e/equal-items.spec.ts`.
+every palette (fixtures `app/EqualItems`, "Content and actions" among
+them), and from the keyboard and at a phone's width in
+`e2e/equal-items.spec.ts`.
 
 ## An overview page
 

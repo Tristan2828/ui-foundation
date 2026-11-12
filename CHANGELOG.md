@@ -7,6 +7,37 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.94.0 — A title edited in place stays whole; an equal item's own editor and actions
+
+The UI package only; additive, no new dependency (the backend package's
+version moves with it, unchanged). Record page standard R1 and R10.
+
+- **Fix: a short value edited in place no longer wraps.** An inline
+  `EditableValue` (EntityView's `titleEdit`, a header badge) was capped
+  0.75rem narrower than its own text: its hover tint's negative margins
+  shrank what its line was sized to, and `max-w-full` then cut it short,
+  so "Dr. Example" read "Dr. / Example". The cap now gives those margins
+  back; a short title stays on one line and a long one still wraps
+  between words within its column, at desktop and 375px.
+- **`EqualItem.content`**: anything of the app's (an editor of several
+  fields, a note) under the item's fields at its full width, never in the
+  label/value grid. In `table`, a row of its own under the item's, as wide
+  as the table's box and held in view while a phone scrolls the table.
+- **`EqualItem.actions`**: the item's own buttons (Edit, Remove) at the
+  end of its title line; beside a featured toggle (never inside its
+  button); in `table` a last column, named by the new `actionsColumn`
+  prop ("Actions").
+- **`EqualItem.wide`**: the item takes the whole row of `cards` or
+  `panels`, for an editor open in it.
+- Docs: design-language.md "A few equal things" ("An item's own content
+  and actions"), add-an-entity.md "The record view", cell-patterns.md
+  "Editable value".
+
+To take it: bump to `^4.94.0` (and `ui-foundation-backend==4.94.0`) and
+run `ui-foundation sync` (the docs change). An item edited on its own in
+place moves its editor out of a field's value into `content`, with its
+buttons in `actions`.
+
 ## 4.93.0 — A few equal things: EqualItems, one data shape in four looks
 
 The UI package only; additive, no new dependency and nothing to change in
