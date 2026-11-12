@@ -1,0 +1,226 @@
+import type { Meta, StoryObj } from '@/fixtures/types'
+import type { ReactNode } from 'react'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { EqualItems, type EqualItem, type EqualItemsLook } from './equal-items'
+
+// A few equal things in a record (R10), all made up: the three phases of a
+// training plan and three options (Basic, Plus, Pro), each in the four
+// looks, then the edges: long titles, an item with no fields, one item,
+// seven items and none. Axe, the token-colour check and the glyph check
+// measure every one in both themes and each palette
+// (e2e/fixtures-visual.spec.ts); e2e/equal-items.spec.ts uses featured's
+// toggles from the keyboard and measures each look at a phone's width.
+const meta: Meta = {
+  title: 'app/EqualItems',
+  parameters: { controls: { disable: true } },
+}
+
+export default meta
+
+const PHASES: EqualItem[] = [
+  {
+    id: 'p1',
+    title: 'Phase 1',
+    state: { label: 'Done', tone: 'success' },
+    fields: [
+      { label: 'Weeks', value: '1–4' },
+      { label: 'Focus', value: 'Easy base miles' },
+      { label: 'Sessions', value: '3 a week' },
+    ],
+  },
+  {
+    id: 'p2',
+    title: 'Phase 2',
+    state: { label: 'Current', tone: 'info' },
+    fields: [
+      { label: 'Weeks', value: '5–8' },
+      { label: 'Focus', value: 'Hills and tempo' },
+      { label: 'Sessions', value: '4 a week' },
+    ],
+  },
+  {
+    id: 'p3',
+    title: 'Phase 3',
+    state: 'Planned',
+    fields: [
+      { label: 'Weeks', value: '9–12' },
+      { label: 'Focus', value: 'Race pace' },
+      { label: 'Sessions', value: null },
+    ],
+  },
+]
+
+const OPTIONS: EqualItem[] = [
+  {
+    id: 'basic',
+    title: 'Basic',
+    state: 'Free',
+    fields: [
+      { label: 'Price', value: '$0' },
+      { label: 'Seats', value: '1' },
+      { label: 'Storage', value: '2 GB' },
+    ],
+  },
+  {
+    id: 'plus',
+    title: 'Plus',
+    state: { label: 'Best value', tone: 'success' },
+    fields: [
+      { label: 'Price', value: '$8 / month' },
+      { label: 'Seats', value: '3' },
+      { label: 'Storage', value: '50 GB' },
+    ],
+  },
+  {
+    id: 'pro',
+    title: 'Pro',
+    state: { label: 'Over budget', tone: 'warning' },
+    fields: [
+      { label: 'Price', value: '$20 / month' },
+      { label: 'Seats', value: '10' },
+      { label: 'Storage', value: '1 TB' },
+      { label: 'Support', value: 'Same day' },
+    ],
+  },
+]
+
+const LONG_TITLES: EqualItem[] = [
+  {
+    id: 'l1',
+    title: 'Getting back to an easy half hour without stopping, three mornings a week',
+    state: { label: 'Done', tone: 'success' },
+    fields: [{ label: 'Weeks', value: '1–6' }, { label: 'Focus', value: 'An unusually long description of the focus for this phase, to see it wrap' }],
+  },
+  {
+    id: 'l2',
+    title: 'Building up the long run with one longer day at the end of each week',
+    state: { label: 'Current', tone: 'info' },
+    fields: [{ label: 'Weeks', value: '7–12' }, { label: 'Focus', value: 'Distance' }],
+  },
+  {
+    id: 'l3',
+    title: 'Tapering',
+    state: 'Planned',
+    fields: [{ label: 'Weeks', value: '13–14' }],
+  },
+]
+
+const EDGES: EqualItem[] = [
+  { id: 'e1', title: 'Phase 1', state: { label: 'Done', tone: 'success' }, fields: [{ label: 'Weeks', value: '1–4' }] },
+  { id: 'e2', title: 'Rest week', state: 'Planned' },
+  { id: 'e3', title: 'Phase 2', fields: [{ label: 'Weeks', value: '6–9' }, { label: 'Focus', value: 'Strength' }] },
+]
+
+const SEVEN: EqualItem[] = Array.from({ length: 7 }, (_, i) => ({
+  id: `s${i + 1}`,
+  title: `Week ${i + 1}`,
+  state: i < 3 ? { label: 'Done', tone: 'success' as const } : i === 3 ? { label: 'Current', tone: 'info' as const } : 'Planned',
+  fields: [
+    { label: 'Distance', value: `${12 + i * 2} km` },
+    { label: 'Long run', value: `${6 + i} km` },
+  ],
+}))
+
+const LOOKS: EqualItemsLook[] = ['cards', 'table', 'featured', 'panels']
+
+function InSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Card className="max-w-5xl">
+      <CardHeader>
+        <h2 className="type-section-title text-foreground">{title}</h2>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  )
+}
+
+const one = (look: EqualItemsLook, items: EqualItem[], label: string, extra?: { featuredId?: string; defaultOpenIds?: string[] }) => (
+  <InSection title={label}>
+    <EqualItems look={look} items={items} label={label} {...extra} />
+  </InSection>
+)
+
+export const Cards: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {one('cards', PHASES, 'Phases')}
+      {one('cards', OPTIONS, 'Options')}
+    </div>
+  ),
+}
+
+export const TableLook: StoryObj = {
+  name: 'Table',
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {one('table', PHASES, 'Phases')}
+      {one('table', OPTIONS, 'Options')}
+    </div>
+  ),
+}
+
+export const Featured: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {one('featured', PHASES, 'Phases', { featuredId: 'p2' })}
+      {one('featured', OPTIONS, 'Options', { featuredId: 'plus', defaultOpenIds: ['pro'] })}
+    </div>
+  ),
+}
+
+export const Panels: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {one('panels', PHASES, 'Phases')}
+      {one('panels', OPTIONS, 'Options')}
+    </div>
+  ),
+}
+
+export const LongTitles: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {LOOKS.map((look) => (
+        <div key={look}>{one(look, LONG_TITLES, `Long titles, ${look}`, { featuredId: 'l2', defaultOpenIds: ['l1'] })}</div>
+      ))}
+    </div>
+  ),
+}
+
+export const NoFields: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {LOOKS.map((look) => (
+        <div key={look}>{one(look, EDGES, `No fields, ${look}`, { featuredId: 'e2', defaultOpenIds: ['e1'] })}</div>
+      ))}
+    </div>
+  ),
+}
+
+export const OneItem: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {LOOKS.map((look) => (
+        <div key={look}>{one(look, PHASES.slice(1, 2), `One item, ${look}`)}</div>
+      ))}
+    </div>
+  ),
+}
+
+export const SevenItems: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {LOOKS.map((look) => (
+        <div key={look}>{one(look, SEVEN, `Seven items, ${look}`, { featuredId: 's4' })}</div>
+      ))}
+    </div>
+  ),
+}
+
+export const Empty: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {one('cards', [], 'Empty phases')}
+    </div>
+  ),
+}

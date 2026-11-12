@@ -208,6 +208,15 @@ export {
   type ListHeaderProps,
 } from '@/components/app/list-header'
 export { Timeline, type TimelineItem, type TimelineProps } from '@/components/app/timeline'
+export {
+  EqualItems,
+  type EqualItem,
+  type EqualItemField,
+  type EqualItemState,
+  type EqualItemTone,
+  type EqualItemsLook,
+  type EqualItemsProps,
+} from '@/components/app/equal-items'
 export { NeedsYou, type NeedsYouItem, type NeedsYouProps, type NeedsYouTone } from '@/components/app/needs-you'
 export { Freshness, type FreshnessProps } from '@/components/app/freshness'
 export { isStale } from '@/lib/freshness'
