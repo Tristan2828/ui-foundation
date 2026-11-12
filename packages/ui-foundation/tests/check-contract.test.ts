@@ -55,6 +55,20 @@ describe('check-contract', () => {
     expect(result.status).toBe(0)
   })
 
+  it('passes an app without the optional Recurrence schema, and refuses one that differs', () => {
+    const spec = foundation()
+    delete spec.components.schemas.Recurrence
+    const left = checkContract(spec)
+    expect(left.output).not.toContain('Recurrence')
+    expect(left.status).toBe(0)
+
+    const changed = foundation()
+    ;(changed.components.schemas.Recurrence as { required: string[] }).required = ['rule']
+    const differs = checkContract(changed)
+    expect(differs.status).toBe(1)
+    expect(differs.output).toContain('components.schemas.Recurrence differs')
+  })
+
   it('requires RegisterRequest when the app has /auth/register', () => {
     const spec = foundation()
     delete spec.components.schemas.RegisterRequest

@@ -1,0 +1,429 @@
+{
+  "$comment": "Recurrence cases both suites check (#326): tests/recurrence.test.ts in this package and packages/backend-foundation/tests/test_recurrence.py. Each case's `next` is the first `count` occurrences strictly after `after` (fewer when the rule ends); `nextAfterDone` is a fromCompletion rule's next once done at `doneAt`. Times are UTC instants.",
+  "cases": [
+    {
+      "name": "every 3 days",
+      "recurrence": {
+        "rule": "FREQ=DAILY;INTERVAL=3",
+        "start": "2026-11-01",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 5,
+      "next": [
+        "2026-11-01T15:00:00Z",
+        "2026-11-04T15:00:00Z",
+        "2026-11-07T15:00:00Z",
+        "2026-11-10T15:00:00Z",
+        "2026-11-13T15:00:00Z"
+      ]
+    },
+    {
+      "name": "every weekday across the fall-back change",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR",
+        "start": "2026-10-01",
+        "times": [
+          "08:00"
+        ],
+        "timeZone": "America/New_York",
+        "fromCompletion": false
+      },
+      "after": "2026-10-29T00:00:00Z",
+      "count": 5,
+      "next": [
+        "2026-10-29T12:00:00Z",
+        "2026-10-30T12:00:00Z",
+        "2026-11-02T13:00:00Z",
+        "2026-11-03T13:00:00Z",
+        "2026-11-04T13:00:00Z"
+      ]
+    },
+    {
+      "name": "every 2nd tue",
+      "recurrence": {
+        "rule": "FREQ=MONTHLY;BYDAY=2TU",
+        "start": "2026-11-01",
+        "times": [
+          "18:30"
+        ],
+        "timeZone": "Europe/London",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 5,
+      "next": [
+        "2026-11-10T18:30:00Z",
+        "2026-12-08T18:30:00Z",
+        "2027-01-12T18:30:00Z",
+        "2027-02-09T18:30:00Z",
+        "2027-03-09T18:30:00Z"
+      ]
+    },
+    {
+      "name": "every last fri",
+      "recurrence": {
+        "rule": "FREQ=MONTHLY;BYDAY=-1FR",
+        "start": "2026-11-01",
+        "times": [
+          "12:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 4,
+      "next": [
+        "2026-11-27T12:00:00Z",
+        "2026-12-25T12:00:00Z",
+        "2027-01-29T12:00:00Z",
+        "2027-02-26T12:00:00Z"
+      ]
+    },
+    {
+      "name": "every last day of the month",
+      "recurrence": {
+        "rule": "FREQ=MONTHLY;BYMONTHDAY=-1",
+        "start": "2027-01-15",
+        "times": [
+          "21:00"
+        ],
+        "timeZone": "Asia/Tokyo",
+        "fromCompletion": false
+      },
+      "after": "2027-01-01T00:00:00Z",
+      "count": 5,
+      "next": [
+        "2027-01-31T12:00:00Z",
+        "2027-02-28T12:00:00Z",
+        "2027-03-31T12:00:00Z",
+        "2027-04-30T12:00:00Z",
+        "2027-05-31T12:00:00Z"
+      ]
+    },
+    {
+      "name": "the 31st skips shorter months",
+      "recurrence": {
+        "rule": "FREQ=MONTHLY;BYMONTHDAY=31",
+        "start": "2027-01-01",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": false
+      },
+      "after": "2027-01-01T00:00:00Z",
+      "count": 5,
+      "next": [
+        "2027-01-31T15:00:00Z",
+        "2027-03-31T14:00:00Z",
+        "2027-05-31T14:00:00Z",
+        "2027-07-31T14:00:00Z",
+        "2027-08-31T14:00:00Z"
+      ]
+    },
+    {
+      "name": "feb 29 only in leap years",
+      "recurrence": {
+        "rule": "FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29",
+        "start": "2026-01-01",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-01-01T00:00:00Z",
+      "count": 3,
+      "next": [
+        "2028-02-29T09:00:00Z",
+        "2032-02-29T09:00:00Z",
+        "2036-02-29T09:00:00Z"
+      ]
+    },
+    {
+      "name": "every jan 1 at midnight",
+      "recurrence": {
+        "rule": "FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=1",
+        "start": "2026-06-01",
+        "times": [
+          "00:00"
+        ],
+        "timeZone": "Pacific/Auckland",
+        "fromCompletion": false
+      },
+      "after": "2026-06-01T00:00:00Z",
+      "count": 3,
+      "next": [
+        "2026-12-31T11:00:00Z",
+        "2027-12-31T11:00:00Z",
+        "2028-12-31T11:00:00Z"
+      ]
+    },
+    {
+      "name": "every other week",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=2",
+        "start": "2026-11-12",
+        "times": [
+          "07:15"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 4,
+      "next": [
+        "2026-11-12T13:15:00Z",
+        "2026-11-26T13:15:00Z",
+        "2026-12-10T13:15:00Z",
+        "2026-12-24T13:15:00Z"
+      ]
+    },
+    {
+      "name": "several times a day across the spring-forward change",
+      "recurrence": {
+        "rule": "FREQ=DAILY",
+        "start": "2027-03-13",
+        "times": [
+          "01:30",
+          "02:30",
+          "09:00"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": false
+      },
+      "after": "2027-03-13T00:00:00Z",
+      "count": 7,
+      "next": [
+        "2027-03-13T07:30:00Z",
+        "2027-03-13T08:30:00Z",
+        "2027-03-13T15:00:00Z",
+        "2027-03-14T07:30:00Z",
+        "2027-03-14T08:30:00Z",
+        "2027-03-14T14:00:00Z",
+        "2027-03-15T06:30:00Z"
+      ]
+    },
+    {
+      "name": "a repeated hour is its first",
+      "recurrence": {
+        "rule": "FREQ=DAILY",
+        "start": "2026-10-31",
+        "times": [
+          "01:30"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": false
+      },
+      "after": "2026-10-31T00:00:00Z",
+      "count": 3,
+      "next": [
+        "2026-10-31T06:30:00Z",
+        "2026-11-01T06:30:00Z",
+        "2026-11-02T07:30:00Z"
+      ]
+    },
+    {
+      "name": "the southern hemisphere's spring forward",
+      "recurrence": {
+        "rule": "FREQ=DAILY",
+        "start": "2026-10-03",
+        "times": [
+          "02:30"
+        ],
+        "timeZone": "Australia/Sydney",
+        "fromCompletion": false
+      },
+      "after": "2026-10-01T00:00:00Z",
+      "count": 3,
+      "next": [
+        "2026-10-02T16:30:00Z",
+        "2026-10-03T16:30:00Z",
+        "2026-10-04T15:30:00Z"
+      ]
+    },
+    {
+      "name": "count counts each time of each day",
+      "recurrence": {
+        "rule": "FREQ=DAILY;COUNT=5",
+        "start": "2026-11-20",
+        "times": [
+          "09:00",
+          "17:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 8,
+      "next": [
+        "2026-11-20T09:00:00Z",
+        "2026-11-20T17:00:00Z",
+        "2026-11-21T09:00:00Z",
+        "2026-11-21T17:00:00Z",
+        "2026-11-22T09:00:00Z"
+      ]
+    },
+    {
+      "name": "count from the start, asked partway",
+      "recurrence": {
+        "rule": "FREQ=DAILY;COUNT=3",
+        "start": "2026-11-20",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-11-21T10:00:00Z",
+      "count": 5,
+      "next": [
+        "2026-11-22T09:00:00Z"
+      ]
+    },
+    {
+      "name": "until is the last day it can fall on",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;BYDAY=MO;UNTIL=20261207",
+        "start": "2026-11-12",
+        "times": [
+          "10:00"
+        ],
+        "timeZone": "America/Denver",
+        "fromCompletion": false
+      },
+      "after": "2026-11-12T00:00:00Z",
+      "count": 6,
+      "next": [
+        "2026-11-16T17:00:00Z",
+        "2026-11-23T17:00:00Z",
+        "2026-11-30T17:00:00Z",
+        "2026-12-07T17:00:00Z"
+      ]
+    },
+    {
+      "name": "every 3 months on the 15th",
+      "recurrence": {
+        "rule": "FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=15",
+        "start": "2026-12-01",
+        "times": [
+          "08:00"
+        ],
+        "timeZone": "Europe/Berlin",
+        "fromCompletion": false
+      },
+      "after": "2026-12-01T00:00:00Z",
+      "count": 4,
+      "next": [
+        "2026-12-15T07:00:00Z",
+        "2027-03-15T07:00:00Z",
+        "2027-06-15T06:00:00Z",
+        "2027-09-15T06:00:00Z"
+      ]
+    },
+    {
+      "name": "every mon, wed and fri (a weekday set)",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;BYDAY=MO,WE,FR",
+        "start": "2026-11-01",
+        "times": [
+          "07:30"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": false
+      },
+      "after": "2026-11-12T14:00:00Z",
+      "count": 4,
+      "next": [
+        "2026-11-13T13:30:00Z",
+        "2026-11-16T13:30:00Z",
+        "2026-11-18T13:30:00Z",
+        "2026-11-20T13:30:00Z"
+      ]
+    },
+    {
+      "name": "every! 3 days",
+      "recurrence": {
+        "rule": "FREQ=DAILY;INTERVAL=3",
+        "start": "2026-11-01",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": true
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 2,
+      "next": [
+        "2026-11-01T15:00:00Z",
+        "2026-11-04T15:00:00Z"
+      ],
+      "doneAt": "2026-11-10T20:00:00Z",
+      "nextAfterDone": "2026-11-13T15:00:00Z"
+    },
+    {
+      "name": "every! 3 days, done late in the evening",
+      "recurrence": {
+        "rule": "FREQ=DAILY;INTERVAL=3",
+        "start": "2026-11-01",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": true
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 1,
+      "next": [
+        "2026-11-01T15:00:00Z"
+      ],
+      "doneAt": "2026-11-11T04:30:00Z",
+      "nextAfterDone": "2026-11-13T15:00:00Z"
+    },
+    {
+      "name": "every! week",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY",
+        "start": "2026-11-02",
+        "times": [
+          "09:00",
+          "18:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": true
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 2,
+      "next": [
+        "2026-11-02T09:00:00Z",
+        "2026-11-02T18:00:00Z"
+      ],
+      "doneAt": "2026-11-11T12:00:00Z",
+      "nextAfterDone": "2026-11-18T09:00:00Z"
+    },
+    {
+      "name": "every! month on the 31st",
+      "recurrence": {
+        "rule": "FREQ=MONTHLY",
+        "start": "2027-01-31",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": true
+      },
+      "after": "2027-01-01T00:00:00Z",
+      "count": 1,
+      "next": [
+        "2027-01-31T09:00:00Z"
+      ],
+      "doneAt": "2027-01-31T10:00:00Z",
+      "nextAfterDone": "2027-03-31T09:00:00Z"
+    }
+  ]
+}

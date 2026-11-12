@@ -3,45 +3,46 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 73–92
-- [1. Plain text](#1-plain-text) · lines 94–147
-- [2. Icon + label](#2-icon--label) · lines 149–172
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 174–187
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 189–266
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 214–266
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 268–281
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 283–295
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 297–318
-- [8. Date, relative](#8-date-relative) · lines 320–357
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 359–407
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 377–407
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 409–459
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 427–459
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 461–501
-- [12. Boolean](#12-boolean) · lines 503–533
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 535–571
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 555–571
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 573–590
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 592–701
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 618–701
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 703–738
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 740–813
-- [18. Editable value](#18-editable-value) · lines 815–1493
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1125–1193
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1195–1231
-  - [A link and its label](#a-link-and-its-label) · lines 1233–1257
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1259–1392
-  - [In a table's rows](#in-a-tables-rows) · lines 1394–1479
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1481–1493
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1495–1561
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1563–1627
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1629–1727
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1729–1758
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1760–1798
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1800–1876
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1878–1901
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1903–1989
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1991–2027
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 74–93
+- [1. Plain text](#1-plain-text) · lines 95–148
+- [2. Icon + label](#2-icon--label) · lines 150–173
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 175–188
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 190–267
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 215–267
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 269–282
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 284–296
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 298–319
+- [8. Date, relative](#8-date-relative) · lines 321–358
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 360–408
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 378–408
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 410–460
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 428–460
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 462–502
+- [12. Boolean](#12-boolean) · lines 504–534
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 536–572
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 556–572
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 574–591
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 593–702
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 619–702
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 704–739
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 741–814
+- [18. Editable value](#18-editable-value) · lines 816–1494
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1126–1194
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1196–1232
+  - [A link and its label](#a-link-and-its-label) · lines 1234–1258
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1260–1393
+  - [In a table's rows](#in-a-tables-rows) · lines 1395–1480
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1482–1494
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1496–1562
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1564–1628
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1630–1728
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1730–1759
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1761–1799
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1801–1877
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1879–1902
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1904–1990
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1992–2028
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2030–2075
 
 <!-- /index -->
 
@@ -2025,3 +2026,50 @@ const visits = useVisits({ provider: provider.id, sort: 'date:desc', page: 1, pa
 - On a DataTable of your own, `limit` and `viewAll` do the same.
 - The fixture `app/DataTable tools` Related draws a capped list and a
   short one with no link; the spec follows View all.
+
+## 27. A repeat and its next time
+
+A record that repeats (a chore, a reminder) shows two columns: **Repeats**,
+the rule in words, and **Next**, when it falls next. The value is the
+contract's `Recurrence` (reminders.md "Repeating reminders"); both cells
+read it in the rule's own zone, so a reminder set in Chicago says 9:00 AM
+wherever it's looked at.
+
+```tsx
+import { formatOccurrence, formatRecurrence, nextOccurrence, EmptyText } from '@tristan2828/ui-foundation'
+
+{
+  id: 'repeats',
+  header: 'Repeats',
+  cell: ({ row }) => (row.original.repeats ? formatRecurrence(row.original.repeats) : <EmptyText />),
+},
+{
+  id: 'next',
+  header: 'Next',
+  cell: ({ row }) => {
+    const repeats = row.original.repeats
+    if (!repeats) return <EmptyText />
+    const next = nextOccurrence(repeats, new Date())
+    if (!next) return <span className="text-muted-foreground">Ended</span>
+    return (
+      <time dateTime={next.toISOString()} className="tabular-nums">
+        {formatOccurrence(next, repeats.timeZone)}
+      </time>
+    )
+  },
+},
+```
+
+- **The label** reads "Every 2nd Tue at 9:00 AM", "Every Mon and Thu at
+  7:00 AM and 7:30 PM", "Every 30 days after done, at 9:00 AM" (from
+  completion), "…, until Mar 1, 2027", "…, 10 times". `times: false`
+  leaves the times out, for a table with its own time column. A rule it
+  can't read shows as stored, never blank.
+- **Next** is "Tue, Dec 8, 9:00 AM", the year only when it isn't this
+  one; a rule that has ended (UNTIL passed, COUNT used up) says Ended, in
+  muted text. For a `fromCompletion` repeat whose next depends on being
+  done, use the server's `next_at` if it sends one; `nextOccurrence`
+  counts from the schedule's start.
+- **Sorting by Next** is the server's (`next_at`), not the cell's text.
+- The fixture `app/RecurrenceField` List cells draws both on six chores;
+  its spec reads each cell.

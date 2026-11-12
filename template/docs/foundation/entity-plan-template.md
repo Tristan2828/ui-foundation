@@ -55,7 +55,9 @@ One or two sentences: what one record is, and who uses the screens.
     time: OpenAPI `format: date`; the foundation's `DateField`; say
     whether it's optional), `month-day` (a day that comes round every
     year, no year: `'MM-DD'`; the foundation's `MonthDayField`; say
-    whether it's optional).
+    whether it's optional), `recurrence` (how it repeats: the
+    foundation's `Recurrence` schema and `RecurrenceField`; say whether
+    it's optional).
   - *Not supported yet:* a yes/no that can also be unset (three states),
     file, and anything else.
     Write it anyway with a note; the playbook will stop and raise it

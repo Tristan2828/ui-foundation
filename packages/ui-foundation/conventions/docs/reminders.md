@@ -111,6 +111,59 @@ Scope it to the signed-in user, as Widgets are.
   that's the `tzdata` package, which the backend doesn't install: a
   Windows dev machine reads only `UTC` until it's added.
 
+## Repeating reminders (4.95)
+
+A weekday set and one time is the simple schedule. For anything more
+(every 2nd Tuesday, the last day of the month, several times a day, an
+end, "every! 3 days" counted from when it's done), a reminder carries a
+**recurrence**: the contract's `Recurrence` schema (in the package's
+`openapi/foundation.yaml`, marked `x-optional`: copy it into
+`components.schemas` and reference it from the reminder's schema), the
+package's `RecurrenceField` on the form and `inPlace.recurrence` on the
+view, and `foundation_backend.recurrence` on the server. Both sides read
+the same rules and agree on every next occurrence.
+
+- **The value**: `{ rule, start, times, timeZone, fromCompletion }`.
+  `rule` is RFC 5545's RRULE without DTSTART (`FREQ=MONTHLY;BYDAY=2TU`):
+  FREQ daily to yearly, INTERVAL, BYDAY with an nth (`2TU`, `-1FR`),
+  BYMONTHDAY (`-1` the last day), BYMONTH, UNTIL (a date) or COUNT.
+  `start` is the first day it can fall on; each of `times` is an
+  occurrence on every day the rule falls on, read in `timeZone`. A day a
+  month lacks is skipped (the 31st, Feb 29), as in RFC 5545.
+- **The columns**: the app's reminders model inherits
+  `foundation_backend.recurrence_models.RecurringReminderFields` and its
+  migration adds them: `recurrence` (JSON), `next_at`, `sent_at`,
+  `last_sent_at`, `done_occurrence`, `done_at` (timestamps with time
+  zone), `nag_count` (integer, default 0), `nag_every_minutes` and
+  `nag_limit` (integers, null for no nagging). `days` and `time_of_day`
+  become nullable. Hand the model to the job as before
+  (`reminders.register(model=MyReminder)`).
+- **What the job does with a row whose `recurrence` is set**: each
+  occurrence is due from its time until 15 minutes have passed, so
+  several a day go out; one missed past that is skipped, not sent late
+  (the run's line says "1 missed"). Sent and not done, it's re-sent
+  every `nag_every_minutes`, at most `nag_limit` times (3 when only the
+  interval is set). The next occurrence coming round ends the wait; a
+  `fromCompletion` rule waits for done instead. A row with no
+  `recurrence` is the weekday set, as before.
+- **Done**: the app's Done button (or a notification action that calls
+  the app) runs `reminders.mark_done(row)` and commits: the occurrence is
+  recorded (`done_occurrence`, `done_at`), nagging stops, and the next is
+  pending; for `fromCompletion` it counts from the done time. After the
+  rule itself changes, `reminders.schedule_changed(row)` forgets where it
+  was.
+- **Moving a simple schedule over**: `recurrence.from_weekdays(days,
+  time_of_day, time_zone, start=today)` (and the package's
+  `recurrenceFromWeekdays`) is the same schedule exactly; store its
+  `model_dump(by_alias=True, mode="json")` in `recurrence`.
+  `recurrence.as_weekdays(rule)` goes back when a rule is still that
+  simple.
+- **On screens**: `RecurrenceField` in the form (a `Controller`; check
+  with `recurrenceProblem`), `inPlace.recurrence` on the view, and in the
+  list `formatRecurrence` for a Repeats column and `nextOccurrence` with
+  `formatOccurrence` for a Next one (cell-patterns.md "A repeat and its
+  next time").
+
 ## Testing
 
 Under MSW the page is held by MSW's service worker, so `usePushPermission`

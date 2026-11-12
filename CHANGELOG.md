@@ -7,6 +7,73 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.95.0 — Repeating schedules: one rule on both sides, a phrase box, and repeating reminders
+
+Both packages; additive. Two new dependencies, each on its allowlist:
+`rrule` 2.8.1 in the npm package and `python-dateutil` 2.9.0.post0 in
+`ui-foundation-backend` (with `types-python-dateutil` for mypy, in the
+template backend's dev extra). #326.
+
+- **`Recurrence`**, a new optional schema in the foundation's contract
+  (`openapi/foundation.yaml`, `x-optional`): `{ rule, start, times,
+  timeZone, fromCompletion }`, the rule RFC 5545's RRULE without DTSTART
+  (FREQ daily to yearly, INTERVAL, BYDAY with an nth, BYMONTHDAY with -1
+  for the last day, BYMONTH, UNTIL or COUNT), one or more times of day
+  and an IANA zone. `check-contract` now lets a component marked
+  `x-optional` be left out; an app that copies it in is held to its shape.
+- **Backend: `foundation_backend.recurrence`**: `Recurrence` (pydantic,
+  camelCase, checked and put in one stored form), `next_after`,
+  `occurrences` (the next n), `next_after_completion` (`every!`),
+  `from_weekdays` / `as_weekdays` (a weekday set and one time, exactly),
+  and the pure steps of a repeating reminder (`step`, `done`,
+  `OccurrenceState`, `Nagging`). Days come from dateutil's rrule; the
+  times go on them in the zone, so a DST change never moves a time (a
+  skipped 02:30 is read as 03:30, a repeated 01:30 is the first). A 31st
+  falls only in months that have one, Feb 29 only in leap years.
+- **Backend: repeating reminders in the `send-reminders` job.** A model
+  with `recurrence_models.RecurringReminderFields`' columns can set
+  `recurrence` on a row: each occurrence is due inside the grace (several
+  a day), one missed past it is skipped and counted ("1 missed"), a sent
+  one is nagged every `nag_every_minutes` up to `nag_limit` times until
+  `reminders.mark_done(row)`, and a `fromCompletion` rule's next counts
+  from the done time. `reminders.schedule_changed(row)` after the rule
+  changes. A row without `recurrence` is the weekday set, unchanged.
+- **Fix: a weekday-set reminder at a time the clocks skip is sent.**
+  `due_on` measured lateness in wall-clock time, so on the spring-forward
+  night a 02:30 reminder read an hour late and wasn't sent that day. It's
+  measured in UTC now: sent at 03:30, as its comment always said.
+- **Frontend: the same rules in the package** (`nextOccurrence`,
+  `nextOccurrences`, `nextAfterCompletion`, `normalizeRecurrence`,
+  `recurrenceProblem`, `recurrenceFromWeekdays`, `parseRule`,
+  `formatRule`, `atLocal`). One JSON fixture
+  (`packages/ui-foundation/tests/fixtures/recurrence-cases.json`, 21
+  cases: DST both ways and in both hemispheres, month ends, Feb 29,
+  COUNT, UNTIL, `every!`) is read by both test suites, so they agree on
+  every next occurrence.
+- **`parseRecurrencePhrase`**: a task app's phrases into a `Recurrence`,
+  live as you type: `every 3 days`, `every weekday`, `every 2nd tue`,
+  `every last day of the month`, `every jan 1`, `every other week`,
+  `every! 3 days`, `at 9am, 5pm`, `starting dec 1`, `until mar 1`,
+  `for 10 times`, and more (`every 2 weeks on mon, fri`, `every 3 months
+  on the 15th`). What it can't read is refused with why ("Couldn't read
+  “blue moon”"). `recurrencePhrase` is the way back.
+- **`formatRecurrence`** ("Every 2nd Tue at 9:00 AM") and
+  **`formatOccurrence`** ("Tue, Dec 8, 9:00 AM"), both in the rule's
+  zone, for a list's Repeats and Next cells (cell pattern 27).
+- **`RecurrenceField`**: presets (Daily, Weekdays, Weekly on Thu,
+  Monthly on the 12th, Monthly on the 2nd Thu, Yearly on Nov 12, Custom),
+  the phrase box and a preview (the label and the next five), for
+  EntityForm (a `Controller`) and in place (**`inPlace.recurrence`**).
+- Docs: reminders.md "Repeating reminders", add-an-entity.md (a
+  `recurrence` field), entity-plan-template.md, cell-patterns.md 27.
+
+To take it: bump to `^4.95.0` (and `ui-foundation-backend==4.95.0`) and
+run `ui-foundation sync` (the docs change). Nothing else is needed. An
+app that repeats things copies `Recurrence` into its `openapi.yaml`; one
+whose reminders repeat adds the columns (reminders.md lists them) in a
+migration of its own, and `types-python-dateutil` to its dev extra for
+mypy (the template has it).
+
 ## 4.94.0 — A title edited in place stays whole; an equal item's own editor and actions
 
 Both packages; additive, no new dependency. Record page standard R1 and

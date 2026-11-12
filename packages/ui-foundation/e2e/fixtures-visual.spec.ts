@@ -204,6 +204,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-monthdayfield--open-on-days', mustShow: 'March' },
   { id: 'app-monthdayfield--open-on-months', mustShow: 'Month' },
   { id: 'app-monthdayfield--edit-in-place', mustShow: 'Nov 1' },
+  // How something repeats (#326): presets pressed and not, a preview's label
+  // and next dates, a refusal; on a form, in place, and as list cells.
+  { id: 'app-recurrencefield--default', mustShow: 'Every 2nd Tue at 9:00 AM' },
+  { id: 'app-recurrencefield--in-form', mustShow: 'Save chore' },
+  { id: 'app-recurrencefield--edit-in-place', mustShow: 'Every 2nd Tue at 9:00 AM' },
+  { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
   { id: 'app-imagefield--default', mustShow: 'Edit plant' },

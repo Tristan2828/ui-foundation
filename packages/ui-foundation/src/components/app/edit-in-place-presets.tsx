@@ -1,5 +1,5 @@
 // Ready-made fields for editing in place (cell-patterns.md "Editable
-// value", "Presets"): `inPlace.text`, `.number`, `.date`, `.monthDay`,
+// value", "Presets"): `inPlace.text`, `.number`, `.date`, `.monthDay`, `.recurrence`,
 // `.money`, `.select`, `.choice`, `.reference`, `.link`, and `.fields` for two or more values
 // edited and saved as one. Each carries its own control, its check (run
 // before anything is sent, its message under the field) and how the value
@@ -20,10 +20,13 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/
 import { linkHost, linkRule } from '@/lib/link-href'
 import { formatMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
 import { formatPlainDate, unreadableDateMessage, type PlainDate } from '@/lib/plain-date'
+import { normalizeRecurrence, recurrenceProblem, type Recurrence } from '@/lib/recurrence'
+import { formatRecurrence } from '@/lib/recurrence-format'
 import { ChoiceButtons } from './choice-buttons'
 import { DateField } from './date-field'
 import { MonthDayField } from './month-day-field'
 import { OptionSelect } from './option-select'
+import { RecurrenceField } from './recurrence-field'
 import type { EditControlProps, EditInPlace } from './edit-in-place'
 import { Parts, ReferencePicker } from './edit-in-place-controls'
 import { LinkOut } from './row-edit-cells'
@@ -126,6 +129,24 @@ export type InPlaceMonthDayConfig<TRequired extends boolean = boolean> = {
   format?: Pick<Intl.DateTimeFormatOptions, 'month' | 'day'>
   locale?: string
   placeholder?: string
+}
+
+/**
+ * How something repeats (RecurrenceField): presets, a phrase read as it's
+ * typed, and a preview. Enter in the box or leaving the field saves; a
+ * phrase it can't read isn't saved. Not `required`: emptying the box saves
+ * `null` (doesn't repeat).
+ */
+export type InPlaceRecurrenceConfig<TRequired extends boolean = boolean> = {
+  required?: TRequired
+  /** The IANA zone a new repeat is read in. Defaults to the value's, else the browser's. */
+  timeZone?: string
+  /** The times a new repeat starts with. Defaults to 09:00. */
+  defaultTimes?: string[]
+  /** Today, `'YYYY-MM-DD'`, and "now", for a fixed preview (tests). Default to the clock. */
+  today?: string
+  now?: Date
+  locale?: string
 }
 
 /** One option of a select: its value and its words. */
@@ -454,6 +475,36 @@ function monthDayKind(config: InPlaceMonthDayConfig): Kind<MonthDay | null, Mont
   }
 }
 
+function recurrenceKind(config: InPlaceRecurrenceConfig): Kind<Recurrence | null, Recurrence | null> {
+  return {
+    editKind: 'text',
+    toDraft: (value) => value ?? null,
+    check: (draft) => {
+      if (draft === null) return config.required ? { ok: false, message: REQUIRED } : { ok: true, value: null }
+      const problem = recurrenceProblem(draft)
+      return problem ? { ok: false, message: problem } : { ok: true, value: normalizeRecurrence(draft) }
+    },
+    show: (value) => (value ? formatRecurrence(value, { locale: config.locale }) : null),
+    control: (props) => (
+      <RecurrenceField
+        id={props.id}
+        value={props.value}
+        onChange={props.onChange}
+        onProblem={props.onProblem}
+        timeZone={config.timeZone}
+        defaultTimes={config.defaultTimes}
+        today={config.today}
+        now={config.now}
+        locale={config.locale}
+        invalid={props.invalid}
+        readOnly={props.disabled}
+        aria-label={props.label}
+        aria-describedby={props.describedBy}
+      />
+    ),
+  }
+}
+
 function selectKind<T extends string | number>(config: InPlaceSelectConfig<T>): Kind<T | null, T | null> {
   const labelOf = (value: T) => config.options.find((option) => option.value === value)?.label ?? String(value)
   const shownOf = (value: T) => (config.render ? config.render(value, labelOf(value)) : labelOf(value))
@@ -759,6 +810,17 @@ export const inPlace = {
     options: Common<MonthDay | null | undefined, InPlaceSaved<MonthDay, R>> & InPlaceMonthDayConfig<R>,
   ) {
     return single(monthDayKind(options), { ...options, value: options.value || null } as Common<MonthDay | null, never>)
+  },
+  /**
+   * How something repeats (the contract's `Recurrence`) in RecurrenceField:
+   * presets, a phrase read as it's typed ("every 2nd tue at 9am") and a
+   * preview of the next five. Reads as its label ("Every 2nd Tue at 9:00
+   * AM"); Enter or leaving saves, and a phrase it can't read is refused.
+   */
+  recurrence<R extends boolean = false>(
+    options: Common<Recurrence | null | undefined, InPlaceSaved<Recurrence, R>> & InPlaceRecurrenceConfig<R>,
+  ) {
+    return single(recurrenceKind(options), { ...options, value: options.value ?? null } as Common<Recurrence | null, never>)
   },
   /**
    * One of a fixed list; its list opens with the field and a pick saves.

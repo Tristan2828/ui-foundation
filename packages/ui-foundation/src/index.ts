@@ -144,6 +144,7 @@ export {
   type InPlaceOption,
   type InPlacePart,
   type InPlaceRecord,
+  type InPlaceRecurrenceConfig,
   type InPlaceReferenceConfig,
   type InPlaceSaved,
   type InPlaceSelectConfig,
@@ -251,6 +252,34 @@ export {
   type PlainDate,
 } from '@/lib/plain-date'
 export { formatMonthDay, isMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
+export { RecurrenceField, type RecurrenceFieldProps } from '@/components/app/recurrence-field'
+export {
+  atLocal,
+  formatRule,
+  nextAfterCompletion,
+  nextOccurrence,
+  nextOccurrences,
+  normalizeRecurrence,
+  parseRule,
+  RecurrenceError,
+  recurrenceFromWeekdays,
+  recurrenceProblem,
+  type Recurrence,
+  type RuleParts,
+} from '@/lib/recurrence'
+export {
+  parseRecurrencePhrase,
+  recurrencePhrase,
+  type PhraseOptions,
+  type PhraseResult,
+} from '@/lib/recurrence-phrase'
+export {
+  formatOccurrence,
+  formatRecurrence,
+  todayIn,
+  type OccurrenceFormatOptions,
+  type RecurrenceFormatOptions,
+} from '@/lib/recurrence-format'
 export {
   ChoiceCell,
   LinkCell,
