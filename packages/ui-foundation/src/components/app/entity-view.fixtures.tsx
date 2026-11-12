@@ -903,7 +903,9 @@ function DeleteAction({ name }: { name: string }) {
   )
 }
 
-function StandardRecord({ title }: { title: string }) {
+function StandardRecord({ title: initialTitle, editTitle = false }: { title: string; editTitle?: boolean }) {
+  const [savedTitle, , titleText] = useText(initialTitle)
+  const title = savedTitle ?? initialTitle
   const [, , rep] = useText('Sam Example')
   const [, setPhone, phone] = useText(null)
   const [, , fax] = useText(null)
@@ -953,6 +955,7 @@ function StandardRecord({ title }: { title: string }) {
       isLoading={false}
       back={{ to: '/', label: 'Suppliers' }}
       title={title}
+      titleEdit={editTitle ? { ...titleText, label: 'Name' } : undefined}
       subtitle="Timber and sheet goods for the workshop"
       badges={
         <>
@@ -984,8 +987,10 @@ function StandardRecord({ title }: { title: string }) {
   )
 }
 
-function StandardInRouter({ title }: { title: string }) {
-  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <StandardRecord title={title} /> }]))
+function StandardInRouter({ title, editTitle }: { title: string; editTitle?: boolean }) {
+  const [router] = useState(() =>
+    createMemoryRouter([{ path: '/', element: <StandardRecord title={title} editTitle={editTitle} /> }]),
+  )
   return <RouterProvider router={router} />
 }
 
@@ -998,6 +1003,25 @@ export const RecordStandardLongTitle: StoryObj = {
   name: 'Record standard, long title',
   render: () => (
     <StandardInRouter title="Northwind Lumber and Sheet Goods, the warehouse on the far side of the river" />
+  ),
+}
+
+// The title edited in place (`titleEdit`): a short name stays on one
+// line beside its badges, never broken mid-word ("Dr. / Example" before
+// 4.94), and a long one wraps within its column. e2e/entity-view-standard
+// .spec.ts measures both at 1280px and 375px.
+export const RecordStandardEditableTitle: StoryObj = {
+  name: 'Record standard, title edited in place',
+  render: () => <StandardInRouter title="Dr. Example" editTitle />,
+}
+
+export const RecordStandardEditableLongTitle: StoryObj = {
+  name: 'Record standard, long title edited in place',
+  render: () => (
+    <StandardInRouter
+      title="Northwind Lumber and Sheet Goods, the warehouse on the far side of the river"
+      editTitle
+    />
   ),
 }
 

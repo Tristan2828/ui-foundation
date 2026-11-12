@@ -57,7 +57,7 @@ describe('EqualItems', () => {
     expect(html).toMatch(/data-featured=""[^>]*aria-label="Phase 2"/)
     expect(html).toContain('>Hills<')
     expect(count(html, 'data-slot="equal-item-toggle"')).toBe(2)
-    expect(html).toMatch(/<h3 class="m-0"><button[^>]*aria-expanded="false"/)
+    expect(html).toMatch(/<h3 class="m-0[^"]*"><button[^>]*aria-expanded="false"/)
     // Closed toggles draw nothing of their fields.
     expect(html).not.toContain('>1–4<')
   })
@@ -76,5 +76,27 @@ describe('EqualItems', () => {
     expect(html).toContain('data-look="panels"')
     expect(count(html, '<h4')).toBe(3)
     expect(count(html, '<dt')).toBe(3)
+  })
+  it("content and actions: the item's own, the content outside the fields' grid", () => {
+    const items = [
+      { id: 'a', title: 'Phase 1', content: <form aria-label="Edit Phase 1" />, wide: true, actions: <button type="button">Edit Phase 1</button> },
+      { id: 'b', title: 'Phase 2', fields: [{ label: 'Weeks', value: '5–8' }] },
+    ]
+    const cards = renderToStaticMarkup(<EqualItems label="Phases" items={items} />)
+    expect(cards).toMatch(/data-wide=""[^>]*class="[^"]*col-span-full/)
+    expect(cards).toMatch(/data-slot="equal-item-actions"[^>]*><button type="button">Edit Phase 1<\/button>/)
+    // Content alone reads no "No details", and sits outside any <dl>.
+    expect(cards).not.toContain('>No details<')
+    expect(cards).toMatch(/data-slot="equal-item-content"[^>]*><form aria-label="Edit Phase 1"/)
+    expect(count(cards, '<dl')).toBe(1)
+
+    const table = renderToStaticMarkup(<EqualItems look="table" label="Phases" items={items} />)
+    expect(table).toContain('<span class="sr-only">Actions</span>')
+    // Name, Weeks and Actions: the content row spans all three.
+    expect(table).toMatch(/data-slot="equal-item-content-row"[^>]*><td[^>]*colSpan="3"/i)
+
+    const featured = renderToStaticMarkup(<EqualItems look="featured" featuredId="b" label="Phases" items={items} />)
+    // The actions sit beside the toggle's button, not inside it.
+    expect(featured).toMatch(/<\/button><\/h3><div data-slot="equal-item-actions"/)
   })
 })

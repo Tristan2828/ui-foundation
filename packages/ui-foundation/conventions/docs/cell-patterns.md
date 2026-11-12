@@ -26,22 +26,22 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 618–701
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 703–738
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 740–813
-- [18. Editable value](#18-editable-value) · lines 815–1489
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1121–1189
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1191–1227
-  - [A link and its label](#a-link-and-its-label) · lines 1229–1253
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1255–1388
-  - [In a table's rows](#in-a-tables-rows) · lines 1390–1475
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1477–1489
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1491–1557
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1559–1623
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1625–1723
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1725–1754
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1756–1794
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1796–1872
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1874–1897
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1899–1985
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1987–2023
+- [18. Editable value](#18-editable-value) · lines 815–1493
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1125–1193
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1195–1231
+  - [A link and its label](#a-link-and-its-label) · lines 1233–1257
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1259–1392
+  - [In a table's rows](#in-a-tables-rows) · lines 1394–1479
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1481–1493
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1495–1561
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1563–1627
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1629–1727
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1729–1758
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1760–1798
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1800–1876
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1878–1901
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1903–1989
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1991–2027
 
 <!-- /index -->
 
@@ -849,7 +849,11 @@ on that tint, since muted on `bg-muted` is under 4.5:1; the package does
 it, so an app just uses `text-muted-foreground` as anywhere else. On a
 touch screen the pencil always shows. A click anywhere on the value opens it, except on a
 link inside it (a reference to a record with a view, a link in the
-notes), which still navigates.
+notes), which still navigates. The tint reaches 0.375rem past the value
+on each side without moving it, and never wraps it: a short title or
+badge edited in place (`layout="inline"`) stays on one line, and a long
+one wraps between words within its column (4.94; before, a title like
+"Dr. Example" broke over two lines).
 
 **In a field list, the row is the target** (4.88, `look="row"`, which
 EntityView's field rows use). The row wears the list's row hover, the

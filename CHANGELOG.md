@@ -7,6 +7,47 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.94.0 — A title edited in place stays whole; an equal item's own editor and actions
+
+Both packages; additive, no new dependency. Record page standard R1 and
+R10, and #321.
+
+- **Fix: a short value edited in place no longer wraps.** An inline
+  `EditableValue` (EntityView's `titleEdit`, a header badge) was capped
+  0.75rem narrower than its own text: its hover tint's negative margins
+  shrank what its line was sized to, and `max-w-full` then cut it short,
+  so "Dr. Example" read "Dr. / Example". The cap now gives those margins
+  back; a short title stays on one line and a long one still wraps
+  between words within its column, at desktop and 375px.
+- **`EqualItem.content`**: anything of the app's (an editor of several
+  fields, a note) under the item's fields at its full width, never in the
+  label/value grid. In `table`, a row of its own under the item's, as wide
+  as the table's box and held in view while a phone scrolls the table.
+- **`EqualItem.actions`**: the item's own buttons (Edit, Remove) at the
+  end of its title line; beside a featured toggle (never inside its
+  button); in `table` a last column, named by the new `actionsColumn`
+  prop ("Actions").
+- **`EqualItem.wide`**: the item takes the whole row of `cards` or
+  `panels`, for an editor open in it.
+- **Backend: the MCP read tools hide a table's widths comment** (#321).
+  Since 4.79.0 rich text with sized columns stores
+  `<!-- table widths: … -->` after the table; `fetch`, `list`, `search`
+  and `update`'s answer now show the text without it (and the blank
+  lines before it), as every renderer does. What's stored keeps it, so a
+  round trip through `edit_text` or `update` never drops the widths.
+  `search` leaves out a record whose only match is inside the comment,
+  and `edit_text`'s "old wasn't found" says the widths are hidden from
+  `fetch`. A comment that isn't straight after a table still shows.
+- Docs: design-language.md "A few equal things" ("An item's own content
+  and actions") and "Written text (notes)", add-an-entity.md "The
+  record view" and "What a chat is told about an entity", cell-patterns.md
+  "Editable value".
+
+To take it: bump to `^4.94.0` (and `ui-foundation-backend==4.94.0`) and
+run `ui-foundation sync` (the docs change). An item edited on its own in
+place moves its editor out of a field's value into `content`, with its
+buttons in `actions`.
+
 ## 4.93.0 — A few equal things: EqualItems, one data shape in four looks
 
 The UI package only; additive, no new dependency and nothing to change in

@@ -386,6 +386,66 @@ async def test_edit_text_appends_on_a_new_line(session: AsyncSession, writer: Ca
     assert MEMOS[1].body == "Start over."
 
 
+# A table's column widths (4.79.0) are a comment straight after the table,
+# which a read answer hides and the stored text keeps (#321).
+TABLE = "Costs:\n\n| Item | Cost |\n| --- | ---: |\n| Paint | $42 |\n\n<!-- table widths: Item=140, Cost=72 -->\n\nPaint twice."
+SHOWN = "Costs:\n\n| Item | Cost |\n| --- | ---: |\n| Paint | $42 |\n\nPaint twice."
+
+
+def test_a_tables_widths_comment_is_hidden_and_any_other_comment_shown() -> None:
+    assert mcp_tools._hide_table_widths(TABLE) == SHOWN
+    # At the very end, with no blank line before it, or the text's only table.
+    assert mcp_tools._hide_table_widths("| A |\n| - |\n| 1 |\n<!-- table widths: A=96 -->") == "| A |\n| - |\n| 1 |"
+    # Not straight after a table: any other comment, shown as written.
+    loose = "Intro\n\n<!-- table widths: A=96 -->\n\nMore"
+    assert mcp_tools._hide_table_widths(loose) == loose
+    assert mcp_tools._hide_table_widths("| A |\n\n<!-- a note -->") == "| A |\n\n<!-- a note -->"
+
+
+async def test_fetch_and_update_hide_the_widths_and_edit_text_keeps_them(session: AsyncSession, writer: Caller) -> None:
+    register_entities({"memos": MEMO})
+    MEMOS[1] = MEMOS[1].model_copy(update={"body": TABLE})
+    fetched = await call_tool(session, writer, "fetch", {"url": "/memos/1"})
+    assert fetched is not None and "table widths" not in fetched and "| Paint | $42 |\n\nPaint twice." in fetched
+
+    # A round trip through edit_text keeps the comment in what's stored.
+    args = {"url": "/memos/1", "field": "body", "old": "Paint twice.", "new": "Two coats."}
+    answer = await call_tool(session, writer, "edit_text", args)
+    assert answer is not None and answer.startswith("Updated memo /memos/1. Changed body.")
+    assert "table widths" not in answer
+    assert MEMOS[1].body == TABLE.replace("Paint twice.", "Two coats.")
+
+    # As does update with another field, and its answer hides it too.
+    answer = await call_tool(session, writer, "update", {"url": "/memos/1", "fields": {"title": "Costs"}})
+    assert answer is not None and "Changed title." in answer and "table widths" not in answer
+    assert MEMOS[1].body is not None and "<!-- table widths: Item=140, Cost=72 -->" in MEMOS[1].body
+
+    # Old spanning the hidden comment isn't in the stored text: the hint says why.
+    spanning = {"url": "/memos/1", "field": "body", "old": "| Paint | $42 |\n\nTwo coats.", "new": "x"}
+    with pytest.raises(ToolError, match="column widths, which fetch hides"):
+        await call_tool(session, writer, "edit_text", spanning)
+
+
+async def test_search_and_list_leave_out_a_match_only_inside_the_widths(session: AsyncSession, caller: Caller) -> None:
+    async def by_body(_session: AsyncSession, _user: User, args: ListArgs) -> tuple[list[Any], int]:
+        needle = (args.search or "").lower()
+        found = [m for m in MEMOS.values() if needle in f"{m.title} {m.body}".lower()]
+        return found[args.offset : args.offset + args.limit], len(found)
+
+    register_entities({"memos": replace(MEMO, list=by_body, summary=("body",))})
+    MEMOS[1] = MEMOS[1].model_copy(update={"body": TABLE})
+    MEMOS[2] = MemoOut(id=2, title="Widths", body="Measure the window widths.")
+    # "Item=140" is only in the comment: no record matches.
+    assert await call_tool(session, caller, "search", {"query": "Item=140"}) == "Nothing matches 'Item=140'."
+    # "widths" is in memo 2's own text, and in memo 1's comment only.
+    found = await call_tool(session, caller, "search", {"query": "widths"})
+    assert found is not None and "/memos/2" in found and "/memos/1" not in found
+    # A match in its shown text keeps it.
+    assert "/memos/1" in (await call_tool(session, caller, "search", {"query": "paint"}) or "")
+    listed = await call_tool(session, caller, "list", {"entity": "memos"})
+    assert listed is not None and "table widths" not in listed and "Paint twice." in listed
+
+
 async def test_an_answer_note_is_given_the_call_and_the_entities_shown(session: AsyncSession, caller: Caller) -> None:
     calls: list[tuple[str, dict[str, Any], tuple[str, ...]]] = []
 

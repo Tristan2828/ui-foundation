@@ -806,7 +806,7 @@ export function EntityView({
           <div data-slot="entity-view-title-line" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
             <h1 id={dialog?.titleId} className="min-w-0 max-w-full type-page-title break-words text-foreground">
               {titleEdit ? (
-                <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline" className="w-full">
+                <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline">
                   {title}
                 </EditableValue>
               ) : (
