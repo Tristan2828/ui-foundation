@@ -24,7 +24,8 @@
     "remark-gfm",
     "@milkdown/kit",
     "unified",
-    "remark-parse"
+    "remark-parse",
+    "rrule"
   ],
   "devDependencies": [
     "vite",

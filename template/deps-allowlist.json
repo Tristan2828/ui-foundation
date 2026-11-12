@@ -63,12 +63,14 @@
     "python-dotenv",
     "email-validator",
     "cryptography",
+    "python-dateutil",
     "mypy",
     "pytest",
     "pytest-asyncio",
     "httpx",
     "pyyaml",
     "types-pyyaml",
+    "types-python-dateutil",
     "aiosqlite"
   ]
 }

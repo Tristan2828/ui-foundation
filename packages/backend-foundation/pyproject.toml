@@ -15,6 +15,9 @@ dependencies = [
   "pydantic==2.13.5",
   "python-dotenv==1.2.3",
   "email-validator==2.3.0",
+  # Recurrence rules (foundation_backend.recurrence): its rrule, RFC 5545's
+  # repeat rules, rather than date maths of our own.
+  "python-dateutil==2.9.0.post0",
 ]
 
 [project.urls]
@@ -31,6 +34,7 @@ push = [
 dev = [
   "cryptography==50.0.2",
   "mypy==2.3.1",
+  "types-python-dateutil==2.9.0.20260716",
   "pytest==9.1.1",
   "pytest-asyncio==1.4.0",
   "httpx==0.28.1",

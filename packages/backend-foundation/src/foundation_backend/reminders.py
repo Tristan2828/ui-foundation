@@ -22,6 +22,15 @@ reminder that's due:
   backend that was down at 07:30 doesn't send the morning's at noon.
 - **Sent or not, it's done for the day.** A user with no device
   subscribed gets nothing, and the job doesn't try again every minute.
+- **Repeating reminders** (#326): a row of a model with
+  `recurrence_models.RecurringReminderFields`' columns whose `recurrence`
+  is set follows that rule (foundation_backend.recurrence) instead of
+  `days` and `time_of_day`: each occurrence is due inside the grace
+  (several a day if the rule has several times), one missed past it is
+  skipped rather than sent late, a sent one is nagged every
+  `nag_every_minutes` up to `nag_limit` times until it's marked done
+  (`mark_done`), and a `fromCompletion` rule's next one counts from the
+  done time.
 - **Channels beyond push** (email, a phone-alert app) are the app's
   senders, handed to `register(senders=...)`: the job still decides what's
   due and stamps it once, and says per channel whether it was sent or
@@ -33,13 +42,12 @@ from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
 from typing import Any, Literal
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import inspect
 from sqlmodel import SQLModel, col, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from foundation_backend import jobs, push
+from foundation_backend import jobs, push, recurrence
 from foundation_backend.error_reporting import ErrorContext, report_error
 
 logger = logging.getLogger("app.reminders")
@@ -65,15 +73,8 @@ def format_days(days: Iterable[int]) -> str:
     return ",".join(DAYS[day] for day in sorted(set(days)))
 
 
-def zone(name: str) -> tzinfo:
-    """The IANA zone, read from the system's time zone database (on
-    Windows, from the tzdata package: docs/foundation/reminders.md)."""
-    if name == "UTC":
-        return timezone.utc
-    try:
-        return ZoneInfo(name)
-    except (ZoneInfoNotFoundError, ValueError) as exc:
-        raise ValueError(f"Unknown time zone {name!r}.") from exc
+# The IANA zone, read from the system's time zone database (recurrence.zone).
+zone = recurrence.zone
 
 
 def due_on(
@@ -93,7 +94,9 @@ def due_on(
     # The scheduled moment today, as the zone has it. A time skipped by a
     # DST change (02:30 on the spring-forward night) resolves an hour on.
     scheduled = datetime.combine(today, time_of_day, tzinfo=tz)
-    late = local_now - scheduled
+    # In UTC: two times in one zone subtract as wall-clock times, which
+    # made that skipped 02:30 an hour late and never sent (#326).
+    late = now.astimezone(timezone.utc) - scheduled.astimezone(timezone.utc)
     if late < timedelta(0) or late > grace:
         return None
     return today
@@ -139,11 +142,14 @@ commit."""
 @dataclass
 class ReminderSent:
     """A reminder the run sent (its id): the local day it was due on, and
-    how each of its channels went."""
+    how each of its channels went. A repeating one also says which
+    occurrence (a UTC instant) and whether this was a nag."""
 
     reminder_id: Any
     on: date
     results: dict[str, ChannelResult]
+    occurrence: datetime | None = None
+    nag: bool = False
 
 
 @dataclass
@@ -153,14 +159,18 @@ class RemindersRun:
 
     sent: list[ReminderSent] = field(default_factory=list)
     unreadable: int = 0
+    # Occurrences of repeating reminders passed over unsent (missed past the grace).
+    skipped: int = 0
     push_result: push.PushResult = field(default_factory=push.PushResult)
 
     def summary(self) -> str | None:
         """The job's line in the jobs record, None when nothing was due.
         Push-only runs read as before ("1 due: 2 sent"); each other
         channel adds its own count ("email: 1 sent, 1 failed")."""
-        if not self.sent and not self.unreadable:
+        if not self.sent and not self.unreadable and not self.skipped:
             return None
+        if not self.sent and not self.unreadable:
+            return f"{self.skipped} missed"
         counts: dict[str, dict[str, int]] = {}
         for item in self.sent:
             for channel, result in item.results.items():
@@ -172,6 +182,8 @@ class RemindersRun:
                 words = [f"{tally[status]} {status}" for status in ("sent", "failed", "skipped") if status in tally]
                 parts.append(f"{channel}: {', '.join(words)}")
         summary = f"{len(self.sent)} due: {'; '.join(parts)}"
+        if self.skipped:
+            summary += f"; {self.skipped} missed"
         return f"{summary}; {self.unreadable} unreadable" if self.unreadable else summary
 
 
@@ -251,13 +263,39 @@ async def run_due_reminders(
     (all of them when left out), and `on_sent` sees each reminder's results
     before it's stamped. A failed channel doesn't stop the others, and the
     reminder is done for the day either way: a channel that's down isn't
-    tried again every minute."""
+    tried again every minute.
+
+    A model with recurrence_models.RecurringReminderFields' columns may
+    set `recurrence` on a row: that row follows its rule
+    (recurrence.step), its occurrence counts as sent whichever channels
+    failed, and its state columns are stored each run."""
     now = now or datetime.now(timezone.utc)
     table: Any = model or _default_model()
     result = await session.exec(select(table).where(col(table.enabled).is_(True)))
     run = RemindersRun()
     due: list[tuple[Any, date]] = []
+    repeating: dict[int, recurrence.Step] = {}
+    moved = False
     for reminder in result.all():
+        if getattr(reminder, "recurrence", None) is not None:
+            try:
+                rule = recurrence.Recurrence.model_validate(reminder.recurrence)
+            except ValueError:
+                logger.warning("reminder %s: unreadable recurrence", reminder.id)
+                run.unreadable += 1
+                continue
+            planned = recurrence.step(rule, state_of(reminder), now, grace=REMINDER_GRACE, nagging=nagging_of(reminder))
+            run.skipped += planned.skipped
+            if planned.send is None:
+                # Its pending occurrence was set or moved on: stored with the others below.
+                if _apply(reminder, planned.state):
+                    session.add(reminder)
+                    moved = True
+                continue
+            assert planned.occurrence is not None
+            repeating[id(reminder)] = planned
+            due.append((reminder, planned.occurrence.astimezone(rule.tz).date()))
+            continue
         try:
             on = due_on(
                 time_of_day=reminder.time_of_day,
@@ -273,6 +311,8 @@ async def run_due_reminders(
             continue
         if on is not None:
             due.append((reminder, on))
+    if moved:
+        await session.commit()
     available: dict[str, Sender] = {PUSH: _push_sender(run.push_result), **(senders or {})}
     for reminder, on in due:
         reminder_id = (await _loaded(session, reminder)).id
@@ -283,11 +323,82 @@ async def run_due_reminders(
                 await on_sent(session, await _loaded(session, reminder), results)
             except Exception as exc:  # noqa: BLE001 — stamped anyway, or it's sent again next minute
                 _report("on_sent", exc)
-        reminder.last_sent_on = on
+        plan = repeating.get(id(reminder))
+        if plan is None:
+            reminder.last_sent_on = on
+        else:
+            _apply(reminder, plan.state)
         session.add(reminder)
         await session.commit()
-        run.sent.append(ReminderSent(reminder_id, on, results))
+        if plan is None:
+            run.sent.append(ReminderSent(reminder_id, on, results))
+        else:
+            run.sent.append(ReminderSent(reminder_id, on, results, plan.occurrence, plan.send == "nag"))
     return run
+
+
+# ---------------------------------------------------------- repeating reminders
+
+# How many nags when a row sets nag_every_minutes and no nag_limit.
+DEFAULT_NAG_LIMIT = 3
+_STATE_COLUMNS = ("next_at", "sent_at", "last_sent_at", "nag_count", "done_at", "done_occurrence")
+
+
+def state_of(reminder: Any) -> recurrence.OccurrenceState:
+    """A repeating reminder's row as recurrence.OccurrenceState."""
+    return recurrence.OccurrenceState(
+        next_at=reminder.next_at,
+        sent_at=reminder.sent_at,
+        last_sent_at=reminder.last_sent_at,
+        nag_count=reminder.nag_count or 0,
+        done_at=reminder.done_at,
+        done_occurrence=reminder.done_occurrence,
+    )
+
+
+def nagging_of(reminder: Any) -> recurrence.Nagging | None:
+    """The row's nagging: every nag_every_minutes, at most nag_limit times."""
+    every = getattr(reminder, "nag_every_minutes", None)
+    if not every or every <= 0:
+        return None
+    limit = getattr(reminder, "nag_limit", None)
+    return recurrence.Nagging(timedelta(minutes=every), DEFAULT_NAG_LIMIT if limit is None else max(limit, 0))
+
+
+def _same(a: Any, b: Any) -> bool:
+    if isinstance(a, datetime) and isinstance(b, datetime):
+        return recurrence.as_utc(a) == recurrence.as_utc(b)
+    return bool(a == b)
+
+
+def _apply(reminder: Any, state: recurrence.OccurrenceState) -> bool:
+    """Writes `state` onto the row; True when anything changed."""
+    changed = False
+    for name in _STATE_COLUMNS:
+        value = getattr(state, name)
+        if not _same(getattr(reminder, name), value):
+            setattr(reminder, name, value)
+            changed = True
+    return changed
+
+
+def mark_done(reminder: Any, done_at: datetime | None = None) -> recurrence.OccurrenceState:
+    """Marks a repeating reminder's pending occurrence done (the app's
+    "Done" button or notification action), on the row: `done_occurrence`
+    and `done_at` are set, nagging stops, and the next occurrence is
+    pending (for `fromCompletion`, counted from `done_at`). The app adds
+    and commits the row."""
+    rule = recurrence.Recurrence.model_validate(reminder.recurrence)
+    state = recurrence.done(rule, state_of(reminder), done_at or datetime.now(timezone.utc))
+    _apply(reminder, state)
+    return state
+
+
+def schedule_changed(reminder: Any) -> None:
+    """Forgets where a repeating reminder was, after its rule changed: the
+    next run picks the first occurrence of the new rule. The app adds and
+    commits the row."""
+    _apply(reminder, recurrence.OccurrenceState(done_at=reminder.done_at, done_occurrence=reminder.done_occurrence))
 
 
 async def send_due_reminders(

@@ -36,6 +36,9 @@ dev = [
   "httpx==0.28.1",
   "pyyaml==6.0.3",
   "types-pyyaml==6.0.12.20260906",
+  # ui-foundation-backend's recurrence reads dateutil (its own runtime
+  # dependency); mypy strict needs its stubs.
+  "types-python-dateutil==2.9.0.20260716",
   "aiosqlite==0.22.1",
 ]
 
