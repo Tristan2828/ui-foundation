@@ -40,6 +40,7 @@ import type { IconComponent } from '@/components/app/icon-component'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyText } from './empty-value'
 
 /** One of the twelve categorical slots (design-language.md "Categorical colour"). */
 export type CategorySlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
@@ -159,10 +160,7 @@ function ChipValue({ state, value }: { state: 'loading' | 'error' | 'success'; v
     )
   if (state === 'error')
     return (
-      <span className="text-muted-foreground">
-        <span aria-hidden="true">—</span>
-        <span className="sr-only">Couldn't load</span>
-      </span>
+      <EmptyText label="Couldn't load" />
     )
   if (value === undefined) return null
   return (

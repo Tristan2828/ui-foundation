@@ -64,6 +64,10 @@ const COMPOSITE_STORIES = [
   { id: 'ui-toast--all-tones', mustShow: 'Deleted Harbor Light' },
   { id: 'app-deleteaction--open', mustShow: 'It goes to Deleted, and Restore brings it back.' },
   { id: 'app-feedback--all-states', mustShow: 'Checked 12 · 2 deals' },
+  // A delete that asks a reason: its field, label and hint (4.96).
+  { id: 'app-deleteaction--open-with-reason', mustShow: 'Kept with its history.' },
+  // The record's empty value as an app draws it (4.96): the dash, words.
+  { id: 'app-emptytext--places', mustShow: 'No budget yet' },
   // Invalid fields with their typed values, on a card (4.63.2).
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },

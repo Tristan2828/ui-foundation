@@ -15,17 +15,17 @@
   - Step 8: Add Playwright specs for all three screens · lines 752–830
   - Step 9: Register the nav entry and route names · lines 831–845
   - Step 10: `npm run verify`. · lines 846–848
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 850–1169
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 850–1178
   - [The record view](#the-record-view) · lines 999–1047
   - [Forms](#forms) · lines 1049–1101
   - [Dialogs](#dialogs) · lines 1103–1128
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1130–1169
-- [What not to copy](#what-not-to-copy) · lines 1171–1197
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1199–1216
-- [Deleting](#deleting) · lines 1218–1249
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1251–1272
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1274–1283
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1286–1328
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1130–1178
+- [What not to copy](#what-not-to-copy) · lines 1180–1206
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1208–1225
+- [Deleting](#deleting) · lines 1227–1258
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1260–1281
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1283–1292
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1295–1337
 
 <!-- /index -->
 
@@ -1154,6 +1154,15 @@ sight.** What happened where the person is looking says so there.
   `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
   `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
   Never a delete without a confirm, never a hand-written dialog.
+- **A delete that asks a reason: `DeleteAction reason`** (4.96). One
+  optional field between the sentence and the buttons, a "Why" box:
+  `reason={{ label: 'Why remove it?', hint: 'Kept with its history.' }}`
+  and `onDelete={(why) => remove({ id, reason: why })}`, `why` trimmed
+  and `''` when nothing's typed. The rest is the same confirm: 420px, a
+  bottom sheet on a phone, Cancel then the filled destructive button, a
+  refusal in the dialog with Try again (sending the same words), and
+  closing with something typed asks "Discard your changes?" first. One
+  field only: a confirm that needs more is a `FormDialog`.
 - **A toast's words come from `notify.done(verb, name, { undo })`**: the
   verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when
   given, then says "Restored The Long Walk". Never "X deleted", never

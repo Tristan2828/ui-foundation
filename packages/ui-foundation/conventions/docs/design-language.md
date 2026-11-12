@@ -30,12 +30,12 @@
 - [Parts of the page standards](#parts-of-the-page-standards) · lines 1278–1321
 - [A few equal things](#a-few-equal-things) · lines 1323–1407
 - [An overview page](#an-overview-page) · lines 1409–1472
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1473–1511
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1513–1558
-- [Picking at random](#picking-at-random) · lines 1560–1591
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1593–1660
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1662–1687
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1689–1762
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1473–1524
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1526–1571
+- [Picking at random](#picking-at-random) · lines 1573–1604
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1606–1673
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1675–1700
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1702–1775
 
 <!-- /index -->
 
@@ -1502,6 +1502,19 @@ data on each its own.
   muted text tone, read by a screen reader as "Not set": the same on
   every field, the presets' included. A field's own `emptyLabel` still
   wins where words say more than a dash ("No budget yet").
+- **The same dash off the record: `EmptyText`** (4.96). An app's own
+  strip, summary line or cell with nothing in it draws
+  `isEmptyValue(value) ? <EmptyText /> : value`, never a dash and an
+  `sr-only` of its own. `label` is what a screen reader says for the
+  dash ("Not set" unless set: `label="No reason given"`), `text` shows
+  words instead of it, and `className` replaces the muted tone's class
+  (keep a muted tone: `className="type-label text-muted-foreground"` on a
+  label-sized line). EntityView, KeyStats, EqualItems, ValueList and the
+  hub cards' "Couldn't load" all draw through it.
+
+  ```tsx
+  <p className="type-body">{shelf} · {isEmptyValue(reason) ? <EmptyText label="No reason given" /> : reason}</p>
+  ```
 - **Folded empties** (`emptyFields="fold"`): each fields card lists its
   filled fields, then a muted, underlined "N empty" with a down chevron
   under them opens the rest in their places, each still edited in place,

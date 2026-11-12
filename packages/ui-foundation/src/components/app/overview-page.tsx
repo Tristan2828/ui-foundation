@@ -30,6 +30,7 @@ import { NeedsYou, type NeedsYouItem } from '@/components/app/needs-you'
 import type { PartEmptyState } from '@/components/app/part-empty'
 import { WidgetCard, WidgetCardGroup } from '@/components/app/widget-card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyText } from './empty-value'
 
 export type OverviewPart = {
   /** Unique on the page: the tile's and the card's id. */
@@ -208,10 +209,7 @@ function OverviewTile({
           <span className="sr-only">Loading</span>
         </>
       ) : state === 'error' ? (
-        <span data-state="error" className="type-numeric text-muted-foreground">
-          <span aria-hidden="true">—</span>
-          <span className="sr-only">Couldn't load</span>
-        </span>
+        <EmptyText data-state="error" label="Couldn't load" className="type-numeric text-muted-foreground" />
       ) : state === 'empty' ? (
         <span data-state="empty" className="py-0.5 type-body text-muted-foreground">
           Nothing yet
