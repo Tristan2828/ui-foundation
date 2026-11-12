@@ -20,7 +20,7 @@ const tailwind = readFileSync(new URL('../styles/index.css', import.meta.url), '
 
 const SLOTS = Array.from({ length: 12 }, (_, i) => i + 1)
 const STEPS = [1, 2, 3, 4, 5]
-const MIN_DELTA_E = { light: 8, dark: 8 }
+const MIN_DELTA_E = { light: 8, dark: 8, 'palm-lcd': 8 }
 const MIN_CVD_DELTA_E = 6
 const MIN_GREY_DELTA_E = 6
 const MIN_CHROMA = 0.03 // oklch: below this a step reads as grey, or as white or black
@@ -32,8 +32,14 @@ const CHART_GREYS = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--char
 const MIN_CONTRAST = 3
 const MIN_TEXT_CONTRAST = 4.5
 
-function primitives(slot: number, shade: '700' | '400'): Map<number, Oklch> {
+// Light's -700 and dark's -400; Palm LCD's are its own (--palette-palm-lcd-category-N-depth-M).
+function primitives(slot: number, shade: '700' | '400' | 'lcd'): Map<number, Oklch> {
   const steps = new Map<number, Oklch>()
+  if (shade === 'lcd') {
+    for (const m of css.matchAll(/--palette-palm-lcd-category-(\d+)-depth-(\d+):\s*oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)/g))
+      if (Number(m[1]) === slot) steps.set(Number(m[2]), { l: Number(m[3]), c: Number(m[4]), h: Number(m[5]) })
+    return steps
+  }
   for (const m of css.matchAll(/--category-(\d+)-depth-(\d+)-(\d+):\s*oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)/g)) {
     if (Number(m[1]) !== slot || m[3] !== shade) continue
     steps.set(Number(m[2]), { l: Number(m[4]), c: Number(m[5]), h: Number(m[6]) })
@@ -41,8 +47,8 @@ function primitives(slot: number, shade: '700' | '400'): Map<number, Oklch> {
   return steps
 }
 
-function block(selector: ':root' | '.dark') {
-  const body = [...css.replaceAll('\r\n', '\n').matchAll(/^(:root|\.dark) \{\n([\s\S]*?)^\}/gm)].find((m) => m[1] === selector)
+function block(selector: ':root' | '.dark' | '[data-palette="palm-lcd"]') {
+  const body = [...css.replaceAll('\r\n', '\n').matchAll(/^(:root|\.dark|\[data-palette="palm-lcd"\]) \{\n([\s\S]*?)^\}/gm)].find((m) => m[1] === selector)
   if (!body) throw new Error(`no ${selector} block`)
   return body[2]
 }
@@ -101,9 +107,17 @@ const THEMES = {
       ),
     } as Record<string, Rgb>,
   },
+  // Palm LCD, the light palette: its own steps on its green, at light's floor.
+  'palm-lcd': {
+    shade: 'lcd',
+    selector: '[data-palette="palm-lcd"]',
+    cards: { 'palm-lcd card': palettePanel('palm-lcd', 'panel'), 'palm-lcd raised': palettePanel('palm-lcd', 'raised') } as Record<string, Rgb>,
+  },
 } as const
 
 const name = (slot: number, step: number) => `--category-${slot}-depth-${step}`
+const primitiveName = (slot: number, step: number, shade: string) =>
+  shade === 'lcd' ? `--palette-palm-lcd-category-${slot}-depth-${step}` : `${name(slot, step)}-${shade}`
 
 describe('depth ramps', () => {
   it('has five steps for every slot in both themes, each a Tailwind colour with its foreground', () => {
@@ -111,7 +125,7 @@ describe('depth ramps', () => {
       for (const slot of SLOTS) {
         expect([...primitives(slot, shade).keys()].sort((a, b) => a - b)).toEqual(STEPS)
         for (const n of STEPS) {
-          expect(block(selector)).toContain(`${name(slot, n)}: var(${name(slot, n)}-${shade});`)
+          expect(block(selector)).toContain(`${name(slot, n)}: var(${primitiveName(slot, n, shade)});`)
           expect(block(selector)).toMatch(new RegExp(`${name(slot, n)}-foreground: var\\(--(white|black)\\);`))
         }
       }
@@ -143,9 +157,11 @@ describe('depth ramps', () => {
       expect(ramps.flatMap(({ slot, rgb }) => STEPS.filter((_, i) => rgb[i].some((v) => v < -0.001 || v > 1.001)).map((n) => `${slot}.${n}`))).toEqual([])
     })
 
+    // The slot's own hue: its --category-N, which in Palm LCD is its own slot.
+    const slotPrimitive = (slot: number) => (shade === 'lcd' ? `--palette-palm-lcd-category-${slot}` : `--category-${slot}-700`)
     it(`keeps one hue per slot, the slot's own, across all five steps (${theme})`, () => {
       for (const { slot, steps } of ramps) {
-        const slotHue = Number(css.match(new RegExp(`--category-${slot}-700: oklch\\([\\d.]+ [\\d.]+ ([\\d.]+)\\)`))![1])
+        const slotHue = Number(css.match(new RegExp(`${slotPrimitive(slot)}: oklch\\([\\d.]+ [\\d.]+ ([\\d.]+)\\)`))![1])
         expect(STEPS.map((n) => steps.get(n)!.h)).toEqual(STEPS.map(() => slotHue))
       }
     })
@@ -154,18 +170,24 @@ describe('depth ramps', () => {
       expect(ramps.flatMap(({ slot, steps }) => STEPS.filter((n) => steps.get(n)!.c < MIN_CHROMA).map((n) => `${slot}.${n}`))).toEqual([])
     })
 
-    // Depth is contrast with the page: deeper is darker in light, brighter in dark.
-    const order = theme === 'light' ? 'darker' : 'brighter'
+    // Depth is contrast with the page: deeper is darker in light (and Palm LCD, a light palette), brighter in dark.
+    const onLight = theme !== 'dark'
+    const order = onLight ? 'darker' : 'brighter'
     it(`gets ${order} at every step, so the order survives without hue (${theme})`, () => {
       for (const { steps } of ramps) {
         const lightness = STEPS.map((n) => steps.get(n)!.l)
-        expect(lightness).toEqual([...lightness].sort((a, b) => (theme === 'light' ? b - a : a - b)))
+        expect(lightness).toEqual([...lightness].sort((a, b) => (onLight ? b - a : a - b)))
         expect(new Set(lightness).size).toBe(STEPS.length)
       }
     })
 
     it(`keeps every step ΔE ${MIN_GREY_DELTA_E} from the neutral greys, on the page and in each palette (${theme})`, () => {
-      const tones = theme === 'light' ? [[':root']] : [['.dark', ':root'], ...PALETTES.map((name) => [`.dark[data-palette="${name}"]`, '.dark', ':root'])]
+      const tones =
+        theme === 'light'
+          ? [[':root']]
+          : theme === 'palm-lcd'
+            ? [['[data-palette="palm-lcd"]', ':root']]
+            : [['.dark', ':root'], ...PALETTES.map((name) => [`.dark[data-palette="${name}"]`, '.dark', ':root'])]
       const near: string[] = []
       for (const selectors of tones) {
         const tokens = selectors[0].includes('data-palette') ? GREY_TOKENS : [...GREY_TOKENS, ...CHART_GREYS]

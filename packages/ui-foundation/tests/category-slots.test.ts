@@ -29,6 +29,14 @@ function primitives(shade: '700' | '400'): Map<number, Oklch> {
   return slots
 }
 
+// Palm LCD's own slots (--palette-palm-lcd-category-N), dark enough for its green.
+function palmLcdSlots(): Map<number, Oklch> {
+  const slots = new Map<number, Oklch>()
+  for (const m of css.matchAll(/--palette-palm-lcd-category-(\d+):\s*oklch\(([\d.]+) ([\d.]+) ([\d.]+)\)/g))
+    slots.set(Number(m[1]), { l: Number(m[2]), c: Number(m[3]), h: Number(m[4]) })
+  return slots
+}
+
 function closerThan(slots: Map<number, Rgb>, min: number) {
   const tooClose: string[] = []
   for (const [a, x] of slots)
@@ -41,8 +49,8 @@ function closerThan(slots: Map<number, Rgb>, min: number) {
 }
 
 describe('categorical slots', () => {
-  // Light mode uses each slot's -700, dark its -400.
-  const themes = { light: primitives('700'), dark: primitives('400') }
+  // Light mode uses each slot's -700, dark its -400, Palm LCD its own.
+  const themes = { light: primitives('700'), dark: primitives('400'), 'palm-lcd': palmLcdSlots() }
 
   it('has twelve slots, numbered 1-12, in both themes and as Tailwind colours', () => {
     const numbers = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -50,6 +58,7 @@ describe('categorical slots', () => {
     for (const n of numbers) {
       expect(css).toContain(`--category-${n}: var(--category-${n}-700);`)
       expect(css).toContain(`--category-${n}: var(--category-${n}-400);`)
+      expect(css).toContain(`--category-${n}: var(--palette-palm-lcd-category-${n});`)
       expect(tailwind).toContain(`--color-category-${n}: var(--category-${n});`)
     }
   })

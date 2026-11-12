@@ -187,12 +187,13 @@ test.describe('rich-text tables', () => {
     await expect(table(page, 'markedTable').locator('td[data-color=green]')).toHaveText('$12.49')
   })
 
-  // Light, dark, and dark in each palette (design-language.md "Palettes"):
-  // a palette remaps the heading band, the grid's borders and the washes' page.
-  const PALETTES = ['indigo-cyan', 'indigo-rose', 'graphite-periwinkle', 'violet']
+  // Light, dark, and each palette in the theme it forces (design-language.md
+  // "Palettes"): a palette remaps the heading band, the grid's borders and
+  // the washes' page.
+  const PALETTES = ['indigo-cyan', 'indigo-rose', 'graphite-periwinkle', 'violet', 'palm-lcd']
   for (const theme of ['light', 'dark', ...PALETTES] as const) {
     test(`both looks, coloured cells and row headers, a grip's menu open: zero axe violations (${theme})`, async ({ page }) => {
-      const query = PALETTES.includes(theme) ? `theme=dark&palette=${theme}` : `theme=${theme}`
+      const query = PALETTES.includes(theme) ? `theme=${theme === 'palm-lcd' ? 'light' : 'dark'}&palette=${theme}` : `theme=${theme}`
       await page.goto(`${TABLES}&${query}`)
       if (PALETTES.includes(theme)) await expect(page.locator('html')).toHaveAttribute('data-palette', theme)
       await expect(table(page, 'markedTable')).toBeVisible()

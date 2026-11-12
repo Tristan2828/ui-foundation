@@ -1016,7 +1016,7 @@ view reaches them all. A record uses the parts it has, in this order:
 - **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
   what's known, then "N empty" opens the rest, still edited in place.
 - **A few equal things** (a plan's phases, a price at each store, a
-  handful of options) are one `EqualItems` (4.92) in a section, one look
+  handful of options) are one `EqualItems` (4.93) in a section, one look
   per set: `cards` for little to say about each, `table` for things
   compared on the same values, `featured` when one is current or best,
   `panels` when each has several details (design-language.md "A few

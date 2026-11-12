@@ -88,6 +88,10 @@ describe('pwaFiles', () => {
     expect(() => pwaFiles({ name: 'Demo', palette: 'tangerine' as 'violet' })).toThrow(/tangerine/)
   })
 
+  it('takes the light palette’s ink and green', () => {
+    expect(manifest(pwaFiles({ name: 'Datebook', palette: 'palm-lcd' }))).toMatchObject({ theme_color: '#1d2416', background_color: '#c9d1b2' })
+  })
+
   it('serves the worker with the icon’s address, and no fetch handler', () => {
     const worker = text(pwaFiles({ name: 'App' }, '/app/'), 'push-sw.js')
     expect(worker).toContain("const ICON = '/app/icons/icon-192.png'")

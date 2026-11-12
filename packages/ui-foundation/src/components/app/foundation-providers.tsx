@@ -6,13 +6,13 @@ import { MockModeBanner } from '@/components/app/mock-mode-banner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { PaletteProvider } from '@/components/app/palette-provider'
 import { RowsProvider } from '@/components/app/rows-provider'
-import type { PaletteName } from '@/lib/palettes'
+import { paletteColorScheme, type AppPaletteName } from '@/lib/palettes'
 import { ErrorReportingProvider } from '@/error-reporting/error-reporting-provider'
 import { resolveErrorReporting, type ErrorReportingOptions } from '@/error-reporting/reporter'
 import { browserStaleChunkReload } from '@/lib/stale-chunk-reload'
 
 // Everything an app's root needs around its router, in the order that
-// works: the theme outermost (and the palette, which forces it dark), the mock-mode banner above the router so it
+// works: the theme outermost (and the palette, which forces it dark, or light for a light one), the mock-mode banner above the router so it
 // shows on every route (/login included), and AuthProvider inside
 // QueryClientProvider because it queries /auth/me through TanStack Query.
 // An app's DataEnvironmentBanner goes first among the children, before its
@@ -42,13 +42,15 @@ export function FoundationProviders({
   /**
    * The app's palette (design-language.md "Palettes"). With one, the app
    * is always dark in that palette and the shell has no light/dark
-   * toggle; printed notes still print light. Without, light and dark
-   * follow the system, as before.
+   * toggle; printed notes still print light. A light palette
+   * (`'palm-lcd'`), which an app opts into only here, forces light
+   * instead. Without, light and dark follow the system, as before.
    */
-  palette?: PaletteName
+  palette?: AppPaletteName
   /**
    * With `palette`: the shell offers all four palettes, and the one picked
    * is remembered on this device. A new device starts on `palette`.
+   * Ignored with a light palette, which is never in the picker.
    */
   palettePicker?: boolean
   /**
@@ -63,7 +65,7 @@ export function FoundationProviders({
   const reporting = resolveErrorReporting(errorReporting)
   useEffect(() => browserStaleChunkReload().install(window), [])
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem forcedTheme={palette ? 'dark' : undefined}>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem forcedTheme={palette ? paletteColorScheme(palette) : undefined}>
       <PaletteProvider palette={palette} picker={palettePicker}>
       <RowsProvider picker={rowsPicker}>
       <MockModeBanner active={mockMode} />

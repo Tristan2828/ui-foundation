@@ -3,39 +3,39 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 48–115
-- [Glow](#glow) · lines 117–135
-- [Semantic tones](#semantic-tones) · lines 137–165
-- [The three badge styles](#the-three-badge-styles) · lines 167–184
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 186–215
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 217–230
-- [Logos and brand marks](#logos-and-brand-marks) · lines 232–276
-- [Categorical colour](#categorical-colour) · lines 278–348
-- [Heat scale](#heat-scale) · lines 350–411
-- [Depth ramps](#depth-ramps) · lines 413–496
-- [A stored colour](#a-stored-colour) · lines 498–546
-- [Shapes and sizes](#shapes-and-sizes) · lines 548–569
-- [Typography](#typography) · lines 571–691
-  - [Written text (notes)](#written-text-notes) · lines 605–691
-- [Density](#density) · lines 693–786
-  - [Rows on this device](#rows-on-this-device) · lines 759–786
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 788–902
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 904–981
-- [Notices](#notices) · lines 983–1011
-- [A value over time](#a-value-over-time) · lines 1013–1099
-  - [Several values over time](#several-values-over-time) · lines 1062–1099
-- [A list as a board](#a-list-as-a-board) · lines 1101–1152
-- [A list as cards](#a-list-as-cards) · lines 1154–1200
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1202–1231
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1233–1276
-- [A few equal things](#a-few-equal-things) · lines 1278–1323
-- [An overview page](#an-overview-page) · lines 1325–1388
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1389–1427
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1429–1474
-- [Picking at random](#picking-at-random) · lines 1476–1507
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1509–1576
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1578–1603
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1605–1678
+- [Palettes](#palettes) · lines 48–155
+- [Glow](#glow) · lines 157–176
+- [Semantic tones](#semantic-tones) · lines 178–206
+- [The three badge styles](#the-three-badge-styles) · lines 208–225
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 227–256
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 258–271
+- [Logos and brand marks](#logos-and-brand-marks) · lines 273–317
+- [Categorical colour](#categorical-colour) · lines 319–389
+- [Heat scale](#heat-scale) · lines 391–452
+- [Depth ramps](#depth-ramps) · lines 454–539
+- [A stored colour](#a-stored-colour) · lines 541–589
+- [Shapes and sizes](#shapes-and-sizes) · lines 591–612
+- [Typography](#typography) · lines 614–734
+  - [Written text (notes)](#written-text-notes) · lines 648–734
+- [Density](#density) · lines 736–829
+  - [Rows on this device](#rows-on-this-device) · lines 802–829
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 831–945
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 947–1024
+- [Notices](#notices) · lines 1026–1054
+- [A value over time](#a-value-over-time) · lines 1056–1142
+  - [Several values over time](#several-values-over-time) · lines 1105–1142
+- [A list as a board](#a-list-as-a-board) · lines 1144–1195
+- [A list as cards](#a-list-as-cards) · lines 1197–1243
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1245–1274
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1276–1319
+- [A few equal things](#a-few-equal-things) · lines 1321–1366
+- [An overview page](#an-overview-page) · lines 1368–1431
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1432–1470
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1472–1517
+- [Picking at random](#picking-at-random) · lines 1519–1550
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1552–1619
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1621–1646
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1648–1721
 
 <!-- /index -->
 
@@ -47,9 +47,9 @@ composites don't grow that way; they are built against a real app's screen.
 
 ## Palettes
 
-A palette is an app's own dark look: its surfaces, text, accent and a
-second colour, chosen once for every app the foundation serves. There
-are four, in the order they were ranked:
+A palette is an app's own look: its surfaces, text, accent and a
+second colour. Four dark ones were chosen once for every app the
+foundation serves, in the order they were ranked:
 
 | Name | `palette` | Accent | Second colour |
 |---|---|---|---|
@@ -58,24 +58,60 @@ are four, in the order they were ranked:
 | Graphite and Periwinkle | `graphite-periwinkle` | periwinkle on neutral grey | lilac |
 | Violet | `violet` | violet | magenta |
 
+And one light one, which an app opts into by name (`LIGHT_PALETTES`):
+
+| Name | `palette` | Surface | Text and accent |
+|---|---|---|---|
+| Palm LCD | `palm-lcd` | a Palm OS LCD's green, flat (cards are the same green) | dark ink; ink is also the primary fill and the field border |
+
 **How an app picks one.** `<FoundationProviders palette="indigo-cyan">`
 names the app's default. Add `palettePicker` and the app shell's header
-offers all four (with swatches); the one picked is remembered on that
-device, and a new device starts on the default. `usePalette()` reads the
-palette on screen. Without `palette`, nothing changes: light and dark
-follow the system, with the toggle in the header.
+offers the four dark ones (with swatches); the one picked is remembered
+on that device, and a new device starts on the default. `usePalette()`
+reads the palette on screen. Without `palette`, nothing changes: light and
+dark follow the system, with the toggle in the header.
 
-**A palette is dark only.** With one, the theme is forced dark and the
-shell has no light/dark toggle. The light theme stays for apps without a
-palette. Printed notes still print light: the print override beats a
-palette's block.
+**A palette forces its theme.** A dark palette forces the dark theme and
+the shell has no light/dark toggle. The light theme stays for apps
+without a palette, and for Palm LCD. Printed notes still print light:
+the print override beats a palette's block.
+
+**Palm LCD is opt-in.** An app gets it only by naming it:
+`<FoundationProviders palette="palm-lcd">`. It forces the light theme, so
+the shell has no toggle. It is never in the picker: `palettePicker` is
+ignored beside it, and so is a palette a device saved before. It has no
+[glow](#glow). Everything is still a semantic token, so the app's code
+uses no raw colours:
+
+- **Surfaces.** `--background`, `--card` and `--popover` are the LCD green
+  (`#c9d1b2`). `--muted`, `--secondary` and `--accent` are a step darker.
+- **Ink.** `--foreground` is the mockup's ink (`#1d2416`, 10.1:1).
+  `--primary` and `--ring` are ink too, with the green on the primary fill,
+  as a pressed button looks on the device.
+- **Dimmed text.** `--muted-foreground` is `#464e39`, 5.50:1. The mockup's
+  `#5c6650` measured 3.82, under 4.5.
+- **The dotted rules between rows.** The colour is a token: `--rule` and
+  `--border` are the LCD's line colour (`#a3ad8f`). The style is the
+  app's, a Tailwind border utility: `border-b border-dotted border-rule`.
+  A table's own rows wear the colour, solid.
+- **Status text and links.** Status text is a quarter darker than the
+  mockup's green, rust and blue, so it still reads on its own tinted wash
+  (7.0:1 or more on the green). `--link` is the mockup's blue.
+- **Glyphs and fills.** The light theme's categorical slots, heat steps
+  and depth steps were tuned for white, and measure 1.5 to 3 on the
+  green. Palm LCD has its own set, each darker than about oklch 0.57, so
+  it clears 3:1 on both greens. It keeps the light theme's floors for how
+  far apart they must look. Each depth ramp holds its Palm LCD slot's
+  hue and gets darker at every step, as in light ([Depth ramps](#depth-ramps)).
+  Every heat and depth fill takes white text.
 
 **Where it lives.** `styles/theme.css`: each palette's colours as
 primitives (`--palette-<name>-*`, ratios beside them), and one block per
-palette, `.dark[data-palette="<name>"]`, that sets only what differs from
-`.dark`. `data-palette` goes on `<html>`, so popups portaled to `<body>`
-wear it too. An installed app's colours follow it with
-`pwa({ palette })`.
+palette that sets only what differs from its theme:
+`.dark[data-palette="<name>"]` for the four, and `[data-palette="palm-lcd"]`,
+on top of `:root`, for Palm LCD. `data-palette` goes on `<html>`, so popups
+portaled to `<body>` wear it too. An installed app's colours follow it with
+`pwa({ palette })`. For Palm LCD that is the ink and the green.
 
 **Why some tokens aren't the guide's colour as written.**
 
@@ -102,23 +138,28 @@ wear it too. An installed app's colours follow it with
   palette has, so it is kept as designed; axe doesn't check borders.
 
 The package's `e2e/fixtures-visual.spec.ts` runs every primitive,
-composite and tone story through axe in each palette, and measures every
-glyph, categorical slot and heat step against each palette's page and
-card.
+composite and tone story through axe in each palette (Palm LCD in light,
+the others in dark), and measures every glyph, categorical slot, heat
+step and depth step against each palette's page and card.
+`tests/category-slots.test.ts`, `heat-scale.test.ts` and
+`depth-ramps.test.ts` hold Palm LCD's own shades to the light theme's
+floors.
 
 **An app's own axe specs** check its palettes instead of light and dark:
 `defineA11ySuite({ …, palettes: ['indigo-cyan'] })` (and
 `defineDataEnvironmentBannerSuite`'s `palettes`) saves each as the
-device's choice before the page loads and checks it dark. Pass the app's
-default on every spec and `PALETTES` on the one that covers the shell.
-Without `palettes`, a palette app's light run fails: there is no light
-theme to find.
+device's choice before the page loads and checks it in the theme it
+forces: dark, or light for `palettes: ['palm-lcd']`. Pass the app's
+default on every spec and, with the picker, `PALETTES` on the one that
+covers the shell. Without `palettes`, a dark palette app's light run
+fails: there is no light theme to find.
 
 ## Glow
 
-Under a palette only, from `--primary` so each palette glows in its own
-accent; an app without a palette never gets it. Everything else stays
-flat: no glow at the top of the page.
+Under a dark palette only, from `--primary` so each palette glows in its
+own accent. An app without a palette never gets it, and nor does Palm
+LCD, the light one. Everything else stays flat: no glow at the top of the
+page.
 
 - **The primary button** (Button's default variant) on hover, keyboard
   focus and press: one soft layer of the accent (`--primary-glow`: 38px
@@ -490,7 +531,9 @@ slot, as a fill and as a cell, against the page and a card in each.
 slot, the order of lightness, the distance between neighbours (ΔE 8, and
 6 with deuteranopia and protanopia), the distance from the neutral greys
 (6), text on every fill and every step against every palette's card and
-raised surface, and fails if a change to `theme.css` breaks one.
+raised surface, and fails if a change to `theme.css` breaks one. Palm LCD,
+the light palette, has its own ramps on the same rules (its slot's hue,
+darker at every step, ΔE 6 from its own greys).
 `SideBySide` shows both themes at once, each ramp beside its theme's
 muted greys, under normal vision and simulated deuteranopia and
 protanopia.
@@ -1277,7 +1320,7 @@ Every one is measured with axe and the glyph check in both themes
 
 ## A few equal things
 
-`EqualItems` (4.92, record standard R10): a small set of equal, related
+`EqualItems` (4.93, record standard R10): a small set of equal, related
 things inside a record (a plan's phases, the stores a price is compared
 at, a handful of options), one data shape in four looks. A record picks
 one look per set; a fifth is asked for first.
