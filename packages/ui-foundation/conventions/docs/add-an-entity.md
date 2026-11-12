@@ -25,7 +25,7 @@
 - [Deleting](#deleting) · lines 1202–1233
 - [Fields only a script writes](#fields-only-a-script-writes) · lines 1235–1256
 - [Searching one part of the app](#searching-one-part-of-the-app) · lines 1258–1267
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1270–1309
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1270–1312
 
 <!-- /index -->
 
@@ -1282,7 +1282,10 @@ Four more things an app sets for AI chats (4.71), each in
   must be found exactly once (missing, or found twice, is a refusal that
   says so and saves nothing), or `append` adds text on a new line at the
   end. It saves and logs as `update` does, so a long note isn't sent back
-  whole to change a line. Each must be a text field of `update_schema`
+  whole to change a line. A table's widths comment (design-language.md
+  "Written text (notes)") is hidden from every read answer and kept
+  in what's stored, so an edit never drops it (4.94); `search` leaves
+  out a record whose only match is inside it. Each must be a text field of `update_schema`
   and not `script_only`; the backend refuses to start otherwise.
 - **The server's instructions** a chat gets when it connects:
   `register_entities(ENTITIES, instructions="…")` (or

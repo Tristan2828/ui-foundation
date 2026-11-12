@@ -157,9 +157,25 @@ async def _record(session: AsyncSession, user: User, entity: McpEntity, record_i
     return record
 
 
+# A table's column widths (4.79.0): the rich-text editor keeps them as one
+# comment line straight after the table (`<!-- table widths: Item=140 -->`,
+# the package's src/lib/markdown-table-widths.ts), which every renderer
+# hides. A read answer hides it too, with the blank lines before it; the
+# stored text keeps it (`_dump`), so edit_text and update save it back.
+# A comment anywhere else isn't this one, and shows as written.
+_TABLE_WIDTHS = re.compile(r"(^|\n)([ \t]*\|[^\n]*)(?:\n[ \t]*)*\n[ \t]*<!--\s*table widths:[^\n]*?-->[ \t]*(?=\n|$)")
+
+
+def _hide_table_widths(text: str) -> str:
+    """The text as a read answer shows it: without its tables' widths comments."""
+    return _TABLE_WIDTHS.sub(r"\1\2", text) if "table widths" in text else text
+
+
 def _format_value(value: Any) -> str:
     if value is None:
         return "(not set)"
+    if isinstance(value, str):
+        return _hide_table_widths(value)
     if isinstance(value, bool):
         return "yes" if value else "no"
     if isinstance(value, list):
@@ -263,6 +279,15 @@ def _list_line(entity: McpEntity, data: dict[str, Any]) -> str:
     return f"- {data[entity.title]} — {_address(entity, data['id'])}{suffix}"
 
 
+def _matches_only_hidden(data: dict[str, Any], query: str) -> bool:
+    """Whether the record's text holds `query` only inside a widths comment."""
+    needle = query.lower()
+    texts = [value for value in data.values() if isinstance(value, str)]
+    if not any(needle in text.lower() for text in texts):
+        return False  # The match is somewhere the answer doesn't show: keep it.
+    return not any(needle in _hide_table_widths(text).lower() for text in texts)
+
+
 def _groups() -> list[str]:
     """The groups the registered entities name, in their order."""
     return list(dict.fromkeys(e.group for e in ENTITIES.values() if e.group))
@@ -285,10 +310,15 @@ async def tool_search(session: AsyncSession, caller: Caller, args: dict[str, Any
         items, total = await entity.list(
             session, caller.user, ListArgs(offset=0, limit=SEARCH_PER_ENTITY, sort=None, search=query.strip(), filters={})
         )
-        if items:
+        dumped = [_dump(entity, item) for item in items]
+        # A record whose only match is inside a table's widths comment
+        # isn't one: none of its text holds the query once that's hidden.
+        kept = [data for data in dumped if not _matches_only_hidden(data, query.strip())]
+        total -= len(dumped) - len(kept)
+        if kept:
             _shown(entity)
-            more = f" (showing {len(items)} of {total}; use list to see more)" if total > len(items) else ""
-            lines = [_list_line(entity, _dump(entity, item)) for item in items]
+            more = f" (showing {len(kept)} of {total}; use list to see more)" if total > len(kept) else ""
+            lines = [_list_line(entity, data) for data in kept]
             sections.append(f"{entity.name}{more}:\n" + "\n".join(lines))
     if sections:
         return "\n\n".join(sections)
@@ -432,7 +462,9 @@ async def tool_edit_text(session: AsyncSession, caller: Caller, args: dict[str, 
         if found == 0:
             raise ToolError(
                 f"Nothing was saved: old wasn't found in {name}. It must match the current text exactly, "
-                "spaces and line breaks included; fetch the record to see it."
+                "spaces and line breaks included; fetch the record to see it. The text is as fetch shows it, "
+                "apart from a table's column widths, which fetch hides and edit_text keeps: give old from "
+                "within one paragraph or one table."
             )
         if found > 1:
             raise ToolError(

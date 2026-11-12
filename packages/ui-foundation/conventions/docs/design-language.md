@@ -15,27 +15,27 @@
 - [Depth ramps](#depth-ramps) · lines 454–539
 - [A stored colour](#a-stored-colour) · lines 541–589
 - [Shapes and sizes](#shapes-and-sizes) · lines 591–612
-- [Typography](#typography) · lines 614–734
-  - [Written text (notes)](#written-text-notes) · lines 648–734
-- [Density](#density) · lines 736–829
-  - [Rows on this device](#rows-on-this-device) · lines 802–829
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 831–945
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 947–1024
-- [Notices](#notices) · lines 1026–1054
-- [A value over time](#a-value-over-time) · lines 1056–1142
-  - [Several values over time](#several-values-over-time) · lines 1105–1142
-- [A list as a board](#a-list-as-a-board) · lines 1144–1195
-- [A list as cards](#a-list-as-cards) · lines 1197–1243
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1245–1274
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1276–1319
-- [A few equal things](#a-few-equal-things) · lines 1321–1405
-- [An overview page](#an-overview-page) · lines 1407–1470
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1471–1509
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1511–1556
-- [Picking at random](#picking-at-random) · lines 1558–1589
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1591–1658
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1660–1685
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1687–1760
+- [Typography](#typography) · lines 614–736
+  - [Written text (notes)](#written-text-notes) · lines 648–736
+- [Density](#density) · lines 738–831
+  - [Rows on this device](#rows-on-this-device) · lines 804–831
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 833–947
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 949–1026
+- [Notices](#notices) · lines 1028–1056
+- [A value over time](#a-value-over-time) · lines 1058–1144
+  - [Several values over time](#several-values-over-time) · lines 1107–1144
+- [A list as a board](#a-list-as-a-board) · lines 1146–1197
+- [A list as cards](#a-list-as-cards) · lines 1199–1245
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1247–1276
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1278–1321
+- [A few equal things](#a-few-equal-things) · lines 1323–1407
+- [An overview page](#an-overview-page) · lines 1409–1472
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1473–1511
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1513–1558
+- [Picking at random](#picking-at-random) · lines 1560–1591
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1593–1660
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1662–1687
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1689–1762
 
 <!-- /index -->
 
@@ -686,7 +686,9 @@ least), a column's menu has Narrower, Wider, Fit to content and Fit all
 columns, and a double-click on the edge fits it again. The width is kept
 in the Markdown as a comment after the table, naming its columns
 (`<!-- table widths: Item=140, Cost=72 -->`), which `<Markdown>` and the
-editor read and never show. A column named nowhere fits its words. A
+editor read and never show; nor do the backend's MCP read tools (4.94:
+`fetch`, `list`, `search`, and `update`'s answer), while `edit_text` and
+`update` keep it in what's stored. A column named nowhere fits its words. A
 phone ignores the widths and can't set them; on paper they scale to the
 page.
 

@@ -9,8 +9,8 @@ are listed on the
 
 ## 4.94.0 — A title edited in place stays whole; an equal item's own editor and actions
 
-The UI package only; additive, no new dependency (the backend package's
-version moves with it, unchanged). Record page standard R1 and R10.
+Both packages; additive, no new dependency. Record page standard R1 and
+R10, and #321.
 
 - **Fix: a short value edited in place no longer wraps.** An inline
   `EditableValue` (EntityView's `titleEdit`, a header badge) was capped
@@ -29,8 +29,18 @@ version moves with it, unchanged). Record page standard R1 and R10.
   prop ("Actions").
 - **`EqualItem.wide`**: the item takes the whole row of `cards` or
   `panels`, for an editor open in it.
+- **Backend: the MCP read tools hide a table's widths comment** (#321).
+  Since 4.79.0 rich text with sized columns stores
+  `<!-- table widths: … -->` after the table; `fetch`, `list`, `search`
+  and `update`'s answer now show the text without it (and the blank
+  lines before it), as every renderer does. What's stored keeps it, so a
+  round trip through `edit_text` or `update` never drops the widths.
+  `search` leaves out a record whose only match is inside the comment,
+  and `edit_text`'s "old wasn't found" says the widths are hidden from
+  `fetch`. A comment that isn't straight after a table still shows.
 - Docs: design-language.md "A few equal things" ("An item's own content
-  and actions"), add-an-entity.md "The record view", cell-patterns.md
+  and actions") and "Written text (notes)", add-an-entity.md "The
+  record view" and "What a chat is told about an entity", cell-patterns.md
   "Editable value".
 
 To take it: bump to `^4.94.0` (and `ui-foundation-backend==4.94.0`) and
