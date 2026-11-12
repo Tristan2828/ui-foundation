@@ -14,7 +14,9 @@ info:
     A path marked `x-optional: true` may be left out of an app's spec (an
     app without self-service sign-up omits /auth/register, an app that
     doesn't render DataEnvironmentBanner omits /environment, an app without
-    reminders omits /push/*), but if present it must match.
+    reminders omits /push/*), but if present it must match. A component
+    marked `x-optional: true` (Recurrence, which no path here calls and an
+    app's own schemas reference) may be left out the same way.
 
 servers:
   - url: /api
@@ -330,6 +332,52 @@ components:
       required: [id]
       properties:
         id: { type: integer }
+
+    Recurrence:
+      # Not called by any path here: a schema an app's own entities
+      # reference (a reminder's or a task's repeat). An app without one
+      # leaves it out; with one, it must match.
+      x-optional: true
+      type: object
+      description: >
+        A repeating schedule (RecurrenceField, foundation_backend.recurrence).
+        The rule's days, each at every one of its times, read in its zone.
+      required: [rule, start, times, timeZone]
+      properties:
+        rule:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: "^FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)(;(INTERVAL|BYMONTH|BYMONTHDAY|BYDAY|UNTIL|COUNT)=[A-Z0-9,+-]+)*$"
+          description: >
+            RFC 5545's RRULE value, without DTSTART: FREQ (daily, weekly,
+            monthly, yearly), INTERVAL, BYMONTH, BYMONTHDAY (-1 is the last
+            day), BYDAY (an nth for monthly and yearly: 2TU, -1FR), UNTIL
+            (a date, YYYYMMDD, the last day it can fall on) or COUNT
+            (occurrences, each time of each day). "FREQ=MONTHLY;BYDAY=2TU".
+        start:
+          type: string
+          format: date
+          description: The first day it can fall on (DTSTART's date).
+        times:
+          type: array
+          minItems: 1
+          maxItems: 24
+          items:
+            type: string
+            pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+          description: Its times of day, HH:MM, in order, each once.
+        timeZone:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: The IANA zone its days and times are read in.
+        fromCompletion:
+          type: boolean
+          default: false
+          description: >
+            Repeat from when it was done ("every!"), not from the schedule:
+            the next one is the rule's days counted from the day it was done.
 
     ValidationErrorBody:
       type: object

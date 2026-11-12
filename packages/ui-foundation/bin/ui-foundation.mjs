@@ -219,7 +219,11 @@ function checkContract(specPath) {
     for (const [name, entry] of Object.entries(entries)) {
       const appEntry = app.components?.[section]?.[name]
       if (appEntry === undefined) {
-        if (!optionalOnly.has(`${section}/${name}`)) problems.push(`missing components.${section}.${name}`)
+        // A component marked x-optional (Recurrence) is one an app's own
+        // schemas may reference; no path here needs it.
+        if (!entry['x-optional'] && !optionalOnly.has(`${section}/${name}`)) {
+          problems.push(`missing components.${section}.${name}`)
+        }
       } else if (!same(appEntry, entry)) {
         problems.push(`components.${section}.${name} differs`)
       }

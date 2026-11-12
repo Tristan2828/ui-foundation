@@ -231,9 +231,24 @@ class Recurrence(CamelModel):
 _FREQ: dict[str, Literal[0, 1, 2, 3]] = {"DAILY": du.DAILY, "WEEKLY": du.WEEKLY, "MONTHLY": du.MONTHLY, "YEARLY": du.YEARLY}
 
 
+_MONTH_LENGTHS = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+
+
+def month_days_never_fall(parts: RuleParts) -> bool:
+    """Whether no month the rule allows has any of its month days (the 30th
+    of February): such a rule never falls, and rrule would walk to the year
+    9999 looking, since it checks UNTIL only on a day it finds."""
+    if not parts.by_month_day:
+        return False
+    months = parts.by_month or tuple(range(1, 13))
+    return not any(abs(day) <= _MONTH_LENGTHS[month - 1] for month in months for day in parts.by_month_day)
+
+
 def _days(parts: RuleParts, start: date, stop: date | None = None) -> Iterator[date]:
     """The days the rule falls on from `start`, through UNTIL (and `stop`),
     with no times and no zone: dateutil's rrule does the walking."""
+    if month_days_never_fall(parts):
+        return
     end = parts.until if stop is None else min(stop, parts.until) if parts.until else stop
     weekdays = [du.weekday(day, nth) if nth is not None else du.weekday(day) for nth, day in parts.by_day]
     rule = du.rrule(

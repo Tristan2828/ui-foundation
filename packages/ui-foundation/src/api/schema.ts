@@ -260,6 +260,25 @@ export interface components {
         PushSubscriptionCreated: {
             id: number;
         };
+        /** @description A repeating schedule (RecurrenceField, foundation_backend.recurrence). The rule's days, each at every one of its times, read in its zone. */
+        Recurrence: {
+            /** @description RFC 5545's RRULE value, without DTSTART: FREQ (daily, weekly, monthly, yearly), INTERVAL, BYMONTH, BYMONTHDAY (-1 is the last day), BYDAY (an nth for monthly and yearly: 2TU, -1FR), UNTIL (a date, YYYYMMDD, the last day it can fall on) or COUNT (occurrences, each time of each day). "FREQ=MONTHLY;BYDAY=2TU". */
+            rule: string;
+            /**
+             * Format: date
+             * @description The first day it can fall on (DTSTART's date).
+             */
+            start: string;
+            /** @description Its times of day, HH:MM, in order, each once. */
+            times: string[];
+            /** @description The IANA zone its days and times are read in. */
+            timeZone: string;
+            /**
+             * @description Repeat from when it was done ("every!"), not from the schedule: the next one is the rule's days counted from the day it was done.
+             * @default false
+             */
+            fromCompletion: boolean;
+        };
         /** @description FastAPI's default 422 shape (RequestValidationError). */
         ValidationErrorBody: {
             detail: {
