@@ -81,6 +81,10 @@ export { ChoiceButtons, type ChoiceButtonsOption, type ChoiceButtonsProps } from
 export { ReferenceCombobox, type ReferenceComboboxProps, type ReferenceRecord } from '@/components/app/reference-combobox'
 export { fieldRows, type FieldKind, type FieldRowItem, type FieldRowPlace, type FieldSize } from '@/lib/field-rows'
 export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
+// The record's empty value (4.96): a muted dash read as "Not set", for an
+// app's own strips, summary lines and cells.
+export { EmptyText, type EmptyTextProps } from '@/components/app/empty-value'
+export { isEmptyValue } from '@/lib/empty-value'
 export { IconAction, type IconActionProps } from '@/components/app/icon-action'
 export {
   EntityView,
@@ -114,7 +118,7 @@ export {
 export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
 // The dialogs and feedback standard (4.90): one delete, toasts' words, an
 // action's error beside it, a job's progress, and the offline bar.
-export { DeleteAction, type DeleteActionProps, type DeleteKind } from '@/components/app/delete-action'
+export { DeleteAction, type DeleteActionProps, type DeleteKind, type DeleteReason } from '@/components/app/delete-action'
 export { notify, doneMessage, pastTense, type NotifyDoneOptions } from '@/components/app/notify'
 export { useAction, type ActionOutcome, type ActionState, type UseActionOptions } from '@/hooks/use-action'
 export { ActionError, type ActionErrorProps } from '@/components/app/action-error'

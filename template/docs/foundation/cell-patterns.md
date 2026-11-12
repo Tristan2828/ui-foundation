@@ -3,46 +3,46 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 74–93
-- [1. Plain text](#1-plain-text) · lines 95–148
-- [2. Icon + label](#2-icon--label) · lines 150–173
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 175–188
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 190–267
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 215–267
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 269–282
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 284–296
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 298–319
-- [8. Date, relative](#8-date-relative) · lines 321–358
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 360–408
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 378–408
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 410–460
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 428–460
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 462–502
-- [12. Boolean](#12-boolean) · lines 504–534
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 536–572
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 556–572
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 574–591
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 593–702
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 619–702
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 704–739
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 741–814
-- [18. Editable value](#18-editable-value) · lines 816–1494
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1126–1194
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1196–1232
-  - [A link and its label](#a-link-and-its-label) · lines 1234–1258
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1260–1393
-  - [In a table's rows](#in-a-tables-rows) · lines 1395–1480
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1482–1494
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1496–1562
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1564–1628
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1630–1728
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1730–1759
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1761–1799
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1801–1877
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1879–1902
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1904–1990
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1992–2028
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2030–2075
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 74–94
+- [1. Plain text](#1-plain-text) · lines 96–149
+- [2. Icon + label](#2-icon--label) · lines 151–174
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 176–189
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 191–268
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 216–268
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 270–283
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 285–297
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 299–320
+- [8. Date, relative](#8-date-relative) · lines 322–359
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 361–409
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 379–409
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 411–461
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 429–461
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 463–503
+- [12. Boolean](#12-boolean) · lines 505–535
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 537–573
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 557–573
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 575–592
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 594–703
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 620–703
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 705–740
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 742–815
+- [18. Editable value](#18-editable-value) · lines 817–1495
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1127–1195
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1197–1233
+  - [A link and its label](#a-link-and-its-label) · lines 1235–1259
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1261–1394
+  - [In a table's rows](#in-a-tables-rows) · lines 1396–1481
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1483–1495
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1497–1563
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1565–1629
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1631–1729
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1731–1760
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1762–1800
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1802–1878
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1880–1903
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1905–1991
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1993–2029
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2031–2076
 
 <!-- /index -->
 
@@ -74,9 +74,10 @@ too, so it ships here for every app.
 ## The rules that apply to every cell
 
 - **An empty value renders an em dash**, never a blank cell: a blank reads
-  as a rendering bug. Define it once per columns file —
-  `const emptyCell = <span className="text-muted-foreground">—</span>` —
-  and use it everywhere. The one exception is a value whose "nothing" state
+  as a rendering bug. Draw it with the package's `EmptyText` (4.96), the
+  record's own dash, read by a screen reader as "Not set" (`label` for
+  other words): `const emptyCell = <EmptyText />` once per columns file,
+  used everywhere. Never a hand-written dash. The one exception is a value whose "nothing" state
   has its own meaning (an unrated 0-of-5 scale, a missing image), where the
   shape itself should say so.
 - **Colour is never the only signal.** Greyscale, colourblindness and print

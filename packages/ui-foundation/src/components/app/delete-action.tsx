@@ -13,11 +13,17 @@
 // - `verb` covers the other ways something leaves a list: `verb="Retire"`
 //   asks "Retire <name>?" on a "Retire" button and says "Retired <name>".
 //
+// - `reason` (4.96) puts one field between the sentence and the buttons, a
+//   "Why" box, optional: what's typed (trimmed, '' for nothing) is
+//   `onDelete`'s argument, and Try again sends it again. While something's
+//   typed, closing asks "Discard your changes?" first (the dialog
+//   standard's `dirty`). Width, words and the buttons stay as they are.
+//
 // The trigger is an icon (IconAction's Trash2) unless `trigger` says
 // otherwise: `"button"` for a "Delete" button in words, an element of the
 // caller's, or `null` for none, opened with `open`/`onOpenChange` (a row's
 // menu item).
-import { useState, type ReactElement, type ReactNode } from 'react'
+import { useId, useState, type ReactElement, type ReactNode } from 'react'
 import { Trash2Icon } from 'lucide-react'
 import { useAction } from '@/hooks/use-action'
 import { Button } from '@/components/ui/button'
@@ -31,20 +37,34 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
+import { Textarea } from '@/components/ui/textarea'
 import { ActionError } from './action-error'
 import { IconAction } from './icon-action'
 import { notify, pastTense } from './notify'
 
 export type DeleteKind = 'soft' | 'hard'
 
+/** The one field a confirm can ask (4.96): an optional reason, in a textarea. */
+export type DeleteReason = {
+  /** The field's label: "Why" unless set ("Why remove it?"). */
+  label?: string
+  /** A line under the box, in muted type ("Kept with its history."). */
+  hint?: ReactNode
+  placeholder?: string
+}
+
 export type DeleteActionProps = {
   /** What's deleted, as the page names it: "The Long Walk". */
   name: string
   /** `soft`: it goes to Deleted and Restore brings it back. `hard`: it's gone. */
   kind: DeleteKind
-  /** Deletes it. A rejection keeps the dialog open with the reason. */
-  onDelete: () => Promise<unknown>
+  /**
+   * Deletes it. A rejection keeps the dialog open with the reason. With
+   * `reason`, it's given what was typed, trimmed ('' for nothing).
+   */
+  onDelete: (reason: string) => Promise<unknown>
   /** A soft delete's Undo: restores it. Without it the toast has no Undo. */
   onRestore?: () => Promise<unknown>
   /** After it's deleted and the toast is up: leave the record's page, say. */
@@ -55,6 +75,8 @@ export type DeleteActionProps = {
   verbDone?: string
   /** Another sentence under the question than `kind`'s. */
   description?: ReactNode
+  /** Ask a reason: one optional field between the sentence and the buttons, passed to `onDelete`. */
+  reason?: DeleteReason
   /** `"icon"` (the default), `"button"` (the verb in words), an element to open it, or `null` for none. */
   trigger?: 'icon' | 'button' | ReactElement | null
   /** The icon trigger's size: `default` (36px, a header) or `sm` (32px, a row). */
@@ -78,6 +100,7 @@ export function DeleteAction({
   verb = 'Delete',
   verbDone,
   description,
+  reason,
   trigger = 'icon',
   size = 'default',
   open: openProp,
@@ -91,9 +114,17 @@ export function DeleteAction({
   }
   const done = verbDone ?? pastTense(verb)
   const remove = useAction(onDelete, { failed: `Couldn't ${verb.toLowerCase()} ${name}` })
+  const reasonId = useId()
+  const [typed, setTyped] = useState('')
+  // A closed confirm starts empty next time, however it was closed.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (wasOpen !== open) {
+    setWasOpen(open)
+    if (!open) setTyped('')
+  }
 
   const confirm = async () => {
-    const outcome = await remove.run()
+    const outcome = await remove.run(reason ? typed.trim() : '')
     if (!outcome.ok) return
     // Whether or not this is still on screen: a row's delete is gone with
     // its row once the list refetches, and the toast must still show.
@@ -118,13 +149,31 @@ export function DeleteAction({
         <DialogTrigger render={<Button variant="outline" size={size === 'sm' ? 'sm' : 'default'} />}>{verb}</DialogTrigger>
       )}
       {trigger && typeof trigger === 'object' && <DialogTrigger render={trigger} />}
-      <DialogContent size="confirm" data-slot="delete-action" data-kind={kind}>
+      <DialogContent
+        size="confirm"
+        dirty={reason !== undefined && typed.trim() !== '' && !remove.pending}
+        data-slot="delete-action"
+        data-kind={kind}
+      >
         <DialogHeader>
           <DialogTitle>
             {verb} {name}?
           </DialogTitle>
           <DialogDescription>{description ?? SAYS[kind]}</DialogDescription>
         </DialogHeader>
+        {reason && (
+          <Field data-slot="delete-action-reason">
+            <FieldLabel htmlFor={reasonId}>{reason.label ?? 'Why'}</FieldLabel>
+            <Textarea
+              id={reasonId}
+              value={typed}
+              placeholder={reason.placeholder}
+              disabled={remove.pending}
+              onChange={(event) => setTyped(event.target.value)}
+            />
+            {reason.hint && <FieldDescription>{reason.hint}</FieldDescription>}
+          </Field>
+        )}
         {/* Try again is the whole confirm again: the toast and closing included. */}
         <ActionError action={{ ...remove, retry: confirm }} />
         <DialogFooter>

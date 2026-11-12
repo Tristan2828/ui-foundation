@@ -7,6 +7,35 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.96.0 — The record's empty value as an export, and a delete that asks a reason
+
+npm package; additive, nothing to change. `ui-foundation-backend` moves
+to 4.96.0 with it, unchanged. #329, #330.
+
+- **`EmptyText`** (and `isEmptyValue`) from the package root: the muted
+  dash a record draws for an empty value, read by a screen reader as
+  "Not set". `label` changes what's read (`label="No reason given"`),
+  `text` shows words instead of the dash, `className` replaces the muted
+  tone's class, and any other span attribute passes through. EntityView,
+  KeyStats and EqualItems already drew through it; ValueList's empty
+  list ("None") and ModuleCard's, OverviewPage's and WidgetCard's
+  "Couldn't load" dash now do too, with the same markup as before.
+- **`DeleteAction reason`**: one optional field between the sentence and
+  the buttons, a "Why" box (`label`, `hint`, `placeholder`; the type is
+  `DeleteReason`). What's typed, trimmed (`''` for nothing), is
+  `onDelete`'s argument, and Try again sends it again. While something's
+  typed, closing asks "Discard your changes?" first (the dialog
+  standard's `dirty`); a closed confirm opens empty. The width, the
+  words, Cancel then the filled destructive button, and the refusal in
+  the dialog are unchanged. `onDelete`'s type is now `(reason: string)
+  => Promise<unknown>`: a `() => …` handler still fits.
+
+**For an app:** a dash with its own `sr-only` text in a strip, summary
+line or columns file becomes `<EmptyText />` (`label` for its own
+words). A hand-made confirm worded like DeleteAction that only adds a
+reason becomes `<DeleteAction reason={{ label: 'Why remove it?' }}
+onDelete={(why) => …} … />`.
+
 ## 4.95.0 — Repeating schedules: one rule on both sides, a phrase box, and repeating reminders
 
 Both packages; additive. Two new dependencies, each on its allowlist:
