@@ -19,6 +19,10 @@ export const FIELD_ROW = {
   rail: '@lg/fields:grid @lg/fields:grid-cols-[minmax(--spacing(32),--spacing(48))_1fr] @lg/fields:gap-6',
   railBeside:
     '@2xs/fields:grid @2xs/fields:grid-cols-[minmax(--spacing(24),--spacing(28))_minmax(0,1fr)] @2xs/fields:items-baseline @2xs/fields:gap-4 @2xs/fields:py-2.5 @lg/fields:grid-cols-[minmax(--spacing(32),--spacing(48))_1fr] @lg/fields:gap-6',
+  // The facts rail (4.106, A1): a 300px card, so side by side from a
+  // 16rem list, the label column a little narrower again.
+  facts:
+    '@3xs/fields:grid @3xs/fields:grid-cols-[--spacing(24)_minmax(0,1fr)] @3xs/fields:items-baseline @3xs/fields:gap-3 @3xs/fields:py-2.5',
 }
 
 /** A row's own spacing, before its place's grid. */

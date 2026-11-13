@@ -406,6 +406,100 @@ function DetailsTabInRouter() {
 
 export const DetailsTab: StoryObj = { name: 'Details tab', render: () => <DetailsTabInRouter /> }
 
+// --- The facts rail (4.106, A1) --------------------------------------------
+// `factsRail`: where the view has 60rem, the sections of short facts
+// (`facts`, placed `rail`) sit in a 300px column beside the strip and the
+// tabs and leave Details. FactsRail keeps one long-text facts section
+// (`fields`, the closing condition) in Details; FactsRailOnly has nothing
+// else, so it has no Details tab. A list of linked records with long
+// titles (the Linked tab) stays a tab. Narrower than 60rem (a phone),
+// every facts section is back in Details.
+
+const LINKED = [
+  'Ask the landlord whether the loading bay can be booked for the whole of the second morning',
+  'Find out which of the old desks the recycling firm will still take after the end of the month',
+]
+
+function FactsRailRecord({ only }: { only: boolean }) {
+  const location = useLocation()
+  const sections: EntityViewSection[] = [
+    { title: 'Purpose', tab: 'Purpose', content: <Markdown>{'Move the team to the third floor over two weekends.'}</Markdown> },
+    {
+      title: 'Linked',
+      tab: 'Linked',
+      content: (
+        <ul className="flex list-disc flex-col gap-1 pl-5">
+          {LINKED.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Status', kind: 'status', status: 'active', word: 'Open' },
+        { label: 'By', kind: 'text', text: 'Mar 2, 2026' },
+        { label: 'Boxes', kind: 'text', text: 12 },
+        { label: 'Owner', kind: 'record', name: 'Sam Example', to: '/people/3', short: true },
+        { label: 'Teams', kind: 'badges', items: ['Finance', 'Support'] },
+        { label: 'Open Tasks', kind: 'count', count: 4, to: '/tasks?project=1' },
+        { label: 'Floor Plan', kind: 'link', href: 'https://example.com/plan', name: 'Plan (PDF)' },
+        { label: 'Lift', kind: 'text', text: null, emptyLabel: 'Not booked' },
+      ],
+    },
+    ...(only
+      ? []
+      : [
+          {
+            title: 'Closing',
+            placement: 'rail' as const,
+            fields: [{ label: 'Closes When', value: 'Every team has unpacked and the old floor is handed back clean' }],
+          },
+        ]),
+  ]
+  return (
+    <>
+      <EntityView
+        isLoading={false}
+        back={{ to: '/', label: 'Projects' }}
+        title="Office move"
+        badges={<StatusMark kind="active">In Progress</StatusMark>}
+        actions={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+        tabCounts={{ Linked: LINKED.length }}
+        factsRail
+        strip={
+          <KeyStats
+            stats={[
+              { label: 'Boxes', value: '12', icon: PackageIcon },
+              { label: 'Starts', value: 'Mar 2', icon: CalendarIcon },
+            ]}
+          />
+        }
+        sections={sections}
+      />
+      <p data-testid="address" className="mt-6 type-caption text-muted-foreground">
+        Page at {location.pathname + location.search}
+      </p>
+    </>
+  )
+}
+
+function FactsRailInRouter({ only }: { only: boolean }) {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <FactsRailRecord only={only} /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const FactsRail: StoryObj = { name: 'Facts rail', render: () => <FactsRailInRouter only={false} /> }
+
+export const FactsRailOnly: StoryObj = { name: 'Facts rail, nothing else', render: () => <FactsRailInRouter only /> }
+
 // The `tabs` layout with no other tab: the facts stay in the column, in
 // their place, their labels beside their values.
 export const DetailsInTheColumn: StoryObj = {

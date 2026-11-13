@@ -125,6 +125,41 @@ a list opts in; move one list at a time:
    to stay expects it cleared. A link from another page that names a
    filter (`?status=active`) is the URL's own, as before.
 
+## A record's facts rail (4.106)
+
+Since 4.106 a record's short facts can sit beside its tabs on a laptop
+(`factsRail`), instead of only in Details. Move one view at a time:
+
+1. Turn the facts section from `fields` into `facts`, one kind per fact:
+   - a status: `{ label: 'Status', kind: 'status', status: KINDS[r.status], word: LABELS[r.status] }`
+   - a date, a number or a person's name: `{ label: 'By', kind: 'text', text: formatDay(r.due) }`
+   - a few short labels: `{ label: 'Areas', kind: 'badges', items: r.areas.map(label) }`
+   - a count: `{ label: 'Open', kind: 'count', count: r.open, to: '/things?parent=3' }`
+   - a link out: `{ label: 'Task', kind: 'link', href: t.url, name: t.name }`
+   - another record with a short name: `{ label: 'From', kind: 'record', name: p.name, to: '/people/3', short: true }`
+
+   Keep its `placement: 'rail'`, and its `edit`s: they work as on a
+   field.
+2. A fact that's a sentence (a closing condition, a reason, notes)
+   stays a `fields` section placed `rail`. It remains in Details, the
+   only thing there.
+3. Linked records with long titles (a list of discussions, a log's
+   entries) are never facts: they stay a tab of their own, with its
+   count.
+4. Add `factsRail` to the view. On a laptop the facts move beside the
+   strip and the tabs, and Details shows only what's left (no Details
+   tab when nothing is). On a phone nothing changes.
+5. Specs: at a laptop width, read a fact in the rail (`getByRole(
+   'complementary', { name: '<title> facts' })`); a spec that opened
+   Details for it either does that or sets a phone width.
+
+## A list's header as wide as its table (4.106)
+
+On a list with the framed table, move the `<ListHeader … />` into the
+table as `pageHeader={<ListHeader … />}`. The header then ends on the
+card's right edge above a short table, and where the page ends above a
+wide one. A phone is unchanged, as is `width="full"`.
+
 ## Changing the foundation
 
 When an app needs something the package doesn't do:

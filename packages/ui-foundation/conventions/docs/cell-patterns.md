@@ -40,10 +40,10 @@
 - [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1811–1849
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1851–1927
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1929–1952
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2112
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2074–2112
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2114–2150
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2152–2197
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2129
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2074–2129
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2131–2167
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2169–2214
 
 <!-- /index -->
 
@@ -2090,6 +2090,13 @@ The toolbar a list-page review picked (4.100): `look="framed"` on
 <DataTable look="framed" views={VIEWS} columnsMenu={…} groupings={…} toolbar={<FilterBar … />} … />
 ```
 
+Since 4.106 (C3) the header goes in the table, as `pageHeader`, so the
+header row ends where the card does:
+
+```tsx
+<DataTable look="framed" pageHeader={<ListHeader title="Exercises" … />} views={VIEWS} toolbar={…} … />
+```
+
 - **The card**: the toolbar in its top bar (search and Filters keep their
   words), the rows, then the count and pager in its bottom bar. Saved
   views sit above it, outside the bar. Loading, empty and error show
@@ -2097,6 +2104,14 @@ The toolbar a list-page review picked (4.100): `look="framed"` on
 - **The tools end at the table's edge**: the card is as wide as `width`
   makes the table, tools and pager with it, so nothing sits off at the
   far right of a wide page. `width="full"` fills the area as before.
+- **So does the header** (4.106, C3), passed as `pageHeader`: the
+  header (title, siblings, ⋯ and New), the views and the card are one
+  box as wide as the table (CSS `fit-content` with the table's minimum
+  and the page as its maximum; nothing is measured), so above a short
+  table ⋯ and New sit over the card's right edge, and above a wide one
+  where the page ends. A header wider than the table widens the card to
+  match. `width="full"` and the phone's row list span the page as before.
+  A ListHeader left outside the table spans the page, as before 4.106.
 - **One settings button** in place of Columns and Group: the Columns
   ticks, then Group By, in one menu. Its name says the grouping that's on
   ("Table Settings, Grouped by Status") and a dot marks it. Fold All
@@ -2109,7 +2124,9 @@ The toolbar a list-page review picked (4.100): `look="framed"` on
 - The fixtures' `app/DataTable tools` Framed and `app/ListHeader`
   Siblings stories hold it, under axe and the token check in both
   themes; `e2e/data-table-framed.spec.ts` checks the edges, the menu
-  from the mouse and the keyboard, the switch and the phone.
+  from the mouse and the keyboard, the switch and the phone, and
+  `e2e/list-header-width.spec.ts` the header's edge at 1440 and 1920
+  (`Header at the table edge` stories).
 
 ## 26. A record's related list, capped
 

@@ -125,6 +125,7 @@ import { FIELD_LABEL, FIELD_ROW, FIELD_ROW_BASE, FIELD_VALUE } from './field-row
 import { PageTrail, type PageCrumb } from './page-trail'
 import { usePageTrail } from './page-trail-context'
 import { entityViewTabSlug } from '@/lib/entity-view-tab'
+import { factsAsFields, useWideParent, type EntityViewFact } from './entity-view-facts'
 
 export type EntityViewField = {
   label: string
@@ -156,6 +157,18 @@ export type EntityViewSection = (
       /** The section's heading (an <h2>). Unique on the page. */
       title: string
       fields: EntityViewField[]
+    }
+  | {
+      /** The section's heading. */
+      title: string
+      /**
+       * Short facts only (4.106, A1): each a typed kind (a status, short
+       * text, badges, a count, a link, a short-named record), never free
+       * markup. Placed `rail` with no `tab`, the section goes in the facts
+       * rail beside the tabs where the view has room (`factsRail`), else
+       * in Details, as rows like `fields`.
+       */
+      facts: EntityViewFact[]
     }
   | {
       title: string
@@ -339,6 +352,18 @@ export type EntityViewProps = {
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
   railLabel?: string
   /**
+   * The facts rail (4.106, record standard A1), in the `tabs` layout:
+   * where the view has room (60rem beside it: a laptop's page, a record
+   * dialog), the sections of short facts (`facts`, placed `rail`, no
+   * `tab`) go in a 300px column beside the strip and the tabs, and leave
+   * Details; a Details tab left with nothing isn't drawn. Narrower (a
+   * phone), they're in Details as before. Sections with `fields` or
+   * `content` never go in it: a rail holds short values only.
+   */
+  factsRail?: boolean
+  /** The facts rail's landmark name (its `<aside>`). Defaults to the title + " facts". */
+  factsRailLabel?: string
+  /**
    * In the `rail` layout, a rail section's fields: each label to the left
    * of its value (`beside`, the default since 4.81), falling back to
    * stacked where the rail is too narrow for both, or above it
@@ -479,10 +504,13 @@ function ViewSection({
   inRail = false,
   railFields = 'beside',
   bare,
+  factsRail = false,
 }: {
   section: EntityViewSection
   inRail?: boolean
   railFields?: EntityViewRailFields
+  /** In the facts rail (A1): its rows side by side in the 300px card. */
+  factsRail?: boolean
   /**
    * In a small card dialog (RecordDialogRoute `look="card"`, record
    * standard 8A): no card round it, its heading a quiet label, or only
@@ -493,8 +521,8 @@ function ViewSection({
   const headingId = useId()
   const empty = useContext(EmptyContext)
   const body =
-    'fields' in section ? (
-      <FieldList fields={section.fields} place={!inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'} />
+    'fields' in section || 'facts' in section ? (
+      <FieldList fields={'fields' in section ? section.fields : factsAsFields(section.facts)} place={factsRail ? 'facts' : !inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'} />
     ) : section.edit?.kind === 'list' ? (
       <div className="flex min-w-0 flex-col gap-2 type-body break-words text-foreground">
         {!isEmptyValue(section.content) && section.content}
@@ -552,6 +580,20 @@ const RAIL_LAYOUT = {
   // (`data-fits`, measured): a taller one scrolls with the page, so its end
   // is never stuck below the fold.
   sticky: '@4xl/view:data-[fits]:sticky @4xl/view:data-[fits]:top-6',
+}
+
+// The facts rail (A1): the record's column at its usual reading width
+// (max-w-4xl) and a 300px rail beside it, top-aligned with the strip.
+const FACTS_RAIL = {
+  page: 'max-w-[calc(var(--container-4xl)+var(--spacing)*6+300px)]',
+  columns: 'grid grid-cols-[minmax(0,1fr)_300px] items-start gap-6',
+  main: 'flex min-w-0 flex-col gap-6',
+  rail: 'flex min-w-0 flex-col gap-6',
+}
+
+/** A section of short facts placed `rail` with no tab: the facts rail's, where it's drawn. */
+function isRailFacts(section: EntityViewSection) {
+  return 'facts' in section && section.placement === 'rail' && section.tab === undefined
 }
 
 function SkeletonCard({ rows, stacked }: { rows: number; stacked: boolean }) {
@@ -898,6 +940,8 @@ export function EntityView({
   tabsStickyTop,
   mobileOrder = 'rail-first',
   railLabel,
+  factsRail = false,
+  factsRailLabel,
   railFields = 'beside',
   emptyFields = 'show',
   emptyText = EMPTY_DASH,
@@ -924,6 +968,8 @@ export function EntityView({
   // In the shell, the trail goes up in its bar; a dialog leaves the bar
   // to the list under it.
   const inShell = usePageTrail(dialog ? null : trail)
+  // The facts rail (A1): only in the tabs layout, never in a card dialog.
+  const [setRoot, wide] = useWideParent<HTMLDivElement>(factsRail && layout === 'tabs' && dialog?.look !== 'card')
 
   if (error?.kind === 'notfound') {
     // A record that doesn't exist and one that belongs to another user are
@@ -960,9 +1006,9 @@ export function EntityView({
     .filter((section) => section.print)
     .map((section) => ({
       title: section.title,
-      ...('fields' in section
+      ...('fields' in section || 'facts' in section
         ? {
-            fields: section.fields.map((field) => ({
+            fields: ('fields' in section ? section.fields : factsAsFields(section.facts)).map((field) => ({
               label: field.label,
               value: field.value !== undefined ? field.value : field.edit?.shown,
             })),
@@ -981,7 +1027,8 @@ export function EntityView({
   const card = dialog?.look === 'card'
   // Tabs: in the `tabs` layout the facts are a tab of their own (1A); in
   // the others a main section's `tab` (a rail one's is ignored).
-  const shaped = layout === 'tabs' ? tabsLayout(sections, detailsTab) : null
+  const railFacts = wide && !card ? sections.filter(isRailFacts) : []
+  const shaped = layout === 'tabs' ? tabsLayout(railFacts.length > 0 ? sections.filter((section) => !isRailFacts(section)) : sections, detailsTab) : null
   const tabs = shaped ? shaped.tabs : tabsOf(mainSections)
   const tabbed = (section: EntityViewSection) => section.placement !== 'rail' && section.tab !== undefined
   const tabList = tabs.length > 0 && (
@@ -1030,7 +1077,7 @@ export function EntityView({
       </div>
     )
   } else if (shaped) {
-    body = (
+    const column = (
       <>
         {shaped.above.map((section) =>
           section.placement === 'rail' ? (
@@ -1042,6 +1089,27 @@ export function EntityView({
         {tabList}
       </>
     )
+    body =
+      railFacts.length > 0 ? (
+        // The strip and the tabs on the left, the facts beside them (A1).
+        <div data-slot="entity-view-with-facts" className={FACTS_RAIL.columns}>
+          <div className={FACTS_RAIL.main}>
+            {strip && <div data-slot="entity-view-strip">{strip}</div>}
+            {column}
+          </div>
+          <aside
+            aria-label={factsRailLabel ?? `${title ?? 'Record'} facts`}
+            data-slot="entity-view-facts-rail"
+            className={FACTS_RAIL.rail}
+          >
+            {railFacts.map((section) => (
+              <ViewSection key={section.title} section={section} inRail factsRail />
+            ))}
+          </aside>
+        </div>
+      ) : (
+        column
+      )
   } else {
     body = (
       <>
@@ -1059,7 +1127,13 @@ export function EntityView({
     <EditInPlaceContext.Provider value={store}>
     <EmptyContext.Provider value={{ text: emptyText, fold: emptyFields === 'fold' }}>
     <div
-      className={layout === 'rail' && !card ? RAIL_LAYOUT.page : cn('flex max-w-4xl flex-col', card ? 'gap-4' : 'gap-6')}
+      ref={setRoot}
+      className={
+        layout === 'rail' && !card
+          ? RAIL_LAYOUT.page
+          : cn('flex flex-col', railFacts.length > 0 ? FACTS_RAIL.page : 'max-w-4xl', card ? 'gap-4' : 'gap-6')
+      }
+      data-facts-rail={railFacts.length > 0 ? '' : undefined}
       data-state="success"
       data-layout={layout}
       data-look={card ? 'card' : undefined}
@@ -1138,7 +1212,7 @@ export function EntityView({
         {notice}
       </div>
 
-      {strip && (!card || cardStrip) && <div data-slot="entity-view-strip">{strip}</div>}
+      {strip && (!card || cardStrip) && railFacts.length === 0 && <div data-slot="entity-view-strip">{strip}</div>}
 
       {body}
 

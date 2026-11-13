@@ -228,6 +228,14 @@ src/main.tsx                           FoundationProviders (theme, query client,
   minus its padding so the bar meets its top edge. Whether it's stuck is
   measured (a marker above the bar against the bar's top, on any scroll
   through a capture listener), and stuck it shows the record's name.
+- **The facts rail** (4.106, A1): `EntityView factsRail` measures the
+  view's parent (`useWideParent`, a layout effect and a ResizeObserver in
+  `entity-view-facts.tsx`) and, at 60rem, takes the `facts` sections
+  placed `rail` out of `tabsLayout`'s input, so Details is built from the
+  rest; the rail holds typed facts only (`EntityViewFactValue`), which is
+  how "short values only" is enforced. A list's header as wide as its
+  table (C3) is CSS only: DataTable's framed root takes the content-width
+  class when it has a `pageHeader`, and the card fills it.
 - **Views fill the filters** (4.105): `useTableUrlState` resolves the
   filters the bar shows from the URL, or at a list's plain address from
   its `defaultView`, and a hand change goes through `filterChanges`

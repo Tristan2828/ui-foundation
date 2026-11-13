@@ -382,6 +382,16 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
   /** The pills' group name: "Views" unless set. */
   viewsLabel?: string
   /**
+   * The list page's header (4.106, the list standard's C3): its
+   * `<ListHeader>`, drawn above the views. In the framed look with
+   * `width="content"` the header, the views and the card share one width,
+   * the table's, so the header's ⋯ and New end on the card's right edge
+   * above a short table instead of at the page's far edge. With
+   * `width="full"`, a table wider than the page, or the row list on a
+   * phone, it spans the page as before.
+   */
+  pageHeader?: ReactNode
+  /**
    * A Columns menu at the end of the toolbar (L5): a tick for every column
    * but the first (the name) and the row actions, remembered on this device
    * under `storageKey`. Until something is ticked it starts from
@@ -1202,6 +1212,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   activeView = null,
   onViewChange,
   viewsLabel = 'Views',
+  pageHeader,
   columnsMenu,
   rowActions,
   phoneRow,
@@ -2063,14 +2074,20 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
       : undefined
 
+  // C3: with a header, the header, views and card are one box as wide as
+  // the table (the box fits its content, the card fills the box), so the
+  // header ends where the card does. CSS only: nothing is measured.
+  const sharedWidth = Boolean(pageHeader) && fitsColumns
   const content = framed ? (
     <div
       ref={root}
-      className="flex flex-col gap-4"
+      className={cn('flex flex-col gap-4', sharedWidth && CONTENT_WIDTH_CLASS)}
       data-width={width}
       data-look="framed"
+      data-shared-width={sharedWidth ? '' : undefined}
       data-layout={layouts?.length ? currentLayout : undefined}
     >
+      {pageHeader}
       {viewPills}
       <DetailFrame enabled={Boolean(detailPanel) && !cardLayout} aside={detailAside}>
         {/* The card: the tools, the rows and the pager as one box, as wide
@@ -2078,7 +2095,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
         <div
           ref={body}
           data-slot="data-table-frame"
-          className={cn(FRAME_CLASS, fitsColumns && CONTENT_WIDTH_CLASS)}
+          className={cn(FRAME_CLASS, fitsColumns && !sharedWidth && CONTENT_WIDTH_CLASS)}
           style={lastWidthStyle}
         >
           {framedToolbar}
@@ -2103,6 +2120,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       data-width={width}
       data-layout={layouts?.length ? currentLayout : undefined}
     >
+      {pageHeader}
       {viewPills}
       {plainToolbar}
 
