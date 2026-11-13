@@ -8,7 +8,12 @@
 // `compact` is the same state for a small container (a WidgetCard): less
 // padding and the icon beside the title instead of in a box above it, so
 // one failing widget reads as that widget's problem, not the page's.
-import { AlertCircleIcon } from 'lucide-react'
+//
+// Kind `proxy_auth` (a lapsed sign-in at a proxy in front of the app, such
+// as Cloudflare Access) offers "Sign In Again" in place of any retry: a
+// full page load, so the proxy's own sign-in runs. Retrying the request
+// would only get the proxy's page again.
+import { AlertCircleIcon, LogInIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
@@ -28,6 +33,11 @@ const TITLE_BY_KIND: Record<AppError['kind'], string> = {
   auth: 'Not authorized',
   rate_limited: 'Too many attempts',
   validation: 'Check the form',
+  proxy_auth: 'Sign-in expired',
+}
+
+function reloadPage() {
+  window.location.reload()
 }
 
 export function ErrorState({
@@ -43,6 +53,7 @@ export function ErrorState({
   className?: string
 }) {
   const compact = size === 'compact'
+  const signInAgain = error.kind === 'proxy_auth'
   return (
     <Empty className={cn(compact && 'gap-3 p-4', className)} data-state="error" data-size={size}>
       <EmptyHeader className={cn(compact && 'gap-1')}>
@@ -54,19 +65,28 @@ export function ErrorState({
         ) : (
           <>
             <EmptyMedia variant="icon">
-              <AlertCircleIcon className="text-destructive" />
+              <AlertCircleIcon className="text-destructive-text" />
             </EmptyMedia>
             <EmptyTitle>{TITLE_BY_KIND[error.kind]}</EmptyTitle>
           </>
         )}
         <EmptyDescription>{error.message}</EmptyDescription>
       </EmptyHeader>
-      {onRetry && (
+      {signInAgain ? (
         <EmptyContent>
-          <Button size="sm" variant="outline" onClick={onRetry}>
-            Try Again
+          <Button size="sm" onClick={reloadPage}>
+            <LogInIcon aria-hidden="true" />
+            Sign In Again
           </Button>
         </EmptyContent>
+      ) : (
+        onRetry && (
+          <EmptyContent>
+            <Button size="sm" variant="outline" onClick={onRetry}>
+              Try Again
+            </Button>
+          </EmptyContent>
+        )
       )}
     </Empty>
   )

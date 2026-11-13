@@ -10,7 +10,14 @@ export type Page<T> = {
 };
 
 export type AppError = {
-  kind: "validation" | "notfound" | "auth" | "rate_limited" | "server" | "network";
+  /**
+   * `proxy_auth`: the answer came from something in front of the app (an
+   * identity-aware proxy such as Cloudflare Access) whose own sign-in has
+   * lapsed, not from the app: a page or a redirect where JSON was
+   * expected. Only a full page load signs in again. Not the app's own
+   * session, which is `auth`.
+   */
+  kind: "validation" | "notfound" | "auth" | "rate_limited" | "server" | "network" | "proxy_auth";
   message: string;
   fieldErrors?: Record<string, string[]>;
   /**

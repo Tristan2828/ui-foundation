@@ -3,29 +3,30 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 44–66
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–847
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
-  - Step 2: `npm run gen:api` · lines 118–119
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 132–141
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–735
-  - Step 7: Register routes · lines 736–751
-  - Step 8: Add Playwright specs for all three screens · lines 752–829
-  - Step 9: Register the nav entry and route names · lines 830–844
-  - Step 10: `npm run verify`. · lines 845–847
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1246
-  - [The record view](#the-record-view) · lines 1002–1096
-  - [Forms](#forms) · lines 1098–1163
-  - [Dialogs](#dialogs) · lines 1165–1196
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1198–1246
-- [What not to copy](#what-not-to-copy) · lines 1248–1280
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1282–1299
-- [Deleting](#deleting) · lines 1301–1332
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1334–1355
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1357–1366
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1369–1411
+- [The reference files](#the-reference-files) · lines 45–67
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–850
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
+  - Step 2: `npm run gen:api` · lines 119–120
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 133–142
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–738
+  - Step 7: Register routes · lines 739–754
+  - Step 8: Add Playwright specs for all three screens · lines 755–832
+  - Step 9: Register the nav entry and route names · lines 833–847
+  - Step 10: `npm run verify`. · lines 848–850
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1249
+  - [The record view](#the-record-view) · lines 1005–1099
+  - [Forms](#forms) · lines 1101–1166
+  - [Dialogs](#dialogs) · lines 1168–1199
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1201–1249
+- [What not to copy](#what-not-to-copy) · lines 1251–1283
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1285–1302
+- [Deleting](#deleting) · lines 1304–1335
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1337–1358
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1360–1369
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1372–1414
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1416–1452
 
 <!-- /index -->
 
@@ -143,7 +144,9 @@ is a filled-in example while the Widgets demo is still here).
    tests pass, built on `safeFetch`/`toAppError` from
    `@tristan2828/ui-foundation/gateway` (see `src/api/gateway/widgets.ts`).
    Wire → `Page<T>` / `AppError` translation only; no hand-written types
-   (everything comes from `schema.d.ts`).
+   (everything comes from `schema.d.ts`). A proxy's sign-in page or redirect never
+   reaches it: `safeFetch` throws kind `proxy_auth` first
+   ([Behind a sign-in proxy](#behind-a-sign-in-proxy)).
 6. **Copy the reference files, one for one, not just the two screens**
    (the Widgets demo's, or the ones the app's `### Reference files` names) — shaped by the plan: table columns and sortable columns from
    its "List" column, toolbar filters from its "Filter" column, form fields
@@ -1409,3 +1412,41 @@ def note(caller, tool, arguments, entities):
 register_entities(ENTITIES, instructions="Amounts are in the account's currency.")
 register_answer_note(note)
 ```
+
+## Behind a sign-in proxy
+
+An app put behind an identity-aware proxy that has its own sign-in
+(Cloudflare Access is the usual one; an OAuth proxy or a VPN gateway's
+portal works the same way) can outlive that sign-in: the page stays open,
+the proxy's session lapses, and the next request gets the proxy's answer
+instead of the app's. The foundation handles it (4.107), with nothing for
+the app to write:
+
+- **The request asks for JSON as a script.** `safeFetch` sends
+  `Accept: application/json` and `X-Requested-With: XMLHttpRequest`
+  (unless the gateway module set its own) and doesn't follow redirects
+  (`redirect: "manual"`, unless the module passes `"follow"`), so a proxy
+  that can answers a script with a 401, and one that can't answers with a
+  redirect the browser doesn't chase to another origin.
+- **The proxy's answer becomes one `AppError`, kind `proxy_auth`.**
+  `safeFetch` throws it, before your gateway module sees the response,
+  for: a page (`text/html`) on a 2xx, 401 or 403; a 401 or 403 whose body
+  isn't JSON; a redirect not followed (an opaque redirect); and a redirect
+  followed to another origin. A step 5 gateway module needs no change.
+  The app's own answers are untouched: a JSON 401 is still `auth` (the
+  app's session, which sends the person to `/login`), and a 404, 422, 429
+  or 5xx, JSON or not, is what `toAppError` always made it.
+- **The screens say "Sign In Again".** `ErrorState` (every `DataTable`,
+  `EntityView`, `WidgetCard`, `Board`, the shell's own session check) and
+  `ModuleCard` show "Sign-in expired" with a **Sign In Again** button in
+  place of any retry. It reloads the whole page, so the proxy's sign-in
+  runs and brings the person back. A screen with its own error UI checks
+  `error.kind === 'proxy_auth'` and offers the same reload.
+- **Your contract tests don't change.** `openapi.yaml` and the step 3
+  gateway tests describe the app's own responses, never the proxy's; the
+  proxy isn't part of the contract. `proxyAuthError()` (from
+  `@tristan2828/ui-foundation/gateway`) is the error itself, for a mock or
+  a test of a screen's state.
+- **On the proxy's side**, nothing is required. Where it offers a 401 for
+  scripts instead of a redirect (Cloudflare Access does for requests with
+  `X-Requested-With`), either answer works.

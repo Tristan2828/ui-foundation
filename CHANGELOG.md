@@ -7,6 +7,70 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.107.0 — Sign In Again when a proxy's sign-in lapses
+
+npm package and `ui-foundation-backend` 4.107.0 (no backend change).
+Additive: a new `AppError` kind and a new gateway export; the error
+envelopes and `check-contract` are unchanged.
+
+An app behind an identity-aware proxy with its own sign-in (Cloudflare
+Access is the usual one) can outlive that sign-in: once the proxy's
+session lapses, the app's requests get the proxy's login page or a
+redirect instead of JSON. That surfaced as a parse failure, a "Connection
+problem" or a screen of garbage. Now:
+
+- **`AppError` kind `proxy_auth`** ("Your sign-in has expired. Reload the
+  page to sign in again."). `safeFetch` throws it before a gateway module
+  sees the response, for a page (`text/html`) on a 2xx, 401 or 403, a 401
+  or 403 whose body isn't JSON, a redirect not followed (an opaque
+  redirect) and a redirect followed to another origin. The app's own
+  answers are what they were: a JSON 401 is still `auth`, and a 404, 422,
+  429 or 5xx, JSON or not, is still what `toAppError` makes it.
+- **What a request sends.** `safeFetch` adds `Accept: application/json`
+  and `X-Requested-With: XMLHttpRequest` unless the module set its own,
+  so a proxy that can answers a script with a 401 (Cloudflare Access
+  does for `X-Requested-With`). It no longer follows redirects
+  (`redirect: "manual"`), so a proxy's redirect to a login page on
+  another origin is named rather than failing as a network error; a
+  module that relies on a redirect passes `redirect: "follow"`. No
+  endpoint in the foundation's or the template's contract redirects.
+- **The screens.** `ErrorState` (so every `DataTable`, `EntityView`,
+  `WidgetCard`, `Board`, `FillInQueue`, and the shell's own session
+  check) and `ModuleCard` show "Sign-in expired" with **Sign In Again**,
+  which reloads the whole page so the proxy's sign-in runs, in place of
+  any retry. The query client doesn't retry it and error reporting
+  doesn't send it.
+- `GET /environment` (the data banner) reads a page there as "not
+  served", as it did: a dev server's `index.html` looks the same.
+- **Fix:** the full-size `ErrorState`'s icon is `--destructive-text`, as
+  the compact one's already was. Plain `--destructive` measured 2.74:1 in
+  four palettes once the glyph check first covered it.
+- New export: `proxyAuthError()` from `@tristan2828/ui-foundation/gateway`,
+  the error itself, for an app's mocks and screen tests.
+- Tests: gateway tests for HTML on a 200, 401 and 403, a bare 401/403, a
+  redirect to another origin and an opaque redirect, and every JSON error
+  kind unchanged (`tests/gateway/proxy-auth.test.ts`); `ErrorState` by
+  kind; `e2e/error-state.spec.ts` presses Sign In Again (full size, in a
+  widget, on a module card) and sees the page load again; the new
+  `app/ErrorState` "Sign In Again" story under axe in both themes, the
+  token check and the glyph check. Each failed with its change taken out.
+- Docs: `add-an-entity.md` "Behind a sign-in proxy" (synced), the
+  template's `docs/deploy.md` "Behind a sign-in proxy".
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.107.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.107.0` in `backend/`. That is the
+   whole adoption: the gateway modules, contract and contract tests stay
+   as they are, since the proxy's answers aren't part of the app's
+   contract.
+2. Code that maps every `AppError['kind']` (a `Record<AppError['kind'],
+   …>`, an exhaustive `switch`) gets a `proxy_auth` entry; `tsc` points
+   at each. A screen with its own error UI (not `ErrorState`) offers a
+   reload for it: `if (error.kind === 'proxy_auth') window.location.reload()`.
+3. A gateway module whose endpoint answers with a redirect it meant to be
+   followed passes `redirect: "follow"` to `safeFetch`.
+
 ## 4.106.0 — A short-facts rail beside a record's tabs, and a list's header as wide as its table
 
 npm package and `ui-foundation-backend` 4.106.0 (no backend change).
