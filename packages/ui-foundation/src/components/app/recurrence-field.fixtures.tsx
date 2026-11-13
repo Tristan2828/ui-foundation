@@ -59,12 +59,12 @@ function Fields() {
   return (
     <FieldGroup className="max-w-xl">
       <Field>
-        <FieldLabel htmlFor="filter-repeats">Change the filter</FieldLabel>
+        <FieldLabel htmlFor="filter-repeats">Change the Filter</FieldLabel>
         <RecurrenceField id="filter-repeats" value={filter} onChange={setFilter} {...fixed} />
         <Value testId="filter-value" value={filter} />
       </Field>
       <Field>
-        <FieldLabel htmlFor="water-repeats">Water the plants</FieldLabel>
+        <FieldLabel htmlFor="water-repeats">Water the Plants</FieldLabel>
         <RecurrenceField id="water-repeats" value={water} onChange={setWater} {...fixed} />
         <Value testId="water-value" value={water} />
       </Field>
@@ -86,7 +86,7 @@ function NewChore() {
   const onSubmit = form.handleSubmit((values) => setSaved(values))
   return (
     <div className="flex flex-col gap-4">
-      <EntityForm title="New chore" onSubmit={onSubmit} submitLabel="Save chore" isSubmitting={false} dirty={isDirty && !saved} errors={errors} onCancel={() => form.reset()}>
+      <EntityForm title="New chore" onSubmit={onSubmit} submitLabel="Save Chore" isSubmitting={false} dirty={isDirty && !saved} errors={errors} onCancel={() => form.reset()}>
         <Field data-invalid={!!errors.name || undefined}>
           <FieldLabel htmlFor="chore-name" required>
             Name

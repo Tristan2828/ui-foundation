@@ -91,7 +91,7 @@ export function Timeline({ items, initial = 5, label, emptyText = 'Nothing yet',
           onClick={() => setAll(!all)}
           className="self-start"
         >
-          {all ? 'Show fewer' : `Show all ${items.length}`}
+          {all ? 'Show Fewer' : `Show All ${items.length}`}
         </Button>
       )}
     </div>

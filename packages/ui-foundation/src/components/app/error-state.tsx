@@ -64,7 +64,7 @@ export function ErrorState({
       {onRetry && (
         <EmptyContent>
           <Button size="sm" variant="outline" onClick={onRetry}>
-            Try again
+            Try Again
           </Button>
         </EmptyContent>
       )}

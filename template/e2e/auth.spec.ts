@@ -9,16 +9,16 @@ test.describe('auth', () => {
     await page.goto('/login')
     await page.getByLabel('Email').fill('dev@example.com')
     await page.getByLabel('Password', { exact: true }).fill('dev-password-123')
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).click()
     await expect(page).toHaveURL('/')
-    await expect(page.getByRole('button', { name: 'Get started' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Get Started' })).toBeVisible()
   })
 
   test('logging in with the wrong password shows an error and does not redirect', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel('Email').fill('dev@example.com')
     await page.getByLabel('Password', { exact: true }).fill('not-the-right-password')
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).click()
     await expect(page.getByText('Invalid email or password')).toBeVisible()
     await expect(page).toHaveURL('/login')
   })
@@ -31,21 +31,21 @@ test.describe('auth', () => {
 
   test('logging out redirects to /login', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('button', { name: 'Log out' }).click()
+    await page.getByRole('button', { name: 'Log Out' }).click()
     await expect(page).toHaveURL('/login')
   })
 
   test('a logout the server fails to confirm still logs out on screen', async ({ page }) => {
     await forceMswOverride(page, { method: 'post', path: '*/api/auth/logout', status: 500, body: { detail: 'Internal error' } })
     await page.goto('/widgets')
-    await page.getByRole('button', { name: 'Log out' }).click()
+    await page.getByRole('button', { name: 'Log Out' }).click()
     await expect(page).toHaveURL('/login')
-    await expect(page.getByRole('button', { name: 'Log out' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Log Out' })).toHaveCount(0)
     // Still a deliberate logout: whoever signs in next lands on the home
     // route, not on the previous user's page.
     await page.getByLabel('Email').fill('dev@example.com')
     await page.getByLabel('Password', { exact: true }).fill('dev-password-123')
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).click()
     await expect(page).toHaveURL('/')
   })
 
@@ -55,7 +55,7 @@ test.describe('auth', () => {
     await expect(page).toHaveURL('/login')
     await page.getByLabel('Email').fill('dev@example.com')
     await page.getByLabel('Password', { exact: true }).fill('dev-password-123')
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).click()
     await expect(page).toHaveURL('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
   })
@@ -83,14 +83,14 @@ test.describe('auth', () => {
     await forceMswOverride(page, { method: 'get', path: '*/api/auth/me', status: 500, body: { detail: 'Internal error' } })
     await page.goto('/widgets')
     await expect(page.getByText('Something went wrong')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Try Again' })).toBeVisible()
     await expect(page).toHaveURL('/widgets')
   })
 
   test("logging out drops the previous session's cached data", async ({ page }) => {
     await page.goto('/widgets')
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Log out' }).click()
+    await page.getByRole('button', { name: 'Log Out' }).click()
     await expect(page).toHaveURL('/login')
     await waitForMswReady(page)
 
@@ -108,7 +108,7 @@ test.describe('auth', () => {
     })
     await page.getByLabel('Email').fill('dev@example.com')
     await page.getByLabel('Password', { exact: true }).fill('dev-password-123')
-    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('button', { name: 'Sign In' }).click()
     await expect(page).toHaveURL('/')
     await page.getByRole('link', { name: 'Widgets' }).click()
 
@@ -131,11 +131,11 @@ test('the password toggle reveals and re-hides, on login and register', async ({
     const field = page.locator(`#${fieldId}`)
     await expect(field).toHaveAttribute('type', 'password')
 
-    const show = page.getByRole('button', { name: 'Show password' }).first()
+    const show = page.getByRole('button', { name: 'Show Password' }).first()
     await show.click()
     await expect(field).toHaveAttribute('type', 'text')
 
-    const hide = page.getByRole('button', { name: 'Hide password' }).first()
+    const hide = page.getByRole('button', { name: 'Hide Password' }).first()
     await hide.click()
     await expect(field).toHaveAttribute('type', 'password')
   }

@@ -177,7 +177,7 @@ function TimerSession({ dark = false }: { dark?: boolean }) {
   return (
     <div className="flex flex-col items-start gap-2">
       <p>{open ? 'Session open' : 'Session closed'}</p>
-      <Button onClick={() => changeOpen(true)}>Open the session</Button>
+      <Button onClick={() => changeOpen(true)}>Open the Session</Button>
       <SessionView
         open={open}
         onOpenChange={changeOpen}

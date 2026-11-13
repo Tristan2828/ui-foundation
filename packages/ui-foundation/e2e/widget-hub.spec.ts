@@ -20,24 +20,24 @@ const axe = (page: Page) => new AxeBuilder({ page }).disableRules(['landmark-one
 test.describe('folded summary', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(story('app-widgetcard--folded-summary'))
-    await expect(card(page, 'Ready to start (success)')).toBeVisible()
+    await expect(card(page, 'Ready to Start (success)')).toBeVisible()
   })
 
   test('a folded card shows its value by state, describes its chevron with it, and drops it when opened', async ({
     page,
   }) => {
-    const summary = (state: string) => card(page, `Ready to start (${state})`).locator('[data-slot="widget-card-summary"]')
+    const summary = (state: string) => card(page, `Ready to Start (${state})`).locator('[data-slot="widget-card-summary"]')
     await expect(summary('success')).toHaveText('3 ready')
-    await expect(chevron(page, 'Ready to start (success)')).toHaveAccessibleDescription('3 ready')
+    await expect(chevron(page, 'Ready to Start (success)')).toHaveAccessibleDescription('3 ready')
     await expect(summary('loading').locator('[data-slot="skeleton"]')).toBeVisible()
     await expect(summary('error')).toHaveText("—Couldn't load")
     await expect(summary('empty')).toHaveText('None')
 
     // Opened, the error is the card's own, inside it, and the summary goes.
-    await chevron(page, 'Ready to start (error)').click()
+    await chevron(page, 'Ready to Start (error)').click()
     await expect(summary('error')).toHaveCount(0)
-    await expect(card(page, 'Ready to start (error)').getByRole('button', { name: 'Try again' })).toBeVisible()
-    await chevron(page, 'Ready to start (success)').click()
+    await expect(card(page, 'Ready to Start (error)').getByRole('button', { name: 'Try Again' })).toBeVisible()
+    await chevron(page, 'Ready to Start (success)').click()
     await expect(summary('success')).toHaveCount(0)
     await expect(page.getByText('Fix the gate latch').first()).toBeVisible()
   })
@@ -45,7 +45,7 @@ test.describe('folded summary', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`zero axe violations (${theme})`, async ({ page }) => {
       await page.goto(story('app-widgetcard--folded-summary', theme))
-      await expect(card(page, 'Ready to start (success)')).toBeVisible()
+      await expect(card(page, 'Ready to Start (success)')).toBeVisible()
       expect((await axe(page)).violations).toEqual([])
     })
   }
@@ -58,13 +58,13 @@ test.describe('accordion', () => {
   })
 
   test('opening one card folds the open one; the chevron toggles from the keyboard', async ({ page }) => {
-    await expect(chevron(page, 'Ready to start')).toHaveAttribute('aria-expanded', 'true')
+    await expect(chevron(page, 'Ready to Start')).toHaveAttribute('aria-expanded', 'true')
     await expect(chevron(page, 'Waiting on')).toHaveAttribute('aria-expanded', 'false')
 
     await chevron(page, 'Waiting on').focus()
     await page.keyboard.press('Enter')
     await expect(chevron(page, 'Waiting on')).toHaveAttribute('aria-expanded', 'true')
-    await expect(chevron(page, 'Ready to start')).toHaveAttribute('aria-expanded', 'false')
+    await expect(chevron(page, 'Ready to Start')).toHaveAttribute('aria-expanded', 'false')
     await expect(page.getByText('Parts arrive')).toBeVisible()
     await expect(page.getByText('Fix the gate latch')).toBeHidden()
 
@@ -77,7 +77,7 @@ test.describe('accordion', () => {
   test("a click on the header's title toggles the card; one on its link doesn't", async ({ page }) => {
     await card(page, 'Saved links').getByRole('heading', { name: 'Saved links' }).click()
     await expect(chevron(page, 'Saved links')).toHaveAttribute('aria-expanded', 'true')
-    await expect(chevron(page, 'Ready to start')).toHaveAttribute('aria-expanded', 'false')
+    await expect(chevron(page, 'Ready to Start')).toHaveAttribute('aria-expanded', 'false')
 
     // The link to an outside address opens its own tab and leaves the card alone.
     const popup = page.waitForEvent('popup')
@@ -91,7 +91,7 @@ test.describe('accordion', () => {
       await page.goto(story('app-widgetcard--accordion', theme))
       await expect(page.getByText('Fix the gate latch')).toBeVisible()
       expect((await axe(page)).violations).toEqual([])
-      await chevron(page, 'Ready to start').click()
+      await chevron(page, 'Ready to Start').click()
       await expect(page.getByText('Fix the gate latch')).toBeHidden()
       expect((await axe(page)).violations).toEqual([])
     })
@@ -105,7 +105,7 @@ test.describe('accordion="mobile"', () => {
     await page.evaluate(() => localStorage.clear())
     await page.reload()
     await expect(chevron(page, 'Waiting on')).toHaveAttribute('aria-expanded', 'false')
-    await expect(chevron(page, 'Ready to start')).toHaveAttribute('aria-expanded', 'true')
+    await expect(chevron(page, 'Ready to Start')).toHaveAttribute('aria-expanded', 'true')
 
     await page.setViewportSize({ width: 1280, height: 800 })
     await expect(card(page, 'Waiting on').getByRole('button', { name: 'Waiting on', exact: true })).toHaveCount(0)
@@ -147,10 +147,10 @@ test.describe('Customize sheet', () => {
 
   test('Up and Down move a card, the focus staying on the button pressed, and Show hides one', async ({ page }) => {
     await page.getByRole('button', { name: 'Customize' }).click()
-    const sheet = page.getByRole('dialog', { name: 'Customize this page' })
+    const sheet = page.getByRole('dialog', { name: 'Customize This Page' })
     await expect(sheet).toBeVisible()
 
-    const down = sheet.getByRole('button', { name: 'Move Ready to start down' })
+    const down = sheet.getByRole('button', { name: 'Move Ready to Start down' })
     await down.focus()
     await page.keyboard.press('Enter')
     await expect(down).toBeFocused()
@@ -171,21 +171,21 @@ test.describe('Customize sheet', () => {
 
     await sheet.getByRole('switch', { name: 'Show Waiting on' }).press('Space')
     await expect(sheet.getByRole('switch', { name: 'Show Waiting on' })).not.toBeChecked()
-    expect(await regionTitles(page)).toEqual(['Garden', 'Saved links', 'Ready to start'])
+    expect(await regionTitles(page)).toEqual(['Garden', 'Saved links', 'Ready to Start'])
 
     // Kept on this device; Reset undoes it.
     await page.reload()
     await expect(page.getByText('Fix the gate latch')).toBeVisible()
-    expect(await regionTitles(page)).toEqual(['Garden', 'Saved links', 'Ready to start'])
+    expect(await regionTitles(page)).toEqual(['Garden', 'Saved links', 'Ready to Start'])
     await page.getByRole('button', { name: 'Customize' }).click()
     await page.getByRole('button', { name: 'Reset' }).click()
-    expect(await regionTitles(page)).toEqual(['Ready to start', 'Waiting on', 'Saved links', 'Garden'])
+    expect(await regionTitles(page)).toEqual(['Ready to Start', 'Waiting on', 'Saved links', 'Garden'])
   })
 
   for (const theme of ['light', 'dark'] as const) {
     test(`zero axe violations, open (${theme})`, async ({ page }) => {
       await page.goto(story('app-widgetlayoutsheet--open', theme))
-      await expect(page.getByRole('dialog', { name: 'Customize this page' })).toBeVisible()
+      await expect(page.getByRole('dialog', { name: 'Customize This Page' })).toBeVisible()
       expect((await axe(page)).violations).toEqual([])
     })
   }

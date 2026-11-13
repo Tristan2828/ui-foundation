@@ -200,8 +200,8 @@ test.describe('editing features', () => {
   test('Ctrl/Cmd+K links the selected words: Enter applies, focus comes back', async ({ page }) => {
     await selectFirstWord(page, 'links')
     await page.keyboard.press('ControlOrMeta+k')
-    const box = page.getByRole('dialog', { name: 'Add link' })
-    const address = box.getByRole('textbox', { name: 'Link address' })
+    const box = page.getByRole('dialog', { name: 'Add Link' })
+    const address = box.getByRole('textbox', { name: 'Link Address' })
     await expect(address).toBeFocused()
     await address.fill('example.com/plain')
     await page.keyboard.press('Enter')
@@ -220,9 +220,9 @@ test.describe('editing features', () => {
     for (let i = 0; i < 'See the se'.length; i++) await page.keyboard.press('ArrowRight')
     await page.waitForTimeout(100)
     await page.keyboard.press('ControlOrMeta+k')
-    const box = page.getByRole('dialog', { name: 'Edit link' })
-    await expect(box.getByRole('textbox', { name: 'Link address' })).toHaveValue('https://example.com/setup')
-    await box.getByRole('button', { name: 'Remove link' }).click()
+    const box = page.getByRole('dialog', { name: 'Edit Link' })
+    await expect(box.getByRole('textbox', { name: 'Link Address' })).toHaveValue('https://example.com/setup')
+    await box.getByRole('button', { name: 'Remove Link' }).click()
     await expect(box).toHaveCount(0)
     await expect(saved(page, 'links')).toContainText('See the setup guide for details.')
   })
@@ -261,15 +261,15 @@ test.describe('editing features', () => {
     const before = await saved(page, 'links').textContent()
     await selectFirstWord(page, 'links')
     await page.keyboard.press('ControlOrMeta+k')
-    const box = page.getByRole('dialog', { name: 'Add link' })
-    await box.getByRole('textbox', { name: 'Link address' }).fill('javascript:alert(1)')
+    const box = page.getByRole('dialog', { name: 'Add Link' })
+    await box.getByRole('textbox', { name: 'Link Address' }).fill('javascript:alert(1)')
     await page.keyboard.press('Enter')
     await expect(box.getByRole('alert')).toHaveText('Enter a web or email address, like https://example.com.')
-    await expect(box.getByRole('textbox', { name: 'Link address' })).toHaveAccessibleDescription(
+    await expect(box.getByRole('textbox', { name: 'Link Address' })).toHaveAccessibleDescription(
       'Enter a web or email address, like https://example.com.',
     )
     // Two words are not an address either (#177).
-    await box.getByRole('textbox', { name: 'Link address' }).fill('setup guide')
+    await box.getByRole('textbox', { name: 'Link Address' }).fill('setup guide')
     await page.keyboard.press('Enter')
     await expect(box.getByRole('alert')).toHaveText('An address has no spaces. Remove them, or write each as %20.')
     await page.keyboard.press('Escape')
@@ -311,8 +311,8 @@ test.describe('editing features', () => {
       await page.goto(`${FEATURES}&theme=${theme}`)
       await selectFirstWord(page, 'links')
       await page.keyboard.press('ControlOrMeta+k')
-      const box = page.getByRole('dialog', { name: 'Add link' })
-      await box.getByRole('textbox', { name: 'Link address' }).fill('javascript:x')
+      const box = page.getByRole('dialog', { name: 'Add Link' })
+      await box.getByRole('textbox', { name: 'Link Address' }).fill('javascript:x')
       await page.keyboard.press('Enter')
       await expect(box.getByRole('alert')).toBeVisible()
       const results = await new AxeBuilder({ page })
@@ -353,14 +353,14 @@ test.describe('toolbar', () => {
   test('one row of named buttons, each with its shortcut, one tab stop', async ({ page }) => {
     const bar = toolbar(page, 'formats')
     const labels = [
-      'Bold', 'Italic', 'Strikethrough', 'Code', 'Highlight', 'Heading 1', 'Heading 2', 'Heading 3', 'Toggle heading',
-      'Task list', 'Bulleted list', 'Numbered list', 'Quote', 'Callout', 'Code block', 'Divider', 'Table', 'Link', 'Full screen',
+      'Bold', 'Italic', 'Strikethrough', 'Code', 'Highlight', 'Heading 1', 'Heading 2', 'Heading 3', 'Toggle Heading',
+      'Task List', 'Bulleted List', 'Numbered List', 'Quote', 'Callout', 'Code Block', 'Divider', 'Table', 'Link', 'Full Screen',
     ]
     await expect(bar.getByRole('button')).toHaveCount(labels.length)
     for (const label of labels) await expect(bar.getByRole('button', { name: label, exact: true })).toBeVisible()
     await expect(button(page, 'Bold')).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+B$/)
     // Notion's block keys: Ctrl+Shift and a digit, Cmd+Option on a Mac.
-    await expect(button(page, 'Bulleted list')).toHaveAttribute('aria-keyshortcuts', /^(Control\+Shift|Meta\+Alt)\+5$/)
+    await expect(button(page, 'Bulleted List')).toHaveAttribute('aria-keyshortcuts', /^(Control\+Shift|Meta\+Alt)\+5$/)
     await expect(button(page, 'Strikethrough')).toHaveAttribute('aria-keyshortcuts', /^(Control|Meta)\+Shift\+S$/)
     await expect(bar.locator('[tabindex="0"]')).toHaveCount(1)
     await expect(bar).toHaveAttribute('aria-controls', /.+/)
@@ -373,11 +373,11 @@ test.describe('toolbar', () => {
     await page.keyboard.press('ArrowRight')
     await expect(button(page, 'Italic')).toBeFocused()
     await page.keyboard.press('End')
-    await expect(button(page, 'Full screen')).toBeFocused()
+    await expect(button(page, 'Full Screen')).toBeFocused()
     await page.keyboard.press('ArrowRight')
     await expect(button(page, 'Bold')).toBeFocused()
     await page.keyboard.press('ArrowLeft')
-    await expect(button(page, 'Full screen')).toBeFocused()
+    await expect(button(page, 'Full Screen')).toBeFocused()
     await page.keyboard.press('Home')
     await expect(button(page, 'Bold')).toBeFocused()
   })
@@ -430,26 +430,26 @@ test.describe('toolbar', () => {
     await expect(first()).toContainText('> Format me here.')
     await button(page, 'Quote').click()
     await expect(first()).not.toContainText('>')
-    await button(page, 'Code block').click()
+    await button(page, 'Code Block').click()
     await expect(first()).toContainText('```\nFormat me here.\n```')
-    await button(page, 'Code block').click()
+    await button(page, 'Code Block').click()
     await expect(first()).not.toContainText('```')
   })
 
   test('Toggle heading turns a heading into a toggle one and back, its level kept; a plain line becomes a toggle ##', async ({ page }) => {
     const first = () => saved(page, 'formats')
     await caretInFirstLine(page)
-    await button(page, 'Toggle heading').click()
+    await button(page, 'Toggle Heading').click()
     await expect(first()).toContainText('## Format me here. {toggle="true"}')
-    await expect(button(page, 'Toggle heading')).toHaveAttribute('aria-pressed', 'true')
+    await expect(button(page, 'Toggle Heading')).toHaveAttribute('aria-pressed', 'true')
     await expect(button(page, 'Heading 2')).toHaveAttribute('aria-pressed', 'false')
     // Heading 3 makes it a plain ###.
     await button(page, 'Heading 3').click()
     await expect(first()).toContainText('### Format me here.\n')
     await expect(first()).not.toContainText('toggle')
-    await button(page, 'Toggle heading').click()
+    await button(page, 'Toggle Heading').click()
     await expect(first()).toContainText('### Format me here. {toggle="true"}')
-    await button(page, 'Toggle heading').click()
+    await button(page, 'Toggle Heading').click()
     await expect(first()).not.toContainText('toggle')
     await expect(button(page, 'Heading 3')).toHaveAttribute('aria-pressed', 'true')
   })
@@ -457,16 +457,16 @@ test.describe('toolbar', () => {
   test('lists: bulleted, then numbered, then tasks, then plain again', async ({ page }) => {
     const text = () => saved(page, 'formats')
     await caretInFirstLine(page)
-    await button(page, 'Bulleted list').click()
+    await button(page, 'Bulleted List').click()
     await expect(text()).toContainText('- Format me here.')
-    await expect(button(page, 'Bulleted list')).toHaveAttribute('aria-pressed', 'true')
-    await button(page, 'Numbered list').click()
+    await expect(button(page, 'Bulleted List')).toHaveAttribute('aria-pressed', 'true')
+    await button(page, 'Numbered List').click()
     await expect(text()).toContainText('1. Format me here.')
-    await expect(button(page, 'Bulleted list')).toHaveAttribute('aria-pressed', 'false')
-    await button(page, 'Task list').click()
+    await expect(button(page, 'Bulleted List')).toHaveAttribute('aria-pressed', 'false')
+    await button(page, 'Task List').click()
     await expect(text()).toContainText('- [ ] Format me here.')
-    await expect(button(page, 'Task list')).toHaveAttribute('aria-pressed', 'true')
-    await button(page, 'Task list').click()
+    await expect(button(page, 'Task List')).toHaveAttribute('aria-pressed', 'true')
+    await button(page, 'Task List').click()
     await expect(text()).toContainText('Format me here.\n\nSecond line.')
     await expect(text()).not.toContainText('- ')
   })
@@ -474,8 +474,8 @@ test.describe('toolbar', () => {
   test('Link opens the link box for the selection', async ({ page }) => {
     await selectFormat(page)
     await button(page, 'Link').click()
-    const box = page.getByRole('dialog', { name: 'Add link' })
-    await box.getByRole('textbox', { name: 'Link address' }).fill('example.com')
+    const box = page.getByRole('dialog', { name: 'Add Link' })
+    await box.getByRole('textbox', { name: 'Link Address' }).fill('example.com')
     await page.keyboard.press('Enter')
     await expect(saved(page, 'formats')).toContainText('[Format](https://example.com) me here.')
     await expect(button(page, 'Link')).toHaveAttribute('aria-pressed', 'true')
@@ -485,7 +485,7 @@ test.describe('toolbar', () => {
     const buttons = toolbar(page, 'readOnly').getByRole('button')
     await expect(buttons).toHaveCount(19)
     for (const one of await buttons.all()) {
-      if ((await one.getAttribute('aria-label')) === 'Full screen') await expect(one).toBeEnabled()
+      if ((await one.getAttribute('aria-label')) === 'Full Screen') await expect(one).toBeEnabled()
       else await expect(one).toBeDisabled()
     }
   })
@@ -649,10 +649,10 @@ test.describe('floating toolbar', () => {
   test('Link opens the link box for the words, and it steps aside while the box is open', async ({ page }) => {
     await pickWord(page, 1)
     await floatingButton(page, 'Link').click()
-    const box = page.getByRole('dialog', { name: 'Add link' })
+    const box = page.getByRole('dialog', { name: 'Add Link' })
     await expect(box).toBeVisible()
     await expect(floating(page)).toHaveCount(0)
-    await box.getByRole('textbox', { name: 'Link address' }).fill('example.com')
+    await box.getByRole('textbox', { name: 'Link Address' }).fill('example.com')
     await page.keyboard.press('Enter')
     await expect(saved(page, 'formats')).toContainText('[Second](https://example.com) line.')
   })
@@ -660,7 +660,7 @@ test.describe('floating toolbar', () => {
   test('not in a code block, and not read-only', async ({ page }) => {
     await editor(page, 'formats').locator('p').first().click()
     await page.waitForTimeout(100)
-    await fixed(page).getByRole('button', { name: 'Code block', exact: true }).click()
+    await fixed(page).getByRole('button', { name: 'Code Block', exact: true }).click()
     await editor(page, 'formats').locator('pre').dblclick({ position: { x: 16, y: 16 } })
     await page.waitForTimeout(100)
     await expect(floating(page)).toHaveCount(0)
@@ -692,9 +692,9 @@ test.describe('slash menu', () => {
   const menu = (page: Page) => page.getByRole('listbox', { name: 'Blocks' })
   const option = (page: Page, name: string) => menu(page).getByRole('option', { name, exact: true })
   const BLOCKS = [
-    'Heading 1', 'Heading 2', 'Heading 3', 'Toggle heading 1', 'Toggle heading 2', 'Toggle heading 3',
-    'Task list', 'Bulleted list', 'Numbered list',
-    'Quote', 'Callout', 'Code block', 'Divider', 'Table',
+    'Heading 1', 'Heading 2', 'Heading 3', 'Toggle Heading 1', 'Toggle Heading 2', 'Toggle Heading 3',
+    'Task List', 'Bulleted List', 'Numbered List',
+    'Quote', 'Callout', 'Code Block', 'Divider', 'Table',
   ]
 
   // A new empty line at the end, the caret on it.
@@ -726,7 +726,7 @@ test.describe('slash menu', () => {
     await newLine(page)
     await page.keyboard.type('/num')
     await expect(menu(page).getByRole('option')).toHaveCount(1)
-    await expect(option(page, 'Numbered list')).toHaveAttribute('aria-selected', 'true')
+    await expect(option(page, 'Numbered List')).toHaveAttribute('aria-selected', 'true')
     await page.keyboard.press('Enter')
     await expect(menu(page)).toHaveCount(0)
     await page.keyboard.type('Step one')
@@ -743,14 +743,14 @@ test.describe('slash menu', () => {
     await page.keyboard.press('Backspace')
     await page.keyboard.type('todo')
     await expect(menu(page).getByRole('option')).toHaveCount(1)
-    await expect(option(page, 'Task list')).toBeVisible()
+    await expect(option(page, 'Task List')).toBeVisible()
   })
 
   test('"/toggle" lists the toggle headings; a pick makes one, written with its marker', async ({ page }) => {
     await newLine(page)
     await page.keyboard.type('/toggle')
-    await expect(menu(page).getByRole('option')).toHaveText(['Toggle heading 1', 'Toggle heading 2', 'Toggle heading 3'])
-    await option(page, 'Toggle heading 2').click()
+    await expect(menu(page).getByRole('option')).toHaveText(['Toggle Heading 1', 'Toggle Heading 2', 'Toggle Heading 3'])
+    await option(page, 'Toggle Heading 2').click()
     await page.keyboard.type('Folds')
     await expect(saved(page, 'formats')).toContainText('Third line.\n\n## Folds {toggle="true"}')
   })
@@ -838,8 +838,8 @@ test.describe('slash menu', () => {
       await newLine(page)
       await page.keyboard.type('/')
       await page.keyboard.press('ArrowDown')
-      await option(page, 'Task list').hover()
-      await expect(option(page, 'Task list')).toHaveAttribute('aria-selected', 'true')
+      await option(page, 'Task List').hover()
+      await expect(option(page, 'Task List')).toHaveAttribute('aria-selected', 'true')
       const results = await new AxeBuilder({ page })
         .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
         .analyze()
@@ -983,7 +983,7 @@ test.describe('callouts', () => {
     await expect(saved(page, 'callout')).toContainText('> [!TIP]\n> Measure twice.')
     await expect(editor(page, 'callout')).toBeFocused()
     await kindButton(page, 'Tip').click()
-    await page.getByRole('menuitem', { name: 'Remove callout' }).click()
+    await page.getByRole('menuitem', { name: 'Remove Callout' }).click()
     await expect(saved(page, 'callout')).toContainText('Measure twice.\n\nAfter the callout.')
     await expect(saved(page, 'callout')).not.toContainText('[!')
   })
@@ -1070,18 +1070,18 @@ test.describe('tables', () => {
 
   test("a cell's menu adds rows and columns, aligns a column, and deletes", async ({ page }) => {
     await caretIn(page, 1, 0)
-    await pick(page, 'Insert row below')
+    await pick(page, 'Insert Row Below')
     await expect(rows(page)).toHaveCount(4)
     await expect(editor(page, 'table')).toBeFocused()
-    await pick(page, 'Insert column right')
+    await pick(page, 'Insert Column Right')
     await expect(rows(page).first().locator('th')).toHaveCount(3)
     await pick(page, 'Center')
     await expect(saved(page, 'table')).toContainText(/\n\| :-+: \| -+ \| -+ \|\n/)
-    await pick(page, 'Delete column')
+    await pick(page, 'Delete Column')
     await expect(rows(page).first().locator('th')).toHaveCount(2)
-    await pick(page, 'Delete row')
+    await pick(page, 'Delete Row')
     await expect(rows(page)).toHaveCount(3)
-    await pick(page, 'Delete table')
+    await pick(page, 'Delete Table')
     await expect(table(page)).toHaveCount(0)
     await expect(saved(page, 'table')).not.toContainText('|')
   })
@@ -1093,10 +1093,10 @@ test.describe('tables', () => {
     await expect(tableButton(page)).toBeDisabled()
     await page.keyboard.press('Shift+F10')
     const menu = page.getByRole('menu')
-    await expect(menu.getByRole('menuitem', { name: 'Delete row' })).toHaveAttribute('aria-disabled', 'true')
-    await expect(menu.getByRole('menuitem', { name: 'Insert row above' })).toHaveAttribute('aria-disabled', 'true')
-    await expect(menu.getByRole('menuitem', { name: 'Move row down' })).toHaveAttribute('aria-disabled', 'true')
-    await expect(menu.getByRole('menuitem', { name: 'Insert row below' })).not.toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Delete Row' })).toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Insert Row Above' })).toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Move Row Down' })).toHaveAttribute('aria-disabled', 'true')
+    await expect(menu.getByRole('menuitem', { name: 'Insert Row Below' })).not.toHaveAttribute('aria-disabled', 'true')
     await page.keyboard.press('Escape')
     await expect(menu).toHaveCount(0)
     await expect(editor(page, 'table')).toBeFocused()
@@ -1110,11 +1110,11 @@ test.describe('tables', () => {
   test('the bars add a row at the end and a column at the right', async ({ page }) => {
     const fixture = page.locator('[data-fixture="table"]')
     await table(page).hover()
-    await fixture.getByRole('button', { name: 'Add a row' }).click()
+    await fixture.getByRole('button', { name: 'Add a Row' }).click()
     await expect(rows(page)).toHaveCount(4)
     await page.keyboard.type('Foot')
     await expect(saved(page, 'table')).toContainText(/\| Foot +\| +\|/)
-    await fixture.getByRole('button', { name: 'Add a column' }).click()
+    await fixture.getByRole('button', { name: 'Add a Column' }).click()
     await expect(rows(page).first().locator('th')).toHaveCount(3)
     await page.keyboard.type('Note')
     await expect(saved(page, 'table')).toContainText(/\| Part +\| Count +\| Note +\|/)
@@ -1492,7 +1492,7 @@ test.describe('table scroll', () => {
     // Empty columns are narrow (columns fit their words): nine of them.
     for (let i = 0; i < 9; i++) {
       await narrow.hover()
-      await fixture.getByRole('button', { name: 'Add a column' }).click()
+      await fixture.getByRole('button', { name: 'Add a Column' }).click()
     }
     await expect(narrow).toHaveAttribute('tabindex', '0')
     await expect(narrow).toHaveAttribute('role', 'region')

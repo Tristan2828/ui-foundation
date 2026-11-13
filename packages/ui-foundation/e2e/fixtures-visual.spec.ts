@@ -91,8 +91,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-colorswatch--in-a-badge', mustShow: 'secondary' },
   { id: 'app-colorswatch--in-a-table', mustShow: 'Errands' },
   { id: 'app-colorswatch--long-name', mustShow: 'A name longer than its column' },
-  { id: 'app-emojifield--default', mustShow: 'Routine emoji' },
-  { id: 'app-emojifield--open', mustShow: 'Morning and sleep' },
+  { id: 'app-emojifield--default', mustShow: 'Routine Emoji' },
+  { id: 'app-emojifield--open', mustShow: 'Morning and Sleep' },
   // <Board>: a list as columns of cards, every app's second view of a list.
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
   { id: 'app-board--empty-columns', mustShow: 'No planned projects' },
@@ -115,28 +115,28 @@ const COMPOSITE_STORIES = [
   // The edit-in-place presets at rest: a money value, a select's badge, a
   // reference, a pair read as one, links by label and by host.
   { id: 'app-editinplacepresets--presets', mustShow: '$1,234.56' },
-  { id: 'app-editinplacepresets--fields-as-one', mustShow: 'Hours and budget' },
+  { id: 'app-editinplacepresets--fields-as-one', mustShow: 'Hours and Budget' },
   { id: 'app-editinplacepresets--links', mustShow: 'docs.example.com' },
   // A list in place under group headings, and its filter beside it.
   { id: 'app-editablelist--grouped-and-filtered', mustShow: 'By room' },
   // A record open in a dialog over its list, and the dialog's loading and not-found states.
   { id: 'app-recorddialog--open', mustShow: 'after a dry day' },
-  { id: 'app-recorddialog--loading', mustShow: 'Open full page' },
+  { id: 'app-recorddialog--loading', mustShow: 'Open Full Page' },
   { id: 'app-recorddialog--not-found', mustShow: 'Back to Projects' },
   { id: 'app-recorddialog--dialog-only-deep-link', mustShow: 'after a dry day' },
   // A list at its own path (`listPath`) with a record open over it, and a sub-record over its parent's page.
   { id: 'app-recorddialog--list-at-its-own-path-open', mustShow: 'after a dry day' },
   { id: 'app-recorddialog--sub-record-open', mustShow: 'Sand the boards' },
   // A new record's form over its list (`newPath`), and a record's rail beside it at 1,120px (4.82).
-  { id: 'app-recorddialog--new-record-open', mustShow: 'Add project' },
+  { id: 'app-recorddialog--new-record-open', mustShow: 'Add Project' },
   { id: 'app-recorddialog--rail-beside', mustShow: 'after a dry day' },
   // FormDialog: open, and with a failed save's Notice (4.82).
-  { id: 'app-formdialog--default', mustShow: 'Add book' },
+  { id: 'app-formdialog--default', mustShow: 'Add Book' },
   { id: 'app-formdialog--failed-save', mustShow: "Couldn't add the book" },
   // EntityForm in the form standard: rows by size, required marks, a status's badge,
   // sections as cards, and a failed save's Notice (4.85).
-  { id: 'app-entityform--default', mustShow: 'Add book' },
-  { id: 'app-entityform--sections', mustShow: 'What it is' },
+  { id: 'app-entityform--default', mustShow: 'Add Book' },
+  { id: 'app-entityform--sections', mustShow: 'What It Is' },
   { id: 'app-entityform--failed-save', mustShow: "Couldn't add the book" },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
@@ -164,9 +164,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-valuelist--default', mustShow: 'Example capsule B' },
   { id: 'app-valuelist--icons', mustShow: '+1' },
   { id: 'app-listheader--default', mustShow: 'Change log' },
-  { id: 'app-listheader--showing-deleted', mustShow: 'Back to the list' },
-  { id: 'app-timeline--default', mustShow: 'Show all 7' },
-  { id: 'app-timeline--in-a-narrow-card', mustShow: 'Show all 7' },
+  { id: 'app-listheader--showing-deleted', mustShow: 'Back to the List' },
+  { id: 'app-timeline--default', mustShow: 'Show All 7' },
+  { id: 'app-timeline--in-a-narrow-card', mustShow: 'Show All 7' },
   { id: 'app-timeline--few-entries', mustShow: 'Nothing yet' },
   { id: 'app-equalitems--cards', mustShow: 'Best value' },
   { id: 'app-equalitems--table-look', mustShow: 'Best value' },
@@ -200,7 +200,7 @@ const COMPOSITE_STORIES = [
   // The form standard's controls (4.88): choice buttons, typed dates, a
   // reference with Create, a long multi-pick, and a record's rows edited in place.
   { id: 'app-datefield--typed', mustShow: '2026-09-02' },
-  { id: 'app-formcontrols--form', mustShow: 'Show all 40' },
+  { id: 'app-formcontrols--form', mustShow: 'Show All 40' },
   { id: 'app-formcontrols--edit-in-place', mustShow: 'The Quiet Harbour' },
   // A month and day with no year (4.78): set, empty and a stored value refused,
   // open on its days and on its months, and edited in place on a view.
@@ -211,12 +211,12 @@ const COMPOSITE_STORIES = [
   // How something repeats (#326): presets pressed and not, a preview's label
   // and next dates, a refusal; on a form, in place, and as list cells.
   { id: 'app-recurrencefield--default', mustShow: 'Every 2nd Tue at 9:00 AM' },
-  { id: 'app-recurrencefield--in-form', mustShow: 'Save chore' },
+  { id: 'app-recurrencefield--in-form', mustShow: 'Save Chore' },
   { id: 'app-recurrencefield--edit-in-place', mustShow: 'Every 2nd Tue at 9:00 AM' },
   { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
-  { id: 'app-imagefield--default', mustShow: 'Edit plant' },
+  { id: 'app-imagefield--default', mustShow: 'Edit Plant' },
   // Images in written text, and the editor that uploads them (its Image button).
   { id: 'app-markdown--images', mustShow: 'A view of the yard:' },
   { id: 'app-richtexteditor--image-uploads', mustShow: 'Paste or drop a photo here.' },
@@ -226,15 +226,15 @@ const COMPOSITE_STORIES = [
   { id: 'app-markdown--wide-table', mustShow: 'A table that scrolls sideways:' },
   { id: 'app-richtexteditor--heading-levels', mustShow: 'A form with notes' },
   { id: 'app-richtexteditor--wide-table', mustShow: 'wideTable' },
-  { id: 'app-markdown--folding', mustShow: 'Fold all' },
+  { id: 'app-markdown--folding', mustShow: 'Fold All' },
   // Task items ticked where they are read: checkboxes, nested and in a callout.
   { id: 'app-markdown--tickable-tasks', mustShow: '2/7 done' },
-  { id: 'app-richtexteditor--folding', mustShow: 'Fold all' },
+  { id: 'app-richtexteditor--folding', mustShow: 'Fold All' },
   // Allow reminders in every state, on a card (#167).
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
-  { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
+  { id: 'app-datatable--grouped', mustShow: 'Earlier This Week' },
   // Group headings pinned while scrolling: columns that fit, no header row, wide.
   { id: 'app-datatable--sticky-groups', mustShow: 'Thursday' },
   { id: 'app-datatable--sticky-groups-no-header', mustShow: 'Thursday' },
@@ -243,9 +243,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--sticky-groups-wide-below-a-bar', mustShow: 'Thursday' },
   // DataTable's card layouts (#252): a feed's grid and compact list under
   // day headings, and covers with a round Read button and a placeholder.
-  { id: 'app-datatable-layouts--feed', mustShow: 'Earlier this week' },
-  { id: 'app-datatable-layouts--feed-grid', mustShow: 'Earlier this week' },
-  { id: 'app-datatable-layouts--feed-compact', mustShow: 'Earlier this week' },
+  { id: 'app-datatable-layouts--feed', mustShow: 'Earlier This Week' },
+  { id: 'app-datatable-layouts--feed-grid', mustShow: 'Earlier This Week' },
+  { id: 'app-datatable-layouts--feed-compact', mustShow: 'Earlier This Week' },
   { id: 'app-datatable-layouts--covers', mustShow: 'Harbour Lights' },
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   // A highlighted row's wash, with muted text inside it (#156).
@@ -266,7 +266,7 @@ const COMPOSITE_STORIES = [
   // The table tools: views, FilterBar, Columns, row actions, a capped related list.
   { id: 'app-datatable-tools--list-tools', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
-  { id: 'app-datatable-tools--related', mustShow: 'View all 19' },
+  { id: 'app-datatable-tools--related', mustShow: 'View All 19' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
@@ -305,7 +305,7 @@ const COMPOSITE_STORIES = [
   // Customize sheet, open (#263).
   { id: 'app-widgetcard--folded-summary', mustShow: '3 ready' },
   { id: 'app-widgetcard--accordion', mustShow: 'Fix the gate latch' },
-  { id: 'app-widgetlayoutsheet--open', mustShow: 'Customize this page' },
+  { id: 'app-widgetlayoutsheet--open', mustShow: 'Customize This Page' },
   // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
   // slot under foreground text, the number, the note, the action, in
   // every state, and at compact.
@@ -1369,7 +1369,7 @@ test.describe('widget card', () => {
 
   test('each widget is a region named by its heading, in the page outline', async ({ page }) => {
     await page.goto(storyUrlById('app-widgetcard--default', 'light'))
-    for (const title of ['Ready to start', 'Waiting on', 'Saved links']) {
+    for (const title of ['Ready to Start', 'Waiting on', 'Saved links']) {
       await expect(page.getByRole('region', { name: title })).toBeVisible()
       await expect(page.getByRole('heading', { level: 2, name: title })).toBeVisible()
     }
@@ -1377,8 +1377,8 @@ test.describe('widget card', () => {
 
   test('a header link is described by its title, so two "All" links stay distinct', async ({ page }) => {
     await page.goto(storyUrlById('app-widgetcard--default', 'light'))
-    const ready = page.getByRole('region', { name: 'Ready to start' }).getByRole('link', { name: 'All', exact: true })
-    await expect(ready).toHaveAccessibleDescription('Ready to start')
+    const ready = page.getByRole('region', { name: 'Ready to Start' }).getByRole('link', { name: 'All', exact: true })
+    await expect(ready).toHaveAccessibleDescription('Ready to Start')
     const waiting = page.getByRole('region', { name: 'Waiting on' }).getByRole('link', { name: 'All', exact: true })
     await expect(waiting).toHaveAccessibleDescription('Waiting on')
   })
@@ -1405,7 +1405,7 @@ test.describe('widget card', () => {
     await expect(inState(page, 'empty').getByText('Nothing waiting')).toBeVisible()
     const errors = inState(page, 'error')
     await expect(errors.getByText('Connection problem')).toHaveCount(3)
-    await expect(errors.getByRole('button', { name: 'Try again' })).toHaveCount(3)
+    await expect(errors.getByRole('button', { name: 'Try Again' })).toHaveCount(3)
     await expect(errors.locator('[data-state=error][data-size=compact]')).toHaveCount(3)
     await expect(inState(page, 'success').getByRole('listitem')).toHaveCount(8)
   })
@@ -1414,7 +1414,7 @@ test.describe('widget card', () => {
   // keeps its height when its data arrives.
   test("a loading widget is its loaded height, within a few pixels", async ({ page }) => {
     await page.goto(storyUrlById(ALL, 'light'))
-    for (const title of ['Ready to start', 'Waiting on', 'Saved links']) {
+    for (const title of ['Ready to Start', 'Waiting on', 'Saved links']) {
       const height = async (state: string) =>
         (await page.getByRole('region', { name: `${title} (${state})` }).boundingBox())!.height
       expect(Math.abs((await height('loading')) - (await height('success')))).toBeLessThanOrEqual(4)

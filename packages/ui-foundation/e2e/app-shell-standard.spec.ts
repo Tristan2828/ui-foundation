@@ -99,7 +99,7 @@ test('N7: on a phone a page below an entry shows a back arrow to it in the menu 
 
 test('N7: an entry\'s own page keeps the menu button; wide screens never show the arrow', async ({ page }) => {
   await openPhone(page, 'standard-on-entry')
-  await expect(page.getByRole('link', { name: /^Back to/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /^Back To/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Toggle Sidebar' })).toBeVisible()
   await openWide(page, 'standard')
   await expect(page.getByRole('link', { name: 'Back to Accounts' })).toBeHidden()
@@ -130,7 +130,7 @@ test("N8: an area's sheet is a grid of tiles, icon over label, a finger's target
   expect(Math.abs(boxes[0]!.y - boxes[1]!.y)).toBeLessThan(1)
   await tiles.getByRole('link', { name: 'House' }).click()
   await expect(sheet).toBeHidden()
-  await expect(page.getByRole('link', { name: /^Back to/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /^Back To/ })).toHaveCount(0)
   await bar(page).getByRole('button', { name: 'Household' }).click()
   await expect(sheet.getByRole('link', { name: 'House' })).toHaveAttribute('aria-current', 'page')
 })

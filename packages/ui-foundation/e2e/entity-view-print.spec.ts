@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// EntityView's Print notes (app/EntityView "Print notes"), in a real
+// EntityView's Print notes (app/EntityView "Print Notes"), in a real
 // browser with print media emulated: the button mounts the printed copy
 // and opens the print dialog (stubbed here, counting calls); on paper the
 // copy is all there is (no rail, no shell, no buttons), folded text is
@@ -28,7 +28,7 @@ const printCalls = (page: Page) => page.evaluate(() => (window as unknown as { p
 test('the button prints a copy of the marked sections, gone after the dialog closes', async ({ page }) => {
   await open(page)
   await expect(copy(page)).toHaveCount(0)
-  await page.getByRole('button', { name: 'Print notes' }).click()
+  await page.getByRole('button', { name: 'Print Notes' }).click()
   await expect(copy(page)).toHaveCount(1)
   expect(await printCalls(page)).toBe(1)
   // On screen it never shows.
@@ -44,7 +44,7 @@ test('on paper: the marked sections alone, under the title', async ({ page }) =>
   await page.getByRole('button', { name: 'Questions', exact: true }).click()
   await expect(page.getByText('In priority order.')).toBeHidden()
 
-  await page.getByRole('button', { name: 'Print notes' }).click()
+  await page.getByRole('button', { name: 'Print Notes' }).click()
   await page.emulateMedia({ media: 'print' })
 
   await expect(copy(page)).toBeVisible()
@@ -63,7 +63,7 @@ test('on paper: the marked sections alone, under the title', async ({ page }) =>
 
 test('on paper: tables are ruled with room to write, questions have space under them', async ({ page }) => {
   await open(page)
-  await page.getByRole('button', { name: 'Print notes' }).click()
+  await page.getByRole('button', { name: 'Print Notes' }).click()
   await page.emulateMedia({ media: 'print' })
   const printed = copy(page)
 
@@ -90,7 +90,7 @@ test(`a dark screen prints light${palette ? ` (palette ${palette})` : ''}`, asyn
   await open(page, 'dark', palette)
   if (palette) await expect(page.locator('html')).toHaveAttribute('data-palette', palette)
   const before = await page.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor)
-  await page.getByRole('button', { name: 'Print notes' }).click()
+  await page.getByRole('button', { name: 'Print Notes' }).click()
   await page.emulateMedia({ media: 'print' })
   const paper = await copy(page).evaluate((el) => {
     const probe = document.createElement('div')
@@ -121,7 +121,7 @@ test('the light palette prints white, not its green', async ({ page }) => {
   await open(page, 'light', 'palm-lcd')
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'palm-lcd')
   expect(await page.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(201, 209, 178)')
-  await page.getByRole('button', { name: 'Print notes' }).click()
+  await page.getByRole('button', { name: 'Print Notes' }).click()
   await page.emulateMedia({ media: 'print' })
   const paper = await copy(page).evaluate((el) => {
     const probe = document.createElement('div')

@@ -93,24 +93,24 @@ const SWATCH: Record<HighlightColor, string> = {
 type Item = { action: TableAction; label: string; icon: LucideIcon }
 
 const ROW_ITEMS: Item[] = [
-  { action: 'rowAbove', label: 'Insert row above', icon: BetweenHorizontalStartIcon },
-  { action: 'rowBelow', label: 'Insert row below', icon: BetweenHorizontalEndIcon },
-  { action: 'moveRowUp', label: 'Move row up', icon: ArrowUpIcon },
-  { action: 'moveRowDown', label: 'Move row down', icon: ArrowDownIcon },
-  { action: 'deleteRow', label: 'Delete row', icon: Trash2Icon },
+  { action: 'rowAbove', label: 'Insert Row Above', icon: BetweenHorizontalStartIcon },
+  { action: 'rowBelow', label: 'Insert Row Below', icon: BetweenHorizontalEndIcon },
+  { action: 'moveRowUp', label: 'Move Row Up', icon: ArrowUpIcon },
+  { action: 'moveRowDown', label: 'Move Row Down', icon: ArrowDownIcon },
+  { action: 'deleteRow', label: 'Delete Row', icon: Trash2Icon },
 ]
 
 const COLUMN_ITEMS: Item[] = [
-  { action: 'columnLeft', label: 'Insert column left', icon: BetweenVerticalStartIcon },
-  { action: 'columnRight', label: 'Insert column right', icon: BetweenVerticalEndIcon },
-  { action: 'moveColumnLeft', label: 'Move column left', icon: ArrowLeftIcon },
-  { action: 'moveColumnRight', label: 'Move column right', icon: ArrowRightIcon },
-  { action: 'deleteColumn', label: 'Delete column', icon: Trash2Icon },
+  { action: 'columnLeft', label: 'Insert Column Left', icon: BetweenVerticalStartIcon },
+  { action: 'columnRight', label: 'Insert Column Right', icon: BetweenVerticalEndIcon },
+  { action: 'moveColumnLeft', label: 'Move Column Left', icon: ArrowLeftIcon },
+  { action: 'moveColumnRight', label: 'Move Column Right', icon: ArrowRightIcon },
+  { action: 'deleteColumn', label: 'Delete Column', icon: Trash2Icon },
 ]
 
 const SORT_ITEMS: Item[] = [
-  { action: 'sortAscending', label: 'Sort ascending', icon: ArrowDownAZIcon },
-  { action: 'sortDescending', label: 'Sort descending', icon: ArrowUpZAIcon },
+  { action: 'sortAscending', label: 'Sort Ascending', icon: ArrowDownAZIcon },
+  { action: 'sortDescending', label: 'Sort Descending', icon: ArrowUpZAIcon },
 ]
 
 const ALIGNMENTS: { value: ColumnAlignment; action: TableAction; label: string; icon: LucideIcon }[] = [
@@ -405,7 +405,7 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
           ))}
           <DropdownMenuRadioItem value="" closeOnClick>
             <span aria-hidden="true" className="size-4 shrink-0 rounded-sm border border-foreground/30" />
-            No colour
+            No Colour
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuGroup>
@@ -441,18 +441,18 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
             </DropdownMenuItem>
             <DropdownMenuItem disabled={setWidth === null} onClick={() => later(() => onWidth(menuCell.column, null))}>
               <MoveHorizontalIcon aria-hidden="true" />
-              Fit to content
+              Fit to Content
             </DropdownMenuItem>
             <DropdownMenuItem disabled={!anyWidth} onClick={() => later(() => onWidth(menuCell.column, 'all'))}>
               <Columns3Icon aria-hidden="true" />
-              Fit all columns
+              Fit All Columns
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
         </>
       )}
       <DropdownMenuGroup>
-        <DropdownMenuLabel>Align column</DropdownMenuLabel>
+        <DropdownMenuLabel>Align Column</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={there ? columnAlignment(there) : 'left'}
           onValueChange={(value) => {
@@ -480,20 +480,20 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
             closeOnClick
           >
             <PanelLeftIcon aria-hidden="true" />
-            Header column
+            Header Column
           </DropdownMenuCheckboxItem>
         </>
       )}
       {withColor && there && tableColorEnabled(there, 'column') && (
         <>
           <DropdownMenuSeparator />
-          {colorGroup('column', 'Colour column')}
+          {colorGroup('column', 'Colour Column')}
         </>
       )}
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={() => run('deleteTable')}>
         <Trash2Icon aria-hidden="true" />
-        Delete table
+        Delete Table
       </DropdownMenuItem>
     </>
   )
@@ -540,7 +540,7 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
             <>
               {menuCell && menuCell.row > 0 && (
                 <>
-                  {colorGroup('cell', 'Cell colour')}
+                  {colorGroup('cell', 'Cell Colour')}
                   <DropdownMenuSeparator />
                 </>
               )}
@@ -559,7 +559,7 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
       <DropdownMenu open={open === 'row'} onOpenChange={openMenu('row')}>
         <DropdownMenuTrigger
           tabIndex={-1}
-          aria-label={menuCell ? (menuCell.row === 0 ? 'Header row' : `Row ${menuCell.row}`) : 'Row'}
+          aria-label={menuCell ? (menuCell.row === 0 ? 'Header Row' : `Row ${menuCell.row}`) : 'Row'}
           ref={rowGrip}
           data-slot="rich-text-table-row-grip"
           className={cn(grip, 'h-6 w-3.5 -translate-x-1/2 -translate-y-1/2')}
@@ -571,7 +571,7 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
           {rowColor && (
             <>
               <DropdownMenuSeparator />
-              {colorGroup('row', 'Colour row')}
+              {colorGroup('row', 'Colour Row')}
             </>
           )}
         </DropdownMenuContent>

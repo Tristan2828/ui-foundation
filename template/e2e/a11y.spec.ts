@@ -163,7 +163,7 @@ test.describe('a11y: editing in place on the view', () => {
         await test.step('item open', () => expectNoAxeViolations(page))
         await page.keyboard.press('Escape')
 
-        await checklist.getByRole('button', { name: 'Add item' }).click()
+        await checklist.getByRole('button', { name: 'Add Item' }).click()
         await expect(page.getByRole('textbox', { name: 'Item 3 text' })).toBeFocused()
         await test.step('item being added', () => expectNoAxeViolations(page))
         await page.keyboard.press('Escape')

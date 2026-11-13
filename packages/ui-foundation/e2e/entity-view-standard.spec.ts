@@ -52,7 +52,7 @@ test.describe('EntityView header', () => {
 
   test('Print notes and Delete are icons, each named, with its tooltip', async ({ page }) => {
     await open(page, 'record-standard', 1280)
-    for (const name of ['Print notes', 'Delete']) {
+    for (const name of ['Print Notes', 'Delete']) {
       const button = page.getByRole('button', { name, exact: true })
       await expect(button).toHaveText('')
       const size = await box(button)
@@ -62,7 +62,7 @@ test.describe('EntityView header', () => {
       await page.mouse.move(0, 0)
     }
     // The record's own command stays in words.
-    await expect(page.getByRole('button', { name: 'New order' })).toHaveText('New order')
+    await expect(page.getByRole('button', { name: 'New Order' })).toHaveText('New Order')
   })
 
   test('Delete as a dialog trigger opens its confirm dialog', async ({ page }) => {
@@ -91,7 +91,7 @@ test.describe('EntityView folded empties', () => {
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
       await toggle.click()
       await expect(contact.locator('dt')).toHaveText(['Phone', 'Fax', 'Website', 'Address'])
-      await expect(contact.getByRole('button', { name: 'Hide empty' })).toHaveAttribute('aria-expanded', 'true')
+      await expect(contact.getByRole('button', { name: 'Hide Empty' })).toHaveAttribute('aria-expanded', 'true')
       // The dash, read as "Not set".
       await expect(contact.locator('dd').first()).toHaveText('—Not set')
       expect(await pageScrollsSideways(page)).toBe(false)
@@ -107,7 +107,7 @@ test.describe('EntityView folded empties', () => {
     await page.keyboard.press('Enter')
     await expect(contact.getByText('555-0199')).toBeVisible()
     // Folded again, the filled one stays in the card.
-    await contact.getByRole('button', { name: 'Hide empty' }).click()
+    await contact.getByRole('button', { name: 'Hide Empty' }).click()
     await expect(contact.locator('dt')).toHaveText(['Fax', 'Address'])
     await expect(contact.getByRole('button', { name: '2 empty' })).toBeVisible()
   })
@@ -115,7 +115,7 @@ test.describe('EntityView folded empties', () => {
   test('a value set elsewhere moves its field into the card', async ({ page }) => {
     await open(page, 'record-standard', 1280)
     const contact = region(page, 'Contact')
-    await page.getByRole('button', { name: 'Add the phone' }).click()
+    await page.getByRole('button', { name: 'Add the Phone' }).click()
     await expect(contact.locator('dt')).toHaveText(['Phone', 'Address'])
     await expect(contact.getByRole('button', { name: '2 empty' })).toBeVisible()
   })

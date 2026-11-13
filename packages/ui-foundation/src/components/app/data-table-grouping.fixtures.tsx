@@ -122,7 +122,7 @@ function ChoresTable({ withPanel, quickLook }: { withPanel?: boolean; quickLook?
       ? [
           {
             id: 'quick-look',
-            header: 'Quick look',
+            header: 'Quick Look',
             cell: ({ row }) => (
               <Button
                 size="icon-sm"
@@ -164,7 +164,7 @@ function ChoresTable({ withPanel, quickLook }: { withPanel?: boolean; quickLook?
               All
             </Button>
             <Button size="sm" variant="outline" onClick={() => applyView(VIEWS['by-status'])}>
-              By status
+              By Status
             </Button>
           </div>
         }
@@ -183,7 +183,7 @@ function ChoresTable({ withPanel, quickLook }: { withPanel?: boolean; quickLook?
                   </div>
                   <p className="type-body text-foreground">{chore.notes}</p>
                   <Link to={`/chores/${chore.id}`} className="w-fit type-label text-link underline underline-offset-4">
-                    Open page
+                    Open Page
                   </Link>
                 </div>
               )
@@ -199,7 +199,7 @@ function ChorePage() {
     <div className="p-6">
       <p className="type-body text-foreground">A chore's page</p>
       <Link to="/" className="text-link underline">
-        Back to chores
+        Back to Chores
       </Link>
     </div>
   )

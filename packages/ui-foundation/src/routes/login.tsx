@@ -81,7 +81,7 @@ export function LoginRoute({ registerPath = '/register' }: LoginRouteProps = {})
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-lg">
-            <h1>Sign in</h1>
+            <h1>Sign In</h1>
           </CardTitle>
           {step === 'code' && <CardDescription>Your account has two-step sign-in.</CardDescription>}
         </CardHeader>
@@ -181,12 +181,12 @@ function PasswordStep({
 
       <Button type="submit" disabled={isSubmitting || held}>
         {isSubmitting && <Spinner className="size-4" />}
-        Sign in
+        Sign In
       </Button>
 
       {registerPath !== null && (
         <Button variant="link" size="sm" nativeButton={false} render={<Link to={registerPath} state={location.state} />}>
-          Create account
+          Create Account
         </Button>
       )}
     </form>
@@ -260,7 +260,7 @@ function CodeForm({
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       <FieldGroup>
         <Field data-invalid={invalid}>
-          <FieldLabel htmlFor="login-code">{recovery ? 'Recovery code' : 'Authentication code'}</FieldLabel>
+          <FieldLabel htmlFor="login-code">{recovery ? 'Recovery Code' : 'Authentication Code'}</FieldLabel>
           <Input
             id="login-code"
             autoComplete={recovery ? 'off' : 'one-time-code'}
@@ -288,10 +288,10 @@ function CodeForm({
 
       <div className="flex flex-wrap justify-between gap-2">
         <Button type="button" variant="link" size="sm" onClick={onSwitchMode}>
-          {recovery ? 'Use your authenticator app' : 'Use a recovery code'}
+          {recovery ? 'Use Your Authenticator App' : 'Use a Recovery Code'}
         </Button>
         <Button type="button" variant="link" size="sm" onClick={onStartOver}>
-          Start over
+          Start Over
         </Button>
       </div>
     </form>

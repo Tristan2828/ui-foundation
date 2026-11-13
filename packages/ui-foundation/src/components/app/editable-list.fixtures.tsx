@@ -151,7 +151,7 @@ function FilesRecord() {
           {uploading ? 'Uploading…' : 'Add files'}
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => onProblem('That file is too large (at most 10 MB).')}>
-          Refuse an upload
+          Refuse an Upload
         </Button>
       </div>
     ),
@@ -268,7 +268,7 @@ function GroupedRecord() {
     duplicate: (task) => ({ ...task, done: false }),
     newItem: (room) => ({ text: '', room: room ?? 'Kitchen', done: false }),
     itemName: (index) => `task ${index + 1}`,
-    addLabel: 'Add task',
+    addLabel: 'Add Task',
     renderShown: (task) => <span className={task.done ? 'text-muted-foreground line-through' : undefined}>{task.text}</span>,
     renderItem: roomTaskRow('Task'),
   })
@@ -279,7 +279,7 @@ function GroupedRecord() {
     filter: hideDone ? (task) => !task.done : undefined,
     newItem: () => ({ text: '', room: 'Hallway', done: false }),
     itemName: (index) => `entry ${index + 1}`,
-    addLabel: 'Add entry',
+    addLabel: 'Add Entry',
     renderShown: (task) => (
       <span className={task.done ? 'text-muted-foreground line-through' : undefined}>
         {task.text} <span className="type-caption text-muted-foreground">({task.room})</span>
@@ -294,7 +294,7 @@ function GroupedRecord() {
       content: (
         <div>
           <Button type="button" variant="outline" size="sm" aria-pressed={hideDone} onClick={() => setHideDone((now) => !now)}>
-            Hide done
+            Hide Done
           </Button>
         </div>
       ),
@@ -370,7 +370,7 @@ function FormRowsRecord() {
     save: steps.save,
     newItem: () => ({ text: '', minutes: 10 }),
     itemName: (index) => `step ${index + 1}`,
-    addLabel: 'Add step',
+    addLabel: 'Add Step',
     renderShown: (step) => (
       <span>
         {step.text} <span className="type-caption text-muted-foreground">· {step.minutes} min</span>

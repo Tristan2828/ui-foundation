@@ -324,13 +324,13 @@ function MoveMenu<V extends string>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="icon-xs" aria-label={`Move ${name}`} title="Move to…" data-board-move={id} />}
+        render={<Button variant="ghost" size="icon-xs" aria-label={`Move ${name}`} title="Move To…" data-board-move={id} />}
       >
         <ArrowRightLeftIcon aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Move to</DropdownMenuLabel>
+          <DropdownMenuLabel>Move To</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={value} onValueChange={(next) => onMove(next as V)}>
             {targets.map((target) => (
               // Choosing closes the menu: a move is done, not a setting to

@@ -22,12 +22,12 @@ function OnAForm({ defaultOpen }: { defaultOpen?: 'days' | 'months' }) {
   return (
     <FieldGroup className="max-w-sm">
       <Field>
-        <FieldLabel htmlFor="blooms-from">Blooms from</FieldLabel>
+        <FieldLabel htmlFor="blooms-from">Blooms From</FieldLabel>
         <MonthDayField id="blooms-from" value={from} onChange={setFrom} defaultOpen={defaultOpen === 'days'} />
         <output data-testid="from-value">{from || 'empty'}</output>
       </Field>
       <Field>
-        <FieldLabel htmlFor="blooms-by">Blooms by</FieldLabel>
+        <FieldLabel htmlFor="blooms-by">Blooms By</FieldLabel>
         <MonthDayField
           id="blooms-by"
           value={by}
@@ -70,14 +70,14 @@ function Record() {
         {
           title: 'Each year',
           fields: [
-            { label: 'Blooms from', edit: inPlace.monthDay({ value: plant.from, save: (from) => save({ from }) }) },
+            { label: 'Blooms From', edit: inPlace.monthDay({ value: plant.from, save: (from) => save({ from }) }) },
             {
-              label: 'Blooms by',
+              label: 'Blooms By',
               edit: inPlace.monthDay({ value: plant.by, required: true, format: { month: 'long', day: 'numeric' }, save: (by) => save({ by }) }),
             },
-            { label: 'Checked on', edit: inPlace.monthDay({ value: plant.leap, save: (leap) => save({ leap }) }) },
+            { label: 'Checked On', edit: inPlace.monthDay({ value: plant.leap, save: (leap) => save({ leap }) }) },
             {
-              label: 'Resting season',
+              label: 'Resting Season',
               edit: inPlace.fields({
                 value: { seasonFrom: plant.seasonFrom, seasonBy: plant.seasonBy },
                 fields: {

@@ -1,6 +1,6 @@
 // DataTable's table tools (the list and record page standards: L3, L4, L5,
 // L9, L11, R8) as markup: the views' pills, a view's columns over the
-// menu's, the row actions' column, a capped list and its View all, and the
+// menu's, the row actions' column, a capped list and its View All, and the
 // filters that name themselves. The Columns menu's stored pick, the phone's
 // row list and the bottom sheet need a browser: e2e/data-table-tools.spec.ts.
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
@@ -133,16 +133,16 @@ describe('DataTable row actions (L9)', () => {
 })
 
 describe('a capped list (R8)', () => {
-  it('shows the limit, no pagination, and View all with the total', () => {
+  it('shows the limit, no pagination, and View All with the total', () => {
     const html = render({ data: items, total: 19, limit: 10, viewAll: { to: '/visits?plant=1' } })
     expect(html.match(/<tr/g)).toHaveLength(11)
     expect(html).not.toContain('data-table-pagination')
-    expect(html).toMatch(/<a[^>]*href="\/visits\?plant=1"[^>]*>View all 19<\/a>/)
+    expect(html).toMatch(/<a[^>]*href="\/visits\?plant=1"[^>]*>View All 19<\/a>/)
   })
 
-  it('has no View all when every row shows', () => {
+  it('has no View All when every row shows', () => {
     const html = render({ data: items.slice(0, 3), total: 3, limit: 10, viewAll: { to: '/visits' } })
-    expect(html).not.toContain('View all')
+    expect(html).not.toContain('View All')
   })
 
   it('RelatedTable caps at 10 and its headers are not sort buttons', () => {
@@ -169,9 +169,9 @@ describe('filters that name themselves (L4)', () => {
     { value: 'stopped', label: 'Stopped' },
   ]
 
-  it('FilterSelect says "Any status" while off and "Status: Active" on', () => {
+  it('FilterSelect says "Any Status" while off and "Status: Active" on', () => {
     const off = renderToStaticMarkup(<FilterSelect label="Status" options={options} value="" onValueChange={noop} />)
-    expect(off).toContain('aria-label="Any status"')
+    expect(off).toContain('aria-label="Any Status"')
     const on = renderToStaticMarkup(<FilterSelect label="Status" options={options} value="active" onValueChange={noop} />)
     expect(on).toContain('aria-label="Status: Active"')
     expect(on).toContain('Status: Active')
@@ -198,7 +198,7 @@ describe('filters that name themselves (L4)', () => {
     )
     expect(html).toContain('aria-label="Search"')
     expect(html).toContain('placeholder="Search by name"')
-    expect(html).toContain('aria-label="Any status"')
+    expect(html).toContain('aria-label="Any Status"')
     expect(html).toContain('Kind: Active')
   })
 })

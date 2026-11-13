@@ -113,7 +113,7 @@ describe('DataTable groupings', () => {
     expect(html).not.toContain('table-group')
   })
 
-  it('None is the default: a menu, every column, no headings, no Fold all', () => {
+  it('None is the default: a menu, every column, no headings, no Fold All', () => {
     const html = render({ groupings })
     expect(html).toContain('data-slot="data-table-group-menu"')
     expect(html).toMatch(/data-table-group-menu[^>]*>.*?Group<\/button>/)
@@ -136,7 +136,7 @@ describe('DataTable groupings', () => {
     expect(html).toContain('>Area<')
     expect(html).toMatch(/data-table-group-menu[^>]*>.*?Group: Status<\/button>/)
     expect(html).toContain('data-slot="data-table-fold-all"')
-    expect(html).toContain('>Fold all<')
+    expect(html).toContain('>Fold All<')
   })
 
   it('shows a multi-value row under each of its values, and one with none last', () => {

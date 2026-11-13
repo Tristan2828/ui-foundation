@@ -78,7 +78,7 @@ test('date: typed (Enter saves), or picked from the calendar on its button (a pi
   await box.press('Enter')
   await expect(row(page, 'Due')).toContainText('Sep 5, 2026')
   await page.getByRole('button', { name: 'Edit Due' }).click()
-  await row(page, 'Due').getByRole('button', { name: 'Open calendar' }).click()
+  await row(page, 'Due').getByRole('button', { name: 'Open Calendar' }).click()
   const calendar = page.locator('[data-slot="date-field-calendar"]')
   await expect(calendar).toBeVisible()
   await calendar.getByRole('button', { name: /September 9th, 2026/ }).click()
@@ -112,9 +112,9 @@ test('reference: typing searches through the app, a pick saves and reads as its 
 
 test('fields as one: the rule across them shows on the pair, and nothing is sent until they agree', async ({ page }) => {
   await open(page, 'fields-as-one')
-  const pair = row(page, 'Model and effort')
+  const pair = row(page, 'Model and Effort')
   await expect(pair).toContainText('Small · Low')
-  await page.getByRole('button', { name: 'Edit Model and effort' }).click()
+  await page.getByRole('button', { name: 'Edit Model and Effort' }).click()
   await expect(page.getByRole('combobox', { name: 'Model' })).toBeFocused()
   await page.getByRole('combobox', { name: 'Effort' }).click()
   await page.getByRole('option', { name: 'Max' }).click()
@@ -132,8 +132,8 @@ test('fields as one: the rule across them shows on the pair, and nothing is sent
 
 test('fields as one: a server refusal of one part shows on that part, not under the pair', async ({ page }) => {
   await open(page, 'fields-as-one')
-  const pair = row(page, 'Model and effort')
-  await page.getByRole('button', { name: 'Edit Model and effort' }).click()
+  const pair = row(page, 'Model and Effort')
+  await page.getByRole('button', { name: 'Edit Model and Effort' }).click()
   await page.getByRole('combobox', { name: 'Model' }).click()
   await page.getByRole('option', { name: 'Legacy' }).click()
   await page.keyboard.press('Control+Enter')
@@ -146,9 +146,9 @@ test('fields as one: a server refusal of one part shows on that part, not under 
 
 test('fields as one, typed into: Enter saves both, a part’s own check shows on that part', async ({ page }) => {
   await open(page, 'fields-as-one')
-  const pair = row(page, 'Hours and budget')
+  const pair = row(page, 'Hours and Budget')
   await expect(pair).toContainText('12 · $1,234.56')
-  await page.getByRole('button', { name: 'Edit Hours and budget' }).click()
+  await page.getByRole('button', { name: 'Edit Hours and Budget' }).click()
   const hours = page.getByRole('textbox', { name: 'Hours' })
   const budget = page.getByRole('textbox', { name: 'Budget' })
   await budget.fill('abc')
@@ -217,10 +217,10 @@ for (const theme of ['light', 'dark'] as const) {
     await page.keyboard.press('Escape')
 
     await open(page, 'fields-as-one', theme)
-    await page.getByRole('button', { name: 'Edit Hours and budget' }).click()
+    await page.getByRole('button', { name: 'Edit Hours and Budget' }).click()
     await page.getByRole('textbox', { name: 'Budget' }).fill('abc')
     await page.keyboard.press('Enter')
-    await expect(row(page, 'Hours and budget').locator('[data-part="budget"] [data-slot="field-error"]')).toBeVisible()
+    await expect(row(page, 'Hours and Budget').locator('[data-part="budget"] [data-slot="field-error"]')).toBeVisible()
     expect((await axe(page)).violations).toEqual([])
 
     await open(page, 'links', theme)

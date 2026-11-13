@@ -316,7 +316,7 @@ function DiscardChangesDialog({
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
-              Keep editing
+              Keep Editing
             </DialogClose>
             <Button variant="destructive" onClick={onDiscard}>
               Discard

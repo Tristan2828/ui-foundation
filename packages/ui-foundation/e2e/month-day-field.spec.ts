@@ -14,7 +14,7 @@ test.use({ locale: 'en-US' })
 
 test('shows the saved day and saves the day picked, as MM-DD', async ({ page }) => {
   await page.goto(story('default'))
-  const from = page.getByRole('button', { name: 'Blooms from', exact: true })
+  const from = page.getByRole('button', { name: 'Blooms From', exact: true })
   await expect(from).toHaveText('Mar 14')
   await from.click()
   // It opens on the chosen day's month, the chosen day focused and pressed.
@@ -29,25 +29,25 @@ test('shows the saved day and saves the day picked, as MM-DD', async ({ page }) 
 
 test('February offers its 29th and nothing past it; April stops at 30', async ({ page }) => {
   await page.goto(story('default'))
-  await page.getByRole('button', { name: 'Blooms from', exact: true }).click()
+  await page.getByRole('button', { name: 'Blooms From', exact: true }).click()
   await picker(page).getByRole('button', { name: 'March, pick another month', exact: true }).click()
   await picker(page).getByRole('button', { name: 'February', exact: true }).click()
   const days = picker(page).getByRole('group', { name: 'February', exact: true }).getByRole('button')
   await expect(days).toHaveCount(29)
   await expect(picker(page).getByRole('button', { name: 'February 30', exact: true })).toHaveCount(0)
-  await picker(page).getByRole('button', { name: 'Next month', exact: true }).click()
-  await picker(page).getByRole('button', { name: 'Next month', exact: true }).click()
+  await picker(page).getByRole('button', { name: 'Next Month', exact: true }).click()
+  await picker(page).getByRole('button', { name: 'Next Month', exact: true }).click()
   await expect(picker(page).getByRole('group', { name: 'April', exact: true }).getByRole('button')).toHaveCount(30)
-  await picker(page).getByRole('button', { name: 'Previous month', exact: true }).click()
-  await picker(page).getByRole('button', { name: 'Previous month', exact: true }).click()
+  await picker(page).getByRole('button', { name: 'Previous Month', exact: true }).click()
+  await picker(page).getByRole('button', { name: 'Previous Month', exact: true }).click()
   await picker(page).getByRole('button', { name: 'February 29', exact: true }).click()
   await expect(page.getByTestId('from-value')).toHaveText('02-29')
-  await expect(page.getByRole('button', { name: 'Blooms from', exact: true })).toHaveText('Feb 29')
+  await expect(page.getByRole('button', { name: 'Blooms From', exact: true })).toHaveText('Feb 29')
 })
 
 test('the keyboard: arrows move, Page Down changes month and keeps the day in it, Enter picks', async ({ page }) => {
   await page.goto(story('default'))
-  await page.getByRole('button', { name: 'Blooms from', exact: true }).focus()
+  await page.getByRole('button', { name: 'Blooms From', exact: true }).focus()
   await page.keyboard.press('Enter')
   await expect(picker(page).getByRole('button', { name: 'March 14', exact: true })).toBeFocused()
   await page.keyboard.press('ArrowDown')
@@ -66,7 +66,7 @@ test('the keyboard: arrows move, Page Down changes month and keeps the day in it
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('from-value')).toHaveText('02-01')
   // Opening again starts on the day picked.
-  await expect(page.getByRole('button', { name: 'Blooms from', exact: true })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'Blooms From', exact: true })).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(picker(page).getByRole('button', { name: 'February 1', exact: true })).toBeFocused()
   await page.keyboard.press('Escape')
@@ -76,7 +76,7 @@ test('the keyboard: arrows move, Page Down changes month and keeps the day in it
 
 test('an empty field opens on the months, which the keyboard moves through too', async ({ page }) => {
   await page.goto(story('default'))
-  const by = page.getByRole('button', { name: 'Blooms by', exact: true })
+  const by = page.getByRole('button', { name: 'Blooms By', exact: true })
   await expect(by).toHaveText('No end day')
   await by.click()
   const months = picker(page).getByRole('group', { name: 'Month', exact: true })
@@ -114,7 +114,7 @@ test('a stored value that is not a day shows as written, refused, and a pick rep
 test('on a phone: the picker fits the screen and every day is a finger-sized target', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 })
   await page.goto(story('default'))
-  await page.getByRole('button', { name: 'Blooms from', exact: true }).click()
+  await page.getByRole('button', { name: 'Blooms From', exact: true }).click()
   // Measured once the popup's opening animation has run (it grows in from smaller).
   await expect(picker(page)).toBeVisible()
   await picker(page).evaluate((element) => Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)))
@@ -122,7 +122,7 @@ test('on a phone: the picker fits the screen and every day is a finger-sized tar
   expect(box).not.toBeNull()
   expect(box!.x).toBeGreaterThanOrEqual(0)
   expect(box!.x + box!.width).toBeLessThanOrEqual(320)
-  for (const name of ['March 1', 'March 31', 'Next month']) {
+  for (const name of ['March 1', 'March 31', 'Next Month']) {
     const target = await picker(page).getByRole('button', { name, exact: true }).boundingBox()
     expect(target!.width, name).toBeGreaterThanOrEqual(36)
     expect(target!.height, name).toBeGreaterThanOrEqual(36)
@@ -133,49 +133,49 @@ test('on a phone: the picker fits the screen and every day is a finger-sized tar
 
 test('in place: the picker opens with the field, a pick saves, Esc gives up, Clear unsets', async ({ page }) => {
   await page.goto(story('edit-in-place'))
-  await expect(row(page, 'Blooms from')).toContainText('Apr 1')
-  await expect(row(page, 'Blooms by')).toContainText('May 15')
-  await expect(row(page, 'Checked on')).toContainText('Feb 29')
+  await expect(row(page, 'Blooms From')).toContainText('Apr 1')
+  await expect(row(page, 'Blooms By')).toContainText('May 15')
+  await expect(row(page, 'Checked On')).toContainText('Feb 29')
 
-  await page.getByRole('button', { name: 'Edit Blooms from', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit Blooms From', exact: true }).click()
   await expect(picker(page).getByRole('button', { name: 'April 1', exact: true })).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(picker(page)).toHaveCount(0)
-  await expect(row(page, 'Blooms from')).toContainText('Apr 1')
+  await expect(row(page, 'Blooms From')).toContainText('Apr 1')
 
-  await page.getByRole('button', { name: 'Edit Blooms from', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit Blooms From', exact: true }).click()
   await picker(page).getByRole('button', { name: 'April 10', exact: true }).click()
-  await expect(row(page, 'Blooms from')).toContainText('Apr 10', { timeout: 5000 })
+  await expect(row(page, 'Blooms From')).toContainText('Apr 10', { timeout: 5000 })
 
   // Choosing another month doesn't save: only a day does.
-  await page.getByRole('button', { name: 'Edit Blooms from', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit Blooms From', exact: true }).click()
   await picker(page).getByRole('button', { name: 'April, pick another month', exact: true }).click()
   await picker(page).getByRole('button', { name: 'June', exact: true }).click()
   await expect(picker(page).getByRole('group', { name: 'June', exact: true })).toBeVisible()
   await picker(page).getByRole('button', { name: 'June 5', exact: true }).click()
-  await expect(row(page, 'Blooms from')).toContainText('Jun 5', { timeout: 5000 })
+  await expect(row(page, 'Blooms From')).toContainText('Jun 5', { timeout: 5000 })
 
-  await page.getByRole('button', { name: 'Edit Blooms from', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit Blooms From', exact: true }).click()
   await picker(page).getByRole('button', { name: 'Clear', exact: true }).click()
-  await expect(row(page, 'Blooms from')).toContainText('Not set', { timeout: 5000 })
+  await expect(row(page, 'Blooms From')).toContainText('Not set', { timeout: 5000 })
 
   // A required one offers no Clear, and reads in its own format.
-  await expect(row(page, 'Blooms by')).toContainText('May 15')
-  await page.getByRole('button', { name: 'Edit Blooms by', exact: true }).click()
+  await expect(row(page, 'Blooms By')).toContainText('May 15')
+  await page.getByRole('button', { name: 'Edit Blooms By', exact: true }).click()
   await expect(picker(page).getByRole('button', { name: 'May 15', exact: true })).toBeFocused()
   await expect(picker(page).getByRole('button', { name: 'Clear', exact: true })).toHaveCount(0)
 })
 
 test('in place as a pair: each part picks its own day, saved together', async ({ page }) => {
   await page.goto(story('edit-in-place'))
-  await expect(row(page, 'Resting season')).toContainText('Nov 1 · Feb 28')
-  await page.getByRole('button', { name: 'Edit Resting season', exact: true }).click()
+  await expect(row(page, 'Resting Season')).toContainText('Nov 1 · Feb 28')
+  await page.getByRole('button', { name: 'Edit Resting Season', exact: true }).click()
   await page.getByRole('button', { name: 'By', exact: true }).click()
   await picker(page).getByRole('button', { name: 'February 29', exact: true }).click()
   await expect(page.getByRole('button', { name: 'By', exact: true })).toHaveText('Feb 29')
   await page.getByRole('button', { name: 'By', exact: true }).focus()
   await page.keyboard.press('Control+Enter')
-  await expect(row(page, 'Resting season')).toContainText('Nov 1 · Feb 29', { timeout: 5000 })
+  await expect(row(page, 'Resting Season')).toContainText('Nov 1 · Feb 29', { timeout: 5000 })
 })
 
 for (const theme of ['light', 'dark'] as const) {

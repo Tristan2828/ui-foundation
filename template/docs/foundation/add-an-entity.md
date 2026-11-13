@@ -15,17 +15,17 @@
   - Step 8: Add Playwright specs for all three screens · lines 752–830
   - Step 9: Register the nav entry and route names · lines 831–845
   - Step 10: `npm run verify`. · lines 846–848
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 850–1178
-  - [The record view](#the-record-view) · lines 999–1047
-  - [Forms](#forms) · lines 1049–1101
-  - [Dialogs](#dialogs) · lines 1103–1128
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1130–1178
-- [What not to copy](#what-not-to-copy) · lines 1180–1206
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1208–1225
-- [Deleting](#deleting) · lines 1227–1258
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1260–1281
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1283–1292
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1295–1337
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 850–1190
+  - [The record view](#the-record-view) · lines 1003–1054
+  - [Forms](#forms) · lines 1056–1110
+  - [Dialogs](#dialogs) · lines 1112–1140
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1142–1190
+- [What not to copy](#what-not-to-copy) · lines 1192–1218
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1220–1237
+- [Deleting](#deleting) · lines 1239–1270
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1272–1293
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1295–1304
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1307–1349
 
 <!-- /index -->
 
@@ -583,7 +583,7 @@ is a filled-in example while the Widgets demo is still here).
      of its own; a removed page (soft-deleted) shows "Page removed" and,
      with `onRestore` (the app's undelete, returning its promise),
      Restore. Give the editor `onCreatePage={(title) => createPage(title).then((page) => pagePath(page))}`
-     too: "/page" (and Turn into page on selected words) asks for a
+     too: "/page" (and Turn Into Page on selected words) asks for a
      title, awaits the new page's address and puts in the link; a
      rejection shows in the title box in the gateway's words and leaves
      the text as it was. The page's own screen puts `PageTrail` above its
@@ -594,7 +594,7 @@ is a filled-in example while the Widgets demo is still here).
      (under the record, or under the page whose note it's in).
    - **Notes worth taking on paper** (a visit's prep and questions, a
      guide, a checklist to tick by hand): mark each of those sections
-     `print: true`. The header gets a Print notes icon (`printLabel`
+     `print: true`. The header gets a Print Notes icon (`printLabel`
      renames its tooltip and name) that prints the marked sections alone, under the title
      and subtitle: no rail, no shell, no buttons, light paper in either
      theme, headings and bullets as written, nothing folded, tables
@@ -760,7 +760,7 @@ is a filled-in example while the Widgets demo is still here).
    start), and load once more if the server refused one of its files,
    so a spec's first expect never meets an empty page. The view's states are
    loading, not found (a 404: "Not found", the way back, no retry), error
-   (a failed load, then Try again recovering) and success (every section,
+   (a failed load, then Try Again recovering) and success (every section,
    each value as its cell shows it), plus the sparse record showing its
    "not set" labels and no blank value. Its flows: the table's title link
    opens it, saving and cancelling the form return to it, creating opens
@@ -858,11 +858,15 @@ picks one per list (`docs/entities/<entity>.md` "List screen"):
 
 | `opens.kind` | The record opens | Use it for |
 | --- | --- | --- |
-| `dialog` | in a dialog over the list, with Open full page; the record also has its page | most records |
+| `dialog` | in a dialog over the list, with Open Full Page; the record also has its page | most records |
 | `dialog-only` | in a dialog over the list, and has no page of its own | a small record with no notes, where a page would only repeat the dialog |
 | `page` | on its own page, `/<entity>/:id` | a record too big for a dialog: a drawing, an ordered sub-list, long writing |
 | `panel` | in the panel beside the list (`detailPanel`) | reading records one after another |
 | `rows` | nowhere: every value is edited in its row (cell pattern 18) | a record of a field or two |
+
+A list's title, column headers, menus, view pills and buttons are Title
+Case ("Rows per Page", "Show Deleted", "View All"); its empty state and
+messages are sentences ("No books yet") ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
 
 Whichever it is, the record edits in place (cell pattern 18, EntityView's
 `edit`) rather than through an Edit button and a form page, wherever the
@@ -981,13 +985,13 @@ const created = useNewRecordDialog()
   back to the list's entry (over every record opened inside the dialog,
   a linked one included). Focus goes back to the row, on its own link
   when it has one, or the link that opened it.
-- **Open full page**, in the dialog's bar (not with `fullPage={false}`),
+- **Open Full Page**, in the dialog's bar (not with `fullPage={false}`),
   swaps the entry for the same address as the full page; Back from there
   is the list.
 - **The view is unchanged.** `EntityView` sees the dialog: its title
   names the dialog (`label` names it while loading or on an error), the
   back link gives way to the dialog's bar, and not found's "Back to …"
-  closes the dialog. Loading, error with Try again, and the plain 404
+  closes the dialog. Loading, error with Try Again, and the plain 404
   show inside it. A screen that isn't an `EntityView` can read
   `useRecordDialog()` (null on the full page) for its `close`, as a
   Delete should, rather than navigating to the list:
@@ -1000,7 +1004,10 @@ const created = useNewRecordDialog()
 
 Every record a list opens is an `EntityView`, the same one in a dialog
 and on its page, and every one has the same shape, so a change to the
-view reaches them all. A record uses the parts it has, in this order:
+view reaches them all. Its field labels, tab names and buttons are Title
+Case ("Print Notes", "Hide Empty"); an empty value's words and its
+messages are sentences ("Not set") ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
+A record uses the parts it has, in this order:
 
 - **Header**: the title, edited in place (`titleEdit`); under it a
   one-line summary field, edited in place (`subtitle`: a goal, a
@@ -1017,7 +1024,7 @@ view reaches them all. A record uses the parts it has, in this order:
   `mobileOrder="main-first"`: the label/value facts in the rail, the long
   text in the main column, folded by its toggle headings (`foldKey`;
   `## Safety {toggle="true"}`, the only headings that fold) with an
-  Outline for a long one and Print notes (`print`). Without long text,
+  Outline for a long one and Print Notes (`print`). Without long text,
   one column. Every value edited in place (`edit`), a sub-item list
   included (`editInPlace({ kind: 'list' })`).
 - **Tabs** (4.76), for a main column with **three or more groups of
@@ -1067,8 +1074,10 @@ shape (4.85):
 - **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
   on the control it names). Nothing on an optional field: never
   "(optional)".
-- **Labels** above the box, sentence case ("My rating"). Help text
-  (`FieldDescription`) only where the label can't say it, one short line.
+- **Labels** above the box, in Title Case ("My Rating"), and the form's
+  title, section titles and buttons too ("Save Changes"); help text,
+  placeholders and messages stay sentence case ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
+  Help text (`FieldDescription`) only where the label can't say it, one short line.
   A placeholder only for a format the box needs (`https://`), never an
   example that looks like a value.
 - **Messages say what to do**, in the app's voice: "Give it a title",
@@ -1082,7 +1091,7 @@ shape (4.85):
   `ReferenceCombobox` (`inPlace.reference` in place), several are
   `MultiReference`, and a set the app loads whole (tags, a few dozen
   records from its list query) is `MultiPick`, whose chips wrap and which
-  shows 30 before "Show all". Where a missing record stops the form, give
+  shows 30 before "Show All". Where a missing record stops the form, give
   the reference `onCreate(name)`: open the other entity's `FormDialog`
   with the name filled in, and resolve with the record it saves (or
   `null` on Cancel).
@@ -1095,7 +1104,7 @@ shape (4.85):
   `isSubmitting` (the save's own move to the record) doesn't. With
   `errors`, a refused Add moves to the first problem and the bar says
   "2 to fix". Both come free; the form draws a failed save as a `Notice`
-  with Try again in its bar, which sticks to the window's bottom on a long
+  with Try Again in its bar, which sticks to the window's bottom on a long
   form.
 - **The words:** "New book", "Add book" (the word Add on every create
   form), and the toast after it "Added The Long Walk".
@@ -1110,6 +1119,9 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
 | `form` | 640px | the whole screen, the title and buttons pinned | a small form (`FormDialog`, which is this size) |
 | `record` | 1,120px | full width, the rail under the main column | a record over its list (`RecordDialogRoute`, which is this size) |
 
+- **A dialog's title and buttons are Title Case** ("New Book", "Keep
+  Editing"); a question or a message in it is a sentence ("Discard your
+  changes?") ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
 - **Never a width of its own** (`sm:max-w-…` on `DialogContent`). A
   confirm's buttons go in `DialogFooter`, Cancel first, so the phone's
   sheet stacks the action on top.
@@ -1121,7 +1133,7 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
   its own, for any other way of leaving with something unsaved.
 - **A form in a dialog is a `FormDialog`**: the title, the fields
   scrolling between it and the pinned Cancel and Add, a failed save as a
-  destructive `Notice` above the buttons with Try again, and `dirty`.
+  destructive `Notice` above the buttons with Try Again, and `dirty`.
   Opened from a page with `open`/`onOpenChange`; as a list's `new` route
   with neither (above).
 - **Always a dialog, never a side panel**, except a phone's filters
@@ -1138,7 +1150,7 @@ sight.** What happened where the person is looking says so there.
 | A delete (soft: with Undo) | `DeleteAction`'s toast, "Deleted The Long Walk" |
 | A record made, landing on its own page | a toast, "Added The Long Walk" |
 | An edit in place, a quick action, a toggle | the value itself and its "Saved" (cell pattern 18). **Never a toast** |
-| An action that failed, its button still there | `ActionError` beside the button: the reason and Try again |
+| An action that failed, its button still there | `ActionError` beside the button: the reason and Try Again |
 | An action that failed after its page was left | a toast that stays until it's closed (`useAction` does this) |
 | A job that takes a while | `JobStatus` beside its button: "Checking 3 of 12…", then the result stays |
 | A job that finished after its page was left | a toast (`useAction`'s `doneAway`) |
@@ -1160,7 +1172,7 @@ sight.** What happened where the person is looking says so there.
   and `onDelete={(why) => remove({ id, reason: why })}`, `why` trimmed
   and `''` when nothing's typed. The rest is the same confirm: 420px, a
   bottom sheet on a phone, Cancel then the filled destructive button, a
-  refusal in the dialog with Try again (sending the same words), and
+  refusal in the dialog with Try Again (sending the same words), and
   closing with something typed asks "Discard your changes?" first. One
   field only: a confirm that needs more is a `FormDialog`.
 - **A toast's words come from `notify.done(verb, name, { undo })`**: the

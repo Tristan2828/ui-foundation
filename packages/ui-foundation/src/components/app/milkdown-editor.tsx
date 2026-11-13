@@ -1560,14 +1560,14 @@ function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => v
     <PopoverContent
       anchor={box.anchor}
       align="start"
-      aria-label={box.href ? 'Edit link' : 'Add link'}
+      aria-label={box.href ? 'Edit Link' : 'Add Link'}
       initialFocus={inputRef}
       finalFocus={false}
       className="w-80"
       onKeyDown={onKeyDown}
     >
       <Field data-invalid={error ? true : undefined}>
-        <FieldLabel htmlFor={inputId}>Link address</FieldLabel>
+        <FieldLabel htmlFor={inputId}>Link Address</FieldLabel>
         <Input
           ref={inputRef}
           id={inputId}
@@ -1589,7 +1589,7 @@ function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => v
         </Button>
         {box.href && (
           <Button size="sm" variant="outline" onClick={() => onApply('')}>
-            Remove link
+            Remove Link
           </Button>
         )}
       </div>
@@ -1636,7 +1636,7 @@ function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCrea
     <PopoverContent
       anchor={box.anchor}
       align="start"
-      aria-label="New page"
+      aria-label="New Page"
       initialFocus={inputRef}
       finalFocus={false}
       className="w-80"
@@ -1645,7 +1645,7 @@ function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCrea
       onKeyDown={onKeyDown}
     >
       <Field data-invalid={error ? true : undefined}>
-        <FieldLabel htmlFor={inputId}>Page title</FieldLabel>
+        <FieldLabel htmlFor={inputId}>Page Title</FieldLabel>
         <Input
           ref={inputRef}
           id={inputId}
@@ -1663,7 +1663,7 @@ function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCrea
       </Field>
       <div className="flex gap-2">
         <Button size="sm" onClick={create} disabled={busy}>
-          {busy ? 'Creating…' : 'Create page'}
+          {busy ? 'Creating…' : 'Create Page'}
         </Button>
       </div>
     </PopoverContent>

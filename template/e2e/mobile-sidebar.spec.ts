@@ -8,7 +8,7 @@ import { expect, test } from '@tristan2828/ui-foundation/testing'
 test.describe('mobile sidebar sheet', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('button', { name: 'Get started' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Get Started' })).toBeVisible()
   })
 
   const openSheet = async (page: Page) => {

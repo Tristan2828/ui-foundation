@@ -39,7 +39,7 @@ test.describe('highlight', () => {
     await page.getByRole('menuitemradio', { name: 'Amber' }).click()
     await expect(saved(page, 'formats')).toContainText('==Format== me here.')
     await button(page, 'Highlight', field(page, 'formats')).first().click()
-    await page.getByRole('menuitem', { name: 'Remove highlight' }).click()
+    await page.getByRole('menuitem', { name: 'Remove Highlight' }).click()
     await expect(editor(page, 'formats').locator('mark')).toHaveCount(0)
     await expect(saved(page, 'formats')).toContainText('Format me here.')
   })
@@ -84,7 +84,7 @@ test.describe('full screen', () => {
     await page.setViewportSize({ width: 1000, height: 700 })
     await page.goto(FEATURES)
     const box = field(page, 'formats')
-    await button(page, 'Full screen', box).click()
+    await button(page, 'Full Screen', box).click()
     await expect(box).toHaveAttribute('data-full-screen', 'true')
     expect(await box.boundingBox()).toMatchObject({ x: 0, y: 0, width: 1000, height: 700 })
     await expect(editor(page, 'formats')).toBeFocused()
@@ -98,10 +98,10 @@ test.describe('full screen', () => {
   test('the button leaves it too, and Esc from the toolbar', async ({ page }) => {
     await page.goto(FEATURES)
     const box = field(page, 'formats')
-    await button(page, 'Full screen', box).click()
-    await button(page, 'Full screen', box).click()
+    await button(page, 'Full Screen', box).click()
+    await button(page, 'Full Screen', box).click()
     await expect(box).not.toHaveAttribute('data-full-screen')
-    await button(page, 'Full screen', box).click()
+    await button(page, 'Full Screen', box).click()
     await button(page, 'Bold', box).focus()
     // The first Esc may close the button's tooltip, which has it first.
     await page.keyboard.press('Escape')
@@ -112,7 +112,7 @@ test.describe('full screen', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`zero axe violations (${theme})`, async ({ page }) => {
       await page.goto(`${DEFAULT}&theme=${theme}`)
-      await button(page, 'Full screen').click()
+      await button(page, 'Full Screen').click()
       const results = await new AxeBuilder({ page }).disableRules(AXE_RULES).analyze()
       expect(results.violations).toEqual([])
     })
@@ -172,7 +172,7 @@ test.describe('a new task item', () => {
     await page.waitForTimeout(100)
     await page.keyboard.press('ControlOrMeta+End')
     await page.keyboard.press('Enter')
-    await button(page, 'Task list', field(page, 'formats')).click()
+    await button(page, 'Task List', field(page, 'formats')).click()
     await expect(editor(page, 'formats').locator('p[data-placeholder="To-do"]')).toBeVisible()
   })
 })
@@ -198,7 +198,7 @@ test.describe('typing a task list', () => {
     await page.keyboard.type('After the list.')
     await expect(saved(page, 'formats')).toContainText('Third line.\n\n- [ ] Milk\n- [ ] Eggs\n\nAfter the list.\n')
     await expect(editor(page, 'formats').getByRole('checkbox', { name: 'Done' })).toHaveCount(2)
-    await expect(button(page, 'Task list', field(page, 'formats'))).toHaveAttribute('aria-pressed', 'false')
+    await expect(button(page, 'Task List', field(page, 'formats'))).toHaveAttribute('aria-pressed', 'false')
   })
 
   test('`[x] ` starts a ticked one, and `[] ` in a bulleted item makes it a task', async ({ page }) => {

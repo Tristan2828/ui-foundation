@@ -41,7 +41,7 @@ test.describe('ImageField', () => {
   test('an empty field uploads a picked photo: busy, then the thumbnail, and the form saves its id', async ({ page }) => {
     await page.goto(story('app-imagefield--default'))
     const plant = form(page, 'new-plant')
-    const add = plant.getByRole('button', { name: 'Add photo', exact: true })
+    const add = plant.getByRole('button', { name: 'Add Photo', exact: true })
     await expect(add).toBeVisible()
     await expect(plant.getByRole('group', { name: 'Photo' })).toBeVisible()
 
@@ -54,7 +54,7 @@ test.describe('ImageField', () => {
     await expect(plant.getByTestId('new-plant-busy')).toHaveText('yes')
     await expect(plant.getByRole('status').filter({ hasText: 'Uploading photo…' })).toBeAttached()
 
-    const replace = plant.getByRole('button', { name: 'Replace photo' })
+    const replace = plant.getByRole('button', { name: 'Replace Photo' })
     await expect(replace).toBeEnabled()
     await expect(replace).toBeFocused()
     await expect(plant.getByRole('img', { name: 'Current photo' })).toHaveAttribute('src', /^blob:/)
@@ -70,7 +70,7 @@ test.describe('ImageField', () => {
     const plant = form(page, 'edit-plant')
     await expect(plant.getByRole('img', { name: 'Current photo' })).toHaveAttribute('src', '/sample-photo.svg')
     await plant.getByRole('button', { name: 'Remove photo' }).click()
-    const add = plant.getByRole('button', { name: 'Add photo', exact: true })
+    const add = plant.getByRole('button', { name: 'Add Photo', exact: true })
     await expect(add).toBeFocused()
     await expect(plant.getByRole('img', { name: 'Current photo' })).toHaveCount(0)
     await plant.getByRole('button', { name: 'Save' }).click()
@@ -82,7 +82,7 @@ test.describe('ImageField', () => {
     const plant = form(page, 'edit-plant')
     await plant.getByLabel('Name').focus()
     await page.keyboard.press('Tab')
-    await expect(plant.getByRole('button', { name: 'Replace photo' })).toBeFocused()
+    await expect(plant.getByRole('button', { name: 'Replace Photo' })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(plant.getByRole('button', { name: 'Remove photo' })).toBeFocused()
     await page.keyboard.press('Shift+Tab')
@@ -94,7 +94,7 @@ test.describe('ImageField', () => {
   test("a failed upload says why under the field and keeps the value", async ({ page }) => {
     await page.goto(story('app-imagefield--refusals'))
     const plant = form(page, 'upload-fails')
-    const add = plant.getByRole('button', { name: 'Add photo', exact: true })
+    const add = plant.getByRole('button', { name: 'Add Photo', exact: true })
     await pick(page, add, png('cactus.png'))
     const reason = plant.getByRole('alert').filter({ hasText: 'Storage is full. Free some space and try again.' })
     await expect(reason).toBeVisible()
@@ -109,7 +109,7 @@ test.describe('ImageField', () => {
   test('a file over the size limit, or of another type, is refused before it is sent', async ({ page }) => {
     await page.goto(story('app-imagefield--refusals'))
     const plant = form(page, 'size-limit')
-    const add = plant.getByRole('button', { name: 'Add photo', exact: true })
+    const add = plant.getByRole('button', { name: 'Add Photo', exact: true })
 
     await pick(page, add, png('huge.png', 3 * 1024 * 1024))
     await expect(plant.getByRole('alert')).toHaveText('That image is 3 MB. The limit is 1 MB.')
@@ -123,7 +123,7 @@ test.describe('ImageField', () => {
     // A file it takes clears the reason.
     await pick(page, add, png('small.png'))
     await expect(plant.getByRole('alert')).toHaveCount(0)
-    await expect(plant.getByRole('button', { name: 'Replace photo' })).toBeVisible()
+    await expect(plant.getByRole('button', { name: 'Replace Photo' })).toBeVisible()
   })
 
   test("the picker offers only the field's types", async ({ page }) => {
@@ -141,7 +141,7 @@ test.describe('ImageField', () => {
 
       await page.goto(story('app-imagefield--refusals', theme))
       const fails = form(page, 'upload-fails')
-      await pick(page, fails.getByRole('button', { name: 'Add photo', exact: true }), png('a.png'))
+      await pick(page, fails.getByRole('button', { name: 'Add Photo', exact: true }), png('a.png'))
       await expect(fails.getByRole('button', { name: 'Uploading photo…' })).toBeVisible()
       expect((await axe(page)).violations).toEqual([])
       await expect(fails.getByRole('alert')).toBeVisible()

@@ -5,15 +5,15 @@ const story = (id: string) => `http://localhost:6180/story.html?id=app-emojifiel
 
 test('picks an emoji and shows it', async ({ page }) => {
   await page.goto(story('default'))
-  await page.getByRole('button', { name: 'List emoji' }).click()
+  await page.getByRole('button', { name: 'List Emoji' }).click()
   await page.getByRole('button', { name: 'Alarm clock' }).click()
   await expect(page.getByTestId('empty-value')).toHaveText('⏰')
-  await expect(page.getByRole('button', { name: 'List emoji' })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'List Emoji' })).toBeFocused()
 })
 
 test('search narrows by name and keyword, and says when nothing matches', async ({ page }) => {
   await page.goto(story('default'))
-  await page.getByRole('button', { name: 'List emoji' }).click()
+  await page.getByRole('button', { name: 'List Emoji' }).click()
   await page.getByRole('searchbox', { name: 'Search emoji' }).fill('coffee')
   await expect(page.getByRole('button', { name: 'Hot beverage' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Alarm clock' })).toHaveCount(0)
@@ -23,7 +23,7 @@ test('search narrows by name and keyword, and says when nothing matches', async 
 
 test('the keyboard picks, and Clear empties a clearable field', async ({ page }) => {
   await page.goto(story('default'))
-  const chosen = page.getByRole('button', { name: 'Routine emoji' })
+  const chosen = page.getByRole('button', { name: 'Routine Emoji' })
   await chosen.focus()
   await page.keyboard.press('Enter')
   await page.getByRole('searchbox', { name: 'Search emoji' }).fill('bathtub')

@@ -106,7 +106,7 @@ export function ColumnsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>{setByView ? 'Set by this view' : 'Show columns'}</DropdownMenuLabel>
+          <DropdownMenuLabel>{setByView ? 'Set by This View' : 'Show Columns'}</DropdownMenuLabel>
           {columns.map((column) => (
             <DropdownMenuCheckboxItem
               key={column.id}
@@ -121,7 +121,7 @@ export function ColumnsMenu({
         {pick && !setByView ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onPickChange(null)}>Reset to the list's columns</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onPickChange(null)}>Reset to the List's Columns</DropdownMenuItem>
           </>
         ) : null}
       </DropdownMenuContent>
@@ -330,7 +330,7 @@ export function ViewAllLink({ viewAll, total, navigator }: { viewAll: DataTableV
         void navigator.push(viewAll.to)
       }}
     >
-      {viewAll.label ?? `View all ${total}`}
+      {viewAll.label ?? `View All ${total}`}
     </a>
   )
 }

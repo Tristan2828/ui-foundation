@@ -65,19 +65,19 @@ const STATUS_FILTER_ALL = 'all'
 // entity's toolbar is copied from this file (docs/foundation/add-an-entity.md), so
 // keep this shape when adding a filter: a label constant, the children
 // function, and a test that asserts the *unset* display.
-const STATUS_FILTER_ALL_LABEL = 'All statuses'
+const STATUS_FILTER_ALL_LABEL = 'All Statuses'
 // A yes/no filter is a three-way choice: either (no filter), yes or no.
 // The URL holds 'true'/'false' ('' for either), the same strings the API
 // takes; the labels say what each one means for this field.
 const IN_STOCK_FILTER_ALL = 'all'
 const IN_STOCK_FILTER_LABELS: Record<string, string> = {
-  [IN_STOCK_FILTER_ALL]: 'Any stock',
-  true: 'In stock',
-  false: 'Out of stock',
+  [IN_STOCK_FILTER_ALL]: 'Any Stock',
+  true: 'In Stock',
+  false: 'Out of Stock',
 }
 // A computed field filters like any single choice: the server evaluates it.
 const PROGRESS_FILTER_ALL = 'all'
-const PROGRESS_FILTER_ALL_LABEL = 'Any progress'
+const PROGRESS_FILTER_ALL_LABEL = 'Any Progress'
 const FILTERS = ['search', 'status', 'inStock', 'checklistState'] as const
 const MULTI_FILTERS = ['tags', 'extraCategoryIds'] as const
 const SEARCH_DEBOUNCE_MS = 300
@@ -95,7 +95,7 @@ const VIEWS: Record<'all' | 'restock', TableView<(typeof FILTERS)[number], (type
     columns: ['name', 'category', 'assigneeEmail', 'price', 'inStock'],
   },
 }
-const VIEW_LABELS: Record<keyof typeof VIEWS, string> = { all: 'All widgets', restock: 'Restock' }
+const VIEW_LABELS: Record<keyof typeof VIEWS, string> = { all: 'All Widgets', restock: 'Restock' }
 
 export function WidgetsTableRoute() {
   // Page, sort and filters live in the URL (?page=2&sort=name:asc&...), so
@@ -188,7 +188,7 @@ export function WidgetsTableRoute() {
       ? [
           {
             id: 'extraCategoryIds',
-            label: `Extra categories: ${extraCategoryFilter.map((id) => names.get(id) ?? '…').join(', ')}`,
+            label: `Extra Categories: ${extraCategoryFilter.map((id) => names.get(id) ?? '…').join(', ')}`,
             onRemove: () => setMultiFilter('extraCategoryIds', []),
           },
         ]
@@ -246,7 +246,7 @@ export function WidgetsTableRoute() {
           emptyAction={
             !hasActiveFilters && (
               <Button size="sm" nativeButton={false} render={<Link to="/widgets/new" />}>
-                Create widget
+                Create Widget
               </Button>
             )
           }

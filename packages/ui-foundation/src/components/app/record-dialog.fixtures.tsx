@@ -198,7 +198,7 @@ function ProjectView({ listAt = '/projects', tasks = false, rail = false }: { li
             { label: 'Status', value: project?.status },
             { label: 'Owner', value: owner, edit: owners },
             {
-              label: 'Next project',
+              label: 'Next Project',
               value: next && <RecordLink to={`/projects/${next.id}`}>{next.name}</RecordLink>,
             },
           ],
@@ -273,8 +273,8 @@ function NewProject() {
   const [saving, setSaving] = useState(false)
   return (
     <FormDialog
-      title="New project"
-      submitLabel="Add project"
+      title="New Project"
+      submitLabel="Add Project"
       isSubmitting={saving}
       submitError={error}
       dirty={name !== ''}
@@ -323,7 +323,7 @@ function Home() {
         Repaint the fence
       </RecordLink>
       <Link to="/projects" className="type-label underline">
-        All projects
+        All Projects
       </Link>
     </div>
   )

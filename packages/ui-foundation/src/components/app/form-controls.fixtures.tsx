@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { formatPlainDate, type PlainDate } from '@/lib/plain-date'
+import { titleCase } from '@/lib/title-case'
 import { ChoiceButtons } from './choice-buttons'
 import { DateField } from './date-field'
 import { inPlace } from './edit-in-place-presets'
@@ -26,6 +28,10 @@ import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 // - Record: the same fields edited in place on a record (EntityView's
 //   field rows wear the list's row hover; a phone gets a chevron), each
 //   save a moment long, then "✓ Saved". "Fail" as an author is refused.
+//
+// - Narrow: ChoiceButtons of four in a 280px box, on a form, edited in
+//   place on a record, and in a dialog's row of short fields: the buttons
+//   wrap onto a second line, never past the box's edge.
 //
 // e2e/form-controls.spec.ts drives these; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
@@ -86,7 +92,7 @@ function useCreateDialog(noun: string, add: (label: string) => ReferenceRecord<n
   }
   const dialog = (
     <FormDialog
-      title={`New ${noun}`}
+      title={`New ${titleCase(noun)}`}
       open={name !== null}
       onOpenChange={(open) => {
         if (!open) close(null)
@@ -96,7 +102,7 @@ function useCreateDialog(noun: string, add: (label: string) => ReferenceRecord<n
         if (name?.trim()) close(add(name.trim()))
       }}
       isSubmitting={false}
-      submitLabel={`Add ${noun}`}
+      submitLabel={`Add ${titleCase(noun)}`}
     >
       <FieldGroup>
         <Field>
@@ -135,13 +141,13 @@ function OnAForm() {
         </Field>
         <Field size="m">
           <FieldLabel htmlFor="started" required>
-            Started on
+            Started On
           </FieldLabel>
           <DateField id="started" value={started} onChange={setStarted} locale="en-US" />
           <output data-testid="started-value">{started || 'empty'}</output>
         </Field>
         <Field size="m">
-          <FieldLabel htmlFor="finished">Finished on</FieldLabel>
+          <FieldLabel htmlFor="finished">Finished On</FieldLabel>
           <DateField id="finished" value={finished} onChange={setFinished} clearable locale="en-US" />
           <output data-testid="finished-value">{finished || 'empty'}</output>
         </Field>
@@ -229,7 +235,7 @@ function Record() {
               },
               { label: 'Format', edit: inPlace.choice({ value: book.format, options: FORMATS, save: (format) => save({ format }) }) },
               {
-                label: 'Started on',
+                label: 'Started On',
                 value: book.started ? formatPlainDate(book.started) : null,
                 edit: inPlace.date({ value: book.started, locale: 'en-US', save: (started) => save({ started }) }),
               },
@@ -257,6 +263,101 @@ function InPlace() {
   return <RouterProvider router={router} />
 }
 
+const BINDINGS = [
+  { value: 'paperback', label: 'Paperback' },
+  { value: 'hardcover', label: 'Hardcover' },
+  { value: 'ebook', label: 'Ebook' },
+  { value: 'audiobook', label: 'Audiobook' },
+] as const
+type Binding = (typeof BINDINGS)[number]['value']
+
+// A 280px box: a phone's narrow column, a panel, a field sharing a row.
+function NarrowBox({ name, children }: { name: string; children: ReactNode }) {
+  return (
+    <section aria-label={name} data-testid={`narrow-${name.toLowerCase().replace(/\W+/g, '-')}`} className="w-70 rounded-md border border-dashed border-border p-2">
+      {children}
+    </section>
+  )
+}
+
+function NarrowRecord() {
+  const [binding, setBinding] = useState<Binding | null>('hardcover')
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Books' }}
+      title="The Quiet Harbour"
+      sections={[
+        {
+          title: 'Details',
+          fields: [
+            {
+              label: 'Binding',
+              edit: inPlace.choice({ value: binding, options: BINDINGS, save: (next) => slowly(() => setBinding(next)) }),
+            },
+          ],
+        },
+      ]}
+    />
+  )
+}
+
+function NarrowControls() {
+  const [binding, setBinding] = useState<Binding | null>('ebook')
+  const [dialogBinding, setDialogBinding] = useState<Binding | null>('paperback')
+  const [started, setStarted] = useState<PlainDate>('2026-03-14')
+  const [finished, setFinished] = useState<PlainDate>('')
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <NarrowRecord /> }]))
+  return (
+    <div className="flex flex-col gap-6">
+      <NarrowBox name="Form">
+        <Field>
+          <FieldLabel id="narrow-binding-label">Binding</FieldLabel>
+          <ChoiceButtons aria-labelledby="narrow-binding-label" options={BINDINGS} value={binding} onValueChange={setBinding} />
+        </Field>
+      </NarrowBox>
+      <NarrowBox name="Record">
+        <RouterProvider router={router} />
+      </NarrowBox>
+      <Button variant="outline" className="w-fit" onClick={() => setDialogOpen(true)}>
+        Edit Book
+      </Button>
+      <FormDialog
+        title="Edit Book"
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={(event) => {
+          event.preventDefault()
+          setDialogOpen(false)
+        }}
+        isSubmitting={false}
+        submitLabel="Save Changes"
+      >
+        <FieldGroup>
+          <Field size="m">
+            <FieldLabel id="dialog-binding-label">Binding</FieldLabel>
+            <ChoiceButtons
+              aria-labelledby="dialog-binding-label"
+              options={BINDINGS}
+              value={dialogBinding}
+              onValueChange={setDialogBinding}
+            />
+          </Field>
+          <Field size="m">
+            <FieldLabel htmlFor="dialog-started">Started On</FieldLabel>
+            <DateField id="dialog-started" value={started} onChange={setStarted} locale="en-US" />
+          </Field>
+          <Field size="m">
+            <FieldLabel htmlFor="dialog-finished">Finished On</FieldLabel>
+            <DateField id="dialog-finished" value={finished} onChange={setFinished} clearable locale="en-US" />
+          </Field>
+        </FieldGroup>
+      </FormDialog>
+    </div>
+  )
+}
+
 const meta: Meta = {
   title: 'app/FormControls',
   parameters: { controls: { disable: true } },
@@ -267,3 +368,5 @@ export default meta
 export const Form: StoryObj = { render: () => <OnAForm /> }
 
 export const EditInPlace: StoryObj = { render: () => <InPlace /> }
+
+export const Narrow: StoryObj = { render: () => <NarrowControls /> }

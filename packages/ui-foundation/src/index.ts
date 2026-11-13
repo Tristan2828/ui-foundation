@@ -155,6 +155,7 @@ export {
   type InPlaceTextConfig,
 } from '@/components/app/edit-in-place-presets'
 export { linkHost, linkHref, linkRule } from '@/lib/link-href'
+export { TITLE_CASE_SMALL_WORDS, titleCase } from '@/lib/title-case'
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
 export { editRowClass, onEditRowClick, SAVED_FOR_MS } from '@/components/app/edit-row'

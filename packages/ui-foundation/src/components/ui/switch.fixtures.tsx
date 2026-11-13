@@ -22,7 +22,7 @@ const meta: Meta<SwitchStoryArgs> = {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <Switch id="switch-on" defaultChecked size={args.size} disabled={args.disabled} />
-        <Label htmlFor="switch-on">In stock</Label>
+        <Label htmlFor="switch-on">In Stock</Label>
       </div>
       <div className="flex items-center gap-2">
         <Switch id="switch-off" size={args.size} disabled={args.disabled} />

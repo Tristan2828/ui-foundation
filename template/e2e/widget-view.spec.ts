@@ -80,7 +80,7 @@ test.describe('widget view', () => {
     await page.goto('/widgets/99')
     await expect(page.getByText('Not found', { exact: true })).toBeVisible()
     await expect(page.getByText('Widget 99 not found')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0)
     await expect(page).toHaveTitle('Widgets · UI Foundation')
 
     await page.getByRole('button', { name: 'Back to Widgets' }).click()
@@ -105,7 +105,7 @@ test.describe('widget view', () => {
 
     await expect(page.getByText('Something went wrong')).toBeVisible()
     await expect(page.getByText('Database is down')).toBeVisible()
-    await page.getByRole('button', { name: 'Try again' }).click()
+    await page.getByRole('button', { name: 'Try Again' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
   })
 
@@ -119,8 +119,8 @@ test.describe('widget view', () => {
     await expect(header.getByText('Active', { exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Edit Status' })).toBeAttached()
     await expect(header.getByText('In progress', { exact: true })).toBeVisible()
-    await expect(header.getByRole('switch', { name: 'In stock' })).toBeChecked()
-    await expect(header.getByText('In stock', { exact: true })).toBeVisible()
+    await expect(header.getByRole('switch', { name: 'In Stock' })).toBeChecked()
+    await expect(header.getByText('In Stock', { exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Delete' })).toBeVisible()
 
@@ -172,8 +172,8 @@ test.describe('widget view', () => {
     await expect(fieldValue(page, 'Assignee Email')).toHaveText('Unassigned')
     await expect(fieldValue(page, 'Tags')).toHaveText('Untagged')
     await expect(fieldValue(page, 'Extra Categories')).toHaveText('No extra categories')
-    await expect(page.getByRole('switch', { name: 'In stock' })).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).not.toBeChecked()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     await expect(page.getByRole('region', { name: 'Checklist' })).toContainText('No items')
     await expect(page.getByRole('region', { name: 'Pairings' })).toContainText('No pairings')
 
@@ -309,7 +309,7 @@ test.describe('widget view', () => {
     // Notice), with Try again; the dialog stays open (only success closes it).
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByText('cannot delete a widget with active assignments')).toBeVisible()
-    await expect(dialog.getByRole('button', { name: 'Try again' })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Try Again' })).toBeVisible()
     await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
@@ -355,23 +355,23 @@ test.describe('widget view', () => {
   test('quick action: In stock flips on the page and saves', async ({ page }) => {
     const bodies = patchBodies(page)
     await page.goto('/widgets/1')
-    const inStock = page.getByRole('switch', { name: 'In stock' })
+    const inStock = page.getByRole('switch', { name: 'In Stock' })
     await inStock.click()
 
     await expect(inStock).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     await expect.poll(() => bodies).toEqual([{ inStock: false }])
     expect((await serverWidget(page, 1)).inStock).toBe(false)
 
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
-    await expect(page.getByRole('switch', { name: 'In stock: Wireless Mouse' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock: Wireless Mouse' })).not.toBeChecked()
   })
 
   test('quick action: a refused change goes back and the server\'s reason shows', async ({ page }) => {
     // A rule only the server knows (a cap on how many can be in stock):
     // it answers 422 with the reason on the field.
     await page.goto('/widgets/3')
-    const inStock = page.getByRole('switch', { name: 'In stock' })
+    const inStock = page.getByRole('switch', { name: 'In Stock' })
     await expect(inStock).not.toBeChecked()
     await waitForMswReady(page)
     await page.evaluate(() => {
@@ -389,7 +389,7 @@ test.describe('widget view', () => {
 
     await expect(page.getByText("Couldn't update Fountain Pen: Only 3 widgets can be in stock at once")).toBeVisible()
     await expect(inStock).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     expect((await serverWidget(page, 3)).inStock).toBe(false)
   })
 
@@ -405,7 +405,7 @@ test.describe('widget view', () => {
     await expect(checklist.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeEnabled()
     await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeEnabled()
     await expect(page.getByRole('button', { name: 'Edit Status' })).toBeEnabled()
-    await expect(page.getByRole('switch', { name: 'In stock' })).toBeEnabled()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).toBeEnabled()
     await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeEnabled()
 
     await expect(checklist.getByRole('status', { name: 'Saving' })).toHaveCount(0)

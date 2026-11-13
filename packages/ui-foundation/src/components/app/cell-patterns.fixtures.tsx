@@ -282,7 +282,7 @@ export const DependencyList: StoryObj = {
       <thead>
         <tr>
           <th className="pr-6 text-left type-label">Name</th>
-          <th className="text-left type-label">Depends on</th>
+          <th className="text-left type-label">Depends On</th>
         </tr>
       </thead>
       <tbody>
