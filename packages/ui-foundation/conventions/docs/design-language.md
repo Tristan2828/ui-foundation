@@ -37,7 +37,7 @@
 - [Picking at random](#picking-at-random) · lines 1665–1696
 - [Filling in what's missing](#filling-in-whats-missing) · lines 1698–1765
 - [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1767–1792
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1794–1867
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1794–1883
 
 <!-- /index -->
 
@@ -1840,6 +1840,22 @@ const bottomBar: BottomBarItem[] = [
   one tile per entry, the icon in `--link` over the label, bordered,
   44px tall at least; the tile holding the page has a `--primary`
   border. The entries' own pages are left to the module.
+- **The sidebar as icon tiles** (`navLook="tiles"` on `AppShell`, or a
+  section's own `look: 'tiles'`; 4.99): fewer words, more icons. Each
+  group is a three-column grid of tiles, the icon (20px) over a short
+  label in the caption size, on the sidebar's tint at half strength; no
+  visible headings (a section's label names its grid for screen
+  readers). The tile you're in, or the one holding the page, has the
+  full tint and a 1px `--primary` ring; a count sits in its top corner
+  in the sidebar's text tone. The pages of the entry you're in list
+  under its group's grid as the list look's, a hairline in place of
+  each heading (each run still a list named by it). A tiles section
+  doesn't fold. The icon rail is the rail's icons, as in the list look,
+  and the sidebar's phone sheet shows the tiles. A `bottomBar` item for
+  a tiles section with no `sheet` of its own opens its sheet as tiles,
+  with the current entry's pages under them as smaller tiles, four to a
+  row, 44px at least. Keep tile labels to a word or two; a section that
+  should stay a list (Tools at the foot) sets `look: 'list'`.
 - **The trail in the bar** (`usePageTrail`, `EntityView`'s
   `back.trail`): between the menu button and the search box, from 48rem
   up, `PageTrail` at 14px: every crumb but the last a

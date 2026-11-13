@@ -301,6 +301,9 @@ const COMPOSITE_STORIES = [
   // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
   { id: 'app-appshell--standard', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-rail', mustShow: 'Page at /finance/accounts/3' },
+  // The sidebar as icon tiles (#6C, navLook), and on the rail.
+  { id: 'app-appshell--standard-tiles', mustShow: 'Page at /finance/accounts/3' },
+  { id: 'app-appshell--standard-tiles-rail', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-trail', mustShow: 'Bills and the paycheck' },
   { id: 'app-appshell--standard-search', mustShow: 'Page at /finance/budget' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
