@@ -13,7 +13,7 @@ to the device, where the app's service worker shows it.
 | `usePushPermission()` | the package | Whether this device gets reminders, and `enable`/`disable` |
 | `AllowReminders` | the package | The control: says what reminders are, then asks, on a click |
 | `/push/public-key`, `/push/subscriptions` | `openapi.yaml`, the foundation's part (optional) | The VAPID key to subscribe with; this device's subscription saved or dropped |
-| `foundation_backend.push` | `ui-foundation-backend` | `send_push(session, user_id, title, body, url)`: encrypted (RFC 8291), signed (VAPID), to every device the user allowed |
+| `foundation_backend.push` | `ui-foundation-backend` | `send_push(session, user_id, title, body, url)`: encrypted (RFC 8291), signed (VAPID), to every device the user allowed; optionally a `PushAction` button and `renotify` |
 | `foundation_backend.reminders`, `reminders` | `ui-foundation-backend` | A reminder row (when, which days, the text, the path), and the `send-reminders` job that sends each one when it's due |
 
 Off until the backend turns it on (`PUSH_ENABLED`, `docs/deploy.md`
@@ -149,8 +149,9 @@ the same rules and agree on every next occurrence.
 - **Done**: the app's Done button (or a notification action that calls
   the app) runs `reminders.mark_done(row)` and commits: the occurrence is
   recorded (`done_occurrence`, `done_at`), nagging stops, and the next is
-  pending; for `fromCompletion` it counts from the done time. After the
-  rule itself changes, `reminders.schedule_changed(row)` forgets where it
+  pending; for `fromCompletion` it counts from the done time (and from
+  the notification itself: "A Done button on the notification" below).
+  After the rule itself changes, `reminders.schedule_changed(row)` forgets where it
   was.
 - **Moving a simple schedule over**: `recurrence.from_weekdays(days,
   time_of_day, time_zone, start=today)` (and the package's
@@ -163,6 +164,52 @@ the same rules and agree on every next occurrence.
   list `formatRecurrence` for a Repeats column and `nextOccurrence` with
   `formatOccurrence` for a Next one (cell-patterns.md "A repeat and its
   next time").
+
+## A Done button on the notification (4.104)
+
+A repeating reminder's push can carry a **Done** button that marks the
+occurrence done without opening the app. The app names its own endpoint;
+the job puts it on each occurrence's push:
+
+```python
+from foundation_backend import push, reminders
+
+reminders.register(
+    model=MyReminder,
+    done_action=lambda row, occurrence: push.PushAction(
+        f"/api/reminders/{row.id}/done", {"occurrence": occurrence.isoformat()}
+    ),
+)
+```
+
+- **The endpoint is the app's**: an ordinary signed-in route
+  (`POST /reminders/{id}/done`, body `{ occurrence }`) that loads the
+  user's own row, checks the occurrence is still the pending one (a tap
+  on an old notification marks nothing), runs `reminders.mark_done(row)`
+  and commits. Answer 2xx when done or already done; anything else counts
+  as a failure. Return nothing the worker needs to read.
+- **What the service worker does** (`/push-sw.js`, from `pwa()`): shows
+  the button where the browser has notification buttons (Chrome, Edge,
+  Firefox on desktop, Chrome on Android). Tapped, it POSTs the action's
+  body as JSON to its path on the app's own origin with the session
+  cookie (`credentials: 'same-origin'`), and opens no window. Done, the
+  notification closes. Refused (signed out, a 4xx or 5xx) or offline, it
+  opens the reminder's `url` instead, so the person can do it in the app.
+- **iOS Safari and any browser without buttons** shows the notification
+  without one; a tap opens the `url` as always. Keep a Done button on the
+  reminder's own page.
+- **Only the app's own paths.** `PushAction`'s `path` (like `url`) must
+  start with one `/`: `send_push` refuses `https://...`, `//host`, a
+  backslash or a control character, and the worker checks again and
+  drops a button whose path resolves to any other origin.
+- **Nags sound again.** A nag is re-sent under the same tag
+  (`reminder-{id}`), which a browser otherwise replaces silently; the job
+  sends it with `renotify`, so it rings again. `send_push(..., tag=...,
+  renotify=True, action=PushAction(...))` does the same for an app's own
+  pushes.
+- **A weekday-set reminder** (no `recurrence`) has no occurrence to mark,
+  so it gets no button. Left out, `done_action` adds none: pushes look as
+  before.
 
 ## Testing
 

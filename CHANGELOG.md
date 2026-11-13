@@ -7,13 +7,70 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.104.0 — A Done button on a repeating reminder's notification
+
+npm package and `ui-foundation-backend` 4.104.0. Additive: a push looks
+and behaves as before unless the app asks for the new parts.
+
+A repeating reminder could be marked done on its own page or from its
+email, but not from the push itself, and a nag re-sent under the same
+tag could be replaced on the device without a sound.
+
+- **`foundation_backend.push.PushAction(path, body, title="Done")`**, a
+  button on the notification: tapped, the service worker POSTs `body`
+  as JSON to `path` on the app's own origin with the session cookie, and
+  opens no window. `PushMessage` gains optional `action` and `renotify`,
+  and `send_push(..., renotify=..., action=...)` carries them through.
+  Only an app path may be posted to: `send_push` refuses a URL, `//host`,
+  a backslash or a control character, and the worker checks again and
+  drops a button that resolves to any other origin.
+- **`/push-sw.js` (`pwa()`)** shows the button where the browser has
+  notification buttons (not iOS Safari, which shows the notification
+  without one and opens the `url` on a tap). Done, it closes the
+  notification; refused or offline, it opens the `url`. With `renotify`
+  (and a tag) a replacement sounds again.
+- **The reminders job**: `reminders.register(done_action=...)` (and
+  `run_due_reminders` / `send_due_reminders`) takes
+  `(row, occurrence) -> PushAction | None`, put on every push of a
+  repeating reminder; each nag goes out with `renotify`. A weekday-set
+  reminder gets no button.
+- Docs: `docs/foundation/reminders.md` "A Done button on the
+  notification". Tests: the payload and its path checks, `send_push`
+  decrypted on a device, the job's nag and action, and the worker run
+  against a fake `self.registration`, `clients` and fetch.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.104.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.104.0` in `backend/`. The new
+   `/push-sw.js` is written by the next build; a device picks it up the
+   next time the browser checks the worker (or on the next
+   `enable()`).
+2. Give the app the endpoint the button posts to (an ordinary signed-in
+   route): load the user's own row, check that `occurrence` is still the
+   pending one, `reminders.mark_done(row)`, commit, and answer 2xx (also
+   when it was already done).
+3. Name it to the job:
+
+   ```python
+   reminders.register(
+       model=MyReminder,
+       done_action=lambda row, occurrence: push.PushAction(
+           f"/api/reminders/{row.id}/done", {"occurrence": occurrence.isoformat()}
+       ),
+   )
+   ```
+
+4. A test fake of `push.send_push` in the app's own tests takes the new
+   keyword arguments only when they're used: a reminder with no
+   `done_action` and no nag calls it exactly as before.
+
 ## 4.103.0 — DataTable's title column capped at every width
 
 npm package. `ui-foundation-backend` moves to 4.103.0 with it, unchanged.
 
-A fix (Homebase Roadmap 338): a list's title column had no width cap
-above md, so a long title (a discussion's topic) overran and pushed the
-other columns off.
+A fix: a list's title column had no width cap above md, so a long
+title (a discussion's topic) overran and pushed the other columns off.
 
 - **The title column (DataTable's first) is cut to one line at 24rem**
   at every width, with an ellipsis, never over 60% of the table's area

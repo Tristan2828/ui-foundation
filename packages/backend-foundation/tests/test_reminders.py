@@ -328,15 +328,20 @@ async def test_the_registered_job_passes_its_senders_on(
     def channels(_: object) -> list[str]:
         return ["email"]
 
+    def done_action(_: object, occurrence: datetime) -> None:
+        return None
+
     monkeypatch.setattr(reminders, "send_due_reminders", send_due_reminders)
     before = dict(jobs.JOBS)
     try:
-        reminders.register(senders={"email": send_email}, channels=channels)
+        reminders.register(senders={"email": send_email}, channels=channels, done_action=done_action)
         await jobs.JOBS[reminders.JOB_NAME].run(session)
     finally:
         jobs.JOBS.clear()
         jobs.JOBS.update(before)
-    assert calls == [{"model": None, "senders": {"email": send_email}, "channels": channels, "on_sent": None}]
+    assert calls == [
+        {"model": None, "senders": {"email": send_email}, "channels": channels, "on_sent": None, "done_action": done_action}
+    ]
 
 
 def test_push_and_reminder_tables_are_registered_only_when_used() -> None:

@@ -12,7 +12,8 @@
 //   plain PNGs in the theme colour (iOS's Home Screen icon must be a PNG,
 //   and drawing a letter into one needs a font rasteriser the package
 //   doesn't carry). `icon` replaces them all with the app's own PNG.
-// - /push-sw.js: ./push-sw.js, showing pushes and opening their path.
+// - /push-sw.js: ./push-sw.js, showing pushes, opening their path, and
+//   posting a message's action (a Done button) to the app's own path.
 // And adds the manifest, theme-color and apple-touch-icon tags to
 // index.html. Registering the worker is usePushPermission's, on a click.
 //
