@@ -1520,9 +1520,9 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       {row.getVisibleCells().map((cell, index) => {
         const meta = cell.column.columnDef.meta
         const value = flexRender(cell.column.columnDef.cell, cell.getContext())
-        // The title column (the first) is capped at every width (#338's
-        // discussion topic overran above md): cut to one line by default, or wrapped
-        // with `meta.wrap`; `maxWidth: 'none'` lifts the cap.
+        // The title column (the first) is capped at every width (a long
+        // discussion topic overran above md): cut to one line by default,
+        // or wrapped with `meta.wrap`; `maxWidth: 'none'` lifts the cap.
         const isTitle = index === 0 && cell.column.id !== ROW_ACTIONS_COLUMN_ID && meta?.maxWidth !== 'none'
         const shown = isTitle && meta?.wrap ? (
           <div
