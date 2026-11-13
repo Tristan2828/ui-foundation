@@ -190,6 +190,15 @@ src/main.tsx                           FoundationProviders (theme, query client,
   reported while the page reloads onto a new build: a lazy chunk gone
   after a deploy (`vite:preloadError`) reloads it once
   (`lib/stale-chunk-reload.ts`, #206), reporting on or off.
+- **A proxy's sign-in** (4.107). An app behind an identity-aware proxy
+  (Cloudflare Access, say) gets the proxy's page or a redirect once its
+  session lapses. `apiFetch` asks as a script (`Accept`,
+  `X-Requested-With`), doesn't follow redirects, and marks an answer that
+  can't be the app's JSON (`ApiResponse.foreign`); `safeFetch` throws
+  that as `AppError` kind `proxy_auth` (a page on a 2xx/401/403, a
+  non-JSON 401/403, an opaque or cross-origin redirect), and `ErrorState`
+  and `ModuleCard` offer Sign In Again, a full reload. The app's own
+  JSON errors never reach that path, so its contract doesn't name it.
 - **A small entity** (3.26) edits in its table's rows: `DataTable` runs
   the same edit-in-place store as a view, so a cell that renders an
   `EditableValue` edits where it's shown, and `InlineCreate` creates from

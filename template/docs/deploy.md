@@ -140,6 +140,20 @@ the email, never the address.
 - A rate-limit rule at a CDN or proxy in front still helps, but the
   backend doesn't rely on it.
 
+## Behind a sign-in proxy
+
+An identity-aware proxy with its own sign-in in front of the whole app
+(Cloudflare Access, say) needs nothing from the app. When its session
+lapses while a page is open, the app's requests get the proxy's login page
+or a redirect instead of JSON; the foundation turns that into "Sign-in
+expired" with a **Sign In Again** button that reloads the page, so the
+proxy's sign-in runs (`docs/foundation/add-an-entity.md` "Behind a
+sign-in proxy"). The app's own sign-in still runs after it, as usual. If
+the proxy can answer scripts with a 401 instead of a redirect (Cloudflare
+Access does for requests carrying `X-Requested-With`, which the app
+sends), either is fine. AI chats need some paths let through: see "AI
+chats" below.
+
 ## Two-step sign-in (TOTP)
 
 An account can require a code from an authenticator app after its password

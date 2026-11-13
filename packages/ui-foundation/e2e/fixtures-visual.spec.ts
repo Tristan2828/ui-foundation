@@ -319,6 +319,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-appshell--standard-tiles-rail', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-trail', mustShow: 'Bills and the paycheck' },
   { id: 'app-appshell--standard-search', mustShow: 'Page at /finance/budget' },
+  // A lapsed sign-in at a proxy in front of the app (kind proxy_auth):
+  // Sign In Again, full size, in a widget and on a module card.
+  { id: 'app-errorstate--sign-in-again', mustShow: 'Ready to Start' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
@@ -405,6 +408,8 @@ const GLYPH_STORIES: {
     open: (page) => page.getByRole('button', { name: /^2 holds/ }).click(),
   },
   { id: 'ui-toggle--default' },
+  // Sign In Again's icon, and the error icons beside it.
+  { id: 'app-errorstate--sign-in-again' },
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },

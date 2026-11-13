@@ -278,16 +278,30 @@ export function ModuleCard({
                 {error?.message && <span className="sr-only">: {error.message}</span>}
               </span>
             </p>
-            {onRetry && (
+            {error?.kind === 'proxy_auth' ? (
+              // A lapsed sign-in at a proxy in front of the app: only a
+              // full page load signs in again (ErrorState's "Sign In Again").
               <Button
                 size="sm"
                 variant="outline"
-                onClick={onRetry}
+                onClick={() => window.location.reload()}
                 aria-describedby={titleId}
                 className="relative z-10 mt-1 self-start"
               >
-                Retry
+                Sign In Again
               </Button>
+            ) : (
+              onRetry && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onRetry}
+                  aria-describedby={titleId}
+                  className="relative z-10 mt-1 self-start"
+                >
+                  Retry
+                </Button>
+              )
             )}
           </>
         ) : state === 'loading' ? (
