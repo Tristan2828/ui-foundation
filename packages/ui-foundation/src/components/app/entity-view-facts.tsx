@@ -111,24 +111,19 @@ export const FACTS_RAIL_MIN_WIDTH = 960
 
 /**
  * Whether the element's parent (the room the view has: the page's content
- * area, or a dialog's body) is at least `min` px wide. Measured before
- * paint and on every resize, so the rail and the Details tab never flash.
+ * area, or a dialog's body) is at least `min` px wide. A ResizeObserver
+ * measures it: its first report comes after layout and before paint, and
+ * then on every resize, so the rail and the Details tab never flash.
  */
 export function useWideParent<T extends HTMLElement>(enabled: boolean, min = FACTS_RAIL_MIN_WIDTH) {
   const [node, setNode] = useState<T | null>(null)
   const [wide, setWide] = useState(false)
   useLayoutEffect(() => {
     const parent = node?.parentElement
-    if (!enabled || !parent) {
-      setWide(false)
-      return
-    }
-    const measure = () => setWide(parent.getBoundingClientRect().width >= min)
-    measure()
-    if (typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(measure)
+    if (!enabled || !parent || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => setWide(parent.getBoundingClientRect().width >= min))
     observer.observe(parent)
     return () => observer.disconnect()
   }, [node, enabled, min])
-  return [setNode, wide] as const
+  return [setNode, enabled && wide] as const
 }
