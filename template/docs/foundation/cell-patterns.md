@@ -867,6 +867,13 @@ on each side without moving it, and never wraps it: a short title or
 badge edited in place (`layout="inline"`) stays on one line, and a long
 one wraps between words within its column (4.94; before, a title like
 "Dr. Example" broke over two lines).
+Inline, the pencil takes no room at rest (4.102): a value in a summary
+line ("Harbor Office · Tuesdays") is followed by its separator a space
+after it, not a pencil's width. Hover or focus opens the pencil out to
+the value's right, eased (at once with reduced motion), so what follows
+moves over by the pencil, smoothly, only while it shows. It's never
+hidden from the keyboard: Tab still reaches it and opens it out. A touch
+screen keeps it open. An app needs no override for this.
 
 **In a field list, the row is the target** (4.88, `look="row"`, which
 EntityView's field rows use). The row wears the list's row hover, the
@@ -929,6 +936,21 @@ Larger sets, or ones that grow with the data, keep `MultiReference`
 - **Keyboard:** opening puts the caret in the filter box; Down goes to
   the chips, Left/Right (Home/End) move along them, Space or Enter
   toggles one, Up goes back to the box.
+- **Create "<typed>"** (4.102, `onCreate`): when what's typed names no
+  option (ignoring case), a Create "<typed>" button shows under the
+  chips; Enter in the box does the same when nothing matches, and Down
+  reaches it when there are no chips. It calls `onCreate(name)`, which
+  opens the app's small create form (a `FormDialog`, the name filled in)
+  or saves at once, and resolves with the new `{ id, label, icon? }`:
+  that option joins the chips and is picked (in place, saved like any
+  pick, with its spinner). `null` (the form cancelled) changes nothing.
+  While it's out the button reads Creating "<typed>"… (`aria-busy`), the
+  box is read-only and an edit in place stays open. A rejection shows
+  "Couldn't create "<typed>": <reason>" under the chips, the button
+  described by it, and keeps the typed name, so Create can be tried
+  again; typing clears it. The caret goes back to the box either way,
+  and a screen reader hears "<name> created and picked." Never a "New
+  <thing>" button beside the picker for this.
 - Pass the record's value as `value`, not the control's `props.value`
   (the draft, which never moves here), and keep the field's `save`: the
   form's whole-set save, never called in place.

@@ -19,6 +19,8 @@
 //   value it edits (`inline` among its props).
 // - Saved (4.88, F16): once a save lands, "✓ Saved" shows beside the value
 //   for two seconds (`role="status"`).
+// - `layout="inline"` (4.102): the pencil takes no room until hover or
+//   focus, so nothing gaps before what follows the value on its line.
 // - `look="row"` (4.88, F15 and F18): in a record's field list the row is
 //   the target (edit-row.ts): it wears the list's row hover and the pencil
 //   sits at its end; under 48rem or on a touch screen there's a chevron
@@ -287,13 +289,16 @@ export function EditableField({
         </span>
       )
     const row = look === 'row'
+    const inlineValue = layout === 'inline' && !row
     return (
       <span
         data-slot="editable-value"
         data-look={look}
         onClick={onShownClick}
         className={cn(
-          'group/editable relative cursor-text items-start gap-1',
+          // Inline, the gap is the pencil's own margin, there only while it shows.
+          'group/editable relative cursor-text items-start',
+          !inlineValue && 'gap-1',
           // A row: the row (editRowClass) wears the hover, not the value.
           !row && '-mx-1.5 rounded-md px-1.5 transition-colors hover:bg-muted has-[[data-edit]:focus-visible]:bg-muted',
           // Inline, the cap is its column plus the 0.75rem the negative
@@ -339,6 +344,14 @@ export function EditableField({
           className={cn(
             'shrink-0 text-muted-foreground opacity-0 focus-visible:opacity-100 pointer-coarse:opacity-100',
             row ? 'group-hover/edit-row:opacity-100 hover:bg-transparent max-md:opacity-100' : 'group-hover/editable:opacity-100',
+            // Inline (4.102): at rest the pencil takes no room, so a value
+            // in a line ("Harbor Clinic · Tuesdays") is followed by its
+            // separator with no gap. Hover or focus opens it out to the
+            // value's right, eased (no ease with reduced motion); it's
+            // never display:none, so Tab still reaches it and opens it.
+            // A touch screen, with no hover, keeps it open.
+            inlineValue &&
+              'max-w-0 overflow-hidden border-0 transition-[max-width,margin] duration-150 ease-out motion-reduce:transition-none group-hover/editable:ml-1 group-hover/editable:max-w-6 focus-visible:ml-1 focus-visible:max-w-6 pointer-coarse:ml-1 pointer-coarse:max-w-6',
           )}
         >
           {row ? (
