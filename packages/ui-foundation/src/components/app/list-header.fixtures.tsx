@@ -6,7 +6,9 @@ import { ListHeader } from './list-header'
 
 // A list's header: a title with its count and New alone; one related link
 // out as a button; several folded into ⋯ with the page's extras and Show
-// deleted; and Show deleted on, with its notice and Back to the list. Axe
+// deleted; and Show deleted on, with its notice and Back to the list.
+// Siblings: a switch between three peer lists beside the title, the
+// current one marked, ⋯ keeping only Show deleted. Axe
 // and the glyph check measure them in both themes
 // (e2e/fixtures-visual.spec.ts).
 const meta: Meta = {
@@ -61,6 +63,24 @@ export const ShowingDeleted: StoryObj = {
         count={4}
         newAction={{ label: 'New medication', onClick: () => {} }}
         deleted={{ shown: true, onShownChange: () => {}, noun: 'medications' }}
+      />
+    </div>
+  ),
+}
+
+export const Siblings: StoryObj = {
+  render: () => (
+    <div className="max-w-4xl">
+      <ListHeader
+        title="Houseplants"
+        count={12}
+        siblings={[
+          { label: 'Houseplants', to: '/', count: 12 },
+          { label: 'Cuttings', to: '/cuttings', count: 6 },
+          { label: 'Seeds', to: '/seeds', count: 3 },
+        ]}
+        newAction={{ label: 'New plant', onClick: () => {} }}
+        deleted={{ shown: false, onShownChange: () => {}, noun: 'plants' }}
       />
     </div>
   ),
