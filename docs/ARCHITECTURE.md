@@ -223,6 +223,11 @@ src/main.tsx                           FoundationProviders (theme, query client,
   a choice (`ChoiceButtons`) by itself and pairs choices only with each
   other (`fieldRows`), side by side on a phone while both fit (CSS
   `flex: 1 1 max-content`, so the browser decides).
+- **A record's tab bar** (4.101, 3B) sticks to whatever scrolls: the page,
+  or a record dialog's body, which sets `--entity-view-sticky-top` to
+  minus its padding so the bar meets its top edge. Whether it's stuck is
+  measured (a marker above the bar against the bar's top, on any scroll
+  through a capture listener), and stuck it shows the record's name.
 - **A record's tabs** (4.76, #303): a main section's `tab` groups it
   under `EntityView`'s tab list, the selected tab in `?tab=`, changed by
   replacing the entry with its state kept, so a record over its list stays

@@ -146,6 +146,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--details-in-the-column', mustShow: 'No follow-ups' },
   { id: 'app-statusmark--all-kinds', mustShow: 'Renew the permit' },
   { id: 'app-recorddialog--card', mustShow: 'Display Order' },
+  // A record with tabs in the dialog, its 3B tab bar and counts (4.101).
+  { id: 'app-recorddialog--tabs-open', mustShow: 'Open Full Page' },
   { id: 'app-formcontrols--choice-pairs', mustShow: 'Coats' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },

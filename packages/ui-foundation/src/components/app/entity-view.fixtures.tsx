@@ -328,7 +328,9 @@ export const TabsColumn: StoryObj = { name: 'Tabs, column', render: () => <TabsI
 // `rail`, is the last tab, Details; Notes has a small box of facts beside
 // it (placed `rail` with its `tab`), under it on a phone; the strip is as
 // wide as its numbers (2A); the status is a StatusMark (5B). The memory
-// router starts at the harness page's own `tab`, as Tabs does.
+// router starts at the harness page's own `tab`, as Tabs does. The tab
+// bar is 3B's (4.101): Changes shows its count, and the bar sticks with
+// the record's name above it as Notes scrolls under it.
 
 function DetailsTabRecord() {
   const location = useLocation()
@@ -373,6 +375,7 @@ function DetailsTabRecord() {
         title="Office move"
         badges={<StatusMark kind="active">In Progress</StatusMark>}
         actions={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+        tabCounts={{ Changes: 2 }}
         strip={
           <KeyStats
             stats={[

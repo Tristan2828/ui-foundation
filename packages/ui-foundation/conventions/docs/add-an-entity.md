@@ -15,17 +15,17 @@
   - Step 8: Add Playwright specs for all three screens · lines 752–829
   - Step 9: Register the nav entry and route names · lines 830–844
   - Step 10: `npm run verify`. · lines 845–847
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1206
-  - [The record view](#the-record-view) · lines 1002–1063
-  - [Forms](#forms) · lines 1065–1123
-  - [Dialogs](#dialogs) · lines 1125–1156
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1158–1206
-- [What not to copy](#what-not-to-copy) · lines 1208–1234
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1236–1253
-- [Deleting](#deleting) · lines 1255–1286
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1288–1309
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1311–1320
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1323–1365
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1208
+  - [The record view](#the-record-view) · lines 1002–1065
+  - [Forms](#forms) · lines 1067–1125
+  - [Dialogs](#dialogs) · lines 1127–1158
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1160–1208
+- [What not to copy](#what-not-to-copy) · lines 1210–1236
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1238–1255
+- [Deleting](#deleting) · lines 1257–1288
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1290–1311
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1313–1322
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1325–1367
 
 <!-- /index -->
 
@@ -1033,7 +1033,9 @@ A record uses the parts it has, in this order:
 - **Tabs** (4.76), for a main column with **three or more groups of
   long content** (the steps, where it's used, the reasoning): a `tab` on
   each main section groups them under a tab list, the selected one in
-  `?tab=`. Fewer groups stay one scroll, folded by headings. A record's
+  `?tab=`. Give each tab that holds records its count (`tabCounts={{
+  Updates: updates.length }}`); the bar sticks as the record scrolls,
+  with the record's name above it (4.101). Fewer groups stay one scroll, folded by headings. A record's
   Notes stay outside the tabs, above them, unless they are one tab's
   content; the strip never goes in a tab, and the facts are a tab of
   their own (Details, `detailsTab` to name it otherwise).

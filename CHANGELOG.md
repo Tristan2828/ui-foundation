@@ -7,6 +7,39 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.101.0 — Record tabs that stand out, and stick
+
+npm package. `ui-foundation-backend` moves to 4.101.0 with it, unchanged.
+
+- **The record's tab bar is the record standard's 3B.** `EntityView`'s
+  tabs are 44px, 16px semibold (14px on a phone), with a 3px primary line
+  under the open one and the others muted. A tab can show its count beside
+  its name: `tabCounts={{ Updates: 2, Linked: 1 }}`, by tab name, the
+  records it holds; a tab at 0 or left out shows none.
+- **The bar sticks** to the top of whatever scrolls (the page, or a
+  record dialog's body) as the record scrolls under it. Once stuck it
+  shows the record's name above the tabs, so the other tabs and the
+  record you're on stay in view. `tabsStickyTop` (any CSS length) moves it
+  down for a page with a bar of its own pinned to the top. In a record
+  dialog the bar meets the body's top edge (`--entity-view-sticky-top`,
+  set by `RecordDialogRoute`).
+- New fixture app/RecordDialog Tabs, open; app/EntityView Details tab
+  gains a count. `e2e/record-tabs.spec.ts` covers the look, sticking on
+  the page at desktop and phone width and in a dialog, and axe on the
+  stuck bar in both themes.
+
+**For an app:**
+
+1. `npm install @tristan2828/ui-foundation@4.101.0`, `npx ui-foundation
+   sync`, and bump `ui-foundation-backend==4.101.0`.
+2. Give each record's tabs that hold records their counts:
+   `tabCounts={{ Updates: updates.length }}`.
+3. A screen with its own bar pinned to the top passes `tabsStickyTop`.
+4. Specs: a tab with a count reads with it (`getByRole('tab', { name:
+   'Updates 2' })`, or a regex); an exact `toHaveText` on the tab list
+   needs the count, or a regex. A spec that measured a tab's height or
+   type size changes (44px, 16px).
+
 ## 4.98.0 — The record standard's looks: a Details tab, status marks, a small card dialog
 
 npm package. `ui-foundation-backend` moves to 4.98.0 with it, unchanged.

@@ -296,7 +296,11 @@ export function RecordDialogRoute({
             data-slot="record-dialog-body"
             className={cn(
               'min-h-0 overflow-y-auto',
-              card ? 'p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-5' : 'p-4 sm:p-6',
+              // A record's tab bar sticks to the body's top edge, not inside
+              // its padding (4.101): minus the padding, for EntityView.
+              card
+                ? 'p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [--entity-view-sticky-top:-1rem] md:p-5 md:[--entity-view-sticky-top:-1.25rem]'
+                : 'p-4 [--entity-view-sticky-top:-1rem] sm:p-6 sm:[--entity-view-sticky-top:-1.5rem]',
             )}
           >
             <RecordDialogContext.Provider value={dialog}>{open && outlet}</RecordDialogContext.Provider>
