@@ -519,7 +519,7 @@ test.describe('widget form', () => {
     await expect(page).toHaveURL(/\/widgets\/\d+$/)
     await expect(page.getByRole('switch', { name: 'In Stock' })).not.toBeChecked()
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
-    await expect(page.getByRole('switch', { name: 'In stock: Out Of Stock Widget' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock: Out Of Stock Widget' })).not.toBeChecked()
   })
 
   test('yes/no: editing shows the stored value, and turning it on saves', async ({ page }) => {

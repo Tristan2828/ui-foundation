@@ -20,24 +20,24 @@ const axe = (page: Page) => new AxeBuilder({ page }).disableRules(['landmark-one
 test.describe('folded summary', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(story('app-widgetcard--folded-summary'))
-    await expect(card(page, 'Ready to start (success)')).toBeVisible()
+    await expect(card(page, 'Ready to Start (success)')).toBeVisible()
   })
 
   test('a folded card shows its value by state, describes its chevron with it, and drops it when opened', async ({
     page,
   }) => {
-    const summary = (state: string) => card(page, `Ready to start (${state})`).locator('[data-slot="widget-card-summary"]')
+    const summary = (state: string) => card(page, `Ready to Start (${state})`).locator('[data-slot="widget-card-summary"]')
     await expect(summary('success')).toHaveText('3 ready')
-    await expect(chevron(page, 'Ready to start (success)')).toHaveAccessibleDescription('3 ready')
+    await expect(chevron(page, 'Ready to Start (success)')).toHaveAccessibleDescription('3 ready')
     await expect(summary('loading').locator('[data-slot="skeleton"]')).toBeVisible()
     await expect(summary('error')).toHaveText("—Couldn't load")
     await expect(summary('empty')).toHaveText('None')
 
     // Opened, the error is the card's own, inside it, and the summary goes.
-    await chevron(page, 'Ready to start (error)').click()
+    await chevron(page, 'Ready to Start (error)').click()
     await expect(summary('error')).toHaveCount(0)
-    await expect(card(page, 'Ready to start (error)').getByRole('button', { name: 'Try Again' })).toBeVisible()
-    await chevron(page, 'Ready to start (success)').click()
+    await expect(card(page, 'Ready to Start (error)').getByRole('button', { name: 'Try Again' })).toBeVisible()
+    await chevron(page, 'Ready to Start (success)').click()
     await expect(summary('success')).toHaveCount(0)
     await expect(page.getByText('Fix the gate latch').first()).toBeVisible()
   })
@@ -45,7 +45,7 @@ test.describe('folded summary', () => {
   for (const theme of ['light', 'dark'] as const) {
     test(`zero axe violations (${theme})`, async ({ page }) => {
       await page.goto(story('app-widgetcard--folded-summary', theme))
-      await expect(card(page, 'Ready to start (success)')).toBeVisible()
+      await expect(card(page, 'Ready to Start (success)')).toBeVisible()
       expect((await axe(page)).violations).toEqual([])
     })
   }
@@ -150,7 +150,7 @@ test.describe('Customize sheet', () => {
     const sheet = page.getByRole('dialog', { name: 'Customize This Page' })
     await expect(sheet).toBeVisible()
 
-    const down = sheet.getByRole('button', { name: 'Move Ready to start down' })
+    const down = sheet.getByRole('button', { name: 'Move Ready to Start down' })
     await down.focus()
     await page.keyboard.press('Enter')
     await expect(down).toBeFocused()

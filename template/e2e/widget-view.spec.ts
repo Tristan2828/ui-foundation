@@ -173,7 +173,7 @@ test.describe('widget view', () => {
     await expect(fieldValue(page, 'Tags')).toHaveText('Untagged')
     await expect(fieldValue(page, 'Extra Categories')).toHaveText('No extra categories')
     await expect(page.getByRole('switch', { name: 'In Stock' })).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     await expect(page.getByRole('region', { name: 'Checklist' })).toContainText('No items')
     await expect(page.getByRole('region', { name: 'Pairings' })).toContainText('No pairings')
 
@@ -359,12 +359,12 @@ test.describe('widget view', () => {
     await inStock.click()
 
     await expect(inStock).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     await expect.poll(() => bodies).toEqual([{ inStock: false }])
     expect((await serverWidget(page, 1)).inStock).toBe(false)
 
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
-    await expect(page.getByRole('switch', { name: 'In stock: Wireless Mouse' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock: Wireless Mouse' })).not.toBeChecked()
   })
 
   test('quick action: a refused change goes back and the server\'s reason shows', async ({ page }) => {
@@ -389,7 +389,7 @@ test.describe('widget view', () => {
 
     await expect(page.getByText("Couldn't update Fountain Pen: Only 3 widgets can be in stock at once")).toBeVisible()
     await expect(inStock).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     expect((await serverWidget(page, 3)).inStock).toBe(false)
   })
 

@@ -132,7 +132,7 @@ test('in place: Enter saves what was typed, an unreadable phrase is not saved, E
 test('list cells: the Repeats label and the Next one, in the rule’s zone', async ({ page }) => {
   await page.goto(story('list-cells'))
   const cells = (name: string) => page.getByRole('row').filter({ hasText: name }).getByRole('cell')
-  await expect(cells('Change the Filter')).toHaveText(['Change the Filter', 'Every 2nd Tue at 9:00 AM', 'Tue, Dec 8, 9:00 AM'])
+  await expect(cells('Change the filter')).toHaveText(['Change the filter', 'Every 2nd Tue at 9:00 AM', 'Tue, Dec 8, 9:00 AM'])
   await expect(cells('Take out the bins')).toHaveText([
     'Take out the bins',
     'Every Mon and Thu at 7:00 AM and 7:30 PM',

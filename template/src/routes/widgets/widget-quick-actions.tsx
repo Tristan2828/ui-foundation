@@ -35,7 +35,7 @@ export function WidgetInStockSwitch({ widget }: { widget: Widget }) {
   const save = useSaveWidgetField(widget.id)
   return (
     <span className="inline-flex items-center gap-2 type-label">
-      <Switch size="sm" checked={widget.inStock} aria-label="In stock" onCheckedChange={(inStock) => save.mutate({ inStock })} />
+      <Switch size="sm" checked={widget.inStock} aria-label="In Stock" onCheckedChange={(inStock) => save.mutate({ inStock })} />
       <span aria-hidden="true" className={widget.inStock ? 'text-foreground' : 'text-muted-foreground'}>
         {widget.inStock ? 'In Stock' : 'Out of Stock'}
       </span>

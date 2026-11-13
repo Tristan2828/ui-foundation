@@ -291,7 +291,7 @@ function HubSample({ density }: { density: Density }) {
           />
         </ModuleStrip>
         <WidgetCard
-          title={`Ready to start (${density})`}
+          title={`Ready to Start (${density})`}
           link={{ to: '/projects?status=ready', label: 'All' }}
           isLoading={false}
           isEmpty={false}
