@@ -78,6 +78,20 @@ export type EditableValueProps = {
   className?: string
 }
 
+// An inline value's room for its pencil: none at rest; the pencil's 24px
+// and a 4px gap (w-7) while the value is hovered or its pencil focused.
+function InlinePencilRoom({ inline, children }: { inline: boolean; children: ReactNode }) {
+  if (!inline) return children
+  return (
+    <span
+      data-slot="editable-value-pencil-room"
+      className="relative w-0 shrink-0 self-stretch transition-[width] duration-150 ease-out motion-reduce:transition-none group-hover/editable:w-7 group-has-[[data-edit]:focus-visible]/editable:w-7 pointer-coarse:w-7"
+    >
+      {children}
+    </span>
+  )
+}
+
 // The field's own control, given what it needs.
 function Control({ render, ...props }: EditControlProps<unknown> & { render: EditInPlace['control'] }) {
   return render(props)
@@ -93,6 +107,12 @@ export type EditableFieldProps = EditableValueProps & {
   trigger?: (start: () => void) => ReactNode
   /** Opens again, empty, once a save from the keyboard succeeds: adding one item after another. */
   reopenAfterKeyboardSave?: boolean
+  /**
+   * Inline, the pencil's room is kept at rest, as before 4.102: a table
+   * cell (row-edit-cells.tsx), whose column would otherwise widen on
+   * hover, and EntityView's title, which ends its line and can fill it.
+   */
+  keepPencilRoom?: boolean
 }
 
 function useStore(): EditInPlaceStore {
@@ -114,6 +134,7 @@ export function EditableField({
   className,
   trigger,
   reopenAfterKeyboardSave = false,
+  keepPencilRoom = false,
 }: EditableFieldProps) {
   const store = useStore()
   const key = useId()
@@ -289,7 +310,7 @@ export function EditableField({
         </span>
       )
     const row = look === 'row'
-    const inlineValue = layout === 'inline' && !row
+    const inlineValue = layout === 'inline' && !row && !keepPencilRoom
     return (
       <span
         data-slot="editable-value"
@@ -333,37 +354,41 @@ export function EditableField({
             )}
           </span>
         </span>
-        <Button
-          ref={editButton}
-          data-edit=""
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={`Edit ${label}`}
-          onClick={start}
-          className={cn(
-            'shrink-0 text-muted-foreground opacity-0 focus-visible:opacity-100 pointer-coarse:opacity-100',
-            row ? 'group-hover/edit-row:opacity-100 hover:bg-transparent max-md:opacity-100' : 'group-hover/editable:opacity-100',
-            // Inline (4.102): at rest the pencil takes no room, so a value
-            // in a line ("Harbor Clinic · Tuesdays") is followed by its
-            // separator with no gap. Hover or focus opens it out to the
-            // value's right, eased (no ease with reduced motion); it's
-            // never display:none, so Tab still reaches it and opens it.
-            // A touch screen, with no hover, keeps it open.
-            inlineValue &&
-              'max-w-0 overflow-hidden border-0 transition-[max-width,margin] duration-150 ease-out motion-reduce:transition-none group-hover/editable:ml-1 group-hover/editable:max-w-6 focus-visible:ml-1 focus-visible:max-w-6 pointer-coarse:ml-1 pointer-coarse:max-w-6',
-          )}
-        >
-          {row ? (
-            <>
-              {/* A phone or a touch screen: a chevron says the row opens. */}
-              <PencilIcon className="max-md:hidden pointer-coarse:hidden" />
-              <ChevronRightIcon className="hidden max-md:block pointer-coarse:block" />
-            </>
-          ) : (
-            <PencilIcon />
-          )}
-        </Button>
+        {/* Inline (4.102): the pencil sits in a spacer that takes no room
+            at rest, so a value in a line ("Harbor Office · Tuesdays") is
+            followed by its separator with no gap. The pencil keeps its
+            24px box out of the flow, hidden just past the value over what
+            follows (the separator), so it's still a real target to click,
+            hover and Tab to. Hover or focus opens the spacer under it,
+            eased (at once with reduced motion): what follows moves over,
+            the pencil stays put. A touch screen keeps it open. Not over
+            the value itself: a click on a short value would land on it. */}
+        <InlinePencilRoom inline={inlineValue}>
+          <Button
+            ref={editButton}
+            data-edit=""
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={`Edit ${label}`}
+            onClick={start}
+            className={cn(
+              'shrink-0 text-muted-foreground opacity-0 focus-visible:opacity-100 pointer-coarse:opacity-100',
+              row ? 'group-hover/edit-row:opacity-100 hover:bg-transparent max-md:opacity-100' : 'group-hover/editable:opacity-100',
+              inlineValue && 'absolute top-0 left-1 z-10',
+            )}
+          >
+            {row ? (
+              <>
+                {/* A phone or a touch screen: a chevron says the row opens. */}
+                <PencilIcon className="max-md:hidden pointer-coarse:hidden" />
+                <ChevronRightIcon className="hidden max-md:block pointer-coarse:block" />
+              </>
+            ) : (
+              <PencilIcon />
+            )}
+          </Button>
+        </InlinePencilRoom>
       </span>
     )
   }

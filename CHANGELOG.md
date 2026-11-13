@@ -16,10 +16,14 @@ npm package. `ui-foundation-backend` moves to 4.102.0 with it, unchanged.
   value look), the hidden pencil used to keep its 24px and the gap
   before it, so a summary line built of values and "·" read "Harbor
   Office   · Tuesdays". Now the separator sits a space after the value.
-  Hover or focus opens the pencil out beside the value, eased (at once
-  with reduced motion); Tab still reaches it and Enter still opens the
-  value. A touch screen keeps it open. Block values and the field rows'
-  `look="row"` are unchanged.
+  The pencil keeps its whole 24px box, out of the flow and hidden just
+  past the value (over the separator), so it's still a real target to
+  hover, click and Tab to. Hover or focus makes its room under it, eased
+  (at once with reduced motion): what follows moves over, the pencil
+  stays put. A touch screen keeps the room open. Block values,
+  the field rows' `look="row"`, `DataTable`'s cells edited in their rows
+  (whose columns would widen on hover) and `EntityView`'s title (which
+  ends its line and can fill it) keep the room as before.
 - **`MultiPick` takes `onCreate`** (cell-patterns.md "A small set").
   When what's typed names no option (ignoring case), Create "<typed>"
   shows under the chips; Enter in the filter box does the same when
@@ -47,9 +51,9 @@ drop the two stopgaps:
 1. **The zero-width pencil override.** Remove any class or CSS that
    collapsed an inline `EditableValue`'s edit button (a `w-0`, `size-0`
    or `[&_[data-edit]]:…` on the value or its line, or a negative margin
-   after it). The package now does it, and an override left in place can
-   keep the pencil from opening out on hover and focus. A spec that
-   measured the line can stay as it is.
+   after it). The package now does it, and a zero-width override left in
+   place makes the pencil an empty box no one (and no test) can click.
+   Specs that click "Edit <label>" work as before.
 2. **"New <thing>" buttons under multi-pickers.** Where a button beside
    a `MultiPick` opened the entity's create form, delete the button and
    pass the same opener as `onCreate`:
