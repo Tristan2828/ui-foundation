@@ -25,7 +25,7 @@ import { RelatedTable } from './related-table'
 // - OneRowAction: a single action, drawn as its icon.
 // - Related: a record's related lists (R8): 19 visits capped at 10 with
 //   View all 19, and 3 with no link.
-// - Framed: the same list as `look="framed"` (4.98) under a ListHeader
+// - Framed: the same list as `look="framed"` (4.100) under a ListHeader
 //   with a sibling-list switch (Houseplants / Cuttings / Seeds): views
 //   above a card whose top bar holds the filters and one settings button
 //   (the Columns ticks and Group By, by Status), its bottom bar the pager.

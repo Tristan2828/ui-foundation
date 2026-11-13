@@ -409,7 +409,7 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    */
   viewAll?: DataTableViewAll
   /**
-   * How the list is drawn around its rows (4.98). `plain` (the default):
+   * How the list is drawn around its rows (4.100). `plain` (the default):
    * the toolbar above the whole width, the Columns and Group menus as
    * buttons at its end, the pagination under the rows. `framed`: the
    * list is a card with a border, as wide as the table under `width`'s

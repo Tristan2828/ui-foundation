@@ -11,7 +11,7 @@
 // are routes, `more` are the app's own actions. The ⋯ button has an
 // accessible name and is left out when the menu would be empty.
 //
-// `siblings` (4.98) is a switch beside the title between lists that are
+// `siblings` (4.100) is a switch beside the title between lists that are
 // one thing seen three ways (Exercises / Targets / Weak spots): links in a
 // segmented row, the one on marked as the current page. They're the
 // page's own peers, so they aren't in ⋯, which keeps only what's left
@@ -66,7 +66,7 @@ export type ListHeaderProps = {
    */
   deleted?: { shown: boolean; onShownChange: (shown: boolean) => void; noun?: string }
   /**
-   * Lists that are this one's peers (4.98): a switch beside the title,
+   * Lists that are this one's peers (4.100): a switch beside the title,
    * this list among them. Two or more; fewer draws nothing.
    */
   siblings?: readonly ListHeaderSibling[]

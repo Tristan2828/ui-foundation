@@ -1,4 +1,4 @@
-// DataTable's framed look (`look="framed"`, 4.98) and ListHeader's
+// DataTable's framed look (`look="framed"`, 4.100) and ListHeader's
 // sibling-list switch (`siblings`), as markup: the card and its two bars,
 // the tools ending at the table's edge (the card takes `width`'s fit, not
 // the toolbar row), one settings button in place of Columns and Group,

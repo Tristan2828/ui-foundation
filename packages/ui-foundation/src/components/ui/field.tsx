@@ -12,7 +12,9 @@ import { fieldRows, type FieldKind, type FieldSize } from "@/lib/field-rows"
 //   (`<Field size="s" | "m" | "l">`) share a row, up to three, each as
 //   wide as its size; `<Field solo>` keeps a short one alone
 //   (lib/field-rows.ts has the rule). Below 48rem each takes its own row
-//   but two dates or two numbers. The rows are worked out from the DOM, so
+//   but two dates or two numbers. A choice (a Field holding ChoiceButtons,
+//   4.98) shares a row only with another choice, and two choices stay side
+//   by side on a phone while both fit. The rows are worked out from the DOM, so
 //   a Field inside the app's own component still counts.
 // - Compact: 14px between fields and 32px controls (40px under 48rem or
 //   on a touch screen), from `--control-height`, which FieldGroup sets
@@ -58,9 +60,13 @@ function FieldLegend({
 const DATE_CONTROL = "input[type=date], [data-kind=date]"
 const NUMBER_CONTROL = "input[type=number], input[inputmode=numeric], input[inputmode=decimal]"
 
+// A row of choice buttons (ChoiceButtons, 4.98): two to a row (9C).
+const CHOICE_CONTROL = "[data-slot=choice-buttons]"
+
 function kindOf(field: HTMLElement): FieldKind | null {
   const said = field.dataset.kind
-  if (said === "date" || said === "number") return said
+  if (said === "date" || said === "number" || said === "choice") return said
+  if (field.querySelector(CHOICE_CONTROL)) return "choice"
   if (field.querySelector(DATE_CONTROL)) return "date"
   if (field.querySelector(NUMBER_CONTROL)) return "number"
   return null
@@ -87,6 +93,7 @@ function layOut(group: HTMLElement) {
       child.style.removeProperty("--field-gaps")
       delete child.dataset.fieldRow
       delete child.dataset.phonePair
+      delete child.dataset.phoneFit
       return
     }
     child.style.setProperty("--field-share", String(place.share))
@@ -94,6 +101,8 @@ function layOut(group: HTMLElement) {
     child.dataset.fieldRow = ""
     if (place.phonePair) child.dataset.phonePair = ""
     else delete child.dataset.phonePair
+    if (place.phoneFit) child.dataset.phoneFit = ""
+    else delete child.dataset.phoneFit
   })
 }
 
@@ -170,8 +179,9 @@ function Field({
     solo?: boolean
     /**
      * A date or a number: two of a kind stay side by side on a phone.
-     * Found by itself for a date or number `<input>` and for DateField
-     * (which marks itself, 4.88); say it for a control of your own.
+     * `choice`: two to a row, side by side on a phone while both fit.
+     * Found by itself for a date or number `<input>`, DateField (which
+     * marks itself, 4.88) and ChoiceButtons; say it for a control of your own.
      */
     kind?: FieldKind
   }) {

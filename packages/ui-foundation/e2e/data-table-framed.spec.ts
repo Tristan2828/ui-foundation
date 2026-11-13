@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// DataTable's framed look and ListHeader's sibling switch (4.98), in a
+// DataTable's framed look and ListHeader's sibling switch (4.100), in a
 // browser: the tools end at the table's own edge, the one settings button
 // holds the Columns ticks and Group By and works from the keyboard, the
 // views sit above the card, the switch goes to a sibling list, and on a

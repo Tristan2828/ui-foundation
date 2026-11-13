@@ -5,7 +5,7 @@
 // dialog, at the list's address (its filters, sort and page as they were),
 // and an address with no such state (a link pasted, a reload in a new tab,
 // "Open full page") is the record's full page.
-import { createContext, useCallback, useContext } from 'react'
+import { createContext, useCallback, useContext, type ReactNode } from 'react'
 import { useLocation, useNavigate, type Location } from 'react-router'
 
 /**
@@ -54,6 +54,14 @@ export type RecordDialogContextValue = {
   titleId: string
   /** Closes the dialog: back to the list, as Back does. */
   close: () => void
+  /**
+   * `card`: a small card dialog (RecordDialogRoute `look="card"`, 8A).
+   * EntityView draws the record's title smaller, its sections as plain
+   * rows with no cards, and `controls` on the title's line.
+   */
+  look?: 'record' | 'card'
+  /** The card dialog's own controls (Open full page, Close), for EntityView's title line. */
+  controls?: ReactNode
 }
 
 export const RecordDialogContext = createContext<RecordDialogContextValue | null>(null)

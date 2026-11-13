@@ -30,8 +30,14 @@ import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 //   save a moment long, then "✓ Saved". "Fail" as an author is refused.
 //
 // - Narrow: ChoiceButtons of four in a 280px box, on a form, edited in
-//   place on a record, and in a dialog's row of short fields: the buttons
+//   place on a record, and in a dialog's row beside a second choice (two
+//   choices share a row, 4.98), the two dates on the next: the buttons
 //   wrap onto a second line, never past the box's edge.
+//
+// - Choice pairs (4.98, 9C): five choice fields in a 460px form, two to
+//   a row and the fifth on a row of its own; on a phone Side and Coats
+//   stay side by side (both fit), Room and Effort each take a row (too
+//   wide for half of one).
 //
 // e2e/form-controls.spec.ts drives these; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
@@ -270,6 +276,11 @@ const BINDINGS = [
   { value: 'audiobook', label: 'Audiobook' },
 ] as const
 type Binding = (typeof BINDINGS)[number]['value']
+const CONDITIONS = [
+  { value: 'new', label: 'New' },
+  { value: 'used', label: 'Used' },
+] as const
+type Condition = (typeof CONDITIONS)[number]['value']
 
 // A 280px box: a phone's narrow column, a panel, a field sharing a row.
 function NarrowBox({ name, children }: { name: string; children: ReactNode }) {
@@ -305,6 +316,7 @@ function NarrowRecord() {
 function NarrowControls() {
   const [binding, setBinding] = useState<Binding | null>('ebook')
   const [dialogBinding, setDialogBinding] = useState<Binding | null>('paperback')
+  const [dialogCondition, setDialogCondition] = useState<Condition | null>('used')
   const [started, setStarted] = useState<PlainDate>('2026-03-14')
   const [finished, setFinished] = useState<PlainDate>('')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -344,6 +356,17 @@ function NarrowControls() {
               onValueChange={setDialogBinding}
             />
           </Field>
+          {/* A second choice: the two share the row (9C, 4.98), so Binding
+              has half of it and its four buttons wrap inside its field. */}
+          <Field size="m">
+            <FieldLabel id="dialog-condition-label">Condition</FieldLabel>
+            <ChoiceButtons
+              aria-labelledby="dialog-condition-label"
+              options={CONDITIONS}
+              value={dialogCondition}
+              onValueChange={setDialogCondition}
+            />
+          </Field>
           <Field size="m">
             <FieldLabel htmlFor="dialog-started">Started On</FieldLabel>
             <DateField id="dialog-started" value={started} onChange={setStarted} locale="en-US" />
@@ -354,6 +377,63 @@ function NarrowControls() {
           </Field>
         </FieldGroup>
       </FormDialog>
+    </div>
+  )
+}
+
+const ROOMS = [
+  { value: 'kitchen', label: 'Kitchen' },
+  { value: 'hall', label: 'Hall' },
+  { value: 'garden', label: 'Garden' },
+] as const
+const SIDES = [
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'both', label: 'Both' },
+] as const
+const EFFORTS = [
+  { value: 'light', label: 'Light' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'heavy', label: 'Heavy' },
+] as const
+const COATS = [
+  { value: 'one', label: 'One' },
+  { value: 'two', label: 'Two' },
+] as const
+
+function ChoiceField<T extends string>({
+  name,
+  options,
+  initial,
+}: {
+  name: string
+  options: readonly { value: T; label: string }[]
+  initial: T
+}) {
+  const [value, setValue] = useState<T | null>(initial)
+  const id = `pair-${name.toLowerCase()}`
+  return (
+    <Field size="m">
+      <FieldLabel id={id}>{name}</FieldLabel>
+      <ChoiceButtons aria-labelledby={id} options={options} value={value} onValueChange={setValue} />
+    </Field>
+  )
+}
+
+function ChoicePairForm() {
+  return (
+    <div data-testid="choice-pairs" className="w-full max-w-[460px] rounded-lg border border-border bg-card p-5">
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="pair-name">Job</FieldLabel>
+          <Input id="pair-name" defaultValue="Paint the door" />
+        </Field>
+        <ChoiceField name="Room" options={ROOMS} initial="hall" />
+        <ChoiceField name="Effort" options={EFFORTS} initial="moderate" />
+        <ChoiceField name="Side" options={SIDES} initial="both" />
+        <ChoiceField name="Coats" options={COATS} initial="two" />
+        <ChoiceField name="Finish" options={COATS} initial="one" />
+      </FieldGroup>
     </div>
   )
 }
@@ -370,3 +450,5 @@ export const Form: StoryObj = { render: () => <OnAForm /> }
 export const EditInPlace: StoryObj = { render: () => <InPlace /> }
 
 export const Narrow: StoryObj = { render: () => <NarrowControls /> }
+
+export const ChoicePairs: StoryObj = { name: 'Choice pairs', render: () => <ChoicePairForm /> }

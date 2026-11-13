@@ -9,41 +9,41 @@
 - [3. Icon in a badge](#3-icon-in-a-badge) · lines 180–193
 - [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 195–272
   - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 220–272
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 274–287
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 289–301
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 303–324
-- [8. Date, relative](#8-date-relative) · lines 326–363
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 365–413
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 383–413
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 415–465
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 433–465
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 467–507
-- [12. Boolean](#12-boolean) · lines 509–539
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 541–577
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 561–577
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 579–596
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 598–707
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 624–707
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 709–744
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 746–819
-- [18. Editable value](#18-editable-value) · lines 821–1499
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1131–1199
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1201–1237
-  - [A link and its label](#a-link-and-its-label) · lines 1239–1263
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1265–1398
-  - [In a table's rows](#in-a-tables-rows) · lines 1400–1485
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1487–1499
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1501–1567
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1569–1633
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1635–1733
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1735–1764
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1766–1804
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1806–1882
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1884–1907
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1909–2035
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 1997–2035
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2037–2073
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2075–2120
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 274–294
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 296–308
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 310–331
+- [8. Date, relative](#8-date-relative) · lines 333–370
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 372–420
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 390–420
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 422–472
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 440–472
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 474–514
+- [12. Boolean](#12-boolean) · lines 516–546
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 548–584
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 568–584
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 586–603
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 605–714
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 631–714
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 716–751
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 753–826
+- [18. Editable value](#18-editable-value) · lines 828–1506
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1138–1206
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1208–1244
+  - [A link and its label](#a-link-and-its-label) · lines 1246–1270
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1272–1405
+  - [In a table's rows](#in-a-tables-rows) · lines 1407–1492
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1494–1506
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1508–1574
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1576–1640
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1642–1740
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1742–1771
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1773–1811
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1813–1889
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1891–1914
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1916–2042
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2004–2042
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2044–2080
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2082–2127
 
 <!-- /index -->
 
@@ -276,6 +276,13 @@ await expect(page.locator('[data-slot=tooltip-content][data-open]')).toHaveText(
 A many-valued enum that collapses to good / neutral / bad. **The grouping
 is the decision, not the style** — see
 [`design-language.md`](design-language.md#mapping-an-enum-to-tones).
+
+**A record's status** is not this pattern since 4.98: it's a
+`StatusMark` (an icon, a colour and the word, one of six kinds; see
+[`design-language.md` "Status marks"](design-language.md#status-marks)),
+`<StatusMark kind={STATUS_KIND[status]}>{STATUS_LABELS[status]}</StatusMark>`
+in the cell. A tone badge stays for the other status-like values (a
+computed progress, a source's health).
 
 An **ordered** status (a lifecycle every record moves through toward
 *done*) reads better as a stage circle beside the word (pattern 19);
@@ -1996,7 +2003,7 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
 
 ### The framed look, and sibling lists beside the title
 
-The toolbar a list-page review picked (4.98): `look="framed"` on
+The toolbar a list-page review picked (4.100): `look="framed"` on
 `DataTable`, and `siblings` on `ListHeader`. Both are opt-in.
 
 ```tsx

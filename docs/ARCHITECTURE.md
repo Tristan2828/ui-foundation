@@ -211,6 +211,18 @@ src/main.tsx                           FoundationProviders (theme, query client,
   uncontrolled dialogs both close. `FormDialog` is the form's chrome in a
   `size="form"` dialog; as `RecordDialogRoute`'s `newPath` route it opens
   itself from `NewRecordDialogContext`, with no record dialog round it.
+- **The record standard** (4.98): no right rail. `EntityView`'s default
+  layout, `tabs`, turns the facts (sections placed `rail` with no `tab`)
+  into the last tab, Details, or keeps them in the column on a record
+  with no tabs; one placed `rail` with a `tab` is a box beside that tab.
+  `layout="rail"` stays for apps not yet moved. A tiny record opens as a
+  small card (`RecordDialogRoute look="card"`: the `confirm` width, its
+  controls handed to EntityView through the dialog's context, so they
+  sit on the record's title line). A status is a `StatusMark`, one of six
+  kinds whose icons are one map (`lib/status-kinds.ts`). FieldGroup finds
+  a choice (`ChoiceButtons`) by itself and pairs choices only with each
+  other (`fieldRows`), side by side on a phone while both fit (CSS
+  `flex: 1 1 max-content`, so the browser decides).
 - **A record's tabs** (4.76, #303): a main section's `tab` groups it
   under `EntityView`'s tab list, the selected tab in `?tab=`, changed by
   replacing the entry with its state kept, so a record over its list stays
