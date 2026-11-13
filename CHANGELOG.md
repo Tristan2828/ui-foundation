@@ -7,6 +7,45 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.103.0 — DataTable's title column capped at every width
+
+npm package. `ui-foundation-backend` moves to 4.103.0 with it, unchanged.
+
+A fix (Homebase Roadmap 338): a list's title column had no width cap
+above md, so a long title (a discussion's topic) overran and pushed the
+other columns off.
+
+- **The title column (DataTable's first) is cut to one line at 24rem**
+  at every width, with an ellipsis, never over 60% of the table's area
+  (a first column with its own `meta.clip` or `meta.maxWidth` keeps
+  their meaning: cut, or wrapped, at that width). A cut title shows whole in a tooltip on
+  hover and when its link takes focus. The link stays the row's only tab
+  stop (a cut cell with no control of its own takes one, as `meta.clip`
+  does), and a screen reader reads the whole title. A short title looks
+  as before. Below md a pinned first column (`pinFirstColumn`) is cut
+  at 45% of the table's area, where it used to wrap.
+- **A column opts out with new optional `meta` (`ColumnMeta`):**
+  `wrap: true` wraps the title at the cap (24rem, or its `maxWidth`) instead, for a title worth
+  reading whole in the row (a pinned title on a phone wrapped this way
+  before); `maxWidth: 'none'` lifts the cap, the look before.
+- Stories `app/DataTable` TitleColumn and TitleColumnWrap, with axe in
+  both themes; specs at 1920, 1024, 800 and 390px.
+
+**App steps.**
+
+1. Remove any clip of your own around a title cell (a `truncate`,
+   `line-clamp-1`, `max-w-*` or `title` attribute on the title link or
+   its wrapper, the stopgap on a list like Discussions' Topic): the
+   table now does it, with the tooltip. Left in, it cuts the title
+   narrower than the cap and adds a second tooltip.
+2. A title column that isn't the first: move it first, or give it
+   `meta: { clip: true }` (cell pattern 1's long text) for the same cut.
+3. A list whose titles should stay whole and wrap (a pinned title on a
+   phone, short lists of long names): `meta: { wrap: true }` on that
+   column.
+4. Specs that measured a long title's width or height, or expected it on
+   several lines, now see one line at most 24rem.
+
 ## 4.102.0 — An inline pencil that takes no room, and Create in a small set's picker
 
 npm package. `ui-foundation-backend` moves to 4.102.0 with it, unchanged.

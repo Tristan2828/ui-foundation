@@ -267,6 +267,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--list-look', mustShow: '1–50 of 120' },
   { id: 'app-datatable--list-look-in-rows', mustShow: '1–50 of 120' },
   { id: 'app-datatable--list-look-striped', mustShow: '1–50 of 120' },
+  { id: 'app-datatable--title-column', mustShow: 'Shoes for the long walks' },
+  { id: 'app-datatable--title-column-wrap', mustShow: 'Shoes for the long walks' },
   // A list of sub-records, and one whose items open to edit, with Duplicate (#222).
   { id: 'app-listeditor--default', mustShow: 'Pack for the trip' },
   { id: 'app-listeditor--rows-that-open', mustShow: 'Romanian deadlift' },
