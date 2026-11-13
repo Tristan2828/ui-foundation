@@ -262,6 +262,33 @@ function ProjectCard() {
   )
 }
 
+// A record with tabs in the dialog (4.101, 3B): long enough that its body
+// scrolls, and the tab bar sticks to the top of it with the name above.
+const LONG_NOTES = Array.from(
+  { length: 30 },
+  (_, at) => `${at + 1}. Sand the boards, then wipe them down before the next coat goes on.`,
+).join('\n')
+
+function ProjectTabs() {
+  const { id } = useParams()
+  const { project, error, isLoading, retry } = useProject(id)
+  return (
+    <EntityView
+      title={project?.name}
+      isLoading={isLoading}
+      error={error}
+      onRetry={retry}
+      back={{ to: '/projects', label: 'Projects' }}
+      tabCounts={{ Steps: 30 }}
+      sections={[
+        { title: 'Details', placement: 'rail', fields: [{ label: 'Status', value: project?.status }] },
+        { title: 'Steps', tab: 'Steps', content: <Markdown>{LONG_NOTES}</Markdown> },
+        { title: 'Notes', tab: 'Notes', content: project?.notes && <Markdown>{project.notes}</Markdown>, emptyLabel: 'No notes' },
+      ]}
+    />
+  )
+}
+
 function TaskList({ projectId }: { projectId: number }) {
   const rows = TASKS.filter((task) => task.projectId === projectId)
   return (
@@ -376,9 +403,17 @@ function Layout() {
 // How the routes are laid out: the record a child of its list (`nested`,
 // the default), the list a sibling at /projects/list (`sibling`), or a
 // project's page whose tasks open over it (`sub-records`).
-type Shape = 'nested' | 'sibling' | 'sub-records' | 'new' | 'card'
+type Shape = 'nested' | 'sibling' | 'sub-records' | 'new' | 'card' | 'tabs'
 
 function projectRoutes(shape: Shape, opens: Opens, rail: boolean) {
+  if (shape === 'tabs')
+    return [
+      {
+        path: 'projects',
+        element: <RecordDialogRoute list={<ProjectList opens={opens} />} label="Project" />,
+        children: [{ path: ':id', element: <ProjectTabs /> }],
+      },
+    ]
   if (shape === 'card')
     return [
       {
@@ -584,4 +619,9 @@ export const Card: Story = {
 export const CardDialogOnly: Story = {
   name: 'Card, dialog only',
   render: () => <Projects initialEntries={openOver('1')} initialIndex={1} shape="card" opens="dialog-only" />,
+}
+
+export const TabsOpen: Story = {
+  name: 'Tabs, open',
+  render: () => <Projects initialEntries={openOver('1')} initialIndex={1} shape="tabs" />,
 }

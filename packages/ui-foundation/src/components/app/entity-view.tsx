@@ -72,6 +72,15 @@
 // sections stay mounted, hidden, so a field open in place survives a
 // switch. With no `tab` on any section, nothing changes.
 //
+// The tab bar (4.101, record standard 3B): bigger underline tabs (16px
+// semibold, 14px on a phone), a 3px primary line under the open one, each
+// tab's count beside its name (`tabCounts`; none for zero). The bar sticks
+// to the top of whatever scrolls (the page, or a record dialog's body) as
+// the record scrolls under it, `tabsStickyTop` below the top, and once
+// stuck it shows the record's name above the tabs, so the other tabs and
+// the record you're on stay in view. Stuck is measured (a marker just
+// above the bar, compared on every scroll), never guessed from the width.
+//
 // `leading`, left of the title: the record's mark or avatar, with the
 // title, subtitle and badges beside it at every width. A rail field's
 // label sits to the left of its value (`railFields`, `beside` by default
@@ -294,6 +303,18 @@ export type EntityViewProps = {
    * section of the record's own with this tab joins it.
    */
   detailsTab?: string
+  /**
+   * Each tab's count, by its name (`{ Updates: 2, Linked: 1 }`): the
+   * records it holds, shown beside the name. A tab left out, or at 0,
+   * shows none.
+   */
+  tabCounts?: Readonly<Record<string, number>>
+  /**
+   * How far from the top the tab bar sticks, for a page with a bar of its
+   * own pinned to the top: any CSS length (`'3.5rem'`,
+   * `'var(--page-bar-height)'`). Defaults to `0px`.
+   */
+  tabsStickyTop?: string
   /**
    * In the `rail` layout, where its columns stack (a phone): the rail
    * before the main column (`rail-first`, the default), or the main column
@@ -704,15 +725,49 @@ function TabBody({ tab, railFields }: { tab: ViewTab; railFields: EntityViewRail
 // (hidden but mounted unless selected). The selected tab is the address's,
 // changed in place: the entry replaced, its state kept (a record over its
 // list stays the dialog), the scroll where it was.
+// Whether the tab bar is stuck: the marker just above it has scrolled
+// above the bar's top. Read on every scroll anywhere (a capture listener:
+// the page's or a dialog body's) and on resize.
+function useStuck() {
+  const [marker, setMarker] = useState<HTMLElement | null>(null)
+  const [bar, setBar] = useState<HTMLElement | null>(null)
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    if (!marker || !bar) return
+    const measure = () => setStuck(marker.getBoundingClientRect().top < bar.getBoundingClientRect().top - 1)
+    measure()
+    window.addEventListener('scroll', measure, { capture: true, passive: true })
+    window.addEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('scroll', measure, { capture: true })
+      window.removeEventListener('resize', measure)
+    }
+  }, [marker, bar])
+  return { setMarker, setBar, stuck }
+}
+
 function MainTabs({
   tabs,
   label,
   railFields = 'beside',
+  title,
+  counts,
+  stickyTop,
 }: {
   tabs: ViewTab[]
   label: string
   railFields?: EntityViewRailFields
+  /** The record's name, above the tabs while the bar is stuck. */
+  title?: string
+  counts?: Readonly<Record<string, number>>
+  stickyTop?: string
 }) {
+  const { setMarker, setBar, stuck } = useStuck()
+  const countOf = (tab: ViewTab) => {
+    if (!counts) return 0
+    const key = Object.keys(counts).find((name) => entityViewTabSlug(name) === tab.slug)
+    return key ? counts[key] ?? 0 : 0
+  }
   const location = useLocation()
   const navigate = useNavigate()
   const asked = new URLSearchParams(location.search).get(TAB_PARAM)
@@ -734,24 +789,54 @@ function MainTabs({
       data-slot="entity-view-tabs"
       className="min-w-0 gap-6"
     >
-      {/* Wider than the column (many tabs, a phone), the list scrolls
-          sideways on its own, never the page. */}
-      <TabsList
-        variant="line"
-        activateOnFocus
-        aria-label={label}
-        className="h-auto w-full max-w-full justify-start gap-1 overflow-x-auto overflow-y-hidden border-b border-border p-0 [scrollbar-width:thin]"
+      <div ref={setMarker} aria-hidden="true" data-slot="entity-view-tabs-marker" className="h-px -mb-6" />
+      {/* Sticks as the record scrolls under it (3B); stuck, the record's
+          name shows above the tabs. The page's own background, so what
+          scrolls under it doesn't show through. */}
+      <div
+        ref={setBar}
+        data-slot="entity-view-tab-bar"
+        data-stuck={stuck ? '' : undefined}
+        // A record dialog's body sets --entity-view-sticky-top to minus its
+        // padding, so the bar sits at the body's own top edge there.
+        style={{ top: stickyTop ?? 'var(--entity-view-sticky-top, 0px)' }}
+        className="sticky z-10 -mx-1 flex min-w-0 flex-col gap-1 bg-background px-1 pt-0 data-[stuck]:pt-2 data-[stuck]:shadow-[0_8px_12px_-10px_var(--color-foreground)]"
       >
-        {tabs.map((tab) => (
-          <TabsTrigger
-            key={tab.slug}
-            value={tab.slug}
-            className="h-9 flex-none px-3 text-muted-foreground group-data-horizontal/tabs:after:bottom-0 pointer-coarse:h-11 dark:text-muted-foreground"
-          >
-            {tab.name}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+        {stuck && title && (
+          <p data-slot="entity-view-tab-bar-title" aria-hidden="true" className="truncate type-label font-semibold text-foreground">
+            {title}
+          </p>
+        )}
+        {/* Wider than the column (many tabs, a phone), the list scrolls
+            sideways on its own, never the page. */}
+        <TabsList
+          variant="line"
+          activateOnFocus
+          aria-label={label}
+          className="h-auto w-full max-w-full justify-start gap-0 overflow-x-auto overflow-y-hidden border-b border-border p-0 md:gap-1 [scrollbar-width:thin]"
+        >
+          {tabs.map((tab) => {
+            const count = countOf(tab)
+            return (
+              <TabsTrigger
+                key={tab.slug}
+                value={tab.slug}
+                className="h-11 flex-none gap-1.5 px-2.5 text-sm font-semibold text-muted-foreground group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-[3px] after:bg-primary data-active:text-foreground md:px-4 md:text-base dark:text-muted-foreground dark:data-active:text-foreground"
+              >
+                {tab.name}
+                {count > 0 && (
+                  <span
+                    data-slot="entity-view-tab-count"
+                    className="rounded-full bg-muted px-1.5 text-xs leading-[1.0625rem] font-medium tabular-nums text-foreground"
+                  >
+                    {count}
+                  </span>
+                )}
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
+      </div>
       {tabs.map((tab) => (
         <TabsContent
           key={tab.slug}
@@ -803,6 +888,8 @@ export function EntityView({
   footer,
   layout = 'tabs',
   detailsTab = 'Details',
+  tabCounts,
+  tabsStickyTop,
   mobileOrder = 'rail-first',
   railLabel,
   railFields = 'beside',
@@ -891,7 +978,16 @@ export function EntityView({
   const shaped = layout === 'tabs' ? tabsLayout(sections, detailsTab) : null
   const tabs = shaped ? shaped.tabs : tabsOf(mainSections)
   const tabbed = (section: EntityViewSection) => section.placement !== 'rail' && section.tab !== undefined
-  const tabList = tabs.length > 0 && <MainTabs tabs={tabs} label={tabsLabel} railFields={railFields} />
+  const tabList = tabs.length > 0 && (
+    <MainTabs
+      tabs={tabs}
+      label={tabsLabel}
+      railFields={railFields}
+      title={title}
+      counts={tabCounts}
+      stickyTop={tabsStickyTop}
+    />
+  )
   const main = (
     <div className={cn(RAIL_LAYOUT.main, railSections.length === 0 && RAIL_LAYOUT.mainAlone)}>
       {mainSections

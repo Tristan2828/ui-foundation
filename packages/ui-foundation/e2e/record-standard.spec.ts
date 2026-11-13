@@ -21,7 +21,8 @@ test.describe('the Details tab (1A)', () => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto(`${HARNESS}app-entityview--details-tab`)
     const tabs = page.getByRole('tablist', { name: 'Office move sections' })
-    await expect(tabs.getByRole('tab')).toHaveText(['Notes', 'Changes', 'Details'])
+    // Changes carries its count (4.101's tab bar).
+    await expect(tabs.getByRole('tab')).toHaveText(['Notes', /^Changes/, 'Details'])
     await expect(page.getByRole('complementary', { name: 'Office move details' })).toHaveCount(0)
     await expect(page.getByRole('region', { name: 'Summary' })).toBeHidden()
 

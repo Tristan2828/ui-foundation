@@ -33,11 +33,11 @@
 - [A few equal things](#a-few-equal-things) · lines 1401–1485
 - [An overview page](#an-overview-page) · lines 1487–1550
 - [A record's header and empty values](#a-records-header-and-empty-values) · lines 1551–1602
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1604–1663
-- [Picking at random](#picking-at-random) · lines 1665–1696
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1698–1765
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1767–1792
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1794–1883
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1604–1671
+- [Picking at random](#picking-at-random) · lines 1673–1704
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1706–1773
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1775–1800
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1802–1891
 
 <!-- /index -->
 
@@ -1622,10 +1622,18 @@ its short facts the last tab, Details. A mark goes left of the title.
 
 - **Tabs** (`tab` on a section): a line tab list under the strip and any
   sections with no tab, one tab per name in the order the sections first
-  give it. The selected tab has foreground text and a 2px underline, the
-  others muted text; the list's own bottom border runs the column's
-  width. On a phone each tab is 44px tall, and a list wider than the
-  column scrolls sideways on its own, never the page. Arrow keys move
+  give it. The look is the record standard's 3B (4.101): 44px tabs in
+  16px semibold (14px under 48rem), the selected one in foreground text
+  with a 3px primary line under it, the others muted; the list's own
+  bottom border runs the column's width. A tab's count (`tabCounts`, by
+  name: the records it holds) sits beside its name in a small muted
+  pill; a tab with none shows no count. A list wider than the column
+  scrolls sideways on its own, never the page.
+- **The tab bar sticks** (4.101) to the top of whatever scrolls (the
+  page, or a record dialog's body) while the record scrolls under it,
+  and once stuck shows the record's name above the tabs, so you always
+  see which record and which other tabs there are. A page with a bar of
+  its own pinned to the top passes `tabsStickyTop` (any CSS length). Arrow keys move
   between tabs and select (Home, End), and Tab goes on into the panel.
   The address holds the selected tab (`?tab=used-in`,
   `entityViewTabSlug`), replaced rather than pushed, so Back leaves the
