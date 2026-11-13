@@ -7,6 +7,43 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.99.0 — The sidebar as icon tiles
+
+npm package. `ui-foundation-backend` moves to 4.99.0 with it, unchanged.
+
+- **`AppShell`'s `navLook="tiles"`** (design-language.md "The sidebar and
+  the phone's bar"): each sidebar group a three-column grid of tiles,
+  icon over a short label, with no visible headings (a section's label
+  still names its grid for screen readers). The tile you're in, or the
+  one holding the page, has the tint and a `--primary` ring; a count
+  sits in its corner. The pages of the entry you're in list under its
+  group's grid, a hairline in place of each heading. The icon rail is
+  unchanged, and the sidebar's phone sheet shows the tiles.
+- **A section's own `look`** (`'list' | 'tiles'`, type `NavLook`) wins
+  over the shell's: `look: 'list'` keeps a Tools section at the foot a
+  list under a tiles sidebar, or `look: 'tiles'` draws one section as
+  tiles in a list sidebar. A tiles section doesn't fold (`collapsible`
+  is ignored).
+- **The phone's bar follows the look**: a `bottomBar` item for a tiles
+  section that sets no `sheet` opens its sheet as tiles, the current
+  entry's pages under them as smaller tiles. An item's own `sheet` still
+  wins, and `sheet: 'tiles'` on a list section is unchanged (its pages
+  left to the module).
+- New fixtures app/AppShell StandardTiles, StandardTilesRail and
+  StandardTilesOnHome, with e2e/app-shell-tiles.spec.ts (the grid, the
+  marks, the pages under it, the keyboard, the rail, the phone's sheets,
+  axe in both themes).
+
+**For an app:** nothing changes until it opts in. To take the tiles,
+pass `navLook="tiles"` to `AppShell`, shorten any long entry label to a
+word or two, and give a section that should stay a list `look: 'list'`
+(a Tools section at the foot, say). Drop `sheet: 'tiles'` from the
+`bottomBar` items for tiles sections if you want their sheets to show
+the current module's pages too. A test that finds a section's heading
+by its visible text (`getByText('Every day')`) now finds a
+screen-reader-only label; find the section's list by name instead
+(`getByRole('list', { name: 'Every day', exact: true })`).
+
 ## 4.97.0 — Labels in Title Case, and ChoiceButtons that wrap in a narrow box
 
 npm package. `ui-foundation-backend` moves to 4.97.0 with it, unchanged.

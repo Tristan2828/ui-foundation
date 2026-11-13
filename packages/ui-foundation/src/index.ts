@@ -14,6 +14,7 @@ export {
   type BottomBarItem,
   type NavEntry,
   type NavItem,
+  type NavLook,
   type NavSection,
 } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
