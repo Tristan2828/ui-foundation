@@ -138,6 +138,11 @@ OnSent = Callable[[AsyncSession, Any, dict[str, ChannelResult]], Awaitable[None]
 it sent and commits, so a last-sent time per channel lands in the same
 commit."""
 
+DoneAction = Callable[[Any, datetime], push.PushAction | None]
+"""The Done button on a repeating reminder's push (4.104): given the row
+and the occurrence being sent (a UTC instant), the app's endpoint that
+marks it done, as a push.PushAction. None leaves that push without one."""
+
 
 @dataclass
 class ReminderSent:
@@ -187,11 +192,24 @@ class RemindersRun:
         return f"{summary}; {self.unreadable} unreadable" if self.unreadable else summary
 
 
-def _push_sender(totals: push.PushResult) -> Sender:
+def _push_sender(
+    totals: push.PushResult,
+    plans: Mapping[int, recurrence.Step] | None = None,
+    done_action: DoneAction | None = None,
+) -> Sender:
     """The package's channel: every device the user allowed, counted into
-    the run's totals."""
+    the run's totals. A repeating reminder's nag sounds again (`renotify`),
+    and with `done_action` its push carries a Done button."""
 
     async def send(session: AsyncSession, reminder: Any) -> ChannelResult:
+        plan = (plans or {}).get(id(reminder))
+        extra: dict[str, Any] = {}
+        if plan is not None:
+            if plan.send == "nag":
+                extra["renotify"] = True
+            action = done_action(reminder, plan.occurrence) if done_action and plan.occurrence else None
+            if action is not None:
+                extra["action"] = action
         outcome = await push.send_push(
             session,
             reminder.user_id,
@@ -199,6 +217,7 @@ def _push_sender(totals: push.PushResult) -> Sender:
             reminder.body,
             reminder.url,
             tag=f"reminder-{reminder.id}",
+            **extra,
         )
         totals.sent += outcome.sent
         totals.removed += outcome.removed
@@ -251,6 +270,7 @@ async def run_due_reminders(
     senders: Mapping[str, Sender] | None = None,
     channels: ChannelsOf | None = None,
     on_sent: OnSent | None = None,
+    done_action: DoneAction | None = None,
 ) -> RemindersRun:
     """One run of the job: sends each due reminder on its channels, marks
     it sent today, and says how each channel went.
@@ -261,7 +281,8 @@ async def run_due_reminders(
     channels beyond Web Push by name ({"email": send_email}); one named
     "push" replaces the package's. `channels` picks a reminder's channels
     (all of them when left out), and `on_sent` sees each reminder's results
-    before it's stamped. A failed channel doesn't stop the others, and the
+    before it's stamped. `done_action` puts a Done button on a repeating
+    reminder's push (DoneAction). A failed channel doesn't stop the others, and the
     reminder is done for the day either way: a channel that's down isn't
     tried again every minute.
 
@@ -313,7 +334,7 @@ async def run_due_reminders(
             due.append((reminder, on))
     if moved:
         await session.commit()
-    available: dict[str, Sender] = {PUSH: _push_sender(run.push_result), **(senders or {})}
+    available: dict[str, Sender] = {PUSH: _push_sender(run.push_result, repeating, done_action), **(senders or {})}
     for reminder, on in due:
         reminder_id = (await _loaded(session, reminder)).id
         names = list(dict.fromkeys(channels(reminder))) if channels else list(available)
@@ -409,10 +430,13 @@ async def send_due_reminders(
     senders: Mapping[str, Sender] | None = None,
     channels: ChannelsOf | None = None,
     on_sent: OnSent | None = None,
+    done_action: DoneAction | None = None,
 ) -> str | None:
     """run_due_reminders as the job runs it: its summary line, or None
     when nothing was due."""
-    run = await run_due_reminders(session, now, model=model, senders=senders, channels=channels, on_sent=on_sent)
+    run = await run_due_reminders(
+        session, now, model=model, senders=senders, channels=channels, on_sent=on_sent, done_action=done_action
+    )
     return run.summary()
 
 
@@ -422,14 +446,24 @@ def register(
     senders: Mapping[str, Sender] | None = None,
     channels: ChannelsOf | None = None,
     on_sent: OnSent | None = None,
+    done_action: DoneAction | None = None,
 ) -> None:
     """Adds the send-reminders job (main.py, when PUSH_ENABLED), reading
     `model`'s table (the package's `reminders` when left out) and sending
-    on push and `senders`, as run_due_reminders says."""
+    on push and `senders`, as run_due_reminders says.
+
+        reminders.register(
+            model=MyReminder,
+            done_action=lambda row, occurrence: push.PushAction(
+                f"/api/reminders/{row.id}/done", {"occurrence": occurrence.isoformat()}
+            ),
+        )"""
     if JOB_NAME in jobs.JOBS:
         return
 
     async def run(session: AsyncSession) -> str | None:
-        return await send_due_reminders(session, model=model, senders=senders, channels=channels, on_sent=on_sent)
+        return await send_due_reminders(
+            session, model=model, senders=senders, channels=channels, on_sent=on_sent, done_action=done_action
+        )
 
     jobs.register_job(JOB_NAME, every=timedelta(minutes=1), run=run, timeout=timedelta(minutes=2))

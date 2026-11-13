@@ -351,6 +351,8 @@ class RepeatingReminder(RecurringReminderFields, table=True):
 class Sent:
     title: str
     tag: str | None
+    renotify: bool = False
+    action: push.PushAction | None = None
 
 
 @pytest.fixture
@@ -358,9 +360,17 @@ def sent(monkeypatch: pytest.MonkeyPatch) -> list[Sent]:
     calls: list[Sent] = []
 
     async def send_push(
-        _: AsyncSession, user_id: int, title: str, body: str = "", url: str = "/", *, tag: str | None = None
+        _: AsyncSession,
+        user_id: int,
+        title: str,
+        body: str = "",
+        url: str = "/",
+        *,
+        tag: str | None = None,
+        renotify: bool = False,
+        action: push.PushAction | None = None,
     ) -> push.PushResult:
-        calls.append(Sent(title, tag))
+        calls.append(Sent(title, tag, renotify, action))
         return push.PushResult(sent=1)
 
     monkeypatch.setattr(push, "send_push", send_push)
@@ -466,6 +476,32 @@ async def test_a_rule_written_wrong_is_unreadable_and_a_changed_one_starts_again
     await session.commit()
     assert (await _stored(session)).next_at is None
     assert await _run(session, "2026-11-05T12:00:00Z") == "1 due: 1 sent; 1 unreadable"
+
+
+async def test_a_nag_sounds_again_and_each_push_carries_the_apps_done_action(
+    session: AsyncSession, sent: list[Sent]
+) -> None:
+    session.add(_row(nag_every_minutes=15, nag_limit=1))
+    session.add(_row(title="Old style", recurrence=None, days="thu", time_of_day=time(9, 0)))
+    await session.commit()
+
+    def done_action(row: Any, occurrence: datetime) -> push.PushAction:
+        return push.PushAction(f"/api/reminders/{row.id}/done", {"occurrence": occurrence.isoformat()})
+
+    for now in ("2026-11-05T09:00:00Z", "2026-11-05T09:15:00Z"):
+        await reminders.send_due_reminders(session, now=at(now), model=RepeatingReminder, done_action=done_action)
+    first, old_style, nag = sent
+    assert (first.renotify, nag.renotify) == (False, True)
+    assert first.action == nag.action == push.PushAction("/api/reminders/1/done", {"occurrence": "2026-11-05T09:00:00+00:00"})
+    # A weekday-set row has no occurrence to mark done: no button, no renotify.
+    assert (old_style.title, old_style.action, old_style.renotify) == ("Old style", None, False)
+
+
+async def test_without_a_done_action_a_push_has_no_button(session: AsyncSession, sent: list[Sent]) -> None:
+    session.add(_row())
+    await session.commit()
+    await _run(session, "2026-11-05T09:00:00Z")
+    assert [call.action for call in sent] == [None]
 
 
 def test_the_columns_base_registers_no_table() -> None:

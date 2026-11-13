@@ -40,6 +40,7 @@ import os
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
@@ -263,23 +264,74 @@ def encrypt(
 # ---------------------------------------------------------------- message
 
 
+MAX_ACTION_TITLE = 40
+
+
+def _is_app_path(value: str) -> bool:
+    """A path in the app itself: one leading /, never // or a backslash
+    (a browser reads either as the start of another host), and no control
+    characters."""
+    return (
+        value.startswith("/")
+        and not value.startswith("//")
+        and not any(ord(char) < 0x20 or char == "\\" for char in value)
+    )
+
+
+@dataclass(frozen=True)
+class PushAction:
+    """A button on the notification (4.104): tapped, the service worker
+    POSTs `body` as JSON to `path`, the app's own endpoint, with the
+    session cookie, and opens nothing. A browser without notification
+    actions (iOS Safari) shows no button; the tap still opens the url.
+
+        PushAction(f"/api/reminders/{row.id}/done", {"occurrence": occurrence.isoformat()})
+    """
+
+    path: str
+    body: Mapping[str, object] | None = None
+    title: str = "Done"
+
+    def problem(self) -> str | None:
+        if not _is_app_path(self.path):
+            return "A push action's path is the app's own, starting with one /."
+        if not self.title.strip():
+            return "A push action needs a title."
+        return None
+
+    def wire(self) -> dict[str, object]:
+        return {"title": self.title[:MAX_ACTION_TITLE], "path": self.path, "body": dict(self.body or {})}
+
+
 @dataclass(frozen=True)
 class PushMessage:
     """What the service worker shows: a title, a line of text, and the
     app's own path to open when it's tapped. `tag`: a newer message with
-    the same tag replaces the one still showing."""
+    the same tag replaces the one still showing. `renotify` (with a tag):
+    that replacement sounds and vibrates again, as a nag should (a browser
+    replaces silently otherwise). `action`: a button that posts to the app
+    (PushAction)."""
 
     title: str
     body: str = ""
     url: str = "/"
     tag: str | None = None
+    renotify: bool = False
+    action: PushAction | None = None
 
     def payload(self) -> bytes:
-        if not self.url.startswith("/") or self.url.startswith("//"):
+        if not _is_app_path(self.url):
             raise ValueError("A push message's url is a path in the app, starting with one /.")
-        data: dict[str, str] = {"title": self.title[:MAX_TITLE], "body": self.body[:MAX_BODY], "url": self.url}
+        data: dict[str, object] = {"title": self.title[:MAX_TITLE], "body": self.body[:MAX_BODY], "url": self.url}
         if self.tag:
             data["tag"] = self.tag
+            if self.renotify:
+                data["renotify"] = True
+        if self.action is not None:
+            problem = self.action.problem()
+            if problem:
+                raise ValueError(problem)
+            data["action"] = self.action.wire()
         encoded = json.dumps(data, separators=(",", ":"), ensure_ascii=False).encode()
         if len(encoded) > MAX_PAYLOAD_BYTES:
             raise ValueError(f"A push message is at most {MAX_PAYLOAD_BYTES} bytes as JSON.")
@@ -350,14 +402,18 @@ async def send_push(
     url: str = "/",
     *,
     tag: str | None = None,
+    renotify: bool = False,
+    action: PushAction | None = None,
     ttl: int = DEFAULT_TTL_SECONDS,
 ) -> PushResult:
     """Sends a notification to every device `user_id` allowed reminders on.
     Deletes the subscriptions the push service says are gone, and commits
-    that. A user with no subscriptions is sent nothing (0 sent)."""
+    that. A user with no subscriptions is sent nothing (0 sent).
+    `renotify` and `action` are PushMessage's: a re-send that sounds
+    again, and a button that posts to the app."""
     if not config.PUSH_ENABLED or not config.VAPID_PRIVATE_KEY or not config.VAPID_SUBJECT:
         raise RuntimeError("Push is off (PUSH_ENABLED, VAPID_PRIVATE_KEY, VAPID_SUBJECT).")
-    payload = PushMessage(title=title, body=body, url=url, tag=tag).payload()
+    payload = PushMessage(title=title, body=body, url=url, tag=tag, renotify=renotify, action=action).payload()
     key = load_private_key(config.VAPID_PRIVATE_KEY)
     result = await session.exec(select(PushSubscription).where(col(PushSubscription.user_id) == user_id))
     outcome = PushResult()
