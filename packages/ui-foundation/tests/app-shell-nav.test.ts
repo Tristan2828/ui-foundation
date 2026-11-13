@@ -8,7 +8,9 @@ import { describe, expect, it } from 'vitest'
 import {
   activeNavTo,
   bottomBarCurrent,
+  bottomBarTiles,
   childItems,
+  childRuns,
   childrenOpen,
   navBackTarget,
   navGroups,
@@ -293,5 +295,40 @@ describe('trailBackTarget', () => {
     const reading = [{ label: 'Reading', href: '/reading' }, { label: 'Dune' }]
     expect(trailBackTarget([tasks], '/reading/2', reading)).toEqual({ label: 'Reading', to: '/reading' })
     expect(trailBackTarget([tasks], '/reading/2', null)).toBeUndefined()
+  })
+})
+
+// The tiles look (#6C): a section's own look carried to its group, the
+// runs of a module's pages with no headings, and a bar item's sheet.
+describe('the tiles look', () => {
+  it("carries a section's look to its group, and nothing when it sets none", () => {
+    expect(navGroups([home, { label: 'Tasks', items: [tasks], look: 'tiles' }])).toEqual([
+      { items: [home] },
+      { label: 'Tasks', items: [tasks], look: 'tiles' },
+    ])
+    expect(navGroups([{ label: 'Tasks', items: [tasks] }])[0]).not.toHaveProperty('look')
+  })
+
+  it("splits a module's pages into runs: each heading its own, named, and plain pages between", () => {
+    const finance: NavItem = {
+      to: '/finance',
+      label: 'Finance',
+      icon: HomeIcon,
+      children: [tasks, { label: 'Money', items: [categories] }, home],
+    }
+    expect(childRuns(finance)).toEqual([{ items: [tasks] }, { label: 'Money', items: [categories] }, { items: [home] }])
+    expect(childRuns(tasks)).toEqual([])
+  })
+
+  it("opens a bar item's sheet as tiles by its own `sheet`, else by its section's look, else the shell's", () => {
+    const section = { label: 'Tasks', items: [tasks] }
+    const item = { group: 'Tasks', icon: HomeIcon }
+    expect(bottomBarTiles(item, section)).toBe(false)
+    expect(bottomBarTiles(item, section, 'tiles')).toBe(true)
+    expect(bottomBarTiles(item, { ...section, look: 'list' }, 'tiles')).toBe(false)
+    expect(bottomBarTiles(item, { ...section, look: 'tiles' })).toBe(true)
+    expect(bottomBarTiles({ ...item, sheet: 'list' }, { ...section, look: 'tiles' })).toBe(false)
+    expect(bottomBarTiles({ ...item, sheet: 'tiles' }, section)).toBe(true)
+    expect(bottomBarTiles({ to: '/', label: 'Home', icon: HomeIcon }, undefined, 'tiles')).toBe(false)
   })
 })
