@@ -303,13 +303,22 @@ test.describe('a choice in a narrow box', () => {
     await fitsIn(box, box.getByRole('group', { name: 'Binding' }))
   })
 
-  test('in a dialog, sharing a row with two dates, the buttons wrap inside their field', async ({ page }) => {
+  // Since 4.98 (9C) a choice shares its row only with another choice: in
+  // the dialog Binding has half the row beside Condition, too narrow for
+  // its four buttons, and the two dates take the next row together.
+  test('in a dialog, sharing a row with another choice, the buttons wrap inside their field', async ({ page }) => {
     await page.goto(story('narrow'))
     await page.getByRole('button', { name: 'Edit Book' }).click()
     const dialog = page.getByRole('dialog', { name: 'Edit Book' })
     // Measured once it has grown in, not while it animates.
     await dialog.evaluate((node) => Promise.all(node.getAnimations({ subtree: true }).map((animation) => animation.finished)))
     const group = dialog.getByRole('group', { name: 'Binding' })
+    const condition = (await dialog.getByRole('group', { name: 'Condition' }).boundingBox())!
+    expect(Math.abs(condition.y - (await group.boundingBox())!.y)).toBeLessThan(2)
     await fitsIn(group.locator('xpath=ancestor::*[@data-slot="field"][1]'), group)
+    const started = (await dialog.getByRole('textbox', { name: 'Started On' }).boundingBox())!
+    const finished = (await dialog.getByRole('textbox', { name: 'Finished On' }).boundingBox())!
+    expect(Math.abs(started.y - finished.y)).toBeLessThan(2)
+    expect(started.y).toBeGreaterThan(condition.y + condition.height)
   })
 })

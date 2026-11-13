@@ -3,23 +3,22 @@
 // reads the same on both screens. Lookups and formatters only; the markup
 // stays with each screen. Not in widgets-columns.tsx: that file exports a
 // function, and these would make it a mixed module for fast refresh.
+import type { StatusKind } from '@tristan2828/ui-foundation'
 import type { components } from '@/api/schema'
 
 type WidgetStatus = components['schemas']['WidgetStatus']
 type WidgetChecklistState = components['schemas']['WidgetChecklistState']
 
-// Enum → tone-mapped badge: group the values by what they *mean* (good /
-// neutral / bad) first, then pick one style for the whole column. The
-// grouping is the real decision; the style is mostly consistency with the
-// table's other columns. See docs/foundation/design-language.md.
-//
-// Only `active` earns a tone. `archived` is an end state, not a failure,
-// so it stays neutral — a red badge would tell the reader something is
-// wrong when nothing is.
-export const STATUS_BADGE_VARIANT: Record<WidgetStatus, 'outline' | 'outline-success' | 'secondary'> = {
-  draft: 'outline',
-  active: 'outline-success',
-  archived: 'secondary',
+// A status: its kind (the record standard's six, 4.98: icon, colour and
+// word, StatusMark). Sort each value by what it *means*: a draft hasn't
+// started (planned), an active one is in use, an archived one stopped
+// without anything being wrong (ended, a muted grey, never red). The word
+// stays the status's own (WIDGET_STATUS_LABELS). See
+// docs/foundation/design-language.md "Status marks".
+export const STATUS_KIND: Record<WidgetStatus, StatusKind> = {
+  draft: 'planned',
+  active: 'active',
+  archived: 'ended',
 }
 
 // Computed field (the server works it out): an enum → tone-mapped badge

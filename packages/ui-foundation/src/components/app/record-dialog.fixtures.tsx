@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createMemoryRouter, Link, Outlet, RouterProvider, useLocation, useParams, useSearchParams, type InitialEntry } from 'react-router'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import type { AppError } from '@/api/contracts'
+import { Trash2Icon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { DataTable } from './data-table'
 import { editInPlace } from './edit-in-place'
 import { EntityView } from './entity-view'
 import { FormDialog } from './form-dialog'
+import { IconAction } from './icon-action'
 import { Markdown } from './markdown'
 import { RecordDialogRoute, RecordLink } from './record-dialog'
 import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
@@ -38,7 +40,10 @@ import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
 // project opens a FormDialog over the list, a deep link to /projects/new
 // too, and Add opens the new project over the list. A name of "fail" is
 // refused. The Rail stories' records use EntityView's `rail` layout, its
-// rail beside the main column at the dialog's 1,120px.
+// rail beside the main column at the dialog's 1,120px. The Card stories
+// (4.98, 8A) open a tiny record (a name and a few facts, no notes) as a
+// small 420px card, `look="card"`: its Delete, Open full page and Close
+// on the title's line; Card, dialog only has no full page.
 // e2e/record-dialog.spec.ts drives it; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
@@ -230,6 +235,33 @@ const TASK_COLUMNS: LegacyColumnDef<Task, unknown>[] = [
   },
 ]
 
+// A tiny record for the card dialog (8A): its name, three facts, Delete.
+function ProjectCard() {
+  const { id } = useParams()
+  const { project, error, isLoading, retry } = useProject(id)
+  return (
+    <EntityView
+      title={project?.name}
+      isLoading={isLoading}
+      error={error}
+      onRetry={retry}
+      back={{ to: '/projects', label: 'Projects' }}
+      actions={project && <IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+      sections={[
+        {
+          title: 'Details',
+          fields: [
+            { label: 'Status', value: project?.status },
+            { label: 'Area', value: <Badge variant="outline">Garden</Badge> },
+            { label: 'Display Order', value: project?.id },
+            { label: 'Owner', value: null },
+          ],
+        },
+      ]}
+    />
+  )
+}
+
 function TaskList({ projectId }: { projectId: number }) {
   const rows = TASKS.filter((task) => task.projectId === projectId)
   return (
@@ -344,9 +376,24 @@ function Layout() {
 // How the routes are laid out: the record a child of its list (`nested`,
 // the default), the list a sibling at /projects/list (`sibling`), or a
 // project's page whose tasks open over it (`sub-records`).
-type Shape = 'nested' | 'sibling' | 'sub-records' | 'new'
+type Shape = 'nested' | 'sibling' | 'sub-records' | 'new' | 'card'
 
 function projectRoutes(shape: Shape, opens: Opens, rail: boolean) {
+  if (shape === 'card')
+    return [
+      {
+        path: 'projects',
+        element: (
+          <RecordDialogRoute
+            list={<ProjectList opens={opens} />}
+            label="Project"
+            look="card"
+            fullPage={opens !== 'dialog-only'}
+          />
+        ),
+        children: [{ path: ':id', element: <ProjectCard /> }],
+      },
+    ]
   if (shape === 'new')
     return [
       {
@@ -527,4 +574,14 @@ export const NewRecordDeepLink: Story = {
 export const RailBeside: Story = {
   name: 'Rail beside',
   render: () => <Projects initialEntries={openOver('1')} initialIndex={1} rail />,
+}
+
+export const Card: Story = {
+  name: 'Card',
+  render: () => <Projects initialEntries={openOver('1')} initialIndex={1} shape="card" />,
+}
+
+export const CardDialogOnly: Story = {
+  name: 'Card, dialog only',
+  render: () => <Projects initialEntries={openOver('1')} initialIndex={1} shape="card" opens="dialog-only" />,
 }

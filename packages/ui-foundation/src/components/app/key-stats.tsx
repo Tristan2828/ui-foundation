@@ -9,6 +9,11 @@
 // before the label's word, in the label's muted tone, from the app's icon
 // vocabulary (a `CalendarIcon` for a date, `HashIcon` for a count). The
 // word stays: the icon is decorative.
+//
+// As wide as its numbers (4.98, record standard 2A): the box hugs them
+// (`width="content"`, the default) instead of running the page's width
+// into empty space, and wraps them inside the page when it's narrow.
+// `width="full"` keeps the box across the page, the look before 4.98.
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { EmptyText } from './empty-value'
@@ -28,17 +33,21 @@ export type KeyStatsProps = {
   stats: readonly KeyStat[]
   /** What an empty value reads as. Defaults to a dash, read as "Not set". */
   emptyLabel?: string
+  /** `content` (the default since 4.98): as wide as its numbers. `full`: across the page. */
+  width?: 'content' | 'full'
   className?: string
 }
 
 const isEmpty = (value: ReactNode) => value === null || value === undefined || value === false || value === ''
 
-export function KeyStats({ stats, emptyLabel = EMPTY_DASH, className }: KeyStatsProps) {
+export function KeyStats({ stats, emptyLabel = EMPTY_DASH, width = 'content', className }: KeyStatsProps) {
   return (
     <dl
       data-slot="key-stats"
+      data-width={width}
       className={cn(
         'flex flex-wrap gap-x-8 gap-y-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground',
+        width === 'content' && 'w-fit max-w-full',
         className,
       )}
     >

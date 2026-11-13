@@ -3,40 +3,41 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 49–156
-- [Glow](#glow) · lines 158–177
-- [Semantic tones](#semantic-tones) · lines 179–207
-- [The three badge styles](#the-three-badge-styles) · lines 209–226
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 228–257
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 259–272
-- [Logos and brand marks](#logos-and-brand-marks) · lines 274–318
-- [Categorical colour](#categorical-colour) · lines 320–390
-- [Heat scale](#heat-scale) · lines 392–453
-- [Depth ramps](#depth-ramps) · lines 455–540
-- [A stored colour](#a-stored-colour) · lines 542–590
-- [Shapes and sizes](#shapes-and-sizes) · lines 592–613
-- [Typography](#typography) · lines 615–772
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 649–682
-  - [Written text (notes)](#written-text-notes) · lines 684–772
-- [Density](#density) · lines 774–867
-  - [Rows on this device](#rows-on-this-device) · lines 840–867
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 869–983
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 985–1062
-- [Notices](#notices) · lines 1064–1092
-- [A value over time](#a-value-over-time) · lines 1094–1180
-  - [Several values over time](#several-values-over-time) · lines 1143–1180
-- [A list as a board](#a-list-as-a-board) · lines 1182–1233
-- [A list as cards](#a-list-as-cards) · lines 1235–1281
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1283–1312
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1314–1357
-- [A few equal things](#a-few-equal-things) · lines 1359–1443
-- [An overview page](#an-overview-page) · lines 1445–1508
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1509–1560
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1562–1607
-- [Picking at random](#picking-at-random) · lines 1609–1640
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1642–1709
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1711–1736
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1738–1811
+- [Palettes](#palettes) · lines 50–157
+- [Glow](#glow) · lines 159–178
+- [Semantic tones](#semantic-tones) · lines 180–208
+- [The three badge styles](#the-three-badge-styles) · lines 210–227
+- [Status marks](#status-marks) · lines 229–268
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 270–299
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 301–314
+- [Logos and brand marks](#logos-and-brand-marks) · lines 316–360
+- [Categorical colour](#categorical-colour) · lines 362–432
+- [Heat scale](#heat-scale) · lines 434–495
+- [Depth ramps](#depth-ramps) · lines 497–582
+- [A stored colour](#a-stored-colour) · lines 584–632
+- [Shapes and sizes](#shapes-and-sizes) · lines 634–655
+- [Typography](#typography) · lines 657–814
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 691–724
+  - [Written text (notes)](#written-text-notes) · lines 726–814
+- [Density](#density) · lines 816–909
+  - [Rows on this device](#rows-on-this-device) · lines 882–909
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 911–1025
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1027–1104
+- [Notices](#notices) · lines 1106–1134
+- [A value over time](#a-value-over-time) · lines 1136–1222
+  - [Several values over time](#several-values-over-time) · lines 1185–1222
+- [A list as a board](#a-list-as-a-board) · lines 1224–1275
+- [A list as cards](#a-list-as-cards) · lines 1277–1323
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1325–1354
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1356–1399
+- [A few equal things](#a-few-equal-things) · lines 1401–1485
+- [An overview page](#an-overview-page) · lines 1487–1550
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1551–1602
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1604–1663
+- [Picking at random](#picking-at-random) · lines 1665–1696
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1698–1765
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1767–1792
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1794–1867
 
 <!-- /index -->
 
@@ -225,6 +226,47 @@ themes. **A new tone or style is not done until it appears in that story.**
 Pick **one style per table** and vary only the tone. Mixing styles across
 columns makes the difference look meaningful when it isn't.
 
+## Status marks
+
+A record's status (4.98, the record standard's 5B) is a `StatusMark`: an
+icon, a colour and the status's own word, the same in its cell, the
+record's header and the select's options. Every status sorts into one of
+six kinds; the kind decides the icon and the colour, so it reads by
+shape without colour too, and the word stays, so nothing needs learning.
+
+| Kind | Means | Icon | Colour |
+|---|---|---|---|
+| `active` | in use or under way now | a ring with a dot | `success-text` |
+| `planned` | not started yet: an idea, queued, ordered, scheduled | a dashed ring | `info-text` |
+| `paused` | started, then held; expected back | a ring with bars | `warning-text` |
+| `done` | finished as meant: closed, resolved, filed, bought | a ring with a tick | muted foreground |
+| `ended` | stopped without finishing: dropped, retired, cancelled, past | a ring with a slash | muted foreground |
+| `attention` | overdue, failing or blocked: look now | a warning triangle | `destructive-text` |
+
+```tsx
+// widget-format.ts: the enum sorted by what each value means.
+export const STATUS_KIND: Record<WidgetStatus, StatusKind> = {
+  draft: 'planned',
+  active: 'active',
+  archived: 'ended',
+}
+// The cell, the header and the select's render:
+<StatusMark kind={STATUS_KIND[status]}>{WIDGET_STATUS_LABELS[status]}</StatusMark>
+```
+
+- **Sort by meaning, not by word.** "As needed" is `active`, "On hold"
+  `paused`, "Idea" and "Up next" `planned`, "Retired" `ended`.
+  `attention` is for a state that wants a look now, often worked out
+  rather than stored (a review date past due).
+- **The icons are one map** (`STATUS_KIND_ICONS`, `lib/status-kinds.ts`
+  in the package): changing one there changes it in every app. A screen
+  can pass `icon` for one place; don't.
+- **Measured:** every kind's word clears 4.5:1 and its icon 3:1 on the
+  page, a card and a table row, in both themes and every palette
+  (`app-statusmark--all-kinds`).
+- Badges stay for everything else status-like (a computed progress, a
+  tag): the tone rules below.
+
 ## Mapping an enum to tones
 
 The decision is the **grouping**, not the style. Before choosing how it
@@ -233,10 +275,10 @@ neither — including the ones that look distinct as text but should share a
 tone.
 
 ```tsx
-const STATUS_BADGE_VARIANT: Record<WidgetStatus, 'outline' | 'outline-success' | 'secondary'> = {
-  draft: 'outline',
-  active: 'outline-success',
-  archived: 'secondary',
+const CHECKLIST_STATE_BADGE_VARIANT: Record<WidgetChecklistState, 'outline' | 'outline-success' | 'secondary'> = {
+  none: 'secondary',
+  open: 'outline',
+  complete: 'outline-success',
 }
 ```
 
@@ -246,8 +288,8 @@ gains a value with no tone, rather than falling back silently.
 Two rules that keep this honest:
 
 - **Most values are neutral.** If more than about a third of an enum is
-  coloured, the colour has stopped meaning anything. Widget's `archived` is
-  an end state, not a failure — it stays grey.
+  coloured, the colour has stopped meaning anything. Widget's progress
+  only colours `complete`; an empty or unfinished list isn't a problem.
 - **Never let colour be the only signal.** A colourblind reader, a
   greyscale screenshot and a printed page all lose it. The label text
   usually carries the meaning already; where a cell is a glyph rather than
@@ -1559,39 +1601,48 @@ data on each its own.
   alone. A value set elsewhere moves its field into the card at once.
   The fold is per card and isn't remembered.
 
-## A record's tabs, mark and rail
+## A record's tabs, mark and facts
 
-Three settings on `EntityView` (4.76): tabs and a mark, each for a
-record that needs it, and rail fields beside their labels, the default
-since 4.81.
+The record standard (4.98): no right rail. A record is one column, its
+long content grouped under tabs where it has three or more groups, and
+its short facts the last tab, Details. A mark goes left of the title.
 
 ```tsx
 <EntityView
-  layout="rail"
-  mobileOrder="main-first"
   leading={<img src={photo} alt="" className="size-12 rounded-full object-cover" />}
+  strip={<KeyStats stats={stats} />}
   sections={[
-    { title: 'Summary', placement: 'rail', fields },
-    { title: 'Notes', content: <Markdown>{notes}</Markdown> },
-    { title: 'Steps', tab: 'Steps', content: steps },
-    { title: 'Where it applies', tab: 'Used in', content: uses },
-    { title: 'Why this order', tab: 'Reasoning', content: reasoning },
+    { title: 'Summary', placement: 'rail', fields },           // the Details tab
+    { title: 'Notes', tab: 'Notes', content: <Markdown>{notes}</Markdown> },
+    { title: 'Packing', tab: 'Notes', placement: 'rail', fields: packing }, // beside Notes
+    { title: 'Changes', tab: 'Changes', content: changes },
   ]}
   … />
 ```
 
-- **Tabs** (`tab` on a main section): a line tab list at the top of
-  the main column, under the strip and any sections with no tab, one
-  tab per name in the order the sections first give it. The selected
-  tab has foreground text and a 2px underline, the others muted text;
-  the list's own bottom border runs the column's width. On a phone each
-  tab is 44px tall, and a list wider than the column scrolls sideways on
-  its own, never the page. Arrow keys move between tabs and select
-  (Home, End), and Tab goes on into the panel. The address holds the
-  selected tab (`?tab=used-in`, `entityViewTabSlug`), replaced rather
-  than pushed, so Back leaves the record, not the tab. Every tab's
-  sections stay mounted, so a value open in place survives a switch.
-  Short tab names, one or two words; no counts or icons in them yet.
+- **Tabs** (`tab` on a section): a line tab list under the strip and any
+  sections with no tab, one tab per name in the order the sections first
+  give it. The selected tab has foreground text and a 2px underline, the
+  others muted text; the list's own bottom border runs the column's
+  width. On a phone each tab is 44px tall, and a list wider than the
+  column scrolls sideways on its own, never the page. Arrow keys move
+  between tabs and select (Home, End), and Tab goes on into the panel.
+  The address holds the selected tab (`?tab=used-in`,
+  `entityViewTabSlug`), replaced rather than pushed, so Back leaves the
+  record, not the tab. Every tab's sections stay mounted, so a value open
+  in place survives a switch. Short tab names, one or two words; no
+  counts or icons in them yet.
+- **The facts** (`placement: 'rail'` with no `tab`): the last tab,
+  Details (`detailsTab` names it otherwise), their cards no wider than
+  42rem, labels beside values. A record with no other tab keeps them in
+  the column, in their place.
+- **A box beside a tab** (`placement: 'rail'` with a `tab`): a few short
+  facts that explain that tab's content (a dose beside the notes), in a
+  18rem column beside its sections once the tab is 42rem wide, under
+  them below that. Short facts only, never free text: run-on text in a
+  narrow box is what the standard took away.
+- **The strip** (`KeyStats`) is as wide as its numbers (`width="content"`,
+  the default since 4.98), not the page's width.
 - **A mark or avatar** (`leading`): left of the title, top-aligned,
   with the title, subtitle and badges beside it at every width. 40 to
   64px (`size-10` to `size-16`): an avatar round (`rounded-full`), a
@@ -1599,12 +1650,17 @@ since 4.81.
   the title names the record (`alt=""`, `aria-hidden`); initials in
   foreground on `bg-muted`, an icon in muted foreground on the card
   with its border. "Logos and brand marks" above holds for a logo here.
-- **Rail fields beside** (`railFields`, `beside` by default since 4.81;
-  `stacked` puts each label above its value): the label in a 6 to
+- **Facts beside their labels** (`railFields`, `beside` by default since
+  4.81; `stacked` puts each label above its value): the label in a 6 to
   7rem column left of its value, baseline-aligned, rows a little tighter
-  than stacked. Where the rail's list is under 18rem (a phone narrower
-  than ~350px) it stacks as before, and once the rail stacks full width
-  the label column widens to the page's.
+  than stacked, stacked again where the list is under 18rem (a phone
+  narrower than ~350px).
+- **A tiny record** (a few fields, no notes): `RecordDialogRoute
+  look="card"`, a 420px card dialog (a sheet on a phone) with its title,
+  Delete, Open full page and Close on one line and the facts as plain
+  rows, no cards.
+- **The rail layout** (`layout="rail"`) is the shape before 4.98, kept
+  for apps not yet moved; a new record never uses it.
 
 ## Picking at random
 
