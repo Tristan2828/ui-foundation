@@ -39,6 +39,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ListTreeIcon,
+  Settings2Icon,
   TableIcon,
   XIcon,
 } from 'lucide-react'
@@ -52,6 +53,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
@@ -64,10 +66,12 @@ import { EditInPlaceContext } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { LeaveGuard } from './editable-value'
 import { recordDialogState } from './record-dialog-context'
+import { IconAction } from './icon-action'
 import type { IconComponent } from './icon-component'
 import { groupByValues, groupRuns, type GroupRun, type RowGroup } from './table-groups'
 import {
   ColumnsMenu,
+  ColumnsMenuItems,
   PHONE_LIST_CLASS,
   PhoneRow,
   PhoneRowsSkeleton,
@@ -404,7 +408,23 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    * when there are more than the rows shown.
    */
   viewAll?: DataTableViewAll
+  /**
+   * How the list is drawn around its rows (4.98). `plain` (the default):
+   * the toolbar above the whole width, the Columns and Group menus as
+   * buttons at its end, the pagination under the rows. `framed`: the
+   * list is a card with a border, as wide as the table under `width`'s
+   * rules, so its tools end at the table's own edge and nothing sits off
+   * at the far right of a wide page. The card's top bar holds the toolbar
+   * (search and Filters keep their words), Fold All while grouped, one
+   * settings button holding the Columns ticks and Group By, and the layout
+   * switch; its bottom bar holds the count and the pager. Saved views stay
+   * above the card, outside its bar. Every other prop works the same way.
+   */
+  look?: DataTableLook
 }
+
+/** How DataTable draws the list around its rows (`look`). */
+export type DataTableLook = 'plain' | 'framed'
 
 /** A field DataTable's rows can be grouped by (`groupings`). */
 export type DataTableGrouping<TData> = {
@@ -594,16 +614,38 @@ function LayoutSwitch({
 // stand-in, never '' (the grouping's own word for None).
 const NO_GROUPING = '__none__'
 
-function GroupMenu<TData>({
-  groupings,
-  value,
-  onValueChange,
-}: {
+type GroupMenuProps<TData> = {
   groupings: readonly DataTableGrouping<TData>[]
   value: string
   onValueChange: (grouping: string) => void
-}) {
+}
+
+// The Group menu's items alone: its own menu's, and the framed look's
+// settings menu's second group.
+function GroupMenuItems<TData>({ groupings, value, onValueChange }: GroupMenuProps<TData>) {
   const current = groupings.find((grouping) => grouping.id === value)
+  return (
+    <DropdownMenuGroup>
+      <DropdownMenuLabel>Group By</DropdownMenuLabel>
+      <DropdownMenuRadioGroup
+        value={current?.id ?? NO_GROUPING}
+        onValueChange={(next) => onValueChange(next === NO_GROUPING ? '' : String(next))}
+      >
+        <DropdownMenuRadioItem value={NO_GROUPING} closeOnClick>
+          None
+        </DropdownMenuRadioItem>
+        {groupings.map((grouping) => (
+          <DropdownMenuRadioItem key={grouping.id} value={grouping.id} closeOnClick>
+            {grouping.label}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+    </DropdownMenuGroup>
+  )
+}
+
+function GroupMenu<TData>(props: GroupMenuProps<TData>) {
+  const current = props.groupings.find((grouping) => grouping.id === props.value)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="outline" size="sm" data-slot="data-table-group-menu" />}>
@@ -611,26 +653,66 @@ function GroupMenu<TData>({
         {current ? `Group: ${current.label}` : 'Group'}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Group By</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={current?.id ?? NO_GROUPING}
-            onValueChange={(next) => onValueChange(next === NO_GROUPING ? '' : String(next))}
-          >
-            <DropdownMenuRadioItem value={NO_GROUPING} closeOnClick>
-              None
-            </DropdownMenuRadioItem>
-            {groupings.map((grouping) => (
-              <DropdownMenuRadioItem key={grouping.id} value={grouping.id} closeOnClick>
-                {grouping.label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
+        <GroupMenuItems {...props} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
+
+// The framed look's one settings button (`look="framed"`): the Columns
+// ticks, then Group By, in one menu, in place of the two buttons with
+// words. Its name says what's set that the bar no longer shows ("Table
+// Settings, Grouped by Status"), and a dot on it says so to the eye.
+function TableSettingsMenu<TData>({
+  columns,
+  grouping,
+  changed,
+}: {
+  columns?: React.ComponentProps<typeof ColumnsMenuItems>
+  grouping?: GroupMenuProps<TData>
+  /** The columns differ from the list's own: a pick of the reader's, or a view's. */
+  changed: boolean
+}) {
+  const current = grouping?.groupings.find((each) => each.id === grouping.value)
+  const label = current ? `Table Settings, Grouped by ${current.label}` : 'Table Settings'
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <IconAction
+            icon={Settings2Icon}
+            label={label}
+            size="sm"
+            data-tool="table-settings"
+            data-set={current || changed ? true : undefined}
+            className={SETTINGS_DOT_CLASS}
+          />
+        }
+      />
+      <DropdownMenuContent align="end" className="w-56">
+        {columns ? <ColumnsMenuItems {...columns} /> : null}
+        {columns && grouping ? <DropdownMenuSeparator /> : null}
+        {grouping ? <GroupMenuItems {...grouping} /> : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+// The dot on the settings button while something in it is set: the
+// primary colour, ringed in the button's own background so it reads on
+// either theme. Decoration: the button's name says it in words.
+const SETTINGS_DOT_CLASS =
+  'relative data-set:after:absolute data-set:after:top-0.5 data-set:after:right-0.5 data-set:after:size-2 ' +
+  'data-set:after:rounded-full data-set:after:bg-primary data-set:after:ring-2 data-set:after:ring-background ' +
+  "data-set:after:content-['']"
+
+// `look="framed"`: the card around the list, and its two bars. The card
+// clips (never hides) its overflow, so the rounded corners hold and sticky
+// headings still stick to the page.
+const FRAME_CLASS = 'flex flex-col overflow-clip rounded-lg border border-border bg-background'
+// The phone's row list inside the card: the card is its border.
+const FRAMED_PHONE_ROWS_CLASS = '[&_[data-slot=data-table-phone-rows]_ul]:rounded-none [&_[data-slot=data-table-phone-rows]_ul]:border-0'
+const FRAME_BAR_CLASS = 'flex flex-wrap items-center gap-x-4 gap-y-2 bg-card px-3 py-2.5 text-card-foreground max-md:gap-x-2'
 
 // The rows-per-page menu in the pagination bar (`pageSizes`): a radio list
 // that closes on a pick. The button says the size in words of its own
@@ -1090,6 +1172,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   phoneRow,
   limit,
   viewAll,
+  look = 'plain',
 }: DataTableProps<TData, TView>) {
   // The switch's own state, for a table that doesn't pass `layout`.
   const [ownLayout, setOwnLayout] = useState('table')
@@ -1488,13 +1571,10 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   // The row list a phone gets has no columns to pick.
   const showColumnsMenu = Boolean(columnsMenu) && !showPhoneRows
 
-  const content = (
-    <div
-      ref={root}
-      className="flex flex-col gap-4"
-      data-width={width}
-      data-layout={layouts?.length ? currentLayout : undefined}
-    >
+  // The pieces, placed as `look` says: plain, or a framed card.
+  const framed = look === 'framed'
+  const viewPills = (
+    <>
       {viewEntries.length > 0 ? (
         <ViewPills
           label={viewsLabel}
@@ -1506,81 +1586,106 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
           }}
         />
       ) : null}
-      {layouts?.length || groupings?.length || showColumnsMenu ? (
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-          {/* A basis, so on a phone the toolbar takes its own line and the
-              menus wrap under it rather than squeezing it to its content. */}
-          <div className="min-w-0 flex-1 basis-72">{toolbar}</div>
-          {showColumnsMenu ? (
-            <ColumnsMenu
-              label={columnsMenu?.label}
-              columns={menuColumns}
-              visible={shownColumns ?? leafIds}
-              fixed={fixedColumns}
-              pick={columnsPick}
-              onPickChange={setColumnsPick}
-              setByView={viewColumns !== undefined}
-            />
-          ) : null}
-          {groupings?.length ? (
-            <div className="flex items-center gap-2">
-              {activeGrouping && (
-                <Button variant="ghost" size="sm" data-slot="data-table-fold-all" disabled={!runs?.length} onClick={foldAll}>
-                  {allFolded ? 'Unfold All' : 'Fold All'}
-                </Button>
-              )}
-              <GroupMenu groupings={groupings} value={activeGrouping?.id ?? ''} onValueChange={setGrouping} />
-            </div>
-          ) : null}
-          {layouts?.length ? (
-            <LayoutSwitch
-              options={[
-                { id: 'table', label: tableLayout?.label ?? 'Table', icon: tableLayout?.icon ?? TableIcon },
-                ...layouts,
-              ]}
-              value={currentLayout}
-              onValueChange={setLayout}
-            />
-          ) : null}
-        </div>
-      ) : (
-        toolbar
-      )}
+    </>
+  )
 
-      {/* The table, its states and its pagination: what `width="content"`
-          fits to the columns, the toolbar above keeping the whole width. */}
-      <div
-        ref={body}
-        data-slot="data-table-body"
-        className={cn('flex flex-col gap-4', fitsColumns && CONTENT_WIDTH_CLASS)}
-        style={
-          fitsColumns && !isSuccessView && lastWidth !== null
-            ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
-            : undefined
-        }
-      >
-      {error ? (
-        <ErrorState error={error} onRetry={onRetry} />
-      ) : isLoading || isPastLastPage ? (
-        cardLayout ? (
-          <CardsSkeleton layout={cardLayout} />
-        ) : showPhoneRows ? (
-          <PhoneRowsSkeleton />
-        ) : (
-          <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
-        )
-      ) : isEmpty ? (
-        <Empty data-state="empty">
-          <EmptyHeader>
-            <EmptyTitle>{emptyTitle}</EmptyTitle>
-            {emptyDescription && <EmptyDescription>{emptyDescription}</EmptyDescription>}
-          </EmptyHeader>
-          {emptyAction}
-        </Empty>
-      ) : (
-        <DetailFrame
-          enabled={Boolean(detailPanel) && !cardLayout}
-          aside={
+  const foldAllButton = activeGrouping ? (
+    <Button variant="ghost" size="sm" data-slot="data-table-fold-all" disabled={!runs?.length} onClick={foldAll}>
+      {allFolded ? 'Unfold All' : 'Fold All'}
+    </Button>
+  ) : null
+  const columnsItems = showColumnsMenu
+    ? {
+        columns: menuColumns,
+        visible: shownColumns ?? leafIds,
+        fixed: fixedColumns,
+        pick: columnsPick,
+        onPickChange: setColumnsPick,
+        setByView: viewColumns !== undefined,
+      }
+    : undefined
+  const layoutSwitch = layouts?.length ? (
+    <LayoutSwitch
+      options={[
+        { id: 'table', label: tableLayout?.label ?? 'Table', icon: tableLayout?.icon ?? TableIcon },
+        ...layouts,
+      ]}
+      value={currentLayout}
+      onValueChange={setLayout}
+    />
+  ) : null
+  const hasTools = Boolean(layouts?.length || groupings?.length || showColumnsMenu)
+
+  // `plain`: the toolbar, then the Columns and Group menus as buttons.
+  const plainToolbar = hasTools ? (
+    <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+      {/* A basis, so on a phone the toolbar takes its own line and the
+          menus wrap under it rather than squeezing it to its content. */}
+      <div className="min-w-0 flex-1 basis-72">{toolbar}</div>
+      {columnsItems ? <ColumnsMenu label={columnsMenu?.label} {...columnsItems} /> : null}
+      {groupings?.length ? (
+        <div className="flex items-center gap-2">
+          {foldAllButton}
+          <GroupMenu groupings={groupings} value={activeGrouping?.id ?? ''} onValueChange={setGrouping} />
+        </div>
+      ) : null}
+      {layoutSwitch}
+    </div>
+  ) : (
+    toolbar
+  )
+
+  // `framed`: the card's top bar, one settings button in place of the two
+  // menus. Left out when there's nothing to put in it.
+  const framedToolbar =
+    toolbar || hasTools ? (
+      <div data-slot="data-table-top-bar" className={cn(FRAME_BAR_CLASS, 'border-b border-border')}>
+        {/* On a phone the settings button stays on the search's line. */}
+        <div className="min-w-0 flex-1 basis-72 max-md:basis-0">{toolbar}</div>
+        {hasTools ? (
+          <div className="flex items-center gap-2">
+            {foldAllButton}
+            {columnsItems || groupings?.length ? (
+              <TableSettingsMenu
+                columns={columnsItems}
+                grouping={
+                  groupings?.length
+                    ? { groupings, value: activeGrouping?.id ?? '', onValueChange: setGrouping }
+                    : undefined
+                }
+                changed={Boolean(columnsItems && (columnsPick || viewColumns !== undefined))}
+              />
+            ) : null}
+            {layoutSwitch}
+          </div>
+        ) : null}
+      </div>
+    ) : null
+
+  // Loading, empty or failed: in place of the rows.
+  const stateView = error ? (
+    <ErrorState error={error} onRetry={onRetry} />
+  ) : isLoading || isPastLastPage ? (
+    cardLayout ? (
+      <CardsSkeleton layout={cardLayout} />
+    ) : showPhoneRows ? (
+      <PhoneRowsSkeleton />
+    ) : (
+      <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
+    )
+  ) : isEmpty ? (
+    <Empty data-state="empty">
+      <EmptyHeader>
+        <EmptyTitle>{emptyTitle}</EmptyTitle>
+        {emptyDescription && <EmptyDescription>{emptyDescription}</EmptyDescription>}
+      </EmptyHeader>
+      {emptyAction}
+    </Empty>
+  ) : null
+
+  const detailAside = !isSuccessView
+    ? null
+    : (
             selectedRow && detailPanel && isWide ? (
               <aside
                 aria-label={detailLabel}
@@ -1602,8 +1707,10 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
                 {detailPanel(selectedRow.original)}
               </aside>
             ) : null
-          }
-        >
+      )
+
+  const rowsView = (
+    <>
           {cardLayout ? (
             <Cards
               layout={cardLayout}
@@ -1851,9 +1958,15 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
           {viewAll && limit !== undefined && viewAllTotal > rows.length ? (
             <ViewAllLink viewAll={viewAll} total={viewAllTotal} navigator={navigation?.navigator} />
           ) : null}
+    </>
+  )
 
-          {limit === undefined && (
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2" data-slot="data-table-pagination">
+  const pagination =
+    limit === undefined ? (
+          <div
+            className={cn('flex flex-wrap items-center justify-between gap-x-4 gap-y-2', framed && [FRAME_BAR_CLASS, 'border-t border-border py-2'])}
+            data-slot="data-table-pagination"
+          >
             <p className="type-body text-muted-foreground">
               {total === 0 ? 0 : (page - 1) * pageSize + 1}
               {'–'}
@@ -1886,9 +1999,71 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
               </Button>
             </div>
           </div>
-          )}
-        </DetailFrame>
-      )}
+    ) : null
+
+  // `width="content"`'s last width, kept while another state shows.
+  const lastWidthStyle =
+    fitsColumns && !isSuccessView && lastWidth !== null
+      ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
+      : undefined
+
+  const content = framed ? (
+    <div
+      ref={root}
+      className="flex flex-col gap-4"
+      data-width={width}
+      data-look="framed"
+      data-layout={layouts?.length ? currentLayout : undefined}
+    >
+      {viewPills}
+      <DetailFrame enabled={Boolean(detailPanel) && !cardLayout} aside={detailAside}>
+        {/* The card: the tools, the rows and the pager as one box, as wide
+            as `width` makes the table, so the tools end at its edge. */}
+        <div
+          ref={body}
+          data-slot="data-table-frame"
+          className={cn(FRAME_CLASS, fitsColumns && CONTENT_WIDTH_CLASS)}
+          style={lastWidthStyle}
+        >
+          {framedToolbar}
+          <div
+            data-slot="data-table-body"
+            className={cn(
+              'flex flex-col gap-4',
+              (stateView || cardLayout) && 'p-3',
+              showPhoneRows && !stateView && FRAMED_PHONE_ROWS_CLASS,
+            )}
+          >
+            {stateView ?? rowsView}
+          </div>
+          {stateView ? null : pagination}
+        </div>
+      </DetailFrame>
+    </div>
+  ) : (
+    <div
+      ref={root}
+      className="flex flex-col gap-4"
+      data-width={width}
+      data-layout={layouts?.length ? currentLayout : undefined}
+    >
+      {viewPills}
+      {plainToolbar}
+
+      {/* The table, its states and its pagination: what `width="content"`
+          fits to the columns, the toolbar above keeping the whole width. */}
+      <div
+        ref={body}
+        data-slot="data-table-body"
+        className={cn('flex flex-col gap-4', fitsColumns && CONTENT_WIDTH_CLASS)}
+        style={lastWidthStyle}
+      >
+        {stateView ?? (
+          <DetailFrame enabled={Boolean(detailPanel) && !cardLayout} aside={detailAside}>
+            {rowsView}
+            {pagination}
+          </DetailFrame>
+        )}
       </div>
     </div>
   )

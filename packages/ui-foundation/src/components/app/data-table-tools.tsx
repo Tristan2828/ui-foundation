@@ -76,15 +76,7 @@ export type DataTableColumnsMenu = {
   label?: string
 }
 
-export function ColumnsMenu({
-  columns,
-  visible,
-  fixed,
-  pick,
-  onPickChange,
-  setByView,
-  label = 'Columns',
-}: {
+type ColumnsMenuProps = {
   /** Every column the menu can tick, in order, with its name. */
   columns: readonly { id: string; label: string }[]
   /** Every column id showing now, ticked or not tickable. */
@@ -95,9 +87,38 @@ export function ColumnsMenu({
   onPickChange: (pick: ColumnsPick | null) => void
   /** A view on that sets its own columns: the ticks show them and can't change. */
   setByView: boolean
-  label?: string
-}) {
+}
+
+// The menu's items alone: the Columns menu's, and the framed look's
+// settings menu's first group (data-table.tsx's TableSettingsMenu).
+export function ColumnsMenuItems({ columns, visible, fixed, pick, onPickChange, setByView }: ColumnsMenuProps) {
   const ids = [...fixed, ...columns.map((column) => column.id)]
+  return (
+    <>
+      <DropdownMenuGroup>
+        <DropdownMenuLabel>{setByView ? 'Set by This View' : 'Show Columns'}</DropdownMenuLabel>
+        {columns.map((column) => (
+          <DropdownMenuCheckboxItem
+            key={column.id}
+            checked={visible.includes(column.id)}
+            disabled={setByView}
+            onCheckedChange={(checked) => onPickChange(togglePick(ids, visible, column.id, checked, pick))}
+          >
+            {column.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuGroup>
+      {pick && !setByView ? (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onPickChange(null)}>Reset to the List's Columns</DropdownMenuItem>
+        </>
+      ) : null}
+    </>
+  )
+}
+
+export function ColumnsMenu({ label = 'Columns', ...props }: ColumnsMenuProps & { label?: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="outline" size="sm" data-slot="data-table-columns-menu" />}>
@@ -105,25 +126,7 @@ export function ColumnsMenu({
         {label}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>{setByView ? 'Set by This View' : 'Show Columns'}</DropdownMenuLabel>
-          {columns.map((column) => (
-            <DropdownMenuCheckboxItem
-              key={column.id}
-              checked={visible.includes(column.id)}
-              disabled={setByView}
-              onCheckedChange={(checked) => onPickChange(togglePick(ids, visible, column.id, checked, pick))}
-            >
-              {column.label}
-            </DropdownMenuCheckboxItem>
-          ))}
-        </DropdownMenuGroup>
-        {pick && !setByView ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onPickChange(null)}>Reset to the List's Columns</DropdownMenuItem>
-          </>
-        ) : null}
+        <ColumnsMenuItems {...props} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
