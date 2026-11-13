@@ -154,6 +154,8 @@ const COMPOSITE_STORIES = [
   // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
   { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
+  // Cards and no tabs: the rail level with the first card (4.108).
+  { id: 'app-entityview--facts-rail-no-tabs', mustShow: 'Not booked' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },

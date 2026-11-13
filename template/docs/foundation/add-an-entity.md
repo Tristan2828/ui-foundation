@@ -15,18 +15,18 @@
   - Step 8: Add Playwright specs for all three screens · lines 755–832
   - Step 9: Register the nav entry and route names · lines 833–847
   - Step 10: `npm run verify`. · lines 848–850
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1249
-  - [The record view](#the-record-view) · lines 1005–1099
-  - [Forms](#forms) · lines 1101–1166
-  - [Dialogs](#dialogs) · lines 1168–1199
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1201–1249
-- [What not to copy](#what-not-to-copy) · lines 1251–1283
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1285–1302
-- [Deleting](#deleting) · lines 1304–1335
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1337–1358
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1360–1369
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1372–1414
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1416–1452
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1252
+  - [The record view](#the-record-view) · lines 1005–1102
+  - [Forms](#forms) · lines 1104–1169
+  - [Dialogs](#dialogs) · lines 1171–1202
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1204–1252
+- [What not to copy](#what-not-to-copy) · lines 1254–1286
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1288–1305
+- [Deleting](#deleting) · lines 1307–1338
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1340–1361
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1363–1372
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1375–1417
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1419–1455
 
 <!-- /index -->
 
@@ -1046,9 +1046,12 @@ A record uses the parts it has, in this order:
   4.81), so the short facts read as a list of pairs rather than a column
   of labels; keep labels to a word or two.
 - **The facts rail** (4.106, record standard A1): `factsRail` on the
-  view puts the record's short facts in a 300px column beside the strip
-  and the tabs where the view has room (60rem: a laptop's page, a record
-  dialog), so the page doesn't end 900px in. Only short values go in it,
+  view puts the record's short facts in a 300px column beside the
+  record's body where the view has room (60rem: a laptop's page, a record
+  dialog), so the page doesn't end 900px in. The strip stays above it at
+  full width, and the rail starts level with the first content under the
+  strip: the open tab's first section (beside the tab's content, not its
+  bar), or the first card when cards come before the tabs (4.108). Only short values go in it,
   and the API holds to that: a rail section is `facts`, not `fields`,
   each fact one of a few kinds, never free markup:
 
