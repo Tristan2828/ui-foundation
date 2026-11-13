@@ -40,6 +40,7 @@ import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { Notice } from './notice'
 import { RichTextEditor } from './rich-text-editor'
+import { StatusMark } from './status-mark'
 import { SourceCredit } from './source-credit'
 
 // One record in both layouts: `column` (the default) and `rail`, the
@@ -54,7 +55,10 @@ import { SourceCredit } from './source-credit'
 // opens on a click. Rail, main first is the rail layout with
 // `mobileOrder="main-first"`: the same at a desktop width, Notes straight
 // after the header on a phone. Tabs, Leading and Rail fields beside are
-// 4.76's opt-ins, measured in e2e/entity-view-tabs.spec.ts.
+// 4.76's opt-ins, measured in e2e/entity-view-tabs.spec.ts. Details tab
+// and Details in the column are 4.98's record standard (1A, 2A, 5B): the
+// `tabs` layout, the default, with no rail, measured in
+// e2e/entity-view-details.spec.ts.
 
 // Long enough to scroll past a rail, with a table wider than the column
 // layout's 896px (it scrolls sideways there) but not than the rail
@@ -318,6 +322,93 @@ function TabsInRouter({ layout }: { layout: EntityViewLayout }) {
 export const Tabs: StoryObj = { render: () => <TabsInRouter layout="rail" /> }
 
 export const TabsColumn: StoryObj = { name: 'Tabs, column', render: () => <TabsInRouter layout="column" /> }
+
+// --- The record standard (4.98): no right rail -----------------------------
+// The `tabs` layout, the default (1A): Summary, the short facts placed
+// `rail`, is the last tab, Details; Notes has a small box of facts beside
+// it (placed `rail` with its `tab`), under it on a phone; the strip is as
+// wide as its numbers (2A); the status is a StatusMark (5B). The memory
+// router starts at the harness page's own `tab`, as Tabs does.
+
+function DetailsTabRecord() {
+  const location = useLocation()
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Summary',
+      placement: 'rail',
+      fields: [
+        { label: 'Kind', value: 'Office move' },
+        { label: 'Floor', value: 'Third' },
+        { label: 'Starts', value: 'Mar 2, 2026' },
+        { label: 'Owner', value: null, emptyLabel: 'Unassigned' },
+        { label: 'Teams', value: <Badge variant="outline">Finance</Badge> },
+      ],
+    },
+    { title: 'Notes', tab: 'Notes', content: <Markdown>{NOTES}</Markdown> },
+    {
+      title: 'Packing',
+      tab: 'Notes',
+      placement: 'rail',
+      fields: [
+        { label: 'Boxes', value: '12' },
+        { label: 'Labels', value: 'By team' },
+      ],
+    },
+    {
+      title: 'Changes',
+      tab: 'Changes',
+      content: (
+        <ul className="flex list-disc flex-col gap-1 pl-5">
+          <li>Mar 1: the movers moved to the morning.</li>
+          <li>Feb 20: Support joins week 3.</li>
+        </ul>
+      ),
+    },
+  ]
+  return (
+    <>
+      <EntityView
+        isLoading={false}
+        back={{ to: '/', label: 'Projects' }}
+        title="Office move"
+        badges={<StatusMark kind="active">In Progress</StatusMark>}
+        actions={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+        strip={
+          <KeyStats
+            stats={[
+              { label: 'Boxes', value: '12', icon: PackageIcon },
+              { label: 'Starts', value: 'Mar 2', icon: CalendarIcon },
+              { label: 'Teams', value: '3', icon: HashIcon },
+            ]}
+          />
+        }
+        sections={sections}
+      />
+      <p data-testid="address" className="mt-6 type-caption text-muted-foreground">
+        Page at {location.pathname + location.search}
+      </p>
+    </>
+  )
+}
+
+function DetailsTabInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '/', element: <DetailsTabRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const DetailsTab: StoryObj = { name: 'Details tab', render: () => <DetailsTabInRouter /> }
+
+// The `tabs` layout with no other tab: the facts stay in the column, in
+// their place, their labels beside their values.
+export const DetailsInTheColumn: StoryObj = {
+  name: 'Details in the column',
+  render: () => <InRouter layout="tabs" />,
+}
 
 // --- A notice and a footer ------------------------------------------------
 

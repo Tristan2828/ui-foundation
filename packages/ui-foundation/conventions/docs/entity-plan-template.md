@@ -161,29 +161,23 @@ does, except the quick actions, if any.
 
 - Title: the field that names a record, shown as the page heading and
   linked from the table: `title`.
-- Badges beside the title: a few status-like fields, as badges: `status`,
-  `priority`.
-- Layout (optional; delete for one column): `rail` for a record with long
-  content (notes written as Markdown, long lists). The page takes the
-  screen's whole width, the short sections (a summary, label/value fields,
-  a few links) sit in a narrow column on the right that stays in view, and
-  the long ones fill the main column beside it. On a phone: one column,
-  the rail's sections first. Without this line, every section is in one
-  column, as wide as a long read.
-
-  Layout: rail
-
+- Badges beside the title: a few status-like fields: `status` (its
+  StatusMark), `priority`.
 - Sections, in order. Each lists its fields in the order they show. A
   section holding a single long text or a single sub-records list shows
-  it under the section's heading, with no label of its own. With
-  `Layout: rail`, Placement says which column each goes in (`rail` or
-  `main`); otherwise delete the column.
+  it under the section's heading, with no label of its own. Placement
+  (the record standard, 4.98: no right rail): `details` for the short
+  label/value facts, which are the record's last tab, Details, when it
+  has tabs (Tab), and stay in the column, labels beside values, when it
+  has none; `main` for everything else. A `details` section with a Tab is
+  a small box beside that tab's sections: short facts only, never free
+  text. Delete the Tab column when nothing goes under a tab.
 
-| Section | Fields | Placement |
-|---|---|---|
-| Details | dueDate, project, tags | rail |
-| Checklist | checklist | main |
-| Notes | notes | main |
+| Section | Fields | Placement | Tab |
+|---|---|---|---|
+| Details | dueDate, project, tags | details | |
+| Checklist | checklist | main | |
+| Notes | notes | main | |
 
 - "Not set" labels: what an empty optional field reads as on the view
   (`dueDate`: No due date; `checklist`: No items). A field not listed here

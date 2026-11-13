@@ -43,6 +43,80 @@ the current module's pages too. A test that finds a section's heading
 by its visible text (`getByText('Every day')`) now finds a
 screen-reader-only label; find the section's list by name instead
 (`getByRole('list', { name: 'Every day', exact: true })`).
+## 4.98.0 — The record standard's looks: a Details tab, status marks, a small card dialog
+
+npm package. `ui-foundation-backend` moves to 4.98.0 with it, unchanged.
+
+- **No right rail** (record standard 1A). `EntityView`'s new default
+  layout, `tabs`: the short facts (sections placed `rail` with no `tab`)
+  are the record's last tab, **Details**, beside its other tabs
+  (`detailsTab` names it otherwise; a tab of that name of the record's
+  own takes them in). A record with no other tab keeps them in the
+  column, in their place, labels beside values. A section placed `rail`
+  *with* a `tab` is a small box of facts beside that tab's sections
+  (under them on a phone): short facts only, never free text.
+  `layout="rail"` and `layout="column"` are unchanged; `rail` is kept for
+  apps not yet moved (docs/consuming.md "Moving a record off the rail
+  (4.98)").
+- **The strip is as wide as its numbers** (2A): `KeyStats` hugs them
+  (`width="content"`, the new default) and wraps inside the page when
+  it's narrow. `width="full"` is the old look.
+- **Status marks** (5B): `StatusMark`, a status as an icon, a colour and
+  its own word, in one of six kinds: `active`, `planned`, `paused`,
+  `done`, `ended`, `attention` ("Needs Attention"). The icons are one map,
+  `STATUS_KIND_ICONS`, so they can change in one place; with
+  `STATUS_KINDS`, `STATUS_KIND_LABELS`, `STATUS_KIND_TONES` and the
+  `StatusKind` type from the package root. Tokens only (`*-text` and the
+  muted foreground); axe and the 3:1 glyph check measure every kind on
+  the page, a card and a table row in both themes and every palette.
+- **A tiny record as a small card** (8A): `RecordDialogRoute
+  look="card"`, a 420px dialog (a sheet from the bottom on a phone) with
+  no bar: the record's title, its actions (Delete as an `IconAction`),
+  Open full page (an icon, when it has a page) and Close on one line,
+  and its facts as plain rows with no cards. `RecordDialogContextValue`
+  gains optional `look` and `controls`.
+- **Choice fields two to a row** (9C): a `Field` holding `ChoiceButtons`
+  is found as a choice by itself (`FieldKind` gains `'choice'`; say
+  `kind="choice"` for a control of your own) and shares its row only
+  with another choice, two to a row, split evenly. On a phone two stay
+  side by side while both groups fit their buttons, and go one per row
+  when they don't. `FieldRowPlace` gains `phoneFit`.
+- The template's widget view drops `layout="rail"` (its Details comes
+  first in the one column), and its status is a `StatusMark` in the
+  table and the header (`STATUS_KIND` in `widget-format.ts` replaces
+  `STATUS_BADGE_VARIANT`). The playbook, the plan template (Placement
+  `details`, an optional Tab column; no `Layout` line), the design
+  language ("Status marks", "A record's tabs, mark and facts") and cell
+  pattern 5 follow.
+
+**For an app:**
+
+1. `npm install @tristan2828/ui-foundation@4.98.0`, `npx ui-foundation
+   sync`, and bump `ui-foundation-backend==4.98.0`.
+2. **Records:** a view that passes no `layout` and places sections
+   `rail` now shows them as a Details tab when it has tabs; check those
+   records. A view on `layout="rail"` keeps its rail until you move it:
+   drop `layout="rail"` and `mobileOrder` (see docs/consuming.md "Moving a
+   record off the rail (4.98)"), and update specs that looked for the
+   rail's `complementary` landmark ("<title> details") or for Details
+   beside the main column: Details is now a tab (`?tab=details`) or the
+   first section in the column.
+3. **Strips:** a `KeyStats` is now as wide as its numbers. A spec that
+   measured it across the page, or a screen that wants that, passes
+   `width="full"`.
+4. **Statuses:** map each status enum to a kind (`Record<YourStatus,
+   StatusKind>`, by what it means: an idea or a queued item is
+   `planned`, "On hold" `paused`, "Retired" `ended`, overdue `attention`)
+   and draw it with `<StatusMark kind={…}>{label}</StatusMark>` in its
+   cell, the record's header and its select's `render`. Specs that find
+   the status by its words keep working.
+5. **Tiny records** (a few fields, no notes) opened in a dialog: pass
+   `look="card"` to their `RecordDialogRoute` (usually with
+   `fullPage={false}`), and give Delete as an `IconAction`.
+6. **Forms:** choice fields now pair only with each other. A form that
+   put a choice and two dates in one row now has the choice on its own
+   row and the dates together; a spec that measured that row changes. A
+   `switch` over `FieldKind` gains a `'choice'` case.
 
 ## 4.97.0 — Labels in Title Case, and ChoiceButtons that wrap in a narrow box
 

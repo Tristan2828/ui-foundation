@@ -44,8 +44,15 @@
 // button, which prints those sections alone under the title and
 // subtitle, with no rail, shell or buttons, on light paper.
 //
-// Two layouts. `column` (the default): every section in one column capped
-// at max-w-4xl. `rail`, for a record with long content: the page takes the
+// Three layouts. `tabs` (the default since 4.98, record standard 1A):
+// every section in one column capped at max-w-4xl, with no right rail. The
+// short facts (sections placed `rail` with no `tab`) are the record's last
+// tab, Details (`detailsTab`), beside its other tabs; a record with no other
+// tab shows them in the column, in their place. A section placed `rail`
+// *with* a `tab` is a narrow box beside that tab's sections (on a phone,
+// under them): short facts only, never free text. `column`: one column,
+// `placement` ignored, as before 4.98. `rail` (kept for apps not yet
+// moved; consuming.md "4.98"): the page takes the
 // content area's whole width, sections placed `rail` go in a narrow column
 // on the right that stays in view while the main column scrolls (an issue
 // tracker's shape), and the rest fill the main column. Below the width two
@@ -155,9 +162,12 @@ export type EntityViewSection = (
     }
 ) & {
   /**
-   * Where the section goes in the `rail` layout: `rail` for the short ones
-   * (a summary, label/value fields, a few links), `main` (the default) for
-   * long text and long lists. The `column` layout ignores it.
+   * `rail` for the short facts (a summary, label/value fields, a few
+   * links), `main` (the default) for long text and long lists. In the
+   * `tabs` layout (the default) a `rail` section with no `tab` goes in the
+   * Details tab, and one with a `tab` in a narrow box beside that tab's
+   * sections (short facts only, never free text). In the `rail` layout it
+   * goes in the column on the right. The `column` layout ignores it.
    */
   placement?: EntityViewPlacement
   /**
@@ -170,8 +180,9 @@ export type EntityViewSection = (
    */
   print?: boolean | { answerSpace?: boolean }
   /**
-   * The tab the section goes under, by name ("Steps", "Used in"): main
-   * sections only (a `rail` one ignores it). Any main section with a tab
+   * The tab the section goes under, by name ("Steps", "Used in"). In the
+   * `tabs` layout a `rail` section with a tab sits beside the tab's own
+   * sections; in the others a `rail` one ignores it. Any main section with a tab
    * adds a tab list to the main column, one tab per name in the order the
    * sections first give it; sections without one stay above the list. The
    * selected tab is in the address, `?tab=<slug of the name>`.
@@ -182,11 +193,14 @@ export type EntityViewSection = (
 export type EntityViewPlacement = 'main' | 'rail'
 
 /**
- * `column` (the default): one column, at most max-w-4xl wide. `rail`: the
- * content area's whole width, with the sections placed `rail` in a narrow
- * column on the right (one column on a narrow screen, rail first).
+ * `tabs` (the default since 4.98): one column, at most max-w-4xl wide, the
+ * short facts (sections placed `rail`) in a Details tab after the record's
+ * other tabs. `column`: one column, `placement` ignored. `rail` (before
+ * 4.98's record standard; move off it, consuming.md "4.98"): the content
+ * area's whole width, with the sections placed `rail` in a narrow column
+ * on the right (one column on a narrow screen, rail first).
  */
-export type EntityViewLayout = 'column' | 'rail'
+export type EntityViewLayout = 'tabs' | 'column' | 'rail'
 
 /**
  * Which column comes first where the rail layout is one column (a phone,
@@ -267,8 +281,19 @@ export type EntityViewProps = {
    * (`<SourceCredit>`), when its source's terms ask for a credit.
    */
   footer?: ReactNode
-  /** `rail` puts the sections placed `rail` in a column on the right. Defaults to `column`. */
+  /**
+   * `tabs` (the default since 4.98): the sections placed `rail` are a
+   * Details tab after the other tabs (in the column where there's no other
+   * tab). `column`: one column, `placement` ignored. `rail`: the sections
+   * placed `rail` in a column on the right, the shape before 4.98's record
+   * standard (no right rail); drop it to move to `tabs`.
+   */
   layout?: EntityViewLayout
+  /**
+   * The `tabs` layout's facts tab: its name ("Details" by default). A
+   * section of the record's own with this tab joins it.
+   */
+  detailsTab?: string
   /**
    * In the `rail` layout, where its columns stack (a phone): the rail
    * before the main column (`rail-first`, the default), or the main column
@@ -427,13 +452,49 @@ function ViewSection({
   section,
   inRail = false,
   railFields = 'beside',
+  bare,
 }: {
   section: EntityViewSection
   inRail?: boolean
   railFields?: EntityViewRailFields
+  /**
+   * In a small card dialog (RecordDialogRoute `look="card"`, record
+   * standard 8A): no card round it, its heading a quiet label, or only
+   * for a screen reader where it's the dialog's one section.
+   */
+  bare?: 'label' | 'hidden'
 }) {
   const headingId = useId()
   const empty = useContext(EmptyContext)
+  const body =
+    'fields' in section ? (
+      <FieldList fields={section.fields} place={!inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'} />
+    ) : section.edit?.kind === 'list' ? (
+      <div className="flex min-w-0 flex-col gap-2 type-body break-words text-foreground">
+        {!isEmptyValue(section.content) && section.content}
+        <EditableList label={section.title} edit={section.edit} emptyLabel={section.emptyLabel ?? empty.text} />
+      </div>
+    ) : (
+      <div className="min-w-0 type-body break-words text-foreground">
+        {section.edit ? (
+          <EditableValue label={section.title} edit={section.edit}>
+            <OrEmpty value={section.content} emptyLabel={section.emptyLabel} />
+          </EditableValue>
+        ) : (
+          <OrEmpty value={section.content} emptyLabel={section.emptyLabel} />
+        )}
+      </div>
+    )
+  if (bare) {
+    return (
+      <section aria-labelledby={headingId} data-slot="entity-view-bare-section" className="flex flex-col gap-2">
+        <h2 id={headingId} className={bare === 'hidden' ? 'sr-only' : 'type-label text-muted-foreground'}>
+          {section.title}
+        </h2>
+        {body}
+      </section>
+    )
+  }
   return (
     <section aria-labelledby={headingId}>
       <Card>
@@ -442,29 +503,7 @@ function ViewSection({
             {section.title}
           </h2>
         </CardHeader>
-        <CardContent>
-          {'fields' in section ? (
-            <FieldList
-              fields={section.fields}
-              place={!inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'}
-            />
-          ) : section.edit?.kind === 'list' ? (
-            <div className="flex min-w-0 flex-col gap-2 type-body break-words text-foreground">
-              {!isEmptyValue(section.content) && section.content}
-              <EditableList label={section.title} edit={section.edit} emptyLabel={section.emptyLabel ?? empty.text} />
-            </div>
-          ) : (
-            <div className="min-w-0 type-body break-words text-foreground">
-              {section.edit ? (
-                <EditableValue label={section.title} edit={section.edit}>
-                  <OrEmpty value={section.content} emptyLabel={section.emptyLabel} />
-                </EditableValue>
-              ) : (
-                <OrEmpty value={section.content} emptyLabel={section.emptyLabel} />
-              )}
-            </div>
-          )}
-        </CardContent>
+        <CardContent>{body}</CardContent>
       </Card>
     </section>
   )
@@ -598,27 +637,82 @@ function Rail({
 
 const TAB_PARAM = 'tab'
 
-type ViewTab = { slug: string; name: string; sections: EntityViewSection[] }
+type ViewTab = {
+  slug: string
+  name: string
+  sections: EntityViewSection[]
+  /** Short facts beside the tab's sections (`tabs` layout: placed `rail`, with this tab). */
+  side: EntityViewSection[]
+  /** The facts tab (`detailsTab`): its cards capped at a reading width, their labels beside values. */
+  details?: boolean
+}
 
-// The main sections' tabs, in the order the sections first name them. Two
-// names with one slug ("Notes", "notes") are one tab, under the first.
-function tabsOf(sections: EntityViewSection[]) {
+// The tabs, in the order the sections first name them. Two names with one
+// slug ("Notes", "notes") are one tab, under the first. `side` sections
+// (placed `rail` in the `tabs` layout) go beside their tab's own.
+function tabsOf(sections: EntityViewSection[], side: EntityViewSection[] = []) {
   const tabs: ViewTab[] = []
-  for (const section of sections) {
-    if (section.tab === undefined) continue
-    const slug = entityViewTabSlug(section.tab)
-    const tab = tabs.find((each) => each.slug === slug)
-    if (tab) tab.sections.push(section)
-    else tabs.push({ slug, name: section.tab, sections: [section] })
+  const tabFor = (name: string) => {
+    const slug = entityViewTabSlug(name)
+    let tab = tabs.find((each) => each.slug === slug)
+    if (!tab) {
+      tab = { slug, name, sections: [], side: [] }
+      tabs.push(tab)
+    }
+    return tab
   }
+  for (const section of sections) if (section.tab !== undefined) tabFor(section.tab).sections.push(section)
+  for (const section of side) if (section.tab !== undefined) tabFor(section.tab).side.push(section)
   return tabs
+}
+
+// A tab with short facts beside its sections: two columns once the tab is
+// 42rem wide (the side ~18rem), the facts under the sections below that.
+const TAB_SIDE = {
+  columns:
+    'flex min-w-0 flex-col gap-6 @2xl/tab:grid @2xl/tab:grid-cols-[minmax(0,1fr)_--spacing(72)] @2xl/tab:items-start',
+  main: 'flex min-w-0 flex-col gap-6',
+  side: 'flex min-w-0 flex-col gap-6',
+}
+
+function TabBody({ tab, railFields }: { tab: ViewTab; railFields: EntityViewRailFields }) {
+  if (tab.details) {
+    // The facts on their own: a reading width, never the whole page.
+    return (
+      <div data-slot="entity-view-details" className="flex w-full max-w-2xl min-w-0 flex-col gap-6">
+        {tab.sections.map((section) => (
+          <ViewSection key={section.title} section={section} inRail railFields={railFields} />
+        ))}
+      </div>
+    )
+  }
+  const main = tab.sections.map((section) => <ViewSection key={section.title} section={section} />)
+  if (tab.side.length === 0) return main
+  return (
+    <div className={TAB_SIDE.columns}>
+      <div className={TAB_SIDE.main}>{main}</div>
+      <aside aria-label={`${tab.name} Facts`} data-slot="entity-view-tab-side" className={TAB_SIDE.side}>
+        {tab.side.map((section) => (
+          <ViewSection key={section.title} section={section} inRail railFields={railFields} />
+        ))}
+      </aside>
+    </div>
+  )
 }
 
 // The tab list, under the sections with no tab, and every tab's sections
 // (hidden but mounted unless selected). The selected tab is the address's,
 // changed in place: the entry replaced, its state kept (a record over its
 // list stays the dialog), the scroll where it was.
-function MainTabs({ tabs, label }: { tabs: ViewTab[]; label: string }) {
+function MainTabs({
+  tabs,
+  label,
+  railFields = 'beside',
+}: {
+  tabs: ViewTab[]
+  label: string
+  railFields?: EntityViewRailFields
+}) {
   const location = useLocation()
   const navigate = useNavigate()
   const asked = new URLSearchParams(location.search).get(TAB_PARAM)
@@ -659,14 +753,40 @@ function MainTabs({ tabs, label }: { tabs: ViewTab[]; label: string }) {
         ))}
       </TabsList>
       {tabs.map((tab) => (
-        <TabsContent key={tab.slug} value={tab.slug} keepMounted className="flex min-w-0 flex-col gap-6 [font-size:inherit]">
-          {tab.sections.map((section) => (
-            <ViewSection key={section.title} section={section} />
-          ))}
+        <TabsContent
+          key={tab.slug}
+          value={tab.slug}
+          keepMounted
+          className="@container/tab flex min-w-0 flex-col gap-6 [font-size:inherit]"
+        >
+          <TabBody tab={tab} railFields={railFields} />
         </TabsContent>
       ))}
     </Tabs>
   )
+}
+
+// The `tabs` layout's sections (1A): the main column's untabbed sections,
+// then the tab list, with the facts (placed `rail`, no tab) as the last
+// tab, or in the column in their place when there's no other tab.
+function tabsLayout(sections: EntityViewSection[], detailsTab: string) {
+  const isFacts = (section: EntityViewSection) => section.placement === 'rail' && section.tab === undefined
+  const side = sections.filter((section) => section.placement === 'rail' && section.tab !== undefined)
+  const main = sections.filter((section) => section.placement !== 'rail')
+  const facts = sections.filter(isFacts)
+  const tabs = tabsOf(main, side)
+  if (tabs.length === 0 || facts.length === 0) {
+    return { above: sections.filter((section) => section.tab === undefined), tabs, factsInColumn: true }
+  }
+  const slug = entityViewTabSlug(detailsTab)
+  const own = tabs.find((tab) => tab.slug === slug)
+  if (own) {
+    // The record's own tab of that name: the facts join it, drawn as its
+    // own facts tab only if it held nothing else.
+    own.details = own.sections.length === 0 && own.side.length === 0
+    own.sections.push(...facts)
+  } else tabs.push({ slug, name: detailsTab, sections: facts, side: [], details: true })
+  return { above: main.filter((section) => section.tab === undefined), tabs, factsInColumn: false }
 }
 
 export function EntityView({
@@ -681,7 +801,8 @@ export function EntityView({
   strip,
   sections,
   footer,
-  layout = 'column',
+  layout = 'tabs',
+  detailsTab = 'Details',
   mobileOrder = 'rail-first',
   railLabel,
   railFields = 'beside',
@@ -761,10 +882,16 @@ export function EntityView({
   )
   const railSections = sections.filter((section) => section.placement === 'rail')
   const mainSections = sections.filter((section) => section.placement !== 'rail')
-  // Tabs: a main section's `tab` (a rail one's is ignored, in either layout).
-  const tabs = tabsOf(mainSections)
+  const tabsLabel = `${title ?? 'Record'} sections`
+  // A tiny record in a small card dialog (8A): the facts as plain rows,
+  // the dialog's own controls on the title's line.
+  const card = dialog?.look === 'card'
+  // Tabs: in the `tabs` layout the facts are a tab of their own (1A); in
+  // the others a main section's `tab` (a rail one's is ignored).
+  const shaped = layout === 'tabs' ? tabsLayout(sections, detailsTab) : null
+  const tabs = shaped ? shaped.tabs : tabsOf(mainSections)
   const tabbed = (section: EntityViewSection) => section.placement !== 'rail' && section.tab !== undefined
-  const tabList = tabs.length > 0 && <MainTabs tabs={tabs} label={`${title ?? 'Record'} sections`} />
+  const tabList = tabs.length > 0 && <MainTabs tabs={tabs} label={tabsLabel} railFields={railFields} />
   const main = (
     <div className={cn(RAIL_LAYOUT.main, railSections.length === 0 && RAIL_LAYOUT.mainAlone)}>
       {mainSections
@@ -775,25 +902,80 @@ export function EntityView({
       {tabList}
     </div>
   )
+  let body: ReactNode
+  if (card) {
+    body = (
+      <div data-slot="entity-view-card-sections" className="flex flex-col gap-5">
+        {sections.map((section) => (
+          <ViewSection
+            key={section.title}
+            section={section}
+            inRail
+            railFields={railFields}
+            bare={sections.length === 1 ? 'hidden' : 'label'}
+          />
+        ))}
+      </div>
+    )
+  } else if (layout === 'rail') {
+    body = (
+      <div className={RAIL_LAYOUT.columns}>
+        {mobileOrder === 'main-first' && main}
+        {railSections.length > 0 && (
+          <Rail label={railLabel ?? `${title ?? 'Record'} details`} sections={railSections} fields={railFields} />
+        )}
+        {mobileOrder === 'rail-first' && main}
+      </div>
+    )
+  } else if (shaped) {
+    body = (
+      <>
+        {shaped.above.map((section) =>
+          section.placement === 'rail' ? (
+            <ViewSection key={section.title} section={section} inRail railFields={railFields} />
+          ) : (
+            <ViewSection key={section.title} section={section} />
+          ),
+        )}
+        {tabList}
+      </>
+    )
+  } else {
+    body = (
+      <>
+        {sections
+          .filter((section) => !tabbed(section))
+          .map((section) => (
+            <ViewSection key={section.title} section={section} />
+          ))}
+        {tabList}
+      </>
+    )
+  }
 
   return (
     <EditInPlaceContext.Provider value={store}>
     <EmptyContext.Provider value={{ text: emptyText, fold: emptyFields === 'fold' }}>
     <div
-      className={layout === 'rail' ? RAIL_LAYOUT.page : 'flex max-w-4xl flex-col gap-6'}
+      className={layout === 'rail' && !card ? RAIL_LAYOUT.page : cn('flex max-w-4xl flex-col', card ? 'gap-4' : 'gap-6')}
       data-state="success"
       data-layout={layout}
+      data-look={card ? 'card' : undefined}
     >
       {editing && <LeaveGuard store={store} />}
       {!dialog && !trail && <BackLink back={back} />}
       {!dialog && trail && !inShell && <PageTrail crumbs={trail} />}
 
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <header
+        className={
+          card ? 'flex items-start justify-between gap-3' : 'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'
+        }
+      >
         {/* The title keeps at least 16rem beside the actions, which wrap
             under one another (right-aligned) rather than squeeze it: at
             36px buttons a record with many actions (eight) took the whole
             row and left the title 0px wide, a letter per line (4.63.2). */}
-        <div className="flex min-w-0 flex-1 items-start gap-3 sm:min-w-64 sm:gap-4">
+        <div className={cn('flex min-w-0 flex-1 items-start gap-3', !card && 'sm:min-w-64 sm:gap-4')}>
         {leading && (
           <div data-slot="entity-view-leading" className="flex shrink-0 items-center">
             {leading}
@@ -803,7 +985,10 @@ export function EntityView({
           {/* The title's line: the title, then the status and badges after
               it, wrapping under a title too long for both. */}
           <div data-slot="entity-view-title-line" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-            <h1 id={dialog?.titleId} className="min-w-0 max-w-full type-page-title break-words text-foreground">
+            <h1
+              id={dialog?.titleId}
+              className={cn('min-w-0 max-w-full break-words text-foreground', card ? 'type-section-title' : 'type-page-title')}
+            >
               {titleEdit ? (
                 <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline">
                   {title}
@@ -825,11 +1010,19 @@ export function EntityView({
           )}
         </div>
         </div>
-        {(actions || printButton) && (
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
+        {card ? (
+          <div data-slot="entity-view-card-controls" className="flex shrink-0 items-center gap-1">
             {printButton}
             {actions}
+            {dialog?.controls}
           </div>
+        ) : (
+          (actions || printButton) && (
+            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
+              {printButton}
+              {actions}
+            </div>
+          )
         )}
       </header>
 
@@ -842,24 +1035,7 @@ export function EntityView({
 
       {strip && <div data-slot="entity-view-strip">{strip}</div>}
 
-      {layout === 'rail' ? (
-        <div className={RAIL_LAYOUT.columns}>
-          {mobileOrder === 'main-first' && main}
-          {railSections.length > 0 && (
-            <Rail label={railLabel ?? `${title ?? 'Record'} details`} sections={railSections} fields={railFields} />
-          )}
-          {mobileOrder === 'rail-first' && main}
-        </div>
-      ) : (
-        <>
-          {sections
-            .filter((section) => !tabbed(section))
-            .map((section) => (
-              <ViewSection key={section.title} section={section} />
-            ))}
-          {tabList}
-        </>
-      )}
+      {body}
 
       {footer && (
         <footer data-slot="entity-view-footer" className="type-caption text-muted-foreground">

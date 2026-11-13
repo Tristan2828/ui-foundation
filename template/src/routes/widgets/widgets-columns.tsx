@@ -3,13 +3,14 @@
 // (docs/foundation/add-an-entity.md).
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { Link } from 'react-router'
+import { StatusMark } from '@tristan2828/ui-foundation'
 import { Badge } from '@tristan2828/ui-foundation/ui/badge'
 import type { components } from '@/api/schema'
 import { CategoryName } from './category-names'
 import { InStockToggle } from './in-stock-toggle'
 import {
   CHECKLIST_STATE_BADGE_VARIANT,
-  STATUS_BADGE_VARIANT,
+  STATUS_KIND,
   checklistDoneCount,
   dateFormatter,
   priceFormatter,
@@ -58,7 +59,7 @@ export function buildWidgetsColumns(): LegacyColumnDef<Widget, unknown>[] {
       enableSorting: true,
       cell: ({ getValue }) => {
         const status = getValue() as WidgetStatus
-        return <Badge variant={STATUS_BADGE_VARIANT[status]}>{WIDGET_STATUS_LABELS[status]}</Badge>
+        return <StatusMark kind={STATUS_KIND[status]}>{WIDGET_STATUS_LABELS[status]}</StatusMark>
       },
     },
     {

@@ -82,6 +82,14 @@ export { ChoiceButtons, type ChoiceButtonsOption, type ChoiceButtonsProps } from
 export { ReferenceCombobox, type ReferenceComboboxProps, type ReferenceRecord } from '@/components/app/reference-combobox'
 export { fieldRows, type FieldKind, type FieldRowItem, type FieldRowPlace, type FieldSize } from '@/lib/field-rows'
 export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
+export { StatusMark, type StatusMarkProps } from '@/components/app/status-mark'
+export {
+  STATUS_KINDS,
+  STATUS_KIND_ICONS,
+  STATUS_KIND_LABELS,
+  STATUS_KIND_TONES,
+  type StatusKind,
+} from '@/lib/status-kinds'
 // The record's empty value (4.96): a muted dash read as "Not set", for an
 // app's own strips, summary lines and cells.
 export { EmptyText, type EmptyTextProps } from '@/components/app/empty-value'

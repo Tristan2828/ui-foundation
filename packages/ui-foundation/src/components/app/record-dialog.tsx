@@ -62,6 +62,13 @@
 // an EntityView with `layout="rail"` keeps its rail beside the main
 // column, as on its page; a narrower screen stacks them.
 //
+// A tiny record (4.98, record standard 8A: a few fields and no notes)
+// opens as a small card instead, `look="card"`: a 420px dialog (a bottom
+// sheet on a phone, DialogContent `size="confirm"`) with no bar. The
+// record's title, its actions (Delete as an icon), Open full page (an
+// icon, when it has a page) and Close share one line, and its facts are
+// plain rows under it, with no cards.
+//
 // Inside, the record's route renders as it always does. EntityView sees
 // the dialog (useRecordDialog): its heading names the dialog, its back link
 // gives way to the dialog's own bar, and not found's way out closes the
@@ -100,6 +107,13 @@ export type RecordDialogRouteProps = {
   /** Extra classes on the dialog's popup. It's 1,120px (`size="record"`) by default. */
   className?: string
   /**
+   * `record` (the default): 1,120px, a bar with Open full page and Close
+   * above the record. `card`: a small 420px card for a tiny record (a few
+   * fields, no notes), a bottom sheet on a phone, its controls on the
+   * title's line and its facts as plain rows.
+   */
+  look?: 'record' | 'card'
+  /**
    * False: the record has no full page, only this dialog (DataTable's
    * `opens` kind `dialog-only`). No Open full page, and its address opened
    * any other way (a deep link, a link from another page) is the dialog
@@ -131,6 +145,7 @@ export function RecordDialogRoute({
   list,
   label,
   className,
+  look = 'record',
   fullPage = true,
   listPath: listAt,
   newPath: newAt,
@@ -180,7 +195,37 @@ export function RecordDialogRoute({
       void navigate({ pathname, search, hash }, { replace: true })
     } else void navigate(-depth)
   }, [navigate, location.key, depth, pathname, search, hash])
-  const dialog = useMemo(() => ({ titleId, close }), [titleId, close])
+  const card = look === 'card'
+  // The card's controls sit on the record's title line (EntityView), so
+  // they're built here, where the address and the dialog are.
+  const { pathname: atPath, search: atSearch, hash: atHash } = location
+  const dialog = useMemo(
+    () => ({
+      titleId,
+      close,
+      look,
+      controls: card ? (
+        <>
+          {fullPage && (
+            <Link
+              to={{ pathname: atPath, search: atSearch, hash: atHash }}
+              replace
+              aria-label="Open Full Page"
+              title="Open Full Page"
+              className={buttonVariants({ variant: 'ghost', size: 'icon-sm' })}
+            >
+              <Maximize2Icon aria-hidden="true" />
+            </Link>
+          )}
+          <DialogClose render={<Button variant="ghost" size="icon-sm" />}>
+            <XIcon aria-hidden="true" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
+        </>
+      ) : undefined,
+    }),
+    [titleId, close, look, card, fullPage, atPath, atSearch, atHash],
+  )
   // After the save: the new record over the same list, in this entry.
   const created = useMemo(
     () => ({
@@ -224,9 +269,11 @@ export function RecordDialogRoute({
           aria-labelledby={titleId}
           aria-label={label}
           data-slot="record-dialog"
-          size="record"
-          className={cn('gap-0 overflow-hidden p-0 data-closed:hidden', className)}
+          size={card ? 'confirm' : 'record'}
+          data-look={look}
+          className={cn('gap-0 overflow-hidden p-0 data-closed:hidden', card && 'flex max-h-[calc(100dvh-2rem)] flex-col', className)}
         >
+          {!card && (
           <div className={cn('flex items-center gap-2 border-b px-2 py-2', fullPage ? 'justify-between' : 'justify-end')}>
             {/* A link, not a button: it goes to an address (and opens in a new tab on Ctrl/Cmd+click). */}
             {fullPage && (
@@ -244,7 +291,14 @@ export function RecordDialogRoute({
               <span className="sr-only">Close</span>
             </DialogClose>
           </div>
-          <div data-slot="record-dialog-body" className="min-h-0 overflow-y-auto p-4 sm:p-6">
+          )}
+          <div
+            data-slot="record-dialog-body"
+            className={cn(
+              'min-h-0 overflow-y-auto',
+              card ? 'p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-5' : 'p-4 sm:p-6',
+            )}
+          >
             <RecordDialogContext.Provider value={dialog}>{open && outlet}</RecordDialogContext.Provider>
           </div>
         </DialogContent>
