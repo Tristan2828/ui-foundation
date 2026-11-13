@@ -7,9 +7,10 @@ import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
-import { DataTable } from './data-table'
+import { DataTable, type DataTableGrouping } from './data-table'
 import type { DataTableRowAction } from './data-table-tools'
 import { FilterBar, FilterSelect } from './filter-bar'
+import { ListHeader } from './list-header'
 import { MultiChoice } from './multi-choice'
 import { RelatedTable } from './related-table'
 
@@ -24,6 +25,11 @@ import { RelatedTable } from './related-table'
 // - OneRowAction: a single action, drawn as its icon.
 // - Related: a record's related lists (R8): 19 visits capped at 10 with
 //   View all 19, and 3 with no link.
+// - Framed: the same list as `look="framed"` (4.100) under a ListHeader
+//   with a sibling-list switch (Houseplants / Cuttings / Seeds): views
+//   above a card whose top bar holds the filters and one settings button
+//   (the Columns ticks and Group By, by Status), its bottom bar the pager.
+//   e2e/data-table-framed.spec.ts.
 // The rows are made up.
 
 type State = 'loaded' | 'loading' | 'empty' | 'error'
@@ -106,7 +112,14 @@ const plantActions = (plant: Plant): DataTableRowAction[] => [
   { label: 'Delete', icon: Trash2Icon, tone: 'destructive', onSelect: noop },
 ]
 
-function PlantsList({ single = false }: { single?: boolean }) {
+const STATUS_GROUPING: DataTableGrouping<Plant> = {
+  id: 'status',
+  label: 'Status',
+  options: STATUSES.map((status) => ({ value: status, label: STATUS_LABELS[status] })),
+  value: (plant) => plant.status,
+}
+
+function PlantsList({ single = false, framed = false }: { single?: boolean; framed?: boolean }) {
   const [state, setState] = useState<State>('loaded')
   const { page, setPage, sorting, setSorting, filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView, applyView } =
     useTableUrlState(FILTERS, MULTI, VIEWS)
@@ -123,8 +136,24 @@ function PlantsList({ single = false }: { single?: boolean }) {
   return (
     <div className="flex flex-col gap-4 p-4">
       <StateSwitch state={state} onChange={setState} />
-      <h1 className="type-page-title">Houseplants</h1>
+      {framed ? (
+        <ListHeader
+          title="Houseplants"
+          count={PLANTS.length}
+          siblings={[
+            { label: 'Houseplants', to: '/', count: PLANTS.length },
+            { label: 'Cuttings', to: '/cuttings', count: 6 },
+            { label: 'Seeds', to: '/seeds', count: 3 },
+          ]}
+          deleted={{ shown: false, onShownChange: noop, noun: 'plants' }}
+          newAction={{ label: 'New plant', onClick: noop }}
+        />
+      ) : (
+        <h1 className="type-page-title">Houseplants</h1>
+      )}
       <DataTable
+        look={framed ? 'framed' : 'plain'}
+        groupings={framed ? [STATUS_GROUPING] : undefined}
         columns={plantColumns}
         opens={{ kind: 'page', to: (plant) => `/plants/${plant.id}` }}
         views={VIEWS}
@@ -221,6 +250,8 @@ function InRouter({ element, path }: { element: React.ReactNode; path: string })
         { path: '/', element },
         { path: '/plants/:id', element: <Opened /> },
         { path: '/visits', element: <p className="p-4 type-body">All visits</p> },
+        { path: '/cuttings', element: <p className="p-4 type-body">All cuttings</p> },
+        { path: '/seeds', element: <p className="p-4 type-body">All seeds</p> },
       ],
       { initialEntries: [path] },
     ),
@@ -315,3 +346,5 @@ export const ListToolsFiltered: StoryObj = {
 export const OneRowAction: StoryObj = { render: () => <InRouter element={<PlantsList single />} path="/" /> }
 
 export const Related: StoryObj = { render: () => <InRouter element={<RelatedLists />} path="/" /> }
+
+export const Framed: StoryObj = { render: () => <InRouter element={<PlantsList framed />} path="/" /> }

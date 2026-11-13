@@ -14,6 +14,7 @@ export {
   type BottomBarItem,
   type NavEntry,
   type NavItem,
+  type NavLook,
   type NavSection,
 } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
@@ -58,6 +59,7 @@ export {
   type DataTableOpens,
   type DataTableOpensKind,
   type DataTableGrouping,
+  type DataTableLook,
   type DataTableProps,
   type DataTableTotals,
   type DataTableWidth,
@@ -220,6 +222,7 @@ export {
   type ListHeaderAction,
   type ListHeaderLink,
   type ListHeaderProps,
+  type ListHeaderSibling,
 } from '@/components/app/list-header'
 export { Timeline, type TimelineItem, type TimelineProps } from '@/components/app/timeline'
 export {

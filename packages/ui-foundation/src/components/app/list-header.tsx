@@ -10,8 +10,15 @@
 // Holds no state: the app keeps `shown` (usually a URL filter). `links`
 // are routes, `more` are the app's own actions. The ⋯ button has an
 // accessible name and is left out when the menu would be empty.
+//
+// `siblings` (4.100) is a switch beside the title between lists that are
+// one thing seen three ways (Exercises / Targets / Weak spots): links in a
+// segmented row, the one on marked as the current page. They're the
+// page's own peers, so they aren't in ⋯, which keeps only what's left
+// (Show deleted). On a phone the switch takes its own line under the
+// title and scrolls sideways if it must.
 import { EllipsisIcon, PlusIcon, Trash2Icon } from 'lucide-react'
-import { Link, type To } from 'react-router'
+import { Link, NavLink, type To } from 'react-router'
 import { cn } from 'cn'
 import type { IconComponent } from '@/components/app/icon-component'
 import { Notice } from '@/components/app/notice'
@@ -27,6 +34,19 @@ import {
 
 export type ListHeaderLink = { label: string; to: To; icon?: IconComponent }
 export type ListHeaderAction = { label: string; onSelect: () => void; icon?: IconComponent }
+/** One list in the `siblings` switch. */
+export type ListHeaderSibling = {
+  label: string
+  to: To
+  /** How many records it holds, after its label. */
+  count?: number
+  /**
+   * Whether it's the list showing. Left out, it's the one whose path is
+   * the page's (react-router's NavLink, `end`), so set it for siblings
+   * told apart by their query string.
+   */
+  current?: boolean
+}
 
 export type ListHeaderProps = {
   /** The list's name: the page's h1. */
@@ -45,10 +65,75 @@ export type ListHeaderProps = {
    * <noun>" (default "records").
    */
   deleted?: { shown: boolean; onShownChange: (shown: boolean) => void; noun?: string }
+  /**
+   * Lists that are this one's peers (4.100): a switch beside the title,
+   * this list among them. Two or more; fewer draws nothing.
+   */
+  siblings?: readonly ListHeaderSibling[]
+  /** The switch's landmark name: "<title> Lists" unless set. */
+  siblingsLabel?: string
   className?: string
 }
 
-export function ListHeader({ title, count, links = [], newAction, more = [], deleted, className }: ListHeaderProps) {
+// The switch: one bordered row, the current list filled. Each link is
+// 32px tall (40 on a phone), its focus ring inside the row.
+const SIBLING_CLASS =
+  'inline-flex min-h-8 shrink-0 items-center gap-1.5 border-r border-border px-3 type-body whitespace-nowrap ' +
+  'text-muted-foreground outline-none last:border-r-0 hover:bg-muted hover:text-foreground ' +
+  'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset max-md:min-h-10 ' +
+  'aria-[current=page]:bg-muted aria-[current=page]:font-medium aria-[current=page]:text-foreground'
+
+function SiblingSwitch({ siblings, label }: { siblings: readonly ListHeaderSibling[]; label: string }) {
+  return (
+    <nav
+      aria-label={label}
+      data-slot="list-header-siblings"
+      className="max-w-full max-md:order-last max-md:basis-full max-md:overflow-x-auto"
+    >
+      <div className="inline-flex overflow-hidden rounded-md border border-border">
+        {siblings.map((sibling) => {
+          const inner = (
+            <>
+              {sibling.label}
+              {sibling.count !== undefined && (
+                <span className="tabular-nums">
+                  <span className="sr-only">, </span>
+                  {sibling.count}
+                </span>
+              )}
+            </>
+          )
+          return sibling.current === undefined ? (
+            <NavLink key={sibling.label} to={sibling.to} end className={SIBLING_CLASS}>
+              {inner}
+            </NavLink>
+          ) : (
+            <Link
+              key={sibling.label}
+              to={sibling.to}
+              aria-current={sibling.current ? 'page' : undefined}
+              className={SIBLING_CLASS}
+            >
+              {inner}
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
+
+export function ListHeader({
+  title,
+  count,
+  links = [],
+  newAction,
+  more = [],
+  deleted,
+  siblings = [],
+  siblingsLabel,
+  className,
+}: ListHeaderProps) {
   // One link is a button of its own; two or more go in the menu.
   const outLink = links.length === 1 ? links[0] : undefined
   const menuLinks = links.length > 1 ? links : []
@@ -65,7 +150,8 @@ export function ListHeader({ title, count, links = [], newAction, more = [], del
             </span>
           )}
         </h1>
-        <div className="flex flex-wrap items-center gap-2">
+        {siblings.length > 1 && <SiblingSwitch siblings={siblings} label={siblingsLabel ?? `${title} Lists`} />}
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           {outLink && (
             <Button size="sm" variant="outline" nativeButton={false} render={<Link to={outLink.to} />}>
               {outLink.icon && <outLink.icon aria-hidden="true" />}

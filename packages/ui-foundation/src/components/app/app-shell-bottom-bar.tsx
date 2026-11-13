@@ -14,12 +14,16 @@ import { Link, useLocation } from 'react-router'
 import {
   bottomBarCurrent,
   bottomBarSection,
+  bottomBarTiles,
   childItems,
+  childRuns,
+  childrenOpen,
   isNavItemGroup,
   type BottomBarItem,
   type NavChild,
   type NavEntry,
   type NavItem,
+  type NavLook,
 } from '@/components/app/app-shell-nav'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
@@ -92,25 +96,71 @@ function SheetChildren({ items, activeTo }: { items: readonly NavChild[]; active
   )
 }
 
-// The tiles (#N8): one per entry, its pages left to the module itself. The
-// tile holding the current page, its own or one of its pages, is marked.
-function SheetTiles({ items, activeTo }: { items: readonly NavItem[]; activeTo: string | undefined }) {
+// A page tile, under a tiles section's tiles: smaller, four to a row,
+// still a finger's target.
+const PAGE_TILE_CLASS =
+  'flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1.5 text-center type-caption ' +
+  'text-foreground outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 ' +
+  'aria-[current=page]:bg-accent aria-[current=page]:font-medium [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground'
+
+// The current entry's pages under a tiles section's tiles (#6C): a
+// hairline, then its pages as small tiles, each heading a hairline of its
+// own with its list still named by it.
+function SheetPageTiles({ items, activeTo }: { items: readonly NavItem[]; activeTo: string | undefined }) {
+  const open = items.filter((item) => childrenOpen(item, activeTo))
+  return open.map((item) => (
+    <div key={item.to} role="group" aria-label={`${item.label} pages`} data-slot="app-shell-sheet-pages" className="flex flex-col">
+      {childRuns(item).map((run, runIndex) => (
+        <div key={run.label ?? `run:${runIndex}`} className="flex flex-col">
+          <div role="separator" className="my-2 h-px bg-border" />
+          <ul aria-label={run.label} className="grid grid-cols-4 gap-1.5">
+            {run.items.map(({ to, label, icon: Icon }) => (
+              <li key={to} className="flex min-w-0">
+                <Link to={to} aria-current={to === activeTo ? 'page' : undefined} className={PAGE_TILE_CLASS}>
+                  <Icon aria-hidden="true" />
+                  <span className="max-w-full break-words">{label}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  ))
+}
+
+// The tiles (#N8): one per entry. Its pages are left to the module itself,
+// unless the section's look is tiles (#6C): then the current entry's are
+// under the tiles. The tile holding the current page, its own or one of
+// its pages, is marked.
+function SheetTiles({
+  items,
+  activeTo,
+  withPages,
+}: {
+  items: readonly NavItem[]
+  activeTo: string | undefined
+  withPages: boolean
+}) {
   return (
-    <ul data-slot="app-shell-sheet-tiles" className="grid grid-cols-3 gap-2">
-      {items.map((item) => {
-        const { to, label, icon: Icon } = item
-        // "page" on the module's own page, "true" on one of its pages.
-        const current = to === activeTo ? 'page' : childItems(item).some((child) => child.to === activeTo) ? 'true' : undefined
-        return (
-          <li key={to} className="flex min-w-0">
-            <Link to={to} aria-current={current} className={`${TILE_CLASS} flex-1`}>
-              <Icon aria-hidden="true" />
-              <span className="max-w-full break-words">{label}</span>
-            </Link>
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      <ul data-slot="app-shell-sheet-tiles" className="grid grid-cols-3 gap-2">
+        {items.map((item) => {
+          const { to, label, icon: Icon } = item
+          // "page" on the module's own page, "true" on one of its pages.
+          const current = to === activeTo ? 'page' : childItems(item).some((child) => child.to === activeTo) ? 'true' : undefined
+          return (
+            <li key={to} className="flex min-w-0">
+              <Link to={to} aria-current={current} className={`${TILE_CLASS} flex-1`}>
+                <Icon aria-hidden="true" />
+                <span className="max-w-full break-words">{label}</span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+      {withPages && <SheetPageTiles items={items} activeTo={activeTo} />}
+    </>
   )
 }
 
@@ -118,10 +168,13 @@ export function BottomBar({
   items,
   nav,
   activeTo,
+  navLook = 'list',
 }: {
   items: readonly BottomBarItem[]
   nav: readonly NavEntry[]
   activeTo: string | undefined
+  /** The shell's `navLook`: a section's sheet follows its look when its item sets no `sheet`. */
+  navLook?: NavLook
 }) {
   // The section open, and the location it was opened at: following a link
   // in the sheet (or anywhere) moves to a new location, which closes it.
@@ -134,7 +187,10 @@ export function BottomBar({
   const shown = items.slice(0, 5)
   const current = bottomBarCurrent(shown, nav, activeTo)
   const section = openGroup === null ? undefined : bottomBarSection(nav, openGroup)
-  const tiles = shown.some((item) => 'group' in item && item.group === openGroup && item.sheet === 'tiles')
+  const openItem = shown.find((item) => 'group' in item && item.group === openGroup)
+  const tiles = openItem !== undefined && bottomBarTiles(openItem, section, navLook)
+  // The current entry's pages show under the tiles when the section's own look is tiles.
+  const withPages = (section?.look ?? navLook) === 'tiles'
 
   return (
     <>
@@ -190,7 +246,7 @@ export function BottomBar({
               </SheetHeader>
               <nav aria-label={section.label} className="overflow-y-auto px-2">
                 {tiles ? (
-                  <SheetTiles items={section.items} activeTo={activeTo} />
+                  <SheetTiles items={section.items} activeTo={activeTo} withPages={withPages} />
                 ) : (
                   <SheetChildren items={section.items} activeTo={activeTo} />
                 )}

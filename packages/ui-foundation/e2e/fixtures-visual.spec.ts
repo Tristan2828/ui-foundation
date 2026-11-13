@@ -176,6 +176,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-valuelist--icons', mustShow: '+1' },
   { id: 'app-listheader--default', mustShow: 'Change log' },
   { id: 'app-listheader--showing-deleted', mustShow: 'Back to the List' },
+  { id: 'app-listheader--siblings', mustShow: 'Cuttings' },
   { id: 'app-timeline--default', mustShow: 'Show All 7' },
   { id: 'app-timeline--in-a-narrow-card', mustShow: 'Show All 7' },
   { id: 'app-timeline--few-entries', mustShow: 'Nothing yet' },
@@ -278,6 +279,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable-tools--list-tools', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
   { id: 'app-datatable-tools--related', mustShow: 'View All 19' },
+  { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
@@ -301,6 +303,9 @@ const COMPOSITE_STORIES = [
   // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
   { id: 'app-appshell--standard', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-rail', mustShow: 'Page at /finance/accounts/3' },
+  // The sidebar as icon tiles (#6C, navLook), and on the rail.
+  { id: 'app-appshell--standard-tiles', mustShow: 'Page at /finance/accounts/3' },
+  { id: 'app-appshell--standard-tiles-rail', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-trail', mustShow: 'Bills and the paycheck' },
   { id: 'app-appshell--standard-search', mustShow: 'Page at /finance/budget' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },

@@ -3,46 +3,47 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 74–97
-- [1. Plain text](#1-plain-text) · lines 99–152
-- [2. Icon + label](#2-icon--label) · lines 154–177
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 179–192
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 194–271
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 219–271
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 273–293
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 295–307
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 309–330
-- [8. Date, relative](#8-date-relative) · lines 332–369
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 371–419
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 389–419
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 421–471
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 439–471
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 473–513
-- [12. Boolean](#12-boolean) · lines 515–545
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 547–583
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 567–583
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 585–602
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 604–713
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 630–713
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 715–750
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 752–825
-- [18. Editable value](#18-editable-value) · lines 827–1505
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1137–1205
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1207–1243
-  - [A link and its label](#a-link-and-its-label) · lines 1245–1269
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1271–1404
-  - [In a table's rows](#in-a-tables-rows) · lines 1406–1491
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1493–1505
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1507–1573
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1575–1639
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1641–1739
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1741–1770
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1772–1810
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1812–1888
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1890–1913
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1915–2001
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2003–2039
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2041–2086
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 75–98
+- [1. Plain text](#1-plain-text) · lines 100–153
+- [2. Icon + label](#2-icon--label) · lines 155–178
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 180–193
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 195–272
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 220–272
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 274–294
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 296–308
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 310–331
+- [8. Date, relative](#8-date-relative) · lines 333–370
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 372–420
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 390–420
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 422–472
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 440–472
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 474–514
+- [12. Boolean](#12-boolean) · lines 516–546
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 548–584
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 568–584
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 586–603
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 605–714
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 631–714
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 716–751
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 753–826
+- [18. Editable value](#18-editable-value) · lines 828–1506
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1138–1206
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1208–1244
+  - [A link and its label](#a-link-and-its-label) · lines 1246–1270
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1272–1405
+  - [In a table's rows](#in-a-tables-rows) · lines 1407–1492
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1494–1506
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1508–1574
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1576–1640
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1642–1740
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1742–1771
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1773–1811
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1813–1889
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1891–1914
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1916–2042
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2004–2042
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2044–2080
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2082–2127
 
 <!-- /index -->
 
@@ -1999,6 +2000,46 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   both themes; `e2e/data-table-tools.spec.ts` checks the pills, the stored
   pick and a view's columns winning, the ⋯ menu, the 44px rows, the
   phone's line and sheet.
+
+### The framed look, and sibling lists beside the title
+
+The toolbar a list-page review picked (4.100): `look="framed"` on
+`DataTable`, and `siblings` on `ListHeader`. Both are opt-in.
+
+```tsx
+<ListHeader
+  title="Exercises" count={total}
+  siblings={[
+    { label: 'Exercises', to: '/training/exercises', count: 5 },
+    { label: 'Targets', to: '/training/targets', count: 9 },
+    { label: 'Weak spots', to: '/training/weak-spots', count: 4 },
+  ]}
+  deleted={{ shown, onShownChange: setShown, noun: 'exercises' }}
+  newAction={{ label: 'New Exercise', to: '/training/exercises/new' }}
+/>
+<DataTable look="framed" views={VIEWS} columnsMenu={…} groupings={…} toolbar={<FilterBar … />} … />
+```
+
+- **The card**: the toolbar in its top bar (search and Filters keep their
+  words), the rows, then the count and pager in its bottom bar. Saved
+  views sit above it, outside the bar. Loading, empty and error show
+  inside it.
+- **The tools end at the table's edge**: the card is as wide as `width`
+  makes the table, tools and pager with it, so nothing sits off at the
+  far right of a wide page. `width="full"` fills the area as before.
+- **One settings button** in place of Columns and Group: the Columns
+  ticks, then Group By, in one menu. Its name says the grouping that's on
+  ("Table Settings, Grouped by Status") and a dot marks it. Fold All
+  stays a button of its own while grouped. On a phone it holds Group By
+  alone.
+- **Siblings** are the page's peers, a switch of links beside the title,
+  the current one marked (`aria-current="page"`); they don't go in ⋯,
+  which keeps what's left. Two or more; on a phone the switch has its own
+  line. Pass `current` when the siblings differ only by query string.
+- The fixtures' `app/DataTable tools` Framed and `app/ListHeader`
+  Siblings stories hold it, under axe and the token check in both
+  themes; `e2e/data-table-framed.spec.ts` checks the edges, the menu
+  from the mouse and the keyboard, the switch and the phone.
 
 ## 26. A record's related list, capped
 

@@ -68,6 +68,14 @@ export function navTooltip(item: NavItem): string {
   return `${item.label}: ${children.map((child) => child.label).join(', ')}`
 }
 
+/**
+ * How a sidebar group draws its entries: a list, icon beside label
+ * (`'list'`, the default), or a grid of tiles, icon over a short label,
+ * three to a row, with no visible heading (`'tiles'`). Set for the whole
+ * nav with `AppShell`'s `navLook`, or per section with its `look`.
+ */
+export type NavLook = 'list' | 'tiles'
+
 /** A labelled group of sidebar entries: one module's pages, say. */
 export type NavSection = {
   label: string
@@ -87,6 +95,15 @@ export type NavSection = {
    * (`'bottom'`: a Tools group, say).
    */
   placement?: 'top' | 'bottom'
+  /**
+   * This section's look, over `AppShell`'s `navLook`: `'tiles'` draws its
+   * entries as a grid of icon tiles, its label kept for screen readers
+   * only, and the current entry's pages listed under the grid. A tiles
+   * section doesn't fold (`collapsible` is ignored). On the icon rail it's
+   * the rail's icons, as any section. A `bottomBar` item for it opens its
+   * sheet as tiles too, the current entry's pages under them.
+   */
+  look?: NavLook
 }
 
 /** One entry of `AppShell`'s `nav`: a page, or a labelled section of pages. */
@@ -105,6 +122,8 @@ export type NavGroup = {
   defaultOpen?: boolean
   /** From its section: at the sidebar's foot (NavSection's `placement`). */
   placement?: 'bottom'
+  /** From its section: its own look (NavSection's `look`), over the shell's. */
+  look?: NavLook
 }
 
 /**
@@ -126,6 +145,7 @@ export function navGroups(nav: readonly NavEntry[]): NavGroup[] {
         items: entry.items,
         ...(entry.collapsible && { collapsible: true, defaultOpen: entry.defaultOpen ?? true }),
         ...(entry.placement === 'bottom' && { placement: 'bottom' as const }),
+        ...(entry.look && { look: entry.look }),
       })
     } else {
       run.push(entry)
@@ -274,10 +294,46 @@ export type BottomBarItem =
       /**
        * How its sheet shows the section: a list of its entries with their
        * pages (`'list'`, the default), or a grid of tiles, one per entry,
-       * icon over label, like a phone's home screen (`'tiles'`).
+       * icon over label, like a phone's home screen (`'tiles'`). Without
+       * it, the section's look decides (`NavSection.look`, `navLook`).
        */
       sheet?: 'list' | 'tiles'
     }
+
+/**
+ * Whether a bottom bar item's sheet is tiles: its own `sheet`, or else
+ * its section's look (the section's `look`, or the shell's `navLook`).
+ */
+export function bottomBarTiles(
+  item: BottomBarItem,
+  section: NavSection | undefined,
+  navLook: NavLook = 'list',
+): boolean {
+  if (!('group' in item)) return false
+  if (item.sheet) return item.sheet === 'tiles'
+  return (section?.look ?? navLook) === 'tiles'
+}
+
+/**
+ * The runs of an entry's pages, for a look with no headings: each group
+ * its own run, named by its label, and each run of plain pages between
+ * them an unnamed one.
+ */
+export function childRuns(item: NavItem): { label?: string; items: NavItem[] }[] {
+  const runs: { label?: string; items: NavItem[] }[] = []
+  let run: NavItem[] = []
+  for (const child of item.children ?? []) {
+    if (isNavItemGroup(child)) {
+      if (run.length) runs.push({ items: run })
+      run = []
+      runs.push({ label: child.label, items: [...child.items] })
+    } else {
+      run.push(child)
+    }
+  }
+  if (run.length) runs.push({ items: run })
+  return runs
+}
 
 /** The nav's section with this label, if there is one. */
 export function bottomBarSection(nav: readonly NavEntry[], label: string): NavSection | undefined {

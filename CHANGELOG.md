@@ -40,6 +40,93 @@ npm package. `ui-foundation-backend` moves to 4.101.0 with it, unchanged.
    needs the count, or a regex. A spec that measured a tab's height or
    type size changes (44px, 16px).
 
+## 4.100.0 — A framed list, its tools at the table's edge, and sibling lists beside the title
+
+npm package. `ui-foundation-backend` moves to 4.100.0 with it, unchanged.
+
+The list toolbar picked in a list-page review (its options 7A, 7F and
+7K). Everything is opt-in: a list that changes nothing looks as before.
+
+- **`DataTable`'s `look="framed"`** (new type `DataTableLook`, `'plain'`
+  by default): the list is a card with a border. Its top bar holds the
+  `toolbar` (search and Filters keep their words), Fold All while
+  grouped, the layout switch, and **one settings button** (a sliders
+  icon, "Table Settings") holding the Columns ticks and Group By in one
+  menu, in place of the Columns and Group buttons with words. While a
+  grouping is on, the button's name says so ("Table Settings, Grouped by
+  Status") and a dot marks it, since the bar no longer spells it out. Its
+  bottom bar holds the count, rows per page and the pager. Saved views
+  stay above the card, outside its bar. Loading, empty and error show
+  inside the card.
+- **The tools end at the table's own edge.** Framed, the card (tools,
+  rows and pager together) is as wide as `width` makes the table (the
+  default `content`: the columns' width, at least 36rem, never wider than
+  the area), so on a narrow table nothing sits off at the far right of a
+  wide page. The plain look keeps its full-width toolbar.
+- On a phone (under 48rem) the card holds the row list (`phoneRow`) with
+  no border of its own, the settings button stays on the search's line
+  and holds Group By alone (a row list has no columns to pick), and the
+  page never scrolls sideways.
+- **`ListHeader`'s `siblings`** (new type `ListHeaderSibling`): lists
+  that are one thing seen several ways (Exercises / Targets / Weak spots)
+  as a switch of links beside the title, with optional counts. The one
+  showing is the current page (react-router's `NavLink`, `end`), or set
+  `current` for siblings told apart by their query string. It's a
+  landmark named "<title> Lists" (`siblingsLabel` to change it). On a
+  phone it takes its own line under the title, 40px tall, and scrolls
+  sideways if it must. The siblings leave ⋯, which keeps what's left
+  (Show Deleted, Export).
+- `opens`, `requireTableOpens`, `columnsMenu`'s stored pick, `groupings`,
+  `views`, `rowActions`, `phoneRow`, `detailPanel`, `limit`/`viewAll` and
+  every other prop work the same in both looks.
+
+To take it, for a list page that wants the reviewed toolbar:
+
+1. Pass `look="framed"` to its `DataTable`. Keep `toolbar`,
+   `columnsMenu` and `groupings` as they are: the settings button builds
+   itself from them.
+2. If the page links to sibling lists (from ⋯ `links`, or a hand-made
+   row of buttons), move them to `ListHeader`'s `siblings`, this list
+   among them, and drop them from `links`.
+3. A spec that clicks `Columns` or `Group` on a framed list now opens
+   the "Table Settings" button (`getByRole('button', { name: /^Table
+   Settings/ })`) and finds the same menu items inside.
+## 4.99.0 — The sidebar as icon tiles
+
+npm package. `ui-foundation-backend` moves to 4.99.0 with it, unchanged.
+
+- **`AppShell`'s `navLook="tiles"`** (design-language.md "The sidebar and
+  the phone's bar"): each sidebar group a three-column grid of tiles,
+  icon over a short label, with no visible headings (a section's label
+  still names its grid for screen readers). The tile you're in, or the
+  one holding the page, has the tint and a `--primary` ring; a count
+  sits in its corner. The pages of the entry you're in list under its
+  group's grid, a hairline in place of each heading. The icon rail is
+  unchanged, and the sidebar's phone sheet shows the tiles.
+- **A section's own `look`** (`'list' | 'tiles'`, type `NavLook`) wins
+  over the shell's: `look: 'list'` keeps a Tools section at the foot a
+  list under a tiles sidebar, or `look: 'tiles'` draws one section as
+  tiles in a list sidebar. A tiles section doesn't fold (`collapsible`
+  is ignored).
+- **The phone's bar follows the look**: a `bottomBar` item for a tiles
+  section that sets no `sheet` opens its sheet as tiles, the current
+  entry's pages under them as smaller tiles. An item's own `sheet` still
+  wins, and `sheet: 'tiles'` on a list section is unchanged (its pages
+  left to the module).
+- New fixtures app/AppShell StandardTiles, StandardTilesRail and
+  StandardTilesOnHome, with e2e/app-shell-tiles.spec.ts (the grid, the
+  marks, the pages under it, the keyboard, the rail, the phone's sheets,
+  axe in both themes).
+
+**For an app:** nothing changes until it opts in. To take the tiles,
+pass `navLook="tiles"` to `AppShell`, shorten any long entry label to a
+word or two, and give a section that should stay a list `look: 'list'`
+(a Tools section at the foot, say). Drop `sheet: 'tiles'` from the
+`bottomBar` items for tiles sections if you want their sheets to show
+the current module's pages too. A test that finds a section's heading
+by its visible text (`getByText('Every day')`) now finds a
+screen-reader-only label; find the section's list by name instead
+(`getByRole('list', { name: 'Every day', exact: true })`).
 ## 4.98.0 — The record standard's looks: a Details tab, status marks, a small card dialog
 
 npm package. `ui-foundation-backend` moves to 4.98.0 with it, unchanged.
