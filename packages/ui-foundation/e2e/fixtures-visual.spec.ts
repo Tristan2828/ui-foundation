@@ -138,6 +138,15 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityform--default', mustShow: 'Add Book' },
   { id: 'app-entityform--sections', mustShow: 'What It Is' },
   { id: 'app-entityform--failed-save', mustShow: "Couldn't add the book" },
+  // The record standard (4.98): the Details tab's record (a status mark in
+  // the header, the strip as wide as its numbers, a box beside Notes), the
+  // facts in the column, every status kind on the page, a card and a table,
+  // a tiny record's card dialog, and choice fields two to a row.
+  { id: 'app-entityview--details-tab', mustShow: 'Packing' },
+  { id: 'app-entityview--details-in-the-column', mustShow: 'No follow-ups' },
+  { id: 'app-statusmark--all-kinds', mustShow: 'Renew the permit' },
+  { id: 'app-recorddialog--card', mustShow: 'Display Order' },
+  { id: 'app-formcontrols--choice-pairs', mustShow: 'Coats' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
@@ -342,6 +351,10 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  // Each status kind's icon (4.98, 5B) on the page, a card and a table row,
+  // and the header's on the Details tab's record.
+  { id: 'app-statusmark--all-kinds' },
+  { id: 'app-entityview--details-tab' },
   // Each toast's icon in its tone on the popover surface (4.90), and the
   // offline bar's, an action error's and a job's (the spinner and check).
   {

@@ -4,7 +4,7 @@ import { expect, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui
 // The widget view (/widgets/:id): one test per state (loading, not found,
 // error, success, the sparse record's empty values), then the ways in and
 // out of it (the table's title link, Edit, Cancel, Delete) and its layout
-// (the rail) on wide screens and at phone width.
+// (one column, no rail) on wide screens and at phone width.
 
 // Wireless Mouse (id 1) as the mocks seed it, for overrides that replace
 // its first GET.
@@ -436,26 +436,21 @@ test.describe('widget view', () => {
     await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeChecked()
   })
 
-  // The plan's layout is `rail`: Details in a column on the right,
-  // Description and Checklist in the main column beside it.
+  // The record standard (4.98): no right rail. With no tabs, Details (the
+  // facts) comes first in the one column, Description under it.
   for (const width of [1280, 2289]) {
-    test(`wide screens (${width}px): Details in the rail, the main column beside it from the top`, async ({ page, isMobile }) => {
+    test(`wide screens (${width}px): no rail, Details first in one column, labels beside values`, async ({ page, isMobile }) => {
       test.skip(!!isMobile, 'the phone layout is the next test')
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/widgets/1')
-      const rail = page.getByRole('complementary', { name: 'Wireless Mouse details' })
-      await expect(rail.getByRole('region', { name: 'Details' })).toBeVisible()
+      await expect(page.getByRole('region', { name: 'Details' })).toBeVisible()
+      await expect(page.getByRole('complementary', { name: 'Wireless Mouse details' })).toHaveCount(0)
 
-      const header = await page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) }).boundingBox()
       const details = await page.getByRole('region', { name: 'Details' }).boundingBox()
       const description = await page.getByRole('region', { name: 'Description' }).boundingBox()
-      expect(description!.y).toBeGreaterThan(header!.y + header!.height)
-      expect(Math.abs(description!.y - details!.y)).toBeLessThan(2)
-      expect(description!.x + description!.width).toBeLessThan(details!.x)
-      // The whole content area: the header reaches the rail's right edge.
-      expect(Math.abs(header!.x + header!.width - (details!.x + details!.width))).toBeLessThan(2)
+      expect(description!.y).toBeGreaterThanOrEqual(details!.y + details!.height)
+      expect(Math.abs(description!.x - details!.x)).toBeLessThan(2)
 
-      // Rail fields sit beside their labels (the default since 4.81).
       const label = await page.locator('dt').getByText('Category', { exact: true }).boundingBox()
       const value = await fieldValue(page, 'Category').boundingBox()
       expect(value!.x).toBeGreaterThan(label!.x + label!.width)
@@ -465,7 +460,7 @@ test.describe('widget view', () => {
     })
   }
 
-  test('phone width: labels beside values, the rail first, nothing scrolls sideways', async ({ page }) => {
+  test('phone width: labels beside values, Details first, nothing scrolls sideways', async ({ page }) => {
     await page.setViewportSize({ width: 393, height: 851 })
     await page.goto('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()

@@ -28,7 +28,7 @@ a data source. For the design behind it, see
 
 | The app's (in its repo) | The package's (`@tristan2828/ui-foundation`) |
 |---|---|
-| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/` (except what `ui-foundation-backend` holds), `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell` (with the trail and search in its bar: `usePageTrail`, `useRecentRecord`), `DataTable`, `EntityView` (and `EmptyText`, its empty value) and editing in place, printing a record's notes, a record opened in a dialog over its list (`RecordDialogRoute`, and a new record's form over it), `FormDialog`, `EntityForm` (with `FormSection`, `OptionSelect`, `ChoiceButtons` and `ReferenceCombobox`), the dialogs and feedback parts (`DeleteAction`, `notify`, `useAction`, `ActionError`, `JobStatus`, `OfflineNotice`), `Markdown` (and its task-item helpers `countTasks`, `toggleTaskAt`), `RichTextEditor`, `StageCircle`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `InlineCreate`, the timed-screen parts (`SessionView`, `useSessionClock`, `useWakeLock`, the audio cues, `useMuted`), reminders (`AllowReminders`, `usePushPermission`, the `pwa()` Vite plugin and its service worker), login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, `titleCase` (a label built from a value), tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
+| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/` (except what `ui-foundation-backend` holds), `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell` (with the trail and search in its bar: `usePageTrail`, `useRecentRecord`), `DataTable`, `EntityView` (and `EmptyText`, its empty value) and editing in place, printing a record's notes, a record opened in a dialog over its list (`RecordDialogRoute`, and a new record's form over it), `FormDialog`, `EntityForm` (with `FormSection`, `OptionSelect`, `ChoiceButtons` and `ReferenceCombobox`), the dialogs and feedback parts (`DeleteAction`, `notify`, `useAction`, `ActionError`, `JobStatus`, `OfflineNotice`), `Markdown` (and its task-item helpers `countTasks`, `toggleTaskAt`), `RichTextEditor`, `StageCircle`, `StatusMark` (a status's icon, colour and word), `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `InlineCreate`, the timed-screen parts (`SessionView`, `useSessionClock`, `useWakeLock`, the audio cues, `useMuted`), reminders (`AllowReminders`, `usePushPermission`, the `pwa()` Vite plugin and its service worker), login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, `titleCase` (a label built from a value), tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
 
 The app's column changes whenever the app wants. The package's column
 changes only through a release, which reaches every app.
@@ -53,6 +53,33 @@ one lists its upgrade steps in the changelog.
 `verify` makes the upgrade complete. `sync --check` fails until `sync` has
 run, `check-contract` fails if the foundation's part of the contract
 changed, and the lint rules and types flag whatever the release changed.
+
+## Moving a record off the rail (4.98)
+
+The record standard (4.98) has no right rail: a record's short facts are
+its last tab, Details, or, on a record with no tabs, the first sections
+in its one column. `layout="rail"` still works, so an app moves one view
+at a time:
+
+1. In the view, delete `layout="rail"`, `mobileOrder` and `railLabel`.
+   Keep `placement: 'rail'` on the facts sections: that's what makes them
+   the Details tab. `railFields` still sets how their labels sit.
+2. Long text in a rail section (notes, a summary written as prose)
+   leaves it: drop its `placement` and give it a `tab` of its own, or
+   leave it in the column. A box of short facts that belongs with one
+   tab (a dose beside the notes) can stay beside it: `placement: 'rail'`
+   with that `tab`.
+3. A record whose facts should be named other than Details passes
+   `detailsTab`.
+4. Specs: the rail's landmark (`getByRole('complementary', { name:
+   '<title> details' })`) is gone. On a record with tabs, open Details
+   first (`getByRole('tab', { name: 'Details' })`, or go to
+   `?tab=details`); on one without, Details is the first section. A
+   geometry test that put Details beside the main column checks there's
+   no rail and the labels sit beside their values instead (the
+   template's `e2e/widget-view.spec.ts`, "wide screens").
+5. The plan (`docs/entities/<entity>.md`): drop its `Layout: rail` line,
+   and write the facts' Placement as `details`.
 
 ## Changing the foundation
 

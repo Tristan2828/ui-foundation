@@ -661,6 +661,15 @@
   [data-slot="field-group"] > [data-field-row][data-phone-pair] {
     width: calc((100% - var(--spacing) * 3) / 2 - 0.05px);
   }
+  /* Two choices (4.98, 9C): each starts as wide as its buttons on one
+     line (up to the row), so two that fit share the row, growing into
+     what's left, and when they don't the second wraps under the first
+     and each grows to the row. */
+  [data-slot="field-group"] > [data-field-row][data-phone-fit] {
+    flex: 1 1 max-content;
+    width: auto;
+    max-width: 100%;
+  }
 }
 
 /* EntityForm's bar, stuck to the bottom of the window while the form is

@@ -4,7 +4,7 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 44–66
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–848
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–847
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
   - Step 2: `npm run gen:api` · lines 118–119
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
@@ -12,20 +12,20 @@
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
   - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–735
   - Step 7: Register routes · lines 736–751
-  - Step 8: Add Playwright specs for all three screens · lines 752–830
-  - Step 9: Register the nav entry and route names · lines 831–845
-  - Step 10: `npm run verify`. · lines 846–848
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 850–1190
-  - [The record view](#the-record-view) · lines 1003–1054
-  - [Forms](#forms) · lines 1056–1110
-  - [Dialogs](#dialogs) · lines 1112–1140
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1142–1190
-- [What not to copy](#what-not-to-copy) · lines 1192–1218
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1220–1237
-- [Deleting](#deleting) · lines 1239–1270
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1272–1293
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1295–1304
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1307–1349
+  - Step 8: Add Playwright specs for all three screens · lines 752–829
+  - Step 9: Register the nav entry and route names · lines 830–844
+  - Step 10: `npm run verify`. · lines 845–847
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1206
+  - [The record view](#the-record-view) · lines 1002–1063
+  - [Forms](#forms) · lines 1065–1123
+  - [Dialogs](#dialogs) · lines 1125–1156
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1158–1206
+- [What not to copy](#what-not-to-copy) · lines 1208–1234
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1236–1253
+- [Deleting](#deleting) · lines 1255–1286
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1288–1309
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1311–1320
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1323–1365
 
 <!-- /index -->
 
@@ -476,18 +476,18 @@ is a filled-in example while the Widgets demo is still here).
      section that holds one long text or one sub-record list is a block
      (`content`) with no label of its own, since a label would only repeat
      the heading.
-   - **Layout.** With the plan's `Layout: rail`, pass `layout="rail"` and
-     give each section its Placement (`placement: 'rail'`; `main` is the
-     default and needs nothing). Without a `Layout` line, drop `layout`
-     and every `placement` from the copied view (one column). Widget's
-     view is `rail`, with Details in the rail. The rail's sections come
-     first in the page (header, rail, main) at every width, so the
-     view's specs find them first too. When the plan says the main
-     column comes first on a phone (the record is opened for its notes
-     or its checklist), pass `mobileOrder="main-first"`: header, main,
-     rail where the columns stack, and in the DOM at every width, with
-     the rail still on the right two columns wide. Never re-order
-     `sections` by the window's width yourself.
+   - **Layout** (the record standard, 4.98: no right rail). Pass no
+     `layout`: the default, `tabs`, is every record's shape. Give the
+     section of short facts (the plan's Placement `details`) `placement:
+     'rail'`: on a record with tabs it's the last tab, Details, and on
+     one without, it stays in the column in its place, its labels beside
+     their values. Widget's view has no tabs, so its Details comes first
+     in the one column. A few short facts that explain one tab (a dose
+     beside the notes) can sit in a small box beside that tab's
+     sections, under them on a phone: `placement: 'rail'` with that
+     `tab`. Short facts only, never free text. Never `layout="rail"` in a
+     new view; it's kept for apps not yet moved (consuming.md "4.98").
+     Never re-order `sections` by the window's width yourself.
    - **A subtitle** (`subtitle`), only when the plan names a line that
      says what the record is for (a goal, a one-line summary): under the
      title in muted body type. When the plan marks it editable, wrap it
@@ -495,8 +495,8 @@ is a filled-in example while the Widgets demo is still here).
    - **Key numbers** (`strip`), only when the plan names a few figures
      read before anything else (done of total, time left, the next
      date): `<KeyStats stats={[{ label, value, hint? }]} />`, under the
-     header across the page, so on a phone it comes before the rail and
-     the main column. Three to five; more belong in a section.
+     header, as wide as its numbers (4.98), so on a phone it comes before
+     the sections. Three to five; more belong in a section.
    - **A notice** (`notice`), only when the plan names a state that
      decides what you do with the record (held, overdue, archived and
      read-only): a `<Notice tone=…>` saying what it means and what to do,
@@ -790,11 +790,10 @@ is a filled-in example while the Widgets demo is still here).
    a heading, a list, a table, a link and raw HTML, and asserts the HTML
    shows as text. Add the view's spec to `playwright.config.ts`'s
    `mobile-chrome` `testMatch`, with a test that at phone width each
-   label sits above its value and nothing scrolls sideways. With
-   `Layout: rail`, that test also checks the rail's sections come before
-   the main ones, and another that on a wide screen the main column
-   starts beside the rail (copy `wide screens: …` in
-   `e2e/widget-view.spec.ts`).
+   label sits above its value and nothing scrolls sideways. With a
+   section placed `details`, that test checks its labels sit beside
+   their values, and another on a wide screen that there's no rail (copy
+   `wide screens: …` in `e2e/widget-view.spec.ts`).
    States forced via a first-load init script (loading, load-time error)
    need `page.addInitScript` before navigation; states forced after the
    page is already up (a mutation's error response) can use a
@@ -1012,30 +1011,40 @@ A record uses the parts it has, in this order:
 - **Header**: the title, edited in place (`titleEdit`); under it a
   one-line summary field, edited in place (`subtitle`: a goal, a
   description); beside it the status as a quick action (a picker saved
-  at once) and other status-like fields as badges, edited in place. A
+  at once), drawn as its `StatusMark` (4.98: icon, colour and word), and
+  other status-like fields as badges, edited in place. A
   record with a face or a mark of its own (a person's avatar, a
   service's logo, a cover) puts it left of all that (`leading`, 4.76).
   `actions` holds the record's own commands in words (Run, New visit),
   then Delete (soft, with Undo) as an `IconAction`, never Edit. Print
   notes is an icon of EntityView's own.
 - **Strip**: the record's key numbers and ratings (`strip`, a
-  `KeyStats`), each edited in place where it's shown.
-- **Sections**: with long text (notes, a body) `layout="rail"` and
-  `mobileOrder="main-first"`: the label/value facts in the rail, the long
-  text in the main column, folded by its toggle headings (`foldKey`;
+  `KeyStats`, as wide as its numbers since 4.98), each edited in place
+  where it's shown.
+- **Sections** (4.98, no right rail): one column. The label/value facts
+  are placed `rail`, which makes them the last tab, Details, on a record
+  with tabs, and keeps them in the column on one without; the long text
+  (notes, a body) is folded by its toggle headings (`foldKey`;
   `## Safety {toggle="true"}`, the only headings that fold) with an
-  Outline for a long one and Print Notes (`print`). Without long text,
-  one column. Every value edited in place (`edit`), a sub-item list
-  included (`editInPlace({ kind: 'list' })`).
+  Outline for a long one and Print Notes (`print`). A small box of short
+  facts may sit beside the one tab it explains (placed `rail` with that
+  `tab`), never free text. Every value edited in place (`edit`), a
+  sub-item list included (`editInPlace({ kind: 'list' })`).
 - **Tabs** (4.76), for a main column with **three or more groups of
   long content** (the steps, where it's used, the reasoning): a `tab` on
   each main section groups them under a tab list, the selected one in
   `?tab=`. Fewer groups stay one scroll, folded by headings. A record's
   Notes stay outside the tabs, above them, unless they are one tab's
-  content; the rail and the strip never go in a tab.
-- **Rail fields beside their labels** (`railFields`, `beside` by
-  default since 4.81), so a rail of short facts reads as a list of pairs
-  rather than a column of labels; keep labels to a word or two.
+  content; the strip never goes in a tab, and the facts are a tab of
+  their own (Details, `detailsTab` to name it otherwise).
+- **Facts beside their labels** (`railFields`, `beside` by default since
+  4.81), so the short facts read as a list of pairs rather than a column
+  of labels; keep labels to a word or two.
+- **A tiny record** (4.98: a few fields and no notes, like a lookup's
+  row) opens as a small card: `RecordDialogRoute look="card"`, usually
+  with `fullPage={false}`. A 420px dialog (a sheet on a phone), its
+  title, Delete, Open full page and Close on one line, its facts as
+  plain rows.
 - **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
   what's known, then "N empty" opens the rest, still edited in place.
 - **A few equal things** (a plan's phases, a price at each store, a
@@ -1068,7 +1077,10 @@ shape (4.85):
   takes one short partner (Series and Number). `<Field solo>` keeps a
   short one alone where a pairing would read wrong. Under 48rem every
   field takes its own row but two dates or two numbers (`DateField` says
-  so itself; a date picker of your own with `kind="date"`). Never a hand-made
+  so itself; a date picker of your own with `kind="date"`). A choice
+  (`ChoiceButtons`, found by itself, 4.98) shares a row only with another
+  choice, two to a row; on a phone two stay side by side while both
+  groups fit, and go one per row when they don't. Never a hand-made
   `sm:grid-cols-2` row.
 - **Order:** required first, the status next, long text last.
 - **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
@@ -1082,8 +1094,9 @@ shape (4.85):
   example that looks like a value.
 - **Messages say what to do**, in the app's voice: "Give it a title",
   "Enter a full address, starting https://", never "Title is required".
-- **A status** is an `OptionSelect` with the same `render` (its badge) as
-  its cell and the record: `inPlace.select`'s `{ value, label }` options.
+- **A status** is an `OptionSelect` with the same `render` (its
+  `StatusMark`, 4.98) as its cell and the record: `inPlace.select`'s
+  `{ value, label }` options.
 - **The controls** (4.88): a choice of two to four short options is
   `ChoiceButtons` (`inPlace.choice` in place), five or more an
   `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",
@@ -1117,7 +1130,10 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
 | --- | --- | --- | --- |
 | `confirm` | 420px | a sheet from the bottom, the buttons full width, the action above Cancel | a question with two answers: a delete, "Discard your changes?" |
 | `form` | 640px | the whole screen, the title and buttons pinned | a small form (`FormDialog`, which is this size) |
-| `record` | 1,120px | full width, the rail under the main column | a record over its list (`RecordDialogRoute`, which is this size) |
+| `record` | 1,120px | full width, with a 1rem margin round it | a record over its list (`RecordDialogRoute`, which is this size) |
+
+A tiny record (a few fields, no notes) opens in the `confirm` width
+instead, as a small card: `RecordDialogRoute look="card"` (4.98).
 
 - **A dialog's title and buttons are Title Case** ("New Book", "Keep
   Editing"); a question or a message in it is a sentence ("Discard your

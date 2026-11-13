@@ -33,6 +33,11 @@ import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 //   place on a record, and in a dialog's row of short fields: the buttons
 //   wrap onto a second line, never past the box's edge.
 //
+// - Choice pairs (4.98, 9C): five choice fields in a 460px form, two to
+//   a row and the fifth on a row of its own; on a phone Side and Coats
+//   stay side by side (both fit), Room and Effort each take a row (too
+//   wide for half of one).
+//
 // e2e/form-controls.spec.ts drives these; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
@@ -358,6 +363,63 @@ function NarrowControls() {
   )
 }
 
+const ROOMS = [
+  { value: 'kitchen', label: 'Kitchen' },
+  { value: 'hall', label: 'Hall' },
+  { value: 'garden', label: 'Garden' },
+] as const
+const SIDES = [
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'both', label: 'Both' },
+] as const
+const EFFORTS = [
+  { value: 'light', label: 'Light' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'heavy', label: 'Heavy' },
+] as const
+const COATS = [
+  { value: 'one', label: 'One' },
+  { value: 'two', label: 'Two' },
+] as const
+
+function ChoiceField<T extends string>({
+  name,
+  options,
+  initial,
+}: {
+  name: string
+  options: readonly { value: T; label: string }[]
+  initial: T
+}) {
+  const [value, setValue] = useState<T | null>(initial)
+  const id = `pair-${name.toLowerCase()}`
+  return (
+    <Field size="m">
+      <FieldLabel id={id}>{name}</FieldLabel>
+      <ChoiceButtons aria-labelledby={id} options={options} value={value} onValueChange={setValue} />
+    </Field>
+  )
+}
+
+function ChoicePairForm() {
+  return (
+    <div data-testid="choice-pairs" className="w-full max-w-[460px] rounded-lg border border-border bg-card p-5">
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="pair-name">Job</FieldLabel>
+          <Input id="pair-name" defaultValue="Paint the door" />
+        </Field>
+        <ChoiceField name="Room" options={ROOMS} initial="hall" />
+        <ChoiceField name="Effort" options={EFFORTS} initial="moderate" />
+        <ChoiceField name="Side" options={SIDES} initial="both" />
+        <ChoiceField name="Coats" options={COATS} initial="two" />
+        <ChoiceField name="Finish" options={COATS} initial="one" />
+      </FieldGroup>
+    </div>
+  )
+}
+
 const meta: Meta = {
   title: 'app/FormControls',
   parameters: { controls: { disable: true } },
@@ -370,3 +432,5 @@ export const Form: StoryObj = { render: () => <OnAForm /> }
 export const EditInPlace: StoryObj = { render: () => <InPlace /> }
 
 export const Narrow: StoryObj = { render: () => <NarrowControls /> }
+
+export const ChoicePairs: StoryObj = { name: 'Choice pairs', render: () => <ChoicePairForm /> }
