@@ -126,9 +126,18 @@ declare module '@tanstack/table-core' {
     /**
      * The widest the column's content gets, as a CSS length: `'24rem'`
      * unless set, with `clip` (and never over 60% of the table's area, for
-     * a phone). Without `clip`, the content wraps at it.
+     * a phone). Without `clip`, the content wraps at it. The title column
+     * (the first) is cut at it by default, as if `clip` were set.
      */
     maxWidth?: string
+    /**
+     * The title column (the table's first, the row's name): wrap at
+     * `maxWidth` (`'24rem'` unless set) instead of the default, one line cut
+     * with an ellipsis. For a title worth reading whole in the row. A title
+     * column with `maxWidth: 'none'` has no cap at all (the look before
+     * 4.103).
+     */
+    wrap?: boolean
     /**
      * The column's name in DataTable's Columns menu (`columnsMenu`), for a
      * column whose `header` isn't a string.
@@ -761,14 +770,27 @@ function PageSizeMenu({
 // A cell's text cut to one line (`meta.clip`). Only when it is cut does it
 // take a tab stop and a tooltip with the whole text, on hover and on focus;
 // re-measured on every render (the text may change) and on every resize.
-function ClippedText({ maxWidth, children }: { maxWidth: string; children: ReactNode }) {
+// A cut cell whose content has a control of its own (the title's link)
+// takes no tab stop: the control already has one, and focusing it opens
+// the tooltip, since focus reaches the trigger from inside it.
+function ClippedText({
+  maxWidth,
+  slot = 'data-table-clip',
+  children,
+}: {
+  maxWidth: string
+  slot?: string
+  children: ReactNode
+}) {
   const ref = useRef<HTMLSpanElement>(null)
   const [fullText, setFullText] = useState<string | null>(null)
+  const [hasControl, setHasControl] = useState(false)
   const measure = () => {
     const element = ref.current
     if (!element) return
     const isCut = element.scrollWidth > element.clientWidth + 0.5
     setFullText(isCut ? element.textContent?.trim() || null : null)
+    setHasControl(element.querySelector(ROW_CONTROL_SELECTOR) !== null)
   }
   useLayoutEffect(measure)
   useEffect(() => {
@@ -784,12 +806,12 @@ function ClippedText({ maxWidth, children }: { maxWidth: string; children: React
         render={
           <span
             ref={ref}
-            data-slot="data-table-clip"
-            className={CLIP_CLASS}
+            data-slot={slot}
+            className={slot === 'data-table-title' ? TITLE_CLIP_CLASS : CLIP_CLASS}
             // Never more than 60% of the table's area, so on a phone the
             // cut column leaves the name and the rest room.
             style={{ maxWidth: `min(${maxWidth}, 60cqw)` }}
-            tabIndex={fullText === null ? undefined : 0}
+            tabIndex={fullText === null || hasControl ? undefined : 0}
           />
         }
       >
@@ -887,12 +909,16 @@ const HOVER_FOCUSED_ROW_CLASS =
 const DEFAULT_CLIP_WIDTH = '24rem'
 const CLIP_CLASS =
   'block truncate rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+// The title's: padding, taken back by the margin, keeps its link's focus
+// ring clear of the cut.
+const TITLE_CLIP_CLASS = cn(CLIP_CLASS, '-m-1 p-1')
 
 // A pinned first column's content, capped below md at 45% of the table's
 // scroll area (`cqw`: the container is an inline-size query container)
 // and wrapping, so a long title can't widen the column past the screen
 // and leave every other column scrolling underneath it (issue #91).
-// Wider screens are unchanged: the column sizes to its content.
+// The title inside is capped at every width too (cut at 24rem, or
+// wrapped with `meta.wrap`), so wider screens don't overrun either.
 const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-normal max-md:break-words'
 
 // `highlightRow`: the wash on every cell, so it covers the zebra stripe
@@ -1494,7 +1520,23 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       {row.getVisibleCells().map((cell, index) => {
         const meta = cell.column.columnDef.meta
         const value = flexRender(cell.column.columnDef.cell, cell.getContext())
-        const shown = meta?.clip ? (
+        // The title column (the first) is capped at every width (#338's
+        // discussion topic overran above md): cut to one line by default, or wrapped
+        // with `meta.wrap`; `maxWidth: 'none'` lifts the cap.
+        const isTitle = index === 0 && cell.column.id !== ROW_ACTIONS_COLUMN_ID && meta?.maxWidth !== 'none'
+        const shown = isTitle && meta?.wrap ? (
+          <div
+            data-slot="data-table-title"
+            className="whitespace-normal break-words"
+            style={{ maxWidth: `min(${meta.maxWidth ?? DEFAULT_CLIP_WIDTH}, 60cqw)` }}
+          >
+            {value}
+          </div>
+        ) : isTitle ? (
+          <ClippedText maxWidth={meta?.maxWidth ?? DEFAULT_CLIP_WIDTH} slot="data-table-title">
+            {value}
+          </ClippedText>
+        ) : meta?.clip ? (
           <ClippedText maxWidth={meta.maxWidth ?? DEFAULT_CLIP_WIDTH}>{value}</ClippedText>
         ) : meta?.maxWidth ? (
           <div className="whitespace-normal break-words" style={{ maxWidth: meta.maxWidth }}>

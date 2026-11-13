@@ -43,6 +43,10 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 //   useTableUrlState, remembered under a storage key). ListLookInRows: the
 //   same rows edited in place (`opens: rows`), so the arrow cursor.
 //   ListLookStriped: `striped` and `width="full"`, the look before 4.83.
+// - TitleColumn (4.103): Discussions whose long topics are cut to one line
+//   at 24rem at every width, the whole topic in a tooltip on hover and on
+//   the link's focus. TitleColumnWrap: the same with `meta.wrap`, so the
+//   topics wrap at 24rem instead.
 // - Totals: `totals`, sums under Quantity, Price and Target price for
 //   every matching row (eight, over two pages), right-aligned like their
 //   columns (Price sortable, its arrow left of its label), with the first and last
@@ -797,6 +801,72 @@ function RecipesInRouter({ variant }: { variant: 'opens' | 'rows' | 'striped' })
   return <RouterProvider router={router} />
 }
 
+// --- the title column (4.103) ----------------------------------------------------
+
+type Discussion = { id: number; topic: string; started: string; replies: number; status: string }
+
+const DISCUSSIONS: Discussion[] = [
+  { id: 1, topic: 'Whether the morning stretches should move to the evening now that the days are shorter and the mornings colder', started: '2 Nov', replies: 14, status: 'Open' },
+  { id: 2, topic: 'Shoes for the long walks', started: '29 Oct', replies: 3, status: 'Open' },
+  { id: 3, topic: 'What to ask at the next visit about the plan for the rest of the winter, and how to track it week by week', started: '21 Oct', replies: 8, status: 'Resolved' },
+  { id: 4, topic: 'A standing desk', started: '12 Oct', replies: 0, status: 'Open' },
+]
+
+const TITLE_LINK_CLASS =
+  'rounded-sm font-medium text-foreground underline-offset-4 outline-none hover:underline ' +
+  'focus-visible:underline focus-visible:ring-3 focus-visible:ring-ring/50'
+
+function discussionColumns(wrap: boolean): LegacyColumnDef<Discussion, unknown>[] {
+  return [
+    {
+      id: 'topic',
+      header: 'Topic',
+      ...(wrap ? { meta: { wrap: true } } : {}),
+      cell: ({ row }) => (
+        <Link to={`/discussions/${row.original.id}`} className={TITLE_LINK_CLASS}>
+          {row.original.topic}
+        </Link>
+      ),
+    },
+    { id: 'started', header: 'Started', cell: ({ row }) => row.original.started },
+    { id: 'replies', header: 'Replies', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{row.original.replies}</span> },
+    { id: 'status', header: 'Status', cell: ({ row }) => row.original.status },
+  ]
+}
+
+function DiscussionsTable({ wrap }: { wrap: boolean }) {
+  const columns = useMemo(() => discussionColumns(wrap), [wrap])
+  return (
+    <div className="flex flex-col gap-4 p-6">
+      <h1 className="type-page-title text-foreground">Discussions</h1>
+      <DataTable<Discussion>
+        columns={columns}
+        data={DISCUSSIONS}
+        total={DISCUSSIONS.length}
+        page={1}
+        pageSize={25}
+        onPageChange={noop}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        emptyTitle="No discussions yet"
+        getRowId={(row) => String(row.id)}
+        opens={{ kind: 'page', to: (row) => `/discussions/${row.id}` }}
+      />
+    </div>
+  )
+}
+
+function DiscussionsInRouter({ wrap }: { wrap: boolean }) {
+  const [router] = useState(() =>
+    createMemoryRouter([
+      { path: '/', element: <DiscussionsTable wrap={wrap} /> },
+      { path: '/discussions/:id', element: <p className="p-6 type-body text-foreground">A discussion's page.</p> },
+    ]),
+  )
+  return <RouterProvider router={router} />
+}
+
 const meta: Meta = {
   title: 'app/DataTable',
   parameters: { controls: { disable: true }, layout: 'fullscreen' },
@@ -833,3 +903,7 @@ export const ListLook: StoryObj = { render: () => <RecipesInRouter variant="open
 export const ListLookInRows: StoryObj = { render: () => <RecipesInRouter variant="rows" /> }
 
 export const ListLookStriped: StoryObj = { render: () => <RecipesInRouter variant="striped" /> }
+
+export const TitleColumn: StoryObj = { render: () => <DiscussionsInRouter wrap={false} /> }
+
+export const TitleColumnWrap: StoryObj = { render: () => <DiscussionsInRouter wrap /> }

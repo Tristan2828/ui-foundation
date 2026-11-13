@@ -151,6 +151,8 @@ can't make the whole table thousands of pixels wide:
   reads the whole text either way, and the record shows it too.
 - `meta.maxWidth` alone caps the column and lets its text wrap, for a
   value worth reading whole in the row.
+- The title column (the first) is cut this way already, with no `meta`
+  (pattern 16, 4.103).
 
 ## 2. Icon + label
 
@@ -749,6 +751,16 @@ cell: ({ row }) => (
 - **Cost:** none to speak of. Specs that match the title as a cell still
   work (`getByRole('cell', { name })` reads the link's text); ones that
   opened the form from a row button go through the view's Edit instead.
+- **DataTable caps the title column (4.103).** The first column is the
+  title column: at every width it's cut to one line at 24rem (or its
+  `meta.maxWidth`, and never over 60% of the table's area) with an
+  ellipsis, so a long title (a discussion's topic) can't push the other
+  columns off. A cut title shows whole in a tooltip on hover and when its
+  link takes focus; the link stays the row's only tab stop, and a screen
+  reader reads it whole. Put the title column first and write no clip of
+  your own (`truncate`, `max-w-*`) around it. `meta: { wrap: true }`
+  wraps it at the cap instead, for a title worth reading whole in the row;
+  `meta: { maxWidth: 'none' }` lifts the cap.
 
 ## 17. Quick action on the view
 
