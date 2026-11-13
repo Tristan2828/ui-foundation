@@ -45,6 +45,7 @@ other columns off.
    column.
 4. Specs that measured a long title's width or height, or expected it on
    several lines, now see one line at most 24rem.
+
 ## 4.102.0 — An inline pencil that takes no room, and Create in a small set's picker
 
 npm package. `ui-foundation-backend` moves to 4.102.0 with it, unchanged.

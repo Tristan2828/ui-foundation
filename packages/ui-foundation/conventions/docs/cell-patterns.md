@@ -24,26 +24,26 @@
 - [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 588–605
 - [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 607–716
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 633–716
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 718–763
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 765–838
-- [18. Editable value](#18-editable-value) · lines 840–1518
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1150–1218
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1220–1256
-  - [A link and its label](#a-link-and-its-label) · lines 1258–1282
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1284–1417
-  - [In a table's rows](#in-a-tables-rows) · lines 1419–1504
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1506–1518
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1520–1586
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1588–1652
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1654–1752
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1754–1783
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1785–1823
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1825–1901
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1903–1926
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1928–2054
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2016–2054
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2056–2092
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2094–2139
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 718–764
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 766–839
+- [18. Editable value](#18-editable-value) · lines 841–1544
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1176–1244
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1246–1282
+  - [A link and its label](#a-link-and-its-label) · lines 1284–1308
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1310–1443
+  - [In a table's rows](#in-a-tables-rows) · lines 1445–1530
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1532–1544
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1546–1612
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1614–1678
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1680–1778
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1780–1809
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1811–1849
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1851–1927
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1929–1952
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2080
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2042–2080
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2082–2118
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2120–2165
 
 <!-- /index -->
 
@@ -753,12 +753,13 @@ cell: ({ row }) => (
   opened the form from a row button go through the view's Edit instead.
 - **DataTable caps the title column (4.103).** The first column is the
   title column: at every width it's cut to one line at 24rem (never over
-  60% of the table's area) with an ellipsis, so a long title (a discussion's topic) can't push the other
-  columns off. A cut title shows whole in a tooltip on hover and when its
-  link takes focus; the link stays the row's only tab stop, and a screen
-  reader reads it whole. Put the title column first and write no clip of
-  your own (`truncate`, `max-w-*`) around it. `meta: { wrap: true }`
-  wraps it at the cap instead, for a title worth reading whole in the row;
+  60% of the table's area) with an ellipsis, so a long title (a
+  discussion's topic) can't push the other columns off. A cut title shows
+  whole in a tooltip on hover and when its link takes focus; the link
+  stays the row's only tab stop, and a screen reader reads it whole. Put
+  the title column first and write no clip of your own (`truncate`,
+  `max-w-*`) around it. `meta: { wrap: true }` wraps it at the cap
+  instead, for a title worth reading whole in the row;
   `meta: { maxWidth: 'none' }` lifts the cap. Its own `meta.clip` or
   `meta.maxWidth` works as on any column (cut, or wrapped, at that width).
 
@@ -879,6 +880,16 @@ on each side without moving it, and never wraps it: a short title or
 badge edited in place (`layout="inline"`) stays on one line, and a long
 one wraps between words within its column (4.94; before, a title like
 "Dr. Example" broke over two lines).
+Inline, the pencil takes no room at rest (4.102): a value in a summary
+line ("Harbor Office · Tuesdays") is followed by its separator a space
+after it, not a pencil's width. The pencil keeps its 24px box out of the
+flow, hidden just past the value over the separator, so it's still a
+target to hover, click and Tab to. Hover or focus makes its room under
+it, eased (at once with reduced motion): what follows moves over by the
+pencil, smoothly, only while it shows, and the pencil stays put. A touch
+screen keeps the room open. `DataTable`'s cells keep the room at rest
+(a column never widens on hover), and so does `EntityView`'s title,
+which ends its line and can fill it. An app needs no override for this.
 
 **In a field list, the row is the target** (4.88, `look="row"`, which
 EntityView's field rows use). The row wears the list's row hover, the
@@ -941,6 +952,21 @@ Larger sets, or ones that grow with the data, keep `MultiReference`
 - **Keyboard:** opening puts the caret in the filter box; Down goes to
   the chips, Left/Right (Home/End) move along them, Space or Enter
   toggles one, Up goes back to the box.
+- **Create "<typed>"** (4.102, `onCreate`): when what's typed names no
+  option (ignoring case), a Create "<typed>" button shows under the
+  chips; Enter in the box does the same when nothing matches, and Down
+  reaches it when there are no chips. It calls `onCreate(name)`, which
+  opens the app's small create form (a `FormDialog`, the name filled in)
+  or saves at once, and resolves with the new `{ id, label, icon? }`:
+  that option joins the chips and is picked (in place, saved like any
+  pick, with its spinner). `null` (the form cancelled) changes nothing.
+  While it's out the button reads Creating "<typed>"… (`aria-busy`), the
+  box is read-only and an edit in place stays open. A rejection shows
+  "Couldn't create "<typed>": <reason>" under the chips, the button
+  described by it, and keeps the typed name, so Create can be tried
+  again; typing clears it. The caret goes back to the box either way,
+  and a screen reader hears "<name> created and picked." Never a "New
+  <thing>" button beside the picker for this.
 - Pass the record's value as `value`, not the control's `props.value`
   (the draft, which never moves here), and keep the field's `save`: the
   form's whole-set save, never called in place.
