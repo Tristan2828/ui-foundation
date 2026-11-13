@@ -340,7 +340,7 @@ function HeldRecord() {
             title="On hold"
             action={
               <Button size="sm" variant="outline" onClick={() => setHeld(false)}>
-                Release the hold
+                Release the Hold
               </Button>
             }
           >
@@ -455,7 +455,7 @@ function ListsRecord() {
     save: tasks.save,
     newItem: () => ({ text: '', done: false }),
     itemName: (index) => `item ${index + 1}`,
-    addLabel: 'Add item',
+    addLabel: 'Add Item',
     // A quick action: the box ticks and saves on its own; the text edits.
     renderShown: (task, index) => (
       <span className="flex items-start gap-2">
@@ -496,7 +496,7 @@ function ListsRecord() {
     save: links.save,
     newItem: () => ({ label: '', url: '' }),
     itemName: (index) => `link ${index + 1}`,
-    addLabel: 'Add link',
+    addLabel: 'Add Link',
     renderShown: (link) => (
       <a className="text-link underline underline-offset-4" href={link.url}>
         {link.label}
@@ -605,7 +605,7 @@ function AutosaveRecord() {
       placement: 'rail',
       fields: [
         { label: 'Saves', value: String(saves) },
-        { label: 'Saved notes', value: <span data-testid="saved-notes">{saved.notes}</span> },
+        { label: 'Saved Notes', value: <span data-testid="saved-notes">{saved.notes}</span> },
       ],
     },
     { title: 'Summary', content: <Markdown>{saved.summary}</Markdown>, edit: longText('summary', false) },
@@ -921,7 +921,7 @@ function StandardRecord({ title: initialTitle, editTitle = false }: { title: str
           <div>
             <Button size="sm" variant="outline" onClick={() => setPhone('555-0100')}>
               <PlusIcon />
-              Add the phone
+              Add the Phone
             </Button>
           </div>
         </div>
@@ -932,7 +932,7 @@ function StandardRecord({ title: initialTitle, editTitle = false }: { title: str
       placement: 'rail',
       fields: [
         { label: 'Kind', value: 'Wholesale' },
-        { label: 'Account rep', edit: rep },
+        { label: 'Account Rep', edit: rep },
         { label: 'Terms', edit: terms },
         { label: 'Tax ID', value: null },
       ],
@@ -977,7 +977,7 @@ function StandardRecord({ title: initialTitle, editTitle = false }: { title: str
         <>
           <Button variant="outline">
             <PlusIcon />
-            New order
+            New Order
           </Button>
           <DeleteAction name={title} />
         </>

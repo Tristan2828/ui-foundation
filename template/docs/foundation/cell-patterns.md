@@ -3,46 +3,46 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 74–94
-- [1. Plain text](#1-plain-text) · lines 96–149
-- [2. Icon + label](#2-icon--label) · lines 151–174
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 176–189
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 191–268
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 216–268
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 270–283
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 285–297
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 299–320
-- [8. Date, relative](#8-date-relative) · lines 322–359
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 361–409
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 379–409
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 411–461
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 429–461
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 463–503
-- [12. Boolean](#12-boolean) · lines 505–535
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 537–573
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 557–573
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 575–592
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 594–703
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 620–703
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 705–740
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 742–815
-- [18. Editable value](#18-editable-value) · lines 817–1495
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1127–1195
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1197–1233
-  - [A link and its label](#a-link-and-its-label) · lines 1235–1259
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1261–1394
-  - [In a table's rows](#in-a-tables-rows) · lines 1396–1481
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1483–1495
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1497–1563
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1565–1629
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1631–1729
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1731–1760
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1762–1800
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1802–1878
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1880–1903
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1905–1991
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1993–2029
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2031–2076
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 74–97
+- [1. Plain text](#1-plain-text) · lines 99–152
+- [2. Icon + label](#2-icon--label) · lines 154–177
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 179–192
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 194–271
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 219–271
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 273–286
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 288–300
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 302–323
+- [8. Date, relative](#8-date-relative) · lines 325–362
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 364–412
+  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 382–412
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 414–464
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 432–464
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 466–506
+- [12. Boolean](#12-boolean) · lines 508–538
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 540–576
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 560–576
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 578–595
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 597–706
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 623–706
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 708–743
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 745–818
+- [18. Editable value](#18-editable-value) · lines 820–1498
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1130–1198
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1200–1236
+  - [A link and its label](#a-link-and-its-label) · lines 1238–1262
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1264–1397
+  - [In a table's rows](#in-a-tables-rows) · lines 1399–1484
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1486–1498
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1500–1566
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1568–1632
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1634–1732
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1734–1763
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1765–1803
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1805–1881
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1883–1906
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1908–1994
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 1996–2032
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2034–2079
 
 <!-- /index -->
 
@@ -88,6 +88,9 @@ too, so it ships here for every app.
   falling back.
 - **A cell that reads across the row needs `row.original`**, not just
   `getValue()`.
+- **Column headers are Title Case** ("Available From", "Rows per Page");
+  a cell's value is written as its data is, and an empty value's words
+  ("Not set") are a sentence ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
 - **Give a repeated control a row-specific `aria-label`.** Twenty-five
   buttons all named "Link" are useless to a screen reader.
 
@@ -892,7 +895,7 @@ and in place: every option a toggle chip with its icon or colour where
 the app draws one (`icon`), the picked ones pressed with a check, and a
 filter box above them, not in front of them. The chips wrap at every
 width (4.88); past 30 options (`limit`) it shows the picked ones and the
-first 30, then "Show all N", and a filter searches them all. The options
+first 30, then "Show All N", and a filter searches them all. The options
 can be the app's list of records (its query's rows as `{ id, label }`,
 `loading` meanwhile), so links to a few dozen other records use it too.
 Larger sets, or ones that grow with the data, keep `MultiReference`
@@ -1037,7 +1040,7 @@ description: editInPlace({
 ```
 
 **Leaving the page** (a link, Back) while a value holds unsaved text asks
-"Discard your changes?" first (Keep editing / Discard); closing the tab
+"Discard your changes?" first (Keep Editing / Discard); closing the tab
 asks through the browser. A link press doesn't save the field on its
 way out: the prompt decides.
 
@@ -1097,7 +1100,7 @@ const price = editInPlace({
   highlighted in four colours (amber, yellow, green, red) from the
   toolbars' Highlight menu or with "/highlight", and un-highlighted;
   they're saved as `==words==` (`=={green}words==` for the others), plain
-  Markdown, and `<Markdown>` shows them. The fixed toolbar's Full screen
+  Markdown, and `<Markdown>` shows them. The fixed toolbar's Full Screen
   button fills the window with the field (Esc leaves; nothing is lost or
   saved by it), and on a touch screen or under 768px it carries Indent
   and Outdent for list items, where there is no Tab. A field with only the
@@ -1631,7 +1634,7 @@ What the cell decides:
 ## 21. Rows grouped under headings, and a pill filter
 
 A feed, an activity log or a timeline reads best as rows under day
-headings (Today, Yesterday, Earlier this week, then each older week, then
+headings (Today, Yesterday, Earlier This Week, then each older week, then
 months), each heading with a count and a summary ("4 · 1 h 12 m"). The
 same screens usually want one quick filter as pills above the rows (All /
 Video / Audio / Text, one pressed at a time) rather than a dropdown: there
@@ -1652,7 +1655,7 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   groupBy={byPublished}
   groupSummary={(items) => `${items.length} · ${duration(sum(items, 'minutes'))}`}
   emptyTitle={filters.kind ? `No ${KIND_LABELS[filters.kind].toLowerCase()} items` : 'Nothing in the feed yet'}
-  emptyAction={filters.kind ? <Button variant="outline" onClick={() => setFilter('kind', '')}>Show all types</Button> : undefined}
+  emptyAction={filters.kind ? <Button variant="outline" onClick={() => setFilter('kind', '')}>Show All Types</Button> : undefined}
   toolbar={
     <PillFilter label="Type" value={filters.kind} onValueChange={(kind) => setFilter('kind', kind)}
       options={KINDS.map((kind) => ({ value: kind, label: KIND_LABELS[kind] }))} />
@@ -1672,7 +1675,7 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   saving change never moves a row to the wrong day. Weeks start on
   Monday (`weekStartsOn: 0` for Sunday). Four weeks back it switches to
   months ("September", "December 2025"). A later date is Upcoming, no
-  date is No date. Pin `now` in a test, as for pattern 8.
+  date is No Date. Pin `now` in a test, as for pattern 8.
 - **A heading is a row header for its group** (`<th scope="rowgroup">`
   in the group's own `<tbody>`), so a screen reader names a cell's group
   as it names its column. It stays in view while a wide table scrolls
@@ -1776,7 +1779,7 @@ standard), and the two choices it leaves an app.
 - **No zebra stripes:** rows are told apart by the line under each.
   `striped` brings the stripes back for an app that wants them. Tables in
   notes keep theirs (4.67.1).
-- **Rows per page:** a menu in the pagination bar, from
+- **Rows per Page:** a menu in the pagination bar, from
   `useTableUrlState`, which keeps the pick in the URL (`?size=`) and on
   this device:
 
@@ -1833,7 +1836,7 @@ const { grouping, setGrouping, ...table } = useTableUrlState(FILTERS, MULTI, VIE
 - **None is the default**, and the table is exactly as it was until a
   grouping is picked. The Group menu sits at the end of the toolbar
   (before a layout switch): None, then each grouping. While grouped a
-  Fold all button joins it, and the menu says which ("Group: Status").
+  Fold All button joins it, and the menu says which ("Group: Status").
 - **Only choice fields**: each group is one of the field's options, in
   the options' order (the order the form lists them), so give the same
   options list the column and the form use. A multi-value field (an
@@ -1954,7 +1957,7 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   views, each with its `label`, in order. The view on is pressed; none is
   once the filters move off every view. Under 48rem they stay on one line
   that scrolls sideways. Replaces a hand-written row of view buttons; a
-  Deleted view goes in ListHeader's ⋯ menu as Show deleted instead.
+  Deleted view goes in ListHeader's ⋯ menu as Show Deleted instead.
 - **The filters** (L4): `FilterBar` holds search, the two filters used
   most (`primary`), and the rest behind Filters (`secondary`, with their
   chips, as `SecondaryFilters` draws them). No captions over controls:
@@ -1993,7 +1996,7 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
 ## 26. A record's related list, capped
 
 A list of records related to this one, in a section of its view (a
-provider's visits, a project's tasks): the ten newest, then View all N to
+provider's visits, a project's tasks): the ten newest, then View All N to
 the whole list filtered to this record (R8), so a long list doesn't push
 the rest of the record away. With tabs (EntityView's), each such list
 counts as a group.
@@ -2017,16 +2020,16 @@ const visits = useVisits({ provider: provider.id, sort: 'date:desc', page: 1, pa
 ```
 
 - **`limit`** is 10 unless set; ask the server for that many, newest
-  first. No pagination bar, and the headers aren't sort buttons (View all
+  first. No pagination bar, and the headers aren't sort buttons (View All
   has the list's own sorting).
-- **View all** shows only when `total` is over the rows shown, its text
-  "View all 19" unless `viewAll.label` says otherwise. It's a link, so a
+- **View All** shows only when `total` is over the rows shown, its text
+  "View All 19" unless `viewAll.label` says otherwise. It's a link, so a
   modified click opens a tab.
 - **`opens` is required**, as on any list. Everything else a DataTable
   takes for its rows (`rowActions`, `phoneRow`, `highlightRow`) works.
 - On a DataTable of your own, `limit` and `viewAll` do the same.
 - The fixture `app/DataTable tools` Related draws a capped list and a
-  short one with no link; the spec follows View all.
+  short one with no link; the spec follows View All.
 
 ## 27. A repeat and its next time
 

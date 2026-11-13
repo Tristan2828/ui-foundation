@@ -61,10 +61,10 @@ function NewBook({ startOpen = true, long = false, failed = false }: { startOpen
         {added ? `Added ${added}` : 'No book added yet'}
       </p>
       <Button variant="outline" onClick={() => setOpen(true)}>
-        New book
+        New Book
       </Button>
       <FormDialog
-        title="New book"
+        title="New Book"
         open={open}
         onOpenChange={(next) => {
           setOpen(next)
@@ -72,7 +72,7 @@ function NewBook({ startOpen = true, long = false, failed = false }: { startOpen
         }}
         onSubmit={submit}
         isSubmitting={saving}
-        submitLabel="Add book"
+        submitLabel="Add Book"
         submitError={error}
         dirty={title !== '' || author !== '' || notes !== ''}
       >

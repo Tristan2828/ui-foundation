@@ -72,6 +72,6 @@ describe('Board', () => {
     expect(empty).toContain('No items yet')
     const failed = render(props({ error: { kind: 'network', message: 'Offline' }, onRetry: () => {} }))
     expect(failed).toContain('data-state="error"')
-    expect(failed).toContain('Try again')
+    expect(failed).toContain('Try Again')
   })
 })

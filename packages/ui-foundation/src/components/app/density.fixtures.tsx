@@ -79,14 +79,14 @@ function PrimitivesSample({ density }: { density: Density }) {
 
       <div className="flex flex-wrap items-center gap-2">
         <Button data-measure="button">
-          <PlusIcon data-measure="icon" /> New widget
+          <PlusIcon data-measure="icon" /> New Widget
         </Button>
         <Button variant="outline">Outline</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="ghost">Ghost</Button>
         <Button variant="destructive">Delete</Button>
         <Button size="sm">Small</Button>
-        <Button size="xs">Extra small</Button>
+        <Button size="xs">Extra Small</Button>
         <Button size="icon" variant="outline" aria-label="Settings">
           <SettingsIcon />
         </Button>
@@ -133,7 +133,7 @@ function PrimitivesSample({ density }: { density: Density }) {
 
       <Card className="max-w-sm">
         <CardHeader>
-          <CardTitle>Monthly summary</CardTitle>
+          <CardTitle>Monthly Summary</CardTitle>
           <CardDescription>12 widgets added, 3 archived.</CardDescription>
         </CardHeader>
         <CardContent className="type-body">Next review on the 1st.</CardContent>

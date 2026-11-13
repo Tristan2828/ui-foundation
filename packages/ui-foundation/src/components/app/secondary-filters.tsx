@@ -75,7 +75,7 @@ export function SecondaryFilters({ children, active, onClear, label = 'Filters',
   const footer = (
     <div className="flex justify-end gap-2">
       <Button variant="ghost" size="sm" disabled={count === 0} onClick={onClear}>
-        Clear filters
+        Clear Filters
       </Button>
       <Button size="sm" onClick={() => setOpen(false)}>
         Done
@@ -120,7 +120,7 @@ export function SecondaryFilters({ children, active, onClear, label = 'Filters',
       ))}
       {count > 1 && (
         <Button variant="ghost" size="sm" onClick={onClear}>
-          Clear filters
+          Clear Filters
         </Button>
       )}
     </div>

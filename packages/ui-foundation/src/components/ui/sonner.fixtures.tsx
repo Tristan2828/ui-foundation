@@ -28,7 +28,7 @@ const meta: Meta<ToastStoryArgs> = {
     <>
       <Toaster />
       <Button variant="outline" onClick={() => toast[args.type](args.message)}>
-        Show toast
+        Show Toast
       </Button>
     </>
   ),

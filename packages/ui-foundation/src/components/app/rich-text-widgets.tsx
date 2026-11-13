@@ -61,7 +61,7 @@ export function CalloutKindMenu({ kind, readOnly, onPick, onRemove, text }: Call
           })}
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onRemove}>Remove callout</DropdownMenuItem>
+        <DropdownMenuItem onClick={onRemove}>Remove Callout</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -82,7 +82,7 @@ export function TableBar({ side, active, readOnly, onAdd }: TableBarProps) {
     <button
       type="button"
       tabIndex={-1}
-      aria-label={side === 'row' ? 'Add a row' : 'Add a column'}
+      aria-label={side === 'row' ? 'Add a Row' : 'Add a Column'}
       data-slot={`rich-text-table-add-${side}`}
       className={cn(
         'flex flex-1 items-center justify-center rounded-md text-muted-foreground transition-opacity hover:bg-muted hover:text-foreground',

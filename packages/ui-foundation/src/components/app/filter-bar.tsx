@@ -138,7 +138,7 @@ const ANY = '__any__'
  * "Status: Active" with a value, so the toolbar needs no captions.
  */
 export function FilterSelect({ label, options, value, onValueChange, anyLabel, className }: FilterSelectProps) {
-  const any = anyLabel ?? `Any ${label.toLowerCase()}`
+  const any = anyLabel ?? `Any ${label}`
   const picked = options.find((option) => option.value === value)
   const shown = picked ? `${label}: ${picked.label}` : any
   return (

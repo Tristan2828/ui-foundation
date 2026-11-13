@@ -13,5 +13,5 @@ test.beforeEach(async ({ page }) => {
 
 test('home route renders a shadcn button', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('button', { name: 'Get started' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Get Started' })).toBeVisible()
 })

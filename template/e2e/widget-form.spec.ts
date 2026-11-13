@@ -119,7 +119,7 @@ test.describe('widget form', () => {
     await pickAvailableFromDate(page)
     await page.locator('#widget-price').fill('19.99')
     await page.locator('#widget-description').fill('Exercises the 422 -> fieldErrors path.')
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     await expect(page.getByText('must be greater than zero')).toBeVisible()
     // Still on the form — a validation error must not navigate away.
@@ -138,7 +138,7 @@ test.describe('widget form', () => {
     await page.locator('#widget-description').fill('Created by the success e2e test.')
     await pickTag(page, 'Bulky')
     await pickTag(page, 'Seasonal')
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     // The new widget's own view (the four seeded widgets are ids 1–4).
     await expect(page).toHaveURL('/widgets/5')
@@ -159,7 +159,7 @@ test.describe('widget form', () => {
     await page.locator('#widget-name').fill('Never Saved')
     await page.getByRole('button', { name: 'Cancel' }).click()
     const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
-    await prompt.getByRole('button', { name: 'Keep editing' }).click()
+    await prompt.getByRole('button', { name: 'Keep Editing' }).click()
     await expect(page.locator('#widget-name')).toHaveValue('Never Saved')
     await page.getByRole('button', { name: 'Cancel' }).click()
     await prompt.getByRole('button', { name: 'Discard' }).click()
@@ -182,7 +182,7 @@ test.describe('widget form', () => {
       expect(await top('widget-price')).toBe(await top('widget-status'))
     }
 
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
     await expect(page.locator('#widget-name')).toBeFocused()
     await expect(page.locator('[data-slot=entity-form-to-fix]')).toHaveText(/^\d+ to fix$/)
   })
@@ -212,7 +212,7 @@ test.describe('widget form', () => {
     await pickExtraCategory(page, 'stat', 'Stationery')
     await expect(page.getByRole('button', { name: 'Remove Furniture' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     await expect(page).toHaveURL(/\/widgets\/\d+$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Linked Widget' })).toBeVisible()
@@ -365,7 +365,7 @@ test.describe('widget form', () => {
     await expect(page.getByRole('button', { name: 'Move item 1 up' })).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Move item 2 down' })).toBeDisabled()
 
-    await page.getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('button', { name: 'Add Item' }).click()
     // The new row's text box takes focus, ready to type.
     await expect(page.getByLabel('Item 3 text')).toBeFocused()
     await page.keyboard.type('Test the scroll wheel')
@@ -407,7 +407,7 @@ test.describe('widget form', () => {
   test('sub-records: an empty list says so, and a blank item is caught on its own row', async ({ page }) => {
     await page.goto('/widgets/2/edit')
     await expect(page.getByText('No items yet.')).toBeVisible()
-    await page.getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('button', { name: 'Add Item' }).click()
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page.getByText('Write something or remove the item')).toBeVisible()
@@ -447,7 +447,7 @@ test.describe('widget form', () => {
     await expect(page.getByRole('combobox', { name: 'Pairing 2 category' })).toHaveValue('Furniture')
     await expect(page.getByLabel('Pairing 2 note')).toHaveValue('')
 
-    await page.getByRole('button', { name: 'Add pairing' }).click()
+    await page.getByRole('button', { name: 'Add Pairing' }).click()
     // Each row has its own search: this one finds Electronics alone.
     const picker = page.getByRole('combobox', { name: 'Pairing 3 category' })
     await picker.fill('elec')
@@ -467,7 +467,7 @@ test.describe('widget form', () => {
   test('sub-records with a reference: a row with no pick is caught on its own row', async ({ page }) => {
     await page.goto('/widgets/2/edit')
     await expect(page.getByText('No pairings yet.')).toBeVisible()
-    await page.getByRole('button', { name: 'Add pairing' }).click()
+    await page.getByRole('button', { name: 'Add Pairing' }).click()
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page.getByText('Pick a category or remove the pairing')).toBeVisible()
@@ -514,10 +514,10 @@ test.describe('widget form', () => {
     await pickAvailableFromDate(page)
     await page.locator('#widget-price').fill('5.00')
     await page.locator('#widget-description').fill('Saved with the switch off.')
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     await expect(page).toHaveURL(/\/widgets\/\d+$/)
-    await expect(page.getByRole('switch', { name: 'In stock' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).not.toBeChecked()
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
     await expect(page.getByRole('switch', { name: 'In stock: Out Of Stock Widget' })).not.toBeChecked()
   })
@@ -533,6 +533,6 @@ test.describe('widget form', () => {
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page).toHaveURL('/widgets/3')
-    await expect(page.getByRole('switch', { name: 'In stock' })).toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).toBeChecked()
   })
 })

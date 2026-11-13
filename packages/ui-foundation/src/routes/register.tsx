@@ -59,7 +59,7 @@ export function RegisterRoute() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-lg">
-            <h1>Create an account</h1>
+            <h1>Create an Account</h1>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -100,7 +100,7 @@ export function RegisterRoute() {
               </Field>
 
               <Field data-invalid={!!form.formState.errors.confirmPassword}>
-                <FieldLabel htmlFor="register-confirm-password">Confirm password</FieldLabel>
+                <FieldLabel htmlFor="register-confirm-password">Confirm Password</FieldLabel>
                 <PasswordInput
                   id="register-confirm-password"
                   autoComplete="new-password"
@@ -115,11 +115,11 @@ export function RegisterRoute() {
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Spinner className="size-4" />}
-              Create account
+              Create Account
             </Button>
 
             <Button variant="link" size="sm" nativeButton={false} render={<Link to="/login" state={location.state} />}>
-              Sign in instead
+              Sign In Instead
             </Button>
           </form>
         </CardContent>

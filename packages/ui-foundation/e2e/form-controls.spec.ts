@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // The form standard's controls (4.88, F10 to F18), on app/FormControls:
 // a choice as buttons, a typed date, Create from a reference picker (single
@@ -30,7 +30,7 @@ test.describe('on a form', () => {
 
   test('a date is typed: 3/20, Mar 21, today, and the box reads it back as shown', async ({ page }) => {
     await page.goto(story('form'))
-    const finished = page.getByRole('textbox', { name: 'Finished on' })
+    const finished = page.getByRole('textbox', { name: 'Finished On' })
     await expect(finished).toHaveAttribute('placeholder', '3/14 or Mar 14')
     await finished.fill('3/20')
     await expect(page.getByTestId('finished-value')).toHaveText('2026-03-20')
@@ -49,7 +49,7 @@ test.describe('on a form', () => {
 
   test('an unreadable date says what to type, and gives empty, not the day it had', async ({ page }) => {
     await page.goto(story('form'))
-    const started = page.getByRole('textbox', { name: 'Started on' })
+    const started = page.getByRole('textbox', { name: 'Started On' })
     await expect(started).toHaveValue('Mar 14, 2026')
     await started.fill('soon')
     await expect(page.getByTestId('started-value')).toHaveText('empty')
@@ -67,9 +67,9 @@ test.describe('on a form', () => {
 
   test('the calendar is on the box\'s button, and a pick goes back to the box', async ({ page }) => {
     await page.goto(story('form'))
-    const started = page.getByRole('textbox', { name: 'Started on' })
+    const started = page.getByRole('textbox', { name: 'Started On' })
     const field = page.locator('[data-slot="date-field"]').filter({ has: started })
-    await field.getByRole('button', { name: 'Open calendar' }).click()
+    await field.getByRole('button', { name: 'Open Calendar' }).click()
     const calendar = page.locator('[data-slot="date-field-calendar"]')
     await expect(calendar.getByRole('button', { name: /March 14th, 2026/ })).toBeFocused()
     await calendar.getByRole('button', { name: /March 18th, 2026/ }).click()
@@ -132,9 +132,9 @@ test.describe('on a form', () => {
     await page.getByRole('searchbox', { name: 'Filter Shelves' }).fill('zep')
     await expect(shelves.getByRole('button')).toHaveText(['Zeppelins'])
     await page.getByRole('searchbox', { name: 'Filter Shelves' }).fill('')
-    await page.getByRole('button', { name: 'Show all 40 Shelves' }).click()
+    await page.getByRole('button', { name: 'Show All 40 Shelves' }).click()
     await expect(shelves.getByRole('button')).toHaveCount(40)
-    await expect(page.getByRole('button', { name: /^Show all/ })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^Show All/ })).toHaveCount(0)
     await shelves.getByRole('button', { name: 'Zeppelins' }).click()
     await expect(page.getByTestId('shelves-value')).toHaveText('38,40')
   })
@@ -142,11 +142,11 @@ test.describe('on a form', () => {
   test('on a phone: the chips wrap, nothing runs off, and two dates still share a row', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto(story('form'))
-    await page.getByRole('button', { name: 'Show all 40 Shelves' }).click()
+    await page.getByRole('button', { name: 'Show All 40 Shelves' }).click()
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(overflow).toBe(0)
-    const started = await page.getByRole('textbox', { name: 'Started on' }).boundingBox()
-    const finished = await page.getByRole('textbox', { name: 'Finished on' }).boundingBox()
+    const started = await page.getByRole('textbox', { name: 'Started On' }).boundingBox()
+    const finished = await page.getByRole('textbox', { name: 'Finished On' }).boundingBox()
     expect(started && finished && Math.abs(started.y - finished.y)).toBeLessThan(2)
     // The filter box stays above the chips.
     const filter = await page.getByRole('searchbox', { name: 'Filter Shelves' }).boundingBox()
@@ -212,10 +212,10 @@ test.describe('edited in place', () => {
 
   test('a date is typed in place: Enter saves it; an unreadable one is refused and not sent', async ({ page }) => {
     await page.goto(story('edit-in-place'))
-    const started = row(page, 'Started on')
+    const started = row(page, 'Started On')
     await expect(started).toContainText('Mar 14, 2026')
-    await started.getByRole('button', { name: 'Edit Started on' }).click()
-    const box = page.getByRole('textbox', { name: 'Started on' })
+    await started.getByRole('button', { name: 'Edit Started On' }).click()
+    const box = page.getByRole('textbox', { name: 'Started On' })
     await expect(box).toBeFocused()
     await box.fill('soon')
     await box.press('Enter')
@@ -229,9 +229,9 @@ test.describe('edited in place', () => {
 
   test('a day picked in place from the calendar saves at once', async ({ page }) => {
     await page.goto(story('edit-in-place'))
-    const started = row(page, 'Started on')
-    await started.getByRole('button', { name: 'Edit Started on' }).click()
-    await started.getByRole('button', { name: 'Open calendar' }).click()
+    const started = row(page, 'Started On')
+    await started.getByRole('button', { name: 'Edit Started On' }).click()
+    await started.getByRole('button', { name: 'Open Calendar' }).click()
     await page.locator('[data-slot="date-field-calendar"]').getByRole('button', { name: /March 9th, 2026/ }).click()
     await expect(started).toContainText('Mar 9, 2026')
   })
@@ -264,5 +264,52 @@ test.describe('edited in place', () => {
     // The control still opens in the row.
     await author.locator('dt').click()
     await expect(author.getByRole('textbox', { name: 'Author' })).toBeFocused()
+  })
+})
+
+test.describe('a choice in a narrow box', () => {
+  // Every button inside the box with its whole border, the group not
+  // scrolling, the first line still joined and the rest wrapped below it:
+  // never cut off (4.97, app/FormControls Narrow).
+  async function fitsIn(box: Locator, group: Locator) {
+    await expect(group.getByRole('button')).toHaveCount(4)
+    const edge = (await box.boundingBox())!
+    const tops: number[] = []
+    for (const button of await group.getByRole('button').all()) {
+      const at = (await button.boundingBox())!
+      expect(at.x).toBeGreaterThanOrEqual(edge.x)
+      expect(at.x + at.width).toBeLessThanOrEqual(edge.x + edge.width + 0.5)
+      tops.push(Math.round(at.y))
+      // Each keeps its whole border, so one that wraps starts with an edge.
+      expect(await button.evaluate((node) => getComputedStyle(node).borderLeftWidth)).toBe('1px')
+    }
+    expect(await group.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
+    expect(tops[1]).toBe(tops[0])
+    expect(Math.max(...tops)).toBeGreaterThan(tops[0]!)
+  }
+
+  test.use({ viewport: { width: 1280, height: 900 } })
+
+  test('on a form 280px wide, the buttons wrap inside it', async ({ page }) => {
+    await page.goto(story('narrow'))
+    const box = page.getByTestId('narrow-form')
+    await fitsIn(box, box.getByRole('group', { name: 'Binding' }))
+  })
+
+  test('edited in place on a record 280px wide, the value column keeps its width and the buttons wrap', async ({ page }) => {
+    await page.goto(story('narrow'))
+    const box = page.getByTestId('narrow-record')
+    await box.getByRole('button', { name: 'Edit Binding' }).click()
+    await fitsIn(box, box.getByRole('group', { name: 'Binding' }))
+  })
+
+  test('in a dialog, sharing a row with two dates, the buttons wrap inside their field', async ({ page }) => {
+    await page.goto(story('narrow'))
+    await page.getByRole('button', { name: 'Edit Book' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Edit Book' })
+    // Measured once it has grown in, not while it animates.
+    await dialog.evaluate((node) => Promise.all(node.getAnimations({ subtree: true }).map((animation) => animation.finished)))
+    const group = dialog.getByRole('group', { name: 'Binding' })
+    await fitsIn(group.locator('xpath=ancestor::*[@data-slot="field"][1]'), group)
   })
 })

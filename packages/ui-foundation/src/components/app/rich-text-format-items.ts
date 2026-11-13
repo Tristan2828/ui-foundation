@@ -63,19 +63,19 @@ export const FORMAT_GROUPS: FormatItem[][] = [
     { id: 'heading1', label: 'Heading 1', icon: Heading1Icon, keys: 'Block+1' },
     { id: 'heading2', label: 'Heading 2', icon: Heading2Icon, keys: 'Block+2' },
     { id: 'heading3', label: 'Heading 3', icon: Heading3Icon, keys: 'Block+3' },
-    { id: 'toggleHeading', label: 'Toggle heading', icon: ListCollapseIcon, hint: 'folds what is under it; or type >## ' },
+    { id: 'toggleHeading', label: 'Toggle Heading', icon: ListCollapseIcon, hint: 'folds what is under it; or type >## ' },
   ],
   [
-    { id: 'tasks', label: 'Task list', icon: ListChecksIcon, keys: 'Block+4', hint: 'tick an item: Mod+Shift+Enter' },
-    { id: 'bullets', label: 'Bulleted list', icon: ListIcon, keys: 'Block+5' },
-    { id: 'numbers', label: 'Numbered list', icon: ListOrderedIcon, keys: 'Block+6' },
+    { id: 'tasks', label: 'Task List', icon: ListChecksIcon, keys: 'Block+4', hint: 'tick an item: Mod+Shift+Enter' },
+    { id: 'bullets', label: 'Bulleted List', icon: ListIcon, keys: 'Block+5' },
+    { id: 'numbers', label: 'Numbered List', icon: ListOrderedIcon, keys: 'Block+6' },
     { id: 'outdent', label: 'Outdent', icon: IndentDecreaseIcon, hint: 'a list item, one level out', action: true, touch: true },
     { id: 'indent', label: 'Indent', icon: IndentIncreaseIcon, hint: 'a list item, one level in', action: true, touch: true },
   ],
   [
     { id: 'quote', label: 'Quote', icon: TextQuoteIcon, keys: 'Mod+Shift+B' },
     { id: 'callout', label: 'Callout', icon: CALLOUT_LOOK.note.icon },
-    { id: 'codeBlock', label: 'Code block', icon: SquareCodeIcon, keys: 'Block+8' },
+    { id: 'codeBlock', label: 'Code Block', icon: SquareCodeIcon, keys: 'Block+8' },
     { id: 'divider', label: 'Divider', icon: MinusIcon, hint: 'or type ---' },
   ],
   [{ id: 'table', label: 'Table', icon: TableIcon, hint: 'its grips edit it', action: true }],
@@ -92,7 +92,7 @@ export const FORMAT_ITEMS = new Map(FORMAT_GROUPS.flat().map((item) => [item.id,
  */
 export const TOGGLE_HEADING_VARIANTS: FormatItem[] = ([1, 2, 3] as const).map((level) => ({
   id: `toggleHeading${level}` as ToggleHeadingFormat,
-  label: `Toggle heading ${level}`,
+  label: `Toggle Heading ${level}`,
   icon: [Heading1Icon, Heading2Icon, Heading3Icon][level - 1],
   hint: `or type >${'#'.repeat(level)} `,
 }))

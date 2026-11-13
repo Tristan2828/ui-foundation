@@ -11,6 +11,12 @@
 // Pressing the picked one again keeps it: a choice is changed, never
 // emptied, by its buttons. `clearable` lets the picked one be pressed off
 // (an optional field), giving `null`.
+//
+// Never cut off (4.97): in a box narrower than the row (a field sharing a
+// form's row, a dialog's column, a narrow panel) the buttons wrap onto a
+// second line, each keeping its whole border, instead of spilling past the
+// box's edge. The first line stays joined; a wrapped line starts a new row
+// of joined buttons a little below it.
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -69,7 +75,7 @@ export function ChoiceButtons<T extends string | number>({
       disabled={disabled}
       aria-invalid={invalid || undefined}
       className={cn(
-        'max-w-full flex-wrap rounded-md aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
+        'max-w-full min-w-0 flex-wrap gap-y-1 rounded-md pl-px aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
         className,
       )}
       {...aria}
@@ -79,7 +85,11 @@ export function ChoiceButtons<T extends string | number>({
           key={String(option.value)}
           value={String(index)}
           className={cn(
-            'h-(--control-height,--spacing(8)) px-3 font-normal text-muted-foreground aria-pressed:font-medium aria-pressed:text-foreground',
+            // Every button has its left border (`!`: the joined group drops it
+            // after the first) and overlaps the one before by it, so a button
+            // that wraps to a new line starts with an edge; `pl-px` on the
+            // group keeps that edge inside the box.
+            '-ml-px border-l! h-(--control-height,--spacing(8)) max-w-full px-3 font-normal text-muted-foreground aria-pressed:font-medium aria-pressed:text-foreground',
             invalid && 'border-destructive',
           )}
         >

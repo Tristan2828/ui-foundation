@@ -122,7 +122,7 @@ const SEVEN: EqualItem[] = Array.from({ length: 7 }, (_, i) => ({
   state: i < 3 ? { label: 'Done', tone: 'success' as const } : i === 3 ? { label: 'Current', tone: 'info' as const } : 'Planned',
   fields: [
     { label: 'Distance', value: `${12 + i * 2} km` },
-    { label: 'Long run', value: `${6 + i} km` },
+    { label: 'Long Run', value: `${6 + i} km` },
   ],
 }))
 

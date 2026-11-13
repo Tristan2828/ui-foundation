@@ -74,7 +74,7 @@ export function SessionView({
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Full screen"
+                aria-label="Full Screen"
                 aria-pressed={fullscreen.active}
                 onClick={fullscreen.toggle}
               >

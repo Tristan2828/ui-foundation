@@ -35,7 +35,7 @@ test.describe('DataTable width="content"', () => {
     const remove = (await page.getByRole('button', { name: 'Delete Work' }).boundingBox())!
     expect(remove.x + remove.width).toBeLessThanOrEqual(area.x + area.width)
     // The pagination lines up with it.
-    const next = (await page.getByRole('button', { name: 'Next page' }).boundingBox())!
+    const next = (await page.getByRole('button', { name: 'Next Page' }).boundingBox())!
     expect(next.x + next.width).toBeLessThanOrEqual(area.x + area.width + 1)
   })
 
@@ -132,7 +132,7 @@ test.describe('DataTable, editing in its rows', () => {
 
   test('InlineCreate: Enter adds a row and keeps the caret; a blank or taken name says why', async ({ page }) => {
     await open(page)
-    const box = page.getByRole('textbox', { name: "New category's name" })
+    const box = page.getByRole('textbox', { name: "New Category's Name" })
     await box.fill('Garden')
     await page.keyboard.press('Enter')
     await expect(row(page, 'Garden')).toBeVisible()
@@ -210,7 +210,7 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
 
   test('a heading row starts each day, spanning the row, with its summary', async ({ page }) => {
     await page.goto(story('grouped'))
-    await expect(headings(page)).toHaveText(['Today2 · 1 h', 'Yesterday2 · 42 m', 'Earlier this week2 · 1 h 4 m'])
+    await expect(headings(page)).toHaveText(['Today2 · 1 h', 'Yesterday2 · 42 m', 'Earlier This Week2 · 1 h 4 m'])
     const first = headings(page).first()
     await expect(first).toHaveAttribute('scope', 'rowgroup')
     await expect(first).toHaveAttribute('colspan', '2')
@@ -220,9 +220,9 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
 
   test('a group split across pages repeats its heading on the next', async ({ page }) => {
     await page.goto(story('grouped'))
-    await page.getByRole('button', { name: 'Next page' }).click()
+    await page.getByRole('button', { name: 'Next Page' }).click()
     await expect(headings(page)).toHaveText([
-      'Earlier this week1 · 7 m',
+      'Earlier This Week1 · 7 m',
       'Week of 5 Oct2 · 1 h 25 m',
       /^Week of 28 Sept?1 · 16 m$/,
       'August1 · 33 m',
@@ -241,7 +241,7 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
   test('one pill pressed at a time; pressing it again leaves it on; the filter returns to page 1', async ({ page }) => {
     await page.goto(story('grouped'))
     await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'true')
-    await page.getByRole('button', { name: 'Next page' }).click()
+    await page.getByRole('button', { name: 'Next Page' }).click()
     await pill(page, 'Video').click()
     await expect(pill(page, 'Video')).toHaveAttribute('aria-pressed', 'true')
     await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'false')
@@ -272,7 +272,7 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
     await expect(pill(page, 'Text')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByText('No text items')).toBeVisible()
     await expect(headings(page)).toHaveCount(0)
-    await page.getByRole('button', { name: 'Show all types' }).click()
+    await page.getByRole('button', { name: 'Show All Types' }).click()
     await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'true')
     await expect(headings(page).first()).toHaveText('Today2 · 1 h')
   })
@@ -559,7 +559,7 @@ test.describe('DataTable list look (4.83)', () => {
   test('rows per page: 50 to start, a pick shows that many from page 1, and is remembered', async ({ page }) => {
     await page.goto(story('list-look'))
     await expect(page.locator('tbody tr')).toHaveCount(50)
-    await page.getByRole('button', { name: 'Next page' }).click()
+    await page.getByRole('button', { name: 'Next Page' }).click()
     await expect(page.getByText('Page 2 of 3')).toBeVisible()
     await page.getByRole('button', { name: '50 rows per page' }).click()
     await page.getByRole('menuitemradio', { name: '25' }).click()

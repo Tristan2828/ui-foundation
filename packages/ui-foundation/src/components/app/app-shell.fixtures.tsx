@@ -243,7 +243,7 @@ function ProjectView({ loaded: loadedAtFirst, documentTitle }: { loaded: boolean
     <div className="flex flex-col gap-4">
       {!loaded && (
         <Button size="sm" variant="outline" className="w-fit" onClick={() => setLoaded(true)}>
-          Finish loading
+          Finish Loading
         </Button>
       )}
       <EntityView

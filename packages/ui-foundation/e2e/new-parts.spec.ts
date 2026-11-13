@@ -21,9 +21,9 @@ test.describe('Timeline', () => {
     // The dates' right edges line up down the column.
     const edges = await items.locator('time').evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().right)))
     expect(new Set(edges).size).toBe(1)
-    await page.getByRole('button', { name: 'Show all 7' }).click()
+    await page.getByRole('button', { name: 'Show All 7' }).click()
     await expect(items).toHaveCount(7)
-    await expect(page.getByRole('button', { name: 'Show fewer' })).toHaveAttribute('aria-expanded', 'true')
+    await expect(page.getByRole('button', { name: 'Show Fewer' })).toHaveAttribute('aria-expanded', 'true')
   })
 
   test('under 24rem the date moves above its entry', async ({ page }) => {
@@ -58,9 +58,9 @@ test.describe('ListHeader', () => {
     const header = page.locator('[data-slot="list-header"]').nth(1)
     await expect(header.getByRole('status')).toBeEmpty()
     await header.getByRole('button', { name: 'More for Medications' }).click()
-    await page.getByRole('menuitemcheckbox', { name: 'Show deleted' }).click()
+    await page.getByRole('menuitemcheckbox', { name: 'Show Deleted' }).click()
     await expect(header.getByRole('status')).toContainText('Showing deleted medications.')
-    await header.getByRole('button', { name: 'Back to the list' }).click()
+    await header.getByRole('button', { name: 'Back to the List' }).click()
     await expect(header.getByRole('status')).toBeEmpty()
   })
 
@@ -71,6 +71,6 @@ test.describe('ListHeader', () => {
     await header.getByRole('button', { name: 'More for Tasks' }).click()
     for (const name of ['Board', 'Spin', 'Fill in 54']) await expect(page.getByRole('menuitem', { name })).toBeVisible()
     await expect(page.getByRole('menuitem', { name: 'Export' })).toBeVisible()
-    await expect(page.getByRole('menuitemcheckbox', { name: 'Show deleted' })).toBeVisible()
+    await expect(page.getByRole('menuitemcheckbox', { name: 'Show Deleted' })).toBeVisible()
   })
 })

@@ -32,7 +32,7 @@ test.describe('DataTable groupings', () => {
     await expect(groupMenu(page)).toHaveText('Group')
     await expect(headings(page)).toHaveCount(0)
     await expect(page.getByRole('columnheader', { name: 'Status' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Fold all' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Fold All' })).toHaveCount(0)
 
     await groupBy(page, 'Status')
     await expect(groupMenu(page)).toHaveText('Group: Status')
@@ -66,10 +66,10 @@ test.describe('DataTable groupings', () => {
     await page.keyboard.press('Enter')
     await expect(kitchen).toHaveAttribute('aria-expanded', 'true')
 
-    await page.getByRole('button', { name: 'Fold all' }).click()
+    await page.getByRole('button', { name: 'Fold All' }).click()
     for (const heading of await headings(page).all()) await expect(heading).toHaveAttribute('aria-expanded', 'false')
     await expect(page.locator('tbody tr[data-slot="table-row"]')).toHaveCount(0)
-    await page.getByRole('button', { name: 'Unfold all' }).click()
+    await page.getByRole('button', { name: 'Unfold All' }).click()
     await expect(row(page, 'Descale the kettle')).toBeVisible()
   })
 
@@ -81,7 +81,7 @@ test.describe('DataTable groupings', () => {
     await expect(groupMenu(page)).toHaveText('Group: Ready')
 
     // By status turns on Status; All names no grouping, so it stays.
-    await page.getByRole('button', { name: 'By status' }).click()
+    await page.getByRole('button', { name: 'By Status' }).click()
     await expect(groupMenu(page)).toHaveText('Group: Status')
     await page.getByRole('button', { name: 'All', exact: true }).click()
     await expect(groupMenu(page)).toHaveText('Group: Status')
@@ -123,7 +123,7 @@ test.describe('DataTable detail panel', () => {
     await page.goto(story('chores-with-panel'))
     await page.getByRole('link', { name: 'Oil the hinges' }).click()
     await expect(panel(page)).toContainText('Back door still squeaks a little.')
-    await panel(page).getByRole('link', { name: 'Open page' }).click()
+    await panel(page).getByRole('link', { name: 'Open Page' }).click()
     await expect(page.getByText("A chore's page")).toBeVisible()
   })
 
@@ -403,7 +403,7 @@ test.describe('DataTable stickyGroupHeadings', () => {
 
   test('a table that does not ask scrolls as before', async ({ page }) => {
     await page.goto(`http://localhost:6180/story.html?id=app-datatable--grouped&theme=light`)
-    await expect(page.getByText('Earlier this week')).toBeVisible()
+    await expect(page.getByText('Earlier This Week')).toBeVisible()
     expect(await page.locator('[data-slot="table-container"]').evaluate((element) => getComputedStyle(element).overflowX)).toBe('auto')
     expect(await page.locator('[data-slot="table-group-heading"] th').first().evaluate((element) => getComputedStyle(element).position)).toBe('static')
   })

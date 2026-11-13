@@ -18,10 +18,10 @@ const PASSWORD = 'dev-password-123'
 async function passwordStep(page: Page, email = TWO_STEP_EMAIL) {
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.getByRole('button', { name: 'Sign In' }).click()
 }
 
-const codeField = (page: Page) => page.getByRole('textbox', { name: 'Authentication code' })
+const codeField = (page: Page) => page.getByRole('textbox', { name: 'Authentication Code' })
 
 test.describe('two-step sign-in', () => {
   test('the password, then a code from the authenticator app; a wrong code is the field’s error', async ({ page }) => {
@@ -57,8 +57,8 @@ test.describe('two-step sign-in', () => {
     await forceLoggedOut(page)
     await page.goto('/login')
     await passwordStep(page)
-    await page.getByRole('button', { name: 'Use a recovery code' }).click()
-    const recovery = page.getByRole('textbox', { name: 'Recovery code' })
+    await page.getByRole('button', { name: 'Use a Recovery Code' }).click()
+    const recovery = page.getByRole('textbox', { name: 'Recovery Code' })
     await expect(recovery).toBeFocused()
     await expect(recovery).toHaveAttribute('autocomplete', 'off')
     await recovery.fill('abcd-efgh')
@@ -91,7 +91,7 @@ test.describe('two-step sign-in', () => {
   test('Start over goes back to the password', async ({ page }) => {
     await page.goto('/login')
     await passwordStep(page)
-    await page.getByRole('button', { name: 'Start over' }).click()
+    await page.getByRole('button', { name: 'Start Over' }).click()
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible()
   })
 
@@ -116,9 +116,9 @@ test.describe('too many sign-in attempts', () => {
     await passwordStep(page, 'dev@example.com')
     await expect(page.getByText('Too many attempts')).toBeVisible()
     await expect(page.getByText('Too many sign-in attempts. Try again in 10 minutes.')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeDisabled()
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeDisabled()
     // No retry is offered.
-    await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0)
     await expect(page).toHaveURL('/login')
   })
 })
@@ -141,8 +141,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test('the recovery code step', async ({ page }) => {
       await page.goto('/login')
       await passwordStep(page)
-      await page.getByRole('button', { name: 'Use a recovery code' }).click()
-      await expect(page.getByRole('textbox', { name: 'Recovery code' })).toBeVisible()
+      await page.getByRole('button', { name: 'Use a Recovery Code' }).click()
+      await expect(page.getByRole('textbox', { name: 'Recovery Code' })).toBeVisible()
       await expectNoAxeViolations(page)
     })
 

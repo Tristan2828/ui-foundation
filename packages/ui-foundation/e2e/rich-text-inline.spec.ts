@@ -136,7 +136,7 @@ test.describe('the tools strip', () => {
     await caretAtEnd(page)
     await expect(tools(page)).toBeVisible()
     await expect(tools(page).getByRole('button')).toHaveCount(1)
-    await expect(tools(page).getByRole('button', { name: 'Full screen' })).toBeVisible()
+    await expect(tools(page).getByRole('button', { name: 'Full Screen' })).toBeVisible()
     await notes(page).blur()
     await page.mouse.click(5, 5)
     await expect(tools(page)).toHaveCount(0)
@@ -145,7 +145,7 @@ test.describe('the tools strip', () => {
   test('Full screen fills the window, keeps the text, and Esc leaves', async ({ page }) => {
     await openInline(page)
     await caretAtEnd(page)
-    await tools(page).getByRole('button', { name: 'Full screen' }).click()
+    await tools(page).getByRole('button', { name: 'Full Screen' }).click()
     const field = region(page, 'Notes').locator('[data-slot=rich-text-editor]')
     await expect(field).toHaveAttribute('data-full-screen', 'true')
     await expect(notes(page)).toBeFocused()
@@ -178,7 +178,7 @@ test.describe('the tools strip', () => {
       await expect(tools(page).getByRole('button', { name: 'Indent' })).toBeVisible()
       const axe = () => new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
       expect((await axe()).violations).toEqual([])
-      await tools(page).getByRole('button', { name: 'Full screen' }).click()
+      await tools(page).getByRole('button', { name: 'Full Screen' }).click()
       expect((await axe()).violations).toEqual([])
     })
   }

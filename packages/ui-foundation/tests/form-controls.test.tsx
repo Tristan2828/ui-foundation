@@ -109,7 +109,7 @@ describe('DateField', () => {
     expect(html).toContain('data-kind="date"')
     expect(html).toMatch(/<input[^>]*id="due"/)
     expect(html).toContain('value="Sep 2, 2026"')
-    expect(html).toContain('aria-label="Open calendar"')
+    expect(html).toContain('aria-label="Open Calendar"')
   })
 
   it('shows the examples in an empty box', () => {

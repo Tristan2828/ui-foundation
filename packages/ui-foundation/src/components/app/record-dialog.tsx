@@ -236,7 +236,7 @@ export function RecordDialogRoute({
                 className={buttonVariants({ variant: 'ghost', size: 'sm' })}
               >
                 <Maximize2Icon aria-hidden="true" />
-                Open full page
+                Open Full Page
               </Link>
             )}
             <DialogClose render={<Button variant="ghost" size="icon-sm" />}>

@@ -612,7 +612,7 @@ function GroupMenu<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Group by</DropdownMenuLabel>
+          <DropdownMenuLabel>Group By</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={current?.id ?? NO_GROUPING}
             onValueChange={(next) => onValueChange(next === NO_GROUPING ? '' : String(next))}
@@ -662,7 +662,7 @@ function PageSizeMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Rows per page</DropdownMenuLabel>
+          <DropdownMenuLabel>Rows per Page</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={String(value)} onValueChange={(next) => onValueChange(Number(next))}>
             {pageSizes.map((size) => (
               <DropdownMenuRadioItem key={size} value={String(size)} closeOnClick>
@@ -1526,7 +1526,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
             <div className="flex items-center gap-2">
               {activeGrouping && (
                 <Button variant="ghost" size="sm" data-slot="data-table-fold-all" disabled={!runs?.length} onClick={foldAll}>
-                  {allFolded ? 'Unfold all' : 'Fold all'}
+                  {allFolded ? 'Unfold All' : 'Fold All'}
                 </Button>
               )}
               <GroupMenu groupings={groupings} value={activeGrouping?.id ?? ''} onValueChange={setGrouping} />
@@ -1866,7 +1866,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="Previous page"
+                aria-label="Previous Page"
                 disabled={page <= 1}
                 onClick={() => onPageChange(page - 1)}
               >
@@ -1878,7 +1878,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="Next page"
+                aria-label="Next Page"
                 disabled={page >= pageCount}
                 onClick={() => onPageChange(page + 1)}
               >

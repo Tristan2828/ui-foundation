@@ -7,6 +7,59 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.97.0 — Labels in Title Case, and ChoiceButtons that wrap in a narrow box
+
+npm package. `ui-foundation-backend` moves to 4.97.0 with it, unchanged.
+#333, #334.
+
+- **Title Case for labels** (design-language.md "Words on screen", the
+  rule the form, dialog, list, record and cell docs now point to): page,
+  dialog, form, card and section titles, buttons, menu items, tabs and
+  pills, column headers, field labels, a list's group headings and a
+  control's accessible name are Title Case. Messages, help text, toasts,
+  placeholders, an empty or error state's words, a notice's title, a
+  question and a sentence read to a screen reader stay sentence case. The
+  small words (a, an, the, and, but, or, nor, as, at, by, for, in, of,
+  on, per, to, with) stay lowercase unless first or last.
+- **The package's own labels follow it**: "Try Again", "Show Deleted",
+  "Back to the List", "Rows per Page", "Group By", "View All 12", "Show
+  All", "Show Fewer", "Fold All", "Clear Filters", "Open Full Page",
+  "Print Notes", "Hide Empty", "Save and Next", "Keep Editing", "Customize
+  This Page", "Needs You", "Allow Reminders" / "Turn Off", the rich-text
+  editor's menus and table grips ("Insert Row Above", "Delete Table"),
+  `byDay`'s headings ("No Date", "Earlier This Week"), the emoji picker's
+  groups, the login and register screens ("Sign In", "Create Account",
+  "Confirm Password"), `ImageField`'s "Add Photo" (its `noun` through
+  `titleCase`), and control names such as "Next Page", "Open Calendar",
+  "Show Password", "Toggle Dark Mode", "Log Out". `FilterBar`'s default
+  any-option is now `Any ${label}` (it used to lowercase the label):
+  "Any Status". Messages are unchanged ("Discard your changes?",
+  "Nothing here yet", "Couldn't load", "Not set").
+- **`titleCase(text)`** and **`TITLE_CASE_SMALL_WORDS`** from the package
+  root, for a label built from a value (`` `Add ${titleCase(noun)}` ``). A
+  word that already holds a capital is left as written ("Open in GitHub").
+- **`ChoiceButtons` never cuts off** in a narrow box: the buttons wrap
+  onto a second line inside it, each keeping its whole border, the first
+  line still joined. A record's field rows (EntityView's)
+  put the label beside the value only once the list itself is 24rem wide
+  as well as at `sm`; in a narrower box on a wide screen (a panel, a
+  dialog's column) the label sits above, where before the value column
+  could shrink to nothing and cut off the editor's controls. New fixture
+  app/FormControls Narrow (a 280px form, a record edited in place, a
+  dialog's row of short fields) with a browser test that nothing
+  overflows.
+
+**For an app:** its own labels change too. Rewrite page, dialog, form,
+card and section titles, buttons, menu items, tabs, column headers and
+field labels in Title Case ("Save Changes", "New Book", "Rows per Page");
+leave messages, help text, toasts, placeholders and empty states as they
+are. A label built from a value goes through `titleCase()`. A test that
+finds a package control by its exact name changes with it: Playwright's
+`getByRole(..., { name })` matches without case unless `exact: true`;
+Testing Library's string `name` is exact, so `'Try again'` becomes
+`'Try Again'` (or use a case-insensitive regex). A `FilterBar` given a
+lowercase `label` should pass Title Case, or `anyLabel`.
+
 ## 4.96.0 — The record's empty value as an export, and a delete that asks a reason
 
 npm package; additive, nothing to change. `ui-foundation-backend` moves

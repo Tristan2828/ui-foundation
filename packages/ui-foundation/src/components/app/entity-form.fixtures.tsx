@@ -229,14 +229,14 @@ function NewBook({ sections = false, failed = false }: { sections?: boolean; fai
       onSubmit={onSubmit}
       isSubmitting={saving}
       submitError={error}
-      submitLabel="Add book"
+      submitLabel="Add Book"
       onCancel={() => navigate('/books', { replace: true })}
       dirty={isDirty}
       errors={errors}
     >
       {sections ? (
         <>
-          <FormSection title="What it is">
+          <FormSection title="What It Is">
             {title}
             {status}
             {format}
@@ -247,7 +247,7 @@ function NewBook({ sections = false, failed = false }: { sections?: boolean; fai
             {series}
             {numbers}
             <Field>
-              <FieldLabel htmlFor="book-recommended">Recommended by</FieldLabel>
+              <FieldLabel htmlFor="book-recommended">Recommended By</FieldLabel>
               <Input id="book-recommended" {...form.register('recommendedBy')} />
             </Field>
             {link}
@@ -265,7 +265,7 @@ function NewBook({ sections = false, failed = false }: { sections?: boolean; fai
           {numbers}
           {link}
           <Field>
-            <FieldLabel htmlFor="book-recommended">Recommended by</FieldLabel>
+            <FieldLabel htmlFor="book-recommended">Recommended By</FieldLabel>
             <Input id="book-recommended" {...form.register('recommendedBy')} />
             <FieldDescription>Who told you about it.</FieldDescription>
           </Field>
@@ -281,7 +281,7 @@ function Books() {
     <div className="flex flex-col items-start gap-2">
       <h1 className="type-page-title text-foreground">Books</h1>
       <Link to="/books/new" className="text-link underline">
-        New book
+        New Book
       </Link>
     </div>
   )

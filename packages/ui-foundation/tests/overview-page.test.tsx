@@ -24,7 +24,7 @@ const part = (over: Partial<OverviewPart> = {}): OverviewPart => ({
 })
 
 describe('OverviewPage', () => {
-  it('draws the title as the h1, Needs you, and a tile per part, all closed', () => {
+  it('draws the title as the h1, Needs You, and a tile per part, all closed', () => {
     const html = render(
       <OverviewPage title="Household" needs={[{ text: '2 deals at their target', to: '/deals' }]} parts={[part(), part({ id: 'deals', title: 'Deals', value: '2 now' })]} />,
     )
@@ -37,7 +37,7 @@ describe('OverviewPage', () => {
     expect(html).not.toContain('Two accounts')
   })
 
-  it('draws no Needs you when nothing waits', () => {
+  it('draws no Needs You when nothing waits', () => {
     expect(render(<OverviewPage title="Household" parts={[part()]} />)).not.toContain('needs-you')
   })
 

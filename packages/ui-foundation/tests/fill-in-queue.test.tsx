@@ -72,17 +72,17 @@ describe('FillInQueue', () => {
     expect(html).toContain('12 of 160 filled')
     expect(html).toMatch(/role="progressbar"[^>]*aria-valuemax="160"[^>]*aria-valuenow="12"/)
     expect(html).toContain('>Skip<')
-    expect(html).toContain('Save and next')
+    expect(html).toContain('Save and Next')
   })
 
-  it('starts at `index` and disables Save and next until it can save', () => {
+  it('starts at `index` and disables Save and Next until it can save', () => {
     const html = render(props({ index: 1, canSave: false }))
     expect(html).toContain('Learn Rust')
     expect(html).toContain('Record 2 of 2')
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Save and next<\/button>/)
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Save and Next<\/button>/)
     const asked = render(props({ canSave: (item) => item.id === 2 }))
-    expect(asked).toMatch(/<button[^>]*disabled=""[^>]*>Save and next<\/button>/)
-    expect(render(props())).not.toMatch(/<button[^>]*disabled=""[^>]*>Save and next<\/button>/)
+    expect(asked).toMatch(/<button[^>]*disabled=""[^>]*>Save and Next<\/button>/)
+    expect(render(props())).not.toMatch(/<button[^>]*disabled=""[^>]*>Save and Next<\/button>/)
   })
 
   it("names the record's group above it, with its count, and lists each group's count under the bar", () => {
@@ -109,7 +109,7 @@ describe('FillInQueue', () => {
     const failed = render(props({ error: { kind: 'network', message: 'Offline' }, onRetry: () => {} }))
     expect(failed).toContain('data-state="error"')
     expect(failed).toContain('Offline')
-    expect(failed).toContain('Try again')
+    expect(failed).toContain('Try Again')
     expect(render(props({ error: <span>Broken list</span> }))).toContain('Broken list')
     const empty = render(props({ items: [], progress: { done: 2, total: 2 } }))
     expect(empty).toContain('data-state="empty"')

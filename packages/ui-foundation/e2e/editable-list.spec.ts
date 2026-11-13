@@ -93,7 +93,7 @@ test('Files: the add stops at its limit, and a refused upload says why under the
   await expect(files.getByRole('listitem')).toHaveCount(3)
   await expect(add).toBeDisabled()
 
-  await files.getByRole('button', { name: 'Refuse an upload' }).click()
+  await files.getByRole('button', { name: 'Refuse an Upload' }).click()
   await expect(files.getByText('That file is too large (at most 10 MB).')).toBeVisible()
 })
 
@@ -174,13 +174,13 @@ test("grouped: a group's Add puts the new item in that group; Duplicate copies r
 test('filtered: hidden items stay in the list; a move passes over them', async ({ page }) => {
   await openGrouped(page)
   const every = page.getByRole('list', { name: 'Every task' })
-  await page.getByRole('button', { name: 'Hide done' }).click()
+  await page.getByRole('button', { name: 'Hide Done' }).click()
   expect(await texts(every)).toEqual(['Paint the skirting (Kitchen)', 'Fix the tap (Kitchen)', 'Hang the shelves (Garage)'])
   // Fix the tap (entry 3) up swaps with Paint the skirting (entry 1),
   // over Sweep out (hidden) between them, which keeps its place.
   await every.getByRole('button', { name: 'Move entry 3 up' }).click()
   await expect(every.getByRole('listitem').first()).toContainText('Fix the tap')
-  await page.getByRole('button', { name: 'Hide done' }).click()
+  await page.getByRole('button', { name: 'Hide Done' }).click()
   expect(await texts(every)).toEqual([
     'Fix the tap (Kitchen)',
     'Sweep out (Garage)',
@@ -231,7 +231,7 @@ test("form rows: the row is the form's, its refusals on its own field", async ({
 
 test('form rows: Add uses the same row, its draft saved at the end', async ({ page }) => {
   const steps = await openFormRows(page)
-  await steps.getByRole('button', { name: 'Add step' }).click()
+  await steps.getByRole('button', { name: 'Add Step' }).click()
   const text = page.getByRole('textbox', { name: 'Step 3 text' })
   await expect(text).toBeFocused()
   await text.fill('Nail the edges')

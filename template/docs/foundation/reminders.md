@@ -39,8 +39,8 @@ const push = usePushPermission()
 
 | `status` | Means | Shows |
 |---|---|---|
-| `off` | Can be turned on | The description and "Allow reminders" |
-| `on` | This device gets them | "Reminders are on for this device", and "Turn off" |
+| `off` | Can be turned on | The description and "Allow Reminders" |
+| `on` | This device gets them | "Reminders are on for this device", and "Turn Off" |
 | `needs-install` | iPhone or iPad in a browser tab | How to add the app to the Home Screen |
 | `blocked` | The person said no | Where to allow it again |
 | `unsupported` | No push in this browser | That it can't |

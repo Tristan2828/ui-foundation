@@ -16,9 +16,9 @@ test.use({ locale: 'en-US', timezoneId: 'America/Chicago' })
 
 test('reads a set value back as its phrase, label and next five dates', async ({ page }) => {
   await page.goto(story('default'))
-  const box = page.getByRole('textbox', { name: 'Change the filter', exact: true })
+  const box = page.getByRole('textbox', { name: 'Change the Filter', exact: true })
   await expect(box).toHaveValue('every 2nd tue at 9am')
-  const preview = field(page, 'Change the filter').locator('[data-slot="recurrence-preview"]')
+  const preview = field(page, 'Change the Filter').locator('[data-slot="recurrence-preview"]')
   await expect(preview).toContainText('Every 2nd Tue at 9:00 AM')
   await expect(preview.getByRole('list', { name: 'Next' }).getByRole('listitem')).toHaveText([
     'Tue, Dec 8, 9:00 AM',
@@ -28,14 +28,14 @@ test('reads a set value back as its phrase, label and next five dates', async ({
     'Tue, Apr 13, 2027, 9:00 AM',
   ])
   // Its preset is pressed.
-  await expect(field(page, 'Change the filter').getByRole('button', { name: 'Monthly on the 2nd Thu' })).toHaveAttribute('aria-pressed', 'false')
-  await expect(field(page, 'Change the filter').getByRole('button', { name: 'Custom' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(field(page, 'Change the Filter').getByRole('button', { name: 'Monthly on the 2nd Thu' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(field(page, 'Change the Filter').getByRole('button', { name: 'Custom' })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('reads a phrase as it is typed, and says clearly what it cannot read', async ({ page }) => {
   await page.goto(story('default'))
-  const box = page.getByRole('textbox', { name: 'Water the plants', exact: true })
-  const preview = field(page, 'Water the plants').locator('[data-slot="recurrence-preview"]')
+  const box = page.getByRole('textbox', { name: 'Water the Plants', exact: true })
+  const preview = field(page, 'Water the Plants').locator('[data-slot="recurrence-preview"]')
   await expect(preview).toContainText("Doesn’t repeat")
   await box.pressSequentially('every 3 days at 9am, 5pm')
   await expect(preview).toContainText('Every 3 days at 9:00 AM and 5:00 PM')
@@ -59,7 +59,7 @@ test('reads a phrase as it is typed, and says clearly what it cannot read', asyn
 
 test('a preset sets the rule from the start day, and keeps the times', async ({ page }) => {
   await page.goto(story('default'))
-  const presets = field(page, 'Change the filter').getByRole('group', { name: 'Presets' })
+  const presets = field(page, 'Change the Filter').getByRole('group', { name: 'Presets' })
   await expect(presets.getByRole('button')).toHaveText([
     'Daily',
     'Weekdays',
@@ -71,12 +71,12 @@ test('a preset sets the rule from the start day, and keeps the times', async ({ 
   ])
   await presets.getByRole('button', { name: 'Weekdays' }).click()
   await expect(page.getByTestId('filter-value')).toHaveText('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR · 2026-11-12 · 09:00 · schedule')
-  await expect(page.getByRole('textbox', { name: 'Change the filter', exact: true })).toHaveValue('every weekday at 9am')
+  await expect(page.getByRole('textbox', { name: 'Change the Filter', exact: true })).toHaveValue('every weekday at 9am')
   await expect(presets.getByRole('button', { name: 'Weekdays' })).toHaveAttribute('aria-pressed', 'true')
   await presets.getByRole('button', { name: 'Monthly on the 2nd Thu' }).click()
   await expect(page.getByTestId('filter-value')).toHaveText('FREQ=MONTHLY;BYDAY=2TH · 2026-11-12 · 09:00 · schedule')
   await presets.getByRole('button', { name: 'Custom' }).click()
-  await expect(page.getByRole('textbox', { name: 'Change the filter', exact: true })).toBeFocused()
+  await expect(page.getByRole('textbox', { name: 'Change the Filter', exact: true })).toBeFocused()
 })
 
 test('a stored rule that can never fall is refused and shown as such', async ({ page }) => {
@@ -93,11 +93,11 @@ test('on a form: the value saves, and a phrase it cannot read stops the save', a
   await page.goto(story('in-form'))
   const box = page.getByRole('textbox', { name: 'Repeats', exact: true })
   await box.fill('every last fri at 6pm')
-  await page.getByRole('button', { name: 'Save chore' }).click()
+  await page.getByRole('button', { name: 'Save Chore' }).click()
   await expect(page.getByTestId('saved-value')).toHaveText('FREQ=MONTHLY;BYDAY=-1FR · 2026-11-12 · 18:00 · schedule')
 
   await box.fill('every so often')
-  await page.getByRole('button', { name: 'Save chore' }).click()
+  await page.getByRole('button', { name: 'Save Chore' }).click()
   await expect(page.getByText('Say how it repeats')).toBeVisible()
 })
 
@@ -132,7 +132,7 @@ test('in place: Enter saves what was typed, an unreadable phrase is not saved, E
 test('list cells: the Repeats label and the Next one, in the rule’s zone', async ({ page }) => {
   await page.goto(story('list-cells'))
   const cells = (name: string) => page.getByRole('row').filter({ hasText: name }).getByRole('cell')
-  await expect(cells('Change the filter')).toHaveText(['Change the filter', 'Every 2nd Tue at 9:00 AM', 'Tue, Dec 8, 9:00 AM'])
+  await expect(cells('Change the Filter')).toHaveText(['Change the Filter', 'Every 2nd Tue at 9:00 AM', 'Tue, Dec 8, 9:00 AM'])
   await expect(cells('Take out the bins')).toHaveText([
     'Take out the bins',
     'Every Mon and Thu at 7:00 AM and 7:30 PM',
@@ -146,7 +146,7 @@ test('list cells: the Repeats label and the Next one, in the rule’s zone', asy
 test('on a phone: the presets wrap and nothing scrolls sideways', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 })
   await page.goto(story('default'))
-  const presets = field(page, 'Change the filter').getByRole('group', { name: 'Presets' })
+  const presets = field(page, 'Change the Filter').getByRole('group', { name: 'Presets' })
   const box = await presets.boundingBox()
   expect(box!.x + box!.width).toBeLessThanOrEqual(320)
   const scrolls = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
@@ -156,8 +156,8 @@ test('on a phone: the presets wrap and nothing scrolls sideways', async ({ page 
 for (const theme of ['light', 'dark'] as const) {
   test(`a refusal and a preview have no axe violations (${theme})`, async ({ page }) => {
     await page.goto(`${story('default')}&theme=${theme}`)
-    await page.getByRole('textbox', { name: 'Water the plants', exact: true }).fill('every blue moon')
-    await expect(field(page, 'Water the plants')).toContainText("Couldn't read")
+    await page.getByRole('textbox', { name: 'Water the Plants', exact: true }).fill('every blue moon')
+    await expect(field(page, 'Water the Plants')).toContainText("Couldn't read")
     const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region', 'page-has-heading-one']).analyze()
     expect(results.violations).toEqual([])
   })

@@ -65,7 +65,7 @@ test.describe('DeleteAction', () => {
     // Not a toast: the reason is in the dialog, beside what failed.
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0)
 
-    await dialog.getByRole('button', { name: 'Try again' }).click()
+    await dialog.getByRole('button', { name: 'Try Again' }).click()
     await expect(dialog).toHaveCount(0)
     await expect(toast(page, 'Deleted Harbor Light')).toBeVisible()
   })
@@ -92,7 +92,7 @@ test.describe('DeleteAction', () => {
     await dialog.getByRole('button', { name: 'Remove' }).click()
     await expect(dialog.getByText('The server didn’t answer. Try again.')).toBeVisible()
     await expect(box).toHaveValue('  Closed for good  ')
-    await dialog.getByRole('button', { name: 'Try again' }).click()
+    await dialog.getByRole('button', { name: 'Try Again' }).click()
     await expect(dialog).toHaveCount(0)
     await expect(toast(page, 'Removed Corner Market')).toBeVisible()
     await expect(page.getByTestId('reason')).toHaveText('Closed for good')
@@ -110,7 +110,7 @@ test.describe('DeleteAction', () => {
     await dialog.getByRole('button', { name: 'Cancel' }).click()
     const ask = page.getByRole('dialog', { name: 'Discard your changes?' })
     await expect(ask).toBeVisible()
-    await ask.getByRole('button', { name: 'Keep editing' }).click()
+    await ask.getByRole('button', { name: 'Keep Editing' }).click()
     await expect(dialog.getByRole('textbox', { name: 'Why remove it?' })).toHaveValue('Moved away')
 
     await page.keyboard.press('Escape')
@@ -196,18 +196,18 @@ test.describe('the toaster', () => {
 test.describe('an action beside its button', () => {
   test('a failure is a Notice next to it with Try again, never a toast', async ({ page }) => {
     await page.goto(story('app-feedback--action-failed'))
-    await page.getByRole('button', { name: 'Mark as read' }).click()
+    await page.getByRole('button', { name: 'Mark as Read' }).click()
     const notice = page.locator('[data-slot=action-error] [data-slot=notice]')
     await expect(notice).toContainText('Couldn’t mark Harbor Light as read')
     await expect(notice).toHaveAttribute('data-tone', 'destructive')
     await expect(page.locator('[data-sonner-toast]')).toHaveCount(0)
-    await notice.getByRole('button', { name: 'Try again' }).click()
+    await notice.getByRole('button', { name: 'Try Again' }).click()
     await expect(notice).toBeVisible()
   })
 
   test('a job counts up beside its button, then its result stays; no toast while on screen', async ({ page }) => {
     await page.goto(story('app-feedback--job'))
-    await page.getByRole('button', { name: 'Check prices' }).click()
+    await page.getByRole('button', { name: 'Check Prices' }).click()
     const status = page.locator('[data-slot=job-status]')
     await expect(status).toContainText(/Checking \d+ of 12…/)
     await expect(status).toHaveText('Checked 12 · 2 deals')
@@ -230,11 +230,11 @@ test.describe('the skeleton', () => {
         }
       }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-shown'] })
     })
-    await page.getByRole('button', { name: 'Load fast' }).click()
+    await page.getByRole('button', { name: 'Load Fast' }).click()
     await expect(page.getByText('The Long Walk')).toBeVisible()
     expect(await page.evaluate(() => (window as unknown as { shownSkeletons: number }).shownSkeletons)).toBe(0)
 
-    await page.getByRole('button', { name: 'Load slowly' }).click()
+    await page.getByRole('button', { name: 'Load Slowly' }).click()
     const skeleton = page.locator('[data-slot=skeleton]').first()
     // There, holding its room, but not shown yet.
     await expect(skeleton).toBeAttached()
@@ -249,10 +249,10 @@ test.describe('OfflineNotice', () => {
     await page.goto(story('app-feedback--offline'))
     const bar = page.getByText('You’re offline. Changes won’t save until you’re back.')
     await expect(bar).toHaveCount(0)
-    await page.getByRole('button', { name: 'Lose the connection' }).click()
+    await page.getByRole('button', { name: 'Lose the Connection' }).click()
     await expect(bar).toBeVisible()
     await expect(page.locator('[data-slot=offline-notice]')).toHaveAttribute('role', 'status')
-    await page.getByRole('button', { name: 'Get it back' }).click()
+    await page.getByRole('button', { name: 'Get It Back' }).click()
     await expect(bar).toHaveCount(0)
   })
 

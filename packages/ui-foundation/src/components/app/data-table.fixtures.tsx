@@ -241,7 +241,7 @@ const ITEM_COLUMNS: LegacyColumnDef<Item, unknown>[] = [
   // the sums under them line up. Price sorts, for its header's arrow.
   { id: 'quantity', header: 'Quantity', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{row.original.quantity}</span> },
   { id: 'price', accessorKey: 'priceCents', header: 'Price', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{usd(row.original.priceCents)}</span> },
-  { id: 'target', header: 'Target price', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{usd(row.original.targetCents)}</span> },
+  { id: 'target', header: 'Target Price', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{usd(row.original.targetCents)}</span> },
   { id: 'weight', header: 'Weight', meta: { align: 'right' }, cell: ({ row }) => <span className="tabular-nums">{kg(row.original.weightGrams)}</span> },
   {
     id: 'actions',
@@ -453,7 +453,7 @@ function EditInRowsTable() {
         getRowId={(row) => String(row.id)}
         pinFirstColumn
         pinLastColumn
-        toolbar={<InlineCreate label="New category's name" schema={NAME_RULE} create={server.create} />}
+        toolbar={<InlineCreate label="New Category's Name" schema={NAME_RULE} create={server.create} />}
       />
     </div>
   )
@@ -565,7 +565,7 @@ function FeedTable() {
         emptyAction={
           filters.kind ? (
             <Button variant="outline" onClick={() => setFilter('kind', '')}>
-              Show all types
+              Show All Types
             </Button>
           ) : undefined
         }

@@ -117,7 +117,7 @@ function DirtyDemo() {
             }}
           >
             <DialogHeader>
-              <DialogTitle>New shelf</DialogTitle>
+              <DialogTitle>New Shelf</DialogTitle>
             </DialogHeader>
             <FieldGroup>
               <Field>
@@ -127,7 +127,7 @@ function DirtyDemo() {
             </FieldGroup>
             <DialogFooter>
               <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
-              <Button type="submit">Add shelf</Button>
+              <Button type="submit">Add Shelf</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -141,7 +141,7 @@ function DiscardDemo() {
   return (
     <div className="flex flex-col items-start gap-2">
       <Button variant="outline" onClick={() => setOpen(true)}>
-        Ask again
+        Ask Again
       </Button>
       <DiscardChangesDialog open={open} onKeepEditing={() => setOpen(false)} onDiscard={() => setOpen(false)} />
     </div>

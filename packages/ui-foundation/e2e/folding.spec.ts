@@ -54,18 +54,18 @@ test.describe('folding <Markdown>', () => {
 
   test('the outline lists the top two levels and folds and opens everything', async ({ page }) => {
     await expect(outline(page).getByRole('listitem')).toHaveText(['Garden plan', 'Beds', 'Watering (folded)', 'Harvest', 'Shopping list'])
-    await outline(page).getByRole('button', { name: 'Fold all' }).click()
+    await outline(page).getByRole('button', { name: 'Fold All' }).click()
     await expect(page.getByText('What goes where this year')).toBeHidden()
     await expect(page.getByText('Twine')).toBeHidden()
-    await expect(outline(page).getByRole('button', { name: 'Fold all' })).toBeDisabled()
-    await outline(page).getByRole('button', { name: 'Open all' }).click()
+    await expect(outline(page).getByRole('button', { name: 'Fold All' })).toBeDisabled()
+    await outline(page).getByRole('button', { name: 'Open All' }).click()
     await expect(page.getByText('Every other morning in July and August.')).toBeVisible()
     await expect(page.getByText('Twine')).toBeVisible()
-    await expect(outline(page).getByRole('button', { name: 'Open all' })).toBeDisabled()
+    await expect(outline(page).getByRole('button', { name: 'Open All' })).toBeDisabled()
   })
 
   test('a jump from the outline opens the sections around a heading and lands on its button', async ({ page }) => {
-    await outline(page).getByRole('button', { name: 'Fold all' }).click()
+    await outline(page).getByRole('button', { name: 'Fold All' }).click()
     await outline(page).getByRole('button', { name: 'Harvest' }).click()
     await expect(fold(page, 'Harvest')).toBeFocused()
     await expect(fold(page, 'Garden plan')).toHaveAttribute('aria-expanded', 'true')
@@ -159,7 +159,7 @@ test.describe('folding in the rich-text editor', () => {
   })
 
   test('the outline beside the editor folds it and jumps into it', async ({ page }) => {
-    await outline(page).getByRole('button', { name: 'Fold all' }).click()
+    await outline(page).getByRole('button', { name: 'Fold All' }).click()
     await expect(text(page).getByText('What goes where this year')).toBeHidden()
     await outline(page).getByRole('button', { name: 'Harvest' }).click()
     await expect(fold(page, 'Garden plan')).toHaveAttribute('aria-expanded', 'true')

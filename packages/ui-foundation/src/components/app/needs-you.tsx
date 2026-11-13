@@ -39,7 +39,7 @@ const LINE: Record<NeedsYouTone, { icon: string; Icon: LucideIcon }> = {
   destructive: { icon: 'text-destructive-text', Icon: CircleAlertIcon },
 }
 
-export function NeedsYou({ items, title = 'Needs you', headingLevel = 2, className }: NeedsYouProps) {
+export function NeedsYou({ items, title = 'Needs You', headingLevel = 2, className }: NeedsYouProps) {
   const headingId = useId()
   if (items.length === 0) return null
   const Heading = `h${headingLevel}` as const

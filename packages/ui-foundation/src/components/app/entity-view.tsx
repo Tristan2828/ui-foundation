@@ -391,7 +391,7 @@ function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace 
 // places (the card's order kept) and then reads "Hide empty". Whether a
 // field is empty is read on every render, so one filled elsewhere joins
 // the card at once.
-function FieldList({ fields, inRail, place }: { fields: EntityViewField[]; inRail: boolean; place: FieldPlace }) {
+function FieldList({ fields, place }: { fields: EntityViewField[]; place: FieldPlace }) {
   const empty = useContext(EmptyContext)
   const [open, setOpen] = useState(false)
   const listId = useId()
@@ -400,7 +400,7 @@ function FieldList({ fields, inRail, place }: { fields: EntityViewField[]; inRai
   return (
     <div className="flex flex-col gap-3">
       {shown.length > 0 && (
-        <dl id={listId} className={cn('flex flex-col divide-y divide-border', inRail && '@container/fields')}>
+        <dl id={listId} className="@container/fields flex flex-col divide-y divide-border">
           {shown.map((field) => (
             <FieldRow key={field.label} field={field} place={place} />
           ))}
@@ -415,7 +415,7 @@ function FieldList({ fields, inRail, place }: { fields: EntityViewField[]; inRai
           onClick={() => setOpen((was) => !was)}
           className="inline-flex w-fit items-center gap-1 rounded-sm type-label text-muted-foreground underline underline-offset-3 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 pointer-coarse:min-h-11"
         >
-          {open ? 'Hide empty' : `${emptyCount} empty`}
+          {open ? 'Hide Empty' : `${emptyCount} Empty`}
           <ChevronDownIcon aria-hidden="true" className={cn('size-3.5 transition-transform', open && 'rotate-180')} />
         </button>
       )}
@@ -446,7 +446,6 @@ function ViewSection({
           {'fields' in section ? (
             <FieldList
               fields={section.fields}
-              inRail={inRail}
               place={!inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'}
             />
           ) : section.edit?.kind === 'list' ? (
@@ -688,7 +687,7 @@ export function EntityView({
   railFields = 'beside',
   emptyFields = 'show',
   emptyText = EMPTY_DASH,
-  printLabel = 'Print notes',
+  printLabel = 'Print Notes',
   printLook = 'icon',
   isLoading,
   error,
@@ -727,11 +726,11 @@ export function EntityView({
         <EmptyContent>
           {dialog ? (
             <Button size="sm" variant="outline" onClick={dialog.close}>
-              Back to {back.label}
+              Back To {back.label}
             </Button>
           ) : (
             <Button size="sm" variant="outline" nativeButton={false} render={<Link to={back.to} />}>
-              Back to {back.label}
+              Back To {back.label}
             </Button>
           )}
         </EmptyContent>

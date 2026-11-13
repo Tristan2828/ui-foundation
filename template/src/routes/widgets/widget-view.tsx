@@ -211,7 +211,7 @@ function widgetEdits(
       save: (change) => saveChange((current) => ({ checklist: change(current.checklist) })),
       newItem: () => ({ text: '', done: false }),
       itemName: (index) => `item ${index + 1}`,
-      addLabel: 'Add item',
+      addLabel: 'Add Item',
       renderShown: (_item, index) => <ChecklistItem widget={widget} index={index} />,
       renderItem: (props) => (
         <WidgetChecklistItemFields
@@ -241,7 +241,7 @@ function widgetEdits(
       save: (change) => saveChange((current) => ({ pairings: change(current.pairings) })),
       newItem: () => ({ categoryId: undefined as unknown as number, note: '' }),
       itemName: (index) => `pairing ${index + 1}`,
-      addLabel: 'Add pairing',
+      addLabel: 'Add Pairing',
       renderShown: (item) => <PairingShown item={item} />,
       renderItem: (props) => (
         <WidgetPairingItemFields

@@ -271,10 +271,10 @@ export function MultiPick<Id extends string | number>({
           variant="link"
           size="sm"
           className="h-auto w-fit p-0"
-          aria-label={`Show all ${options.length} ${label}`}
+          aria-label={`Show All ${options.length} ${label}`}
           onClick={() => setShowAll(true)}
         >
-          Show all {options.length}
+          Show All {options.length}
         </Button>
       )}
       {refused.size > 0 && (

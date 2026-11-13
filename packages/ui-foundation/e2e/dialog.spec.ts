@@ -86,14 +86,14 @@ test('on a phone a form dialog is the whole screen', async ({ page }) => {
   ])
 })
 
-const shelf = (page: Page) => page.getByRole('dialog', { name: 'New shelf' })
+const shelf = (page: Page) => page.getByRole('dialog', { name: 'New Shelf' })
 const prompt = (page: Page) => page.getByRole('dialog', { name: 'Discard your changes?' })
 
 test('with nothing typed, Esc, Cancel and a click outside close at once', async ({ page }) => {
   await page.setViewportSize(LAPTOP)
   await page.goto(story('dirty'))
   for (const how of ['Escape', 'Cancel', 'outside'] as const) {
-    await page.getByRole('button', { name: 'New shelf' }).click()
+    await page.getByRole('button', { name: 'New Shelf' }).click()
     await expect(shelf(page)).toBeVisible()
     if (how === 'Escape') await page.keyboard.press('Escape')
     else if (how === 'Cancel') await shelf(page).getByRole('button', { name: 'Cancel' }).click()
@@ -107,7 +107,7 @@ for (const how of ['Escape', 'Close', 'Cancel', 'outside'] as const) {
   test(`with something typed, ${how} asks first; Keep editing keeps it, Discard closes`, async ({ page }) => {
     await page.setViewportSize(LAPTOP)
     await page.goto(story('dirty'))
-    await page.getByRole('button', { name: 'New shelf' }).click()
+    await page.getByRole('button', { name: 'New Shelf' }).click()
     await shelf(page).getByRole('textbox', { name: 'Name' }).fill('Cookbooks')
     const leave = async () => {
       if (how === 'Escape') await page.keyboard.press('Escape')
@@ -119,7 +119,7 @@ for (const how of ['Escape', 'Close', 'Cancel', 'outside'] as const) {
     await leave()
     await expect(prompt(page)).toBeVisible()
     await expect(prompt(page).getByText('What you typed will be lost.')).toBeVisible()
-    await prompt(page).getByRole('button', { name: 'Keep editing' }).click()
+    await prompt(page).getByRole('button', { name: 'Keep Editing' }).click()
     await expect(prompt(page)).toHaveCount(0)
     await expect(shelf(page).getByRole('textbox', { name: 'Name' })).toHaveValue('Cookbooks')
 
@@ -137,7 +137,7 @@ for (const how of ['Escape', 'Close', 'Cancel', 'outside'] as const) {
     await expect(page.getByTestId('shelf-result')).toHaveText('Nothing saved yet')
 
     // Opened again, it starts empty and clean.
-    await page.getByRole('button', { name: 'New shelf' }).click()
+    await page.getByRole('button', { name: 'New Shelf' }).click()
     await expect(shelf(page).getByRole('textbox', { name: 'Name' })).toHaveValue('')
     await page.keyboard.press('Escape')
     await expect(shelf(page)).toHaveCount(0)
@@ -147,9 +147,9 @@ for (const how of ['Escape', 'Close', 'Cancel', 'outside'] as const) {
 test('a save that closes the dialog from code never asks', async ({ page }) => {
   await page.setViewportSize(LAPTOP)
   await page.goto(story('dirty'))
-  await page.getByRole('button', { name: 'New shelf' }).click()
+  await page.getByRole('button', { name: 'New Shelf' }).click()
   await shelf(page).getByRole('textbox', { name: 'Name' }).fill('Cookbooks')
-  await shelf(page).getByRole('button', { name: 'Add shelf' }).click()
+  await shelf(page).getByRole('button', { name: 'Add Shelf' }).click()
   await expect(shelf(page)).toHaveCount(0)
   await expect(prompt(page)).toHaveCount(0)
   await expect(page.getByTestId('shelf-result')).toHaveText('Saved Cookbooks')

@@ -229,7 +229,7 @@ function LookMenu({ palette }: { palette: PaletteName | null }) {
       <DropdownMenuContent align="end" className="w-60">
         {palette && (
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Palette on this device</DropdownMenuLabel>
+            <DropdownMenuLabel>Palette on This Device</DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={palette}
               onValueChange={(next) => {
@@ -248,7 +248,7 @@ function LookMenu({ palette }: { palette: PaletteName | null }) {
         {palette && pickRows && <DropdownMenuSeparator />}
         {pickRows && (
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Rows on this device</DropdownMenuLabel>
+            <DropdownMenuLabel>Rows on This Device</DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={rows}
               onValueChange={(next) => {
@@ -275,7 +275,7 @@ function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon-sm"
-      aria-label="Toggle dark mode"
+      aria-label="Toggle Dark Mode"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
@@ -642,7 +642,7 @@ export function AppShell({
                 <span className="truncate type-caption text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
                   {user.name}
                 </span>
-                <Button variant="ghost" size="icon-sm" aria-label="Log out"
+                <Button variant="ghost" size="icon-sm" aria-label="Log Out"
                   onClick={() => {
                     setIsLoggingOut(true)
                     // The records opened lately are this person's: the

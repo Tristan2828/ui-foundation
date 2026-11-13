@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('the chevron names its card and controls its body; Enter folds it, Space opens it', async ({ page }) => {
-  const button = toggle(page, 'Ready to start')
+  const button = toggle(page, 'Ready to Start')
   await expect(button).toHaveAttribute('aria-expanded', 'true')
   const body = page.locator(`[id="${await button.getAttribute('aria-controls')}"]`)
   await expect(body).toContainText('Fix the gate latch')
@@ -31,7 +31,7 @@ test('the chevron names its card and controls its body; Enter folds it, Space op
   await expect(button).toHaveAttribute('aria-expanded', 'false')
   await expect(body).toBeHidden()
   // Folded, the header's link still works.
-  await expect(card(page, 'Ready to start').getByRole('link', { name: 'All' })).toBeVisible()
+  await expect(card(page, 'Ready to Start').getByRole('link', { name: 'All' })).toBeVisible()
 
   await page.keyboard.press('Space')
   await expect(button).toHaveAttribute('aria-expanded', 'true')
@@ -61,7 +61,7 @@ test('with localStorage blocked, it starts at defaultCollapsed and still folds',
   await page.reload()
   await expect(page.getByText('Fix the gate latch')).toBeVisible()
   await expect(toggle(page, 'Saved links')).toHaveAttribute('aria-expanded', 'false')
-  await toggle(page, 'Ready to start').click()
+  await toggle(page, 'Ready to Start').click()
   await expect(page.getByText('Fix the gate latch')).toBeHidden()
 })
 
@@ -76,7 +76,7 @@ test('a header link to an outside address opens in a new tab, named by its label
   await expect(link).toHaveAttribute('rel', 'noreferrer')
   await expect(link).toHaveAccessibleDescription('Saved links')
   // An app route stays a plain link in the same tab.
-  const route = card(page, 'Ready to start').getByRole('link', { name: 'All' })
+  const route = card(page, 'Ready to Start').getByRole('link', { name: 'All' })
   await expect(route).not.toHaveAttribute('target')
 })
 
@@ -86,7 +86,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(page.getByText('Fix the gate latch')).toBeVisible()
     const axe = () => new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region']).analyze()
     expect((await axe()).violations).toEqual([])
-    await toggle(page, 'Ready to start').click()
+    await toggle(page, 'Ready to Start').click()
     await toggle(page, 'Waiting on').click()
     await expect(page.getByText('Fix the gate latch')).toBeHidden()
     expect((await axe()).violations).toEqual([])

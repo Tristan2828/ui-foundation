@@ -89,7 +89,7 @@ describe('foldPlan', () => {
 describe('changing what is folded', () => {
   const plan = markdownFoldPlan(TEXT)
 
-  it('Fold all is every heading with something under it', () => {
+  it('Fold All is every heading with something under it', () => {
     expect([...allFoldable(plan)].sort()).toEqual(['1:Plan', '1:Shopping', '2:Beds', '2:Watering', '3:Soil'])
   })
 

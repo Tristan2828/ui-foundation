@@ -3,39 +3,40 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 48–155
-- [Glow](#glow) · lines 157–176
-- [Semantic tones](#semantic-tones) · lines 178–206
-- [The three badge styles](#the-three-badge-styles) · lines 208–225
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 227–256
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 258–271
-- [Logos and brand marks](#logos-and-brand-marks) · lines 273–317
-- [Categorical colour](#categorical-colour) · lines 319–389
-- [Heat scale](#heat-scale) · lines 391–452
-- [Depth ramps](#depth-ramps) · lines 454–539
-- [A stored colour](#a-stored-colour) · lines 541–589
-- [Shapes and sizes](#shapes-and-sizes) · lines 591–612
-- [Typography](#typography) · lines 614–736
-  - [Written text (notes)](#written-text-notes) · lines 648–736
-- [Density](#density) · lines 738–831
-  - [Rows on this device](#rows-on-this-device) · lines 804–831
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 833–947
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 949–1026
-- [Notices](#notices) · lines 1028–1056
-- [A value over time](#a-value-over-time) · lines 1058–1144
-  - [Several values over time](#several-values-over-time) · lines 1107–1144
-- [A list as a board](#a-list-as-a-board) · lines 1146–1197
-- [A list as cards](#a-list-as-cards) · lines 1199–1245
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1247–1276
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1278–1321
-- [A few equal things](#a-few-equal-things) · lines 1323–1407
-- [An overview page](#an-overview-page) · lines 1409–1472
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1473–1524
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1526–1571
-- [Picking at random](#picking-at-random) · lines 1573–1604
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1606–1673
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1675–1700
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1702–1775
+- [Palettes](#palettes) · lines 49–156
+- [Glow](#glow) · lines 158–177
+- [Semantic tones](#semantic-tones) · lines 179–207
+- [The three badge styles](#the-three-badge-styles) · lines 209–226
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 228–257
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 259–272
+- [Logos and brand marks](#logos-and-brand-marks) · lines 274–318
+- [Categorical colour](#categorical-colour) · lines 320–390
+- [Heat scale](#heat-scale) · lines 392–453
+- [Depth ramps](#depth-ramps) · lines 455–540
+- [A stored colour](#a-stored-colour) · lines 542–590
+- [Shapes and sizes](#shapes-and-sizes) · lines 592–613
+- [Typography](#typography) · lines 615–772
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 649–682
+  - [Written text (notes)](#written-text-notes) · lines 684–772
+- [Density](#density) · lines 774–867
+  - [Rows on this device](#rows-on-this-device) · lines 840–867
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 869–983
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 985–1062
+- [Notices](#notices) · lines 1064–1092
+- [A value over time](#a-value-over-time) · lines 1094–1180
+  - [Several values over time](#several-values-over-time) · lines 1143–1180
+- [A list as a board](#a-list-as-a-board) · lines 1182–1233
+- [A list as cards](#a-list-as-cards) · lines 1235–1281
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1283–1312
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1314–1357
+- [A few equal things](#a-few-equal-things) · lines 1359–1443
+- [An overview page](#an-overview-page) · lines 1445–1508
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1509–1560
+- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1562–1607
+- [Picking at random](#picking-at-random) · lines 1609–1640
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1642–1709
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1711–1736
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1738–1811
 
 <!-- /index -->
 
@@ -644,6 +645,41 @@ height and weight together, from tokens in the package's `styles/theme.css`:
   `cn('text-page-title', 'text-foreground')` would silently drop the title.
 - A shadcn primitive keeps its own sizes (`CardTitle`, `Button`). Don't put
   a role on one: its built-in size classes would then compete with the role.
+
+### Words on screen: Title Case and sentence case
+
+Two cases, chosen by what the words are (4.97; before it, everything was
+sentence case):
+
+- **Title Case names a thing you can see or press:** page, dialog, sheet,
+  form, card and section titles; buttons and links that act like
+  buttons; menu items and menu labels; tabs and pills; column headers;
+  field labels; a group's heading in a list ("Earlier This Week"); and a
+  control's accessible name (`aria-label="Next Page"`, an icon button's
+  tooltip). "Show Deleted", "Try Again", "Rows per Page", "View All 12",
+  "Back to the List", "Save and Next", "Move To".
+- **Sentence case is anything said to the person:** messages, help text
+  (`FieldDescription`), toasts, placeholders, a form's error ("Give it a
+  title"), an empty or error state's words, even its heading line
+  ("Nothing here yet", "Something went wrong", "Couldn't load"), a
+  notice's title, a question ("Discard your changes?"), and a sentence
+  read to a screen reader (a live announcement, "Moved Fix the latch to
+  Done"). A value the app shows is written as its data is (a status
+  label, a rule's phrase "Every weekday", "Not set").
+- **The small words stay lowercase** unless first or last, or first
+  after a colon: a, an, the, and, but, or, nor, as, at, by, for, in, of,
+  on, per, to, with (`TITLE_CASE_SMALL_WORDS`). Every other word,
+  however short, is capitalised ("Turn Into Page", "Show All", "Is",
+  "It"), and so is each part of a hyphenated word ("Follow-Up"). A word
+  that is part of a verb ("Sign In", "Log Out", "Turn Off") is
+  capitalised even where it is a small word elsewhere.
+- **A label written in the code is written in Title Case**; a label built
+  from a value goes through `titleCase()` (`` `Add ${titleCase(noun)}` ``).
+  `titleCase` leaves a word that already holds a capital as written, so
+  names and acronyms survive ("Open in GitHub").
+- **The words around a name keep the name's own case:** `Back to
+  ${list}` gets the list's title as it is, `Actions for ${row}` the row's
+  name.
 
 ### Written text (notes)
 
@@ -1291,14 +1327,14 @@ into a table, a record or an overview.
   `count`, `newAction` alone beside it, and one ⋯ menu for the rest. One
   related link in `links` stays a button; two or more fold into ⋯ with
   `more` (the page's own actions). `deleted={{ shown, onShownChange }}` adds
-  "Show deleted" as the menu's last item and, while it's on, an info
-  `Notice` with "Back to the list" in a `role="status"` region that is
+  "Show Deleted" as the menu's last item and, while it's on, an info
+  `Notice` with "Back to the List" in a `role="status"` region that is
   always there. It holds no state: the app keeps `shown`.
 - **`Timeline`: a record's dated history.** `items` newest first
   (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
   column on the left, a dot and a thin line, the entry on the right with
   its `kind` as a muted line under it and `edit` (the entry's own
-  control) at its end. The first `initial` (5) show, then "Show all N";
+  control) at its end. The first `initial` (5) show, then "Show All N";
   under 24rem of its own width the date moves above its entry. Empty
   reads `emptyText` ("Nothing yet").
 - **`NeedsYou`: what waits on the user.** `items={[{ text, to, tone? }]}`:
@@ -1491,13 +1527,13 @@ data on each its own.
   too long for both pushes them to the next line, starting under it.
   `subtitle` is the line below, in muted body type.
 - **Actions**: the record's own commands in words (New visit, Mark
-  done), then the universal ones as `IconAction`s: Print notes
+  done), then the universal ones as `IconAction`s: Print Notes
   (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
   tone). Each is a square outline button at the header's 36px with its
   words as both its tooltip and its accessible name. Icon alone is for
-  the universal actions only (Delete, Print notes, Copy link, Pin, Open
-  site, Restore, Open full page, Close, More); everything else keeps its
-  word. `printLook="words"` keeps Print notes as a button with its words.
+  the universal actions only (Delete, Print Notes, Copy link, Pin, Open
+  site, Restore, Open Full Page, Close, More); everything else keeps its
+  word. `printLook="words"` keeps Print Notes as a button with its words.
 - **An empty value** reads as a dash (`emptyText`, default `'—'`), in the
   muted text tone, read by a screen reader as "Not set": the same on
   every field, the presets' included. A field's own `emptyLabel` still
@@ -1518,7 +1554,7 @@ data on each its own.
 - **Folded empties** (`emptyFields="fold"`): each fields card lists its
   filled fields, then a muted, underlined "N empty" with a down chevron
   under them opens the rest in their places, each still edited in place,
-  and reads "Hide empty" (the chevron up) while open. A card with
+  and reads "Hide Empty" (the chevron up) while open. A card with
   nothing empty has no toggle; one with nothing filled has the toggle
   alone. A value set elsewhere moves its field into the card at once.
   The fold is per card and isn't remembered.
@@ -1648,7 +1684,7 @@ size"); the list stays where a record is edited one field at a time.
   clicked again to clear) for a short choice, any input for the rest.
   A guess is a `suggestion`: drawn dashed in the info tone and said
   under the row, never picked for the person.
-- **Quick from the keyboard:** Enter is Save and next (not in a
+- **Quick from the keyboard:** Enter is Save and Next (not in a
   textarea), and the one row marked `shortcut` takes the number keys.
   After a move the focus is on the new record.
 - A refused save keeps the record and says why under the buttons, not

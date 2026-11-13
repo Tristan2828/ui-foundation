@@ -55,14 +55,14 @@ test.describe('widgets table', () => {
     await expect(page.getByText('No widgets yet')).toBeVisible()
     // Base UI's Button forces role="button" via ARIA even when it renders
     // as a react-router <Link> (nativeButton={false}) — it's not role=link.
-    await expect(page.getByRole('button', { name: 'Create widget' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Create Widget' })).toBeVisible()
   })
 
   test('error: a 500 response shows the error state', async ({ page }) => {
     await forceWidgetsListOverride(page, { status: 500, body: { detail: 'Internal error' } })
     await page.goto('/widgets')
     await expect(page.getByText('Something went wrong')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Try Again' })).toBeVisible()
   })
 
   test('sort and filters live in the URL and survive the round trip to a view', async ({ page }) => {
@@ -239,7 +239,7 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
 
-    await pickFilter(page, 'Filter by stock', 'In stock')
+    await pickFilter(page, 'Filter by stock', 'In Stock')
     await expect(page).toHaveURL(/[?&]inStock=true/)
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
@@ -249,7 +249,7 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toHaveCount(0)
     await openFilters(page)
-    await expect(page.getByLabel('Filter by stock')).toContainText('In stock')
+    await expect(page.getByLabel('Filter by stock')).toContainText('In Stock')
     await page.keyboard.press('Escape')
 
     await pickFilter(page, 'Filter by stock', 'Any stock')
@@ -296,7 +296,7 @@ test.describe('widgets table', () => {
       // primary filters (search) stay as they are.
       await page.getByLabel('Search widgets').fill('pen')
       await openFilters(page)
-      await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Clear filters' }).click()
+      await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Clear Filters' }).click()
       await page.getByRole('dialog', { name: 'Filters' }).getByRole('button', { name: 'Done' }).click()
       await expect(page).not.toHaveURL(/inStock=/)
       await expect(page).toHaveURL(/[?&]search=pen/)
@@ -422,7 +422,7 @@ test.describe('widgets table', () => {
     await expect(page).toHaveURL('/widgets/3')
     // Exact: for a moment after the URL changes, the table's own switches
     // ("In stock: <row>") can still be on screen.
-    await expect(page.getByRole('switch', { name: 'In stock', exact: true })).toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock', exact: true })).toBeChecked()
   })
 
   test('yes/no row toggle: works from the keyboard', async ({ page }) => {

@@ -13,7 +13,7 @@ export function HomeRoute() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Button>Get started</Button>
+        <Button>Get Started</Button>
       </CardContent>
     </Card>
   )

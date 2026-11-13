@@ -30,7 +30,7 @@ function ComboboxTrigger({
       // Patched (ui-foundation, audit Phase E): upstream's icon-only trigger
       // has no accessible name — a critical axe violation on every form
       // with a combobox. Overridable; shipped as a registry:file for that.
-      aria-label="Show options"
+      aria-label="Show Options"
       className={cn("[&_svg:not([class*='size-'])]:size-4", className)}
       {...props}
     >

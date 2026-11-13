@@ -146,7 +146,7 @@ export function WidgetFormRoute() {
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
       submitError={submitError}
-      submitLabel={isEdit ? 'Save changes' : 'Create widget'}
+      submitLabel={isEdit ? 'Save Changes' : 'Create Widget'}
       onCancel={() => navigate(isEdit ? `/widgets/${widgetId}` : '/widgets', { replace: true })}
       // Leaving with something typed asks first; a refused submit moves to
       // the first problem and counts them ("2 to fix").
@@ -390,7 +390,7 @@ export function WidgetFormRoute() {
           aria-label="Checklist"
           items={checklist.fields}
           itemName={(index) => `item ${index + 1}`}
-          addLabel="Add item"
+          addLabel="Add Item"
           emptyText="No items yet."
           max={50}
           onAdd={() => checklist.append({ text: '', done: false })}
@@ -429,7 +429,7 @@ export function WidgetFormRoute() {
           aria-label="Pairings"
           items={pairings.fields}
           itemName={(index) => `pairing ${index + 1}`}
-          addLabel="Add pairing"
+          addLabel="Add Pairing"
           emptyText="No pairings yet."
           max={20}
           onAdd={() => pairings.append({ categoryId: undefined as unknown as number, note: '' })}

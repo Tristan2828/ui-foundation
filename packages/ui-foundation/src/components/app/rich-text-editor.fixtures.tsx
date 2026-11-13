@@ -314,7 +314,7 @@ function InlineRecord() {
       title: 'Saved',
       fields: [
         { label: 'Saves', value: <span data-testid="saves">{saves}</span> },
-        { label: 'Saved notes', value: <pre data-testid="saved-notes" className="font-sans whitespace-pre-wrap">{saved.notes}</pre> },
+        { label: 'Saved Notes', value: <pre data-testid="saved-notes" className="font-sans whitespace-pre-wrap">{saved.notes}</pre> },
       ],
     },
     { title: 'Notes', content: <Markdown>{saved.notes}</Markdown>, edit: notes('notes') },

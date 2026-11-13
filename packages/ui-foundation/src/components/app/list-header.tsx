@@ -96,7 +96,7 @@ export function ListHeader({ title, count, links = [], newAction, more = [], del
                 {deleted && (
                   <DropdownMenuCheckboxItem closeOnClick checked={deleted.shown} onCheckedChange={deleted.onShownChange}>
                     <Trash2Icon aria-hidden="true" />
-                    Show deleted
+                    Show Deleted
                   </DropdownMenuCheckboxItem>
                 )}
               </DropdownMenuContent>
@@ -124,7 +124,7 @@ export function ListHeader({ title, count, links = [], newAction, more = [], del
             icon={Trash2Icon}
             action={
               <Button size="sm" variant="outline" onClick={() => deleted.onShownChange(false)}>
-                Back to the list
+                Back to the List
               </Button>
             }
           >
