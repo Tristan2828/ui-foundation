@@ -26,24 +26,24 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 631–714
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 716–751
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 753–826
-- [18. Editable value](#18-editable-value) · lines 828–1506
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1138–1206
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1208–1244
-  - [A link and its label](#a-link-and-its-label) · lines 1246–1270
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1272–1405
-  - [In a table's rows](#in-a-tables-rows) · lines 1407–1492
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1494–1506
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1508–1574
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1576–1640
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1642–1740
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1742–1771
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1773–1811
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1813–1889
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1891–1914
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1916–2042
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2004–2042
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2044–2080
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2082–2127
+- [18. Editable value](#18-editable-value) · lines 828–1528
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1160–1228
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1230–1266
+  - [A link and its label](#a-link-and-its-label) · lines 1268–1292
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1294–1427
+  - [In a table's rows](#in-a-tables-rows) · lines 1429–1514
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1516–1528
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1530–1596
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1598–1662
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1664–1762
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1764–1793
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1795–1833
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1835–1911
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1913–1936
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1938–2064
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2026–2064
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2066–2102
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2104–2149
 
 <!-- /index -->
 

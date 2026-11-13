@@ -22,8 +22,8 @@ function SummaryRecord() {
   const [place, setPlace] = useState('Harbor Office')
   const [days, setDays] = useState('Tuesdays')
   const slowly = (apply: () => void) => new Promise<void>((resolve) => setTimeout(() => resolve(apply()), 200))
-  const placeEdit = inPlace.text({ value: place, save: (next) => slowly(() => setPlace(next)) })
-  const daysEdit = inPlace.text({ value: days, save: (next) => slowly(() => setDays(next)) })
+  const placeEdit = inPlace.text({ value: place, save: (next) => slowly(() => setPlace(next ?? '')) })
+  const daysEdit = inPlace.text({ value: days, save: (next) => slowly(() => setDays(next ?? '')) })
   const sections: EntityViewSection[] = [
     {
       title: 'Details',
