@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { linkHref, linkRule } from '@/lib/link-href'
 import { editInPlace, type EditInPlaceOptions } from './edit-in-place'
-import { EditableValue } from './editable-value'
+import { EditableField } from './editable-value'
 
 type Schema<TValue> = EditInPlaceOptions<unknown, TValue>['schema']
 
@@ -39,7 +39,8 @@ export type NameCellProps = {
 /** A name in one line: Enter saves, the form's rule runs first, a taken name's 422 shows in the cell. */
 export function NameCell({ label, value, save, schema, children, inputClassName = 'w-48' }: NameCellProps) {
   return (
-    <EditableValue
+    <EditableField
+      keepPencilRoom
       label={label}
       layout="inline"
       edit={editInPlace<string>({
@@ -62,7 +63,7 @@ export function NameCell({ label, value, save, schema, children, inputClassName 
       })}
     >
       {children ?? value}
-    </EditableValue>
+    </EditableField>
   )
 }
 
@@ -91,7 +92,8 @@ export function ChoiceCell<T extends string>({
   triggerClassName = 'w-40',
 }: ChoiceCellProps<T>) {
   return (
-    <EditableValue
+    <EditableField
+      keepPencilRoom
       label={label}
       layout="inline"
       edit={editInPlace<T>({
@@ -132,7 +134,7 @@ export function ChoiceCell<T extends string>({
       })}
     >
       {render(value)}
-    </EditableValue>
+    </EditableField>
   )
 }
 
@@ -187,7 +189,8 @@ export function LinkCell({ label, value, save, linkText, emptyLabel = 'Not set',
   // stored `javascript:` reads as text, never as something to click.
   const href = value ? linkHref(value) : null
   return (
-    <EditableValue
+    <EditableField
+      keepPencilRoom
       label={label}
       layout="inline"
       edit={editInPlace<string, string | null>({
@@ -219,6 +222,6 @@ export function LinkCell({ label, value, save, linkText, emptyLabel = 'Not set',
       ) : (
         value
       )}
-    </EditableValue>
+    </EditableField>
   )
 }

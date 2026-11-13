@@ -116,7 +116,7 @@ import { EditInPlaceContext, type EditInPlace, type EditInPlaceList } from './ed
 import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
 import { editRowClass, onEditRowClick } from './edit-row'
-import { EditableValue, LeaveGuard } from './editable-value'
+import { EditableField, EditableValue, LeaveGuard } from './editable-value'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH, isEmptyValue } from '@/lib/empty-value'
 import { useRecordDialog } from './record-dialog-context'
@@ -1086,9 +1086,12 @@ export function EntityView({
               className={cn('min-w-0 max-w-full break-words text-foreground', card ? 'type-section-title' : 'type-page-title')}
             >
               {titleEdit ? (
-                <EditableValue label={titleEdit.label} edit={titleEdit} layout="inline">
+                // The title keeps its pencil's room: it ends its line, and a
+                // long one fills its column, which a pencil hung past the
+                // text would push the page wider than (4.102).
+                <EditableField label={titleEdit.label} edit={titleEdit} layout="inline" keepPencilRoom>
                   {title}
-                </EditableValue>
+                </EditableField>
               ) : (
                 title
               )}

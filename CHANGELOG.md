@@ -7,6 +7,65 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.102.0 — An inline pencil that takes no room, and Create in a small set's picker
+
+npm package. `ui-foundation-backend` moves to 4.102.0 with it, unchanged.
+
+- **An inline `EditableValue`'s pencil takes no room at rest**
+  (cell-patterns.md "Editable value"). With `layout="inline"` (the
+  value look), the hidden pencil used to keep its 24px and the gap
+  before it, so a summary line built of values and "·" read "Harbor
+  Office   · Tuesdays". Now the separator sits a space after the value.
+  The pencil keeps its whole 24px box, out of the flow and hidden just
+  past the value (over the separator), so it's still a real target to
+  hover, click and Tab to. Hover or focus makes its room under it, eased
+  (at once with reduced motion): what follows moves over, the pencil
+  stays put. A touch screen keeps the room open. Block values,
+  the field rows' `look="row"`, `DataTable`'s cells edited in their rows
+  (whose columns would widen on hover) and `EntityView`'s title (which
+  ends its line and can fill it) keep the room as before.
+- **`MultiPick` takes `onCreate`** (cell-patterns.md "A small set").
+  When what's typed names no option (ignoring case), Create "<typed>"
+  shows under the chips; Enter in the filter box does the same when
+  nothing matches, and Down reaches it when there are no chips.
+  `onCreate(name)` opens the app's create form (or saves at once) and
+  resolves with the new `{ id, label, icon? }`, which joins the chips
+  and is picked: on a form through `onValueChange`, in place saved
+  through `onPick` like any pick. `null` changes nothing. While it's out
+  the button reads Creating "<typed>"… (`aria-busy`), the box is
+  read-only, and an edit in place stays open. A rejection shows
+  "Couldn't create "<typed>": <reason>" in the picker, keeps the typed
+  name and the caret on Create, so it can be tried again. A screen
+  reader hears "<name> created and picked." `ReferenceCombobox` and
+  `MultiReference` already had `onCreate` (4.88) and are unchanged.
+- New fixture app/EditableValue "Inline in a line", with
+  e2e/editable-value.spec.ts (the gaps measured, hover, the keyboard,
+  axe in both themes); app/MultiPick's stories gain Create (a form in
+  place, a save at once with a refusal on a form), with their specs in
+  e2e/multi-pick.spec.ts.
+
+**For an app:** both are additive. `npm install @tristan2828/ui-foundation@4.102.0`,
+`npx ui-foundation sync`, and bump `ui-foundation-backend==4.102.0`. Then
+drop the two stopgaps:
+
+1. **The zero-width pencil override.** Remove any class or CSS that
+   collapsed an inline `EditableValue`'s edit button (a `w-0`, `size-0`
+   or `[&_[data-edit]]:…` on the value or its line, or a negative margin
+   after it). The package now does it, and a zero-width override left in
+   place makes the pencil an empty box no one (and no test) can click.
+   Specs that click "Edit <label>" work as before.
+2. **"New <thing>" buttons under multi-pickers.** Where a button beside
+   a `MultiPick` opened the entity's create form, delete the button and
+   pass the same opener as `onCreate`:
+   `onCreate={(name) => openNewLabelForm({ name })}`, resolving with
+   `{ id, label }` (and `icon`, as the options have) once saved, or
+   `null` when the form is cancelled. Don't pick the new record yourself
+   any more: the picker picks it (on a form through `onValueChange`, in
+   place through `onPick`), and showing it until your query refetches
+   is the picker's job too. Specs that clicked "New <thing>" now type the
+   name in the "Filter <label>" box and click `Create "<name>"` (a
+   button).
+
 ## 4.101.0 — Record tabs that stand out, and stick
 
 npm package. `ui-foundation-backend` moves to 4.101.0 with it, unchanged.
@@ -91,6 +150,7 @@ To take it, for a list page that wants the reviewed toolbar:
 3. A spec that clicks `Columns` or `Group` on a framed list now opens
    the "Table Settings" button (`getByRole('button', { name: /^Table
    Settings/ })`) and finds the same menu items inside.
+
 ## 4.99.0 — The sidebar as icon tiles
 
 npm package. `ui-foundation-backend` moves to 4.99.0 with it, unchanged.
