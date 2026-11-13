@@ -151,6 +151,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-formcontrols--choice-pairs', mustShow: 'Coats' },
   // A status as a choice, its kinds' icons coloured, one picked in the theme colour (4.105).
   { id: 'app-formcontrols--status-choices', mustShow: 'Status choices on a card' },
+  // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
+  { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
+  { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
@@ -286,6 +289,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
   // Views that fill the filters (4.105): the default view's statuses in the Status filter.
   { id: 'app-datatable-tools--views-fill-filters', mustShow: 'Needs Water' },
+  // A list's header as wide as its framed table (4.106, C3).
+  { id: 'app-datatable-tools--header-at-table-edge', mustShow: 'New Plant' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
@@ -369,6 +374,8 @@ const GLYPH_STORIES: {
   { id: 'app-statusmark--all-kinds' },
   // The same kinds' icons on ChoiceButtons, picked (the primary tint) and not, on the page and a card (4.105).
   { id: 'app-formcontrols--status-choices' },
+  // The facts rail's status icon and external-link mark on its card (4.106).
+  { id: 'app-entityview--facts-rail' },
   { id: 'app-entityview--details-tab' },
   // Each toast's icon in its tone on the popover surface (4.90), and the
   // offline bar's, an action error's and a job's (the spinner and check).

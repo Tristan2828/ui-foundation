@@ -7,6 +7,73 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.106.0 — A short-facts rail beside a record's tabs, and a list's header as wide as its table
+
+npm package and `ui-foundation-backend` 4.106.0 (no backend change).
+Additive: both are opt-in, and a record or list that doesn't ask looks as
+it did.
+
+The developer's picks from the record and list layout round: A1 (a rail
+of short facts beside the tabs, so a record page on a laptop doesn't end
+900px in) and C3 (a list's header only as wide as its framed table).
+
+- **The facts rail (A1)**: `EntityView factsRail`. Where the view has
+  60rem (a laptop's page, a record dialog), its sections of short facts
+  sit in a 300px column beside the strip and the tabs, top-aligned with
+  the strip, rows side by side.
+  - A rail section is a new section shape, `facts`, whose entries are
+    typed kinds, never free markup: `status` (its StatusMark), `text` (a
+    date, a number, a name: one line, cut with its whole text on hover),
+    `badges`, `count` (optionally a link), `link` (external), and
+    `record`, a link to another record that must say `short: true`.
+    Records with long titles (a list of discussions, a log's entries)
+    can't go in the rail; they stay a tab. tsc refuses markup, and a
+    record link that isn't marked short.
+  - What's in the rail isn't repeated in Details; a Details tab left with
+    nothing isn't drawn. Under 60rem (a phone) the facts are back in
+    Details as rows. The width is measured on the view's parent before
+    paint and on resize, so nothing flashes.
+  - `factsRailLabel` names its landmark (default "<title> facts").
+  - New exports: `EntityViewFact`, `EntityViewFactValue`.
+- **A list's header as wide as its table (C3)**: `DataTable pageHeader`.
+  Pass the ListHeader there. In the framed look with `width="content"`
+  the header, the views and the card are one box as wide as the table
+  (CSS `fit-content`, nothing measured), so ⋯ and New end on the card's
+  right edge above a short table. `width="full"`, a table as wide as the
+  page and the phone's row list look as before. A ListHeader left
+  outside spans the page as before.
+- Fixtures: `app/EntityView` "Facts rail" and "Facts rail, nothing
+  else"; `app/DataTable tools` "Header at the table edge" (and ", wide").
+  Specs: `e2e/facts-rail.spec.ts` (beside the strip at 1440 and 1920,
+  not repeated in Details, no Details tab when all fits, each kind, the
+  phone, a resize, axe in light, dark and graphite-periwinkle),
+  `e2e/list-header-width.spec.ts` (New on the card's edge at 1440 and
+  1920 on a narrow and a wide table, the phone, axe), and
+  `tests/facts-rail.test.tsx` (each kind, empties, Details without a
+  measured width, the type rule). The new stories under axe in both
+  themes and every palette, the token check and the glyph check. Each
+  layout check failed with its fix taken out.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.106.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.106.0` in `backend/`.
+2. **A record with short facts** (consuming.md "A record's facts rail
+   (4.106)"): turn its facts section from `fields` into `facts`, one kind
+   per fact, and add `factsRail` to the view. A fact that's a sentence
+   (a closing condition, a reason) stays a `fields` section placed
+   `rail`: it remains in Details. A linked record with a short name (a
+   provider) is `{ kind: 'record', name, to, short: true }`; linked
+   records with long titles (discussions, care events) stay in their
+   tab.
+3. **A list page with the framed table**: move its `<ListHeader … />`
+   into the table as `pageHeader={<ListHeader … />}`. Nothing else
+   changes; on a phone it's where it was.
+4. Specs: at a laptop width the facts are in the rail (`getByRole(
+   'complementary', { name: '<title> facts' })`) and Details may be gone;
+   a spec that opened Details for a fact reads it in the rail instead,
+   or sets a phone width.
+
 ## 4.105.0 — Review fixes: a clear open tab and pick, status choices, and views that fill the filters
 
 npm package and `ui-foundation-backend` 4.105.0 (no backend change).

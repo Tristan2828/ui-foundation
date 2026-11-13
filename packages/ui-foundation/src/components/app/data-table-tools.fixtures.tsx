@@ -35,6 +35,11 @@ import { RelatedTable } from './related-table'
 //   filter; Needs Water adds a rule no control shows (watered before
 //   Nov 5); All ticks every status. Changing a filter by hand keeps the
 //   rest and the pills follow. e2e/data-table-views.spec.ts.
+// - HeaderAtTableEdge, HeaderAtTableEdgeWide (4.106, C3): the ListHeader
+//   passed as `pageHeader`, so the header, views and card share the
+//   table's width: on a short table (three columns) ⋯ and New end on the
+//   card's right edge; on a wide one (every column) they're where the
+//   page ends. e2e/list-header-width.spec.ts.
 // The rows are made up.
 
 type State = 'loaded' | 'loading' | 'empty' | 'error'
@@ -321,6 +326,45 @@ function ViewsFillFiltersList() {
   )
 }
 
+// --- the header as wide as the table (4.106, C3) --------------------------
+
+const NARROW_COLUMNS = plantColumns.filter((column) => ['name', 'status', 'light'].includes(String((column as { accessorKey?: string }).accessorKey)))
+
+function HeaderAtTableEdgeList({ wide }: { wide: boolean }) {
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <DataTable
+        look="framed"
+        pageHeader={
+          <ListHeader
+            title="Houseplants"
+            count={PLANTS.length}
+            deleted={{ shown: false, onShownChange: noop, noun: 'plants' }}
+            newAction={{ label: 'New Plant', onClick: noop }}
+          />
+        }
+        columns={wide ? plantColumns : NARROW_COLUMNS}
+        opens={{ kind: 'page', to: (plant) => `/plants/${plant.id}` }}
+        views={VIEWS}
+        activeView={null}
+        onViewChange={noop}
+        phoneRow={{ title: (plant) => plant.name, facts: (plant) => [`${plant.light} light`] }}
+        toolbar={<FilterBar search={{ value: '', onChange: noop, placeholder: 'Search by name' }} />}
+        data={PLANTS}
+        total={PLANTS.length}
+        page={1}
+        pageSize={50}
+        onPageChange={noop}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        getRowId={(plant) => String(plant.id)}
+        emptyTitle="No plants yet"
+      />
+    </div>
+  )
+}
+
 function Opened() {
   const { id } = useParams()
   return <p className="p-4 type-body">Opened plant {id}</p>
@@ -433,3 +477,7 @@ export const Related: StoryObj = { render: () => <InRouter element={<RelatedList
 export const Framed: StoryObj = { render: () => <InRouter element={<PlantsList framed />} path="/" /> }
 
 export const ViewsFillFilters: StoryObj = { render: () => <InRouter element={<ViewsFillFiltersList />} path="/" /> }
+
+export const HeaderAtTableEdge: StoryObj = { name: 'Header at the table edge', render: () => <InRouter element={<HeaderAtTableEdgeList wide={false} />} path="/" /> }
+
+export const HeaderAtTableEdgeWide: StoryObj = { name: 'Header at the table edge, wide', render: () => <InRouter element={<HeaderAtTableEdgeList wide />} path="/" /> }

@@ -29,15 +29,15 @@
 - [A list as a board](#a-list-as-a-board) · lines 1236–1287
 - [A list as cards](#a-list-as-cards) · lines 1289–1335
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1337–1366
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1368–1413
-- [A few equal things](#a-few-equal-things) · lines 1415–1499
-- [An overview page](#an-overview-page) · lines 1501–1564
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1565–1616
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1618–1686
-- [Picking at random](#picking-at-random) · lines 1688–1719
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1721–1788
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1790–1815
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1817–1906
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1368–1415
+- [A few equal things](#a-few-equal-things) · lines 1417–1501
+- [An overview page](#an-overview-page) · lines 1503–1566
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1567–1618
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1620–1688
+- [Picking at random](#picking-at-random) · lines 1690–1721
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1723–1790
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1792–1817
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1819–1908
 
 <!-- /index -->
 
@@ -1383,7 +1383,9 @@ into a table, a record or an overview.
   `more` (the page's own actions). `deleted={{ shown, onShownChange }}` adds
   "Show Deleted" as the menu's last item and, while it's on, an info
   `Notice` with "Back to the List" in a `role="status"` region that is
-  always there. It holds no state: the app keeps `shown`. The menu is as
+  always there. It holds no state: the app keeps `shown`. Passed as a
+  framed DataTable's `pageHeader` (4.106, C3) it's as wide as the
+  table, so ⋯ and New end on the card's right edge. The menu is as
   wide as its longest item and never wraps one (4.105), as is a row's ⋯
   menu.
 - **`Timeline`: a record's dated history.** `items` newest first

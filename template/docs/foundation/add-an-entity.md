@@ -15,17 +15,17 @@
   - Step 8: Add Playwright specs for all three screens · lines 752–829
   - Step 9: Register the nav entry and route names · lines 830–844
   - Step 10: `npm run verify`. · lines 845–847
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1216
-  - [The record view](#the-record-view) · lines 1002–1066
-  - [Forms](#forms) · lines 1068–1133
-  - [Dialogs](#dialogs) · lines 1135–1166
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1168–1216
-- [What not to copy](#what-not-to-copy) · lines 1218–1250
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1252–1269
-- [Deleting](#deleting) · lines 1271–1302
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1304–1325
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1327–1336
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1339–1381
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1246
+  - [The record view](#the-record-view) · lines 1002–1096
+  - [Forms](#forms) · lines 1098–1163
+  - [Dialogs](#dialogs) · lines 1165–1196
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1198–1246
+- [What not to copy](#what-not-to-copy) · lines 1248–1280
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1282–1299
+- [Deleting](#deleting) · lines 1301–1332
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1334–1355
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1357–1366
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1369–1411
 
 <!-- /index -->
 
@@ -1042,6 +1042,36 @@ A record uses the parts it has, in this order:
 - **Facts beside their labels** (`railFields`, `beside` by default since
   4.81), so the short facts read as a list of pairs rather than a column
   of labels; keep labels to a word or two.
+- **The facts rail** (4.106, record standard A1): `factsRail` on the
+  view puts the record's short facts in a 300px column beside the strip
+  and the tabs where the view has room (60rem: a laptop's page, a record
+  dialog), so the page doesn't end 900px in. Only short values go in it,
+  and the API holds to that: a rail section is `facts`, not `fields`,
+  each fact one of a few kinds, never free markup:
+
+  ```tsx
+  { title: 'Facts', placement: 'rail', facts: [
+    { label: 'Status', kind: 'status', status: STATUS_KINDS[record.status], word: STATUS_LABELS[record.status] },
+    { label: 'By', kind: 'text', text: formatDay(record.due) },
+    { label: 'Areas', kind: 'badges', items: record.areas.map(areaLabel) },
+    { label: 'From', kind: 'record', name: provider.name, to: `/providers/${provider.id}`, short: true },
+    { label: 'Open Tasks', kind: 'count', count: record.openTasks, to: `/tasks?project=${record.id}` },
+    { label: 'Task', kind: 'link', href: task.url, name: task.name },
+  ] }
+  ```
+
+  - `text` is a date, a number or a person's name: one line, cut with
+    its whole text on hover. `badges` are a few short labels.
+  - A link to another record is `record`, and must say `short: true`:
+    the app vouches its names are short (a person, a place). Records
+    with long titles (a list of discussions, a log's entries) never go in
+    the rail: they're a tab of their own, with its count.
+  - Anything else (a sentence, a closing condition, notes) is a
+    `fields` or `content` section: in Details, never the rail.
+  - What's in the rail isn't repeated in Details. A Details tab left with
+    nothing isn't drawn. On a phone (or a view under 60rem) the rail's
+    sections are back in Details, as rows.
+  - `edit` works on a fact as on a field; at rest it's drawn by its kind.
 - **A tiny record** (4.98: a few fields and no notes, like a lookup's
   row) opens as a small card: `RecordDialogRoute look="card"`, usually
   with `fullPage={false}`. A 420px dialog (a sheet on a phone), its
