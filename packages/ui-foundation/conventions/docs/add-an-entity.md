@@ -15,17 +15,17 @@
   - Step 8: Add Playwright specs for all three screens · lines 752–829
   - Step 9: Register the nav entry and route names · lines 830–844
   - Step 10: `npm run verify`. · lines 845–847
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1208
-  - [The record view](#the-record-view) · lines 1002–1065
-  - [Forms](#forms) · lines 1067–1125
-  - [Dialogs](#dialogs) · lines 1127–1158
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1160–1208
-- [What not to copy](#what-not-to-copy) · lines 1210–1236
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1238–1255
-- [Deleting](#deleting) · lines 1257–1288
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1290–1311
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1313–1322
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1325–1367
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 849–1216
+  - [The record view](#the-record-view) · lines 1002–1066
+  - [Forms](#forms) · lines 1068–1133
+  - [Dialogs](#dialogs) · lines 1135–1166
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1168–1216
+- [What not to copy](#what-not-to-copy) · lines 1218–1250
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1252–1269
+- [Deleting](#deleting) · lines 1271–1302
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1304–1325
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1327–1336
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1339–1381
 
 <!-- /index -->
 
@@ -1046,7 +1046,8 @@ A record uses the parts it has, in this order:
   row) opens as a small card: `RecordDialogRoute look="card"`, usually
   with `fullPage={false}`. A 420px dialog (a sheet on a phone), its
   title, Delete, Open full page and Close on one line, its facts as
-  plain rows.
+  plain rows. The view's `strip` (KeyStats) is left out in the card
+  (4.105); `cardStrip` keeps it, and the record's own page still shows it.
 - **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
   what's known, then "N empty" opens the rest, still edited in place.
 - **A few equal things** (a plan's phases, a price at each store, a
@@ -1083,7 +1084,9 @@ shape (4.85):
   (`ChoiceButtons`, found by itself, 4.98) shares a row only with another
   choice, two to a row; on a phone two stay side by side while both
   groups fit, and go one per row when they don't. Never a hand-made
-  `sm:grid-cols-2` row.
+  `sm:grid-cols-2` row. The picked option is in the theme colour (4.105);
+  a status choice gives each option its `kind`, so its icons are
+  `StatusMark`'s in their colours (below).
 - **Order:** required first, the status next, long text last.
 - **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
   on the control it names). Nothing on an optional field: never
@@ -1098,7 +1101,12 @@ shape (4.85):
   "Enter a full address, starting https://", never "Title is required".
 - **A status** is an `OptionSelect` with the same `render` (its
   `StatusMark`, 4.98) as its cell and the record: `inPlace.select`'s
-  `{ value, label }` options.
+  `{ value, label }` options. A status of two to four is `ChoiceButtons`
+  (4.105) with each option's `kind`, its status kind:
+  `{ value: 'done', label: 'Done', kind: 'done' }` draws the kind's icon
+  in its colour before the word, the same as the record's `StatusMark`
+  (`icon` overrides the kind's icon; an `icon` with no `kind` stays
+  uncoloured). Map the enum to kinds once and use that map for both.
 - **The controls** (4.88): a choice of two to four short options is
   `ChoiceButtons` (`inPlace.choice` in place), five or more an
   `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",
@@ -1226,6 +1234,12 @@ sight.** What happened where the person is looking says so there.
   takes the views, `activeView` says which one the filters are, and that
   view's `columns` go to `DataTable`'s `visibleColumns` (the table's own
   default list when no view is active, or `undefined` for every column).
+  Views fill the filters (4.105): write each view's whole meaning in its
+  `filters` and `multiFilters` (a "Current" view names its statuses, never
+  `{}` with the server's default doing the rest), name the one the list
+  opens on with `defaultView`, and put what no control can show (a
+  computed "overdue") in the view's `rule` (cell-patterns.md "Saved views
+  are pills").
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.

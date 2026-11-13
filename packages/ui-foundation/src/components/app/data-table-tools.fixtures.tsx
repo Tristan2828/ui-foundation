@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@/fixtures/types'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { DropletIcon, MoveRightIcon, Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
-import { createMemoryRouter, RouterProvider, useParams } from 'react-router'
+import { createMemoryRouter, RouterProvider, useLocation, useParams } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,11 @@ import { RelatedTable } from './related-table'
 //   above a card whose top bar holds the filters and one settings button
 //   (the Columns ticks and Group By, by Status), its bottom bar the pager.
 //   e2e/data-table-framed.spec.ts.
+// - ViewsFillFilters: views that fill the filters (4.105). Current is the
+//   default view (the plain address), its statuses shown in the Status
+//   filter; Needs Water adds a rule no control shows (watered before
+//   Nov 5); All ticks every status. Changing a filter by hand keeps the
+//   rest and the pills follow. e2e/data-table-views.spec.ts.
 // The rows are made up.
 
 type State = 'loaded' | 'loading' | 'empty' | 'error'
@@ -238,6 +243,84 @@ function PlantsList({ single = false, framed = false }: { single?: boolean; fram
   )
 }
 
+// --- views that fill the filters (4.105) ----------------------------------
+
+const LIVING = ['thriving', 'watch', 'resting'] as const
+const FILL_FILTERS = ['search', 'dry'] as const
+const FILL_MULTI = ['status'] as const
+const FILL_VIEWS = {
+  current: { label: 'Current', multiFilters: { status: [...LIVING] } },
+  dry: { label: 'Needs Water', rule: { dry: 'true' }, multiFilters: { status: [...LIVING] } },
+  all: { label: 'All', multiFilters: { status: [...STATUSES] } },
+}
+// The rule no control shows: watered before Nov 5 (the rows' dates are all 2026).
+const isDry = (plant: Plant) => new Date(`${plant.watered} 2026`) < new Date('Nov 5 2026')
+
+function ViewsFillFiltersList() {
+  const { filters, multiFilters, setFilter, setMultiFilter, setFilters, activeView, applyView, sorting, setSorting } =
+    useTableUrlState(FILL_FILTERS, FILL_MULTI, FILL_VIEWS, { defaultView: 'current' })
+  const location = useLocation()
+  const rows = PLANTS.filter(
+    (plant) =>
+      (!filters.search || plant.name.toLowerCase().includes(filters.search.toLowerCase())) &&
+      (multiFilters.status.length === 0 || multiFilters.status.includes(plant.status)) &&
+      (filters.dry !== 'true' || isDry(plant)),
+  )
+  const statusLabel = (status: string) => STATUS_LABELS[status as Status]
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <h1 className="type-page-title">Houseplants</h1>
+      <DataTable
+        columns={plantColumns}
+        opens={{ kind: 'page', to: (plant) => `/plants/${plant.id}` }}
+        views={FILL_VIEWS}
+        activeView={activeView}
+        onViewChange={applyView}
+        toolbar={
+          <FilterBar
+            search={{ value: filters.search, onChange: (value) => setFilter('search', value), placeholder: 'Search by name' }}
+            primary={
+              <MultiChoice
+                label="Status"
+                options={STATUSES}
+                value={multiFilters.status}
+                onValueChange={(statuses) => setMultiFilter('status', statuses)}
+                getLabel={statusLabel}
+                placeholder="Any status"
+                aria-label="Filter by status"
+                className="w-60 max-md:w-full"
+              />
+            }
+            primaryActive={
+              multiFilters.status.length
+                ? [{ id: 'status', label: `Status: ${multiFilters.status.map(statusLabel).join(', ')}`, onRemove: () => setMultiFilter('status', []) }]
+                : []
+            }
+            onClearAll={() => setFilters({ search: '', status: [] })}
+          />
+        }
+        data={rows}
+        total={rows.length}
+        page={1}
+        pageSize={50}
+        onPageChange={noop}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        isLoading={false}
+        getRowId={(plant) => String(plant.id)}
+        emptyTitle="No plants match your filters"
+        emptyDescription="Try different filters."
+      />
+      <p className="type-caption text-muted-foreground" data-testid="address">
+        Address: {location.search || '(plain)'}
+      </p>
+      <p className="type-caption text-muted-foreground" data-testid="status-filter">
+        Status filter: {multiFilters.status.join(', ') || 'none'}
+      </p>
+    </div>
+  )
+}
+
 function Opened() {
   const { id } = useParams()
   return <p className="p-4 type-body">Opened plant {id}</p>
@@ -348,3 +431,5 @@ export const OneRowAction: StoryObj = { render: () => <InRouter element={<Plants
 export const Related: StoryObj = { render: () => <InRouter element={<RelatedLists />} path="/" /> }
 
 export const Framed: StoryObj = { render: () => <InRouter element={<PlantsList framed />} path="/" /> }
+
+export const ViewsFillFilters: StoryObj = { render: () => <InRouter element={<ViewsFillFiltersList />} path="/" /> }

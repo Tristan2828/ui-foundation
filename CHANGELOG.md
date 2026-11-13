@@ -7,6 +7,101 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.105.0 — Review fixes: a clear open tab and pick, status choices, and views that fill the filters
+
+npm package and `ui-foundation-backend` 4.105.0 (no backend change).
+Additive: every new prop and option is optional. Looks change for every
+app without a code change (the open tab, a picked choice, the column
+header row, the ⋯ menu, the card dialog's strip); the views behaviour
+changes only for a list that passes the new `defaultView` or `rule`.
+
+The first module reviewed on the new looks (4.98 to 4.104) asked for:
+
+- **The open record tab stands out** (3B). Its name is in the theme
+  colour, the new `--primary-text` token (`text-primary-text`), over its
+  3px primary line; the other tabs stay muted. `--primary-text` is the
+  primary as small text: the primary itself in the light and dark
+  themes, each dark palette's accent light, Palm LCD's ink.
+- **A picked `ChoiceButtons` option is obvious**: a primary-tinted fill
+  (`bg-primary/12`), a primary border and its word in `--primary-text`,
+  in place of a grey tint.
+- **Options with icons and status kinds.** `ChoiceButtonsOption` (and
+  `InPlaceOption`, so `inPlace.choice` too) takes `kind?: StatusKind`,
+  which draws the kind's icon in its colour before the word, as
+  `StatusMark` does, and `icon?`, a plain icon (or one in place of the
+  kind's).
+- **`DataTable`'s column header row** wears the muted fill on every
+  header cell (pinned and stuck ones too), in the plain and framed looks.
+- **A small card dialog leaves out the strip** (`RecordDialogRoute
+  look="card"`): the view's `strip` (KeyStats) isn't drawn there.
+  `EntityView cardStrip` keeps it; the record's page still shows it.
+- **The ⋯ menus never wrap an item**: `ListHeader`'s and a row's are as
+  wide as their longest item ("Show Deleted" on one line).
+- **Views fill the filters** (`useTableUrlState`):
+  - `defaultView` (option): at the list's plain address the bar's
+    filters are that view's and its pill is pressed; pressing it goes
+    back to the plain address.
+  - `TableView.rule`: a part of a view no control shows (a computed
+    "overdue"). It's in the URL and counts toward the view, applies while
+    the view is on, and the first hand change clears it.
+  - A hand change (`setFilter`, `setFilters`, `setMultiFilter`) keeps
+    every other filter the bar shows (the default view's too) and the
+    pills follow: the view the result equals, usually none. Clearing every
+    filter by hand on a list with a `defaultView` writes `?view=none`.
+  - `applyView(view, id?)` takes the id DataTable's `onViewChange`
+    passes. Everything else (URL state, sort, grouping, page size, the
+    remembered columns and the list's last address) is as before.
+  - New exports: `TableUrlStateViewOptions`.
+- Fixtures: `app/FormControls` "Status choices", `app/DataTable tools`
+  "Views Fill Filters", the card dialog's view with a strip. Specs:
+  `e2e/review-looks.spec.ts` and `e2e/data-table-views.spec.ts` (each
+  failed with its fix taken out), the views helpers in
+  `tests/table-url-changes.test.ts`, and the new stories under axe in
+  both themes and every palette, and the glyph check (3:1) for the
+  status choices' icons.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.105.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.105.0` in `backend/`. The new
+   looks need nothing more. Specs that read the open tab's or a picked
+   choice's colour as `--foreground` now read `--primary-text`.
+2. **A status choice on a form** (a ChoiceButtons of statuses, such as
+   an outcome's Done / Scheduled / Cancelled): give each option its
+   status kind, from the same enum-to-kind map the record's `StatusMark`
+   uses, so the two can't drift:
+
+   ```tsx
+   const OUTCOME_OPTIONS = OUTCOMES.map((value) => ({ value, label: OUTCOME_LABELS[value], kind: OUTCOME_KINDS[value] }))
+   <ChoiceButtons options={OUTCOME_OPTIONS} … />   // or inPlace.choice({ options: OUTCOME_OPTIONS })
+   ```
+
+   An EntityForm field whose `options` come from the same list picks it
+   up as is. Drop a `render` that drew the icon by hand.
+3. **A tiny record with a strip in a card dialog**: nothing to do, it's
+   gone from the card. Pass `cardStrip` on its EntityView if it should
+   stay.
+4. **Views that fill the filters**, one list at a time
+   (consuming.md "Views that fill the filters (4.105)"):
+   - Write each view's whole meaning in its filters. A `current: {
+     label: 'Current' }` that leaned on the server's default (every
+     status but the stopped ones) becomes `{ label: 'Current',
+     multiFilters: { status: [...NOT_STOPPED] } }`.
+   - Pass `defaultView: 'current'` in `useTableUrlState`'s options (with
+     the list's storage keys), so the plain address is Current with its
+     statuses in the bar. The query can then use `multiFilters.status`
+     as it is: drop the `status.length ? … : NOT_STOPPED` fallback, and
+     the Status filter's "Not stopped" placeholder can say "Any status".
+   - Move what no control shows from `filters` to `rule`: `overdue: {
+     label: 'Overdue', rule: { overdue: 'true' }, multiFilters: { status:
+     [...OPEN] } }`. Keep the filter's name in the hook's filter names.
+   - `onViewChange={applyView}` stays as it is. Show deleted's
+     `applyView(shown ? { filters: { deleted: 'true' } } : {})` and a
+     "Clear filters" link's `applyView({})` go back to the plain address,
+     the default view.
+   - Specs that expected no pill pressed at the plain address, or a
+     view's rule to survive a filter change, change with it.
+
 ## 4.104.0 — A Done button on a repeating reminder's notification
 
 npm package and `ui-foundation-backend` 4.104.0. Additive: a push looks

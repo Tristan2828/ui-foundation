@@ -73,7 +73,8 @@
 // switch. With no `tab` on any section, nothing changes.
 //
 // The tab bar (4.101, record standard 3B): bigger underline tabs (16px
-// semibold, 14px on a phone), a 3px primary line under the open one, each
+// semibold, 14px on a phone), a 3px primary line under the open one and
+// its name in the theme colour (`text-primary-text`, 4.105), each
 // tab's count beside its name (`tabCounts`; none for zero). The bar sticks
 // to the top of whatever scrolls (the page, or a record dialog's body) as
 // the record scrolls under it, `tabsStickyTop` below the top, and once
@@ -280,9 +281,13 @@ export type EntityViewProps = {
    * A row of the record's key numbers (`<KeyStats>`) under the header and
    * its notice, across the page at every width: in the rail layout above
    * both columns, so on a phone it comes before the rail and the main
-   * column.
+   * column. Left out in a small card dialog (RecordDialogRoute
+   * `look="card"`, 4.105): a tiny record's facts are its few rows, so
+   * `cardStrip` keeps it there.
    */
   strip?: ReactNode
+  /** Show `strip` in a small card dialog too (4.105); off by default. */
+  cardStrip?: boolean
   sections: EntityViewSection[]
   /**
    * Below every section (both columns in the rail layout), in small muted
@@ -821,7 +826,7 @@ function MainTabs({
               <TabsTrigger
                 key={tab.slug}
                 value={tab.slug}
-                className="h-11 flex-none gap-1.5 px-2.5 text-sm font-semibold text-muted-foreground group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-[3px] after:bg-primary data-active:text-foreground md:px-4 md:text-base dark:text-muted-foreground dark:data-active:text-foreground"
+                className="h-11 flex-none gap-1.5 px-2.5 text-sm font-semibold text-muted-foreground group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-[3px] after:bg-primary data-active:text-primary-text md:px-4 md:text-base dark:text-muted-foreground dark:data-active:text-primary-text"
               >
                 {tab.name}
                 {count > 0 && (
@@ -884,6 +889,7 @@ export function EntityView({
   actions,
   notice,
   strip,
+  cardStrip = false,
   sections,
   footer,
   layout = 'tabs',
@@ -1132,7 +1138,7 @@ export function EntityView({
         {notice}
       </div>
 
-      {strip && <div data-slot="entity-view-strip">{strip}</div>}
+      {strip && (!card || cardStrip) && <div data-slot="entity-view-strip">{strip}</div>}
 
       {body}
 

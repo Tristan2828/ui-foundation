@@ -12,6 +12,7 @@ import { editInPlace } from './edit-in-place'
 import { EntityView } from './entity-view'
 import { FormDialog } from './form-dialog'
 import { IconAction } from './icon-action'
+import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { RecordDialogRoute, RecordLink } from './record-dialog'
 import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
@@ -236,6 +237,8 @@ const TASK_COLUMNS: LegacyColumnDef<Task, unknown>[] = [
 ]
 
 // A tiny record for the card dialog (8A): its name, three facts, Delete.
+// Its strip of key numbers is left out in the card (4.105); the same view
+// on its own page shows it.
 function ProjectCard() {
   const { id } = useParams()
   const { project, error, isLoading, retry } = useProject(id)
@@ -247,6 +250,7 @@ function ProjectCard() {
       onRetry={retry}
       back={{ to: '/projects', label: 'Projects' }}
       actions={project && <IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+      strip={project && <KeyStats stats={[{ label: 'Coats', value: 2 }, { label: 'Hours', value: 6 }]} />}
       sections={[
         {
           title: 'Details',

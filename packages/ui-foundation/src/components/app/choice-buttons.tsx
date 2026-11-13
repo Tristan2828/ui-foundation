@@ -17,11 +17,30 @@
 // second line, each keeping its whole border, instead of spilling past the
 // box's edge. The first line stays joined; a wrapped line starts a new row
 // of joined buttons a little below it.
+//
+// The picked one in the theme colour (4.105): a primary-tinted fill, a
+// primary border and its word in `text-primary-text`, so a pick reads at a
+// glance, not only as a grey tint.
+//
+// An option can carry an icon, or a status kind (4.105): `kind` draws the
+// kind's icon in its colour (StatusMark's, lib/status-kinds.ts), so a
+// status choice on a form looks like the status on the record. The word
+// keeps the button's own colour; the kind's icon colour stays, picked or
+// not.
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { STATUS_KIND_ICONS, STATUS_KIND_TONES, type StatusKind } from '@/lib/status-kinds'
+import type { IconComponent } from './icon-component'
 
-export type ChoiceButtonsOption<T> = { value: T; label: string }
+export type ChoiceButtonsOption<T> = {
+  value: T
+  label: string
+  /** A status kind (4.105): its icon, in its colour, before the word, as StatusMark draws it. */
+  kind?: StatusKind
+  /** An icon before the word; with `kind`, in place of the kind's. Uncoloured without a `kind`. */
+  icon?: IconComponent
+}
 
 export type ChoiceButtonsProps<T extends string | number> = {
   /** The group's id. Name it with `aria-labelledby` (the FieldLabel's id) or `aria-label`. */
@@ -89,13 +108,30 @@ export function ChoiceButtons<T extends string | number>({
             // after the first) and overlaps the one before by it, so a button
             // that wraps to a new line starts with an edge; `pl-px` on the
             // group keeps that edge inside the box.
-            '-ml-px border-l! h-(--control-height,--spacing(8)) max-w-full px-3 font-normal text-muted-foreground aria-pressed:font-medium aria-pressed:text-foreground',
+            '-ml-px border-l! h-(--control-height,--spacing(8)) max-w-full px-3 font-normal text-muted-foreground',
+            // Picked: the theme colour. On top of the ones before and
+            // after it (`z-1`), so its whole border shows where they overlap.
+            'aria-pressed:z-1 aria-pressed:border-primary aria-pressed:bg-primary/12 aria-pressed:font-medium aria-pressed:text-primary-text hover:aria-pressed:bg-primary/16 hover:aria-pressed:text-primary-text',
             invalid && 'border-destructive',
           )}
         >
+          <OptionIcon option={option} />
           {render ? render(option.value, option.label) : option.label}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
+  )
+}
+
+function OptionIcon<T>({ option }: { option: ChoiceButtonsOption<T> }) {
+  const Icon = option.icon ?? (option.kind ? STATUS_KIND_ICONS[option.kind] : undefined)
+  if (!Icon) return null
+  return (
+    <Icon
+      aria-hidden="true"
+      data-slot="choice-buttons-icon"
+      data-kind={option.kind}
+      className={cn('size-3.5 shrink-0', option.kind && STATUS_KIND_TONES[option.kind])}
+    />
   )
 }

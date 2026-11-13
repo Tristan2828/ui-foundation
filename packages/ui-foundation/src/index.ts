@@ -344,7 +344,7 @@ export type { ErrorReportingOptions } from '@/error-reporting/reporter'
 export { createQueryClient } from '@/api/query-client'
 
 // Hooks
-export { useTableUrlState, type TableUrlStateOptions } from '@/hooks/use-table-url-state'
+export { useTableUrlState, type TableUrlStateOptions, type TableUrlStateViewOptions } from '@/hooks/use-table-url-state'
 export { useTableLayout, type TableLayoutOptions } from '@/hooks/use-table-layout'
 export {
   useWidgetLayout,

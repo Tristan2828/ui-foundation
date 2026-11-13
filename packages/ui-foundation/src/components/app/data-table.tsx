@@ -948,6 +948,14 @@ const TOTALS_LABEL_CLASS = 'h-auto py-(--table-cell-py)'
 // is its name in an sr-only span, in a cell with no height or padding.
 const HIDDEN_HEAD_CLASS = 'h-0 p-0'
 
+// The column header row (4.105): the muted fill on every header cell, so
+// the row of names reads apart from the rows of data, in the plain and
+// framed looks alike. On the cells, not the row, so a pinned or stuck
+// header cell (opaque, bg-background above) wears it too: listed after
+// those, it wins. Its words keep --foreground, clear on --muted in every
+// theme and palette.
+const HEAD_CELL_CLASS = 'bg-muted'
+
 // A group's heading row (`groupBy`): a little air above, so the groups
 // read apart, and the page's background, never the zebra stripe.
 // A column's `meta.align` as the class its header, cells and totals take.
@@ -1874,6 +1882,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
                               index === headerGroup.headers.length - 1 &&
                               PINNED_LAST_COLUMN_CLASS,
                             stickyGroups && showHeader && STICKY_HEAD_CELL_CLASS,
+                            showHeader && HEAD_CELL_CLASS,
                             alignClass(header.column.columnDef.meta?.align),
                           )}
                           aria-sort={

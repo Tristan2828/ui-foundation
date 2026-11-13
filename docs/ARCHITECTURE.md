@@ -228,6 +228,13 @@ src/main.tsx                           FoundationProviders (theme, query client,
   minus its padding so the bar meets its top edge. Whether it's stuck is
   measured (a marker above the bar against the bar's top, on any scroll
   through a capture listener), and stuck it shows the record's name.
+- **Views fill the filters** (4.105): `useTableUrlState` resolves the
+  filters the bar shows from the URL, or at a list's plain address from
+  its `defaultView`, and a hand change goes through `filterChanges`
+  (`hooks/table-url-changes.ts`, pure and unit-tested): it writes the
+  shown filters back, clears any view's `rule`, and writes `?view=none`
+  for a hand-emptied list with a default view. The pills follow from
+  `activeViewOf` as before.
 - **A record's tabs** (4.76, #303): a main section's `tab` groups it
   under `EntityView`'s tab list, the selected tab in `?tab=`, changed by
   replacing the entry with its state kept, so a record over its list stays

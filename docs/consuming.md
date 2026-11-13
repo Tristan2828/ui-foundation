@@ -81,6 +81,50 @@ at a time:
 5. The plan (`docs/entities/<entity>.md`): drop its `Layout: rail` line,
    and write the facts' Placement as `details`.
 
+## Views that fill the filters (4.105)
+
+Since 4.105 a list's saved views can show what they mean in the filter
+bar, so a reader always sees why rows are hidden. Nothing changes until
+a list opts in; move one list at a time:
+
+1. **Write each view's whole meaning in its filters.** A view that was
+   `{}` and leaned on the server's default (a Current that hides the
+   stopped records) names its values instead:
+
+   ```ts
+   const VIEWS = {
+     current: { label: 'Current', multiFilters: { status: [...NOT_STOPPED] } },
+     stopped: { label: 'Stopped', multiFilters: { status: ['stopped'] } },
+     all: { label: 'All', multiFilters: { status: [...STATUSES] } },
+   }
+   ```
+
+2. **Name the view the list opens on**: `useTableUrlState(FILTERS,
+   MULTI, VIEWS, { ...listOptions, defaultView: 'current' })`. At the
+   plain address `multiFilters.status` is Current's statuses and its
+   pill is pressed. Build the query from `filters` and `multiFilters` as
+   they come: a fallback for "nothing in the URL" (`status.length ?
+   status : NOT_STOPPED`) is no longer needed, and the control's
+   placeholder for no picks says what no picks means ("Any status").
+3. **A part no control shows is the view's `rule`**: a computed
+   `overdue` or `upcoming` moves from `filters` to `rule` (`{ label:
+   'Overdue', rule: { overdue: 'true' }, multiFilters: { status: OPEN }
+   }`). Keep its name in the hook's filter names; the server reads it as
+   before. It applies while its view is on, and the reader's first
+   filter change clears it, so the rows are then what the bar shows.
+4. **Hand changes need nothing.** `setFilter`, `setFilters` and
+   `setMultiFilter` keep every other filter the bar shows (the default
+   view's too) and the pills follow: ticking every status presses All;
+   most changes press none. Emptying every filter by hand writes
+   `?view=none`, so the list stays unfiltered. `applyView({})` (Back to
+   the List, a "Clear filters" link) is the plain address: the default
+   view.
+5. **Specs**: at the plain address the default view's pill is now
+   pressed and its values are in the filters. A spec that changed a
+   filter while a view with a computed part was on and expected that part
+   to stay expects it cleared. A link from another page that names a
+   filter (`?status=active`) is the URL's own, as before.
+
 ## Changing the foundation
 
 When an app needs something the package doesn't do:
