@@ -60,6 +60,7 @@
     --color-info-foreground: var(--info-foreground);
     --color-info-text: var(--info-text);
     --color-link: var(--link);
+    --color-primary-text: var(--primary-text);
     --color-card-header: var(--card-header);
     --color-highlight-amber: var(--highlight-amber);
     --color-highlight-yellow: var(--highlight-yellow);
@@ -492,6 +493,7 @@
     --warning-text: var(--amber-800);
     --info-text: var(--blue-800);
     --link: var(--blue-700);
+    --primary-text: var(--gray-950);
     --highlight-amber: oklch(0.9 0.1 75);
     --highlight-yellow: oklch(0.94 0.13 100);
     --highlight-green: oklch(0.9 0.1 150);

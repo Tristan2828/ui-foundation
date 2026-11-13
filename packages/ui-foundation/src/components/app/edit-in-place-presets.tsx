@@ -22,7 +22,7 @@ import { formatMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
 import { formatPlainDate, unreadableDateMessage, type PlainDate } from '@/lib/plain-date'
 import { normalizeRecurrence, recurrenceProblem, type Recurrence } from '@/lib/recurrence'
 import { formatRecurrence } from '@/lib/recurrence-format'
-import { ChoiceButtons } from './choice-buttons'
+import { ChoiceButtons, type ChoiceButtonsOption } from './choice-buttons'
 import { DateField } from './date-field'
 import { MonthDayField } from './month-day-field'
 import { OptionSelect } from './option-select'
@@ -149,8 +149,11 @@ export type InPlaceRecurrenceConfig<TRequired extends boolean = boolean> = {
   locale?: string
 }
 
-/** One option of a select: its value and its words. */
-export type InPlaceOption<T> = { value: T; label: string }
+/**
+ * One option of a select: its value and its words. `kind` and `icon`
+ * (4.105) are ChoiceButtons': drawn by `look: 'buttons'` only.
+ */
+export type InPlaceOption<T> = ChoiceButtonsOption<T>
 
 /**
  * One of a fixed list. Not `required`: the list starts with "Not set",

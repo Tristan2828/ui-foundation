@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeViewOf, applyUrlChanges, viewToUrlChanges } from "../src/hooks/table-url-changes";
+import { activeViewOf, applyUrlChanges, filterChanges, readFilterState, viewToUrlChanges } from "../src/hooks/table-url-changes";
 
 // The URL-building half of useTableUrlState, the part with semantics worth
 // pinning. The hook itself only feeds these to setSearchParams in a single
@@ -90,5 +90,90 @@ describe("activeViewOf", () => {
 
   it("is null with no views", () => {
     expect(activeViewOf({}, NO_FILTERS, { tags: [] })).toBeNull();
+  });
+});
+
+// Views fill the filters (4.105): the default view at the plain address,
+// a view's rule that no control shows, and a hand change that keeps what
+// the bar shows.
+describe("views fill the filters", () => {
+  const F = ["search", "overdue"] as const;
+  const M = ["status"] as const;
+  const OPEN = ["open", "waiting"];
+  const views = {
+    open: { label: "Open", multiFilters: { status: OPEN } },
+    overdue: { label: "Overdue", rule: { overdue: "true" }, multiFilters: { status: OPEN } },
+    all: { label: "All", multiFilters: { status: ["open", "waiting", "closed"] } },
+  };
+  const at = (query: string, withDefault = true) =>
+    readFilterState(new URLSearchParams(query), F, M, withDefault ? views.open : undefined);
+
+  it("fills the bar with the default view's filters at the plain address, and it's the active view", () => {
+    const state = at("");
+    expect(state.atDefault).toBe(true);
+    expect(state.multiFilters.status).toEqual(OPEN);
+    expect(activeViewOf(views, state.filters, state.multiFilters)).toBe("open");
+    // Sort and page aren't filters: still the plain address.
+    expect(at("sort=name:asc&page=2").atDefault).toBe(true);
+    // Any filter in the URL, or ?view=none, is the URL's own.
+    expect(at("search=x").multiFilters.status).toEqual([]);
+    expect(at("view=none").atDefault).toBe(false);
+    // With no default view the plain address is no filters, as before.
+    expect(at("", false).multiFilters.status).toEqual([]);
+  });
+
+  it("counts a view's rule toward it being on", () => {
+    const state = at("overdue=true&status=open&status=waiting");
+    expect(activeViewOf(views, state.filters, state.multiFilters)).toBe("overdue");
+    const without = at("status=open&status=waiting");
+    expect(activeViewOf(views, without.filters, without.multiFilters)).toBe("open");
+  });
+
+  it("writes the rule into the URL when the view is pressed, and the default view as the plain address", () => {
+    const next = applyUrlChanges(new URLSearchParams("view=none&search=x"), viewToUrlChanges(F, M, views.overdue));
+    expect(next.toString()).toBe("overdue=true&status=open&status=waiting");
+    const home = applyUrlChanges(next, viewToUrlChanges(F, M, views.open, true));
+    expect(home.toString()).toBe("");
+  });
+
+  it("keeps the default view's filters when one changes by hand, and the pill follows", () => {
+    const state = at("");
+    const next = applyUrlChanges(new URLSearchParams(), filterChanges(state, { search: "pump" }, ["overdue"], true));
+    expect(next.getAll("status")).toEqual(OPEN);
+    expect(next.get("search")).toBe("pump");
+    const after = readFilterState(next, F, M, views.open);
+    expect(activeViewOf(views, after.filters, after.multiFilters)).toBeNull();
+    // Ticking every status by hand is the All view.
+    const all = applyUrlChanges(next, filterChanges(after, { search: "", status: ["open", "waiting", "closed"] }, ["overdue"], true));
+    const allState = readFilterState(all, F, M, views.open);
+    expect(activeViewOf(views, allState.filters, allState.multiFilters)).toBe("all");
+  });
+
+  it("clears a view's rule on a hand change, so the rows are what the bar shows", () => {
+    const on = new URLSearchParams("overdue=true&status=open&status=waiting&page=3");
+    const state = readFilterState(on, F, M, views.open);
+    const next = applyUrlChanges(on, filterChanges(state, { status: ["open"] }, ["overdue"], true));
+    expect(next.toString()).toBe("status=open");
+    // Unless the change sets it itself.
+    const kept = applyUrlChanges(on, filterChanges(state, { overdue: "true", status: ["open"] }, ["overdue"], true));
+    expect(kept.get("overdue")).toBe("true");
+  });
+
+  it("writes ?view=none when the last filter is cleared by hand, so the default view doesn't come back", () => {
+    const state = readFilterState(new URLSearchParams("status=open"), F, M, views.open);
+    const next = applyUrlChanges(new URLSearchParams("status=open"), filterChanges(state, { status: [] }, [], true));
+    expect(next.toString()).toBe("view=none");
+    expect(readFilterState(next, F, M, views.open).multiFilters.status).toEqual([]);
+    // Setting a filter again drops it; with no default view it's never written.
+    expect(applyUrlChanges(next, filterChanges(readFilterState(next, F, M, views.open), { search: "a" }, [], true)).toString()).toBe("search=a");
+    expect(filterChanges(state, { status: [] }, [], false)).not.toHaveProperty("view");
+  });
+
+  it("leaves a list's own filter named view alone when the list has no default view", () => {
+    const own = ["view"] as const;
+    const params = new URLSearchParams("view=grid");
+    expect(applyUrlChanges(params, viewToUrlChanges(own, [], { filters: { view: "list" } })).get("view")).toBe("list");
+    const state = readFilterState(params, own, []);
+    expect(applyUrlChanges(params, filterChanges(state, { other: "x" }, [], false)).get("view")).toBe("grid");
   });
 });

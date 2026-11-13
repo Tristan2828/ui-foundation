@@ -149,6 +149,8 @@ const COMPOSITE_STORIES = [
   // A record with tabs in the dialog, its 3B tab bar and counts (4.101).
   { id: 'app-recorddialog--tabs-open', mustShow: 'Open Full Page' },
   { id: 'app-formcontrols--choice-pairs', mustShow: 'Coats' },
+  // A status as a choice, its kinds' icons coloured, one picked in the theme colour (4.105).
+  { id: 'app-formcontrols--status-choices', mustShow: 'Status choices on a card' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
@@ -282,6 +284,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
   { id: 'app-datatable-tools--related', mustShow: 'View All 19' },
   { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
+  // Views that fill the filters (4.105): the default view's statuses in the Status filter.
+  { id: 'app-datatable-tools--views-fill-filters', mustShow: 'Needs Water' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
@@ -363,6 +367,8 @@ const GLYPH_STORIES: {
   // Each status kind's icon (4.98, 5B) on the page, a card and a table row,
   // and the header's on the Details tab's record.
   { id: 'app-statusmark--all-kinds' },
+  // The same kinds' icons on ChoiceButtons, picked (the primary tint) and not, on the page and a card (4.105).
+  { id: 'app-formcontrols--status-choices' },
   { id: 'app-entityview--details-tab' },
   // Each toast's icon in its tone on the popover surface (4.90), and the
   // offline bar's, an action error's and a job's (the spinner and check).

@@ -1,3 +1,4 @@
+import { StoreIcon, TruckIcon } from 'lucide-react'
 import type { Meta, StoryObj } from '@/fixtures/types'
 import { useRef, useState, type ReactNode } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
@@ -438,6 +439,60 @@ function ChoicePairForm() {
   )
 }
 
+// A status as a choice (4.105): each option a status kind, its icon in the
+// kind's colour as StatusMark draws it, on the page and on a card, one
+// picked in the theme colour; and an option with a plain icon.
+const OUTCOMES = [
+  { value: 'done', label: 'Done', kind: 'done' },
+  { value: 'booked', label: 'Booked', kind: 'planned' },
+  { value: 'called-off', label: 'Called Off', kind: 'ended' },
+] as const
+const URGENCY = [
+  { value: 'now', label: 'Now', kind: 'attention' },
+  { value: 'soon', label: 'Soon', kind: 'paused' },
+  { value: 'going', label: 'Going', kind: 'active' },
+] as const
+const DELIVERY = [
+  { value: 'pickup', label: 'Pick Up', icon: StoreIcon },
+  { value: 'post', label: 'Post', icon: TruckIcon },
+] as const
+
+function StatusChoiceFields({ prefix }: { prefix: string }) {
+  const [outcome, setOutcome] = useState<string | null>('booked')
+  const [urgency, setUrgency] = useState<string | null>('now')
+  const [delivery, setDelivery] = useState<string | null>('post')
+  return (
+    <FieldGroup>
+      <Field size="m">
+        <FieldLabel id={`${prefix}-outcome`}>Outcome</FieldLabel>
+        <ChoiceButtons aria-labelledby={`${prefix}-outcome`} options={OUTCOMES} value={outcome} onValueChange={setOutcome} />
+      </Field>
+      <Field size="m">
+        <FieldLabel id={`${prefix}-urgency`}>Urgency</FieldLabel>
+        <ChoiceButtons aria-labelledby={`${prefix}-urgency`} options={URGENCY} value={urgency} onValueChange={setUrgency} />
+      </Field>
+      <Field size="m">
+        <FieldLabel id={`${prefix}-delivery`}>Delivery</FieldLabel>
+        <ChoiceButtons aria-labelledby={`${prefix}-delivery`} options={DELIVERY} value={delivery} onValueChange={setDelivery} />
+      </Field>
+    </FieldGroup>
+  )
+}
+
+function StatusChoicesPage() {
+  return (
+    <div className="flex max-w-xl flex-col gap-6">
+      <div data-testid="status-choices-page">
+        <StatusChoiceFields prefix="page" />
+      </div>
+      <div data-testid="status-choices-card" className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 text-card-foreground">
+        <p className="type-caption text-muted-foreground">Status choices on a card</p>
+        <StatusChoiceFields prefix="card" />
+      </div>
+    </div>
+  )
+}
+
 const meta: Meta = {
   title: 'app/FormControls',
   parameters: { controls: { disable: true } },
@@ -452,3 +507,5 @@ export const EditInPlace: StoryObj = { render: () => <InPlace /> }
 export const Narrow: StoryObj = { render: () => <NarrowControls /> }
 
 export const ChoicePairs: StoryObj = { name: 'Choice pairs', render: () => <ChoicePairForm /> }
+
+export const StatusChoices: StoryObj = { name: 'Status choices', render: () => <StatusChoicesPage /> }

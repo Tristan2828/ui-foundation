@@ -165,7 +165,11 @@ export function ListHeader({
               >
                 <EllipsisIcon aria-hidden="true" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              {/* As wide as its longest item, never wrapping one
+                  ("Show Deleted" on one line, 4.105): the trigger is a
+                  small icon, so the menu's default width (the trigger's)
+                  is too narrow. */}
+              <DropdownMenuContent align="end" className="w-max max-w-(--available-width) whitespace-nowrap">
                 {menuLinks.map((link) => (
                   <DropdownMenuItem key={link.label} render={<Link to={link.to} />}>
                     {link.icon && <link.icon aria-hidden="true" />}

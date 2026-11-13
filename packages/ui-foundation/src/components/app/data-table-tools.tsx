@@ -181,7 +181,7 @@ export function RowActions({ actions, rowLabel }: { actions: readonly DataTableR
           <IconAction icon={EllipsisIcon} label={rowLabel ? `Actions for ${rowLabel}` : 'Actions'} size="sm" variant="ghost" data-slot="data-table-row-actions" />
         }
       />
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent align="end" className="w-max min-w-44 max-w-(--available-width) whitespace-nowrap">
         {actions.map((action) => {
           const Icon = action.icon
           return (

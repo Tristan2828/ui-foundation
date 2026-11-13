@@ -3,41 +3,41 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 50–157
-- [Glow](#glow) · lines 159–178
-- [Semantic tones](#semantic-tones) · lines 180–208
-- [The three badge styles](#the-three-badge-styles) · lines 210–227
-- [Status marks](#status-marks) · lines 229–268
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 270–299
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 301–314
-- [Logos and brand marks](#logos-and-brand-marks) · lines 316–360
-- [Categorical colour](#categorical-colour) · lines 362–432
-- [Heat scale](#heat-scale) · lines 434–495
-- [Depth ramps](#depth-ramps) · lines 497–582
-- [A stored colour](#a-stored-colour) · lines 584–632
-- [Shapes and sizes](#shapes-and-sizes) · lines 634–655
-- [Typography](#typography) · lines 657–814
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 691–724
-  - [Written text (notes)](#written-text-notes) · lines 726–814
-- [Density](#density) · lines 816–909
-  - [Rows on this device](#rows-on-this-device) · lines 882–909
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 911–1025
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1027–1104
-- [Notices](#notices) · lines 1106–1134
-- [A value over time](#a-value-over-time) · lines 1136–1222
-  - [Several values over time](#several-values-over-time) · lines 1185–1222
-- [A list as a board](#a-list-as-a-board) · lines 1224–1275
-- [A list as cards](#a-list-as-cards) · lines 1277–1323
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1325–1354
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1356–1399
-- [A few equal things](#a-few-equal-things) · lines 1401–1485
-- [An overview page](#an-overview-page) · lines 1487–1550
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1551–1602
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1604–1671
-- [Picking at random](#picking-at-random) · lines 1673–1704
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1706–1773
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1775–1800
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1802–1891
+- [Palettes](#palettes) · lines 50–159
+- [Glow](#glow) · lines 161–180
+- [Semantic tones](#semantic-tones) · lines 182–210
+- [The three badge styles](#the-three-badge-styles) · lines 212–229
+- [Status marks](#status-marks) · lines 231–270
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 272–301
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 303–316
+- [Logos and brand marks](#logos-and-brand-marks) · lines 318–362
+- [Categorical colour](#categorical-colour) · lines 364–434
+- [Heat scale](#heat-scale) · lines 436–497
+- [Depth ramps](#depth-ramps) · lines 499–584
+- [A stored colour](#a-stored-colour) · lines 586–634
+- [Shapes and sizes](#shapes-and-sizes) · lines 636–657
+- [Typography](#typography) · lines 659–826
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 693–726
+  - [Written text (notes)](#written-text-notes) · lines 728–826
+- [Density](#density) · lines 828–921
+  - [Rows on this device](#rows-on-this-device) · lines 894–921
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 923–1037
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1039–1116
+- [Notices](#notices) · lines 1118–1146
+- [A value over time](#a-value-over-time) · lines 1148–1234
+  - [Several values over time](#several-values-over-time) · lines 1197–1234
+- [A list as a board](#a-list-as-a-board) · lines 1236–1287
+- [A list as cards](#a-list-as-cards) · lines 1289–1335
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1337–1366
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1368–1413
+- [A few equal things](#a-few-equal-things) · lines 1415–1499
+- [An overview page](#an-overview-page) · lines 1501–1564
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1565–1616
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1618–1686
+- [Picking at random](#picking-at-random) · lines 1688–1719
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1721–1788
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1790–1815
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1817–1906
 
 <!-- /index -->
 
@@ -124,7 +124,9 @@ portaled to `<body>` wear it too. An installed app's colours follow it with
   4.5:1 as small text on Indigo and Rose and on Violet, and on every
   palette's cards but Indigo and Cyan, so it is never small text: it is
   the ring, the primary fill and the active item's tint. The `link`
-  Button variant is `text-link` for the same reason.
+  Button variant is `text-link` for the same reason, and the theme
+  colour as text (`--primary-text`, 4.105: the open tab's name, a picked
+  choice's word) is accent light too.
 - **The status colours are text shades.** The guide's success, warning
   and danger are `--success-text`, `--warning-text` and
   `--destructive-text` (soft badges, icons, coloured words). Solid fills
@@ -776,6 +778,16 @@ columns ("Item, Size, Colour, …"), so two such tables keep distinct
 names; the arrow keys scroll it (in the editor Home and End too), with
 the `ring` focus ring. A table that fits gets no tab stop and no region.
 
+**The theme colour as text** (4.105) is `--primary-text`
+(`text-primary-text`): what's picked or open, in the primary's own colour
+where that reads as small text. The open record tab's name and a picked
+`ChoiceButtons` option wear it (the tab with a 3px `bg-primary` line, the
+choice with a `border-primary` and a `bg-primary/12` fill). It's the
+primary itself in the light and dark themes (near-black, near-white),
+each dark palette's accent light (the accent fails 4.5:1 as small text on
+some surfaces), and Palm LCD's ink. Never for a link (`--link`) or a
+heading.
+
 The same text has four colour tokens of its own: `--link` (`text-link`), a
 link's colour, blue as well as underlined (5.59:1 on white, 8.90:1 on the
 dark page); `--heading-band` (`bg-heading-band`), the `#` band, one step
@@ -1371,7 +1383,9 @@ into a table, a record or an overview.
   `more` (the page's own actions). `deleted={{ shown, onShownChange }}` adds
   "Show Deleted" as the menu's last item and, while it's on, an info
   `Notice` with "Back to the List" in a `role="status"` region that is
-  always there. It holds no state: the app keeps `shown`.
+  always there. It holds no state: the app keeps `shown`. The menu is as
+  wide as its longest item and never wraps one (4.105), as is a row's ⋯
+  menu.
 - **`Timeline`: a record's dated history.** `items` newest first
   (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
   column on the left, a dot and a thin line, the entry on the right with
@@ -1623,8 +1637,9 @@ its short facts the last tab, Details. A mark goes left of the title.
 - **Tabs** (`tab` on a section): a line tab list under the strip and any
   sections with no tab, one tab per name in the order the sections first
   give it. The look is the record standard's 3B (4.101): 44px tabs in
-  16px semibold (14px under 48rem), the selected one in foreground text
-  with a 3px primary line under it, the others muted; the list's own
+  16px semibold (14px under 48rem), the selected one's name in the theme
+  colour (`--primary-text`, 4.105) with a 3px primary line under it, the
+  others muted; the list's own
   bottom border runs the column's width. A tab's count (`tabCounts`, by
   name: the records it holds) sits beside its name in a small muted
   pill; a tab with none shows no count. A list wider than the column

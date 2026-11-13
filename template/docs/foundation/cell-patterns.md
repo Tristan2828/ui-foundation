@@ -40,10 +40,10 @@
 - [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1811–1849
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1851–1927
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1929–1952
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2080
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2042–2080
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2082–2118
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2120–2165
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2112
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2074–2112
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2114–2150
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2152–2197
 
 <!-- /index -->
 
@@ -2004,6 +2004,38 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   once the filters move off every view. Under 48rem they stay on one line
   that scrolls sideways. Replaces a hand-written row of view buttons; a
   Deleted view goes in ListHeader's ⋯ menu as Show Deleted instead.
+- **Views fill the filters** (4.105), so the bar always says why rows are
+  hidden:
+  - A view's `filters` and `multiFilters` are what the bar's controls
+    show while it's on: write its whole meaning there. A "Current" view
+    names its statuses (`multiFilters: { status: ['active', 'paused'] }`),
+    never `{}` with the server's default hiding the rest.
+  - `defaultView` (useTableUrlState's options) is the view the list opens
+    on: at the list's plain address (no filter in the URL) its filters
+    fill the bar and its pill is pressed; pressing it goes back to the
+    plain address.
+  - A part no control can show (a computed "overdue") is the view's
+    `rule`: `{ label: 'Overdue', rule: { overdue: 'true' }, multiFilters: {
+    status: OPEN } }`. It's in the URL and applies while the view is on;
+    the bar shows the filters it can.
+  - Changing a filter by hand keeps every other filter the bar shows (the
+    default view's too), clears any `rule`, and the pills follow: the view
+    the result equals is pressed (ticking every status is All), usually
+    none. Clearing every filter by hand on a list with a `defaultView`
+    writes `?view=none`, so it stays unfiltered; `applyView({})` (Back to
+    the List, a "Clear filters" link) is the plain address again.
+
+  ```tsx
+  const VIEWS = {
+    current: { label: 'Current', multiFilters: { status: ['open', 'waiting'] } },
+    overdue: { label: 'Overdue', rule: { overdue: 'true' }, multiFilters: { status: ['open', 'waiting'] } },
+    all: { label: 'All', multiFilters: { status: ['open', 'waiting', 'closed'] } },
+  }
+  const table = useTableUrlState(['search', 'overdue'], ['status'], VIEWS, { defaultView: 'current' })
+  ```
+- **The column header row** (4.105) wears the muted fill on every cell,
+  pinned and stuck ones too, in the plain and framed looks, so the names
+  read apart from the rows; its words stay `--foreground`.
 - **The filters** (L4): `FilterBar` holds search, the two filters used
   most (`primary`), and the rest behind Filters (`secondary`, with their
   chips, as `SecondaryFilters` draws them). No captions over controls:

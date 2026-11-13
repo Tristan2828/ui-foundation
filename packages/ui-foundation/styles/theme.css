@@ -645,6 +645,10 @@
   /* A link in written text: coloured as well as underlined, so it reads
      as a link at a glance (on white: 5.59). */
   --link: var(--blue-700);
+  /* The theme colour as text (4.105): what's picked or open, such as the
+     open tab's name and a picked choice, in the primary's own colour where
+     it reads as text. Here it's the primary (near-black, 17.7 on white). */
+  --primary-text: var(--primary);
   /* Highlighted words in written text (the notes editor's highlight, four
      colours): a wash behind words that keep --foreground. Light washes,
      text on each measures 11 or more. */
@@ -957,6 +961,7 @@
   --warning-text: var(--amber-400);
   --info-text: var(--blue-400);
   --link: var(--blue-400); /* on near-black: 8.90 */
+  --primary-text: var(--primary); /* near-white on near-black */
   /* Highlighted words: deep washes, --foreground on each measures 7 or more. */
   --highlight-amber: oklch(0.42 0.09 75);
   --highlight-yellow: oklch(0.44 0.09 100);
@@ -1182,6 +1187,7 @@
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
   --link: var(--palette-indigo-cyan-accent-light);
+  --primary-text: var(--palette-indigo-cyan-accent-light);
   --heading-bar: var(--palette-indigo-cyan-accent-light);
   --rule: var(--palette-indigo-cyan-strong-border);
   --table-highlight-muted-foreground: var(--palette-indigo-cyan-dim);
@@ -1223,6 +1229,7 @@
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
   --link: var(--palette-indigo-rose-accent-light);
+  --primary-text: var(--palette-indigo-rose-accent-light);
   --heading-bar: var(--palette-indigo-rose-accent-light);
   --rule: var(--palette-indigo-rose-strong-border);
   --table-highlight-muted-foreground: var(--palette-indigo-rose-dim);
@@ -1264,6 +1271,7 @@
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
   --link: var(--palette-graphite-periwinkle-accent-light);
+  --primary-text: var(--palette-graphite-periwinkle-accent-light);
   --heading-bar: var(--palette-graphite-periwinkle-accent-light);
   --rule: var(--palette-graphite-periwinkle-strong-border);
   --table-highlight-muted-foreground: var(--palette-graphite-periwinkle-dim);
@@ -1305,6 +1313,7 @@
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
   --link: var(--palette-violet-accent-light);
+  --primary-text: var(--palette-violet-accent-light);
   --heading-bar: var(--palette-violet-accent-light);
   --rule: var(--palette-violet-strong-border);
   --table-highlight-muted-foreground: var(--palette-violet-dim);
@@ -1359,6 +1368,7 @@
   --warning-text: var(--palette-palm-lcd-warning);
   --info-text: var(--palette-palm-lcd-info);
   --link: var(--palette-palm-lcd-link);
+  --primary-text: var(--palette-palm-lcd-accent);
   --heading-bar: var(--palette-palm-lcd-link);
   --rule: var(--palette-palm-lcd-border);
   --heading-band: var(--palette-palm-lcd-band);
