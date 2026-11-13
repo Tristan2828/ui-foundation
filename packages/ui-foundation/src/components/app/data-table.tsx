@@ -127,15 +127,16 @@ declare module '@tanstack/table-core' {
      * The widest the column's content gets, as a CSS length: `'24rem'`
      * unless set, with `clip` (and never over 60% of the table's area, for
      * a phone). Without `clip`, the content wraps at it. The title column
-     * (the first) is cut at it by default, as if `clip` were set.
+     * (the first) is cut at 24rem when neither is set.
      */
     maxWidth?: string
     /**
      * The title column (the table's first, the row's name): wrap at
      * `maxWidth` (`'24rem'` unless set) instead of the default, one line cut
-     * with an ellipsis. For a title worth reading whole in the row. A title
-     * column with `maxWidth: 'none'` has no cap at all (the look before
-     * 4.103).
+     * at 24rem with an ellipsis. For a title worth reading whole in the row.
+     * A title column with `maxWidth: 'none'` has no cap at all (the look
+     * before 4.103); one with its own `clip` or `maxWidth` is cut or wrapped
+     * at it, as any column is.
      */
     wrap?: boolean
     /**
@@ -1522,8 +1523,12 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
         const value = flexRender(cell.column.columnDef.cell, cell.getContext())
         // The title column (the first) is capped at every width (a long
         // discussion topic overran above md): cut to one line by default,
-        // or wrapped with `meta.wrap`; `maxWidth: 'none'` lifts the cap.
-        const isTitle = index === 0 && cell.column.id !== ROW_ACTIONS_COLUMN_ID && meta?.maxWidth !== 'none'
+        // or wrapped with `meta.wrap`; `maxWidth: 'none'` lifts the cap. A
+        // first column with its own `clip` or `maxWidth` keeps their meaning.
+        const isTitle =
+          index === 0 &&
+          cell.column.id !== ROW_ACTIONS_COLUMN_ID &&
+          (meta?.wrap || (!meta?.clip && meta?.maxWidth === undefined))
         const shown = isTitle && meta?.wrap ? (
           <div
             data-slot="data-table-title"
@@ -1538,7 +1543,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
           </ClippedText>
         ) : meta?.clip ? (
           <ClippedText maxWidth={meta.maxWidth ?? DEFAULT_CLIP_WIDTH}>{value}</ClippedText>
-        ) : meta?.maxWidth ? (
+        ) : meta?.maxWidth && meta.maxWidth !== 'none' ? (
           <div className="whitespace-normal break-words" style={{ maxWidth: meta.maxWidth }}>
             {value}
           </div>

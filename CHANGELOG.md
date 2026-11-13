@@ -16,15 +16,16 @@ above md, so a long title (a discussion's topic) overran and pushed the
 other columns off.
 
 - **The title column (DataTable's first) is cut to one line at 24rem**
-  at every width, with an ellipsis: its `meta.maxWidth` if set, and never
-  over 60% of the table's area. A cut title shows whole in a tooltip on
+  at every width, with an ellipsis, never over 60% of the table's area
+  (a first column with its own `meta.clip` or `meta.maxWidth` keeps
+  their meaning: cut, or wrapped, at that width). A cut title shows whole in a tooltip on
   hover and when its link takes focus. The link stays the row's only tab
   stop (a cut cell with no control of its own takes one, as `meta.clip`
   does), and a screen reader reads the whole title. A short title looks
   as before. Below md a pinned first column (`pinFirstColumn`) is cut
   at 45% of the table's area, where it used to wrap.
 - **A column opts out with new optional `meta` (`ColumnMeta`):**
-  `wrap: true` wraps the title at the cap instead, for a title worth
+  `wrap: true` wraps the title at the cap (24rem, or its `maxWidth`) instead, for a title worth
   reading whole in the row (a pinned title on a phone wrapped this way
   before); `maxWidth: 'none'` lifts the cap, the look before.
 - Stories `app/DataTable` TitleColumn and TitleColumnWrap, with axe in

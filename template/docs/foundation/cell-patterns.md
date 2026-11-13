@@ -752,15 +752,15 @@ cell: ({ row }) => (
   work (`getByRole('cell', { name })` reads the link's text); ones that
   opened the form from a row button go through the view's Edit instead.
 - **DataTable caps the title column (4.103).** The first column is the
-  title column: at every width it's cut to one line at 24rem (or its
-  `meta.maxWidth`, and never over 60% of the table's area) with an
-  ellipsis, so a long title (a discussion's topic) can't push the other
+  title column: at every width it's cut to one line at 24rem (never over
+  60% of the table's area) with an ellipsis, so a long title (a discussion's topic) can't push the other
   columns off. A cut title shows whole in a tooltip on hover and when its
   link takes focus; the link stays the row's only tab stop, and a screen
   reader reads it whole. Put the title column first and write no clip of
   your own (`truncate`, `max-w-*`) around it. `meta: { wrap: true }`
   wraps it at the cap instead, for a title worth reading whole in the row;
-  `meta: { maxWidth: 'none' }` lifts the cap.
+  `meta: { maxWidth: 'none' }` lifts the cap. Its own `meta.clip` or
+  `meta.maxWidth` works as on any column (cut, or wrapped, at that width).
 
 ## 17. Quick action on the view
 
