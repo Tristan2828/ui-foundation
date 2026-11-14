@@ -46,9 +46,15 @@ for (const width of [1440, 1920]) {
 test("on another tab the rail is level with that tab's first section", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${HARNESS}app-entityview--facts-rail`)
-  await page.getByRole('tab', { name: /Linked/ }).click()
+  const linked = page.getByRole('tab', { name: /Linked/ })
+  await linked.click()
+  await expect(linked).toHaveAttribute('aria-selected', 'true')
   await expect(rail(page)).toBeVisible()
-  const first = await box(page.getByRole('tabpanel').getByRole('region').first())
+  // Linked's own panel, once it shows: right after the click a bare
+  // tabpanel locator can still find Purpose's, which then hides (no box).
+  const section = page.getByRole('tabpanel', { name: /Linked/ }).getByRole('region').first()
+  await expect(section).toBeVisible()
+  const first = await box(section)
   expect(Math.abs((await box(rail(page))).y - first.y)).toBeLessThan(2)
 })
 
