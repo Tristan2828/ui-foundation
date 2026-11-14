@@ -14,11 +14,18 @@
 // (`width="content"`, the default) instead of running the page's width
 // into empty space, and wraps them inside the page when it's narrow.
 // `width="full"` keeps the box across the page, the look before 4.98.
+//
+// Nothing moves on hover or focus (4.115): an inline <EditableValue> as a
+// stat's value keeps its pencil's room at rest here (KeepPencilRoomContext),
+// as a table cell's does. Its room opening on hover moved the values after
+// it along and wrapped a nearly full row, so the hovered value slid out
+// from under the mouse and a click opened the next one.
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH } from '@/lib/empty-value'
 import type { IconComponent } from './icon-component'
+import { KeepPencilRoomContext } from './keep-pencil-room'
 
 export type KeyStat = {
   label: string
@@ -42,30 +49,32 @@ const isEmpty = (value: ReactNode) => value === null || value === undefined || v
 
 export function KeyStats({ stats, emptyLabel = EMPTY_DASH, width = 'content', className }: KeyStatsProps) {
   return (
-    <dl
-      data-slot="key-stats"
-      data-width={width}
-      className={cn(
-        'flex flex-wrap gap-x-8 gap-y-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground',
-        width === 'content' && 'w-fit max-w-full',
-        className,
-      )}
-    >
-      {stats.map((stat) => {
-        const Icon = stat.icon
-        return (
-          <div key={stat.label} className="flex min-w-0 flex-col gap-0.5">
-            <dt className={cn('type-caption text-muted-foreground', Icon && 'inline-flex items-center gap-1')}>
-              {Icon && <Icon aria-hidden="true" className="size-3.25 shrink-0" />}
-              {stat.label}
-            </dt>
-            <dd className="type-section-title tabular-nums break-words text-foreground">
-              {isEmpty(stat.value) ? <EmptyText text={emptyLabel} className="type-body text-muted-foreground" /> : stat.value}
-            </dd>
-            {stat.hint && <dd className="type-caption text-muted-foreground">{stat.hint}</dd>}
-          </div>
-        )
-      })}
-    </dl>
+    <KeepPencilRoomContext.Provider value>
+      <dl
+        data-slot="key-stats"
+        data-width={width}
+        className={cn(
+          'flex flex-wrap gap-x-8 gap-y-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground',
+          width === 'content' && 'w-fit max-w-full',
+          className,
+        )}
+      >
+        {stats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <div key={stat.label} className="flex min-w-0 flex-col gap-0.5">
+              <dt className={cn('type-caption text-muted-foreground', Icon && 'inline-flex items-center gap-1')}>
+                {Icon && <Icon aria-hidden="true" className="size-3.25 shrink-0" />}
+                {stat.label}
+              </dt>
+              <dd className="type-section-title tabular-nums break-words text-foreground">
+                {isEmpty(stat.value) ? <EmptyText text={emptyLabel} className="type-body text-muted-foreground" /> : stat.value}
+              </dd>
+              {stat.hint && <dd className="type-caption text-muted-foreground">{stat.hint}</dd>}
+            </div>
+          )
+        })}
+      </dl>
+    </KeepPencilRoomContext.Provider>
   )
 }

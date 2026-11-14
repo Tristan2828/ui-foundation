@@ -163,6 +163,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
   // Cards and no tabs: the rail level with the first card (4.108).
   { id: 'app-entityview--facts-rail-no-tabs', mustShow: 'Not booked' },
+  // The status first with its action and hint, badges with icons, an editable strip (4.115).
+  { id: 'app-entityview--facts-rail-status', mustShow: 'Close…' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
@@ -400,6 +402,8 @@ const GLYPH_STORIES: {
   { id: 'app-entityview--facts-rail' },
   // A list fact's kind icons and external-link mark (4.111).
   { id: 'app-factlist--links-box' },
+  // The status's hint mark and the badges' icons in the rail (4.115).
+  { id: 'app-entityview--facts-rail-status' },
   { id: 'app-entityview--details-tab' },
   // Each toast's icon in its tone on the popover surface (4.90), and the
   // offline bar's, an action error's and a job's (the spinner and check).

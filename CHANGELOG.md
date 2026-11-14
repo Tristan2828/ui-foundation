@@ -7,9 +7,9 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.115.0 — A deploy shows on the next launch
+## 4.116.0 — A deploy shows on the next launch
 
-`ui-foundation-backend` and npm package 4.115.0 (no npm package change).
+`ui-foundation-backend` and npm package 4.116.0 (no npm package change).
 `foundation_backend.spa.SPAStaticFiles` now sends `Cache-Control` on
 every file it serves. Until now it sent none, so a browser guessed how
 long to keep each file. Safari on an iPhone could keep an old
@@ -33,7 +33,7 @@ cleared, so a deploy didn't show on the phone.
 - No service worker change was needed: `pwa()`'s `push-sw.js` has no
   fetch handler and caches nothing.
 
-**App step:** bump `ui-foundation-backend==4.115.0` in
+**App step:** bump `ui-foundation-backend==4.116.0` in
 `backend/pyproject.toml` (and the npm package with it, as usual). An app
 whose `app/spa.py` re-exports the package's `SPAStaticFiles` and whose
 `main.py` mounts it (every app since 4.25) needs nothing else. An app
@@ -45,6 +45,53 @@ its own rules (`docs/deploy.md` "Caching and a deploy that doesn't
 show"). A phone that already holds an old `index.html` with a guessed
 lifetime may keep it until that guess runs out, after the first deploy
 with this release; from then on every deploy shows on the next launch.
+
+## 4.115.0 — The record's status tops the facts rail; the strip holds still
+
+npm package and `ui-foundation-backend` 4.115.0 (no backend change).
+Additive: new optional props on `EntityViewFact` and `EditableValue`, and
+new type exports `EntityViewFactAction` and `EntityViewFactBadge`.
+
+**The facts rail** (`EntityView factsRail`, its `facts` sections):
+
+- `recordStatus: true` on a fact draws it first, at the top of the rail,
+  whatever its place in `facts` and its section's among the rail's (and
+  first in Details where the rail folds on a phone). The standard: a
+  record's status is the first fact at the top of the right rail, edited
+  in place there; a status that changes only through an action stays
+  read-only, with the action as a small button under it and a tooltip
+  saying why.
+- `action: { label, icon?, onClick? | render? }`: a small button under the
+  fact's value. `render` is given that button, so an app's own action (one
+  that opens its dialog) can use it as the trigger:
+  `render: (button) => <CloseRecord trigger={button} />`. 44px tall on a
+  touch screen; drawn in the rail and in Details alike.
+- `hint`: a few words on the value (why it can't be edited here), in a
+  tooltip on an info button after it, on hover and keyboard focus, and
+  read with the button by a screen reader. On a touch screen the words
+  are a caption line under the value instead.
+- `badges` items may be `{ label, icon }`: the icon (a component or a
+  node) before the label, in the muted tone. Plain strings still work.
+
+**`KeyStats` no longer moves on hover.** An inline `EditableValue` took
+its pencil's 28px only on hover or focus (4.102), so in the strip's
+wrapping row the values after it moved along and a nearly full row
+wrapped: the hovered value slid out from under the mouse, and on a phone
+a click on one value opened the next. Inside a `KeyStats` an inline value
+now keeps its pencil's room at rest, as table cells and the title do.
+`keepPencilRoom` is now a public prop of `EditableValue`, for an app's own
+wrapping row of inline values.
+
+`e2e/facts-rail-status.spec.ts` covers the order, the action's dialog, the
+hint by keyboard, hover and touch, the badge icons, axe in both themes, and
+hovers each strip value then clicks where the mouse rests, at 1440 and
+375 (it fails without the fix).
+
+**Upgrading:** nothing required. To follow the status standard, mark the
+status fact `recordStatus: true`; for one changed only by an action, drop
+its `edit` and give it `hint` and `action` (the app's own action through
+`render`). An app that worked around the strip's reflow can remove that.
+
 
 ## 4.114.0 — Mock mode's boot survives a restarted service worker
 

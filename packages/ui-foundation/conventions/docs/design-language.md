@@ -33,11 +33,11 @@
 - [A few equal things](#a-few-equal-things) · lines 1427–1511
 - [An overview page](#an-overview-page) · lines 1513–1576
 - [A record's header and empty values](#a-records-header-and-empty-values) · lines 1577–1628
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1630–1711
-- [Picking at random](#picking-at-random) · lines 1713–1744
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1746–1813
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1815–1840
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1842–1938
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1630–1736
+- [Picking at random](#picking-at-random) · lines 1738–1769
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1771–1838
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1840–1865
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1867–1963
 
 <!-- /index -->
 
@@ -1689,8 +1689,33 @@ its short facts the last tab, Details. A mark goes left of the title.
   bullet otherwise, in the muted colour; a wrapped line starts after the
   mark (a hanging indent), and items have a little room between them.
   Never a bare stack of links.
+- **The record's status** (4.115): a record's status is the first fact at
+  the top of the right rail, edited in place there; a status that changes
+  only through an action stays read-only, with the action as a small
+  button under it and a tooltip saying why. Mark it `recordStatus: true`
+  and EntityView draws it first, whatever its place in `facts` and its
+  section's among the rail's, and first in Details where the rail folds.
+  One per record.
+- **An action under a fact** (`action`, 4.115): a small outline button
+  (`xs`, 44px tall on a touch screen) under the value, its words a verb
+  ("Close…", an ellipsis when it opens a dialog), an icon before them if
+  the app's actions have one. For the status above, and for any read-only
+  fact that one action changes. Never several: more belong in the
+  header's actions.
+- **Why a fact can't be edited here** (`hint`, 4.115): a few words, in a
+  tooltip on a small info button after the value, shown on hover and on
+  keyboard focus, and read with the button by a screen reader. A touch
+  screen has no hover, so there the words are a caption line under the
+  value instead. Nothing that only hover shows.
+- **Icons on badges** (4.115): a `badges` fact's items may each carry an
+  icon (a component or a node) before the label, at the badge's icon size
+  in the muted tone a list's item icons have; items without one stay
+  words alone. The label always stays.
 - **The strip** (`KeyStats`) is as wide as its numbers (`width="content"`,
-  the default since 4.98), not the page's width.
+  the default since 4.98), not the page's width. **Nothing in it moves on
+  hover or focus** (4.115): a value edited in place inline keeps its
+  pencil's room at rest there, as in a table cell, so a click lands on the
+  value under the mouse, wrapped onto two lines on a phone too.
 - **A mark or avatar** (`leading`): left of the title, top-aligned,
   with the title, subtitle and badges beside it at every width. 40 to
   64px (`size-10` to `size-16`): an avatar round (`rounded-full`), a
