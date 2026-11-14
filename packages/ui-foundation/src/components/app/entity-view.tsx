@@ -408,6 +408,11 @@ export type EntityViewProps = {
 // for every section without threading them through each layout.
 const EmptyContext = createContext<{ text: string; fold: boolean }>({ text: EMPTY_DASH, fold: false })
 
+// Whether the facts rail is drawn (4.112): the record's column then fills
+// the room up to the rail (Details' reading-width cap off), and its fields
+// rows keep a compact label (`FIELD_ROW.wide`) so the values get the rest.
+const BesideFactsRailContext = createContext(false)
+
 // The record's trail (#R2): the crumbs above it, then its own title
 // once it has loaded; the list's crumb is the last until then.
 function recordTrail(back: EntityViewProps['back'], title: string | undefined): PageCrumb[] | null {
@@ -508,10 +513,13 @@ function ViewSection({
   railFields = 'beside',
   bare,
   factsRail = false,
+  side = false,
 }: {
   section: EntityViewSection
   inRail?: boolean
   railFields?: EntityViewRailFields
+  /** In a tab's own narrow side column (`TAB_SIDE`): never the wide rows. */
+  side?: boolean
   /** In the facts rail (A1): its rows side by side in the 300px card. */
   factsRail?: boolean
   /**
@@ -523,9 +531,19 @@ function ViewSection({
 }) {
   const headingId = useId()
   const empty = useContext(EmptyContext)
+  const besideFactsRail = useContext(BesideFactsRailContext)
+  const place: FieldPlace = factsRail
+    ? 'facts'
+    : besideFactsRail && !side && bare === undefined
+      ? 'wide'
+      : !inRail
+        ? 'page'
+        : railFields === 'beside'
+          ? 'railBeside'
+          : 'rail'
   const body =
     'fields' in section || 'facts' in section ? (
-      <FieldList fields={'fields' in section ? section.fields : factsAsFields(section.facts)} place={factsRail ? 'facts' : !inRail ? 'page' : railFields === 'beside' ? 'railBeside' : 'rail'} />
+      <FieldList fields={'fields' in section ? section.fields : factsAsFields(section.facts)} place={place} />
     ) : section.edit?.kind === 'list' ? (
       <div className="flex min-w-0 flex-col gap-2 type-body break-words text-foreground">
         {!isEmptyValue(section.content) && section.content}
@@ -753,10 +771,13 @@ const TAB_SIDE = {
 }
 
 function TabBody({ tab, railFields }: { tab: ViewTab; railFields: EntityViewRailFields }) {
+  const besideFactsRail = useContext(BesideFactsRailContext)
   if (tab.details) {
-    // The facts on their own: a reading width, never the whole page.
+    // The facts on their own: a reading width, never the whole page. Beside
+    // the facts rail the column is already that (the page's own cap), so
+    // they fill it up to the rail, level with the tab bar (4.112).
     return (
-      <div data-slot="entity-view-details" className="flex w-full max-w-2xl min-w-0 flex-col gap-6">
+      <div data-slot="entity-view-details" className={cn('flex w-full min-w-0 flex-col gap-6', !besideFactsRail && 'max-w-2xl')}>
         {tab.sections.map((section) => (
           <ViewSection key={section.title} section={section} inRail railFields={railFields} />
         ))}
@@ -770,7 +791,7 @@ function TabBody({ tab, railFields }: { tab: ViewTab; railFields: EntityViewRail
       <div className={TAB_SIDE.main}>{main}</div>
       <aside aria-label={`${tab.name} Facts`} data-slot="entity-view-tab-side" className={TAB_SIDE.side}>
         {tab.side.map((section) => (
-          <ViewSection key={section.title} section={section} inRail railFields={railFields} />
+          <ViewSection key={section.title} section={section} inRail railFields={railFields} side />
         ))}
       </aside>
     </div>
@@ -1169,6 +1190,7 @@ export function EntityView({
   return (
     <EditInPlaceContext.Provider value={store}>
     <EmptyContext.Provider value={{ text: emptyText, fold: emptyFields === 'fold' }}>
+    <BesideFactsRailContext.Provider value={railFacts.length > 0}>
     <div
       ref={setRoot}
       className={
@@ -1265,6 +1287,7 @@ export function EntityView({
         </footer>
       )}
     </div>
+    </BesideFactsRailContext.Provider>
     </EmptyContext.Provider>
     </EditInPlaceContext.Provider>
   )

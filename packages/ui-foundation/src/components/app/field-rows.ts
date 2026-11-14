@@ -23,6 +23,11 @@ export const FIELD_ROW = {
   // 16rem list, the label column a little narrower again.
   facts:
     '@3xs/fields:grid @3xs/fields:grid-cols-[--spacing(24)_minmax(0,1fr)] @3xs/fields:items-baseline @3xs/fields:gap-3 @3xs/fields:py-2.5',
+  // Beside the facts rail (4.112): the cards fill the column up to the
+  // rail, so the label keeps a compact 10rem and the value takes the rest
+  // (a 12rem label, a third of a 36rem card, wrapped most values onto two
+  // lines). Stacked below `sm` or a 24rem list, as on the page.
+  wide: 'sm:@sm/fields:grid sm:@sm/fields:grid-cols-[--spacing(40)_minmax(0,1fr)] sm:@sm/fields:items-baseline sm:@sm/fields:gap-6',
 }
 
 /** A row's own spacing, before its place's grid. */

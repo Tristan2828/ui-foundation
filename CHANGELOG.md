@@ -41,6 +41,31 @@ up on the phone. A phone e2e spec that found a bar item or sheet tile by
 its exact name (`{ name: 'News', exact: true }`) now needs the count in
 it ("News, 7 new"), or a non-exact match.
 
+## 4.112.0 — Beside the facts rail, the cards fill the column
+
+npm package and `ui-foundation-backend` 4.112.0 (no backend change). A
+look change only: no prop, export or synced file an app relies on
+changes.
+
+- **The record's cards reach the rail.** With `factsRail` drawn (a
+  laptop's page), the Details tab kept its 42rem reading width, so its
+  cards stopped well short of the rail while the tab bar above them ran
+  up to it. Now the open tab's cards fill the column up to the rail's
+  gap, the same width as the tab bar. The page as a whole keeps its cap
+  (the 56rem column plus the 300px rail), so long text never runs wider
+  than the column already allowed.
+- **A compact label column beside the rail.** Fields rows in that column
+  (Details' cards, and cards before the tabs) give the label a fixed
+  10rem instead of up to 12rem of a narrower card, so values that wrapped
+  onto two lines read on one. Below `sm`, or in a card under 24rem, the
+  label sits above its value as before.
+- **Unchanged:** a record without `factsRail`, or where the rail folds
+  back into Details (a phone, a narrow dialog), and the `rail` and
+  `column` layouts. A tab's own side column of facts keeps its narrow
+  rows.
+
+**App steps:** none.
+
 ## 4.111.0 — The open tab plainly marked, and fact lists
 
 npm package and `ui-foundation-backend` 4.111.0 (no backend change).
