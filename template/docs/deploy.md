@@ -142,7 +142,7 @@ the email, never the address.
 
 ## Caching and a deploy that doesn't show
 
-The SPA mount (`foundation_backend.spa.SPAStaticFiles`, 4.114) tells
+The SPA mount (`foundation_backend.spa.SPAStaticFiles`, 4.115) tells
 browsers how long to keep each file, so a deploy shows on the app's next
 launch, a phone's Home Screen app included:
 
@@ -168,7 +168,7 @@ the old `index.html` from the edge however the app answers. It may cache
 `/` from outside (`curl -sI https://<your-app>/`): `cache-control:
 no-cache` should be there, and an `age` header or `cf-cache-status: HIT`
 on `/` means the edge is caching the page. A device that kept an old
-`index.html` from before 4.114 (no header, so a guessed lifetime) catches
+`index.html` from before 4.115 (no header, so a guessed lifetime) catches
 up once that guess runs out; clearing the site's data fixes it at once.
 
 ## Behind a sign-in proxy

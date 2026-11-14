@@ -7,9 +7,9 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.114.0 — A deploy shows on the next launch
+## 4.115.0 — A deploy shows on the next launch
 
-`ui-foundation-backend` and npm package 4.114.0 (no npm package change).
+`ui-foundation-backend` and npm package 4.115.0 (no npm package change).
 `foundation_backend.spa.SPAStaticFiles` now sends `Cache-Control` on
 every file it serves. Until now it sent none, so a browser guessed how
 long to keep each file. Safari on an iPhone could keep an old
@@ -33,7 +33,7 @@ cleared, so a deploy didn't show on the phone.
 - No service worker change was needed: `pwa()`'s `push-sw.js` has no
   fetch handler and caches nothing.
 
-**App step:** bump `ui-foundation-backend==4.114.0` in
+**App step:** bump `ui-foundation-backend==4.115.0` in
 `backend/pyproject.toml` (and the npm package with it, as usual). An app
 whose `app/spa.py` re-exports the package's `SPAStaticFiles` and whose
 `main.py` mounts it (every app since 4.25) needs nothing else. An app
@@ -45,6 +45,51 @@ its own rules (`docs/deploy.md` "Caching and a deploy that doesn't
 show"). A phone that already holds an old `index.html` with a guessed
 lifetime may keep it until that guess runs out, after the first deploy
 with this release; from then on every deploy shows on the next launch.
+
+## 4.114.0 — Mock mode's boot survives a restarted service worker
+
+npm package and `ui-foundation-backend` 4.114.0 (no backend change).
+Additive: a new export, `startMockWorker` (and `MOCK_PROBE_PATH`), from
+`@tristan2828/ui-foundation/mocks`.
+
+In mock mode an app's first requests could go to the network instead of
+the mocks: no `main`, and queries such as `["auth","me"]` with undefined
+data, seen as flaky accessibility runs on navigation pages. MSW's service
+worker mocks only for the pages in an in-memory list, which a page joins
+during `worker.start()`. A worker the browser stops and starts again
+(under load, at any time) has forgotten the list and passes every request
+through.
+
+`startMockWorker(worker, options?)` is the whole boot: `worker.start()`
+(unhandled requests bypassed unless `options` say otherwise), a bounded
+wait for the page to be controlled, then a probe request that only a
+runtime handler answers. Until it comes back mocked the page joins the
+worker's list again (`MOCK_ACTIVATE`), up to 20 tries, with a console
+error if it never does. The probe's handler is then cleared and the worker
+exposed for Playwright as `exposeMswForE2E` did. The template's
+`src/main.tsx` uses it; `e2e/msw-boot.spec.ts` forces the failure by
+holding the first fetch and stopping every service worker over CDP (it
+fails without the probe).
+
+**Upgrading:** in `src/main.tsx`, replace
+
+```ts
+await worker.start({ onUnhandledRequest: 'bypass' })
+const { exposeMswForE2E } = await import('@tristan2828/ui-foundation/mocks')
+exposeMswForE2E(worker)
+```
+
+(and any controller wait of the app's own) with
+
+```ts
+const { startMockWorker } = await import('@tristan2828/ui-foundation/mocks')
+await startMockWorker(worker)
+```
+
+Copying `template/e2e/msw-boot.spec.ts` is optional; its assertion that the
+home page shows "Get Started" is the template's, so use one of the app's
+own.
+
 
 ## 4.113.0 — Nav counts on a phone
 
