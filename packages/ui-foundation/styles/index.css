@@ -59,6 +59,8 @@
     --color-info: var(--info);
     --color-info-foreground: var(--info-foreground);
     --color-info-text: var(--info-text);
+    --color-status-done-text: var(--status-done-text);
+    --color-status-ended-text: var(--status-ended-text);
     --color-link: var(--link);
     --color-primary-text: var(--primary-text);
     --color-card-header: var(--card-header);
@@ -492,6 +494,8 @@
     --success-text: var(--green-800);
     --warning-text: var(--amber-800);
     --info-text: var(--blue-800);
+    --status-done-text: var(--teal-800);
+    --status-ended-text: var(--rose-700);
     --link: var(--blue-700);
     --primary-text: var(--gray-950);
     --highlight-amber: oklch(0.9 0.1 75);

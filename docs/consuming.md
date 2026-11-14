@@ -125,6 +125,43 @@ a list opts in; move one list at a time:
    to stay expects it cleared. A link from another page that names a
    filter (`?status=active`) is the URL's own, as before.
 
+## A date filter a view fills (4.110)
+
+A view whose rule is a date ("Upcoming": from today on; "Overdue": due
+before today) used to be a `rule` the bar couldn't show. Since 4.110 the
+bar has a date filter, `FilterDate`, and the view fills it like any
+other. One list at a time:
+
+1. **Add the date to the filter names**, a single-value filter:
+   `useTableUrlState(['search', 'due'], MULTI, VIEWS, options)`.
+2. **Put the control in the bar**, usually behind Filters, with its chip:
+
+   ```tsx
+   const due = dateFilterText(filters.due)
+   <FilterBar
+     secondary={<FilterDate label="Due" value={filters.due} onValueChange={(value) => setFilter('due', value)} />}
+     active={due ? [{ id: 'due', label: `Due: ${due}`, onRemove: () => setFilter('due', '') }] : []}
+     onClear={() => setFilters({ due: '' })}
+   />
+   ```
+
+   `presets` picks which of Before today, Today and From today it offers;
+   `range={false}` leaves Between dates out.
+3. **The view sets the preset** in `filters`, in place of its `rule`:
+   `{ label: 'Overdue', filters: { due: 'before-today' }, multiFilters: {
+   status: OPEN } }`, `{ label: 'Upcoming', filters: { date: 'from-today' }
+   }`. Pressing it fills the filter and shows "Due: Before today ×"; the
+   reader can change or remove it like any filter, and picking the same
+   preset by hand presses the view.
+4. **The query reads the bounds**: `resolveDateFilter(filters.due)` gives
+   inclusive plain days, `{ from?, to? }`, read against the browser's
+   today when the list loads (`before-today` is `{ to: yesterday }`), or
+   null for no filter. Send them as the API's own range parameters
+   (`due_from`, `due_to`); a mock filters with `dateFilterKeeps(value,
+   day)`. A timestamp column compares its own day against them.
+5. **Specs**: a view's address is now `?due=before-today` where it was
+   `?overdue=true`, and the chip is there while it's on.
+
 ## A record's facts rail (4.106)
 
 Since 4.106 a record's short facts can sit beside its tabs on a laptop

@@ -56,6 +56,15 @@
   --blue-700: oklch(0.52 0.17 255); /* white on it: 5.59 */
   --blue-800: oklch(0.45 0.15 255); /* on white: 7.54 */
   --blue-400: oklch(0.75 0.12 255); /* on near-black: 8.90 */
+  /* The two status kinds that have stopped (4.110, StatusMark's done and
+     ended): text shades only, nothing fills with them. A teal for done,
+     a hue away from success's green, and a soft rose for ended, a hue
+     away from destructive's red. On white / gray-100 / gray-200, and on
+     near-black / gray-950 / gray-900: */
+  --teal-800: oklch(0.45 0.09 190); /* 6.93 / 6.36 / 5.50 */
+  --teal-400: oklch(0.78 0.11 190); /* 10.4 / 9.39 / 7.93 */
+  --rose-700: oklch(0.52 0.13 0); /* 5.91 / 5.42 / 4.69 */
+  --rose-400: oklch(0.76 0.11 5); /* 8.77 / 7.94 / 6.71 */
   /*
    * Categorical slots. For values that differ from each other but are not
    * better or worse than each other — a genre, a team, a category. Tones
@@ -386,6 +395,11 @@
   --palette-success: #66d69a;
   --palette-warning: #e0b152;
   --palette-danger: #df7a72;
+  /* Done (a teal) and ended (a soft rose), the stopped status kinds (4.110).
+     On bg / card / raised, the lowest palette: done 8.86 / 7.86 / 6.80,
+     ended 7.37 / 6.54 / 5.66. */
+  --palette-done: #56c6cf;
+  --palette-ended: #e88aa8;
 
   /*
    * Palm LCD, the one light palette (design-language.md "Palettes"): a
@@ -447,6 +461,8 @@
   --palette-palm-lcd-warning: #4a3500;
   --palette-palm-lcd-danger: #5c2c16;
   --palette-palm-lcd-info: #203b5c;
+  --palette-palm-lcd-done: #14444a; /* 6.77 / 6.16 */
+  --palette-palm-lcd-ended: #5a2340; /* 7.57 / 6.89 */
   --palette-palm-lcd-category-1: oklch(0.532 0.243 264); /* blue */
   --palette-palm-lcd-category-2: oklch(0.299 0.101 38); /* orange */
   --palette-palm-lcd-category-3: oklch(0.392 0.089 160); /* green */
@@ -642,6 +658,10 @@
   --success-text: var(--green-800);
   --warning-text: var(--amber-800);
   --info-text: var(--blue-800);
+  /* The status kinds that have stopped (4.110): done and ended, for
+     StatusMark's icon and word (lib/status-kinds.ts). */
+  --status-done-text: var(--teal-800);
+  --status-ended-text: var(--rose-700);
   /* A link in written text: coloured as well as underlined, so it reads
      as a link at a glance (on white: 5.59). */
   --link: var(--blue-700);
@@ -960,6 +980,8 @@
   --success-text: var(--green-400);
   --warning-text: var(--amber-400);
   --info-text: var(--blue-400);
+  --status-done-text: var(--teal-400);
+  --status-ended-text: var(--rose-400);
   --link: var(--blue-400); /* on near-black: 8.90 */
   --primary-text: var(--primary); /* near-white on near-black */
   /* Highlighted words: deep washes, --foreground on each measures 7 or more. */
@@ -1186,6 +1208,8 @@
   --destructive-text: var(--palette-danger);
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
+  --status-done-text: var(--palette-done);
+  --status-ended-text: var(--palette-ended);
   --link: var(--palette-indigo-cyan-accent-light);
   --primary-text: var(--palette-indigo-cyan-accent-light);
   --heading-bar: var(--palette-indigo-cyan-accent-light);
@@ -1228,6 +1252,8 @@
   --destructive-text: var(--palette-danger);
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
+  --status-done-text: var(--palette-done);
+  --status-ended-text: var(--palette-ended);
   --link: var(--palette-indigo-rose-accent-light);
   --primary-text: var(--palette-indigo-rose-accent-light);
   --heading-bar: var(--palette-indigo-rose-accent-light);
@@ -1270,6 +1296,8 @@
   --destructive-text: var(--palette-danger);
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
+  --status-done-text: var(--palette-done);
+  --status-ended-text: var(--palette-ended);
   --link: var(--palette-graphite-periwinkle-accent-light);
   --primary-text: var(--palette-graphite-periwinkle-accent-light);
   --heading-bar: var(--palette-graphite-periwinkle-accent-light);
@@ -1312,6 +1340,8 @@
   --destructive-text: var(--palette-danger);
   --success-text: var(--palette-success);
   --warning-text: var(--palette-warning);
+  --status-done-text: var(--palette-done);
+  --status-ended-text: var(--palette-ended);
   --link: var(--palette-violet-accent-light);
   --primary-text: var(--palette-violet-accent-light);
   --heading-bar: var(--palette-violet-accent-light);
@@ -1367,6 +1397,8 @@
   --success-text: var(--palette-palm-lcd-success);
   --warning-text: var(--palette-palm-lcd-warning);
   --info-text: var(--palette-palm-lcd-info);
+  --status-done-text: var(--palette-palm-lcd-done);
+  --status-ended-text: var(--palette-palm-lcd-ended);
   --link: var(--palette-palm-lcd-link);
   --primary-text: var(--palette-palm-lcd-accent);
   --heading-bar: var(--palette-palm-lcd-link);

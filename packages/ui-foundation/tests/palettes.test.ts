@@ -124,7 +124,7 @@ describe('the palettes', () => {
       const used = [...block(name).matchAll(/var\((--[\w-]+)\)/g)].map((m) => m[1])
       expect(used.filter((token) => !declared.has(token)), name).toEqual([])
       // And only its own palette's primitives, or the shared status ones.
-      expect(used.filter((token) => token.startsWith('--palette-') && !token.startsWith(`--palette-${name}-`) && !/^--palette-(success|warning|danger)$/.test(token)), name).toEqual([])
+      expect(used.filter((token) => token.startsWith('--palette-') && !token.startsWith(`--palette-${name}-`) && !/^--palette-(success|warning|danger|done|ended)$/.test(token)), name).toEqual([])
     }
   })
 
