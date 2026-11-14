@@ -13,8 +13,10 @@ import { DateField } from './date-field'
 import { inPlace } from './edit-in-place-presets'
 import { EntityView } from './entity-view'
 import { FormDialog } from './form-dialog'
+import { MultiChoice } from './multi-choice'
 import { MultiPick } from './multi-pick'
 import { MultiReference } from './multi-reference'
+import { OptionSelect } from './option-select'
 import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 
 // The form and in-place controls of the form standard (4.88, F10 to F18),
@@ -39,6 +41,13 @@ import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 //   a row and the fifth on a row of its own; on a phone Side and Coats
 //   stay side by side (both fit), Room and Effort each take a row (too
 //   wide for half of one).
+//
+// - Status selects (4.109): a status of five or more as OptionSelect, each
+//   option's kind icon in its colour on the trigger and in the list, as
+//   ChoiceButtons draws it, on the page and on a card.
+//
+// - Narrow filters (4.109): a 192px MultiChoice filter with a long summary
+//   beside a 192px Input, the two the same height.
 //
 // e2e/form-controls.spec.ts drives these; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
@@ -493,6 +502,74 @@ function StatusChoicesPage() {
   )
 }
 
+// A status of five or more (4.109): OptionSelect, each option's kind icon
+// in its colour, on the trigger and in the list; and one with plain icons.
+const STAGES = [
+  { value: 'idea', label: 'Idea', kind: 'planned' },
+  { value: 'drafting', label: 'Drafting', kind: 'active' },
+  { value: 'stuck', label: 'Stuck', kind: 'attention' },
+  { value: 'shelved', label: 'Shelved', kind: 'paused' },
+  { value: 'sent', label: 'Sent', kind: 'done' },
+  { value: 'dropped', label: 'Dropped', kind: 'ended' },
+] as const
+const PICKUP = [
+  { value: 'shop', label: 'From the Shop', icon: StoreIcon },
+  { value: 'van', label: 'By Van', icon: TruckIcon },
+] as const
+
+function StatusSelectFields({ prefix }: { prefix: string }) {
+  const [stage, setStage] = useState<string | null>('stuck')
+  const [pickup, setPickup] = useState<string | null>('van')
+  return (
+    <FieldGroup>
+      <Field>
+        <FieldLabel htmlFor={`${prefix}-stage`}>Stage</FieldLabel>
+        <OptionSelect id={`${prefix}-stage`} options={STAGES} value={stage} onValueChange={setStage} />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`${prefix}-pickup`}>Pick Up</FieldLabel>
+        <OptionSelect id={`${prefix}-pickup`} options={PICKUP} value={pickup} onValueChange={setPickup} />
+      </Field>
+    </FieldGroup>
+  )
+}
+
+function StatusSelectsPage() {
+  return (
+    <div className="flex max-w-sm flex-col gap-6">
+      <div data-testid="status-selects-page">
+        <StatusSelectFields prefix="page" />
+      </div>
+      <div data-testid="status-selects-card" className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 text-card-foreground">
+        <p className="type-caption text-muted-foreground">Status selects on a card</p>
+        <StatusSelectFields prefix="card" />
+      </div>
+    </div>
+  )
+}
+
+// A list's filters in a row (4.109): a 192px MultiChoice whose summary is
+// long, beside a 192px Input; the two stay one line, the same height.
+const FILTER_SHELVES = ['Hallway bookcase by the stairs', 'Study', 'Attic boxes', 'Kitchen'] as const
+
+function NarrowFilterRow() {
+  const [shelves, setShelves] = useState<string[]>(['Hallway bookcase by the stairs', 'Attic boxes'])
+  return (
+    <div data-testid="narrow-filters" className="flex items-start gap-2">
+      <Input aria-label="Search by title" placeholder="Search by title" className="w-48" />
+      <MultiChoice
+        label="Shelf"
+        options={FILTER_SHELVES}
+        value={shelves}
+        onValueChange={setShelves}
+        placeholder="Any shelf"
+        aria-label="Filter by shelf"
+        className="w-48"
+      />
+    </div>
+  )
+}
+
 const meta: Meta = {
   title: 'app/FormControls',
   parameters: { controls: { disable: true } },
@@ -509,3 +586,7 @@ export const Narrow: StoryObj = { render: () => <NarrowControls /> }
 export const ChoicePairs: StoryObj = { name: 'Choice pairs', render: () => <ChoicePairForm /> }
 
 export const StatusChoices: StoryObj = { name: 'Status choices', render: () => <StatusChoicesPage /> }
+
+export const StatusSelects: StoryObj = { name: 'Status selects', render: () => <StatusSelectsPage /> }
+
+export const NarrowFilters: StoryObj = { name: 'Narrow filters', render: () => <NarrowFilterRow /> }

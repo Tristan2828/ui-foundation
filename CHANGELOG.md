@@ -7,6 +7,54 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.109.0 — A narrow filter keeps its height, and status kinds on OptionSelect
+
+npm package and `ui-foundation-backend` 4.109.0 (no backend change).
+A fix and an additive option: `OptionSelectOption` gains optional `kind`
+and `icon`; nothing is removed or renamed.
+
+- **`MultiChoice` with a summary stays one line.** A toolbar filter with
+  `label` and a pick draws "Status: Active +1" and its text box. The box
+  kept its `min-w-16` (the rule that shrinks it only saw chips), so in a
+  narrow trigger (192px) the box wrapped and the control grew from 36px to
+  55px, taller than the inputs beside it. Now, while the summary shows,
+  the row doesn't wrap, the text box takes no room until it's focused,
+  and a long summary truncates with an ellipsis. Every list filter picks
+  it up.
+- **`OptionSelect` draws status kinds.** Its options take ChoiceButtons'
+  `kind` and `icon` (4.105): `{ value: 'stuck', label: 'Stuck', kind:
+  'attention' }` draws the kind's icon in its colour (`STATUS_KIND_TONES`,
+  as `StatusMark`) before the words, on the trigger and on each item in
+  the list, so a status of five or more reads like one of four drawn as
+  buttons. `icon` overrides the kind's icon; an `icon` with no `kind`
+  stays uncoloured. `inPlace.select` passes them through, so its select
+  look draws them too. A highlighted item takes the list's highlight
+  colour, icon and all. ChoiceButtons and OptionSelect share one icon
+  component, so the two stay the same.
+- Tests: `tests/form-controls.test.tsx` (the trigger's icon, its kind and
+  colour class; none without a kind or for "Not set"; the same class as
+  ChoiceButtons'); `e2e/form-controls.spec.ts` (the new `app/FormControls`
+  "Narrow filters" story: the 192px MultiChoice as tall as the Input
+  beside it, unfocused and focused, its summary cut off; it fails on
+  4.108.0 at 55px against 36px. The "Status selects" story: each kind's
+  icon colour on the trigger and in the open list, and a plain icon in the
+  words' colour); both stories in `fixtures-visual.spec.ts`, axe and
+  token-only colours in light, dark and every palette, and the select's
+  glyphs (closed and its list open) at 3:1 in each.
+- Docs: add-an-entity.md "A status" (synced).
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.109.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.109.0` in `backend/`.
+2. Nothing to change for the filter fix; check a list's toolbar with a
+   multi-choice filter picked stays one line.
+3. Optional: give a status `OptionSelect` (or `inPlace.select`) of five or
+   more options each option's `kind`, from the same status-to-kind map its
+   `StatusMark` and `ChoiceButtons` use. Where its `render` draws a
+   `StatusMark`, drop that `render` (or make it the word alone), or the
+   option shows two icons.
+
 ## 4.108.0 — The facts rail lines up with the body, not the strip
 
 npm package and `ui-foundation-backend` 4.108.0 (no backend change). A

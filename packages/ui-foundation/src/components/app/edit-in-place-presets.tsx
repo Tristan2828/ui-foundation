@@ -151,7 +151,7 @@ export type InPlaceRecurrenceConfig<TRequired extends boolean = boolean> = {
 
 /**
  * One option of a select: its value and its words. `kind` and `icon`
- * (4.105) are ChoiceButtons': drawn by `look: 'buttons'` only.
+ * (4.105) are ChoiceButtons': drawn by both looks (the select's since 4.109).
  */
 export type InPlaceOption<T> = ChoiceButtonsOption<T>
 

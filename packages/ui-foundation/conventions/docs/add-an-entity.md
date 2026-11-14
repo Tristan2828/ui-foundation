@@ -15,18 +15,18 @@
   - Step 8: Add Playwright specs for all three screens · lines 755–832
   - Step 9: Register the nav entry and route names · lines 833–847
   - Step 10: `npm run verify`. · lines 848–850
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1252
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1257
   - [The record view](#the-record-view) · lines 1005–1102
-  - [Forms](#forms) · lines 1104–1169
-  - [Dialogs](#dialogs) · lines 1171–1202
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1204–1252
-- [What not to copy](#what-not-to-copy) · lines 1254–1286
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1288–1305
-- [Deleting](#deleting) · lines 1307–1338
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1340–1361
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1363–1372
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1375–1417
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1419–1455
+  - [Forms](#forms) · lines 1104–1174
+  - [Dialogs](#dialogs) · lines 1176–1207
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1209–1257
+- [What not to copy](#what-not-to-copy) · lines 1259–1291
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1293–1310
+- [Deleting](#deleting) · lines 1312–1343
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1345–1366
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1368–1377
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1380–1422
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1424–1460
 
 <!-- /index -->
 
@@ -1143,6 +1143,11 @@ shape (4.85):
   in its colour before the word, the same as the record's `StatusMark`
   (`icon` overrides the kind's icon; an `icon` with no `kind` stays
   uncoloured). Map the enum to kinds once and use that map for both.
+  A status of five or more is an `OptionSelect` with the same `kind` on
+  each option (4.109): the kind's icon in its colour before the words, on
+  the trigger and on each item in its list (`inPlace.select` passes them
+  through). With `kind`, leave out a `render` that draws its own icon
+  (a `StatusMark`), or the option shows two.
 - **The controls** (4.88): a choice of two to four short options is
   `ChoiceButtons` (`inPlace.choice` in place), five or more an
   `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",

@@ -151,6 +151,10 @@ const COMPOSITE_STORIES = [
   { id: 'app-formcontrols--choice-pairs', mustShow: 'Coats' },
   // A status as a choice, its kinds' icons coloured, one picked in the theme colour (4.105).
   { id: 'app-formcontrols--status-choices', mustShow: 'Status choices on a card' },
+  // The same kinds on OptionSelect, a status of five or more, on the page and a card (4.109).
+  { id: 'app-formcontrols--status-selects', mustShow: 'Status selects on a card' },
+  // A narrow MultiChoice filter's summary, cut off beside an Input (4.109).
+  { id: 'app-formcontrols--narrow-filters', mustShow: 'Shelf:' },
   // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
   { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
@@ -379,6 +383,13 @@ const GLYPH_STORIES: {
   { id: 'app-statusmark--all-kinds' },
   // The same kinds' icons on ChoiceButtons, picked (the primary tint) and not, on the page and a card (4.105).
   { id: 'app-formcontrols--status-choices' },
+  // OptionSelect's kind icons on the trigger, on the page and a card, and in its open list (4.109).
+  { id: 'app-formcontrols--status-selects' },
+  {
+    id: 'app-formcontrols--status-selects',
+    name: 'list open',
+    open: (page) => page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Stage' }).click(),
+  },
   // The facts rail's status icon and external-link mark on its card (4.106).
   { id: 'app-entityview--facts-rail' },
   { id: 'app-entityview--details-tab' },
