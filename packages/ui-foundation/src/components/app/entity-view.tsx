@@ -96,7 +96,7 @@
 // ones behind an "N empty" toggle, still edited in place once opened.
 import { createContext, useContext, useEffect, useId, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { ArrowLeftIcon, ChevronDownIcon, SearchXIcon } from 'lucide-react'
+import { ArrowLeftIcon, ChevronDownIcon, InfoIcon, SearchXIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
@@ -126,7 +126,8 @@ import { FIELD_LABEL, FIELD_ROW, FIELD_ROW_BASE, FIELD_VALUE } from './field-row
 import { PageTrail, type PageCrumb } from './page-trail'
 import { usePageTrail } from './page-trail-context'
 import { entityViewTabSlug } from '@/lib/entity-view-tab'
-import { factsAsFields, useWideParent, type EntityViewFact } from './entity-view-facts'
+import { factsAsFields, statusSectionFirst, useWideParent, type EntityViewFact, type EntityViewFactAction } from './entity-view-facts'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export type EntityViewField = {
   label: string
@@ -442,11 +443,74 @@ const fieldValue = (field: EntityViewField) => (field.value !== undefined ? fiel
 
 type FieldPlace = keyof typeof FIELD_ROW
 
-function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace }) {
+// A row as drawn: a field, or a fact with what only a fact has (4.115).
+type RowField = EntityViewField & { hint?: string; action?: EntityViewFactAction; recordStatus?: boolean }
+
+// A fact's hint (4.115): an info button after the value, its words in a
+// tooltip on hover and on keyboard focus. On a touch screen, where a
+// tooltip has no hover to open it, the words are a line under the value
+// instead (and the button goes). A screen reader reads the words with the
+// value either way: the line is there for it, only visually hidden on a
+// mouse's screen, and it describes the button.
+function FactHint({ label, hint }: { label: string; hint: string }) {
+  const id = useId()
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              data-slot="entity-view-fact-hint"
+              aria-label={`About ${label}`}
+              aria-describedby={id}
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 pointer-coarse:hidden"
+            />
+          }
+        >
+          <InfoIcon aria-hidden="true" className="size-3.5" />
+        </TooltipTrigger>
+        <TooltipContent>{hint}</TooltipContent>
+      </Tooltip>
+      <span id={id} data-slot="entity-view-fact-hint-text" className="sr-only basis-full type-caption text-muted-foreground pointer-coarse:not-sr-only">
+        {hint}
+      </span>
+    </>
+  )
+}
+
+// A fact's action (4.115): a small button under its value, or the app's
+// own action given that button (`render`), so its dialog opens from it.
+function FactAction({ action }: { action: EntityViewFactAction }) {
+  const Icon = action.icon
+  const button = (
+    <Button
+      type="button"
+      variant="outline"
+      size="xs"
+      data-slot="entity-view-fact-action"
+      onClick={action.render ? undefined : action.onClick}
+      className="pointer-coarse:min-h-11"
+    >
+      {Icon && <Icon aria-hidden="true" data-icon="inline-start" />}
+      {action.label}
+    </Button>
+  )
+  return <div className="flex">{action.render ? action.render(button) : button}</div>
+}
+
+function FieldRow({ field, place }: { field: RowField; place: FieldPlace }) {
   const value = fieldValue(field)
   // An editable row is the target as a whole (4.88, F15/F18): the list's
   // row hover, its pencil at the end, a chevron on a phone.
   const editable = Boolean(field.edit)
+  const shown = field.edit ? (
+    <EditableValue label={field.label} edit={field.edit} look="row">
+      <OrEmpty value={value} emptyLabel={field.emptyLabel} />
+    </EditableValue>
+  ) : (
+    <OrEmpty value={value} emptyLabel={field.emptyLabel} />
+  )
   return (
     <div
       className={cn(
@@ -457,14 +521,16 @@ function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace 
       onClick={editable ? onEditRowClick : undefined}
     >
       <dt className={FIELD_LABEL}>{field.label}</dt>
-      <dd className={FIELD_VALUE}>
-        {field.edit ? (
-          <EditableValue label={field.label} edit={field.edit} look="row">
-            <OrEmpty value={value} emptyLabel={field.emptyLabel} />
-          </EditableValue>
+      <dd className={cn(FIELD_VALUE, field.action && 'flex flex-col items-start gap-1.5')} data-record-status={field.recordStatus ? '' : undefined}>
+        {field.hint ? (
+          <span className="inline-flex max-w-full flex-wrap items-center gap-x-1">
+            <span className="min-w-0 max-w-full">{shown}</span>
+            <FactHint label={field.label} hint={field.hint} />
+          </span>
         ) : (
-          <OrEmpty value={value} emptyLabel={field.emptyLabel} />
+          shown
         )}
+        {field.action && <FactAction action={field.action} />}
       </dd>
     </div>
   )
@@ -475,7 +541,7 @@ function FieldRow({ field, place }: { field: EntityViewField; place: FieldPlace 
 // places (the card's order kept) and then reads "Hide empty". Whether a
 // field is empty is read on every render, so one filled elsewhere joins
 // the card at once.
-function FieldList({ fields, place }: { fields: EntityViewField[]; place: FieldPlace }) {
+function FieldList({ fields, place }: { fields: RowField[]; place: FieldPlace }) {
   const empty = useContext(EmptyContext)
   const [open, setOpen] = useState(false)
   const listId = useId()
@@ -991,7 +1057,7 @@ export function EntityView({
   notice,
   strip,
   cardStrip = false,
-  sections,
+  sections: givenSections,
   footer,
   layout = 'tabs',
   detailsTab = 'Details',
@@ -1011,6 +1077,8 @@ export function EntityView({
   onRetry,
   back,
 }: EntityViewProps) {
+  // The record's status first among the sections in its place (4.115).
+  const sections = statusSectionFirst(givenSections)
   // Editing in place: one store per view, and the leave-page prompt only
   // while a field is open (or one is always editable).
   const [store] = useState(() => new EditInPlaceStore())

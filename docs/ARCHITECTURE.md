@@ -174,7 +174,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   never fall (a 30th of February) is refused before either walks.
   `RecurrenceField` reads a phrase as it's typed
   (`lib/recurrence-phrase.ts`); the `send-reminders` job follows a row's
-  `recurrence` occurrence by occurrence (`recurrence.step`). WKST (4.114)
+  `recurrence` occurrence by occurrence (`recurrence.step`). WKST (4.119)
   is passed to both libraries (Monday when absent, set explicitly, since
   dateutil's own default follows `calendar.firstweekday()`); a second
   fixture (`recurrence-shapes.json`) pins 174 rule shapes' days as they

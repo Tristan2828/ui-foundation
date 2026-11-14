@@ -107,7 +107,14 @@ export {
   type EntityViewRailFields,
   type EntityViewSection,
 } from '@/components/app/entity-view'
-export { type EntityViewFact, type EntityViewFactListItem, type EntityViewFactValue } from '@/components/app/entity-view-facts'
+export {
+  type EntityViewFact,
+  type EntityViewFactAction,
+  type EntityViewFactBadge,
+  type EntityViewFactListItem,
+  type EntityViewFactRatingLook,
+  type EntityViewFactValue,
+} from '@/components/app/entity-view-facts'
 export { entityViewTabSlug } from '@/lib/entity-view-tab'
 export { usePrinting } from '@/components/app/print-context'
 export {
@@ -237,6 +244,7 @@ export {
   type ListHeaderAction,
   type ListHeaderLink,
   type ListHeaderProps,
+  type ListHeaderSecondaryAction,
   type ListHeaderSibling,
 } from '@/components/app/list-header'
 export { Timeline, type TimelineItem, type TimelineProps } from '@/components/app/timeline'
@@ -269,6 +277,7 @@ export {
 } from '@/components/app/multi-line-chart'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
+export { RatingScore, type RatingScoreGlyph, type RatingScoreProps } from '@/components/app/rating-score'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
 export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'

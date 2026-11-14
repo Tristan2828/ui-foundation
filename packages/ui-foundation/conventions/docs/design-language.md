@@ -29,15 +29,15 @@
 - [A list as a board](#a-list-as-a-board) · lines 1246–1297
 - [A list as cards](#a-list-as-cards) · lines 1299–1345
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1347–1376
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1378–1425
-- [A few equal things](#a-few-equal-things) · lines 1427–1511
-- [An overview page](#an-overview-page) · lines 1513–1576
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1577–1628
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1630–1711
-- [Picking at random](#picking-at-random) · lines 1713–1744
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1746–1813
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1815–1840
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1842–1938
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1378–1430
+- [A few equal things](#a-few-equal-things) · lines 1432–1516
+- [An overview page](#an-overview-page) · lines 1518–1581
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1582–1633
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1635–1750
+- [Picking at random](#picking-at-random) · lines 1752–1783
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1785–1852
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1854–1879
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1881–1977
 
 <!-- /index -->
 
@@ -1397,7 +1397,12 @@ into a table, a record or an overview.
   framed DataTable's `pageHeader` (4.106, C3) it's as wide as the
   table, so ⋯ and New end on the card's right edge. The menu is as
   wide as its longest item and never wraps one (4.105), as is a row's ⋯
-  menu.
+  menu. **One more button beside New** (`secondaryAction`, 4.117) for
+  the list's second most common action ("Refresh Now", "Add from
+  Catalog"): `{ label, icon?, onClick | to, disabled? }`, an outline
+  button just before New, which stays the one filled button. Only one:
+  anything else is in ⋯. On a phone it folds into ⋯ as the menu's first
+  item (⋯ shows there for it alone if nothing else is in the menu).
 - **`Timeline`: a record's dated history.** `items` newest first
   (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
   column on the left, a dot and a thin line, the entry on the right with
@@ -1689,8 +1694,42 @@ its short facts the last tab, Details. A mark goes left of the title.
   bullet otherwise, in the muted colour; a wrapped line starts after the
   mark (a hanging indent), and items have a little room between them.
   Never a bare stack of links.
+- **The record's status** (4.115): a record's status is the first fact at
+  the top of the right rail, edited in place there; a status that changes
+  only through an action stays read-only, with the action as a small
+  button under it and a tooltip saying why. Mark it `recordStatus: true`
+  and EntityView draws it first, whatever its place in `facts` and its
+  section's among the rail's, and first in Details where the rail folds.
+  One per record.
+- **An action under a fact** (`action`, 4.115): a small outline button
+  (`xs`, 44px tall on a touch screen) under the value, its words a verb
+  ("Close…", an ellipsis when it opens a dialog), an icon before them if
+  the app's actions have one. For the status above, and for any read-only
+  fact that one action changes. Never several: more belong in the
+  header's actions.
+- **Why a fact can't be edited here** (`hint`, 4.115): a few words, in a
+  tooltip on a small info button after the value, shown on hover and on
+  keyboard focus, and read with the button by a screen reader. A touch
+  screen has no hover, so there the words are a caption line under the
+  value instead. Nothing that only hover shows.
+- **A rating** (`kind: 'rating'`, 4.117) is drawn as the list's cells
+  draw it: a score out of `max` (5) as stars (`RatingScore`, the
+  default) or hearts (`look: 'hearts'`), a quality level as the step bar
+  (`look: 'bar'`, `StepBar`, with its `word`). Never "4 of 5" as text:
+  that's what a screen reader hears, one image named in words. The
+  glyphs are a fixed size, so the value never moves on hover, and it's
+  drawn the same in Details on a phone. An empty one reads its
+  `emptyLabel` ("Not rated"), not a row of empty stars. Edited in place
+  like any fact (`edit`), usually `inPlace.select` over the scores.
+- **Icons on badges** (4.115): a `badges` fact's items may each carry an
+  icon (a component or a node) before the label, at the badge's icon size
+  in the muted tone a list's item icons have; items without one stay
+  words alone. The label always stays.
 - **The strip** (`KeyStats`) is as wide as its numbers (`width="content"`,
-  the default since 4.98), not the page's width.
+  the default since 4.98), not the page's width. **Nothing in it moves on
+  hover or focus** (4.115): a value edited in place inline keeps its
+  pencil's room at rest there, as in a table cell, so a click lands on the
+  value under the mouse, wrapped onto two lines on a phone too.
 - **A mark or avatar** (`leading`): left of the title, top-aligned,
   with the title, subtitle and badges beside it at every width. 40 to
   64px (`size-10` to `size-16`): an avatar round (`rounded-full`), a

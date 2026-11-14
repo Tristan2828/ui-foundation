@@ -163,6 +163,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
   // Cards and no tabs: the rail level with the first card (4.108).
   { id: 'app-entityview--facts-rail-no-tabs', mustShow: 'Not booked' },
+  // The status first with its action and hint, badges with icons, an editable strip (4.115).
+  { id: 'app-entityview--facts-rail-status', mustShow: 'Close…' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
@@ -240,7 +242,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-recurrencefield--in-form', mustShow: 'Save Chore' },
   { id: 'app-recurrencefield--edit-in-place', mustShow: 'Every 2nd Tue at 9:00 AM' },
   { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
-  // With no times and weeks from Sunday (4.114): dates only, WKST=SU's rules.
+  // With no times and weeks from Sunday (4.119): dates only, WKST=SU's rules.
   { id: 'app-recurrencefield--dates-only', mustShow: 'Sun, Nov 15' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
@@ -402,6 +404,8 @@ const GLYPH_STORIES: {
   { id: 'app-entityview--facts-rail' },
   // A list fact's kind icons and external-link mark (4.111).
   { id: 'app-factlist--links-box' },
+  // The status's hint mark and the badges' icons in the rail (4.115).
+  { id: 'app-entityview--facts-rail-status' },
   { id: 'app-entityview--details-tab' },
   // Each toast's icon in its tone on the popover surface (4.90), and the
   // offline bar's, an action error's and a job's (the spinner and check).

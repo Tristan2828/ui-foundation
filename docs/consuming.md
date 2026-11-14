@@ -486,7 +486,8 @@ branch, with the app's `verify` green before and after.
      `@import "@tristan2828/ui-foundation/styles.css";`, plus the app's own
      rules after them
    - `src/main.tsx`: `<FoundationProviders mockMode={IS_MOCK_MODE}>`, and
-     `exposeMswForE2E(worker)` from `@tristan2828/ui-foundation/mocks`.
+     `await startMockWorker(worker)` from `@tristan2828/ui-foundation/mocks`
+     in place of `worker.start()` and `exposeMswForE2E(worker)`.
      Keep the *literal* `import.meta.env.VITE_API === 'real'` check around
      the MSW import, or `build:real` still bundles MSW
    - `src/mocks/`: spread `authHandlers` into the handler list and call

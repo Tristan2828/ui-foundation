@@ -17,6 +17,12 @@
 // page's own peers, so they aren't in ⋯, which keeps only what's left
 // (Show deleted). On a phone the switch takes its own line under the
 // title and scrolls sideways if it must.
+//
+// `secondaryAction` (4.117) is one more button, beside New and before it,
+// for a list's second most common action ("Refresh Now", "Add from
+// Catalog"): an outline button, so New stays the primary. On a phone it
+// folds into ⋯, the menu's first item, so the row keeps the title, ⋯ and
+// New.
 import { EllipsisIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 import { Link, NavLink, type To } from 'react-router'
 import { cn } from 'cn'
@@ -34,6 +40,14 @@ import {
 
 export type ListHeaderLink = { label: string; to: To; icon?: IconComponent }
 export type ListHeaderAction = { label: string; onSelect: () => void; icon?: IconComponent }
+/** The one button beside New (4.117): a link to a page, or a function. */
+export type ListHeaderSecondaryAction = {
+  label: string
+  /** Drawn before the words, in the button and in ⋯. */
+  icon?: IconComponent
+  /** Can't be used now (a refresh in flight): the button and its menu item are disabled. */
+  disabled?: boolean
+} & ({ to: To; onClick?: never } | { onClick: () => void; to?: never })
 /** One list in the `siblings` switch. */
 export type ListHeaderSibling = {
   label: string
@@ -57,6 +71,12 @@ export type ListHeaderProps = {
   links?: readonly ListHeaderLink[]
   /** The New button: a link to the new-record page, or a function that opens its dialog. */
   newAction?: { label: string; to: To; onClick?: never } | { label: string; onClick: () => void; to?: never }
+  /**
+   * One more button beside New (4.117), for the list's second most common
+   * action ("Refresh Now", "Add from Catalog"). An outline button before
+   * New, which stays the primary. On a phone it's the first item in ⋯.
+   */
+  secondaryAction?: ListHeaderSecondaryAction
   /** The page's other actions (Export, Import), in ⋯ after the folded links. */
   more?: readonly ListHeaderAction[]
   /**
@@ -128,6 +148,7 @@ export function ListHeader({
   count,
   links = [],
   newAction,
+  secondaryAction,
   more = [],
   deleted,
   siblings = [],
@@ -137,7 +158,11 @@ export function ListHeader({
   // One link is a button of its own; two or more go in the menu.
   const outLink = links.length === 1 ? links[0] : undefined
   const menuLinks = links.length > 1 ? links : []
-  const hasMenu = menuLinks.length > 0 || more.length > 0 || deleted !== undefined
+  const hasOwnMenu = menuLinks.length > 0 || more.length > 0 || deleted !== undefined
+  // The secondary action folds into ⋯ on a phone, so ⋯ is there on a
+  // phone even when nothing else is in it (and only there).
+  const hasMenu = hasOwnMenu || secondaryAction !== undefined
+  const SecondaryIcon = secondaryAction?.icon
   return (
     <div data-slot="list-header" className={cn('flex flex-col', className)}>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -161,7 +186,15 @@ export function ListHeader({
           {hasMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={<Button size="icon-sm" variant="outline" aria-label={`More for ${title}`} data-slot="list-header-more" />}
+                render={
+                  <Button
+                    size="icon-sm"
+                    variant="outline"
+                    aria-label={`More for ${title}`}
+                    data-slot="list-header-more"
+                    className={hasOwnMenu ? undefined : 'md:hidden'}
+                  />
+                }
               >
                 <EllipsisIcon aria-hidden="true" />
               </DropdownMenuTrigger>
@@ -170,6 +203,21 @@ export function ListHeader({
                   small icon, so the menu's default width (the trigger's)
                   is too narrow. */}
               <DropdownMenuContent align="end" className="w-max max-w-(--available-width) whitespace-nowrap">
+                {secondaryAction && (
+                  <>
+                    <DropdownMenuItem
+                      data-slot="list-header-secondary-item"
+                      className="md:hidden"
+                      disabled={secondaryAction.disabled}
+                      render={secondaryAction.to !== undefined ? <Link to={secondaryAction.to} /> : undefined}
+                      onClick={secondaryAction.onClick}
+                    >
+                      {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
+                      {secondaryAction.label}
+                    </DropdownMenuItem>
+                    {hasOwnMenu && <DropdownMenuSeparator className="md:hidden" />}
+                  </>
+                )}
                 {menuLinks.map((link) => (
                   <DropdownMenuItem key={link.label} render={<Link to={link.to} />}>
                     {link.icon && <link.icon aria-hidden="true" />}
@@ -192,6 +240,32 @@ export function ListHeader({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          {secondaryAction &&
+            (secondaryAction.to !== undefined && !secondaryAction.disabled ? (
+              <Button
+                size="sm"
+                variant="outline"
+                data-slot="list-header-secondary"
+                className="max-md:hidden"
+                nativeButton={false}
+                render={<Link to={secondaryAction.to} />}
+              >
+                {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
+                {secondaryAction.label}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                data-slot="list-header-secondary"
+                className="max-md:hidden"
+                disabled={secondaryAction.disabled}
+                onClick={secondaryAction.onClick}
+              >
+                {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
+                {secondaryAction.label}
+              </Button>
+            ))}
           {newAction &&
             (newAction.to !== undefined ? (
               <Button size="sm" nativeButton={false} render={<Link to={newAction.to} />}>

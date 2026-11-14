@@ -7,9 +7,9 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.114.0 — Repeats without times, and the day weeks start on (WKST)
+## 4.119.0 — Repeats without times, and the day weeks start on (WKST)
 
-npm package and `ui-foundation-backend` 4.114.0. Additive: new optional
+npm package and `ui-foundation-backend` 4.119.0. Additive: new optional
 props and options, new exports, and one more rule part both sides
 accept. Every rule an app stores today, and every screen that doesn't
 pass the new props, behaves exactly as before.
@@ -63,7 +63,7 @@ pass the new props, behaves exactly as before.
   times are its own), add-an-entity.md (a `recurrence` field),
   entity-plan-template.md, cell-patterns.md 27.
 
-**App steps:** bump to `^4.114.0` (and `ui-foundation-backend==4.114.0`)
+**App steps:** bump to `^4.119.0` (and `ui-foundation-backend==4.119.0`)
 and run `npx ui-foundation sync` (the docs change). Nothing else is
 needed; nothing changes until an app opts in:
 
@@ -81,6 +81,179 @@ needed; nothing changes until an app opts in:
   already stored without WKST keep counting weeks from Monday; to count
   an existing every-N-weeks rule from Sunday, append `;WKST=SU` to it in
   a migration of the app's own (it can move that rule's days).
+
+## 4.118.0 — A deploy shows on the next launch
+
+`ui-foundation-backend` and npm package 4.118.0 (no npm package change).
+`foundation_backend.spa.SPAStaticFiles` now sends `Cache-Control` on
+every file it serves. Until now it sent none, so a browser guessed how
+long to keep each file. Safari on an iPhone could keep an old
+`index.html`, naming the old build's assets, until the site's data was
+cleared, so a deploy didn't show on the phone.
+
+- **`index.html` is `no-cache`**, also when it answers a client route
+  (`/widgets/3`, `/login`). The browser keeps it but asks the server
+  before every use; an unchanged page is a 304 by ETag, so a launch costs
+  one small request.
+- **Vite's hashed files under `/assets/` are `public, max-age=31536000,
+  immutable`.** Their names change whenever their content does, so the
+  browser never asks again.
+- **Every other file is `no-cache`**: `manifest.webmanifest`,
+  `push-sw.js`, the icons, `favicon.svg`, `build-info.json`, anything in
+  `public/`. Their names don't change between builds.
+- **Never cached as immutable:** a missing file (its 404 has no
+  `Cache-Control`, under `/assets/` too) and `index.html` answering a
+  path under `/assets/`. API routes and anything else not served by the
+  SPA mount are untouched.
+- No service worker change was needed: `pwa()`'s `push-sw.js` has no
+  fetch handler and caches nothing.
+
+**App step:** bump `ui-foundation-backend==4.118.0` in
+`backend/pyproject.toml` (and the npm package with it, as usual). An app
+whose `app/spa.py` re-exports the package's `SPAStaticFiles` and whose
+`main.py` mounts it (every app since 4.25) needs nothing else. An app
+that changed Vite's `build.assetsDir` gets `no-cache` for its hashed
+files too (safe, just not kept for a year). If a CDN or proxy sits in
+front (Cloudflare, say), make sure it respects the origin's
+`Cache-Control` for `/` and the root files rather than caching HTML on
+its own rules (`docs/deploy.md` "Caching and a deploy that doesn't
+show"). A phone that already holds an old `index.html` with a guessed
+lifetime may keep it until that guess runs out, after the first deploy
+with this release; from then on every deploy shows on the next launch.
+
+## 4.117.0 — A rating in the facts rail; a second button beside New
+
+npm package and `ui-foundation-backend` 4.117.0 (no backend change).
+Additive: a new fact kind, a new optional `ListHeader` prop, and new
+exports `RatingScore`, `RatingScoreGlyph`,
+`RatingScoreProps`, `EntityViewFactRatingLook` and
+`ListHeaderSecondaryAction`. (4.116.0 is held by another open PR.)
+
+**A rating fact** (`EntityView factsRail`, its `facts` sections):
+`{ label, kind: 'rating', value, max?, look?, word? }` draws a rating the
+way a list's cells do, not as "4 of 5" text: `stars` (the default) or
+`hearts` for a score out of `max` (5), and `bar` for a quality level
+(`StepBar`, with its `word`). It is one image named "4 of 5" ("High, 4 of
+5" with a word); `null` reads its `emptyLabel`. It's edited in place like
+any fact (`edit`, usually `inPlace.select` over the scores), drawn the
+same in Details where the rail folds on a phone, and its glyphs have a
+fixed size, so a hover moves nothing (4.115's rule).
+
+**`RatingScore`**, the score's glyphs for a table cell or a card too
+(cell pattern 9): `max` stars or hearts, the first `value` filled in
+`foreground`, the rest outlined in `muted-foreground` (3:1 in both
+themes).
+
+**`ListHeader secondaryAction`** (and so a framed `DataTable`'s
+`pageHeader`): `{ label, icon?, onClick | to, disabled? }`, one outline
+button just before New, for a list's second most common action ("Refresh
+Now", "Add from Catalog"). New stays the primary. On a phone it folds
+into ⋯ as the menu's first item; with nothing else in the menu, ⋯ shows
+on a phone for it alone.
+
+`e2e/facts-rail-rating.spec.ts` covers each look's glyphs and names, the
+empty state, editing in place, hover at 1440 and 375, the phone's
+Details, axe in both themes and the empty glyph's 3:1;
+`e2e/list-header-secondary.spec.ts` its place beside New, disabled while
+it runs, the fold into ⋯ on a phone, and axe in both themes at both
+widths and with the phone's menu open. Both fail with the feature broken.
+
+**Upgrading:** nothing required. A rating shown as text in the rail can
+become a `rating` fact; an extra action in ⋯ that a list uses all the
+time can become its `secondaryAction`.
+
+
+## 4.115.0 — The record's status tops the facts rail; the strip holds still
+
+npm package and `ui-foundation-backend` 4.115.0 (no backend change).
+Additive: new optional props on `EntityViewFact` and `EditableValue`, and
+new type exports `EntityViewFactAction` and `EntityViewFactBadge`.
+
+**The facts rail** (`EntityView factsRail`, its `facts` sections):
+
+- `recordStatus: true` on a fact draws it first, at the top of the rail,
+  whatever its place in `facts` and its section's among the rail's (and
+  first in Details where the rail folds on a phone). The standard: a
+  record's status is the first fact at the top of the right rail, edited
+  in place there; a status that changes only through an action stays
+  read-only, with the action as a small button under it and a tooltip
+  saying why.
+- `action: { label, icon?, onClick? | render? }`: a small button under the
+  fact's value. `render` is given that button, so an app's own action (one
+  that opens its dialog) can use it as the trigger:
+  `render: (button) => <CloseRecord trigger={button} />`. 44px tall on a
+  touch screen; drawn in the rail and in Details alike.
+- `hint`: a few words on the value (why it can't be edited here), in a
+  tooltip on an info button after it, on hover and keyboard focus, and
+  read with the button by a screen reader. On a touch screen the words
+  are a caption line under the value instead.
+- `badges` items may be `{ label, icon }`: the icon (a component or a
+  node) before the label, in the muted tone. Plain strings still work.
+
+**`KeyStats` no longer moves on hover.** An inline `EditableValue` took
+its pencil's 28px only on hover or focus (4.102), so in the strip's
+wrapping row the values after it moved along and a nearly full row
+wrapped: the hovered value slid out from under the mouse, and on a phone
+a click on one value opened the next. Inside a `KeyStats` an inline value
+now keeps its pencil's room at rest, as table cells and the title do.
+`keepPencilRoom` is now a public prop of `EditableValue`, for an app's own
+wrapping row of inline values.
+
+`e2e/facts-rail-status.spec.ts` covers the order, the action's dialog, the
+hint by keyboard, hover and touch, the badge icons, axe in both themes, and
+hovers each strip value then clicks where the mouse rests, at 1440 and
+375 (it fails without the fix).
+
+**Upgrading:** nothing required. To follow the status standard, mark the
+status fact `recordStatus: true`; for one changed only by an action, drop
+its `edit` and give it `hint` and `action` (the app's own action through
+`render`). An app that worked around the strip's reflow can remove that.
+
+
+## 4.114.0 — Mock mode's boot survives a restarted service worker
+
+npm package and `ui-foundation-backend` 4.114.0 (no backend change).
+Additive: a new export, `startMockWorker` (and `MOCK_PROBE_PATH`), from
+`@tristan2828/ui-foundation/mocks`.
+
+In mock mode an app's first requests could go to the network instead of
+the mocks: no `main`, and queries such as `["auth","me"]` with undefined
+data, seen as flaky accessibility runs on navigation pages. MSW's service
+worker mocks only for the pages in an in-memory list, which a page joins
+during `worker.start()`. A worker the browser stops and starts again
+(under load, at any time) has forgotten the list and passes every request
+through.
+
+`startMockWorker(worker, options?)` is the whole boot: `worker.start()`
+(unhandled requests bypassed unless `options` say otherwise), a bounded
+wait for the page to be controlled, then a probe request that only a
+runtime handler answers. Until it comes back mocked the page joins the
+worker's list again (`MOCK_ACTIVATE`), up to 20 tries, with a console
+error if it never does. The probe's handler is then cleared and the worker
+exposed for Playwright as `exposeMswForE2E` did. The template's
+`src/main.tsx` uses it; `e2e/msw-boot.spec.ts` forces the failure by
+holding the first fetch and stopping every service worker over CDP (it
+fails without the probe).
+
+**Upgrading:** in `src/main.tsx`, replace
+
+```ts
+await worker.start({ onUnhandledRequest: 'bypass' })
+const { exposeMswForE2E } = await import('@tristan2828/ui-foundation/mocks')
+exposeMswForE2E(worker)
+```
+
+(and any controller wait of the app's own) with
+
+```ts
+const { startMockWorker } = await import('@tristan2828/ui-foundation/mocks')
+await startMockWorker(worker)
+```
+
+Copying `template/e2e/msw-boot.spec.ts` is optional; its assertion that the
+home page shows "Get Started" is the template's, so use one of the app's
+own.
+
 
 ## 4.113.0 — Nav counts on a phone
 

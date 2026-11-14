@@ -12,7 +12,7 @@ openapi/foundation.yaml, camelCase on the wire):
   INTERVAL, BYDAY (with an nth for MONTHLY and YEARLY: `2TU`, `-1FR`),
   BYMONTHDAY (1 to 31, -1 the last day), BYMONTH, UNTIL (a date,
   `YYYYMMDD`, the last day it can fall on), COUNT and WKST (the day a
-  week starts on, 4.114; Monday when left out). Nothing else.
+  week starts on, 4.119; Monday when left out). Nothing else.
 - `start`: the first day it can fall on (DTSTART's date).
 - `times`: one or more times of day, `"HH:MM"`, each a separate
   occurrence on every day the rule falls on.
