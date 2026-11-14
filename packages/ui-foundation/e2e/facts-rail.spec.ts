@@ -85,6 +85,57 @@ test("what's in the rail isn't repeated in Details; Details keeps the rest", asy
   await expect(rail(page).getByText(/loading bay/)).toHaveCount(0)
 })
 
+// Beside the rail the record's column fills the room up to it (4.112): the
+// Details cards as wide as the tab bar over them, not a 42rem reading width
+// that left a blank band before the rail, and their labels a compact 10rem,
+// so a value that wrapped at the old width (a 12rem label in a 42rem card)
+// reads on one line.
+for (const width of [1440, 1920]) {
+  test(`Details fills the column up to the rail, its labels compact (${width})`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`${HARNESS}app-entityview--facts-rail&tab=details`)
+    await expect(rail(page)).toBeVisible()
+    const closing = page.getByRole('tabpanel').getByRole('region', { name: 'Closing' })
+    await expect(closing).toBeVisible()
+    const tabsBox = await box(page.getByRole('tablist'))
+    const card = await box(closing)
+    expect(Math.abs(card.x + card.width - (tabsBox.x + tabsBox.width))).toBeLessThan(2)
+    expect(Math.abs(card.x - tabsBox.x)).toBeLessThan(2)
+    expect(card.x + card.width).toBeLessThan((await box(rail(page))).x)
+    const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize))
+    const label = await box(closing.locator('dt').first())
+    expect(label.width).toBeLessThanOrEqual(11 * rem + 0.5)
+    // Beside its value, which takes the rest on one line.
+    const value = closing.locator('dd').first()
+    const valueBox = await box(value)
+    expect(valueBox.x).toBeGreaterThan(label.x + label.width)
+    const lineHeight = await value.evaluate((node) => parseFloat(getComputedStyle(node).lineHeight))
+    expect(valueBox.height).toBeLessThan(lineHeight * 1.5)
+  })
+}
+
+test('without the rail, Details keeps its reading width and its rows', async ({ page }) => {
+  // A record with no facts rail: Details at its 42rem reading width.
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${HARNESS}app-entityview--details-tab`)
+  await page.getByRole('tab', { name: 'Details' }).click()
+  const details = page.locator('[data-slot=entity-view-details]')
+  await expect(details).toBeVisible()
+  const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize))
+  expect((await box(details)).width).toBeLessThanOrEqual(42 * rem + 0.5)
+  // The rail's record on a phone: the rail folds back and Details' rows are
+  // as before, the narrow card's 6-7rem label beside its value (never the
+  // rail's 10rem one).
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto(`${HARNESS}app-entityview--facts-rail&tab=details`)
+  await expect(page.locator('[data-slot=entity-view-facts-rail]')).toHaveCount(0)
+  const closing = page.getByRole('tabpanel').getByRole('region', { name: 'Closing' })
+  await expect(closing).toBeVisible()
+  const label = await box(closing.locator('dt').first())
+  expect(label.width).toBeLessThanOrEqual(7 * rem + 0.5)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)).toBe(false)
+})
+
 test('everything fits the rail: no Details tab', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${HARNESS}app-entityview--facts-rail-only`)
@@ -133,7 +184,7 @@ for (const [theme, query] of [
   ['dark', 'theme=dark'],
   ['graphite-periwinkle', 'theme=dark&palette=graphite-periwinkle'],
 ] as const) {
-  for (const story of ['facts-rail', 'facts-rail-no-tabs']) {
+  for (const story of ['facts-rail', 'facts-rail&tab=details', 'facts-rail-no-tabs']) {
     test(`the rail at desktop width has no axe violations (${story}, ${theme})`, async ({ page }) => {
       await page.setViewportSize({ width: 1440, height: 900 })
       await page.goto(`${HARNESS}app-entityview--${story}&${query}`)
