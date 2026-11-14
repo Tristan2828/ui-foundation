@@ -13,37 +13,37 @@
 - [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 298–310
 - [7. Link as an outline button](#7-link-as-an-outline-button) · lines 312–333
 - [8. Date, relative](#8-date-relative) · lines 335–372
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 374–422
-  - [Two variants the package draws: a step bar and a star](#two-variants-the-package-draws-a-step-bar-and-a-star) · lines 392–422
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 424–474
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 442–474
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 476–516
-- [12. Boolean](#12-boolean) · lines 518–548
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 550–586
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 570–586
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 588–605
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 607–716
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 633–716
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 718–764
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 766–839
-- [18. Editable value](#18-editable-value) · lines 841–1544
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1176–1244
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1246–1282
-  - [A link and its label](#a-link-and-its-label) · lines 1284–1308
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1310–1443
-  - [In a table's rows](#in-a-tables-rows) · lines 1445–1530
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1532–1544
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1546–1612
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1614–1678
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1680–1778
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1780–1809
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1811–1849
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1851–1927
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1929–1952
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2157
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2102–2157
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2159–2195
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2197–2242
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 374–433
+  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 392–433
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 435–485
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 453–485
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 487–527
+- [12. Boolean](#12-boolean) · lines 529–559
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 561–597
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 581–597
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 599–616
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 618–727
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 644–727
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 729–775
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 777–850
+- [18. Editable value](#18-editable-value) · lines 852–1555
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1187–1255
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1257–1293
+  - [A link and its label](#a-link-and-its-label) · lines 1295–1319
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1321–1454
+  - [In a table's rows](#in-a-tables-rows) · lines 1456–1541
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1543–1555
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1557–1623
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1625–1689
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1691–1789
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1791–1820
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1822–1860
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1862–1938
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1940–1963
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1965–2184
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2113–2184
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2186–2222
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2224–2269
 
 <!-- /index -->
 
@@ -389,7 +389,7 @@ own state.
   does not check icon contrast. That's a defensible choice — make it
   deliberately, in a comment, not by accident.
 
-### Two variants the package draws: a step bar and a star
+### Three variants the package draws: a step bar, a star and a score
 
 Both are in the package's fixtures (`patterns/Scales`), every value on
 the page and on a card, measured by axe and the glyph check in both
@@ -418,7 +418,18 @@ themes. Each is one image to a screen reader, named in words.
   <RatingStar value={OWNED[o].value /* 'full' | 'half' | 'empty' */} word={OWNED[o].word} />
   ```
 
-- Both draw in `foreground`. Tone one only as pattern 5 would (a `*-text`
+- **`RatingScore`, a score out of a few** (4.117): `max` stars (the
+  default) or hearts (`glyph="heart"`), the first `value` filled in
+  `foreground`, the rest outlines in `muted-foreground` (which clears 3:1,
+  so an empty glyph is still seen). Named "4 of 5";
+  pass the field in `label` where the column doesn't give it. The facts
+  rail's `rating` fact draws it too.
+
+  ```tsx
+  {row.rating === null ? <Muted>Not rated</Muted> : <RatingScore value={row.rating} glyph="heart" />}
+  ```
+
+- All three draw in `foreground`. Tone one only as pattern 5 would (a `*-text`
   class in `className`), never by band alone.
 
 ## 10. Summary in the cell, detail in a popover
@@ -2145,6 +2156,22 @@ header row ends where the card does:
   ("Table Settings, Grouped by Status") and a dot marks it. Fold All
   stays a button of its own while grouped. On a phone it holds Group By
   alone.
+- **One more button beside New** (`secondaryAction`, 4.117), in the
+  header in or out of the table: a list's second most common action, as
+  an outline button just before New, which stays the primary.
+
+  ```tsx
+  <ListHeader title="Feeds" count={total}
+    secondaryAction={{ label: 'Refresh Now', icon: RefreshCwIcon, onClick: () => refresh.mutate(), disabled: refresh.isPending }}
+    newAction={{ label: 'New Feed', to: '/feeds/new' }} />
+  ```
+
+  One at most: a third action goes in ⋯ (`more`). On a phone it's ⋯'s
+  first item, so the row keeps the title, ⋯ and New; ⋯ shows on a phone
+  for it alone when nothing else is in the menu. The fixtures'
+  `app/ListHeader` Secondary action story, and
+  `e2e/list-header-secondary.spec.ts` (its place, the fold, axe in both
+  themes at both widths).
 - **Siblings** are the page's peers, a switch of links beside the title,
   the current one marked (`aria-current="page"`); they don't go in ⋯,
   which keeps what's left. Two or more; on a phone the switch has its own
