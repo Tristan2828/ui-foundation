@@ -40,10 +40,10 @@
 - [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1811–1849
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1851–1927
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1929–1952
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2129
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2074–2129
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2131–2167
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2169–2214
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1954–2157
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2102–2157
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2159–2195
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2197–2242
 
 <!-- /index -->
 
@@ -2045,6 +2045,34 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   and every filter, primary ones too, is in Filters' bottom sheet, so pass
   `primaryActive` (their chips) and an `onClearAll` that clears them all
   in one `setFilters` call.
+- **A date filter** (4.110) is `FilterDate`: "Any due date" while off,
+  "Due: Before today" on, with the presets Before today, Today and From
+  today (`presets` picks which) and Between dates, a From and a To day
+  beside it. Its value is one string in the URL (`before-today`,
+  `from-today`, `2026-11-01..2026-11-30`, an end left out when open), a
+  single-value filter like any other, so a view sets it in `filters` and
+  the bar shows it: an "Overdue" view is `{ filters: { due: 'before-today' }
+  }`, not a `rule`. The query reads it with `resolveDateFilter(value)`,
+  inclusive plain days (`{ to: yesterday }`, `{ from: today }`), read
+  against today when the list loads; its chip's words are
+  `dateFilterText(value)`. A list filtered in the browser (or a mock) uses
+  `dateFilterKeeps(value, day)`.
+
+  ```tsx
+  const VIEWS = {
+    upcoming: { label: 'Upcoming', filters: { due: 'from-today' } },
+    overdue: { label: 'Overdue', filters: { due: 'before-today' } },
+    all: { label: 'All' },
+  }
+  const { filters, setFilter } = useTableUrlState(['search', 'due'], [], VIEWS)
+  const due = dateFilterText(filters.due)
+  // The query: resolveDateFilter(filters.due) → { from?, to? } → due_from / due_to.
+  <FilterBar
+    secondary={<FilterDate label="Due" value={filters.due} onValueChange={(value) => setFilter('due', value)} />}
+    active={due ? [{ id: 'due', label: `Due: ${due}`, onRemove: () => setFilter('due', '') }] : []}
+    onClear={() => setFilter('due', '')}
+  />
+  ```
 - **The Columns menu** (L5) sits at the end of the toolbar: a tick for
   every column but the first (the name) and the actions, remembered on
   this device under `storageKey` as every column's id in order and the

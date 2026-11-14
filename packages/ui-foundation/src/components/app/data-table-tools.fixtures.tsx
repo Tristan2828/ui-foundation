@@ -9,7 +9,10 @@ import { Button } from '@/components/ui/button'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { DataTable, type DataTableGrouping } from './data-table'
 import type { DataTableRowAction } from './data-table-tools'
+import { dateFilterKeeps, dateFilterText } from '@/lib/date-filter'
+import { formatPlainDate } from '@/lib/plain-date'
 import { FilterBar, FilterSelect } from './filter-bar'
+import { FilterDate } from './filter-date'
 import { ListHeader } from './list-header'
 import { MultiChoice } from './multi-choice'
 import { RelatedTable } from './related-table'
@@ -40,6 +43,11 @@ import { RelatedTable } from './related-table'
 //   table's width: on a short table (three columns) ⋯ and New end on the
 //   card's right edge; on a wide one (every column) they're where the
 //   page ends. e2e/list-header-width.spec.ts.
+// - DateViews: a date filter a view fills (4.110). Upcoming is "due from
+//   today", Overdue "due before today", both in the Due filter behind
+//   Filters, its chip beside them ("Due: Before today"); Between dates
+//   takes a range. Today is fixed at Nov 13, 2026.
+//   e2e/date-filter.spec.ts.
 // The rows are made up.
 
 type State = 'loaded' | 'loading' | 'empty' | 'error'
@@ -326,6 +334,75 @@ function ViewsFillFiltersList() {
   )
 }
 
+// --- a date filter a view fills (4.110) -------------------------------------
+
+// The harness's today, so the presets keep the same rows on any day.
+const FIXTURE_TODAY = '2026-11-13'
+type Chore = { id: number; what: string; due: string }
+const CHORES: Chore[] = [
+  { id: 1, what: 'Repot the fig', due: '2026-11-02' },
+  { id: 2, what: 'Feed the lily', due: '2026-11-12' },
+  { id: 3, what: 'Prune the basil', due: '2026-11-13' },
+  { id: 4, what: 'Mist the fern', due: '2026-11-14' },
+  { id: 5, what: 'Turn the jade', due: '2026-11-20' },
+  { id: 6, what: 'Clean the leaves', due: '2026-12-01' },
+]
+const choreColumns: LegacyColumnDef<Chore, unknown>[] = [
+  { accessorKey: 'what', header: 'Chore', cell: ({ row }) => <span className="font-medium">{row.original.what}</span> },
+  { accessorKey: 'due', header: 'Due', cell: ({ row }) => formatPlainDate(row.original.due) },
+]
+const DATE_FILTERS = ['search', 'due'] as const
+const DATE_VIEWS = {
+  upcoming: { label: 'Upcoming', filters: { due: 'from-today' } },
+  overdue: { label: 'Overdue', filters: { due: 'before-today' } },
+  all: { label: 'All' },
+}
+
+function DateViewsList() {
+  const { filters, setFilter, setFilters, activeView, applyView, sorting, setSorting } = useTableUrlState(DATE_FILTERS, [], DATE_VIEWS)
+  const location = useLocation()
+  const rows = CHORES.filter(
+    (chore) =>
+      (!filters.search || chore.what.toLowerCase().includes(filters.search.toLowerCase())) &&
+      dateFilterKeeps(filters.due, chore.due, FIXTURE_TODAY),
+  )
+  const due = dateFilterText(filters.due)
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <h1 className="type-page-title">Chores</h1>
+      <DataTable
+        columns={choreColumns}
+        opens={{ kind: 'page', to: (chore) => `/plants/${chore.id}` }}
+        views={DATE_VIEWS}
+        activeView={activeView}
+        onViewChange={applyView}
+        toolbar={
+          <FilterBar
+            search={{ value: filters.search, onChange: (value) => setFilter('search', value), placeholder: 'Search chores' }}
+            secondary={<FilterDate label="Due" value={filters.due} onValueChange={(value) => setFilter('due', value)} />}
+            active={due ? [{ id: 'due', label: `Due: ${due}`, onRemove: () => setFilter('due', '') }] : []}
+            onClear={() => setFilters({ due: '' })}
+          />
+        }
+        data={rows}
+        total={rows.length}
+        page={1}
+        pageSize={50}
+        onPageChange={noop}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        isLoading={false}
+        getRowId={(chore) => String(chore.id)}
+        emptyTitle="No chores match your filters"
+        emptyDescription="Try different filters."
+      />
+      <p className="type-caption text-muted-foreground" data-testid="address">
+        Address: {location.search || '(plain)'}
+      </p>
+    </div>
+  )
+}
+
 // --- the header as wide as the table (4.106, C3) --------------------------
 
 const NARROW_COLUMNS = plantColumns.filter((column) => ['name', 'status', 'light'].includes(String((column as { accessorKey?: string }).accessorKey)))
@@ -477,6 +554,10 @@ export const Related: StoryObj = { render: () => <InRouter element={<RelatedList
 export const Framed: StoryObj = { render: () => <InRouter element={<PlantsList framed />} path="/" /> }
 
 export const ViewsFillFilters: StoryObj = { render: () => <InRouter element={<ViewsFillFiltersList />} path="/" /> }
+
+export const DateViews: StoryObj = { render: () => <InRouter element={<DateViewsList />} path="/" /> }
+
+export const DateViewsOverdue: StoryObj = { render: () => <InRouter element={<DateViewsList />} path="/?due=before-today" /> }
 
 export const HeaderAtTableEdge: StoryObj = { name: 'Header at the table edge', render: () => <InRouter element={<HeaderAtTableEdgeList wide={false} />} path="/" /> }
 

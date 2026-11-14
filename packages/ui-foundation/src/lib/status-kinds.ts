@@ -36,12 +36,17 @@ export const STATUS_KIND_LABELS: Record<StatusKind, string> = {
   attention: 'Needs Attention',
 }
 
-/** Each kind's colour, for the icon and the word: *-text tokens and the muted foreground only. */
+/**
+ * Each kind's colour, for the icon and the word: *-text tokens only. Done
+ * is a teal and ended a soft rose (4.110, --status-done-text and
+ * --status-ended-text), so a finished or stopped record no longer reads as
+ * a grey, disabled one.
+ */
 export const STATUS_KIND_TONES: Record<StatusKind, string> = {
   active: 'text-success-text',
   planned: 'text-info-text',
   paused: 'text-warning-text',
-  done: 'text-muted-foreground',
-  ended: 'text-muted-foreground',
+  done: 'text-status-done-text',
+  ended: 'text-status-ended-text',
   attention: 'text-destructive-text',
 }

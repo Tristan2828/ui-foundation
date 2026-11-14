@@ -24,6 +24,7 @@ const PRIMITIVES = [
   'spinner',
   'switch',
   'table',
+  'tabs',
   'toast',
   'toggle',
   'tooltip',
@@ -295,6 +296,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
   // Views that fill the filters (4.105): the default view's statuses in the Status filter.
   { id: 'app-datatable-tools--views-fill-filters', mustShow: 'Needs Water' },
+  // A date filter a view fills (4.110): the Due filter behind Filters, and its chip.
+  { id: 'app-datatable-tools--date-views', mustShow: 'Repot the fig' },
+  { id: 'app-datatable-tools--date-views-overdue', mustShow: 'Due: Before today' },
   // A list's header as wide as its framed table (4.106, C3).
   { id: 'app-datatable-tools--header-at-table-edge', mustShow: 'New Plant' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },

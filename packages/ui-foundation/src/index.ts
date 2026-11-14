@@ -199,6 +199,19 @@ export {
   type FilterSelectOption,
   type FilterSelectProps,
 } from '@/components/app/filter-bar'
+export { FilterDate, type FilterDateProps } from '@/components/app/filter-date'
+export {
+  DATE_FILTER_PRESETS,
+  DATE_FILTER_PRESET_LABELS,
+  dateFilterKeeps,
+  dateFilterText,
+  dateRangeValue,
+  parseDateFilter,
+  resolveDateFilter,
+  type DateFilter,
+  type DateFilterBounds,
+  type DateFilterPreset,
+} from '@/lib/date-filter'
 export {
   SessionStage,
   SessionView,

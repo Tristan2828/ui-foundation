@@ -7,6 +7,97 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.110.0 — Line tabs in the theme colour, done and ended colours, and a date filter a view fills
+
+npm package and `ui-foundation-backend` 4.110.0 (no backend change).
+Additive: new tokens, a new `FilterDate` control and date-filter
+helpers; two looks change for every app (line tabs, done and ended).
+Nothing is removed or renamed.
+
+- **Line tabs open in the theme colour.** `TabsList variant="line"`, a
+  page's sub-navigation (a row of tabs under a small section heading),
+  drew the open tab's underline in the text colour. Now its line is
+  `bg-primary` and its name `--primary-text`, the way `EntityView`'s
+  record tabs (4.105) draw theirs, in both themes and every palette
+  (under graphite-periwinkle: the periwinkle accent line and its light
+  shade for the name); a closed one is `--muted-foreground`, as a
+  record's are. The pill look (`TabsList`'s default) keeps its open tab in
+  `--foreground`; its closed tabs are the text at 75% (shadcn's 60%
+  measured 3.45:1 on Palm LCD's raised surface, found by the new story).
+  Inside the package `EntityView` is the only line tab list, and already
+  drew this; the template has none.
+- **`done` and `ended` have colours of their own.** `STATUS_KIND_TONES`
+  drew both in `text-muted-foreground`, so Done, Cancelled, Retired,
+  Declined and Stopped looked grey, like something disabled. Now done is
+  a teal (`text-status-done-text`), a hue away from active's green, and
+  ended a soft rose (`text-status-ended-text`), a hue away from
+  attention's red. New tokens `--status-done-text` and
+  `--status-ended-text` in light, dark, the four dark palettes and Palm
+  LCD, and in the print override; every value clears 4.5:1 as text on
+  the page, a card and a raised surface (the ratios are beside them in
+  `theme.css`). `StatusMark`, `ChoiceButtons` and `OptionSelect` all pick
+  them up from the one map.
+- **A date filter a view fills: `FilterDate`.** The filter bar had no
+  date control, so a view whose rule is a date ("Upcoming", "Overdue")
+  had nothing to fill. `FilterDate` names itself like `FilterSelect`
+  ("Any due date", "Due: Before today") and offers Before today, Today,
+  From today (`presets` picks which) and Between dates, which shows a
+  From and a To day beside it. Its value is one string in the URL
+  (`before-today`, `today`, `from-today`, `2026-11-01..2026-11-30`, an
+  end left out when open), so it's a plain single-value filter in
+  `useTableUrlState` and a view sets it in `filters`; picking a preset by
+  hand presses the view it equals. New helpers in the package root:
+  `resolveDateFilter(value, today?)` (the inclusive days for the query:
+  `{ to: yesterday }`, `{ from: today }`, `{ from, to }`, or null),
+  `dateFilterText(value)` (its chip's words, "Before today", "Nov 1, 2026
+  – Nov 30, 2026"), `dateFilterKeeps(value, day)` (a mock or a list
+  filtered in the browser), `parseDateFilter`, `dateRangeValue`,
+  `DATE_FILTER_PRESETS`, `DATE_FILTER_PRESET_LABELS`.
+- New harness stories: `ui/Tabs` (the line look under a section heading
+  and the pill look), `app/DataTable tools` "Date Views" and "Date Views
+  Overdue" (a list whose Upcoming and Overdue views fill the Due filter,
+  today fixed at Nov 13, 2026).
+- Tests: `tests/date-filter.test.ts` (parsing, ranges, the presets
+  against today across a month and a year, the chip's words, a view that
+  sets one is on while it holds); `tests/record-standard.test.tsx` (every
+  kind's tone a `*-text` token); `e2e/page-tabs-status.spec.ts` (in light,
+  dark and every palette: the open line tab's name is `--primary-text`
+  and its line `--primary`, the closed ones' line hidden, the pill look's
+  open tab `--foreground`; done and ended are their tokens and differ
+  from muted, success, destructive, warning and info. Putting the line
+  back to `bg-foreground` and done back to muted fails 13 of its 15);
+  `e2e/date-filter.spec.ts` (Overdue fills the filter with its chip and
+  "Filters, 1 active", removing the chip clears it and lets the pill go,
+  Upcoming keeps today on, a shared `?due=before-today` presses Overdue,
+  a preset picked by hand presses its view, Between dates writes
+  `?due=2026-11-14..2026-11-30` and presses none, axe with the panel and
+  range open in light, dark, graphite-periwinkle and Palm LCD);
+  `fixtures-visual.spec.ts` gains `ui-tabs` as a primitive and both date
+  stories as composites (axe and token-only colours in both themes and
+  every palette; the status-mark, choice and select glyphs re-measured at
+  3:1 with the new colours).
+- Docs: design-language.md "Status marks" and "The theme colour as
+  text", cell-patterns.md "A date filter" (synced); consuming.md "A date
+  filter a view fills (4.110)".
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.110.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.110.0` in `backend/`.
+2. Nothing to change for the tabs or the status colours. Look over a page
+   with line tabs (its open tab is now in the theme colour) and a list or
+   record with a done or ended status. A spec that expected the open line
+   tab in `--foreground`, or a done or ended mark in
+   `--muted-foreground`, expects `--primary-text`, or
+   `--status-done-text` and `--status-ended-text`.
+3. For each list whose view is a date (consuming.md "A date filter a
+   view fills (4.110)"): add the date field to the hook's filter names,
+   put `FilterDate` in the bar with its chip, set the view's `filters` to
+   the preset (`{ due: 'before-today' }`) in place of a `rule`, and build
+   the query's bounds with `resolveDateFilter`. Old links with the rule's
+   flag (`?overdue=true`) keep working while the server reads it; drop
+   the flag from the server once no view writes it.
+
 ## 4.109.0 — A narrow filter keeps its height, and status kinds on OptionSelect
 
 npm package and `ui-foundation-backend` 4.109.0 (no backend change).

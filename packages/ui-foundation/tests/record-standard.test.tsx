@@ -113,7 +113,7 @@ describe('StatusMark (5B)', () => {
     expect(STATUS_KINDS).toHaveLength(6)
     expect(new Set(STATUS_KINDS.map((kind) => STATUS_KIND_ICONS[kind])).size).toBe(6)
     for (const kind of STATUS_KINDS) {
-      expect(STATUS_KIND_TONES[kind]).toMatch(/^text-(success-text|info-text|warning-text|muted-foreground|destructive-text)$/)
+      expect(STATUS_KIND_TONES[kind]).toMatch(/^text-(success-text|info-text|warning-text|status-done-text|status-ended-text|destructive-text)$/)
     }
   })
 
