@@ -15,18 +15,18 @@
   - Step 8: Add Playwright specs for all three screens · lines 755–832
   - Step 9: Register the nav entry and route names · lines 833–847
   - Step 10: `npm run verify`. · lines 848–850
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1261
-  - [The record view](#the-record-view) · lines 1005–1106
-  - [Forms](#forms) · lines 1108–1178
-  - [Dialogs](#dialogs) · lines 1180–1211
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1213–1261
-- [What not to copy](#what-not-to-copy) · lines 1263–1295
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1297–1314
-- [Deleting](#deleting) · lines 1316–1347
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1349–1370
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1372–1381
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1384–1426
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1428–1464
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1287
+  - [The record view](#the-record-view) · lines 1005–1132
+  - [Forms](#forms) · lines 1134–1204
+  - [Dialogs](#dialogs) · lines 1206–1237
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1239–1287
+- [What not to copy](#what-not-to-copy) · lines 1289–1321
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1323–1340
+- [Deleting](#deleting) · lines 1342–1373
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1375–1396
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1398–1407
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1410–1452
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1454–1490
 
 <!-- /index -->
 
@@ -1023,7 +1023,9 @@ A record uses the parts it has, in this order:
   notes is an icon of EntityView's own.
 - **Strip**: the record's key numbers and ratings (`strip`, a
   `KeyStats`, as wide as its numbers since 4.98), each edited in place
-  where it's shown.
+  where it's shown. An inline `EditableValue` there keeps its pencil's room
+  at rest (4.115), so nothing moves on hover; an app's own wrapping row of
+  inline values passes `keepPencilRoom` for the same.
 - **Sections** (4.98, no right rail): one column. The label/value facts
   are placed `rail`, which makes them the last tab, Details, on a record
   with tabs, and keeps them in the column on one without; the long text
@@ -1082,6 +1084,30 @@ A record uses the parts it has, in this order:
     nothing isn't drawn. On a phone (or a view under 60rem) the rail's
     sections are back in Details, as rows.
   - `edit` works on a fact as on a field; at rest it's drawn by its kind.
+  - **The status first** (4.115): a record's status is the first fact at
+    the top of the right rail, edited in place there; a status that
+    changes only through an action stays read-only, with the action as a
+    small button under it and a tooltip saying why. Mark it
+    `recordStatus: true` and the view puts it first, wherever it is in
+    `facts`:
+
+    ```tsx
+    { label: 'Status', recordStatus: true, kind: 'status', status: STATUS_KINDS[record.status], word: STATUS_LABELS[record.status],
+      // Editable in place:
+      edit: inPlace.select({ ... }),
+      // Or, changed only by an action (closing records a date and a reason):
+      hint: 'Changes when the record is closed.',
+      action: { label: 'Close…', render: (button) => <CloseRecord record={record} trigger={button} /> } }
+    ```
+
+    `action` is a small button under the value: `onClick`, or `render`,
+    which is given the button so the app's own action (its dialog) opens
+    from it with the same look (`<DialogTrigger render={button} />`).
+    `hint` is an info button after the value, its words in a tooltip on
+    hover and keyboard focus, and a line under the value on a touch
+    screen. Both are drawn in Details too, where the rail folds.
+  - A `badges` item may be `{ label, icon }` (4.115): the icon (a
+    component or a node) before the label, in the muted tone.
 - **A tiny record** (4.98: a few fields and no notes, like a lookup's
   row) opens as a small card: `RecordDialogRoute look="card"`, usually
   with `fullPage={false}`. A 420px dialog (a sheet on a phone), its

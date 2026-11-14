@@ -107,7 +107,13 @@ export {
   type EntityViewRailFields,
   type EntityViewSection,
 } from '@/components/app/entity-view'
-export { type EntityViewFact, type EntityViewFactListItem, type EntityViewFactValue } from '@/components/app/entity-view-facts'
+export {
+  type EntityViewFact,
+  type EntityViewFactAction,
+  type EntityViewFactBadge,
+  type EntityViewFactListItem,
+  type EntityViewFactValue,
+} from '@/components/app/entity-view-facts'
 export { entityViewTabSlug } from '@/lib/entity-view-tab'
 export { usePrinting } from '@/components/app/print-context'
 export {
