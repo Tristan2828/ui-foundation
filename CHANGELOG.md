@@ -7,6 +7,45 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.118.0 — A deploy shows on the next launch
+
+`ui-foundation-backend` and npm package 4.118.0 (no npm package change).
+`foundation_backend.spa.SPAStaticFiles` now sends `Cache-Control` on
+every file it serves. Until now it sent none, so a browser guessed how
+long to keep each file. Safari on an iPhone could keep an old
+`index.html`, naming the old build's assets, until the site's data was
+cleared, so a deploy didn't show on the phone.
+
+- **`index.html` is `no-cache`**, also when it answers a client route
+  (`/widgets/3`, `/login`). The browser keeps it but asks the server
+  before every use; an unchanged page is a 304 by ETag, so a launch costs
+  one small request.
+- **Vite's hashed files under `/assets/` are `public, max-age=31536000,
+  immutable`.** Their names change whenever their content does, so the
+  browser never asks again.
+- **Every other file is `no-cache`**: `manifest.webmanifest`,
+  `push-sw.js`, the icons, `favicon.svg`, `build-info.json`, anything in
+  `public/`. Their names don't change between builds.
+- **Never cached as immutable:** a missing file (its 404 has no
+  `Cache-Control`, under `/assets/` too) and `index.html` answering a
+  path under `/assets/`. API routes and anything else not served by the
+  SPA mount are untouched.
+- No service worker change was needed: `pwa()`'s `push-sw.js` has no
+  fetch handler and caches nothing.
+
+**App step:** bump `ui-foundation-backend==4.118.0` in
+`backend/pyproject.toml` (and the npm package with it, as usual). An app
+whose `app/spa.py` re-exports the package's `SPAStaticFiles` and whose
+`main.py` mounts it (every app since 4.25) needs nothing else. An app
+that changed Vite's `build.assetsDir` gets `no-cache` for its hashed
+files too (safe, just not kept for a year). If a CDN or proxy sits in
+front (Cloudflare, say), make sure it respects the origin's
+`Cache-Control` for `/` and the root files rather than caching HTML on
+its own rules (`docs/deploy.md` "Caching and a deploy that doesn't
+show"). A phone that already holds an old `index.html` with a guessed
+lifetime may keep it until that guess runs out, after the first deploy
+with this release; from then on every deploy shows on the next launch.
+
 ## 4.117.0 — A rating in the facts rail; a second button beside New
 
 npm package and `ui-foundation-backend` 4.117.0 (no backend change).
@@ -47,6 +86,7 @@ widths and with the phone's menu open. Both fail with the feature broken.
 **Upgrading:** nothing required. A rating shown as text in the rail can
 become a `rating` fact; an extra action in ⋯ that a list uses all the
 time can become its `secondaryAction`.
+
 
 ## 4.115.0 — The record's status tops the facts rail; the strip holds still
 
@@ -94,6 +134,7 @@ status fact `recordStatus: true`; for one changed only by an action, drop
 its `edit` and give it `hint` and `action` (the app's own action through
 `render`). An app that worked around the strip's reflow can remove that.
 
+
 ## 4.114.0 — Mock mode's boot survives a restarted service worker
 
 npm package and `ui-foundation-backend` 4.114.0 (no backend change).
@@ -137,6 +178,7 @@ await startMockWorker(worker)
 Copying `template/e2e/msw-boot.spec.ts` is optional; its assertion that the
 home page shows "Get Started" is the template's, so use one of the app's
 own.
+
 
 ## 4.113.0 — Nav counts on a phone
 
