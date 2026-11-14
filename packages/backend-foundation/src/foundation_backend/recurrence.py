@@ -11,7 +11,8 @@ openapi/foundation.yaml, camelCase on the wire):
   `FREQ=MONTHLY;BYDAY=2TU`. FREQ is DAILY, WEEKLY, MONTHLY or YEARLY;
   INTERVAL, BYDAY (with an nth for MONTHLY and YEARLY: `2TU`, `-1FR`),
   BYMONTHDAY (1 to 31, -1 the last day), BYMONTH, UNTIL (a date,
-  `YYYYMMDD`, the last day it can fall on) and COUNT. Nothing else.
+  `YYYYMMDD`, the last day it can fall on), COUNT and WKST (the day a
+  week starts on, 4.114; Monday when left out). Nothing else.
 - `start`: the first day it can fall on (DTSTART's date).
 - `times`: one or more times of day, `"HH:MM"`, each a separate
   occurrence on every day the rule falls on.
@@ -33,6 +34,11 @@ every month's last day. COUNT counts occurrences, each time of each day.
 it was done instead of from `start`: "every! 3 days" done on the 10th is
 next due on the 13th, at the rule's times. COUNT means nothing there and
 is refused.
+
+WKST matters only to an every-N-weeks rule with BYDAY, which counts its
+weeks from a week's first day: `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU`
+from Wednesday 2026-11-04 next falls on Sunday the 15th; with weeks from
+Monday (no WKST) on the 8th. `WKST=MO` is the default and isn't stored.
 """
 
 import re
@@ -68,6 +74,8 @@ class RuleParts:
     by_month: tuple[int, ...] = ()
     until: date | None = None
     count: int | None = None
+    # WKST, Monday 0 to Sunday 6; None for Monday, RFC 5545's default.
+    week_start: int | None = None
 
 
 def _integers(name: str, value: str, low: int, high: int, *, zero: bool = False) -> tuple[int, ...]:
@@ -95,7 +103,7 @@ def parse_rule(text: str) -> RuleParts:
         if name in fields:
             raise ValueError(f"{name} appears twice.")
         fields[name] = value
-    unknown = sorted(set(fields) - {"FREQ", "INTERVAL", "BYDAY", "BYMONTHDAY", "BYMONTH", "UNTIL", "COUNT"})
+    unknown = sorted(set(fields) - {"FREQ", "INTERVAL", "BYDAY", "BYMONTHDAY", "BYMONTH", "UNTIL", "COUNT", "WKST"})
     if unknown:
         raise ValueError(f"Rule part {unknown[0]} isn't supported.")
     freq = fields.get("FREQ")
@@ -131,6 +139,11 @@ def parse_rule(text: str) -> RuleParts:
         (count,) = _integers("COUNT", fields["COUNT"], 1, 9999)
     if until is not None and count is not None:
         raise ValueError("A rule has UNTIL or COUNT, not both.")
+    week_start: int | None = None
+    if "WKST" in fields:
+        if fields["WKST"] not in WEEKDAYS:
+            raise ValueError("WKST must be a weekday, MO to SU.")
+        week_start = WEEKDAYS.index(fields["WKST"]) or None
     return RuleParts(
         freq=freq,  # type: ignore[arg-type]  # checked against FREQUENCIES above
         interval=interval,
@@ -139,13 +152,14 @@ def parse_rule(text: str) -> RuleParts:
         by_month=tuple(sorted(by_month)),
         until=until,
         count=count,
+        week_start=week_start,
     )
 
 
 def format_rule(parts: RuleParts) -> str:
     """The stored form, its parts always in one order (so two rules that
     mean the same are the same text): FREQ, INTERVAL (left out at 1),
-    BYMONTH, BYMONTHDAY, BYDAY, UNTIL, COUNT."""
+    BYMONTH, BYMONTHDAY, BYDAY, UNTIL, COUNT, WKST (left out for Monday)."""
     out = [f"FREQ={parts.freq}"]
     if parts.interval != 1:
         out.append(f"INTERVAL={parts.interval}")
@@ -159,6 +173,8 @@ def format_rule(parts: RuleParts) -> str:
         out.append(f"UNTIL={parts.until:%Y%m%d}")
     if parts.count is not None:
         out.append(f"COUNT={parts.count}")
+    if parts.week_start:
+        out.append(f"WKST={WEEKDAYS[parts.week_start]}")
     return ";".join(out)
 
 
@@ -259,6 +275,9 @@ def _days(parts: RuleParts, start: date, stop: date | None = None) -> Iterator[d
         bymonthday=list(parts.by_month_day) or None,
         bymonth=list(parts.by_month) or None,
         until=datetime.combine(end, time()) if end is not None else None,
+        # Monday unless the rule says: dateutil's own default is
+        # calendar.firstweekday(), which a process can change.
+        wkst=parts.week_start if parts.week_start is not None else du.MO,
         cache=False,
     )
     for moment in rule:
@@ -328,6 +347,14 @@ def next_after_completion(recurrence: Recurrence, done_at: datetime) -> datetime
         if instant.astimezone(recurrence.tz).date() > done_day:
             return instant
     return None
+
+
+def week_start_matters(parts: RuleParts) -> bool:
+    """Whether the rule's WKST can change the days it falls on: only an
+    every-N-weeks rule (FREQ=WEEKLY, INTERVAL over 1) with BYDAY counts its
+    weeks from a week's first day. (BYWEEKNO, the other part it moves,
+    isn't supported.)"""
+    return parts.freq == "WEEKLY" and parts.interval > 1 and bool(parts.by_day)
 
 
 # ------------------------------------------------- a weekday set and one time

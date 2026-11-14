@@ -126,10 +126,29 @@ the same rules and agree on every next occurrence.
 - **The value**: `{ rule, start, times, timeZone, fromCompletion }`.
   `rule` is RFC 5545's RRULE without DTSTART (`FREQ=MONTHLY;BYDAY=2TU`):
   FREQ daily to yearly, INTERVAL, BYDAY with an nth (`2TU`, `-1FR`),
-  BYMONTHDAY (`-1` the last day), BYMONTH, UNTIL (a date) or COUNT.
+  BYMONTHDAY (`-1` the last day), BYMONTH, UNTIL (a date) or COUNT, and
+  WKST (4.114, below).
   `start` is the first day it can fall on; each of `times` is an
   occurrence on every day the rule falls on, read in `timeZone`. A day a
   month lacks is skipped (the 31st, Feb 29), as in RFC 5545.
+- **Which day a week starts on (WKST, 4.114)**: weeks start on Monday
+  unless the rule says `WKST=SU` (or any weekday; `WKST=MO` is the
+  default and isn't stored). It moves only an every-N-weeks rule with
+  days: from Wednesday 2026-11-04, `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE`
+  next falls on Sunday the 8th (its Monday week runs to the 8th), and
+  with `;WKST=SU` on Sunday the 15th (its Sunday week began on the 1st,
+  before the start). Both sides agree, as python-dateutil and `rrule` do.
+  An app whose weeks start on Sunday gives `RecurrenceField` and
+  `inPlace.recurrence` `weekStart="SU"`: every weekly rule they build
+  (the presets and what's typed) gets `WKST=SU`, and "weeks start mon"
+  typed says otherwise. Give the same `weekStart` to `formatRecurrence`
+  in a Repeats cell, which otherwise says ", weeks start Sun" on a rule
+  where it matters. A rule stored without WKST keeps counting from
+  Monday; an app that wants its old every-N-weeks rules counted from
+  Sunday rewrites them in a migration of its own (append `;WKST=SU`).
+  The rule pattern in `openapi/foundation.yaml` allows WKST since 4.114:
+  an app copies the new `Recurrence` when it stores one (an older copy
+  still passes `check-contract`, but its mocks and spec refuse WKST).
 - **The columns**: the app's reminders model inherits
   `foundation_backend.recurrence_models.RecurringReminderFields` and its
   migration adds them: `recurrence` (JSON), `next_at`, `sent_at`,
@@ -164,6 +183,15 @@ the same rules and agree on every next occurrence.
   list `formatRecurrence` for a Repeats column and `nextOccurrence` with
   `formatOccurrence` for a Next one (cell-patterns.md "A repeat and its
   next time").
+- **A record whose times are its own fields** (a calendar event with a
+  start and an end, 4.114): `RecurrenceField times={false}` (and
+  `inPlace.recurrence({ times: false })`) says only dates: the preview
+  lists the next days from today on ("Sun, Nov 15"), the label and the
+  box leave the times out, and "at 9am" typed is refused. The value still
+  carries `times`, as the schema needs one: the value's own, else
+  `defaultTimes` (09:00 when not given; `['00:00']` reads best for a
+  calendar). In the list, `formatRecurrence(value, { times: false })` and
+  `formatOccurrence(next, zone, { time: false })`.
 
 ## A Done button on the notification (4.104)
 

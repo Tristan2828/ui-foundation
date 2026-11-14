@@ -5,12 +5,18 @@
 // locale given (the browser's when left out); the words around them are
 // English, like the rest of the package.
 import { listWords, ordinalWord } from '@/lib/recurrence-phrase'
-import { parseRule, wallClock, type Recurrence, type RuleParts } from '@/lib/recurrence'
+import { parseRule, wallClock, WEEKDAY_CODES, weekStartMatters, type Recurrence, type RuleParts, type WeekdayCode } from '@/lib/recurrence'
 
 export type RecurrenceFormatOptions = {
   locale?: string
   /** Leave the times out ("Every 2nd Tue"), for a cell beside a separate time. */
   times?: boolean
+  /**
+   * The app's week start (4.114; Monday when left out). An every-N-weeks
+   * rule whose WKST differs says so: "Every other week on Sun and Wed,
+   * weeks start Sun".
+   */
+  weekStart?: WeekdayCode
 }
 
 const WEEKDAYS_MO_FR = [0, 1, 2, 3, 4]
@@ -60,7 +66,10 @@ function days(parts: RuleParts, start: string, locale: string | undefined): stri
       return `${every(parts, 'day')}${inMonths}`
     case 'WEEKLY': {
       const chosen = weekdays.length ? weekdays : [startWeekday]
-      const names = listWords(chosen.map((day) => dayName(day, locale)))
+      // From the week's first day: "Sun and Wed" when weeks start on Sunday.
+      const first = parts.weekStart ?? 0
+      const inWeek = [...chosen].sort((a, b) => ((a - first + 7) % 7) - ((b - first + 7) % 7))
+      const names = listWords(inWeek.map((day) => dayName(day, locale)))
       if (parts.interval === 1) {
         if (chosen.join() === WEEKDAYS_MO_FR.join()) return `Every weekday${inMonths}`
         if (chosen.join() === '5,6') return `Every weekend${inMonths}`
@@ -107,8 +116,9 @@ function monthName(month: number, locale: string | undefined): string {
  * The repeat's label: its days, "after done" when it repeats from
  * completion, its times, and how it ends. "Every 2nd Tue at 9:00 AM",
  * "Every 3 days after done, at 9:00 AM", "Every weekday at 8:00 AM and
- * 5:30 PM, until Mar 1, 2027", "Every day at 9:00 AM, 10 times". A rule
- * it can't read shows as stored.
+ * 5:30 PM, until Mar 1, 2027", "Every day at 9:00 AM, 10 times", and the
+ * week start when it matters and isn't the app's ("Every other week on Sun
+ * and Wed, weeks start Sun"). A rule it can't read shows as stored.
  */
 export function formatRecurrence(value: Recurrence, options: RecurrenceFormatOptions = {}): string {
   let parts: RuleParts
@@ -125,6 +135,10 @@ export function formatRecurrence(value: Recurrence, options: RecurrenceFormatOpt
   }
   if (parts.until) label += `, until ${plainDay(parts.until, locale)}`
   if (parts.count !== null) label += `, ${parts.count} ${parts.count === 1 ? 'time' : 'times'}`
+  const weekStart = parts.weekStart ?? 0
+  if (weekStartMatters(parts) && weekStart !== WEEKDAY_CODES.indexOf(options.weekStart ?? 'MO')) {
+    label += `, weeks start ${dayName(weekStart, locale)}`
+  }
   return label
 }
 
@@ -132,11 +146,13 @@ export type OccurrenceFormatOptions = {
   locale?: string
   /** What "now" is, for leaving out this year. Defaults to the clock. */
   now?: Date
+  /** Leave the time out ("Tue, Dec 8"), for a record whose times are its own (4.114). */
+  time?: boolean
 }
 
 /**
  * One occurrence's day and time in the rule's zone: "Tue, Dec 8, 9:00 AM",
- * with the year when it isn't this year's.
+ * with the year when it isn't this year's; "Tue, Dec 8" with `time: false`.
  */
 export function formatOccurrence(moment: Date, timeZone: string, options: OccurrenceFormatOptions = {}): string {
   const thisYear = wallClock(options.now ?? new Date(), timeZone).day.slice(0, 4)
@@ -147,8 +163,7 @@ export function formatOccurrence(moment: Date, timeZone: string, options: Occurr
     month: 'short',
     day: 'numeric',
     year: year === thisYear ? undefined : 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+    ...(options.time === false ? {} : { hour: 'numeric', minute: '2-digit' }),
   }).format(moment)
 }
 

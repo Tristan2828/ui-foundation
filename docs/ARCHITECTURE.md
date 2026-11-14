@@ -174,7 +174,14 @@ src/main.tsx                           FoundationProviders (theme, query client,
   never fall (a 30th of February) is refused before either walks.
   `RecurrenceField` reads a phrase as it's typed
   (`lib/recurrence-phrase.ts`); the `send-reminders` job follows a row's
-  `recurrence` occurrence by occurrence (`recurrence.step`).
+  `recurrence` occurrence by occurrence (`recurrence.step`). WKST (4.114)
+  is passed to both libraries (Monday when absent, set explicitly, since
+  dateutil's own default follows `calendar.firstweekday()`); a second
+  fixture (`recurrence-shapes.json`) pins 174 rule shapes' days as they
+  were before WKST, and with `WKST=SU`, for both suites. Widening the
+  rule's `pattern` used `x-earlier-patterns`: `check-contract` accepts an
+  app's copy of a component with an earlier pattern listed there, so a
+  pattern can widen without failing every app that copied the schema.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps

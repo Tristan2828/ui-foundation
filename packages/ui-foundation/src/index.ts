@@ -295,14 +295,17 @@ export {
   RecurrenceError,
   recurrenceFromWeekdays,
   recurrenceProblem,
+  weekStartMatters,
   type Recurrence,
   type RuleParts,
+  type WeekdayCode,
 } from '@/lib/recurrence'
 export {
   parseRecurrencePhrase,
   recurrencePhrase,
   type PhraseOptions,
   type PhraseResult,
+  type RecurrencePhraseOptions,
 } from '@/lib/recurrence-phrase'
 export {
   formatOccurrence,

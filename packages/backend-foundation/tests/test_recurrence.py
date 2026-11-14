@@ -36,11 +36,16 @@ from foundation_backend.recurrence import (
     occurrences,
     parse_rule,
     step,
+    week_start_matters,
 )
 from foundation_backend.recurrence_models import RecurringReminderFields
 
 CASES_FILE = Path(__file__).resolve().parents[2] / "ui-foundation" / "tests" / "fixtures" / "recurrence-cases.json"
 CASES: list[dict[str, Any]] = json.loads(CASES_FILE.read_text(encoding="utf-8"))["cases"]
+# Rule shapes without WKST and their days before WKST was supported, with
+# the same rule's days under WKST=SU (4.114); the package's suite checks them too.
+SHAPES_FILE = CASES_FILE.with_name("recurrence-shapes.json")
+SHAPES: list[dict[str, Any]] = json.loads(SHAPES_FILE.read_text(encoding="utf-8"))["shapes"]
 
 try:
     ZoneInfo("America/Chicago")
@@ -79,8 +84,62 @@ def test_the_shared_cases(case: dict[str, Any]) -> None:
 
 def test_the_shared_cases_cover_what_they_must() -> None:
     names = " ".join(case["name"] for case in CASES)
-    for needed in ("fall-back", "spring-forward", "31st", "feb 29", "last day", "count", "until", "every!"):
+    for needed in ("fall-back", "spring-forward", "31st", "feb 29", "last day", "count", "until", "every!", "WKST"):
         assert needed in names
+
+
+# --------------------------------------------------------- week start (WKST)
+
+
+def _days(text: str, start: str) -> list[str]:
+    recurrence = rule(text, start=start, times=["00:00"], zone="UTC")
+    return [each.date().isoformat() for each in occurrences(recurrence, at(f"{start}T00:00:00Z") - timedelta(seconds=1), 8)]
+
+
+def test_the_worked_example_a_sunday_week_moves_the_first_sunday() -> None:
+    # From Wednesday 2026-11-04: weeks from Sunday give Sun the 15th; from Monday, the 8th.
+    assert _days("FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU", "2026-11-04")[:3] == ["2026-11-04", "2026-11-15", "2026-11-18"]
+    assert _days("FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE", "2026-11-04")[:3] == ["2026-11-04", "2026-11-08", "2026-11-18"]
+
+
+@pytest.mark.parametrize("shape", SHAPES, ids=[f"{shape['rule']} from {shape['start']}" for shape in SHAPES])
+def test_every_shape_is_unchanged_without_wkst_and_agrees_with_it(shape: dict[str, Any]) -> None:
+    text, start = shape["rule"], shape["start"]
+    # Without WKST: the stored text and the days are as before.
+    assert rule(text, start=start).rule == text
+    assert parse_rule(text).week_start is None
+    assert _days(text, start) == shape["days"]
+    # WKST=MO is the default: the same rule, stored without it.
+    assert rule(f"{text};WKST=MO", start=start).rule == text
+    assert _days(f"{text};WKST=MO", start) == shape["days"]
+    # WKST=SU: stored last, the same days as the package, a change only where it can matter.
+    assert rule(f"WKST=SU;{text}", start=start).rule == f"{text};WKST=SU"
+    assert _days(f"{text};WKST=SU", start) == shape["sundayDays"]
+    if not week_start_matters(parse_rule(text)):
+        assert shape["sundayDays"] == shape["days"]
+
+
+def test_a_week_start_is_any_weekday_and_nothing_else() -> None:
+    assert parse_rule("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;WKST=sa").week_start == 5
+    assert parse_rule("FREQ=WEEKLY;WKST=SU").week_start == 6
+    for text, message in (
+        ("FREQ=WEEKLY;WKST=XX", "WKST must be a weekday"),
+        ("FREQ=WEEKLY;WKST=1SU", "WKST must be a weekday"),
+        ("FREQ=WEEKLY;WKST=SU;WKST=MO", "WKST appears twice"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            parse_rule(text)
+
+
+def test_without_wkst_weeks_start_on_monday_whatever_the_process_says() -> None:
+    import calendar
+
+    was = calendar.firstweekday()
+    calendar.setfirstweekday(calendar.SUNDAY)
+    try:
+        assert _days("FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE", "2026-11-04")[:3] == ["2026-11-04", "2026-11-08", "2026-11-18"]
+    finally:
+        calendar.setfirstweekday(was)
 
 
 # ------------------------------------------------------------------- rules
