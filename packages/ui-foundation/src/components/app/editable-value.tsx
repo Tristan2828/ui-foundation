@@ -21,6 +21,8 @@
 //   for two seconds (`role="status"`).
 // - `layout="inline"` (4.102): the pencil takes no room until hover or
 //   focus, so nothing gaps before what follows the value on its line.
+//   `keepPencilRoom` (and every value inside a KeyStats, 4.115) keeps it
+//   at rest instead, so nothing moves on hover or focus.
 // - `look="row"` (4.88, F15 and F18): in a record's field list the row is
 //   the target (edit-row.ts): it wears the list's row hover and the pencil
 //   sits at its end; under 48rem or on a touch screen there's a chevron
@@ -37,6 +39,7 @@ import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './e
 import type { EditInPlaceStore } from './edit-in-place-store'
 import { SAVED_FOR_MS } from './edit-row'
 import { escapePassedThrough } from './escape-passthrough'
+import { KeepPencilRoomContext } from './keep-pencil-room'
 
 // What a click on the shown value must leave alone: links navigate,
 // buttons and boxes do their own thing (a list item's done box ticks it).
@@ -75,6 +78,14 @@ export type EditableValueProps = {
    * have); under 48rem or on a touch screen a chevron, not the pencil.
    */
   look?: 'value' | 'row'
+  /**
+   * Inline, the pencil's room is kept at rest, as before 4.102, so nothing
+   * moves on hover or focus: a table cell (row-edit-cells.tsx), whose
+   * column would otherwise widen, EntityView's title, which ends its line
+   * and can fill it, and every value inside a <KeyStats> (4.115, which
+   * sets it for them: a wrapping row moved the values after it along).
+   */
+  keepPencilRoom?: boolean
   className?: string
 }
 
@@ -107,12 +118,6 @@ export type EditableFieldProps = EditableValueProps & {
   trigger?: (start: () => void) => ReactNode
   /** Opens again, empty, once a save from the keyboard succeeds: adding one item after another. */
   reopenAfterKeyboardSave?: boolean
-  /**
-   * Inline, the pencil's room is kept at rest, as before 4.102: a table
-   * cell (row-edit-cells.tsx), whose column would otherwise widen on
-   * hover, and EntityView's title, which ends its line and can fill it.
-   */
-  keepPencilRoom?: boolean
 }
 
 function useStore(): EditInPlaceStore {
@@ -134,9 +139,11 @@ export function EditableField({
   className,
   trigger,
   reopenAfterKeyboardSave = false,
-  keepPencilRoom = false,
+  keepPencilRoom: keepPencilRoomProp,
 }: EditableFieldProps) {
   const store = useStore()
+  const keepRoomHere = useContext(KeepPencilRoomContext)
+  const keepPencilRoom = keepPencilRoomProp ?? keepRoomHere
   const key = useId()
   const controlId = `${key}-control`
   const describedBy = `${key}-status`

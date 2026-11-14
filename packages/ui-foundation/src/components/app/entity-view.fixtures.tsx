@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactElement } from 'react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import {
   CalendarClockIcon,
@@ -506,6 +506,129 @@ export const FactsRailNoTabs: StoryObj = {
   name: 'Facts rail, no tabs',
   render: () => <FactsRailInRouter only untabbed />,
 }
+
+// --- The record's status in the rail (4.115) -------------------------------
+// The status first at the top of the rail, whatever its place: Status is
+// listed last in its section, and its section after Schedule. It changes
+// only through an action, so it's read-only, with "Close…" under it (the
+// app's own dialog, opened from the fact's button) and a hint saying why.
+// Teams are badges with icons. The strip's values are edited in place,
+// inline: nothing moves when one is hovered or focused, so the click
+// lands on the value under the mouse (e2e/facts-rail.spec.ts).
+
+function CloseDialog({ trigger, onClose }: { trigger: ReactElement; onClose: () => void }) {
+  return (
+    <Dialog>
+      <DialogTrigger render={trigger} />
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Close this project?</DialogTitle>
+          <DialogDescription>Closing records today's date and a reason.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button />} onClick={onClose}>
+            Close Project
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+const STRIP_START = { boxes: 84, crates: 12, floor: 'Third', lift: 'Mar 9', budget: 4200, teams: 3 }
+
+function FactsRailStatusRecord() {
+  const [closed, setClosed] = useState(false)
+  const [strip, setStrip] = useState(STRIP_START)
+  const save = (patch: Partial<typeof STRIP_START>) =>
+    new Promise((resolve) => setTimeout(() => resolve(setStrip((was) => ({ ...was, ...patch }))), 200))
+  const number = (key: 'boxes' | 'crates' | 'budget' | 'teams', label: string) => ({
+    label,
+    value: (
+      <EditableValue
+        label={label}
+        layout="inline"
+        edit={inPlace.number({ value: strip[key], min: 0, save: (next) => save({ [key]: next ?? 0 }) })}
+      />
+    ),
+  })
+  const text = (key: 'floor' | 'lift', label: string) => ({
+    label,
+    value: <EditableValue label={label} layout="inline" edit={inPlace.text({ value: strip[key], save: (next) => save({ [key]: next ?? '' }) })} />,
+  })
+  const sections: EntityViewSection[] = [
+    { title: 'Purpose', tab: 'Purpose', content: <Markdown>{'Move the team to the third floor over two weekends.'}</Markdown> },
+    {
+      title: 'Schedule',
+      placement: 'rail',
+      facts: [
+        { label: 'Starts', kind: 'text', text: 'Mar 2, 2026' },
+        { label: 'Ends', kind: 'text', text: 'Mar 16, 2026' },
+      ],
+    },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Owner', kind: 'record', name: 'Sam Example', to: '/people/3', short: true },
+        {
+          label: 'Teams',
+          kind: 'badges',
+          items: [
+            { label: 'Finance', icon: HashIcon },
+            { label: 'Support', icon: <CircleDotIcon className="size-3" /> },
+            'Facilities',
+          ],
+        },
+        {
+          label: 'Status',
+          recordStatus: true,
+          kind: 'status',
+          status: closed ? 'done' : 'active',
+          word: closed ? 'Closed' : 'Open',
+          hint: 'Changes when the project is closed, which records a date and a reason.',
+          action: closed
+            ? undefined
+            : { label: 'Close…', render: (button) => <CloseDialog trigger={button} onClose={() => setClosed(true)} /> },
+        },
+      ],
+    },
+  ]
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Projects' }}
+      title="Office move"
+      factsRail
+      strip={
+        <KeyStats
+          stats={[
+            number('boxes', 'Boxes'),
+            number('crates', 'Crates'),
+            text('floor', 'Floor'),
+            text('lift', 'Lift'),
+            number('budget', 'Budget'),
+            number('teams', 'Teams'),
+          ]}
+        />
+      }
+      sections={sections}
+    />
+  )
+}
+
+function FactsRailStatusInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <FactsRailStatusRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const FactsRailStatus: StoryObj = { name: 'Facts rail, status', render: () => <FactsRailStatusInRouter /> }
 
 // The `tabs` layout with no other tab: the facts stay in the column, in
 // their place, their labels beside their values.

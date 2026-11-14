@@ -11,8 +11,16 @@
 // (a list of discussions, a log's entries) have long titles and belong in
 // a tab. Anything else is a section with `fields` or `content`, in a tab
 // or in Details, never the rail.
-import type { ReactNode } from 'react'
-import { useLayoutEffect, useState } from 'react'
+//
+// The record's status (4.115, record standard A1): a fact marked
+// `recordStatus: true` is drawn first, at the top of the rail (and of
+// Details where the rail folds), whatever its place in `facts` and
+// whichever rail section holds it. It's edited in place there (`edit`); a
+// status that changes only through an action (closing a record records a
+// date and a reason) stays read-only, with the action as a small button
+// under it (`action`) and a `hint` saying why it can't be edited here.
+import type { ReactElement, ReactNode } from 'react'
+import { isValidElement, useLayoutEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { ExternalLinkIcon } from 'lucide-react'
 import { cn } from 'cn'
@@ -29,8 +37,8 @@ export type EntityViewFactValue =
   | { kind: 'status'; status: StatusKind; word?: string }
   /** Short text: a date, a number, a person's name. One line, cut with its whole text on hover. `null` is empty. */
   | { kind: 'text'; text: string | number | null | undefined }
-  /** A few short labels (areas, tags) as badges. None is empty. */
-  | { kind: 'badges'; items: readonly string[] }
+  /** A few short labels (areas, tags) as badges, each with its icon if it has one (4.115). None is empty. */
+  | { kind: 'badges'; items: readonly (string | EntityViewFactBadge)[] }
   /** A count, and where it links to, if anywhere (`/discussions?provider=3`). */
   | { kind: 'count'; count: number; to?: string }
   /** A link out of the app, its words `name`, opening in a new tab. */
@@ -60,16 +68,69 @@ export type EntityViewFactListItem = {
   icon?: IconComponent
 }
 
+/** One item of a `badges` fact with an icon (4.115): the icon before its label, in the muted tone. */
+export type EntityViewFactBadge = {
+  label: string
+  /** An icon component (a `LucideIcon`, an app's own mark) or a node drawn as it is. Decorative: the label says it. */
+  icon?: IconComponent | ReactNode
+}
+
+/** A small button under a fact's value (4.115): "Close…" under a status that changes only through it. */
+export type EntityViewFactAction = {
+  /** The button's words ("Close…"; an ellipsis when it opens a dialog). */
+  label: string
+  /** Drawn before the words. */
+  icon?: IconComponent
+  /** What a click does, when `render` isn't given. */
+  onClick?: () => void
+  /**
+   * The app's own action instead (one that opens its dialog), given the
+   * button the fact would draw, so it can be the dialog's trigger with the
+   * same look: `(button) => <CloseDialog trigger={button} />`, or
+   * `<DialogTrigger render={button} />`. What it returns is drawn as it is.
+   */
+  render?: (button: ReactElement) => ReactNode
+}
+
 export type EntityViewFact = EntityViewFactValue & {
   label: string
   /** What an empty value reads as, for this fact. Defaults to the view's `emptyText`. */
   emptyLabel?: string
   /** Editable in place, as a field is (`inPlace.select`, `inPlace.date`); it's drawn by its kind at rest. */
   edit?: EditInPlace
+  /**
+   * The record's status (4.115): drawn first, at the top of the rail (or
+   * of Details), whatever its place in `facts` or its section's among the
+   * rail's. One per record; usually a `kind: 'status'` fact.
+   */
+  recordStatus?: boolean
+  /**
+   * A few words on the value (4.115), such as why it can't be edited here
+   * ("Changes when the record is closed"). An info button after the value
+   * shows it on hover and keyboard focus; a touch screen shows it as a
+   * line under the value instead. A screen reader reads it with the value.
+   */
+  hint?: string
+  /** A small button under the value (4.115), drawn in the rail and in Details alike. */
+  action?: EntityViewFactAction
 }
 
 const LINK_CLASS =
   'rounded-sm font-medium text-link underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50'
+
+// A badge item's icon in the muted tone a list's item icons have
+// (FactList's marks): a component drawn at the badge's icon size, or the
+// app's own node as it is.
+function badgeIcon(icon: IconComponent | ReactNode) {
+  // A component: a function, or a forwardRef or memo object (a LucideIcon); an element is a node.
+  const isComponent = typeof icon === 'function' || (typeof icon === 'object' && icon !== null && !isValidElement(icon) && '$$typeof' in icon)
+  const Icon = icon as IconComponent
+  return (
+    <span data-slot="entity-view-fact-badge-icon" aria-hidden="true" data-icon="inline-start" className="inline-flex shrink-0 text-muted-foreground">
+      {isComponent ? <Icon aria-hidden="true" className="size-3" /> : (icon as ReactNode)}
+    </span>
+  )
+}
 
 /** A fact as the view draws it: `null` when empty. */
 export function factValue(fact: EntityViewFactValue): ReactNode {
@@ -89,11 +150,15 @@ export function factValue(fact: EntityViewFactValue): ReactNode {
       if (fact.items.length === 0) return null
       return (
         <span className="inline-flex max-w-full flex-wrap gap-1">
-          {fact.items.map((item) => (
-            <Badge key={item} variant="outline" className="max-w-full truncate">
-              {item}
-            </Badge>
-          ))}
+          {fact.items.map((item, index) => {
+            const { label, icon } = typeof item === 'string' ? { label: item, icon: undefined } : item
+            return (
+              <Badge key={`${index}:${label}`} variant="outline" className="max-w-full">
+                {icon !== undefined && icon !== null && badgeIcon(icon)}
+                <span className="min-w-0 truncate">{label}</span>
+              </Badge>
+            )
+          })}
         </span>
       )
     case 'count':
@@ -144,9 +209,41 @@ export function factValue(fact: EntityViewFactValue): ReactNode {
   }
 }
 
-/** A facts section's facts as fields rows, for Details, the column and printing. */
+/** A facts section's facts as fields rows, for Details, the column and printing: the status first. */
 export function factsAsFields(facts: readonly EntityViewFact[]) {
-  return facts.map((fact) => ({ label: fact.label, value: factValue(fact), emptyLabel: fact.emptyLabel, edit: fact.edit }))
+  return statusFirst(facts).map((fact) => ({
+    label: fact.label,
+    value: factValue(fact),
+    emptyLabel: fact.emptyLabel,
+    edit: fact.edit,
+    hint: fact.hint,
+    action: fact.action,
+    recordStatus: fact.recordStatus,
+  }))
+}
+
+// The status fact first, the rest in their order.
+function statusFirst(facts: readonly EntityViewFact[]): readonly EntityViewFact[] {
+  const at = facts.findIndex((fact) => fact.recordStatus)
+  return at <= 0 ? facts : [facts[at], ...facts.slice(0, at), ...facts.slice(at + 1)]
+}
+
+/**
+ * The sections with the one holding the status fact (4.115) moved before
+ * the other sections that share its place (the rail, or a tab's
+ * side), so the status is the first fact there. Nothing else moves.
+ */
+export function statusSectionFirst<T extends { placement?: string; tab?: string }>(sections: readonly T[]): T[] {
+  const holds = (section: T) => 'facts' in section && (section as T & { facts: readonly EntityViewFact[] }).facts.some((fact) => fact.recordStatus)
+  const at = sections.findIndex(holds)
+  if (at < 0) return [...sections]
+  const status = sections[at]
+  const sameSpot = (section: T) => section.placement === status.placement && section.tab === status.tab
+  const first = sections.findIndex(sameSpot)
+  if (first === at) return [...sections]
+  const rest = sections.filter((_, index) => index !== at)
+  rest.splice(first, 0, status)
+  return rest
 }
 
 /** The width the view needs for the facts rail beside its column: 60rem (the column ~40rem, a 300px rail, the gap). */
