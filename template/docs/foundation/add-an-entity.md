@@ -15,18 +15,18 @@
   - Step 8: Add Playwright specs for all three screens · lines 755–832
   - Step 9: Register the nav entry and route names · lines 833–847
   - Step 10: `npm run verify`. · lines 848–850
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1287
-  - [The record view](#the-record-view) · lines 1005–1132
-  - [Forms](#forms) · lines 1134–1204
-  - [Dialogs](#dialogs) · lines 1206–1237
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1239–1287
-- [What not to copy](#what-not-to-copy) · lines 1289–1321
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1323–1340
-- [Deleting](#deleting) · lines 1342–1373
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1375–1396
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1398–1407
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1410–1452
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1454–1490
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1298
+  - [The record view](#the-record-view) · lines 1005–1143
+  - [Forms](#forms) · lines 1145–1215
+  - [Dialogs](#dialogs) · lines 1217–1248
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1250–1298
+- [What not to copy](#what-not-to-copy) · lines 1300–1332
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1334–1351
+- [Deleting](#deleting) · lines 1353–1384
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1386–1407
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1409–1418
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1421–1463
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1465–1501
 
 <!-- /index -->
 
@@ -1108,6 +1108,17 @@ A record uses the parts it has, in this order:
     screen. Both are drawn in Details too, where the rail folds.
   - A `badges` item may be `{ label, icon }` (4.115): the icon (a
     component or a node) before the label, in the muted tone.
+  - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
+    draw it, never as "4 of 5" text: stars (the default) or hearts for a
+    score out of `max` (5), the step bar for a quality level. `null` is
+    empty (its `emptyLabel`). Edited in place with `inPlace.select`:
+
+    ```tsx
+    { label: 'My Rating', kind: 'rating', look: 'hearts', value: record.rating, emptyLabel: 'Not rated',
+      edit: inPlace.select({ value: record.rating, options: [1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} of 5` })),
+        emptyLabel: 'Not rated', save: (rating) => save({ rating }) }) },
+    { label: 'Quality', kind: 'rating', look: 'bar', value: QUALITY[record.quality].value, word: QUALITY[record.quality].word },
+    ```
 - **A tiny record** (4.98: a few fields and no notes, like a lookup's
   row) opens as a small card: `RecordDialogRoute look="card"`, usually
   with `fullPage={false}`. A 420px dialog (a sheet on a phone), its

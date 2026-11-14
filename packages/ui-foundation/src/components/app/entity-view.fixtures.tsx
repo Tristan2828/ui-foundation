@@ -630,6 +630,54 @@ function FactsRailStatusInRouter() {
 
 export const FactsRailStatus: StoryObj = { name: 'Facts rail, status', render: () => <FactsRailStatusInRouter /> }
 
+// A rating in the facts rail (4.117): a score out of five as stars,
+// edited in place (a pick saves), one as hearts, a quality level as the
+// step bar, and an empty one. Each drawn as the list's cells draw it, and
+// named "4 of 5". e2e/facts-rail-rating.spec.ts measures them.
+const SCORE_OPTIONS = [1, 2, 3, 4, 5].map((value) => ({ value, label: `${value} of 5` }))
+
+function FactsRailRatingRecord() {
+  const [rating, setRating] = useState<number | null>(4)
+  const sections: EntityViewSection[] = [
+    { title: 'Summary', tab: 'Summary', content: <Markdown>{'A long novel about a lighthouse keeper and the town below.'}</Markdown> },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Author', kind: 'text', text: 'A. Marsh' },
+        {
+          label: 'My Rating',
+          kind: 'rating',
+          value: rating,
+          edit: inPlace.select({
+            value: rating,
+            options: SCORE_OPTIONS,
+            emptyLabel: 'Not rated',
+            save: (next) => new Promise((resolve) => setTimeout(() => resolve(setRating(next)), 200)),
+          }),
+        },
+        { label: 'Loved', kind: 'rating', look: 'hearts', value: 3 },
+        { label: 'Print', kind: 'rating', look: 'bar', value: 4, word: 'High' },
+        { label: 'Critics', kind: 'rating', value: null, emptyLabel: 'Not rated' },
+        { label: 'Pages', kind: 'text', text: 412 },
+      ],
+    },
+  ]
+  return <EntityView isLoading={false} back={{ to: '/', label: 'Books' }} title="Harbour Lights" factsRail sections={sections} />
+}
+
+function FactsRailRatingInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <FactsRailRatingRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const FactsRailRating: StoryObj = { name: 'Facts rail, rating', render: () => <FactsRailRatingInRouter /> }
+
 // The `tabs` layout with no other tab: the facts stay in the column, in
 // their place, their labels beside their values.
 export const DetailsInTheColumn: StoryObj = {
