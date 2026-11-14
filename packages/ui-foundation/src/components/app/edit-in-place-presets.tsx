@@ -20,7 +20,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/
 import { linkHost, linkRule } from '@/lib/link-href'
 import { formatMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
 import { formatPlainDate, unreadableDateMessage, type PlainDate } from '@/lib/plain-date'
-import { normalizeRecurrence, recurrenceProblem, type Recurrence } from '@/lib/recurrence'
+import { normalizeRecurrence, recurrenceProblem, type Recurrence, type WeekdayCode } from '@/lib/recurrence'
 import { formatRecurrence } from '@/lib/recurrence-format'
 import { ChoiceButtons, type ChoiceButtonsOption } from './choice-buttons'
 import { DateField } from './date-field'
@@ -143,6 +143,10 @@ export type InPlaceRecurrenceConfig<TRequired extends boolean = boolean> = {
   timeZone?: string
   /** The times a new repeat starts with. Defaults to 09:00. */
   defaultTimes?: string[]
+  /** RecurrenceField's `times` (4.114): false for a record whose times are its own fields; the value at rest says no times either. */
+  times?: boolean
+  /** RecurrenceField's `weekStart` (4.114): `'SU'` for an app whose weeks start on Sunday. */
+  weekStart?: WeekdayCode
   /** Today, `'YYYY-MM-DD'`, and "now", for a fixed preview (tests). Default to the clock. */
   today?: string
   now?: Date
@@ -487,7 +491,7 @@ function recurrenceKind(config: InPlaceRecurrenceConfig): Kind<Recurrence | null
       const problem = recurrenceProblem(draft)
       return problem ? { ok: false, message: problem } : { ok: true, value: normalizeRecurrence(draft) }
     },
-    show: (value) => (value ? formatRecurrence(value, { locale: config.locale }) : null),
+    show: (value) => (value ? formatRecurrence(value, { locale: config.locale, times: config.times, weekStart: config.weekStart }) : null),
     control: (props) => (
       <RecurrenceField
         id={props.id}
@@ -496,6 +500,8 @@ function recurrenceKind(config: InPlaceRecurrenceConfig): Kind<Recurrence | null
         onProblem={props.onProblem}
         timeZone={config.timeZone}
         defaultTimes={config.defaultTimes}
+        times={config.times}
+        weekStart={config.weekStart}
         today={config.today}
         now={config.now}
         locale={config.locale}

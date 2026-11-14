@@ -4,29 +4,29 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 45–67
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–850
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–855
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
   - Step 2: `npm run gen:api` · lines 119–120
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 133–142
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–738
-  - Step 7: Register routes · lines 739–754
-  - Step 8: Add Playwright specs for all three screens · lines 755–832
-  - Step 9: Register the nav entry and route names · lines 833–847
-  - Step 10: `npm run verify`. · lines 848–850
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 852–1298
-  - [The record view](#the-record-view) · lines 1005–1143
-  - [Forms](#forms) · lines 1145–1215
-  - [Dialogs](#dialogs) · lines 1217–1248
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1250–1298
-- [What not to copy](#what-not-to-copy) · lines 1300–1332
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1334–1351
-- [Deleting](#deleting) · lines 1353–1384
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1386–1407
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1409–1418
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1421–1463
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1465–1501
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–743
+  - Step 7: Register routes · lines 744–759
+  - Step 8: Add Playwright specs for all three screens · lines 760–837
+  - Step 9: Register the nav entry and route names · lines 838–852
+  - Step 10: `npm run verify`. · lines 853–855
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 857–1303
+  - [The record view](#the-record-view) · lines 1010–1148
+  - [Forms](#forms) · lines 1150–1220
+  - [Dialogs](#dialogs) · lines 1222–1253
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1255–1303
+- [What not to copy](#what-not-to-copy) · lines 1305–1337
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1339–1356
+- [Deleting](#deleting) · lines 1358–1389
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1391–1412
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1414–1423
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1426–1468
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1470–1506
 
 <!-- /index -->
 
@@ -265,7 +265,12 @@ is a filled-in example while the Widgets demo is still here).
    the schema checks it with `recurrenceProblem(value)`, and a phrase the
    field can't read gives `null`, so a required one is refused. The table
    shows `formatRecurrence(value)` and a Next column (cell pattern 27);
-   editing in place is `inPlace.recurrence({ value, save })`. The backend
+   editing in place is `inPlace.recurrence({ value, save })`. A record
+   whose times are fields of its own (an event's start and end) gives the
+   field and the preset `times={false}`: dates only, no "at". An app whose
+   weeks start on Sunday gives them `weekStart="SU"`, which adds
+   `WKST=SU` to the weekly rules they build (reminders.md "Repeating
+   reminders" says when that moves a day). The backend
    column is JSON, read and checked with
    `foundation_backend.recurrence.Recurrence` (a 422 on the field for a
    rule it refuses); `next_after` and `occurrences` say when it falls

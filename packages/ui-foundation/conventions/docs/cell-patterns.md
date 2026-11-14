@@ -43,7 +43,7 @@
 - [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1965–2184
   - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2113–2184
 - [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2186–2222
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2224–2269
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2224–2273
 
 <!-- /index -->
 
@@ -2257,10 +2257,14 @@ import { formatOccurrence, formatRecurrence, nextOccurrence, EmptyText } from '@
 - **The label** reads "Every 2nd Tue at 9:00 AM", "Every Mon and Thu at
   7:00 AM and 7:30 PM", "Every 30 days after done, at 9:00 AM" (from
   completion), "…, until Mar 1, 2027", "…, 10 times". `times: false`
-  leaves the times out, for a table with its own time column. A rule it
-  can't read shows as stored, never blank.
+  leaves the times out, for a table with its own time column. An app
+  whose weeks start on Sunday passes `weekStart: 'SU'`: an every-N-weeks
+  rule whose WKST isn't the app's says so (", weeks start Mon"), and a
+  week's days read from its first ("Sun and Wed"). A rule it can't read
+  shows as stored, never blank.
 - **Next** is "Tue, Dec 8, 9:00 AM", the year only when it isn't this
-  one; a rule that has ended (UNTIL passed, COUNT used up) says Ended, in
+  one, or "Tue, Dec 8" with `{ time: false }` (a record whose times are
+  its own); a rule that has ended (UNTIL passed, COUNT used up) says Ended, in
   muted text. For a `fromCompletion` repeat whose next depends on being
   done, use the server's `next_at` if it sends one; `nextOccurrence`
   counts from the schedule's start.

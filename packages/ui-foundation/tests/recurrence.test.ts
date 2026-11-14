@@ -11,6 +11,7 @@ import {
   parseRule,
   recurrenceFromWeekdays,
   recurrenceProblem,
+  weekStartMatters,
   type Recurrence,
 } from '@/lib/recurrence'
 
@@ -46,6 +47,51 @@ describe('the shared cases', () => {
     expect(value.rule).toBe(each.recurrence.rule)
     expect(nextOccurrences(value, new Date(each.after), each.count).map(iso)).toEqual(each.next)
     if (each.doneAt) expect(iso(nextAfterCompletion(value, new Date(each.doneAt)))).toBe(each.nextAfterDone)
+  })
+})
+
+// Rule shapes without WKST, with the days each gave before WKST was
+// supported, and the same rule's days with WKST=SU from python-dateutil
+// (tests/fixtures/recurrence-shapes.json). The backend's suite checks the same.
+type Shape = { rule: string; start: string; days: string[]; sundayDays: string[] }
+const SHAPES = (
+  JSON.parse(readFileSync(path.join(import.meta.dirname, 'fixtures/recurrence-shapes.json'), 'utf8')) as { shapes: Shape[] }
+).shapes
+const daysOf = (text: string, start: string) =>
+  nextOccurrences(normalizeRecurrence({ rule: text, start, times: ['00:00'], timeZone: 'UTC', fromCompletion: false }), new Date(Date.parse(`${start}T00:00:00Z`) - 1000), 8).map(
+    (moment) => moment.toISOString().slice(0, 10),
+  )
+
+describe('week start (WKST)', () => {
+  it('from Wednesday 2026-11-04, every other week on sun and wed first falls on a Sunday on the 15th with weeks from Sunday, the 8th without', () => {
+    expect(daysOf('FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU', '2026-11-04').slice(0, 3)).toEqual(['2026-11-04', '2026-11-15', '2026-11-18'])
+    expect(daysOf('FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE', '2026-11-04').slice(0, 3)).toEqual(['2026-11-04', '2026-11-08', '2026-11-18'])
+  })
+
+  it.each(SHAPES.map((each) => [`${each.rule} from ${each.start}`, each] as const))('%s: unchanged without WKST, and agrees with dateutil with it', (_, each) => {
+    // Without WKST: the stored text and the days are as before.
+    expect(formatRule(parseRule(each.rule))).toBe(each.rule)
+    expect(parseRule(each.rule).weekStart).toBeNull()
+    expect(daysOf(each.rule, each.start)).toEqual(each.days)
+    // WKST=MO is the default: the same rule, stored without it.
+    expect(formatRule(parseRule(`${each.rule};WKST=MO`))).toBe(each.rule)
+    expect(daysOf(`${each.rule};WKST=MO`, each.start)).toEqual(each.days)
+    // WKST=SU: stored last, the days dateutil gives, and a change only where it can matter.
+    expect(formatRule(parseRule(`WKST=SU;${each.rule}`))).toBe(`${each.rule};WKST=SU`)
+    expect(daysOf(`${each.rule};WKST=SU`, each.start)).toEqual(each.sundayDays)
+    if (!weekStartMatters(parseRule(each.rule))) expect(each.sundayDays).toEqual(each.days)
+  })
+
+  it('the shapes include every-N-weeks rules that WKST=SU moves', () => {
+    expect(SHAPES.filter((each) => each.sundayDays.join() !== each.days.join()).length).toBeGreaterThan(10)
+  })
+
+  it('reads every weekday as a week start, and refuses anything else', () => {
+    expect(parseRule('FREQ=WEEKLY;INTERVAL=2;BYDAY=TU;WKST=sa').weekStart).toBe(5)
+    expect(parseRule('FREQ=WEEKLY;WKST=SU').weekStart).toBe(6)
+    expect(() => parseRule('FREQ=WEEKLY;WKST=XX')).toThrow('WKST must be a weekday')
+    expect(() => parseRule('FREQ=WEEKLY;WKST=1SU')).toThrow('WKST must be a weekday')
+    expect(() => parseRule('FREQ=WEEKLY;WKST=SU;WKST=MO')).toThrow('WKST appears twice')
   })
 })
 

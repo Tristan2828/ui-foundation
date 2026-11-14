@@ -262,7 +262,7 @@ export interface components {
         };
         /** @description A repeating schedule (RecurrenceField, foundation_backend.recurrence). The rule's days, each at every one of its times, read in its zone. */
         Recurrence: {
-            /** @description RFC 5545's RRULE value, without DTSTART: FREQ (daily, weekly, monthly, yearly), INTERVAL, BYMONTH, BYMONTHDAY (-1 is the last day), BYDAY (an nth for monthly and yearly: 2TU, -1FR), UNTIL (a date, YYYYMMDD, the last day it can fall on) or COUNT (occurrences, each time of each day). "FREQ=MONTHLY;BYDAY=2TU". */
+            /** @description RFC 5545's RRULE value, without DTSTART: FREQ (daily, weekly, monthly, yearly), INTERVAL, BYMONTH, BYMONTHDAY (-1 is the last day), BYDAY (an nth for monthly and yearly: 2TU, -1FR), UNTIL (a date, YYYYMMDD, the last day it can fall on) or COUNT (occurrences, each time of each day), and WKST (the day weeks start on, MO when left out: it moves an every-N-weeks rule's weeks). "FREQ=MONTHLY;BYDAY=2TU", "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU". */
             rule: string;
             /**
              * Format: date
