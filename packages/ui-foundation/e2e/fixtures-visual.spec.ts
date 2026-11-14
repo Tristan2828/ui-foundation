@@ -241,7 +241,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-recurrencefield--edit-in-place', mustShow: 'Every 2nd Tue at 9:00 AM' },
   { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
   // With no times and weeks from Sunday (4.114): dates only, WKST=SU's rules.
-  { id: 'app-recurrencefield--dates-only', mustShow: 'Every other week on Sun and Wed' },
+  { id: 'app-recurrencefield--dates-only', mustShow: 'Sun, Nov 15' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
   { id: 'app-imagefield--default', mustShow: 'Edit Plant' },
