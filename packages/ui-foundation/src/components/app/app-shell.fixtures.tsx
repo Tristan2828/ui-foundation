@@ -239,6 +239,33 @@ const STANDARD_TILES_BAR: BottomBarItem[] = [
   { group: 'Home and money', label: 'Household', icon: WalletIcon },
 ]
 
+// The tiles look with counts on a phone (4.113): News a page of its own
+// on the bar with 7 new, Videos past 99, Timers at 0 (nothing drawn).
+// Every day's badge is its entries' sum, Collections' reads "99+".
+const STANDARD_TILES_COUNTS: NavEntry[] = STANDARD_TILES.map((entry) =>
+  'items' in entry
+    ? {
+        ...entry,
+        items: entry.items.map((item) =>
+          item.to === '/news'
+            ? { ...item, count: 7, countLabel: 'new' }
+            : item.to === '/videos'
+              ? { ...item, count: 120 }
+              : item.to === '/timers'
+                ? { ...item, count: 0, countLabel: 'new' }
+                : item,
+        ),
+      }
+    : entry,
+)
+const STANDARD_TILES_COUNTS_BAR: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { to: '/news', label: 'News', icon: NewspaperIcon },
+  { group: 'Every day', icon: SunIcon },
+  { group: 'Collections', icon: LibraryIcon },
+  { group: 'Home and money', label: 'Household', icon: WalletIcon },
+]
+
 // The phone's bar for it: Home and the three areas, each opening its
 // sheet as tiles.
 const STANDARD_BAR: BottomBarItem[] = [
@@ -577,4 +604,18 @@ export const StandardTilesRail: Story = {
 }
 export const StandardTilesOnHome: Story = {
   args: { nav: STANDARD_TILES, path: '/', bottomBar: STANDARD_TILES_BAR, navLook: 'tiles' },
+}
+
+// Counts on a phone (4.113): a badge on a bar item's icon, a page's own
+// or its area's sum, "99+" past 99, nothing at 0; in a sheet's tiles'
+// corners. e2e/app-shell-phone-counts.spec.ts.
+export const StandardTilesCounts: Story = {
+  args: { nav: STANDARD_TILES_COUNTS, path: '/finance/accounts/3', bottomBar: STANDARD_TILES_COUNTS_BAR, navLook: 'tiles' },
+}
+export const StandardCountsList: Story = {
+  args: {
+    nav: STANDARD_TILES_COUNTS,
+    path: '/finance/accounts/3',
+    bottomBar: STANDARD_TILES_COUNTS_BAR.map((item) => ('group' in item ? { ...item, sheet: 'list' as const } : item)),
+  },
 }

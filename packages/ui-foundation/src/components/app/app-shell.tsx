@@ -10,6 +10,8 @@ import {
   childRuns,
   childrenOpen,
   isNavItemGroup,
+  navCountSpoken,
+  navCountText,
   navGroups,
   navPageLabel,
   navTooltip,
@@ -321,7 +323,8 @@ const ACTIVE_MARK = 'data-active:shadow-[inset_3px_0_0_0_var(--primary)]'
 // An entry's count (#N3): a plain number at its end in the muted tone,
 // read with what it counts; on the icon rail, a dot on the icon.
 function NavCount({ count, countLabel }: { count?: number; countLabel?: string }) {
-  if (!count) return null
+  const text = navCountText(count)
+  if (text === undefined) return null
   return (
     <>
       <span
@@ -329,9 +332,9 @@ function NavCount({ count, countLabel }: { count?: number; countLabel?: string }
         data-slot="nav-count"
         className="ml-auto shrink-0 type-caption text-muted-foreground tabular-nums group-data-[collapsible=icon]:hidden"
       >
-        {count}
+        {text}
       </span>
-      <span className="sr-only">{countLabel ? `${count} ${countLabel}` : count}</span>
+      <span className="sr-only">{navCountSpoken(count, countLabel)}</span>
       <span
         aria-hidden="true"
         data-slot="nav-count-dot"
@@ -459,16 +462,16 @@ function NavTile({ item, activeTo }: { item: NavItem; activeTo: string | undefin
       >
         <Icon aria-hidden="true" />
         <span className="max-w-full break-words">{label}</span>
-        {count ? (
+        {navCountText(count) !== undefined ? (
           <>
             <span
               aria-hidden="true"
               data-slot="nav-count"
               className="absolute top-1 right-1.5 type-caption leading-none text-sidebar-foreground tabular-nums"
             >
-              {count}
+              {navCountText(count)}
             </span>
-            <span className="sr-only">{countLabel ? `${count} ${countLabel}` : count}</span>
+            <span className="sr-only">{navCountSpoken(count, countLabel)}</span>
           </>
         ) : null}
       </Link>

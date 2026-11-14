@@ -144,7 +144,7 @@ test("on a phone, an area's sheet is tiles with the current module's pages under
   // An area without the page: tiles alone.
   await bar(page).getByRole('button', { name: 'Collections' }).click()
   const collections = page.getByRole('dialog', { name: 'Collections' })
-  await expect(collections.locator('[data-slot="app-shell-sheet-tiles"]').getByRole('link')).toHaveText(['Videos', 'Books'])
+  await expect(collections.locator('[data-slot="app-shell-sheet-tiles"]').getByRole('link')).toHaveText([/^Videos/, 'Books'])
   await expect(collections.locator('[data-slot="app-shell-sheet-pages"]')).toHaveCount(0)
 })
 
