@@ -17,4 +17,5 @@ export { clientErrorHandlers, getMockClientErrors, resetMockClientErrors } from 
 export { environmentHandlers } from './environment'
 export { getMockPushSubscriptions, MOCK_PUSH_PUBLIC_KEY, pushHandlers, resetMockPush } from './push'
 export { exposeMswForE2E } from './e2e-hooks'
+export { MOCK_PROBE_PATH, startMockWorker } from './start-worker'
 export type { MswHandle, MswOverride } from './override'
