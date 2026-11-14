@@ -8,7 +8,12 @@
 // Values are the wire's enum strings; `getLabel` names them when those
 // aren't fit to show (`quick_win` → "Quick win"). Chips, options and the
 // typed-text match all use the label, and the value is what's emitted.
+//
+// A toolbar filter's summary ("Status: Active +1", `label`) keeps the
+// control one line high however narrow it is (4.109): it truncates, and
+// the text box beside it takes no room until it's focused.
 import * as React from 'react'
+import { cn } from 'cn'
 import {
   Combobox,
   ComboboxChip,
@@ -60,6 +65,7 @@ export function MultiChoice<T extends string>({
   className?: string
 }) {
   const anchor = useComboboxAnchor()
+  const summarised = label !== undefined && value.length > 0
 
   return (
     <Combobox
@@ -82,7 +88,11 @@ export function MultiChoice<T extends string>({
       }}
       itemToStringLabel={getLabel}
     >
-      <ComboboxChips ref={anchor} className={className}>
+      {/* With a summary (4.109): one line at the control's own height. The
+          row doesn't wrap, the summary truncates with an ellipsis, and the
+          text box takes no room until it's focused, so "Status: Active +1"
+          in a narrow filter stays as tall as the inputs beside it. */}
+      <ComboboxChips ref={anchor} className={cn(summarised && 'flex-nowrap', className)}>
         <ComboboxValue>
           {(selected: T[]) => (
             <React.Fragment>
@@ -102,6 +112,7 @@ export function MultiChoice<T extends string>({
                 aria-label={ariaLabel}
                 aria-invalid={ariaInvalid}
                 placeholder={selected.length === 0 ? placeholder : undefined}
+                className={summarised ? 'min-w-0 focus:min-w-16' : undefined}
               />
             </React.Fragment>
           )}

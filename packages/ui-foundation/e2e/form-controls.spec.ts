@@ -322,3 +322,77 @@ test.describe('a choice in a narrow box', () => {
     expect(started.y).toBeGreaterThan(condition.y + condition.height)
   })
 })
+
+// A list's filter with a summary stays one line (4.109): with picks,
+// "Shelf: <first> +1" truncates and the text box takes no room until
+// focused, so in a 192px box it's as tall as the Input beside it.
+test.describe('a narrow MultiChoice filter with a summary', () => {
+  test('stays the height of the Input beside it, its summary cut off with an ellipsis', async ({ page }) => {
+    await page.goto(story('narrow-filters'))
+    const row = page.getByTestId('narrow-filters')
+    const input = row.getByRole('textbox', { name: 'Search by title' })
+    const filter = row.locator('[data-slot=combobox-chips]')
+    const summary = filter.locator('[data-slot=multi-choice-summary]')
+    await expect(summary).toContainText('Shelf: Hallway bookcase by the stairs')
+    await expect(summary).toContainText('+1')
+    const heightOf = async (locator: Locator) => (await locator.boundingBox())!.height
+    expect((await filter.boundingBox())!.width).toBe(192)
+    expect(await heightOf(filter)).toBe(await heightOf(input))
+    // The summary is cut off, not wrapped: wider than the room it has.
+    expect(await summary.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true)
+    expect(await summary.evaluate((node) => getComputedStyle(node).textOverflow)).toBe('ellipsis')
+    // Focused, the text box takes its room and the control keeps its height.
+    await row.getByRole('combobox', { name: 'Filter by shelf' }).focus()
+    expect(await heightOf(filter)).toBe(await heightOf(input))
+  })
+})
+
+// A status of five or more as OptionSelect (4.109): each option's kind icon
+// in its colour on the trigger and in the list, as ChoiceButtons draws it.
+test.describe('a status select draws its kinds', () => {
+  const tokenColour = (page: Page, token: string) =>
+    page.evaluate((token) => {
+      const probe = document.createElement('div')
+      probe.style.color = `var(${token})`
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).color
+      probe.remove()
+      return colour
+    }, token)
+  const colourOf = (locator: Locator) => locator.evaluate((node) => getComputedStyle(node).color)
+
+  test("the picked one's icon on the trigger, and every option's in the list, in their kinds' colours", async ({ page }) => {
+    await page.goto(story('status-selects'))
+    const trigger = page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Stage' })
+    const icon = trigger.locator('[data-slot=option-select-icon]')
+    await expect(icon).toHaveAttribute('data-kind', 'attention')
+    expect(await colourOf(icon)).toBe(await tokenColour(page, '--destructive-text'))
+
+    await trigger.click()
+    const list = page.getByRole('listbox')
+    const tones: Record<string, string> = {
+      Idea: '--info-text',
+      Drafting: '--success-text',
+      Shelved: '--warning-text',
+      Sent: '--muted-foreground',
+    }
+    for (const [label, token] of Object.entries(tones)) {
+      const item = list.getByRole('option', { name: label })
+      await expect(item.locator('[data-slot=option-select-icon]')).toBeVisible()
+      expect(await colourOf(item.locator('[data-slot=option-select-icon]'))).toBe(await tokenColour(page, token))
+    }
+    // "Not set" has no icon.
+    await expect(list.getByRole('option', { name: 'Not set' }).locator('svg[data-slot=option-select-icon]')).toHaveCount(0)
+    await list.getByRole('option', { name: 'Sent' }).click()
+    await expect(icon).toHaveAttribute('data-kind', 'done')
+  })
+
+  test('a plain icon, with no kind, keeps the words’ colour', async ({ page }) => {
+    await page.goto(story('status-selects'))
+    const trigger = page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Pick Up' })
+    const icon = trigger.locator('[data-slot=option-select-icon]')
+    await expect(icon).toBeVisible()
+    await expect(icon).not.toHaveAttribute('data-kind', /.+/)
+    expect(await colourOf(icon)).toBe(await colourOf(trigger.locator('[data-slot=select-value]')))
+  })
+})

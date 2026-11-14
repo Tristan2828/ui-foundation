@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { ChoiceButtons } from '../src/components/app/choice-buttons'
 import { DateField } from '../src/components/app/date-field'
 import { editRowClass } from '../src/components/app/edit-row'
+import { OptionSelect } from '../src/components/app/option-select'
 import { namesRecord } from '../src/lib/names-record'
 import { parsePlainDate, plainDateExamples, unreadableDateMessage } from '../src/lib/plain-date'
 
@@ -100,6 +101,44 @@ describe('ChoiceButtons', () => {
       <ChoiceButtons aria-label="Format" options={formats} value={null} onValueChange={() => {}} />,
     )
     expect(html).not.toContain('aria-pressed="true"')
+  })
+})
+
+describe('OptionSelect', () => {
+  const stages = [
+    { value: 'idea', label: 'Idea', kind: 'planned' },
+    { value: 'stuck', label: 'Stuck', kind: 'attention' },
+    { value: 'sent', label: 'Sent', kind: 'done' },
+  ] as const
+
+  it("draws the picked option's kind icon in the kind's colour on the trigger, as ChoiceButtons does", () => {
+    const html = renderToStaticMarkup(<OptionSelect aria-label="Stage" options={stages} value="stuck" onValueChange={() => {}} />)
+    const icon = html.match(/<svg[^>]*data-slot="option-select-icon"[^>]*>/)?.[0] ?? ''
+    expect(icon).toContain('data-kind="attention"')
+    expect(icon).toContain('text-destructive-text')
+    expect(icon).toContain('aria-hidden="true"')
+    expect(html).toContain('Stuck')
+  })
+
+  it('draws no icon for an option with neither a kind nor an icon, nor for "Not set"', () => {
+    const html = renderToStaticMarkup(
+      <OptionSelect aria-label="Stage" options={[{ value: 'a', label: 'A' }]} value="a" onValueChange={() => {}} />,
+    )
+    expect(html).not.toContain('option-select-icon')
+    const empty = renderToStaticMarkup(<OptionSelect aria-label="Stage" options={stages} value={null} onValueChange={() => {}} />)
+    expect(empty).not.toContain('option-select-icon')
+  })
+})
+
+describe('ChoiceButtons and OptionSelect draw a kind the same way', () => {
+  it('the same icon class on both', () => {
+    const options = [{ value: 'stuck', label: 'Stuck', kind: 'attention' }] as const
+    const buttons = renderToStaticMarkup(<ChoiceButtons aria-label="Stage" options={options} value="stuck" onValueChange={() => {}} />)
+    const select = renderToStaticMarkup(<OptionSelect aria-label="Stage" options={options} value="stuck" onValueChange={() => {}} />)
+    const iconClass = (html: string, slot: string) =>
+      html.match(new RegExp(`<svg[^>]*data-slot="${slot}"[^>]*>`))?.[0].match(/class="([^"]*)"/)?.[1]
+    expect(iconClass(buttons, 'choice-buttons-icon')).toBeDefined()
+    expect(iconClass(select, 'option-select-icon')).toBe(iconClass(buttons, 'choice-buttons-icon'))
   })
 })
 

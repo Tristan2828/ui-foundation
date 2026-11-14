@@ -26,12 +26,13 @@
 // kind's icon in its colour (StatusMark's, lib/status-kinds.ts), so a
 // status choice on a form looks like the status on the record. The word
 // keeps the button's own colour; the kind's icon colour stays, picked or
-// not.
+// not. OptionSelect draws the same (4.109).
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { STATUS_KIND_ICONS, STATUS_KIND_TONES, type StatusKind } from '@/lib/status-kinds'
+import type { StatusKind } from '@/lib/status-kinds'
 import type { IconComponent } from './icon-component'
+import { OptionIcon } from './option-icon'
 
 export type ChoiceButtonsOption<T> = {
   value: T
@@ -115,23 +116,10 @@ export function ChoiceButtons<T extends string | number>({
             invalid && 'border-destructive',
           )}
         >
-          <OptionIcon option={option} />
+          <OptionIcon kind={option.kind} icon={option.icon} slot="choice-buttons-icon" />
           {render ? render(option.value, option.label) : option.label}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
-  )
-}
-
-function OptionIcon<T>({ option }: { option: ChoiceButtonsOption<T> }) {
-  const Icon = option.icon ?? (option.kind ? STATUS_KIND_ICONS[option.kind] : undefined)
-  if (!Icon) return null
-  return (
-    <Icon
-      aria-hidden="true"
-      data-slot="choice-buttons-icon"
-      data-kind={option.kind}
-      className={cn('size-3.5 shrink-0', option.kind && STATUS_KIND_TONES[option.kind])}
-    />
   )
 }
