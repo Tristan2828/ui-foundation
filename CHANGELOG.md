@@ -7,6 +7,36 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.108.0 — The facts rail lines up with the body, not the strip
+
+npm package and `ui-foundation-backend` 4.108.0 (no backend change). A
+layout fix to 4.106.0's `factsRail`; no prop or export changes.
+
+4.106.0 drew the record's key-number strip (`strip`, a `KeyStats`) inside
+the rail's left column, so the rail's top lined up with the strip and the
+facts sat beside the record's numbers rather than its content. Now:
+
+- **The strip is above, at full width**, as it is without the rail.
+- **The rail starts level with the first content under the strip.** With
+  tabs first, that is the open tab's first section: the rail sits beside
+  the tab's content, not beside the tab bar, and the bar keeps to the
+  column. With cards before the tabs, or no tabs, it's the first card.
+- On a phone (or anywhere under 60rem) nothing changes: the facts are in
+  Details as before.
+- Tests: `e2e/facts-rail.spec.ts` measures the rail's top against the
+  open tab's first section (on the first tab and another) and, in the new
+  `app/EntityView` "Facts rail, no tabs" story, against the first card,
+  each within 2px, with the strip above and as wide as both; axe in light,
+  dark and a palette for both stories, and the new story in
+  `fixtures-visual.spec.ts`. The alignment checks failed on 4.107.0's
+  layout.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.108.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.108.0` in `backend/`. Nothing to
+   change; `factsRail` views pick it up.
+
 ## 4.107.0 — Sign In Again when a proxy's sign-in lapses
 
 npm package and `ui-foundation-backend` 4.107.0 (no backend change).

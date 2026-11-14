@@ -1,28 +1,40 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // EntityView's facts rail (4.106, record standard A1): on a laptop the
-// short facts sit in a 300px column beside the strip and the tabs, and
-// aren't repeated in Details; with nothing else, there's no Details tab.
-// On a phone they fold back into Details. Axe in both themes and every
-// palette is fixtures-visual.spec.ts's (the stories named there); the
-// rail itself is measured here at desktop width, where it's drawn.
+// short facts sit in a 300px column beside the record's body, and aren't
+// repeated in Details; with nothing else, there's no Details tab. The strip
+// stays above at full width, and the rail starts level with the first
+// content under it: the open tab's first section (never the tab bar), or
+// the first card with no tabs (4.108). On a phone they fold back into
+// Details. Axe in both themes and every palette is fixtures-visual.spec.ts's
+// (the stories named there); the rail itself is measured here at desktop
+// width, where it's drawn.
 const HARNESS = 'http://localhost:6180/story.html?id='
 
 const rail = (page: Page) => page.getByRole('complementary', { name: 'Office move facts' })
 const tabs = (page: Page) => page.getByRole('tablist', { name: 'Office move sections' }).getByRole('tab')
 
+const box = async (locator: Locator) => (await locator.boundingBox())!
+
 for (const width of [1440, 1920]) {
-  test(`beside the strip and the tabs, 300px wide, top-aligned with the strip (${width})`, async ({ page }) => {
+  test(`beside the open tab's content, 300px wide, level with its first section (${width})`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(`${HARNESS}app-entityview--facts-rail`)
     await expect(rail(page)).toBeVisible()
-    const railBox = (await rail(page).boundingBox())!
-    const stripBox = (await page.locator('[data-slot=entity-view-strip]').boundingBox())!
-    const tabsBox = (await page.getByRole('tablist').boundingBox())!
+    const railBox = await box(rail(page))
+    const stripBox = await box(page.locator('[data-slot=entity-view-strip]'))
+    const tabsBox = await box(page.getByRole('tablist'))
+    const first = await box(page.getByRole('tabpanel').getByRole('region').first())
     expect(railBox.width).toBe(300)
-    expect(Math.abs(railBox.y - stripBox.y)).toBeLessThan(2)
-    expect(railBox.x).toBeGreaterThan(tabsBox.x + tabsBox.width)
+    // Level with the open tab's first section, under the tab bar.
+    expect(Math.abs(railBox.y - first.y)).toBeLessThan(2)
+    expect(railBox.y).toBeGreaterThan(tabsBox.y + tabsBox.height)
+    expect(railBox.x).toBeGreaterThan(first.x + first.width)
+    // The strip above both, the record's full width; the tab bar keeps to the column.
+    expect(railBox.y).toBeGreaterThan(stripBox.y + stripBox.height)
+    expect(stripBox.x + stripBox.width).toBeGreaterThan(railBox.x + railBox.width - 2)
+    expect(tabsBox.x + tabsBox.width).toBeLessThan(railBox.x)
     // The labels sit beside their values.
     const status = rail(page).getByText('Status', { exact: true })
     const open = rail(page).getByText('Open', { exact: true })
@@ -30,6 +42,30 @@ for (const width of [1440, 1920]) {
     expect(Math.abs((await open.boundingBox())!.y - (await status.boundingBox())!.y)).toBeLessThan(6)
   })
 }
+
+test("on another tab the rail is level with that tab's first section", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${HARNESS}app-entityview--facts-rail`)
+  await page.getByRole('tab', { name: /Linked/ }).click()
+  await expect(rail(page)).toBeVisible()
+  const first = await box(page.getByRole('tabpanel').getByRole('region').first())
+  expect(Math.abs((await box(rail(page))).y - first.y)).toBeLessThan(2)
+})
+
+test('with no tabs, level with the first card, the strip above both', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${HARNESS}app-entityview--facts-rail-no-tabs`)
+  await expect(rail(page)).toBeVisible()
+  await expect(page.getByRole('tablist')).toHaveCount(0)
+  const railBox = await box(rail(page))
+  const stripBox = await box(page.locator('[data-slot=entity-view-strip]'))
+  const first = await box(page.getByRole('region', { name: 'Purpose' }))
+  expect(railBox.width).toBe(300)
+  expect(Math.abs(railBox.y - first.y)).toBeLessThan(2)
+  expect(railBox.x).toBeGreaterThan(first.x + first.width)
+  expect(railBox.y).toBeGreaterThan(stripBox.y + stripBox.height)
+  expect(stripBox.x + stripBox.width).toBeGreaterThan(railBox.x + railBox.width - 2)
+})
 
 test("what's in the rail isn't repeated in Details; Details keeps the rest", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
@@ -91,11 +127,13 @@ for (const [theme, query] of [
   ['dark', 'theme=dark'],
   ['graphite-periwinkle', 'theme=dark&palette=graphite-periwinkle'],
 ] as const) {
-  test(`the rail at desktop width has no axe violations (${theme})`, async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto(`${HARNESS}app-entityview--facts-rail&${query}`)
-    await expect(rail(page)).toBeVisible()
-    const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
-    expect(results.violations).toEqual([])
-  })
+  for (const story of ['facts-rail', 'facts-rail-no-tabs']) {
+    test(`the rail at desktop width has no axe violations (${story}, ${theme})`, async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 })
+      await page.goto(`${HARNESS}app-entityview--${story}&${query}`)
+      await expect(rail(page)).toBeVisible()
+      const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
+      expect(results.violations).toEqual([])
+    })
+  }
 }

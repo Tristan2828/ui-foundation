@@ -408,10 +408,11 @@ export const DetailsTab: StoryObj = { name: 'Details tab', render: () => <Detail
 
 // --- The facts rail (4.106, A1) --------------------------------------------
 // `factsRail`: where the view has 60rem, the sections of short facts
-// (`facts`, placed `rail`) sit in a 300px column beside the strip and the
-// tabs and leave Details. FactsRail keeps one long-text facts section
-// (`fields`, the closing condition) in Details; FactsRailOnly has nothing
-// else, so it has no Details tab. A list of linked records with long
+// (`facts`, placed `rail`) sit in a 300px column beside the open tab's
+// content (the strip above both, 4.108) and leave Details. FactsRail
+// keeps one long-text facts section (`fields`, the closing condition) in
+// Details; FactsRailOnly has nothing else, so it has no Details tab;
+// FactsRailNoTabs has cards and no tabs, the rail level with the first. A list of linked records with long
 // titles (the Linked tab) stays a tab. Narrower than 60rem (a phone),
 // every facts section is back in Details.
 
@@ -420,13 +421,14 @@ const LINKED = [
   'Find out which of the old desks the recycling firm will still take after the end of the month',
 ]
 
-function FactsRailRecord({ only }: { only: boolean }) {
+function FactsRailRecord({ only, untabbed = false }: { only: boolean; untabbed?: boolean }) {
   const location = useLocation()
+  const tab = (name: string) => (untabbed ? {} : { tab: name })
   const sections: EntityViewSection[] = [
-    { title: 'Purpose', tab: 'Purpose', content: <Markdown>{'Move the team to the third floor over two weekends.'}</Markdown> },
+    { title: 'Purpose', ...tab('Purpose'), content: <Markdown>{'Move the team to the third floor over two weekends.'}</Markdown> },
     {
       title: 'Linked',
-      tab: 'Linked',
+      ...tab('Linked'),
       content: (
         <ul className="flex list-disc flex-col gap-1 pl-5">
           {LINKED.map((item) => (
@@ -486,10 +488,10 @@ function FactsRailRecord({ only }: { only: boolean }) {
   )
 }
 
-function FactsRailInRouter({ only }: { only: boolean }) {
+function FactsRailInRouter({ only, untabbed }: { only: boolean; untabbed?: boolean }) {
   const [router] = useState(() => {
     const tab = new URLSearchParams(window.location.search).get('tab')
-    return createMemoryRouter([{ path: '*', element: <FactsRailRecord only={only} /> }], {
+    return createMemoryRouter([{ path: '*', element: <FactsRailRecord only={only} untabbed={untabbed} /> }], {
       initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
     })
   })
@@ -499,6 +501,11 @@ function FactsRailInRouter({ only }: { only: boolean }) {
 export const FactsRail: StoryObj = { name: 'Facts rail', render: () => <FactsRailInRouter only={false} /> }
 
 export const FactsRailOnly: StoryObj = { name: 'Facts rail, nothing else', render: () => <FactsRailInRouter only /> }
+
+export const FactsRailNoTabs: StoryObj = {
+  name: 'Facts rail, no tabs',
+  render: () => <FactsRailInRouter only untabbed />,
+}
 
 // The `tabs` layout with no other tab: the facts stay in the column, in
 // their place, their labels beside their values.

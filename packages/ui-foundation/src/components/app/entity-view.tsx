@@ -355,9 +355,11 @@ export type EntityViewProps = {
    * The facts rail (4.106, record standard A1), in the `tabs` layout:
    * where the view has room (60rem beside it: a laptop's page, a record
    * dialog), the sections of short facts (`facts`, placed `rail`, no
-   * `tab`) go in a 300px column beside the strip and the tabs, and leave
-   * Details; a Details tab left with nothing isn't drawn. Narrower (a
-   * phone), they're in Details as before. Sections with `fields` or
+   * `tab`) go in a 300px column beside the record's body, and leave
+   * Details. The strip stays above, full width; the rail starts level with
+   * the first content under it (the open tab's first section, or the first
+   * card when cards come before the tabs; 4.108). A Details tab left with
+   * nothing isn't drawn. Narrower (a phone), they're in Details as before. Sections with `fields` or
    * `content` never go in it: a rail holds short values only.
    */
   factsRail?: boolean
@@ -583,12 +585,18 @@ const RAIL_LAYOUT = {
 }
 
 // The facts rail (A1): the record's column at its usual reading width
-// (max-w-4xl) and a 300px rail beside it, top-aligned with the strip.
+// (max-w-4xl) and a 300px rail beside it. The strip stays above both, at
+// full width; the rail starts level with the first content under it: the
+// first section of the open tab (beside the tab's content, never its bar),
+// or the first card when the record's first content isn't the tabs (4.108).
 const FACTS_RAIL = {
   page: 'max-w-[calc(var(--container-4xl)+var(--spacing)*6+300px)]',
   columns: 'grid grid-cols-[minmax(0,1fr)_300px] items-start gap-6',
   main: 'flex min-w-0 flex-col gap-6',
-  rail: 'flex min-w-0 flex-col gap-6',
+  rail: 'col-start-2 row-start-1 flex min-w-0 flex-col gap-6',
+  // The tab bar over the column only: the rail's 300px and the gap (the
+  // bar's own -mx-1 bleed kept on its left).
+  barBeside: 'mr-[calc(300px+var(--spacing)*5)]',
 }
 
 /** A section of short facts placed `rail` with no tab: the facts rail's, where it's drawn. */
@@ -800,6 +808,7 @@ function MainTabs({
   title,
   counts,
   stickyTop,
+  aside,
 }: {
   tabs: ViewTab[]
   label: string
@@ -808,6 +817,12 @@ function MainTabs({
   title?: string
   counts?: Readonly<Record<string, number>>
   stickyTop?: string
+  /**
+   * The facts rail (A1), when the tabs are the record's first content: it
+   * sits beside the open tab, level with its first section, and the tab
+   * bar keeps to the column.
+   */
+  aside?: ReactNode
 }) {
   const { setMarker, setBar, stuck } = useStuck()
   const countOf = (tab: ViewTab) => {
@@ -829,6 +844,18 @@ function MainTabs({
       { replace: true, state: location.state, preventScrollReset: true },
     )
   }
+  // Kept mounted, the closed tabs are hidden (no box), so beside the rail
+  // only the open one takes the first column.
+  const panels = tabs.map((tab) => (
+    <TabsContent
+      key={tab.slug}
+      value={tab.slug}
+      keepMounted
+      className={cn('@container/tab flex min-w-0 flex-col gap-6 [font-size:inherit]', aside !== undefined && 'col-start-1 row-start-1')}
+    >
+      <TabBody tab={tab} railFields={railFields} />
+    </TabsContent>
+  ))
   return (
     <Tabs
       value={selected}
@@ -847,7 +874,10 @@ function MainTabs({
         // A record dialog's body sets --entity-view-sticky-top to minus its
         // padding, so the bar sits at the body's own top edge there.
         style={{ top: stickyTop ?? 'var(--entity-view-sticky-top, 0px)' }}
-        className="sticky z-10 -mx-1 flex min-w-0 flex-col gap-1 bg-background px-1 pt-0 data-[stuck]:pt-2 data-[stuck]:shadow-[0_8px_12px_-10px_var(--color-foreground)]"
+        className={cn(
+          'sticky z-10 -mx-1 flex min-w-0 flex-col gap-1 bg-background px-1 pt-0 data-[stuck]:pt-2 data-[stuck]:shadow-[0_8px_12px_-10px_var(--color-foreground)]',
+          aside !== undefined && FACTS_RAIL.barBeside,
+        )}
       >
         {stuck && title && (
           <p data-slot="entity-view-tab-bar-title" aria-hidden="true" className="truncate type-label font-semibold text-foreground">
@@ -884,16 +914,14 @@ function MainTabs({
           })}
         </TabsList>
       </div>
-      {tabs.map((tab) => (
-        <TabsContent
-          key={tab.slug}
-          value={tab.slug}
-          keepMounted
-          className="@container/tab flex min-w-0 flex-col gap-6 [font-size:inherit]"
-        >
-          <TabBody tab={tab} railFields={railFields} />
-        </TabsContent>
-      ))}
+      {aside === undefined ? (
+        panels
+      ) : (
+        <div data-slot="entity-view-with-facts" className={FACTS_RAIL.columns}>
+          {panels}
+          {aside}
+        </div>
+      )}
     </Tabs>
   )
 }
@@ -1031,6 +1059,20 @@ export function EntityView({
   const shaped = layout === 'tabs' ? tabsLayout(railFacts.length > 0 ? sections.filter((section) => !isRailFacts(section)) : sections, detailsTab) : null
   const tabs = shaped ? shaped.tabs : tabsOf(mainSections)
   const tabbed = (section: EntityViewSection) => section.placement !== 'rail' && section.tab !== undefined
+  const factsAside = railFacts.length > 0 && (
+    <aside
+      aria-label={factsRailLabel ?? `${title ?? 'Record'} facts`}
+      data-slot="entity-view-facts-rail"
+      className={FACTS_RAIL.rail}
+    >
+      {railFacts.map((section) => (
+        <ViewSection key={section.title} section={section} inRail factsRail />
+      ))}
+    </aside>
+  )
+  // The record's first content under the strip is the tab bar: the rail
+  // goes in the tabs, beside the open tab's content.
+  const factsInTabs = factsAside !== false && shaped !== null && shaped.above.length === 0 && tabs.length > 0
   const tabList = tabs.length > 0 && (
     <MainTabs
       tabs={tabs}
@@ -1039,6 +1081,7 @@ export function EntityView({
       title={title}
       counts={tabCounts}
       stickyTop={tabsStickyTop}
+      aside={factsInTabs ? factsAside : undefined}
     />
   )
   const main = (
@@ -1090,22 +1133,12 @@ export function EntityView({
       </>
     )
     body =
-      railFacts.length > 0 ? (
-        // The strip and the tabs on the left, the facts beside them (A1).
+      factsAside !== false && !factsInTabs ? (
+        // The cards (and any tabs after them) on the left, the facts beside
+        // them from the first card (A1).
         <div data-slot="entity-view-with-facts" className={FACTS_RAIL.columns}>
-          <div className={FACTS_RAIL.main}>
-            {strip && <div data-slot="entity-view-strip">{strip}</div>}
-            {column}
-          </div>
-          <aside
-            aria-label={factsRailLabel ?? `${title ?? 'Record'} facts`}
-            data-slot="entity-view-facts-rail"
-            className={FACTS_RAIL.rail}
-          >
-            {railFacts.map((section) => (
-              <ViewSection key={section.title} section={section} inRail factsRail />
-            ))}
-          </aside>
+          <div className={cn(FACTS_RAIL.main, 'col-start-1 row-start-1')}>{column}</div>
+          {factsAside}
         </div>
       ) : (
         column
@@ -1212,7 +1245,7 @@ export function EntityView({
         {notice}
       </div>
 
-      {strip && (!card || cardStrip) && railFacts.length === 0 && <div data-slot="entity-view-strip">{strip}</div>}
+      {strip && (!card || cardStrip) && <div data-slot="entity-view-strip">{strip}</div>}
 
       {body}
 
