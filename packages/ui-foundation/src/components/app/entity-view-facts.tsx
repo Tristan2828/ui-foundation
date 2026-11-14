@@ -5,7 +5,8 @@
 // of a few kinds, each drawn the one way it fits on a line, and nothing
 // long can be passed. A status (its StatusMark), short text (a date, a
 // number, a person's name: one line, cut with its whole text on hover),
-// a few short badges, a count (optionally a link to what it counts), an
+// a few short badges, a count (optionally a link to what it counts), a
+// rating (stars, hearts or a step bar, as the list's cells draw it), an
 // external link, and a link to another record, which must say it's
 // short (`short: true`, a provider's name), since most linked records
 // (a list of discussions, a log's entries) have long titles and belong in
@@ -28,6 +29,8 @@ import { Badge } from '@/components/ui/badge'
 import type { StatusKind } from '@/lib/status-kinds'
 import type { EditInPlace } from './edit-in-place'
 import { FactList, FactListItem } from './fact-list'
+import { RatingScore } from './rating-score'
+import { StepBar } from './step-bar'
 import type { IconComponent } from './icon-component'
 import { StatusMark } from './status-mark'
 
@@ -56,6 +59,17 @@ export type EntityViewFactValue =
    * `href` out of it (a new tab), with neither is its words. None is empty.
    */
   | { kind: 'list'; items: readonly EntityViewFactListItem[] }
+  /**
+   * A rating (4.117), drawn as the list's cells draw it: `stars` (the
+   * default) or `hearts` for a score out of `max` (RatingScore), `bar` for a
+   * quality level of `max` steps (StepBar). `value` is how many are
+   * filled; `null` is empty. Named "4 of 5" for a screen reader (with
+   * `word` first when given: "High, 4 of 5"). `word` is shown after it.
+   */
+  | { kind: 'rating'; value: number | null | undefined; max?: number; look?: EntityViewFactRatingLook; word?: string }
+
+/** How a `rating` fact draws its score. */
+export type EntityViewFactRatingLook = 'stars' | 'hearts' | 'bar'
 
 /** One item of a `list` fact. */
 export type EntityViewFactListItem = {
@@ -200,6 +214,15 @@ export function factValue(fact: EntityViewFactValue): ReactNode {
           ))}
         </FactList>
       )
+    case 'rating': {
+      if (fact.value === null || fact.value === undefined) return null
+      const max = fact.max ?? 5
+      return fact.look === 'bar' ? (
+        <StepBar value={fact.value} steps={max} word={fact.word} className="align-middle" />
+      ) : (
+        <RatingScore value={fact.value} max={max} glyph={fact.look === 'hearts' ? 'heart' : 'star'} word={fact.word} />
+      )
+    }
     case 'record':
       return (
         <Link to={fact.to} title={fact.name} className={cn(LINK_CLASS, 'inline-block max-w-full truncate align-bottom')}>

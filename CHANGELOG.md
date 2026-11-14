@@ -7,9 +7,9 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.116.0 — A deploy shows on the next launch
+## 4.118.0 — A deploy shows on the next launch
 
-`ui-foundation-backend` and npm package 4.116.0 (no npm package change).
+`ui-foundation-backend` and npm package 4.118.0 (no npm package change).
 `foundation_backend.spa.SPAStaticFiles` now sends `Cache-Control` on
 every file it serves. Until now it sent none, so a browser guessed how
 long to keep each file. Safari on an iPhone could keep an old
@@ -33,7 +33,7 @@ cleared, so a deploy didn't show on the phone.
 - No service worker change was needed: `pwa()`'s `push-sw.js` has no
   fetch handler and caches nothing.
 
-**App step:** bump `ui-foundation-backend==4.116.0` in
+**App step:** bump `ui-foundation-backend==4.118.0` in
 `backend/pyproject.toml` (and the npm package with it, as usual). An app
 whose `app/spa.py` re-exports the package's `SPAStaticFiles` and whose
 `main.py` mounts it (every app since 4.25) needs nothing else. An app
@@ -45,6 +45,48 @@ its own rules (`docs/deploy.md` "Caching and a deploy that doesn't
 show"). A phone that already holds an old `index.html` with a guessed
 lifetime may keep it until that guess runs out, after the first deploy
 with this release; from then on every deploy shows on the next launch.
+
+## 4.117.0 — A rating in the facts rail; a second button beside New
+
+npm package and `ui-foundation-backend` 4.117.0 (no backend change).
+Additive: a new fact kind, a new optional `ListHeader` prop, and new
+exports `RatingScore`, `RatingScoreGlyph`,
+`RatingScoreProps`, `EntityViewFactRatingLook` and
+`ListHeaderSecondaryAction`. (4.116.0 is held by another open PR.)
+
+**A rating fact** (`EntityView factsRail`, its `facts` sections):
+`{ label, kind: 'rating', value, max?, look?, word? }` draws a rating the
+way a list's cells do, not as "4 of 5" text: `stars` (the default) or
+`hearts` for a score out of `max` (5), and `bar` for a quality level
+(`StepBar`, with its `word`). It is one image named "4 of 5" ("High, 4 of
+5" with a word); `null` reads its `emptyLabel`. It's edited in place like
+any fact (`edit`, usually `inPlace.select` over the scores), drawn the
+same in Details where the rail folds on a phone, and its glyphs have a
+fixed size, so a hover moves nothing (4.115's rule).
+
+**`RatingScore`**, the score's glyphs for a table cell or a card too
+(cell pattern 9): `max` stars or hearts, the first `value` filled in
+`foreground`, the rest outlined in `muted-foreground` (3:1 in both
+themes).
+
+**`ListHeader secondaryAction`** (and so a framed `DataTable`'s
+`pageHeader`): `{ label, icon?, onClick | to, disabled? }`, one outline
+button just before New, for a list's second most common action ("Refresh
+Now", "Add from Catalog"). New stays the primary. On a phone it folds
+into ⋯ as the menu's first item; with nothing else in the menu, ⋯ shows
+on a phone for it alone.
+
+`e2e/facts-rail-rating.spec.ts` covers each look's glyphs and names, the
+empty state, editing in place, hover at 1440 and 375, the phone's
+Details, axe in both themes and the empty glyph's 3:1;
+`e2e/list-header-secondary.spec.ts` its place beside New, disabled while
+it runs, the fold into ⋯ on a phone, and axe in both themes at both
+widths and with the phone's menu open. Both fail with the feature broken.
+
+**Upgrading:** nothing required. A rating shown as text in the rail can
+become a `rating` fact; an extra action in ⋯ that a list uses all the
+time can become its `secondaryAction`.
+
 
 ## 4.115.0 — The record's status tops the facts rail; the strip holds still
 
