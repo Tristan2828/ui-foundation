@@ -33,11 +33,11 @@
 - [A few equal things](#a-few-equal-things) · lines 1427–1511
 - [An overview page](#an-overview-page) · lines 1513–1576
 - [A record's header and empty values](#a-records-header-and-empty-values) · lines 1577–1628
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1630–1698
-- [Picking at random](#picking-at-random) · lines 1700–1731
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1733–1800
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1802–1827
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1829–1918
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1630–1711
+- [Picking at random](#picking-at-random) · lines 1713–1744
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1746–1813
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1815–1840
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1842–1931
 
 <!-- /index -->
 
@@ -789,7 +789,7 @@ the `ring` focus ring. A table that fits gets no tab stop and no region.
 where that reads as small text. The open record tab's name, the open tab
 of any line tab list (`TabsList variant="line"`, a page's sub-navigation
 under a section heading, 4.110) and a picked `ChoiceButtons` option wear
-it (each tab with a `bg-primary` line, 3px on a record's, the choice with
+it (each tab with a 3px `bg-primary` line and a `bg-primary/12` tint, the choice with
 a `border-primary` and a `bg-primary/12` fill). The pill look
 (`TabsList`'s default) keeps its open tab in `--foreground` on the page
 colour. It's the
@@ -1649,9 +1649,13 @@ its short facts the last tab, Details. A mark goes left of the title.
 - **Tabs** (`tab` on a section): a line tab list under the strip and any
   sections with no tab, one tab per name in the order the sections first
   give it. The look is the record standard's 3B (4.101): 44px tabs in
-  16px semibold (14px under 48rem), the selected one's name in the theme
-  colour (`--primary-text`, 4.105) with a 3px primary line under it, the
-  others muted; the list's own
+  16px semibold (14px under 48rem), the others muted. The selected one is
+  plainly marked (4.111): its name bold in the theme colour
+  (`--primary-text`, 4.105), a 3px primary line under it and a primary
+  tint behind it (`bg-primary/12`, as a picked choice); every tab is as
+  wide as its bold name, so choosing one moves none. A page's own line
+  tabs (`TabsList variant="line"`) are marked the same way, semibold
+  over medium. The list's own
   bottom border runs the column's width. A tab's count (`tabCounts`, by
   name: the records it holds) sits beside its name in a small muted
   pill; a tab with none shows no count. A list wider than the column
@@ -1676,6 +1680,15 @@ its short facts the last tab, Details. A mark goes left of the title.
   18rem column beside its sections once the tab is 42rem wide, under
   them below that. Short facts only, never free text: run-on text in a
   narrow box is what the standard took away.
+- **Several items in one fact** (4.111): linked records, a few tasks,
+  each item marked so a long title that wraps doesn't run into the next.
+  A `list` fact (`{ label: 'Related', kind: 'list', items: [{ name, to,
+  icon }] }`) draws them; an app's own box of several things uses the
+  same `FactList` and `FactListItem`. Each item leads with its kind's
+  icon (the record standard's 4I) when the app gives one, a neutral
+  bullet otherwise, in the muted colour; a wrapped line starts after the
+  mark (a hanging indent), and items have a little room between them.
+  Never a bare stack of links.
 - **The strip** (`KeyStats`) is as wide as its numbers (`width="content"`,
   the default since 4.98), not the page's width.
 - **A mark or avatar** (`leading`): left of the title, top-aligned,

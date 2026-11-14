@@ -18,14 +18,30 @@ const box = async (locator: Locator) => {
 const bar = (page: Page) => page.locator('[data-slot=entity-view-tab-bar]').first()
 
 test.describe('the look (3B)', () => {
-  test('16px semibold tabs, a 3px primary line under the open one, counts beside names', async ({ page }) => {
+  test('16px semibold tabs, the open one bold on a primary tint over a 3px primary line, counts beside names', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto(`${HARNESS}app-entityview--details-tab`)
     const tabs = page.getByRole('tablist', { name: 'Office move sections' })
     const notes = tabs.getByRole('tab', { name: 'Notes' })
     await expect(notes).toHaveAttribute('aria-selected', 'true')
     expect(await notes.evaluate((node) => getComputedStyle(node).fontSize)).toBe('16px')
-    expect(await notes.evaluate((node) => getComputedStyle(node).fontWeight)).toBe('600')
+    // Open: bold (4.110); closed: semibold, each as wide as its bold name, so choosing one moves none.
+    expect(await notes.evaluate((node) => getComputedStyle(node).fontWeight)).toBe('700')
+    const details = tabs.getByRole('tab', { name: 'Details' })
+    expect(await details.evaluate((node) => getComputedStyle(node).fontWeight)).toBe('600')
+    const before = await box(details)
+    await details.click()
+    await expect(details).toHaveAttribute('aria-selected', 'true')
+    expect((await box(details)).width).toBe(before.width)
+    await notes.click()
+    // A primary tint behind the open tab only.
+    await expect(details).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await expect(notes).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await expect(notes).toHaveCSS('font-weight', '700')
+    // The hidden bold copy is in neither the name nor the text.
+    await expect(notes).toHaveAccessibleName('Notes')
+    await expect(tabs.getByRole('tab', { name: 'Changes 2', exact: true })).toBeVisible()
+    expect(await notes.textContent()).toBe('Notes')
     const line = await notes.evaluate((node) => {
       const after = getComputedStyle(node, '::after')
       const probe = document.createElement('div')

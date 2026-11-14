@@ -73,8 +73,9 @@
 // switch. With no `tab` on any section, nothing changes.
 //
 // The tab bar (4.101, record standard 3B): bigger underline tabs (16px
-// semibold, 14px on a phone), a 3px primary line under the open one and
-// its name in the theme colour (`text-primary-text`, 4.105), each
+// semibold, 14px on a phone), the open one plainly marked (4.111): a 3px
+// primary line, a primary tint behind it (ui/tabs' line look) and its name
+// bold in the theme colour (`text-primary-text`, 4.105), each
 // tab's count beside its name (`tabCounts`; none for zero). The bar sticks
 // to the top of whatever scrolls (the page, or a record dialog's body) as
 // the record scrolls under it, `tabsStickyTop` below the top, and once
@@ -898,9 +899,18 @@ function MainTabs({
               <TabsTrigger
                 key={tab.slug}
                 value={tab.slug}
-                className="h-11 flex-none gap-1.5 px-2.5 text-sm font-semibold text-muted-foreground group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-[3px] after:bg-primary data-active:text-primary-text md:px-4 md:text-base dark:text-muted-foreground dark:data-active:text-primary-text"
+                className="h-11 flex-none gap-1.5 rounded-b-none px-2.5 text-sm font-semibold text-muted-foreground group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-[3px] after:bg-primary data-active:font-bold! data-active:text-primary-text md:px-4 md:text-base dark:text-muted-foreground dark:data-active:text-primary-text"
               >
-                {tab.name}
+                {/* The open name is bold: a hidden bold copy (::after, not in
+                    the DOM's text or the tab's name) holds every tab at its
+                    bold width, so choosing one moves none. */}
+                <span
+                  data-slot="entity-view-tab-name"
+                  data-text={tab.name}
+                  className="inline-grid after:invisible after:col-start-1 after:row-start-1 after:h-0 after:font-bold after:content-[attr(data-text)]"
+                >
+                  <span className="col-start-1 row-start-1">{tab.name}</span>
+                </span>
                 {count > 0 && (
                   <span
                     data-slot="entity-view-tab-count"

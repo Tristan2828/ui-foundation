@@ -158,6 +158,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-formcontrols--narrow-filters', mustShow: 'Shelf:' },
   // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
   { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
+  // Several items in a fact, each marked by its kind's icon or a bullet (4.111).
+  { id: 'app-factlist--links-box', mustShow: 'Moving day, the second weekend' },
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
   // Cards and no tabs: the rail level with the first card (4.108).
   { id: 'app-entityview--facts-rail-no-tabs', mustShow: 'Not booked' },
@@ -396,6 +398,8 @@ const GLYPH_STORIES: {
   },
   // The facts rail's status icon and external-link mark on its card (4.106).
   { id: 'app-entityview--facts-rail' },
+  // A list fact's kind icons and external-link mark (4.111).
+  { id: 'app-factlist--links-box' },
   { id: 'app-entityview--details-tab' },
   // Each toast's icon in its tone on the popover surface (4.90), and the
   // offline bar's, an action error's and a job's (the spinner and check).

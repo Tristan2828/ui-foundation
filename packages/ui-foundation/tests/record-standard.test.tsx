@@ -28,7 +28,7 @@ const FACTS: EntityViewSection = { title: 'Summary', placement: 'rail', fields: 
 const NOTES: EntityViewSection = { title: 'Notes', tab: 'Notes', content: <p>Pack the shelves first.</p> }
 const CHANGES: EntityViewSection = { title: 'Changes', tab: 'Changes', content: <p>Moved to the morning.</p> }
 
-const tabNames = (html: string) => [...html.matchAll(/role="tab"[^>]*>([^<]+)</g)].map((match) => match[1])
+const tabNames = (html: string) => [...html.matchAll(/role="tab"[^>]*>(.*?)<\/button>/g)].map((match) => match[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
 
 describe('EntityView, the tabs layout (1A)', () => {
   it('is the default: the facts are the last tab, Details, and there is no rail', () => {
