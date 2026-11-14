@@ -52,7 +52,7 @@ describe('without the room measured, the facts are in Details', () => {
   it('as a Details tab of rows, no rail', () => {
     const html = render(<EntityView isLoading={false} back={{ to: '/', label: 'Projects' }} title="Office move" factsRail sections={sections} />)
     expect(html).not.toContain('data-slot="entity-view-facts-rail"')
-    expect(html).toMatch(/role="tab"[^>]*>Details</)
+    expect(html).toMatch(/role="tab"[^>]*>(<[^>]+>)*Details</)
     expect(html).toContain('Not booked')
   })
 })

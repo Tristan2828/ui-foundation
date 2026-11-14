@@ -7,6 +7,85 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.111.0 — The open tab plainly marked, and fact lists
+
+npm package and `ui-foundation-backend` 4.111.0 (no backend change).
+Additive: a new `FactList` and `FactListItem`, and a `list` fact kind;
+the open tab's look changes for every app. Nothing is removed or
+renamed.
+
+- **The open record tab is plainly marked.** On a record (`EntityView`'s
+  3B tabs) the selected tab was only a slightly coloured name over a
+  line, hard to pick out under a dark palette. Now its name is bold in
+  `--primary-text` over a 3px `primary` line, with a primary tint behind
+  it (`bg-primary/12`, as on a picked `ChoiceButtons` option). The others
+  stay semibold and muted. Every tab is as wide as its bold name, so
+  choosing one moves none. The bold copy that holds the width is hidden
+  and isn't part of the tab's text or accessible name. A stuck bar looks
+  the same.
+- **Line tabs match it.** The open tab in a `TabsList variant="line"`
+  (a page's sub-navigation) now has the same 3px line and tint, and its
+  name is semibold in `--primary-text`. A closed one is medium weight in
+  `--muted-foreground`. This holds in both themes and every palette.
+- **Several items in one fact are marked apart: `FactList`.** A fact row
+  that listed several linked records with long titles ran them together,
+  each wrapped title stacked on the next. The new exported `FactList` and
+  `FactListItem` fix that:
+  - each item leads with its kind's icon (the record standard's 4I,
+    `icon`) or a neutral bullet, in the muted colour;
+  - a wrapped line starts after the mark (a hanging indent);
+  - the items have 6px between them.
+
+  EntityView facts gain a `list` kind that draws one: `{ label:
+  'Related', kind: 'list', items: [{ name, to, icon }] }`. An item with
+  `to` links within the app, one with `href` opens outside it in a new
+  tab, and one with neither is plain words. An empty list shows the
+  fact's empty label. An app's own box of several things (its links box,
+  a box of tasks) uses `FactList` directly.
+- New harness story: `app/FactList` "Links box". It's a record with a
+  Related row of long linked titles with kind icons, a For row with a
+  bullet, an empty From row, and a Tasks box drawn with `FactList`.
+- Tests:
+  - `e2e/record-tabs.spec.ts`: the open record tab is bold on the tint
+    over the 3px line; the others are semibold with no tint; a tab is as
+    wide open as closed; its accessible name and text hold its name once.
+  - `e2e/page-tabs-status.spec.ts`: in light, dark and every palette, the
+    open line tab has a 3px line and the tint and is semibold, and the
+    closed ones are medium with no tint.
+  - `e2e/fact-list.spec.ts`: each item is marked (an icon or a bullet,
+    hidden from screen readers); the mark sits on the first line; a
+    wrapped title's lines start after it; there's room between items; the
+    empty label shows; an app's own list is named by its `aria-label`.
+    With the gap and the hanging indent taken out, it fails.
+  - `fixtures-visual.spec.ts` gains the Links box: axe and token-only
+    colours in both themes and every palette, and its icons in the 3:1
+    glyph check.
+  - The markup tests that read tab names strip the name's span.
+- Docs: design-language.md "A record's tabs, mark and facts" and "The
+  theme colour as text" (synced).
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.111.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.111.0` in `backend/`.
+2. Nothing to change for the tabs. Look over a record's tabs and a page
+   with line tabs. Update specs that check the open tab:
+   - the open record tab's weight is now 700, not 600;
+   - the open line tab is semibold on the tint.
+
+   A spec that reads a record tab's `textContent` still gets its name
+   once.
+3. Move every box in a record that lists several things (its links box,
+   a box of tasks, notes that came up, records touched) onto `FactList`:
+   - draw each item as a `FactListItem` inside a `FactList`;
+   - give each item its kind's icon where the box's items have kinds
+     (`icon={MessageSquareIcon}`), and leave it out where they don't (a
+     bullet);
+   - drop the box's own `<ul>` spacing and markers.
+
+   A facts section's row of several records can be a `list` fact instead
+   (`{ label: 'Related', kind: 'list', items }`).
+
 ## 4.110.0 — Line tabs in the theme colour, done and ended colours, and a date filter a view fills
 
 npm package and `ui-foundation-backend` 4.110.0 (no backend change).

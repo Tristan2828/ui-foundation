@@ -107,7 +107,7 @@ export {
   type EntityViewRailFields,
   type EntityViewSection,
 } from '@/components/app/entity-view'
-export { type EntityViewFact, type EntityViewFactValue } from '@/components/app/entity-view-facts'
+export { type EntityViewFact, type EntityViewFactListItem, type EntityViewFactValue } from '@/components/app/entity-view-facts'
 export { entityViewTabSlug } from '@/lib/entity-view-tab'
 export { usePrinting } from '@/components/app/print-context'
 export {
@@ -200,6 +200,7 @@ export {
   type FilterSelectProps,
 } from '@/components/app/filter-bar'
 export { FilterDate, type FilterDateProps } from '@/components/app/filter-date'
+export { FactList, FactListItem, type FactListItemProps, type FactListProps } from '@/components/app/fact-list'
 export {
   DATE_FILTER_PRESETS,
   DATE_FILTER_PRESET_LABELS,

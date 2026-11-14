@@ -19,6 +19,8 @@ import { cn } from 'cn'
 import { Badge } from '@/components/ui/badge'
 import type { StatusKind } from '@/lib/status-kinds'
 import type { EditInPlace } from './edit-in-place'
+import { FactList, FactListItem } from './fact-list'
+import type { IconComponent } from './icon-component'
 import { StatusMark } from './status-mark'
 
 /** What a fact holds: one of the short kinds a rail can draw. */
@@ -39,6 +41,24 @@ export type EntityViewFactValue =
    * long (a discussion, a log entry) is a section in a tab instead.
    */
   | { kind: 'record'; name: string; to: string; short: true }
+  /**
+   * Several items (4.111): linked records, links out, or plain words, each
+   * marked by its kind's `icon` or a bullet (FactList), so long titles
+   * that wrap still read apart. An item with `to` links in the app, with
+   * `href` out of it (a new tab), with neither is its words. None is empty.
+   */
+  | { kind: 'list'; items: readonly EntityViewFactListItem[] }
+
+/** One item of a `list` fact. */
+export type EntityViewFactListItem = {
+  name: string
+  /** A record in the app (`/discussions/3`). */
+  to?: string
+  /** A page out of the app, opening in a new tab. */
+  href?: string
+  /** Its kind's icon (the record standard's 4I); a bullet without one. */
+  icon?: IconComponent
+}
 
 export type EntityViewFact = EntityViewFactValue & {
   label: string
@@ -91,6 +111,29 @@ export function factValue(fact: EntityViewFactValue): ReactNode {
           <ExternalLinkIcon aria-hidden="true" className="size-3.5 shrink-0" />
           <span className="sr-only">(opens in a new tab)</span>
         </a>
+      )
+    case 'list':
+      if (fact.items.length === 0) return null
+      return (
+        <FactList>
+          {fact.items.map((item, index) => (
+            <FactListItem key={`${index}:${item.name}`} icon={item.icon}>
+              {item.to ? (
+                <Link to={item.to} className={LINK_CLASS}>
+                  {item.name}
+                </Link>
+              ) : item.href ? (
+                <a href={item.href} target="_blank" rel="noreferrer" className={LINK_CLASS}>
+                  {item.name}
+                  <ExternalLinkIcon aria-hidden="true" className="ml-1 inline size-3.5 align-[-0.125em]" />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              ) : (
+                item.name
+              )}
+            </FactListItem>
+          ))}
+        </FactList>
       )
     case 'record':
       return (

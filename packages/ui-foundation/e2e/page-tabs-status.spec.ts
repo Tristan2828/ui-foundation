@@ -26,6 +26,16 @@ const tokenColour = (page: Page, token: string, property: 'color' | 'backgroundC
     },
     { token, property },
   )
+// bg-primary/12, as the browser resolves it.
+const primaryTint = (page: Page) =>
+  page.evaluate(() => {
+    const probe = document.createElement('div')
+    probe.style.backgroundColor = 'color-mix(in oklab, var(--primary) 12%, transparent)'
+    document.body.append(probe)
+    const colour = getComputedStyle(probe).backgroundColor
+    probe.remove()
+    return colour
+  })
 const colour = (locator: Locator) => locator.evaluate((node) => getComputedStyle(node).color)
 const after = (locator: Locator, property: 'backgroundColor' | 'opacity') =>
   locator.evaluate((node, property) => getComputedStyle(node, '::after')[property], property)
@@ -43,6 +53,12 @@ test.describe("a page's line tabs open in the theme colour", () => {
       expect(await colour(other)).not.toBe(await colour(open))
       expect(await after(open, 'backgroundColor')).toBe(await tokenColour(page, '--primary', 'backgroundColor'))
       expect(await after(open, 'opacity')).toBe('1')
+      expect(await open.evaluate((node) => getComputedStyle(node, '::after').height)).toBe('3px')
+      // Clearly picked: semibold on a primary tint, the closed ones medium on nothing.
+      expect(await open.evaluate((node) => getComputedStyle(node).fontWeight)).toBe('600')
+      expect(await other.evaluate((node) => getComputedStyle(node).fontWeight)).toBe('500')
+      expect(await open.evaluate((node) => getComputedStyle(node).backgroundColor)).toBe(await primaryTint(page))
+      expect(await other.evaluate((node) => getComputedStyle(node).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
       expect(await after(other, 'opacity')).toBe('0')
       // The pill look keeps its own: the open one in the text colour.
       const pill = page.getByTestId('pill-tabs').getByRole('tab', { name: 'Week' })

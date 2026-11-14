@@ -21,7 +21,7 @@ const view = (props: Partial<EntityViewProps>) => (
 )
 
 const tabTexts = (html: string) =>
-  [...html.matchAll(/role="tab"[^>]*>(.*?)<\/button>/g)].map((match) => match[1].replace(/<[^>]+>/g, ' ').trim())
+  [...html.matchAll(/role="tab"[^>]*>(.*?)<\/button>/g)].map((match) => match[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
 
 describe('the tab bar (3B)', () => {
   it('shows each tab its count by name, none for zero or left out', () => {

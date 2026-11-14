@@ -50,7 +50,7 @@ describe('EntityView tabs', () => {
 
   it('one tab per name in first-named order, a rail section never under one', () => {
     const html = render(view({ layout: 'rail', sections: SECTIONS }))
-    const tabs = [...html.matchAll(/role="tab"[^>]*>([^<]+)</g)].map((match) => match[1])
+    const tabs = [...html.matchAll(/role="tab"[^>]*>(.*?)<\/button>/g)].map((match) => match[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
     expect(tabs).toEqual(['Steps', 'Used in'])
     expect(html).toContain('aria-label="Packing a desk sections"')
     expect(html).not.toContain('Ignored')
