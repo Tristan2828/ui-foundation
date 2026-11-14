@@ -424,6 +424,174 @@
       ],
       "doneAt": "2027-01-31T10:00:00Z",
       "nextAfterDone": "2027-03-31T09:00:00Z"
+    },
+    {
+      "name": "WKST: every other week on sun and wed, weeks from sun",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU;WKST=SU",
+        "start": "2026-11-04",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 6,
+      "next": [
+        "2026-11-04T09:00:00Z",
+        "2026-11-15T09:00:00Z",
+        "2026-11-18T09:00:00Z",
+        "2026-11-29T09:00:00Z",
+        "2026-12-02T09:00:00Z",
+        "2026-12-13T09:00:00Z"
+      ]
+    },
+    {
+      "name": "WKST: the same rule with weeks from mon (no WKST)",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU",
+        "start": "2026-11-04",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 6,
+      "next": [
+        "2026-11-04T09:00:00Z",
+        "2026-11-08T09:00:00Z",
+        "2026-11-18T09:00:00Z",
+        "2026-11-22T09:00:00Z",
+        "2026-12-02T09:00:00Z",
+        "2026-12-06T09:00:00Z"
+      ]
+    },
+    {
+      "name": "WKST: every 3 weeks on sun from a monday, weeks from sun",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=3;BYDAY=SU;WKST=SU",
+        "start": "2026-11-02",
+        "times": [
+          "18:00"
+        ],
+        "timeZone": "America/Chicago",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 4,
+      "next": [
+        "2026-11-23T00:00:00Z",
+        "2026-12-14T00:00:00Z",
+        "2027-01-04T00:00:00Z",
+        "2027-01-25T00:00:00Z"
+      ]
+    },
+    {
+      "name": "WKST: every other weekend, weeks from sat",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=SA,SU;WKST=SA",
+        "start": "2026-11-08",
+        "times": [
+          "10:00"
+        ],
+        "timeZone": "Europe/London",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 6,
+      "next": [
+        "2026-11-08T10:00:00Z",
+        "2026-11-21T10:00:00Z",
+        "2026-11-22T10:00:00Z",
+        "2026-12-05T10:00:00Z",
+        "2026-12-06T10:00:00Z",
+        "2026-12-19T10:00:00Z"
+      ]
+    },
+    {
+      "name": "WKST: every other week on sun, weeks from sun, across the spring-forward change",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=TH,SU;WKST=SU",
+        "start": "2027-02-25",
+        "times": [
+          "08:00"
+        ],
+        "timeZone": "America/New_York",
+        "fromCompletion": false
+      },
+      "after": "2027-02-25T00:00:00Z",
+      "count": 6,
+      "next": [
+        "2027-02-25T13:00:00Z",
+        "2027-03-07T13:00:00Z",
+        "2027-03-11T13:00:00Z",
+        "2027-03-21T12:00:00Z",
+        "2027-03-25T12:00:00Z",
+        "2027-04-04T12:00:00Z"
+      ]
+    },
+    {
+      "name": "WKST: weekly with a week start falls as without one",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;BYDAY=WE,SU;WKST=SU",
+        "start": "2026-11-04",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 4,
+      "next": [
+        "2026-11-04T09:00:00Z",
+        "2026-11-08T09:00:00Z",
+        "2026-11-11T09:00:00Z",
+        "2026-11-15T09:00:00Z"
+      ]
+    },
+    {
+      "name": "WKST: every other week on sun and wed with a count, weeks from sun",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU;COUNT=3;WKST=SU",
+        "start": "2026-11-04",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": false
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 5,
+      "next": [
+        "2026-11-04T09:00:00Z",
+        "2026-11-15T09:00:00Z",
+        "2026-11-18T09:00:00Z"
+      ]
+    },
+    {
+      "name": "WKST: every! other week on sun and wed, weeks from sun",
+      "recurrence": {
+        "rule": "FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU;WKST=SU",
+        "start": "2026-11-04",
+        "times": [
+          "09:00"
+        ],
+        "timeZone": "UTC",
+        "fromCompletion": true
+      },
+      "after": "2026-11-01T00:00:00Z",
+      "count": 3,
+      "next": [
+        "2026-11-04T09:00:00Z",
+        "2026-11-15T09:00:00Z",
+        "2026-11-18T09:00:00Z"
+      ],
+      "doneAt": "2026-11-05T12:00:00Z",
+      "nextAfterDone": "2026-11-15T09:00:00Z"
     }
   ]
 }

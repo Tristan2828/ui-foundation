@@ -5,7 +5,8 @@ import { expect, test, type Page } from '@playwright/test'
 // phrase read as it's typed, with its label and next five dates, and a
 // clear refusal; the presets; on a form; edited in place (Enter saves, a
 // phrase it can't read doesn't); the list cells; a phone's width; axe in
-// both themes with a refusal showing. Every story is on Thursday
+// both themes with a refusal showing; dates only, with weeks from Sunday
+// (4.114), and its axe in both themes. Every story is on Thursday
 // 2026-11-12, noon in Chicago.
 const story = (id: string) => `http://localhost:6180/story.html?id=app-recurrencefield--${id}`
 const field = (page: Page, name: string) => page.locator('[data-slot="recurrence-field"]').filter({ has: page.getByRole('textbox', { name, exact: true }) })
@@ -152,6 +153,64 @@ test('on a phone: the presets wrap and nothing scrolls sideways', async ({ page 
   const scrolls = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
   expect(scrolls).toBe(false)
 })
+
+test('dates only, weeks from Sunday: the preview has no times, and weekly rules carry WKST=SU', async ({ page }) => {
+  await page.goto(story('dates-only'))
+  const club = field(page, 'Book Club')
+  const box = page.getByRole('textbox', { name: 'Book Club', exact: true })
+  await expect(box).toHaveValue('every other week on sun and wed')
+  const preview = club.locator('[data-slot="recurrence-preview"]')
+  await expect(preview.locator('p').first()).toHaveText('Every other week on Sun and Wed')
+  // From Thursday the 12th: weeks from Sunday, so Sun the 15th (not the 8th's fortnight), and no times.
+  await expect(preview.getByRole('list', { name: 'Next' }).getByRole('listitem')).toHaveText([
+    'Sun, Nov 15',
+    'Wed, Nov 18',
+    'Sun, Nov 29',
+    'Wed, Dec 2',
+    'Sun, Dec 13',
+  ])
+  await expect(club).not.toContainText('AM')
+  await expect(club).not.toContainText('12:00')
+
+  // Typed: a weekly rule gets WKST=SU; a time is refused; today counts when it falls today.
+  const market = page.getByRole('textbox', { name: 'Farmers Market', exact: true })
+  await expect(market).toHaveAttribute('placeholder', 'every 2nd tue')
+  await market.fill('every other week on sun and thu')
+  await expect(page.getByTestId('market-value')).toHaveText('FREQ=WEEKLY;INTERVAL=2;BYDAY=TH,SU;WKST=SU · 2026-11-12 · 00:00 · schedule')
+  const marketPreview = field(page, 'Farmers Market').locator('[data-slot="recurrence-preview"]')
+  await expect(marketPreview.getByRole('listitem').first()).toHaveText('Thu, Nov 12')
+  // Its week is Sun 8 to Sat 14, so the next is two weeks on: Sun the 22nd (Monday weeks would give the 15th).
+  await expect(marketPreview.getByRole('listitem').nth(1)).toHaveText('Sun, Nov 22')
+  await market.fill('every thu at 9am')
+  await expect(marketPreview).toContainText('leave out “at …”')
+  await expect(market).toHaveAttribute('aria-invalid', 'true')
+  await expect(page.getByTestId('market-value')).toHaveText('none')
+
+  // A weekly preset carries WKST=SU, and stays pressed.
+  const presets = field(page, 'Farmers Market').getByRole('group', { name: 'Presets' })
+  await presets.getByRole('button', { name: 'Weekdays' }).click()
+  await expect(page.getByTestId('market-value')).toHaveText('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;WKST=SU · 2026-11-12 · 00:00 · schedule')
+  await expect(market).toHaveValue('every weekday')
+  await expect(presets.getByRole('button', { name: 'Weekdays' })).toHaveAttribute('aria-pressed', 'true')
+
+  // In place: the value at rest has no times either, and what's typed saves.
+  await expect(row(page, 'Repeats')).toHaveText(/Every other week on Sun and Wed$/)
+  await page.getByRole('button', { name: 'Edit Repeats', exact: true }).click()
+  const inPlaceBox = page.getByRole('textbox', { name: 'Repeats', exact: true })
+  await inPlaceBox.fill('every 3 weeks on sun')
+  await inPlaceBox.press('Enter')
+  await expect(row(page, 'Repeats')).toHaveText(/Every 3 weeks on Sun$/, { timeout: 5000 })
+})
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`dates only has no axe violations (${theme})`, async ({ page }) => {
+    await page.goto(`${story('dates-only')}&theme=${theme}`)
+    await page.getByRole('textbox', { name: 'Farmers Market', exact: true }).fill('every thu at 9am')
+    await expect(field(page, 'Farmers Market')).toContainText('leave out')
+    const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'region', 'page-has-heading-one']).analyze()
+    expect(results.violations).toEqual([])
+  })
+}
 
 for (const theme of ['light', 'dark'] as const) {
   test(`a refusal and a preview have no axe violations (${theme})`, async ({ page }) => {

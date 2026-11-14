@@ -14,6 +14,17 @@
 // - **The preview**: the rule's label ("Every 2nd Tue at 9:00 AM") and its
 //   next five occurrences, in the rule's zone, or why it can't be read.
 //
+// Two options an app's own records may want (4.114):
+// - `times={false}`, for a record whose times are fields of its own (a
+//   calendar's events): the preview lists dates only ("Tue, Dec 8", from
+//   today on), the label and the box say no times, and typing "at 9am" is
+//   refused. The value still carries `times` (the value's, `defaultTimes`
+//   or 09:00), as the contract needs one.
+// - `weekStart`, the day the app's weeks start on: `'SU'` adds `WKST=SU`
+//   to every weekly rule the presets and the box build, so "every other
+//   week on sun, wed" counts its weeks Sunday to Saturday. A rule whose
+//   week start differs, where it matters, says so ("weeks start mon").
+//
 // One control for the form (a react-hook-form `Controller`) and for
 // editing in place (`inPlace.recurrence`: Enter in the box or leaving the
 // field saves). The box is the field's labelled control (`id`); the
@@ -25,7 +36,16 @@ import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { formatOccurrence, formatRecurrence, todayIn } from '@/lib/recurrence-format'
 import { ordinalWord, parseRecurrencePhrase, recurrencePhrase } from '@/lib/recurrence-phrase'
-import { nextOccurrences, normalizeRecurrence, recurrenceProblem, WEEKDAY_CODES, type Recurrence } from '@/lib/recurrence'
+import {
+  atLocal,
+  nextOccurrences,
+  normalizeRecurrence,
+  recurrenceProblem,
+  wallClock,
+  WEEKDAY_CODES,
+  type Recurrence,
+  type WeekdayCode,
+} from '@/lib/recurrence'
 
 export type RecurrenceFieldProps = {
   /** The phrase box's id, for the field's `<FieldLabel htmlFor>`. */
@@ -46,6 +66,19 @@ export type RecurrenceFieldProps = {
   previewCount?: number
   /** Show the preset buttons (the default). */
   presets?: boolean
+  /**
+   * Show times of day (the default). False, for a record whose times are
+   * its own fields: the preview lists dates only, from today on, the label
+   * and the box leave the times out, and "at …" in the box is refused.
+   */
+  times?: boolean
+  /**
+   * The day the app's weeks start on (`'MO'` to `'SU'`; Monday when left
+   * out). Not Monday: every weekly rule the presets and the box build gets
+   * it as WKST (`'SU'` adds `WKST=SU`), which moves an every-N-weeks rule's
+   * weeks.
+   */
+  weekStart?: WeekdayCode
   locale?: string
   /** The value was refused: `aria-invalid` on the box. */
   invalid?: boolean
@@ -73,8 +106,9 @@ function dayName(day: number, locale: string | undefined) {
   return new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(Date.UTC(2024, 0, 1 + day))
 }
 
-/** The presets for a start day: each a rule built from that day. */
-function presetsFor(start: string, locale: string | undefined): Preset[] {
+/** The presets for a start day: each a rule built from that day; a weekly one with the app's week start. */
+function presetsFor(start: string, locale: string | undefined, weekStart: WeekdayCode): Preset[] {
+  const wkst = weekStart === 'MO' ? '' : `;WKST=${weekStart}`
   const [year, month, date] = start.split('-').map(Number)
   const weekday = weekdayOf(start)
   const lastOfMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
@@ -86,8 +120,8 @@ function presetsFor(start: string, locale: string | undefined): Preset[] {
   )
   return [
     { id: 'daily', label: 'Daily', rule: 'FREQ=DAILY' },
-    { id: 'weekdays', label: 'Weekdays', rule: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' },
-    { id: 'weekly', label: `Weekly on ${dayName(weekday, locale)}`, rule: `FREQ=WEEKLY;BYDAY=${code}` },
+    { id: 'weekdays', label: 'Weekdays', rule: `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR${wkst}` },
+    { id: 'weekly', label: `Weekly on ${dayName(weekday, locale)}`, rule: `FREQ=WEEKLY;BYDAY=${code}${wkst}` },
     { id: 'monthly', label: `Monthly on the ${ordinalWord(date)}`, rule: `FREQ=MONTHLY;BYMONTHDAY=${date}` },
     {
       id: 'nth',
@@ -108,6 +142,25 @@ function browserZone(): string {
 }
 
 const same = (a: Recurrence | null, b: Recurrence | null) => JSON.stringify(a) === JSON.stringify(b)
+// Every preset repeats each week or less often, where WKST changes nothing:
+// a stored weekly rule with or without one is still its preset.
+const sameDays = (a: string, b: string) => a.replace(/;WKST=[A-Z]{2}/, '') === b.replace(/;WKST=[A-Z]{2}/, '')
+
+/** The next `count` days the value falls on, from today (in its zone) on: a date-only preview. */
+function nextDays(value: Recurrence, today: string, count: number): Date[] {
+  const days: Date[] = []
+  const seen = new Set<string>()
+  const from = new Date(atLocal(today, '00:00', value.timeZone).getTime() - 1)
+  // Each day once, however many times it has: ask for enough to fill the list.
+  for (const moment of nextOccurrences(value, from, count * value.times.length)) {
+    const day = wallClock(moment, value.timeZone).day
+    if (seen.has(day)) continue
+    seen.add(day)
+    days.push(moment)
+    if (days.length === count) break
+  }
+  return days
+}
 
 export function RecurrenceField({
   id,
@@ -119,6 +172,8 @@ export function RecurrenceField({
   now,
   previewCount = 5,
   presets = true,
+  times = true,
+  weekStart = 'MO',
   locale,
   invalid = false,
   readOnly = false,
@@ -138,13 +193,14 @@ export function RecurrenceField({
 
   // The box's text, and the value it last read (or was given). A new value
   // from outside (a preset, the form's reset) is written back as its phrase.
-  const [text, setText] = useState(() => (value ? (recurrencePhrase(value, day) ?? '') : ''))
+  const phraseOf = (recurrence: Recurrence) => recurrencePhrase(recurrence, day, { times, weekStart }) ?? ''
+  const [text, setText] = useState(() => (value ? phraseOf(value) : ''))
   const [problem, setProblem] = useState<string | null>(null)
   const [known, setKnown] = useState<Recurrence | null>(value)
   if (!same(known, value)) {
     setKnown(value)
     if (value !== null || problem === null) {
-      setText(value ? (recurrencePhrase(value, day) ?? '') : '')
+      setText(value ? phraseOf(value) : '')
       setProblem(null)
     }
   }
@@ -167,14 +223,18 @@ export function RecurrenceField({
       timeZone: zone,
       times: value?.times ?? defaultTimes,
       start: value?.start,
+      weekStart,
+      readTimes: times,
     })
     if (result.ok) emit(result.value, null)
     else emit(null, result.error)
   }
 
   const start = value?.start ?? day
-  const options = presetsFor(start, locale)
-  const pressed: PresetId | null = value ? (options.find((option) => option.rule === value.rule)?.id ?? 'custom') : null
+  const options = presetsFor(start, locale, weekStart)
+  const pressed: PresetId | null = value
+    ? (options.find((option) => option.rule !== null && sameDays(option.rule, value.rule))?.id ?? 'custom')
+    : null
 
   const pick = (preset: Preset) => {
     if (preset.rule === null) {
@@ -188,7 +248,7 @@ export function RecurrenceField({
       timeZone: zone,
       fromCompletion: false,
     })
-    setText(recurrencePhrase(next, day) ?? '')
+    setText(phraseOf(next))
     emit(next, null)
   }
 
@@ -200,7 +260,12 @@ export function RecurrenceField({
 
   const stored = value ? recurrenceProblem(value) : null
   const shownProblem = problem ?? stored
-  const upcoming = value && !shownProblem && previewCount > 0 ? nextOccurrences(value, now ?? new Date(), previewCount) : []
+  const upcoming =
+    value && !shownProblem && previewCount > 0
+      ? times
+        ? nextOccurrences(value, now ?? new Date(), previewCount)
+        : nextDays(value, day, previewCount)
+      : []
 
   return (
     <div data-slot="recurrence-field" className={cn('flex min-w-0 flex-col gap-2', className)}>
@@ -239,7 +304,7 @@ export function RecurrenceField({
           onChange={(event) => read(event.target.value)}
           onBlur={onBlur}
           readOnly={readOnly}
-          placeholder="every 2nd tue at 9am"
+          placeholder={times ? 'every 2nd tue at 9am' : 'every 2nd tue'}
           autoComplete="off"
           spellCheck={false}
           className="pl-8"
@@ -255,13 +320,13 @@ export function RecurrenceField({
           </p>
         ) : value ? (
           <div id={previewId}>
-            <p className="font-medium text-foreground">{formatRecurrence(value, { locale })}</p>
+            <p className="font-medium text-foreground">{formatRecurrence(value, { locale, times, weekStart })}</p>
             {previewCount > 0 && (
               <>
                 {upcoming.length ? (
                   <ol aria-label="Next" className="mt-1 flex flex-col gap-0.5 text-muted-foreground tabular-nums">
                     {upcoming.map((moment) => (
-                      <li key={moment.getTime()}>{formatOccurrence(moment, value.timeZone, { locale, now })}</li>
+                      <li key={moment.getTime()}>{formatOccurrence(moment, value.timeZone, { locale, now, time: times })}</li>
                     ))}
                   </ol>
                 ) : (

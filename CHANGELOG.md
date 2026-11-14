@@ -7,6 +7,81 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.114.0 — Repeats without times, and the day weeks start on (WKST)
+
+npm package and `ui-foundation-backend` 4.114.0. Additive: new optional
+props and options, new exports, and one more rule part both sides
+accept. Every rule an app stores today, and every screen that doesn't
+pass the new props, behaves exactly as before.
+
+- **`RecurrenceField times={false}`**, for a record whose times are its
+  own fields (a calendar event's start and end). The preview lists the
+  next five *dates*, from today on ("Sun, Nov 15"; no "at 12:00 AM"); the
+  label and the phrase box leave the times out; the placeholder is
+  "every 2nd tue"; and "at 9am" typed is refused ("The times are set on
+  their own here: leave out “at …”."). The value still carries `times`,
+  since the schema needs one: the value's, else `defaultTimes` (09:00
+  when not given). `inPlace.recurrence({ times: false })` passes it on,
+  and its value at rest has no times either.
+- **WKST, the day a week starts on**, in `Recurrence`'s rule, on both
+  sides. `parseRule`/`formatRule` and `parse_rule`/`format_rule` read it
+  (any of MO to SU; anything else is refused), store it last, and leave
+  out `WKST=MO`, the default. The days honour it the way python-dateutil
+  and `rrule` do; it moves only an every-N-weeks rule with BYDAY. From
+  Wednesday 2026-11-04, `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU`
+  next falls on Sunday the 15th; without WKST on the 8th.
+  `weekStartMatters(parts)` / `week_start_matters(parts)` say whether a
+  rule's WKST can move a day. `RuleParts` gains an optional `weekStart`
+  (Monday 0 to Sunday 6, null for Monday; `week_start` in Python).
+- **`RecurrenceField weekStart="SU"`** (any `WeekdayCode`; Monday when
+  left out): every weekly rule its presets and box build gets `WKST=SU`
+  ("every other week on sun and wed" → `…;BYDAY=WE,SU;WKST=SU`), and a
+  stored weekly rule with or without WKST keeps its preset pressed. Typed,
+  "weeks start sun" (or "week starts on mon") sets it for one rule. Where
+  a rule's week start matters and differs from the field's, the box and
+  the label say so ("…, weeks start mon"); a week's days are listed from
+  its first ("on Sun and Wed"). `inPlace.recurrence({ weekStart })`,
+  `parseRecurrencePhrase`'s `weekStart` and `readTimes`,
+  `recurrencePhrase(value, today, { times, weekStart })`, and
+  `formatRecurrence`'s `weekStart` are the same options for an app's own
+  code; `formatOccurrence(…, { time: false })` is a date alone.
+- **Contract**: `Recurrence.rule`'s `pattern` in `openapi/foundation.yaml`
+  allows WKST. `check-contract` still accepts an app's copy with the 4.95
+  pattern (listed under the new `x-earlier-patterns`, which it ignores
+  when comparing), so no app has to touch its spec to upgrade.
+- **Tests**: 8 WKST cases in the shared `recurrence-cases.json` (DST, a
+  count, `every!`, Saturday and Sunday starts), and a new
+  `recurrence-shapes.json`: 174 rule shapes without WKST, with the days
+  each gave before this release and the days with `WKST=SU` from
+  dateutil. Both suites check every shape: unchanged without WKST, the
+  same with `WKST=MO`, the same as dateutil with `WKST=SU`, and moved only
+  where `weekStartMatters`. Without WKST the backend now passes Monday to
+  dateutil explicitly, whose own default follows `calendar.firstweekday()`.
+- A new fixture, `app/RecurrenceField` Dates only, with its spec and
+  axe in both themes.
+- Docs: reminders.md "Repeating reminders" (week start; a record whose
+  times are its own), add-an-entity.md (a `recurrence` field),
+  entity-plan-template.md, cell-patterns.md 27.
+
+**App steps:** bump to `^4.114.0` (and `ui-foundation-backend==4.114.0`)
+and run `npx ui-foundation sync` (the docs change). Nothing else is
+needed; nothing changes until an app opts in:
+
+- *Dates only:* pass `times={false}` to `RecurrenceField` (and
+  `times: false` to `inPlace.recurrence`), and `defaultTimes={['00:00']}`
+  if the stored time should be midnight. In a list, use
+  `formatRecurrence(value, { times: false })` and
+  `formatOccurrence(next, zone, { time: false })`.
+- *Weeks from Sunday:* pass `weekStart="SU"` to `RecurrenceField` and
+  `inPlace.recurrence`, and `{ weekStart: 'SU' }` to `formatRecurrence`
+  in a Repeats cell. Copy the new `Recurrence` schema from
+  `node_modules/@tristan2828/ui-foundation/openapi/foundation.yaml` into
+  `openapi.yaml` (its `rule` pattern now allows WKST, so the app's mocks
+  and spec accept the rules it stores), and run `npm run gen:api`. Rules
+  already stored without WKST keep counting weeks from Monday; to count
+  an existing every-N-weeks rule from Sunday, append `;WKST=SU` to it in
+  a migration of the app's own (it can move that rule's days).
+
 ## 4.113.0 — Nav counts on a phone
 
 npm package and `ui-foundation-backend` 4.113.0 (no backend change).

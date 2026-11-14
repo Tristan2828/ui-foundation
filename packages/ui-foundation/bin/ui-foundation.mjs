@@ -143,7 +143,7 @@ function sync({ check }) {
 // ---------------------------------------------------------- check-contract
 
 // Wording may differ between the app's spec and the foundation's; shapes may not.
-const IGNORED_KEYS = new Set(['description', 'summary', 'example', 'examples', 'tags', 'x-optional'])
+const IGNORED_KEYS = new Set(['description', 'summary', 'example', 'examples', 'tags', 'x-optional', 'x-earlier-patterns'])
 
 function normalise(value) {
   if (Array.isArray(value)) return value.map(normalise)
@@ -159,6 +159,31 @@ function normalise(value) {
 }
 
 const same = (a, b) => JSON.stringify(normalise(a)) === JSON.stringify(normalise(b))
+
+// A pattern the foundation widened keeps the ones before it
+// (`x-earlier-patterns`, Recurrence's rule since 4.114), and an app's copy
+// with an earlier one still matches: it allows less, so the package reads
+// everything it can hold, and the app copies the new one when it wants
+// what that allows. The nth earlier version takes every such node's nth.
+function withEarlierPattern(value, nth) {
+  if (Array.isArray(value)) return value.map((each) => withEarlierPattern(each, nth))
+  if (!value || typeof value !== 'object') return value
+  const out = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, withEarlierPattern(child, nth)]))
+  const earlier = value['x-earlier-patterns']
+  if (Array.isArray(earlier) && nth < earlier.length) out.pattern = earlier[nth]
+  return out
+}
+
+function earlierCount(value) {
+  if (Array.isArray(value)) return Math.max(0, ...value.map(earlierCount))
+  if (!value || typeof value !== 'object') return 0
+  const own = Array.isArray(value['x-earlier-patterns']) ? value['x-earlier-patterns'].length : 0
+  return Math.max(own, ...Object.values(value).map(earlierCount))
+}
+
+const matches = (app, foundation) =>
+  same(app, foundation) ||
+  Array.from({ length: earlierCount(foundation) }, (_, nth) => withEarlierPattern(foundation, nth)).some((earlier) => same(app, earlier))
 
 // Every component a value reaches through $refs, following refs inside the
 // components themselves, as 'section/name' keys.
@@ -207,7 +232,7 @@ function checkContract(specPath) {
     const appItem = app.paths?.[route]
     if (appItem === undefined) {
       if (!item['x-optional']) problems.push(`missing path ${route}`)
-    } else if (!same(appItem, item)) {
+    } else if (!matches(appItem, item)) {
       problems.push(`path ${route} differs`)
     }
   }
@@ -224,7 +249,7 @@ function checkContract(specPath) {
         if (!entry['x-optional'] && !optionalOnly.has(`${section}/${name}`)) {
           problems.push(`missing components.${section}.${name}`)
         }
-      } else if (!same(appEntry, entry)) {
+      } else if (!matches(appEntry, entry)) {
         problems.push(`components.${section}.${name} differs`)
       }
     }

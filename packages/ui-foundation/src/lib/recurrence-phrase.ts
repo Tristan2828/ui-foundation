@@ -13,9 +13,20 @@
 // - a day of the year: `jan 1`, `1 jan`
 //
 // then, in any order: `at 9am, 5:30pm` (`noon`, `17:00`), `starting dec 1`
-// (`from`), `until mar 1` (`ending`), `for 10 times`. A day with no year is
-// the next one: from today for `starting`, from the start for `until`.
-import { normalizeRecurrence, RecurrenceError, type Recurrence, type RuleParts, formatRule, parseRule, WEEKDAY_CODES } from '@/lib/recurrence'
+// (`from`), `until mar 1` (`ending`), `for 10 times`, `weeks start sun`
+// (WKST, 4.114). A day with no year is the next one: from today for
+// `starting`, from the start for `until`.
+import {
+  formatRule,
+  normalizeRecurrence,
+  parseRule,
+  RecurrenceError,
+  WEEKDAY_CODES,
+  weekStartMatters,
+  type Recurrence,
+  type RuleParts,
+  type WeekdayCode,
+} from '@/lib/recurrence'
 
 export type PhraseOptions = {
   /** Today, `'YYYY-MM-DD'` in the rule's zone: where a day with no year counts from. */
@@ -26,6 +37,18 @@ export type PhraseOptions = {
   times?: string[]
   /** The start when the phrase has no "starting". Defaults to `today`. */
   start?: string
+  /**
+   * The day weeks start on (4.114): a weekly rule read with no "weeks
+   * start" gets it as its WKST (`'SU'` adds `WKST=SU`). Defaults to
+   * Monday, which is no WKST.
+   */
+  weekStart?: WeekdayCode
+  /**
+   * Whether the phrase may say its times ("at 9am"; the default). False
+   * refuses them, for a record whose times are fields of its own: the
+   * rule keeps `times` (or 09:00).
+   */
+  readTimes?: boolean
 }
 
 export type PhraseResult = { ok: true; value: Recurrence } | { ok: false; error: string }
@@ -107,7 +130,7 @@ function checkMonthDay(day: number): number {
   return day
 }
 
-type Body = Omit<RuleParts, 'until' | 'count'>
+type Body = Omit<RuleParts, 'until' | 'count' | 'weekStart'>
 
 /** What comes after "every": the rule's frequency and days. */
 function readBody(reader: Reader): Body {
@@ -309,6 +332,7 @@ function readPhrase(text: string, options: PhraseOptions): Recurrence {
   let untilAt: number | undefined
   let untilText: string | undefined
   let count: number | null = null
+  let weekStart: number | undefined
   const seen = new Set<string>()
   const once = (word: string) => {
     if (seen.has(word)) throw new Refusal(`It says “${word}” twice.`)
@@ -317,7 +341,12 @@ function readPhrase(text: string, options: PhraseOptions): Recurrence {
   while (!reader.done) {
     reader.read(',')
     if (reader.done) break
-    if (reader.read('at')) {
+    const week = reader.read(String.raw`weeks?\s+(?:start|starts|starting|begin|begins|beginning)(?:\s+on)?\s+(${WEEKDAY})`)
+    if (week) {
+      once('weeks start')
+      weekStart = weekdayOf(week[1])
+    } else if (reader.read('at')) {
+      if (options.readTimes === false) throw new Refusal('The times are set on their own here: leave out “at …”.')
       once('at')
       times = readTimes(reader)
     } else if (reader.read('(?:starting|starts|start|from)(?:\\s+on)?')) {
@@ -346,8 +375,9 @@ function readPhrase(text: string, options: PhraseOptions): Recurrence {
   }
   const first = start ?? options.start ?? options.today
   const until = untilText === undefined ? null : readDate(new Reader(untilText), first, 'until')
+  const defaultStart = body.freq === 'WEEKLY' && options.weekStart ? WEEKDAY_CODES.indexOf(options.weekStart) : 0
   return normalizeRecurrence({
-    rule: formatRule({ ...body, until, count }),
+    rule: formatRule({ ...body, until, count, weekStart: weekStart ?? defaultStart }),
     start: first,
     times: times ?? options.times ?? ['09:00'],
     timeZone: options.timeZone,
@@ -384,6 +414,9 @@ const WEEKDAYS_MO_FR = 'MO,TU,WE,TH,FR'
 
 /** The days part of a rule as a phrase ("every 2nd tue"), or null for one the reader can't write. */
 function phraseBody(parts: RuleParts): string | null {
+  const first = parts.weekStart ?? 0
+  // A week's days from its first day: "on sun and wed" when weeks start on Sunday.
+  const inWeek = (days: RuleParts['byDay']) => [...days].sort((a, b) => ((a.day - first + 7) % 7) - ((b.day - first + 7) % 7))
   const { freq, interval, byDay, byMonthDay, byMonth } = parts
   const codes = byDay.map(({ day }) => WEEKDAY_CODES[day]).join(',')
   const plain = byDay.every(({ nth }) => nth === null)
@@ -396,7 +429,7 @@ function phraseBody(parts: RuleParts): string | null {
     case 'WEEKLY': {
       if (!byDay.length) return every
       if (!plain) return null
-      const names = listWords(byDay.map(({ day }) => DAY_WORDS[day]))
+      const names = listWords(inWeek(byDay).map(({ day }) => DAY_WORDS[day]))
       if (interval === 1) return codes === WEEKDAYS_MO_FR ? 'weekday' : codes === 'SA,SU' ? 'weekend' : names
       return `${every} on ${names}`
     }
@@ -423,13 +456,24 @@ function phraseBody(parts: RuleParts): string | null {
   }
 }
 
+export type RecurrencePhraseOptions = {
+  /** Leave out "at …" (false), for a field whose times are the record's own. */
+  times?: boolean
+  /**
+   * The week start the phrase is read back with (PhraseOptions'
+   * `weekStart`; Monday when left out). An every-N-weeks rule whose WKST
+   * differs says it: "…, weeks start sun".
+   */
+  weekStart?: WeekdayCode
+}
+
 /**
  * The Recurrence as a phrase parseRecurrencePhrase reads back to it
  * ("every 2nd tue at 9am until mar 1"), or null for a rule it can't say
  * (several month days, BYMONTH on a daily rule). The start is said only
  * when it's after `today`.
  */
-export function recurrencePhrase(value: Recurrence, today?: string): string | null {
+export function recurrencePhrase(value: Recurrence, today?: string, options: RecurrencePhraseOptions = {}): string | null {
   let parts: RuleParts
   try {
     parts = parseRule(value.rule)
@@ -439,10 +483,14 @@ export function recurrencePhrase(value: Recurrence, today?: string): string | nu
   const body = phraseBody(parts)
   if (body === null) return null
   const words = [`${value.fromCompletion ? 'every!' : 'every'} ${body}`]
-  words.push(`at ${value.times.map(phraseTime).join(', ')}`)
+  if (options.times !== false) words.push(`at ${value.times.map(phraseTime).join(', ')}`)
   if (today && value.start > today) words.push(`starting ${phraseDate(value.start, today)}`)
   if (parts.until) words.push(`until ${phraseDate(parts.until, today && value.start > today ? value.start : today)}`)
   if (parts.count !== null) words.push(`for ${parts.count} times`)
+  const weekStart = parts.weekStart ?? 0
+  if (weekStartMatters(parts) && weekStart !== WEEKDAY_CODES.indexOf(options.weekStart ?? 'MO')) {
+    return `${words.join(' ')}, weeks start ${DAY_WORDS[weekStart]}`
+  }
   return words.join(' ')
 }
 

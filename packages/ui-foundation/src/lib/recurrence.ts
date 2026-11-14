@@ -16,6 +16,12 @@
 // month doesn't have is skipped: the 31st falls only in months with 31
 // days, Feb 29 only in leap years, and -1 is every month's last day. COUNT
 // counts occurrences, each time of each day.
+//
+// WKST (4.114) says which day a week starts on, for the weeks an
+// every-N-weeks rule counts: `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU`
+// from Wednesday 2026-11-04 next falls on Sunday the 15th (with weeks from
+// Monday, the default, on the 8th). It changes nothing else here; a rule
+// without it counts weeks from Monday, as before.
 import * as rruleModule from 'rrule'
 import type { components } from '@/api/schema'
 
@@ -32,6 +38,8 @@ export const FREQUENCIES = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const
 export type Frequency = (typeof FREQUENCIES)[number]
 /** RFC 5545's weekday codes, Monday first (Monday is 0 everywhere here). */
 export const WEEKDAY_CODES = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const
+/** A weekday's code, `'MO'` to `'SU'`: a week start (WKST) as an app gives it. */
+export type WeekdayCode = (typeof WEEKDAY_CODES)[number]
 
 export type ByDay = { nth: number | null; day: number }
 
@@ -44,6 +52,12 @@ export type RuleParts = {
   byMonth: number[]
   until: string | null
   count: number | null
+  /**
+   * WKST: the day weeks start on (Monday 0 to Sunday 6), or null for
+   * Monday, RFC 5545's default. `WKST=MO` reads as null, so it isn't stored.
+   * Optional (4.114), so parts an app builds without it still are parts.
+   */
+  weekStart?: number | null
 }
 
 /** What's wrong with a rule or a recurrence, in words a person can act on. */
@@ -53,7 +67,7 @@ const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 const BYDAY = /^([+-]?[1-5])?(MO|TU|WE|TH|FR|SA|SU)$/
 const UNTIL = /^(\d{4})(\d{2})(\d{2})$/
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/
-const PARTS = new Set(['FREQ', 'INTERVAL', 'BYDAY', 'BYMONTHDAY', 'BYMONTH', 'UNTIL', 'COUNT'])
+const PARTS = new Set(['FREQ', 'INTERVAL', 'BYDAY', 'BYMONTHDAY', 'BYMONTH', 'UNTIL', 'COUNT', 'WKST'])
 // How far ahead a rule must fall at least once (a 31st of February never does).
 const HORIZON_YEARS = 28
 const DAY_MS = 86_400_000
@@ -107,6 +121,12 @@ export function parseRule(text: string): RuleParts {
   }
   const count = fields.has('COUNT') ? integers('COUNT', fields.get('COUNT')!, 1, 9999)[0] : null
   if (until !== null && count !== null) throw new RecurrenceError('A rule has UNTIL or COUNT, not both.')
+  let weekStart: number | null = null
+  if (fields.has('WKST')) {
+    const day = WEEKDAY_CODES.indexOf(fields.get('WKST') as (typeof WEEKDAY_CODES)[number])
+    if (day < 0) throw new RecurrenceError('WKST must be a weekday, MO to SU.')
+    weekStart = day === 0 ? null : day
+  }
   return {
     freq,
     interval,
@@ -115,13 +135,14 @@ export function parseRule(text: string): RuleParts {
     byMonth: byMonth.sort((a, b) => a - b),
     until,
     count,
+    weekStart,
   }
 }
 
 /**
  * The stored form, its parts always in one order (so two rules that mean
  * the same are the same text): FREQ, INTERVAL (left out at 1), BYMONTH,
- * BYMONTHDAY, BYDAY, UNTIL, COUNT.
+ * BYMONTHDAY, BYDAY, UNTIL, COUNT, WKST (left out for Monday).
  */
 export function formatRule(parts: RuleParts): string {
   const out = [`FREQ=${parts.freq}`]
@@ -131,6 +152,7 @@ export function formatRule(parts: RuleParts): string {
   if (parts.byDay.length) out.push(`BYDAY=${parts.byDay.map(({ nth, day }) => `${nth ?? ''}${WEEKDAY_CODES[day]}`).join(',')}`)
   if (parts.until) out.push(`UNTIL=${parts.until.replaceAll('-', '')}`)
   if (parts.count !== null) out.push(`COUNT=${parts.count}`)
+  if (parts.weekStart) out.push(`WKST=${WEEKDAY_CODES[parts.weekStart]}`)
   return out.join(';')
 }
 
@@ -230,6 +252,8 @@ function* days(parts: RuleParts, start: string, stop?: string): Generator<string
     bymonthday: parts.byMonthDay.length ? parts.byMonthDay : null,
     bymonth: parts.byMonth.length ? parts.byMonth : null,
     until: last ? toUtcDay(last) : null,
+    // Monday (rrule's default) when the rule has no WKST.
+    wkst: parts.weekStart ?? 0,
   })
   let given = 0
   for (let limit = 64; ; limit *= 4) {
@@ -344,6 +368,16 @@ export function nextAfterCompletion(value: Recurrence, doneAt: Date): Date | nul
 }
 
 // ------------------------------------------ a weekday set and one time
+
+/**
+ * Whether the rule's WKST can change the days it falls on: only an
+ * every-N-weeks rule (`FREQ=WEEKLY`, INTERVAL over 1) with BYDAY counts
+ * its weeks from a week's first day. (BYWEEKNO, the other part it moves,
+ * isn't supported.)
+ */
+export function weekStartMatters(parts: Pick<RuleParts, 'freq' | 'interval' | 'byDay'>): boolean {
+  return parts.freq === 'WEEKLY' && parts.interval > 1 && parts.byDay.length > 0
+}
 
 const DAY_NAMES = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 

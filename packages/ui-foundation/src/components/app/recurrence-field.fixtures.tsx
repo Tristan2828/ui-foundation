@@ -24,6 +24,9 @@ import { RecurrenceField } from './recurrence-field'
 // - EditInPlace: on a record's view (`inPlace.recurrence`).
 // - Cells: the Repeats label and the Next cell in a list's rows
 //   (cell-patterns.md "A repeat and its next time").
+// - DatesOnly (4.114): events whose times are their own fields, in an app
+//   whose weeks start on Sunday (`times={false}`, `weekStart="SU"`): one
+//   set every other week on Sun and Wed, one empty, and one edited in place.
 //
 // e2e/recurrence-field.spec.ts types the phrases and presses the presets;
 // axe and the token check run every story in both themes
@@ -200,6 +203,51 @@ function Cells() {
   )
 }
 
+// Made-up events: one every other week on Sunday and Wednesday, from
+// Wednesday 2026-11-04, weeks from Sunday (its first Sunday is the 15th).
+const BOOK_CLUB: Recurrence = {
+  rule: 'FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU;WKST=SU',
+  start: '2026-11-04',
+  times: ['00:00'],
+  timeZone: ZONE,
+  fromCompletion: false,
+}
+const datesOnly = { ...fixed, times: false, weekStart: 'SU' as const, defaultTimes: ['00:00'] }
+
+function Events() {
+  const [club, setClub] = useState<Recurrence | null>(BOOK_CLUB)
+  const [market, setMarket] = useState<Recurrence | null>(null)
+  const [event, setEvent] = useState<{ repeats: Recurrence | null }>({ repeats: BOOK_CLUB })
+  const save = (repeats: Recurrence | null) => new Promise((resolve) => setTimeout(() => resolve(setEvent({ repeats })), 300))
+  return (
+    <div className="flex flex-col gap-6">
+      <FieldGroup className="max-w-xl">
+        <Field>
+          <FieldLabel htmlFor="club-repeats">Book Club</FieldLabel>
+          <RecurrenceField id="club-repeats" value={club} onChange={setClub} {...datesOnly} />
+          <Value testId="club-value" value={club} />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="market-repeats">Farmers Market</FieldLabel>
+          <RecurrenceField id="market-repeats" value={market} onChange={setMarket} {...datesOnly} />
+          <Value testId="market-value" value={market} />
+        </Field>
+      </FieldGroup>
+      <EntityView
+        isLoading={false}
+        back={{ to: '/', label: 'Events' }}
+        title="Book club"
+        sections={[{ title: 'Schedule', fields: [{ label: 'Repeats', edit: inPlace.recurrence({ value: event.repeats, save, ...datesOnly }) }] }]}
+      />
+    </div>
+  )
+}
+
+function DatesOnlyStory() {
+  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <Events /> }]))
+  return <RouterProvider router={router} />
+}
+
 const meta: Meta = {
   title: 'app/RecurrenceField',
   parameters: { controls: { disable: true } },
@@ -214,3 +262,5 @@ export const InForm: StoryObj = { name: 'In a form', render: () => <InAForm /> }
 export const EditInPlace: StoryObj = { render: () => <InPlace /> }
 
 export const ListCells: StoryObj = { name: 'List cells', render: () => <Cells /> }
+
+export const DatesOnly: StoryObj = { name: 'Dates only', render: () => <DatesOnlyStory /> }

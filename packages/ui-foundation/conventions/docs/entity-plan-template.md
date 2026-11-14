@@ -57,7 +57,9 @@ One or two sentences: what one record is, and who uses the screens.
     year, no year: `'MM-DD'`; the foundation's `MonthDayField`; say
     whether it's optional), `recurrence` (how it repeats: the
     foundation's `Recurrence` schema and `RecurrenceField`; say whether
-    it's optional).
+    it's optional, whether its times are the record's own fields
+    (`times={false}`), and the day the app's weeks start on when it
+    isn't Monday (`weekStart`)).
   - *Not supported yet:* a yes/no that can also be unset (three states),
     file, and anything else.
     Write it anyway with a note; the playbook will stop and raise it

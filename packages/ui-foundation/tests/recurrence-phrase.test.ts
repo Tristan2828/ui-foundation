@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatOccurrence, formatRecurrence, todayIn } from '@/lib/recurrence-format'
-import { parseRecurrencePhrase, recurrencePhrase } from '@/lib/recurrence-phrase'
+import { parseRecurrencePhrase, recurrencePhrase, type PhraseOptions } from '@/lib/recurrence-phrase'
 import { nextOccurrences, type Recurrence } from '@/lib/recurrence'
 
 // The phrase reader, its way back, and the label (#326). Today is Thursday
@@ -8,7 +8,7 @@ import { nextOccurrences, type Recurrence } from '@/lib/recurrence'
 const TODAY = '2026-11-12'
 const options = { today: TODAY, timeZone: 'America/Chicago' }
 
-function read(text: string, more: Partial<typeof options> & { times?: string[]; start?: string } = {}): Recurrence {
+function read(text: string, more: Partial<PhraseOptions> = {}): Recurrence {
   const result = parseRecurrencePhrase(text, { ...options, ...more })
   if (!result.ok) throw new Error(`${text}: ${result.error}`)
   return result.value
@@ -233,6 +233,66 @@ describe('the label', () => {
     expect(formatRecurrence(read('every 2nd tue'), { locale: 'en-US', times: false })).toBe('Every 2nd Tue')
     const odd: Recurrence = { rule: 'FREQ=SECONDLY', start: TODAY, times: ['09:00'], timeZone: 'UTC', fromCompletion: false }
     expect(formatRecurrence(odd)).toBe('FREQ=SECONDLY')
+  })
+})
+
+describe('a week start (WKST)', () => {
+  it('adds the app’s week start to every weekly rule it reads, and to no other', () => {
+    const sunday = { weekStart: 'SU' } as const
+    expect(read('every other week on sun and wed', sunday).rule).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU;WKST=SU')
+    expect(read('every weekday', sunday).rule).toBe('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;WKST=SU')
+    expect(read('every tue', sunday).rule).toBe('FREQ=WEEKLY;BYDAY=TU;WKST=SU')
+    expect(read('weekly', sunday).rule).toBe('FREQ=WEEKLY;WKST=SU')
+    expect(read('every 3 days', sunday).rule).toBe('FREQ=DAILY;INTERVAL=3')
+    expect(read('every 2nd tue', sunday).rule).toBe('FREQ=MONTHLY;BYDAY=2TU')
+    // Monday, the default, is no WKST: as before.
+    expect(read('every other week on sun and wed').rule).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU')
+    expect(read('every other week on sun and wed', { weekStart: 'MO' }).rule).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU')
+  })
+
+  it('reads “weeks start sun” typed, over the app’s own', () => {
+    expect(read('every other week on sun and wed, weeks start sun').rule).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,SU;WKST=SU')
+    expect(read('every 2 weeks on sat at 10am week starts on sat').rule).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=SA;WKST=SA')
+    expect(read('every other week on sun, weeks begin mon', { weekStart: 'SU' }).rule).toBe('FREQ=WEEKLY;INTERVAL=2;BYDAY=SU')
+    const twice = parseRecurrencePhrase('every other week on sun, weeks start sun, weeks start mon', options)
+    expect(twice.ok ? twice.value.rule : twice.error).toContain('twice')
+  })
+
+  it('says the week start in the phrase and the label only where it matters and differs from the app’s', () => {
+    const sundayRule = read('every other week on sun and wed', { weekStart: 'SU' })
+    // For a Sunday app it's the default: nothing to say. Days from Sunday.
+    expect(recurrencePhrase(sundayRule, TODAY, { weekStart: 'SU' })).toBe('every other week on sun and wed at 9am')
+    expect(formatRecurrence(sundayRule, { locale: 'en-US', weekStart: 'SU' })).toBe('Every other week on Sun and Wed at 9:00 AM')
+    // For a Monday app (or none given) it's said, and read back the same.
+    const said = recurrencePhrase(sundayRule, TODAY)
+    expect(said).toBe('every other week on sun and wed at 9am, weeks start sun')
+    expect(read(said!)).toEqual(sundayRule)
+    expect(formatRecurrence(sundayRule, { locale: 'en-US' })).toBe('Every other week on Sun and Wed at 9:00 AM, weeks start Sun')
+    // A Monday rule shown in a Sunday app says so, and reads back to Monday.
+    const mondayRule = read('every other week on sun and wed')
+    const back = recurrencePhrase(mondayRule, TODAY, { weekStart: 'SU' })
+    expect(back).toBe('every other week on wed and sun at 9am, weeks start mon')
+    expect(read(back!, { weekStart: 'SU' })).toEqual(mondayRule)
+    // Weekly, where WKST changes nothing: never said.
+    const weekly = read('every weekday', { weekStart: 'SU' })
+    expect(recurrencePhrase(weekly, TODAY)).toBe('every weekday at 9am')
+    expect(formatRecurrence(weekly, { locale: 'en-US' })).toBe('Every weekday at 9:00 AM')
+  })
+})
+
+describe('without times', () => {
+  it('writes no “at”, refuses one typed, and keeps the given times on the value', () => {
+    const value = read('every 2nd tue', { readTimes: false, times: ['00:00'] })
+    expect(value.times).toEqual(['00:00'])
+    expect(recurrencePhrase(value, TODAY, { times: false })).toBe('every 2nd tue')
+    const refused = parseRecurrencePhrase('every 2nd tue at 9am', { ...options, readTimes: false })
+    expect(refused.ok ? refused.value.rule : refused.error).toContain('leave out “at …”')
+  })
+
+  it('an occurrence without its time', () => {
+    const now = new Date('2026-11-12T18:00:00Z')
+    const [first] = nextOccurrences(read('every 2nd tue at 9am'), now, 1)
+    expect(formatOccurrence(first, 'America/Chicago', { locale: 'en-US', now, time: false })).toBe('Tue, Dec 8')
   })
 })
 
