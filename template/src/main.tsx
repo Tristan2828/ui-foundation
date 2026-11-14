@@ -16,16 +16,12 @@ async function enableMocking() {
   if (import.meta.env.VITE_API === 'real') return
   swapBlockedLocalStorage()
   const { worker } = await import('./mocks/browser')
-  // start() before exposeMswForE2E(): worker.start() resets the runtime
-  // handler list to the ones setupWorker() was configured with, so a
-  // worker.use() override registered before start() gets silently
-  // discarded rather than applied. React doesn't render (and so doesn't
-  // issue its first fetch) until this whole function's returned promise
-  // resolves, so applying the override after start() is still safely
-  // ahead of any app code.
-  await worker.start({ onUnhandledRequest: 'bypass' })
-  const { exposeMswForE2E } = await import('@tristan2828/ui-foundation/mocks')
-  exposeMswForE2E(worker)
+  // Starts the worker, waits until the page's requests really reach the
+  // mocks (a service worker the browser restarted forgets the page), then
+  // exposes it for Playwright. React doesn't render, and so makes no
+  // request, until this whole function's promise resolves.
+  const { startMockWorker } = await import('@tristan2828/ui-foundation/mocks')
+  await startMockWorker(worker)
 }
 
 // Mock mode only. MSW's cookie store calls localStorage.getItem unguarded
