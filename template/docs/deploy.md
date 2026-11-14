@@ -140,6 +140,37 @@ the email, never the address.
 - A rate-limit rule at a CDN or proxy in front still helps, but the
   backend doesn't rely on it.
 
+## Caching and a deploy that doesn't show
+
+The SPA mount (`foundation_backend.spa.SPAStaticFiles`, 4.114) tells
+browsers how long to keep each file, so a deploy shows on the app's next
+launch, a phone's Home Screen app included:
+
+| Path | `Cache-Control` | Why |
+|---|---|---|
+| `/assets/*` (Vite's hashed build files) | `public, max-age=31536000, immutable` | a new build gives them new names |
+| `index.html`, also for every client route (`/widgets/3`) | `no-cache` | kept, but checked with the server (by ETag) before every use |
+| everything else it serves: `manifest.webmanifest`, `push-sw.js`, icons, `favicon.svg`, `build-info.json`, `public/` | `no-cache` | same names in every build |
+
+A 404 (a missing file, under `/assets/` too) has no `Cache-Control`.
+API routes are untouched. Nothing to configure: it's the package's
+default.
+
+**A CDN or proxy in front** (Cloudflare, a reverse proxy with caching
+on) must respect the origin's `Cache-Control` for these paths. In
+particular it must not cache `/` or a client route as HTML on its own
+rules ("Cache Everything" with an edge TTL, say), or every phone gets
+the old `index.html` from the edge however the app answers. It may cache
+`/assets/*` freely. After changing a CDN's rules, purge its cache once.
+
+**If a deploy still doesn't show** on a device: check the live
+`/build-info.json` (it should name the new commit), then the headers of
+`/` from outside (`curl -sI https://<your-app>/`): `cache-control:
+no-cache` should be there, and an `age` header or `cf-cache-status: HIT`
+on `/` means the edge is caching the page. A device that kept an old
+`index.html` from before 4.114 (no header, so a guessed lifetime) catches
+up once that guess runs out; clearing the site's data fixes it at once.
+
 ## Behind a sign-in proxy
 
 An identity-aware proxy with its own sign-in in front of the whole app
