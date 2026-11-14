@@ -1874,8 +1874,15 @@ const bottomBar: BottomBarItem[] = [
 - **Counts** (`count`, `countLabel`): a plain number at the entry's end
   in the muted text tone, never a coloured badge; on the icon rail a dot
   in `--primary` on the icon. Only on entries that ask you to act
-  (unread, to fill in, new); 0 shows nothing. `countLabel` is what the
-  number counts, read after the entry's name ("News 24 unread").
+  (unread, to fill in, new); 0 shows nothing, nor does a count still
+  loading, and past 99 it reads "99+". `countLabel` is what the number
+  counts, read after the entry's name ("News 24 unread"). On a phone
+  (4.113) the bottom bar has no room at an item's end, so its count is
+  a small `--primary` badge on the item's icon, ringed in the bar's
+  background: a page's own count, or a section's sum of its entries'
+  (with their `countLabel` when they share one). The sheet's tiles carry
+  theirs in the corner and its list links at their end, as the sidebar
+  does. Each is read after its name ("News, 7 new").
 - **A section at the foot** (`placement: 'bottom'`): under every other
   section and `sidebarExtra`, pushed to the sidebar's foot when there's
   room; for tools rather than modules.

@@ -7,6 +7,40 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.113.0 — Nav counts on a phone
+
+npm package and `ui-foundation-backend` 4.113.0 (no backend change).
+Additive: no prop is added, removed or renamed. A nav entry's `count`
+already shows in the sidebar and as a dot on the icon rail; it now
+shows on a phone too.
+
+- **The bottom bar shows counts.** A bar item gets a small badge on its
+  icon, in `--primary`, ringed in the bar's background. A page on the bar
+  (`{ to }`) takes its nav entry's `count`. A section (`{ group }`) takes
+  the sum of its entries' counts, their pages' included. The badge uses
+  their `countLabel` when they all share one; otherwise the number is
+  read alone.
+- **The phone's sheets show counts.** A tile has its count in the
+  corner, as the sidebar's tiles do; the pages under the tiles have
+  theirs too. A list sheet's links have theirs at the end, as the
+  sidebar's list does.
+- **Same rules everywhere.** Nothing shows at 0, below it, or while the
+  count is still loading (`undefined`). Past 99 it reads "99+"; the
+  screen-reader name keeps the real number. The sidebar and its tiles now
+  cap at "99+" too.
+- **Named for screen readers.** A counted bar item, tile or sheet link is
+  named "News, 7 new" (`countLabel` after the number), and a section's
+  bar item "Every day, 7 new". An item with no count keeps its plain
+  label.
+- Bar items and tiles stay 44px targets at 375 wide. Axe passes in both
+  themes and every palette with the bar and a sheet open
+  (`e2e/app-shell-phone-counts.spec.ts`).
+
+**App step:** none. Counts an app already passes on its nav entries show
+up on the phone. A phone e2e spec that found a bar item or sheet tile by
+its exact name (`{ name: 'News', exact: true }`) now needs the count in
+it ("News, 7 new"), or a non-exact match.
+
 ## 4.111.0 — The open tab plainly marked, and fact lists
 
 npm package and `ui-foundation-backend` 4.111.0 (no backend change).

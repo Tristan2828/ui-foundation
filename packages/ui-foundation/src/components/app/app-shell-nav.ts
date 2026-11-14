@@ -358,3 +358,46 @@ export function bottomBarCurrent(
   )
   return group === -1 ? undefined : group
 }
+
+/**
+ * A count as drawn: nothing at 0, below it or while it's loading (no
+ * count yet), and "99+" past 99, so a badge keeps its size.
+ */
+export function navCountText(count: number | undefined): string | undefined {
+  if (count === undefined || !Number.isFinite(count) || count <= 0) return undefined
+  return count > 99 ? '99+' : String(Math.floor(count))
+}
+
+/**
+ * A count as read, after its entry's label: "7 new" with its
+ * `countLabel`, the number alone without. The real number, past 99 too.
+ * Nothing where nothing is drawn.
+ */
+export function navCountSpoken(count: number | undefined, countLabel?: string): string | undefined {
+  if (navCountText(count) === undefined) return undefined
+  const n = Math.floor(count!)
+  return countLabel ? `${n} ${countLabel}` : String(n)
+}
+
+/**
+ * A bottom bar item's count: a page's, from its nav entry, or a
+ * section's, the sum of its entries' and their pages'. A section's
+ * `countLabel` is its entries' when they share one, and none otherwise.
+ */
+export function bottomBarCount(
+  item: BottomBarItem,
+  nav: readonly NavEntry[],
+): { count?: number; countLabel?: string } {
+  if ('to' in item) {
+    const entry = navItems(nav).find((other) => other.to === item.to)
+    return entry ? { count: entry.count, countLabel: entry.countLabel } : {}
+  }
+  const counted = withChildren(bottomBarSection(nav, item.group)?.items ?? []).filter(
+    (entry) => navCountText(entry.count) !== undefined,
+  )
+  if (!counted.length) return {}
+  const count = counted.reduce((sum, entry) => sum + Math.floor(entry.count!), 0)
+  const labels = new Set(counted.map((entry) => entry.countLabel))
+  const [only] = labels
+  return { count, countLabel: labels.size === 1 ? only : undefined }
+}
