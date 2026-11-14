@@ -374,7 +374,7 @@ test.describe('a status select draws its kinds', () => {
       Idea: '--info-text',
       Drafting: '--success-text',
       Shelved: '--warning-text',
-      Sent: '--muted-foreground',
+      Sent: '--status-done-text',
     }
     for (const [label, token] of Object.entries(tones)) {
       const item = list.getByRole('option', { name: label })
