@@ -113,7 +113,23 @@ export type EntityViewFactBadge = {
   label: string
   /** An icon component (a `LucideIcon`, an app's own mark) or a node drawn as it is. Decorative: the label says it. */
   icon?: IconComponent | ReactNode
+  /**
+   * The badge's tone (4.121), for a label that is a state ("Pinned",
+   * "Overdue"): the outline badge in that tone's text colour, its icon
+   * too. Neutral (the outline) unless set. The word still says it.
+   */
+  tone?: EntityViewFactBadgeTone
 }
+
+/** A badge item's tone (4.121): the design language's four, as outline badges. */
+export type EntityViewFactBadgeTone = 'success' | 'warning' | 'info' | 'destructive'
+
+const BADGE_TONE = {
+  success: 'outline-success',
+  warning: 'outline-warning',
+  info: 'outline-info',
+  destructive: 'outline-destructive',
+} as const satisfies Record<EntityViewFactBadgeTone, string>
 
 /** A small button under a fact's value (4.115): "Close…" under a status that changes only through it. */
 export type EntityViewFactAction = {
@@ -161,12 +177,12 @@ const LINK_CLASS =
 // A badge item's icon in the muted tone a list's item icons have
 // (FactList's marks): a component drawn at the badge's icon size, or the
 // app's own node as it is.
-function badgeIcon(icon: IconComponent | ReactNode) {
+function badgeIcon(icon: IconComponent | ReactNode, toned = false) {
   // A component: a function, or a forwardRef or memo object (a LucideIcon); an element is a node.
   const isComponent = typeof icon === 'function' || (typeof icon === 'object' && icon !== null && !isValidElement(icon) && '$$typeof' in icon)
   const Icon = icon as IconComponent
   return (
-    <span data-slot="entity-view-fact-badge-icon" aria-hidden="true" data-icon="inline-start" className="inline-flex shrink-0 text-muted-foreground">
+    <span data-slot="entity-view-fact-badge-icon" aria-hidden="true" data-icon="inline-start" className={cn('inline-flex shrink-0', !toned && 'text-muted-foreground')}>
       {isComponent ? <Icon aria-hidden="true" className="size-3" /> : (icon as ReactNode)}
     </span>
   )
@@ -193,10 +209,10 @@ export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
       return (
         <span className="inline-flex max-w-full flex-wrap gap-1">
           {fact.items.map((item, index) => {
-            const { label, icon } = typeof item === 'string' ? { label: item, icon: undefined } : item
+            const { label, icon, tone } = typeof item === 'string' ? { label: item, icon: undefined, tone: undefined } : item
             return (
-              <Badge key={`${index}:${label}`} variant="outline" className="max-w-full">
-                {icon !== undefined && icon !== null && badgeIcon(icon)}
+              <Badge key={`${index}:${label}`} variant={tone ? BADGE_TONE[tone] : 'outline'} data-tone={tone} className="max-w-full">
+                {icon !== undefined && icon !== null && badgeIcon(icon, tone !== undefined)}
                 <span className="min-w-0 truncate">{label}</span>
               </Badge>
             )

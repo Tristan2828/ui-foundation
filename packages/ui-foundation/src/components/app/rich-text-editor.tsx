@@ -49,13 +49,15 @@
 // where it is. A caller that never feeds `onChange` back keeps its text.
 //
 // The editor (Milkdown) is loaded on first use, so a page that only reads
-// Markdown never downloads it. Until it arrives, a placeholder the size of
-// the field shows.
+// Markdown never downloads it. Until it arrives the text shows as
+// <Markdown> draws it (4.121), the field's size, so nothing moves when the
+// editor takes its place; an empty one shows skeleton lines.
 import { lazy, Suspense, useState } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
 import type { CreatePage, PageLinkResolver } from '@/lib/page-link'
+import { Markdown } from './markdown'
 import type { HeadingFrom, HeadingLevel, TableLook } from './prose-look'
 
 const MilkdownEditor = lazy(() => import('./milkdown-editor'))
@@ -104,7 +106,8 @@ export type RichTextEditorProps = {
   inline?: boolean
   /**
    * Images uploaded into the text: pasted, dropped, or picked with an
-   * Image button on the fixed toolbar. Each file goes through this (the
+   * Image button on the fixed toolbar or the slash menu's Image ("/image",
+   * 4.121, the way to pick one with only the floating toolbar). Each file goes through this (the
    * app's own storage: the package knows no endpoint) and goes in as
    * `![](url)`, from the result's `url`, else its `thumbUrl`. A
    * placeholder shows where it will go while it uploads (it isn't saved);
@@ -218,9 +221,29 @@ export function RichTextEditor(props: RichTextEditorProps) {
         >
           {/* The toolbar's height, so nothing moves when it arrives. */}
           {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input" />}
-          <div className={cn('flex flex-col gap-2', props.inline ? 'py-0.5' : 'min-h-24 px-2.5 py-2')}>
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
+          {/* The text itself while the editor loads (4.121): it's as tall as
+              the editor will be, so nothing under it moves when the editor
+              arrives (a phone's notes, edited in place above the facts).
+              Skeleton lines only for an empty one. */}
+          <div
+            aria-busy="true"
+            className={cn(
+              'flex flex-col gap-2',
+              props.inline ? 'py-0.5' : 'min-h-24 px-2.5 py-2',
+              // The room of the add-row bar the editor draws under a table.
+              !props.readOnly && '[&_table]:mb-5',
+            )}
+          >
+            {props.defaultValue.trim() ? (
+              <Markdown headingLevel={props.headingLevel} headingFrom={props.headingFrom} foldKey={props.foldable === false ? undefined : props.foldKey}>
+                {props.defaultValue}
+              </Markdown>
+            ) : (
+              <>
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </>
+            )}
           </div>
         </div>
       }

@@ -53,7 +53,7 @@ test("a shared link's preset is the view it names", async ({ page }) => {
 test('picking a preset by hand is the view it equals; Between dates takes a range', async ({ page }) => {
   await page.goto(URL)
   await filtersButton(page).click()
-  await page.getByRole('combobox', { name: 'Any due date' }).click()
+  await page.getByRole('combobox', { name: 'Due', exact: true }).click()
   await page.getByRole('option', { name: 'From today' }).click()
   await expect(address(page)).toHaveText('Address: ?due=from-today')
   await expect(pill(page, 'Upcoming')).toHaveAttribute('aria-pressed', 'true')
@@ -83,7 +83,7 @@ test.describe('the open Filters panel with a range has zero axe violations', () 
     test(query, async ({ page }) => {
       await page.goto(`${HARNESS}app-datatable-tools--date-views&${query}`)
       await filtersButton(page).click()
-      await page.getByRole('combobox', { name: 'Any due date' }).click()
+      await page.getByRole('combobox', { name: 'Due', exact: true }).click()
       await page.getByRole('option', { name: 'Between dates' }).click()
       await expect(page.getByRole('textbox', { name: 'Due From' })).toBeVisible()
       const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()

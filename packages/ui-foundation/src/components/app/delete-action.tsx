@@ -19,7 +19,8 @@
 //   typed, closing asks "Discard your changes?" first (the dialog
 //   standard's `dirty`). Width, words and the buttons stay as they are.
 //
-// The trigger is an icon (IconAction's Trash2) unless `trigger` says
+// The trigger is an icon (IconAction's Trash2, named "Delete <name>" since
+// 4.121, its tooltip "Delete") unless `trigger` says
 // otherwise: `"button"` for a "Delete" button in words, an element of the
 // caller's, or `null` for none, opened with `open`/`onOpenChange` (a row's
 // menu item).
@@ -143,7 +144,11 @@ export function DeleteAction({
       }}
     >
       {trigger === 'icon' && (
-        <DialogTrigger render={<IconAction icon={Trash2Icon} label={verb} tone="destructive" size={size} />} />
+        // Named for the record (4.121), "Delete The Long Walk", so several on
+        // one page are told apart; the tooltip still says the verb alone.
+        <DialogTrigger
+          render={<IconAction icon={Trash2Icon} label={verb} accessibleName={`${verb} ${name}`} tone="destructive" size={size} />}
+        />
       )}
       {trigger === 'button' && (
         <DialogTrigger render={<Button variant="outline" size={size === 'sm' ? 'sm' : 'default'} />}>{verb}</DialogTrigger>

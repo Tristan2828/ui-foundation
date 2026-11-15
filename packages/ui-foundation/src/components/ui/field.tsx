@@ -60,8 +60,10 @@ function FieldLegend({
 const DATE_CONTROL = "input[type=date], [data-kind=date]"
 const NUMBER_CONTROL = "input[type=number], input[inputmode=numeric], input[inputmode=decimal]"
 
-// A row of choice buttons (ChoiceButtons, 4.98): two to a row (9C).
-const CHOICE_CONTROL = "[data-slot=choice-buttons]"
+// A row of choice buttons (ChoiceButtons, 4.98): two to a row (9C). A
+// ToggleGroup that is the field's own control (4.121) is one too; one
+// nested deeper (a RecurrenceField's weekdays) isn't.
+const CHOICE_CONTROL = "[data-slot=choice-buttons], :scope > [data-slot=toggle-group]"
 
 function kindOf(field: HTMLElement): FieldKind | null {
   const said = field.dataset.kind

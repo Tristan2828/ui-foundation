@@ -392,6 +392,15 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    */
   pageHeader?: ReactNode
   /**
+   * A bar between the page header and the list (4.121): something about
+   * the whole page that belongs above its rows, such as a deals bar, an
+   * "Allow reminders" notice or a budget's totals. Drawn under
+   * `pageHeader` and above the views, so C3 holds: the header, the bar and
+   * the card are still one box as wide as the table, and the bar never
+   * widens it (it wraps in that width instead).
+   */
+  pageBar?: ReactNode
+  /**
    * A Columns menu at the end of the toolbar (L5): a tick for every column
    * but the first (the name) and the row actions, remembered on this device
    * under `storageKey`. Until something is ticked it starts from
@@ -1213,6 +1222,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   onViewChange,
   viewsLabel = 'Views',
   pageHeader,
+  pageBar,
   columnsMenu,
   rowActions,
   phoneRow,
@@ -2077,7 +2087,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   // C3: with a header, the header, views and card are one box as wide as
   // the table (the box fits its content, the card fills the box), so the
   // header ends where the card does. CSS only: nothing is measured.
-  const sharedWidth = Boolean(pageHeader) && fitsColumns
+  const sharedWidth = Boolean(pageHeader || pageBar) && fitsColumns
   const content = framed ? (
     <div
       ref={root}
@@ -2088,6 +2098,12 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       data-layout={layouts?.length ? currentLayout : undefined}
     >
       {pageHeader}
+      {pageBar && (
+        // contain-inline-size: the bar takes the box's width, never sets it.
+        <div data-slot="data-table-page-bar" className="min-w-0 contain-inline-size">
+          {pageBar}
+        </div>
+      )}
       {viewPills}
       <DetailFrame enabled={Boolean(detailPanel) && !cardLayout} aside={detailAside}>
         {/* The card: the tools, the rows and the pager as one box, as wide
@@ -2121,6 +2137,12 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       data-layout={layouts?.length ? currentLayout : undefined}
     >
       {pageHeader}
+      {pageBar && (
+        // contain-inline-size: the bar takes the box's width, never sets it.
+        <div data-slot="data-table-page-bar" className="min-w-0 contain-inline-size">
+          {pageBar}
+        </div>
+      )}
       {viewPills}
       {plainToolbar}
 
