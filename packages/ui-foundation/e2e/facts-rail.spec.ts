@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // EntityView's facts rail (4.106, record standard A1): on a laptop the

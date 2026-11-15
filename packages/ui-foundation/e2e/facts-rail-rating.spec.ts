@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // A rating in the facts rail (4.117): `kind: 'rating'` draws a score out

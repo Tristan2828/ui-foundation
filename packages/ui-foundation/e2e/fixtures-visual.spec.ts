@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test } from '@playwright/test'
 
 // Every primitive the package ships with a story. Apps import these from

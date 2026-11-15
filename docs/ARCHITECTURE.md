@@ -472,7 +472,13 @@ Rules learned the hard way (each cost a phase to find):
   playwright.harness.config.ts --workers=1` in `packages/ui-foundation/`,
   then the template's `verify:fast` and `npx playwright test --workers=1`.
   A thousand failures at once with "worker process exited unexpectedly"
-  is this, not the code.
+  is this, not the code. Since 4.120 `PW_WORKERS=1 npm run verify` (or
+  `PW_WORKERS=50%`) sets both Playwright configs' worker count, so the
+  one command runs with fewer workers too.
+- **The package's specs build axe from `e2e/axe.ts`**, never from
+  `@axe-core/playwright` directly (4.120). Its `analyze()` first waits out
+  the page's transitions, as `expectNoAxeViolations` does, so a menu or
+  hover tint isn't measured mid-fade.
 
 **Claude Code cloud sessions** run `.claude/hooks/session-start.sh` on
 start (registered in `.claude/settings.json`; it does nothing anywhere

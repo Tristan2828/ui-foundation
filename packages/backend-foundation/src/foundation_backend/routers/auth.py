@@ -110,6 +110,7 @@ async def _start_session(user: User, response: Response, session: AsyncSession) 
     Also prunes the user's expired sessions — nothing else removes a session
     that's never presented again, so without this the table only grows.
     """
+    assert user.id is not None
     existing = await session.exec(select(UserSession).where(UserSession.user_id == user.id))
     for stale in existing.all():
         if _is_expired(stale):

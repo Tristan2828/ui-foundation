@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // A list item's row edited in place (app/EditableList ItemRows, #187): the

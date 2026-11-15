@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
 // The sidebar as icon tiles (#6C, AppShell's `navLook="tiles"`, the
