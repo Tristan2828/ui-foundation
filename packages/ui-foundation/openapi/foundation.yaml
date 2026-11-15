@@ -349,7 +349,7 @@ components:
           minLength: 1
           maxLength: 200
           pattern: "^FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)(;(INTERVAL|BYMONTH|BYMONTHDAY|BYDAY|UNTIL|COUNT|WKST)=[A-Z0-9,+-]+)*$"
-          # The pattern before WKST (4.95 to 4.113). check-contract still
+          # The pattern before WKST (4.95 to 4.118). check-contract still
           # accepts an app's copy with it: such an app can't store WKST,
           # and needn't copy this one until it wants to.
           x-earlier-patterns:
