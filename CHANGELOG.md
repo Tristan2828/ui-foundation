@@ -7,6 +7,64 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.121.0 — An empty task item saves again; dependencies up to date within their majors
+
+npm package and `ui-foundation-backend` 4.121.0. No API changes. The
+package's peer ranges are unchanged, so an app's frontend upgrades as
+usual. The backend's pins moved, which an app must match (below).
+
+- **Fix: Enter at the end of a task list lost the edit.** Since
+  mdast-util-gfm-task-list-item 2.0.1 (a transitive dependency that
+  `^2.0.0` takes on any fresh install), the rich-text editor threw on
+  every keystroke after Enter made an empty task item, so nothing typed
+  there was saved. One Enter could also make two items. The cause is
+  Milkdown, which serializes an empty paragraph without its `children`,
+  and 2.0.1 reads their length. The editor now gives an empty paragraph
+  `children: []` (`rich-text-empty-paragraph.ts`). Four
+  `rich-text-tools.spec.ts` tests caught it, and they pass again. Apps on
+  4.120.0 or earlier with a fresh lockfile have this bug, so upgrade.
+- **npm**: every dependency is on its newest version within its major.
+  Among them: Vite 8.3.8, Vitest 5.1, ESLint 10.15, typescript-eslint
+  8.72, Tailwind 4.3.5, Base UI 1.9, TanStack Query 5.107 and Table 9.3,
+  React 19.3.1, React Router 7.18.5, react-hook-form 7.92, lucide-react
+  1.73, Milkdown 7.23, shadcn 4.23 and Playwright 1.65.1. The lockfile
+  was regenerated, so transitive dependencies are current too. The
+  template's `tools` pins are now `shadcn` 4.23.0 and `@playwright/test`
+  1.65.1. Majors not taken are listed in `docs/DEFERRED.md`.
+- **Python**: fastapi 0.163.0, sqlmodel 0.0.50, pydantic 2.14.3,
+  python-dotenv 1.2.4, email-validator 2.4.0 (the package's runtime
+  pins), and alembic 1.20.1, asyncpg 0.32.0, uvicorn 0.54.0, mypy 2.4.1,
+  pytest 9.2.0, pytest-asyncio 1.5.0 and the type stubs in the template.
+  sqlmodel 0.0.50 types table models' constructors, so mypy now checks
+  their arguments. The package's `_start_session` asserts the user has an
+  id. The template's child rows (`WidgetTagLink`, `WidgetChecklistItem`
+  and the rest) declare `widget_id: int | None = Field(default=None, …)`
+  because the relationship fills it on save. `nullable=False` keeps those
+  columns NOT NULL, so there is no migration.
+- **SQLAlchemy 2.1.** sqlmodel 0.0.50 allows SQLAlchemy 2.1, and a fresh
+  install takes it (2.1.8). 2.1 no longer installs `greenlet`, which the
+  async engine needs, so sqlmodel is now pinned with its `asyncio` extra:
+  `sqlmodel[asyncio]==0.0.50`. Without it every database call fails with
+  "the SQLAlchemy asyncio module requires that the Python 'greenlet'
+  library is installed". 2.1 also raises a lazy load after a commit as a
+  `StatementError` around the `MissingGreenlet`, not the bare error.
+- **Tests and tools**: `PW_WORKERS` sets the worker count in both
+  Playwright configs (`PW_WORKERS=1 npm run verify` on a machine short of
+  memory). The package's axe specs build axe from `e2e/axe.ts`, which
+  waits for transitions before it measures. The `data-table` kept-width
+  spec measures once the layout has settled.
+
+**Upgrading an app's backend.** `ui-foundation-backend==4.121.0` pins
+its runtime dependencies exactly, so pip refuses it beside the old pins.
+In `backend/pyproject.toml`, set `fastapi==0.163.0`, `sqlmodel[asyncio]==0.0.50`
+(with the extra),
+`pydantic==2.14.3`, `python-dotenv==1.2.4` and `email-validator==2.4.0`
+in the same change (the other pins are the app's own choice), then
+`pip install -e ".[dev]"` and `npm run verify:backend`. If mypy now
+reports a missing named argument for a foreign key that a relationship
+fills, or an `int | None` id passed as `int`, fix it the way the template
+did (see above). A test that expects `MissingGreenlet` from a lazy load
+after a commit now gets a `StatementError` whose `orig` is one.
 ## 4.120.0 — A switch fact, links on an overview, a list's description, and hints
 
 npm package and `ui-foundation-backend` 4.120.0 (the backend is unchanged

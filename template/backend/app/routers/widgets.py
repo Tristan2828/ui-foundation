@@ -176,6 +176,7 @@ async def create_widget(
     await _check_categories_exist([payload.category_id], "categoryId", session)
     await _check_categories_exist(payload.extra_category_ids, "extraCategoryIds", session)
     await _check_item_categories_exist([item.category_id for item in payload.pairings], "pairings", session)
+    assert user.id is not None
     widget = Widget(
         **payload.model_dump(exclude={"price", "tags", "extra_category_ids", "checklist", "pairings"}),
         price=Decimal(payload.price),

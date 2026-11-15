@@ -89,6 +89,7 @@ import { history } from '@milkdown/kit/plugin/history'
 import {
   commands,
   headingSchema,
+  paragraphSchema,
   inputRules,
   keymap,
   markInputRules,
@@ -140,6 +141,7 @@ import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry }
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
 import { splitTaskItem, taskInputRule } from './rich-text-tasks'
+import { withEmptyParagraphChildren } from './rich-text-empty-paragraph'
 import { toggleHeadingInputRule, toggleHeadingRemark, withToggle } from './rich-text-toggle-heading'
 import { addRowAtEnd, colorTableCells, fitAllColumns, handleTableKey, previewColumnWidth, runTableAction, setColumnWidth, tableLook as tableLookPlugin, tableWidthsOf, type TableAction, type TableColorScope } from './rich-text-table'
 import { TABLE_MENU_EVENT, TableGrips, type TableCell } from './rich-text-table-grips'
@@ -952,6 +954,8 @@ export default function MilkdownEditor({
         }))
         // Headings carry `toggle` (rich-text-toggle-heading.ts).
         ctx.update(headingSchema.key, withToggle)
+        // An empty paragraph keeps its `children` (rich-text-empty-paragraph.ts).
+        ctx.update(paragraphSchema.key, withEmptyParagraphChildren)
         ctx.update(editorViewOptionsCtx, (options) => ({
           ...options,
           editable: () => !latest.current.readOnly,

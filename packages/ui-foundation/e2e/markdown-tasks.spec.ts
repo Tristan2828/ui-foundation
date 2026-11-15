@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test } from '@playwright/test'
 
 // <Markdown onTasksChange>: task items ticked where they're read, by

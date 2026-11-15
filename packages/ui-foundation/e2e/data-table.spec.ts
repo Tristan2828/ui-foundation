@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 import { expectDataViewsLoaded } from '../src/testing'
 
@@ -16,6 +16,18 @@ const story = (id: string, theme: 'light' | 'dark' = 'light') =>
 const table = (page: Page) => page.locator('[data-width="content"] [data-slot="data-table-body"]')
 const width = async (page: Page) => (await table(page).boundingBox())!.width
 const areaWidth = async (page: Page) => (await page.locator('[data-width="content"]').boundingBox())!.width
+// The table's width once it holds still: fonts loaded, then the same width
+// on two animation frames in a row.
+const settledWidth = async (page: Page) => {
+  await page.evaluate(() => document.fonts.ready)
+  let previous = -1
+  for (;;) {
+    const current = await width(page)
+    if (Math.abs(current - previous) < 0.5) return current
+    previous = current
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  }
+}
 
 test.describe('DataTable width="content"', () => {
   test('on a wide screen, a few short columns take the width they need (at least 36rem), actions beside them', async ({ page }) => {
@@ -59,13 +71,17 @@ test.describe('DataTable width="content"', () => {
     await page.setViewportSize({ width: 2560, height: 900 })
     await page.goto(story('content-width'))
     await expect(page.getByRole('cell', { name: 'Finance', exact: true })).toBeVisible()
-    const loaded = await width(page)
+    // Measured once the layout has settled (the font loaded, the same width
+    // two frames running): read mid-layout, it was off by a scrollbar's
+    // width now and then.
+    const loaded = await settledWidth(page)
     // Wider than the 36rem minimum, so it's the kept width being measured.
     expect(loaded).toBeGreaterThan(620)
     for (const state of ['loading', 'empty', 'error', 'loaded']) {
       await page.getByRole('group', { name: 'State' }).getByRole('button', { name: state }).click()
       await expect(table(page).locator(`[data-state]`).first()).toBeVisible()
-      expect(Math.abs((await width(page)) - loaded), state).toBeLessThanOrEqual(1)
+      // Polled, not read once: a wrong kept width stays wrong and fails.
+      await expect.poll(async () => Math.abs((await width(page)) - loaded), { message: state }).toBeLessThanOrEqual(1)
     }
   })
 })
