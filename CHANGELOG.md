@@ -7,12 +7,22 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.120.0 — Dependencies up to date within their majors
+## 4.120.0 — An empty task item saves again; dependencies up to date within their majors
 
 npm package and `ui-foundation-backend` 4.120.0. No API changes. The
 package's peer ranges are unchanged, so an app's frontend upgrades as
 usual. The backend's pins moved, which an app must match (below).
 
+- **Fix: Enter at the end of a task list lost the edit.** Since
+  mdast-util-gfm-task-list-item 2.0.1 (a transitive dependency that
+  `^2.0.0` takes on any fresh install), the rich-text editor threw on
+  every keystroke after Enter made an empty task item, so nothing typed
+  there was saved. One Enter could also make two items. The cause is
+  Milkdown, which serializes an empty paragraph without its `children`,
+  and 2.0.1 reads their length. The editor now gives an empty paragraph
+  `children: []` (`rich-text-empty-paragraph.ts`). Four
+  `rich-text-tools.spec.ts` tests caught it, and they pass again. Apps on
+  4.119.0 or earlier with a fresh lockfile have this bug, so upgrade.
 - **npm**: every dependency is on its newest version within its major.
   Among them: Vite 8.3.8, Vitest 5.1, ESLint 10.15, typescript-eslint
   8.72, Tailwind 4.3.5, Base UI 1.9, TanStack Query 5.107 and Table 9.3,
