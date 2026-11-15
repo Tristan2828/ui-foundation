@@ -28,16 +28,16 @@
   - [Several values over time](#several-values-over-time) · lines 1207–1244
 - [A list as a board](#a-list-as-a-board) · lines 1246–1297
 - [A list as cards](#a-list-as-cards) · lines 1299–1345
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1347–1376
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1378–1430
-- [A few equal things](#a-few-equal-things) · lines 1432–1516
-- [An overview page](#an-overview-page) · lines 1518–1581
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1582–1633
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1635–1750
-- [Picking at random](#picking-at-random) · lines 1752–1783
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1785–1852
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1854–1879
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1881–1977
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1347–1383
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1385–1446
+- [A few equal things](#a-few-equal-things) · lines 1448–1532
+- [An overview page](#an-overview-page) · lines 1534–1605
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1606–1664
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1666–1790
+- [Picking at random](#picking-at-random) · lines 1792–1823
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1825–1892
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1894–1919
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1921–2017
 
 <!-- /index -->
 
@@ -1370,6 +1370,13 @@ row under the header, across the page at every width.
 - **An empty value reads as a dash** (`emptyLabel`, 4.81; "Not set"
   before), in body type and muted, read by a screen reader as "Not set".
   Never a blank.
+- **A tip and an action on a value** (4.120), as a rail fact has:
+  `info` is a few words behind a small info button after the value (a
+  tooltip on hover and keyboard focus, a caption line under the value on
+  a touch screen, read with the value by a screen reader), and `action`
+  (`{ label, icon?, onClick | render }`) a small outline button under it.
+  Both are there at rest, so nothing moves on hover. `hint` stays the
+  caption line ("of 12"); `info` is the tooltip.
 - **Three to five.** It's what the page is for at a glance; anything
   more is a section's label/value rows.
 - **`subtitle`** is the line under the title: what the record is for,
@@ -1403,6 +1410,15 @@ into a table, a record or an overview.
   button just before New, which stays the one filled button. Only one:
   anything else is in ⋯. On a phone it folds into ⋯ as the menu's first
   item (⋯ shows there for it alone if nothing else is in the menu).
+  Its `hint` (4.120) is a short line under the button ("12 searches
+  left"), in caption type and the muted tone, describing the button to a
+  screen reader; the buttons stay level, the line hanging below. On a
+  phone it's under the words of ⋯'s first item. **A line of context**
+  (`description`, 4.120): one short muted sentence under the title, for a
+  list that needs it ("Each search runs against the catalog once a
+  day."). It wraps in the header's width and never widens a framed
+  table's shared width; on a phone it's under the title and its buttons.
+  One sentence: anything longer belongs in a help page.
 - **`Timeline`: a record's dated history.** `items` newest first
   (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
   column on the left, a dot and a thin line, the entry on the right with
@@ -1568,6 +1584,13 @@ read alike.
   `ErrorState` in the card), and `empty` (a part with nothing yet: "Nothing
   yet" in the tile, `PartEmpty` and its one way to start in the card). An
   empty part stays on the page: hiding it makes the part forgotten.
+- **Links out** (`links`, 4.120): a short list of pages outside the app
+  (`{ label, href, icon? }`), one section after the parts under a
+  "Links" heading (`linksTitle`). Each link is its label, its icon
+  before it if it has one, and the external-link mark, opening in a new
+  tab and saying so to a screen reader. In a row from 48rem, one per
+  line on a phone, each 44px tall. A few: a module's whole bookmark list
+  is a list of its own.
 - **One card anatomy on a hub** (`WidgetCard`): `to` makes the title the
   link with a chevron (in place of the header's `link`), `value` the
   headline in the numeric type, `line` one muted line under it, and
@@ -1578,7 +1601,8 @@ read alike.
 
 Measured with axe and the glyph check in both themes and every palette
 (fixture `app/OverviewPage`); `e2e/overview-page.spec.ts` clicks the
-tiles, Escape and the accordion.
+tiles, Escape and the accordion, and `e2e/overview-links.spec.ts` checks
+the links.
 ## A record's header and empty values
 
 The record page standard (4.81): the same header on every record, the
@@ -1599,6 +1623,13 @@ data on each its own.
   (12px apart, 6px between badges), centred on the title's line; a title
   too long for both pushes them to the next line, starting under it.
   `subtitle` is the line below, in muted body type.
+- **Badges edited in place** (an inline `EditableValue` around a
+  `Badge`) keep their pencil's room at rest (4.120), as the strip's values
+  do, so hovering one moves nothing after it and never wraps the line.
+- **A hint under a header button** (`ActionHint`, 4.120): `<ActionHint
+  hint="12 searches left"><Button>Search</Button></ActionHint>` draws a
+  short caption line under the button, describing it; the header's
+  buttons line up by their tops, so it stays level with the rest.
 - **Actions**: the record's own commands in words (New visit, Mark
   done), then the universal ones as `IconAction`s: Print Notes
   (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
@@ -1721,6 +1752,15 @@ its short facts the last tab, Details. A mark goes left of the title.
   drawn the same in Details on a phone. An empty one reads its
   `emptyLabel` ("Not rated"), not a row of empty stars. Edited in place
   like any fact (`edit`), usually `inPlace.select` over the scores.
+- **A yes/no** (`kind: 'switch'`, 4.120) is a switch on the value's
+  line, never a two-choice select: `checked`, `onCheckedChange` (return
+  the save's promise and the switch shows the new state, busy, until it
+  lands, going back if it fails), and optional `on`/`off` words after it
+  ("With the team", "Only me"). Its accessible name is the fact's label;
+  a click, Space or Enter toggles it. Both words keep their room, so
+  toggling or hovering moves nothing, and it works the same in Details on
+  a phone. `disabled` with a `hint` for one that can't change here.
+  Printed, it's its word (or Yes/No).
 - **Icons on badges** (4.115): a `badges` fact's items may each carry an
   icon (a component or a node) before the label, at the badge's icon size
   in the muted tone a list's item icons have; items without one stay

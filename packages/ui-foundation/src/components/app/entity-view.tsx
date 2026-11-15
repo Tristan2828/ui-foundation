@@ -96,7 +96,7 @@
 // ones behind an "N empty" toggle, still edited in place once opened.
 import { createContext, useContext, useEffect, useId, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { ArrowLeftIcon, ChevronDownIcon, InfoIcon, SearchXIcon } from 'lucide-react'
+import { ArrowLeftIcon, ChevronDownIcon, SearchXIcon } from 'lucide-react'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { ErrorState } from '@/components/app/error-state'
@@ -126,8 +126,9 @@ import { FIELD_LABEL, FIELD_ROW, FIELD_ROW_BASE, FIELD_VALUE } from './field-row
 import { PageTrail, type PageCrumb } from './page-trail'
 import { usePageTrail } from './page-trail-context'
 import { entityViewTabSlug } from '@/lib/entity-view-tab'
+import { FactAction, FactHint } from './fact-extras'
+import { KeepPencilRoomContext } from './keep-pencil-room'
 import { factsAsFields, statusSectionFirst, useWideParent, type EntityViewFact, type EntityViewFactAction } from './entity-view-facts'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export type EntityViewField = {
   label: string
@@ -445,59 +446,6 @@ type FieldPlace = keyof typeof FIELD_ROW
 
 // A row as drawn: a field, or a fact with what only a fact has (4.115).
 type RowField = EntityViewField & { hint?: string; action?: EntityViewFactAction; recordStatus?: boolean }
-
-// A fact's hint (4.115): an info button after the value, its words in a
-// tooltip on hover and on keyboard focus. On a touch screen, where a
-// tooltip has no hover to open it, the words are a line under the value
-// instead (and the button goes). A screen reader reads the words with the
-// value either way: the line is there for it, only visually hidden on a
-// mouse's screen, and it describes the button.
-function FactHint({ label, hint }: { label: string; hint: string }) {
-  const id = useId()
-  return (
-    <>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <button
-              type="button"
-              data-slot="entity-view-fact-hint"
-              aria-label={`About ${label}`}
-              aria-describedby={id}
-              className="inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 pointer-coarse:hidden"
-            />
-          }
-        >
-          <InfoIcon aria-hidden="true" className="size-3.5" />
-        </TooltipTrigger>
-        <TooltipContent>{hint}</TooltipContent>
-      </Tooltip>
-      <span id={id} data-slot="entity-view-fact-hint-text" className="sr-only basis-full type-caption text-muted-foreground pointer-coarse:not-sr-only">
-        {hint}
-      </span>
-    </>
-  )
-}
-
-// A fact's action (4.115): a small button under its value, or the app's
-// own action given that button (`render`), so its dialog opens from it.
-function FactAction({ action }: { action: EntityViewFactAction }) {
-  const Icon = action.icon
-  const button = (
-    <Button
-      type="button"
-      variant="outline"
-      size="xs"
-      data-slot="entity-view-fact-action"
-      onClick={action.render ? undefined : action.onClick}
-      className="pointer-coarse:min-h-11"
-    >
-      {Icon && <Icon aria-hidden="true" data-icon="inline-start" />}
-      {action.label}
-    </Button>
-  )
-  return <div className="flex">{action.render ? action.render(button) : button}</div>
-}
 
 function FieldRow({ field, place }: { field: RowField; place: FieldPlace }) {
   const value = fieldValue(field)
@@ -1310,9 +1258,14 @@ export function EntityView({
               )}
             </h1>
             {badges && (
-              <div data-slot="entity-view-badges" className="flex flex-wrap items-center gap-1.5">
-                {badges}
-              </div>
+              // An inline-edited badge keeps its pencil's room at rest
+              // (4.120), as a strip value does: its room opening on hover
+              // moved the badges after it and could wrap the line.
+              <KeepPencilRoomContext.Provider value>
+                <div data-slot="entity-view-badges" className="flex flex-wrap items-center gap-1.5">
+                  {badges}
+                </div>
+              </KeepPencilRoomContext.Provider>
             )}
           </div>
           {subtitle && (
@@ -1330,7 +1283,9 @@ export function EntityView({
           </div>
         ) : (
           (actions || printButton) && (
-            <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
+            // A button with a hint line under it (ActionHint, 4.120): the
+            // buttons line up by their tops, so it stays level with the rest.
+            <div className="flex min-w-0 flex-wrap items-center gap-2 has-[[data-slot=action-hint]]:items-start sm:justify-end">
               {printButton}
               {actions}
             </div>

@@ -10,7 +10,9 @@ import { ListHeader } from './list-header'
 // Siblings: a switch between three peer lists beside the title, the
 // current one marked, ⋯ keeping only Show deleted. Secondary action
 // (4.117): one more button beside New, on a list with ⋯ and one without;
-// on a phone it's ⋯'s first item (e2e/list-header-secondary.spec.ts). Axe
+// on a phone it's ⋯'s first item (e2e/list-header-secondary.spec.ts).
+// Description and hint (4.120): a line of context under the title, and a
+// hint line under the second button (e2e/list-header-description.spec.ts). Axe
 // and the glyph check measure them in both themes
 // (e2e/fixtures-visual.spec.ts).
 const meta: Meta = {
@@ -126,3 +128,36 @@ function SecondaryGallery() {
 }
 
 export const SecondaryAction: StoryObj = { name: 'Secondary action', render: () => <SecondaryGallery /> }
+
+// A line of context under the title (4.120), and a hint under the second
+// button ("12 searches left"); and a long description that wraps.
+function DescriptionGallery() {
+  const [searches, setSearches] = useState(12)
+  return (
+    <div className="flex max-w-4xl flex-col gap-8">
+      <ListHeader
+        title="Saved Searches"
+        count={7}
+        description="Each search runs against the catalog once a day."
+        secondaryAction={{
+          label: 'Run Now',
+          icon: RefreshCwIcon,
+          hint: `${searches} searches left`,
+          disabled: searches === 0,
+          onClick: () => setSearches((was) => Math.max(0, was - 1)),
+        }}
+        more={[{ label: 'Export', icon: DownloadIcon, onSelect: () => {} }]}
+        newAction={{ label: 'New search', onClick: () => {} }}
+      />
+      <ListHeader
+        title="Suppliers"
+        count={23}
+        description="Suppliers you have ordered from in the last two years, with the ones you marked as preferred first. Others are under Show Deleted."
+        newAction={{ label: 'New supplier', to: '/suppliers/new' }}
+        deleted={{ shown: false, onShownChange: () => {}, noun: 'suppliers' }}
+      />
+    </div>
+  )
+}
+
+export const Description: StoryObj = { name: 'Description and hint', render: () => <DescriptionGallery /> }
