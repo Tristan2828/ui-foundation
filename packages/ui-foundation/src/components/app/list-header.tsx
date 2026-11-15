@@ -22,10 +22,18 @@
 // for a list's second most common action ("Refresh Now", "Add from
 // Catalog"): an outline button, so New stays the primary. On a phone it
 // folds into ⋯, the menu's first item, so the row keeps the title, ⋯ and
-// New.
+// New. Its `hint` (4.120) is a short line under the button ("12 searches
+// left", ActionHint), and the line under its words in ⋯ on a phone.
+//
+// `description` (4.120) is one short muted line under the title, for a
+// list that needs a sentence of context ("Searches run against the
+// catalog once a day."). It wraps in the header's width (under a framed
+// table's, where DataTable's `pageHeader` shares it), never widening it,
+// and on a phone it sits under the title's row, the buttons staying on it.
 import { EllipsisIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 import { Link, NavLink, type To } from 'react-router'
 import { cn } from 'cn'
+import { ActionHint } from '@/components/app/action-hint'
 import type { IconComponent } from '@/components/app/icon-component'
 import { Notice } from '@/components/app/notice'
 import { Button } from '@/components/ui/button'
@@ -47,6 +55,8 @@ export type ListHeaderSecondaryAction = {
   icon?: IconComponent
   /** Can't be used now (a refresh in flight): the button and its menu item are disabled. */
   disabled?: boolean
+  /** A few words under the button (4.120): "12 searches left". In ⋯ on a phone, under its words. */
+  hint?: string
 } & ({ to: To; onClick?: never } | { onClick: () => void; to?: never })
 /** One list in the `siblings` switch. */
 export type ListHeaderSibling = {
@@ -67,6 +77,11 @@ export type ListHeaderProps = {
   title: string
   /** How many records there are, beside the title in the muted tone. Left out while loading. */
   count?: number
+  /**
+   * One short line under the title (4.120), in the muted tone: a sentence
+   * of context for a list that needs it. Wraps in the header's width.
+   */
+  description?: string
   /** Related screens (Board, Change log). One stays a button; two or more fold into ⋯. */
   links?: readonly ListHeaderLink[]
   /** The New button: a link to the new-record page, or a function that opens its dialog. */
@@ -146,6 +161,7 @@ function SiblingSwitch({ siblings, label }: { siblings: readonly ListHeaderSibli
 export function ListHeader({
   title,
   count,
+  description,
   links = [],
   newAction,
   secondaryAction,
@@ -163,9 +179,37 @@ export function ListHeader({
   // phone even when nothing else is in it (and only there).
   const hasMenu = hasOwnMenu || secondaryAction !== undefined
   const SecondaryIcon = secondaryAction?.icon
+  const secondaryButton =
+    secondaryAction &&
+    (secondaryAction.to !== undefined && !secondaryAction.disabled ? (
+      <Button
+        size="sm"
+        variant="outline"
+        data-slot="list-header-secondary"
+        nativeButton={false}
+        render={<Link to={secondaryAction.to} />}
+      >
+        {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
+        {secondaryAction.label}
+      </Button>
+    ) : (
+      <Button
+        size="sm"
+        variant="outline"
+        data-slot="list-header-secondary"
+        disabled={secondaryAction.disabled}
+        onClick={secondaryAction.onClick}
+      >
+        {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
+        {secondaryAction.label}
+      </Button>
+    ))
+  // A hint line under the button lines the row up by its tops (the title
+  // and the buttons level), the line hanging below.
+  const hinted = Boolean(secondaryAction?.hint)
   return (
     <div data-slot="list-header" className={cn('flex flex-col', className)}>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className={cn('flex flex-wrap justify-between gap-x-4 gap-y-2', hinted ? 'items-start' : 'items-center')}>
         <h1 className="flex items-baseline gap-2 type-page-title text-foreground">
           {title}
           {count !== undefined && (
@@ -176,7 +220,7 @@ export function ListHeader({
           )}
         </h1>
         {siblings.length > 1 && <SiblingSwitch siblings={siblings} label={siblingsLabel ?? `${title} Lists`} />}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className={cn('ml-auto flex flex-wrap gap-2', hinted ? 'items-start' : 'items-center')}>
           {outLink && (
             <Button size="sm" variant="outline" nativeButton={false} render={<Link to={outLink.to} />}>
               {outLink.icon && <outLink.icon aria-hidden="true" />}
@@ -213,7 +257,17 @@ export function ListHeader({
                       onClick={secondaryAction.onClick}
                     >
                       {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
-                      {secondaryAction.label}
+                      {secondaryAction.hint ? (
+                        <span className="flex flex-col">
+                          {secondaryAction.label}
+                          <span className="sr-only">, </span>
+                          <span data-slot="list-header-secondary-item-hint" className="type-caption text-muted-foreground">
+                            {secondaryAction.hint}
+                          </span>
+                        </span>
+                      ) : (
+                        secondaryAction.label
+                      )}
                     </DropdownMenuItem>
                     {hasOwnMenu && <DropdownMenuSeparator className="md:hidden" />}
                   </>
@@ -240,31 +294,13 @@ export function ListHeader({
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {secondaryAction &&
-            (secondaryAction.to !== undefined && !secondaryAction.disabled ? (
-              <Button
-                size="sm"
-                variant="outline"
-                data-slot="list-header-secondary"
-                className="max-md:hidden"
-                nativeButton={false}
-                render={<Link to={secondaryAction.to} />}
-              >
-                {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
-                {secondaryAction.label}
-              </Button>
+          {secondaryButton &&
+            (secondaryAction?.hint ? (
+              <ActionHint hint={secondaryAction.hint} className="max-md:hidden">
+                {secondaryButton}
+              </ActionHint>
             ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                data-slot="list-header-secondary"
-                className="max-md:hidden"
-                disabled={secondaryAction.disabled}
-                onClick={secondaryAction.onClick}
-              >
-                {SecondaryIcon && <SecondaryIcon aria-hidden="true" />}
-                {secondaryAction.label}
-              </Button>
+              <span className="contents max-md:hidden">{secondaryButton}</span>
             ))}
           {newAction &&
             (newAction.to !== undefined ? (
@@ -280,6 +316,11 @@ export function ListHeader({
             ))}
         </div>
       </div>
+      {description && (
+        <p data-slot="list-header-description" className="mt-1 max-w-prose type-body text-muted-foreground contain-inline-size">
+          {description}
+        </p>
+      )}
       {/* A status region that is always there, so the notice appearing is announced and the page's first one isn't. */}
       <div role="status" data-slot="list-header-notice" className="not-empty:mt-3">
         {deleted?.shown && (

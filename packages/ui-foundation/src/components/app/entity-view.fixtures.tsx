@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import type { AppError } from '@/api/contracts'
+import { ActionHint } from './action-hint'
 import { editInPlace } from './edit-in-place'
 import { inPlace } from './edit-in-place-presets'
 import { EditableValue } from './editable-value'
@@ -677,6 +678,111 @@ function FactsRailRatingInRouter() {
 }
 
 export const FactsRailRating: StoryObj = { name: 'Facts rail, rating', render: () => <FactsRailRatingInRouter /> }
+
+// The record extras of 4.120: yes/no facts as switches in the rail (one
+// with on/off words and a slow save, one plain, one read-only with a hint
+// saying why), header badges edited in place that keep their pencil's
+// room, strip values with an info tip and an action, and a header button
+// with a hint line under it. e2e/record-extras.spec.ts measures them.
+const STAGE_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'review', label: 'In review' },
+  { value: 'final', label: 'Final' },
+]
+const KIND_OPTIONS = [
+  { value: 'guide', label: 'Guide' },
+  { value: 'note', label: 'Note' },
+]
+
+function RecordExtrasRecord() {
+  const [shared, setShared] = useState(true)
+  const [reminders, setReminders] = useState(false)
+  const [stage, setStage] = useState('review')
+  const [kind, setKind] = useState('guide')
+  const [checks, setChecks] = useState(0)
+  const [searches, setSearches] = useState(12)
+  const slow = (apply: () => void) => new Promise((resolve) => setTimeout(() => resolve(apply()), 300))
+  const sections: EntityViewSection[] = [
+    { title: 'Body', tab: 'Body', content: <Markdown>{'How the team hands work over at the end of a shift.'}</Markdown> },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Owner', kind: 'text', text: 'Sam Example' },
+        { label: 'Shared', kind: 'switch', checked: shared, on: 'With the team', off: 'Only me', onCheckedChange: (next) => slow(() => setShared(next)) },
+        { label: 'Reminders', kind: 'switch', checked: reminders, onCheckedChange: setReminders },
+        {
+          label: 'Archived',
+          kind: 'switch',
+          checked: false,
+          onCheckedChange: () => {},
+          disabled: true,
+          hint: 'A guide in review is never archived.',
+        },
+        { label: 'Pages', kind: 'text', text: 4 },
+      ],
+    },
+  ]
+  const badge = (label: string, value: string, options: typeof STAGE_OPTIONS, save: (next: string) => void) => (
+    <EditableValue
+      label={label}
+      layout="inline"
+      edit={inPlace.select({ value, options, save: (next) => slow(() => save(next ?? value)) })}
+    >
+      <Badge variant="outline">{options.find((option) => option.value === value)?.label}</Badge>
+    </EditableValue>
+  )
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Guides' }}
+      title="Shift handover"
+      factsRail
+      badges={
+        <>
+          {badge('Stage', stage, STAGE_OPTIONS, setStage)}
+          {badge('Kind', kind, KIND_OPTIONS, setKind)}
+          <Badge variant="outline">Team</Badge>
+        </>
+      }
+      strip={
+        <KeyStats
+          stats={[
+            { label: 'Readers', icon: HashIcon, value: '18', info: 'People who opened it this month.' },
+            {
+              label: 'Checks',
+              icon: CircleDotIcon,
+              value: String(checks),
+              action: { label: 'Check Now', onClick: () => setChecks((was) => was + 1) },
+            },
+            { label: 'Updated', icon: CalendarIcon, value: 'Nov 2' },
+          ]}
+        />
+      }
+      actions={
+        <>
+          <Button variant="outline">Print</Button>
+          <ActionHint hint={`${searches} searches left`}>
+            <Button onClick={() => setSearches((was) => Math.max(0, was - 1))}>Search</Button>
+          </ActionHint>
+        </>
+      }
+      sections={sections}
+    />
+  )
+}
+
+function RecordExtrasInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <RecordExtrasRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const RecordExtras: StoryObj = { name: 'Record extras', render: () => <RecordExtrasInRouter /> }
 
 // The `tabs` layout with no other tab: the facts stay in the column, in
 // their place, their labels beside their values.

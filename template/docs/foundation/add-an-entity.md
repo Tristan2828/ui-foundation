@@ -15,18 +15,18 @@
   - Step 8: Add Playwright specs for all three screens · lines 760–837
   - Step 9: Register the nav entry and route names · lines 838–852
   - Step 10: `npm run verify`. · lines 853–855
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 857–1303
-  - [The record view](#the-record-view) · lines 1010–1148
-  - [Forms](#forms) · lines 1150–1220
-  - [Dialogs](#dialogs) · lines 1222–1253
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1255–1303
-- [What not to copy](#what-not-to-copy) · lines 1305–1337
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1339–1356
-- [Deleting](#deleting) · lines 1358–1389
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1391–1412
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1414–1423
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1426–1468
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1470–1506
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 857–1318
+  - [The record view](#the-record-view) · lines 1010–1163
+  - [Forms](#forms) · lines 1165–1235
+  - [Dialogs](#dialogs) · lines 1237–1268
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1270–1318
+- [What not to copy](#what-not-to-copy) · lines 1320–1352
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1354–1371
+- [Deleting](#deleting) · lines 1373–1404
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1406–1427
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1429–1438
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1441–1483
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1485–1521
 
 <!-- /index -->
 
@@ -1124,6 +1124,21 @@ A record uses the parts it has, in this order:
         emptyLabel: 'Not rated', save: (rating) => save({ rating }) }) },
     { label: 'Quality', kind: 'rating', look: 'bar', value: QUALITY[record.quality].value, word: QUALITY[record.quality].word },
     ```
+  - **A yes/no** (4.120) is `kind: 'switch'`, a switch toggled where it
+    is, named by the label, never a two-choice select. Return the save's
+    promise: the switch shows the new state while it runs and goes back
+    if it fails. `on`/`off` words are optional (both or neither):
+
+    ```tsx
+    { label: 'Shared', kind: 'switch', checked: record.shared, on: 'With the team', off: 'Only me',
+      onCheckedChange: (shared) => save({ shared }) },
+    ```
+  - **The strip's values** take `info` (a tooltip on an info button) and
+    `action` (a small button under the value) as rail facts take `hint`
+    and `action` (4.120); a stat's `hint` stays its caption line. A
+    header button that needs a short line under it ("12 searches left")
+    is wrapped in `<ActionHint hint="…">`. Inline-edited header badges
+    keep their pencil's room on their own.
 - **A tiny record** (4.98: a few fields and no notes, like a lookup's
   row) opens as a small card: `RecordDialogRoute look="card"`, usually
   with `fullPage={false}`. A 420px dialog (a sheet on a phone), its
