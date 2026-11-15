@@ -7,6 +7,31 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.122.0 — Passwords hashed with scrypt; one phone breakpoint
+
+npm package and `ui-foundation-backend` 4.122.0. Additive; nothing for an
+app to change.
+
+- **scrypt for passwords** (`foundation_backend.security`). New hashes are
+  scrypt at N=2^15, r=8, p=3: OWASP's next choice after Argon2id, which
+  the standard library doesn't have, and one of the equivalent settings
+  its Password Storage Cheat Sheet lists. They're stored as
+  `scrypt$32768$8$3$<salt>$<digest>`. PBKDF2 hashes from earlier releases
+  still verify, and a successful sign-in replaces one with scrypt. That
+  includes an account with a second step, at the password step. So
+  accounts move over as people sign in, with no reset and no migration.
+  `needs_rehash(stored)` is new beside `hash_password` and
+  `verify_password`. Each sign-in now takes 32 MiB of memory for its hash.
+  An app that needs FIPS-140 algorithms should stay on 4.121.0 and raise
+  it here.
+- **`useIsMobile` returns `useIsPhone()`**, so the 768px breakpoint is
+  written once. Same name, same answer. It no longer reads `window`
+  outside a browser, so it renders on a server or in a test without
+  `matchMedia`.
+- `docs/DEFERRED.md`: Temporal stays deferred. Safari doesn't ship it in
+  a stable release (checked 2026-11-15), and a polyfill would be a new
+  dependency.
+
 ## 4.121.0 — An empty task item saves again; dependencies up to date within their majors
 
 npm package and `ui-foundation-backend` 4.121.0. No API changes. The
