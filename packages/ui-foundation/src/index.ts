@@ -82,7 +82,8 @@ export { OptionSelect, type OptionSelectOption, type OptionSelectProps } from '@
 export { ChoiceButtons, type ChoiceButtonsOption, type ChoiceButtonsProps } from '@/components/app/choice-buttons'
 export { ReferenceCombobox, type ReferenceComboboxProps, type ReferenceRecord } from '@/components/app/reference-combobox'
 export { fieldRows, type FieldKind, type FieldRowItem, type FieldRowPlace, type FieldSize } from '@/lib/field-rows'
-export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
+export { KeyStats, type KeyStat, type KeyStatAction, type KeyStatsProps } from '@/components/app/key-stats'
+export { ActionHint, type ActionHintProps } from '@/components/app/action-hint'
 export { StatusMark, type StatusMarkProps } from '@/components/app/status-mark'
 export {
   STATUS_KINDS,
@@ -352,7 +353,7 @@ export {
   type WidgetCardProps,
   type WidgetListItemProps,
 } from '@/components/app/widget-card'
-export { OverviewPage, type OverviewPageProps, type OverviewPart } from '@/components/app/overview-page'
+export { OverviewPage, type OverviewLink, type OverviewPageProps, type OverviewPart } from '@/components/app/overview-page'
 export { WidgetLayoutSheet, type WidgetLayoutSheetProps } from '@/components/app/widget-layout-sheet'
 export { ThemeProvider } from '@/components/theme-provider'
 

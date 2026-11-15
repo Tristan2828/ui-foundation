@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import { CalendarIcon, FileTextIcon, LandmarkIcon, PieChartIcon, TagIcon, TrendingUpIcon, WalletIcon } from 'lucide-react'
+import { CalendarIcon, FileTextIcon, GlobeIcon, LandmarkIcon, PieChartIcon, TagIcon, TrendingUpIcon, WalletIcon } from 'lucide-react'
 import { MemoryRouter } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { KeyStats } from './key-stats'
@@ -14,7 +14,8 @@ import { WidgetCard, WidgetCardGroup, WidgetList, WidgetListItem } from './widge
 // title linking with a chevron, a value, a line and freshness, folded on
 // a phone to its value. Axe and the glyph check measure them in both
 // themes (e2e/fixtures-visual.spec.ts); e2e/overview-page.spec.ts clicks
-// the tiles and the accordion.
+// the tiles and the accordion. Links (4.120): three pages outside the
+// app after the parts (e2e/overview-links.spec.ts).
 const meta: Meta = {
   title: 'app/OverviewPage',
   parameters: { controls: { disable: true } },
@@ -130,6 +131,16 @@ const STATS = (
 
 export const Default: StoryObj = {
   render: () => <OverviewPage title="Household" stats={STATS} needs={NEEDS} parts={PARTS} defaultOpen="savings" />,
+}
+
+const LINKS = [
+  { label: 'Bank account', href: 'https://example.com/bank', icon: LandmarkIcon },
+  { label: 'Supplier price list', href: 'https://example.org/prices', icon: GlobeIcon },
+  { label: 'Budgeting guide', href: 'https://example.net/guide' },
+]
+
+export const Links: StoryObj = {
+  render: () => <OverviewPage title="Household" stats={STATS} parts={PARTS.slice(0, 4)} links={LINKS} />,
 }
 
 export const States: StoryObj = {

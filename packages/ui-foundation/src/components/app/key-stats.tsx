@@ -20,11 +20,20 @@
 // as a table cell's does. Its room opening on hover moved the values after
 // it along and wrapped a nearly full row, so the hovered value slid out
 // from under the mouse and a click opened the next one.
+//
+// A value's extras (4.120), as a rail fact's (4.115): `info`, a few words
+// behind an info button after the value (a tooltip on hover and keyboard
+// focus, a line under the value on a touch screen, read with the value by
+// a screen reader), and `action`, a small button under the value. Both
+// are there at rest, so hovering moves nothing. `info` isn't `hint`:
+// a stat's `hint` was already its caption line ("of 12").
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH } from '@/lib/empty-value'
 import type { IconComponent } from './icon-component'
+import type { EntityViewFactAction } from './entity-view-facts'
+import { FactAction, FactHint } from './fact-extras'
 import { KeepPencilRoomContext } from './keep-pencil-room'
 
 export type KeyStat = {
@@ -34,7 +43,18 @@ export type KeyStat = {
   hint?: ReactNode
   /** The concept's icon, drawn at 13px before the label (decorative: the label still says it). */
   icon?: IconComponent
+  /**
+   * A few words on the value (4.120), behind an info button after it: a
+   * tooltip on hover and keyboard focus, a line under the value on a touch
+   * screen. A screen reader reads it with the value.
+   */
+  info?: string
+  /** A small button under the value (4.120), as a rail fact's `action`. */
+  action?: EntityViewFactAction
 }
+
+/** A strip value's action: the same shape as a rail fact's. */
+export type KeyStatAction = EntityViewFactAction
 
 export type KeyStatsProps = {
   stats: readonly KeyStat[]
@@ -48,6 +68,8 @@ export type KeyStatsProps = {
 const isEmpty = (value: ReactNode) => value === null || value === undefined || value === false || value === ''
 
 export function KeyStats({ stats, emptyLabel = EMPTY_DASH, width = 'content', className }: KeyStatsProps) {
+  const shown = (stat: KeyStat) =>
+    isEmpty(stat.value) ? <EmptyText text={emptyLabel} className="type-body text-muted-foreground" /> : stat.value
   return (
     <KeepPencilRoomContext.Provider value>
       <dl
@@ -68,9 +90,21 @@ export function KeyStats({ stats, emptyLabel = EMPTY_DASH, width = 'content', cl
                 {stat.label}
               </dt>
               <dd className="type-section-title tabular-nums break-words text-foreground">
-                {isEmpty(stat.value) ? <EmptyText text={emptyLabel} className="type-body text-muted-foreground" /> : stat.value}
+                {stat.info ? (
+                  <span className="inline-flex max-w-full flex-wrap items-center gap-x-1">
+                    <span className="min-w-0 max-w-full">{shown(stat)}</span>
+                    <FactHint label={stat.label} hint={stat.info} />
+                  </span>
+                ) : (
+                  shown(stat)
+                )}
               </dd>
               {stat.hint && <dd className="type-caption text-muted-foreground">{stat.hint}</dd>}
+              {stat.action && (
+                <dd data-slot="key-stats-action" className="mt-1">
+                  <FactAction action={stat.action} />
+                </dd>
+              )}
             </div>
           )
         })}

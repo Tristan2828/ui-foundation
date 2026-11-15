@@ -20,6 +20,14 @@
 // status that changes only through an action (closing a record records a
 // date and a reason) stays read-only, with the action as a small button
 // under it (`action`) and a `hint` saying why it can't be edited here.
+//
+// A yes/no (4.120): `kind: 'switch'` is a switch on the value's line,
+// toggled where it is (a click, Space or Enter), named by the fact's
+// label. It's drawn the same in the rail and in Details where the rail
+// folds. An `on`/`off` word after it says the state in words; both words
+// keep their room, so a toggle moves nothing after it. While the save is
+// in flight the switch shows the new state and is busy; a failed save
+// puts it back. Printed, it's its word (or Yes/No).
 import type { ReactElement, ReactNode } from 'react'
 import { isValidElement, useLayoutEffect, useState } from 'react'
 import { Link } from 'react-router'
@@ -33,6 +41,7 @@ import { RatingScore } from './rating-score'
 import { StepBar } from './step-bar'
 import type { IconComponent } from './icon-component'
 import { StatusMark } from './status-mark'
+import { FactSwitch } from './fact-extras'
 
 /** What a fact holds: one of the short kinds a rail can draw. */
 export type EntityViewFactValue =
@@ -67,6 +76,23 @@ export type EntityViewFactValue =
    * `word` first when given: "High, 4 of 5"). `word` is shown after it.
    */
   | { kind: 'rating'; value: number | null | undefined; max?: number; look?: EntityViewFactRatingLook; word?: string }
+  /**
+   * A yes/no (4.120), toggled in place by a switch named by the fact's
+   * label. `onCheckedChange` saves it: while a promise it returns is
+   * pending the switch shows the new state and is busy, and if it rejects
+   * the switch goes back. `on`/`off` are words after the switch ("Shared",
+   * "Private"); give both or neither. `disabled` keeps it read-only (a
+   * `hint` can say why). Never empty, so `emptyLabel` doesn't apply, and
+   * it isn't an `edit` fact: the switch is its own editor.
+   */
+  | {
+      kind: 'switch'
+      checked: boolean
+      onCheckedChange: (checked: boolean) => void | Promise<unknown>
+      on?: string
+      off?: string
+      disabled?: boolean
+    }
 
 /** How a `rating` fact draws its score. */
 export type EntityViewFactRatingLook = 'stars' | 'hearts' | 'bar'
@@ -146,9 +172,11 @@ function badgeIcon(icon: IconComponent | ReactNode) {
   )
 }
 
-/** A fact as the view draws it: `null` when empty. */
-export function factValue(fact: EntityViewFactValue): ReactNode {
+/** A fact as the view draws it: `null` when empty. `label` names a control the fact draws (a switch). */
+export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
   switch (fact.kind) {
+    case 'switch':
+      return <FactSwitch fact={fact} label={label} />
     case 'status':
       return <StatusMark kind={fact.status}>{fact.word}</StatusMark>
     case 'text': {
@@ -236,9 +264,10 @@ export function factValue(fact: EntityViewFactValue): ReactNode {
 export function factsAsFields(facts: readonly EntityViewFact[]) {
   return statusFirst(facts).map((fact) => ({
     label: fact.label,
-    value: factValue(fact),
+    value: factValue(fact, fact.label),
     emptyLabel: fact.emptyLabel,
-    edit: fact.edit,
+    // A switch is its own editor: an `edit` would wrap it in another.
+    edit: fact.kind === 'switch' ? undefined : fact.edit,
     hint: fact.hint,
     action: fact.action,
     recordStatus: fact.recordStatus,
