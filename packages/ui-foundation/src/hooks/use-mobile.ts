@@ -1,20 +1,9 @@
-import * as React from "react"
+import { useIsPhone } from "@/hooks/use-is-phone"
 
-const MOBILE_BREAKPOINT = 768
-
+// shadcn's hook (the sidebar, sonner and the package's own code read it),
+// answered by useIsPhone so the 768px breakpoint lives in one place. Same
+// result as shadcn's own `window.innerWidth < 768`, and safe where
+// matchMedia is missing.
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean>(
-    () => window.innerWidth < MOBILE_BREAKPOINT
-  )
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
-
-  return isMobile
+  return useIsPhone()
 }
