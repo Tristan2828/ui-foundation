@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 # so an app that pins the same ones resolves to one set.
 dependencies = [
   "fastapi==0.163.0",
-  "sqlmodel==0.0.50",
+  "sqlmodel[asyncio]==0.0.50",
   "pydantic==2.14.3",
   "python-dotenv==1.2.4",
   "email-validator==2.4.0",

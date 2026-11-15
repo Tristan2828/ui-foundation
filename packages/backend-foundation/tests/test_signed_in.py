@@ -13,7 +13,7 @@ import pytest_asyncio
 from fastapi import Depends
 from fastapi.routing import APIRoute
 from httpx import AsyncClient
-from sqlalchemy.exc import MissingGreenlet
+from sqlalchemy.exc import MissingGreenlet, StatementError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from foundation_backend.db import get_session
@@ -63,8 +63,12 @@ async def routes() -> AsyncGenerator[None, None]:
 
 async def test_reading_the_user_after_a_commit_fails_as_it_does_live(routes: None, client: AsyncClient) -> None:
     # Live, this is a 500; the test client re-raises what caused it.
-    with pytest.raises(MissingGreenlet):
+    # SQLAlchemy 2.1 wraps the MissingGreenlet in a StatementError; 2.0
+    # raised it bare. Either way it's the lazy load after the commit.
+    with pytest.raises((MissingGreenlet, StatementError)) as raised:
         await client.post("/api/test-after-commit/user")
+    cause = raised.value.orig if isinstance(raised.value, StatementError) else raised.value
+    assert isinstance(cause, MissingGreenlet)
 
 
 async def test_the_user_id_saved_before_the_commit_is_the_way(routes: None, client: AsyncClient) -> None:

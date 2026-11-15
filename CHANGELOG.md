@@ -41,6 +41,13 @@ usual. The backend's pins moved, which an app must match (below).
   and the rest) declare `widget_id: int | None = Field(default=None, …)`
   because the relationship fills it on save. `nullable=False` keeps those
   columns NOT NULL, so there is no migration.
+- **SQLAlchemy 2.1.** sqlmodel 0.0.50 allows SQLAlchemy 2.1, and a fresh
+  install takes it (2.1.8). 2.1 no longer installs `greenlet`, which the
+  async engine needs, so sqlmodel is now pinned with its `asyncio` extra:
+  `sqlmodel[asyncio]==0.0.50`. Without it every database call fails with
+  "the SQLAlchemy asyncio module requires that the Python 'greenlet'
+  library is installed". 2.1 also raises a lazy load after a commit as a
+  `StatementError` around the `MissingGreenlet`, not the bare error.
 - **Tests and tools**: `PW_WORKERS` sets the worker count in both
   Playwright configs (`PW_WORKERS=1 npm run verify` on a machine short of
   memory). The package's axe specs build axe from `e2e/axe.ts`, which
@@ -49,13 +56,15 @@ usual. The backend's pins moved, which an app must match (below).
 
 **Upgrading an app's backend.** `ui-foundation-backend==4.121.0` pins
 its runtime dependencies exactly, so pip refuses it beside the old pins.
-In `backend/pyproject.toml`, set `fastapi==0.163.0`, `sqlmodel==0.0.50`,
+In `backend/pyproject.toml`, set `fastapi==0.163.0`, `sqlmodel[asyncio]==0.0.50`
+(with the extra),
 `pydantic==2.14.3`, `python-dotenv==1.2.4` and `email-validator==2.4.0`
 in the same change (the other pins are the app's own choice), then
 `pip install -e ".[dev]"` and `npm run verify:backend`. If mypy now
 reports a missing named argument for a foreign key that a relationship
 fills, or an `int | None` id passed as `int`, fix it the way the template
-did (see above).
+did (see above). A test that expects `MissingGreenlet` from a lazy load
+after a commit now gets a `StatementError` whose `orig` is one.
 ## 4.120.0 — A switch fact, links on an overview, a list's description, and hints
 
 npm package and `ui-foundation-backend` 4.120.0 (the backend is unchanged
