@@ -7,6 +7,60 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.120.0 — A switch fact, links on an overview, a list's description, and hints
+
+npm package and `ui-foundation-backend` 4.120.0 (the backend is unchanged
+apart from its version). Additive: new optional props and kinds, new
+exports. A screen that passes none of them is drawn as before, except
+that inline-edited badges in a record header now keep their pencil's
+room at rest (below).
+
+- **A yes/no in the facts rail**: `EntityView` facts take
+  `kind: 'switch'`, `{ checked, onCheckedChange, on?, off?, disabled? }`.
+  A switch on the value's line named by the fact's label, toggled by a
+  click, Space or Enter. Return the save's promise from
+  `onCheckedChange` and the switch shows the new state, busy, until it
+  settles, going back if it rejects. `on`/`off` words after it keep the
+  room of the longer one, so toggling or hovering moves nothing. Drawn
+  the same in Details where the rail folds on a phone; printed as its
+  word (or Yes/No). An `edit` on a switch fact is ignored: the switch is
+  its own editor.
+- **Links on `OverviewPage`**: `links={[{ label, href, icon? }]}` (type
+  `OverviewLink`) draws one section after the parts, under a "Links"
+  heading (`linksTitle`). Each link opens in a new tab with the
+  external-link mark and says so to a screen reader; in a row from
+  48rem, one per 44px line on a phone. None draws nothing.
+- **`ListHeader description`**: one short muted line under the title. It
+  wraps in the header's width (`contain-inline-size`), so it never
+  widens a framed DataTable's shared header width (`pageHeader`); on a
+  phone it sits under the title and its buttons.
+- **Hints on header buttons**: `ListHeader`'s `secondaryAction` takes
+  `hint` ("12 searches left"), a caption line under the button that
+  describes it; the buttons stay level. On a phone it's under the words
+  of ⋯'s first item. A record header's own buttons take the same line
+  with the new **`ActionHint`** export:
+  `<ActionHint hint="12 searches left"><Button>Search</Button></ActionHint>`.
+  EntityView's header lines its actions up by their tops while one has
+  a hint.
+- **A tip and an action on a strip value**: `KeyStat` takes `info` (a
+  tooltip on an info button after the value, a caption line under it on
+  a touch screen, read with the value by a screen reader) and `action`
+  (a small button under the value, `KeyStatAction`, the same shape as a
+  rail fact's). Named `info`, not `hint`: a stat's `hint` already is its
+  caption line ("of 12") and stays so. Both are there at rest, so
+  hovering moves nothing.
+- **Inline-edited header badges hold still**: an inline `EditableValue`
+  in `EntityView`'s `badges` keeps its pencil's room at rest, as a strip
+  value has since 4.115, so hovering one no longer moves the badges after
+  it or wraps the line. The badges sit a little further apart at rest.
+  Nothing to do; a badge that must not keep the room can pass
+  `keepPencilRoom={false}`.
+- Specs: `e2e/record-extras.spec.ts`, `e2e/list-header-description.spec.ts`,
+  `e2e/overview-links.spec.ts`, with axe in both themes at desktop and
+  phone widths. The badge and framed-width checks fail with the change
+  removed. New fixtures: `app/EntityView` Record extras, `app/ListHeader`
+  Description and hint, `app/OverviewPage` Links.
+
 ## 4.119.0 — Repeats without times, and the day weeks start on (WKST)
 
 npm package and `ui-foundation-backend` 4.119.0. Additive: new optional
