@@ -40,10 +40,10 @@
 - [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1822–1860
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1862–1938
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1940–1963
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1965–2184
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2113–2184
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2186–2222
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2224–2273
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1965–2190
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2119–2190
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2192–2228
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2230–2279
 
 <!-- /index -->
 
@@ -2051,7 +2051,13 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   most (`primary`), and the rest behind Filters (`secondary`, with their
   chips, as `SecondaryFilters` draws them). No captions over controls:
   each names itself. `FilterSelect` says "Any status" while off and
-  "Status: Active" on; `MultiChoice`'s `label` makes it "Rooms: Hall +1"
+  "Status: Active" on, and is named by its label first (4.123): "Status"
+  while it shows "Any status", "Status: Active", "Status: All reminders"
+  for an `anyLabel` that doesn't say the label (`FilterDate` the same), so
+  a test finds it by `getByRole('combobox', { name: /^Status/ })`.
+  `search.onKeyDown` (4.123) gives the search box's keys to the app
+  first: Enter on "#12" opening record 12, `preventDefault()` keeping the
+  key from the box. `MultiChoice`'s `label` makes it "Rooms: Hall +1"
   instead of a chip per pick. Below 48rem search and Filters share a line
   and every filter, primary ones too, is in Filters' bottom sheet, so pass
   `primaryActive` (their chips) and an `onClearAll` that clears them all

@@ -7,6 +7,77 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.123.0 — The page standards' gaps: links, keys, tones, names and a bar
+
+npm package and `ui-foundation-backend` 4.123.0 (the backend is unchanged
+apart from its version). The gaps apps worked around while putting their
+modules on the six page standards. Mostly additive; three changes of
+behaviour are marked **(behaviour)** with what a test may need.
+
+- **`IconAction` as a link**: `render={<Link to="/print" />}` or
+  `render={<a href=… target="_blank" />}` now draws the icon as that
+  link, its tooltip and name kept. Before, the link was drawn through
+  `Button`, which marked it `type="button"` and lost a router `Link`'s
+  `href` once it mounted. A link takes no Button props. Apps that drew
+  Open Site as a `Tooltip` around an `<a>` with `buttonVariants` can use
+  `IconAction` again.
+- **`IconAction accessibleName`**: an accessible name that says more than
+  the tooltip ("Delete The Long Walk" for a tooltip of "Delete").
+- **`DeleteAction`'s icon is named for its record** **(behaviour)**:
+  "Delete <name>", its tooltip still "Delete", so several on one page (a
+  record's and each of its rows') are told apart. A test that found it
+  with `getByRole('button', { name: 'Delete', exact: true })` finds it by
+  `{ name: 'Delete The Long Walk' }`; one without `exact` still matches.
+  The `"button"` trigger (the verb in words) is unchanged.
+- **`FilterBar` `search.onKeyDown`**: the search box's keys go to the app
+  first (Enter on "#12" opening record 12); `preventDefault()` keeps a
+  key from the box.
+- **`FilterSelect` and `FilterDate` are named by their label first**
+  **(behaviour)**: "Status" while showing "Any status", "Status: Active"
+  with a value (as before), and "Status: All reminders" for an `anyLabel`
+  that doesn't say the label. Before, the name was always the words
+  shown. A test that found one by `{ name: 'Any status' }` finds it by
+  `{ name: 'Status' }` (or `/^Status/` for any state).
+- **A `badges` fact item takes a `tone`** (`success`, `warning`, `info`,
+  `destructive`; type `EntityViewFactBadgeTone`): the outline badge in
+  that tone's text colour, its icon too, for a label that is a state
+  ("Pinned", "Overdue"). Axe-checked in both themes.
+- **The default view's sort stays off the address** **(behaviour)**:
+  pressing a list's `defaultView` pill wrote its `sort` into the URL
+  (`?sort=due:asc`) while its filters went back to the plain address. Now
+  nothing is written, and at the plain address the rows take the default
+  view's `sort` (before, it applied only once the pill was pressed).
+  Changing a filter by hand from there keeps that sort; un-sorting a
+  column there writes `sort=none`.
+- **A `ToggleGroup` in a `Field` is a choice**: one that is the field's
+  own control pairs with `ChoiceButtons` (two choices to a row, side by
+  side on a phone) without `kind="choice"`. One nested deeper (a
+  RecurrenceField's weekdays) isn't.
+- **The slash menu's Image**: with `upload`, "/image" (or "/photo",
+  "/picture") opens the file picker and puts the images where the "/"
+  was: the way to pick one in an editor with only the floating toolbar
+  (`toolbar="floating"`, `inline` notes), and a quicker one with the
+  fixed bar.
+- **Notes hold their place while the editor loads**: until the editor's
+  code arrives, `RichTextEditor` shows its text as `<Markdown>` draws it
+  (the room of a table's add-row bar included) instead of two skeleton
+  lines, so nothing under it moves when the editor takes over. This was
+  the "a FactList edited in place shifts at phone width" gap: on a phone
+  a record's notes are edited in place above the facts, and the facts
+  dropped by the notes' height a moment after the page opened. An empty
+  editor still shows the skeleton lines.
+- **`ListHeader` `more` items take `disabled`**: greyed in ⋯, never
+  hidden ("Import" while one is running).
+- **`DataTable pageBar`**: a bar between the page header and the list (a
+  deals bar, "Allow Reminders", a budget's totals), under `pageHeader`
+  and above the views in the same box, so the list standard's C3 holds:
+  header, bar and card share the table's width, and the bar wraps in it
+  rather than widening it.
+- Specs: `e2e/page-gaps.spec.ts` (fixtures `app/Page Gaps`), axe in both
+  themes; a unit test for the default view's address. Each check fails
+  with its fix taken out. `e2e/data-table-tools.spec.ts` and
+  `e2e/date-filter.spec.ts` find their filter selects by label now.
+
 ## 4.122.0 — Passwords hashed with scrypt; one phone breakpoint
 
 npm package and `ui-foundation-backend` 4.122.0. Additive; nothing for an

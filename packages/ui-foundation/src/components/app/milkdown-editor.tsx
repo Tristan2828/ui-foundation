@@ -147,6 +147,7 @@ import { addRowAtEnd, colorTableCells, fitAllColumns, handleTableKey, previewCol
 import { TABLE_MENU_EVENT, TableGrips, type TableCell } from './rich-text-table-grips'
 import {
   applySlash,
+  clearSlash,
   closeSlash,
   slashItems,
   slashOptionId,
@@ -593,6 +594,7 @@ export default function MilkdownEditor({
   const [pageBusy, setPageBusy] = useState(false)
   // Opens the title box: from the slash menu's keys (set up once) too.
   const startPageRef = useRef<(view: EditorView, span: PageSpan, title: string) => void>(() => {})
+  const pickSlashImageRef = useRef<(view: EditorView, span: SlashQuery) => void>(() => {})
   // The router's navigate, for a page link's click (NavigateBridge).
   const navigateRef = useRef<((href: string) => void) | null>(null)
   const inRouter = useInRouterContext()
@@ -678,7 +680,7 @@ export default function MilkdownEditor({
   // The slash menu: open while a "/" typed at a line's start is followed
   // by something some block answers to, and the field has focus.
   const slash = menus && !readOnly && focused && editorState ? slashQuery(editorState) : null
-  const slashMatches = slash ? slashItems(slash.query, { page: Boolean(onCreatePage) }) : []
+  const slashMatches = slash ? slashItems(slash.query, { page: Boolean(onCreatePage), image: Boolean(upload) }) : []
   const slashOpen = slash !== null && slashMatches.length > 0
   const slashMenuKey = slash ? `${slash.from}:${slash.query}` : ''
   const slashIndex = slashActive.key === slashMenuKey ? Math.min(slashActive.index, slashMatches.length - 1) : 0
@@ -978,6 +980,7 @@ export default function MilkdownEditor({
                 event.preventDefault()
                 const item = menu.items[menu.index]
                 if (item.id === 'page') startPageRef.current(view, menu.span, '')
+                else if (item.id === 'image') pickSlashImageRef.current(view, menu.span)
                 else applySlash(view, menu.span, item.id)
                 return true
               }
@@ -1097,6 +1100,14 @@ export default function MilkdownEditor({
   // The toolbar's Image button: the file picker, then each file picked
   // uploaded in place of the selection, and focus back in the text.
   const pickImages = () => imageInputRef.current?.click()
+  // The slash menu's Image (4.123): the "/…" goes, then the file picker;
+  // the images go in at the caret, where the "/" was.
+  // A tick later: Chrome opens no picker for a click made inside the
+  // editor's own keydown (Enter on the item); the key's activation lasts.
+  const pickSlashImage = (view: EditorView, span: SlashQuery) => {
+    clearSlash(view, span)
+    setTimeout(pickImages, 0)
+  }
   const imagesPicked = (files: File[]) => {
     const send = latest.current.upload
     if (!editorView || !send || files.length === 0) return
@@ -1251,6 +1262,7 @@ export default function MilkdownEditor({
   }
   useEffect(() => {
     startPageRef.current = startPage
+    pickSlashImageRef.current = pickSlashImage
   })
   // Selected words in one block (a double-click takes the space after a
   // word too: the link gets the words, the spaces stay).
@@ -1453,7 +1465,13 @@ export default function MilkdownEditor({
             items={slashMatches}
             active={slashIndex}
             onHighlight={(index) => setSlashActive({ key: slashMenuKey, index })}
-            onPick={(item) => (item === 'page' ? startPage(editorView, slash, '') : applySlash(editorView, slash, item))}
+            onPick={(item) =>
+              item === 'page'
+                ? startPage(editorView, slash, '')
+                : item === 'image'
+                  ? pickSlashImage(editorView, slash)
+                  : applySlash(editorView, slash, item)
+            }
           />
         )}
         {toolsOpen && (

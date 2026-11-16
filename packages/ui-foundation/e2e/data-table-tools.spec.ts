@@ -111,7 +111,7 @@ test.describe('on a phone', () => {
     await expect(sheet.getByRole('combobox', { name: 'Status: Thriving' })).toBeVisible()
     await expect(sheet.getByRole('combobox', { name: 'Light: Medium' })).toBeVisible()
     await sheet.getByRole('button', { name: 'Clear Filters' }).click()
-    await expect(sheet.getByRole('combobox', { name: 'Any status' })).toBeVisible()
+    await expect(sheet.getByRole('combobox', { name: 'Status', exact: true })).toBeVisible()
     await sheet.getByRole('button', { name: 'Done' }).click()
     await expect(page.getByRole('button', { name: 'Filters', exact: true })).toBeVisible()
   })

@@ -498,7 +498,8 @@ const GLYPH_STORIES: {
     id: 'app-richtexteditor--features',
     name: 'table menu',
     open: async (page) => {
-      await page.locator('[data-fixture="table"] td').first().click()
+      // The editor's own table, not the text shown while it loads (4.123).
+      await page.locator('[data-fixture="table"] [contenteditable] td').first().click()
       await page.waitForTimeout(100)
       await page.keyboard.press('Shift+F10')
     },
@@ -573,7 +574,7 @@ test.describe('composite stories have zero axe violations in both themes', () =>
       test(`${id} is accessible (${theme})`, async ({ page }) => {
         await page.goto(storyUrlById(id, theme))
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
-        await expect(page.getByText(mustShow)).toBeVisible()
+        await expect(page.getByText(mustShow).first()).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
       })
@@ -623,7 +624,7 @@ test.describe('stories have zero axe violations in each palette', () => {
       test(`${id} is accessible (${palette})`, async ({ page }) => {
         await page.goto(paletteUrl(id, palette))
         await expectPalette(page, palette)
-        if (mustShow) await expect(page.getByText(mustShow)).toBeVisible()
+        if (mustShow) await expect(page.getByText(mustShow).first()).toBeVisible()
         else await expect(page.locator('#root')).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
@@ -665,7 +666,7 @@ test.describe('composite stories have zero axe violations at the large density',
         await page.goto(storyUrlById(id, theme, 'large'))
         await expect(page.locator('html')).toHaveAttribute('data-density', 'large')
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
-        await expect(page.getByText(mustShow)).toBeVisible()
+        await expect(page.getByText(mustShow).first()).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
       })
@@ -863,7 +864,7 @@ test.describe('primitives paint only token colours', () => {
       test(`${id} uses only tokens (${theme})`, async ({ page }) => {
         await page.goto(storyUrlById(id, theme))
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
-        await expect(page.getByText(mustShow)).toBeVisible()
+        await expect(page.getByText(mustShow).first()).toBeVisible()
         expect(await offTokenColors(page)).toEqual([])
       })
     }

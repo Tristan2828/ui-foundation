@@ -29,15 +29,15 @@
 - [A list as a board](#a-list-as-a-board) · lines 1246–1297
 - [A list as cards](#a-list-as-cards) · lines 1299–1345
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1347–1383
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1385–1446
-- [A few equal things](#a-few-equal-things) · lines 1448–1532
-- [An overview page](#an-overview-page) · lines 1534–1605
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1606–1664
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1666–1790
-- [Picking at random](#picking-at-random) · lines 1792–1823
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1825–1892
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1894–1919
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1921–2017
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1385–1455
+- [A few equal things](#a-few-equal-things) · lines 1457–1541
+- [An overview page](#an-overview-page) · lines 1543–1614
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1615–1678
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1680–1804
+- [Picking at random](#picking-at-random) · lines 1806–1837
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1839–1906
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1908–1933
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1935–2031
 
 <!-- /index -->
 
@@ -1418,6 +1418,15 @@ into a table, a record or an overview.
   list that needs it ("Each search runs against the catalog once a
   day."). It wraps in the header's width and never widens a framed
   table's shared width; on a phone it's under the title and its buttons.
+  A `more` item that can't be used now (4.123, `disabled: true`: an
+  import already running) stays in ⋯, greyed, never hidden.
+- **A bar between the header and the list** (`DataTable pageBar`, 4.123):
+  something about the whole page that belongs above its rows, such as a
+  deals bar, "Allow Reminders" or a budget's totals. It's drawn under
+  `pageHeader` and above the views, in the same box, so C3 holds: the
+  header, the bar and the card share the table's width, and the bar
+  wraps in it rather than widening it. Never a bar put between a
+  separate `ListHeader` and the table, which loses the shared width.
   One sentence: anything longer belongs in a help page.
 - **`Timeline`: a record's dated history.** `items` newest first
   (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
@@ -1634,7 +1643,12 @@ data on each its own.
   done), then the universal ones as `IconAction`s: Print Notes
   (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
   tone). Each is a square outline button at the header's 36px with its
-  words as both its tooltip and its accessible name. Icon alone is for
+  words as both its tooltip and its accessible name. An `IconAction`
+  that goes somewhere (Open Site, Print to a page) takes the link as
+  `render` (4.123, `render={<Link to="/print" />}` or `render={<a href=…
+  target="_blank" />}`) and is drawn as that link. `accessibleName` says
+  more than the tooltip where several are on one page: `DeleteAction`'s
+  icon is named "Delete <name>" (4.123), its tooltip still "Delete". Icon alone is for
   the universal actions only (Delete, Print Notes, Copy link, Pin, Open
   site, Restore, Open Full Page, Close, More); everything else keeps its
   word. `printLook="words"` keeps Print Notes as a button with its words.

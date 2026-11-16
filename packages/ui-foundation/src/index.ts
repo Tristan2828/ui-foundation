@@ -112,6 +112,7 @@ export {
   type EntityViewFact,
   type EntityViewFactAction,
   type EntityViewFactBadge,
+  type EntityViewFactBadgeTone,
   type EntityViewFactListItem,
   type EntityViewFactRatingLook,
   type EntityViewFactValue,
