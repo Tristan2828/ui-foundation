@@ -17,6 +17,7 @@ import {
   type DateFilterPreset,
 } from '@/lib/date-filter'
 import { DateField } from './date-field'
+import { filterName } from './filter-name'
 
 export type FilterDateProps = {
   /** What it filters ("Due"): the prefix of the value it shows ("Due: Before today"). */
@@ -82,7 +83,7 @@ export function FilterDate({
     <div data-slot="filter-date" className={cn('flex flex-wrap items-center gap-2', className)}>
       <Select value={picked} onValueChange={(next) => pick(next === null ? ANY : String(next))}>
         {/* Named by the text it shows, as FilterSelect is, so voice control can say it. */}
-        <SelectTrigger aria-label={shown} data-slot="filter-date-select" data-active={filter ? true : undefined}>
+        <SelectTrigger aria-label={filterName(label, shown)} data-slot="filter-date-select" data-active={filter ? true : undefined}>
           <SelectValue>{() => shown}</SelectValue>
         </SelectTrigger>
         <SelectContent>

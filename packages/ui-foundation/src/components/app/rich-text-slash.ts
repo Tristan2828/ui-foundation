@@ -9,7 +9,7 @@
 // list, a quote or a code block.
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
-import { FileTextIcon } from 'lucide-react'
+import { FileTextIcon, ImageIcon } from 'lucide-react'
 import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, TOGGLE_HEADING_VARIANTS, type FormatItem } from './rich-text-format-items'
 import { toggleFormat, type FormatId } from './rich-text-formats'
 
@@ -121,8 +121,17 @@ const KEYWORDS: Partial<Record<FormatId, string[]>> = {
 const BLOCKS = FORMAT_GROUPS.flat().filter((item) => KEYWORDS[item.id])
 BLOCKS.splice(BLOCKS.findIndex((item) => item.id === 'heading3') + 1, 0, ...TOGGLE_HEADING_VARIANTS)
 
-/** A slash menu item: a block, or the new page (only with the app's `onCreatePage`). */
-export type SlashItem = Omit<FormatItem, 'id'> & { id: FormatId | 'page' }
+/**
+ * A slash menu item: a block, an image (only with the editor's `upload`,
+ * 4.123) or the new page (only with the app's `onCreatePage`).
+ */
+export type SlashItem = Omit<FormatItem, 'id'> & { id: FormatId | 'image' | 'page' }
+
+// An image (4.123): the file picker, the image going where the "/" was.
+// The Image button's job for an editor with no fixed toolbar
+// (`toolbar="floating"`), and a quicker way with one.
+const IMAGE_ITEM: SlashItem = { id: 'image', label: 'Image', icon: ImageIcon }
+const IMAGE_KEYWORDS = ['image', 'picture', 'photo', 'img', 'upload']
 
 // A page of its own, linked from here (src/lib/page-link.ts): last, since
 // it's the only item that leaves the editor (a title box, then the app).
@@ -131,20 +140,27 @@ const PAGE_KEYWORDS = ['page', 'subpage', 'child', 'link', 'new']
 
 /**
  * The blocks matching what's typed after the "/": in the name, or the
- * start of a keyword. With `page`, the new page too.
+ * start of a keyword. With `image`, an image too; with `page`, the new page.
  */
-export function slashItems(query: string, options: { page?: boolean } = {}): SlashItem[] {
+export function slashItems(query: string, options: { page?: boolean; image?: boolean } = {}): SlashItem[] {
   const typed = query.trim().toLowerCase()
   const page = options.page && (!typed || 'page'.includes(typed) || PAGE_KEYWORDS.some((word) => word.startsWith(typed))) ? [PAGE_ITEM] : []
-  if (!typed) return [...BLOCKS, ...page]
+  const image = options.image && (!typed || IMAGE_KEYWORDS.some((word) => word.startsWith(typed))) ? [IMAGE_ITEM] : []
+  if (!typed) return [...BLOCKS, ...image, ...page]
   const blocks = [...BLOCKS]
   blocks.splice(BLOCKS.findIndex((item) => item.id === 'callout') + 1, 0, ...CALLOUT_VARIANTS)
   blocks.push(...HIGHLIGHT_VARIANTS)
-  const matches: SlashItem[] = blocks.filter(
-    (item) => item.label.toLowerCase().includes(typed) || KEYWORDS[item.id]!.some((word) => word.startsWith(typed)),
-  )
+  const matches: SlashItem[] = [
+    ...blocks.filter((item) => item.label.toLowerCase().includes(typed) || KEYWORDS[item.id]!.some((word) => word.startsWith(typed))),
+    ...image,
+  ]
   // "/page" puts the page first: it's what was asked for by name.
   return typed.length >= 2 && 'page'.startsWith(typed) ? [...page, ...matches] : [...matches, ...page]
+}
+
+/** Picks the image item: the "/…" goes and the menu closes, the caret where it was, for the picked images. */
+export function clearSlash(view: EditorView, span: SlashQuery): void {
+  view.dispatch(view.state.tr.delete(span.from, span.to).setMeta(slashKey, 'close'))
 }
 
 /**

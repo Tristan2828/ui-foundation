@@ -136,6 +136,15 @@ describe("views fill the filters", () => {
     expect(home.toString()).toBe("");
   });
 
+  it("leaves the default view's sort out of the URL when it's pressed (4.123)", () => {
+    const sorted = { ...views.open, sort: [{ id: "due", desc: false }] };
+    const away = applyUrlChanges(new URLSearchParams("sort=name:desc&search=x"), viewToUrlChanges(F, M, views.all));
+    const home = applyUrlChanges(away, viewToUrlChanges(F, M, sorted, true));
+    expect(home.toString()).toBe("");
+    // Another view's sort is still written.
+    expect(applyUrlChanges(home, viewToUrlChanges(F, M, { ...views.all, sort: [{ id: "due", desc: true }] })).toString()).toContain("sort=due%3Adesc");
+  });
+
   it("keeps the default view's filters when one changes by hand, and the pill follows", () => {
     const state = at("");
     const next = applyUrlChanges(new URLSearchParams(), filterChanges(state, { search: "pump" }, ["overdue"], true));

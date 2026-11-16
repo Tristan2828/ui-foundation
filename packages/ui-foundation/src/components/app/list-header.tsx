@@ -47,7 +47,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export type ListHeaderLink = { label: string; to: To; icon?: IconComponent }
-export type ListHeaderAction = { label: string; onSelect: () => void; icon?: IconComponent }
+export type ListHeaderAction = {
+  label: string
+  onSelect: () => void
+  icon?: IconComponent
+  /** Can't be used now (4.123): an import already running, nothing to export. The item stays in ⋯, greyed. */
+  disabled?: boolean
+}
 /** The one button beside New (4.117): a link to a page, or a function. */
 export type ListHeaderSecondaryAction = {
   label: string
@@ -279,7 +285,7 @@ export function ListHeader({
                   </DropdownMenuItem>
                 ))}
                 {more.map((action) => (
-                  <DropdownMenuItem key={action.label} onClick={action.onSelect}>
+                  <DropdownMenuItem key={action.label} onClick={action.onSelect} disabled={action.disabled}>
                     {action.icon && <action.icon aria-hidden="true" />}
                     {action.label}
                   </DropdownMenuItem>

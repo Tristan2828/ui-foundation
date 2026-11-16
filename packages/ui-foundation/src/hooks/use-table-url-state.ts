@@ -112,18 +112,28 @@ export function useTableUrlState<F extends string, M extends string = never, V e
 
   const page = Math.max(1, Math.floor(Number(params.get('page'))) || 1)
 
-  const [sortField, sortDir] = (params.get('sort') ?? '').split(':')
-  const sorting: SortingState = sortField ? [{ id: sortField, desc: sortDir === 'desc' }] : []
-
   const fallback = defaultView === undefined ? undefined : views[defaultView]
   const state = readFilterState(params, filterNames, multiFilterNames, fallback)
   const { filters, multiFilters } = state
+
+  // The URL's sort, else the default view's at the list's plain address
+  // (4.123): pressing the default view writes no `?sort=`, as it writes no
+  // filters, and its sort still holds.
+  const urlSort = params.get('sort')
+  const [sortField, sortDir] = (urlSort ?? '').split(':')
+  const sorting: SortingState = sortField && urlSort !== 'none'
+    ? [{ id: sortField, desc: sortDir === 'desc' }]
+    : urlSort === null && state.atDefault && fallback?.sort
+      ? [...fallback.sort]
+      : []
+  // Leaving the plain address (a filter changed by hand) keeps the sort it showed.
+  const keptSort: UrlChanges = urlSort === null && state.atDefault && fallback?.sort ? { sort: serializeSort(fallback.sort) } : {}
 
   const activeView = activeViewOf(views, filters, multiFilters)
   const ruleNames = ruleFilterNames<F, M>(views)
   // The reader changing filters by hand: see filterChanges.
   const changeFilters = (changes: Readonly<Record<string, string | string[] | undefined>>) =>
-    update(filterChanges(state, changes, ruleNames, fallback !== undefined))
+    update({ ...keptSort, ...filterChanges(state, changes, ruleNames, fallback !== undefined) })
 
   function update(changes: UrlChanges) {
     setParams((previous) => applyUrlChanges(previous, changes), { replace: true })
@@ -147,7 +157,9 @@ export function useTableUrlState<F extends string, M extends string = never, V e
       update({ group: next || null })
     },
     setPage: (next: number) => update({ page: next > 1 ? String(next) : null }),
-    setSorting: (next: SortingState) => update({ sort: serializeSort(next), page: null }),
+    // Unsorting where the default view's sort would come back writes `sort=none`.
+    setSorting: (next: SortingState) =>
+      update({ sort: serializeSort(next) ?? (fallback?.sort && state.atDefault ? 'none' : null), page: null }),
     setFilter: (name: F, value: string) => changeFilters({ [name]: value }),
     // Several filters in one call — for any user action that changes more
     // than one (both ends of a date range, "clear filters"). Two setters in

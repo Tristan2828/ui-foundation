@@ -41,10 +41,10 @@
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1863–1939
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1941–2027
   - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1966–2027
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2029–2248
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2177–2248
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2250–2286
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2288–2337
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2029–2254
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2183–2254
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2256–2292
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2294–2343
 
 <!-- /index -->
 
@@ -1965,7 +1965,7 @@ checks measure the ring at 3:1 in both themes and every palette.
 
 ### Picking one on a form: `ColorField`
 
-The same colour on the record's form (4.123): a grid of named swatches
+The same colour on the record's form (4.124): a grid of named swatches
 and **Custom**, which opens the browser's own colour picker. One control
 for a react-hook-form `Controller`, like `DateField`.
 
@@ -2115,7 +2115,13 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   most (`primary`), and the rest behind Filters (`secondary`, with their
   chips, as `SecondaryFilters` draws them). No captions over controls:
   each names itself. `FilterSelect` says "Any status" while off and
-  "Status: Active" on; `MultiChoice`'s `label` makes it "Rooms: Hall +1"
+  "Status: Active" on, and is named by its label first (4.123): "Status"
+  while it shows "Any status", "Status: Active", "Status: All reminders"
+  for an `anyLabel` that doesn't say the label (`FilterDate` the same), so
+  a test finds it by `getByRole('combobox', { name: /^Status/ })`.
+  `search.onKeyDown` (4.123) gives the search box's keys to the app
+  first: Enter on "#12" opening record 12, `preventDefault()` keeping the
+  key from the box. `MultiChoice`'s `label` makes it "Rooms: Hall +1"
   instead of a chip per pick. Below 48rem search and Filters share a line
   and every filter, primary ones too, is in Filters' bottom sheet, so pass
   `primaryActive` (their chips) and an `onClearAll` that clears them all

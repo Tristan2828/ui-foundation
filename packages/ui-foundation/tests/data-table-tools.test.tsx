@@ -169,9 +169,10 @@ describe('filters that name themselves (L4)', () => {
     { value: 'stopped', label: 'Stopped' },
   ]
 
-  it('FilterSelect says "Any Status" while off and "Status: Active" on', () => {
+  it('FilterSelect says "Any Status" while off (named "Status", 4.123) and "Status: Active" on', () => {
     const off = renderToStaticMarkup(<FilterSelect label="Status" options={options} value="" onValueChange={noop} />)
-    expect(off).toContain('aria-label="Any Status"')
+    expect(off).toContain('aria-label="Status"')
+    expect(off).toContain("Any Status")
     const on = renderToStaticMarkup(<FilterSelect label="Status" options={options} value="active" onValueChange={noop} />)
     expect(on).toContain('aria-label="Status: Active"')
     expect(on).toContain('Status: Active')
@@ -198,7 +199,7 @@ describe('filters that name themselves (L4)', () => {
     )
     expect(html).toContain('aria-label="Search"')
     expect(html).toContain('placeholder="Search by name"')
-    expect(html).toContain('aria-label="Any Status"')
+    expect(html).toContain('aria-label="Status"')
     expect(html).toContain('Kind: Active')
   })
 })

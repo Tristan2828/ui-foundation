@@ -15,18 +15,18 @@
   - Step 8: Add Playwright specs for all three screens · lines 760–837
   - Step 9: Register the nav entry and route names · lines 838–852
   - Step 10: `npm run verify`. · lines 853–855
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 857–1318
-  - [The record view](#the-record-view) · lines 1010–1163
-  - [Forms](#forms) · lines 1165–1235
-  - [Dialogs](#dialogs) · lines 1237–1268
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1270–1318
-- [What not to copy](#what-not-to-copy) · lines 1320–1352
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1354–1371
-- [Deleting](#deleting) · lines 1373–1404
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1406–1427
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1429–1438
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1441–1483
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1485–1521
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 857–1326
+  - [The record view](#the-record-view) · lines 1010–1167
+  - [Forms](#forms) · lines 1169–1240
+  - [Dialogs](#dialogs) · lines 1242–1273
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1275–1326
+- [What not to copy](#what-not-to-copy) · lines 1328–1361
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1363–1380
+- [Deleting](#deleting) · lines 1382–1413
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1415–1436
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1438–1447
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1450–1492
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1494–1530
 
 <!-- /index -->
 
@@ -1071,6 +1071,7 @@ A record uses the parts it has, in this order:
     { label: 'Status', kind: 'status', status: STATUS_KINDS[record.status], word: STATUS_LABELS[record.status] },
     { label: 'By', kind: 'text', text: formatDay(record.due) },
     { label: 'Areas', kind: 'badges', items: record.areas.map(areaLabel) },
+    { label: 'Flags', kind: 'badges', items: [{ label: 'Pinned', icon: PinIcon, tone: 'info' }] },
     { label: 'From', kind: 'record', name: provider.name, to: `/providers/${provider.id}`, short: true },
     { label: 'Open Tasks', kind: 'count', count: record.openTasks, to: `/tasks?project=${record.id}` },
     { label: 'Task', kind: 'link', href: task.url, name: task.name },
@@ -1112,7 +1113,10 @@ A record uses the parts it has, in this order:
     hover and keyboard focus, and a line under the value on a touch
     screen. Both are drawn in Details too, where the rail folds.
   - A `badges` item may be `{ label, icon }` (4.115): the icon (a
-    component or a node) before the label, in the muted tone.
+    component or a node) before the label, in the muted tone. With
+    `tone` (4.123: `success`, `warning`, `info`, `destructive`) a label
+    that is a state ("Pinned", "Overdue") is the outline badge in that
+    tone, its icon too; the word still says it.
   - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
     draw it, never as "4 of 5" text: stars (the default) or hearts for a
     score out of `max` (5), the step bar for a quality level. `null` is
@@ -1178,7 +1182,8 @@ shape (4.85):
   short one alone where a pairing would read wrong. Under 48rem every
   field takes its own row but two dates or two numbers (`DateField` says
   so itself; a date picker of your own with `kind="date"`). A choice
-  (`ChoiceButtons`, found by itself, 4.98) shares a row only with another
+  (`ChoiceButtons`, found by itself, 4.98, or a `ToggleGroup` that is the
+  field's own control, 4.123) shares a row only with another
   choice, two to a row; on a phone two stay side by side while both
   groups fit, and go one per row when they don't. Never a hand-made
   `sm:grid-cols-2` row. The picked option is in the theme colour (4.105);
@@ -1293,7 +1298,10 @@ sight.** What happened where the person is looking says so there.
   the same component (`size="sm"`), or `trigger={null}` with
   `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
   `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
-  Never a delete without a confirm, never a hand-written dialog.
+  Never a delete without a confirm, never a hand-written dialog. Its icon
+  is named "Delete <name>" (4.123), so several on one page (a record's,
+  each of its rows') are told apart; its tooltip says "Delete". A test
+  finds one by `getByRole('button', { name: 'Delete The Long Walk' })`.
 - **A delete that asks a reason: `DeleteAction reason`** (4.96). One
   optional field between the sentence and the buttons, a "Why" box:
   `reason={{ label: 'Why remove it?', hint: 'Kept with its history.' }}`
@@ -1341,7 +1349,8 @@ sight.** What happened where the person is looking says so there.
   `{}` with the server's default doing the rest), name the one the list
   opens on with `defaultView`, and put what no control can show (a
   computed "overdue") in the view's `rule` (cell-patterns.md "Saved views
-  are pills").
+  are pills"). The default view's `sort` is its plain address's too
+  (4.123): pressing it writes no `?sort=`, and the rows keep that order.
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.

@@ -29,15 +29,15 @@
 - [A list as a board](#a-list-as-a-board) · lines 1255–1306
 - [A list as cards](#a-list-as-cards) · lines 1308–1354
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1356–1392
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1455
-- [A few equal things](#a-few-equal-things) · lines 1457–1541
-- [An overview page](#an-overview-page) · lines 1543–1614
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1615–1673
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1675–1799
-- [Picking at random](#picking-at-random) · lines 1801–1832
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1834–1901
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1903–1928
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1930–2026
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1464
+- [A few equal things](#a-few-equal-things) · lines 1466–1550
+- [An overview page](#an-overview-page) · lines 1552–1623
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1624–1687
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1689–1813
+- [Picking at random](#picking-at-random) · lines 1815–1846
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1848–1915
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1917–1942
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1944–2040
 
 <!-- /index -->
 
@@ -639,7 +639,7 @@ palette side by side), with axe, the token check and the ring's ratio
 measured in light, dark and every palette. Cell pattern 24 is it in a
 column.
 
-**Picking one on a form is `ColorField`** (4.123): the same swatches,
+**Picking one on a form is `ColorField`** (4.124): the same swatches,
 each beside its name, as one radio group, and Custom for the browser's
 own picker. Its default twelve (`COLOR_CHOICES`) sit at a middle
 lightness, so each fill clears 3:1 against a card in light, dark and the
@@ -1427,6 +1427,15 @@ into a table, a record or an overview.
   list that needs it ("Each search runs against the catalog once a
   day."). It wraps in the header's width and never widens a framed
   table's shared width; on a phone it's under the title and its buttons.
+  A `more` item that can't be used now (4.123, `disabled: true`: an
+  import already running) stays in ⋯, greyed, never hidden.
+- **A bar between the header and the list** (`DataTable pageBar`, 4.123):
+  something about the whole page that belongs above its rows, such as a
+  deals bar, "Allow Reminders" or a budget's totals. It's drawn under
+  `pageHeader` and above the views, in the same box, so C3 holds: the
+  header, the bar and the card share the table's width, and the bar
+  wraps in it rather than widening it. Never a bar put between a
+  separate `ListHeader` and the table, which loses the shared width.
   One sentence: anything longer belongs in a help page.
 - **`Timeline`: a record's dated history.** `items` newest first
   (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
@@ -1643,7 +1652,12 @@ data on each its own.
   done), then the universal ones as `IconAction`s: Print Notes
   (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
   tone). Each is a square outline button at the header's 36px with its
-  words as both its tooltip and its accessible name. Icon alone is for
+  words as both its tooltip and its accessible name. An `IconAction`
+  that goes somewhere (Open Site, Print to a page) takes the link as
+  `render` (4.123, `render={<Link to="/print" />}` or `render={<a href=…
+  target="_blank" />}`) and is drawn as that link. `accessibleName` says
+  more than the tooltip where several are on one page: `DeleteAction`'s
+  icon is named "Delete <name>" (4.123), its tooltip still "Delete". Icon alone is for
   the universal actions only (Delete, Print Notes, Copy link, Pin, Open
   site, Restore, Open Full Page, Close, More); everything else keeps its
   word. `printLook="words"` keeps Print Notes as a button with its words.
