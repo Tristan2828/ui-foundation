@@ -119,7 +119,7 @@ export function PrintNotes({
     const release = () => setPrinting(0)
     // Whether print() waited for the dialog; unknown until it returns, and an
     // `afterprint` inside the call is kept until then.
-    let blocked: boolean | undefined
+    let blocked: boolean | undefined = undefined
     let endedInside = false
     const onAfterPrint = () => {
       if (blocked === undefined) endedInside = true
