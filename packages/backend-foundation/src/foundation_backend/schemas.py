@@ -16,8 +16,8 @@ from pydantic.alias_generators import to_camel
 
 T = TypeVar("T")
 
-# PBKDF2 hashes a long password down first, so length costs little, but a
-# request body still shouldn't be unbounded.
+# scrypt reads the password once (one PBKDF2-HMAC pass), so length costs
+# little, but a request body still shouldn't be unbounded.
 PASSWORD_MAX_LENGTH = 1024
 
 

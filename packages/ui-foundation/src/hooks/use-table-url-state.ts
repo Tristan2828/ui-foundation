@@ -117,7 +117,7 @@ export function useTableUrlState<F extends string, M extends string = never, V e
   const { filters, multiFilters } = state
 
   // The URL's sort, else the default view's at the list's plain address
-  // (4.121): pressing the default view writes no `?sort=`, as it writes no
+  // (4.123): pressing the default view writes no `?sort=`, as it writes no
   // filters, and its sort still holds.
   const urlSort = params.get('sort')
   const [sortField, sortDir] = (urlSort ?? '').split(':')

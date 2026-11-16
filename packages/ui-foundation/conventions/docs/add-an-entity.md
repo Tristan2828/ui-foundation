@@ -1114,7 +1114,7 @@ A record uses the parts it has, in this order:
     screen. Both are drawn in Details too, where the rail folds.
   - A `badges` item may be `{ label, icon }` (4.115): the icon (a
     component or a node) before the label, in the muted tone. With
-    `tone` (4.121: `success`, `warning`, `info`, `destructive`) a label
+    `tone` (4.123: `success`, `warning`, `info`, `destructive`) a label
     that is a state ("Pinned", "Overdue") is the outline badge in that
     tone, its icon too; the word still says it.
   - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
@@ -1183,7 +1183,7 @@ shape (4.85):
   field takes its own row but two dates or two numbers (`DateField` says
   so itself; a date picker of your own with `kind="date"`). A choice
   (`ChoiceButtons`, found by itself, 4.98, or a `ToggleGroup` that is the
-  field's own control, 4.121) shares a row only with another
+  field's own control, 4.123) shares a row only with another
   choice, two to a row; on a phone two stay side by side while both
   groups fit, and go one per row when they don't. Never a hand-made
   `sm:grid-cols-2` row. The picked option is in the theme colour (4.105);
@@ -1299,7 +1299,7 @@ sight.** What happened where the person is looking says so there.
   `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
   `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
   Never a delete without a confirm, never a hand-written dialog. Its icon
-  is named "Delete <name>" (4.121), so several on one page (a record's,
+  is named "Delete <name>" (4.123), so several on one page (a record's,
   each of its rows') are told apart; its tooltip says "Delete". A test
   finds one by `getByRole('button', { name: 'Delete The Long Walk' })`.
 - **A delete that asks a reason: `DeleteAction reason`** (4.96). One
@@ -1350,7 +1350,7 @@ sight.** What happened where the person is looking says so there.
   opens on with `defaultView`, and put what no control can show (a
   computed "overdue") in the view's `rule` (cell-patterns.md "Saved views
   are pills"). The default view's `sort` is its plain address's too
-  (4.121): pressing it writes no `?sort=`, and the rows keep that order.
+  (4.123): pressing it writes no `?sort=`, and the rows keep that order.
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.

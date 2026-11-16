@@ -1,4 +1,4 @@
-// A filter select's accessible name (4.121, FilterSelect and FilterDate):
+// A filter select's accessible name (4.123, FilterSelect and FilterDate):
 // what it filters first, so it's found by its label ("Status") whatever it
 // shows, then the words shown unless they already say the label, so voice
 // control can say them too. "Status" while it shows "Any status", "Status:

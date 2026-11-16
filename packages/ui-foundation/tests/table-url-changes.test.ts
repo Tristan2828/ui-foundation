@@ -136,7 +136,7 @@ describe("views fill the filters", () => {
     expect(home.toString()).toBe("");
   });
 
-  it("leaves the default view's sort out of the URL when it's pressed (4.121)", () => {
+  it("leaves the default view's sort out of the URL when it's pressed (4.123)", () => {
     const sorted = { ...views.open, sort: [{ id: "due", desc: false }] };
     const away = applyUrlChanges(new URLSearchParams("sort=name:desc&search=x"), viewToUrlChanges(F, M, views.all));
     const home = applyUrlChanges(away, viewToUrlChanges(F, M, sorted, true));

@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // A nav entry's count on a phone (4.113, the app/AppShell

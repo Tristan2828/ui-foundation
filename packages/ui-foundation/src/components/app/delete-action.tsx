@@ -20,7 +20,7 @@
 //   standard's `dirty`). Width, words and the buttons stay as they are.
 //
 // The trigger is an icon (IconAction's Trash2, named "Delete <name>" since
-// 4.121, its tooltip "Delete") unless `trigger` says
+// 4.123, its tooltip "Delete") unless `trigger` says
 // otherwise: `"button"` for a "Delete" button in words, an element of the
 // caller's, or `null` for none, opened with `open`/`onOpenChange` (a row's
 // menu item).
@@ -144,7 +144,7 @@ export function DeleteAction({
       }}
     >
       {trigger === 'icon' && (
-        // Named for the record (4.121), "Delete The Long Walk", so several on
+        // Named for the record (4.123), "Delete The Long Walk", so several on
         // one page are told apart; the tooltip still says the verb alone.
         <DialogTrigger
           render={<IconAction icon={Trash2Icon} label={verb} accessibleName={`${verb} ${name}`} tone="destructive" size={size} />}

@@ -15,7 +15,7 @@ direction and the queue) and any open item in
   synced into `template/AGENTS.md`) applies there exactly as in any app:
   the Hard Rules, the required states, kebab-case, the entity playbook.
 - **The package follows the same Hard Rules from the inside.** Semantic
-  tokens only, shadcn before hand-rolling (`npx shadcn@4.21.0 add <name>`
+  tokens only, shadcn before hand-rolling (`npx shadcn@4.23.0 add <name>`
   run inside `packages/ui-foundation/`), no fetch outside `src/api/transport/`,
   and only the gateway modules may call it. `auth-provider.tsx` is the only
   file that knows how auth works. No hand-written API types: the package's

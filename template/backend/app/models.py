@@ -61,7 +61,9 @@ class WidgetTagLink(SQLModel, table=True):
 
     __tablename__ = "widget_tags"
 
-    widget_id: int = Field(foreign_key="widgets.id", primary_key=True, ondelete="CASCADE")
+    # Optional only to the type checker: the relationship fills it when the
+    # widget is saved (Widget.set_tags builds links without it).
+    widget_id: int | None = Field(default=None, foreign_key="widgets.id", primary_key=True, ondelete="CASCADE")
     tag: WidgetTag = Field(primary_key=True)
 
 
@@ -72,7 +74,7 @@ class WidgetExtraCategoryLink(SQLModel, table=True):
 
     __tablename__ = "widget_extra_categories"
 
-    widget_id: int = Field(foreign_key="widgets.id", primary_key=True, ondelete="CASCADE")
+    widget_id: int | None = Field(default=None, foreign_key="widgets.id", primary_key=True, ondelete="CASCADE")
     category_id: int = Field(foreign_key="widget_categories.id", primary_key=True, ondelete="CASCADE")
 
 
@@ -85,7 +87,9 @@ class WidgetChecklistItem(SQLModel, table=True):
     __tablename__ = "widget_checklist_items"
 
     id: int | None = Field(default=None, primary_key=True)
-    widget_id: int = Field(foreign_key="widgets.id", index=True, ondelete="CASCADE")
+    # NOT NULL in the table; optional only to the type checker, since the
+    # relationship fills it when the widget is saved.
+    widget_id: int | None = Field(default=None, foreign_key="widgets.id", index=True, nullable=False, ondelete="CASCADE")
     position: int
     text: str = Field(max_length=300)
     done: bool = Field(default=False)
@@ -101,7 +105,9 @@ class WidgetPairing(SQLModel, table=True):
     __tablename__ = "widget_pairings"
 
     id: int | None = Field(default=None, primary_key=True)
-    widget_id: int = Field(foreign_key="widgets.id", index=True, ondelete="CASCADE")
+    # NOT NULL in the table; optional only to the type checker, since the
+    # relationship fills it when the widget is saved.
+    widget_id: int | None = Field(default=None, foreign_key="widgets.id", index=True, nullable=False, ondelete="CASCADE")
     position: int
     category_id: int = Field(foreign_key="widget_categories.id", index=True, ondelete="CASCADE")
     note: str = Field(default="", max_length=100)

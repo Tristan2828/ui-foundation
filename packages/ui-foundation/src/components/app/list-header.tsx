@@ -51,7 +51,7 @@ export type ListHeaderAction = {
   label: string
   onSelect: () => void
   icon?: IconComponent
-  /** Can't be used now (4.121): an import already running, nothing to export. The item stays in ⋯, greyed. */
+  /** Can't be used now (4.123): an import already running, nothing to export. The item stays in ⋯, greyed. */
   disabled?: boolean
 }
 /** The one button beside New (4.117): a link to a page, or a function. */

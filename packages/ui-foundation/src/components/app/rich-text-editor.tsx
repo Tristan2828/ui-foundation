@@ -50,7 +50,7 @@
 //
 // The editor (Milkdown) is loaded on first use, so a page that only reads
 // Markdown never downloads it. Until it arrives the text shows as
-// <Markdown> draws it (4.121), the field's size, so nothing moves when the
+// <Markdown> draws it (4.123), the field's size, so nothing moves when the
 // editor takes its place; an empty one shows skeleton lines.
 import { lazy, Suspense, useState } from 'react'
 import { cn } from 'cn'
@@ -107,7 +107,7 @@ export type RichTextEditorProps = {
   /**
    * Images uploaded into the text: pasted, dropped, or picked with an
    * Image button on the fixed toolbar or the slash menu's Image ("/image",
-   * 4.121, the way to pick one with only the floating toolbar). Each file goes through this (the
+   * 4.123, the way to pick one with only the floating toolbar). Each file goes through this (the
    * app's own storage: the package knows no endpoint) and goes in as
    * `![](url)`, from the result's `url`, else its `thumbUrl`. A
    * placeholder shows where it will go while it uploads (it isn't saved);
@@ -221,7 +221,7 @@ export function RichTextEditor(props: RichTextEditorProps) {
         >
           {/* The toolbar's height, so nothing moves when it arrives. */}
           {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input" />}
-          {/* The text itself while the editor loads (4.121): it's as tall as
+          {/* The text itself while the editor loads (4.123): it's as tall as
               the editor will be, so nothing under it moves when the editor
               arrives (a phone's notes, edited in place above the facts).
               Skeleton lines only for an empty one. */}

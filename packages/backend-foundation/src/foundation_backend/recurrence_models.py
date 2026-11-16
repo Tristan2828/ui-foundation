@@ -22,14 +22,14 @@ class RecurringReminderFields(SQLModel):
     # The Recurrence, as its JSON (camelCase, the contract's shape).
     recurrence: dict[str, Any] | None = Field(default=None, sa_type=JSON)
     # The occurrence pending: the next to send, or the one sent and not done.
-    next_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore[call-overload]
+    next_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
     # When the pending occurrence was first sent, and last sent (a nag).
-    sent_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore[call-overload]
-    last_sent_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore[call-overload]
+    sent_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    last_sent_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
     nag_count: int = Field(default=0)
     # Re-send every so many minutes until done, at most nag_limit times (null: no nagging).
     nag_every_minutes: int | None = Field(default=None)
     nag_limit: int | None = Field(default=None)
     # The last occurrence marked done, and when.
-    done_occurrence: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore[call-overload]
-    done_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore[call-overload]
+    done_occurrence: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    done_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))

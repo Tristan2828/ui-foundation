@@ -392,7 +392,7 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    */
   pageHeader?: ReactNode
   /**
-   * A bar between the page header and the list (4.121): something about
+   * A bar between the page header and the list (4.123): something about
    * the whole page that belongs above its rows, such as a deals bar, an
    * "Allow reminders" notice or a budget's totals. Drawn under
    * `pageHeader` and above the views, so C3 holds: the header, the bar and

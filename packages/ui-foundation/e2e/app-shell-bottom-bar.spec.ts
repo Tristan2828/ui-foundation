@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
 // AppShell's bottom bar on a phone (#240), on the BottomBar story (a page

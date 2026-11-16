@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-// Whether the screen is under 48rem (useIsMobile's 768px), read through
+// Whether the screen is under 48rem (768px; useIsMobile returns this), read through
 // matchMedia as a store, so rendering on the server or where matchMedia is
 // missing (a test's DOM) gives "not a phone" instead of failing on
 // `window`. DataTable's row list, FilterBar and SecondaryFilters' sheet

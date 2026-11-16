@@ -3,6 +3,9 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // PW_WORKERS=1 (or 50%) runs the suite with fewer workers on a machine
+  // short of memory; unset, Playwright picks its default.
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) || process.env.PW_WORKERS : undefined,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: 'list',

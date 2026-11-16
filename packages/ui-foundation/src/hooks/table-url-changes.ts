@@ -76,7 +76,7 @@ export function viewToUrlChanges<F extends string, M extends string>(
     [NO_VIEW_PARAM]: null,
     ...Object.fromEntries(filterNames.map((name) => [name, own[name] ?? ''])),
     ...Object.fromEntries(multiFilterNames.map((name) => [name, asDefault ? [] : (view.multiFilters?.[name] ?? [])])),
-    // The default view's sort is its plain address's (4.121): not written.
+    // The default view's sort is its plain address's (4.123): not written.
     sort: view.sort && !asDefault ? serializeSort(view.sort) : null,
     ...(view.group === undefined ? {} : { group: view.group || null }),
     page: null,

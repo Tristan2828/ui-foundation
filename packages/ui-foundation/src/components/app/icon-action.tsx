@@ -8,7 +8,7 @@
 // It takes every Button prop, so it can be a dialog's trigger as it is:
 // `<DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />`.
 //
-// A link (4.121): `render={<Link to="/print" />}` or `render={<a href=… />}`
+// A link (4.123): `render={<Link to="/print" />}` or `render={<a href=… />}`
 // draws the icon as that link, its tooltip and name kept: the link is the
 // tooltip's trigger itself, drawn as the button, so it stays a link with
 // its href. A link takes no Button props.
@@ -24,7 +24,7 @@ export type IconActionProps = Omit<ComponentProps<typeof Button>, 'children' | '
   /** What the action does ("Delete", "Print notes"): its tooltip and accessible name. */
   label: string
   /**
-   * The accessible name, when it says more than the tooltip (4.121):
+   * The accessible name, when it says more than the tooltip (4.123):
    * "Delete The Long Walk" for a tooltip of "Delete", so several on a page
    * are told apart. Start it with `label`, so what's seen is what's said.
    */

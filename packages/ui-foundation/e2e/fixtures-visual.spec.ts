@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test } from '@playwright/test'
 
 // Every primitive the package ships with a story. Apps import these from
@@ -498,7 +498,7 @@ const GLYPH_STORIES: {
     id: 'app-richtexteditor--features',
     name: 'table menu',
     open: async (page) => {
-      // The editor's own table, not the text shown while it loads (4.121).
+      // The editor's own table, not the text shown while it loads (4.123).
       await page.locator('[data-fixture="table"] [contenteditable] td').first().click()
       await page.waitForTimeout(100)
       await page.keyboard.press('Shift+F10')

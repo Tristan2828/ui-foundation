@@ -42,6 +42,7 @@ from foundation_backend.security import (
     generate_session_token,
     hash_password,
     hash_token,
+    needs_rehash,
     verify_password,
 )
 
@@ -110,6 +111,7 @@ async def _start_session(user: User, response: Response, session: AsyncSession) 
     Also prunes the user's expired sessions — nothing else removes a session
     that's never presented again, so without this the table only grows.
     """
+    assert user.id is not None
     existing = await session.exec(select(UserSession).where(UserSession.user_id == user.id))
     for stale in existing.all():
         if _is_expired(stale):
@@ -151,7 +153,7 @@ async def register(
             [{"loc": ("body", "email"), "msg": "email already registered", "type": "value_error.email_exists"}]
         )
 
-    # PBKDF2 at 600k iterations is deliberately slow CPU work; run inline in
+    # scrypt (32 MiB) is deliberately slow work; run inline in
     # an async handler it stalls every other request on the event loop.
     password_hash = await run_in_threadpool(hash_password, body.password)
     user = User(email=body.email, name=body.name, password_hash=password_hash)
@@ -184,6 +186,13 @@ async def login(
         await login_limits.record_failure(session, ip, account)
         # Deliberately generic — never confirm whether the email exists.
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # A hash from before 4.122 (PBKDF2), or scrypt at older settings: the
+    # password is known now, so it's rehashed and saved by the commit below
+    # (both paths commit).
+    if needs_rehash(user.password_hash):
+        user.password_hash = await run_in_threadpool(hash_password, body.password)
+        session.add(user)
 
     if user.totp_secret is not None:
         # No session yet, and the failures stay: a known password mustn't

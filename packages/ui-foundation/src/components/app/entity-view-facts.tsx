@@ -114,14 +114,14 @@ export type EntityViewFactBadge = {
   /** An icon component (a `LucideIcon`, an app's own mark) or a node drawn as it is. Decorative: the label says it. */
   icon?: IconComponent | ReactNode
   /**
-   * The badge's tone (4.121), for a label that is a state ("Pinned",
+   * The badge's tone (4.123), for a label that is a state ("Pinned",
    * "Overdue"): the outline badge in that tone's text colour, its icon
    * too. Neutral (the outline) unless set. The word still says it.
    */
   tone?: EntityViewFactBadgeTone
 }
 
-/** A badge item's tone (4.121): the design language's four, as outline badges. */
+/** A badge item's tone (4.123): the design language's four, as outline badges. */
 export type EntityViewFactBadgeTone = 'success' | 'warning' | 'info' | 'destructive'
 
 const BADGE_TONE = {

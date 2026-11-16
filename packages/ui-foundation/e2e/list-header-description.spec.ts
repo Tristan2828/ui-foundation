@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // ListHeader's description and the secondary action's hint (4.120): one

@@ -123,11 +123,11 @@ BLOCKS.splice(BLOCKS.findIndex((item) => item.id === 'heading3') + 1, 0, ...TOGG
 
 /**
  * A slash menu item: a block, an image (only with the editor's `upload`,
- * 4.121) or the new page (only with the app's `onCreatePage`).
+ * 4.123) or the new page (only with the app's `onCreatePage`).
  */
 export type SlashItem = Omit<FormatItem, 'id'> & { id: FormatId | 'image' | 'page' }
 
-// An image (4.121): the file picker, the image going where the "/" was.
+// An image (4.123): the file picker, the image going where the "/" was.
 // The Image button's job for an editor with no fixed toolbar
 // (`toolbar="floating"`), and a quicker way with one.
 const IMAGE_ITEM: SlashItem = { id: 'image', label: 'Image', icon: ImageIcon }

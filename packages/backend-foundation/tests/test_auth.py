@@ -49,6 +49,32 @@ async def test_login_success_sets_cookie_and_returns_user(auth_client: AsyncClie
     assert "session_id" in response.cookies
 
 
+async def test_a_pbkdf2_hash_is_replaced_with_scrypt_on_sign_in(auth_client: AsyncClient, session: AsyncSession) -> None:
+    # Hashes from before 4.122: the next sign-in with the right password
+    # rewrites them, so old accounts move without a reset.
+    from tests.test_password_hash import pbkdf2_hash
+
+    user = await session.get(User, 99)
+    assert user is not None
+    user.password_hash = pbkdf2_hash(TEST_PASSWORD)
+    session.add(user)
+    await session.commit()
+
+    wrong = await auth_client.post("/api/auth/login", json={"email": TEST_EMAIL, "password": "wrong-password"})
+    assert wrong.status_code == 401
+    await session.refresh(user)
+    assert user.password_hash.startswith("pbkdf2_sha256$")
+
+    response = await auth_client.post("/api/auth/login", json={"email": TEST_EMAIL, "password": TEST_PASSWORD})
+    assert response.status_code == 200
+    await session.refresh(user)
+    assert user.password_hash.startswith("scrypt$")
+    assert security.verify_password(TEST_PASSWORD, user.password_hash)
+
+    again = await auth_client.post("/api/auth/login", json={"email": TEST_EMAIL, "password": TEST_PASSWORD})
+    assert again.status_code == 200
+
+
 async def test_login_wrong_password_is_401(auth_client: AsyncClient) -> None:
     response = await auth_client.post("/api/auth/login", json={"email": TEST_EMAIL, "password": "wrong-password"})
     assert response.status_code == 401
@@ -215,7 +241,7 @@ async def test_login_unknown_email_still_runs_the_password_hash(
     auth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # Not a timing test: it checks the missing-user path does the same work
-    # (a PBKDF2 verify) as a wrong password, against the dummy hash.
+    # (a scrypt verify) as a wrong password, against the dummy hash.
     calls: list[str] = []
 
     def spy(password: str, stored: str) -> bool:

@@ -1418,9 +1418,9 @@ into a table, a record or an overview.
   list that needs it ("Each search runs against the catalog once a
   day."). It wraps in the header's width and never widens a framed
   table's shared width; on a phone it's under the title and its buttons.
-  A `more` item that can't be used now (4.121, `disabled: true`: an
+  A `more` item that can't be used now (4.123, `disabled: true`: an
   import already running) stays in ⋯, greyed, never hidden.
-- **A bar between the header and the list** (`DataTable pageBar`, 4.121):
+- **A bar between the header and the list** (`DataTable pageBar`, 4.123):
   something about the whole page that belongs above its rows, such as a
   deals bar, "Allow Reminders" or a budget's totals. It's drawn under
   `pageHeader` and above the views, in the same box, so C3 holds: the
@@ -1645,10 +1645,10 @@ data on each its own.
   tone). Each is a square outline button at the header's 36px with its
   words as both its tooltip and its accessible name. An `IconAction`
   that goes somewhere (Open Site, Print to a page) takes the link as
-  `render` (4.121, `render={<Link to="/print" />}` or `render={<a href=…
+  `render` (4.123, `render={<Link to="/print" />}` or `render={<a href=…
   target="_blank" />}`) and is drawn as that link. `accessibleName` says
   more than the tooltip where several are on one page: `DeleteAction`'s
-  icon is named "Delete <name>" (4.121), its tooltip still "Delete". Icon alone is for
+  icon is named "Delete <name>" (4.123), its tooltip still "Delete". Icon alone is for
   the universal actions only (Delete, Print Notes, Copy link, Pin, Open
   site, Restore, Open Full Page, Close, More); everything else keeps its
   word. `printLook="words"` keeps Print Notes as a button with its words.
