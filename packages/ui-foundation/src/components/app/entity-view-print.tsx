@@ -12,7 +12,16 @@
 // write. A section marked `print: { answerSpace: true }` leaves space
 // under each item of its numbered lists, for questions answered by hand.
 //
-// The browser's own print (Ctrl+P) still prints the page as it is; only
+// How long the copy stays depends on the browser. A desktop browser blocks
+// in window.print() until the dialog closes, so `afterprint` ends it. A
+// phone (Android Chrome, iOS Safari) returns from print() at once and
+// fires `afterprint` before its preview is built, and a copy that went then
+// would leave the preview to print the whole app page. So when print()
+// returns in under a second, that early `afterprint` is ignored and the copy
+// stays until the person next touches the page (a pointerdown or a key).
+// Hidden on screen, it costs nothing to keep. The one visible side effect:
+// the browser's own print (Ctrl+P) made before that touch prints the notes
+// copy rather than the page. Otherwise Ctrl+P prints the page as it is; only
 // the button prints the notes alone.
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -76,10 +85,16 @@ function PrintedNotes({ title, subtitle, sections }: { title?: string; subtitle?
   )
 }
 
+/** A print() that returns sooner than this didn't wait for the dialog: a phone's. */
+const BLOCKING_PRINT_MS = 1000
+
 /**
  * The header's Print notes button and, while it prints, the printed copy.
- * The copy mounts, then the browser's print dialog opens on it; it goes
- * when the dialog closes (`afterprint`).
+ * The copy mounts, then the browser's print dialog opens on it. Where
+ * print() blocks (a desktop browser) it goes when the dialog closes
+ * (`afterprint`). Where print() returns at once (a phone) `afterprint`
+ * comes too early to mean anything, so the copy goes on the person's next
+ * pointerdown or key instead.
  */
 export function PrintNotes({
   label,
@@ -96,15 +111,36 @@ export function PrintNotes({
   sections: EntityViewPrintSection[]
 }) {
   // How many times it's been pressed since the copy last went: a press
-  // while one is up (a browser that never said the dialog closed) prints
-  // it again rather than doing nothing.
+  // while one is up (a browser that never said the dialog closed, or a phone
+  // still holding the copy) prints it again rather than doing nothing.
   const [printing, setPrinting] = useState(0)
   useEffect(() => {
     if (printing === 0) return
-    const done = () => setPrinting(0)
-    window.addEventListener('afterprint', done)
+    const release = () => setPrinting(0)
+    // Whether print() waited for the dialog; unknown until it returns, and an
+    // `afterprint` inside the call is kept until then.
+    let blocked: boolean | undefined = undefined
+    let endedInside = false
+    const onAfterPrint = () => {
+      if (blocked === undefined) endedInside = true
+      else if (blocked) release()
+    }
+    window.addEventListener('afterprint', onAfterPrint)
+    const started = performance.now()
     window.print()
-    return () => window.removeEventListener('afterprint', done)
+    blocked = performance.now() - started >= BLOCKING_PRINT_MS
+    if (blocked) {
+      if (endedInside) release()
+    } else {
+      // A phone: the copy waits for the person to come back to the page.
+      window.addEventListener('pointerdown', release)
+      window.addEventListener('keydown', release)
+    }
+    return () => {
+      window.removeEventListener('afterprint', onAfterPrint)
+      window.removeEventListener('pointerdown', release)
+      window.removeEventListener('keydown', release)
+    }
   }, [printing])
   return (
     <>

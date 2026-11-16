@@ -7,6 +7,27 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.124.1 — Print Notes prints the notes on phones
+
+npm package and `ui-foundation-backend` 4.124.1 (the backend is unchanged
+apart from its version). A fix; nothing for an app to change.
+
+- **Print Notes on a phone** printed the whole app page instead of the
+  notes. Android Chrome and iOS Safari return from `window.print()` at
+  once and fire `afterprint` before the preview is built, so the printed
+  copy was already gone when the preview took the page. When `print()`
+  returns in under a second, the copy now ignores that early `afterprint`
+  and stays until the next pointerdown or key press. On a desktop browser,
+  where `print()` blocks until the dialog closes, nothing changes. The
+  copy is hidden on screen, so keeping it longer shows nothing; the one
+  difference is that the browser's own print (Ctrl+P) before that next
+  touch prints the notes copy. This was the behaviour since the button
+  shipped, not a recent regression. Fixed from the code's timing, not yet
+  confirmed on a real phone.
+- A test that stubs `window.print`: if an app's own e2e fires `afterprint`
+  to close the copy, stub `print` so it takes about a second (as a desktop's
+  does), or press a key or click after it.
+
 ## 4.124.0 — A colour field for a stored colour
 
 npm package and `ui-foundation-backend` 4.124.0. Additive; nothing for an

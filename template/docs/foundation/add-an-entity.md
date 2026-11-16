@@ -4,29 +4,29 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 45–67
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–855
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–859
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
   - Step 2: `npm run gen:api` · lines 119–120
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 133–142
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–743
-  - Step 7: Register routes · lines 744–759
-  - Step 8: Add Playwright specs for all three screens · lines 760–837
-  - Step 9: Register the nav entry and route names · lines 838–852
-  - Step 10: `npm run verify`. · lines 853–855
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 857–1326
-  - [The record view](#the-record-view) · lines 1010–1167
-  - [Forms](#forms) · lines 1169–1240
-  - [Dialogs](#dialogs) · lines 1242–1273
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1275–1326
-- [What not to copy](#what-not-to-copy) · lines 1328–1361
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1363–1380
-- [Deleting](#deleting) · lines 1382–1413
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1415–1436
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1438–1447
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1450–1492
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1494–1530
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–747
+  - Step 7: Register routes · lines 748–763
+  - Step 8: Add Playwright specs for all three screens · lines 764–841
+  - Step 9: Register the nav entry and route names · lines 842–856
+  - Step 10: `npm run verify`. · lines 857–859
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 861–1330
+  - [The record view](#the-record-view) · lines 1014–1171
+  - [Forms](#forms) · lines 1173–1244
+  - [Dialogs](#dialogs) · lines 1246–1277
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1279–1330
+- [What not to copy](#what-not-to-copy) · lines 1332–1365
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1367–1384
+- [Deleting](#deleting) · lines 1386–1417
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1419–1440
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1442–1451
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1454–1496
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1498–1534
 
 <!-- /index -->
 
@@ -606,7 +606,11 @@ is a filled-in example while the Widgets demo is still here).
      renames its tooltip and name) that prints the marked sections alone, under the title
      and subtitle: no rail, no shell, no buttons, light paper in either
      theme, headings and bullets as written, nothing folded, tables
-     ruled with room in their empty cells. `print: { answerSpace: true }`
+     ruled with room in their empty cells. On a phone, whose print()
+     returns at once and fires `afterprint` before its preview exists, the
+     copy stays until the person next touches the page or presses a key
+     (4.124.1), so the preview prints the notes; the browser's own print
+     (Ctrl+P) in that gap prints them too. `print: { answerSpace: true }`
      also leaves space under each item of the section's numbered lists,
      for questions answered by hand. A section's own content that should
      print differently (a list of sub-items as plain text) reads

@@ -6,18 +6,30 @@ import { expect, test, type Page } from '@playwright/test'
 // copy is all there is (no rail, no shell, no buttons), folded text is
 // whole, tables are ruled with room in their cells, numbered questions
 // have space under them, and a dark screen still prints light, in a
-// palette too. The copy
-// goes when the dialog closes (afterprint).
+// palette too. Where print() blocks (a desktop browser) the copy goes when
+// the dialog closes (afterprint); where it returns at once and fires
+// afterprint early (a phone) it stays until the next pointerdown or key.
 const STORY = 'http://localhost:6180/story.html?id=app-entityview--print-notes'
 
-async function open(page: Page, theme: 'light' | 'dark' = 'light', palette?: string) {
-  await page.addInitScript(() => {
+// How the browser's window.print() behaves: `blocking` waits for the dialog
+// like a desktop browser (the page's clock jumps ahead, rather than the test
+// really waiting), `phone` returns at once and fires afterprint inside the
+// call, before any preview exists.
+type PrintMode = 'blocking' | 'phone'
+
+async function open(page: Page, theme: 'light' | 'dark' = 'light', palette?: string, mode: PrintMode = 'blocking') {
+  await page.addInitScript((printMode) => {
     const w = window as unknown as { printCalls: number }
     w.printCalls = 0
+    const now = performance.now.bind(performance)
+    let skew = 0
+    performance.now = () => now() + skew
     window.print = () => {
       w.printCalls += 1
+      if (printMode === 'phone') window.dispatchEvent(new Event('afterprint'))
+      else skew += 5000
     }
-  })
+  }, mode)
   await page.goto(`${STORY}&theme=${theme}${palette ? `&palette=${palette}` : ''}`)
   await expect(page.getByRole('heading', { level: 1, name: 'Check-up' })).toBeVisible()
 }
@@ -36,6 +48,65 @@ test('the button prints a copy of the marked sections, gone after the dialog clo
 
   await page.evaluate(() => window.dispatchEvent(new Event('afterprint')))
   await expect(copy(page)).toHaveCount(0)
+})
+
+test('a blocking print that finishes inside the call takes the copy away at once', async ({ page }) => {
+  await open(page)
+  await page.evaluate(() => {
+    const blocking = window.print
+    window.print = () => {
+      blocking()
+      window.dispatchEvent(new Event('afterprint'))
+    }
+  })
+  await page.getByRole('button', { name: 'Print Notes' }).click()
+  await expect(copy(page)).toHaveCount(0)
+  expect(await printCalls(page)).toBe(1)
+})
+
+test('on a phone, print() returns at once and afterprint fires early: the copy stays until the next touch', async ({ page }) => {
+  await open(page, 'light', undefined, 'phone')
+  await page.getByRole('button', { name: 'Print Notes' }).click()
+  expect(await printCalls(page)).toBe(1)
+  // afterprint has already fired, inside print(), and again now.
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')))
+  await expect(copy(page)).toHaveCount(1)
+  await expect(copy(page)).toBeHidden()
+
+  await page.evaluate(() => window.dispatchEvent(new Event('pointerdown')))
+  await expect(copy(page)).toHaveCount(0)
+})
+
+test('on a phone, a key press also takes the copy away', async ({ page }) => {
+  await open(page, 'light', undefined, 'phone')
+  await page.getByRole('button', { name: 'Print Notes' }).click()
+  await expect(copy(page)).toHaveCount(1)
+  await page.keyboard.press('Shift')
+  await expect(copy(page)).toHaveCount(0)
+})
+
+test('on a phone, pressing the button while the copy is up prints it again', async ({ page }) => {
+  await open(page, 'light', undefined, 'phone')
+  const button = page.getByRole('button', { name: 'Print Notes' })
+  await button.click()
+  await expect(copy(page)).toHaveCount(1)
+  // A press with no pointerdown before it (a script's, say) finds the copy
+  // still up and prints it again. (A real press's pointerdown takes it away
+  // first, and the press prints a fresh one: the same count.)
+  await button.evaluate((el) => (el as HTMLButtonElement).click())
+  await expect(copy(page)).toHaveCount(1)
+  expect(await printCalls(page)).toBe(2)
+  await button.click()
+  await expect(copy(page)).toHaveCount(1)
+  expect(await printCalls(page)).toBe(3)
+})
+
+test('on a phone, the copy is still there when the page is printed (paper shows the notes)', async ({ page }) => {
+  await open(page, 'light', undefined, 'phone')
+  await page.getByRole('button', { name: 'Print Notes' }).click()
+  await page.emulateMedia({ media: 'print' })
+  await expect(copy(page)).toBeVisible()
+  await expect(page.locator('#root')).toBeHidden()
 })
 
 test('on paper: the marked sections alone, under the title', async ({ page }) => {
