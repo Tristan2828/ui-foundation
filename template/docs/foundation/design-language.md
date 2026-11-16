@@ -32,12 +32,12 @@
 - [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1464
 - [A few equal things](#a-few-equal-things) · lines 1466–1550
 - [An overview page](#an-overview-page) · lines 1552–1623
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1624–1687
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1689–1813
-- [Picking at random](#picking-at-random) · lines 1815–1846
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1848–1915
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1917–1942
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1944–2040
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1624–1690
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1692–1816
+- [Picking at random](#picking-at-random) · lines 1818–1849
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1851–1918
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1920–1945
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1947–2043
 
 <!-- /index -->
 
@@ -1661,6 +1661,9 @@ data on each its own.
   the universal actions only (Delete, Print Notes, Copy link, Pin, Open
   site, Restore, Open Full Page, Close, More); everything else keeps its
   word. `printLook="words"` keeps Print Notes as a button with its words.
+  Print Notes prints a hidden copy of the notes: a desktop browser takes it
+  away when its dialog closes, a phone's (print() returns at once) when the
+  person next touches the page (4.124.1).
 - **An empty value** reads as a dash (`emptyText`, default `'—'`), in the
   muted text tone, read by a screen reader as "Not set": the same on
   every field, the presets' included. A field's own `emptyLabel` still
