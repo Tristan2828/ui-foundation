@@ -3,47 +3,48 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 75–98
-- [1. Plain text](#1-plain-text) · lines 100–155
-- [2. Icon + label](#2-icon--label) · lines 157–180
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 182–195
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 197–274
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 222–274
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 276–296
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 298–310
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 312–333
-- [8. Date, relative](#8-date-relative) · lines 335–372
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 374–433
-  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 392–433
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 435–485
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 453–485
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 487–527
-- [12. Boolean](#12-boolean) · lines 529–559
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 561–597
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 581–597
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 599–616
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 618–727
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 644–727
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 729–775
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 777–850
-- [18. Editable value](#18-editable-value) · lines 852–1555
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1187–1255
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1257–1293
-  - [A link and its label](#a-link-and-its-label) · lines 1295–1319
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1321–1454
-  - [In a table's rows](#in-a-tables-rows) · lines 1456–1541
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1543–1555
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1557–1623
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1625–1689
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1691–1789
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1791–1820
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1822–1860
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1862–1938
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1940–1963
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1965–2190
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2119–2190
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2192–2228
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2230–2279
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 76–99
+- [1. Plain text](#1-plain-text) · lines 101–156
+- [2. Icon + label](#2-icon--label) · lines 158–181
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 183–196
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 198–275
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 223–275
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 277–297
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 299–311
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 313–334
+- [8. Date, relative](#8-date-relative) · lines 336–373
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 375–434
+  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 393–434
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 436–486
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 454–486
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 488–528
+- [12. Boolean](#12-boolean) · lines 530–560
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 562–598
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 582–598
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 600–617
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 619–728
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 645–728
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 730–776
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 778–851
+- [18. Editable value](#18-editable-value) · lines 853–1556
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1188–1256
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1258–1294
+  - [A link and its label](#a-link-and-its-label) · lines 1296–1320
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1322–1455
+  - [In a table's rows](#in-a-tables-rows) · lines 1457–1542
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1544–1556
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1558–1624
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1626–1690
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1692–1790
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1792–1821
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1823–1861
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1863–1939
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1941–2027
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1966–2027
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2029–2254
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2183–2254
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2256–2292
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2294–2343
 
 <!-- /index -->
 
@@ -1961,6 +1962,69 @@ import { ColorSwatch } from '@tristan2828/ui-foundation'
 
 The package's fixture `app/ColorSwatch` "In a table" renders it; its
 checks measure the ring at 3:1 in both themes and every palette.
+
+### Picking one on a form: `ColorField`
+
+The same colour on the record's form (4.124): a grid of named swatches
+and **Custom**, which opens the browser's own colour picker. One control
+for a react-hook-form `Controller`, like `DateField`.
+
+```tsx
+import { ColorField, storedColor } from '@tristan2828/ui-foundation'
+
+<Field data-invalid={!!errors.color || undefined}>
+  <FieldLabel id="label-color-label" htmlFor="label-color">Colour</FieldLabel>
+  <Controller
+    control={form.control}
+    name="color"
+    rules={{ validate: (value) => !value || !!storedColor(value) || 'Pick a colour' }}
+    render={({ field, fieldState }) => (
+      <ColorField
+        id="label-color"
+        aria-labelledby="label-color-label"
+        value={field.value}
+        onChange={field.onChange}
+        onBlur={field.onBlur}
+        invalid={fieldState.invalid}
+      />
+    )}
+  />
+  <FieldError errors={[errors.color]} />
+</Field>
+```
+
+- **It's one radio group.** One tab stop; the arrow keys move and pick;
+  Tab goes on to Custom's picker, then out. Each swatch's name is its
+  radio's label, written beside it (the word carries it, as above). The
+  picked one shows its radio's dot and a primary border, not only its
+  colour.
+- **Name the group with `aria-labelledby`** (the `FieldLabel`'s `id`): a
+  label's `htmlFor` can't name a group. Still pass `id` and `htmlFor`, so
+  `<FieldLabel required>` marks the group `aria-required`.
+- **The value out is always `storedColor`'s form** (`#c0392b`). A value in
+  is compared in full, so `C0392B` or `#FFF` still shows as its named
+  colour. One that's none of the named colours (a hex typed in the old
+  text box) shows **Custom** picked, its hex beside it, and stays as it
+  is until someone picks. A value that isn't a colour shows nothing
+  picked.
+- **Custom by pointer opens the picker; by keyboard it only picks**, and
+  the picker is the next tab stop. Picking Custom keeps the current
+  colour until a colour is chosen in the picker.
+- **The default set** is `COLOR_CHOICES`: twelve named hues at a middle
+  lightness that read on a card in light, dark and every palette (3:1,
+  2.3:1 on Palm LCD's mid panel). An app with its own names passes
+  `colors={[{ name: 'Hale Navy', color: '#434c56' }, ...]}`; each name is
+  shown, so make them words a person would say.
+- **Replacing a text box and a swatch preview**: the stored values don't
+  change. Swap the `Input` for `ColorField` in the same `Controller`;
+  values already stored that aren't in the set show as Custom.
+
+The package's fixture `app/ColorField` renders it on a card (a named
+colour, a Custom hex, a required one left empty, an app's own list, a
+refused value); its checks run axe, the token check, each swatch's ring
+and the picker's edge at 3:1, and each default fill against the card, in
+both themes and every palette. `e2e/color-field.spec.ts` drives the
+pointer, the keyboard and Custom.
 
 ## 25. A list's tools: views, filters, columns, row actions, a phone's rows
 

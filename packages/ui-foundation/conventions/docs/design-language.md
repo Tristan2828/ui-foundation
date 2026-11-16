@@ -14,30 +14,30 @@
 - [Categorical colour](#categorical-colour) · lines 370–440
 - [Heat scale](#heat-scale) · lines 442–503
 - [Depth ramps](#depth-ramps) · lines 505–590
-- [A stored colour](#a-stored-colour) · lines 592–640
-- [Shapes and sizes](#shapes-and-sizes) · lines 642–663
-- [Typography](#typography) · lines 665–836
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 699–732
-  - [Written text (notes)](#written-text-notes) · lines 734–836
-- [Density](#density) · lines 838–931
-  - [Rows on this device](#rows-on-this-device) · lines 904–931
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 933–1047
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1049–1126
-- [Notices](#notices) · lines 1128–1156
-- [A value over time](#a-value-over-time) · lines 1158–1244
-  - [Several values over time](#several-values-over-time) · lines 1207–1244
-- [A list as a board](#a-list-as-a-board) · lines 1246–1297
-- [A list as cards](#a-list-as-cards) · lines 1299–1345
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1347–1383
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1385–1455
-- [A few equal things](#a-few-equal-things) · lines 1457–1541
-- [An overview page](#an-overview-page) · lines 1543–1614
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1615–1678
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1680–1804
-- [Picking at random](#picking-at-random) · lines 1806–1837
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1839–1906
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1908–1933
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1935–2031
+- [A stored colour](#a-stored-colour) · lines 592–649
+- [Shapes and sizes](#shapes-and-sizes) · lines 651–672
+- [Typography](#typography) · lines 674–845
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 708–741
+  - [Written text (notes)](#written-text-notes) · lines 743–845
+- [Density](#density) · lines 847–940
+  - [Rows on this device](#rows-on-this-device) · lines 913–940
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 942–1056
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1058–1135
+- [Notices](#notices) · lines 1137–1165
+- [A value over time](#a-value-over-time) · lines 1167–1253
+  - [Several values over time](#several-values-over-time) · lines 1216–1253
+- [A list as a board](#a-list-as-a-board) · lines 1255–1306
+- [A list as cards](#a-list-as-cards) · lines 1308–1354
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1356–1392
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1464
+- [A few equal things](#a-few-equal-things) · lines 1466–1550
+- [An overview page](#an-overview-page) · lines 1552–1623
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1624–1687
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1689–1813
+- [Picking at random](#picking-at-random) · lines 1815–1846
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1848–1915
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1917–1942
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1944–2040
 
 <!-- /index -->
 
@@ -638,6 +638,15 @@ invalid and missing, in a Badge, in a `DataTable`, a long name, every
 palette side by side), with axe, the token check and the ring's ratio
 measured in light, dark and every palette. Cell pattern 24 is it in a
 column.
+
+**Picking one on a form is `ColorField`** (4.124): the same swatches,
+each beside its name, as one radio group, and Custom for the browser's
+own picker. Its default twelve (`COLOR_CHOICES`) sit at a middle
+lightness, so each fill clears 3:1 against a card in light, dark and the
+dark palettes, and 2.3:1 on Palm LCD, whose mid-light panel no middle
+colour clears 3:1 on (the ring shows the edge there). The picked one is
+marked by its radio's dot and a primary border, never by its colour
+alone. Cell pattern 24 has its markup.
 
 ## Shapes and sizes
 

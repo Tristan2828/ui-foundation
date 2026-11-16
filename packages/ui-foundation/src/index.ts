@@ -52,6 +52,8 @@ export {
 } from '@/components/app/artwork'
 export { ColorSwatch, type ColorSwatchProps } from '@/components/app/color-swatch'
 export { storedColor } from '@/lib/stored-color'
+export { ColorField, type ColorFieldProps } from '@/components/app/color-field'
+export { COLOR_CHOICES, type ColorChoice } from '@/lib/color-choices'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export {
   DataTable,

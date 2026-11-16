@@ -92,6 +92,10 @@ const COMPOSITE_STORIES = [
   { id: 'app-colorswatch--in-a-badge', mustShow: 'secondary' },
   { id: 'app-colorswatch--in-a-table', mustShow: 'Errands' },
   { id: 'app-colorswatch--long-name', mustShow: 'A name longer than its column' },
+  // <ColorField>: a stored colour on a form, its swatches as one radio group and Custom.
+  { id: 'app-colorfield--default', mustShow: 'Calendar Colour' },
+  { id: 'app-colorfield--own-colors', mustShow: 'Terracotta' },
+  { id: 'app-colorfield--invalid', mustShow: 'That colour is taken by another label' },
   { id: 'app-emojifield--default', mustShow: 'Routine Emoji' },
   { id: 'app-emojifield--open', mustShow: 'Morning and Sleep' },
   // <Board>: a list as columns of cards, every app's second view of a list.
@@ -1117,8 +1121,14 @@ const SWATCH_STORIES = [
   'app-colorswatch--in-a-badge',
   'app-colorswatch--in-a-table',
   'app-colorswatch--long-name',
+  'app-colorfield--default',
+  'app-colorfield--own-colors',
+  'app-colorfield--invalid',
 ]
 const SWATCH_RING: InkTarget = { selector: '[data-slot=color-swatch]', ink: 'borderTopColor', behind: 'parent' }
+// ColorField's Custom picker (<input type="color">) shows its colour the
+// same way, so its edge is held to the same 3:1.
+const PICKER_EDGE: InkTarget = { selector: '[data-slot=color-field-picker]', ink: 'borderTopColor', behind: 'parent' }
 
 test.describe('a stored colour', () => {
   for (const id of SWATCH_STORIES) {
@@ -1136,8 +1146,37 @@ test.describe('a stored colour', () => {
         if (process.env.PRINT_GLYPHS) console.log(id, theme, JSON.stringify(rings))
         expect(rings.length).toBeGreaterThan(0)
         expect(rings.filter(({ ratio }) => ratio < 3)).toEqual([])
+        if (id.startsWith('app-colorfield--')) {
+          const edges = await glyphContrasts(page, PICKER_EDGE)
+          expect(edges.length).toBeGreaterThan(0)
+          expect(edges.filter(({ ratio }) => ratio < 3)).toEqual([])
+        }
       })
     }
+  }
+
+  // ColorField's default colours are chosen to read on the card a form
+  // sits on: each fill against the card clears 3:1 in light, dark and the
+  // dark palettes, and 2.3:1 on Palm LCD, whose panel is a middle grey-green
+  // no middle colour can clear 3:1 on (the ring shows the edge there).
+  // Unpicked ones only, so it's the card behind them, not the picked one's
+  // wash: each colour is unpicked in at least one of the story's fields.
+  for (const theme of ['light', 'dark', ...PALETTES] as const) {
+    test(`app-colorfield--default: the default colours read on the card (${theme})`, async ({ page }) => {
+      if (theme === 'light' || theme === 'dark') {
+        await page.goto(storyUrlById('app-colorfield--default', theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      } else {
+        await page.goto(paletteUrl('app-colorfield--default', theme))
+        await expectPalette(page, theme)
+      }
+      const group = page.getByRole('radiogroup', { name: 'Label Colour' })
+      await expect(group.locator('[data-slot=color-swatch][data-color]')).toHaveCount(12)
+      const fills = (await glyphContrasts(page, { selector: '[data-slot=color-field-choice]:not(:has([data-checked])) [data-slot=color-swatch]', ink: 'backgroundColor', behind: 'parent' }))
+      if (process.env.PRINT_GLYPHS) console.log(theme, JSON.stringify(fills))
+      expect(fills.length).toBe(35)
+      expect(fills.filter(({ ratio }) => ratio < (theme === 'palm-lcd' ? 2.3 : 3))).toEqual([])
+    })
   }
 
   test('is filled with a valid stored colour, hidden, beside its name; a bad one paints nothing', async ({ page }) => {
