@@ -7,6 +7,41 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.123.0 — A colour field for a stored colour
+
+npm package and `ui-foundation-backend` 4.123.0. Additive; nothing for an
+app to change unless it wants the field.
+
+- **`ColorField`**: a stored hex colour on a form, for a react-hook-form
+  `Controller` (`value`, `onChange`, `onBlur`, `invalid`, `id`). A grid of
+  named swatches as one radio group (one tab stop, the arrow keys move and
+  pick, a focus ring, the picked one marked by its radio's dot and a
+  primary border), each beside its name, and **Custom**, which opens the
+  browser's own colour picker (`<input type="color">`) with the chosen hex
+  beside it. A value that's none of the named colours, uppercase or
+  3-digit included, shows Custom with its hex; a named colour stored
+  another way (`C0392B`, `#FFF`) still shows as its name. The value out is
+  always `storedColor`'s form (`#c0392b`).
+- **`COLOR_CHOICES`** (and the `ColorChoice` type): the default twelve,
+  chosen to read on a card in light, dark and every palette, Palm LCD
+  included. Pass `colors` for an app's own `{ name, color }` list.
+- **`ui/radio-group`**: shadcn's radio group (Base UI), which `ColorField`
+  is built on, now ships as a primitive like the others.
+- Docs: cell pattern 24 "Picking one on a form" and the design language's
+  "A stored colour".
+
+To swap a text box and a `ColorSwatch` preview for the field:
+
+1. Bump `@tristan2828/ui-foundation` (and `ui-foundation-backend`) to 4.123.0
+   and run `npx ui-foundation sync`.
+2. In the form, replace the colour's `Input` (and its preview) with
+   `<ColorField id="…" aria-labelledby="…-label" value={field.value}
+   onChange={field.onChange} onBlur={field.onBlur}
+   invalid={fieldState.invalid} />` inside the same `Controller`, and give
+   the `FieldLabel` that `id` (cell pattern 24 has the markup).
+3. Keep validating with `storedColor`. Stored values don't change: one
+   that isn't in the set shows as Custom.
+
 ## 4.122.0 — Passwords hashed with scrypt; one phone breakpoint
 
 npm package and `ui-foundation-backend` 4.122.0. Additive; nothing for an

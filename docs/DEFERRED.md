@@ -44,6 +44,7 @@ history has every removed row).
 
 | Item | Revisit when |
 |---|---|
+| **`ColorField` can't be emptied.** It has no "No colour" choice or Clear, so an optional colour, once picked, can only be changed (4.123) | An app's colour is optional and someone needs to remove one. Then a `clearable` prop, as `EmojiField`'s, giving `''` |
 | **Recurrence labels and phrases in English only.** `parseRecurrencePhrase` reads English words, and `formatRecurrence` writes English around Intl's day, month and time names (#326) | An app's users write or read another language. Then the words as a table per locale, the phrase reader's patterns from it |
 | **BYSETPOS, BYHOUR and the rest of RFC 5545.** The rule takes FREQ, INTERVAL, BYDAY, BYMONTHDAY, BYMONTH, UNTIL and COUNT; times are a list beside it, not BYHOUR/BYMINUTE, and "every last weekday of the month" (BYSETPOS=-1) can't be said (#326) | A real schedule needs one. Both libraries support them; add the part to both rule readers, the shared fixture and the phrase reader together |
 | **A Windows dev venv has no IANA zones.** `foundation_backend.recurrence`'s tests use real zones (the DST cases), and `tests/test_recurrence.py` skips itself without a time zone database; CI's Linux has one. `pip install tzdata` in the venv runs them | A Windows session misses a recurrence regression that CI then catches. Then `tzdata` in the backend's dev extra (an allowlist addition) |
