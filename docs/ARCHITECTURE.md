@@ -454,6 +454,17 @@ Rules learned the hard way (each cost a phase to find):
   workarounds.
 - **SQLite passing proves nothing about Postgres**, timestamp columns in
   particular. `check-backend-postgres.sh` writes through the ORM for this.
+- **Mock mode survives a worker restart** (#367). The browser can stop
+  MSW's service worker at any time, and the restarted worker has an empty
+  client list, so it passes the page's requests to the network. No page
+  event says so (it's the same `controller`). `startMockWorker` probes
+  until mocked at boot, then guards `fetch`: a request settled without
+  MSW's `request:start` was bypassed, so the page sends `MOCK_ACTIVATE`,
+  probes, and makes it once more. The `/testing` `test` fails any `/api/`
+  response that wasn't the worker's and wasn't answered by it after, and
+  the template's e2e preview proxies `/api` to a dead port (`BACKEND_URL`).
+  `template/e2e/msw-boot.spec.ts` restarts the worker over CDP, before
+  the first request and after boot.
 - **Gate MSW on the literal `import.meta.env.VITE_API` check** in
   `main.tsx`. The bundler folds only that exact form, so behind an imported
   constant `build:real` still ships MSW (`consume-test.sh` asserts it).
