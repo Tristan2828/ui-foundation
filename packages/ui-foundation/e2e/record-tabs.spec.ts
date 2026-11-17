@@ -17,6 +17,17 @@ const box = async (locator: Locator) => {
 
 const bar = (page: Page) => page.locator('[data-slot=entity-view-tab-bar]').first()
 
+// Where the open tab's panel starts in what scrolls (the page, or a dialog's
+// body), not on screen: a bar that grows as it sticks must not move it, or a
+// click in progress lands on what slid under the pointer (#366).
+const panelTop = (panel: Locator, scroller?: Locator) =>
+  panel.evaluate((node, scrolled) => {
+    const top = node.getBoundingClientRect().top
+    if (!scrolled) return top + window.scrollY
+    const body = node.closest('[data-slot=record-dialog-body]')!
+    return top - body.getBoundingClientRect().top + body.scrollTop
+  }, !!scroller)
+
 test.describe('the look (3B)', () => {
   test('16px semibold tabs, the open one bold on a primary tint over a 3px primary line, counts beside names', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 })
@@ -79,11 +90,15 @@ test.describe('the bar sticks with the record name above it', () => {
       await page.goto(`${HARNESS}app-entityview--details-tab`)
       await expect(bar(page)).not.toHaveAttribute('data-stuck')
       await expect(page.locator('[data-slot=entity-view-tab-bar-title]')).toHaveCount(0)
+      const panel = page.getByRole('tabpanel').first()
+      const restingTop = await panelTop(panel)
 
       await page.mouse.wheel(0, 1200)
       await expect(bar(page)).toHaveAttribute('data-stuck', '')
       await expect(page.locator('[data-slot=entity-view-tab-bar-title]')).toHaveText('Office move')
       expect(Math.abs((await box(bar(page))).y)).toBeLessThan(2)
+      // The name above the tabs takes no room from the page: nothing under the bar moves (#366).
+      expect(Math.abs((await panelTop(panel)) - restingTop)).toBeLessThan(1)
       // The tabs still work stuck: Changes opens, the bar stays at the top.
       await page.getByRole('tab', { name: 'Changes 2' }).click()
       await expect(page.getByRole('region', { name: 'Changes' })).toBeVisible()
@@ -99,11 +114,15 @@ test.describe('the bar sticks with the record name above it', () => {
     const dialog = page.getByRole('dialog', { name: 'Repaint the fence' })
     await expect(dialog.getByRole('tab', { name: 'Steps 30' })).toBeVisible()
     const body = dialog.locator('[data-slot=record-dialog-body]')
-    await body.evaluate((node) => node.scrollTo(0, node.scrollHeight))
     const tabBar = dialog.locator('[data-slot=entity-view-tab-bar]')
+    await expect(tabBar).not.toHaveAttribute('data-stuck')
+    const panel = dialog.getByRole('tabpanel').first()
+    const restingTop = await panelTop(panel, body)
+    await body.evaluate((node) => node.scrollTo(0, node.scrollHeight))
     await expect(tabBar).toHaveAttribute('data-stuck', '')
     await expect(dialog.locator('[data-slot=entity-view-tab-bar-title]')).toHaveText('Repaint the fence')
     expect(Math.abs((await box(tabBar)).y - (await box(body)).y)).toBeLessThan(2)
+    expect(Math.abs((await panelTop(panel, body)) - restingTop)).toBeLessThan(1)
   })
 })
 
