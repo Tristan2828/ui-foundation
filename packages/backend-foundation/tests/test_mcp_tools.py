@@ -493,3 +493,38 @@ async def test_an_answer_note_can_be_async_and_a_failing_one_is_left_out(
     mcp.register_answer_note(later)
     with pytest.raises(ToolError):
         await call_tool(session, caller, "fetch", {"url": "/memos/9"})
+
+
+async def test_the_definitions_are_built_once_per_registry(
+    session: AsyncSession, caller: Caller, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Building the definitions generates each schema's JSON schema, so
+    tools/list and tools/call reuse one build until the registry changes."""
+    builds: list[None] = []
+    build = mcp_tools._build_definitions
+
+    def counted() -> list[dict[str, Any]]:
+        builds.append(None)
+        return build()
+
+    monkeypatch.setattr(mcp_tools, "_build_definitions", counted)
+    register_entities({"notes": NOTE, "memos": MEMO})
+    first = tool_definitions()
+    for _ in range(20):
+        assert await call_tool(session, caller, "fetch", {"url": "/memos/1"}) is not None
+        assert await call_tool(session, caller, "create", {"entity": "memos", "fields": {}}) is None
+        assert tool_definitions() == first
+    assert len(builds) == 1
+    # A copy each time: changing one answer doesn't change the next.
+    first[0]["name"] = "changed"
+    assert tool_definitions()[0]["name"] == "fetch"
+    # Registering again, or changing the registry in place as a test can,
+    # builds them again, so the tools see the entities registered now.
+    register_entities({"notes": NOTE})
+    assert "update" not in {tool["name"] for tool in tool_definitions()}
+    assert await call_tool(session, caller, "update", {"url": "/memos/1", "fields": {}}) is None
+    mcp.ENTITIES["memos"] = MEMO
+    assert "update" in {tool["name"] for tool in tool_definitions()}
+    mcp.ENTITIES["memos"] = replace(MEMO, text_edits=())
+    assert "edit_text" not in {tool["name"] for tool in tool_definitions()}
+    assert len(builds) == 4

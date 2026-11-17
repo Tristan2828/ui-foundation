@@ -20,6 +20,7 @@ An app's answer note (`register_answer_note`, 4.71) is appended to every
 answer, given the entities the answer showed (`_shown`).
 """
 
+import copy
 import inspect
 import json
 import re
@@ -576,7 +577,40 @@ def _search_definition(names: list[str], read_only: dict[str, Any]) -> dict[str,
     }
 
 
+# The last build of the definitions and the registry it was built from, as
+# (name, entity) pairs. Building them generates every registered schema's
+# JSON schema, so it happens once per registry, not once per tools/list and
+# tools/call. Entities are registered at import, but a later registration
+# (or a test's) replaces the registry's contents in place, so each use
+# compares the registry with the pairs: entities by identity, which the
+# pairs, by holding them, keep from being reused.
+_BUILT: tuple[tuple[tuple[str, McpEntity], ...], list[dict[str, Any]], frozenset[str]] | None = None
+
+
+def _built() -> tuple[list[dict[str, Any]], frozenset[str]]:
+    """The definitions and their tool names, built again only when the
+    registry has changed since the last build."""
+    global _BUILT
+    registry = tuple(ENTITIES.items())
+    if _BUILT is not None:
+        built_from, tools, names = _BUILT
+        if len(built_from) == len(registry) and all(
+            a == b and e is f for (a, e), (b, f) in zip(built_from, registry, strict=True)
+        ):
+            return tools, names
+    tools = _build_definitions()
+    names = frozenset(tool["name"] for tool in tools)
+    _BUILT = (registry, tools, names)
+    return tools, names
+
+
 def tool_definitions() -> list[dict[str, Any]]:
+    """The tools, as tools/list gives them: a copy of the cached build, so
+    a caller that changes it can't change the next answer."""
+    return copy.deepcopy(_built()[0])
+
+
+def _build_definitions() -> list[dict[str, Any]]:
     names = list(ENTITIES)
     creatable = [e for e in ENTITIES.values() if e.create is not None and e.create_schema is not None]
     changeable = [e for e in ENTITIES.values() if e.update is not None and e.update_schema is not None]
@@ -770,7 +804,7 @@ HANDLERS = {
 async def call_tool(session: AsyncSession, caller: Caller, name: str, args: dict[str, Any]) -> str | None:
     """The tool's text, or None if there is no such tool."""
     handler = HANDLERS.get(name)
-    if handler is None or name not in {tool["name"] for tool in tool_definitions()}:
+    if handler is None or name not in _built()[1]:
         return None
     shown: list[McpEntity] = []
     token = _SHOWN.set(shown)
