@@ -9,6 +9,24 @@ are listed on the
 
 ## Unreleased
 
+Merged with no version bump; the next release carries it.
+
+### A record's tab bar no longer moves the page as it sticks (#366)
+
+Nothing an app must change.
+
+- Stuck, the bar shows the record's name above the tabs and grows by that
+  line (`--type-label-leading`), its gap and `pt-2`. The bar is in the
+  flow, so everything under it moved down by that much (2rem), a frame or
+  more after the scroll that stuck it, and a click in progress could land
+  on whatever slid under the pointer. It now gives the same height back
+  below (a negative bottom margin while stuck), so the content under it
+  stays where it was and scrolls beneath the bar's name instead. The name's
+  line is fixed at `--type-label-leading`. Nothing for an app to change.
+  `e2e/record-tabs.spec.ts` checks the open tab's panel keeps its place
+  as the bar sticks, on the page at both widths and in a record dialog
+  (32px before).
+
 ### Mock mode rejoins a restarted worker; e2e fails on a request past MSW (#367)
 
 Nothing an app must change; one new default to know about.
