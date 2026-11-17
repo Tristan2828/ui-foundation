@@ -7,9 +7,12 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## Unreleased
+## 4.125.0 — The tab bar holds the page still; mocks rejoin a restarted worker
 
-Merged with no version bump; the next release carries it.
+npm package and `ui-foundation-backend` 4.125.0 (the backend is unchanged
+apart from its version). Two fixes and one new default in `/testing`,
+marked **(behaviour)**: an app's e2e suite can start failing on it, and
+then the failing test was running on data from outside the mocks.
 
 ### A record's tab bar no longer moves the page as it sticks (#366)
 
@@ -39,8 +42,8 @@ Nothing an app must change; one new default to know about.
   again (probing until it's mocked, bounded) and makes the request once
   more. One rejoin is shared by every request caught together; if it fails
   the guard stands down and logs once. Mock builds only.
-- **New in `/testing`: `watchMswBypass(page)`, and the exported `test`
-  uses it.** A test whose page got an `/api/` response that didn't come
+- **(behaviour) New in `/testing`: `watchMswBypass(page)`, and the
+  exported `test` uses it.** A test whose page got an `/api/` response that didn't come
   from the service worker now fails, naming each request. Off against the
   real API (`VITE_API=real`), in a test that routes requests itself
   (`page.route`, `context.route`, `routeFromHAR`), and with
@@ -52,6 +55,20 @@ Nothing an app must change; one new default to know about.
   template does it with `BACKEND_URL` in `vite.config.ts`, set to
   `http://127.0.0.1:9` by `playwright.config.ts` on the mocks. An app
   copies those two lines, or sets its own proxy variable the same way.
+
+How an app adopts it:
+
+1. Bump `@tristan2828/ui-foundation` to `^4.125.0` (and
+   `ui-foundation-backend==4.125.0`) and run `ui-foundation sync`.
+2. Point the e2e preview's `/api` proxy at a port nothing listens on
+   (`docs/consuming.md` "End-to-end tests on the mocks"), if it doesn't
+   already.
+3. Run the e2e suite. A test that now fails naming requests "without MSW"
+   was passing on answers from outside the mocks: fix the test (a missing
+   handler, a request after the page closed), or, where a bypass is
+   expected, `test.use({ mswBypass: 'allow' })`. An app with its own
+   bypass check in its fixture can drop it for this one, which also knows
+   a request the rejoin answered.
 
 ## 4.124.2 — MCP builds its tool list once
 
