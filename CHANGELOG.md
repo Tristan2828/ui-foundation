@@ -7,6 +7,22 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.124.2 — MCP builds its tool list once
+
+`ui-foundation-backend` and npm package 4.124.2 (the npm package is
+unchanged apart from its version). A fix; nothing for an app to change.
+
+- **Every MCP `tools/call` rebuilt the whole tool list** to check the
+  tool's name, and every `tools/list` rebuilt it too. Building it
+  generates the JSON schema of each registered entity's filters, create
+  and update schemas, so with a handful of entities that was dozens of
+  Pydantic schema generations per call: a noticeable share of each MCP
+  call in production, and most of an app's MCP test time. The definitions
+  are now built once and reused until the registry changes;
+  `tool_definitions()` returns a copy of that build. A later
+  `register_entities`, or a test that changes `ENTITIES` in place, is
+  seen on the next call, as before.
+
 ## 4.124.1 — Print Notes prints the notes on phones
 
 npm package and `ui-foundation-backend` 4.124.1 (the backend is unchanged
