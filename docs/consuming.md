@@ -197,6 +197,36 @@ table as `pageHeader={<ListHeader … />}`. The header then ends on the
 card's right edge above a short table, and where the page ends above a
 wide one. A phone is unchanged, as is `width="full"`.
 
+## End-to-end tests on the mocks
+
+An app's Playwright suite runs on MSW: every `/api/` request is answered
+by the mock service worker in the browser. Two things keep it that way.
+
+- **A request that bypasses MSW fails the test.** The `test` from
+  `@tristan2828/ui-foundation/testing` watches each page's `/api/`
+  responses and fails the test, naming each one, when any didn't come
+  from the service worker (`watchMswBypass`; an app whose fixture opens
+  its own page calls it and then `check()` after the test). It's off
+  against the real API (`VITE_API=real`) and for a test that answers
+  requests itself (`page.route`, `context.route`, `routeFromHAR`). A file
+  or describe that expects a bypass opts out with
+  `test.use({ mswBypass: 'allow' })`. A bypass the app healed doesn't
+  count: since the mock worker can be stopped and restarted by the browser
+  at any time, forgetting the page, `startMockWorker` notices a request it
+  passed through, joins again and makes the request once more (#367), and
+  the check sees the worker answer it.
+- **The preview's `/api` proxy points at a port nothing listens on.** A
+  bypassed request goes to the preview server's proxy. Pointed at your
+  backend, it gets real answers (or changes real data) and the test may
+  pass on them. Point the proxy at a dead port for the e2e run instead, so
+  a bypass fails loudly. The template's `vite.config.ts` reads the proxy's
+  target from `BACKEND_URL`, and its `playwright.config.ts` sets
+  `BACKEND_URL=http://127.0.0.1:9` for the preview it starts unless
+  `VITE_API=real`. An app whose proxy reads another variable sets that one
+  the same way. Playwright reuses a preview that's already running outside
+  CI (`reuseExistingServer`), and that one keeps whatever proxy it was
+  started with.
+
 ## Changing the foundation
 
 When an app needs something the package doesn't do:

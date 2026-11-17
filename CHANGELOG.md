@@ -7,6 +7,34 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## Unreleased
+
+### Mock mode rejoins a restarted worker; e2e fails on a request past MSW (#367)
+
+Nothing an app must change; one new default to know about.
+
+- **A page rejoins its mock worker after boot.** The browser may stop
+  and restart MSW's service worker at any time, and a restarted worker has
+  forgotten the page and passes its requests to the network. Until now
+  `startMockWorker` handled that only at boot. It now guards `fetch` after
+  boot: a request the worker never handed to MSW makes the page join
+  again (probing until it's mocked, bounded) and makes the request once
+  more. One rejoin is shared by every request caught together; if it fails
+  the guard stands down and logs once. Mock builds only.
+- **New in `/testing`: `watchMswBypass(page)`, and the exported `test`
+  uses it.** A test whose page got an `/api/` response that didn't come
+  from the service worker now fails, naming each request. Off against the
+  real API (`VITE_API=real`), in a test that routes requests itself
+  (`page.route`, `context.route`, `routeFromHAR`), and with
+  `test.use({ mswBypass: 'allow' })`. A request the rejoin answered
+  doesn't count. If an app's suite starts failing on this, the test was
+  passing on data from outside the mocks.
+- **Docs:** during e2e, point the preview's `/api` proxy at a port nothing
+  listens on (`docs/consuming.md` "End-to-end tests on the mocks"). The
+  template does it with `BACKEND_URL` in `vite.config.ts`, set to
+  `http://127.0.0.1:9` by `playwright.config.ts` on the mocks. An app
+  copies those two lines, or sets its own proxy variable the same way.
+
 ## 4.124.2 — MCP builds its tool list once
 
 `ui-foundation-backend` and npm package 4.124.2 (the npm package is

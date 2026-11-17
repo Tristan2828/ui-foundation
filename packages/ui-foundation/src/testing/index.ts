@@ -82,14 +82,106 @@ export function withBootWait(page: Page): Page {
   return page
 }
 
+export type MswBypassOptions = {
+  /**
+   * Whether this run's app is MSW-backed. Defaults to
+   * `process.env.VITE_API !== 'real'`; against a real API every response
+   * comes from the network and nothing is checked.
+   */
+  mockMode?: boolean
+}
+
+export type MswBypassWatch = {
+  /** What went past MSW and was never answered by it, one line per request. */
+  bypassed: () => string[]
+  /** Whether the test answers requests itself (`page.route`, `context.route`, or from a HAR). */
+  routed: () => boolean
+  /** Throws naming every bypassed request, unless the test routes requests itself or the app isn't on MSW. */
+  check: () => void
+}
+
+/**
+ * Watches the page's own `/api/` responses for any that didn't come from
+ * the mock service worker (`response.fromServiceWorker()` false), which
+ * means the request went to the network: to the preview server's proxy,
+ * and from there to whatever listens on its port. A test that passed on
+ * data from there didn't test the mocks (#367).
+ *
+ * A bypass the app healed doesn't count: since the rejoin in
+ * `startMockWorker`, a page whose worker forgot it makes the request again
+ * once the worker knows it, so a later answer from the worker to the same
+ * method and URL settles it. A test that routes requests itself is left
+ * alone: its routed answers aren't the worker's either.
+ *
+ * The `test` exported here runs it on every test's `page`; this is for a
+ * page an app's own fixture opens. Call `check()` after the test.
+ */
+export function watchMswBypass(page: Page, { mockMode = process.env.VITE_API !== 'real' }: MswBypassOptions = {}): MswBypassWatch {
+  const pending: { key: string; line: string }[] = []
+  let routed = false
+
+  page.on('response', (response) => {
+    const url = new URL(response.url())
+    const pageUrl = page.url()
+    if (!url.pathname.startsWith('/api/')) return
+    if (/^https?:/.test(pageUrl) && url.origin !== new URL(pageUrl).origin) return
+    const method = response.request().method()
+    const key = `${method} ${url.href}`
+    if (response.fromServiceWorker()) {
+      // The same request answered by the worker after it went past: healed.
+      const healed = pending.findIndex((entry) => entry.key === key)
+      if (healed !== -1) pending.splice(healed, 1)
+      return
+    }
+    pending.push({ key, line: `${method} ${url.pathname}${url.search} answered ${response.status()} without MSW` })
+  })
+
+  const flagRoutes = <T extends object>(target: T, names: readonly (keyof T)[]) => {
+    for (const name of names) {
+      const original = target[name]
+      if (typeof original !== 'function') continue
+      target[name] = ((...args: unknown[]) => {
+        routed = true
+        return (original as (...args: unknown[]) => unknown).apply(target, args)
+      }) as T[keyof T]
+    }
+  }
+  flagRoutes(page, ['route', 'routeFromHAR'])
+  flagRoutes(page.context(), ['route', 'routeFromHAR'])
+
+  const bypassed = () => pending.map((entry) => entry.line)
+  return {
+    bypassed,
+    routed: () => routed,
+    check: () => {
+      if (!mockMode || routed || pending.length === 0) return
+      throw new Error(
+        `${pending.length} API request(s) went past the mock service worker, so this test didn't run on the mocks:\n` +
+          bypassed().map((line) => `  ${line}`).join('\n') +
+          '\nSee docs/consuming.md "End-to-end tests on the mocks". A test that answers requests itself (page.route) is exempt; ' +
+          "one that expects this can opt out with test.use({ mswBypass: 'allow' }).",
+      )
+    },
+  }
+}
+
 /**
  * Playwright's `test`, with a `page` whose `goto()` and `reload()` wait
- * for the app's boot (`withBootWait`). Import `test` and `expect` from
- * here instead of '@playwright/test'; the suites below use it too.
+ * for the app's boot (`withBootWait`), and which fails a test whose page
+ * got an `/api/` answer from anywhere but the mock service worker
+ * (`watchMswBypass`). Import `test` and `expect` from here instead of
+ * '@playwright/test'; the suites below use it too.
+ *
+ * `test.use({ mswBypass: 'allow' })` turns the check off for a file or a
+ * describe; a test that routes requests itself (`page.route`) and a run
+ * against the real API (`VITE_API=real`) are never checked.
  */
-export const test = base.extend({
-  page: async ({ page }, provide) => {
+export const test = base.extend<{ mswBypass: 'fail' | 'allow' }>({
+  mswBypass: ['fail', { option: true }],
+  page: async ({ page, mswBypass }, provide) => {
+    const watch = mswBypass === 'fail' ? watchMswBypass(page) : null
     await provide(withBootWait(page))
+    watch?.check()
   },
 })
 
