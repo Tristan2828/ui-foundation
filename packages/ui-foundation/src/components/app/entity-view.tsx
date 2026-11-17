@@ -902,7 +902,10 @@ function MainTabs({
       <div ref={setMarker} aria-hidden="true" data-slot="entity-view-tabs-marker" className="h-px -mb-6" />
       {/* Sticks as the record scrolls under it (3B); stuck, the record's
           name shows above the tabs. The page's own background, so what
-          scrolls under it doesn't show through. */}
+          scrolls under it doesn't show through. Stuck, it grows by the
+          name's line, the gap and pt-2, and gives the same back below
+          (#366): the bar is in the flow, so without that everything under
+          it moved down as it stuck, under a click already in progress. */}
       <div
         ref={setBar}
         data-slot="entity-view-tab-bar"
@@ -911,12 +914,12 @@ function MainTabs({
         // padding, so the bar sits at the body's own top edge there.
         style={{ top: stickyTop ?? 'var(--entity-view-sticky-top, 0px)' }}
         className={cn(
-          'sticky z-10 -mx-1 flex min-w-0 flex-col gap-1 bg-background px-1 pt-0 data-[stuck]:pt-2 data-[stuck]:shadow-[0_8px_12px_-10px_var(--color-foreground)]',
+          'sticky z-10 -mx-1 flex min-w-0 flex-col gap-1 bg-background px-1 pt-0 data-[stuck]:pt-2 data-[stuck]:mb-[calc(-1*(var(--type-label-leading)+--spacing(3)))] data-[stuck]:shadow-[0_8px_12px_-10px_var(--color-foreground)]',
           aside !== undefined && FACTS_RAIL.barBeside,
         )}
       >
         {stuck && title && (
-          <p data-slot="entity-view-tab-bar-title" aria-hidden="true" className="truncate type-label font-semibold text-foreground">
+          <p data-slot="entity-view-tab-bar-title" aria-hidden="true" className="h-(--type-label-leading) truncate type-label font-semibold text-foreground">
             {title}
           </p>
         )}
