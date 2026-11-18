@@ -9,7 +9,25 @@ are listed on the
 
 ## Unreleased
 
-Merged with no version bump; the next release carries it.
+## 4.128.0 — Forms that don't overwrite, a read-only step track, and an Open link on the done toast
+
+npm package and `ui-foundation-backend` 4.128.0 (the backend is unchanged
+apart from its version). Four changes, all additive: nothing changes for
+an app that doesn't take them.
+
+### How an app adopts it
+
+- Bump both packages to 4.128.0 and run `npx ui-foundation sync`.
+- **Forms that don't overwrite:** an entity already on 4.127.0's version
+  check sends its version from its edit form too; see add-an-entity.md
+  "Saves that don't overwrite".
+- **`StepTrack`:** an app drawing its own read-only row of steps (a list
+  card showing a sequence) moves onto it and deletes its own.
+- **`notify.done(verb, name, { open })`:** an app with its own "Added X,
+  Open" toast moves onto it.
+- **The editor split** is internal: nothing to do.
+
+### What's in it
 
 - **Saves that don't overwrite, for forms** (the rest of 4.127.0's version
   check). An edit form can send the version of the record it opened with,
@@ -41,7 +59,27 @@ Merged with no version bump; the next release carries it.
   `version.send(update)`, start the save's `onError` with
   `if (version.refused(error)) return`, and pass
   `conflict={version.conflict}` to `EntityForm` or `FormDialog`.
+- **`StepTrack`: the stepper's steps, read only** (new export, additive).
+  The row of numbered steps `EqualItems look="stepper"` draws, on its own
+  with no panels and nothing to pick, for a display such as a list card
+  showing a program's phases: the current step ringed, `caption` under it
+  ("Day 12") in place of "Current". A named list, not a tablist; on a
+  phone it scrolls sideways in its own box with the current step in view.
+  The stepper now draws its steps from the same parts, so the marks are
+  one; its markup is unchanged. An app that draws its own row of steps
+  moves onto it (design-language.md "A few equal things"): pass the
+  stepper's items as they are.
 
+- **An Open link on the done toast.** `notify.done(verb, name, { open })`
+  adds an **Open** link to the toast, for a record made where the person
+  stays (a dialog over a page of tiles): "Added The Long Walk" · Open.
+  `open` is a path (anything `Link`'s `to` takes) or `{ to, label }`. A
+  real link named "Open <name>", reached from the keyboard, that closes
+  the toast as it goes; the toast keeps its 4 seconds. With `undo` too,
+  both show. New export: the `NotifyOpen` type. Additive: every call
+  without `open` behaves as before. To adopt: replace a hand-built sonner
+  toast with an Open action by `notify.done('Added', name, { open })`
+  (add-an-entity.md "Toasts and feedback").
 - **The rich-text editor split into its parts** (the RichTextEditor
   review's F26). Internal only: `milkdown-editor.tsx` keeps the wiring,
   and the link box, the page box, the heading and task-item node views

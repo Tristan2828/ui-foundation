@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1387
-  - [The record view](#the-record-view) · lines 1036–1215
-  - [Forms](#forms) · lines 1217–1299
-  - [Dialogs](#dialogs) · lines 1301–1334
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1336–1387
-- [What not to copy](#what-not-to-copy) · lines 1389–1424
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1426–1443
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1445–1510
-- [Deleting](#deleting) · lines 1512–1543
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1545–1566
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1568–1577
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1580–1622
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1624–1660
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1402
+  - [The record view](#the-record-view) · lines 1036–1217
+  - [Forms](#forms) · lines 1219–1301
+  - [Dialogs](#dialogs) · lines 1303–1336
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1338–1402
+- [What not to copy](#what-not-to-copy) · lines 1404–1439
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1441–1458
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1460–1525
+- [Deleting](#deleting) · lines 1527–1558
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1560–1581
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1583–1592
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1595–1637
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1639–1675
 
 <!-- /index -->
 
@@ -1204,7 +1204,9 @@ A record uses the parts it has, in this order:
   `panels` when each has several details, `stepper` (4.127) for a
   sequence with a current step whose items are looked at one at a time
   (numbered steps picking the one panel shown; design-language.md "A few
-  equal things"). Never hand-made cards, a grid or a stepper of their own. An item
+  equal things"). The same steps read only, on a list card with a
+  caption under the current one ("Day 12"), are `StepTrack` (4.128).
+  Never hand-made cards, a grid or a stepper of their own. An item
   edited or removed on its own carries its editor as `content` and its
   Edit and Remove as `actions` (4.94), `wide` while the editor is open;
   never an editor put in a field's value.
@@ -1343,6 +1345,7 @@ sight.** What happened where the person is looking says so there.
 | --- | --- |
 | A delete (soft: with Undo) | `DeleteAction`'s toast, "Deleted The Long Walk" |
 | A record made, landing on its own page | a toast, "Added The Long Walk" |
+| A record made where the person stays (a dialog over a page of tiles) | a toast with Open, "Added The Long Walk" · Open (`notify.done`'s `open`) |
 | An edit in place, a quick action, a toggle | the value itself and its "Saved" (cell pattern 18). **Never a toast** |
 | An action that failed, its button still there | `ActionError` beside the button: the reason and Try Again |
 | An action that failed after its page was left | a toast that stays until it's closed (`useAction` does this) |
@@ -1376,6 +1379,18 @@ sight.** What happened where the person is looking says so there.
   verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when
   given, then says "Restored The Long Walk". Never "X deleted", never
   "Book deleted". Toasts last 4 seconds, Undo's too.
+- **A record made without leaving the page gets Open:**
+  ``notify.done('Added', book.title, { open: `/books/${book.id}` })``.
+  When saving closes a dialog and stays put (a homepage of tiles, a
+  `FormDialog` opened from a page), the toast says "Added The Long Walk"
+  with an **Open** link to the new record; never a hand-built sonner
+  toast. `open` is a path (anything `Link`'s `to` takes) or
+  `{ to, label }` for another word ("View"). It is a real link, named
+  "Open The Long Walk" for a screen reader, reached from the keyboard
+  (Alt+T to the toasts, then Tab), and closes the toast as it goes; the
+  toast keeps its 4 seconds. With `undo` too, both show, Open first. A
+  create that lands on the record's own
+  page doesn't need it: the person is already there.
 - **An error stays beside what failed**: `const save = useAction(mutation)`,
   `save.run(…)` on the button (`disabled={save.pending}`, a `Spinner` in
   it), `<ActionError action={save} />` next to it. Never
