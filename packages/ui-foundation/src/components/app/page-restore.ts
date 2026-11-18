@@ -3,7 +3,7 @@
 // refusal toasted in the gateway's words (messageOf).
 import { toast } from 'sonner'
 import type { PageLinkInfo } from '@/lib/page-link'
-import { messageOf } from './edit-in-place-store'
+import { messageOf } from '@/lib/refusal'
 
 /** Runs the app's restore, toasting a refusal. Resolves either way. */
 export async function restorePage(info: PageLinkInfo, name: string): Promise<void> {

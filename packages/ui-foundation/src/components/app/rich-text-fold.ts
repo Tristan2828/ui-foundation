@@ -3,7 +3,7 @@
 // the document, and the Markdown saved, never change.
 //
 // - Each top-level heading's node view has a fold button before it
-//   (headingView in milkdown-editor.tsx); a node decoration tells it its
+//   (headingView, rich-text-heading-view.ts); a node decoration tells it its
 //   fold id and state.
 // - The blocks a folded heading covers get `hidden`.
 // - The caret put inside a folded section (an undo there, a jump) opens
