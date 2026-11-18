@@ -2,9 +2,11 @@ import type { Page } from '@playwright/test'
 import { expect, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui-foundation/testing'
 
 // Editing in place on the widget view (cell pattern 18): Name, Status,
-// Price, Description and Extra Categories turn into the form's own control
-// where they're shown and save when you leave them. Nothing typed is ever
-// lost: a refused save stays open with what was typed and the reason.
+// Price and Extra Categories turn into the form's own control where
+// they're shown and save when you leave them; Description is edited where
+// it's read (`inline`: the editor at rest, no click to open), saved a
+// pause after typing stops. Nothing typed is ever lost: a refused save
+// stays open with what was typed and the reason.
 
 // The body of every PATCH the page sends, in order.
 function patchBodies(page: Page) {
@@ -55,15 +57,25 @@ async function openWidget(page: Page, id = 1) {
   await page.goto(`/widgets/${id}`)
   await expect(title(page)).toBeVisible()
   await expect(page.locator('[data-state="success"]')).toBeVisible()
+  // The notes' editor builds itself a moment after the page: a click
+  // before it's there lands on nothing.
+  await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible()
+}
+
+// Description saved what's on screen: its line says "Saved".
+async function descriptionSaved(page: Page) {
+  await expect(page.getByRole('region', { name: 'Description' }).getByRole('status')).toHaveText('Saved', { timeout: 5000 })
 }
 
 test.describe('widget view: editing in place', () => {
   test('only the plan\'s fields offer it; the rest stay read-only', async ({ page }) => {
     await openWidget(page)
-    for (const label of ['Name', 'Status', 'Price', 'Description', 'Extra Categories']) {
+    for (const label of ['Name', 'Status', 'Price', 'Extra Categories']) {
       await expect(page.getByRole('button', { name: `Edit ${label}`, exact: true })).toHaveCount(1)
     }
-    for (const label of ['Category', 'Tags', 'Available From', 'Assignee Email', 'Checklist']) {
+    // Description is the editor at rest: no click to open, no pencil.
+    await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible()
+    for (const label of ['Description', 'Category', 'Tags', 'Available From', 'Assignee Email', 'Checklist']) {
       await expect(page.getByRole('button', { name: `Edit ${label}`, exact: true })).toHaveCount(0)
     }
     // The view's own Edit button and form stay.
@@ -184,8 +196,10 @@ test.describe('widget view: editing in place', () => {
     await expect(editor).toBeVisible()
     await page.keyboard.press('ControlOrMeta+Enter')
 
+    // Saved now, and it stays the editor, the caret where it was.
+    await descriptionSaved(page)
+    await expect(editor).toBeFocused()
     await expect(description.getByText('Quiet clicks.')).toBeVisible()
-    await expect(editor).toHaveCount(0)
     expect(bodies).toEqual([
       {
         description:
@@ -226,11 +240,10 @@ test.describe('widget view: editing in place', () => {
       'See the [setup guide](https://example.com/mouse-setup). Two pages.'
     expect(bodies).toEqual([{ description: saved }, { description: `${saved} Quick start.` }])
 
-    // Esc closes it on what was saved: nothing reverts, nothing more is sent.
+    // Esc saves now (nothing is left): nothing reverts, nothing more is sent.
     await page.keyboard.press('Escape')
-    await expect(editor).toHaveCount(0)
+    await expect(editor).toBeFocused()
     await expect(description.getByText('Two pages. Quick start.')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Edit Description' })).toBeFocused()
     expect(bodies).toHaveLength(2)
   })
 
@@ -281,6 +294,7 @@ test.describe('widget view: editing in place', () => {
     await page.keyboard.type(' Two pages.')
     await page.keyboard.press('ControlOrMeta+Enter')
 
+    await descriptionSaved(page)
     await expect(description.getByText('Two pages.')).toBeVisible()
     // The stored text ends without a newline, and so does the save.
     expect(bodies).toEqual([
@@ -328,7 +342,7 @@ test.describe('widget view: editing in place', () => {
     await page.keyboard.type(' top')
     await page.keyboard.press('ControlOrMeta+Enter')
 
-    await expect(editor).toHaveCount(0)
+    await descriptionSaved(page)
     // Inside a table, Ctrl/Cmd+Enter is also the table's "leave the table"
     // key; it saves all the same, with no paragraph added after the table.
     // The edited table is written in the editor's own style (padded cells,
@@ -373,7 +387,7 @@ test.describe('widget view: editing in place', () => {
     await page.keyboard.type(' Edited.')
     await page.keyboard.press('ControlOrMeta+Enter')
 
-    await expect(editor).toHaveCount(0)
+    await descriptionSaved(page)
     await expect(page.getByRole('alert')).toHaveCount(0)
     expect(bodies).toEqual([{ description: `Intro line. Edited.\n\n${table}\n\nOutro.` }])
   })
@@ -411,7 +425,7 @@ test.describe('widget view: editing in place', () => {
     expect(bodies).toEqual([])
     await page.keyboard.press('ControlOrMeta+Enter')
 
-    await expect(editor).toHaveCount(0)
+    await descriptionSaved(page)
     await expect(description.getByRole('link', { name: /Two buttons/ })).toHaveAttribute('href', 'https://example.com/buttons')
     expect(bodies).toEqual([
       {
@@ -424,64 +438,9 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
-  test('long text: the toolbar is part of the field; moving to it saves nothing', async ({ page, isMobile }) => {
-    const bodies = patchBodies(page)
-    await openWidget(page)
-    const description = page.getByRole('region', { name: 'Description' })
-    await description.getByText('Runs on one AA battery').click()
-    const editor = page.getByRole('textbox', { name: 'Description' })
-    await expect(editor).toBeFocused()
-    // "basic", in the first paragraph (in a list item, Shift+Tab would
-    // outdent the item instead of leaving the text).
-    await editor.locator('p').first().click()
-    await page.waitForTimeout(100)
-    // The document's start: at phone width the line wraps, and Home goes
-    // to the start of the line on screen.
-    await page.keyboard.press('ControlOrMeta+Home')
-    for (let i = 0; i < 'A '.length; i++) await page.keyboard.press('ArrowRight')
-    for (let i = 0; i < 'basic'.length; i++) await page.keyboard.press('Shift+ArrowRight')
-    await page.waitForTimeout(100)
-
-    const toolbar = description.getByRole('toolbar', { name: 'Formatting' })
-    if (isMobile) {
-      // A touch screen's toolbar is the row pinned to its keyboard, part of
-      // the field too: a press formats, and focus stays in the text.
-      await toolbar.getByRole('button', { name: 'Bold', exact: true }).click()
-      await expect(editor).toBeFocused()
-      await page.waitForTimeout(100)
-      expect(bodies).toEqual([])
-    } else {
-      // Shift+Tab into the toolbar: still open, nothing sent.
-      await page.keyboard.press('Shift+Tab')
-      await expect(toolbar.getByRole('button', { name: 'Bold', exact: true })).toBeFocused()
-      await page.waitForTimeout(100)
-      await expect(editor).toBeVisible()
-      expect(bodies).toEqual([])
-
-      // Enter formats, and focus goes back to the text; a click formats too.
-      await page.keyboard.press('Enter')
-      await expect(editor).toBeFocused()
-    }
-    await toolbar.getByRole('button', { name: 'Italic', exact: true }).click()
-    await expect(editor).toBeFocused()
-    expect(bodies).toEqual([])
-    await page.keyboard.press('ControlOrMeta+Enter')
-
-    await expect(editor).toHaveCount(0)
-    expect(bodies).toEqual([
-      {
-        description:
-          'A ***basic*** wireless mouse with a **2.4GHz** USB receiver.\n\n' +
-          '- Two buttons and a scroll wheel\n' +
-          '- Runs on one AA battery\n\n' +
-          'See the [setup guide](https://example.com/mouse-setup).',
-      },
-    ])
-  })
-
-  test('long text: the floating toolbar is part of the field; Esc hides it before giving up', async ({ page, isMobile }) => {
+  test('long text: the floating toolbar is part of the field; Esc hides it before saving', async ({ page, isMobile }) => {
     // A touch screen has no floating toolbar: the row pinned to its
-    // keyboard has the words' formats (the test above).
+    // keyboard has the words' formats.
     test.skip(isMobile, 'a laptop: no floating toolbar on a touch screen')
     const bodies = patchBodies(page)
     await openWidget(page)
@@ -512,14 +471,14 @@ test.describe('widget view: editing in place', () => {
     await floating.getByRole('button', { name: 'Italic', exact: true }).click()
     await expect(editor).toBeFocused()
 
-    // Esc hides the floating toolbar only: the field stays open.
+    // Esc hides the floating toolbar only: nothing saved yet.
     await page.keyboard.press('Escape')
     await expect(floating).toHaveCount(0)
     await expect(editor).toBeFocused()
     expect(bodies).toEqual([])
     await page.keyboard.press('ControlOrMeta+Enter')
 
-    await expect(editor).toHaveCount(0)
+    await descriptionSaved(page)
     expect(bodies).toEqual([
       {
         description:
@@ -563,7 +522,7 @@ test.describe('widget view: editing in place', () => {
     expect(bodies).toEqual([])
     await page.keyboard.press('ControlOrMeta+Enter')
 
-    await expect(editor).toHaveCount(0)
+    await descriptionSaved(page)
     expect(bodies).toEqual([
       {
         description:
@@ -576,13 +535,58 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
-  test('a link inside a value still navigates; a click anywhere else edits', async ({ page, context }) => {
+  test('a link in the notes still opens, in a new tab, and changes nothing', async ({ page, context }) => {
+    const bodies = patchBodies(page)
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })
     const opened = context.waitForEvent('page')
     await description.getByRole('link', { name: /setup guide/ }).click()
     await (await opened).close()
-    await expect(page.getByRole('textbox', { name: 'Description' })).toHaveCount(0)
+    await expect(page).toHaveURL('/widgets/1')
+    await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible()
+    expect(bodies).toEqual([])
+  })
+
+  test('a click on paragraph 45 of a long note puts the caret there, and the page stays put (F8)', async ({ page }) => {
+    const description = Array.from({ length: 60 }, (_, index) => `Paragraph ${index + 1} of the notes.`).join('\n\n')
+    await forceMswOverride(page, {
+      method: 'get',
+      path: '*/api/widgets/2',
+      body: {
+        id: 2,
+        name: 'Standing Desk',
+        categoryId: 2,
+        status: 'draft',
+        availableFrom: '2026-03-01T00:00:00Z',
+        assigneeEmail: null,
+        price: '349.00',
+        description,
+        tags: ['bulky', 'featured'],
+        inStock: true,
+        extraCategoryIds: [1, 3],
+        checklist: [],
+        pairings: [],
+        checklistState: 'none',
+      },
+    })
+    const bodies = patchBodies(page)
+    await openWidget(page, 2)
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    const target = editor.getByText('Paragraph 45 of the notes.', { exact: true })
+    await target.scrollIntoViewIfNeeded()
+    const before = await page.evaluate(() => window.scrollY)
+    expect(before).toBeGreaterThan(0)
+    await target.click()
+    await expect(editor).toBeFocused()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' Here.')
+    await expect(editor.getByText('Paragraph 45 of the notes. Here.', { exact: true })).toBeVisible()
+    // Negative control: the first paragraph didn't get it.
+    await expect(editor.getByText('Paragraph 1 of the notes.', { exact: true })).toBeVisible()
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - before)).toBeLessThan(40)
+    await descriptionSaved(page)
+    expect((bodies[0] as { description: string }).description).toContain('Paragraph 45 of the notes. Here.')
   })
 
   test('multi reference: Enter picks, Esc closes the list only, leaving saves', async ({ page }) => {

@@ -186,3 +186,63 @@ test.describe('the tools strip', () => {
     })
   }
 })
+
+// A long note edited inline (the EntityView LongInline story: 80
+// paragraphs, a 900px window). The save's line and a refusal stay in view
+// wherever the typing is (F5), and a problem the editor reports is unsaved
+// at once, so a link clicked within the pause asks.
+test.describe('a long note edited inline', () => {
+  const LONG = 'http://localhost:6180/story.html?id=app-entityview--long-inline'
+  const longNotes = (page: Page) => region(page, 'Notes').getByRole('textbox', { name: 'Notes' })
+  const status = (page: Page) => region(page, 'Notes').locator('[data-slot="editable-value-status"]')
+
+  async function openLong(page: Page, width = 1280) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(LONG)
+    await expect(longNotes(page)).toBeVisible()
+  }
+
+  async function typeInFirst(page: Page, text: string) {
+    await longNotes(page).locator('p').first().click()
+    await expect(longNotes(page)).toBeFocused()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(text)
+  }
+
+  const inViewport = async (page: Page) => {
+    const box = (await status(page).boundingBox())!
+    return box.y >= 0 && box.y + box.height <= 900
+  }
+
+  for (const width of [1280, 393]) {
+    test(`${width}px: a refusal typed at the top shows in view, not 80 paragraphs down, and toasts`, async ({ page }) => {
+      await openLong(page, width)
+      // Negative control: with nothing to say the line takes no room.
+      await expect(status(page)).toBeEmpty()
+      await typeInFirst(page, ' refuse')
+      await expect(status(page).getByText('The server refused it, as a server would.')).toBeVisible({ timeout: 5000 })
+      expect(await inViewport(page)).toBe(true)
+      await expect(page.getByText("Couldn't save Notes")).toBeVisible()
+      // The note's end is far below: the line is stuck to the screen's bottom.
+      const last = (await longNotes(page).locator('p').last().boundingBox())!
+      expect(last.y).toBeGreaterThan(900)
+    })
+  }
+
+  test('a problem the editor reports asks at once when a link is clicked within the pause', async ({ page }) => {
+    await openLong(page)
+    await typeInFirst(page, ' unsavable')
+    await page.getByRole('link', { name: 'Projects' }).click()
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toBeVisible()
+    await expect(page.getByTestId('saves')).toHaveText('0')
+  })
+
+  test('ordinary typing, a link clicked within the pause: saved on the way out, no prompt (negative control)', async ({ page }) => {
+    await openLong(page)
+    await typeInFirst(page, ' Fine.')
+    await page.getByRole('link', { name: 'Projects' }).click()
+    await expect(page.getByText('Projects', { exact: true })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toHaveCount(0)
+  })
+})

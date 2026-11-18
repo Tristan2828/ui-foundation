@@ -21,6 +21,8 @@ export type ApiResponse = {
   foreign?: "html" | "not-json" | "cross-origin-redirect" | "opaque-redirect";
 };
 
+import { keepaliveFor } from "@/lib/page-leaving";
+
 const BASE_URL = "/api";
 
 // Sent unless the caller set them: they tell a proxy in front of the app
@@ -40,7 +42,15 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<ApiRes
   // error that can't be told from being offline; not followed, it comes
   // back as an opaque redirect the gateway can name. A caller can still
   // pass `redirect: "follow"`.
-  const response = await fetch(`${BASE_URL}${path}`, { ...init, headers, redirect: init?.redirect ?? "manual" });
+  // Started as the page goes (an autosave on closing the tab): the browser
+  // finishes it after the page is gone, when the body fits (lib/page-leaving.ts).
+  const keepalive = init?.keepalive ?? (keepaliveFor(init?.body) || undefined);
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers,
+    redirect: init?.redirect ?? "manual",
+    ...(keepalive ? { keepalive } : {}),
+  });
   if (response.type === "opaqueredirect") {
     return { status: response.status, body: undefined, headers: response.headers, foreign: "opaque-redirect" };
   }

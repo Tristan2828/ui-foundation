@@ -122,8 +122,11 @@ test.describe('a11y: editing in place on the view', () => {
         await test.step('refused', () => expectNoAxeViolations(page))
       })
 
-      test('long text open in the rich-text editor', async ({ page }) => {
+      test('long text in the rich-text editor, with the caret in it', async ({ page }) => {
         await page.goto('/widgets/1')
+        // The notes are the editor at rest (inline); it builds itself a
+        // moment after the page.
+        await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible()
         await page.getByRole('region', { name: 'Description' }).getByText('Runs on one AA battery').click()
         await expect(page.getByRole('textbox', { name: 'Description' })).toBeFocused()
         await expectNoAxeViolations(page)
