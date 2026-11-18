@@ -158,6 +158,10 @@ export {
   type EditListAddProps,
   type EditListItemProps,
 } from '@/components/app/edit-in-place'
+// "Keep Mine" for long text after it changed elsewhere: both sides' edits,
+// block by block, or null when they touch the same part (an `editInPlace`'s
+// `rebase`; long text has it by default).
+export { rebaseMarkdown } from '@/lib/markdown-merge'
 export {
   inPlace,
   type InPlaceDateConfig,

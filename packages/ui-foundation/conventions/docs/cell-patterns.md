@@ -26,25 +26,25 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 645–728
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 730–776
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 778–851
-- [18. Editable value](#18-editable-value) · lines 853–1592
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1224–1292
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1294–1330
-  - [A link and its label](#a-link-and-its-label) · lines 1332–1356
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1358–1491
-  - [In a table's rows](#in-a-tables-rows) · lines 1493–1578
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1580–1592
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1594–1660
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1662–1726
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1728–1826
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1828–1857
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1859–1897
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1899–1975
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1977–2063
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2002–2063
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2065–2290
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2219–2290
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2292–2328
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2330–2379
+- [18. Editable value](#18-editable-value) · lines 853–1598
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1230–1298
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1300–1336
+  - [A link and its label](#a-link-and-its-label) · lines 1338–1362
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1364–1497
+  - [In a table's rows](#in-a-tables-rows) · lines 1499–1584
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1586–1598
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1600–1666
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1668–1732
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1734–1832
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1834–1863
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1865–1903
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1905–1981
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1983–2069
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2008–2069
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2071–2296
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2225–2296
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2298–2334
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2336–2385
 
 <!-- /index -->
 
@@ -1050,9 +1050,15 @@ nobody has to click away to save notes. Opt in per field:
   query refetches): with nothing typed waiting, the note shows the new
   text at once, even with the caret in it, which keeps its paragraph.
   Under unsaved typing nothing saves over it: the line says it "changed
-  elsewhere", with **Keep Mine** (save what's typed over it) and **Show
-  Saved** (drop what's typed). The server sending back what it was sent,
-  even trimmed, is not a change: the editor keeps its undo.
+  elsewhere", with **Keep Mine** and **Show Saved** (drop what's typed).
+  Keep Mine keeps both, block by block: what's typed is laid onto the
+  other writer's text and the editor shows the result as it saves; when
+  both changed the same paragraph it says so, and a second Keep Mine
+  replaces theirs. A save the server refuses because another writer saved
+  first (a 409, the record's version check: add-an-entity.md "Saves that
+  don't overwrite") asks the same way, never a plain failure to retry.
+  The server sending back what it was sent, even trimmed, is not a
+  change: the editor keeps its undo.
 - **Leaving mid-save:** a field that leaves the view while a save is in
   flight (a session ending, a parent that stops showing it) still sends
   what was typed after that save started.

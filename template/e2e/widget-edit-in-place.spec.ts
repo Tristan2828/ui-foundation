@@ -8,11 +8,16 @@ import { expect, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui
 // pause after typing stops. Nothing typed is ever lost: a refused save
 // stays open with what was typed and the reason.
 
-// The body of every PATCH the page sends, in order.
+// The body of every PATCH the page sends, in order, without the version
+// each one carries (baseUpdatedAt: the widget it was built on), which
+// "two writers" below checks on its own.
 function patchBodies(page: Page) {
   const bodies: unknown[] = []
   page.on('request', (request) => {
-    if (request.method() === 'PATCH') bodies.push(request.postDataJSON())
+    if (request.method() !== 'PATCH') return
+    const body = { ...(request.postDataJSON() as Record<string, unknown>) }
+    delete body.baseUpdatedAt
+    bodies.push(body)
   })
   return bodies
 }
@@ -1043,5 +1048,105 @@ test.describe('widget view: the pairings edited in place (a reference in each it
     await page.getByRole('textbox', { name: 'Pairing 1 note' }).press('Enter')
     await expect(items(page)).toHaveText(['Furniture'])
     expect(bodies).toEqual([{ pairings: [{ categoryId: 2, note: '' }] }])
+  })
+})
+
+// Two writers (Roadmap 405, the RichTextEditor review's F4): another tab, a
+// phone or an AI chat saves the widget while this tab has it open and
+// doesn't know. Each save carries the version it was built on
+// (baseUpdatedAt), so this tab's stale save is refused (a 409), nothing is
+// written, and the field asks.
+test.describe('widget view: two writers', () => {
+  const THEIRS = 'Added on the phone.'
+
+  // Another writer saves, straight to the API: this tab's cache doesn't hear of it.
+  async function saveElsewhere(page: Page) {
+    await page.evaluate(async (added) => {
+      const widget = await (await fetch('/api/widgets/1')).json()
+      await fetch('/api/widgets/1', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ description: `${widget.description}\n\n${added}`, baseUpdatedAt: widget.updatedAt }),
+      })
+    }, THEIRS)
+  }
+
+  // What's stored now, as the server has it.
+  const stored = (page: Page) =>
+    page.evaluate(async () => ((await (await fetch('/api/widgets/1')).json()) as { description: string }).description)
+
+  // Types at the end of the first paragraph: a different block from theirs.
+  async function typeMine(page: Page, text: string) {
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await editor.locator('p').first().click()
+    await page.keyboard.press('End')
+    await page.keyboard.type(text)
+  }
+
+  test('a stale save is refused, nothing is written, and the field says it changed elsewhere', async ({ page }) => {
+    const sent: Record<string, unknown>[] = []
+    const answers: number[] = []
+    // This tab's own saves (the app's requests say X-Requested-With; the
+    // other writer's fetch doesn't).
+    page.on('request', (request) => {
+      if (request.method() === 'PATCH' && request.headers()['x-requested-with']) sent.push(request.postDataJSON())
+    })
+    page.on('response', (response) => {
+      if (response.request().method() === 'PATCH' && response.request().headers()['x-requested-with']) answers.push(response.status())
+    })
+    await openWidget(page)
+    await saveElsewhere(page)
+    await typeMine(page, ' Mine.')
+
+    const description = page.getByRole('region', { name: 'Description' })
+    await expect(description.getByText(/changed elsewhere/)).toBeVisible({ timeout: 5000 })
+    await expect(description.getByRole('button', { name: 'Keep Mine' })).toBeVisible()
+    expect(answers).toEqual([409])
+    expect(sent[0]).toHaveProperty('baseUpdatedAt', '2026-11-01T09:00:01.000Z')
+    // Nothing of this tab's was written over theirs, and it stays that way past the pause.
+    await page.waitForTimeout(2000)
+    expect(answers).toEqual([409])
+    expect(await stored(page)).toContain(THEIRS)
+    expect(await stored(page)).not.toContain('Mine.')
+    // What was typed is still there.
+    await expect(page.getByRole('textbox', { name: 'Description' })).toContainText('Mine.')
+  })
+
+  test('"Keep Mine" keeps both: typed text laid onto the other writer\'s, block by block', async ({ page }) => {
+    await openWidget(page)
+    await saveElsewhere(page)
+    await typeMine(page, ' Mine.')
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByRole('button', { name: 'Keep Mine' }).click()
+
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toContainText('Mine.')
+    await expect(editor).toContainText(THEIRS)
+    await descriptionSaved(page)
+    const saved = await stored(page)
+    expect(saved).toContain('USB receiver. Mine.')
+    expect(saved).toContain(THEIRS)
+    await expect(description.getByText(/changed elsewhere/)).toHaveCount(0)
+  })
+
+  test('"Show Saved" drops what was typed and shows the other writer\'s text; nothing is sent', async ({ page }) => {
+    await openWidget(page)
+    await saveElsewhere(page)
+    await typeMine(page, ' Mine.')
+    const description = page.getByRole('region', { name: 'Description' })
+    await description.getByRole('button', { name: 'Show Saved' }).click()
+    const editor = page.getByRole('textbox', { name: 'Description' })
+    await expect(editor).toContainText(THEIRS)
+    await expect(editor).not.toContainText('Mine.')
+    await page.waitForTimeout(1500)
+    expect(await stored(page)).not.toContain('Mine.')
+  })
+
+  test('with nobody else saving, the same typing just saves (negative control)', async ({ page }) => {
+    await openWidget(page)
+    await typeMine(page, ' Mine.')
+    await descriptionSaved(page)
+    expect(await stored(page)).toContain('USB receiver. Mine.')
+    await expect(page.getByRole('region', { name: 'Description' }).getByText(/changed elsewhere/)).toHaveCount(0)
   })
 })

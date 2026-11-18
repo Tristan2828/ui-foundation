@@ -49,6 +49,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { clearPageLeaving, markPageLeaving } from '@/lib/page-leaving'
 import { flushPendingEdits, hasPendingEdits, subscribePendingEdits } from '@/lib/pending-edits'
 import { caretSpot, placeCaretWhenReady, spotAtPoint, type CaretSpot } from './edit-caret'
+import { rebaseMarkdown } from '@/lib/markdown-merge'
 import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './edit-in-place'
 import type { EditInPlaceStore } from './edit-in-place-store'
 import { SAVED_FOR_MS } from './edit-row'
@@ -181,6 +182,15 @@ function useStore(): EditInPlaceStore {
   return store
 }
 
+// What the store reads: the field, with its `rebase` decided.
+type FieldConfig = Omit<EditInPlace, 'rebase'> & { rebase?: (base: unknown, mine: unknown, theirs: unknown) => unknown }
+
+// Long text's "Keep Mine": both sides kept block by block (rebaseMarkdown).
+function rebaseText(base: unknown, mine: unknown, theirs: unknown): unknown {
+  if (typeof base !== 'string' || typeof mine !== 'string' || typeof theirs !== 'string') return null
+  return rebaseMarkdown(base, mine, theirs)
+}
+
 export function EditableValue(props: EditableValueProps) {
   return <EditableField {...props} />
 }
@@ -207,10 +217,12 @@ export function EditableField({
   const autosave = always || Boolean(edit.autosave)
 
   // The latest config, read by the store whenever it needs it (`inline`
-  // is always editable to it).
-  const config = useRef(edit)
+  // is always editable to it; long text keeps both sides of a conflict
+  // block by block unless it says otherwise).
+  const config = useRef<FieldConfig>({ ...edit, rebase: undefined })
   useLayoutEffect(() => {
-    config.current = always && !edit.alwaysEditable ? { ...edit, alwaysEditable: true } : edit
+    const rebase = edit.rebase === false ? undefined : (edit.rebase ?? (edit.kind === 'long-text' ? rebaseText : undefined))
+    config.current = { ...edit, alwaysEditable: always || edit.alwaysEditable, rebase }
   })
   useEffect(() => store.register(key, () => config.current), [store, key])
 

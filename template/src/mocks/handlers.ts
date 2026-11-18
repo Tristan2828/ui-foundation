@@ -2,7 +2,7 @@
 // store in ./data. This is what lets the whole UI run with no backend at all.
 import { http, HttpResponse } from "msw";
 import { authHandlers, clientErrorHandlers, environmentHandlers, pushHandlers } from "@tristan2828/ui-foundation/mocks";
-import { deletedWidgets, nextWidgetId, widgetCategories, widgets } from "./data";
+import { deletedWidgets, nextWidgetId, nextWidgetVersion, widgetCategories, widgets } from "./data";
 import type { components } from "../api/schema";
 
 type Widget = components["schemas"]["Widget"];
@@ -245,6 +245,7 @@ export const handlers = [
       id: nextWidgetId(),
       // Last, so a client-sent checklistState can't survive the spread.
       checklistState: checklistStateOf(input.checklist ?? []),
+      updatedAt: nextWidgetVersion(),
     };
     widgets.push(widget);
     return HttpResponse.json(widget, { status: 201 });
@@ -255,12 +256,20 @@ export const handlers = [
     if (!widget) {
       return HttpResponse.json({ detail: `Widget ${params.id} not found` }, { status: 404 });
     }
-    const input = (await request.json()) as WidgetUpdate;
+    const { baseUpdatedAt, ...input } = (await request.json()) as WidgetUpdate;
     const issues = validateWidgetInput(input, { partial: true });
     if (issues.length > 0) {
       return HttpResponse.json({ detail: issues }, { status: 422 });
     }
-    Object.assign(widget, input);
+    // Built on a version that's no longer the widget's: another writer saved
+    // since (ConflictError). Nothing is written. Compared as instants.
+    if (baseUpdatedAt !== undefined && Date.parse(baseUpdatedAt) !== Date.parse(widget.updatedAt)) {
+      return HttpResponse.json(
+        { detail: "This changed since you opened it (another tab, device or chat saved it). Nothing was saved." },
+        { status: 409 },
+      );
+    }
+    Object.assign(widget, input, { updatedAt: nextWidgetVersion() });
     // Read back in ascending id order, like the backend.
     if (input.extraCategoryIds) widget.extraCategoryIds = [...input.extraCategoryIds].sort((a, b) => a - b);
     if (input.checklist) widget.checklist = trimChecklist(input.checklist);

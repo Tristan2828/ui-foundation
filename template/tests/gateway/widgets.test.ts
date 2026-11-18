@@ -39,6 +39,7 @@ function makeWidget(overrides: Partial<Widget> = {}): Widget {
     checklist: [],
     pairings: [],
     checklistState: "none",
+    updatedAt: "2026-11-01T09:00:00.000Z",
     ...overrides,
   };
 }
@@ -669,5 +670,76 @@ describe("restoreWidget", () => {
     await expect(restoreWidget(1)).rejects.toMatchObject({
       kind: "notfound",
     } satisfies Partial<AppError>);
+  });
+});
+
+// openapi.yaml: Widget.updatedAt is the widget's version;
+// WidgetUpdate.baseUpdatedAt is the version the update was built on, and a
+// PATCH whose baseUpdatedAt is no longer the widget's answers 409
+// (ConflictError, HTTPErrorBody { detail }). contracts.ts: a 409 is
+// AppError kind "conflict".
+describe("updateWidget: version check (baseUpdatedAt)", () => {
+  const base = "2026-03-01T12:00:00Z";
+
+  it("sends baseUpdatedAt in the PATCH body when given", async () => {
+    const fetchMock = stubFetch(
+      jsonResponse(makeWidget({ id: 3, name: "Renamed", updatedAt: "2026-03-01T12:05:00Z" }), 200),
+    );
+
+    await updateWidget(3, { name: "Renamed", baseUpdatedAt: base });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init?.method ?? (fetchMock.mock.calls[0][0] as Request).method).toBe("PATCH");
+    const body = (await calledJsonBody(fetchMock)) as WidgetUpdate;
+    expect(body).toEqual({ name: "Renamed", baseUpdatedAt: base });
+  });
+
+  it("rejects a 409 with AppError{kind:'conflict'} carrying the detail as its message", async () => {
+    const detail = "Widget 3 changed since this update was built";
+    stubFetch(jsonResponse({ detail }, 409));
+
+    await expect(
+      updateWidget(3, { name: "Renamed", baseUpdatedAt: base }),
+    ).rejects.toMatchObject({
+      kind: "conflict",
+      message: detail,
+    } satisfies Partial<AppError>);
+  });
+
+  it("does not report a 422 on the same call as a conflict", async () => {
+    stubFetch(
+      jsonResponse(
+        { detail: [{ loc: ["body", "baseUpdatedAt"], msg: "Input should be a valid datetime", type: "datetime_parsing" }] },
+        422,
+      ),
+    );
+
+    const caught = await updateWidget(3, { name: "Renamed", baseUpdatedAt: "not-a-date" }).then(
+      () => expect.unreachable("updateWidget should have thrown"),
+      (err: unknown) => err as AppError,
+    );
+    expect(caught.kind).toBe("validation");
+    expect(caught.kind).not.toBe("conflict");
+  });
+
+  it("does not report a 500 on the same call as a conflict", async () => {
+    stubFetch(jsonResponse({ detail: "Internal Server Error" }, 500));
+
+    const caught = await updateWidget(3, { name: "Renamed", baseUpdatedAt: base }).then(
+      () => expect.unreachable("updateWidget should have thrown"),
+      (err: unknown) => err as AppError,
+    );
+    expect(caught.kind).toBe("server");
+    expect(caught.kind).not.toBe("conflict");
+  });
+
+  it("resolves a 200 with the Widget, including its new updatedAt", async () => {
+    const updated = makeWidget({ id: 3, name: "Renamed", updatedAt: "2026-03-01T12:05:00Z" });
+    stubFetch(jsonResponse(updated, 200));
+
+    const result = await updateWidget(3, { name: "Renamed", baseUpdatedAt: base });
+
+    expect(result).toEqual(updated);
+    expect(result.updatedAt).toBe("2026-03-01T12:05:00Z");
   });
 });

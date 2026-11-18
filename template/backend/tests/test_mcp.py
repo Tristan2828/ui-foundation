@@ -723,6 +723,46 @@ async def test_update_changes_only_what_was_sent_and_logs_before_and_after(
     assert json.loads(entry.after) == {"price": "30.00", "status": "archived"}
 
 
+async def test_an_update_built_on_an_old_read_is_refused_not_saved_over(
+    web: AsyncClient, token: str, session: AsyncSession
+) -> None:
+    """A chat that read the widget, then someone saved it in the app: the
+    chat's update with the version it read is refused (Roadmap 405)."""
+    read = (await web.get("/api/widgets/1")).json()
+    saved = await web.patch(
+        "/api/widgets/1", json={"description": "From the app."}
+    )
+    assert saved.status_code == 200
+    text, is_error = await call(
+        web,
+        token,
+        "update",
+        {"url": "/widgets/1", "fields": {"description": "From the chat.", "baseUpdatedAt": read["updatedAt"]}},
+    )
+    assert is_error
+    assert "changed since you opened it" in text and "baseUpdatedAt" in text
+    widget = await session.get(Widget, 1)
+    assert widget is not None
+    await session.refresh(widget)
+    assert widget.description == "From the app."
+
+    # Built on what it says now: saved (negative control).
+    text, is_error = await call(
+        web,
+        token,
+        "update",
+        {"url": "/widgets/1", "fields": {"description": "From the chat.", "baseUpdatedAt": saved.json()["updatedAt"]}},
+    )
+    assert not is_error, text
+    assert text.startswith("Updated widget /widgets/1. Changed description.")
+
+
+async def test_update_tool_tells_the_chat_to_send_the_version(web: AsyncClient, token: str) -> None:
+    listed = (await rpc(web, token, "tools/list")).json()["result"]["tools"]
+    update = next(tool for tool in listed if tool["name"] == "update")
+    assert "baseUpdatedAt" in update["description"]
+
+
 async def test_update_that_changes_nothing_says_so_and_still_logs(web: AsyncClient, token: str, session: AsyncSession) -> None:
     text, _ = await call(web, token, "update", {"url": "/widgets/1", "fields": {"name": "Wireless Mouse"}})
     assert "Nothing changed" in text

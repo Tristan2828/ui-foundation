@@ -35,4 +35,10 @@ LIST_RESPONSES = {**UNAUTHORIZED, **SERVER_ERROR}
 CREATE_RESPONSES = {**UNAUTHORIZED, **VALIDATION, **SERVER_ERROR}
 GET_RESPONSES = {**UNAUTHORIZED, **NOT_FOUND, **SERVER_ERROR}
 UPDATE_RESPONSES = {**UNAUTHORIZED, **NOT_FOUND, **VALIDATION, **SERVER_ERROR}
+# An update that checks the version it was built on (foundation_backend.versions):
+# a 409 when another writer saved since.
+VERSION_CONFLICT: ResponsesDict = {
+    409: {"model": HTTPErrorBody, "description": "The record changed since the version the update was built on. Nothing was written."}
+}
+VERSIONED_UPDATE_RESPONSES = {**UPDATE_RESPONSES, **VERSION_CONFLICT}
 DELETE_RESPONSES = {**UNAUTHORIZED, **NOT_FOUND, **SERVER_ERROR}

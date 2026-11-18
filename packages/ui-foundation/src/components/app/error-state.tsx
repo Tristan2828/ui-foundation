@@ -32,6 +32,7 @@ const TITLE_BY_KIND: Record<AppError['kind'], string> = {
   notfound: 'Not found',
   auth: 'Not authorized',
   rate_limited: 'Too many attempts',
+  conflict: 'Changed elsewhere',
   validation: 'Check the form',
   proxy_auth: 'Sign-in expired',
 }

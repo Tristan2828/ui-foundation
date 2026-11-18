@@ -16,6 +16,8 @@ from enum import Enum
 from sqlalchemy import Column, DateTime, Text, Time
 from sqlmodel import Field, Relationship, SQLModel
 
+from foundation_backend.versions import touch
+
 from foundation_backend.models import (
     User as User,
     Session as Session,
@@ -153,6 +155,10 @@ class Widget(SQLModel, table=True):
     # clears it, and every other query leaves deleted widgets out
     # (`Widget.deleted_at.is_(None)`) unless it asks (`deleted=true`).
     deleted_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    # The widget's version (migration 0017): when it was last written. Every
+    # write sets it (foundation_backend.versions.touch); an update that sends
+    # a different baseUpdatedAt is a 409, so no writer overwrites another.
+    updated_at: datetime = Field(default_factory=touch, sa_column=Column(DateTime(timezone=True), nullable=False))
     # lazy="selectin": loaded with every widget query in one extra SELECT —
     # the async session can't lazy-load on attribute access later.
     tag_links: list[WidgetTagLink] = Relationship(

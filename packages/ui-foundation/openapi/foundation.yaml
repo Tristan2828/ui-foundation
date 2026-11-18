@@ -436,6 +436,18 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/HTTPErrorBody" }
+    ConflictError:
+      # Optional: an app that checks no versions leaves it out, and
+      # check-contract doesn't ask for it.
+      x-optional: true
+      description: >
+        The record changed since the version the request was built on
+        (another tab, device or AI chat saved in between). Nothing was
+        written. The client fetches the record again and lets the person
+        choose; the gateway's toAppError makes it AppError kind "conflict".
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/HTTPErrorBody" }
     SignInExpiredError:
       description: The pending sign-in is missing, expired or out of tries. Start again with POST /auth/login.
       content:

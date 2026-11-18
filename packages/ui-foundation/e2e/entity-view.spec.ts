@@ -417,15 +417,20 @@ test.describe('EntityView, long text that autosaves', () => {
     await expect(saves(page)).toHaveText('0')
   })
 
-  test('"Keep Mine" saves what was typed over the value saved elsewhere', async ({ page }) => {
+  test('"Keep Mine" keeps both: what was typed, laid onto the value saved elsewhere block by block', async ({ page }) => {
     await openAutosave(page)
     const notes = region(page, 'Notes')
     const editor = notes.getByRole('textbox', { name: 'Notes' })
     await typeAtEnd(page, editor, ' Mine.')
     await changeElsewhere(page)
+    await expect(notes.getByText(/Keep Mine adds your changes/)).toBeVisible()
     await notes.getByRole('button', { name: 'Keep Mine' }).click()
-    await expect(page.getByTestId('saved-notes')).toHaveText('Pack the shared shelves first. Mine.', { timeout: 5000 })
-    await expect(saves(page)).toHaveText('1')
+    // The editor shows both, and both are what's saved.
+    await expect(editor).toContainText('Mine.')
+    await expect(editor).toContainText('Added in another tab.')
+    await expect(saves(page)).toHaveText('1', { timeout: 5000 })
+    await expect(page.getByTestId('saved-notes')).toContainText('Pack the shared shelves first. Mine.')
+    await expect(page.getByTestId('saved-notes')).toContainText('Added in another tab.')
   })
 
   test('without autosave, Esc on a changed long text asks before throwing it away (F7)', async ({ page }) => {

@@ -93,6 +93,9 @@ function translate(status: number, body: unknown, headers?: Headers): AppError {
   const message = (body as HTTPErrorBody | undefined)?.detail ?? `Request failed with status ${status}`;
   if (status === 404) return { kind: "notfound", message };
   if (status === 401) return { kind: "auth", message };
+  // The record changed since the version the save was built on: nothing
+  // was written (ConflictError in openapi/foundation.yaml).
+  if (status === 409) return { kind: "conflict", message };
   if (status === 429) {
     const retryAfterSeconds = parseRetryAfter(headers?.get("retry-after") ?? null);
     return retryAfterSeconds === undefined

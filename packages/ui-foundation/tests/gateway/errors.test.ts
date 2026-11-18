@@ -49,3 +49,24 @@ describe("toAppError 422 with a plain message", () => {
     });
   });
 });
+
+// openapi/foundation.yaml's ConflictError: a 409 with HTTPErrorBody, sent
+// when the record changed since the version a save was built on.
+describe("toAppError 409 (ConflictError)", () => {
+  it("is kind conflict, with the server's sentence as the message", () => {
+    expect(toAppError(409, { detail: "This widget changed since you opened it." })).toEqual({
+      kind: "conflict",
+      message: "This widget changed since you opened it.",
+    });
+  });
+
+  it("is conflict with no body too", () => {
+    expect(toAppError(409, undefined).kind).toBe("conflict");
+  });
+
+  it("no other status is a conflict (negative control: 400, 403, 410, 412, 500)", () => {
+    for (const status of [400, 403, 410, 412, 500]) {
+      expect(toAppError(status, { detail: "x" }).kind).toBe("server");
+    }
+  });
+});

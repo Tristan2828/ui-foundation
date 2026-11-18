@@ -3,30 +3,31 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 45–67
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–880
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
-  - Step 2: `npm run gen:api` · lines 119–120
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 133–142
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–758
-  - Step 7: Register routes · lines 759–774
-  - Step 8: Add Playwright specs for all three screens · lines 775–862
-  - Step 9: Register the nav entry and route names · lines 863–877
-  - Step 10: `npm run verify`. · lines 878–880
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 882–1351
-  - [The record view](#the-record-view) · lines 1035–1192
-  - [Forms](#forms) · lines 1194–1265
-  - [Dialogs](#dialogs) · lines 1267–1298
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1300–1351
-- [What not to copy](#what-not-to-copy) · lines 1353–1386
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1388–1405
-- [Deleting](#deleting) · lines 1407–1438
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1440–1461
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1463–1472
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1475–1517
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1519–1555
+- [The reference files](#the-reference-files) · lines 46–68
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 70–881
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 112–119
+  - Step 2: `npm run gen:api` · lines 120–121
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 122–133
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 134–143
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 144–150
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 151–759
+  - Step 7: Register routes · lines 760–775
+  - Step 8: Add Playwright specs for all three screens · lines 776–863
+  - Step 9: Register the nav entry and route names · lines 864–878
+  - Step 10: `npm run verify`. · lines 879–881
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1352
+  - [The record view](#the-record-view) · lines 1036–1193
+  - [Forms](#forms) · lines 1195–1266
+  - [Dialogs](#dialogs) · lines 1268–1299
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1301–1352
+- [What not to copy](#what-not-to-copy) · lines 1354–1387
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1389–1406
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1408–1454
+- [Deleting](#deleting) · lines 1456–1487
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1489–1510
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1512–1521
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1524–1566
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1568–1604
 
 <!-- /index -->
 
@@ -1403,6 +1404,54 @@ asyncio is a `MissingGreenlet` and a 500.
   `foundation_backend.testing.signed_in`). Never stand
   a `User(...)` in for `get_current_user` in an override: a detached user
   never expires, so the test passes and the route fails live.
+
+## Saves that don't overwrite
+
+A record edited in more than one place (a laptop tab, a phone, an AI chat
+through MCP) needs a version, or the last save wins: a phone left open on
+a note, typed into after the laptop changed it, replaces the laptop's
+work. The fix is optimistic concurrency, the same for every entity:
+
+- **The record carries its version: `updatedAt`** (`updated_at`, a
+  `timestamptz` every write sets with `foundation_backend.versions.touch()`,
+  never null, commented in its migration). Not a counter or an ETag: most
+  tables already have one, a person or an AI reading the row knows what it
+  means, and it rides in the JSON body, where an MCP tool call can send it
+  back too (an `If-Match` header can't reach a chat). It's compared for
+  equality, never ordered, so clocks don't matter.
+- **An update may send the version it was built on: `baseUpdatedAt`**, an
+  optional field of `<Entity>Update` that isn't a column. The router locks
+  the row, calls `check_version(record.updated_at, base)` before changing
+  anything, and sets `updated_at = touch()`. A version that's no longer the
+  record's is a **409** (`ConflictError`, `VersionConflict`): nothing is
+  written. No version sent: no check, so older clients and scripts keep
+  working. `responses=VERSIONED_UPDATE_RESPONSES` documents it, and the
+  PATCH in `openapi.yaml` lists `"409": ConflictError`.
+- **The client sends it with every single-field save:** `useRecordUpdate`'s
+  `withVersion: (update, record) => ({ ...update, baseUpdatedAt:
+  record.updatedAt })`. The record it gets is the latest the server
+  returned (a burst of saves chains through each answer's version), so a
+  save never conflicts with the tab's own. The gateway needs no change:
+  `toAppError` makes the 409 an `AppError` of kind `conflict`, and
+  `useRecordUpdate` refetches the record.
+- **What the person sees.** A quick action's toast gives the 409's reason,
+  and the refetch shows what the other writer saved. A field edited in
+  place asks: "This changed elsewhere", with **Keep Mine** and **Show
+  Saved**, and nothing saves until a pick. Long text's Keep Mine keeps
+  both, block by block (`rebaseMarkdown`); when both changed the same
+  paragraph it says so, and only a second Keep Mine replaces theirs. Any
+  other field's Keep Mine saves what's typed over theirs. An `editInPlace`
+  takes its own `rebase`, or `rebase: false`.
+- **A chat** gets the same check through the entity's `McpEntity.update`:
+  the `update` tool tells it to send the `updatedAt` it read as
+  `baseUpdatedAt`, and a 409 comes back as a refusal that says to fetch
+  the record again. `edit_text` is safe without it (its `old` text must
+  still be there).
+- **Copy:** `template/backend/app/routers/widgets.py` (`update_widget`),
+  migration `0017_widget_updated_at.py`, `WidgetOut.updated_at` and
+  `WidgetUpdate.base_updated_at` in `app/schemas.py`, the PATCH mock in
+  `src/mocks/handlers.ts`, `withVersion` in `use-widgets.ts`, and the
+  "two writers" specs in `e2e/widget-edit-in-place.spec.ts`.
 
 ## Deleting
 
