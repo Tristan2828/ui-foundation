@@ -6,8 +6,12 @@
 // and saving round-trip exactly: an untouched document comes back byte for
 // byte, and an edited one keeps every block the person didn't change as it
 // was written (src/lib/markdown-merge.ts). If an edit can't be saved
-// without rewriting another block, `onProblem` says so and `onChange`
-// isn't called: the draft stays on screen, nothing is saved in its place.
+// without rewriting another block, `onChange` isn't called (the draft
+// stays on screen, nothing is saved in its place), the editor marks itself
+// invalid, and `onProblem` says why; with no `onProblem`, the editor says
+// it itself, inside the field. A form gives `onProblem` and holds its
+// submit on it (add-an-entity.md "The form"), or Save would send the last
+// text that could be saved and say it worked.
 //
 // Raw HTML in the text shows as its characters, as <Markdown> shows it,
 // and nothing pasted or typed can add markup.
@@ -73,7 +77,11 @@ export type RichTextEditorProps = {
   defaultValue: string
   /** The Markdown to save, after every edit: untouched blocks as originally written. */
   onChange: (markdown: string) => void
-  /** Why the edit can't be saved as it stands, or `null` once it can. */
+  /**
+   * Why the edit can't be saved as it stands, or `null` once it can. A form
+   * sets it as the field's error and refuses submit while it stands. Left
+   * out, the editor shows the message inside the field instead.
+   */
   onProblem?: (message: string | null) => void
   /** Shown but not editable (while a save is in flight). */
   readOnly?: boolean
