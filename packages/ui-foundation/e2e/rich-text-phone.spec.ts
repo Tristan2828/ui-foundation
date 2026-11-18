@@ -174,6 +174,23 @@ test.describe('on a phone', () => {
     await expectTappable(fixture(page, 'folding').locator('[data-slot=fold-button]:not(.invisible)').first())
   })
 
+  test('Full Screen is in the Aa panel: the field fills the screen, the row stays on it, and the button leaves', async ({ page }) => {
+    await page.goto(FEATURES)
+    await tapText(page, 'formats')
+    await bar(page).getByRole('button', { name: 'All Formats' }).click()
+    await page.getByRole('group', { name: 'All Formats' }).getByRole('button', { name: 'Full Screen', exact: true }).click()
+    const field = fixture(page, 'formats').locator('[data-slot=rich-text-editor]')
+    await expect(field).toHaveAttribute('data-full-screen', 'true')
+    await expect(page.getByRole('group', { name: 'All Formats' })).toHaveCount(0)
+    await expect(editor(page, 'formats')).toBeFocused()
+    await expect(bar(page)).toBeVisible()
+    const box = (await bar(page).boundingBox())!
+    expect(Math.abs(box.y + box.height - page.viewportSize()!.height)).toBeLessThanOrEqual(1)
+    await bar(page).getByRole('button', { name: 'All Formats' }).click()
+    await page.getByRole('group', { name: 'All Formats' }).getByRole('button', { name: 'Leave Full Screen', exact: true }).click()
+    await expect(field).not.toHaveAttribute('data-full-screen', 'true')
+  })
+
   for (const theme of ['light', 'dark'] as const) {
     test(`the row and the panel have zero axe violations (${theme})`, async ({ page }) => {
       await page.goto(`${FEATURES}&theme=${theme}`)

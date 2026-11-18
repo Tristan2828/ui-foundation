@@ -1648,7 +1648,8 @@ test.describe('paste and addresses', () => {
     await expect(box.locator('code a, a code')).toHaveCount(0)
   })
 
-  test('an address pasted as plain text is a link; pasted over words, it links them', async ({ page }) => {
+  test('an address pasted as plain text is a link; pasted over words, it links them', async ({ page, isMobile }) => {
+    test.skip(isMobile, "a laptop's line: on a phone the pasted address wraps, and Home goes to the start of its second line")
     const box = editor(page, 'links')
     await caretAtEnd(page, 'links')
     await paste(page, 'links', { 'text/plain': ' ' })
@@ -1756,6 +1757,7 @@ test.describe('paste and addresses', () => {
 
 // Full screen holds focus (the review's F20).
 test.describe('full screen', () => {
+  test.skip(({ isMobile }) => isMobile, "a laptop's toolbar button: on a phone it's in the keyboard bar's Aa panel (rich-text-phone.spec.ts)")
   test.beforeEach(async ({ page }) => {
     await page.goto(FEATURES)
     await expect(editor(page, 'links')).toBeVisible()
