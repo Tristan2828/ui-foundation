@@ -9,6 +9,15 @@ are listed on the
 
 ## Unreleased
 
+Merged with no version bump; the next release carries it.
+
+- **The rich-text editor split into its parts** (the RichTextEditor
+  review's F26). Internal only: `milkdown-editor.tsx` keeps the wiring,
+  and the link box, the page box, the heading and task-item node views
+  and the link helpers each have a file beside it. The editor no longer
+  imports from editing in place: `messageOf` moved to `src/lib/refusal.ts`,
+  and a lint rule keeps it that way. Nothing to do to upgrade.
+
 ## 4.127.0 — Saves that don't overwrite, a stepper look, star ratings, and counts on view pills
 
 npm package and `ui-foundation-backend` 4.127.0 (the backend gains
@@ -67,12 +76,6 @@ doesn't take them.
     `RatingInput` puts its label above the stars: five 44px targets don't
     fit a narrow value column.
 
-- **The rich-text editor split into its parts** (the RichTextEditor
-  review's F26). Internal only: `milkdown-editor.tsx` keeps the wiring,
-  and the link box, the page box, the heading and task-item node views
-  and the link helpers each have a file beside it. The editor no longer
-  imports from editing in place: `messageOf` moved to `src/lib/refusal.ts`,
-  and a lint rule keeps it that way. Nothing to do to upgrade.
 - **A record's flags in their tone in the facts rail** (Roadmap 378): a
   set flag reads at a glance, "Blocked" in the destructive tone and
   "Needs you" in the warning tone. No new API: a `badges` fact's item
