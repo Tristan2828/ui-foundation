@@ -6,7 +6,7 @@
 import { lift, setBlockType, toggleMark, wrapIn } from '@milkdown/kit/prose/commands'
 import { Fragment, type MarkType, type Node as ProseNode, type NodeType, type Schema } from '@milkdown/kit/prose/model'
 import { liftListItem, sinkListItem, wrapInList } from '@milkdown/kit/prose/schema-list'
-import { TextSelection, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
+import { TextSelection, type Command, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { CalloutKind } from '@/lib/markdown-callout'
 import { HIGHLIGHT_COLORS, type HighlightColor } from '@/lib/markdown-highlight'
 
@@ -202,6 +202,23 @@ function convertList(tr: Transaction, type: NodeType, checked: boolean | null): 
   return tr
 }
 
+// The list the caret is in, joined to a list of its type right before or
+// after it. Two lists side by side are one in Markdown ("- a" then "- b"
+// read back as one list), so left apart the note would read back other
+// than it shows, and the merge refuses the edit.
+function joinNeighbours(tr: Transaction): Transaction {
+  const $from = tr.selection.$from
+  for (let depth = $from.depth; depth > 0; depth--) {
+    if (!isList($from.node(depth))) continue
+    const after = $from.after(depth)
+    if (tr.doc.resolve(after).nodeAfter?.type === $from.node(depth).type) tr.join(after)
+    const before = $from.before(depth)
+    if (tr.doc.resolve(before).nodeBefore?.type === $from.node(depth).type) tr.join(before)
+    return tr
+  }
+  return tr
+}
+
 /**
  * Turns a format on, or off when it's already on, where the caret is.
  * Returns false when it can't apply there. `link` isn't run here: the
@@ -221,13 +238,13 @@ export function toggleFormat(state: EditorState, dispatch: Dispatch, id: FormatI
   const level = HEADING_LEVEL[id] ?? TOGGLE_LEVEL[id]
   if (level) {
     if (on) return setBlockType(paragraph)(state, dispatch)
-    return setBlockType(schema.nodes.heading, { level, toggle: id in TOGGLE_LEVEL })(state, dispatch)
+    return outOfLists(state, dispatch, setBlockType(schema.nodes.heading, { level, toggle: id in TOGGLE_LEVEL }))
   }
   // The toolbar's Toggle heading: a heading turned toggle or plain, its
   // level kept; any other line a toggle `##`.
   if (id === 'toggleHeading') {
     const here = headingHere(state)
-    return setBlockType(schema.nodes.heading, { level: here?.level ?? 2, toggle: !here?.toggle })(state, dispatch)
+    return outOfLists(state, dispatch, setBlockType(schema.nodes.heading, { level: here?.level ?? 2, toggle: !here?.toggle }))
   }
   const kind = calloutKindOf(id)
   if (kind) return toggleCallout(state, dispatch, kind)
@@ -239,9 +256,11 @@ export function toggleFormat(state: EditorState, dispatch: Dispatch, id: FormatI
     case 'table':
       return on ? false : insertBlock(state, dispatch, createTable(schema), true)
     case 'codeBlock':
-      return on ? setBlockType(paragraph)(state, dispatch) : setBlockType(schema.nodes.code_block)(state, dispatch)
+      return on ? setBlockType(paragraph)(state, dispatch) : outOfLists(state, dispatch, setBlockType(schema.nodes.code_block))
     case 'quote':
-      return on ? lift(state, dispatch) : wrapIn(schema.nodes.blockquote)(state, dispatch)
+      if (on) return lift(state, dispatch)
+      // A list item's line can't be wrapped where it is: out of the list first.
+      return wrapIn(schema.nodes.blockquote)(state, dispatch) || outOfLists(state, dispatch, wrapIn(schema.nodes.blockquote))
     case 'bullets':
     case 'numbers':
     case 'tasks': {
@@ -252,14 +271,56 @@ export function toggleFormat(state: EditorState, dispatch: Dispatch, id: FormatI
         dispatch(convertList(state.tr, type, checked))
         return true
       }
-      let wrapped: Transaction | null = null
-      if (!wrapInList(type)(state, (tr) => (wrapped = tr))) return false
-      dispatch(convertList(wrapped!, type, checked))
-      return true
+      const toList: Command = (from, send) => {
+        let wrapped: Transaction | null = null
+        if (!wrapInList(type)(from, (tr) => (wrapped = tr))) return false
+        send?.(joinNeighbours(convertList(wrapped!, type, checked)))
+        return true
+      }
+      // A heading or a code block is made a plain line first: a list
+      // item starts with one (Ctrl+Shift+5 on a heading, the review's F24).
+      const parent = state.selection.$from.parent
+      if (parent.type !== paragraph && parent.isTextblock) return chain(state, dispatch, [setBlockType(paragraph), toList])
+      return toList(state, dispatch)
     }
     default:
       return false
   }
+}
+
+// Commands run one after another, each on the state the last left, as one
+// transaction (one undo step). False, with nothing done, when one can't.
+function chain(state: EditorState, dispatch: Dispatch, commands: Command[]): boolean {
+  const tr = state.tr
+  let current = state
+  for (const command of commands) {
+    let made: Transaction | null = null
+    if (!command(current, (next) => (made = next))) return false
+    const done = made as Transaction | null
+    if (!done) continue
+    for (const step of done.steps) tr.step(step)
+    tr.setSelection(done.selection.getBookmark().resolve(tr.doc))
+    current = current.apply(done)
+  }
+  dispatch(tr.scrollIntoView())
+  return true
+}
+
+// `command` on the caret's line once it's out of every list it's in: a
+// list item's line can't be a heading or a code block (Ctrl+Shift+1 on an
+// item, the review's F24).
+function outOfLists(state: EditorState, dispatch: Dispatch, command: Command): boolean {
+  if (!ancestor(state, isList)) return command(state, dispatch)
+  const lift = liftListItem(state.schema.nodes.list_item)
+  const commands: Command[] = []
+  let current = state
+  while (ancestor(current, isList)) {
+    let lifted: Transaction | null = null
+    if (!lift(current, (tr) => (lifted = tr)) || !lifted) return false
+    current = current.apply(lifted)
+    commands.push(lift)
+  }
+  return chain(state, dispatch, [...commands, command])
 }
 
 // The line the caret is in as plain text (Notion's "Text"): out of a
@@ -278,7 +339,10 @@ function toText(state: EditorState, dispatch: Dispatch): boolean {
 // callout taken away, its blocks kept.
 function toggleCallout(state: EditorState, dispatch: Dispatch, kind: CalloutKind): boolean {
   const callout = ancestor(state, (node) => node.type.name === 'callout')
-  if (!callout) return wrapIn(state.schema.nodes.callout, { kind })(state, dispatch)
+  if (!callout) {
+    const wrap = wrapIn(state.schema.nodes.callout, { kind })
+    return wrap(state, dispatch) || outOfLists(state, dispatch, wrap)
+  }
   const { node, pos } = callout
   if (node.attrs.kind !== kind) {
     dispatch(state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, kind }))
@@ -311,10 +375,13 @@ function insertBlock(state: EditorState, dispatch: Dispatch, block: ProseNode, i
   const empty = $from.parent.content.size === 0
   const followed = index + 1 < container.childCount
   const content = Fragment.from(into && followed ? [block] : [block, state.schema.nodes.paragraph.create()])
-  const at = empty ? index : index + 1
-  if (!container.canReplace(at, empty ? index + 1 : at, content)) return false
-  const from = empty ? $from.before(depth) : $from.after(depth)
-  const tr = state.tr.replaceWith(from, empty ? $from.after(depth) : from, content)
+  // An empty line is replaced, unless it can't be (a list item's first
+  // line): then, as after words, the block goes under it.
+  const replace = empty && container.canReplace(index, index + 1, content)
+  const at = replace ? index : index + 1
+  if (!container.canReplace(at, replace ? index + 1 : at, content)) return false
+  const from = replace ? $from.before(depth) : $from.after(depth)
+  const tr = state.tr.replaceWith(from, replace ? $from.after(depth) : from, content)
   tr.setSelection(TextSelection.near(tr.doc.resolve(into ? from + 1 : from + block.nodeSize), 1))
   dispatch(tr.scrollIntoView())
   return true

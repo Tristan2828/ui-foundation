@@ -597,7 +597,10 @@ the popup, which for this toolbar is always) fail axe.
 
 **The slash menu (3.18)** (`rich-text-slash.ts`, `rich-text-slash-menu.tsx`)
 lists the blocks a line can become (Heading to Code block) after a "/"
-typed at the start of a top-level paragraph; what follows the "/"
+typed at the start of a line of text (4.126: any line but a code
+block's, in a list item, a quote, a callout or a table cell too, listing
+only the picks that can apply there, found by running each pick's
+command and dropping its transaction); what follows the "/"
 filters it (names and keywords: `/h2`, `/todo`). Only a typed "/" opens
 it (a plugin records where; one already in the text never does), and it
 closes for good once the span stops qualifying (the caret leaves it, a
@@ -608,6 +611,25 @@ while it's open. Its keys are view props, ahead of Milkdown's keymap,
 whose Enter would split the line. A pick is one transaction (one undo
 brings the "/…" back). Placed against the field like the floating
 toolbar, for the same reason.
+
+**Typing (4.126)** (`rich-text-input-rules.ts`, `rich-text-edges.ts`,
+`rich-text-shortcuts.ts`). Milkdown's input rules, with three swapped:
+typed `---` runs the Divider button's insert (a line under it, the caret
+there); `*words*` and `**words**` need a non-space against the marks, as
+CommonMark does, so `5 * 3 * 2` stays; and `==words==` highlights as
+typed. A paragraph's trailing spaces aren't written (`&#x20;` before). At
+the note's edges, ArrowDown past a last code block, table, quote, callout
+or divider (ArrowUp before a first one) adds a line, and a click under
+the last block (above the first) puts the caret on a line there: no
+trailing-paragraph rule, so nothing is saved until one is asked for, and
+no gap cursor, which can't stand by a code block. Backspace at a list
+item's start lifts it out of its list first; Tab and Shift+Tab move a
+list item and stay in the text, and indent a code block's lines; on a
+plain line Tab still leaves the editor. Undo and redo are taken outright:
+ProseMirror's keymap, with nothing to redo, ran Shift+Mod+Z's unshifted
+Mod+Z. The block keys reach across a heading and a list (out of the list
+first, a plain line first), and a new list beside one of its type joins
+it, since two lists side by side read back as one.
 
 **Highlight, full screen, Indent and Outdent, the new task item (4.48)**
 (`rich-text-highlight-menu.tsx`, `src/lib/markdown-highlight.ts`).
