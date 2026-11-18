@@ -7,6 +7,40 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## Unreleased
+
+### Rich text: an edit no longer rewrites what nobody touched (RichTextEditor review F2, F12, F23)
+
+Nothing an app must change. All three are in `src/lib/markdown-merge.ts`,
+which assembles a rich-text save from the original Markdown.
+
+- **A code fence keeps its info string.** The editor loads only a fence's
+  language, so an edit anywhere saved every untouched fence without the
+  rest of its info string (` ```js title="app.js" ` came back as
+  ` ```js `, `{1,3}` line marks went too). The merge now leaves what the
+  editor can't hold out of its comparison, so the untouched fence matches
+  and is kept as written. `content()`, which decides that a block the
+  editor shows its own way lost nothing, now counts every field
+  `meaning()` compares (a heading's level, a list's numbering, a link's
+  title, a fence's language and info string), taken from the node's own
+  fields rather than a list of its own; a unit test changes each field of
+  each fixture's nodes and fails where the two disagree. An edit inside the
+  fence itself still saves it without the info string (the editor has
+  nowhere to keep it).
+- **A Windows (CRLF) note stays CRLF.** One edit rewrote other untouched
+  multi-line blocks (callouts, lists) to LF, leaving mixed endings. Blocks
+  are compared with line endings normalised, and what the editor writes
+  goes back in the document's own ending.
+- **Select all and delete saves an empty text.** A link definition
+  (`[r]: https://…`) the text used and nothing uses any more (no reference
+  to it, no link to its address) goes with the text; it was saved alone,
+  invisible, so the field looked empty and wasn't. A definition nothing
+  used to begin with is kept.
+- Tests: `fenceMeta` and `crlf` fixtures in `MARKDOWN_FIXTURES`, so the
+  round trip's "editing the last block keeps every other block as written"
+  covers them in the browser; unit tests in `tests/markdown-merge.test.ts`.
+  Each fails on the code before this change.
+
 ## 4.125.0 — The tab bar holds the page still; mocks rejoin a restarted worker
 
 npm package and `ui-foundation-backend` 4.125.0 (the backend is unchanged
