@@ -8,6 +8,7 @@ import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
+import { editInPlace } from '../src/components/app/edit-in-place'
 import { EntityView, type EntityViewSection } from '../src/components/app/entity-view'
 import { factValue, type EntityViewFact } from '../src/components/app/entity-view-facts'
 
@@ -34,6 +35,53 @@ describe('a fact draws its kind', () => {
     expect(factValue({ kind: 'badges', items: [] })).toBeNull()
     // A count of 0 is a value, not empty.
     expect(factValue({ kind: 'count', count: 0 })).not.toBeNull()
+  })
+})
+
+describe('a badge takes a tone (4.123)', () => {
+  const flags = factValue({
+    kind: 'badges',
+    items: [{ label: 'Blocked', tone: 'destructive' }, { label: 'Needs you', tone: 'warning' }, 'Plain'],
+  })
+  const badges = (html: string) => html.match(/<span[^>]*data-slot="badge"[^>]*>/g) ?? []
+
+  it("as the outline badge in that tone's text colour, the word kept", () => {
+    const [blocked, needsYou] = badges(render(flags))
+    expect(blocked).toContain('data-tone="destructive"')
+    expect(blocked).toContain('text-destructive-text')
+    expect(needsYou).toContain('data-tone="warning"')
+    expect(needsYou).toContain('text-warning-text')
+    expect(render(flags)).toContain('>Blocked<')
+    expect(render(flags)).toContain('>Needs you<')
+  })
+
+  it('and an untoned badge is the plain outline, as before', () => {
+    const plain = badges(render(flags))[2]
+    expect(plain).not.toContain('data-tone')
+    expect(plain).not.toMatch(/-text\b/)
+    expect(badges(render(factValue({ kind: 'badges', items: ['Finance'] })))[0]).toBe(plain)
+  })
+
+  it('folded into Details (a phone), the tone comes along, edited in place there too', () => {
+    const sections: EntityViewSection[] = [
+      { title: 'Purpose', tab: 'Purpose', content: <p>Swap the shelving.</p> },
+      {
+        title: 'Facts',
+        placement: 'rail',
+        facts: [
+          {
+            label: 'Flags',
+            kind: 'badges',
+            items: [{ label: 'Blocked', tone: 'destructive' }],
+            edit: editInPlace<string[]>({ kind: 'multi', value: ['blocked'], save: async () => {}, control: () => null }),
+          },
+        ],
+      },
+    ]
+    const html = render(<EntityView isLoading={false} back={{ to: '/', label: 'Items' }} title="Shelving swap" factsRail sections={sections} />)
+    expect(html).not.toContain('data-slot="entity-view-facts-rail"')
+    expect(html).toMatch(/data-slot="badge"[^>]*data-tone="destructive"|data-tone="destructive"[^>]*data-slot="badge"/)
+    expect(html).toContain('aria-label="Edit Flags"')
   })
 })
 
