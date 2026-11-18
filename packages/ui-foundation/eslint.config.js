@@ -27,6 +27,24 @@ export default defineConfig([
     },
   },
   {
+    // The editor sits below editing in place (edit-in-place-store, the
+    // layer that opens it): its files word a refusal through
+    // src/lib/refusal.ts, never by importing the layer above.
+    files: ['src/components/app/milkdown-editor.tsx', 'src/components/app/rich-text-*.{ts,tsx}', 'src/components/app/page-restore.ts'],
+    ignores: ['src/**/*.fixtures.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            ...INTERNAL_BOUNDARIES,
+            { group: ['**/edit-in-place', '**/edit-in-place-*'], message: 'The editor is below editing in place: use @/lib/refusal (messageOf).' },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // shadcn-generated primitives: shadcn's convention exports a component
     // alongside its `*Variants` helper — a false positive for fast-refresh.
     files: ['src/components/ui/**/*.{ts,tsx}'],

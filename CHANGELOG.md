@@ -9,6 +9,8 @@ are listed on the
 
 ## Unreleased
 
+Merged with no version bump; the next release carries it.
+
 - **Saves that don't overwrite, for forms** (the rest of 4.127.0's version
   check). An edit form can send the version of the record it opened with,
   as editing in place does, so a form left open while another tab, phone
@@ -39,6 +41,13 @@ are listed on the
   `version.send(update)`, start the save's `onError` with
   `if (version.refused(error)) return`, and pass
   `conflict={version.conflict}` to `EntityForm` or `FormDialog`.
+
+- **The rich-text editor split into its parts** (the RichTextEditor
+  review's F26). Internal only: `milkdown-editor.tsx` keeps the wiring,
+  and the link box, the page box, the heading and task-item node views
+  and the link helpers each have a file beside it. The editor no longer
+  imports from editing in place: `messageOf` moved to `src/lib/refusal.ts`,
+  and a lint rule keeps it that way. Nothing to do to upgrade.
 
 ## 4.127.0 — Saves that don't overwrite, a stepper look, star ratings, and counts on view pills
 

@@ -48,8 +48,7 @@
 // A field marked `alwaysEditable` is also open from the moment it joins:
 // it's the value itself, never "the open field", so it never closes and
 // opening another field leaves it alone.
-import type { AppError } from '@/api/contracts'
-import { refusalReason } from '@/hooks/use-record-update'
+import { messageOf } from '@/lib/refusal'
 import { flushPendingEdits } from '@/lib/pending-edits'
 
 type SafeParse = (
@@ -168,13 +167,6 @@ const ECHOES = 4
 
 const sameAsJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
-/** Why a save failed, in words to show beside what was being saved. */
-export function messageOf(error: unknown): string {
-  if (error && typeof error === 'object' && 'kind' in error) return refusalReason(error as AppError)
-  if (error instanceof Error) return error.message
-  return 'The save failed. Try again.'
-}
-
 type InFlight = { promise: Promise<boolean>; draft: unknown }
 
 // The refusal's messages for the value's own fields, or null for none.
@@ -182,6 +174,9 @@ function fieldErrorsOf(config: EditFieldConfig | undefined, cause: unknown): Rec
   const found = config?.fieldErrors?.(cause)
   return found && Object.keys(found).length > 0 ? found : undefined
 }
+
+// Re-exported for the components that word a refusal beside the store's.
+export { messageOf }
 
 export class EditInPlaceStore {
   private configs = new Map<string, () => EditFieldConfig>()
