@@ -1,6 +1,6 @@
 // A few equal things in a record (record page standard R10): the phases of
 // a plan, the stores a price is compared at, a handful of options. One data
-// shape, four looks, each the record picks for what it shows:
+// shape, five looks, each the record picks for what it shows:
 //
 // - `cards`: a row of equal cards that wraps (one column on a phone), each
 //   its title, its state as a badge and its fields as short label/value
@@ -14,6 +14,13 @@
 // - `panels`: a panel per item side by side, every detail labelled above
 //   its value, stacking on a phone. For things with several details each
 //   that need to read as separate.
+// - `stepper` (4.127): the items in order as a row of numbered steps, each
+//   done, current or upcoming (an item's `step`), picking the one item
+//   whose panel shows under it; it opens on the current step. For a
+//   sequence where one is running and the others are looked at in turn (a
+//   plan's phases). The steps are a tablist: arrow keys, Home and End move
+//   and pick; on a phone the row scrolls sideways in its own box, as the
+//   record's tab bar does.
 //
 // The parts are the record's own: a state is a `Badge` in the outline
 // style (design-language.md "The three badge styles"), a field is the
@@ -28,8 +35,9 @@
 // `actions`, its own buttons (Edit, Remove), at the end of its title line,
 // or the table's last column. `wide` gives an item the whole row in
 // `cards` and `panels`, for content that needs it (an editor open).
-import { Fragment, useState, type ReactNode } from 'react'
-import { ChevronDownIcon } from 'lucide-react'
+import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
+import { CheckIcon, ChevronDownIcon } from 'lucide-react'
 import { cn } from 'cn'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -39,7 +47,14 @@ import { EmptyText } from './empty-value'
 import { FIELD_LABEL, FIELD_ROW, FIELD_ROW_BASE, FIELD_VALUE } from './field-rows'
 
 /** Which look a set of equal items takes. */
-export type EqualItemsLook = 'cards' | 'table' | 'featured' | 'panels'
+export type EqualItemsLook = 'cards' | 'table' | 'featured' | 'panels' | 'stepper'
+
+/**
+ * Where an item is in a sequence, for `look="stepper"`: `done` (a filled
+ * step with a check), `current` (ringed, "Current" under its name, its
+ * panel's border the accent) or `upcoming` (outlined, the default).
+ */
+export type EqualItemStep = 'done' | 'current' | 'upcoming'
 
 /**
  * A state's tone, from design-language.md "Semantic tones": `neutral` (the
@@ -87,6 +102,15 @@ export type EqualItem = {
   actions?: ReactNode
   /** The whole row in the `cards` and `panels` looks (an editor open in it). */
   wide?: boolean
+  /** For `look="stepper"`: done, current or upcoming (the default). */
+  step?: EqualItemStep
+  /**
+   * For `look="stepper"`: a step that needs a look while another is shown
+   * (an unsaved change that needs an answer in it): a small warning dot on
+   * its step, and these words at the end of the step's name ("needs an
+   * answer").
+   */
+  attention?: string
 }
 
 export type EqualItemsProps = {
@@ -95,9 +119,19 @@ export type EqualItemsProps = {
   look?: EqualItemsLook
   /**
    * For `look="featured"`: the item shown in full. Defaults to the first
-   * one; an id that matches none falls back to the first too.
+   * one; an id that matches none falls back to the first too. For
+   * `look="stepper"`: the step shown first, defaulting to the `current`
+   * one, else the first.
    */
   featuredId?: string
+  /**
+   * For `look="stepper"`: the step shown, when the app keeps it (in the
+   * URL, say). An id that matches none falls back as `featuredId` does.
+   * Without it, the stepper keeps its own.
+   */
+  selectedId?: string
+  /** For `look="stepper"`: called with the step picked. */
+  onSelectedChange?: (id: string) => void
   /**
    * For `look="featured"`: the other items open when it first shows.
    * Each toggle opens and closes on its own after that.
@@ -472,9 +506,130 @@ function FeaturedToggle({
   )
 }
 
+// The items as numbered steps joined by a line, a tablist picking the one
+// panel shown under it (Base UI's tabs: arrow keys, Home and End move and
+// pick, Tab goes on into the panel). A step's name is what it shows plus
+// hidden words ("Step 2: Phase 2: Build, done"), never an aria-label, so
+// the visible text stays in the name. Wider than its column (a phone, many
+// steps), the row scrolls sideways in its own box, never the page, and
+// keeps the shown step in view.
+function Stepper({
+  items,
+  label,
+  level,
+  noFieldsText,
+  featuredId,
+  selectedId,
+  onSelectedChange,
+}: LookProps & Pick<EqualItemsProps, 'featuredId' | 'selectedId' | 'onSelectedChange'>) {
+  const has = (id: string | undefined): id is string => id !== undefined && items.some((item) => item.id === id)
+  const first = has(featuredId) ? featuredId : (items.find((item) => item.step === 'current') ?? items[0]!).id
+  const [own, setOwn] = useState(first)
+  const shownId = has(selectedId) ? selectedId : has(own) ? own : first
+  const listRef = useRef<HTMLDivElement>(null)
+  // Keep the shown step in the row's view when it scrolls sideways; the
+  // row only, never the page.
+  useLayoutEffect(() => {
+    const list = listRef.current
+    const tab = list?.querySelector<HTMLElement>('[data-slot="equal-item-step"][data-active]')
+    if (!list || !tab || list.scrollWidth <= list.clientWidth) return
+    const left = tab.offsetLeft - list.offsetLeft
+    if (left < list.scrollLeft || left + tab.offsetWidth > list.scrollLeft + list.clientWidth) {
+      list.scrollLeft = left - (list.clientWidth - tab.offsetWidth) / 2
+    }
+  }, [shownId])
+  return (
+    <TabsPrimitive.Root
+      data-slot="equal-items-stepper"
+      value={shownId}
+      onValueChange={(next) => {
+        const id = String(next)
+        setOwn(id)
+        onSelectedChange?.(id)
+      }}
+      className="flex min-w-0 flex-col gap-3"
+    >
+      <TabsPrimitive.List
+        ref={listRef}
+        activateOnFocus
+        aria-label={label}
+        className="relative flex max-w-full overflow-x-auto overflow-y-hidden [scrollbar-width:thin]"
+      >
+        {items.map((item, index) => {
+          const step = item.step ?? 'upcoming'
+          return (
+            <TabsPrimitive.Tab
+              key={item.id}
+              value={item.id}
+              data-slot="equal-item-step"
+              data-step={step}
+              aria-current={step === 'current' ? 'step' : undefined}
+              className={cn(
+                'group/step relative flex min-h-11 min-w-18 flex-1 basis-0 flex-col items-center gap-1 rounded-md px-1 pt-1 pb-1.5 text-center text-xs text-muted-foreground outline-none',
+                'hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset',
+                'data-active:font-semibold data-active:text-foreground',
+                // The line from the step before, under the marks.
+                'before:absolute before:top-4 before:right-1/2 before:h-0.5 before:w-full first:before:hidden',
+                step === 'upcoming' ? 'before:bg-border' : 'before:bg-primary',
+              )}
+            >
+              <span
+                aria-hidden="true"
+                data-slot="equal-item-step-mark"
+                className={cn(
+                  'relative z-10 grid size-6.5 shrink-0 place-items-center rounded-full border-2 text-xs font-bold tabular-nums',
+                  step === 'done'
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : step === 'current'
+                      ? 'border-primary bg-card text-foreground'
+                      : 'border-border bg-card text-muted-foreground',
+                  // The shown step: a ring round its mark.
+                  'group-data-active/step:ring-2 group-data-active/step:ring-ring group-data-active/step:ring-offset-2 group-data-active/step:ring-offset-card',
+                )}
+              >
+                {step === 'done' ? <CheckIcon className="size-3.5" /> : index + 1}
+                {item.attention && (
+                  <span
+                    data-slot="equal-item-step-attention"
+                    className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border border-card bg-warning-text"
+                  />
+                )}
+              </span>
+              {/* The hidden words sit inside the clamped line, so the name
+                  reads "Phase 1, done" with no gap a block would add. */}
+              <span className="line-clamp-3 max-w-full min-w-0 break-words">
+                <span className="sr-only">{`Step ${index + 1}: `}</span>
+                {item.title}
+                {step === 'done' && <span className="sr-only">, done</span>}
+                {item.attention && <span className="sr-only">{`, ${item.attention}`}</span>}
+              </span>
+              {step === 'current' && <span className="font-normal text-muted-foreground">Current</span>}
+            </TabsPrimitive.Tab>
+          )
+        })}
+      </TabsPrimitive.List>
+      {items.map((item) => (
+        <TabsPrimitive.Panel
+          key={item.id}
+          value={item.id}
+          data-slot="equal-item"
+          data-step={item.step ?? 'upcoming'}
+          className={cn(
+            'flex min-w-0 flex-col gap-3 rounded-lg border bg-card p-4 text-card-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+            item.step === 'current' ? 'border-primary' : 'border-border',
+          )}
+        >
+          <Title item={item} level={level} />
+          <Body item={item} noFieldsText={noFieldsText} rows="beside" />
+        </TabsPrimitive.Panel>
+      ))}
+    </TabsPrimitive.Root>
+  )
+}
+
 /**
  * A few equal, related things inside a record view (record page standard
- * R10): one data shape, four looks.
+ * R10): one data shape, five looks.
  *
  * ```tsx
  * <EqualItems
@@ -491,8 +646,9 @@ function FeaturedToggle({
  *
  * `cards` for a few things with little to say about each, `table` for
  * things compared on the same values, `featured` when one is current or
- * best, `panels` when each has several details and must read as separate
- * (design-language.md "A few equal things"). An item's own `content` (an
+ * best, `panels` when each has several details and must read as separate,
+ * `stepper` for a sequence with a current step, its steps picking the one
+ * panel shown (design-language.md "A few equal things"). An item's own `content` (an
  * editor) goes under its fields at full width, its `actions` (Edit, Remove)
  * at its title line's end; `wide` gives it the whole row of cards or panels.
  */
@@ -501,6 +657,8 @@ export function EqualItems({
   look = 'cards',
   featuredId,
   defaultOpenIds,
+  selectedId,
+  onSelectedChange,
   label,
   headingLevel = 3,
   titleColumn = 'Name',
@@ -530,6 +688,8 @@ export function EqualItems({
         />
       ) : look === 'featured' ? (
         <Featured {...shared} featuredId={featuredId} defaultOpenIds={defaultOpenIds} />
+      ) : look === 'stepper' ? (
+        <Stepper {...shared} featuredId={featuredId} selectedId={selectedId} onSelectedChange={onSelectedChange} />
       ) : look === 'panels' ? (
         <Panels {...shared} />
       ) : (

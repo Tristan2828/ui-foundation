@@ -264,6 +264,7 @@ export {
   type EqualItem,
   type EqualItemField,
   type EqualItemState,
+  type EqualItemStep,
   type EqualItemTone,
   type EqualItemsLook,
   type EqualItemsProps,
