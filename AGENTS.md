@@ -50,7 +50,10 @@ direction and the queue) and any open item in
   change. Bump the version (and the backend package's to match) in the PR
   that finishes a feature or carries a fix an app needs now, with its
   `CHANGELOG.md` entry; a PR that's one step of a larger piece doesn't
-  bump, and goes out with the one that does.
+  bump, and goes out with the one that does. When several PRs that touch
+  the same shared lines (the CHANGELOG, doc indexes, the harness spec
+  list) are green at once, they go out as one release PR, merged once
+  (`docs/ARCHITECTURE.md` "Releasing").
 
 ## Scope and stopping
 
