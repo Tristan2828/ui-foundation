@@ -9,7 +9,35 @@ are listed on the
 
 ## Unreleased
 
-Merged with no version bump; the next release carries it.
+## 4.126.0 — The RichTextEditor review: no quiet losses, typing that keeps up, and a phone toolbar
+
+npm package and `ui-foundation-backend` 4.126.0 (the backend is unchanged
+apart from its version). The fixes from a full review of the
+RichTextEditor and editing in place (findings F1–F3, F5–F25; F4's
+server half, a version check with a 409, follows in its own release),
+plus two `/testing` changes. Three changes in behaviour are marked
+**(behaviour)**: Esc on a changed `long-text` draft asks, the template's
+notes are inline, and `goto()`/`reload()` wait for a page's API
+requests to settle.
+
+### How an app adopts it
+
+1. Bump `@tristan2828/ui-foundation` to `^4.126.0` (and
+   `ui-foundation-backend==4.126.0`) and run `ui-foundation sync`.
+2. Every form with a `RichTextEditor` passes `onProblem` and sets a field
+   error from it, so a refused edit blocks Save (the template's
+   `widget-form.tsx`). Without it the editor now shows the refusal in the
+   field itself, but the form still submits.
+3. Optional: make a record's notes inline (`inline: true`, the new
+   default in the docs), as the template's Widget Description is.
+4. Optional: an app fixture that waits for `/api/` requests to settle
+   before `goto()`/`reload()` can drop its copy; loading-state tests can
+   move from `delayMs` to `forceMswOverride(..., { hold: true })` and
+   `release()`.
+5. `<Toaster />` must be mounted (the shell already does): the first
+   refused or failed autosave of a run toasts.
+
+### The rest of this release, as merged
 
 - **RichTextEditor on a phone** (the RichTextEditor review's F11, the
   looks picked as 1A, 2A, 3A and 4A). On a touch screen only (`pointer:
