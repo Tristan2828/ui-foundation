@@ -552,7 +552,7 @@ export class EditInPlaceStore {
   /**
    * The field's saved value (its config's `value`) may have changed
    * elsewhere: another tab, a phone, an AI chat, the form. Call it whenever
-   * the value changes. An open field with nothing of its own unsaved or
+   * the value changes. An open autosaving field with nothing of its own unsaved or
    * saving shows it, starting its control over (`revision`): true when it
    * did, so the caret can be put back (F4). One with unsaved typing gets a
    * conflict (`conflict`, its message), and nothing saves until the person
@@ -563,7 +563,10 @@ export class EditInPlaceStore {
   refresh(key: string): boolean {
     const state = this.state(key)
     const config = this.configs.get(key)?.()
-    if (state.status === 'closed' || !config) return false
+    // Only a field that saves itself (notes): a field opened by a click
+    // holds its draft until it's saved, and a control that saves each
+    // pick itself (MultiPick) changes the value it shows while open.
+    if (state.status === 'closed' || !config || !this.autosaves(key)) return false
     const isEqual = config.isEqual ?? sameAsJson
     const seen = this.seen.has(key) ? this.seen.get(key) : state.initial
     if (isEqual(config.value, seen)) return false

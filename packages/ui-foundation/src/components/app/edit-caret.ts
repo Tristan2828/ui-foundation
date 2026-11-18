@@ -106,14 +106,23 @@ export function placeCaretWhenReady(container: () => Element | null, spot: Caret
   let left = frames
   let placed = false
   let handle = 0
+  // Once the person acts (a key, a click), the caret is theirs.
+  const stop = () => {
+    cancelAnimationFrame(handle)
+    document.removeEventListener('keydown', stop, true)
+    document.removeEventListener('pointerdown', stop, true)
+  }
   const step = () => {
     const editable = container()?.querySelector<HTMLElement>('[contenteditable="true"]')
     if (editable && placeCaret(editable, spot)) {
-      if (placed) return
+      if (placed) return stop()
       placed = true
     }
     if (--left > 0) handle = requestAnimationFrame(step)
+    else stop()
   }
+  document.addEventListener('keydown', stop, true)
+  document.addEventListener('pointerdown', stop, true)
   handle = requestAnimationFrame(step)
-  return () => cancelAnimationFrame(handle)
+  return stop
 }

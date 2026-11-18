@@ -654,3 +654,16 @@ describe('leaving the page while autosaving', () => {
     expect(store.editing).toBe(false)
   })
 })
+
+describe('a value changing under a field that does not save itself', () => {
+  it('is left alone: no reload, no conflict (a control that saves each pick itself)', async () => {
+    const store = new EditInPlaceStore()
+    let value: string[] = ['a']
+    store.register('labels', () => ({ value, kind: 'multi', save: () => Promise.resolve() }) as EditFieldConfig)
+    await store.start('labels')
+    value = ['a', 'b']
+    expect(store.refresh('labels')).toBe(false)
+    expect(store.state('labels')).not.toHaveProperty('conflict')
+    expect(store.state('labels')).not.toHaveProperty('revision')
+  })
+})
