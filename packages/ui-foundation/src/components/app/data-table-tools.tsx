@@ -20,7 +20,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { IconAction } from './icon-action'
 import type { IconComponent } from './icon-component'
-import { PillFilter } from './pill-filter'
+import { PillGroup } from './pill-filter'
 import { togglePick, type ColumnsPick } from './table-columns'
 
 // --- L3: saved views ----------------------------------------------------------
@@ -34,6 +34,16 @@ export type DataTableView = {
   label?: string
   /** The columns this view shows; while it's on they win over the Columns menu. */
   columns?: readonly string[]
+  /**
+   * How many records the view holds, after its label: "Needs a Look · 3"
+   * (4.127). The app counts them with its own query; the table doesn't.
+   * null, undefined and 0 show no count, as the sidebar's counts and
+   * EntityView's tab counts don't, and past 99 it reads "99+". It's part
+   * of the pill's name ("Needs a Look, 3"). A view that has the key at all,
+   * even undefined while the count loads, keeps room for a two-digit count
+   * from the first render, so the pills don't move when it arrives.
+   */
+  count?: number | null
 }
 
 // The pills on one line that scrolls sideways under 48rem, wrapping wider.
@@ -44,17 +54,17 @@ export function ViewPills({
   onValueChange,
   label,
 }: {
-  views: readonly { id: string; label: string }[]
+  views: readonly { id: string; label: string; count?: number | null; counted?: boolean }[]
   value: string | null
   onValueChange: (id: string) => void
   label: string
 }) {
   return (
     <div data-slot="data-table-views" className="max-md:-mx-1 max-md:overflow-x-auto max-md:p-1">
-      <PillFilter
+      <PillGroup
         label={label}
         allLabel={null}
-        options={views.map((view) => ({ value: view.id, label: view.label }))}
+        options={views.map((view) => ({ value: view.id, label: view.label, count: view.count, counted: view.counted }))}
         // No view's id matches '' (filters set by hand), so none is pressed.
         value={value ?? ''}
         onValueChange={onValueChange}

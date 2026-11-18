@@ -106,6 +106,36 @@ describe('DataTable views (L3)', () => {
   })
 })
 
+describe("a view's count (4.127)", () => {
+  const counted = (count: number | null | undefined) =>
+    render({ views: { ...VIEWS, growing: { ...VIEWS.growing, label: 'Needs a Look', count } }, activeView: null, onViewChange: noop })
+  const pill = (html: string) => html.match(/<button[^>]*aria-pressed="false"[^>]*>.*?<\/button>/)![0]
+
+  it('follows the label as "· 3", named "Needs a Look, 3"', () => {
+    const html = pill(counted(3))
+    expect(html).toContain('aria-label="Needs a Look, 3"')
+    expect(html).toMatch(/data-slot="pill-text"[^>]*>Needs a Look · 3<\/span>/)
+  })
+
+  it('shows none for 0, null or undefined, past 99 "99+"', () => {
+    for (const count of [0, null, undefined]) {
+      expect(pill(counted(count))).toMatch(/data-slot="pill-text"[^>]*>Needs a Look<\/span>/)
+      expect(pill(counted(count))).not.toContain('aria-label')
+    }
+    expect(pill(counted(120))).toMatch(/data-slot="pill-text"[^>]*>Needs a Look · 99\+<\/span>/)
+  })
+
+  it('keeps room for two digits from the first render, for a view with the key', () => {
+    for (const count of [3, 0, null, undefined]) expect(pill(counted(count))).toContain('data-reserve="Needs a Look · 00"')
+  })
+
+  it('leaves a view without one as it was', () => {
+    const html = render({ views: VIEWS, activeView: null, onViewChange: noop })
+    expect(html).not.toContain('data-reserve')
+    expect(html).not.toContain('pill-label')
+  })
+})
+
 describe('DataTable row actions (L9)', () => {
   it('one action is its icon, named by its label, in a pinned last column', () => {
     const html = render({ rowActions: () => [{ label: 'Water', icon: DropletIcon, onSelect: noop }] })

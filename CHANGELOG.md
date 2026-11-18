@@ -11,6 +11,16 @@ are listed on the
 
 Merged with no version bump; the next release carries it.
 
+- **A saved view's count on its pill** (Roadmap 376, question 4). A
+  `DataTable` view (`DataTableView`) takes `count?: number | null`, shown
+  after its label as "Needs a Look · 3" and part of the pill's name
+  ("Needs a Look, 3"). The app supplies it from its own query; the table
+  computes nothing. null, undefined and 0 show no count (as the sidebar's
+  counts and EntityView's tab counts), past 99 "99+". A view that has the
+  key, even `undefined` while it loads, keeps room for a two-digit count,
+  so no pill moves when it arrives, on a phone's scrolling row too.
+  Additive: views without `count` render as before. cell-patterns.md "A
+  view can carry a count".
 - **Saves that don't overwrite: a record's version and a 409** (the
   RichTextEditor review's F4, server half; #374 was the client half). A
   stale tab, a phone or an AI chat could replace what another writer
