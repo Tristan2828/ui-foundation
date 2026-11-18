@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1352
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1363
   - [The record view](#the-record-view) · lines 1036–1193
-  - [Forms](#forms) · lines 1195–1266
-  - [Dialogs](#dialogs) · lines 1268–1299
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1301–1352
-- [What not to copy](#what-not-to-copy) · lines 1354–1387
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1389–1406
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1408–1454
-- [Deleting](#deleting) · lines 1456–1487
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1489–1510
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1512–1521
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1524–1566
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1568–1604
+  - [Forms](#forms) · lines 1195–1277
+  - [Dialogs](#dialogs) · lines 1279–1310
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1312–1363
+- [What not to copy](#what-not-to-copy) · lines 1365–1398
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1400–1417
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1419–1465
+- [Deleting](#deleting) · lines 1467–1498
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1500–1521
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1523–1532
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1535–1577
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1579–1615
 
 <!-- /index -->
 
@@ -651,8 +651,8 @@ is a filled-in example while the Widgets demo is still here).
      a number or integer too), `long-text` (Markdown, `RichTextEditor`
      with `onProblem={props.onProblem}`; notes are `inline: true` by
      default, the control passing `inline={props.inline}` and
-     `toolbar={props.inline ? 'floating' : true}` with no `autoFocus`,
-     as Widget's Description does; a short one opened by a click is
+     `toolbar="floating"` (on the form too: "Forms" below) with no
+     `autoFocus`, as Widget's Description does; a short one opened by a click is
      `autosave: true` with `autoFocus`), `choice` (a
      select or a single reference: its list opens with the field,
      `defaultOpen`, non-modal, `onChange={(v) => props.commit(v)}`,
@@ -1216,6 +1216,17 @@ shape (4.85):
   a status choice gives each option its `kind`, so its icons are
   `StatusMark`'s in their colours (below).
 - **Order:** required first, the status next, long text last.
+- **Notes** (a Markdown long text: notes, a description, a body) are a
+  `RichTextEditor` with `toolbar="floating"` on the form as in place
+  (4.127): no bar above the text, the formats over selected words, every
+  block in the slash menu ("/"), and Image, Full Screen and (on a narrow
+  or touch screen) Indent and Outdent on the small "Editor tools" strip
+  while it has focus. On a phone the row pinned to the keyboard carries
+  them, Image included, at 40px. Give it the app's `upload` (the one
+  `ImageField` takes) for the Image button and for pasted and dropped
+  pictures, which go in as `![](url)`; a refused or failed picture says
+  why in a toast. Without `upload` there's no Image button, and a picture
+  can't go in at all.
 - **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
   on the control it names). Nothing on an optional field: never
   "(optional)".

@@ -113,7 +113,7 @@ export function WidgetDescriptionEditor({
 }: WidgetFieldProps<string> & {
   onProblem?: (message: string | null) => void
   autoFocus?: boolean
-  /** Edited in place where it's read: no box, the toolbar over a selection. */
+  /** Edited in place where it's read: no box, drawn as the text. */
   inline?: boolean
   'aria-labelledby'?: string
 }) {
@@ -126,7 +126,10 @@ export function WidgetDescriptionEditor({
       readOnly={readOnly}
       autoFocus={autoFocus}
       inline={inline}
-      toolbar={inline ? 'floating' : true}
+      // The floating toolbar on the form too (the form standard: notes on a
+      // form): formats over selected words, the rest in the slash menu
+      // and the "Editor tools" strip (Image there when given `upload`).
+      toolbar="floating"
       placeholder={inline ? 'Describe the widget, or type / for blocks' : 'Describe the widget'}
       maxLength={DESCRIPTION_MAX_LENGTH}
       aria-invalid={invalid}

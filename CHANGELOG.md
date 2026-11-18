@@ -55,6 +55,20 @@ Merged with no version bump; the next release carries it.
     `baseUpdatedAt` on its update, `check_version` in the router and the
     409 in `openapi.yaml`, the mock's check, and `withVersion` on its
     `useRecordUpdate` calls. Nothing changes for an entity that skips it.
+- **An Image button with `toolbar="floating"`** (forms' notes, Roadmap
+  379 question 8). Additive: a `RichTextEditor` with `toolbar="floating"`
+  and `upload` now has the fixed toolbar's Image button on its "Editor
+  tools" strip (shown while the field has focus), and on a phone in the
+  row pinned to the keyboard (40px, beside Insert; until now it was only
+  in the Aa panel). Same file picker, accept list, `imageMaxSize`, upload
+  and `![](url)`, focus back in the text after; a refused or failed file
+  says why in the editor's toast, as everywhere else. No `upload`, no
+  button.
+  - **The form standard:** notes on a form use `toolbar="floating"` too
+    (`docs/foundation/add-an-entity.md` "Forms"), and the template's
+    Widget Description does. **To take it:** pass `toolbar="floating"`
+    (not `props.inline ? 'floating' : true`) to a notes field's
+    `RichTextEditor`, with the app's `upload` where pictures belong.
 
 ## 4.126.0 — The RichTextEditor review: no quiet losses, typing that keeps up, and a phone toolbar
 

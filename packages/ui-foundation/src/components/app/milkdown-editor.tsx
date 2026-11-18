@@ -67,7 +67,8 @@
 //   for notes that are always editable where they're read.
 // - Images in the text show (`![alt](url)`), at most the field's width.
 //   With `upload`, an image pasted, dropped or picked with the toolbar's
-//   Image button is uploaded through it and goes in as `![](url)`
+//   Image button (the fixed toolbar's, the tools strip's with
+//   `toolbar="floating"`, the phone's row) is uploaded through it and goes in as `![](url)`
 //   (rich-text-image-upload.ts); a refusal or a failed upload is a toast.
 // - Toggle headings (`## Safety {toggle="true"}`, rich-text-toggle-heading.ts):
 //   a heading's `toggle` attribute, typed as `>## `, picked from the slash
@@ -1662,6 +1663,7 @@ export default function MilkdownEditor({
             fullScreen={fullScreen}
             controls={editableId}
             onFormat={runFormat}
+            onImage={upload ? pickImages : undefined}
             onFullScreen={toggleFullScreen}
             onReturn={returnToText}
             onBlur={(event) => {

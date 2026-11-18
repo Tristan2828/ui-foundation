@@ -26,25 +26,25 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 645–728
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 730–776
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 778–851
-- [18. Editable value](#18-editable-value) · lines 853–1603
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1235–1303
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1305–1341
-  - [A link and its label](#a-link-and-its-label) · lines 1343–1367
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1369–1502
-  - [In a table's rows](#in-a-tables-rows) · lines 1504–1589
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1591–1603
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1605–1671
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1673–1737
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1739–1837
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1839–1868
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1870–1908
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1910–1986
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1988–2074
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2013–2074
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2076–2301
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2230–2301
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2303–2339
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2341–2390
+- [18. Editable value](#18-editable-value) · lines 853–1606
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1238–1306
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1308–1344
+  - [A link and its label](#a-link-and-its-label) · lines 1346–1370
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1372–1505
+  - [In a table's rows](#in-a-tables-rows) · lines 1507–1592
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1594–1606
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1608–1674
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1676–1740
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1742–1840
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1842–1871
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1873–1911
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1913–1989
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1991–2077
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2016–2077
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2079–2304
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2233–2304
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2306–2342
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2344–2393
 
 <!-- /index -->
 
@@ -1106,7 +1106,8 @@ but drops the bar above the text. An empty one shows the editor's
 `placeholder` (say "or type / for blocks" in it), not the view's "Not
 set". It saves like any always-editable value (a pause after typing,
 leaving the page saves first) and is otherwise the same: on the form the
-control is the boxed editor with its fixed toolbar.
+control is the boxed editor, with the floating toolbar too (4.127,
+[add-an-entity.md "Forms"](add-an-entity.md#forms)).
 
 ```tsx
 notes: editInPlace({
@@ -1204,11 +1205,12 @@ const price = editInPlace({
   button fills the window with the field (Esc leaves; nothing is lost or
   saved by it), and on a touch screen or under 768px it carries Indent
   and Outdent for list items, where there is no Tab. A field with only the
-  floating toolbar (`inline` notes) gets the same two in a small "Editor
-  tools" strip over its corner while it has focus. On a touch screen the
+  floating toolbar (`inline` notes, and notes on a form) gets the same
+  two in a small "Editor tools" strip over its corner while it has focus,
+  with the Image button too when the editor has `upload` (4.127). On a touch screen the
   toolbar is instead one row pinned to the top of the keyboard while the
   field has focus (Aa for every format, in the keyboard's place; the list
-  buttons, Insert and Undo; with words selected, their formats first, and
+  buttons, Insert, Image (with `upload`) and Undo; with words selected, their formats first, and
   no floating bar under the system's Copy bar), and the checkbox, the
   table grips, the fold button and the callout icon take a 40px tap. A new checklist item
   shows a "To-do" placeholder and the caret until you type. `[] ` (or
@@ -1220,7 +1222,8 @@ const price = editInPlace({
   the floating one and the slash menu without the bar above (an `inline`
   field's look). Images in the text (`![alt](url)`) show; give it the
   app's `upload` (the same one `ImageField` takes) and an image pasted,
-  dropped or picked with the toolbar's Image button is uploaded and goes
+  dropped or picked with an Image button (the fixed toolbar's, the tools
+  strip's, the phone's row) is uploaded and goes
   in as `![](url)`, a placeholder showing meanwhile (never saved), a
   refusal or failure in a toast. No `upload`, no file handling at all.
 - **The save is the single-field save** (`useRecordUpdate` with

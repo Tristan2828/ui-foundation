@@ -133,6 +133,7 @@ test.describe('the tools strip', () => {
   test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)')
   const tools = (page: Page) => page.getByRole('toolbar', { name: 'Editor tools' })
 
+  // No `upload` here, so no Image (rich-text-editor.spec.ts has it).
   test('only while the field has focus: Full screen, and no Indent with a mouse', async ({ page }) => {
     await openInline(page)
     await expect(tools(page)).toHaveCount(0)
