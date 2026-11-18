@@ -26,25 +26,25 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 645–728
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 730–776
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 778–851
-- [18. Editable value](#18-editable-value) · lines 853–1556
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1188–1256
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1258–1294
-  - [A link and its label](#a-link-and-its-label) · lines 1296–1320
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1322–1455
-  - [In a table's rows](#in-a-tables-rows) · lines 1457–1542
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1544–1556
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1558–1624
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1626–1690
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1692–1790
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1792–1821
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1823–1861
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1863–1939
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1941–2027
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1966–2027
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2029–2254
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2183–2254
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2256–2292
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2294–2343
+- [18. Editable value](#18-editable-value) · lines 853–1563
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1195–1263
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1265–1301
+  - [A link and its label](#a-link-and-its-label) · lines 1303–1327
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1329–1462
+  - [In a table's rows](#in-a-tables-rows) · lines 1464–1549
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1551–1563
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1565–1631
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1633–1697
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1699–1797
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1799–1828
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1830–1868
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1870–1946
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1948–2034
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1973–2034
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2036–2261
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2190–2261
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2263–2299
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2301–2350
 
 <!-- /index -->
 
@@ -1132,7 +1132,14 @@ const price = editInPlace({
   (a count shows from 80% of it, in the destructive text tone once over).
   Its keys: Ctrl/Cmd+K adds or edits a link (web and email addresses
   only), Ctrl/Cmd+Shift+Enter ticks the task item the caret is in, and
-  Markdown pasted as plain text arrives formatted. Notion's block keys
+  Markdown pasted as plain text arrives formatted. A web or email address
+  typed (on a space or Enter) or pasted becomes a link, and one pasted
+  over selected words links them; pasted lines stay lines, Word's and
+  Notion's lists and to-dos arrive as lists and task items. An edit it
+  can't save without rewriting text nobody touched is never saved: on a
+  form, bind its `onProblem` to the field's error and refuse submit while
+  it stands (add-an-entity.md, `widget-form.tsx`); with no `onProblem` it
+  says so inside the field. Notion's block keys
   work: Ctrl+Shift+1 to 3 for headings, +4 tasks, +5 bullets, +6 numbers,
   +8 a code block, +0 back to text (Cmd+Option on a Mac), and
   Ctrl/Cmd+Shift+S strikes through. Ctrl/Cmd+Enter stays the save, in a

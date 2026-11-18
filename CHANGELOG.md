@@ -7,6 +7,48 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## Unreleased
+
+Merged with no version bump; the next release carries it.
+
+### RichTextEditor: a refused edit is never saved quietly; paste, links and full screen (review F1, F9, F14, F19, F20)
+
+One step for an app with a form that edits rich text; the rest needs
+nothing.
+
+- **A form must bind `onProblem` (F1).** When the editor can't save an
+  edit without rewriting text nobody touched, it stops calling
+  `onChange`, so a form keeps the last text that could be saved. A form
+  that passed no `onProblem` showed nothing, and Save sent the old text
+  and said it worked. Now the editor marks itself `aria-invalid`, and
+  with no `onProblem` says why inside the field. **An app's form** binds
+  it as the template's `widget-form.tsx` does (`onDescriptionProblem`):
+  the message is the field's error and submit is refused while it
+  stands (add-an-entity.md "Copy the reference files", the fields file).
+  The message no longer says "edit it in the form": it is "This change
+  can't be saved without rewriting parts of the text you didn't edit.
+  Undo it to go on saving."
+- **Addresses become links (F9).** A web or email address typed and
+  ended with a space or Enter, or pasted alone as plain text, is a link
+  (through `linkHref`: `www.` gains https://, an email mailto:), saved as
+  an address rather than escaped text (`https\://…`). An address pasted
+  over selected words links them.
+- **Paste can't bring in a link that runs code or an image as data
+  (F14).** A pasted link `linkHref` refuses (`javascript:`) keeps its
+  words, not the link. A `data:` image in pasted HTML is uploaded through
+  `upload`, or, without one, left out with a toast.
+- **Paste keeps its shape (F19).** Plain lines stay lines (hard breaks);
+  Word's list paragraphs become lists, without their "·" markers; Notion
+  and GitHub to-dos become task items with their ticks; `language-*` on
+  pasted code is the block's language; a multi-line paste into a table
+  cell is one line, not a spread over the row. An image file pasted or
+  dropped where there's no `upload` now says "Images can't be added
+  here." (it did nothing).
+- **Full screen holds focus (F20).** The full-screen field is a
+  `role="dialog"` with `aria-modal`; the page behind it is `inert`
+  (toasts stay live) and Tab goes round inside it. Everything is
+  restored on leaving.
+
 ## 4.125.0 — The tab bar holds the page still; mocks rejoin a restarted worker
 
 npm package and `ui-foundation-backend` 4.125.0 (the backend is unchanged

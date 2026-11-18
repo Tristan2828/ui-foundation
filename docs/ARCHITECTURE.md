@@ -646,7 +646,35 @@ shows over its top right corner while it has focus (or is full screen).
 `PopoverContent` takes). Only web and email addresses, a path on the site
 or a heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
-code.
+code. Paste goes through the same rule (`rich-text-paste.ts`): a pasted
+link linkHref refuses keeps its words and loses the link, an image at a
+refused address is dropped, and one carried in the HTML as `data:` is
+uploaded through `upload` or left out with a toast, never saved as data.
+An address typed (ended by a space or Enter, `rich-text-autolink.ts`) or
+pasted alone becomes a link through linkHref, so it saves as an address,
+not as escaped text (`https\://`).
+
+**Paste's shapes** (`rich-text-paste.ts`): before ProseMirror reads a
+paste's HTML, Word's `mso-list` paragraphs become nested lists, a Notion
+(`ul.to-do-list`) or GitHub (a checkbox input) to-do a task item, and
+`language-*` on code the block's language. Plain text keeps its single
+line breaks as hard breaks. Into a table cell, a paste is one line
+(blocks joined with spaces), before prosemirror-tables' own paste, which
+would spread lines over the row. These are written against payloads made
+to match what those apps put on the clipboard; real ones vary by version.
+
+**A refused edit is never saved quietly.** The merge guard's refusal
+stops `onChange`, so a form holds the last text that could be saved.
+The editor marks itself `aria-invalid` and, given no `onProblem`, says
+why inside the field; the template's form binds `onProblem` to the
+field's error and refuses submit while it stands (add-an-entity.md).
+
+**Full screen holds focus** (`rich-text-full-screen.ts`): the field is a
+`role="dialog"` with `aria-modal`, every sibling of it and of its
+ancestors up to `<body>` is `inert` (the toasts' region kept live, and
+what a portal adds under `<body>` meanwhile is no such sibling), and Tab
+wraps from the field's last stop to its first. Each element gets its
+`inert` back on leaving.
 
 **Images (4.28)** show in the editor as `<Markdown>` shows them, at most
 the field's width. Until 4.28 the editor dropped every one as it loaded:
