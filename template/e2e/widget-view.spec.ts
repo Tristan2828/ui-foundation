@@ -157,14 +157,19 @@ test.describe('widget view', () => {
       'Furniture',
     ])
 
-    // Long text, as Markdown: emphasis, a list, a link that opens a new tab.
+    // Long text, as formatted text (the notes are edited where they're
+    // read): emphasis, a list, a link that opens in a new tab.
     const description = page.getByRole('region', { name: 'Description' })
     await expect(description.locator('strong')).toHaveText('2.4GHz')
     await expect(description.getByRole('listitem')).toHaveCount(2)
     const link = description.getByRole('link', { name: /setup guide/ })
     await expect(link).toHaveAttribute('href', 'https://example.com/mouse-setup')
-    await expect(link).toHaveAttribute('target', '_blank')
-    await expect(link).toHaveAttribute('rel', 'noreferrer')
+    const opened = page.context().waitForEvent('page')
+    await link.click()
+    const tab = await opened
+    expect(tab.url()).toContain('example.com/mouse-setup')
+    await tab.close()
+    await expect(page).toHaveURL('/widgets/1')
   })
 
   test('empty values read as the plan\'s "not set" labels, never a blank', async ({ page }) => {

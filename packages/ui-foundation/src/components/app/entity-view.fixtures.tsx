@@ -24,6 +24,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Toaster } from '@/components/ui/sonner'
 import type { AppError } from '@/api/contracts'
 import { ActionHint } from './action-hint'
 import { editInPlace } from './edit-in-place'
@@ -1029,14 +1030,21 @@ export const Lists: StoryObj = { render: () => <ListsInRouter /> }
 
 // --- Long text that autosaves ---------------------------------------------
 
-// Notes that are the editor itself (`alwaysEditable`) and a summary that
-// opens on a click and autosaves as it's typed (`autosave`). Each save
-// takes 500ms, so "Saving…" shows; text with "refuse" in it is refused
-// the way a 500 is. Saves counts the requests a server would get.
+// Notes that are the editor itself (`alwaysEditable`), a summary that
+// opens on a click and autosaves as it's typed (`autosave`), and a plan
+// that opens on a click and saves only on leaving it (no autosave: Esc on
+// a changed draft asks). Each save takes 500ms, so "Saving…" shows; text
+// with "refuse" in it is refused the way a 500 is. Saves counts the
+// requests a server would get; "Change Notes Elsewhere" is another tab's
+// save arriving (a refetch).
 function AutosaveRecord() {
-  const [saved, setSaved] = useState({ notes: 'Pack the shared shelves first.', summary: 'Moving to the third floor.' })
+  const [saved, setSaved] = useState({
+    notes: 'Pack the shared shelves first.',
+    summary: 'Moving to the third floor.',
+    plan: 'Step one.\n\nStep two.\n\nStep three.',
+  })
   const [saves, setSaves] = useState(0)
-  const saveText = (field: 'notes' | 'summary') => (text: string) =>
+  const saveText = (field: 'notes' | 'summary' | 'plan') => (text: string) =>
     new Promise<void>((resolve, reject) =>
       setTimeout(() => {
         setSaves((count) => count + 1)
@@ -1049,11 +1057,11 @@ function AutosaveRecord() {
         resolve()
       }, 500),
     )
-  const longText = (field: 'notes' | 'summary', alwaysEditable: boolean) =>
+  const longText = (field: 'notes' | 'summary' | 'plan', alwaysEditable: boolean, autosave = true) =>
     editInPlace<string>({
       kind: 'long-text',
       value: saved[field],
-      autosave: true,
+      autosave,
       alwaysEditable,
       save: saveText(field),
       control: (props) => (
@@ -1078,12 +1086,30 @@ function AutosaveRecord() {
       fields: [
         { label: 'Saves', value: String(saves) },
         { label: 'Saved Notes', value: <span data-testid="saved-notes">{saved.notes}</span> },
+        {
+          label: 'Elsewhere',
+          value: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSaved((current) => ({ ...current, notes: `${current.notes}\n\nAdded in another tab.` }))}
+            >
+              Change Notes Elsewhere
+            </Button>
+          ),
+        },
       ],
     },
     { title: 'Summary', content: <Markdown>{saved.summary}</Markdown>, edit: longText('summary', false) },
     { title: 'Notes', content: <Markdown>{saved.notes}</Markdown>, edit: longText('notes', true) },
+    { title: 'Plan', content: <Markdown>{saved.plan}</Markdown>, edit: longText('plan', false, false) },
   ]
-  return <EntityView layout="rail" isLoading={false} back={{ to: '/projects', label: 'Projects' }} title="Office move" sections={sections} />
+  return (
+    <>
+      <EntityView layout="rail" isLoading={false} back={{ to: '/projects', label: 'Projects' }} title="Office move" sections={sections} />
+      <Toaster />
+    </>
+  )
 }
 
 function AutosaveInRouter() {
@@ -1097,6 +1123,80 @@ function AutosaveInRouter() {
 }
 
 export const Autosave: StoryObj = { render: () => <AutosaveInRouter /> }
+
+// A long note edited where it's read (`inline`), 80 paragraphs, in a
+// 900px window: the save's line and a refusal must stay in view (F5).
+// Text with "refuse" in it is refused the way a 500 is; text with
+// "unsavable" makes the control report a problem instead of a change (as
+// RichTextEditor does when it can't save without rewriting what wasn't
+// edited).
+const LONG_NOTE = Array.from({ length: 80 }, (_, index) => `Paragraph ${index + 1} of the move notes.`).join('\n\n')
+
+function LongInlineRecord() {
+  const [saved, setSaved] = useState(LONG_NOTE)
+  const [saves, setSaves] = useState(0)
+  const notes = editInPlace<string>({
+    kind: 'long-text',
+    inline: true,
+    value: saved,
+    save: (text) =>
+      new Promise<void>((resolve, reject) =>
+        setTimeout(() => {
+          setSaves((count) => count + 1)
+          if (text.includes('refuse')) {
+            const error: AppError = { kind: 'server', message: 'The server refused it, as a server would.' }
+            reject(error)
+            return
+          }
+          setSaved(text)
+          resolve()
+        }, 300),
+      ),
+    control: (props) => (
+      <RichTextEditor
+        id={props.id}
+        defaultValue={props.value}
+        onChange={(text) => {
+          if (text.includes('unsavable')) {
+            props.onProblem("This text can't be saved without changing parts you didn't edit.")
+            return
+          }
+          props.onProblem(null)
+          props.onChange(text)
+        }}
+        onProblem={props.onProblem}
+        readOnly={props.disabled}
+        inline={props.inline}
+        toolbar="floating"
+        aria-invalid={props.invalid || undefined}
+        aria-label={props.label}
+        aria-describedby={props.describedBy}
+      />
+    ),
+  })
+  const sections: EntityViewSection[] = [
+    { title: 'Saved', placement: 'rail', fields: [{ label: 'Saves', value: <span data-testid="saves">{saves}</span> }] },
+    { title: 'Notes', content: <Markdown>{saved}</Markdown>, edit: notes },
+  ]
+  return (
+    <>
+      <EntityView isLoading={false} back={{ to: '/projects', label: 'Projects' }} title="Office move" sections={sections} />
+      <Toaster />
+    </>
+  )
+}
+
+function LongInlineInRouter() {
+  const [router] = useState(() =>
+    createMemoryRouter([
+      { path: '/', element: <LongInlineRecord /> },
+      { path: '/projects', element: <p>Projects</p> },
+    ]),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const LongInline: StoryObj = { render: () => <LongInlineInRouter /> }
 
 // HeaderSlots: `subtitle` under the title, a goal edited in place there
 // (an <EditableValue> of its own), and `strip`, the record's key numbers

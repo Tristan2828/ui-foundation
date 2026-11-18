@@ -26,25 +26,25 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 645–728
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 730–776
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 778–851
-- [18. Editable value](#18-editable-value) · lines 853–1563
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1195–1263
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1265–1301
-  - [A link and its label](#a-link-and-its-label) · lines 1303–1327
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1329–1462
-  - [In a table's rows](#in-a-tables-rows) · lines 1464–1549
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1551–1563
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1565–1631
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1633–1697
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1699–1797
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1799–1828
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1830–1868
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1870–1946
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1948–2034
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1973–2034
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2036–2261
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2190–2261
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2263–2299
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2301–2350
+- [18. Editable value](#18-editable-value) · lines 853–1592
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1224–1292
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1294–1330
+  - [A link and its label](#a-link-and-its-label) · lines 1332–1356
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1358–1491
+  - [In a table's rows](#in-a-tables-rows) · lines 1493–1578
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1580–1592
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1594–1660
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1662–1726
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1728–1826
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1828–1857
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1859–1897
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1899–1975
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1977–2063
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2002–2063
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2065–2290
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2219–2290
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2292–2328
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2330–2379
 
 <!-- /index -->
 
@@ -856,17 +856,21 @@ A value on the record's view that turns into **the form's own control**
 where it's shown, and saves when you leave it: a title, a status, a
 price, notes, a list of linked records. Widget's view is the reference
 (`src/routes/widgets/widget-view.tsx`): Name (the title), Status (its
-header badge), Price, Description (rich text that autosaves) and Extra
-Categories, with the controls in `widget-fields.tsx`, the same ones the
-form uses.
+header badge), Price, Description (rich text edited where it's read,
+`inline`) and Extra Categories, with the controls in `widget-fields.tsx`,
+the same ones the form uses.
 
 The rule behind every part of it: **nothing typed is ever lost.**
 
-**No toast, ever.** An edit in place says what happened where it
+**No toast, but one.** An edit in place says what happened where it
 happened: "Saving…" and "Saved" beside the value, a refusal's reason
 under it. A toast after one would repeat what the person just watched
 (add-an-entity.md "Toasts and feedback": a toast is for what happened
-out of sight).
+out of sight). The one exception is notes that save themselves
+(`autosave`, `alwaysEditable`, `inline`): the first refusal or failed
+save of a run also toasts ("Couldn't save Description", the reason
+under it), since the person is typing, not watching the line, and on a
+long note the line can be a screen away.
 
 **Which values.** Only those the plan's "View screen" names under `Edit
 in place`; read-only is the default, and a value not named renders
@@ -920,7 +924,7 @@ Save button, no Undo:
 | Kind (`editInPlace({ kind })`) | Saves on | Esc |
 |---|---|---|
 | `text`: one line | Enter, or leaving it | puts the saved value back |
-| `long-text`: notes, rich text for Markdown | Ctrl/Cmd+Enter, or leaving it (Enter is a new line); with `autosave`, also a pause in typing | the same; with `autosave`, saves what's left and closes |
+| `long-text`: notes, rich text for Markdown | Ctrl/Cmd+Enter, or leaving it (Enter is a new line); with `autosave`, also a pause in typing | a changed draft asks "Discard your changes?" first (unchanged closes); with `autosave`, saves what's left and closes |
 | `choice`: a select, a switch, a single reference | the pick (its list opens with the field, non-modal) | closes the list with nothing picked: gives up |
 | `multi`: a multi reference | leaving it, or Ctrl/Cmd+Enter (Enter picks) | closes the list first; Esc again gives up |
 | `multi` over a small set (`MultiPick`) | each click, on its own | closes it: every pick is already saved |
@@ -1035,19 +1039,44 @@ nobody has to click away to save notes. Opt in per field:
   is by then, so saves never cross and the latest always wins.
 - Under the text, a quiet line in the muted caption tone
   (`role="status"`): "Saving…" with a spinner while a save is in flight,
-  "Saved" with a check once nothing typed is waiting. No toast.
+  "Saved" with a check once nothing typed is waiting. **On a note longer
+  than the screen the line is pinned to the screen's bottom edge** while
+  the note runs past it, so the save's state and a refusal are never off
+  screen.
 - **Refused:** exactly what was typed stays, with the reason under it, as
-  above. Typing again retries after the pause; a refused draft is never
-  re-sent on its own.
+  above, and the first refusal of a run toasts. Typing again retries
+  after the pause; a refused draft is never re-sent on its own.
+- **Saved elsewhere** (another tab, a phone, an AI chat; the record's
+  query refetches): with nothing typed waiting, the note shows the new
+  text at once, even with the caret in it, which keeps its paragraph.
+  Under unsaved typing nothing saves over it: the line says it "changed
+  elsewhere", with **Keep Mine** (save what's typed over it) and **Show
+  Saved** (drop what's typed). The server sending back what it was sent,
+  even trimmed, is not a change: the editor keeps its undo.
+- **Leaving mid-save:** a field that leaves the view while a save is in
+  flight (a session ending, a parent that stops showing it) still sends
+  what was typed after that save started.
 - **Esc saves what's left and closes.** Nothing reverts: what was saved a
   second ago stays saved, so "give up" would only drop the last second.
 - Rich text that can't save without rewriting what the person didn't edit
-  (`RichTextEditor`'s `onProblem`) saves nothing; its message shows after
-  the pause, and the next good edit saves.
+  (`RichTextEditor`'s `onProblem`) saves nothing; it counts as unsaved at
+  once (leaving asks straight away), its message shows after the pause,
+  and the next good edit saves.
 - **Leaving the page** with a save still to come saves it first and goes
   on; "Discard your changes?" shows only if that save is refused. Closing
   the tab can't wait: it starts the save and the browser asks. Hiding the
-  page (another tab, a phone's home screen) saves too.
+  page (another tab, a phone's home screen) saves at once, with no pause.
+  A save started as the page goes is sent with `keepalive` when its body
+  fits (about 30 KB of JSON), so the browser finishes it after the page
+  is gone; a longer note's save goes as an ordinary request.
+
+**Notes are edited where they're read by default (`inline: true`)** (the
+developer, 2026-11-17): a record's notes, a description, any long text
+the page is for. `alwaysEditable` (the boxed editor at rest) and
+`autosave` alone (the read view at rest, a click opens the editor) are
+for where that doesn't fit, such as a short summary beside other values.
+Opening one by a click puts the caret where the click was, and the page
+doesn't move.
 
 **Always editable (`alwaysEditable: true`, implies `autosave`)**: the
 notes are the editor itself, shown at rest, with no pencil and no click
@@ -1087,13 +1116,13 @@ notes: editInPlace({
 ```
 
 ```tsx
-description: editInPlace({
+summary: editInPlace({
   kind: 'long-text',
-  autosave: true,                // or alwaysEditable: true, with no autoFocus on the control
-  value: widget.description,
-  schema: widgetFormSchema.shape.description,
-  save: (description) => editField.mutateAsync({ description }),
-  control: (props) => <WidgetDescriptionEditor {...} />,
+  autosave: true,                // not notes: a click opens it (autoFocus on the control)
+  value: widget.summary,
+  schema: widgetFormSchema.shape.summary,
+  save: (summary) => editField.mutateAsync({ summary }),
+  control: (props) => <WidgetSummaryEditor {...} />,
 }),
 ```
 

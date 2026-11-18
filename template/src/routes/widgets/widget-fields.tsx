@@ -108,10 +108,13 @@ export function WidgetDescriptionEditor({
   readOnly,
   onProblem,
   autoFocus,
+  inline,
   ...props
 }: WidgetFieldProps<string> & {
   onProblem?: (message: string | null) => void
   autoFocus?: boolean
+  /** Edited in place where it's read: no box, the toolbar over a selection. */
+  inline?: boolean
   'aria-labelledby'?: string
 }) {
   return (
@@ -122,7 +125,9 @@ export function WidgetDescriptionEditor({
       onProblem={onProblem}
       readOnly={readOnly}
       autoFocus={autoFocus}
-      placeholder="Describe the widget"
+      inline={inline}
+      toolbar={inline ? 'floating' : true}
+      placeholder={inline ? 'Describe the widget, or type / for blocks' : 'Describe the widget'}
       maxLength={DESCRIPTION_MAX_LENGTH}
       aria-invalid={invalid}
     />

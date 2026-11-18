@@ -4,29 +4,29 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 45–67
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–876
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–880
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
   - Step 2: `npm run gen:api` · lines 119–120
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 133–142
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–754
-  - Step 7: Register routes · lines 755–770
-  - Step 8: Add Playwright specs for all three screens · lines 771–858
-  - Step 9: Register the nav entry and route names · lines 859–873
-  - Step 10: `npm run verify`. · lines 874–876
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 878–1347
-  - [The record view](#the-record-view) · lines 1031–1188
-  - [Forms](#forms) · lines 1190–1261
-  - [Dialogs](#dialogs) · lines 1263–1294
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1296–1347
-- [What not to copy](#what-not-to-copy) · lines 1349–1382
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1384–1401
-- [Deleting](#deleting) · lines 1403–1434
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1436–1457
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1459–1468
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1471–1513
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1515–1551
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–758
+  - Step 7: Register routes · lines 759–774
+  - Step 8: Add Playwright specs for all three screens · lines 775–862
+  - Step 9: Register the nav entry and route names · lines 863–877
+  - Step 10: `npm run verify`. · lines 878–880
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 882–1351
+  - [The record view](#the-record-view) · lines 1035–1192
+  - [Forms](#forms) · lines 1194–1265
+  - [Dialogs](#dialogs) · lines 1267–1298
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1300–1351
+- [What not to copy](#what-not-to-copy) · lines 1353–1386
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1388–1405
+- [Deleting](#deleting) · lines 1407–1438
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1440–1461
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1463–1472
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1475–1517
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1519–1555
 
 <!-- /index -->
 
@@ -648,7 +648,11 @@ is a filled-in example while the Widgets demo is still here).
      `useEditWidgetField`: the single-field save with `optimistic: false,
      toastOnError: false`). `kind` follows the control: `text` (one line;
      a number or integer too), `long-text` (Markdown, `RichTextEditor`
-     with `autoFocus` and `onProblem={props.onProblem}`), `choice` (a
+     with `onProblem={props.onProblem}`; notes are `inline: true` by
+     default, the control passing `inline={props.inline}` and
+     `toolbar={props.inline ? 'floating' : true}` with no `autoFocus`,
+     as Widget's Description does; a short one opened by a click is
+     `autosave: true` with `autoFocus`), `choice` (a
      select or a single reference: its list opens with the field,
      `defaultOpen`, non-modal, `onChange={(v) => props.commit(v)}`,
      `onOpenChange={(open) => !open && props.cancel()}`; a yes/no switch
