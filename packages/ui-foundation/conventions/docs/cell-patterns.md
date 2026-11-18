@@ -13,38 +13,38 @@
 - [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 299–311
 - [7. Link as an outline button](#7-link-as-an-outline-button) · lines 313–334
 - [8. Date, relative](#8-date-relative) · lines 336–373
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 375–434
-  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 393–434
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 436–486
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 454–486
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 488–528
-- [12. Boolean](#12-boolean) · lines 530–560
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 562–598
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 582–598
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 600–617
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 619–728
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 645–728
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 730–776
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 778–851
-- [18. Editable value](#18-editable-value) · lines 853–1603
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1235–1303
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1305–1341
-  - [A link and its label](#a-link-and-its-label) · lines 1343–1367
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1369–1502
-  - [In a table's rows](#in-a-tables-rows) · lines 1504–1589
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1591–1603
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1605–1671
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1673–1737
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1739–1837
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1839–1868
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1870–1908
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1910–1986
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1988–2074
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2013–2074
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2076–2301
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2230–2301
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2303–2339
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2341–2390
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 375–453
+  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 393–453
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 455–505
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 473–505
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 507–547
+- [12. Boolean](#12-boolean) · lines 549–579
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 581–617
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 601–617
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 619–636
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 638–747
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 664–747
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 749–795
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 797–870
+- [18. Editable value](#18-editable-value) · lines 872–1625
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1254–1325
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1327–1363
+  - [A link and its label](#a-link-and-its-label) · lines 1365–1389
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1391–1524
+  - [In a table's rows](#in-a-tables-rows) · lines 1526–1611
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1613–1625
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1627–1693
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1695–1759
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1761–1859
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1861–1890
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1892–1930
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1932–2008
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 2010–2096
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2035–2096
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2098–2323
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2252–2323
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2325–2361
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2363–2412
 
 <!-- /index -->
 
@@ -428,6 +428,25 @@ themes. Each is one image to a screen reader, named in words.
 
   ```tsx
   {row.rating === null ? <Muted>Not rated</Muted> : <RatingScore value={row.rating} glyph="heart" />}
+  ```
+
+- **`RatingInput`, the same score set by a click** (4.127): RatingScore's
+  glyphs and tokens as a radio group named by `label`, one radio per
+  star ("2 of 5"). A click (or Space) sets a star, a click on the set one
+  clears it to `null`, the arrow keys move and set it, a mouse's hover
+  previews it. 24px targets on a laptop, 44px on a touch screen.
+  `onChange(value, source)`: `source` is `'pointer'` or `'keyboard'`.
+  On a form it's the field's control; on a record or in a row it's
+  `inPlace.rating` ("Presets" below), so a cell sets its row's score where
+  it's drawn:
+
+  ```tsx
+  <RatingInput label="Taste" value={value} onChange={(next) => setValue(next)} />
+  // A table's cell: inside DataTable, which runs editing in place.
+  cell: ({ row }) => (
+    <EditableValue layout="inline" label={`Rating of ${row.original.name}`}
+      edit={inPlace.rating({ value: row.original.rating, save: (rating) => save(row.original.id, { rating }) })} />
+  ),
   ```
 
 - All three draw in `foreground`. Tone one only as pattern 5 would (a `*-text`
@@ -1254,6 +1273,7 @@ fields: [
   { label: 'Priority', edit: inPlace.select({ value: project.priority, options: PRIORITY_OPTIONS,
       render: (priority, label) => <Badge variant={PRIORITY_BADGE[priority]}>{label}</Badge>,
       save: (priority) => save({ priority }) }) },
+  { label: 'My Rating', edit: inPlace.rating({ value: project.rating, save: (rating) => save({ rating }) }) },
   { label: 'Category', edit: inPlace.reference({ value: project.categoryId, label: categoryName,
       search: (text) => searchCategories(text), onCreate: (name) => openNewCategory(name),
       save: (categoryId) => save({ categoryId }) }) },
@@ -1277,12 +1297,14 @@ fields: [
   | `monthDay` | `Mar 14` (`format`, `locale`); a stored value that isn't a day, as written | `'MM-DD'`, no year; February 29 is a day; Clear is `null` | Clear when `required`, a day the month can't have ("February has 29 days") |
   | `select` | the option's label, or its `render` (a badge) | the option's value; "Not set" is `null` | "Not set" isn't offered when `required` |
   | `choice` | as `select` | as `select`, drawn as ChoiceButtons (two to four short options); pressing the picked one again is `null` | as `select` |
+  | `rating` | `RatingScore` (`max`, `glyph`); always the stars (`RatingInput`), with no click to open | the star's number, at once on a click; an arrow's a pause after the last; pressing the set star again is `null` | clearing when `required` (the press does nothing) |
   | `reference` | the record's `label` (the view's lookup by id) | the picked record's id | "Not set" isn't offered when `required` |
 
 - **They save the way their kind does** (the table above): `text`,
   `number`, `money` and a typed `date` on Enter or leaving them, a day
   picked in the date's calendar, `monthDay`, `select`, `choice` and
-  `reference` on the pick (a list opens with the field).
+  `reference` on the pick (a list opens with the field), `rating` on a
+  click of a star (it's always open: the stars are the value).
   `required: true` types the save without `null`.
 - **`reference` searches through the app.** The package knows no
   endpoint: `search(text)` is the app's (its gateway's search by name,

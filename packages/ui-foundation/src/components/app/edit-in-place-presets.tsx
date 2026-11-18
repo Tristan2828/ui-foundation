@@ -1,6 +1,6 @@
 // Ready-made fields for editing in place (cell-patterns.md "Editable
 // value", "Presets"): `inPlace.text`, `.number`, `.date`, `.monthDay`, `.recurrence`,
-// `.money`, `.select`, `.choice`, `.reference`, `.link`, and `.fields` for two or more values
+// `.money`, `.select`, `.choice`, `.rating`, `.reference`, `.link`, and `.fields` for two or more values
 // edited and saved as one. Each carries its own control, its check (run
 // before anything is sent, its message under the field) and how the value
 // reads at rest (`shown`, which EntityView and EditableValue show when
@@ -26,6 +26,8 @@ import { ChoiceButtons, type ChoiceButtonsOption } from './choice-buttons'
 import { DateField } from './date-field'
 import { MonthDayField } from './month-day-field'
 import { OptionSelect } from './option-select'
+import { RatingInput } from './rating-input'
+import { RatingScore, type RatingScoreGlyph } from './rating-score'
 import { RecurrenceField } from './recurrence-field'
 import type { EditControlProps, EditInPlace } from './edit-in-place'
 import { Parts, ReferencePicker } from './edit-in-place-controls'
@@ -177,6 +179,22 @@ export type InPlaceSelectConfig<T extends string | number, TRequired extends boo
   /** The "Not set" option's words. */
   emptyLabel?: string
   placeholder?: string
+}
+
+/**
+ * A score out of a few, set by clicking a star (RatingInput, 4.127). The
+ * stars are the value: shown at rest, with no click to open, a click on a
+ * star saving it at once. Pressing the set star again saves `null` (none)
+ * unless `required`; the arrow keys move and set it, saved a pause after
+ * the last one (or on leaving it).
+ */
+export type InPlaceRatingConfig<TRequired extends boolean = boolean> = {
+  /** Pressing the set star again doesn't clear it: never `null`. */
+  required?: TRequired
+  /** How many stars. Defaults to 5. */
+  max?: number
+  /** Stars (the default) or hearts. */
+  glyph?: RatingScoreGlyph
 }
 
 /** A record found by search, as `search` returns it. */
@@ -566,6 +584,34 @@ function selectKind<T extends string | number>(config: InPlaceSelectConfig<T>): 
   }
 }
 
+function ratingKind(config: InPlaceRatingConfig): Kind<number | null, number | null> {
+  const max = config.max ?? 5
+  return {
+    editKind: 'choice',
+    toDraft: (value) => (value == null ? null : Math.min(Math.max(0, Math.round(value)), max) || null),
+    check: (draft) => (draft == null && config.required ? { ok: false, message: REQUIRED } : { ok: true, value: draft }),
+    show: (value) => (value == null ? null : <RatingScore value={value} max={max} glyph={config.glyph} />),
+    control: (props) => (
+      <RatingInput
+        id={props.id}
+        value={props.value}
+        max={max}
+        glyph={config.glyph}
+        label={props.label}
+        // A pick saves now; an arrow's value waits for the last one.
+        onChange={(next, source) => {
+          if (next === null && config.required) return
+          if (source === 'pointer') props.commit(next)
+          else props.onChange(next)
+        }}
+        disabled={props.disabled}
+        invalid={props.invalid}
+        aria-describedby={props.describedBy}
+      />
+    ),
+  }
+}
+
 function referenceKind<Id extends string | number>(config: InPlaceReferenceConfig<Id>): Kind<Id | null, Id | null> {
   return {
     editKind: 'choice',
@@ -848,6 +894,15 @@ export const inPlace = {
     options: Common<T | null | undefined, InPlaceSaved<T, R>> & Omit<InPlaceSelectConfig<T, R>, 'look'>,
   ) {
     return single(selectKind({ ...options, look: 'buttons' }), { ...options, value: options.value ?? null } as Common<T | null, never>)
+  },
+  /**
+   * A score out of a few as stars (or hearts) set by a click (RatingInput):
+   * the stars are the value, always there with no click to open, and a
+   * click on one saves it. Pressing the set one again saves `null` unless
+   * `required`. Reads at rest (printed) as RatingScore.
+   */
+  rating<R extends boolean = false>(options: Common<number | null | undefined, InPlaceSaved<number, R>> & InPlaceRatingConfig<R>) {
+    return { ...single(ratingKind(options), { ...options, value: options.value ?? null } as Common<number | null, never>), alwaysEditable: true }
   },
   /**
    * Another record, searched as you type through the app's `search`; a

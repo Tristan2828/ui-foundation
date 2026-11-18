@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1352
-  - [The record view](#the-record-view) · lines 1036–1193
-  - [Forms](#forms) · lines 1195–1266
-  - [Dialogs](#dialogs) · lines 1268–1299
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1301–1352
-- [What not to copy](#what-not-to-copy) · lines 1354–1387
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1389–1406
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1408–1454
-- [Deleting](#deleting) · lines 1456–1487
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1489–1510
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1512–1521
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1524–1566
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1568–1604
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1361
+  - [The record view](#the-record-view) · lines 1036–1202
+  - [Forms](#forms) · lines 1204–1275
+  - [Dialogs](#dialogs) · lines 1277–1308
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1310–1361
+- [What not to copy](#what-not-to-copy) · lines 1363–1396
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1398–1415
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1417–1463
+- [Deleting](#deleting) · lines 1465–1496
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1498–1519
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1521–1530
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1533–1575
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1577–1613
 
 <!-- /index -->
 
@@ -1146,14 +1146,23 @@ A record uses the parts it has, in this order:
   - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
     draw it, never as "4 of 5" text: stars (the default) or hearts for a
     score out of `max` (5), the step bar for a quality level. `null` is
-    empty (its `emptyLabel`). Edited in place with `inPlace.select`:
+    empty (its `emptyLabel`). A score the person gives (my rating) is
+    edited in place with **`inPlace.rating`** (4.127): the stars are then
+    the value, a click on one saves it, a second press on the set one
+    saves `null`, and an empty one shows five empty stars to click rather
+    than its `emptyLabel`. A score that isn't the person's to set (a
+    critics' average) stays read-only:
 
     ```tsx
-    { label: 'My Rating', kind: 'rating', look: 'hearts', value: record.rating, emptyLabel: 'Not rated',
-      edit: inPlace.select({ value: record.rating, options: [1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} of 5` })),
-        emptyLabel: 'Not rated', save: (rating) => save({ rating }) }) },
+    { label: 'My Rating', kind: 'rating', value: record.rating,
+      edit: inPlace.rating({ value: record.rating, save: (rating) => save({ rating }) }) },
+    { label: 'Loved', kind: 'rating', look: 'hearts', value: record.loved,
+      edit: inPlace.rating({ value: record.loved, glyph: 'heart', save: (loved) => save({ loved }) }) },
     { label: 'Quality', kind: 'rating', look: 'bar', value: QUALITY[record.quality].value, word: QUALITY[record.quality].word },
     ```
+
+    A quality level drawn as the step bar is an enum, not a score: edit
+    it with `inPlace.select` over its levels.
   - **A yes/no** (4.120) is `kind: 'switch'`, a switch toggled where it
     is, named by the label, never a two-choice select. Return the save's
     promise: the switch shows the new state while it runs and goes back

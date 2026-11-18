@@ -96,6 +96,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-colorfield--default', mustShow: 'Calendar Colour' },
   { id: 'app-colorfield--own-colors', mustShow: 'Terracotta' },
   { id: 'app-colorfield--invalid', mustShow: 'That colour is taken by another label' },
+  // <RatingInput>: stars to click, every state on a card, and inPlace.rating in a record's rail and rows (4.127).
+  { id: 'app-ratinginput--default', mustShow: 'Locked' },
+  { id: 'app-ratinginput--in-a-record', mustShow: 'My Rating' },
   { id: 'app-emojifield--default', mustShow: 'Routine Emoji' },
   { id: 'app-emojifield--open', mustShow: 'Morning and Sleep' },
   // <Board>: a list as columns of cards, every app's second view of a list.
@@ -421,6 +424,8 @@ const GLYPH_STORIES: {
   { id: 'app-feedback--all-states' },
   // The ring's arc, the step bar's filled steps, the star in each shape.
   { id: 'patterns-scales--default' },
+  // RatingInput's empty stars and hearts, outlines in muted-foreground on a card (4.127).
+  { id: 'app-ratinginput--default' },
   { id: 'app-banners--default' },
   // Each tone's icon on its own wash, and the source credit's link marks.
   { id: 'app-notice--default' },

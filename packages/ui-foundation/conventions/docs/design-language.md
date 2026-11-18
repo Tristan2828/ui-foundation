@@ -33,11 +33,11 @@
 - [A few equal things](#a-few-equal-things) · lines 1466–1550
 - [An overview page](#an-overview-page) · lines 1552–1623
 - [A record's header and empty values](#a-records-header-and-empty-values) · lines 1624–1690
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1692–1816
-- [Picking at random](#picking-at-random) · lines 1818–1849
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1851–1918
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1920–1945
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1947–2043
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1692–1829
+- [Picking at random](#picking-at-random) · lines 1831–1862
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1864–1931
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1933–1958
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1960–2056
 
 <!-- /index -->
 
@@ -1776,8 +1776,21 @@ its short facts the last tab, Details. A mark goes left of the title.
   that's what a screen reader hears, one image named in words. The
   glyphs are a fixed size, so the value never moves on hover, and it's
   drawn the same in Details on a phone. An empty one reads its
-  `emptyLabel` ("Not rated"), not a row of empty stars. Edited in place
-  like any fact (`edit`), usually `inPlace.select` over the scores.
+  `emptyLabel` ("Not rated"), not a row of empty stars. A score the
+  person sets is edited with `inPlace.rating` (4.127): the stars become
+  `RatingInput`, set by a click where they're drawn (no select to open),
+  and an empty one is then five empty stars to click. "Saving…" and
+  "Saved" are an icon beside the stars, words for a screen reader, so the
+  row never grows. On a touch screen each star is a 44px target and the
+  row puts its label above them, which a narrow value column can't hold.
+- **`RatingInput`** (4.127): RatingScore's glyphs and tokens as a radio
+  group named by the field's label, each star a radio ("2 of 5"). The
+  arrow keys move and set it, a click or Space sets the star it's on,
+  pressing the set star again clears it. A mouse's hover previews the
+  score in the same ink (the filled count is the preview; leaving puts it
+  back); a finger gets no preview. 24px targets on a laptop, 44px on a
+  touch screen, fixed-size either way. Disabled, it's the score at half
+  opacity and ignores the pointer.
 - **A yes/no** (`kind: 'switch'`, 4.120) is a switch on the value's
   line, never a two-choice select: `checked`, `onCheckedChange` (return
   the save's promise and the switch shows the new state, busy, until it

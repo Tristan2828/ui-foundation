@@ -11,6 +11,32 @@ are listed on the
 
 Merged with no version bump; the next release carries it.
 
+- **`RatingInput`: a score set by clicking a star** (Homebase review,
+  2026-11-18). The package had only the read-only `RatingScore`. All
+  additive; nothing to change in an app that doesn't use it.
+  - **`RatingInput`** (new export, with `RatingInputProps` and
+    `RatingInputSource`): `{ value, max = 5, glyph, onChange, label,
+    disabled }`. RatingScore's glyphs and tokens as a radio group named by
+    `label`: the arrow keys move and set it, a click or Space sets a star,
+    pressing the set star again clears it to `null`, a mouse's hover
+    previews it. 24px targets on a laptop, 44px on a touch screen.
+    `onChange`'s second argument says `pointer` or `keyboard`.
+  - **`inPlace.rating({ value, save, max?, glyph?, required? })`** (new
+    preset, with `InPlaceRatingConfig`): the stars are the value, always
+    there (no click to open), and a click on one saves it at once; an
+    arrow's value saves a pause after the last; a second press saves
+    `null` unless `required`. Use it as a `rating` fact's `edit` in the
+    facts rail, or in an `EditableValue` in a table's cell.
+    **To move a rating fact off `inPlace.select`**, swap its `edit` for
+    `inPlace.rating({ value, save })` (cell-patterns.md "Presets").
+  - **Editing in place:** a field that's always editable and one pick
+    (the stars) says "Saving…" and "Saved" as an icon beside it, the words
+    for a screen reader, and "Saved" goes after two seconds, so a rail's
+    row never grows. Long text is unchanged.
+  - **`EntityView`:** on a touch screen a field row holding a
+    `RatingInput` puts its label above the stars: five 44px targets don't
+    fit a narrow value column.
+
 - **Saves that don't overwrite: a record's version and a 409** (the
   RichTextEditor review's F4, server half; #374 was the client half). A
   stale tab, a phone or an AI chat could replace what another writer

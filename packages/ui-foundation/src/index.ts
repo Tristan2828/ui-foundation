@@ -173,6 +173,7 @@ export {
   type InPlaceNumberConfig,
   type InPlaceOption,
   type InPlacePart,
+  type InPlaceRatingConfig,
   type InPlaceRecord,
   type InPlaceRecurrenceConfig,
   type InPlaceReferenceConfig,
@@ -289,6 +290,7 @@ export {
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { RatingScore, type RatingScoreGlyph, type RatingScoreProps } from '@/components/app/rating-score'
+export { RatingInput, type RatingInputProps, type RatingInputSource } from '@/components/app/rating-input'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
 export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
