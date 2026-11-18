@@ -20,7 +20,8 @@
 //   sequence where one is running and the others are looked at in turn (a
 //   plan's phases). The steps are a tablist: arrow keys, Home and End move
 //   and pick; on a phone the row scrolls sideways in its own box, as the
-//   record's tab bar does.
+//   record's tab bar does. Its marks are StepTrack's (step-track.tsx,
+//   4.128), the same row read only, for a display with no panels.
 //
 // The parts are the record's own: a state is a `Badge` in the outline
 // style (design-language.md "The three badge styles"), a field is the
@@ -35,9 +36,9 @@
 // `actions`, its own buttons (Edit, Remove), at the end of its title line,
 // or the table's last column. `wide` gives an item the whole row in
 // `cards` and `panels`, for content that needs it (an editor open).
-import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
-import { CheckIcon, ChevronDownIcon } from 'lucide-react'
+import { ChevronDownIcon } from 'lucide-react'
 import { cn } from 'cn'
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -45,6 +46,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EMPTY_DASH, isEmptyValue } from '@/lib/empty-value'
 import { EmptyText } from './empty-value'
 import { FIELD_LABEL, FIELD_ROW, FIELD_ROW_BASE, FIELD_VALUE } from './field-rows'
+import { STEP_CELL, STEP_ROW, stepLine, useKeepStepInView } from './step-row'
+import { StepMark, StepName, type StepTrackState } from './step-track'
 
 /** Which look a set of equal items takes. */
 export type EqualItemsLook = 'cards' | 'table' | 'featured' | 'panels' | 'stepper'
@@ -54,7 +57,7 @@ export type EqualItemsLook = 'cards' | 'table' | 'featured' | 'panels' | 'steppe
  * step with a check), `current` (ringed, "Current" under its name, its
  * panel's border the accent) or `upcoming` (outlined, the default).
  */
-export type EqualItemStep = 'done' | 'current' | 'upcoming'
+export type EqualItemStep = StepTrackState
 
 /**
  * A state's tone, from design-language.md "Semantic tones": `neutral` (the
@@ -527,17 +530,7 @@ function Stepper({
   const [own, setOwn] = useState(first)
   const shownId = has(selectedId) ? selectedId : has(own) ? own : first
   const listRef = useRef<HTMLDivElement>(null)
-  // Keep the shown step in the row's view when it scrolls sideways; the
-  // row only, never the page.
-  useLayoutEffect(() => {
-    const list = listRef.current
-    const tab = list?.querySelector<HTMLElement>('[data-slot="equal-item-step"][data-active]')
-    if (!list || !tab || list.scrollWidth <= list.clientWidth) return
-    const left = tab.offsetLeft - list.offsetLeft
-    if (left < list.scrollLeft || left + tab.offsetWidth > list.scrollLeft + list.clientWidth) {
-      list.scrollLeft = left - (list.clientWidth - tab.offsetWidth) / 2
-    }
-  }, [shownId])
+  useKeepStepInView(listRef, '[data-slot="equal-item-step"][data-active]', shownId)
   return (
     <TabsPrimitive.Root
       data-slot="equal-items-stepper"
@@ -553,7 +546,7 @@ function Stepper({
         ref={listRef}
         activateOnFocus
         aria-label={label}
-        className="relative flex max-w-full overflow-x-auto overflow-y-hidden [scrollbar-width:thin]"
+        className={STEP_ROW}
       >
         {items.map((item, index) => {
           const step = item.step ?? 'upcoming'
@@ -565,44 +558,14 @@ function Stepper({
               data-step={step}
               aria-current={step === 'current' ? 'step' : undefined}
               className={cn(
-                'group/step relative flex min-h-11 min-w-18 flex-1 basis-0 flex-col items-center gap-1 rounded-md px-1 pt-1 pb-1.5 text-center text-xs text-muted-foreground outline-none',
-                'hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset',
+                STEP_CELL,
+                stepLine(step),
+                'outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset',
                 'data-active:font-semibold data-active:text-foreground',
-                // The line from the step before, under the marks.
-                'before:absolute before:top-4 before:right-1/2 before:h-0.5 before:w-full first:before:hidden',
-                step === 'upcoming' ? 'before:bg-border' : 'before:bg-primary',
               )}
             >
-              <span
-                aria-hidden="true"
-                data-slot="equal-item-step-mark"
-                className={cn(
-                  'relative z-10 grid size-6.5 shrink-0 place-items-center rounded-full border-2 text-xs font-bold tabular-nums',
-                  step === 'done'
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : step === 'current'
-                      ? 'border-primary bg-card text-foreground'
-                      : 'border-border bg-card text-muted-foreground',
-                  // The shown step: a ring round its mark.
-                  'group-data-active/step:ring-2 group-data-active/step:ring-ring group-data-active/step:ring-offset-2 group-data-active/step:ring-offset-card',
-                )}
-              >
-                {step === 'done' ? <CheckIcon className="size-3.5" /> : index + 1}
-                {item.attention && (
-                  <span
-                    data-slot="equal-item-step-attention"
-                    className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border border-card bg-warning-text"
-                  />
-                )}
-              </span>
-              {/* The hidden words sit inside the clamped line, so the name
-                  reads "Phase 1, done" with no gap a block would add. */}
-              <span className="line-clamp-3 max-w-full min-w-0 break-words">
-                <span className="sr-only">{`Step ${index + 1}: `}</span>
-                {item.title}
-                {step === 'done' && <span className="sr-only">, done</span>}
-                {item.attention && <span className="sr-only">{`, ${item.attention}`}</span>}
-              </span>
+              <StepMark step={step} number={index + 1} attention={item.attention} ring="active" slot="equal-item-step" />
+              <StepName step={step} number={index + 1} title={item.title} attention={item.attention} />
               {step === 'current' && <span className="font-normal text-muted-foreground">Current</span>}
             </TabsPrimitive.Tab>
           )
