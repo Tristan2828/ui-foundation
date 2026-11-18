@@ -101,8 +101,9 @@ export function useRestoreWidgetMutation() {
 // AppError of kind `conflict`), nothing is written, and the widget is
 // fetched again. A quick action's toast says so; a field edited in place
 // asks "This changed elsewhere" (docs/foundation/add-an-entity.md "Saves
-// that don't overwrite").
-const withVersion = (update: WidgetUpdate, widget: Widget): WidgetUpdate => ({
+// that don't overwrite"). The edit form sends it too (useFormVersion in
+// widget-form.tsx), from the widget it was opened with.
+export const withVersion = (update: WidgetUpdate, widget: Widget): WidgetUpdate => ({
   ...update,
   baseUpdatedAt: widget.updatedAt,
 })

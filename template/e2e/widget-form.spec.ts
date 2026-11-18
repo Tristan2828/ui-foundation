@@ -601,3 +601,69 @@ test.describe('widget form', () => {
     await expect(page.getByRole('switch', { name: 'In Stock' })).toBeChecked()
   })
 })
+
+// The edit form sends the version of the widget it opened with
+// (useFormVersion; docs/foundation/add-an-entity.md "Saves that don't
+// overwrite"): another writer's save in between makes the form's a 409,
+// nothing is written, and what was typed stays until Keep Mine or Show
+// Saved. The package's own spec (e2e/form-conflict.spec.ts) covers the
+// Notice at both widths and axe.
+test.describe('widget form: two writers', () => {
+  // Another writer saves, straight to the API: this tab's cache doesn't hear of it.
+  async function saveElsewhere(page: Page) {
+    await waitForMswReady(page)
+    await page.evaluate(async () => {
+      const widget = await (await fetch('/api/widgets/2')).json()
+      await fetch('/api/widgets/2', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'Standing Desk Pro', baseUpdatedAt: widget.updatedAt }),
+      })
+    })
+  }
+  const storedName = (page: Page) =>
+    page.evaluate(async () => ((await (await fetch('/api/widgets/2')).json()) as { name: string }).name)
+
+  async function staleSave(page: Page) {
+    const sent: Record<string, unknown>[] = []
+    page.on('request', (request) => {
+      if (request.method() === 'PATCH' && request.headers()['x-requested-with']) sent.push(request.postDataJSON())
+    })
+    await page.goto('/widgets/2/edit')
+    await expect(page.locator('#widget-name')).toHaveValue('Standing Desk')
+    await page.locator('#widget-name').fill('Sit-Stand Desk')
+    await saveElsewhere(page)
+    await page.getByRole('button', { name: 'Save Changes' }).click()
+    const notice = page.locator('[data-slot=entity-form-bar] [data-slot=notice]')
+    await expect(notice).toContainText('Changed elsewhere')
+    return { sent, notice }
+  }
+
+  test("a stale save is refused, nothing is written, and what's typed stays", async ({ page }) => {
+    const { sent } = await staleSave(page)
+    expect(sent[0]).toHaveProperty('baseUpdatedAt')
+    expect(await storedName(page)).toBe('Standing Desk Pro')
+    await expect(page).toHaveURL('/widgets/2/edit')
+    await expect(page.locator('#widget-name')).toHaveValue('Sit-Stand Desk')
+  })
+
+  test('Keep Mine saves the form over theirs, built on their version', async ({ page }) => {
+    const { sent, notice } = await staleSave(page)
+    await notice.getByRole('button', { name: 'Keep Mine' }).click()
+    await expect(page).toHaveURL('/widgets/2')
+    expect(await storedName(page)).toBe('Sit-Stand Desk')
+    expect(sent).toHaveLength(2)
+    expect(sent[1].baseUpdatedAt).not.toBe(sent[0].baseUpdatedAt)
+  })
+
+  test('Show Saved shows theirs in the form, and saving it then works', async ({ page }) => {
+    const { notice } = await staleSave(page)
+    await notice.getByRole('button', { name: 'Show Saved' }).click()
+    await expect(page.locator('#widget-name')).toHaveValue('Standing Desk Pro')
+    await expect(notice).toHaveCount(0)
+    await page.locator('#widget-price').fill('399.00')
+    await page.getByRole('button', { name: 'Save Changes' }).click()
+    await expect(page).toHaveURL('/widgets/2')
+    expect(await storedName(page)).toBe('Standing Desk Pro')
+  })
+})

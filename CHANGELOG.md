@@ -9,6 +9,37 @@ are listed on the
 
 ## Unreleased
 
+- **Saves that don't overwrite, for forms** (the rest of 4.127.0's version
+  check). An edit form can send the version of the record it opened with,
+  as editing in place does, so a form left open while another tab, phone
+  or chat saved the record is refused (a 409) instead of replacing their
+  save. All additive: a form that doesn't ask sends no version and
+  behaves as before.
+  - **`useFormVersion({ record, withVersion, refetch })`** (new export,
+    with `FormVersion`, `FormVersionOptions` and `FormConflict`): keeps the
+    record the form opened with (`record`, for the form's `values`, so a
+    background refetch never resets what's typed), adds its version to the
+    save (`send`), takes a 409 in the save's `onError` (`refused`: true for
+    a conflict, which it then shows and fetches the newer version for),
+    and `saved` for a form that stays open after a save.
+  - **`EntityForm` and `FormDialog` take `conflict`** (optional): a warning
+    Notice in the bar, "Changed elsewhere", saying nothing was saved and
+    what's typed is still there, with **Keep Mine** (saves the form as it
+    is over theirs) and **Show Saved** (the form takes their record).
+    Without it, nothing changes.
+  - **Template:** the Widgets edit form uses it (`widget-form.tsx`;
+    `withVersion` is exported from `use-widgets.ts`), with "two writers"
+    specs in `e2e/widget-form.spec.ts`. The package's harness covers both
+    components at a laptop's and a phone's width, with axe in both themes
+    (`e2e/form-conflict.spec.ts`).
+
+  Nothing to do to upgrade; to take it, for an entity that already has a
+  version (add-an-entity.md "Saves that don't overwrite"), call
+  `useFormVersion` in its form, feed `values` from `version.record`, send
+  `version.send(update)`, start the save's `onError` with
+  `if (version.refused(error)) return`, and pass
+  `conflict={version.conflict}` to `EntityForm` or `FormDialog`.
+
 ## 4.127.0 — Saves that don't overwrite, a stepper look, star ratings, and counts on view pills
 
 npm package and `ui-foundation-backend` 4.127.0 (the backend gains

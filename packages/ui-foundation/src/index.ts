@@ -404,6 +404,12 @@ export {
   type RecordChange,
   type RecordUpdateOptions,
 } from '@/hooks/use-record-update'
+export {
+  useFormVersion,
+  type FormConflict,
+  type FormVersion,
+  type FormVersionOptions,
+} from '@/hooks/use-form-version'
 export { useIsMobile } from '@/hooks/use-mobile'
 // Timed screens (docs/foundation/timed-screens.md)
 export { useWakeLock } from '@/hooks/use-wake-lock'

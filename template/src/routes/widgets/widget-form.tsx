@@ -8,13 +8,26 @@
 // Cancelling a create, with no widget to show, goes back to the list. Each
 // replaces the form's history entry, so Back from the view returns to
 // where the user came from, not to the form they just left.
+//
+// An edit's save says which version of the widget the form was opened
+// with (useFormVersion): if another tab, a phone or a chat saved it since,
+// the server refuses it (a 409), nothing is written, what was typed stays,
+// and the bar asks "Changed elsewhere": Keep Mine or Show Saved
+// (docs/foundation/add-an-entity.md "Saves that don't overwrite").
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
 import { type FormEvent, useMemo, useState } from 'react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
-import { type AppError, EntityForm, ErrorState, ListEditor, MultiChoice } from '@tristan2828/ui-foundation'
+import {
+  type AppError,
+  EntityForm,
+  ErrorState,
+  ListEditor,
+  MultiChoice,
+  useFormVersion,
+} from '@tristan2828/ui-foundation'
 import { Button } from '@tristan2828/ui-foundation/ui/button'
 import { Calendar } from '@tristan2828/ui-foundation/ui/calendar'
 import {
@@ -32,7 +45,7 @@ import { Skeleton } from '@tristan2828/ui-foundation/ui/skeleton'
 import { Switch } from '@tristan2828/ui-foundation/ui/switch'
 import type { components } from '@/api/schema'
 import { useWidgetCategoriesQuery } from './use-widget-categories'
-import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery } from './use-widgets'
+import { useCreateWidgetMutation, useUpdateWidgetMutation, useWidgetQuery, withVersion } from './use-widgets'
 import {
   WidgetChecklistItemFields,
   WidgetDescriptionEditor,
@@ -82,6 +95,9 @@ export function WidgetFormRoute() {
   const widgetQuery = useWidgetQuery(widgetId, { enabled: isEdit })
   const createWidget = useCreateWidgetMutation()
   const updateWidget = useUpdateWidgetMutation(widgetId)
+  // The widget the form opened with, and its version for the save: a
+  // refetch in the background never resets what's typed.
+  const version = useFormVersion({ record: widgetQuery.data, withVersion, refetch: widgetQuery.refetch })
 
   const [categorySearch, setCategorySearch] = useState('')
   const categoriesQuery = useWidgetCategoriesQuery(categorySearch)
@@ -97,9 +113,10 @@ export function WidgetFormRoute() {
     resolver: zodResolver(widgetFormSchema),
     defaultValues: WIDGET_FORM_DEFAULTS,
     // RHF's documented alternative to resetting inside a useEffect: `values`
-    // re-syncs the form whenever the prop changes, once the edit-mode fetch
-    // resolves.
-    values: isEdit && widgetQuery.data ? widgetToFormValues(widgetQuery.data) : undefined,
+    // re-syncs the form whenever the prop changes: once the edit-mode fetch
+    // resolves, and on Show Saved after a conflict. From the widget the
+    // form opened with (useFormVersion), not the query's latest.
+    values: isEdit && version.record ? widgetToFormValues(version.record) : undefined,
   })
 
   // Sub-records: the items live in the form's own state and save with the
@@ -135,6 +152,8 @@ export function WidgetFormRoute() {
       navigate(`/widgets/${widget.id}`, { replace: true })
     }
     const onError = (error: AppError) => {
+      // Changed elsewhere: the bar's conflict Notice (EntityForm `conflict`).
+      if (version.refused(error)) return
       if (error.kind === 'validation' && error.fieldErrors) {
         for (const [field, messages] of Object.entries(error.fieldErrors)) {
           form.setError(field as keyof WidgetFormValues, { message: messages[0] })
@@ -145,7 +164,7 @@ export function WidgetFormRoute() {
     }
 
     if (isEdit) {
-      updateWidget.mutate(formValuesToWidgetUpdate(values), { onSuccess, onError })
+      updateWidget.mutate(version.send(formValuesToWidgetUpdate(values)), { onSuccess, onError })
     } else {
       createWidget.mutate(formValuesToWidgetCreate(values), { onSuccess, onError })
     }
@@ -165,6 +184,7 @@ export function WidgetFormRoute() {
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
       submitError={submitError}
+      conflict={version.conflict}
       submitLabel={isEdit ? 'Save Changes' : 'Create Widget'}
       onCancel={() => navigate(isEdit ? `/widgets/${widgetId}` : '/widgets', { replace: true })}
       // Leaving with something typed asks first; a refused submit moves to
