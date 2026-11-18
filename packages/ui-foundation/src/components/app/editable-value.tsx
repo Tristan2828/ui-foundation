@@ -12,7 +12,17 @@
 //   the server agrees. Failed: it stays, with the draft and the reason.
 // - `autosave`: it saves itself a pause after typing stops and stays
 //   editable while it does ("Saving…", then "Saved" under it). Leaving,
-//   Ctrl/Cmd+Enter and Esc save what's left now and close it.
+//   Ctrl/Cmd+Enter and Esc save what's left now and close it. On a note
+//   longer than the screen the line under it is pinned to the screen's
+//   bottom edge, so a refusal or a failed save is never off screen, and
+//   the first one also toasts (F5).
+// - `long-text` without `autosave`: Esc on a changed draft asks
+//   ("Discard your changes?") rather than dropping it (F7).
+// - Opening by a click puts the caret where the click was, not at the
+//   top, and the page doesn't move (F8).
+// - The saved value changing elsewhere shows at once when nothing here is
+//   unsaved, the caret keeping its block; under unsaved typing the line
+//   says so, with "Keep Mine" and "Show Saved" (F4).
 // - `alwaysEditable`: the control is shown at rest, with no pencil and no
 //   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
 // - `inline`: always editable, and the control is told to look like the
@@ -28,13 +38,16 @@
 //   sits at its end; under 48rem or on a touch screen there's a chevron
 //   instead of the pencil. The control still opens in the row.
 import { CheckIcon, ChevronRightIcon, PencilIcon } from 'lucide-react'
-import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
 import { useBlocker } from 'react-router'
+import { toast } from 'sonner'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { DiscardChangesDialog } from '@/components/ui/dialog'
 import { FieldError } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
+import { clearPageLeaving, markPageLeaving } from '@/lib/page-leaving'
+import { caretSpot, placeCaretWhenReady, spotAtPoint, type CaretSpot } from './edit-caret'
 import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './edit-in-place'
 import type { EditInPlaceStore } from './edit-in-place-store'
 import { SAVED_FOR_MS } from './edit-row'
@@ -120,6 +133,47 @@ export type EditableFieldProps = EditableValueProps & {
   reopenAfterKeyboardSave?: boolean
 }
 
+// While a field runs past the bottom of the screen, its status line (the
+// save's state, a refusal) is pinned to the screen's bottom edge, under the
+// field's left edge, so it's never off screen (F5). Not CSS sticky: a
+// section's card clips its content (`overflow-hidden`), which stops sticky
+// at the card. Returns where to pin it, or null while it shows in place.
+function usePinnedStatus(
+  field: RefObject<HTMLElement | null>,
+  enabled: boolean,
+): { left: number; width: number } | null {
+  const [pin, setPin] = useState<{ left: number; width: number } | null>(null)
+  useLayoutEffect(() => {
+    if (!enabled) return
+    let frame = 0
+    const measure = () => {
+      frame = 0
+      const box = field.current?.getBoundingClientRect()
+      const runsPast = box !== undefined && box.top < window.innerHeight - 48 && box.bottom > window.innerHeight
+      setPin((current) => {
+        if (!runsPast) return null
+        const next = { left: Math.round(box.left), width: Math.round(box.width) }
+        return current && current.left === next.left && current.width === next.width ? current : next
+      })
+    }
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure)
+    }
+    measure()
+    window.addEventListener('scroll', schedule, { capture: true, passive: true })
+    window.addEventListener('resize', schedule)
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule)
+    if (field.current) observer?.observe(field.current)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', schedule, { capture: true })
+      window.removeEventListener('resize', schedule)
+      observer?.disconnect()
+    }
+  }, [field, enabled])
+  return enabled ? pin : null
+}
+
 function useStore(): EditInPlaceStore {
   const store = useContext(EditInPlaceContext)
   if (!store) throw new Error('<EditableValue> works inside an <EntityView>, which runs editing in place.')
@@ -187,28 +241,46 @@ export function EditableField({
   const refocus = useRef(false)
   const blurTimer = useRef<number | undefined>(undefined)
 
-  // An always-editable control starts over (it's uncontrolled: a rich-text
-  // editor reads its value once) when the value changed elsewhere while
-  // nothing of its own was unsaved and the caret wasn't in it.
+  // Where the caret goes once the control shows or starts over: the spot
+  // clicked in the read view (F8), or the caret's own block (F4).
+  const caretTarget = useRef<CaretSpot | null>(null)
+  const stopPlacing = useRef<() => void>(() => {})
+  useEffect(() => () => stopPlacing.current(), [])
+  const placeCaretSoon = useCallback((spot: CaretSpot) => {
+    stopPlacing.current()
+    stopPlacing.current = placeCaretWhenReady(() => container.current, spot)
+  }, [])
+
+  // The value changed elsewhere (another tab, a phone, an AI chat): the
+  // control starts over (it's uncontrolled: a rich-text editor reads its
+  // value once) when nothing of its own is unsaved, the caret keeping its
+  // block if it was in it; under unsaved typing the store marks a conflict.
   const refresh = useCallback(() => {
-    if (!container.current?.contains(document.activeElement)) store.refresh(key)
-  }, [store, key])
+    const focused = Boolean(container.current?.contains(document.activeElement))
+    const spot = focused && container.current ? caretSpot(container.current) : null
+    if (store.refresh(key) && spot) placeCaretSoon(spot)
+  }, [store, key, placeCaretSoon])
   useEffect(() => {
-    if (always) refresh()
-  }, [always, refresh, edit.value])
+    refresh()
+  }, [refresh, edit.value])
 
   const isOpen = state.status !== 'closed'
+  const pinned = usePinnedStatus(container, autosave && (isOpen || always))
   const wasOpen = useRef(false)
   useEffect(() => {
     // Always open: the caret stays wherever the person put it.
     if (isOpen && !wasOpen.current && !always) {
+      const spot = caretTarget.current
+      caretTarget.current = null
       for (const selector of FOCUS_ORDER) {
         const target = container.current?.querySelector<HTMLElement>(selector)
         if (target) {
-          target.focus()
+          // Opened by a click on the text: the page stays where it is.
+          target.focus(spot ? { preventScroll: true } : undefined)
           break
         }
       }
+      if (spot) placeCaretSoon(spot)
     }
     // Closed: the caret goes back to the value's edit button after a
     // keyboard save or Esc, or whenever closing left it nowhere (a pick
@@ -218,7 +290,30 @@ export function EditableField({
       ;(editButton.current ?? triggerBox.current?.querySelector('button'))?.focus()
     }
     wasOpen.current = isOpen
-  }, [isOpen, always])
+  }, [isOpen, always, placeCaretSoon])
+
+  // Esc on a changed long text that doesn't autosave: asks first (F7).
+  const [askingDiscard, setAskingDiscard] = useState(false)
+  const asking = useRef(false)
+  useLayoutEffect(() => {
+    asking.current = askingDiscard
+  })
+
+  // The first refusal or failed save of an autosaving field toasts too:
+  // its line may be far from where the person is looking (F5). Once per
+  // run of failures; a save that lands starts the count again.
+  const failure = state.status !== 'closed' ? state.error : null
+  const toasted = useRef(false)
+  useEffect(() => {
+    if (!autosave) return
+    if (failure === null) {
+      toasted.current = false
+      return
+    }
+    if (toasted.current) return
+    toasted.current = true
+    toast.error(`Couldn't save ${label}`, { description: failure })
+  }, [autosave, failure, label])
 
   useEffect(() => () => window.clearTimeout(blurTimer.current), [])
 
@@ -260,6 +355,8 @@ export function EditableField({
 
   const onShownClick = (event: MouseEvent) => {
     if ((event.target as Element).closest(INTERACTIVE)) return
+    // Long text opens with the caret where it was clicked (F8).
+    if (edit.kind === 'long-text') caretTarget.current = spotAtPoint(event.currentTarget, event.clientX, event.clientY)
     start()
   }
 
@@ -278,7 +375,13 @@ export function EditableField({
       event.preventDefault()
       if (always) saveNow()
       else if (autosave) commitFromKeyboard()
-      else {
+      else if (edit.kind === 'long-text' && !(edit.isEqual ?? sameAsJson)(state.draft, state.initial)) {
+        window.clearTimeout(blurTimer.current)
+        // This Esc opens the question; it mustn't also close it (or a
+        // record dialog around the field) on its way up to the document.
+        event.stopPropagation()
+        setAskingDiscard(true)
+      } else {
         refocus.current = true
         cancel()
       }
@@ -301,7 +404,7 @@ export function EditableField({
     if (!autosave && (event.relatedTarget as Element | null)?.closest(LEAVING)) return
     blurTimer.current = window.setTimeout(() => {
       if (store.state(key).status !== 'open') return
-      if (container.current?.querySelector(HOLD)) return
+      if (container.current?.querySelector(HOLD) || asking.current) return
       void store.commit(key).then(() => {
         if (always) refresh()
       })
@@ -408,68 +511,113 @@ export function EditableField({
   // A refusal about one of the value's own fields shows on that field when
   // the control says it shows them; anything else shows under the control.
   const lineError = edit.errorsOnFields && fieldErrors ? null : open.error
-  return (
-    <span
-      ref={container}
-      data-slot="editable-value"
-      data-state={saving || autosaving ? 'saving' : open.error ? 'failed' : 'editing'}
-      onKeyDown={onKeyDown}
-      onBlur={onBlur}
-      onFocus={onFocus}
-      className={cn('flex min-w-0 flex-col gap-1.5', layout === 'block' ? 'w-full' : 'w-fit max-w-full', className)}
-    >
-      <Control
-        key={open.revision ?? 0}
-        render={edit.control}
-        id={controlId}
-        value={open.draft}
-        onChange={(value) => store.change(key, value)}
-        commit={commit}
-        cancel={cancel}
-        disabled={saving}
-        invalid={!saving && open.error !== null}
-        label={label}
-        describedBy={describedBy}
-        onProblem={(problem) => store.report(key, problem)}
-        inline={Boolean(edit.inline)}
-        errors={saving ? undefined : fieldErrors}
-      />
-      <span id={describedBy} className="type-body">
-        {autosave ? (
-          // A quiet line, always there so a screen reader hears it change:
-          // "Saving…" while a save is in flight, "Saved" once nothing typed
-          // is waiting, and a refusal's reason above it.
-          <>
-            {lineError && <FieldError className="type-caption">{lineError}</FieldError>}
-            <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
-              {autosaving ? (
-                <>
-                  <Spinner aria-hidden="true" className="size-3.5" />
-                  Saving…
-                </>
-              ) : (
-                open.autosave === 'saved' &&
-                !open.error && (
-                  <>
-                    <CheckIcon aria-hidden="true" className="size-3.5" />
-                    Saved
-                  </>
-                )
-              )}
-            </span>
-          </>
-        ) : saving ? (
-          <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
-            <Spinner aria-hidden="true" className="size-3.5" />
-            Saving…
-          </span>
-        ) : (
-          lineError && <FieldError className="type-caption">{lineError}</FieldError>
-        )}
-      </span>
+  // Something to say: a save in flight, saved, or why it can't save.
+  const hasStatus = autosaving || open.autosave === 'saved' || lineError !== null
+  const pin = hasStatus ? pinned : null
+  // The saved value changed elsewhere under unsaved typing: the person picks (F4).
+  const conflictActions = 'conflict' in open && open.conflict && (
+    <span className="mt-1 flex flex-wrap gap-2">
+      <Button type="button" size="xs" variant="outline" onClick={() => void store.keepMine(key)}>
+        Keep Mine
+      </Button>
+      <Button type="button" size="xs" variant="ghost" onClick={() => store.takeSaved(key)}>
+        Show Saved
+      </Button>
     </span>
   )
+  return (
+    <>
+      <span
+        ref={container}
+        data-slot="editable-value"
+        data-state={saving || autosaving ? 'saving' : open.error ? 'failed' : 'editing'}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        className={cn('flex min-w-0 flex-col gap-1.5', layout === 'block' ? 'w-full' : 'w-fit max-w-full', className)}
+      >
+        <Control
+          key={open.revision ?? 0}
+          render={edit.control}
+          id={controlId}
+          value={open.draft}
+          onChange={(value) => store.change(key, value)}
+          commit={commit}
+          cancel={cancel}
+          disabled={saving}
+          invalid={!saving && open.error !== null}
+          label={label}
+          describedBy={describedBy}
+          onProblem={(problem) => store.report(key, problem)}
+          inline={Boolean(edit.inline)}
+          errors={saving ? undefined : fieldErrors}
+        />
+        <span
+          id={describedBy}
+          data-slot="editable-value-status"
+          data-pinned={pin ? '' : undefined}
+          // Pinned to the screen's bottom edge while the field runs past
+          // it, so the save's state and a refusal stay in view (F5).
+          style={pin ? { left: pin.left, maxWidth: pin.width } : undefined}
+          className={cn(
+            'type-body',
+            pin && 'fixed bottom-3 z-30 w-fit rounded-md border border-border bg-popover px-2 py-1 text-popover-foreground shadow-md',
+          )}
+        >
+          {autosave ? (
+            // A quiet line, always there so a screen reader hears it change:
+            // "Saving…" while a save is in flight, "Saved" once nothing typed
+            // is waiting, and a refusal's reason above it.
+            <>
+              {lineError && <FieldError className="type-caption">{lineError}</FieldError>}
+              {conflictActions}
+              <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
+                {autosaving ? (
+                  <>
+                    <Spinner aria-hidden="true" className="size-3.5" />
+                    Saving…
+                  </>
+                ) : (
+                  open.autosave === 'saved' &&
+                  !open.error && (
+                    <>
+                      <CheckIcon aria-hidden="true" className="size-3.5" />
+                      Saved
+                    </>
+                  )
+                )}
+              </span>
+            </>
+          ) : saving ? (
+            <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
+              <Spinner aria-hidden="true" className="size-3.5" />
+              Saving…
+            </span>
+          ) : (
+            <>
+              {lineError && <FieldError className="type-caption">{lineError}</FieldError>}
+              {conflictActions}
+            </>
+          )}
+        </span>
+      </span>
+      {/* Outside the field: its keys and focus aren't the field's (a
+          portal's events still bubble through React). */}
+      <DiscardChangesDialog
+        open={askingDiscard}
+        data-leave-guard=""
+        onKeepEditing={() => setAskingDiscard(false)}
+        onDiscard={() => {
+          setAskingDiscard(false)
+          refocus.current = true
+          cancel()
+        }}
+      />
+    </>
+  )
 }
+
+const sameAsJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
 /**
  * While a field holds something unsaved, leaving asks first: an in-app
@@ -521,18 +669,33 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
 
   useEffect(() => {
     if (!dirty) return
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+    // Saves started as the page goes ask the browser to finish them
+    // (`keepalive`, lib/page-leaving.ts), F13.
+    const saveAsLeaving = () => {
+      markPageLeaving()
       void store.saveAll()
+    }
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      saveAsLeaving()
       event.preventDefault()
     }
+    // Hidden (another tab, a phone's home screen, often the last thing a
+    // phone tells a page): save now, and while hidden don't wait for the
+    // pause. iOS gives no leave prompt, only these.
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') void store.saveAll()
+      const hidden = document.visibilityState === 'hidden'
+      store.hurry(hidden)
+      if (hidden) saveAsLeaving()
+      else clearPageLeaving()
     }
     window.addEventListener('beforeunload', onBeforeUnload)
+    window.addEventListener('pagehide', saveAsLeaving)
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => {
       window.removeEventListener('beforeunload', onBeforeUnload)
+      window.removeEventListener('pagehide', saveAsLeaving)
       document.removeEventListener('visibilitychange', onVisibilityChange)
+      store.hurry(false)
     }
   }, [dirty, store])
 

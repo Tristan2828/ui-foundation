@@ -23,8 +23,9 @@
 //   turn into the form's own control (widget-fields.tsx) where they're
 //   shown, and save when you leave them. Not optimistic: "Saving…" until
 //   the server agrees; a refusal stays open with its reason. Description
-//   autosaves as it's typed (`autosave`, Notion-style): a pause after
-//   typing stops, without leaving it, editable while it saves.
+//   is edited where it's read (`inline`, Notion-style, the default for
+//   notes): the editor drawn as the text, no click to open, saved a pause
+//   after typing stops, editable while it saves.
 // - The checklist, a list edited in place (editInPlace's `list` kind): an
 //   item is added at the end (Enter adds the next), its text edited where
 //   it's shown, moved and removed with the form's own buttons. Each change
@@ -163,11 +164,13 @@ function widgetEdits(
         />
       ),
     }),
-    // Long text, as rich text, saved as it's typed (a pause after typing
-    // stops); Ctrl/Cmd+Enter or Esc saves now and closes, Enter is a new line.
+    // Notes, as rich text, edited where they're read (`inline`): no click
+    // to open, the caret goes where you click, and it saves as it's typed
+    // (a pause after typing stops). Ctrl/Cmd+Enter or Esc saves now; Enter
+    // is a new line. Notes are inline by default (the developer, 2026-11-17).
     description: editInPlace({
       kind: 'long-text',
-      autosave: true,
+      inline: true,
       value: widget.description,
       schema: rules.description,
       save: (description) => save({ description }),
@@ -179,7 +182,7 @@ function widgetEdits(
           onProblem={props.onProblem}
           invalid={props.invalid}
           readOnly={props.disabled}
-          autoFocus
+          inline={props.inline}
           aria-label={props.label}
           aria-describedby={props.describedBy}
         />

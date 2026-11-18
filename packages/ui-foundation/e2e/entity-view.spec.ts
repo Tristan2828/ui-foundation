@@ -375,6 +375,102 @@ test.describe('EntityView, long text that autosaves', () => {
     await expect(page.getByText('Projects', { exact: true })).toBeVisible({ timeout: 5000 })
     await expect(prompt).toHaveCount(0)
   })
+
+  // Another tab's save arriving (a refetch), without moving the caret:
+  // a click on the button would take focus from the notes.
+  const changeElsewhere = (page: Page) => page.getByRole('button', { name: 'Change Notes Elsewhere' }).dispatchEvent('click')
+
+  test('a value saved elsewhere shows at once under a focused, clean editor, the caret keeping its block (F4)', async ({ page }) => {
+    await openAutosave(page)
+    const notes = region(page, 'Notes')
+    const editor = notes.getByRole('textbox', { name: 'Notes' })
+    await editor.locator('p').first().click()
+    await page.keyboard.press('End')
+    await changeElsewhere(page)
+    await expect(editor).toContainText('Added in another tab.')
+    await expect(editor).toBeFocused()
+    // The caret is still at the end of the first paragraph.
+    await page.keyboard.type(' Kept.')
+    await expect(editor.locator('p').first()).toHaveText('Pack the shared shelves first. Kept.')
+    await expect(notes.getByRole('status')).toHaveText('Saved', { timeout: 5000 })
+    await expect(page.getByTestId('saved-notes')).toContainText('Pack the shared shelves first. Kept.')
+    await expect(page.getByTestId('saved-notes')).toContainText('Added in another tab.')
+  })
+
+  test('a value saved elsewhere under unsaved typing says so, and nothing saves over it until a pick (F4)', async ({ page }) => {
+    await openAutosave(page)
+    const notes = region(page, 'Notes')
+    const editor = notes.getByRole('textbox', { name: 'Notes' })
+    await typeAtEnd(page, editor, ' Mine.')
+    await changeElsewhere(page)
+    await expect(notes.getByText(/changed elsewhere/)).toBeVisible()
+    // Past the pause: no save dropped the other tab's paragraph.
+    await page.waitForTimeout(2000)
+    await expect(saves(page)).toHaveText('0')
+    await expect(page.getByTestId('saved-notes')).toContainText('Added in another tab.')
+    await expect(editor).toContainText('Mine.')
+
+    await notes.getByRole('button', { name: 'Show Saved' }).click()
+    await expect(editor).toContainText('Added in another tab.')
+    await expect(editor).not.toContainText('Mine.')
+    await expect(notes.getByText(/changed elsewhere/)).toHaveCount(0)
+    await expect(saves(page)).toHaveText('0')
+  })
+
+  test('"Keep Mine" saves what was typed over the value saved elsewhere', async ({ page }) => {
+    await openAutosave(page)
+    const notes = region(page, 'Notes')
+    const editor = notes.getByRole('textbox', { name: 'Notes' })
+    await typeAtEnd(page, editor, ' Mine.')
+    await changeElsewhere(page)
+    await notes.getByRole('button', { name: 'Keep Mine' }).click()
+    await expect(page.getByTestId('saved-notes')).toHaveText('Pack the shared shelves first. Mine.', { timeout: 5000 })
+    await expect(saves(page)).toHaveText('1')
+  })
+
+  test('without autosave, Esc on a changed long text asks before throwing it away (F7)', async ({ page }) => {
+    await openAutosave(page)
+    const plan = region(page, 'Plan')
+    await plan.getByText('Step two.').click()
+    const editor = plan.getByRole('textbox', { name: 'Plan' })
+    await expect(editor).toBeFocused()
+    await page.keyboard.type(' Draft')
+    await page.keyboard.press('Escape')
+    const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
+    await expect(prompt).toBeVisible()
+    await prompt.getByRole('button', { name: 'Keep Editing' }).click()
+    await expect(prompt).toHaveCount(0)
+    await expect(editor).toContainText('Draft')
+    await expect(saves(page)).toHaveText('0')
+
+    await page.keyboard.press('Escape')
+    await page.getByRole('dialog', { name: 'Discard your changes?' }).getByRole('button', { name: 'Discard' }).click()
+    await expect(editor).toHaveCount(0)
+    await expect(plan.getByText('Step two.', { exact: true })).toBeVisible()
+    await expect(saves(page)).toHaveText('0')
+  })
+
+  test('without autosave, Esc on an unchanged long text closes it with no question (negative control)', async ({ page }) => {
+    await openAutosave(page)
+    const plan = region(page, 'Plan')
+    await plan.getByText('Step two.').click()
+    await expect(plan.getByRole('textbox', { name: 'Plan' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(plan.getByRole('textbox', { name: 'Plan' })).toHaveCount(0)
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toHaveCount(0)
+  })
+
+  test('a click-to-open note opens with the caret in the paragraph clicked, not the first (F8)', async ({ page }) => {
+    await openAutosave(page)
+    const plan = region(page, 'Plan')
+    await plan.getByText('Step three.').click()
+    const editor = plan.getByRole('textbox', { name: 'Plan' })
+    await expect(editor).toBeFocused()
+    await page.keyboard.press('End')
+    await page.keyboard.type(' Done.')
+    await expect(editor.locator('p').nth(2)).toHaveText('Step three. Done.')
+    await expect(editor.locator('p').first()).toHaveText('Step one.')
+  })
 })
 
 test.describe('EntityView, notice and footer (#158, #159)', () => {

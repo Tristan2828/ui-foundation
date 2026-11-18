@@ -7,6 +7,59 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## Unreleased
+
+### Editing in place: saves that can't be lost or overwritten unseen (RichTextEditor review F3, F4, F5, F7, F8, F13, F25)
+
+Two changes in behaviour, marked **(behaviour)**; the rest is additive.
+
+- **Text typed during a save survives the field unmounting (F3).** A
+  field that leaves the view while its autosave is in flight (a session
+  ending on a 401, a parent that stops rendering the view, a changed
+  `key`) now sends what was typed after that save started, from its last
+  draft, once the save lands. Until it's sent the store still counts as
+  dirty.
+- **A value saved elsewhere (F4, the client half).** When the record's
+  value changes under a field (a refetch after another tab, a phone or an
+  AI chat saved it): with nothing typed waiting, the field shows it at
+  once, even with the caret in it, and the caret keeps its paragraph.
+  Under unsaved typing nothing saves over it: the status line says it
+  "changed elsewhere", with **Keep Mine** and **Show Saved**. The store's
+  `markConflict(key)` is the seam for a server's 409 (a version check,
+  still to come).
+- **Refusals stay in view (F5).** On a note longer than the screen, an
+  autosaving field's status line (Saving…, Saved, a refusal) is pinned to
+  the screen's bottom edge while the note runs past it. The first refusal
+  or failed save of a run also toasts ("Couldn't save <label>"), so the
+  app needs its `<Toaster />` mounted, as the shell already does. A
+  problem the editor reports (`onProblem`) counts as unsaved at once, so
+  a link clicked within the pause asks instead of leaving.
+- **(behaviour) Esc on a changed `long-text` without `autosave` asks (F7).**
+  "Discard your changes?" (Keep Editing / Discard) instead of throwing
+  the draft away; unchanged, Esc still closes at once. `autosave` and
+  always-editable fields are unchanged (Esc saves).
+- **Click-to-open lands where you clicked (F8).** Opening a long text by
+  a click puts the caret in the clicked paragraph, at the clicked spot,
+  and the page doesn't scroll to the top.
+- **Saves as the page goes (F13).** A save started on `beforeunload`,
+  `pagehide` or the page going hidden is sent with `keepalive` when its
+  body fits (30 KB; a longer note goes as an ordinary request, which the
+  leave prompt gives time). While the page is hidden an autosave goes
+  without the pause.
+- **A trimming backend no longer resets the editor (F25).** The server
+  sending back what it was sent, normalised (trimmed, line endings), is
+  the field's own echo: no remount, undo kept.
+- **(behaviour) The template's notes are inline (F8).** Widget's
+  Description is `inline: true` (edited where it's read, no click to
+  open), and the docs now make notes inline by default (the developer,
+  2026-11-17): cell-patterns.md 18, add-an-entity.md's `long-text`
+  wiring. Nothing changes in an app until it moves its own notes.
+
+How an app adopts it: nothing required. To follow the new default, give a
+record's notes `inline: true` and pass `inline={props.inline}` and
+`toolbar={props.inline ? 'floating' : true}` to its `RichTextEditor`,
+without `autoFocus` (Widget's Description in the template).
+
 ## 4.125.0 — The tab bar holds the page still; mocks rejoin a restarted worker
 
 npm package and `ui-foundation-backend` 4.125.0 (the backend is unchanged

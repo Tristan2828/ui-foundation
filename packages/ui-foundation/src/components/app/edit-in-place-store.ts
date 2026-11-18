@@ -24,7 +24,17 @@
 // - What's been saved stays saved: closing it (leaving, Esc) saves what's
 //   left first. Nothing reverts.
 // - A problem the control reports (rich text that can't round-trip) means
-//   nothing is saved; its message shows after the pause.
+//   nothing is saved; it counts as unsaved at once (leaving asks), and its
+//   message shows after the pause.
+// - A field leaving the view mid-save (unmounted) still sends what was
+//   typed after that save started: the last draft and its config go with
+//   the save waiting behind it (`register`'s cleanup).
+// - The saved value changing elsewhere (another tab, a phone, an AI chat)
+//   shows at once in a field with nothing of its own unsaved, even with the
+//   caret in it (`refresh`). Under unsaved typing it's a conflict: nothing
+//   saves until the person picks theirs or the saved one (`keepMine`,
+//   `takeSaved`). The server echoing a save back, even normalised
+//   (trimmed), is not a change.
 // A field marked `alwaysEditable` is also open from the moment it joins:
 // it's the value itself, never "the open field", so it never closes and
 // opening another field leaves it alone.
@@ -79,6 +89,12 @@ export type OpenFieldState = {
   autosave?: 'saving' | 'saved'
   /** Counts the times an always-editable field started over from a value saved elsewhere (`refresh`). */
   revision?: number
+  /**
+   * The saved value changed elsewhere while this held unsaved typing:
+   * nothing saves until `keepMine` (save over it) or `takeSaved` (show it).
+   * `markConflict` sets it too: the seam for a server's 409 (Roadmap 405).
+   */
+  conflict?: boolean
 }
 
 /** How long typing has to stop before an autosaving field saves. */
@@ -90,6 +106,24 @@ export type EditInPlaceStoreOptions = {
 }
 
 const CLOSED: EditFieldState = { status: 'closed' }
+
+/** What a field shows when the saved value changed under unsaved typing. */
+export const CONFLICT_MESSAGE =
+  'This changed elsewhere (another tab, device or chat) since you started typing. Saving now replaces that.'
+
+// Line endings, trailing spaces on a line and blank lines at either end:
+// what a backend commonly normalises in text it's sent.
+function normalisedText(value: string) {
+  return value
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .join('\n')
+    .trim()
+}
+
+// How many of a field's last sent values still count as its own echo.
+const ECHOES = 4
 
 const sameAsJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
@@ -123,6 +157,14 @@ export class EditInPlaceStore {
   private always = new Set<string>()
   // Leaving the page, waiting for its saves: the leave prompt stays.
   private holds = 0
+  // The saved value each field last saw (`refresh` tells a change from it),
+  // and the values it last sent (their echo isn't a change elsewhere).
+  private seen = new Map<string, unknown>()
+  private sent = new Map<string, unknown[]>()
+  // Saves of fields that left the view mid-save, still to send or land.
+  private detached = new Set<Promise<boolean>>()
+  // The page is hidden: an autosave doesn't wait for the pause.
+  private hurried = false
 
   constructor(options: EditInPlaceStoreOptions = {}) {
     this.autosaveDelay = options.autosaveDelay ?? AUTOSAVE_DELAY_MS
@@ -149,19 +191,53 @@ export class EditInPlaceStore {
   register(key: string, config: () => EditFieldConfig) {
     this.configs.set(key, config)
     const { alwaysEditable, value } = config()
+    this.seen.set(key, value)
     if (alwaysEditable) {
       this.always.add(key)
       this.set(key, { status: 'open', draft: value, initial: value, error: null, problem: null })
     }
     return () => {
+      const inFlight = this.autosaving.get(key)
+      const state = this.state(key)
+      const last = this.configs.get(key)?.()
+      // With a save in flight, what was typed since goes once it lands,
+      // from this draft and config: the field is gone by then (F3).
+      if (inFlight) {
+        this.clearTimer(key)
+        if (state.status === 'open' && last) this.sendDetached(inFlight, state, last)
+      }
       // A save still waiting for the pause goes now: the field is leaving,
       // not giving up what was typed.
-      if (this.timers.has(key)) void this.flush(key)
+      else if (this.timers.has(key)) void this.flush(key)
       this.configs.delete(key)
       this.states.delete(key)
+      this.seen.delete(key)
+      this.sent.delete(key)
       if (this.openKey === key) this.openKey = null
       if (this.always.delete(key)) this.emit()
     }
+  }
+
+  // A field that left mid-save: once its save in flight settles, its last
+  // draft is sent if it's newer than what that save held.
+  private sendDetached(inFlight: InFlight, state: OpenFieldState, config: EditFieldConfig) {
+    const isEqual = config.isEqual ?? sameAsJson
+    const run: Promise<boolean> = inFlight.promise
+      .then((saved) => {
+        if (state.problem || state.conflict || isEqual(state.draft, inFlight.draft)) return saved
+        const parsed = config.schema ? config.schema.safeParse(state.draft) : { success: true as const, data: state.draft }
+        if (!parsed.success) return false
+        return config.save(parsed.data).then(
+          () => true,
+          () => false,
+        )
+      })
+      .finally(() => {
+        this.detached.delete(run)
+        this.emit()
+      })
+    this.detached.add(run)
+    this.emit()
   }
 
   state(key: string): EditFieldState {
@@ -178,7 +254,7 @@ export class EditInPlaceStore {
    * a move off the page waiting for its saves (`hold`).
    */
   get editing(): boolean {
-    return this.openKey !== null || this.always.size > 0 || this.holds > 0
+    return this.openKey !== null || this.always.size > 0 || this.holds > 0 || this.detached.size > 0
   }
 
   /**
@@ -199,12 +275,18 @@ export class EditInPlaceStore {
 
   /** Whether leaving the page now would lose something: a draft that isn't saved. */
   get dirty(): boolean {
-    return this.unsaved().length > 0
+    return this.unsaved().length > 0 || this.detached.size > 0
   }
 
-  /** Whether everything unsaved saves on its own, so leaving can save it first rather than ask. */
+  /**
+   * Whether everything unsaved saves on its own, so leaving can save it
+   * first rather than ask. A problem or a conflict can't: leaving asks at once.
+   */
   get savesOnLeave(): boolean {
-    return this.unsaved().every((key) => this.autosaves(key))
+    return this.unsaved().every((key) => {
+      const state = this.state(key)
+      return this.autosaves(key) && !(state.status !== 'closed' && (state.problem || state.conflict))
+    })
   }
 
   private unsaved(): string[] {
@@ -214,6 +296,8 @@ export class EditInPlaceStore {
       const state = this.state(key)
       if (state.status === 'closed') return false
       if (state.status === 'saving' || this.autosaving.has(key) || state.error !== null) return true
+      // A reported problem is unsaved at once, not only after the pause (F5).
+      if (state.problem !== null || state.conflict) return true
       return !this.isEqual(key)(state.draft, state.initial)
     })
   }
@@ -243,6 +327,7 @@ export class EditInPlaceStore {
     const config = this.configs.get(key)?.()
     if (!config) return false
     this.openKey = key
+    this.seen.set(key, config.value)
     this.set(key, { status: 'open', draft: config.value, initial: config.value, error: null, problem: null })
     return true
   }
@@ -295,8 +380,8 @@ export class EditInPlaceStore {
     const config = this.configs.get(key)?.()
     if (!config) return Promise.resolve(false)
 
-    if (open.problem) {
-      this.set(key, { ...open, error: open.problem })
+    if (open.problem || open.conflict) {
+      this.set(key, { ...open, error: open.problem ?? CONFLICT_MESSAGE })
       return Promise.resolve(false)
     }
     const isEqual = config.isEqual ?? sameAsJson
@@ -312,6 +397,8 @@ export class EditInPlaceStore {
     }
 
     this.set(key, { ...open, status: 'saving', error: null, fieldErrors: undefined })
+    this.remember(key, open.draft)
+    if (parsed.data !== open.draft) this.remember(key, parsed.data)
     const save = config
       .save(parsed.data)
       .then(
@@ -345,10 +432,35 @@ export class EditInPlaceStore {
     this.clearTimer(key)
     this.timers.set(
       key,
-      setTimeout(() => {
-        this.timers.delete(key)
-        void this.flush(key)
-      }, this.autosaveDelay),
+      setTimeout(
+        () => {
+          this.timers.delete(key)
+          void this.flush(key)
+        },
+        this.hurried ? 0 : this.autosaveDelay,
+      ),
+    )
+  }
+
+  /**
+   * The page is hidden (another tab, a phone's home screen, F13): while it
+   * is, an autosave goes without the pause, and one waiting goes now.
+   */
+  hurry(hidden: boolean) {
+    this.hurried = hidden
+    if (hidden) for (const key of [...this.timers.keys()]) void this.flush(key)
+  }
+
+  // A value this field sent: its echo from the server isn't a change elsewhere.
+  private remember(key: string, value: unknown) {
+    this.sent.set(key, [...(this.sent.get(key) ?? []), value].slice(-ECHOES))
+  }
+
+  private isEcho(key: string, value: unknown, isEqual: (a: unknown, b: unknown) => boolean) {
+    return (this.sent.get(key) ?? []).some(
+      (sent) =>
+        isEqual(value, sent) ||
+        (typeof value === 'string' && typeof sent === 'string' && normalisedText(value) === normalisedText(sent)),
     )
   }
 
@@ -385,8 +497,8 @@ export class EditInPlaceStore {
     if (state.status !== 'open') return Promise.resolve(state.status === 'closed')
     const config = this.configs.get(key)?.()
     if (!config) return Promise.resolve(false)
-    if (state.problem) {
-      this.set(key, { ...state, error: state.problem })
+    if (state.problem || state.conflict) {
+      this.set(key, { ...state, error: state.problem ?? CONFLICT_MESSAGE })
       return Promise.resolve(false)
     }
     const isEqual = config.isEqual ?? sameAsJson
@@ -402,6 +514,8 @@ export class EditInPlaceStore {
     }
 
     const sent = state.draft
+    this.remember(key, sent)
+    if (parsed.data !== sent) this.remember(key, parsed.data)
     this.set(key, { ...state, error: null, fieldErrors: undefined, autosave: 'saving' })
     const promise = config
       .save(parsed.data)
@@ -431,25 +545,70 @@ export class EditInPlaceStore {
    */
   async saveAll(): Promise<boolean> {
     const keys = this.unsaved().filter((key) => this.autosaves(key))
-    const results = await Promise.all(keys.map((key) => this.flush(key)))
+    const results = await Promise.all([...keys.map((key) => this.flush(key)), ...this.detached])
     return results.every(Boolean) && !this.dirty
   }
 
   /**
-   * An always-editable field shows the saved value again when it changed
-   * elsewhere (another tab, the form), but only while nothing of its own
-   * is unsaved or saving. True when it did: the control starts over.
+   * The field's saved value (its config's `value`) may have changed
+   * elsewhere: another tab, a phone, an AI chat, the form. Call it whenever
+   * the value changes. An open field with nothing of its own unsaved or
+   * saving shows it, starting its control over (`revision`): true when it
+   * did, so the caret can be put back (F4). One with unsaved typing gets a
+   * conflict (`conflict`, its message), and nothing saves until the person
+   * picks. The field's own save coming back, as sent or as the server
+   * normalised it (trimmed), is no change: the control keeps its text and
+   * its undo (F25).
    */
   refresh(key: string): boolean {
     const state = this.state(key)
     const config = this.configs.get(key)?.()
-    if (!this.always.has(key) || state.status !== 'open' || !config) return false
-    if (this.timers.has(key) || this.autosaving.has(key) || state.error !== null) return false
+    if (state.status === 'closed' || !config) return false
     const isEqual = config.isEqual ?? sameAsJson
-    if (!isEqual(state.draft, state.initial) || isEqual(config.value, state.initial)) return false
+    const seen = this.seen.has(key) ? this.seen.get(key) : state.initial
+    if (isEqual(config.value, seen)) return false
+    this.seen.set(key, config.value)
+    if (this.isEcho(key, config.value, isEqual) || isEqual(config.value, state.initial)) return false
+    const busy = this.timers.has(key) || this.autosaving.has(key) || this.queued.has(key) || state.status === 'saving'
+    const clean = !busy && state.error === null && state.problem === null && isEqual(state.draft, state.initial)
+    if (!clean) {
+      this.set(key, { ...state, conflict: true, error: CONFLICT_MESSAGE })
+      return false
+    }
     const revision = (state.revision ?? 0) + 1
     this.set(key, { status: 'open', draft: config.value, initial: config.value, error: null, problem: null, revision })
     return true
+  }
+
+  /**
+   * The saved value changed under this field's unsaved typing, as a
+   * server's conflict answer says: the seam for a version check's 409
+   * (Roadmap 405). Nothing saves until the person picks.
+   */
+  markConflict(key: string) {
+    const state = this.state(key)
+    if (state.status === 'closed') return
+    this.clearTimer(key)
+    this.set(key, { ...state, status: 'open', conflict: true, error: CONFLICT_MESSAGE, autosave: undefined })
+  }
+
+  /** A conflict, answered "keep mine": what's typed saves over the value saved elsewhere. */
+  keepMine(key: string): Promise<boolean> {
+    const state = this.state(key)
+    const config = this.configs.get(key)?.()
+    if (state.status !== 'open' || !state.conflict || !config) return Promise.resolve(false)
+    this.set(key, { ...state, conflict: false, error: null, initial: config.value })
+    return this.autosaves(key) ? this.flush(key) : this.commit(key)
+  }
+
+  /** A conflict, answered "show the saved one": what's typed goes, and the control starts over from the saved value. */
+  takeSaved(key: string) {
+    const state = this.state(key)
+    const config = this.configs.get(key)?.()
+    if (state.status !== 'open' || !state.conflict || !config) return
+    this.clearTimer(key)
+    const revision = (state.revision ?? 0) + 1
+    this.set(key, { status: 'open', draft: config.value, initial: config.value, error: null, problem: null, revision })
   }
 
   /**
@@ -472,7 +631,7 @@ export class EditInPlaceStore {
     }
     for (const key of this.always) {
       const state = this.state(key)
-      if (state.status === 'open') this.set(key, { ...state, draft: state.initial, error: null, autosave: undefined })
+      if (state.status === 'open') this.set(key, { ...state, draft: state.initial, error: null, problem: null, conflict: false, autosave: undefined })
     }
   }
 }
