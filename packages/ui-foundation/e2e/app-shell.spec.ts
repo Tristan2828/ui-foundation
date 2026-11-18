@@ -161,7 +161,7 @@ test.describe("the browser tab's title", () => {
     await open(page, 'with-loading-view')
     await expect(page.locator('[data-state="loading"]')).toBeVisible()
     await expect(page).toHaveTitle('Projects · Example')
-    await page.getByRole('button', { name: 'Finish loading' }).click()
+    await page.getByRole('button', { name: 'Finish Loading' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Apollo' })).toBeVisible()
     await expect(page).toHaveTitle('Apollo · Example')
   })

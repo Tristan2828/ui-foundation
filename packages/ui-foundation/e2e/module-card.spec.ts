@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
 // ModuleStrip and ModuleCard (app/ModuleCard, #224): the strip's columns at

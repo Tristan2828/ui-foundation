@@ -32,7 +32,7 @@ test('without summary or onDuplicate, every item shows its fields as before', as
   await expect(list.getByRole('button', { name: /^Duplicate/ })).toHaveCount(0)
   await expect(list.getByRole('button', { name: 'Remove item 2', exact: true })).toBeEnabled()
 
-  await page.getByRole('button', { name: 'Add item', exact: true }).click()
+  await page.getByRole('button', { name: 'Add Item', exact: true }).click()
   await expect(page.getByRole('textbox', { name: 'Item 3 text' })).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Item 1 text' })).toBeVisible()
 })
@@ -124,7 +124,7 @@ test('items the save refuses open to show why, and stay open while they are fixe
 test('Add opens the new item and closes the open one', async ({ page }) => {
   await open(page, 'rows', 'Leg day')
   await line(page, 3).click()
-  await page.getByRole('button', { name: 'Add exercise', exact: true }).click()
+  await page.getByRole('button', { name: 'Add Exercise', exact: true }).click()
   await expect(line(page, 9)).toHaveAttribute('aria-expanded', 'true')
   await expect(line(page, 9)).toHaveAccessibleName('exercise 9: New exercise · 3 × 10')
   await expect(nameBox(page, 9)).toBeVisible()
@@ -156,7 +156,7 @@ test('Duplicate inserts the copy after its original and opens it, until the max'
   for (const n of [1, 5, 10]) {
     await expect(page.getByRole('button', { name: `Duplicate exercise ${n}`, exact: true })).toBeDisabled()
   }
-  await expect(page.getByRole('button', { name: 'Add exercise', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Add Exercise', exact: true })).toBeDisabled()
 
   await page.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(page.getByTestId('workout-saved')).toContainText('"weight":55')

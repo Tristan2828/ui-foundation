@@ -14,6 +14,7 @@ export {
   type BottomBarItem,
   type NavEntry,
   type NavItem,
+  type NavLook,
   type NavSection,
 } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
@@ -51,6 +52,8 @@ export {
 } from '@/components/app/artwork'
 export { ColorSwatch, type ColorSwatchProps } from '@/components/app/color-swatch'
 export { storedColor } from '@/lib/stored-color'
+export { ColorField, type ColorFieldProps } from '@/components/app/color-field'
+export { COLOR_CHOICES, type ColorChoice } from '@/lib/color-choices'
 export { CountLink, type CountLinkProps } from '@/components/app/count-link'
 export {
   DataTable,
@@ -58,6 +61,7 @@ export {
   type DataTableOpens,
   type DataTableOpensKind,
   type DataTableGrouping,
+  type DataTableLook,
   type DataTableProps,
   type DataTableTotals,
   type DataTableWidth,
@@ -80,7 +84,20 @@ export { OptionSelect, type OptionSelectOption, type OptionSelectProps } from '@
 export { ChoiceButtons, type ChoiceButtonsOption, type ChoiceButtonsProps } from '@/components/app/choice-buttons'
 export { ReferenceCombobox, type ReferenceComboboxProps, type ReferenceRecord } from '@/components/app/reference-combobox'
 export { fieldRows, type FieldKind, type FieldRowItem, type FieldRowPlace, type FieldSize } from '@/lib/field-rows'
-export { KeyStats, type KeyStat, type KeyStatsProps } from '@/components/app/key-stats'
+export { KeyStats, type KeyStat, type KeyStatAction, type KeyStatsProps } from '@/components/app/key-stats'
+export { ActionHint, type ActionHintProps } from '@/components/app/action-hint'
+export { StatusMark, type StatusMarkProps } from '@/components/app/status-mark'
+export {
+  STATUS_KINDS,
+  STATUS_KIND_ICONS,
+  STATUS_KIND_LABELS,
+  STATUS_KIND_TONES,
+  type StatusKind,
+} from '@/lib/status-kinds'
+// The record's empty value (4.96): a muted dash read as "Not set", for an
+// app's own strips, summary lines and cells.
+export { EmptyText, type EmptyTextProps } from '@/components/app/empty-value'
+export { isEmptyValue } from '@/lib/empty-value'
 export { IconAction, type IconActionProps } from '@/components/app/icon-action'
 export {
   EntityView,
@@ -93,6 +110,15 @@ export {
   type EntityViewRailFields,
   type EntityViewSection,
 } from '@/components/app/entity-view'
+export {
+  type EntityViewFact,
+  type EntityViewFactAction,
+  type EntityViewFactBadge,
+  type EntityViewFactBadgeTone,
+  type EntityViewFactListItem,
+  type EntityViewFactRatingLook,
+  type EntityViewFactValue,
+} from '@/components/app/entity-view-facts'
 export { entityViewTabSlug } from '@/lib/entity-view-tab'
 export { usePrinting } from '@/components/app/print-context'
 export {
@@ -114,7 +140,7 @@ export {
 export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
 // The dialogs and feedback standard (4.90): one delete, toasts' words, an
 // action's error beside it, a job's progress, and the offline bar.
-export { DeleteAction, type DeleteActionProps, type DeleteKind } from '@/components/app/delete-action'
+export { DeleteAction, type DeleteActionProps, type DeleteKind, type DeleteReason } from '@/components/app/delete-action'
 export { notify, doneMessage, pastTense, type NotifyDoneOptions } from '@/components/app/notify'
 export { useAction, type ActionOutcome, type ActionState, type UseActionOptions } from '@/hooks/use-action'
 export { ActionError, type ActionErrorProps } from '@/components/app/action-error'
@@ -144,12 +170,14 @@ export {
   type InPlaceOption,
   type InPlacePart,
   type InPlaceRecord,
+  type InPlaceRecurrenceConfig,
   type InPlaceReferenceConfig,
   type InPlaceSaved,
   type InPlaceSelectConfig,
   type InPlaceTextConfig,
 } from '@/components/app/edit-in-place-presets'
 export { linkHost, linkHref, linkRule } from '@/lib/link-href'
+export { TITLE_CASE_SMALL_WORDS, titleCase } from '@/lib/title-case'
 export { DataEnvironmentBanner } from '@/components/app/data-environment-banner'
 export { EditableValue, type EditableValueProps } from '@/components/app/editable-value'
 export { editRowClass, onEditRowClick, SAVED_FOR_MS } from '@/components/app/edit-row'
@@ -182,6 +210,20 @@ export {
   type FilterSelectOption,
   type FilterSelectProps,
 } from '@/components/app/filter-bar'
+export { FilterDate, type FilterDateProps } from '@/components/app/filter-date'
+export { FactList, FactListItem, type FactListItemProps, type FactListProps } from '@/components/app/fact-list'
+export {
+  DATE_FILTER_PRESETS,
+  DATE_FILTER_PRESET_LABELS,
+  dateFilterKeeps,
+  dateFilterText,
+  dateRangeValue,
+  parseDateFilter,
+  resolveDateFilter,
+  type DateFilter,
+  type DateFilterBounds,
+  type DateFilterPreset,
+} from '@/lib/date-filter'
 export {
   SessionStage,
   SessionView,
@@ -206,8 +248,19 @@ export {
   type ListHeaderAction,
   type ListHeaderLink,
   type ListHeaderProps,
+  type ListHeaderSecondaryAction,
+  type ListHeaderSibling,
 } from '@/components/app/list-header'
 export { Timeline, type TimelineItem, type TimelineProps } from '@/components/app/timeline'
+export {
+  EqualItems,
+  type EqualItem,
+  type EqualItemField,
+  type EqualItemState,
+  type EqualItemTone,
+  type EqualItemsLook,
+  type EqualItemsProps,
+} from '@/components/app/equal-items'
 export { NeedsYou, type NeedsYouItem, type NeedsYouProps, type NeedsYouTone } from '@/components/app/needs-you'
 export { Freshness, type FreshnessProps } from '@/components/app/freshness'
 export { isStale } from '@/lib/freshness'
@@ -228,6 +281,7 @@ export {
 } from '@/components/app/multi-line-chart'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
+export { RatingScore, type RatingScoreGlyph, type RatingScoreProps } from '@/components/app/rating-score'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
 export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
@@ -242,6 +296,37 @@ export {
   type PlainDate,
 } from '@/lib/plain-date'
 export { formatMonthDay, isMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
+export { RecurrenceField, type RecurrenceFieldProps } from '@/components/app/recurrence-field'
+export {
+  atLocal,
+  formatRule,
+  nextAfterCompletion,
+  nextOccurrence,
+  nextOccurrences,
+  normalizeRecurrence,
+  parseRule,
+  RecurrenceError,
+  recurrenceFromWeekdays,
+  recurrenceProblem,
+  weekStartMatters,
+  type Recurrence,
+  type RuleParts,
+  type WeekdayCode,
+} from '@/lib/recurrence'
+export {
+  parseRecurrencePhrase,
+  recurrencePhrase,
+  type PhraseOptions,
+  type PhraseResult,
+  type RecurrencePhraseOptions,
+} from '@/lib/recurrence-phrase'
+export {
+  formatOccurrence,
+  formatRecurrence,
+  todayIn,
+  type OccurrenceFormatOptions,
+  type RecurrenceFormatOptions,
+} from '@/lib/recurrence-format'
 export {
   ChoiceCell,
   LinkCell,
@@ -271,7 +356,7 @@ export {
   type WidgetCardProps,
   type WidgetListItemProps,
 } from '@/components/app/widget-card'
-export { OverviewPage, type OverviewPageProps, type OverviewPart } from '@/components/app/overview-page'
+export { OverviewPage, type OverviewLink, type OverviewPageProps, type OverviewPart } from '@/components/app/overview-page'
 export { WidgetLayoutSheet, type WidgetLayoutSheetProps } from '@/components/app/widget-layout-sheet'
 export { ThemeProvider } from '@/components/theme-provider'
 
@@ -290,7 +375,7 @@ export type { ErrorReportingOptions } from '@/error-reporting/reporter'
 export { createQueryClient } from '@/api/query-client'
 
 // Hooks
-export { useTableUrlState, type TableUrlStateOptions } from '@/hooks/use-table-url-state'
+export { useTableUrlState, type TableUrlStateOptions, type TableUrlStateViewOptions } from '@/hooks/use-table-url-state'
 export { useTableLayout, type TableLayoutOptions } from '@/hooks/use-table-layout'
 export {
   useWidgetLayout,

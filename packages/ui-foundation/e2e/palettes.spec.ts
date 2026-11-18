@@ -18,7 +18,7 @@ const html = (page: Page) => page.locator('html')
 
 test('without a palette: the light/dark toggle, and no palette on <html>', async ({ page }) => {
   await open(page, 'flat', 'theme=light')
-  await expect(page.getByRole('button', { name: 'Toggle dark mode' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Toggle Dark Mode' })).toBeVisible()
   await expect(page.getByRole('button', { name: /^Palette/ })).toHaveCount(0)
   await expect(html(page)).not.toHaveAttribute('data-palette')
 })
@@ -26,13 +26,13 @@ test('without a palette: the light/dark toggle, and no palette on <html>', async
 test('a fixed palette: no toggle and no picker', async ({ page }) => {
   await open(page, 'with-palette')
   await expect(html(page)).toHaveAttribute('data-palette', 'indigo-cyan')
-  await expect(page.getByRole('button', { name: 'Toggle dark mode' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Toggle Dark Mode' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Palette/ })).toHaveCount(0)
 })
 
 test('the picker lists the four, switches at once and remembers the choice on this device', async ({ page }) => {
   await open(page, 'with-palette-picker')
-  await expect(page.getByRole('button', { name: 'Toggle dark mode' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Toggle Dark Mode' })).toHaveCount(0)
   const background = () => page.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor)
   const before = await background()
 
@@ -71,7 +71,7 @@ test('the light palette: light, on its green, with no toggle and no picker', asy
   await expect(html(page)).toHaveAttribute('data-palette', 'palm-lcd')
   await expect(html(page)).not.toHaveClass(/dark/)
   expect(await page.locator('body').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(201, 209, 178)')
-  await expect(page.getByRole('button', { name: 'Toggle dark mode' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Toggle Dark Mode' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Palette/ })).toHaveCount(0)
 })
 
@@ -87,7 +87,7 @@ test('the rows picker sits under the palettes and remembers Regular on this devi
   expect(await cellPadding(page)).toBe(0.25)
 
   await page.getByRole('button', { name: 'Palette: Indigo and Cyan' }).click()
-  await expect(page.getByText('Rows on this device')).toBeVisible()
+  await expect(page.getByText('Rows on This Device')).toBeVisible()
   await expect(page.getByRole('menuitemradio', { name: 'Compact' })).toBeChecked()
   await page.getByRole('menuitemradio', { name: 'Regular' }).click()
   await expect(html(page)).toHaveAttribute('data-rows', 'regular')
@@ -106,9 +106,9 @@ test('the rows picker sits under the palettes and remembers Regular on this devi
 
 test('without a palette the rows get a menu of their own beside the toggle', async ({ page }) => {
   await open(page, 'with-rows-picker', 'theme=light')
-  await expect(page.getByRole('button', { name: 'Toggle dark mode' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Toggle Dark Mode' })).toBeVisible()
   await page.getByRole('button', { name: 'Rows: Compact' }).click()
-  await expect(page.getByText('Palette on this device')).toHaveCount(0)
+  await expect(page.getByText('Palette on This Device')).toHaveCount(0)
   await page.getByRole('menuitemradio', { name: 'Regular' }).click()
   await expect(html(page)).toHaveAttribute('data-rows', 'regular')
   await expect(page.getByRole('button', { name: 'Rows: Regular' })).toBeVisible()
@@ -119,7 +119,7 @@ test('a saved Regular is ignored without the rows picker', async ({ page }) => {
   await open(page, 'with-palette-picker')
   await expect(html(page)).not.toHaveAttribute('data-rows')
   await page.getByRole('button', { name: 'Palette: Indigo and Cyan' }).click()
-  await expect(page.getByText('Rows on this device')).toHaveCount(0)
+  await expect(page.getByText('Rows on This Device')).toHaveCount(0)
 })
 
 test('the link button reads in the palette’s link colour, not its accent', async ({ page }) => {

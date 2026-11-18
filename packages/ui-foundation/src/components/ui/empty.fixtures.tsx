@@ -28,7 +28,7 @@ const meta: Meta<EmptyStoryArgs> = {
   args: {
     title: 'No items yet',
     description: 'Create one to get started.',
-    actionLabel: 'Create item',
+    actionLabel: 'Create Item',
   },
   render: (args) => (
     <Empty className="w-full border border-dashed border-border">

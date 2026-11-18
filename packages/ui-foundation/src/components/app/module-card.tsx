@@ -40,6 +40,7 @@ import type { IconComponent } from '@/components/app/icon-component'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyText } from './empty-value'
 
 /** One of the twelve categorical slots (design-language.md "Categorical colour"). */
 export type CategorySlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
@@ -159,10 +160,7 @@ function ChipValue({ state, value }: { state: 'loading' | 'error' | 'success'; v
     )
   if (state === 'error')
     return (
-      <span className="text-muted-foreground">
-        <span aria-hidden="true">—</span>
-        <span className="sr-only">Couldn't load</span>
-      </span>
+      <EmptyText label="Couldn't load" />
     )
   if (value === undefined) return null
   return (
@@ -280,16 +278,30 @@ export function ModuleCard({
                 {error?.message && <span className="sr-only">: {error.message}</span>}
               </span>
             </p>
-            {onRetry && (
+            {error?.kind === 'proxy_auth' ? (
+              // A lapsed sign-in at a proxy in front of the app: only a
+              // full page load signs in again (ErrorState's "Sign In Again").
               <Button
                 size="sm"
                 variant="outline"
-                onClick={onRetry}
+                onClick={() => window.location.reload()}
                 aria-describedby={titleId}
                 className="relative z-10 mt-1 self-start"
               >
-                Retry
+                Sign In Again
               </Button>
+            ) : (
+              onRetry && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onRetry}
+                  aria-describedby={titleId}
+                  className="relative z-10 mt-1 self-start"
+                >
+                  Retry
+                </Button>
+              )
             )}
           </>
         ) : state === 'loading' ? (

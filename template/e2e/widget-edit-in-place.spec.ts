@@ -262,7 +262,7 @@ test.describe('widget view: editing in place', () => {
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Discard your changes?' })
     await expect(dialog).toBeVisible()
-    await dialog.getByRole('button', { name: 'Keep editing' }).click()
+    await dialog.getByRole('button', { name: 'Keep Editing' }).click()
     await expect(page).toHaveURL('/widgets/1')
     await expect(editor).toContainText('Not saved.')
     await expect(page.getByRole('alert')).toHaveText('Database is down')
@@ -394,8 +394,8 @@ test.describe('widget view: editing in place', () => {
 
     // Esc closes the box only: the field stays open, nothing saved.
     await page.keyboard.press('ControlOrMeta+k')
-    const box = page.getByRole('dialog', { name: 'Add link' })
-    await expect(box.getByRole('textbox', { name: 'Link address' })).toBeFocused()
+    const box = page.getByRole('dialog', { name: 'Add Link' })
+    await expect(box.getByRole('textbox', { name: 'Link Address' })).toBeFocused()
     await page.keyboard.press('Escape')
     await expect(box).toHaveCount(0)
     await expect(editor).toBeFocused()
@@ -403,7 +403,7 @@ test.describe('widget view: editing in place', () => {
     // Enter, and Ctrl/Cmd+Enter too, applies the link only: the field
     // stays open until it's saved.
     await page.keyboard.press('ControlOrMeta+k')
-    await box.getByRole('textbox', { name: 'Link address' }).fill('example.com/buttons')
+    await box.getByRole('textbox', { name: 'Link Address' }).fill('example.com/buttons')
     await page.keyboard.press('ControlOrMeta+Enter')
     await expect(box).toHaveCount(0)
     await expect(editor).toBeFocused()
@@ -719,7 +719,7 @@ test.describe('widget view: editing in place', () => {
     await back.click()
     const dialog = page.getByRole('dialog', { name: 'Discard your changes?' })
     await expect(dialog).toBeVisible()
-    await dialog.getByRole('button', { name: 'Keep editing' }).click()
+    await dialog.getByRole('button', { name: 'Keep Editing' }).click()
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('textbox', { name: 'Name' })).toHaveValue('Half typed')
 
@@ -768,7 +768,7 @@ test.describe('widget view: the checklist edited in place', () => {
   test('three items added in a row from the keyboard alone; each saves, and they stay', async ({ page }) => {
     const bodies = patchBodies(page)
     await openWidget(page)
-    await checklist(page).getByRole('button', { name: 'Add item' }).focus()
+    await checklist(page).getByRole('button', { name: 'Add Item' }).focus()
     await page.keyboard.press('Enter')
 
     // Enter saves the item and opens the next, the caret already in it.
@@ -781,7 +781,7 @@ test.describe('widget view: the checklist edited in place', () => {
     await expect(page.getByRole('textbox', { name: 'Item 6 text' })).toBeFocused()
     // An empty box closes on Esc, with nothing sent.
     await page.keyboard.press('Escape')
-    await expect(checklist(page).getByRole('button', { name: 'Add item' })).toBeFocused()
+    await expect(checklist(page).getByRole('button', { name: 'Add Item' })).toBeFocused()
 
     const saved = [
       item('Charge the battery', true),
@@ -848,7 +848,7 @@ test.describe('widget view: the checklist edited in place', () => {
   test("a blank item is never sent: the form's rule shows under it", async ({ page }) => {
     const bodies = patchBodies(page)
     await openWidget(page)
-    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await checklist(page).getByRole('button', { name: 'Add Item' }).click()
     await page.getByRole('textbox', { name: 'Item 3 text' }).fill('   ')
     await page.keyboard.press('Enter')
     await expect(checklist(page).getByRole('alert')).toHaveText('Write something or remove the item')
@@ -882,7 +882,7 @@ test.describe('widget view: the checklist edited in place', () => {
     await openWidget(page)
     await delayPatches(page, 400)
     await checklist(page).getByRole('checkbox', { name: 'Done: Pair the receiver' }).click()
-    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await checklist(page).getByRole('button', { name: 'Add Item' }).click()
     await page.getByRole('textbox', { name: 'Item 3 text' }).fill('Test the scroll wheel')
     await page.keyboard.press('Enter')
 
@@ -900,7 +900,7 @@ test.describe('widget view: the checklist edited in place', () => {
     const bodies = patchBodies(page)
     await openWidget(page, 4)
     await expect(checklist(page)).toContainText('No items')
-    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await checklist(page).getByRole('button', { name: 'Add Item' }).click()
     await page.getByRole('textbox', { name: 'Item 1 text' }).fill('Unbox it')
     await page.keyboard.press('Enter')
     await expect(items(page)).toHaveText(['Unbox it'])
@@ -909,7 +909,7 @@ test.describe('widget view: the checklist edited in place', () => {
 
   test('a half-typed item asks before leaving the page', async ({ page }) => {
     await openWidget(page)
-    await checklist(page).getByRole('button', { name: 'Add item' }).click()
+    await checklist(page).getByRole('button', { name: 'Add Item' }).click()
     await page.getByRole('textbox', { name: 'Item 3 text' }).fill('Half typed')
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
     await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toBeVisible()
@@ -929,7 +929,7 @@ test.describe('widget view: the pairings edited in place (a reference in each it
   test('a pairing added from the keyboard: search, Enter picks without saving, a note, Enter saves', async ({ page }) => {
     const bodies = patchBodies(page)
     await openWidget(page)
-    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
+    await pairings(page).getByRole('button', { name: 'Add Pairing' }).click()
     const picker = page.getByRole('combobox', { name: 'Pairing 3 category' })
     await expect(picker).toBeFocused()
     await picker.fill('Elec')
@@ -970,7 +970,7 @@ test.describe('widget view: the pairings edited in place (a reference in each it
     await expect(picker).toBeFocused()
     // The saved pick shows by name, from the lookup by id.
     await expect(picker).toHaveValue('Furniture')
-    await page.getByRole('button', { name: 'Show options' }).click()
+    await page.getByRole('button', { name: 'Show Options' }).click()
     await page.getByRole('option', { name: 'Electronics' }).click()
     await expect(picker).toHaveValue('Electronics')
     expect(bodies).toEqual([])
@@ -994,7 +994,7 @@ test.describe('widget view: the pairings edited in place (a reference in each it
   test("a pairing with no category is never sent: the form's rule shows under it", async ({ page }) => {
     const bodies = patchBodies(page)
     await openWidget(page)
-    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
+    await pairings(page).getByRole('button', { name: 'Add Pairing' }).click()
     await page.getByRole('textbox', { name: 'Pairing 3 note' }).fill('No category yet')
     await page.keyboard.press('Enter')
     await expect(pairings(page).getByRole('alert')).toHaveText('Pick a category or remove the pairing')
@@ -1006,9 +1006,9 @@ test.describe('widget view: the pairings edited in place (a reference in each it
     await refusePatches(page, 422, {
       detail: [{ loc: ['body', 'pairings', 2, 'categoryId'], msg: 'Category not found', type: 'value_error.foreign_key' }],
     })
-    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
+    await pairings(page).getByRole('button', { name: 'Add Pairing' }).click()
     const picker = page.getByRole('combobox', { name: 'Pairing 3 category' })
-    await page.getByRole('button', { name: 'Show options' }).click()
+    await page.getByRole('button', { name: 'Show Options' }).click()
     await page.getByRole('option', { name: 'Stationery' }).click()
     await page.getByRole('textbox', { name: 'Pairing 3 note' }).fill('Again')
     await page.keyboard.press('Enter')
@@ -1024,8 +1024,8 @@ test.describe('widget view: the pairings edited in place (a reference in each it
     const bodies = patchBodies(page)
     await openWidget(page, 4)
     await expect(pairings(page)).toContainText('No pairings')
-    await pairings(page).getByRole('button', { name: 'Add pairing' }).click()
-    await page.getByRole('button', { name: 'Show options' }).click()
+    await pairings(page).getByRole('button', { name: 'Add Pairing' }).click()
+    await page.getByRole('button', { name: 'Show Options' }).click()
     await page.getByRole('option', { name: 'Furniture' }).click()
     await page.getByRole('textbox', { name: 'Pairing 1 note' }).press('Enter')
     await expect(items(page)).toHaveText(['Furniture'])

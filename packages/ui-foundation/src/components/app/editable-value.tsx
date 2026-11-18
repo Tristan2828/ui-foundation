@@ -19,6 +19,10 @@
 //   value it edits (`inline` among its props).
 // - Saved (4.88, F16): once a save lands, "✓ Saved" shows beside the value
 //   for two seconds (`role="status"`).
+// - `layout="inline"` (4.102): the pencil takes no room until hover or
+//   focus, so nothing gaps before what follows the value on its line.
+//   `keepPencilRoom` (and every value inside a KeyStats, 4.115) keeps it
+//   at rest instead, so nothing moves on hover or focus.
 // - `look="row"` (4.88, F15 and F18): in a record's field list the row is
 //   the target (edit-row.ts): it wears the list's row hover and the pencil
 //   sits at its end; under 48rem or on a touch screen there's a chevron
@@ -35,6 +39,7 @@ import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './e
 import type { EditInPlaceStore } from './edit-in-place-store'
 import { SAVED_FOR_MS } from './edit-row'
 import { escapePassedThrough } from './escape-passthrough'
+import { KeepPencilRoomContext } from './keep-pencil-room'
 
 // What a click on the shown value must leave alone: links navigate,
 // buttons and boxes do their own thing (a list item's done box ticks it).
@@ -73,7 +78,29 @@ export type EditableValueProps = {
    * have); under 48rem or on a touch screen a chevron, not the pencil.
    */
   look?: 'value' | 'row'
+  /**
+   * Inline, the pencil's room is kept at rest, as before 4.102, so nothing
+   * moves on hover or focus: a table cell (row-edit-cells.tsx), whose
+   * column would otherwise widen, EntityView's title, which ends its line
+   * and can fill it, and every value inside a <KeyStats> (4.115, which
+   * sets it for them: a wrapping row moved the values after it along).
+   */
+  keepPencilRoom?: boolean
   className?: string
+}
+
+// An inline value's room for its pencil: none at rest; the pencil's 24px
+// and a 4px gap (w-7) while the value is hovered or its pencil focused.
+function InlinePencilRoom({ inline, children }: { inline: boolean; children: ReactNode }) {
+  if (!inline) return children
+  return (
+    <span
+      data-slot="editable-value-pencil-room"
+      className="relative w-0 shrink-0 self-stretch transition-[width] duration-150 ease-out motion-reduce:transition-none group-hover/editable:w-7 group-has-[[data-edit]:focus-visible]/editable:w-7 pointer-coarse:w-7"
+    >
+      {children}
+    </span>
+  )
 }
 
 // The field's own control, given what it needs.
@@ -112,8 +139,11 @@ export function EditableField({
   className,
   trigger,
   reopenAfterKeyboardSave = false,
+  keepPencilRoom: keepPencilRoomProp,
 }: EditableFieldProps) {
   const store = useStore()
+  const keepRoomHere = useContext(KeepPencilRoomContext)
+  const keepPencilRoom = keepPencilRoomProp ?? keepRoomHere
   const key = useId()
   const controlId = `${key}-control`
   const describedBy = `${key}-status`
@@ -287,16 +317,23 @@ export function EditableField({
         </span>
       )
     const row = look === 'row'
+    const inlineValue = layout === 'inline' && !row && !keepPencilRoom
     return (
       <span
         data-slot="editable-value"
         data-look={look}
         onClick={onShownClick}
         className={cn(
-          'group/editable relative cursor-text items-start gap-1',
+          // Inline, the gap is the pencil's own margin, there only while it shows.
+          'group/editable relative cursor-text items-start',
+          !inlineValue && 'gap-1',
           // A row: the row (editRowClass) wears the hover, not the value.
           !row && '-mx-1.5 rounded-md px-1.5 transition-colors hover:bg-muted has-[[data-edit]:focus-visible]:bg-muted',
-          layout === 'block' ? 'flex w-full' : 'inline-flex max-w-full align-top',
+          // Inline, the cap is its column plus the 0.75rem the negative
+          // margins give back: a parent sized to its content (a title on
+          // its line) is sized to the margin box, 0.75rem under the box,
+          // and `max-w-full` then wrapped a short value mid-word (4.94).
+          layout === 'block' ? 'flex w-full' : cn('inline-flex align-top', row ? 'max-w-full' : 'max-w-[calc(100%+0.75rem)]'),
           className,
         )}
       >
@@ -324,29 +361,41 @@ export function EditableField({
             )}
           </span>
         </span>
-        <Button
-          ref={editButton}
-          data-edit=""
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={`Edit ${label}`}
-          onClick={start}
-          className={cn(
-            'shrink-0 text-muted-foreground opacity-0 focus-visible:opacity-100 pointer-coarse:opacity-100',
-            row ? 'group-hover/edit-row:opacity-100 hover:bg-transparent max-md:opacity-100' : 'group-hover/editable:opacity-100',
-          )}
-        >
-          {row ? (
-            <>
-              {/* A phone or a touch screen: a chevron says the row opens. */}
-              <PencilIcon className="max-md:hidden pointer-coarse:hidden" />
-              <ChevronRightIcon className="hidden max-md:block pointer-coarse:block" />
-            </>
-          ) : (
-            <PencilIcon />
-          )}
-        </Button>
+        {/* Inline (4.102): the pencil sits in a spacer that takes no room
+            at rest, so a value in a line ("Harbor Office · Tuesdays") is
+            followed by its separator with no gap. The pencil keeps its
+            24px box out of the flow, hidden just past the value over what
+            follows (the separator), so it's still a real target to click,
+            hover and Tab to. Hover or focus opens the spacer under it,
+            eased (at once with reduced motion): what follows moves over,
+            the pencil stays put. A touch screen keeps it open. Not over
+            the value itself: a click on a short value would land on it. */}
+        <InlinePencilRoom inline={inlineValue}>
+          <Button
+            ref={editButton}
+            data-edit=""
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={`Edit ${label}`}
+            onClick={start}
+            className={cn(
+              'shrink-0 text-muted-foreground opacity-0 focus-visible:opacity-100 pointer-coarse:opacity-100',
+              row ? 'group-hover/edit-row:opacity-100 hover:bg-transparent max-md:opacity-100' : 'group-hover/editable:opacity-100',
+              inlineValue && 'absolute top-0 left-1 z-10',
+            )}
+          >
+            {row ? (
+              <>
+                {/* A phone or a touch screen: a chevron says the row opens. */}
+                <PencilIcon className="max-md:hidden pointer-coarse:hidden" />
+                <ChevronRightIcon className="hidden max-md:block pointer-coarse:block" />
+              </>
+            ) : (
+              <PencilIcon />
+            )}
+          </Button>
+        </InlinePencilRoom>
       </span>
     )
   }

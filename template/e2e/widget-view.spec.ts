@@ -4,7 +4,7 @@ import { expect, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui
 // The widget view (/widgets/:id): one test per state (loading, not found,
 // error, success, the sparse record's empty values), then the ways in and
 // out of it (the table's title link, Edit, Cancel, Delete) and its layout
-// (the rail) on wide screens and at phone width.
+// (one column, no rail) on wide screens and at phone width.
 
 // Wireless Mouse (id 1) as the mocks seed it, for overrides that replace
 // its first GET.
@@ -80,7 +80,7 @@ test.describe('widget view', () => {
     await page.goto('/widgets/99')
     await expect(page.getByText('Not found', { exact: true })).toBeVisible()
     await expect(page.getByText('Widget 99 not found')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0)
     await expect(page).toHaveTitle('Widgets · UI Foundation')
 
     await page.getByRole('button', { name: 'Back to Widgets' }).click()
@@ -105,7 +105,7 @@ test.describe('widget view', () => {
 
     await expect(page.getByText('Something went wrong')).toBeVisible()
     await expect(page.getByText('Database is down')).toBeVisible()
-    await page.getByRole('button', { name: 'Try again' }).click()
+    await page.getByRole('button', { name: 'Try Again' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
   })
 
@@ -119,8 +119,8 @@ test.describe('widget view', () => {
     await expect(header.getByText('Active', { exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Edit Status' })).toBeAttached()
     await expect(header.getByText('In progress', { exact: true })).toBeVisible()
-    await expect(header.getByRole('switch', { name: 'In stock' })).toBeChecked()
-    await expect(header.getByText('In stock', { exact: true })).toBeVisible()
+    await expect(header.getByRole('switch', { name: 'In Stock' })).toBeChecked()
+    await expect(header.getByText('In Stock', { exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Edit', exact: true })).toBeVisible()
     await expect(header.getByRole('button', { name: 'Delete' })).toBeVisible()
 
@@ -172,8 +172,8 @@ test.describe('widget view', () => {
     await expect(fieldValue(page, 'Assignee Email')).toHaveText('Unassigned')
     await expect(fieldValue(page, 'Tags')).toHaveText('Untagged')
     await expect(fieldValue(page, 'Extra Categories')).toHaveText('No extra categories')
-    await expect(page.getByRole('switch', { name: 'In stock' })).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).not.toBeChecked()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     await expect(page.getByRole('region', { name: 'Checklist' })).toContainText('No items')
     await expect(page.getByRole('region', { name: 'Pairings' })).toContainText('No pairings')
 
@@ -309,7 +309,7 @@ test.describe('widget view', () => {
     // Notice), with Try again; the dialog stays open (only success closes it).
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByText('cannot delete a widget with active assignments')).toBeVisible()
-    await expect(dialog.getByRole('button', { name: 'Try again' })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Try Again' })).toBeVisible()
     await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect(page).toHaveURL('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
@@ -355,23 +355,23 @@ test.describe('widget view', () => {
   test('quick action: In stock flips on the page and saves', async ({ page }) => {
     const bodies = patchBodies(page)
     await page.goto('/widgets/1')
-    const inStock = page.getByRole('switch', { name: 'In stock' })
+    const inStock = page.getByRole('switch', { name: 'In Stock' })
     await inStock.click()
 
     await expect(inStock).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     await expect.poll(() => bodies).toEqual([{ inStock: false }])
     expect((await serverWidget(page, 1)).inStock).toBe(false)
 
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
-    await expect(page.getByRole('switch', { name: 'In stock: Wireless Mouse' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock: Wireless Mouse' })).not.toBeChecked()
   })
 
   test('quick action: a refused change goes back and the server\'s reason shows', async ({ page }) => {
     // A rule only the server knows (a cap on how many can be in stock):
     // it answers 422 with the reason on the field.
     await page.goto('/widgets/3')
-    const inStock = page.getByRole('switch', { name: 'In stock' })
+    const inStock = page.getByRole('switch', { name: 'In Stock' })
     await expect(inStock).not.toBeChecked()
     await waitForMswReady(page)
     await page.evaluate(() => {
@@ -389,7 +389,7 @@ test.describe('widget view', () => {
 
     await expect(page.getByText("Couldn't update Fountain Pen: Only 3 widgets can be in stock at once")).toBeVisible()
     await expect(inStock).not.toBeChecked()
-    await expect(page.getByText('Out of stock', { exact: true })).toBeVisible()
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     expect((await serverWidget(page, 3)).inStock).toBe(false)
   })
 
@@ -405,7 +405,7 @@ test.describe('widget view', () => {
     await expect(checklist.getByRole('checkbox', { name: 'Done: Charge the battery' })).toBeEnabled()
     await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeEnabled()
     await expect(page.getByRole('button', { name: 'Edit Status' })).toBeEnabled()
-    await expect(page.getByRole('switch', { name: 'In stock' })).toBeEnabled()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).toBeEnabled()
     await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeEnabled()
 
     await expect(checklist.getByRole('status', { name: 'Saving' })).toHaveCount(0)
@@ -436,26 +436,21 @@ test.describe('widget view', () => {
     await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeChecked()
   })
 
-  // The plan's layout is `rail`: Details in a column on the right,
-  // Description and Checklist in the main column beside it.
+  // The record standard (4.98): no right rail. With no tabs, Details (the
+  // facts) comes first in the one column, Description under it.
   for (const width of [1280, 2289]) {
-    test(`wide screens (${width}px): Details in the rail, the main column beside it from the top`, async ({ page, isMobile }) => {
+    test(`wide screens (${width}px): no rail, Details first in one column, labels beside values`, async ({ page, isMobile }) => {
       test.skip(!!isMobile, 'the phone layout is the next test')
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/widgets/1')
-      const rail = page.getByRole('complementary', { name: 'Wireless Mouse details' })
-      await expect(rail.getByRole('region', { name: 'Details' })).toBeVisible()
+      await expect(page.getByRole('region', { name: 'Details' })).toBeVisible()
+      await expect(page.getByRole('complementary', { name: 'Wireless Mouse details' })).toHaveCount(0)
 
-      const header = await page.locator('header').filter({ has: page.getByRole('heading', { level: 1 }) }).boundingBox()
       const details = await page.getByRole('region', { name: 'Details' }).boundingBox()
       const description = await page.getByRole('region', { name: 'Description' }).boundingBox()
-      expect(description!.y).toBeGreaterThan(header!.y + header!.height)
-      expect(Math.abs(description!.y - details!.y)).toBeLessThan(2)
-      expect(description!.x + description!.width).toBeLessThan(details!.x)
-      // The whole content area: the header reaches the rail's right edge.
-      expect(Math.abs(header!.x + header!.width - (details!.x + details!.width))).toBeLessThan(2)
+      expect(description!.y).toBeGreaterThanOrEqual(details!.y + details!.height)
+      expect(Math.abs(description!.x - details!.x)).toBeLessThan(2)
 
-      // Rail fields sit beside their labels (the default since 4.81).
       const label = await page.locator('dt').getByText('Category', { exact: true }).boundingBox()
       const value = await fieldValue(page, 'Category').boundingBox()
       expect(value!.x).toBeGreaterThan(label!.x + label!.width)
@@ -465,7 +460,7 @@ test.describe('widget view', () => {
     })
   }
 
-  test('phone width: labels beside values, the rail first, nothing scrolls sideways', async ({ page }) => {
+  test('phone width: labels beside values, Details first, nothing scrolls sideways', async ({ page }) => {
     await page.setViewportSize({ width: 393, height: 851 })
     await page.goto('/widgets/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()

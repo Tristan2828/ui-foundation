@@ -7,8 +7,9 @@ import { DeleteAction } from './delete-action'
 // DeleteAction (D1) on made-up books: a soft delete from a row's icon (the
 // toast's Undo puts the row back), a hard delete in words, a Retire, one
 // the server refuses until the second try, and an open confirm for axe in
-// both themes (e2e/fixtures-visual.spec.ts). e2e/feedback.spec.ts drives
-// them.
+// both themes (e2e/fixtures-visual.spec.ts). A remove that asks a reason
+// (4.96), refused once, shows what reached `onDelete`. e2e/feedback.spec.ts
+// drives them.
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -97,4 +98,40 @@ export const Refused: StoryObj = { render: () => <RefusedOnce /> }
 
 export const Open: StoryObj = {
   render: () => <DeleteAction trigger={null} open name="The Long Walk" kind="soft" onDelete={() => wait(200)} />,
+}
+
+const REASON = { label: 'Why remove it?', hint: 'Kept with its history.', placeholder: 'Optional' }
+
+function WithReasonRows() {
+  const [tries, setTries] = useState(0)
+  const [removed, setRemoved] = useState<string | null>(null)
+  return removed !== null ? (
+    <p className="type-body">
+      Removed Corner Market. Reason: <output data-testid="reason">{removed === '' ? '(none)' : removed}</output>
+    </p>
+  ) : (
+    <DeleteAction
+      trigger="button"
+      verb="Remove"
+      verbDone="Removed"
+      name="Corner Market"
+      kind="hard"
+      description="It comes off the list; its history stays."
+      reason={REASON}
+      onDelete={async (reason) => {
+        await wait(200)
+        setTries((count) => count + 1)
+        if (tries === 0) throw new Error('The server didn’t answer. Try again.')
+        setRemoved(reason)
+      }}
+    />
+  )
+}
+
+export const WithReason: StoryObj = { render: () => <WithReasonRows /> }
+
+export const OpenWithReason: StoryObj = {
+  render: () => (
+    <DeleteAction trigger={null} open verb="Remove" verbDone="Removed" name="Corner Market" kind="hard" reason={REASON} onDelete={() => wait(200)} />
+  ),
 }

@@ -96,6 +96,64 @@ test.describe('widget form', () => {
     await expect(page.getByText('Widget 2 not found')).toBeVisible()
   })
 
+  // A description the editor's merge refuses an edit in (a `1)` list right
+  // before a `10.` one): the edit can't be saved as it stands, so the form
+  // says so on the field and Save sends nothing, rather than the old text
+  // with "Widget updated".
+  test('refused: an edit the description editor cannot save is the field’s error, and Save sends nothing', async ({ page }) => {
+    await forceWidgetGetOverride(page, {
+      body: {
+        id: 2,
+        name: 'Standing Desk',
+        categoryId: 2,
+        status: 'draft',
+        availableFrom: '2026-03-01T00:00:00Z',
+        assigneeEmail: null,
+        price: '349.00',
+        description: '1) a\n2) b\n10. ten\n11. eleven\n\nTail paragraph.\n',
+        tags: ['bulky', 'featured'],
+        inStock: true,
+        extraCategoryIds: [1, 3],
+        checklist: [],
+        pairings: [],
+        checklistState: 'none',
+      },
+    })
+    const patches: string[] = []
+    page.on('request', (request) => {
+      if (request.method() === 'PATCH' && /\/api\/widgets\/2$/.test(request.url())) patches.push(request.postData() ?? '')
+    })
+    await page.goto('/widgets/2/edit')
+    const box = page.getByRole('textbox', { name: 'Description' })
+    await expect(box.locator('li')).toHaveCount(4)
+    await box.locator('li').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' EDIT ONE')
+    const field = page.locator('[data-slot=field]').filter({ has: page.locator('#widget-description-label') })
+    await expect(field.getByText(/can't be saved/)).toBeVisible()
+    await expect(box).toHaveAttribute('aria-invalid', 'true')
+
+    await page.getByRole('button', { name: 'Save Changes' }).click()
+    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
+    await expect(field.getByText(/can't be saved/)).toBeVisible()
+    await page.waitForTimeout(500)
+    expect(patches).toEqual([])
+
+    // Negative control: undo the refused edit and Save goes through, with
+    // the edit the merge takes.
+    for (let i = 0; i < ' EDIT ONE'.length; i++) await page.keyboard.press('Backspace')
+    await expect(field.getByText(/can't be saved/)).toHaveCount(0)
+    await box.getByText('Tail paragraph.').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' EDIT TWO')
+    await page.getByRole('button', { name: 'Save Changes' }).click()
+    await expect(page).toHaveURL('/widgets/2')
+    expect(patches).toHaveLength(1)
+    expect(patches[0]).toContain('Tail paragraph. EDIT TWO')
+  })
+
   test('validation: a 422 on submit binds the message to the right field', async ({ page }) => {
     await page.goto('/widgets/new')
     await waitForMswReady(page)
@@ -119,7 +177,7 @@ test.describe('widget form', () => {
     await pickAvailableFromDate(page)
     await page.locator('#widget-price').fill('19.99')
     await page.locator('#widget-description').fill('Exercises the 422 -> fieldErrors path.')
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     await expect(page.getByText('must be greater than zero')).toBeVisible()
     // Still on the form — a validation error must not navigate away.
@@ -138,7 +196,7 @@ test.describe('widget form', () => {
     await page.locator('#widget-description').fill('Created by the success e2e test.')
     await pickTag(page, 'Bulky')
     await pickTag(page, 'Seasonal')
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     // The new widget's own view (the four seeded widgets are ids 1–4).
     await expect(page).toHaveURL('/widgets/5')
@@ -159,7 +217,7 @@ test.describe('widget form', () => {
     await page.locator('#widget-name').fill('Never Saved')
     await page.getByRole('button', { name: 'Cancel' }).click()
     const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
-    await prompt.getByRole('button', { name: 'Keep editing' }).click()
+    await prompt.getByRole('button', { name: 'Keep Editing' }).click()
     await expect(page.locator('#widget-name')).toHaveValue('Never Saved')
     await page.getByRole('button', { name: 'Cancel' }).click()
     await prompt.getByRole('button', { name: 'Discard' }).click()
@@ -182,7 +240,7 @@ test.describe('widget form', () => {
       expect(await top('widget-price')).toBe(await top('widget-status'))
     }
 
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
     await expect(page.locator('#widget-name')).toBeFocused()
     await expect(page.locator('[data-slot=entity-form-to-fix]')).toHaveText(/^\d+ to fix$/)
   })
@@ -212,7 +270,7 @@ test.describe('widget form', () => {
     await pickExtraCategory(page, 'stat', 'Stationery')
     await expect(page.getByRole('button', { name: 'Remove Furniture' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Remove Stationery' })).toBeVisible()
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     await expect(page).toHaveURL(/\/widgets\/\d+$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Linked Widget' })).toBeVisible()
@@ -365,7 +423,7 @@ test.describe('widget form', () => {
     await expect(page.getByRole('button', { name: 'Move item 1 up' })).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Move item 2 down' })).toBeDisabled()
 
-    await page.getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('button', { name: 'Add Item' }).click()
     // The new row's text box takes focus, ready to type.
     await expect(page.getByLabel('Item 3 text')).toBeFocused()
     await page.keyboard.type('Test the scroll wheel')
@@ -407,7 +465,7 @@ test.describe('widget form', () => {
   test('sub-records: an empty list says so, and a blank item is caught on its own row', async ({ page }) => {
     await page.goto('/widgets/2/edit')
     await expect(page.getByText('No items yet.')).toBeVisible()
-    await page.getByRole('button', { name: 'Add item' }).click()
+    await page.getByRole('button', { name: 'Add Item' }).click()
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page.getByText('Write something or remove the item')).toBeVisible()
@@ -447,7 +505,7 @@ test.describe('widget form', () => {
     await expect(page.getByRole('combobox', { name: 'Pairing 2 category' })).toHaveValue('Furniture')
     await expect(page.getByLabel('Pairing 2 note')).toHaveValue('')
 
-    await page.getByRole('button', { name: 'Add pairing' }).click()
+    await page.getByRole('button', { name: 'Add Pairing' }).click()
     // Each row has its own search: this one finds Electronics alone.
     const picker = page.getByRole('combobox', { name: 'Pairing 3 category' })
     await picker.fill('elec')
@@ -467,7 +525,7 @@ test.describe('widget form', () => {
   test('sub-records with a reference: a row with no pick is caught on its own row', async ({ page }) => {
     await page.goto('/widgets/2/edit')
     await expect(page.getByText('No pairings yet.')).toBeVisible()
-    await page.getByRole('button', { name: 'Add pairing' }).click()
+    await page.getByRole('button', { name: 'Add Pairing' }).click()
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page.getByText('Pick a category or remove the pairing')).toBeVisible()
@@ -514,12 +572,12 @@ test.describe('widget form', () => {
     await pickAvailableFromDate(page)
     await page.locator('#widget-price').fill('5.00')
     await page.locator('#widget-description').fill('Saved with the switch off.')
-    await page.getByRole('button', { name: 'Create widget' }).click()
+    await page.getByRole('button', { name: 'Create Widget' }).click()
 
     await expect(page).toHaveURL(/\/widgets\/\d+$/)
-    await expect(page.getByRole('switch', { name: 'In stock' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).not.toBeChecked()
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
-    await expect(page.getByRole('switch', { name: 'In stock: Out Of Stock Widget' })).not.toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock: Out Of Stock Widget' })).not.toBeChecked()
   })
 
   test('yes/no: editing shows the stored value, and turning it on saves', async ({ page }) => {
@@ -533,6 +591,6 @@ test.describe('widget form', () => {
     await page.getByRole('button', { name: 'Save changes' }).click()
 
     await expect(page).toHaveURL('/widgets/3')
-    await expect(page.getByRole('switch', { name: 'In stock' })).toBeChecked()
+    await expect(page.getByRole('switch', { name: 'In Stock' })).toBeChecked()
   })
 })

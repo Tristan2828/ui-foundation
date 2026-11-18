@@ -209,7 +209,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
                   }}
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Turn into page"
+                  aria-label="Turn Into Page"
                   disabled={readOnly}
                   tabIndex={pageIndex === current ? 0 : -1}
                   onMouseDown={(event) => event.preventDefault()}
@@ -221,7 +221,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
             >
               <FileTextIcon />
             </TooltipTrigger>
-            <TooltipContent>Turn into page · a new page named for the words, linked here</TooltipContent>
+            <TooltipContent>Turn Into Page · a new page named for the words, linked here</TooltipContent>
           </Tooltip>
         </>
       )}
@@ -264,7 +264,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
                     buttons.current[fullScreenIndex] = element
                   }}
                   size="icon-sm"
-                  aria-label="Full screen"
+                  aria-label="Full Screen"
                   pressed={fullScreen}
                   tabIndex={fullScreenIndex === current ? 0 : -1}
                   className="aria-pressed:bg-muted aria-pressed:text-foreground"
@@ -277,7 +277,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
             >
               {fullScreen ? <Minimize2Icon /> : <Maximize2Icon />}
             </TooltipTrigger>
-            <TooltipContent>{fullScreen ? 'Leave full screen · Esc' : 'Full screen'}</TooltipContent>
+            <TooltipContent>{fullScreen ? 'Leave Full Screen · Esc' : 'Full Screen'}</TooltipContent>
           </Tooltip>
         </>
       )}

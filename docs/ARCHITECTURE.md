@@ -161,6 +161,27 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `cryptography`, the optional `push` extra, the backend's one crypto
   dependency, by decision on #167), only to the browsers' push services,
   and the `send-reminders` job sends each due row of `reminders`.
+- **Repeating schedules** (4.95, #326) are one rule on both sides: the
+  contract's `Recurrence` (an RFC 5545 RRULE without DTSTART, a start
+  day, times of day, an IANA zone, from completion or not), an
+  `x-optional` component an app's schemas reference. The package's
+  `lib/recurrence.ts` (npm `rrule`) and `foundation_backend.recurrence`
+  (python-dateutil) walk only the days, as midnights with no zone, then
+  put each day's times on them in the zone, so neither library's time
+  zone handling is used and a DST change can't move a time. Both read
+  one fixture (`packages/ui-foundation/tests/fixtures/recurrence-cases.json`).
+  Both libraries check UNTIL only on a day they find, so a rule that can
+  never fall (a 30th of February) is refused before either walks.
+  `RecurrenceField` reads a phrase as it's typed
+  (`lib/recurrence-phrase.ts`); the `send-reminders` job follows a row's
+  `recurrence` occurrence by occurrence (`recurrence.step`). WKST (4.119)
+  is passed to both libraries (Monday when absent, set explicitly, since
+  dateutil's own default follows `calendar.firstweekday()`); a second
+  fixture (`recurrence-shapes.json`) pins 174 rule shapes' days as they
+  were before WKST, and with `WKST=SU`, for both suites. Widening the
+  rule's `pattern` used `x-earlier-patterns`: `check-contract` accepts an
+  app's copy of a component with an earlier pattern listed there, so a
+  pattern can widen without failing every app that copied the schema.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps
@@ -176,6 +197,15 @@ src/main.tsx                           FoundationProviders (theme, query client,
   reported while the page reloads onto a new build: a lazy chunk gone
   after a deploy (`vite:preloadError`) reloads it once
   (`lib/stale-chunk-reload.ts`, #206), reporting on or off.
+- **A proxy's sign-in** (4.107). An app behind an identity-aware proxy
+  (Cloudflare Access, say) gets the proxy's page or a redirect once its
+  session lapses. `apiFetch` asks as a script (`Accept`,
+  `X-Requested-With`), doesn't follow redirects, and marks an answer that
+  can't be the app's JSON (`ApiResponse.foreign`); `safeFetch` throws
+  that as `AppError` kind `proxy_auth` (a page on a 2xx/401/403, a
+  non-JSON 401/403, an opaque or cross-origin redirect), and `ErrorState`
+  and `ModuleCard` offer Sign In Again, a full reload. The app's own
+  JSON errors never reach that path, so its contract doesn't name it.
 - **A small entity** (3.26) edits in its table's rows: `DataTable` runs
   the same edit-in-place store as a view, so a cell that renders an
   `EditableValue` edits where it's shown, and `InlineCreate` creates from
@@ -197,6 +227,38 @@ src/main.tsx                           FoundationProviders (theme, query client,
   uncontrolled dialogs both close. `FormDialog` is the form's chrome in a
   `size="form"` dialog; as `RecordDialogRoute`'s `newPath` route it opens
   itself from `NewRecordDialogContext`, with no record dialog round it.
+- **The record standard** (4.98): no right rail. `EntityView`'s default
+  layout, `tabs`, turns the facts (sections placed `rail` with no `tab`)
+  into the last tab, Details, or keeps them in the column on a record
+  with no tabs; one placed `rail` with a `tab` is a box beside that tab.
+  `layout="rail"` stays for apps not yet moved. A tiny record opens as a
+  small card (`RecordDialogRoute look="card"`: the `confirm` width, its
+  controls handed to EntityView through the dialog's context, so they
+  sit on the record's title line). A status is a `StatusMark`, one of six
+  kinds whose icons are one map (`lib/status-kinds.ts`). FieldGroup finds
+  a choice (`ChoiceButtons`) by itself and pairs choices only with each
+  other (`fieldRows`), side by side on a phone while both fit (CSS
+  `flex: 1 1 max-content`, so the browser decides).
+- **A record's tab bar** (4.101, 3B) sticks to whatever scrolls: the page,
+  or a record dialog's body, which sets `--entity-view-sticky-top` to
+  minus its padding so the bar meets its top edge. Whether it's stuck is
+  measured (a marker above the bar against the bar's top, on any scroll
+  through a capture listener), and stuck it shows the record's name.
+- **The facts rail** (4.106, A1): `EntityView factsRail` measures the
+  view's parent (`useWideParent`, a layout effect and a ResizeObserver in
+  `entity-view-facts.tsx`) and, at 60rem, takes the `facts` sections
+  placed `rail` out of `tabsLayout`'s input, so Details is built from the
+  rest; the rail holds typed facts only (`EntityViewFactValue`), which is
+  how "short values only" is enforced. A list's header as wide as its
+  table (C3) is CSS only: DataTable's framed root takes the content-width
+  class when it has a `pageHeader`, and the card fills it.
+- **Views fill the filters** (4.105): `useTableUrlState` resolves the
+  filters the bar shows from the URL, or at a list's plain address from
+  its `defaultView`, and a hand change goes through `filterChanges`
+  (`hooks/table-url-changes.ts`, pure and unit-tested): it writes the
+  shown filters back, clears any view's `rule`, and writes `?view=none`
+  for a hand-emptied list with a default view. The pills follow from
+  `activeViewOf` as before.
 - **A record's tabs** (4.76, #303): a main section's `tab` groups it
   under `EntityView`'s tab list, the selected tab in `?tab=`, changed by
   replacing the entry with its state kept, so a record over its list stays
@@ -331,7 +393,8 @@ production start-up checks, the SPA mount, the routers for `/auth/*`,
 foundation_backend.scripts.<name>`), and since 4.35 (#230) AI chats'
 tools and `/mcp` (`mcp`, `mcp_tools`, `routers.mcp`), the scheduled jobs
 (`jobs`, `routers.jobs`), Web Push and reminders (`push`, `reminders`,
-`routers.push`, the `push` extra), their tables (`mcp_audit_log`,
+`routers.push`, the `push` extra), repeating schedules (`recurrence`,
+`recurrence_models`, 4.95), their tables (`mcp_audit_log`,
 `job_runs`, `push_subscriptions`, `reminders`) and scripts, the Python dependency check
 (`scripts.check_deps`: `backend/pyproject.toml` against
 `deps-allowlist.json`'s `python` list, run by the app's `verify.sh`), the `signed_in` test helper, and
@@ -391,6 +454,17 @@ Rules learned the hard way (each cost a phase to find):
   workarounds.
 - **SQLite passing proves nothing about Postgres**, timestamp columns in
   particular. `check-backend-postgres.sh` writes through the ORM for this.
+- **Mock mode survives a worker restart** (#367). The browser can stop
+  MSW's service worker at any time, and the restarted worker has an empty
+  client list, so it passes the page's requests to the network. No page
+  event says so (it's the same `controller`). `startMockWorker` probes
+  until mocked at boot, then guards `fetch`: a request settled without
+  MSW's `request:start` was bypassed, so the page sends `MOCK_ACTIVATE`,
+  probes, and makes it once more. The `/testing` `test` fails any `/api/`
+  response that wasn't the worker's and wasn't answered by it after, and
+  the template's e2e preview proxies `/api` to a dead port (`BACKEND_URL`).
+  `template/e2e/msw-boot.spec.ts` restarts the worker over CDP, before
+  the first request and after boot.
 - **Gate MSW on the literal `import.meta.env.VITE_API` check** in
   `main.tsx`. The bundler folds only that exact form, so behind an imported
   constant `build:real` still ships MSW (`consume-test.sh` asserts it).
@@ -409,7 +483,13 @@ Rules learned the hard way (each cost a phase to find):
   playwright.harness.config.ts --workers=1` in `packages/ui-foundation/`,
   then the template's `verify:fast` and `npx playwright test --workers=1`.
   A thousand failures at once with "worker process exited unexpectedly"
-  is this, not the code.
+  is this, not the code. Since 4.121 `PW_WORKERS=1 npm run verify` (or
+  `PW_WORKERS=50%`) sets both Playwright configs' worker count, so the
+  one command runs with fewer workers too.
+- **The package's specs build axe from `e2e/axe.ts`**, never from
+  `@axe-core/playwright` directly (4.121). Its `analyze()` first waits out
+  the page's transitions, as `expectNoAxeViolations` does, so a menu or
+  hover tint isn't measured mid-fade.
 
 **Claude Code cloud sessions** run `.claude/hooks/session-start.sh` on
 start (registered in `.claude/settings.json`; it does nothing anywhere
@@ -517,7 +597,10 @@ the popup, which for this toolbar is always) fail axe.
 
 **The slash menu (3.18)** (`rich-text-slash.ts`, `rich-text-slash-menu.tsx`)
 lists the blocks a line can become (Heading to Code block) after a "/"
-typed at the start of a top-level paragraph; what follows the "/"
+typed at the start of a line of text (4.126: any line but a code
+block's, in a list item, a quote, a callout or a table cell too, listing
+only the picks that can apply there, found by running each pick's
+command and dropping its transaction); what follows the "/"
 filters it (names and keywords: `/h2`, `/todo`). Only a typed "/" opens
 it (a plugin records where; one already in the text never does), and it
 closes for good once the span stops qualifying (the caret leaves it, a
@@ -528,6 +611,25 @@ while it's open. Its keys are view props, ahead of Milkdown's keymap,
 whose Enter would split the line. A pick is one transaction (one undo
 brings the "/…" back). Placed against the field like the floating
 toolbar, for the same reason.
+
+**Typing (4.126)** (`rich-text-input-rules.ts`, `rich-text-edges.ts`,
+`rich-text-shortcuts.ts`). Milkdown's input rules, with three swapped:
+typed `---` runs the Divider button's insert (a line under it, the caret
+there); `*words*` and `**words**` need a non-space against the marks, as
+CommonMark does, so `5 * 3 * 2` stays; and `==words==` highlights as
+typed. A paragraph's trailing spaces aren't written (`&#x20;` before). At
+the note's edges, ArrowDown past a last code block, table, quote, callout
+or divider (ArrowUp before a first one) adds a line, and a click under
+the last block (above the first) puts the caret on a line there: no
+trailing-paragraph rule, so nothing is saved until one is asked for, and
+no gap cursor, which can't stand by a code block. Backspace at a list
+item's start lifts it out of its list first; Tab and Shift+Tab move a
+list item and stay in the text, and indent a code block's lines; on a
+plain line Tab still leaves the editor. Undo and redo are taken outright:
+ProseMirror's keymap, with nothing to redo, ran Shift+Mod+Z's unshifted
+Mod+Z. The block keys reach across a heading and a list (out of the list
+first, a plain line first), and a new list beside one of its type joins
+it, since two lists side by side read back as one.
 
 **Highlight, full screen, Indent and Outdent, the new task item (4.48)**
 (`rich-text-highlight-menu.tsx`, `src/lib/markdown-highlight.ts`).
@@ -566,7 +668,35 @@ shows over its top right corner while it has focus (or is full screen).
 `PopoverContent` takes). Only web and email addresses, a path on the site
 or a heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
-code.
+code. Paste goes through the same rule (`rich-text-paste.ts`): a pasted
+link linkHref refuses keeps its words and loses the link, an image at a
+refused address is dropped, and one carried in the HTML as `data:` is
+uploaded through `upload` or left out with a toast, never saved as data.
+An address typed (ended by a space or Enter, `rich-text-autolink.ts`) or
+pasted alone becomes a link through linkHref, so it saves as an address,
+not as escaped text (`https\://`).
+
+**Paste's shapes** (`rich-text-paste.ts`): before ProseMirror reads a
+paste's HTML, Word's `mso-list` paragraphs become nested lists, a Notion
+(`ul.to-do-list`) or GitHub (a checkbox input) to-do a task item, and
+`language-*` on code the block's language. Plain text keeps its single
+line breaks as hard breaks. Into a table cell, a paste is one line
+(blocks joined with spaces), before prosemirror-tables' own paste, which
+would spread lines over the row. These are written against payloads made
+to match what those apps put on the clipboard; real ones vary by version.
+
+**A refused edit is never saved quietly.** The merge guard's refusal
+stops `onChange`, so a form holds the last text that could be saved.
+The editor marks itself `aria-invalid` and, given no `onProblem`, says
+why inside the field; the template's form binds `onProblem` to the
+field's error and refuses submit while it stands (add-an-entity.md).
+
+**Full screen holds focus** (`rich-text-full-screen.ts`): the field is a
+`role="dialog"` with `aria-modal`, every sibling of it and of its
+ancestors up to `<body>` is `inert` (the toasts' region kept live, and
+what a portal adds under `<body>` meanwhile is no such sibling), and Tab
+wraps from the field's last stop to its first. Each element gets its
+`inert` back on leaving.
 
 **Images (4.28)** show in the editor as `<Markdown>` shows them, at most
 the field's width. Until 4.28 the editor dropped every one as it loaded:

@@ -76,6 +76,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useRememberedFlag } from '@/hooks/use-remembered-flag'
+import { EmptyText } from './empty-value'
 
 export interface WidgetCardProps {
   title: string
@@ -348,10 +349,7 @@ function WidgetCardSummary({
   }
   if (state === 'error') {
     return (
-      <span data-state="error" className="type-label text-muted-foreground">
-        <span aria-hidden="true">—</span>
-        <span className="sr-only">Couldn't load</span>
-      </span>
+      <EmptyText data-state="error" label="Couldn't load" className="type-label text-muted-foreground" />
     )
   }
   if (state === 'empty') {

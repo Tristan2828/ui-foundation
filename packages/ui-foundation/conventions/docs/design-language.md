@@ -3,38 +3,41 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 47–154
-- [Glow](#glow) · lines 156–175
-- [Semantic tones](#semantic-tones) · lines 177–205
-- [The three badge styles](#the-three-badge-styles) · lines 207–224
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 226–255
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 257–270
-- [Logos and brand marks](#logos-and-brand-marks) · lines 272–316
-- [Categorical colour](#categorical-colour) · lines 318–388
-- [Heat scale](#heat-scale) · lines 390–451
-- [Depth ramps](#depth-ramps) · lines 453–538
-- [A stored colour](#a-stored-colour) · lines 540–588
-- [Shapes and sizes](#shapes-and-sizes) · lines 590–611
-- [Typography](#typography) · lines 613–733
-  - [Written text (notes)](#written-text-notes) · lines 647–733
-- [Density](#density) · lines 735–828
-  - [Rows on this device](#rows-on-this-device) · lines 801–828
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 830–944
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 946–1023
-- [Notices](#notices) · lines 1025–1053
-- [A value over time](#a-value-over-time) · lines 1055–1141
-  - [Several values over time](#several-values-over-time) · lines 1104–1141
-- [A list as a board](#a-list-as-a-board) · lines 1143–1194
-- [A list as cards](#a-list-as-cards) · lines 1196–1242
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1244–1273
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1275–1318
-- [An overview page](#an-overview-page) · lines 1320–1383
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1384–1422
-- [A record's tabs, mark and rail](#a-records-tabs-mark-and-rail) · lines 1424–1469
-- [Picking at random](#picking-at-random) · lines 1471–1502
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1504–1571
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1573–1598
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1600–1673
+- [Palettes](#palettes) · lines 50–159
+- [Glow](#glow) · lines 161–180
+- [Semantic tones](#semantic-tones) · lines 182–210
+- [The three badge styles](#the-three-badge-styles) · lines 212–229
+- [Status marks](#status-marks) · lines 231–276
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 278–307
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 309–322
+- [Logos and brand marks](#logos-and-brand-marks) · lines 324–368
+- [Categorical colour](#categorical-colour) · lines 370–440
+- [Heat scale](#heat-scale) · lines 442–503
+- [Depth ramps](#depth-ramps) · lines 505–590
+- [A stored colour](#a-stored-colour) · lines 592–649
+- [Shapes and sizes](#shapes-and-sizes) · lines 651–672
+- [Typography](#typography) · lines 674–845
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 708–741
+  - [Written text (notes)](#written-text-notes) · lines 743–845
+- [Density](#density) · lines 847–940
+  - [Rows on this device](#rows-on-this-device) · lines 913–940
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 942–1056
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1058–1135
+- [Notices](#notices) · lines 1137–1165
+- [A value over time](#a-value-over-time) · lines 1167–1253
+  - [Several values over time](#several-values-over-time) · lines 1216–1253
+- [A list as a board](#a-list-as-a-board) · lines 1255–1306
+- [A list as cards](#a-list-as-cards) · lines 1308–1354
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1356–1392
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1464
+- [A few equal things](#a-few-equal-things) · lines 1466–1550
+- [An overview page](#an-overview-page) · lines 1552–1623
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1624–1690
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1692–1816
+- [Picking at random](#picking-at-random) · lines 1818–1849
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1851–1918
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1920–1945
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1947–2043
 
 <!-- /index -->
 
@@ -121,7 +124,9 @@ portaled to `<body>` wear it too. An installed app's colours follow it with
   4.5:1 as small text on Indigo and Rose and on Violet, and on every
   palette's cards but Indigo and Cyan, so it is never small text: it is
   the ring, the primary fill and the active item's tint. The `link`
-  Button variant is `text-link` for the same reason.
+  Button variant is `text-link` for the same reason, and the theme
+  colour as text (`--primary-text`, 4.105: the open tab's name, a picked
+  choice's word) is accent light too.
 - **The status colours are text shades.** The guide's success, warning
   and danger are `--success-text`, `--warning-text` and
   `--destructive-text` (soft badges, icons, coloured words). Solid fills
@@ -223,6 +228,53 @@ themes. **A new tone or style is not done until it appears in that story.**
 Pick **one style per table** and vary only the tone. Mixing styles across
 columns makes the difference look meaningful when it isn't.
 
+## Status marks
+
+A record's status (4.98, the record standard's 5B) is a `StatusMark`: an
+icon, a colour and the status's own word, the same in its cell, the
+record's header and the select's options. Every status sorts into one of
+six kinds; the kind decides the icon and the colour, so it reads by
+shape without colour too, and the word stays, so nothing needs learning.
+
+| Kind | Means | Icon | Colour |
+|---|---|---|---|
+| `active` | in use or under way now | a ring with a dot | `success-text` |
+| `planned` | not started yet: an idea, queued, ordered, scheduled | a dashed ring | `info-text` |
+| `paused` | started, then held; expected back | a ring with bars | `warning-text` |
+| `done` | finished as meant: closed, resolved, filed, bought | a ring with a tick | `status-done-text`: a teal |
+| `ended` | stopped without finishing: dropped, retired, cancelled, past | a ring with a slash | `status-ended-text`: a soft rose |
+| `attention` | overdue, failing or blocked: look now | a warning triangle | `destructive-text` |
+
+```tsx
+// widget-format.ts: the enum sorted by what each value means.
+export const STATUS_KIND: Record<WidgetStatus, StatusKind> = {
+  draft: 'planned',
+  active: 'active',
+  archived: 'ended',
+}
+// The cell, the header and the select's render:
+<StatusMark kind={STATUS_KIND[status]}>{WIDGET_STATUS_LABELS[status]}</StatusMark>
+```
+
+- **Sort by meaning, not by word.** "As needed" is `active`, "On hold"
+  `paused`, "Idea" and "Up next" `planned`, "Retired" `ended`.
+  `attention` is for a state that wants a look now, often worked out
+  rather than stored (a review date past due).
+- **The icons are one map** (`STATUS_KIND_ICONS`, `lib/status-kinds.ts`
+  in the package): changing one there changes it in every app. A screen
+  can pass `icon` for one place; don't.
+- **Done and ended have colours of their own** (4.110): a teal for
+  finished, a hue away from `active`'s green, and a soft rose for no
+  longer going, a hue away from `attention`'s red. Neither is grey, so a
+  finished record never reads as a disabled one. They're text shades
+  (`--status-done-text`, `--status-ended-text`, in every palette and both
+  themes); nothing fills with them.
+- **Measured:** every kind's word clears 4.5:1 and its icon 3:1 on the
+  page, a card and a table row, in both themes and every palette
+  (`app-statusmark--all-kinds`).
+- Badges stay for everything else status-like (a computed progress, a
+  tag): the tone rules below.
+
 ## Mapping an enum to tones
 
 The decision is the **grouping**, not the style. Before choosing how it
@@ -231,10 +283,10 @@ neither — including the ones that look distinct as text but should share a
 tone.
 
 ```tsx
-const STATUS_BADGE_VARIANT: Record<WidgetStatus, 'outline' | 'outline-success' | 'secondary'> = {
-  draft: 'outline',
-  active: 'outline-success',
-  archived: 'secondary',
+const CHECKLIST_STATE_BADGE_VARIANT: Record<WidgetChecklistState, 'outline' | 'outline-success' | 'secondary'> = {
+  none: 'secondary',
+  open: 'outline',
+  complete: 'outline-success',
 }
 ```
 
@@ -244,8 +296,8 @@ gains a value with no tone, rather than falling back silently.
 Two rules that keep this honest:
 
 - **Most values are neutral.** If more than about a third of an enum is
-  coloured, the colour has stopped meaning anything. Widget's `archived` is
-  an end state, not a failure — it stays grey.
+  coloured, the colour has stopped meaning anything. Widget's progress
+  only colours `complete`; an empty or unfinished list isn't a problem.
 - **Never let colour be the only signal.** A colourblind reader, a
   greyscale screenshot and a printed page all lose it. The label text
   usually carries the meaning already; where a cell is a glyph rather than
@@ -587,6 +639,15 @@ palette side by side), with axe, the token check and the ring's ratio
 measured in light, dark and every palette. Cell pattern 24 is it in a
 column.
 
+**Picking one on a form is `ColorField`** (4.124): the same swatches,
+each beside its name, as one radio group, and Custom for the browser's
+own picker. Its default twelve (`COLOR_CHOICES`) sit at a middle
+lightness, so each fill clears 3:1 against a card in light, dark and the
+dark palettes, and 2.3:1 on Palm LCD, whose mid-light panel no middle
+colour clears 3:1 on (the ring shows the edge there). The picked one is
+marked by its radio's dot and a primary border, never by its colour
+alone. Cell pattern 24 has its markup.
+
 ## Shapes and sizes
 
 The shared style guide's, the same in every app with or without a
@@ -644,6 +705,41 @@ height and weight together, from tokens in the package's `styles/theme.css`:
 - A shadcn primitive keeps its own sizes (`CardTitle`, `Button`). Don't put
   a role on one: its built-in size classes would then compete with the role.
 
+### Words on screen: Title Case and sentence case
+
+Two cases, chosen by what the words are (4.97; before it, everything was
+sentence case):
+
+- **Title Case names a thing you can see or press:** page, dialog, sheet,
+  form, card and section titles; buttons and links that act like
+  buttons; menu items and menu labels; tabs and pills; column headers;
+  field labels; a group's heading in a list ("Earlier This Week"); and a
+  control's accessible name (`aria-label="Next Page"`, an icon button's
+  tooltip). "Show Deleted", "Try Again", "Rows per Page", "View All 12",
+  "Back to the List", "Save and Next", "Move To".
+- **Sentence case is anything said to the person:** messages, help text
+  (`FieldDescription`), toasts, placeholders, a form's error ("Give it a
+  title"), an empty or error state's words, even its heading line
+  ("Nothing here yet", "Something went wrong", "Couldn't load"), a
+  notice's title, a question ("Discard your changes?"), and a sentence
+  read to a screen reader (a live announcement, "Moved Fix the latch to
+  Done"). A value the app shows is written as its data is (a status
+  label, a rule's phrase "Every weekday", "Not set").
+- **The small words stay lowercase** unless first or last, or first
+  after a colon: a, an, the, and, but, or, nor, as, at, by, for, in, of,
+  on, per, to, with (`TITLE_CASE_SMALL_WORDS`). Every other word,
+  however short, is capitalised ("Turn Into Page", "Show All", "Is",
+  "It"), and so is each part of a hyphenated word ("Follow-Up"). A word
+  that is part of a verb ("Sign In", "Log Out", "Turn Off") is
+  capitalised even where it is a small word elsewhere.
+- **A label written in the code is written in Title Case**; a label built
+  from a value goes through `titleCase()` (`` `Add ${titleCase(noun)}` ``).
+  `titleCase` leaves a word that already holds a capital as written, so
+  names and acronyms survive ("Open in GitHub").
+- **The words around a name keep the name's own case:** `Back to
+  ${list}` gets the list's title as it is, `Actions for ${row}` the row's
+  name.
+
 ### Written text (notes)
 
 A one-line value written as Markdown (a cell, a card's line) is
@@ -685,7 +781,9 @@ least), a column's menu has Narrower, Wider, Fit to content and Fit all
 columns, and a double-click on the edge fits it again. The width is kept
 in the Markdown as a comment after the table, naming its columns
 (`<!-- table widths: Item=140, Cost=72 -->`), which `<Markdown>` and the
-editor read and never show. A column named nowhere fits its words. A
+editor read and never show; nor do the backend's MCP read tools (4.94:
+`fetch`, `list`, `search`, and `update`'s answer), while `edit_text` and
+`update` keep it in what's stored. A column named nowhere fits its words. A
 phone ignores the widths and can't set them; on paper they scale to the
 page.
 
@@ -694,6 +792,20 @@ tab stop and a region named "Table, scrolls sideways: " and its first
 columns ("Item, Size, Colour, …"), so two such tables keep distinct
 names; the arrow keys scroll it (in the editor Home and End too), with
 the `ring` focus ring. A table that fits gets no tab stop and no region.
+
+**The theme colour as text** (4.105) is `--primary-text`
+(`text-primary-text`): what's picked or open, in the primary's own colour
+where that reads as small text. The open record tab's name, the open tab
+of any line tab list (`TabsList variant="line"`, a page's sub-navigation
+under a section heading, 4.110) and a picked `ChoiceButtons` option wear
+it (each tab with a 3px `bg-primary` line and a `bg-primary/12` tint, the choice with
+a `border-primary` and a `bg-primary/12` fill). The pill look
+(`TabsList`'s default) keeps its open tab in `--foreground` on the page
+colour. It's the
+primary itself in the light and dark themes (near-black, near-white),
+each dark palette's accent light (the accent fails 4.5:1 as small text on
+some surfaces), and Palm LCD's ink. Never for a link (`--link`) or a
+heading.
 
 The same text has four colour tokens of its own: `--link` (`text-link`), a
 link's colour, blue as well as underlined (5.59:1 on white, 8.90:1 on the
@@ -1267,6 +1379,13 @@ row under the header, across the page at every width.
 - **An empty value reads as a dash** (`emptyLabel`, 4.81; "Not set"
   before), in body type and muted, read by a screen reader as "Not set".
   Never a blank.
+- **A tip and an action on a value** (4.120), as a rail fact has:
+  `info` is a few words behind a small info button after the value (a
+  tooltip on hover and keyboard focus, a caption line under the value on
+  a touch screen, read with the value by a screen reader), and `action`
+  (`{ label, icon?, onClick | render }`) a small outline button under it.
+  Both are there at rest, so nothing moves on hover. `hint` stays the
+  caption line ("of 12"); `info` is the tooltip.
 - **Three to five.** It's what the page is for at a glance; anything
   more is a section's label/value rows.
 - **`subtitle`** is the line under the title: what the record is for,
@@ -1288,14 +1407,41 @@ into a table, a record or an overview.
   `count`, `newAction` alone beside it, and one ⋯ menu for the rest. One
   related link in `links` stays a button; two or more fold into ⋯ with
   `more` (the page's own actions). `deleted={{ shown, onShownChange }}` adds
-  "Show deleted" as the menu's last item and, while it's on, an info
-  `Notice` with "Back to the list" in a `role="status"` region that is
-  always there. It holds no state: the app keeps `shown`.
+  "Show Deleted" as the menu's last item and, while it's on, an info
+  `Notice` with "Back to the List" in a `role="status"` region that is
+  always there. It holds no state: the app keeps `shown`. Passed as a
+  framed DataTable's `pageHeader` (4.106, C3) it's as wide as the
+  table, so ⋯ and New end on the card's right edge. The menu is as
+  wide as its longest item and never wraps one (4.105), as is a row's ⋯
+  menu. **One more button beside New** (`secondaryAction`, 4.117) for
+  the list's second most common action ("Refresh Now", "Add from
+  Catalog"): `{ label, icon?, onClick | to, disabled? }`, an outline
+  button just before New, which stays the one filled button. Only one:
+  anything else is in ⋯. On a phone it folds into ⋯ as the menu's first
+  item (⋯ shows there for it alone if nothing else is in the menu).
+  Its `hint` (4.120) is a short line under the button ("12 searches
+  left"), in caption type and the muted tone, describing the button to a
+  screen reader; the buttons stay level, the line hanging below. On a
+  phone it's under the words of ⋯'s first item. **A line of context**
+  (`description`, 4.120): one short muted sentence under the title, for a
+  list that needs it ("Each search runs against the catalog once a
+  day."). It wraps in the header's width and never widens a framed
+  table's shared width; on a phone it's under the title and its buttons.
+  A `more` item that can't be used now (4.123, `disabled: true`: an
+  import already running) stays in ⋯, greyed, never hidden.
+- **A bar between the header and the list** (`DataTable pageBar`, 4.123):
+  something about the whole page that belongs above its rows, such as a
+  deals bar, "Allow Reminders" or a budget's totals. It's drawn under
+  `pageHeader` and above the views, in the same box, so C3 holds: the
+  header, the bar and the card share the table's width, and the bar
+  wraps in it rather than widening it. Never a bar put between a
+  separate `ListHeader` and the table, which loses the shared width.
+  One sentence: anything longer belongs in a help page.
 - **`Timeline`: a record's dated history.** `items` newest first
   (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
   column on the left, a dot and a thin line, the entry on the right with
   its `kind` as a muted line under it and `edit` (the entry's own
-  control) at its end. The first `initial` (5) show, then "Show all N";
+  control) at its end. The first `initial` (5) show, then "Show All N";
   under 24rem of its own width the date moves above its entry. Empty
   reads `emptyText` ("Nothing yet").
 - **`NeedsYou`: what waits on the user.** `items={[{ text, to, tone? }]}`:
@@ -1316,6 +1462,92 @@ into a table, a record or an overview.
 Every one is measured with axe and the glyph check in both themes
 (fixtures `app/ValueList`, `ListHeader`, `Timeline`, `NeedsYou`,
 `Freshness`, `PartEmpty`).
+
+## A few equal things
+
+`EqualItems` (4.93, record standard R10): a small set of equal, related
+things inside a record (a plan's phases, the stores a price is compared
+at, a handful of options), one data shape in four looks. A record picks
+one look per set; a fifth is asked for first.
+
+```tsx
+<EqualItems
+  label="Phases"
+  look="featured"
+  featuredId={currentPhaseId}
+  items={phases.map((phase) => ({
+    id: String(phase.id),
+    title: phase.name,
+    state: { label: 'Current', tone: 'info' },
+    fields: [{ label: 'Weeks', value: phase.weeks }, { label: 'Focus', value: phase.focus }],
+  }))}
+/>
+```
+
+| `look` | Draws | Use it when |
+|---|---|---|
+| `cards` (the default) | a row of equal cards that wraps, one column on a phone; label and value on one line, no rules | a few things with little to say about each |
+| `table` | one compact row per item, the title as its row header, a column per field label (first-seen order), a dash where an item has none; scrolls sideways in its own box on a phone | things compared on the same values (a price at each store) |
+| `featured` | the item `featuredId` names in full, in a card with the accent border, then the rest as toggles that open in place | one is current or best (a program's phases) |
+| `panels` | a panel per item side by side, its title and state in a muted band, every detail labelled above its value; stacked on a phone | each has several details and must read as separate |
+
+- **A state is a badge**, the outline style in its tone (`state: 'Planned'`
+  is the neutral one; `{ label, tone }` with `info`, `success`, `warning`
+  or `destructive`). Most states stay neutral ("Mapping an enum to tones").
+- **A field is the record's row**: the label in label type and muted, the
+  value in body type; an empty value is the record's dash, read as "Not
+  set". `featured` uses the rail's beside rows (field-rows.ts).
+- **Featured's toggles** are buttons inside headings at the items' level:
+  Enter or Space opens one, Tab moves to the next, several can be open,
+  `aria-expanded` says which. Never a link; `defaultOpenIds` opens some at
+  first.
+- **Empty**: no items reads `emptyText` ("Nothing yet"), an item with no
+  fields `noFieldsText` ("No details"). `label` names the set for a screen
+  reader (the list's name, the table's caption); titles are `h3` under a
+  section's `h2` (`headingLevel`).
+
+**An item's own content and actions** (4.94). When an item holds more
+than label/value rows (an editor of several fields, a note, a chart), it
+carries them itself, never as a field's value, where the label/value grid
+squeezes them into its narrow value column:
+
+```tsx
+items={stores.map((store) => ({
+  id: store.id,
+  title: store.name,
+  fields: editing === store.id ? undefined : [{ label: 'Price', value: store.price }],
+  content: editing === store.id && <StoreEditor store={store} onDone={stopEditing} />,
+  wide: editing === store.id,
+  actions: (
+    <>
+      <IconAction icon={PencilIcon} label={`Edit ${store.name}`} size="sm" variant="ghost" onClick={() => edit(store.id)} />
+      <IconAction icon={Trash2Icon} label={`Remove ${store.name}`} tone="destructive" size="sm" variant="ghost" onClick={() => remove(store.id)} />
+    </>
+  ),
+}))}
+```
+
+- **`content`** goes under the item's fields at the item's full width (in
+  `table`, a row of its own under the item's, as wide as the table's box
+  and held in view while a phone scrolls the table sideways). An item with
+  content and no fields reads no "No details".
+- **`actions`** are the item's own buttons, at the end of its title line;
+  in `featured` beside the toggle, never inside its button; in `table` a
+  last column, named `actionsColumn` ("Actions") for a screen reader. Icon
+  actions (`IconAction`, a tooltip and a name each) named for the item
+  ("Edit Corner Hardware"), as the record standard's header draws them.
+  A Remove that loses data asks first, as any delete does
+  (add-an-entity.md "Deleting").
+- **`wide`** gives the item the whole row of `cards` or `panels`, for
+  content that needs it: set it while the item's editor is open. The
+  items keep their order; the others wrap around it.
+- **Editing one item swaps its fields for its editor** (the content), then
+  back on Save or Cancel. The set's other items stay as they are.
+
+Measured with axe, the token check and the glyph check in both themes and
+every palette (fixtures `app/EqualItems`, "Content and actions" among
+them), and from the keyboard and at a phone's width in
+`e2e/equal-items.spec.ts`.
 
 ## An overview page
 
@@ -1370,6 +1602,13 @@ read alike.
   `ErrorState` in the card), and `empty` (a part with nothing yet: "Nothing
   yet" in the tile, `PartEmpty` and its one way to start in the card). An
   empty part stays on the page: hiding it makes the part forgotten.
+- **Links out** (`links`, 4.120): a short list of pages outside the app
+  (`{ label, href, icon? }`), one section after the parts under a
+  "Links" heading (`linksTitle`). Each link is its label, its icon
+  before it if it has one, and the external-link mark, opening in a new
+  tab and saying so to a screen reader. In a row from 48rem, one per
+  line on a phone, each 44px tall. A few: a module's whole bookmark list
+  is a list of its own.
 - **One card anatomy on a hub** (`WidgetCard`): `to` makes the title the
   link with a chevron (in place of the header's `link`), `value` the
   headline in the numeric type, `line` one muted line under it, and
@@ -1380,7 +1619,8 @@ read alike.
 
 Measured with axe and the glyph check in both themes and every palette
 (fixture `app/OverviewPage`); `e2e/overview-page.spec.ts` clicks the
-tiles, Escape and the accordion.
+tiles, Escape and the accordion, and `e2e/overview-links.spec.ts` checks
+the links.
 ## A record's header and empty values
 
 The record page standard (4.81): the same header on every record, the
@@ -1401,59 +1641,161 @@ data on each its own.
   (12px apart, 6px between badges), centred on the title's line; a title
   too long for both pushes them to the next line, starting under it.
   `subtitle` is the line below, in muted body type.
+- **Badges edited in place** (an inline `EditableValue` around a
+  `Badge`) keep their pencil's room at rest (4.120), as the strip's values
+  do, so hovering one moves nothing after it and never wraps the line.
+- **A hint under a header button** (`ActionHint`, 4.120): `<ActionHint
+  hint="12 searches left"><Button>Search</Button></ActionHint>` draws a
+  short caption line under the button, describing it; the header's
+  buttons line up by their tops, so it stays level with the rest.
 - **Actions**: the record's own commands in words (New visit, Mark
-  done), then the universal ones as `IconAction`s: Print notes
+  done), then the universal ones as `IconAction`s: Print Notes
   (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
   tone). Each is a square outline button at the header's 36px with its
-  words as both its tooltip and its accessible name. Icon alone is for
-  the universal actions only (Delete, Print notes, Copy link, Pin, Open
-  site, Restore, Open full page, Close, More); everything else keeps its
-  word. `printLook="words"` keeps Print notes as a button with its words.
+  words as both its tooltip and its accessible name. An `IconAction`
+  that goes somewhere (Open Site, Print to a page) takes the link as
+  `render` (4.123, `render={<Link to="/print" />}` or `render={<a href=…
+  target="_blank" />}`) and is drawn as that link. `accessibleName` says
+  more than the tooltip where several are on one page: `DeleteAction`'s
+  icon is named "Delete <name>" (4.123), its tooltip still "Delete". Icon alone is for
+  the universal actions only (Delete, Print Notes, Copy link, Pin, Open
+  site, Restore, Open Full Page, Close, More); everything else keeps its
+  word. `printLook="words"` keeps Print Notes as a button with its words.
+  Print Notes prints a hidden copy of the notes: a desktop browser takes it
+  away when its dialog closes, a phone's (print() returns at once) when the
+  person next touches the page (4.124.1).
 - **An empty value** reads as a dash (`emptyText`, default `'—'`), in the
   muted text tone, read by a screen reader as "Not set": the same on
   every field, the presets' included. A field's own `emptyLabel` still
   wins where words say more than a dash ("No budget yet").
+- **The same dash off the record: `EmptyText`** (4.96). An app's own
+  strip, summary line or cell with nothing in it draws
+  `isEmptyValue(value) ? <EmptyText /> : value`, never a dash and an
+  `sr-only` of its own. `label` is what a screen reader says for the
+  dash ("Not set" unless set: `label="No reason given"`), `text` shows
+  words instead of it, and `className` replaces the muted tone's class
+  (keep a muted tone: `className="type-label text-muted-foreground"` on a
+  label-sized line). EntityView, KeyStats, EqualItems, ValueList and the
+  hub cards' "Couldn't load" all draw through it.
+
+  ```tsx
+  <p className="type-body">{shelf} · {isEmptyValue(reason) ? <EmptyText label="No reason given" /> : reason}</p>
+  ```
 - **Folded empties** (`emptyFields="fold"`): each fields card lists its
   filled fields, then a muted, underlined "N empty" with a down chevron
   under them opens the rest in their places, each still edited in place,
-  and reads "Hide empty" (the chevron up) while open. A card with
+  and reads "Hide Empty" (the chevron up) while open. A card with
   nothing empty has no toggle; one with nothing filled has the toggle
   alone. A value set elsewhere moves its field into the card at once.
   The fold is per card and isn't remembered.
 
-## A record's tabs, mark and rail
+## A record's tabs, mark and facts
 
-Three settings on `EntityView` (4.76): tabs and a mark, each for a
-record that needs it, and rail fields beside their labels, the default
-since 4.81.
+The record standard (4.98): no right rail. A record is one column, its
+long content grouped under tabs where it has three or more groups, and
+its short facts the last tab, Details. A mark goes left of the title.
 
 ```tsx
 <EntityView
-  layout="rail"
-  mobileOrder="main-first"
   leading={<img src={photo} alt="" className="size-12 rounded-full object-cover" />}
+  strip={<KeyStats stats={stats} />}
   sections={[
-    { title: 'Summary', placement: 'rail', fields },
-    { title: 'Notes', content: <Markdown>{notes}</Markdown> },
-    { title: 'Steps', tab: 'Steps', content: steps },
-    { title: 'Where it applies', tab: 'Used in', content: uses },
-    { title: 'Why this order', tab: 'Reasoning', content: reasoning },
+    { title: 'Summary', placement: 'rail', fields },           // the Details tab
+    { title: 'Notes', tab: 'Notes', content: <Markdown>{notes}</Markdown> },
+    { title: 'Packing', tab: 'Notes', placement: 'rail', fields: packing }, // beside Notes
+    { title: 'Changes', tab: 'Changes', content: changes },
   ]}
   … />
 ```
 
-- **Tabs** (`tab` on a main section): a line tab list at the top of
-  the main column, under the strip and any sections with no tab, one
-  tab per name in the order the sections first give it. The selected
-  tab has foreground text and a 2px underline, the others muted text;
-  the list's own bottom border runs the column's width. On a phone each
-  tab is 44px tall, and a list wider than the column scrolls sideways on
-  its own, never the page. Arrow keys move between tabs and select
-  (Home, End), and Tab goes on into the panel. The address holds the
-  selected tab (`?tab=used-in`, `entityViewTabSlug`), replaced rather
-  than pushed, so Back leaves the record, not the tab. Every tab's
-  sections stay mounted, so a value open in place survives a switch.
-  Short tab names, one or two words; no counts or icons in them yet.
+- **Tabs** (`tab` on a section): a line tab list under the strip and any
+  sections with no tab, one tab per name in the order the sections first
+  give it. The look is the record standard's 3B (4.101): 44px tabs in
+  16px semibold (14px under 48rem), the others muted. The selected one is
+  plainly marked (4.111): its name bold in the theme colour
+  (`--primary-text`, 4.105), a 3px primary line under it and a primary
+  tint behind it (`bg-primary/12`, as a picked choice); every tab is as
+  wide as its bold name, so choosing one moves none. A page's own line
+  tabs (`TabsList variant="line"`) are marked the same way, semibold
+  over medium. The list's own
+  bottom border runs the column's width. A tab's count (`tabCounts`, by
+  name: the records it holds) sits beside its name in a small muted
+  pill; a tab with none shows no count. A list wider than the column
+  scrolls sideways on its own, never the page.
+- **The tab bar sticks** (4.101) to the top of whatever scrolls (the
+  page, or a record dialog's body) while the record scrolls under it,
+  and once stuck shows the record's name above the tabs, so you always
+  see which record and which other tabs there are. A page with a bar of
+  its own pinned to the top passes `tabsStickyTop` (any CSS length). Arrow keys move
+  between tabs and select (Home, End), and Tab goes on into the panel.
+  The address holds the selected tab (`?tab=used-in`,
+  `entityViewTabSlug`), replaced rather than pushed, so Back leaves the
+  record, not the tab. Every tab's sections stay mounted, so a value open
+  in place survives a switch. Short tab names, one or two words; no
+  counts or icons in them yet.
+- **The facts** (`placement: 'rail'` with no `tab`): the last tab,
+  Details (`detailsTab` names it otherwise), their cards no wider than
+  42rem, labels beside values. A record with no other tab keeps them in
+  the column, in their place.
+- **A box beside a tab** (`placement: 'rail'` with a `tab`): a few short
+  facts that explain that tab's content (a dose beside the notes), in a
+  18rem column beside its sections once the tab is 42rem wide, under
+  them below that. Short facts only, never free text: run-on text in a
+  narrow box is what the standard took away.
+- **Several items in one fact** (4.111): linked records, a few tasks,
+  each item marked so a long title that wraps doesn't run into the next.
+  A `list` fact (`{ label: 'Related', kind: 'list', items: [{ name, to,
+  icon }] }`) draws them; an app's own box of several things uses the
+  same `FactList` and `FactListItem`. Each item leads with its kind's
+  icon (the record standard's 4I) when the app gives one, a neutral
+  bullet otherwise, in the muted colour; a wrapped line starts after the
+  mark (a hanging indent), and items have a little room between them.
+  Never a bare stack of links.
+- **The record's status** (4.115): a record's status is the first fact at
+  the top of the right rail, edited in place there; a status that changes
+  only through an action stays read-only, with the action as a small
+  button under it and a tooltip saying why. Mark it `recordStatus: true`
+  and EntityView draws it first, whatever its place in `facts` and its
+  section's among the rail's, and first in Details where the rail folds.
+  One per record.
+- **An action under a fact** (`action`, 4.115): a small outline button
+  (`xs`, 44px tall on a touch screen) under the value, its words a verb
+  ("Close…", an ellipsis when it opens a dialog), an icon before them if
+  the app's actions have one. For the status above, and for any read-only
+  fact that one action changes. Never several: more belong in the
+  header's actions.
+- **Why a fact can't be edited here** (`hint`, 4.115): a few words, in a
+  tooltip on a small info button after the value, shown on hover and on
+  keyboard focus, and read with the button by a screen reader. A touch
+  screen has no hover, so there the words are a caption line under the
+  value instead. Nothing that only hover shows.
+- **A rating** (`kind: 'rating'`, 4.117) is drawn as the list's cells
+  draw it: a score out of `max` (5) as stars (`RatingScore`, the
+  default) or hearts (`look: 'hearts'`), a quality level as the step bar
+  (`look: 'bar'`, `StepBar`, with its `word`). Never "4 of 5" as text:
+  that's what a screen reader hears, one image named in words. The
+  glyphs are a fixed size, so the value never moves on hover, and it's
+  drawn the same in Details on a phone. An empty one reads its
+  `emptyLabel` ("Not rated"), not a row of empty stars. Edited in place
+  like any fact (`edit`), usually `inPlace.select` over the scores.
+- **A yes/no** (`kind: 'switch'`, 4.120) is a switch on the value's
+  line, never a two-choice select: `checked`, `onCheckedChange` (return
+  the save's promise and the switch shows the new state, busy, until it
+  lands, going back if it fails), and optional `on`/`off` words after it
+  ("With the team", "Only me"). Its accessible name is the fact's label;
+  a click, Space or Enter toggles it. Both words keep their room, so
+  toggling or hovering moves nothing, and it works the same in Details on
+  a phone. `disabled` with a `hint` for one that can't change here.
+  Printed, it's its word (or Yes/No).
+- **Icons on badges** (4.115): a `badges` fact's items may each carry an
+  icon (a component or a node) before the label, at the badge's icon size
+  in the muted tone a list's item icons have; items without one stay
+  words alone. The label always stays.
+- **The strip** (`KeyStats`) is as wide as its numbers (`width="content"`,
+  the default since 4.98), not the page's width. **Nothing in it moves on
+  hover or focus** (4.115): a value edited in place inline keeps its
+  pencil's room at rest there, as in a table cell, so a click lands on the
+  value under the mouse, wrapped onto two lines on a phone too.
 - **A mark or avatar** (`leading`): left of the title, top-aligned,
   with the title, subtitle and badges beside it at every width. 40 to
   64px (`size-10` to `size-16`): an avatar round (`rounded-full`), a
@@ -1461,12 +1803,17 @@ since 4.81.
   the title names the record (`alt=""`, `aria-hidden`); initials in
   foreground on `bg-muted`, an icon in muted foreground on the card
   with its border. "Logos and brand marks" above holds for a logo here.
-- **Rail fields beside** (`railFields`, `beside` by default since 4.81;
-  `stacked` puts each label above its value): the label in a 6 to
+- **Facts beside their labels** (`railFields`, `beside` by default since
+  4.81; `stacked` puts each label above its value): the label in a 6 to
   7rem column left of its value, baseline-aligned, rows a little tighter
-  than stacked. Where the rail's list is under 18rem (a phone narrower
-  than ~350px) it stacks as before, and once the rail stacks full width
-  the label column widens to the page's.
+  than stacked, stacked again where the list is under 18rem (a phone
+  narrower than ~350px).
+- **A tiny record** (a few fields, no notes): `RecordDialogRoute
+  look="card"`, a 420px card dialog (a sheet on a phone) with its title,
+  Delete, Open full page and Close on one line and the facts as plain
+  rows, no cards.
+- **The rail layout** (`layout="rail"`) is the shape before 4.98, kept
+  for apps not yet moved; a new record never uses it.
 
 ## Picking at random
 
@@ -1546,7 +1893,7 @@ size"); the list stays where a record is edited one field at a time.
   clicked again to clear) for a short choice, any input for the rest.
   A guess is a `suggestion`: drawn dashed in the info tone and said
   under the row, never picked for the person.
-- **Quick from the keyboard:** Enter is Save and next (not in a
+- **Quick from the keyboard:** Enter is Save and Next (not in a
   textarea), and the one row marked `shortcut` takes the number keys.
   After a move the focus is on the new record.
 - A refused save keeps the record and says why under the buttons, not
@@ -1632,8 +1979,15 @@ const bottomBar: BottomBarItem[] = [
 - **Counts** (`count`, `countLabel`): a plain number at the entry's end
   in the muted text tone, never a coloured badge; on the icon rail a dot
   in `--primary` on the icon. Only on entries that ask you to act
-  (unread, to fill in, new); 0 shows nothing. `countLabel` is what the
-  number counts, read after the entry's name ("News 24 unread").
+  (unread, to fill in, new); 0 shows nothing, nor does a count still
+  loading, and past 99 it reads "99+". `countLabel` is what the number
+  counts, read after the entry's name ("News 24 unread"). On a phone
+  (4.113) the bottom bar has no room at an item's end, so its count is
+  a small `--primary` badge on the item's icon, ringed in the bar's
+  background: a page's own count, or a section's sum of its entries'
+  (with their `countLabel` when they share one). The sheet's tiles carry
+  theirs in the corner and its list links at their end, as the sidebar
+  does. Each is read after its name ("News, 7 new").
 - **A section at the foot** (`placement: 'bottom'`): under every other
   section and `sidebarExtra`, pushed to the sidebar's foot when there's
   room; for tools rather than modules.
@@ -1646,6 +2000,22 @@ const bottomBar: BottomBarItem[] = [
   one tile per entry, the icon in `--link` over the label, bordered,
   44px tall at least; the tile holding the page has a `--primary`
   border. The entries' own pages are left to the module.
+- **The sidebar as icon tiles** (`navLook="tiles"` on `AppShell`, or a
+  section's own `look: 'tiles'`; 4.99): fewer words, more icons. Each
+  group is a three-column grid of tiles, the icon (20px) over a short
+  label in the caption size, on the sidebar's tint at half strength; no
+  visible headings (a section's label names its grid for screen
+  readers). The tile you're in, or the one holding the page, has the
+  full tint and a 1px `--primary` ring; a count sits in its top corner
+  in the sidebar's text tone. The pages of the entry you're in list
+  under its group's grid as the list look's, a hairline in place of
+  each heading (each run still a list named by it). A tiles section
+  doesn't fold. The icon rail is the rail's icons, as in the list look,
+  and the sidebar's phone sheet shows the tiles. A `bottomBar` item for
+  a tiles section with no `sheet` of its own opens its sheet as tiles,
+  with the current entry's pages under them as smaller tiles, four to a
+  row, 44px at least. Keep tile labels to a word or two; a section that
+  should stay a list (Tools at the foot) sets `look: 'list'`.
 - **The trail in the bar** (`usePageTrail`, `EntityView`'s
   `back.trail`): between the menu button and the search box, from 48rem
   up, `PageTrail` at 14px: every crumb but the last a

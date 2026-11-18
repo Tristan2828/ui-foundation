@@ -117,7 +117,7 @@ A notification at a time the user chose, with the app closed, is Web
 Push: `pwa()` in `vite.config.ts`, `AllowReminders` with
 `usePushPermission()`, and the backend's `send_push` and reminders job.
 Follow `docs/foundation/reminders.md`. Never ask for notification
-permission on page load: only from the click on "Allow reminders".
+permission on page load: only from the click on "Allow Reminders".
 
 ## Scope and Stopping
 - Do the task you were given and nothing beyond it. A task is done when

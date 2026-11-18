@@ -22,7 +22,37 @@ export async function safeFetch(path: string, init?: RequestInit): Promise<ApiRe
     throw networkError();
   }
   reportAnswered();
+  if (isProxySignIn(response)) throw proxyAuthError(response.status);
   return response;
+}
+
+// What a proxy in front of the app (an identity-aware proxy such as
+// Cloudflare Access) sends once its own sign-in has lapsed, in place of
+// the app's JSON: any redirect (never in an app's contract), or a page or
+// unparseable body on a success, a 401 or a 403. The app's own 401 and
+// 403 are always JSON (the foundation's error envelopes), so they still
+// reach toAppError as before. Anything else not JSON (a load balancer's
+// 502 page, say) is left to the caller's toAppError, as before.
+function isProxySignIn(response: ApiResponse): boolean {
+  const { foreign, status } = response;
+  if (foreign === "opaque-redirect" || foreign === "cross-origin-redirect") return true;
+  if (foreign === "html" && status >= 200 && status < 300) return true;
+  return (foreign === "html" || foreign === "not-json") && (status === 401 || status === 403);
+}
+
+/**
+ * The AppError for a lapsed sign-in at a proxy in front of the app (kind
+ * `proxy_auth`): only a full page load can sign in again, which
+ * `ErrorState` offers ("Sign In Again"). `safeFetch` throws it itself, so
+ * an app's gateway modules need no change to get it.
+ */
+export function proxyAuthError(status?: number): AppError {
+  const error: AppError = {
+    kind: "proxy_auth",
+    message: "Your sign-in has expired. Reload the page to sign in again.",
+  };
+  if (status) STATUS.set(error, status);
+  return error;
 }
 
 /**

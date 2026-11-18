@@ -70,7 +70,9 @@ const headings = (html: string) =>
   [...html.matchAll(/<button type="button" aria-expanded="true"[^>]*>.*?<span class="type-label[^"]*">([^<]+)<\/span><span[^>]*>(\d+)<\/span><\/button>(?:<span[^>]*>([^<]*)<\/span>)?/g)].map(
     ([, label, count, summary]) => [label, Number(count), summary].filter((part) => part !== undefined).join(' '),
   )
-const titles = (html: string) => [...html.matchAll(/<td[^>]*>(Kettle|Leaves|Bins|Keys)<\/td>/g)].map(([, title]) => title)
+// The title column's text sits in its cut span (4.103).
+const titles = (html: string) =>
+  [...html.matchAll(/<td[^>]*>(?:<span[^>]*>)?(Kettle|Leaves|Bins|Keys)(?:<\/span>)?<\/td>/g)].map(([, title]) => title)
 
 describe('groupByValues', () => {
   const valueOf = (chore: Chore) => chore.areas
@@ -113,7 +115,7 @@ describe('DataTable groupings', () => {
     expect(html).not.toContain('table-group')
   })
 
-  it('None is the default: a menu, every column, no headings, no Fold all', () => {
+  it('None is the default: a menu, every column, no headings, no Fold All', () => {
     const html = render({ groupings })
     expect(html).toContain('data-slot="data-table-group-menu"')
     expect(html).toMatch(/data-table-group-menu[^>]*>.*?Group<\/button>/)
@@ -136,7 +138,7 @@ describe('DataTable groupings', () => {
     expect(html).toContain('>Area<')
     expect(html).toMatch(/data-table-group-menu[^>]*>.*?Group: Status<\/button>/)
     expect(html).toContain('data-slot="data-table-fold-all"')
-    expect(html).toContain('>Fold all<')
+    expect(html).toContain('>Fold All<')
   })
 
   it('shows a multi-value row under each of its values, and one with none last', () => {

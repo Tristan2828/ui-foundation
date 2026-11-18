@@ -12,11 +12,12 @@
 //
 // It holds no state: values come from the URL like every filter
 // (useTableUrlState), and so do the chips (`active`, `primaryActive`).
-import type { ReactNode } from 'react'
+import type { KeyboardEvent, ReactNode } from 'react'
 import { SearchIcon } from 'lucide-react'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useIsPhone } from '@/hooks/use-is-phone'
+import { filterName } from './filter-name'
 import { SecondaryFilters, type ActiveFilter } from './secondary-filters'
 
 export type FilterBarSearch = {
@@ -26,6 +27,12 @@ export type FilterBarSearch = {
   placeholder?: string
   /** The box's accessible name: "Search" unless set. */
   label?: string
+  /**
+   * A key pressed in the box (4.123): Enter opening the one match, or
+   * "#12" going straight to record 12. Called before the box's own
+   * handling; `event.preventDefault()` keeps the key from it.
+   */
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
 }
 
 export type FilterBarProps = {
@@ -77,6 +84,7 @@ export function FilterBar({
         onChange={(event) => search.onChange(event.target.value)}
         placeholder={search.placeholder}
         aria-label={search.label ?? 'Search'}
+        onKeyDown={search.onKeyDown}
       />
     </InputGroup>
   ) : null
@@ -138,7 +146,7 @@ const ANY = '__any__'
  * "Status: Active" with a value, so the toolbar needs no captions.
  */
 export function FilterSelect({ label, options, value, onValueChange, anyLabel, className }: FilterSelectProps) {
-  const any = anyLabel ?? `Any ${label.toLowerCase()}`
+  const any = anyLabel ?? `Any ${label}`
   const picked = options.find((option) => option.value === value)
   const shown = picked ? `${label}: ${picked.label}` : any
   return (
@@ -146,9 +154,9 @@ export function FilterSelect({ label, options, value, onValueChange, anyLabel, c
       value={picked ? picked.value : ANY}
       onValueChange={(next) => onValueChange(next === ANY || next === null ? '' : String(next))}
     >
-      {/* A combobox takes its name from a label, not its text: the name
-          holds the text shown, so voice control can say it too. */}
-      <SelectTrigger aria-label={shown} data-slot="filter-select" data-active={picked ? true : undefined} className={className}>
+      {/* A combobox takes its name from a label, not its text: its label
+          first, then the words shown unless they say it (filter-name.ts). */}
+      <SelectTrigger aria-label={filterName(label, shown)} data-slot="filter-select" data-active={picked ? true : undefined} className={className}>
         <SelectValue>{() => shown}</SelectValue>
       </SelectTrigger>
       <SelectContent>

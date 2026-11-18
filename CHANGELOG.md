@@ -7,6 +7,1815 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## Unreleased
+
+Merged with no version bump; the next release carries it.
+
+- **RichTextEditor: typing behaves as in Notion and Obsidian** (the
+  RichTextEditor review's F10, F15, F16, F17, F18, F21, F22, F24 and its
+  Tab row). Nothing an app must change; a note's untouched text is still
+  saved as written.
+  - A code block, table, quote, callout or divider at a note's end can be
+    left: ArrowDown at its end, or a click under it, puts a line under it
+    (ArrowUp, or a click above, a line above one that starts the note).
+    On a phone, where there's no Ctrl+Enter, a click under it was the
+    only way and did nothing.
+  - Typed `---` makes a divider with a line under it and the caret there;
+    the next key no longer replaces the divider.
+  - `5 * 3 * 2` stays as typed: `*words*` and `**words**` need a non-space
+    against the marks, as CommonMark does. `==words==` (and
+    `=={green}words==`) highlights as typed, not only after a reload.
+  - A paragraph's trailing spaces are no longer saved (Markdown drops them
+    on reading; some were written as `&#x20;`).
+  - Backspace at the start of a list item takes it out of the list (a
+    nested one up a level, where it was fused into the item above); a
+    second Backspace joins it to the line above. Tab and Shift+Tab move a list item and stay in the
+    text, and indent or outdent a code block's lines; on a plain line Tab
+    still leaves the editor.
+  - The slash menu opens at the start of any line of text (a list item, a
+    quote, a callout, a heading, a table cell), listing only what can be
+    made there. In a list item a heading, quote or code block takes the
+    line out of the list.
+  - Redo pressed more times than there are steps to redo now does
+    nothing. It undid a step (ProseMirror's keymap fell back to Mod+Z),
+    which is why a redo after a slash pick seemed to lose words.
+  - Ctrl+Shift+5, 4 or 6 turn a heading into a list, and Ctrl+Shift+1 to 3
+    and 8 turn a list item into a heading or code block. A new list beside
+    one of its kind joins it: two lists side by side read back as one, and
+    the edit was refused without a word. Ctrl/Cmd+Shift+H highlights the
+    selection (or takes the highlight off). Ticking a task's box keeps
+    focus in the text, so Ctrl+Z takes the tick back.
+  - `e2e/rich-text-editor.spec.ts` "typing" (on the new RichTextEditor
+    Typing story) and `tests/rich-text-typing.test.ts`.
+
+### RichTextEditor: a refused edit is never saved quietly; paste, links and full screen (review F1, F9, F14, F19, F20)
+
+One step for an app with a form that edits rich text; the rest needs
+nothing.
+
+- **A form must bind `onProblem` (F1).** When the editor can't save an
+  edit without rewriting text nobody touched, it stops calling
+  `onChange`, so a form keeps the last text that could be saved. A form
+  that passed no `onProblem` showed nothing, and Save sent the old text
+  and said it worked. Now the editor marks itself `aria-invalid`, and
+  with no `onProblem` says why inside the field. **An app's form** binds
+  it as the template's `widget-form.tsx` does (`onDescriptionProblem`):
+  the message is the field's error and submit is refused while it
+  stands (add-an-entity.md "Copy the reference files", the fields file).
+  The message no longer says "edit it in the form": it is "This change
+  can't be saved without rewriting parts of the text you didn't edit.
+  Undo it to go on saving."
+- **Addresses become links (F9).** A web or email address typed and
+  ended with a space or Enter, or pasted alone as plain text, is a link
+  (through `linkHref`: `www.` gains https://, an email mailto:), saved as
+  an address rather than escaped text (`https\://…`). An address pasted
+  over selected words links them.
+- **Paste can't bring in a link that runs code or an image as data
+  (F14).** A pasted link `linkHref` refuses (`javascript:`) keeps its
+  words, not the link. A `data:` image in pasted HTML is uploaded through
+  `upload`, or, without one, left out with a toast.
+- **Paste keeps its shape (F19).** Plain lines stay lines (hard breaks);
+  Word's list paragraphs become lists, without their "·" markers; Notion
+  and GitHub to-dos become task items with their ticks; `language-*` on
+  pasted code is the block's language; a multi-line paste into a table
+  cell is one line, not a spread over the row. An image file pasted or
+  dropped where there's no `upload` now says "Images can't be added
+  here." (it did nothing).
+- **Full screen holds focus (F20).** The full-screen field is a
+  `role="dialog"` with `aria-modal`; the page behind it is `inert`
+  (toasts stay live) and Tab goes round inside it. Everything is
+  restored on leaving.
+
+### Rich text: an edit no longer rewrites what nobody touched (RichTextEditor review F2, F12, F23)
+
+Nothing an app must change. All three are in `src/lib/markdown-merge.ts`,
+which assembles a rich-text save from the original Markdown.
+
+- **A code fence keeps its info string.** The editor loads only a fence's
+  language, so an edit anywhere saved every untouched fence without the
+  rest of its info string (` ```js title="app.js" ` came back as
+  ` ```js `, `{1,3}` line marks went too). The merge now leaves what the
+  editor can't hold out of its comparison, so the untouched fence matches
+  and is kept as written. `content()`, which decides that a block the
+  editor shows its own way lost nothing, now counts every field
+  `meaning()` compares (a heading's level, a list's numbering, a link's
+  title, a fence's language and info string), taken from the node's own
+  fields rather than a list of its own; a unit test changes each field of
+  each fixture's nodes and fails where the two disagree. An edit inside the
+  fence itself still saves it without the info string (the editor has
+  nowhere to keep it).
+- **A Windows (CRLF) note stays CRLF.** One edit rewrote other untouched
+  multi-line blocks (callouts, lists) to LF, leaving mixed endings. Blocks
+  are compared with line endings normalised, and what the editor writes
+  goes back in the document's own ending.
+- **Select all and delete saves an empty text.** A link definition
+  (`[r]: https://…`) the text used and nothing uses any more (no reference
+  to it, no link to its address) goes with the text; it was saved alone,
+  invisible, so the field looked empty and wasn't. A definition nothing
+  used to begin with is kept.
+- Tests: `fenceMeta` and `crlf` fixtures in `MARKDOWN_FIXTURES`, so the
+  round trip's "editing the last block keeps every other block as written"
+  covers them in the browser; unit tests in `tests/markdown-merge.test.ts`.
+  Each fails on the code before this change.
+
+## 4.125.0 — The tab bar holds the page still; mocks rejoin a restarted worker
+
+npm package and `ui-foundation-backend` 4.125.0 (the backend is unchanged
+apart from its version). Two fixes and one new default in `/testing`,
+marked **(behaviour)**: an app's e2e suite can start failing on it, and
+then the failing test was running on data from outside the mocks.
+
+### A record's tab bar no longer moves the page as it sticks (#366)
+
+Nothing an app must change.
+
+- Stuck, the bar shows the record's name above the tabs and grows by that
+  line (`--type-label-leading`), its gap and `pt-2`. The bar is in the
+  flow, so everything under it moved down by that much (2rem), a frame or
+  more after the scroll that stuck it, and a click in progress could land
+  on whatever slid under the pointer. It now gives the same height back
+  below (a negative bottom margin while stuck), so the content under it
+  stays where it was and scrolls beneath the bar's name instead. The name's
+  line is fixed at `--type-label-leading`. Nothing for an app to change.
+  `e2e/record-tabs.spec.ts` checks the open tab's panel keeps its place
+  as the bar sticks, on the page at both widths and in a record dialog
+  (32px before).
+
+### Mock mode rejoins a restarted worker; e2e fails on a request past MSW (#367)
+
+Nothing an app must change; one new default to know about.
+
+- **A page rejoins its mock worker after boot.** The browser may stop
+  and restart MSW's service worker at any time, and a restarted worker has
+  forgotten the page and passes its requests to the network. Until now
+  `startMockWorker` handled that only at boot. It now guards `fetch` after
+  boot: a request the worker never handed to MSW makes the page join
+  again (probing until it's mocked, bounded) and makes the request once
+  more. One rejoin is shared by every request caught together; if it fails
+  the guard stands down and logs once. Mock builds only.
+- **(behaviour) New in `/testing`: `watchMswBypass(page)`, and the
+  exported `test` uses it.** A test whose page got an `/api/` response that didn't come
+  from the service worker now fails, naming each request. Off against the
+  real API (`VITE_API=real`), in a test that routes requests itself
+  (`page.route`, `context.route`, `routeFromHAR`), and with
+  `test.use({ mswBypass: 'allow' })`. A request the rejoin answered
+  doesn't count. If an app's suite starts failing on this, the test was
+  passing on data from outside the mocks.
+- **Docs:** during e2e, point the preview's `/api` proxy at a port nothing
+  listens on (`docs/consuming.md` "End-to-end tests on the mocks"). The
+  template does it with `BACKEND_URL` in `vite.config.ts`, set to
+  `http://127.0.0.1:9` by `playwright.config.ts` on the mocks. An app
+  copies those two lines, or sets its own proxy variable the same way.
+
+How an app adopts it:
+
+1. Bump `@tristan2828/ui-foundation` to `^4.125.0` (and
+   `ui-foundation-backend==4.125.0`) and run `ui-foundation sync`.
+2. Point the e2e preview's `/api` proxy at a port nothing listens on
+   (`docs/consuming.md` "End-to-end tests on the mocks"), if it doesn't
+   already.
+3. Run the e2e suite. A test that now fails naming requests "without MSW"
+   was passing on answers from outside the mocks: fix the test (a missing
+   handler, a request after the page closed), or, where a bypass is
+   expected, `test.use({ mswBypass: 'allow' })`. An app with its own
+   bypass check in its fixture can drop it for this one, which also knows
+   a request the rejoin answered.
+
+## 4.124.2 — MCP builds its tool list once
+
+`ui-foundation-backend` and npm package 4.124.2 (the npm package is
+unchanged apart from its version). A fix; nothing for an app to change.
+
+- **Every MCP `tools/call` rebuilt the whole tool list** to check the
+  tool's name, and every `tools/list` rebuilt it too. Building it
+  generates the JSON schema of each registered entity's filters, create
+  and update schemas, so with a handful of entities that was dozens of
+  Pydantic schema generations per call: a noticeable share of each MCP
+  call in production, and most of an app's MCP test time. The definitions
+  are now built once and reused until the registry changes;
+  `tool_definitions()` returns a copy of that build. A later
+  `register_entities`, or a test that changes `ENTITIES` in place, is
+  seen on the next call, as before.
+
+## 4.124.1 — Print Notes prints the notes on phones
+
+npm package and `ui-foundation-backend` 4.124.1 (the backend is unchanged
+apart from its version). A fix; nothing for an app to change.
+
+- **Print Notes on a phone** printed the whole app page instead of the
+  notes. Android Chrome and iOS Safari return from `window.print()` at
+  once and fire `afterprint` before the preview is built, so the printed
+  copy was already gone when the preview took the page. When `print()`
+  returns in under a second, the copy now ignores that early `afterprint`
+  and stays until the next pointerdown or key press. On a desktop browser,
+  where `print()` blocks until the dialog closes, nothing changes. The
+  copy is hidden on screen, so keeping it longer shows nothing; the one
+  difference is that the browser's own print (Ctrl+P) before that next
+  touch prints the notes copy. This was the behaviour since the button
+  shipped, not a recent regression. Fixed from the code's timing, not yet
+  confirmed on a real phone.
+- A test that stubs `window.print`: if an app's own e2e fires `afterprint`
+  to close the copy, stub `print` so it takes about a second (as a desktop's
+  does), or press a key or click after it.
+
+## 4.124.0 — A colour field for a stored colour
+
+npm package and `ui-foundation-backend` 4.124.0. Additive; nothing for an
+app to change unless it wants the field.
+
+- **`ColorField`**: a stored hex colour on a form, for a react-hook-form
+  `Controller` (`value`, `onChange`, `onBlur`, `invalid`, `id`). A grid of
+  named swatches as one radio group (one tab stop, the arrow keys move and
+  pick, a focus ring, the picked one marked by its radio's dot and a
+  primary border), each beside its name, and **Custom**, which opens the
+  browser's own colour picker (`<input type="color">`) with the chosen hex
+  beside it. A value that's none of the named colours, uppercase or
+  3-digit included, shows Custom with its hex; a named colour stored
+  another way (`C0392B`, `#FFF`) still shows as its name. The value out is
+  always `storedColor`'s form (`#c0392b`).
+- **`COLOR_CHOICES`** (and the `ColorChoice` type): the default twelve,
+  chosen to read on a card in light, dark and every palette, Palm LCD
+  included. Pass `colors` for an app's own `{ name, color }` list.
+- **`ui/radio-group`**: shadcn's radio group (Base UI), which `ColorField`
+  is built on, now ships as a primitive like the others.
+- Docs: cell pattern 24 "Picking one on a form" and the design language's
+  "A stored colour".
+
+To swap a text box and a `ColorSwatch` preview for the field:
+
+1. Bump `@tristan2828/ui-foundation` (and `ui-foundation-backend`) to 4.124.0
+   and run `npx ui-foundation sync`.
+2. In the form, replace the colour's `Input` (and its preview) with
+   `<ColorField id="…" aria-labelledby="…-label" value={field.value}
+   onChange={field.onChange} onBlur={field.onBlur}
+   invalid={fieldState.invalid} />` inside the same `Controller`, and give
+   the `FieldLabel` that `id` (cell pattern 24 has the markup).
+3. Keep validating with `storedColor`. Stored values don't change: one
+   that isn't in the set shows as Custom.
+## 4.123.0 — The page standards' gaps: links, keys, tones, names and a bar
+
+npm package and `ui-foundation-backend` 4.123.0 (the backend is unchanged
+apart from its version). The gaps apps worked around while putting their
+modules on the six page standards. Mostly additive; three changes of
+behaviour are marked **(behaviour)** with what a test may need.
+
+- **`IconAction` as a link**: `render={<Link to="/print" />}` or
+  `render={<a href=… target="_blank" />}` now draws the icon as that
+  link, its tooltip and name kept. Before, the link was drawn through
+  `Button`, which marked it `type="button"` and lost a router `Link`'s
+  `href` once it mounted. A link takes no Button props. Apps that drew
+  Open Site as a `Tooltip` around an `<a>` with `buttonVariants` can use
+  `IconAction` again.
+- **`IconAction accessibleName`**: an accessible name that says more than
+  the tooltip ("Delete The Long Walk" for a tooltip of "Delete").
+- **`DeleteAction`'s icon is named for its record** **(behaviour)**:
+  "Delete <name>", its tooltip still "Delete", so several on one page (a
+  record's and each of its rows') are told apart. A test that found it
+  with `getByRole('button', { name: 'Delete', exact: true })` finds it by
+  `{ name: 'Delete The Long Walk' }`; one without `exact` still matches.
+  The `"button"` trigger (the verb in words) is unchanged.
+- **`FilterBar` `search.onKeyDown`**: the search box's keys go to the app
+  first (Enter on "#12" opening record 12); `preventDefault()` keeps a
+  key from the box.
+- **`FilterSelect` and `FilterDate` are named by their label first**
+  **(behaviour)**: "Status" while showing "Any status", "Status: Active"
+  with a value (as before), and "Status: All reminders" for an `anyLabel`
+  that doesn't say the label. Before, the name was always the words
+  shown. A test that found one by `{ name: 'Any status' }` finds it by
+  `{ name: 'Status' }` (or `/^Status/` for any state).
+- **A `badges` fact item takes a `tone`** (`success`, `warning`, `info`,
+  `destructive`; type `EntityViewFactBadgeTone`): the outline badge in
+  that tone's text colour, its icon too, for a label that is a state
+  ("Pinned", "Overdue"). Axe-checked in both themes.
+- **The default view's sort stays off the address** **(behaviour)**:
+  pressing a list's `defaultView` pill wrote its `sort` into the URL
+  (`?sort=due:asc`) while its filters went back to the plain address. Now
+  nothing is written, and at the plain address the rows take the default
+  view's `sort` (before, it applied only once the pill was pressed).
+  Changing a filter by hand from there keeps that sort; un-sorting a
+  column there writes `sort=none`.
+- **A `ToggleGroup` in a `Field` is a choice**: one that is the field's
+  own control pairs with `ChoiceButtons` (two choices to a row, side by
+  side on a phone) without `kind="choice"`. One nested deeper (a
+  RecurrenceField's weekdays) isn't.
+- **The slash menu's Image**: with `upload`, "/image" (or "/photo",
+  "/picture") opens the file picker and puts the images where the "/"
+  was: the way to pick one in an editor with only the floating toolbar
+  (`toolbar="floating"`, `inline` notes), and a quicker one with the
+  fixed bar.
+- **Notes hold their place while the editor loads**: until the editor's
+  code arrives, `RichTextEditor` shows its text as `<Markdown>` draws it
+  (the room of a table's add-row bar included) instead of two skeleton
+  lines, so nothing under it moves when the editor takes over. This was
+  the "a FactList edited in place shifts at phone width" gap: on a phone
+  a record's notes are edited in place above the facts, and the facts
+  dropped by the notes' height a moment after the page opened. An empty
+  editor still shows the skeleton lines.
+- **`ListHeader` `more` items take `disabled`**: greyed in ⋯, never
+  hidden ("Import" while one is running).
+- **`DataTable pageBar`**: a bar between the page header and the list (a
+  deals bar, "Allow Reminders", a budget's totals), under `pageHeader`
+  and above the views in the same box, so the list standard's C3 holds:
+  header, bar and card share the table's width, and the bar wraps in it
+  rather than widening it.
+- Specs: `e2e/page-gaps.spec.ts` (fixtures `app/Page Gaps`), axe in both
+  themes; a unit test for the default view's address. Each check fails
+  with its fix taken out. `e2e/data-table-tools.spec.ts` and
+  `e2e/date-filter.spec.ts` find their filter selects by label now.
+
+## 4.122.0 — Passwords hashed with scrypt; one phone breakpoint
+
+npm package and `ui-foundation-backend` 4.122.0. Additive; nothing for an
+app to change.
+
+- **scrypt for passwords** (`foundation_backend.security`). New hashes are
+  scrypt at N=2^15, r=8, p=3: OWASP's next choice after Argon2id, which
+  the standard library doesn't have, and one of the equivalent settings
+  its Password Storage Cheat Sheet lists. They're stored as
+  `scrypt$32768$8$3$<salt>$<digest>`. PBKDF2 hashes from earlier releases
+  still verify, and a successful sign-in replaces one with scrypt. That
+  includes an account with a second step, at the password step. So
+  accounts move over as people sign in, with no reset and no migration.
+  `needs_rehash(stored)` is new beside `hash_password` and
+  `verify_password`. Each sign-in now takes 32 MiB of memory for its hash.
+  An app that needs FIPS-140 algorithms should stay on 4.121.0 and raise
+  it here.
+- **`useIsMobile` returns `useIsPhone()`**, so the 768px breakpoint is
+  written once. Same name, same answer. It no longer reads `window`
+  outside a browser, so it renders on a server or in a test without
+  `matchMedia`.
+- `docs/DEFERRED.md`: Temporal stays deferred. Safari doesn't ship it in
+  a stable release (checked 2026-11-15), and a polyfill would be a new
+  dependency.
+
+## 4.121.0 — An empty task item saves again; dependencies up to date within their majors
+
+npm package and `ui-foundation-backend` 4.121.0. No API changes. The
+package's peer ranges are unchanged, so an app's frontend upgrades as
+usual. The backend's pins moved, which an app must match (below).
+
+- **Fix: Enter at the end of a task list lost the edit.** Since
+  mdast-util-gfm-task-list-item 2.0.1 (a transitive dependency that
+  `^2.0.0` takes on any fresh install), the rich-text editor threw on
+  every keystroke after Enter made an empty task item, so nothing typed
+  there was saved. One Enter could also make two items. The cause is
+  Milkdown, which serializes an empty paragraph without its `children`,
+  and 2.0.1 reads their length. The editor now gives an empty paragraph
+  `children: []` (`rich-text-empty-paragraph.ts`). Four
+  `rich-text-tools.spec.ts` tests caught it, and they pass again. Apps on
+  4.120.0 or earlier with a fresh lockfile have this bug, so upgrade.
+- **npm**: every dependency is on its newest version within its major.
+  Among them: Vite 8.3.8, Vitest 5.1, ESLint 10.15, typescript-eslint
+  8.72, Tailwind 4.3.5, Base UI 1.9, TanStack Query 5.107 and Table 9.3,
+  React 19.3.1, React Router 7.18.5, react-hook-form 7.92, lucide-react
+  1.73, Milkdown 7.23, shadcn 4.23 and Playwright 1.65.1. The lockfile
+  was regenerated, so transitive dependencies are current too. The
+  template's `tools` pins are now `shadcn` 4.23.0 and `@playwright/test`
+  1.65.1. Majors not taken are listed in `docs/DEFERRED.md`.
+- **Python**: fastapi 0.163.0, sqlmodel 0.0.50, pydantic 2.14.3,
+  python-dotenv 1.2.4, email-validator 2.4.0 (the package's runtime
+  pins), and alembic 1.20.1, asyncpg 0.32.0, uvicorn 0.54.0, mypy 2.4.1,
+  pytest 9.2.0, pytest-asyncio 1.5.0 and the type stubs in the template.
+  sqlmodel 0.0.50 types table models' constructors, so mypy now checks
+  their arguments. The package's `_start_session` asserts the user has an
+  id. The template's child rows (`WidgetTagLink`, `WidgetChecklistItem`
+  and the rest) declare `widget_id: int | None = Field(default=None, …)`
+  because the relationship fills it on save. `nullable=False` keeps those
+  columns NOT NULL, so there is no migration.
+- **SQLAlchemy 2.1.** sqlmodel 0.0.50 allows SQLAlchemy 2.1, and a fresh
+  install takes it (2.1.8). 2.1 no longer installs `greenlet`, which the
+  async engine needs, so sqlmodel is now pinned with its `asyncio` extra:
+  `sqlmodel[asyncio]==0.0.50`. Without it every database call fails with
+  "the SQLAlchemy asyncio module requires that the Python 'greenlet'
+  library is installed". 2.1 also raises a lazy load after a commit as a
+  `StatementError` around the `MissingGreenlet`, not the bare error.
+- **Tests and tools**: `PW_WORKERS` sets the worker count in both
+  Playwright configs (`PW_WORKERS=1 npm run verify` on a machine short of
+  memory). The package's axe specs build axe from `e2e/axe.ts`, which
+  waits for transitions before it measures. The `data-table` kept-width
+  spec measures once the layout has settled.
+
+**Upgrading an app's backend.** `ui-foundation-backend==4.121.0` pins
+its runtime dependencies exactly, so pip refuses it beside the old pins.
+In `backend/pyproject.toml`, set `fastapi==0.163.0`, `sqlmodel[asyncio]==0.0.50`
+(with the extra),
+`pydantic==2.14.3`, `python-dotenv==1.2.4` and `email-validator==2.4.0`
+in the same change (the other pins are the app's own choice), then
+`pip install -e ".[dev]"` and `npm run verify:backend`. If mypy now
+reports a missing named argument for a foreign key that a relationship
+fills, or an `int | None` id passed as `int`, fix it the way the template
+did (see above). A test that expects `MissingGreenlet` from a lazy load
+after a commit now gets a `StatementError` whose `orig` is one.
+## 4.120.0 — A switch fact, links on an overview, a list's description, and hints
+
+npm package and `ui-foundation-backend` 4.120.0 (the backend is unchanged
+apart from its version). Additive: new optional props and kinds, new
+exports. A screen that passes none of them is drawn as before, except
+that inline-edited badges in a record header now keep their pencil's
+room at rest (below).
+
+- **A yes/no in the facts rail**: `EntityView` facts take
+  `kind: 'switch'`, `{ checked, onCheckedChange, on?, off?, disabled? }`.
+  A switch on the value's line named by the fact's label, toggled by a
+  click, Space or Enter. Return the save's promise from
+  `onCheckedChange` and the switch shows the new state, busy, until it
+  settles, going back if it rejects. `on`/`off` words after it keep the
+  room of the longer one, so toggling or hovering moves nothing. Drawn
+  the same in Details where the rail folds on a phone; printed as its
+  word (or Yes/No). An `edit` on a switch fact is ignored: the switch is
+  its own editor.
+- **Links on `OverviewPage`**: `links={[{ label, href, icon? }]}` (type
+  `OverviewLink`) draws one section after the parts, under a "Links"
+  heading (`linksTitle`). Each link opens in a new tab with the
+  external-link mark and says so to a screen reader; in a row from
+  48rem, one per 44px line on a phone. None draws nothing.
+- **`ListHeader description`**: one short muted line under the title. It
+  wraps in the header's width (`contain-inline-size`), so it never
+  widens a framed DataTable's shared header width (`pageHeader`); on a
+  phone it sits under the title and its buttons.
+- **Hints on header buttons**: `ListHeader`'s `secondaryAction` takes
+  `hint` ("12 searches left"), a caption line under the button that
+  describes it; the buttons stay level. On a phone it's under the words
+  of ⋯'s first item. A record header's own buttons take the same line
+  with the new **`ActionHint`** export:
+  `<ActionHint hint="12 searches left"><Button>Search</Button></ActionHint>`.
+  EntityView's header lines its actions up by their tops while one has
+  a hint.
+- **A tip and an action on a strip value**: `KeyStat` takes `info` (a
+  tooltip on an info button after the value, a caption line under it on
+  a touch screen, read with the value by a screen reader) and `action`
+  (a small button under the value, `KeyStatAction`, the same shape as a
+  rail fact's). Named `info`, not `hint`: a stat's `hint` already is its
+  caption line ("of 12") and stays so. Both are there at rest, so
+  hovering moves nothing.
+- **Inline-edited header badges hold still**: an inline `EditableValue`
+  in `EntityView`'s `badges` keeps its pencil's room at rest, as a strip
+  value has since 4.115, so hovering one no longer moves the badges after
+  it or wraps the line. The badges sit a little further apart at rest.
+  Nothing to do; a badge that must not keep the room can pass
+  `keepPencilRoom={false}`.
+- Specs: `e2e/record-extras.spec.ts`, `e2e/list-header-description.spec.ts`,
+  `e2e/overview-links.spec.ts`, with axe in both themes at desktop and
+  phone widths. The badge and framed-width checks fail with the change
+  removed. New fixtures: `app/EntityView` Record extras, `app/ListHeader`
+  Description and hint, `app/OverviewPage` Links.
+
+## 4.119.0 — Repeats without times, and the day weeks start on (WKST)
+
+npm package and `ui-foundation-backend` 4.119.0. Additive: new optional
+props and options, new exports, and one more rule part both sides
+accept. Every rule an app stores today, and every screen that doesn't
+pass the new props, behaves exactly as before.
+
+- **`RecurrenceField times={false}`**, for a record whose times are its
+  own fields (a calendar event's start and end). The preview lists the
+  next five *dates*, from today on ("Sun, Nov 15"; no "at 12:00 AM"); the
+  label and the phrase box leave the times out; the placeholder is
+  "every 2nd tue"; and "at 9am" typed is refused ("The times are set on
+  their own here: leave out “at …”."). The value still carries `times`,
+  since the schema needs one: the value's, else `defaultTimes` (09:00
+  when not given). `inPlace.recurrence({ times: false })` passes it on,
+  and its value at rest has no times either.
+- **WKST, the day a week starts on**, in `Recurrence`'s rule, on both
+  sides. `parseRule`/`formatRule` and `parse_rule`/`format_rule` read it
+  (any of MO to SU; anything else is refused), store it last, and leave
+  out `WKST=MO`, the default. The days honour it the way python-dateutil
+  and `rrule` do; it moves only an every-N-weeks rule with BYDAY. From
+  Wednesday 2026-11-04, `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU`
+  next falls on Sunday the 15th; without WKST on the 8th.
+  `weekStartMatters(parts)` / `week_start_matters(parts)` say whether a
+  rule's WKST can move a day. `RuleParts` gains an optional `weekStart`
+  (Monday 0 to Sunday 6, null for Monday; `week_start` in Python).
+- **`RecurrenceField weekStart="SU"`** (any `WeekdayCode`; Monday when
+  left out): every weekly rule its presets and box build gets `WKST=SU`
+  ("every other week on sun and wed" → `…;BYDAY=WE,SU;WKST=SU`), and a
+  stored weekly rule with or without WKST keeps its preset pressed. Typed,
+  "weeks start sun" (or "week starts on mon") sets it for one rule. Where
+  a rule's week start matters and differs from the field's, the box and
+  the label say so ("…, weeks start mon"); a week's days are listed from
+  its first ("on Sun and Wed"). `inPlace.recurrence({ weekStart })`,
+  `parseRecurrencePhrase`'s `weekStart` and `readTimes`,
+  `recurrencePhrase(value, today, { times, weekStart })`, and
+  `formatRecurrence`'s `weekStart` are the same options for an app's own
+  code; `formatOccurrence(…, { time: false })` is a date alone.
+- **Contract**: `Recurrence.rule`'s `pattern` in `openapi/foundation.yaml`
+  allows WKST. `check-contract` still accepts an app's copy with the 4.95
+  pattern (listed under the new `x-earlier-patterns`, which it ignores
+  when comparing), so no app has to touch its spec to upgrade.
+- **Tests**: 8 WKST cases in the shared `recurrence-cases.json` (DST, a
+  count, `every!`, Saturday and Sunday starts), and a new
+  `recurrence-shapes.json`: 174 rule shapes without WKST, with the days
+  each gave before this release and the days with `WKST=SU` from
+  dateutil. Both suites check every shape: unchanged without WKST, the
+  same with `WKST=MO`, the same as dateutil with `WKST=SU`, and moved only
+  where `weekStartMatters`. Without WKST the backend now passes Monday to
+  dateutil explicitly, whose own default follows `calendar.firstweekday()`.
+- A new fixture, `app/RecurrenceField` Dates only, with its spec and
+  axe in both themes.
+- Docs: reminders.md "Repeating reminders" (week start; a record whose
+  times are its own), add-an-entity.md (a `recurrence` field),
+  entity-plan-template.md, cell-patterns.md 27.
+
+**App steps:** bump to `^4.119.0` (and `ui-foundation-backend==4.119.0`)
+and run `npx ui-foundation sync` (the docs change). Nothing else is
+needed; nothing changes until an app opts in:
+
+- *Dates only:* pass `times={false}` to `RecurrenceField` (and
+  `times: false` to `inPlace.recurrence`), and `defaultTimes={['00:00']}`
+  if the stored time should be midnight. In a list, use
+  `formatRecurrence(value, { times: false })` and
+  `formatOccurrence(next, zone, { time: false })`.
+- *Weeks from Sunday:* pass `weekStart="SU"` to `RecurrenceField` and
+  `inPlace.recurrence`, and `{ weekStart: 'SU' }` to `formatRecurrence`
+  in a Repeats cell. Copy the new `Recurrence` schema from
+  `node_modules/@tristan2828/ui-foundation/openapi/foundation.yaml` into
+  `openapi.yaml` (its `rule` pattern now allows WKST, so the app's mocks
+  and spec accept the rules it stores), and run `npm run gen:api`. Rules
+  already stored without WKST keep counting weeks from Monday; to count
+  an existing every-N-weeks rule from Sunday, append `;WKST=SU` to it in
+  a migration of the app's own (it can move that rule's days).
+
+## 4.118.0 — A deploy shows on the next launch
+
+`ui-foundation-backend` and npm package 4.118.0 (no npm package change).
+`foundation_backend.spa.SPAStaticFiles` now sends `Cache-Control` on
+every file it serves. Until now it sent none, so a browser guessed how
+long to keep each file. Safari on an iPhone could keep an old
+`index.html`, naming the old build's assets, until the site's data was
+cleared, so a deploy didn't show on the phone.
+
+- **`index.html` is `no-cache`**, also when it answers a client route
+  (`/widgets/3`, `/login`). The browser keeps it but asks the server
+  before every use; an unchanged page is a 304 by ETag, so a launch costs
+  one small request.
+- **Vite's hashed files under `/assets/` are `public, max-age=31536000,
+  immutable`.** Their names change whenever their content does, so the
+  browser never asks again.
+- **Every other file is `no-cache`**: `manifest.webmanifest`,
+  `push-sw.js`, the icons, `favicon.svg`, `build-info.json`, anything in
+  `public/`. Their names don't change between builds.
+- **Never cached as immutable:** a missing file (its 404 has no
+  `Cache-Control`, under `/assets/` too) and `index.html` answering a
+  path under `/assets/`. API routes and anything else not served by the
+  SPA mount are untouched.
+- No service worker change was needed: `pwa()`'s `push-sw.js` has no
+  fetch handler and caches nothing.
+
+**App step:** bump `ui-foundation-backend==4.118.0` in
+`backend/pyproject.toml` (and the npm package with it, as usual). An app
+whose `app/spa.py` re-exports the package's `SPAStaticFiles` and whose
+`main.py` mounts it (every app since 4.25) needs nothing else. An app
+that changed Vite's `build.assetsDir` gets `no-cache` for its hashed
+files too (safe, just not kept for a year). If a CDN or proxy sits in
+front (Cloudflare, say), make sure it respects the origin's
+`Cache-Control` for `/` and the root files rather than caching HTML on
+its own rules (`docs/deploy.md` "Caching and a deploy that doesn't
+show"). A phone that already holds an old `index.html` with a guessed
+lifetime may keep it until that guess runs out, after the first deploy
+with this release; from then on every deploy shows on the next launch.
+
+## 4.117.0 — A rating in the facts rail; a second button beside New
+
+npm package and `ui-foundation-backend` 4.117.0 (no backend change).
+Additive: a new fact kind, a new optional `ListHeader` prop, and new
+exports `RatingScore`, `RatingScoreGlyph`,
+`RatingScoreProps`, `EntityViewFactRatingLook` and
+`ListHeaderSecondaryAction`. (4.116.0 is held by another open PR.)
+
+**A rating fact** (`EntityView factsRail`, its `facts` sections):
+`{ label, kind: 'rating', value, max?, look?, word? }` draws a rating the
+way a list's cells do, not as "4 of 5" text: `stars` (the default) or
+`hearts` for a score out of `max` (5), and `bar` for a quality level
+(`StepBar`, with its `word`). It is one image named "4 of 5" ("High, 4 of
+5" with a word); `null` reads its `emptyLabel`. It's edited in place like
+any fact (`edit`, usually `inPlace.select` over the scores), drawn the
+same in Details where the rail folds on a phone, and its glyphs have a
+fixed size, so a hover moves nothing (4.115's rule).
+
+**`RatingScore`**, the score's glyphs for a table cell or a card too
+(cell pattern 9): `max` stars or hearts, the first `value` filled in
+`foreground`, the rest outlined in `muted-foreground` (3:1 in both
+themes).
+
+**`ListHeader secondaryAction`** (and so a framed `DataTable`'s
+`pageHeader`): `{ label, icon?, onClick | to, disabled? }`, one outline
+button just before New, for a list's second most common action ("Refresh
+Now", "Add from Catalog"). New stays the primary. On a phone it folds
+into ⋯ as the menu's first item; with nothing else in the menu, ⋯ shows
+on a phone for it alone.
+
+`e2e/facts-rail-rating.spec.ts` covers each look's glyphs and names, the
+empty state, editing in place, hover at 1440 and 375, the phone's
+Details, axe in both themes and the empty glyph's 3:1;
+`e2e/list-header-secondary.spec.ts` its place beside New, disabled while
+it runs, the fold into ⋯ on a phone, and axe in both themes at both
+widths and with the phone's menu open. Both fail with the feature broken.
+
+**Upgrading:** nothing required. A rating shown as text in the rail can
+become a `rating` fact; an extra action in ⋯ that a list uses all the
+time can become its `secondaryAction`.
+
+
+## 4.115.0 — The record's status tops the facts rail; the strip holds still
+
+npm package and `ui-foundation-backend` 4.115.0 (no backend change).
+Additive: new optional props on `EntityViewFact` and `EditableValue`, and
+new type exports `EntityViewFactAction` and `EntityViewFactBadge`.
+
+**The facts rail** (`EntityView factsRail`, its `facts` sections):
+
+- `recordStatus: true` on a fact draws it first, at the top of the rail,
+  whatever its place in `facts` and its section's among the rail's (and
+  first in Details where the rail folds on a phone). The standard: a
+  record's status is the first fact at the top of the right rail, edited
+  in place there; a status that changes only through an action stays
+  read-only, with the action as a small button under it and a tooltip
+  saying why.
+- `action: { label, icon?, onClick? | render? }`: a small button under the
+  fact's value. `render` is given that button, so an app's own action (one
+  that opens its dialog) can use it as the trigger:
+  `render: (button) => <CloseRecord trigger={button} />`. 44px tall on a
+  touch screen; drawn in the rail and in Details alike.
+- `hint`: a few words on the value (why it can't be edited here), in a
+  tooltip on an info button after it, on hover and keyboard focus, and
+  read with the button by a screen reader. On a touch screen the words
+  are a caption line under the value instead.
+- `badges` items may be `{ label, icon }`: the icon (a component or a
+  node) before the label, in the muted tone. Plain strings still work.
+
+**`KeyStats` no longer moves on hover.** An inline `EditableValue` took
+its pencil's 28px only on hover or focus (4.102), so in the strip's
+wrapping row the values after it moved along and a nearly full row
+wrapped: the hovered value slid out from under the mouse, and on a phone
+a click on one value opened the next. Inside a `KeyStats` an inline value
+now keeps its pencil's room at rest, as table cells and the title do.
+`keepPencilRoom` is now a public prop of `EditableValue`, for an app's own
+wrapping row of inline values.
+
+`e2e/facts-rail-status.spec.ts` covers the order, the action's dialog, the
+hint by keyboard, hover and touch, the badge icons, axe in both themes, and
+hovers each strip value then clicks where the mouse rests, at 1440 and
+375 (it fails without the fix).
+
+**Upgrading:** nothing required. To follow the status standard, mark the
+status fact `recordStatus: true`; for one changed only by an action, drop
+its `edit` and give it `hint` and `action` (the app's own action through
+`render`). An app that worked around the strip's reflow can remove that.
+
+
+## 4.114.0 — Mock mode's boot survives a restarted service worker
+
+npm package and `ui-foundation-backend` 4.114.0 (no backend change).
+Additive: a new export, `startMockWorker` (and `MOCK_PROBE_PATH`), from
+`@tristan2828/ui-foundation/mocks`.
+
+In mock mode an app's first requests could go to the network instead of
+the mocks: no `main`, and queries such as `["auth","me"]` with undefined
+data, seen as flaky accessibility runs on navigation pages. MSW's service
+worker mocks only for the pages in an in-memory list, which a page joins
+during `worker.start()`. A worker the browser stops and starts again
+(under load, at any time) has forgotten the list and passes every request
+through.
+
+`startMockWorker(worker, options?)` is the whole boot: `worker.start()`
+(unhandled requests bypassed unless `options` say otherwise), a bounded
+wait for the page to be controlled, then a probe request that only a
+runtime handler answers. Until it comes back mocked the page joins the
+worker's list again (`MOCK_ACTIVATE`), up to 20 tries, with a console
+error if it never does. The probe's handler is then cleared and the worker
+exposed for Playwright as `exposeMswForE2E` did. The template's
+`src/main.tsx` uses it; `e2e/msw-boot.spec.ts` forces the failure by
+holding the first fetch and stopping every service worker over CDP (it
+fails without the probe).
+
+**Upgrading:** in `src/main.tsx`, replace
+
+```ts
+await worker.start({ onUnhandledRequest: 'bypass' })
+const { exposeMswForE2E } = await import('@tristan2828/ui-foundation/mocks')
+exposeMswForE2E(worker)
+```
+
+(and any controller wait of the app's own) with
+
+```ts
+const { startMockWorker } = await import('@tristan2828/ui-foundation/mocks')
+await startMockWorker(worker)
+```
+
+Copying `template/e2e/msw-boot.spec.ts` is optional; its assertion that the
+home page shows "Get Started" is the template's, so use one of the app's
+own.
+
+
+## 4.113.0 — Nav counts on a phone
+
+npm package and `ui-foundation-backend` 4.113.0 (no backend change).
+Additive: no prop is added, removed or renamed. A nav entry's `count`
+already shows in the sidebar and as a dot on the icon rail; it now
+shows on a phone too.
+
+- **The bottom bar shows counts.** A bar item gets a small badge on its
+  icon, in `--primary`, ringed in the bar's background. A page on the bar
+  (`{ to }`) takes its nav entry's `count`. A section (`{ group }`) takes
+  the sum of its entries' counts, their pages' included. The badge uses
+  their `countLabel` when they all share one; otherwise the number is
+  read alone.
+- **The phone's sheets show counts.** A tile has its count in the
+  corner, as the sidebar's tiles do; the pages under the tiles have
+  theirs too. A list sheet's links have theirs at the end, as the
+  sidebar's list does.
+- **Same rules everywhere.** Nothing shows at 0, below it, or while the
+  count is still loading (`undefined`). Past 99 it reads "99+"; the
+  screen-reader name keeps the real number. The sidebar and its tiles now
+  cap at "99+" too.
+- **Named for screen readers.** A counted bar item, tile or sheet link is
+  named "News, 7 new" (`countLabel` after the number), and a section's
+  bar item "Every day, 7 new". An item with no count keeps its plain
+  label.
+- Bar items and tiles stay 44px targets at 375 wide. Axe passes in both
+  themes and every palette with the bar and a sheet open
+  (`e2e/app-shell-phone-counts.spec.ts`).
+
+**App step:** none. Counts an app already passes on its nav entries show
+up on the phone. A phone e2e spec that found a bar item or sheet tile by
+its exact name (`{ name: 'News', exact: true }`) now needs the count in
+it ("News, 7 new"), or a non-exact match.
+
+## 4.112.0 — Beside the facts rail, the cards fill the column
+
+npm package and `ui-foundation-backend` 4.112.0 (no backend change). A
+look change only: no prop, export or synced file an app relies on
+changes.
+
+- **The record's cards reach the rail.** With `factsRail` drawn (a
+  laptop's page), the Details tab kept its 42rem reading width, so its
+  cards stopped well short of the rail while the tab bar above them ran
+  up to it. Now the open tab's cards fill the column up to the rail's
+  gap, the same width as the tab bar. The page as a whole keeps its cap
+  (the 56rem column plus the 300px rail), so long text never runs wider
+  than the column already allowed.
+- **A compact label column beside the rail.** Fields rows in that column
+  (Details' cards, and cards before the tabs) give the label a fixed
+  10rem instead of up to 12rem of a narrower card, so values that wrapped
+  onto two lines read on one. Below `sm`, or in a card under 24rem, the
+  label sits above its value as before.
+- **Unchanged:** a record without `factsRail`, or where the rail folds
+  back into Details (a phone, a narrow dialog), and the `rail` and
+  `column` layouts. A tab's own side column of facts keeps its narrow
+  rows.
+
+**App steps:** none.
+
+## 4.111.0 — The open tab plainly marked, and fact lists
+
+npm package and `ui-foundation-backend` 4.111.0 (no backend change).
+Additive: a new `FactList` and `FactListItem`, and a `list` fact kind;
+the open tab's look changes for every app. Nothing is removed or
+renamed.
+
+- **The open record tab is plainly marked.** On a record (`EntityView`'s
+  3B tabs) the selected tab was only a slightly coloured name over a
+  line, hard to pick out under a dark palette. Now its name is bold in
+  `--primary-text` over a 3px `primary` line, with a primary tint behind
+  it (`bg-primary/12`, as on a picked `ChoiceButtons` option). The others
+  stay semibold and muted. Every tab is as wide as its bold name, so
+  choosing one moves none. The bold copy that holds the width is hidden
+  and isn't part of the tab's text or accessible name. A stuck bar looks
+  the same.
+- **Line tabs match it.** The open tab in a `TabsList variant="line"`
+  (a page's sub-navigation) now has the same 3px line and tint, and its
+  name is semibold in `--primary-text`. A closed one is medium weight in
+  `--muted-foreground`. This holds in both themes and every palette.
+- **Several items in one fact are marked apart: `FactList`.** A fact row
+  that listed several linked records with long titles ran them together,
+  each wrapped title stacked on the next. The new exported `FactList` and
+  `FactListItem` fix that:
+  - each item leads with its kind's icon (the record standard's 4I,
+    `icon`) or a neutral bullet, in the muted colour;
+  - a wrapped line starts after the mark (a hanging indent);
+  - the items have 6px between them.
+
+  EntityView facts gain a `list` kind that draws one: `{ label:
+  'Related', kind: 'list', items: [{ name, to, icon }] }`. An item with
+  `to` links within the app, one with `href` opens outside it in a new
+  tab, and one with neither is plain words. An empty list shows the
+  fact's empty label. An app's own box of several things (its links box,
+  a box of tasks) uses `FactList` directly.
+- New harness story: `app/FactList` "Links box". It's a record with a
+  Related row of long linked titles with kind icons, a For row with a
+  bullet, an empty From row, and a Tasks box drawn with `FactList`.
+- Tests:
+  - `e2e/record-tabs.spec.ts`: the open record tab is bold on the tint
+    over the 3px line; the others are semibold with no tint; a tab is as
+    wide open as closed; its accessible name and text hold its name once.
+  - `e2e/page-tabs-status.spec.ts`: in light, dark and every palette, the
+    open line tab has a 3px line and the tint and is semibold, and the
+    closed ones are medium with no tint.
+  - `e2e/fact-list.spec.ts`: each item is marked (an icon or a bullet,
+    hidden from screen readers); the mark sits on the first line; a
+    wrapped title's lines start after it; there's room between items; the
+    empty label shows; an app's own list is named by its `aria-label`.
+    With the gap and the hanging indent taken out, it fails.
+  - `fixtures-visual.spec.ts` gains the Links box: axe and token-only
+    colours in both themes and every palette, and its icons in the 3:1
+    glyph check.
+  - The markup tests that read tab names strip the name's span.
+- Docs: design-language.md "A record's tabs, mark and facts" and "The
+  theme colour as text" (synced).
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.111.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.111.0` in `backend/`.
+2. Nothing to change for the tabs. Look over a record's tabs and a page
+   with line tabs. Update specs that check the open tab:
+   - the open record tab's weight is now 700, not 600;
+   - the open line tab is semibold on the tint.
+
+   A spec that reads a record tab's `textContent` still gets its name
+   once.
+3. Move every box in a record that lists several things (its links box,
+   a box of tasks, notes that came up, records touched) onto `FactList`:
+   - draw each item as a `FactListItem` inside a `FactList`;
+   - give each item its kind's icon where the box's items have kinds
+     (`icon={MessageSquareIcon}`), and leave it out where they don't (a
+     bullet);
+   - drop the box's own `<ul>` spacing and markers.
+
+   A facts section's row of several records can be a `list` fact instead
+   (`{ label: 'Related', kind: 'list', items }`).
+
+## 4.110.0 — Line tabs in the theme colour, done and ended colours, and a date filter a view fills
+
+npm package and `ui-foundation-backend` 4.110.0 (no backend change).
+Additive: new tokens, a new `FilterDate` control and date-filter
+helpers; two looks change for every app (line tabs, done and ended).
+Nothing is removed or renamed.
+
+- **Line tabs open in the theme colour.** `TabsList variant="line"`, a
+  page's sub-navigation (a row of tabs under a small section heading),
+  drew the open tab's underline in the text colour. Now its line is
+  `bg-primary` and its name `--primary-text`, the way `EntityView`'s
+  record tabs (4.105) draw theirs, in both themes and every palette
+  (under graphite-periwinkle: the periwinkle accent line and its light
+  shade for the name); a closed one is `--muted-foreground`, as a
+  record's are. The pill look (`TabsList`'s default) keeps its open tab in
+  `--foreground`; its closed tabs are the text at 75% (shadcn's 60%
+  measured 3.45:1 on Palm LCD's raised surface, found by the new story).
+  Inside the package `EntityView` is the only line tab list, and already
+  drew this; the template has none.
+- **`done` and `ended` have colours of their own.** `STATUS_KIND_TONES`
+  drew both in `text-muted-foreground`, so Done, Cancelled, Retired,
+  Declined and Stopped looked grey, like something disabled. Now done is
+  a teal (`text-status-done-text`), a hue away from active's green, and
+  ended a soft rose (`text-status-ended-text`), a hue away from
+  attention's red. New tokens `--status-done-text` and
+  `--status-ended-text` in light, dark, the four dark palettes and Palm
+  LCD, and in the print override; every value clears 4.5:1 as text on
+  the page, a card and a raised surface (the ratios are beside them in
+  `theme.css`). `StatusMark`, `ChoiceButtons` and `OptionSelect` all pick
+  them up from the one map.
+- **A date filter a view fills: `FilterDate`.** The filter bar had no
+  date control, so a view whose rule is a date ("Upcoming", "Overdue")
+  had nothing to fill. `FilterDate` names itself like `FilterSelect`
+  ("Any due date", "Due: Before today") and offers Before today, Today,
+  From today (`presets` picks which) and Between dates, which shows a
+  From and a To day beside it. Its value is one string in the URL
+  (`before-today`, `today`, `from-today`, `2026-11-01..2026-11-30`, an
+  end left out when open), so it's a plain single-value filter in
+  `useTableUrlState` and a view sets it in `filters`; picking a preset by
+  hand presses the view it equals. New helpers in the package root:
+  `resolveDateFilter(value, today?)` (the inclusive days for the query:
+  `{ to: yesterday }`, `{ from: today }`, `{ from, to }`, or null),
+  `dateFilterText(value)` (its chip's words, "Before today", "Nov 1, 2026
+  – Nov 30, 2026"), `dateFilterKeeps(value, day)` (a mock or a list
+  filtered in the browser), `parseDateFilter`, `dateRangeValue`,
+  `DATE_FILTER_PRESETS`, `DATE_FILTER_PRESET_LABELS`.
+- New harness stories: `ui/Tabs` (the line look under a section heading
+  and the pill look), `app/DataTable tools` "Date Views" and "Date Views
+  Overdue" (a list whose Upcoming and Overdue views fill the Due filter,
+  today fixed at Nov 13, 2026).
+- Tests: `tests/date-filter.test.ts` (parsing, ranges, the presets
+  against today across a month and a year, the chip's words, a view that
+  sets one is on while it holds); `tests/record-standard.test.tsx` (every
+  kind's tone a `*-text` token); `e2e/page-tabs-status.spec.ts` (in light,
+  dark and every palette: the open line tab's name is `--primary-text`
+  and its line `--primary`, the closed ones' line hidden, the pill look's
+  open tab `--foreground`; done and ended are their tokens and differ
+  from muted, success, destructive, warning and info. Putting the line
+  back to `bg-foreground` and done back to muted fails 13 of its 15);
+  `e2e/date-filter.spec.ts` (Overdue fills the filter with its chip and
+  "Filters, 1 active", removing the chip clears it and lets the pill go,
+  Upcoming keeps today on, a shared `?due=before-today` presses Overdue,
+  a preset picked by hand presses its view, Between dates writes
+  `?due=2026-11-14..2026-11-30` and presses none, axe with the panel and
+  range open in light, dark, graphite-periwinkle and Palm LCD);
+  `fixtures-visual.spec.ts` gains `ui-tabs` as a primitive and both date
+  stories as composites (axe and token-only colours in both themes and
+  every palette; the status-mark, choice and select glyphs re-measured at
+  3:1 with the new colours).
+- Docs: design-language.md "Status marks" and "The theme colour as
+  text", cell-patterns.md "A date filter" (synced); consuming.md "A date
+  filter a view fills (4.110)".
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.110.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.110.0` in `backend/`.
+2. Nothing to change for the tabs or the status colours. Look over a page
+   with line tabs (its open tab is now in the theme colour) and a list or
+   record with a done or ended status. A spec that expected the open line
+   tab in `--foreground`, or a done or ended mark in
+   `--muted-foreground`, expects `--primary-text`, or
+   `--status-done-text` and `--status-ended-text`.
+3. For each list whose view is a date (consuming.md "A date filter a
+   view fills (4.110)"): add the date field to the hook's filter names,
+   put `FilterDate` in the bar with its chip, set the view's `filters` to
+   the preset (`{ due: 'before-today' }`) in place of a `rule`, and build
+   the query's bounds with `resolveDateFilter`. Old links with the rule's
+   flag (`?overdue=true`) keep working while the server reads it; drop
+   the flag from the server once no view writes it.
+
+## 4.109.0 — A narrow filter keeps its height, and status kinds on OptionSelect
+
+npm package and `ui-foundation-backend` 4.109.0 (no backend change).
+A fix and an additive option: `OptionSelectOption` gains optional `kind`
+and `icon`; nothing is removed or renamed.
+
+- **`MultiChoice` with a summary stays one line.** A toolbar filter with
+  `label` and a pick draws "Status: Active +1" and its text box. The box
+  kept its `min-w-16` (the rule that shrinks it only saw chips), so in a
+  narrow trigger (192px) the box wrapped and the control grew from 36px to
+  55px, taller than the inputs beside it. Now, while the summary shows,
+  the row doesn't wrap, the text box takes no room until it's focused,
+  and a long summary truncates with an ellipsis. Every list filter picks
+  it up.
+- **`OptionSelect` draws status kinds.** Its options take ChoiceButtons'
+  `kind` and `icon` (4.105): `{ value: 'stuck', label: 'Stuck', kind:
+  'attention' }` draws the kind's icon in its colour (`STATUS_KIND_TONES`,
+  as `StatusMark`) before the words, on the trigger and on each item in
+  the list, so a status of five or more reads like one of four drawn as
+  buttons. `icon` overrides the kind's icon; an `icon` with no `kind`
+  stays uncoloured. `inPlace.select` passes them through, so its select
+  look draws them too. A highlighted item takes the list's highlight
+  colour, icon and all. ChoiceButtons and OptionSelect share one icon
+  component, so the two stay the same.
+- Tests: `tests/form-controls.test.tsx` (the trigger's icon, its kind and
+  colour class; none without a kind or for "Not set"; the same class as
+  ChoiceButtons'); `e2e/form-controls.spec.ts` (the new `app/FormControls`
+  "Narrow filters" story: the 192px MultiChoice as tall as the Input
+  beside it, unfocused and focused, its summary cut off; it fails on
+  4.108.0 at 55px against 36px. The "Status selects" story: each kind's
+  icon colour on the trigger and in the open list, and a plain icon in the
+  words' colour); both stories in `fixtures-visual.spec.ts`, axe and
+  token-only colours in light, dark and every palette, and the select's
+  glyphs (closed and its list open) at 3:1 in each.
+- Docs: add-an-entity.md "A status" (synced).
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.109.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.109.0` in `backend/`.
+2. Nothing to change for the filter fix; check a list's toolbar with a
+   multi-choice filter picked stays one line.
+3. Optional: give a status `OptionSelect` (or `inPlace.select`) of five or
+   more options each option's `kind`, from the same status-to-kind map its
+   `StatusMark` and `ChoiceButtons` use. Where its `render` draws a
+   `StatusMark`, drop that `render` (or make it the word alone), or the
+   option shows two icons.
+
+## 4.108.0 — The facts rail lines up with the body, not the strip
+
+npm package and `ui-foundation-backend` 4.108.0 (no backend change). A
+layout fix to 4.106.0's `factsRail`; no prop or export changes.
+
+4.106.0 drew the record's key-number strip (`strip`, a `KeyStats`) inside
+the rail's left column, so the rail's top lined up with the strip and the
+facts sat beside the record's numbers rather than its content. Now:
+
+- **The strip is above, at full width**, as it is without the rail.
+- **The rail starts level with the first content under the strip.** With
+  tabs first, that is the open tab's first section: the rail sits beside
+  the tab's content, not beside the tab bar, and the bar keeps to the
+  column. With cards before the tabs, or no tabs, it's the first card.
+- On a phone (or anywhere under 60rem) nothing changes: the facts are in
+  Details as before.
+- Tests: `e2e/facts-rail.spec.ts` measures the rail's top against the
+  open tab's first section (on the first tab and another) and, in the new
+  `app/EntityView` "Facts rail, no tabs" story, against the first card,
+  each within 2px, with the strip above and as wide as both; axe in light,
+  dark and a palette for both stories, and the new story in
+  `fixtures-visual.spec.ts`. The alignment checks failed on 4.107.0's
+  layout.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.108.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.108.0` in `backend/`. Nothing to
+   change; `factsRail` views pick it up.
+
+## 4.107.0 — Sign In Again when a proxy's sign-in lapses
+
+npm package and `ui-foundation-backend` 4.107.0 (no backend change).
+Additive: a new `AppError` kind and a new gateway export; the error
+envelopes and `check-contract` are unchanged.
+
+An app behind an identity-aware proxy with its own sign-in (Cloudflare
+Access is the usual one) can outlive that sign-in: once the proxy's
+session lapses, the app's requests get the proxy's login page or a
+redirect instead of JSON. That surfaced as a parse failure, a "Connection
+problem" or a screen of garbage. Now:
+
+- **`AppError` kind `proxy_auth`** ("Your sign-in has expired. Reload the
+  page to sign in again."). `safeFetch` throws it before a gateway module
+  sees the response, for a page (`text/html`) on a 2xx, 401 or 403, a 401
+  or 403 whose body isn't JSON, a redirect not followed (an opaque
+  redirect) and a redirect followed to another origin. The app's own
+  answers are what they were: a JSON 401 is still `auth`, and a 404, 422,
+  429 or 5xx, JSON or not, is still what `toAppError` makes it.
+- **What a request sends.** `safeFetch` adds `Accept: application/json`
+  and `X-Requested-With: XMLHttpRequest` unless the module set its own,
+  so a proxy that can answers a script with a 401 (Cloudflare Access
+  does for `X-Requested-With`). It no longer follows redirects
+  (`redirect: "manual"`), so a proxy's redirect to a login page on
+  another origin is named rather than failing as a network error; a
+  module that relies on a redirect passes `redirect: "follow"`. No
+  endpoint in the foundation's or the template's contract redirects.
+- **The screens.** `ErrorState` (so every `DataTable`, `EntityView`,
+  `WidgetCard`, `Board`, `FillInQueue`, and the shell's own session
+  check) and `ModuleCard` show "Sign-in expired" with **Sign In Again**,
+  which reloads the whole page so the proxy's sign-in runs, in place of
+  any retry. The query client doesn't retry it and error reporting
+  doesn't send it.
+- `GET /environment` (the data banner) reads a page there as "not
+  served", as it did: a dev server's `index.html` looks the same.
+- **Fix:** the full-size `ErrorState`'s icon is `--destructive-text`, as
+  the compact one's already was. Plain `--destructive` measured 2.74:1 in
+  four palettes once the glyph check first covered it.
+- New export: `proxyAuthError()` from `@tristan2828/ui-foundation/gateway`,
+  the error itself, for an app's mocks and screen tests.
+- Tests: gateway tests for HTML on a 200, 401 and 403, a bare 401/403, a
+  redirect to another origin and an opaque redirect, and every JSON error
+  kind unchanged (`tests/gateway/proxy-auth.test.ts`); `ErrorState` by
+  kind; `e2e/error-state.spec.ts` presses Sign In Again (full size, in a
+  widget, on a module card) and sees the page load again; the new
+  `app/ErrorState` "Sign In Again" story under axe in both themes, the
+  token check and the glyph check. Each failed with its change taken out.
+- Docs: `add-an-entity.md` "Behind a sign-in proxy" (synced), the
+  template's `docs/deploy.md` "Behind a sign-in proxy".
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.107.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.107.0` in `backend/`. That is the
+   whole adoption: the gateway modules, contract and contract tests stay
+   as they are, since the proxy's answers aren't part of the app's
+   contract.
+2. Code that maps every `AppError['kind']` (a `Record<AppError['kind'],
+   …>`, an exhaustive `switch`) gets a `proxy_auth` entry; `tsc` points
+   at each. A screen with its own error UI (not `ErrorState`) offers a
+   reload for it: `if (error.kind === 'proxy_auth') window.location.reload()`.
+3. A gateway module whose endpoint answers with a redirect it meant to be
+   followed passes `redirect: "follow"` to `safeFetch`.
+
+## 4.106.0 — A short-facts rail beside a record's tabs, and a list's header as wide as its table
+
+npm package and `ui-foundation-backend` 4.106.0 (no backend change).
+Additive: both are opt-in, and a record or list that doesn't ask looks as
+it did.
+
+The developer's picks from the record and list layout round: A1 (a rail
+of short facts beside the tabs, so a record page on a laptop doesn't end
+900px in) and C3 (a list's header only as wide as its framed table).
+
+- **The facts rail (A1)**: `EntityView factsRail`. Where the view has
+  60rem (a laptop's page, a record dialog), its sections of short facts
+  sit in a 300px column beside the strip and the tabs, top-aligned with
+  the strip, rows side by side.
+  - A rail section is a new section shape, `facts`, whose entries are
+    typed kinds, never free markup: `status` (its StatusMark), `text` (a
+    date, a number, a name: one line, cut with its whole text on hover),
+    `badges`, `count` (optionally a link), `link` (external), and
+    `record`, a link to another record that must say `short: true`.
+    Records with long titles (a list of discussions, a log's entries)
+    can't go in the rail; they stay a tab. tsc refuses markup, and a
+    record link that isn't marked short.
+  - What's in the rail isn't repeated in Details; a Details tab left with
+    nothing isn't drawn. Under 60rem (a phone) the facts are back in
+    Details as rows. The width is measured on the view's parent before
+    paint and on resize, so nothing flashes.
+  - `factsRailLabel` names its landmark (default "<title> facts").
+  - New exports: `EntityViewFact`, `EntityViewFactValue`.
+- **A list's header as wide as its table (C3)**: `DataTable pageHeader`.
+  Pass the ListHeader there. In the framed look with `width="content"`
+  the header, the views and the card are one box as wide as the table
+  (CSS `fit-content`, nothing measured), so ⋯ and New end on the card's
+  right edge above a short table. `width="full"`, a table as wide as the
+  page and the phone's row list look as before. A ListHeader left
+  outside spans the page as before.
+- Fixtures: `app/EntityView` "Facts rail" and "Facts rail, nothing
+  else"; `app/DataTable tools` "Header at the table edge" (and ", wide").
+  Specs: `e2e/facts-rail.spec.ts` (beside the strip at 1440 and 1920,
+  not repeated in Details, no Details tab when all fits, each kind, the
+  phone, a resize, axe in light, dark and graphite-periwinkle),
+  `e2e/list-header-width.spec.ts` (New on the card's edge at 1440 and
+  1920 on a narrow and a wide table, the phone, axe), and
+  `tests/facts-rail.test.tsx` (each kind, empties, Details without a
+  measured width, the type rule). The new stories under axe in both
+  themes and every palette, the token check and the glyph check. Each
+  layout check failed with its fix taken out.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.106.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.106.0` in `backend/`.
+2. **A record with short facts** (consuming.md "A record's facts rail
+   (4.106)"): turn its facts section from `fields` into `facts`, one kind
+   per fact, and add `factsRail` to the view. A fact that's a sentence
+   (a closing condition, a reason) stays a `fields` section placed
+   `rail`: it remains in Details. A linked record with a short name (a
+   provider) is `{ kind: 'record', name, to, short: true }`; linked
+   records with long titles (discussions, care events) stay in their
+   tab.
+3. **A list page with the framed table**: move its `<ListHeader … />`
+   into the table as `pageHeader={<ListHeader … />}`. Nothing else
+   changes; on a phone it's where it was.
+4. Specs: at a laptop width the facts are in the rail (`getByRole(
+   'complementary', { name: '<title> facts' })`) and Details may be gone;
+   a spec that opened Details for a fact reads it in the rail instead,
+   or sets a phone width.
+
+## 4.105.0 — Review fixes: a clear open tab and pick, status choices, and views that fill the filters
+
+npm package and `ui-foundation-backend` 4.105.0 (no backend change).
+Additive: every new prop and option is optional. Looks change for every
+app without a code change (the open tab, a picked choice, the column
+header row, the ⋯ menu, the card dialog's strip); the views behaviour
+changes only for a list that passes the new `defaultView` or `rule`.
+
+The first module reviewed on the new looks (4.98 to 4.104) asked for:
+
+- **The open record tab stands out** (3B). Its name is in the theme
+  colour, the new `--primary-text` token (`text-primary-text`), over its
+  3px primary line; the other tabs stay muted. `--primary-text` is the
+  primary as small text: the primary itself in the light and dark
+  themes, each dark palette's accent light, Palm LCD's ink.
+- **A picked `ChoiceButtons` option is obvious**: a primary-tinted fill
+  (`bg-primary/12`), a primary border and its word in `--primary-text`,
+  in place of a grey tint.
+- **Options with icons and status kinds.** `ChoiceButtonsOption` (and
+  `InPlaceOption`, so `inPlace.choice` too) takes `kind?: StatusKind`,
+  which draws the kind's icon in its colour before the word, as
+  `StatusMark` does, and `icon?`, a plain icon (or one in place of the
+  kind's).
+- **`DataTable`'s column header row** wears the muted fill on every
+  header cell (pinned and stuck ones too), in the plain and framed looks.
+- **A small card dialog leaves out the strip** (`RecordDialogRoute
+  look="card"`): the view's `strip` (KeyStats) isn't drawn there.
+  `EntityView cardStrip` keeps it; the record's page still shows it.
+- **The ⋯ menus never wrap an item**: `ListHeader`'s and a row's are as
+  wide as their longest item ("Show Deleted" on one line).
+- **Views fill the filters** (`useTableUrlState`):
+  - `defaultView` (option): at the list's plain address the bar's
+    filters are that view's and its pill is pressed; pressing it goes
+    back to the plain address.
+  - `TableView.rule`: a part of a view no control shows (a computed
+    "overdue"). It's in the URL and counts toward the view, applies while
+    the view is on, and the first hand change clears it.
+  - A hand change (`setFilter`, `setFilters`, `setMultiFilter`) keeps
+    every other filter the bar shows (the default view's too) and the
+    pills follow: the view the result equals, usually none. Clearing every
+    filter by hand on a list with a `defaultView` writes `?view=none`.
+  - `applyView(view, id?)` takes the id DataTable's `onViewChange`
+    passes. Everything else (URL state, sort, grouping, page size, the
+    remembered columns and the list's last address) is as before.
+  - New exports: `TableUrlStateViewOptions`.
+- Fixtures: `app/FormControls` "Status choices", `app/DataTable tools`
+  "Views Fill Filters", the card dialog's view with a strip. Specs:
+  `e2e/review-looks.spec.ts` and `e2e/data-table-views.spec.ts` (each
+  failed with its fix taken out), the views helpers in
+  `tests/table-url-changes.test.ts`, and the new stories under axe in
+  both themes and every palette, and the glyph check (3:1) for the
+  status choices' icons.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.105.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.105.0` in `backend/`. The new
+   looks need nothing more. Specs that read the open tab's or a picked
+   choice's colour as `--foreground` now read `--primary-text`.
+2. **A status choice on a form** (a ChoiceButtons of statuses, such as
+   an outcome's Done / Scheduled / Cancelled): give each option its
+   status kind, from the same enum-to-kind map the record's `StatusMark`
+   uses, so the two can't drift:
+
+   ```tsx
+   const OUTCOME_OPTIONS = OUTCOMES.map((value) => ({ value, label: OUTCOME_LABELS[value], kind: OUTCOME_KINDS[value] }))
+   <ChoiceButtons options={OUTCOME_OPTIONS} … />   // or inPlace.choice({ options: OUTCOME_OPTIONS })
+   ```
+
+   An EntityForm field whose `options` come from the same list picks it
+   up as is. Drop a `render` that drew the icon by hand.
+3. **A tiny record with a strip in a card dialog**: nothing to do, it's
+   gone from the card. Pass `cardStrip` on its EntityView if it should
+   stay.
+4. **Views that fill the filters**, one list at a time
+   (consuming.md "Views that fill the filters (4.105)"):
+   - Write each view's whole meaning in its filters. A `current: {
+     label: 'Current' }` that leaned on the server's default (every
+     status but the stopped ones) becomes `{ label: 'Current',
+     multiFilters: { status: [...NOT_STOPPED] } }`.
+   - Pass `defaultView: 'current'` in `useTableUrlState`'s options (with
+     the list's storage keys), so the plain address is Current with its
+     statuses in the bar. The query can then use `multiFilters.status`
+     as it is: drop the `status.length ? … : NOT_STOPPED` fallback, and
+     the Status filter's "Not stopped" placeholder can say "Any status".
+   - Move what no control shows from `filters` to `rule`: `overdue: {
+     label: 'Overdue', rule: { overdue: 'true' }, multiFilters: { status:
+     [...OPEN] } }`. Keep the filter's name in the hook's filter names.
+   - `onViewChange={applyView}` stays as it is. Show deleted's
+     `applyView(shown ? { filters: { deleted: 'true' } } : {})` and a
+     "Clear filters" link's `applyView({})` go back to the plain address,
+     the default view.
+   - Specs that expected no pill pressed at the plain address, or a
+     view's rule to survive a filter change, change with it.
+
+## 4.104.0 — A Done button on a repeating reminder's notification
+
+npm package and `ui-foundation-backend` 4.104.0. Additive: a push looks
+and behaves as before unless the app asks for the new parts.
+
+A repeating reminder could be marked done on its own page or from its
+email, but not from the push itself, and a nag re-sent under the same
+tag could be replaced on the device without a sound.
+
+- **`foundation_backend.push.PushAction(path, body, title="Done")`**, a
+  button on the notification: tapped, the service worker POSTs `body`
+  as JSON to `path` on the app's own origin with the session cookie, and
+  opens no window. `PushMessage` gains optional `action` and `renotify`,
+  and `send_push(..., renotify=..., action=...)` carries them through.
+  Only an app path may be posted to: `send_push` refuses a URL, `//host`,
+  a backslash or a control character, and the worker checks again and
+  drops a button that resolves to any other origin.
+- **`/push-sw.js` (`pwa()`)** shows the button where the browser has
+  notification buttons (not iOS Safari, which shows the notification
+  without one and opens the `url` on a tap). Done, it closes the
+  notification; refused or offline, it opens the `url`. With `renotify`
+  (and a tag) a replacement sounds again.
+- **The reminders job**: `reminders.register(done_action=...)` (and
+  `run_due_reminders` / `send_due_reminders`) takes
+  `(row, occurrence) -> PushAction | None`, put on every push of a
+  repeating reminder; each nag goes out with `renotify`. A weekday-set
+  reminder gets no button.
+- Docs: `docs/foundation/reminders.md` "A Done button on the
+  notification". Tests: the payload and its path checks, `send_push`
+  decrypted on a device, the job's nag and action, and the worker run
+  against a fake `self.registration`, `clients` and fetch.
+
+**App steps.**
+
+1. `npm install @tristan2828/ui-foundation@4.104.0`, `npx ui-foundation
+   sync`, and `ui-foundation-backend==4.104.0` in `backend/`. The new
+   `/push-sw.js` is written by the next build; a device picks it up the
+   next time the browser checks the worker (or on the next
+   `enable()`).
+2. Give the app the endpoint the button posts to (an ordinary signed-in
+   route): load the user's own row, check that `occurrence` is still the
+   pending one, `reminders.mark_done(row)`, commit, and answer 2xx (also
+   when it was already done).
+3. Name it to the job:
+
+   ```python
+   reminders.register(
+       model=MyReminder,
+       done_action=lambda row, occurrence: push.PushAction(
+           f"/api/reminders/{row.id}/done", {"occurrence": occurrence.isoformat()}
+       ),
+   )
+   ```
+
+4. A test fake of `push.send_push` in the app's own tests takes the new
+   keyword arguments only when they're used: a reminder with no
+   `done_action` and no nag calls it exactly as before.
+
+## 4.103.0 — DataTable's title column capped at every width
+
+npm package. `ui-foundation-backend` moves to 4.103.0 with it, unchanged.
+
+A fix: a list's title column had no width cap above md, so a long
+title (a discussion's topic) overran and pushed the other columns off.
+
+- **The title column (DataTable's first) is cut to one line at 24rem**
+  at every width, with an ellipsis, never over 60% of the table's area
+  (a first column with its own `meta.clip` or `meta.maxWidth` keeps
+  their meaning: cut, or wrapped, at that width). A cut title shows whole in a tooltip on
+  hover and when its link takes focus. The link stays the row's only tab
+  stop (a cut cell with no control of its own takes one, as `meta.clip`
+  does), and a screen reader reads the whole title. A short title looks
+  as before. Below md a pinned first column (`pinFirstColumn`) is cut
+  at 45% of the table's area, where it used to wrap.
+- **A column opts out with new optional `meta` (`ColumnMeta`):**
+  `wrap: true` wraps the title at the cap (24rem, or its `maxWidth`) instead, for a title worth
+  reading whole in the row (a pinned title on a phone wrapped this way
+  before); `maxWidth: 'none'` lifts the cap, the look before.
+- Stories `app/DataTable` TitleColumn and TitleColumnWrap, with axe in
+  both themes; specs at 1920, 1024, 800 and 390px.
+
+**App steps.**
+
+1. Remove any clip of your own around a title cell (a `truncate`,
+   `line-clamp-1`, `max-w-*` or `title` attribute on the title link or
+   its wrapper, the stopgap on a list like Discussions' Topic): the
+   table now does it, with the tooltip. Left in, it cuts the title
+   narrower than the cap and adds a second tooltip.
+2. A title column that isn't the first: move it first, or give it
+   `meta: { clip: true }` (cell pattern 1's long text) for the same cut.
+3. A list whose titles should stay whole and wrap (a pinned title on a
+   phone, short lists of long names): `meta: { wrap: true }` on that
+   column.
+4. Specs that measured a long title's width or height, or expected it on
+   several lines, now see one line at most 24rem.
+
+## 4.102.0 — An inline pencil that takes no room, and Create in a small set's picker
+
+npm package. `ui-foundation-backend` moves to 4.102.0 with it, unchanged.
+
+- **An inline `EditableValue`'s pencil takes no room at rest**
+  (cell-patterns.md "Editable value"). With `layout="inline"` (the
+  value look), the hidden pencil used to keep its 24px and the gap
+  before it, so a summary line built of values and "·" read "Harbor
+  Office   · Tuesdays". Now the separator sits a space after the value.
+  The pencil keeps its whole 24px box, out of the flow and hidden just
+  past the value (over the separator), so it's still a real target to
+  hover, click and Tab to. Hover or focus makes its room under it, eased
+  (at once with reduced motion): what follows moves over, the pencil
+  stays put. A touch screen keeps the room open. Block values,
+  the field rows' `look="row"`, `DataTable`'s cells edited in their rows
+  (whose columns would widen on hover) and `EntityView`'s title (which
+  ends its line and can fill it) keep the room as before.
+- **`MultiPick` takes `onCreate`** (cell-patterns.md "A small set").
+  When what's typed names no option (ignoring case), Create "<typed>"
+  shows under the chips; Enter in the filter box does the same when
+  nothing matches, and Down reaches it when there are no chips.
+  `onCreate(name)` opens the app's create form (or saves at once) and
+  resolves with the new `{ id, label, icon? }`, which joins the chips
+  and is picked: on a form through `onValueChange`, in place saved
+  through `onPick` like any pick. `null` changes nothing. While it's out
+  the button reads Creating "<typed>"… (`aria-busy`), the box is
+  read-only, and an edit in place stays open. A rejection shows
+  "Couldn't create "<typed>": <reason>" in the picker, keeps the typed
+  name and the caret on Create, so it can be tried again. A screen
+  reader hears "<name> created and picked." `ReferenceCombobox` and
+  `MultiReference` already had `onCreate` (4.88) and are unchanged.
+- New fixture app/EditableValue "Inline in a line", with
+  e2e/editable-value.spec.ts (the gaps measured, hover, the keyboard,
+  axe in both themes); app/MultiPick's stories gain Create (a form in
+  place, a save at once with a refusal on a form), with their specs in
+  e2e/multi-pick.spec.ts.
+
+**For an app:** both are additive. `npm install @tristan2828/ui-foundation@4.102.0`,
+`npx ui-foundation sync`, and bump `ui-foundation-backend==4.102.0`. Then
+drop the two stopgaps:
+
+1. **The zero-width pencil override.** Remove any class or CSS that
+   collapsed an inline `EditableValue`'s edit button (a `w-0`, `size-0`
+   or `[&_[data-edit]]:…` on the value or its line, or a negative margin
+   after it). The package now does it, and a zero-width override left in
+   place makes the pencil an empty box no one (and no test) can click.
+   Specs that click "Edit <label>" work as before.
+2. **"New <thing>" buttons under multi-pickers.** Where a button beside
+   a `MultiPick` opened the entity's create form, delete the button and
+   pass the same opener as `onCreate`:
+   `onCreate={(name) => openNewLabelForm({ name })}`, resolving with
+   `{ id, label }` (and `icon`, as the options have) once saved, or
+   `null` when the form is cancelled. Don't pick the new record yourself
+   any more: the picker picks it (on a form through `onValueChange`, in
+   place through `onPick`), and showing it until your query refetches
+   is the picker's job too. Specs that clicked "New <thing>" now type the
+   name in the "Filter <label>" box and click `Create "<name>"` (a
+   button).
+
+## 4.101.0 — Record tabs that stand out, and stick
+
+npm package. `ui-foundation-backend` moves to 4.101.0 with it, unchanged.
+
+- **The record's tab bar is the record standard's 3B.** `EntityView`'s
+  tabs are 44px, 16px semibold (14px on a phone), with a 3px primary line
+  under the open one and the others muted. A tab can show its count beside
+  its name: `tabCounts={{ Updates: 2, Linked: 1 }}`, by tab name, the
+  records it holds; a tab at 0 or left out shows none.
+- **The bar sticks** to the top of whatever scrolls (the page, or a
+  record dialog's body) as the record scrolls under it. Once stuck it
+  shows the record's name above the tabs, so the other tabs and the
+  record you're on stay in view. `tabsStickyTop` (any CSS length) moves it
+  down for a page with a bar of its own pinned to the top. In a record
+  dialog the bar meets the body's top edge (`--entity-view-sticky-top`,
+  set by `RecordDialogRoute`).
+- New fixture app/RecordDialog Tabs, open; app/EntityView Details tab
+  gains a count. `e2e/record-tabs.spec.ts` covers the look, sticking on
+  the page at desktop and phone width and in a dialog, and axe on the
+  stuck bar in both themes.
+
+**For an app:**
+
+1. `npm install @tristan2828/ui-foundation@4.101.0`, `npx ui-foundation
+   sync`, and bump `ui-foundation-backend==4.101.0`.
+2. Give each record's tabs that hold records their counts:
+   `tabCounts={{ Updates: updates.length }}`.
+3. A screen with its own bar pinned to the top passes `tabsStickyTop`.
+4. Specs: a tab with a count reads with it (`getByRole('tab', { name:
+   'Updates 2' })`, or a regex); an exact `toHaveText` on the tab list
+   needs the count, or a regex. A spec that measured a tab's height or
+   type size changes (44px, 16px).
+
+## 4.100.0 — A framed list, its tools at the table's edge, and sibling lists beside the title
+
+npm package. `ui-foundation-backend` moves to 4.100.0 with it, unchanged.
+
+The list toolbar picked in a list-page review (its options 7A, 7F and
+7K). Everything is opt-in: a list that changes nothing looks as before.
+
+- **`DataTable`'s `look="framed"`** (new type `DataTableLook`, `'plain'`
+  by default): the list is a card with a border. Its top bar holds the
+  `toolbar` (search and Filters keep their words), Fold All while
+  grouped, the layout switch, and **one settings button** (a sliders
+  icon, "Table Settings") holding the Columns ticks and Group By in one
+  menu, in place of the Columns and Group buttons with words. While a
+  grouping is on, the button's name says so ("Table Settings, Grouped by
+  Status") and a dot marks it, since the bar no longer spells it out. Its
+  bottom bar holds the count, rows per page and the pager. Saved views
+  stay above the card, outside its bar. Loading, empty and error show
+  inside the card.
+- **The tools end at the table's own edge.** Framed, the card (tools,
+  rows and pager together) is as wide as `width` makes the table (the
+  default `content`: the columns' width, at least 36rem, never wider than
+  the area), so on a narrow table nothing sits off at the far right of a
+  wide page. The plain look keeps its full-width toolbar.
+- On a phone (under 48rem) the card holds the row list (`phoneRow`) with
+  no border of its own, the settings button stays on the search's line
+  and holds Group By alone (a row list has no columns to pick), and the
+  page never scrolls sideways.
+- **`ListHeader`'s `siblings`** (new type `ListHeaderSibling`): lists
+  that are one thing seen several ways (Exercises / Targets / Weak spots)
+  as a switch of links beside the title, with optional counts. The one
+  showing is the current page (react-router's `NavLink`, `end`), or set
+  `current` for siblings told apart by their query string. It's a
+  landmark named "<title> Lists" (`siblingsLabel` to change it). On a
+  phone it takes its own line under the title, 40px tall, and scrolls
+  sideways if it must. The siblings leave ⋯, which keeps what's left
+  (Show Deleted, Export).
+- `opens`, `requireTableOpens`, `columnsMenu`'s stored pick, `groupings`,
+  `views`, `rowActions`, `phoneRow`, `detailPanel`, `limit`/`viewAll` and
+  every other prop work the same in both looks.
+
+To take it, for a list page that wants the reviewed toolbar:
+
+1. Pass `look="framed"` to its `DataTable`. Keep `toolbar`,
+   `columnsMenu` and `groupings` as they are: the settings button builds
+   itself from them.
+2. If the page links to sibling lists (from ⋯ `links`, or a hand-made
+   row of buttons), move them to `ListHeader`'s `siblings`, this list
+   among them, and drop them from `links`.
+3. A spec that clicks `Columns` or `Group` on a framed list now opens
+   the "Table Settings" button (`getByRole('button', { name: /^Table
+   Settings/ })`) and finds the same menu items inside.
+
+## 4.99.0 — The sidebar as icon tiles
+
+npm package. `ui-foundation-backend` moves to 4.99.0 with it, unchanged.
+
+- **`AppShell`'s `navLook="tiles"`** (design-language.md "The sidebar and
+  the phone's bar"): each sidebar group a three-column grid of tiles,
+  icon over a short label, with no visible headings (a section's label
+  still names its grid for screen readers). The tile you're in, or the
+  one holding the page, has the tint and a `--primary` ring; a count
+  sits in its corner. The pages of the entry you're in list under its
+  group's grid, a hairline in place of each heading. The icon rail is
+  unchanged, and the sidebar's phone sheet shows the tiles.
+- **A section's own `look`** (`'list' | 'tiles'`, type `NavLook`) wins
+  over the shell's: `look: 'list'` keeps a Tools section at the foot a
+  list under a tiles sidebar, or `look: 'tiles'` draws one section as
+  tiles in a list sidebar. A tiles section doesn't fold (`collapsible`
+  is ignored).
+- **The phone's bar follows the look**: a `bottomBar` item for a tiles
+  section that sets no `sheet` opens its sheet as tiles, the current
+  entry's pages under them as smaller tiles. An item's own `sheet` still
+  wins, and `sheet: 'tiles'` on a list section is unchanged (its pages
+  left to the module).
+- New fixtures app/AppShell StandardTiles, StandardTilesRail and
+  StandardTilesOnHome, with e2e/app-shell-tiles.spec.ts (the grid, the
+  marks, the pages under it, the keyboard, the rail, the phone's sheets,
+  axe in both themes).
+
+**For an app:** nothing changes until it opts in. To take the tiles,
+pass `navLook="tiles"` to `AppShell`, shorten any long entry label to a
+word or two, and give a section that should stay a list `look: 'list'`
+(a Tools section at the foot, say). Drop `sheet: 'tiles'` from the
+`bottomBar` items for tiles sections if you want their sheets to show
+the current module's pages too. A test that finds a section's heading
+by its visible text (`getByText('Every day')`) now finds a
+screen-reader-only label; find the section's list by name instead
+(`getByRole('list', { name: 'Every day', exact: true })`).
+## 4.98.0 — The record standard's looks: a Details tab, status marks, a small card dialog
+
+npm package. `ui-foundation-backend` moves to 4.98.0 with it, unchanged.
+
+- **No right rail** (record standard 1A). `EntityView`'s new default
+  layout, `tabs`: the short facts (sections placed `rail` with no `tab`)
+  are the record's last tab, **Details**, beside its other tabs
+  (`detailsTab` names it otherwise; a tab of that name of the record's
+  own takes them in). A record with no other tab keeps them in the
+  column, in their place, labels beside values. A section placed `rail`
+  *with* a `tab` is a small box of facts beside that tab's sections
+  (under them on a phone): short facts only, never free text.
+  `layout="rail"` and `layout="column"` are unchanged; `rail` is kept for
+  apps not yet moved (docs/consuming.md "Moving a record off the rail
+  (4.98)").
+- **The strip is as wide as its numbers** (2A): `KeyStats` hugs them
+  (`width="content"`, the new default) and wraps inside the page when
+  it's narrow. `width="full"` is the old look.
+- **Status marks** (5B): `StatusMark`, a status as an icon, a colour and
+  its own word, in one of six kinds: `active`, `planned`, `paused`,
+  `done`, `ended`, `attention` ("Needs Attention"). The icons are one map,
+  `STATUS_KIND_ICONS`, so they can change in one place; with
+  `STATUS_KINDS`, `STATUS_KIND_LABELS`, `STATUS_KIND_TONES` and the
+  `StatusKind` type from the package root. Tokens only (`*-text` and the
+  muted foreground); axe and the 3:1 glyph check measure every kind on
+  the page, a card and a table row in both themes and every palette.
+- **A tiny record as a small card** (8A): `RecordDialogRoute
+  look="card"`, a 420px dialog (a sheet from the bottom on a phone) with
+  no bar: the record's title, its actions (Delete as an `IconAction`),
+  Open full page (an icon, when it has a page) and Close on one line,
+  and its facts as plain rows with no cards. `RecordDialogContextValue`
+  gains optional `look` and `controls`.
+- **Choice fields two to a row** (9C): a `Field` holding `ChoiceButtons`
+  is found as a choice by itself (`FieldKind` gains `'choice'`; say
+  `kind="choice"` for a control of your own) and shares its row only
+  with another choice, two to a row, split evenly. On a phone two stay
+  side by side while both groups fit their buttons, and go one per row
+  when they don't. `FieldRowPlace` gains `phoneFit`.
+- The template's widget view drops `layout="rail"` (its Details comes
+  first in the one column), and its status is a `StatusMark` in the
+  table and the header (`STATUS_KIND` in `widget-format.ts` replaces
+  `STATUS_BADGE_VARIANT`). The playbook, the plan template (Placement
+  `details`, an optional Tab column; no `Layout` line), the design
+  language ("Status marks", "A record's tabs, mark and facts") and cell
+  pattern 5 follow.
+
+**For an app:**
+
+1. `npm install @tristan2828/ui-foundation@4.98.0`, `npx ui-foundation
+   sync`, and bump `ui-foundation-backend==4.98.0`.
+2. **Records:** a view that passes no `layout` and places sections
+   `rail` now shows them as a Details tab when it has tabs; check those
+   records. A view on `layout="rail"` keeps its rail until you move it:
+   drop `layout="rail"` and `mobileOrder` (see docs/consuming.md "Moving a
+   record off the rail (4.98)"), and update specs that looked for the
+   rail's `complementary` landmark ("<title> details") or for Details
+   beside the main column: Details is now a tab (`?tab=details`) or the
+   first section in the column.
+3. **Strips:** a `KeyStats` is now as wide as its numbers. A spec that
+   measured it across the page, or a screen that wants that, passes
+   `width="full"`.
+4. **Statuses:** map each status enum to a kind (`Record<YourStatus,
+   StatusKind>`, by what it means: an idea or a queued item is
+   `planned`, "On hold" `paused`, "Retired" `ended`, overdue `attention`)
+   and draw it with `<StatusMark kind={…}>{label}</StatusMark>` in its
+   cell, the record's header and its select's `render`. Specs that find
+   the status by its words keep working.
+5. **Tiny records** (a few fields, no notes) opened in a dialog: pass
+   `look="card"` to their `RecordDialogRoute` (usually with
+   `fullPage={false}`), and give Delete as an `IconAction`.
+6. **Forms:** choice fields now pair only with each other. A form that
+   put a choice and two dates in one row now has the choice on its own
+   row and the dates together; a spec that measured that row changes. A
+   `switch` over `FieldKind` gains a `'choice'` case.
+
+## 4.97.0 — Labels in Title Case, and ChoiceButtons that wrap in a narrow box
+
+npm package. `ui-foundation-backend` moves to 4.97.0 with it, unchanged.
+#333, #334.
+
+- **Title Case for labels** (design-language.md "Words on screen", the
+  rule the form, dialog, list, record and cell docs now point to): page,
+  dialog, form, card and section titles, buttons, menu items, tabs and
+  pills, column headers, field labels, a list's group headings and a
+  control's accessible name are Title Case. Messages, help text, toasts,
+  placeholders, an empty or error state's words, a notice's title, a
+  question and a sentence read to a screen reader stay sentence case. The
+  small words (a, an, the, and, but, or, nor, as, at, by, for, in, of,
+  on, per, to, with) stay lowercase unless first or last.
+- **The package's own labels follow it**: "Try Again", "Show Deleted",
+  "Back to the List", "Rows per Page", "Group By", "View All 12", "Show
+  All", "Show Fewer", "Fold All", "Clear Filters", "Open Full Page",
+  "Print Notes", "Hide Empty", "Save and Next", "Keep Editing", "Customize
+  This Page", "Needs You", "Allow Reminders" / "Turn Off", the rich-text
+  editor's menus and table grips ("Insert Row Above", "Delete Table"),
+  `byDay`'s headings ("No Date", "Earlier This Week"), the emoji picker's
+  groups, the login and register screens ("Sign In", "Create Account",
+  "Confirm Password"), `ImageField`'s "Add Photo" (its `noun` through
+  `titleCase`), and control names such as "Next Page", "Open Calendar",
+  "Show Password", "Toggle Dark Mode", "Log Out". `FilterBar`'s default
+  any-option is now `Any ${label}` (it used to lowercase the label):
+  "Any Status". Messages are unchanged ("Discard your changes?",
+  "Nothing here yet", "Couldn't load", "Not set").
+- **`titleCase(text)`** and **`TITLE_CASE_SMALL_WORDS`** from the package
+  root, for a label built from a value (`` `Add ${titleCase(noun)}` ``). A
+  word that already holds a capital is left as written ("Open in GitHub").
+- **`ChoiceButtons` never cuts off** in a narrow box: the buttons wrap
+  onto a second line inside it, each keeping its whole border, the first
+  line still joined. A record's field rows (EntityView's)
+  put the label beside the value only once the list itself is 24rem wide
+  as well as at `sm`; in a narrower box on a wide screen (a panel, a
+  dialog's column) the label sits above, where before the value column
+  could shrink to nothing and cut off the editor's controls. New fixture
+  app/FormControls Narrow (a 280px form, a record edited in place, a
+  dialog's row of short fields) with a browser test that nothing
+  overflows.
+
+**For an app:** its own labels change too. Rewrite page, dialog, form,
+card and section titles, buttons, menu items, tabs, column headers and
+field labels in Title Case ("Save Changes", "New Book", "Rows per Page");
+leave messages, help text, toasts, placeholders and empty states as they
+are. A label built from a value goes through `titleCase()`. A test that
+finds a package control by its exact name changes with it: Playwright's
+`getByRole(..., { name })` matches without case unless `exact: true`;
+Testing Library's string `name` is exact, so `'Try again'` becomes
+`'Try Again'` (or use a case-insensitive regex). A `FilterBar` given a
+lowercase `label` should pass Title Case, or `anyLabel`.
+
+## 4.96.0 — The record's empty value as an export, and a delete that asks a reason
+
+npm package; additive, nothing to change. `ui-foundation-backend` moves
+to 4.96.0 with it, unchanged. #329, #330.
+
+- **`EmptyText`** (and `isEmptyValue`) from the package root: the muted
+  dash a record draws for an empty value, read by a screen reader as
+  "Not set". `label` changes what's read (`label="No reason given"`),
+  `text` shows words instead of the dash, `className` replaces the muted
+  tone's class, and any other span attribute passes through. EntityView,
+  KeyStats and EqualItems already drew through it; ValueList's empty
+  list ("None") and ModuleCard's, OverviewPage's and WidgetCard's
+  "Couldn't load" dash now do too, with the same markup as before.
+- **`DeleteAction reason`**: one optional field between the sentence and
+  the buttons, a "Why" box (`label`, `hint`, `placeholder`; the type is
+  `DeleteReason`). What's typed, trimmed (`''` for nothing), is
+  `onDelete`'s argument, and Try again sends it again. While something's
+  typed, closing asks "Discard your changes?" first (the dialog
+  standard's `dirty`); a closed confirm opens empty. The width, the
+  words, Cancel then the filled destructive button, and the refusal in
+  the dialog are unchanged. `onDelete`'s type is now `(reason: string)
+  => Promise<unknown>`: a `() => …` handler still fits.
+
+**For an app:** a dash with its own `sr-only` text in a strip, summary
+line or columns file becomes `<EmptyText />` (`label` for its own
+words). A hand-made confirm worded like DeleteAction that only adds a
+reason becomes `<DeleteAction reason={{ label: 'Why remove it?' }}
+onDelete={(why) => …} … />`.
+
+## 4.95.0 — Repeating schedules: one rule on both sides, a phrase box, and repeating reminders
+
+Both packages; additive. Two new dependencies, each on its allowlist:
+`rrule` 2.8.1 in the npm package and `python-dateutil` 2.9.0.post0 in
+`ui-foundation-backend` (with `types-python-dateutil` for mypy, in the
+template backend's dev extra). #326.
+
+- **`Recurrence`**, a new optional schema in the foundation's contract
+  (`openapi/foundation.yaml`, `x-optional`): `{ rule, start, times,
+  timeZone, fromCompletion }`, the rule RFC 5545's RRULE without DTSTART
+  (FREQ daily to yearly, INTERVAL, BYDAY with an nth, BYMONTHDAY with -1
+  for the last day, BYMONTH, UNTIL or COUNT), one or more times of day
+  and an IANA zone. `check-contract` now lets a component marked
+  `x-optional` be left out; an app that copies it in is held to its shape.
+- **Backend: `foundation_backend.recurrence`**: `Recurrence` (pydantic,
+  camelCase, checked and put in one stored form), `next_after`,
+  `occurrences` (the next n), `next_after_completion` (`every!`),
+  `from_weekdays` / `as_weekdays` (a weekday set and one time, exactly),
+  and the pure steps of a repeating reminder (`step`, `done`,
+  `OccurrenceState`, `Nagging`). Days come from dateutil's rrule; the
+  times go on them in the zone, so a DST change never moves a time (a
+  skipped 02:30 is read as 03:30, a repeated 01:30 is the first). A 31st
+  falls only in months that have one, Feb 29 only in leap years.
+- **Backend: repeating reminders in the `send-reminders` job.** A model
+  with `recurrence_models.RecurringReminderFields`' columns can set
+  `recurrence` on a row: each occurrence is due inside the grace (several
+  a day), one missed past it is skipped and counted ("1 missed"), a sent
+  one is nagged every `nag_every_minutes` up to `nag_limit` times until
+  `reminders.mark_done(row)`, and a `fromCompletion` rule's next counts
+  from the done time. `reminders.schedule_changed(row)` after the rule
+  changes. A row without `recurrence` is the weekday set, unchanged.
+- **Fix: a weekday-set reminder at a time the clocks skip is sent.**
+  `due_on` measured lateness in wall-clock time, so on the spring-forward
+  night a 02:30 reminder read an hour late and wasn't sent that day. It's
+  measured in UTC now: sent at 03:30, as its comment always said.
+- **Frontend: the same rules in the package** (`nextOccurrence`,
+  `nextOccurrences`, `nextAfterCompletion`, `normalizeRecurrence`,
+  `recurrenceProblem`, `recurrenceFromWeekdays`, `parseRule`,
+  `formatRule`, `atLocal`). One JSON fixture
+  (`packages/ui-foundation/tests/fixtures/recurrence-cases.json`, 21
+  cases: DST both ways and in both hemispheres, month ends, Feb 29,
+  COUNT, UNTIL, `every!`) is read by both test suites, so they agree on
+  every next occurrence.
+- **`parseRecurrencePhrase`**: a task app's phrases into a `Recurrence`,
+  live as you type: `every 3 days`, `every weekday`, `every 2nd tue`,
+  `every last day of the month`, `every jan 1`, `every other week`,
+  `every! 3 days`, `at 9am, 5pm`, `starting dec 1`, `until mar 1`,
+  `for 10 times`, and more (`every 2 weeks on mon, fri`, `every 3 months
+  on the 15th`). What it can't read is refused with why ("Couldn't read
+  “blue moon”"). `recurrencePhrase` is the way back.
+- **`formatRecurrence`** ("Every 2nd Tue at 9:00 AM") and
+  **`formatOccurrence`** ("Tue, Dec 8, 9:00 AM"), both in the rule's
+  zone, for a list's Repeats and Next cells (cell pattern 27).
+- **`RecurrenceField`**: presets (Daily, Weekdays, Weekly on Thu,
+  Monthly on the 12th, Monthly on the 2nd Thu, Yearly on Nov 12, Custom),
+  the phrase box and a preview (the label and the next five), for
+  EntityForm (a `Controller`) and in place (**`inPlace.recurrence`**).
+- Docs: reminders.md "Repeating reminders", add-an-entity.md (a
+  `recurrence` field), entity-plan-template.md, cell-patterns.md 27.
+
+To take it: bump to `^4.95.0` (and `ui-foundation-backend==4.95.0`) and
+run `ui-foundation sync` (the docs change). Nothing else is needed. An
+app that repeats things copies `Recurrence` into its `openapi.yaml`; one
+whose reminders repeat adds the columns (reminders.md lists them) in a
+migration of its own, and `types-python-dateutil` to its dev extra for
+mypy (the template has it).
+
+## 4.94.0 — A title edited in place stays whole; an equal item's own editor and actions
+
+Both packages; additive, no new dependency. Record page standard R1 and
+R10, and #321.
+
+- **Fix: a short value edited in place no longer wraps.** An inline
+  `EditableValue` (EntityView's `titleEdit`, a header badge) was capped
+  0.75rem narrower than its own text: its hover tint's negative margins
+  shrank what its line was sized to, and `max-w-full` then cut it short,
+  so "Dr. Example" read "Dr. / Example". The cap now gives those margins
+  back; a short title stays on one line and a long one still wraps
+  between words within its column, at desktop and 375px.
+- **`EqualItem.content`**: anything of the app's (an editor of several
+  fields, a note) under the item's fields at its full width, never in the
+  label/value grid. In `table`, a row of its own under the item's, as wide
+  as the table's box and held in view while a phone scrolls the table.
+- **`EqualItem.actions`**: the item's own buttons (Edit, Remove) at the
+  end of its title line; beside a featured toggle (never inside its
+  button); in `table` a last column, named by the new `actionsColumn`
+  prop ("Actions").
+- **`EqualItem.wide`**: the item takes the whole row of `cards` or
+  `panels`, for an editor open in it.
+- **Backend: the MCP read tools hide a table's widths comment** (#321).
+  Since 4.79.0 rich text with sized columns stores
+  `<!-- table widths: … -->` after the table; `fetch`, `list`, `search`
+  and `update`'s answer now show the text without it (and the blank
+  lines before it), as every renderer does. What's stored keeps it, so a
+  round trip through `edit_text` or `update` never drops the widths.
+  `search` leaves out a record whose only match is inside the comment,
+  and `edit_text`'s "old wasn't found" says the widths are hidden from
+  `fetch`. A comment that isn't straight after a table still shows.
+- Docs: design-language.md "A few equal things" ("An item's own content
+  and actions") and "Written text (notes)", add-an-entity.md "The
+  record view" and "What a chat is told about an entity", cell-patterns.md
+  "Editable value".
+
+To take it: bump to `^4.94.0` (and `ui-foundation-backend==4.94.0`) and
+run `ui-foundation sync` (the docs change). An item edited on its own in
+place moves its editor out of a field's value into `content`, with its
+buttons in `actions`.
+
+## 4.93.0 — A few equal things: EqualItems, one data shape in four looks
+
+The UI package only; additive, no new dependency and nothing to change in
+an app (the backend package's version moves with it, unchanged). Record
+page standard R10.
+
+- **`EqualItems`**: a small set of equal, related things inside a record
+  (a plan's phases, a price at each store, a handful of options).
+  `<EqualItems label="Phases" items={[{ id, title, state, fields: [{ label, value }] }]} look="cards" />`,
+  with `look` one of:
+  - `cards` (the default): a row of equal cards that wraps, one column on
+    a phone, each its title, its state as a badge and its fields as short
+    label/value lines;
+  - `table`: one compact row per item, the title as the row header, a
+    column per field label, a dash where an item has none;
+  - `featured`: the item `featuredId` names in full, the others as
+    toggles that open in place (several at once; `defaultOpenIds`), each
+    a button in a heading, never navigation;
+  - `panels`: a panel per item side by side, every detail labelled,
+    stacked on a phone.
+  `state` is words (a neutral outline badge) or `{ label, tone }` with
+  `info`, `success`, `warning` or `destructive`. Also `headingLevel`,
+  `titleColumn`, `stateColumn`, `emptyText` ("Nothing yet") and
+  `noFieldsText` ("No details"), and the types `EqualItem`,
+  `EqualItemField`, `EqualItemState`, `EqualItemTone`, `EqualItemsLook`
+  and `EqualItemsProps`.
+- EntityView's label/value row classes moved to `field-rows.ts`, shared
+  with `EqualItems`; EntityView looks the same.
+- Docs: design-language.md "A few equal things" (when to use each look)
+  and add-an-entity.md "The record view".
+
+To take it: bump to `^4.92.0` (and `ui-foundation-backend==4.92.0`), run
+`ui-foundation sync` (the docs change), and replace any hand-made cards or
+grid of a record's phases, stores or options with `EqualItems`.
 ## 4.92.0 — Palm LCD, a light palette an app opts into
 
 The UI package only; additive, no new dependency (the backend package's

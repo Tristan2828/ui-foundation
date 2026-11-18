@@ -51,7 +51,8 @@ import { clearRecentRecords, rememberRecentRecord } from '@/lib/search-palette'
 // e2e/palettes.spec.ts). The navigation standard (Standard…,
 // e2e/app-shell-standard.spec.ts): headings among a module's pages, the
 // current entry's bar, counts, a Tools section at the sidebar's foot, the
-// phone's back arrow and an area's sheet as tiles. The trail in the bar
+// phone's back arrow and an area's sheet as tiles; the sidebar as icon
+// tiles (StandardTiles…, e2e/app-shell-tiles.spec.ts). The trail in the bar
 // and search (StandardTrail…, StandardSearch…,
 // e2e/app-shell-trail-search.spec.ts): a record's trail from EntityView,
 // a page's own from usePageTrail, the nav entry's otherwise, and the
@@ -224,6 +225,47 @@ const STANDARD: NavEntry[] = [
   },
 ]
 
+// The navigation standard drawn as tiles (#6C, `navLook="tiles"`): the
+// same nav, its Tools at the foot kept a list by its own `look`.
+const STANDARD_TILES: NavEntry[] = STANDARD.map((entry) =>
+  'items' in entry && entry.label === 'Tools' ? { ...entry, look: 'list' as const } : entry,
+)
+
+// Its phone bar: no `sheet`, so each area's sheet follows the look.
+const STANDARD_TILES_BAR: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { group: 'Every day', icon: SunIcon },
+  { group: 'Collections', icon: LibraryIcon },
+  { group: 'Home and money', label: 'Household', icon: WalletIcon },
+]
+
+// The tiles look with counts on a phone (4.113): News a page of its own
+// on the bar with 7 new, Videos past 99, Timers at 0 (nothing drawn).
+// Every day's badge is its entries' sum, Collections' reads "99+".
+const STANDARD_TILES_COUNTS: NavEntry[] = STANDARD_TILES.map((entry) =>
+  'items' in entry
+    ? {
+        ...entry,
+        items: entry.items.map((item) =>
+          item.to === '/news'
+            ? { ...item, count: 7, countLabel: 'new' }
+            : item.to === '/videos'
+              ? { ...item, count: 120 }
+              : item.to === '/timers'
+                ? { ...item, count: 0, countLabel: 'new' }
+                : item,
+        ),
+      }
+    : entry,
+)
+const STANDARD_TILES_COUNTS_BAR: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { to: '/news', label: 'News', icon: NewspaperIcon },
+  { group: 'Every day', icon: SunIcon },
+  { group: 'Collections', icon: LibraryIcon },
+  { group: 'Home and money', label: 'Household', icon: WalletIcon },
+]
+
 // The phone's bar for it: Home and the three areas, each opening its
 // sheet as tiles.
 const STANDARD_BAR: BottomBarItem[] = [
@@ -243,7 +285,7 @@ function ProjectView({ loaded: loadedAtFirst, documentTitle }: { loaded: boolean
     <div className="flex flex-col gap-4">
       {!loaded && (
         <Button size="sm" variant="outline" className="w-fit" onClick={() => setLoaded(true)}>
-          Finish loading
+          Finish Loading
         </Button>
       )}
       <EntityView
@@ -347,6 +389,7 @@ function Shell({
   search,
   recent = false,
   trail = false,
+  navLook,
 }: {
   nav: NavEntry[]
   path: string
@@ -367,6 +410,8 @@ function Shell({
   recent?: boolean
   /** /finance/accounts/:id is an account's EntityView with a trail, and its statements a page naming its own. */
   trail?: boolean
+  /** The sidebar's look (AppShell's `navLook`). */
+  navLook?: 'list' | 'tiles'
 }) {
   // Once, before the palette can read them.
   useState(() => seedRecent(recent))
@@ -382,6 +427,7 @@ function Shell({
             defaultSidebarOpen={sidebarOpen}
             version={version}
             bottomBar={bottomBar}
+            navLook={navLook}
             search={search ? SEARCH[search] : undefined}
           />
         ),
@@ -542,4 +588,34 @@ export const StandardSearchPages: Story = {
 }
 export const StandardSearchFailing: Story = {
   args: { nav: STANDARD, path: '/finance/budget', bottomBar: STANDARD_BAR, search: 'failing' },
+}
+
+// The sidebar as icon tiles (#6C, `navLook="tiles"`): each area a grid of
+// tiles with no visible heading, Finance's pages listed under its area's
+// grid with hairlines for their headings, Tools kept a list at the foot;
+// on the icon rail, on a module's own page with no pages open, and on a
+// phone, where each area's sheet is tiles with the current module's pages
+// under them. e2e/app-shell-tiles.spec.ts.
+export const StandardTiles: Story = {
+  args: { nav: STANDARD_TILES, path: '/finance/accounts/3', bottomBar: STANDARD_TILES_BAR, navLook: 'tiles' },
+}
+export const StandardTilesRail: Story = {
+  args: { nav: STANDARD_TILES, path: '/finance/accounts/3', bottomBar: STANDARD_TILES_BAR, navLook: 'tiles', sidebarOpen: false },
+}
+export const StandardTilesOnHome: Story = {
+  args: { nav: STANDARD_TILES, path: '/', bottomBar: STANDARD_TILES_BAR, navLook: 'tiles' },
+}
+
+// Counts on a phone (4.113): a badge on a bar item's icon, a page's own
+// or its area's sum, "99+" past 99, nothing at 0; in a sheet's tiles'
+// corners. e2e/app-shell-phone-counts.spec.ts.
+export const StandardTilesCounts: Story = {
+  args: { nav: STANDARD_TILES_COUNTS, path: '/finance/accounts/3', bottomBar: STANDARD_TILES_COUNTS_BAR, navLook: 'tiles' },
+}
+export const StandardCountsList: Story = {
+  args: {
+    nav: STANDARD_TILES_COUNTS,
+    path: '/finance/accounts/3',
+    bottomBar: STANDARD_TILES_COUNTS_BAR.map((item) => ('group' in item ? { ...item, sheet: 'list' as const } : item)),
+  },
 }

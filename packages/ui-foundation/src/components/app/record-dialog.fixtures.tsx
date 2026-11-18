@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createMemoryRouter, Link, Outlet, RouterProvider, useLocation, useParams, useSearchParams, type InitialEntry } from 'react-router'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import type { AppError } from '@/api/contracts'
+import { Trash2Icon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,8 @@ import { DataTable } from './data-table'
 import { editInPlace } from './edit-in-place'
 import { EntityView } from './entity-view'
 import { FormDialog } from './form-dialog'
+import { IconAction } from './icon-action'
+import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { RecordDialogRoute, RecordLink } from './record-dialog'
 import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
@@ -38,7 +41,10 @@ import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
 // project opens a FormDialog over the list, a deep link to /projects/new
 // too, and Add opens the new project over the list. A name of "fail" is
 // refused. The Rail stories' records use EntityView's `rail` layout, its
-// rail beside the main column at the dialog's 1,120px.
+// rail beside the main column at the dialog's 1,120px. The Card stories
+// (4.98, 8A) open a tiny record (a name and a few facts, no notes) as a
+// small 420px card, `look="card"`: its Delete, Open full page and Close
+// on the title's line; Card, dialog only has no full page.
 // e2e/record-dialog.spec.ts drives it; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
@@ -198,7 +204,7 @@ function ProjectView({ listAt = '/projects', tasks = false, rail = false }: { li
             { label: 'Status', value: project?.status },
             { label: 'Owner', value: owner, edit: owners },
             {
-              label: 'Next project',
+              label: 'Next Project',
               value: next && <RecordLink to={`/projects/${next.id}`}>{next.name}</RecordLink>,
             },
           ],
@@ -229,6 +235,63 @@ const TASK_COLUMNS: LegacyColumnDef<Task, unknown>[] = [
     cell: ({ row }) => (row.original.done ? 'Yes' : 'No'),
   },
 ]
+
+// A tiny record for the card dialog (8A): its name, three facts, Delete.
+// Its strip of key numbers is left out in the card (4.105); the same view
+// on its own page shows it.
+function ProjectCard() {
+  const { id } = useParams()
+  const { project, error, isLoading, retry } = useProject(id)
+  return (
+    <EntityView
+      title={project?.name}
+      isLoading={isLoading}
+      error={error}
+      onRetry={retry}
+      back={{ to: '/projects', label: 'Projects' }}
+      actions={project && <IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+      strip={project && <KeyStats stats={[{ label: 'Coats', value: 2 }, { label: 'Hours', value: 6 }]} />}
+      sections={[
+        {
+          title: 'Details',
+          fields: [
+            { label: 'Status', value: project?.status },
+            { label: 'Area', value: <Badge variant="outline">Garden</Badge> },
+            { label: 'Display Order', value: project?.id },
+            { label: 'Owner', value: null },
+          ],
+        },
+      ]}
+    />
+  )
+}
+
+// A record with tabs in the dialog (4.101, 3B): long enough that its body
+// scrolls, and the tab bar sticks to the top of it with the name above.
+const LONG_NOTES = Array.from(
+  { length: 30 },
+  (_, at) => `${at + 1}. Sand the boards, then wipe them down before the next coat goes on.`,
+).join('\n')
+
+function ProjectTabs() {
+  const { id } = useParams()
+  const { project, error, isLoading, retry } = useProject(id)
+  return (
+    <EntityView
+      title={project?.name}
+      isLoading={isLoading}
+      error={error}
+      onRetry={retry}
+      back={{ to: '/projects', label: 'Projects' }}
+      tabCounts={{ Steps: 30 }}
+      sections={[
+        { title: 'Details', placement: 'rail', fields: [{ label: 'Status', value: project?.status }] },
+        { title: 'Steps', tab: 'Steps', content: <Markdown>{LONG_NOTES}</Markdown> },
+        { title: 'Notes', tab: 'Notes', content: project?.notes && <Markdown>{project.notes}</Markdown>, emptyLabel: 'No notes' },
+      ]}
+    />
+  )
+}
 
 function TaskList({ projectId }: { projectId: number }) {
   const rows = TASKS.filter((task) => task.projectId === projectId)
@@ -273,8 +336,8 @@ function NewProject() {
   const [saving, setSaving] = useState(false)
   return (
     <FormDialog
-      title="New project"
-      submitLabel="Add project"
+      title="New Project"
+      submitLabel="Add Project"
       isSubmitting={saving}
       submitError={error}
       dirty={name !== ''}
@@ -323,7 +386,7 @@ function Home() {
         Repaint the fence
       </RecordLink>
       <Link to="/projects" className="type-label underline">
-        All projects
+        All Projects
       </Link>
     </div>
   )
@@ -344,9 +407,32 @@ function Layout() {
 // How the routes are laid out: the record a child of its list (`nested`,
 // the default), the list a sibling at /projects/list (`sibling`), or a
 // project's page whose tasks open over it (`sub-records`).
-type Shape = 'nested' | 'sibling' | 'sub-records' | 'new'
+type Shape = 'nested' | 'sibling' | 'sub-records' | 'new' | 'card' | 'tabs'
 
 function projectRoutes(shape: Shape, opens: Opens, rail: boolean) {
+  if (shape === 'tabs')
+    return [
+      {
+        path: 'projects',
+        element: <RecordDialogRoute list={<ProjectList opens={opens} />} label="Project" />,
+        children: [{ path: ':id', element: <ProjectTabs /> }],
+      },
+    ]
+  if (shape === 'card')
+    return [
+      {
+        path: 'projects',
+        element: (
+          <RecordDialogRoute
+            list={<ProjectList opens={opens} />}
+            label="Project"
+            look="card"
+            fullPage={opens !== 'dialog-only'}
+          />
+        ),
+        children: [{ path: ':id', element: <ProjectCard /> }],
+      },
+    ]
   if (shape === 'new')
     return [
       {
@@ -527,4 +613,19 @@ export const NewRecordDeepLink: Story = {
 export const RailBeside: Story = {
   name: 'Rail beside',
   render: () => <Projects initialEntries={openOver('1')} initialIndex={1} rail />,
+}
+
+export const Card: Story = {
+  name: 'Card',
+  render: () => <Projects initialEntries={openOver('1')} initialIndex={1} shape="card" />,
+}
+
+export const CardDialogOnly: Story = {
+  name: 'Card, dialog only',
+  render: () => <Projects initialEntries={openOver('1')} initialIndex={1} shape="card" opens="dialog-only" />,
+}
+
+export const TabsOpen: Story = {
+  name: 'Tabs, open',
+  render: () => <Projects initialEntries={openOver('1')} initialIndex={1} shape="tabs" />,
 }

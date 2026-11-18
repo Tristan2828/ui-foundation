@@ -29,7 +29,7 @@ function ProjectsTable() {
       <thead>
         <tr>
           <th className="pr-6 text-left type-label">Name</th>
-          <th className="text-left type-label">Open tasks</th>
+          <th className="text-left type-label">Open Tasks</th>
         </tr>
       </thead>
       <tbody>
@@ -58,7 +58,7 @@ function TasksList() {
       <h1 className="type-section-title">Tasks</h1>
       <p>Filtered to {project?.name ?? 'nothing'}.</p>
       <Link to="/" className="underline underline-offset-4">
-        Back to projects
+        Back to Projects
       </Link>
     </div>
   )

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { FieldGroup } from '@/components/ui/field'
 
 export type FormSectionProps = {
-  /** What the group is ("Reading", "Details"): sentence case, a word or two. */
+  /** What the group is ("Reading", "Details"): Title Case, a word or two (design-language.md "Words on screen"). */
   title: string
   /** The group's fields. */
   children: ReactNode

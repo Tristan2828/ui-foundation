@@ -28,7 +28,7 @@ const prompt = (page: Page) => page.getByRole('dialog', { name: 'Discard your ch
 async function open(page: Page, id: string, viewport = LAPTOP) {
   await page.setViewportSize(viewport)
   await page.goto(story(id))
-  await expect(page.getByRole('heading', { level: 1, name: 'New book' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'New Book' })).toBeVisible()
 }
 
 test('on a laptop: short fields share rows by size, 32px controls 14px apart', async ({ page }) => {
@@ -60,7 +60,7 @@ test('on a laptop: short fields share rows by size, 32px controls 14px apart', a
   for (const id of ['book-title', 'book-status', 'book-started', 'book-pages']) {
     expect(Math.round((await box(page.locator(`#${id}`))).height)).toBe(32)
   }
-  expect(Math.round((await box(bar(page).getByRole('button', { name: 'Add book' }))).height)).toBe(32)
+  expect(Math.round((await box(bar(page).getByRole('button', { name: 'Add Book' }))).height)).toBe(32)
   const titleBottom = (await box(fieldOf(page, 'book-title'))).y + title.height
   expect(Math.round((await top('book-status')) - titleBottom)).toBe(14)
 })
@@ -78,7 +78,7 @@ test('on a phone: a field a row but two dates, 40px controls, two wide buttons',
 
   expect(Math.round((await box(page.locator('#book-title'))).height)).toBe(40)
   const cancel = await box(bar(page).getByRole('button', { name: 'Cancel' }))
-  const add = await box(bar(page).getByRole('button', { name: 'Add book' }))
+  const add = await box(bar(page).getByRole('button', { name: 'Add Book' }))
   expect(Math.round(add.height)).toBe(40)
   expect(Math.abs(cancel.width - add.width)).toBeLessThan(2)
   expect(cancel.width).toBeGreaterThan(120)
@@ -98,19 +98,19 @@ test('a required field: an asterisk screen readers skip, and aria-required on it
 test('Add finds the problem: it moves to the first and counts what is left', async ({ page }) => {
   await open(page, 'default')
   await page.getByRole('textbox', { name: 'Link' }).fill('nope')
-  await bar(page).getByRole('button', { name: 'Add book' }).click()
+  await bar(page).getByRole('button', { name: 'Add Book' }).click()
   await expect(toFix(page)).toHaveText('2 to fix')
   await expect(page.getByRole('textbox', { name: 'Title' })).toBeFocused()
   await expect(page.getByText('Give it a title')).toBeVisible()
 
   await page.getByRole('textbox', { name: 'Title' }).fill('The Long Walk')
-  await bar(page).getByRole('button', { name: 'Add book' }).click()
+  await bar(page).getByRole('button', { name: 'Add Book' }).click()
   await expect(toFix(page)).toHaveText('1 to fix')
   await expect(page.getByRole('textbox', { name: 'Link' })).toBeFocused()
   await expect(page.getByText('Enter a full address, starting https://')).toBeVisible()
 
   await page.getByRole('textbox', { name: 'Link' }).fill('https://example.com/book')
-  await bar(page).getByRole('button', { name: 'Add book' }).click()
+  await bar(page).getByRole('button', { name: 'Add Book' }).click()
   await expect(page.getByText('Added The Long Walk')).toBeVisible()
 })
 
@@ -121,14 +121,14 @@ test('a failed save: a Notice in the bar above the buttons, what was typed kept,
   await expect(notice).toHaveAttribute('data-tone', 'destructive')
   // In the bar, so on screen with the buttons though the form is taller than the window.
   await expect(bar(page).locator('[data-slot=notice]')).toBeInViewport()
-  expect((await box(notice)).y).toBeLessThan((await box(bar(page).getByRole('button', { name: 'Add book' }))).y)
+  expect((await box(notice)).y).toBeLessThan((await box(bar(page).getByRole('button', { name: 'Add Book' }))).y)
   await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue('fail')
 
   // Still refused: the Notice stays.
-  await notice.getByRole('button', { name: 'Try again' }).click()
+  await notice.getByRole('button', { name: 'Try Again' }).click()
   await expect(notice).toContainText("Couldn't add the book")
   await page.getByRole('textbox', { name: 'Title' }).fill('The Long Walk')
-  await notice.getByRole('button', { name: 'Try again' }).click()
+  await notice.getByRole('button', { name: 'Try Again' }).click()
   await expect(page.getByText('Added The Long Walk')).toBeVisible()
 })
 
@@ -153,7 +153,7 @@ for (const viewport of [LAPTOP, PHONE]) {
 
 test('sections are cards with their titles, and Add opens to the problem in one', async ({ page }) => {
   await open(page, 'sections', { width: 1280, height: 700 })
-  for (const name of ['What it is', 'Reading', 'Details', 'Notes']) {
+  for (const name of ['What It Is', 'Reading', 'Details', 'Notes']) {
     const section = page.getByRole('region', { name })
     await expect(section).toBeVisible()
     await expect(section.locator('[data-slot=card]')).toHaveCount(1)
@@ -161,7 +161,7 @@ test('sections are cards with their titles, and Add opens to the problem in one'
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
   await page.getByRole('textbox', { name: 'Link' }).fill('nope')
   await page.getByRole('textbox', { name: 'Title' }).fill('The Long Walk')
-  await bar(page).getByRole('button', { name: 'Add book' }).click()
+  await bar(page).getByRole('button', { name: 'Add Book' }).click()
   await expect(toFix(page)).toHaveText('1 to fix')
   await expect(page.getByRole('textbox', { name: 'Link' })).toBeFocused()
   await expect(page.getByRole('textbox', { name: 'Link' })).toBeInViewport()
@@ -184,7 +184,7 @@ test('nothing typed: Cancel and a link leave without asking', async ({ page }) =
   await open(page, 'default')
   await bar(page).getByRole('button', { name: 'Cancel' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Books' })).toBeVisible()
-  await page.getByRole('link', { name: 'New book' }).click()
+  await page.getByRole('link', { name: 'New Book' }).click()
   await page.getByRole('navigation', { name: 'Books nav' }).getByRole('link', { name: 'Books' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Books' })).toBeVisible()
   await expect(prompt(page)).toHaveCount(0)
@@ -196,7 +196,7 @@ test('something typed: a link asks first, Keep editing stays, Discard leaves', a
   const books = page.getByRole('navigation', { name: 'Books nav' }).getByRole('link', { name: 'Books' })
   await books.click()
   await expect(prompt(page)).toBeVisible()
-  await prompt(page).getByRole('button', { name: 'Keep editing' }).click()
+  await prompt(page).getByRole('button', { name: 'Keep Editing' }).click()
   await expect(prompt(page)).toHaveCount(0)
   await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue('The Long Walk')
 
@@ -218,7 +218,7 @@ test('something typed: Cancel asks once, and Discard goes where Cancel goes', as
 test("a save leaves for the new record without asking, though what's typed is unsaved until then", async ({ page }) => {
   await open(page, 'default')
   await page.getByRole('textbox', { name: 'Title' }).fill('The Long Walk')
-  await bar(page).getByRole('button', { name: 'Add book' }).click()
+  await bar(page).getByRole('button', { name: 'Add Book' }).click()
   await expect(page.getByText('Added The Long Walk')).toBeVisible()
   await expect(prompt(page)).toHaveCount(0)
 })
@@ -244,12 +244,12 @@ test('something typed: a reload asks the browser to confirm', async ({ page }) =
 // with a name typed asks first, as its Esc does.
 test("FormDialog's new route: Back with something typed asks first", async ({ page }) => {
   await page.goto('http://localhost:6180/story.html?id=app-recorddialog--new-record-open')
-  const form = page.getByRole('dialog', { name: 'New project' })
+  const form = page.getByRole('dialog', { name: 'New Project' })
   await form.getByRole('textbox', { name: 'Name' }).fill('Paint the shed')
   const back = () => page.evaluate(() => (window as unknown as { recordDialogBack: () => void }).recordDialogBack())
   await back()
   await expect(prompt(page)).toBeVisible()
-  await prompt(page).getByRole('button', { name: 'Keep editing' }).click()
+  await prompt(page).getByRole('button', { name: 'Keep Editing' }).click()
   await expect(page.getByTestId('address')).toHaveText('/projects/new')
   await expect(form.getByRole('textbox', { name: 'Name' })).toHaveValue('Paint the shed')
   await back()

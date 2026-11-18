@@ -15,6 +15,7 @@ import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { EmptyText } from './empty-value'
 
 export type ValueListItem = {
   /** Plain text: the chip's text, the tooltip's line and the screen reader's. Unique in the list. */
@@ -33,10 +34,7 @@ export type ValueListProps = {
 export function ValueList({ items, max = 2, className }: ValueListProps) {
   if (items.length === 0) {
     return (
-      <span data-slot="value-list" data-state="empty" className={cn('text-muted-foreground', className)}>
-        <span aria-hidden="true">—</span>
-        <span className="sr-only">None</span>
-      </span>
+      <EmptyText data-slot="value-list" data-state="empty" label="None" className={cn('text-muted-foreground', className)} />
     )
   }
   const shown = items.slice(0, Math.max(0, max))

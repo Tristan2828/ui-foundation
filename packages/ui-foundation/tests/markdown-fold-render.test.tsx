@@ -41,22 +41,22 @@ describe('Markdown foldKey', () => {
 })
 
 describe('NotesOutline', () => {
-  it('lists the top two levels with Fold all and Open all', () => {
+  it('lists the top two levels with Fold All and Open All', () => {
     const html = renderToStaticMarkup(<NotesOutline markdown={`# A${T}\n\nx\n\n## B\n\ny\n\n### C\n\nz\n`} foldKey="test:outline" />)
     expect(html).toContain('aria-label="Outline"')
-    expect(html).toContain('Fold all')
-    expect(html).toContain('Open all')
+    expect(html).toContain('Fold All')
+    expect(html).toContain('Open All')
     expect(html).toContain('>A<')
     expect(html).toContain('>B<')
     expect(html).not.toContain('>C<')
   })
 
-  it('lists plain headings too, without Fold all and Open all when nothing folds', () => {
+  it('lists plain headings too, without Fold All and Open All when nothing folds', () => {
     const html = renderToStaticMarkup(<NotesOutline markdown={'# A\n\nx\n\n## B\n\ny\n'} foldKey="test:outline-plain" />)
     expect(html).toContain('>A<')
     expect(html).toContain('>B<')
-    expect(html).not.toContain('Fold all')
-    expect(html).not.toContain('Open all')
+    expect(html).not.toContain('Fold All')
+    expect(html).not.toContain('Open All')
   })
 
   it('shows nothing for a text with fewer headings than minHeadings', () => {

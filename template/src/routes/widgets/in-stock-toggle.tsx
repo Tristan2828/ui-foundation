@@ -7,7 +7,7 @@
 // A Switch, not a checkbox: it acts at once, like a light switch. The word
 // stays beside it (cell pattern 12) so the value reads in greyscale and at
 // a glance; it's aria-hidden because the switch already announces its
-// state. The accessible name says which row ("In stock: Wireless Mouse").
+// state. The accessible name says which row ("In Stock: Wireless Mouse").
 // While it saves, a spinner shows in a slot that's always there, so the
 // cell never changes width; the switch stays usable (a second flip waits
 // for the first and builds on it).
@@ -26,7 +26,7 @@ export function InStockToggle({ widget }: { widget: Widget }) {
       <Switch
         size="sm"
         checked={widget.inStock}
-        aria-label={`In stock: ${widget.name}`}
+        aria-label={`In Stock: ${widget.name}`}
         onCheckedChange={(inStock) => save.mutate({ inStock })}
       />
       <span aria-hidden="true" className={widget.inStock ? undefined : 'text-muted-foreground'}>

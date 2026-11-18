@@ -16,7 +16,7 @@ test.beforeEach(async ({ page }) => {
 
 async function expectHomeRenders(page: Page) {
   await page.goto('/')
-  await expect(page.getByRole('button', { name: 'Get started' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Get Started' })).toBeVisible()
 }
 
 test('renders when the Storage methods throw', async ({ page }) => {

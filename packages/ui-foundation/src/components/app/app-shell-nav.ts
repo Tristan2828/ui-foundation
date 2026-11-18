@@ -68,6 +68,14 @@ export function navTooltip(item: NavItem): string {
   return `${item.label}: ${children.map((child) => child.label).join(', ')}`
 }
 
+/**
+ * How a sidebar group draws its entries: a list, icon beside label
+ * (`'list'`, the default), or a grid of tiles, icon over a short label,
+ * three to a row, with no visible heading (`'tiles'`). Set for the whole
+ * nav with `AppShell`'s `navLook`, or per section with its `look`.
+ */
+export type NavLook = 'list' | 'tiles'
+
 /** A labelled group of sidebar entries: one module's pages, say. */
 export type NavSection = {
   label: string
@@ -87,6 +95,15 @@ export type NavSection = {
    * (`'bottom'`: a Tools group, say).
    */
   placement?: 'top' | 'bottom'
+  /**
+   * This section's look, over `AppShell`'s `navLook`: `'tiles'` draws its
+   * entries as a grid of icon tiles, its label kept for screen readers
+   * only, and the current entry's pages listed under the grid. A tiles
+   * section doesn't fold (`collapsible` is ignored). On the icon rail it's
+   * the rail's icons, as any section. A `bottomBar` item for it opens its
+   * sheet as tiles too, the current entry's pages under them.
+   */
+  look?: NavLook
 }
 
 /** One entry of `AppShell`'s `nav`: a page, or a labelled section of pages. */
@@ -105,6 +122,8 @@ export type NavGroup = {
   defaultOpen?: boolean
   /** From its section: at the sidebar's foot (NavSection's `placement`). */
   placement?: 'bottom'
+  /** From its section: its own look (NavSection's `look`), over the shell's. */
+  look?: NavLook
 }
 
 /**
@@ -126,6 +145,7 @@ export function navGroups(nav: readonly NavEntry[]): NavGroup[] {
         items: entry.items,
         ...(entry.collapsible && { collapsible: true, defaultOpen: entry.defaultOpen ?? true }),
         ...(entry.placement === 'bottom' && { placement: 'bottom' as const }),
+        ...(entry.look && { look: entry.look }),
       })
     } else {
       run.push(entry)
@@ -274,10 +294,46 @@ export type BottomBarItem =
       /**
        * How its sheet shows the section: a list of its entries with their
        * pages (`'list'`, the default), or a grid of tiles, one per entry,
-       * icon over label, like a phone's home screen (`'tiles'`).
+       * icon over label, like a phone's home screen (`'tiles'`). Without
+       * it, the section's look decides (`NavSection.look`, `navLook`).
        */
       sheet?: 'list' | 'tiles'
     }
+
+/**
+ * Whether a bottom bar item's sheet is tiles: its own `sheet`, or else
+ * its section's look (the section's `look`, or the shell's `navLook`).
+ */
+export function bottomBarTiles(
+  item: BottomBarItem,
+  section: NavSection | undefined,
+  navLook: NavLook = 'list',
+): boolean {
+  if (!('group' in item)) return false
+  if (item.sheet) return item.sheet === 'tiles'
+  return (section?.look ?? navLook) === 'tiles'
+}
+
+/**
+ * The runs of an entry's pages, for a look with no headings: each group
+ * its own run, named by its label, and each run of plain pages between
+ * them an unnamed one.
+ */
+export function childRuns(item: NavItem): { label?: string; items: NavItem[] }[] {
+  const runs: { label?: string; items: NavItem[] }[] = []
+  let run: NavItem[] = []
+  for (const child of item.children ?? []) {
+    if (isNavItemGroup(child)) {
+      if (run.length) runs.push({ items: run })
+      run = []
+      runs.push({ label: child.label, items: [...child.items] })
+    } else {
+      run.push(child)
+    }
+  }
+  if (run.length) runs.push({ items: run })
+  return runs
+}
 
 /** The nav's section with this label, if there is one. */
 export function bottomBarSection(nav: readonly NavEntry[], label: string): NavSection | undefined {
@@ -301,4 +357,47 @@ export function bottomBarCurrent(
       'group' in item && withChildren(bottomBarSection(nav, item.group)?.items ?? []).some((entry) => entry.to === activeTo),
   )
   return group === -1 ? undefined : group
+}
+
+/**
+ * A count as drawn: nothing at 0, below it or while it's loading (no
+ * count yet), and "99+" past 99, so a badge keeps its size.
+ */
+export function navCountText(count: number | undefined): string | undefined {
+  if (count === undefined || !Number.isFinite(count) || count <= 0) return undefined
+  return count > 99 ? '99+' : String(Math.floor(count))
+}
+
+/**
+ * A count as read, after its entry's label: "7 new" with its
+ * `countLabel`, the number alone without. The real number, past 99 too.
+ * Nothing where nothing is drawn.
+ */
+export function navCountSpoken(count: number | undefined, countLabel?: string): string | undefined {
+  if (navCountText(count) === undefined) return undefined
+  const n = Math.floor(count!)
+  return countLabel ? `${n} ${countLabel}` : String(n)
+}
+
+/**
+ * A bottom bar item's count: a page's, from its nav entry, or a
+ * section's, the sum of its entries' and their pages'. A section's
+ * `countLabel` is its entries' when they share one, and none otherwise.
+ */
+export function bottomBarCount(
+  item: BottomBarItem,
+  nav: readonly NavEntry[],
+): { count?: number; countLabel?: string } {
+  if ('to' in item) {
+    const entry = navItems(nav).find((other) => other.to === item.to)
+    return entry ? { count: entry.count, countLabel: entry.countLabel } : {}
+  }
+  const counted = withChildren(bottomBarSection(nav, item.group)?.items ?? []).filter(
+    (entry) => navCountText(entry.count) !== undefined,
+  )
+  if (!counted.length) return {}
+  const count = counted.reduce((sum, entry) => sum + Math.floor(entry.count!), 0)
+  const labels = new Set(counted.map((entry) => entry.countLabel))
+  const [only] = labels
+  return { count, countLabel: labels.size === 1 ? only : undefined }
 }

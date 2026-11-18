@@ -35,7 +35,7 @@ const meta: Meta<SheetStoryArgs> = {
   },
   render: (args) => (
     <Sheet>
-      <SheetTrigger render={<Button variant="outline">Open sheet</Button>} />
+      <SheetTrigger render={<Button variant="outline">Open Sheet</Button>} />
       <SheetContent side={args.side}>
         <SheetHeader>
           <SheetTitle>{args.title}</SheetTitle>

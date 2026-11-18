@@ -55,6 +55,38 @@ describe('check-contract', () => {
     expect(result.status).toBe(0)
   })
 
+  it('passes an app without the optional Recurrence schema, and refuses one that differs', () => {
+    const spec = foundation()
+    delete spec.components.schemas.Recurrence
+    const left = checkContract(spec)
+    expect(left.output).not.toContain('Recurrence')
+    expect(left.status).toBe(0)
+
+    const changed = foundation()
+    ;(changed.components.schemas.Recurrence as { required: string[] }).required = ['rule']
+    const differs = checkContract(changed)
+    expect(differs.status).toBe(1)
+    expect(differs.output).toContain('components.schemas.Recurrence differs')
+  })
+
+  it('passes an app whose Recurrence copy is from before WKST, and refuses any other pattern', () => {
+    type Rule = { pattern: string; 'x-earlier-patterns'?: string[] }
+    const ruleOf = (spec: Spec) => (spec.components.schemas.Recurrence as { properties: { rule: Rule } }).properties.rule
+    const earlier = foundation()
+    const rule = ruleOf(earlier)
+    expect(rule.pattern).toContain('WKST')
+    rule.pattern = rule['x-earlier-patterns']![0]
+    delete rule['x-earlier-patterns']
+    expect(rule.pattern).not.toContain('WKST')
+    expect(checkContract(earlier).status).toBe(0)
+
+    const other = foundation()
+    ruleOf(other).pattern = '^FREQ=.*$'
+    const differs = checkContract(other)
+    expect(differs.status).toBe(1)
+    expect(differs.output).toContain('components.schemas.Recurrence differs')
+  })
+
   it('requires RegisterRequest when the app has /auth/register', () => {
     const spec = foundation()
     delete spec.components.schemas.RegisterRequest

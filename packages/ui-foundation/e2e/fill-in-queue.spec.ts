@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test'
 const story = (name: string) => `http://localhost:6180/story.html?id=app-fillinqueue--${name}`
 
 const record = (page: Page) => page.locator('[data-slot=fill-in-queue-record]')
-const save = (page: Page) => page.getByRole('button', { name: 'Save and next' })
+const save = (page: Page) => page.getByRole('button', { name: 'Save and Next' })
 const effort = (page: Page) => page.getByRole('group', { name: 'Effort' })
 
 test('a click picks, Save and next saves and shows the next record, with the focus on it', async ({ page }) => {
@@ -106,7 +106,7 @@ test('the States story has a loading, an empty and an error state', async ({ pag
   await expect(page.locator('[data-slot=fill-in-queue][data-state=loading]')).toBeVisible()
   await expect(page.getByText('Every project has an effort')).toBeVisible()
   await expect(page.getByText("Couldn't reach the server.")).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Try Again' })).toBeVisible()
 })
 
 test("FillInField: a record's group, money with a suggestion, a long list, and the next group's record", async ({ page }) => {
@@ -125,9 +125,9 @@ test("FillInField: a record's group, money with a suggestion, a long list, and t
   await expect(price).toHaveValue('1.')
   await price.fill('1.5')
 
-  await page.getByRole('combobox', { name: 'Paid from' }).click()
+  await page.getByRole('combobox', { name: 'Paid From' }).click()
   await page.getByRole('option', { name: 'Account 11' }).click()
-  await expect(page.getByRole('combobox', { name: 'Paid from' })).toHaveText(/Account 11/)
+  await expect(page.getByRole('combobox', { name: 'Paid From' })).toHaveText(/Account 11/)
 
   await save(page).click()
   await expect(record(page).getByRole('heading')).toHaveText('Smoke alarm')

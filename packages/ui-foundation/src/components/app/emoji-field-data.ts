@@ -8,7 +8,7 @@ export type EmojiGroup = { label: string; emojis: EmojiEntry[] }
 
 export const EMOJI_GROUPS: EmojiGroup[] = [
   {
-    label: 'Morning and sleep',
+    label: 'Morning and Sleep',
     emojis: [
       { emoji: '☀️', name: 'Sun', keywords: 'morning day bright' },
       { emoji: '🌅', name: 'Sunrise', keywords: 'morning dawn' },
@@ -21,7 +21,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
     ],
   },
   {
-    label: 'Body and health',
+    label: 'Body and Health',
     emojis: [
       { emoji: '🧘', name: 'Person in lotus position', keywords: 'yoga meditate breathe calm' },
       { emoji: '🏃', name: 'Person running', keywords: 'run exercise workout cardio' },
@@ -53,7 +53,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
     ],
   },
   {
-    label: 'Food and drink',
+    label: 'Food and Drink',
     emojis: [
       { emoji: '🍳', name: 'Cooking', keywords: 'breakfast egg pan' },
       { emoji: '🥣', name: 'Bowl with spoon', keywords: 'cereal oatmeal breakfast' },
@@ -69,7 +69,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
     ],
   },
   {
-    label: 'Home and chores',
+    label: 'Home and Chores',
     emojis: [
       { emoji: '🏠', name: 'House', keywords: 'home' },
       { emoji: '🧹', name: 'Broom', keywords: 'sweep clean chores' },
@@ -88,7 +88,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
     ],
   },
   {
-    label: 'Work and learning',
+    label: 'Work and Learning',
     emojis: [
       { emoji: '💻', name: 'Laptop', keywords: 'computer work code' },
       { emoji: '📧', name: 'Email', keywords: 'mail inbox' },
@@ -107,7 +107,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
     ],
   },
   {
-    label: 'Play and music',
+    label: 'Play and Music',
     emojis: [
       { emoji: '🎵', name: 'Musical note', keywords: 'music song' },
       { emoji: '🎧', name: 'Headphones', keywords: 'music podcast listen' },
@@ -122,7 +122,7 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
     ],
   },
   {
-    label: 'Outside and travel',
+    label: 'Outside and Travel',
     emojis: [
       { emoji: '🚶', name: 'Person walking', keywords: 'walk steps' },
       { emoji: '🥾', name: 'Hiking boot', keywords: 'hike trail' },

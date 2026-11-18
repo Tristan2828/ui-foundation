@@ -44,7 +44,7 @@ function ChecklistForm() {
             aria-label="Checklist"
             items={items.fields}
             itemName={(index) => `item ${index + 1}`}
-            addLabel="Add item"
+            addLabel="Add Item"
             emptyText="No items yet."
             max={20}
             onAdd={() => items.append({ text: '' })}
@@ -138,7 +138,7 @@ function WorkoutForm() {
             itemName={(index) => `exercise ${index + 1}`}
             summary={(index) => exerciseSummary(values[index] ?? blankExercise)}
             invalid={(index) => !!errors?.[index]}
-            addLabel="Add exercise"
+            addLabel="Add Exercise"
             emptyText="No exercises yet."
             max={MAX_EXERCISES}
             onAdd={() => exercises.append(blankExercise)}

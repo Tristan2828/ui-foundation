@@ -154,7 +154,7 @@ export function FillInQueue<T>({
   progress,
   groups,
   getGroup,
-  saveLabel = 'Save and next',
+  saveLabel = 'Save and Next',
   skipLabel = 'Skip',
   loading = false,
   error,
@@ -305,7 +305,7 @@ export function FillInQueue<T>({
             </EmptyHeader>
             {onRetry && (
               <Button size="sm" variant="outline" onClick={onRetry}>
-                Try again
+                Try Again
               </Button>
             )}
           </Empty>

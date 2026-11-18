@@ -31,7 +31,7 @@ describe('byDay', () => {
     ).toEqual([
       'Today',
       'Yesterday',
-      'Earlier this week',
+      'Earlier This Week',
       'Week of 5 Oct',
       // Four weeks before this one are weeks; earlier is a month.
       `Week of ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date('2026-09-14T00:00:00Z'))}`,
@@ -46,12 +46,12 @@ describe('byDay', () => {
     expect(labels(london, '2026-10-14T23:30:00Z', '2026-10-14T22:59:00Z')).toEqual(['Today', 'Yesterday'])
   })
 
-  it('puts a later date under Upcoming and a missing or broken one under No date', () => {
+  it('puts a later date under Upcoming and a missing or broken one under No Date', () => {
     expect(labels(london, '2026-10-16T12:00:00Z', null, '', 'not a date')).toEqual([
       'Upcoming',
-      'No date',
-      'No date',
-      'No date',
+      'No Date',
+      'No Date',
+      'No Date',
     ])
   })
 
@@ -87,7 +87,7 @@ describe('byDay', () => {
 
   it('starts weeks on Sunday when asked', () => {
     const sunday = byDay<Item>('at', { now: new Date('2026-10-15T12:00:00Z'), timeZone: 'UTC', weekStartsOn: 0 })
-    expect(labels(sunday, '2026-10-11T12:00:00Z', '2026-10-10T12:00:00Z')).toEqual(['Earlier this week', 'Week of 4 Oct'])
+    expect(labels(sunday, '2026-10-11T12:00:00Z', '2026-10-10T12:00:00Z')).toEqual(['Earlier This Week', 'Week of 4 Oct'])
   })
 
   it('reads the date through a function', () => {

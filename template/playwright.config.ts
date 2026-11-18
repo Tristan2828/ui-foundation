@@ -3,6 +3,9 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // PW_WORKERS=1 (or 50%) runs the suite with fewer workers on a machine
+  // short of memory; unset, Playwright picks its default.
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) || process.env.PW_WORKERS : undefined,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: 'list',
@@ -39,6 +42,11 @@ export default defineConfig({
     // Self-contained: build then preview, so `playwright test` doesn't
     // depend on a build step having already run in the calling shell/CI job.
     command: 'npm run build && npm run preview',
+    // On the mocks, the preview's /api proxy (vite.config.ts) goes to port 9,
+    // where nothing listens: a request that bypasses MSW fails (and the
+    // package's test fixture names it) rather than reaching a backend
+    // running on :8000. Against the real API it's left alone.
+    env: process.env.VITE_API === 'real' ? {} : { BACKEND_URL: 'http://127.0.0.1:9' },
     url: 'http://localhost:4180',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -11,7 +11,7 @@ const story = (id: string) => `http://localhost:6180/story.html?id=app-formdialo
 const LAPTOP = { width: 1280, height: 800 }
 const PHONE = { width: 375, height: 812 }
 
-const book = (page: Page) => page.getByRole('dialog', { name: 'New book' })
+const book = (page: Page) => page.getByRole('dialog', { name: 'New Book' })
 
 async function rectOf(page: Page, selector: string) {
   const rect = await page.locator(selector).boundingBox()
@@ -26,12 +26,12 @@ test('640px on a laptop; Add with a title adds it and closes', async ({ page }) 
   await page.waitForTimeout(200)
   expect(Math.round((await book(page).boundingBox())!.width)).toBe(640)
 
-  await book(page).getByRole('button', { name: 'Add book' }).click()
+  await book(page).getByRole('button', { name: 'Add Book' }).click()
   await expect(book(page).getByText('Give it a title')).toBeVisible()
   await expect(book(page).getByRole('textbox', { name: 'Title' })).toHaveAttribute('aria-invalid', 'true')
 
   await book(page).getByRole('textbox', { name: 'Title' }).fill('The Long Walk')
-  await book(page).getByRole('button', { name: 'Add book' }).click()
+  await book(page).getByRole('button', { name: 'Add Book' }).click()
   await expect(book(page)).toHaveCount(0)
   await expect(page.getByTestId('book-result')).toHaveText('Added The Long Walk')
 })
@@ -70,7 +70,7 @@ test('on a phone: the whole screen, Cancel and Add two wide buttons', async ({ p
     PHONE.height,
   ])
   const cancel = (await book(page).getByRole('button', { name: 'Cancel' }).boundingBox())!
-  const add = (await book(page).getByRole('button', { name: 'Add book' }).boundingBox())!
+  const add = (await book(page).getByRole('button', { name: 'Add Book' }).boundingBox())!
   expect(Math.round(cancel.width)).toBe(Math.round(add.width))
   expect(cancel.width).toBeGreaterThan(PHONE.width / 2 - 40)
   expect(Math.round(add.height)).toBe(40)
@@ -86,12 +86,12 @@ test('a failed save: a Notice above the buttons, what was typed kept, Try again 
   await expect(book(page).getByRole('textbox', { name: 'Title' })).toHaveValue('fail')
 
   // Try again submits again: refused again, still open.
-  await notice.getByRole('button', { name: 'Try again' }).click()
-  await expect(book(page).getByRole('button', { name: 'Add book' })).toBeDisabled()
+  await notice.getByRole('button', { name: 'Try Again' }).click()
+  await expect(book(page).getByRole('button', { name: 'Add Book' })).toBeDisabled()
   await expect(notice).toContainText("Couldn't add the book")
 
   await book(page).getByRole('textbox', { name: 'Title' }).fill('Harbor Light')
-  await notice.getByRole('button', { name: 'Try again' }).click()
+  await notice.getByRole('button', { name: 'Try Again' }).click()
   await expect(book(page)).toHaveCount(0)
   await expect(page.getByTestId('book-result')).toHaveText('Added Harbor Light')
 })
@@ -99,16 +99,16 @@ test('a failed save: a Notice above the buttons, what was typed kept, Try again 
 test('something typed: closing asks "Discard your changes?"', async ({ page }) => {
   await page.setViewportSize(LAPTOP)
   await page.goto(story('closed'))
-  await page.getByRole('button', { name: 'New book' }).click()
+  await page.getByRole('button', { name: 'New Book' }).click()
   await book(page).getByRole('button', { name: 'Cancel' }).click()
   await expect(book(page)).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'New book' }).click()
+  await page.getByRole('button', { name: 'New Book' }).click()
   await book(page).getByRole('textbox', { name: 'Author' }).fill('Jane Doe')
   await page.keyboard.press('Escape')
   const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
   await expect(prompt).toBeVisible()
-  await prompt.getByRole('button', { name: 'Keep editing' }).click()
+  await prompt.getByRole('button', { name: 'Keep Editing' }).click()
   await expect(book(page).getByRole('textbox', { name: 'Author' })).toHaveValue('Jane Doe')
   await book(page).getByRole('button', { name: 'Cancel' }).click()
   await prompt.getByRole('button', { name: 'Discard' }).click()

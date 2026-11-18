@@ -10,10 +10,12 @@
 // empty value through as it is: EntityView shows the plan's "not set"
 // label for it, never a blank.
 //
-// The plan's layout is `rail`: Details, the short label/value section, sits
-// in a column on the right that stays in view; Description and Checklist,
-// the long ones, fill the main column. An entity whose plan names no
-// layout drops `layout` and every `placement` (one column).
+// The record standard (4.98): no right rail. Details, the short
+// label/value section, is placed `rail`: it's the facts, which EntityView's
+// `tabs` layout (the default) shows as the record's last tab, Details,
+// when the record has tabs, and here, with none, first in the one column,
+// its labels beside their values. Description, Checklist and Pairings,
+// the long ones, follow it.
 //
 // Read-only, except what the plan names:
 // - Editing in place (cell pattern 18): Name (the title), Status (its
@@ -40,6 +42,7 @@ import {
   EditableValue,
   EntityView,
   Markdown,
+  StatusMark,
   editInPlace,
   type EditInPlace,
   type EditInPlaceList,
@@ -62,7 +65,7 @@ import {
   WidgetPriceInput,
   WidgetStatusSelect,
 } from './widget-fields'
-import { CHECKLIST_STATE_BADGE_VARIANT, STATUS_BADGE_VARIANT, dateFormatter, priceFormatter } from './widget-format'
+import { CHECKLIST_STATE_BADGE_VARIANT, STATUS_KIND, dateFormatter, priceFormatter } from './widget-format'
 import { ChecklistDoneCount, ChecklistItem, WidgetInStockSwitch } from './widget-quick-actions'
 import { CHECKLIST_STATE_LABELS, WIDGET_STATUS_LABELS, WIDGET_TAG_LABELS, widgetFormSchema } from './widget-schema'
 
@@ -211,7 +214,7 @@ function widgetEdits(
       save: (change) => saveChange((current) => ({ checklist: change(current.checklist) })),
       newItem: () => ({ text: '', done: false }),
       itemName: (index) => `item ${index + 1}`,
-      addLabel: 'Add item',
+      addLabel: 'Add Item',
       renderShown: (_item, index) => <ChecklistItem widget={widget} index={index} />,
       renderItem: (props) => (
         <WidgetChecklistItemFields
@@ -241,7 +244,7 @@ function widgetEdits(
       save: (change) => saveChange((current) => ({ pairings: change(current.pairings) })),
       newItem: () => ({ categoryId: undefined as unknown as number, note: '' }),
       itemName: (index) => `pairing ${index + 1}`,
-      addLabel: 'Add pairing',
+      addLabel: 'Add Pairing',
       renderShown: (item) => <PairingShown item={item} />,
       renderItem: (props) => (
         <WidgetPairingItemFields
@@ -361,7 +364,6 @@ export function WidgetViewRoute() {
   return (
     <CategoryNamesContext.Provider value={names}>
       <EntityView
-        layout="rail"
         isLoading={widgetQuery.isLoading}
         error={widgetQuery.error}
         onRetry={() => widgetQuery.refetch()}
@@ -374,7 +376,7 @@ export function WidgetViewRoute() {
             <>
               {/* Edited in place: the badge turns into the form's Status picker. */}
               <EditableValue label="Status" edit={edits.status} layout="inline">
-                <Badge variant={STATUS_BADGE_VARIANT[widget.status]}>{WIDGET_STATUS_LABELS[widget.status]}</Badge>
+                <StatusMark kind={STATUS_KIND[widget.status]}>{WIDGET_STATUS_LABELS[widget.status]}</StatusMark>
               </EditableValue>
               {/* Computed by the server, so it follows a tick once the save answers. */}
               <Badge variant={CHECKLIST_STATE_BADGE_VARIANT[widget.checklistState]}>

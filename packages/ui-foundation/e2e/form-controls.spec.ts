@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 // The form standard's controls (4.88, F10 to F18), on app/FormControls:
 // a choice as buttons, a typed date, Create from a reference picker (single
@@ -30,7 +30,7 @@ test.describe('on a form', () => {
 
   test('a date is typed: 3/20, Mar 21, today, and the box reads it back as shown', async ({ page }) => {
     await page.goto(story('form'))
-    const finished = page.getByRole('textbox', { name: 'Finished on' })
+    const finished = page.getByRole('textbox', { name: 'Finished On' })
     await expect(finished).toHaveAttribute('placeholder', '3/14 or Mar 14')
     await finished.fill('3/20')
     await expect(page.getByTestId('finished-value')).toHaveText('2026-03-20')
@@ -49,7 +49,7 @@ test.describe('on a form', () => {
 
   test('an unreadable date says what to type, and gives empty, not the day it had', async ({ page }) => {
     await page.goto(story('form'))
-    const started = page.getByRole('textbox', { name: 'Started on' })
+    const started = page.getByRole('textbox', { name: 'Started On' })
     await expect(started).toHaveValue('Mar 14, 2026')
     await started.fill('soon')
     await expect(page.getByTestId('started-value')).toHaveText('empty')
@@ -67,9 +67,9 @@ test.describe('on a form', () => {
 
   test('the calendar is on the box\'s button, and a pick goes back to the box', async ({ page }) => {
     await page.goto(story('form'))
-    const started = page.getByRole('textbox', { name: 'Started on' })
+    const started = page.getByRole('textbox', { name: 'Started On' })
     const field = page.locator('[data-slot="date-field"]').filter({ has: started })
-    await field.getByRole('button', { name: 'Open calendar' }).click()
+    await field.getByRole('button', { name: 'Open Calendar' }).click()
     const calendar = page.locator('[data-slot="date-field-calendar"]')
     await expect(calendar.getByRole('button', { name: /March 14th, 2026/ })).toBeFocused()
     await calendar.getByRole('button', { name: /March 18th, 2026/ }).click()
@@ -132,9 +132,9 @@ test.describe('on a form', () => {
     await page.getByRole('searchbox', { name: 'Filter Shelves' }).fill('zep')
     await expect(shelves.getByRole('button')).toHaveText(['Zeppelins'])
     await page.getByRole('searchbox', { name: 'Filter Shelves' }).fill('')
-    await page.getByRole('button', { name: 'Show all 40 Shelves' }).click()
+    await page.getByRole('button', { name: 'Show All 40 Shelves' }).click()
     await expect(shelves.getByRole('button')).toHaveCount(40)
-    await expect(page.getByRole('button', { name: /^Show all/ })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^Show All/ })).toHaveCount(0)
     await shelves.getByRole('button', { name: 'Zeppelins' }).click()
     await expect(page.getByTestId('shelves-value')).toHaveText('38,40')
   })
@@ -142,11 +142,11 @@ test.describe('on a form', () => {
   test('on a phone: the chips wrap, nothing runs off, and two dates still share a row', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto(story('form'))
-    await page.getByRole('button', { name: 'Show all 40 Shelves' }).click()
+    await page.getByRole('button', { name: 'Show All 40 Shelves' }).click()
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(overflow).toBe(0)
-    const started = await page.getByRole('textbox', { name: 'Started on' }).boundingBox()
-    const finished = await page.getByRole('textbox', { name: 'Finished on' }).boundingBox()
+    const started = await page.getByRole('textbox', { name: 'Started On' }).boundingBox()
+    const finished = await page.getByRole('textbox', { name: 'Finished On' }).boundingBox()
     expect(started && finished && Math.abs(started.y - finished.y)).toBeLessThan(2)
     // The filter box stays above the chips.
     const filter = await page.getByRole('searchbox', { name: 'Filter Shelves' }).boundingBox()
@@ -212,10 +212,10 @@ test.describe('edited in place', () => {
 
   test('a date is typed in place: Enter saves it; an unreadable one is refused and not sent', async ({ page }) => {
     await page.goto(story('edit-in-place'))
-    const started = row(page, 'Started on')
+    const started = row(page, 'Started On')
     await expect(started).toContainText('Mar 14, 2026')
-    await started.getByRole('button', { name: 'Edit Started on' }).click()
-    const box = page.getByRole('textbox', { name: 'Started on' })
+    await started.getByRole('button', { name: 'Edit Started On' }).click()
+    const box = page.getByRole('textbox', { name: 'Started On' })
     await expect(box).toBeFocused()
     await box.fill('soon')
     await box.press('Enter')
@@ -229,9 +229,9 @@ test.describe('edited in place', () => {
 
   test('a day picked in place from the calendar saves at once', async ({ page }) => {
     await page.goto(story('edit-in-place'))
-    const started = row(page, 'Started on')
-    await started.getByRole('button', { name: 'Edit Started on' }).click()
-    await started.getByRole('button', { name: 'Open calendar' }).click()
+    const started = row(page, 'Started On')
+    await started.getByRole('button', { name: 'Edit Started On' }).click()
+    await started.getByRole('button', { name: 'Open Calendar' }).click()
     await page.locator('[data-slot="date-field-calendar"]').getByRole('button', { name: /March 9th, 2026/ }).click()
     await expect(started).toContainText('Mar 9, 2026')
   })
@@ -264,5 +264,135 @@ test.describe('edited in place', () => {
     // The control still opens in the row.
     await author.locator('dt').click()
     await expect(author.getByRole('textbox', { name: 'Author' })).toBeFocused()
+  })
+})
+
+test.describe('a choice in a narrow box', () => {
+  // Every button inside the box with its whole border, the group not
+  // scrolling, the first line still joined and the rest wrapped below it:
+  // never cut off (4.97, app/FormControls Narrow).
+  async function fitsIn(box: Locator, group: Locator) {
+    await expect(group.getByRole('button')).toHaveCount(4)
+    const edge = (await box.boundingBox())!
+    const tops: number[] = []
+    for (const button of await group.getByRole('button').all()) {
+      const at = (await button.boundingBox())!
+      expect(at.x).toBeGreaterThanOrEqual(edge.x)
+      expect(at.x + at.width).toBeLessThanOrEqual(edge.x + edge.width + 0.5)
+      tops.push(Math.round(at.y))
+      // Each keeps its whole border, so one that wraps starts with an edge.
+      expect(await button.evaluate((node) => getComputedStyle(node).borderLeftWidth)).toBe('1px')
+    }
+    expect(await group.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(0)
+    expect(tops[1]).toBe(tops[0])
+    expect(Math.max(...tops)).toBeGreaterThan(tops[0]!)
+  }
+
+  test.use({ viewport: { width: 1280, height: 900 } })
+
+  test('on a form 280px wide, the buttons wrap inside it', async ({ page }) => {
+    await page.goto(story('narrow'))
+    const box = page.getByTestId('narrow-form')
+    await fitsIn(box, box.getByRole('group', { name: 'Binding' }))
+  })
+
+  test('edited in place on a record 280px wide, the value column keeps its width and the buttons wrap', async ({ page }) => {
+    await page.goto(story('narrow'))
+    const box = page.getByTestId('narrow-record')
+    await box.getByRole('button', { name: 'Edit Binding' }).click()
+    await fitsIn(box, box.getByRole('group', { name: 'Binding' }))
+  })
+
+  // Since 4.98 (9C) a choice shares its row only with another choice: in
+  // the dialog Binding has half the row beside Condition, too narrow for
+  // its four buttons, and the two dates take the next row together.
+  test('in a dialog, sharing a row with another choice, the buttons wrap inside their field', async ({ page }) => {
+    await page.goto(story('narrow'))
+    await page.getByRole('button', { name: 'Edit Book' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Edit Book' })
+    // Measured once it has grown in, not while it animates.
+    await dialog.evaluate((node) => Promise.all(node.getAnimations({ subtree: true }).map((animation) => animation.finished)))
+    const group = dialog.getByRole('group', { name: 'Binding' })
+    const condition = (await dialog.getByRole('group', { name: 'Condition' }).boundingBox())!
+    expect(Math.abs(condition.y - (await group.boundingBox())!.y)).toBeLessThan(2)
+    await fitsIn(group.locator('xpath=ancestor::*[@data-slot="field"][1]'), group)
+    const started = (await dialog.getByRole('textbox', { name: 'Started On' }).boundingBox())!
+    const finished = (await dialog.getByRole('textbox', { name: 'Finished On' }).boundingBox())!
+    expect(Math.abs(started.y - finished.y)).toBeLessThan(2)
+    expect(started.y).toBeGreaterThan(condition.y + condition.height)
+  })
+})
+
+// A list's filter with a summary stays one line (4.109): with picks,
+// "Shelf: <first> +1" truncates and the text box takes no room until
+// focused, so in a 192px box it's as tall as the Input beside it.
+test.describe('a narrow MultiChoice filter with a summary', () => {
+  test('stays the height of the Input beside it, its summary cut off with an ellipsis', async ({ page }) => {
+    await page.goto(story('narrow-filters'))
+    const row = page.getByTestId('narrow-filters')
+    const input = row.getByRole('textbox', { name: 'Search by title' })
+    const filter = row.locator('[data-slot=combobox-chips]')
+    const summary = filter.locator('[data-slot=multi-choice-summary]')
+    await expect(summary).toContainText('Shelf: Hallway bookcase by the stairs')
+    await expect(summary).toContainText('+1')
+    const heightOf = async (locator: Locator) => (await locator.boundingBox())!.height
+    expect((await filter.boundingBox())!.width).toBe(192)
+    expect(await heightOf(filter)).toBe(await heightOf(input))
+    // The summary is cut off, not wrapped: wider than the room it has.
+    expect(await summary.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true)
+    expect(await summary.evaluate((node) => getComputedStyle(node).textOverflow)).toBe('ellipsis')
+    // Focused, the text box takes its room and the control keeps its height.
+    await row.getByRole('combobox', { name: 'Filter by shelf' }).focus()
+    expect(await heightOf(filter)).toBe(await heightOf(input))
+  })
+})
+
+// A status of five or more as OptionSelect (4.109): each option's kind icon
+// in its colour on the trigger and in the list, as ChoiceButtons draws it.
+test.describe('a status select draws its kinds', () => {
+  const tokenColour = (page: Page, token: string) =>
+    page.evaluate((token) => {
+      const probe = document.createElement('div')
+      probe.style.color = `var(${token})`
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).color
+      probe.remove()
+      return colour
+    }, token)
+  const colourOf = (locator: Locator) => locator.evaluate((node) => getComputedStyle(node).color)
+
+  test("the picked one's icon on the trigger, and every option's in the list, in their kinds' colours", async ({ page }) => {
+    await page.goto(story('status-selects'))
+    const trigger = page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Stage' })
+    const icon = trigger.locator('[data-slot=option-select-icon]')
+    await expect(icon).toHaveAttribute('data-kind', 'attention')
+    expect(await colourOf(icon)).toBe(await tokenColour(page, '--destructive-text'))
+
+    await trigger.click()
+    const list = page.getByRole('listbox')
+    const tones: Record<string, string> = {
+      Idea: '--info-text',
+      Drafting: '--success-text',
+      Shelved: '--warning-text',
+      Sent: '--status-done-text',
+    }
+    for (const [label, token] of Object.entries(tones)) {
+      const item = list.getByRole('option', { name: label })
+      await expect(item.locator('[data-slot=option-select-icon]')).toBeVisible()
+      expect(await colourOf(item.locator('[data-slot=option-select-icon]'))).toBe(await tokenColour(page, token))
+    }
+    // "Not set" has no icon.
+    await expect(list.getByRole('option', { name: 'Not set' }).locator('svg[data-slot=option-select-icon]')).toHaveCount(0)
+    await list.getByRole('option', { name: 'Sent' }).click()
+    await expect(icon).toHaveAttribute('data-kind', 'done')
+  })
+
+  test('a plain icon, with no kind, keeps the words’ colour', async ({ page }) => {
+    await page.goto(story('status-selects'))
+    const trigger = page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Pick Up' })
+    const icon = trigger.locator('[data-slot=option-select-icon]')
+    await expect(icon).toBeVisible()
+    await expect(icon).not.toHaveAttribute('data-kind', /.+/)
+    expect(await colourOf(icon)).toBe(await colourOf(trigger.locator('[data-slot=select-value]')))
   })
 })

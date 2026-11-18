@@ -13,12 +13,12 @@ function OnAForm({ defaultOpen = false }: { defaultOpen?: boolean }) {
   return (
     <FieldGroup className="max-w-sm">
       <Field>
-        <FieldLabel htmlFor="routine-emoji">Routine emoji</FieldLabel>
+        <FieldLabel htmlFor="routine-emoji">Routine Emoji</FieldLabel>
         <EmojiField id="routine-emoji" value={chosen} onChange={setChosen} clearable defaultOpen={defaultOpen} />
         <output data-testid="chosen-value">{chosen || 'empty'}</output>
       </Field>
       <Field>
-        <FieldLabel htmlFor="list-emoji">List emoji</FieldLabel>
+        <FieldLabel htmlFor="list-emoji">List Emoji</FieldLabel>
         <EmojiField id="list-emoji" value={empty} onChange={setEmpty} clearable placeholder="No emoji" />
         <output data-testid="empty-value">{empty || 'empty'}</output>
       </Field>

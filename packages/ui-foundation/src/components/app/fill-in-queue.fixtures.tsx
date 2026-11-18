@@ -146,8 +146,8 @@ const GAPS: Gap[] = [
     context: 'Planned purchase · Office',
     fields: [
       { name: 'price', label: 'Price', kind: 'money', suggestion: { value: 249, note: 'last price seen' } },
-      { name: 'buyAt', label: 'Buy at', kind: 'date' },
-      { name: 'paidFrom', label: 'Paid from', kind: 'reference', choices: ACCOUNTS },
+      { name: 'buyAt', label: 'Buy At', kind: 'date' },
+      { name: 'paidFrom', label: 'Paid From', kind: 'reference', choices: ACCOUNTS },
     ],
   },
   {
@@ -167,7 +167,7 @@ const GAPS: Gap[] = [
         ],
       },
       { name: 'model', label: 'Model', kind: 'text' },
-      { name: 'count', label: 'How many', kind: 'number' },
+      { name: 'count', label: 'How Many', kind: 'number' },
     ],
   },
 ]

@@ -134,7 +134,7 @@ function Hub({ mobile }: { mobile?: ModuleStripMobile }) {
       <Strip label="Places" mobile={mobile} />
       <div className={GRID}>
         <WidgetCard
-          title="Ready to start"
+          title="Ready to Start"
           link={{ to: '/projects?status=ready', label: 'All' }}
           isLoading={false}
           isEmpty={false}

@@ -52,7 +52,7 @@ test.describe('EntityView header', () => {
 
   test('Print notes and Delete are icons, each named, with its tooltip', async ({ page }) => {
     await open(page, 'record-standard', 1280)
-    for (const name of ['Print notes', 'Delete']) {
+    for (const name of ['Print Notes', 'Delete']) {
       const button = page.getByRole('button', { name, exact: true })
       await expect(button).toHaveText('')
       const size = await box(button)
@@ -62,7 +62,7 @@ test.describe('EntityView header', () => {
       await page.mouse.move(0, 0)
     }
     // The record's own command stays in words.
-    await expect(page.getByRole('button', { name: 'New order' })).toHaveText('New order')
+    await expect(page.getByRole('button', { name: 'New Order' })).toHaveText('New Order')
   })
 
   test('Delete as a dialog trigger opens its confirm dialog', async ({ page }) => {
@@ -91,7 +91,7 @@ test.describe('EntityView folded empties', () => {
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
       await toggle.click()
       await expect(contact.locator('dt')).toHaveText(['Phone', 'Fax', 'Website', 'Address'])
-      await expect(contact.getByRole('button', { name: 'Hide empty' })).toHaveAttribute('aria-expanded', 'true')
+      await expect(contact.getByRole('button', { name: 'Hide Empty' })).toHaveAttribute('aria-expanded', 'true')
       // The dash, read as "Not set".
       await expect(contact.locator('dd').first()).toHaveText('—Not set')
       expect(await pageScrollsSideways(page)).toBe(false)
@@ -107,7 +107,7 @@ test.describe('EntityView folded empties', () => {
     await page.keyboard.press('Enter')
     await expect(contact.getByText('555-0199')).toBeVisible()
     // Folded again, the filled one stays in the card.
-    await contact.getByRole('button', { name: 'Hide empty' }).click()
+    await contact.getByRole('button', { name: 'Hide Empty' }).click()
     await expect(contact.locator('dt')).toHaveText(['Fax', 'Address'])
     await expect(contact.getByRole('button', { name: '2 empty' })).toBeVisible()
   })
@@ -115,8 +115,53 @@ test.describe('EntityView folded empties', () => {
   test('a value set elsewhere moves its field into the card', async ({ page }) => {
     await open(page, 'record-standard', 1280)
     const contact = region(page, 'Contact')
-    await page.getByRole('button', { name: 'Add the phone' }).click()
+    await page.getByRole('button', { name: 'Add the Phone' }).click()
     await expect(contact.locator('dt')).toHaveText(['Phone', 'Address'])
     await expect(contact.getByRole('button', { name: '2 empty' })).toBeVisible()
   })
+})
+
+// The title edited in place (app/EntityView "Record standard, title edited
+// in place", and its long title). Before 4.94 the editable box's negative
+// margins made the title 0.75rem too narrow for its own text, so a short
+// name broke over two lines ("Dr. / Example").
+test.describe('EntityView title edited in place', () => {
+  // The lines the title's text sits on, and the words broken across two.
+  const titleLines = (page: Page) =>
+    page.getByRole('heading', { level: 1 }).evaluate((heading) => {
+      const value = heading.querySelector('[data-slot="editable-value"] > span')!
+      const text = document.createTreeWalker(value, NodeFilter.SHOW_TEXT).nextNode() as Text
+      const tops = (start: number, end: number) => {
+        const range = document.createRange()
+        range.setStart(text, start)
+        range.setEnd(text, end)
+        return new Set([...range.getClientRects()].filter((rect) => rect.width > 0).map((rect) => Math.round(rect.top))).size
+      }
+      const broken: string[] = []
+      for (const match of text.data.matchAll(/\S+/g)) {
+        if (tops(match.index, match.index + match[0].length) > 1) broken.push(match[0])
+      }
+      return { lines: tops(0, text.data.length), broken }
+    })
+
+  for (const width of [1280, 375]) {
+    test(`${width}px: a short name stays on one line`, async ({ page }) => {
+      await open(page, 'record-standard-editable-title', width)
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Dr. Example')
+      expect(await titleLines(page)).toEqual({ lines: 1, broken: [] })
+      expect(await pageScrollsSideways(page)).toBe(false)
+    })
+
+    test(`${width}px: a long name wraps within its column, between words`, async ({ page }) => {
+      await open(page, 'record-standard-editable-long-title', width)
+      const { lines, broken } = await titleLines(page)
+      expect(lines).toBeGreaterThan(1)
+      expect(broken).toEqual([])
+      const heading = await box(page.getByRole('heading', { level: 1 }))
+      const value = await box(page.getByRole('heading', { level: 1 }).locator('[data-slot="editable-value"]'))
+      // The hover tint reaches 0.375rem past the text on each side, no further.
+      expect(value.x + value.width).toBeLessThanOrEqual(heading.x + heading.width + 6.5)
+      expect(await pageScrollsSideways(page)).toBe(false)
+    })
+  }
 })

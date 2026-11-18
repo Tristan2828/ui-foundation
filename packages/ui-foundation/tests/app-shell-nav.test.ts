@@ -7,10 +7,15 @@ import { HomeIcon, ListIcon, TagIcon } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 import {
   activeNavTo,
+  bottomBarCount,
   bottomBarCurrent,
+  bottomBarTiles,
   childItems,
+  childRuns,
   childrenOpen,
   navBackTarget,
+  navCountSpoken,
+  navCountText,
   navGroups,
   navTooltip,
   navPageLabel,
@@ -293,5 +298,85 @@ describe('trailBackTarget', () => {
     const reading = [{ label: 'Reading', href: '/reading' }, { label: 'Dune' }]
     expect(trailBackTarget([tasks], '/reading/2', reading)).toEqual({ label: 'Reading', to: '/reading' })
     expect(trailBackTarget([tasks], '/reading/2', null)).toBeUndefined()
+  })
+})
+
+// The tiles look (#6C): a section's own look carried to its group, the
+// runs of a module's pages with no headings, and a bar item's sheet.
+describe('the tiles look', () => {
+  it("carries a section's look to its group, and nothing when it sets none", () => {
+    expect(navGroups([home, { label: 'Tasks', items: [tasks], look: 'tiles' }])).toEqual([
+      { items: [home] },
+      { label: 'Tasks', items: [tasks], look: 'tiles' },
+    ])
+    expect(navGroups([{ label: 'Tasks', items: [tasks] }])[0]).not.toHaveProperty('look')
+  })
+
+  it("splits a module's pages into runs: each heading its own, named, and plain pages between", () => {
+    const finance: NavItem = {
+      to: '/finance',
+      label: 'Finance',
+      icon: HomeIcon,
+      children: [tasks, { label: 'Money', items: [categories] }, home],
+    }
+    expect(childRuns(finance)).toEqual([{ items: [tasks] }, { label: 'Money', items: [categories] }, { items: [home] }])
+    expect(childRuns(tasks)).toEqual([])
+  })
+
+  it("opens a bar item's sheet as tiles by its own `sheet`, else by its section's look, else the shell's", () => {
+    const section = { label: 'Tasks', items: [tasks] }
+    const item = { group: 'Tasks', icon: HomeIcon }
+    expect(bottomBarTiles(item, section)).toBe(false)
+    expect(bottomBarTiles(item, section, 'tiles')).toBe(true)
+    expect(bottomBarTiles(item, { ...section, look: 'list' }, 'tiles')).toBe(false)
+    expect(bottomBarTiles(item, { ...section, look: 'tiles' })).toBe(true)
+    expect(bottomBarTiles({ ...item, sheet: 'list' }, { ...section, look: 'tiles' })).toBe(false)
+    expect(bottomBarTiles({ ...item, sheet: 'tiles' }, section)).toBe(true)
+    expect(bottomBarTiles({ to: '/', label: 'Home', icon: HomeIcon }, undefined, 'tiles')).toBe(false)
+  })
+})
+
+describe('counts (drawn the same in the sidebar, the bottom bar and its sheets)', () => {
+  it('draws nothing at 0, below it or while loading, and "99+" past 99', () => {
+    expect(navCountText(undefined)).toBeUndefined()
+    expect(navCountText(0)).toBeUndefined()
+    expect(navCountText(-3)).toBeUndefined()
+    expect(navCountText(Number.NaN)).toBeUndefined()
+    expect(navCountText(7)).toBe('7')
+    expect(navCountText(99)).toBe('99')
+    expect(navCountText(100)).toBe('99+')
+  })
+
+  it('reads the real number with what it counts, and nothing where nothing is drawn', () => {
+    expect(navCountSpoken(7, 'new')).toBe('7 new')
+    expect(navCountSpoken(120, 'new')).toBe('120 new')
+    expect(navCountSpoken(4)).toBe('4')
+    expect(navCountSpoken(0, 'new')).toBeUndefined()
+    expect(navCountSpoken(undefined, 'new')).toBeUndefined()
+  })
+
+  const news: NavItem = { to: '/news', label: 'News', icon: ListIcon, count: 7, countLabel: 'new' }
+  const videos: NavItem = { to: '/videos', label: 'Videos', icon: ListIcon, count: 3, countLabel: 'new' }
+  const inbox: NavItem = { to: '/inbox', label: 'Inbox', icon: ListIcon, count: 2, countLabel: 'unread' }
+  const idle: NavItem = { to: '/idle', label: 'Idle', icon: ListIcon, count: 0, countLabel: 'unread' }
+  const parent: NavItem = { to: '/media', label: 'Media', icon: ListIcon, children: [videos] }
+  const nav: NavEntry[] = [
+    home,
+    { label: 'Daily', items: [news, parent, idle] },
+    { label: 'Mixed', items: [news, inbox] },
+    { label: 'Quiet', items: [tasks] },
+  ]
+
+  it("gives a bar page its nav entry's count", () => {
+    expect(bottomBarCount({ to: '/news', label: 'News', icon: ListIcon }, nav)).toEqual({ count: 7, countLabel: 'new' })
+    expect(bottomBarCount({ to: '/', label: 'Home', icon: ListIcon }, nav)).toEqual({ count: undefined, countLabel: undefined })
+    expect(bottomBarCount({ to: '/elsewhere', label: 'Elsewhere', icon: ListIcon }, nav)).toEqual({})
+  })
+
+  it("gives a bar section the sum of its entries' and their pages', with their label when they share one", () => {
+    expect(bottomBarCount({ group: 'Daily', icon: ListIcon }, nav)).toEqual({ count: 10, countLabel: 'new' })
+    expect(bottomBarCount({ group: 'Mixed', icon: ListIcon }, nav)).toEqual({ count: 9, countLabel: undefined })
+    expect(bottomBarCount({ group: 'Quiet', icon: ListIcon }, nav)).toEqual({})
+    expect(bottomBarCount({ group: 'Missing', icon: ListIcon }, nav)).toEqual({})
   })
 })

@@ -57,7 +57,7 @@ const primary = useRef<HTMLButtonElement>(null)
 
 - **The title is required.** It names the dialog for screen readers and
   heads the view. The header also holds Close and, with
-  `fullscreenControl`, a "Full screen" toggle.
+  `fullscreenControl`, a "Full Screen" toggle.
 - **Real fullscreen** asks the browser to take the whole screen too
   (hiding its own bars). Where the browser can't (iOS Safari on a phone),
   the control isn't shown. The view already covers the page. Closing the

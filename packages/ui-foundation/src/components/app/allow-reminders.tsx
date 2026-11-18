@@ -42,7 +42,7 @@ export function AllowReminders({ push, description = DEFAULT_DESCRIPTION, classN
           <div>
             <Button onClick={push.enable} disabled={pending}>
               <BellIcon aria-hidden="true" />
-              {pending ? 'Turning on…' : 'Allow reminders'}
+              {pending ? 'Turning on…' : 'Allow Reminders'}
             </Button>
           </div>
         </>
@@ -54,7 +54,7 @@ export function AllowReminders({ push, description = DEFAULT_DESCRIPTION, classN
           action={
             <Button size="sm" variant="outline" onClick={push.disable} disabled={pending}>
               <BellOffIcon aria-hidden="true" />
-              {pending ? 'Turning off…' : 'Turn off'}
+              {pending ? 'Turning off…' : 'Turn Off'}
             </Button>
           }
         >

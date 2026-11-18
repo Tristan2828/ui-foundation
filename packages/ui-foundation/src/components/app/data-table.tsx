@@ -39,6 +39,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ListTreeIcon,
+  Settings2Icon,
   TableIcon,
   XIcon,
 } from 'lucide-react'
@@ -52,6 +53,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
@@ -64,10 +66,12 @@ import { EditInPlaceContext } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { LeaveGuard } from './editable-value'
 import { recordDialogState } from './record-dialog-context'
+import { IconAction } from './icon-action'
 import type { IconComponent } from './icon-component'
 import { groupByValues, groupRuns, type GroupRun, type RowGroup } from './table-groups'
 import {
   ColumnsMenu,
+  ColumnsMenuItems,
   PHONE_LIST_CLASS,
   PhoneRow,
   PhoneRowsSkeleton,
@@ -122,9 +126,19 @@ declare module '@tanstack/table-core' {
     /**
      * The widest the column's content gets, as a CSS length: `'24rem'`
      * unless set, with `clip` (and never over 60% of the table's area, for
-     * a phone). Without `clip`, the content wraps at it.
+     * a phone). Without `clip`, the content wraps at it. The title column
+     * (the first) is cut at 24rem when neither is set.
      */
     maxWidth?: string
+    /**
+     * The title column (the table's first, the row's name): wrap at
+     * `maxWidth` (`'24rem'` unless set) instead of the default, one line cut
+     * at 24rem with an ellipsis. For a title worth reading whole in the row.
+     * A title column with `maxWidth: 'none'` has no cap at all (the look
+     * before 4.103); one with its own `clip` or `maxWidth` is cut or wrapped
+     * at it, as any column is.
+     */
+    wrap?: boolean
     /**
      * The column's name in DataTable's Columns menu (`columnsMenu`), for a
      * column whose `header` isn't a string.
@@ -368,6 +382,25 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
   /** The pills' group name: "Views" unless set. */
   viewsLabel?: string
   /**
+   * The list page's header (4.106, the list standard's C3): its
+   * `<ListHeader>`, drawn above the views. In the framed look with
+   * `width="content"` the header, the views and the card share one width,
+   * the table's, so the header's ⋯ and New end on the card's right edge
+   * above a short table instead of at the page's far edge. With
+   * `width="full"`, a table wider than the page, or the row list on a
+   * phone, it spans the page as before.
+   */
+  pageHeader?: ReactNode
+  /**
+   * A bar between the page header and the list (4.123): something about
+   * the whole page that belongs above its rows, such as a deals bar, an
+   * "Allow reminders" notice or a budget's totals. Drawn under
+   * `pageHeader` and above the views, so C3 holds: the header, the bar and
+   * the card are still one box as wide as the table, and the bar never
+   * widens it (it wraps in that width instead).
+   */
+  pageBar?: ReactNode
+  /**
    * A Columns menu at the end of the toolbar (L5): a tick for every column
    * but the first (the name) and the row actions, remembered on this device
    * under `storageKey`. Until something is ticked it starts from
@@ -404,7 +437,23 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    * when there are more than the rows shown.
    */
   viewAll?: DataTableViewAll
+  /**
+   * How the list is drawn around its rows (4.100). `plain` (the default):
+   * the toolbar above the whole width, the Columns and Group menus as
+   * buttons at its end, the pagination under the rows. `framed`: the
+   * list is a card with a border, as wide as the table under `width`'s
+   * rules, so its tools end at the table's own edge and nothing sits off
+   * at the far right of a wide page. The card's top bar holds the toolbar
+   * (search and Filters keep their words), Fold All while grouped, one
+   * settings button holding the Columns ticks and Group By, and the layout
+   * switch; its bottom bar holds the count and the pager. Saved views stay
+   * above the card, outside its bar. Every other prop works the same way.
+   */
+  look?: DataTableLook
 }
+
+/** How DataTable draws the list around its rows (`look`). */
+export type DataTableLook = 'plain' | 'framed'
 
 /** A field DataTable's rows can be grouped by (`groupings`). */
 export type DataTableGrouping<TData> = {
@@ -594,16 +643,38 @@ function LayoutSwitch({
 // stand-in, never '' (the grouping's own word for None).
 const NO_GROUPING = '__none__'
 
-function GroupMenu<TData>({
-  groupings,
-  value,
-  onValueChange,
-}: {
+type GroupMenuProps<TData> = {
   groupings: readonly DataTableGrouping<TData>[]
   value: string
   onValueChange: (grouping: string) => void
-}) {
+}
+
+// The Group menu's items alone: its own menu's, and the framed look's
+// settings menu's second group.
+function GroupMenuItems<TData>({ groupings, value, onValueChange }: GroupMenuProps<TData>) {
   const current = groupings.find((grouping) => grouping.id === value)
+  return (
+    <DropdownMenuGroup>
+      <DropdownMenuLabel>Group By</DropdownMenuLabel>
+      <DropdownMenuRadioGroup
+        value={current?.id ?? NO_GROUPING}
+        onValueChange={(next) => onValueChange(next === NO_GROUPING ? '' : String(next))}
+      >
+        <DropdownMenuRadioItem value={NO_GROUPING} closeOnClick>
+          None
+        </DropdownMenuRadioItem>
+        {groupings.map((grouping) => (
+          <DropdownMenuRadioItem key={grouping.id} value={grouping.id} closeOnClick>
+            {grouping.label}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+    </DropdownMenuGroup>
+  )
+}
+
+function GroupMenu<TData>(props: GroupMenuProps<TData>) {
+  const current = props.groupings.find((grouping) => grouping.id === props.value)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="outline" size="sm" data-slot="data-table-group-menu" />}>
@@ -611,26 +682,66 @@ function GroupMenu<TData>({
         {current ? `Group: ${current.label}` : 'Group'}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Group by</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={current?.id ?? NO_GROUPING}
-            onValueChange={(next) => onValueChange(next === NO_GROUPING ? '' : String(next))}
-          >
-            <DropdownMenuRadioItem value={NO_GROUPING} closeOnClick>
-              None
-            </DropdownMenuRadioItem>
-            {groupings.map((grouping) => (
-              <DropdownMenuRadioItem key={grouping.id} value={grouping.id} closeOnClick>
-                {grouping.label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
+        <GroupMenuItems {...props} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
+
+// The framed look's one settings button (`look="framed"`): the Columns
+// ticks, then Group By, in one menu, in place of the two buttons with
+// words. Its name says what's set that the bar no longer shows ("Table
+// Settings, Grouped by Status"), and a dot on it says so to the eye.
+function TableSettingsMenu<TData>({
+  columns,
+  grouping,
+  changed,
+}: {
+  columns?: React.ComponentProps<typeof ColumnsMenuItems>
+  grouping?: GroupMenuProps<TData>
+  /** The columns differ from the list's own: a pick of the reader's, or a view's. */
+  changed: boolean
+}) {
+  const current = grouping?.groupings.find((each) => each.id === grouping.value)
+  const label = current ? `Table Settings, Grouped by ${current.label}` : 'Table Settings'
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <IconAction
+            icon={Settings2Icon}
+            label={label}
+            size="sm"
+            data-tool="table-settings"
+            data-set={current || changed ? true : undefined}
+            className={SETTINGS_DOT_CLASS}
+          />
+        }
+      />
+      <DropdownMenuContent align="end" className="w-56">
+        {columns ? <ColumnsMenuItems {...columns} /> : null}
+        {columns && grouping ? <DropdownMenuSeparator /> : null}
+        {grouping ? <GroupMenuItems {...grouping} /> : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+// The dot on the settings button while something in it is set: the
+// primary colour, ringed in the button's own background so it reads on
+// either theme. Decoration: the button's name says it in words.
+const SETTINGS_DOT_CLASS =
+  'relative data-set:after:absolute data-set:after:top-0.5 data-set:after:right-0.5 data-set:after:size-2 ' +
+  'data-set:after:rounded-full data-set:after:bg-primary data-set:after:ring-2 data-set:after:ring-background ' +
+  "data-set:after:content-['']"
+
+// `look="framed"`: the card around the list, and its two bars. The card
+// clips (never hides) its overflow, so the rounded corners hold and sticky
+// headings still stick to the page.
+const FRAME_CLASS = 'flex flex-col overflow-clip rounded-lg border border-border bg-background'
+// The phone's row list inside the card: the card is its border.
+const FRAMED_PHONE_ROWS_CLASS = '[&_[data-slot=data-table-phone-rows]_ul]:rounded-none [&_[data-slot=data-table-phone-rows]_ul]:border-0'
+const FRAME_BAR_CLASS = 'flex flex-wrap items-center gap-x-4 gap-y-2 bg-card px-3 py-2.5 text-card-foreground max-md:gap-x-2'
 
 // The rows-per-page menu in the pagination bar (`pageSizes`): a radio list
 // that closes on a pick. The button says the size in words of its own
@@ -662,7 +773,7 @@ function PageSizeMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuGroup>
-          <DropdownMenuLabel>Rows per page</DropdownMenuLabel>
+          <DropdownMenuLabel>Rows per Page</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={String(value)} onValueChange={(next) => onValueChange(Number(next))}>
             {pageSizes.map((size) => (
               <DropdownMenuRadioItem key={size} value={String(size)} closeOnClick>
@@ -679,14 +790,27 @@ function PageSizeMenu({
 // A cell's text cut to one line (`meta.clip`). Only when it is cut does it
 // take a tab stop and a tooltip with the whole text, on hover and on focus;
 // re-measured on every render (the text may change) and on every resize.
-function ClippedText({ maxWidth, children }: { maxWidth: string; children: ReactNode }) {
+// A cut cell whose content has a control of its own (the title's link)
+// takes no tab stop: the control already has one, and focusing it opens
+// the tooltip, since focus reaches the trigger from inside it.
+function ClippedText({
+  maxWidth,
+  slot = 'data-table-clip',
+  children,
+}: {
+  maxWidth: string
+  slot?: string
+  children: ReactNode
+}) {
   const ref = useRef<HTMLSpanElement>(null)
   const [fullText, setFullText] = useState<string | null>(null)
+  const [hasControl, setHasControl] = useState(false)
   const measure = () => {
     const element = ref.current
     if (!element) return
     const isCut = element.scrollWidth > element.clientWidth + 0.5
     setFullText(isCut ? element.textContent?.trim() || null : null)
+    setHasControl(element.querySelector(ROW_CONTROL_SELECTOR) !== null)
   }
   useLayoutEffect(measure)
   useEffect(() => {
@@ -702,12 +826,12 @@ function ClippedText({ maxWidth, children }: { maxWidth: string; children: React
         render={
           <span
             ref={ref}
-            data-slot="data-table-clip"
-            className={CLIP_CLASS}
+            data-slot={slot}
+            className={slot === 'data-table-title' ? TITLE_CLIP_CLASS : CLIP_CLASS}
             // Never more than 60% of the table's area, so on a phone the
             // cut column leaves the name and the rest room.
             style={{ maxWidth: `min(${maxWidth}, 60cqw)` }}
-            tabIndex={fullText === null ? undefined : 0}
+            tabIndex={fullText === null || hasControl ? undefined : 0}
           />
         }
       >
@@ -805,12 +929,16 @@ const HOVER_FOCUSED_ROW_CLASS =
 const DEFAULT_CLIP_WIDTH = '24rem'
 const CLIP_CLASS =
   'block truncate rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+// The title's: padding, taken back by the margin, keeps its link's focus
+// ring clear of the cut.
+const TITLE_CLIP_CLASS = cn(CLIP_CLASS, '-m-1 p-1')
 
 // A pinned first column's content, capped below md at 45% of the table's
 // scroll area (`cqw`: the container is an inline-size query container)
 // and wrapping, so a long title can't widen the column past the screen
 // and leave every other column scrolling underneath it (issue #91).
-// Wider screens are unchanged: the column sizes to its content.
+// The title inside is capped at every width too (cut at 24rem, or
+// wrapped with `meta.wrap`), so wider screens don't overrun either.
 const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-normal max-md:break-words'
 
 // `highlightRow`: the wash on every cell, so it covers the zebra stripe
@@ -838,6 +966,14 @@ const TOTALS_LABEL_CLASS = 'h-auto py-(--table-cell-py)'
 // its column header for a screen reader, but takes no room: each header
 // is its name in an sr-only span, in a cell with no height or padding.
 const HIDDEN_HEAD_CLASS = 'h-0 p-0'
+
+// The column header row (4.105): the muted fill on every header cell, so
+// the row of names reads apart from the rows of data, in the plain and
+// framed looks alike. On the cells, not the row, so a pinned or stuck
+// header cell (opaque, bg-background above) wears it too: listed after
+// those, it wins. Its words keep --foreground, clear on --muted in every
+// theme and palette.
+const HEAD_CELL_CLASS = 'bg-muted'
 
 // A group's heading row (`groupBy`): a little air above, so the groups
 // read apart, and the page's background, never the zebra stripe.
@@ -1085,11 +1221,14 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   activeView = null,
   onViewChange,
   viewsLabel = 'Views',
+  pageHeader,
+  pageBar,
   columnsMenu,
   rowActions,
   phoneRow,
   limit,
   viewAll,
+  look = 'plain',
 }: DataTableProps<TData, TView>) {
   // The switch's own state, for a table that doesn't pass `layout`.
   const [ownLayout, setOwnLayout] = useState('table')
@@ -1411,9 +1550,29 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       {row.getVisibleCells().map((cell, index) => {
         const meta = cell.column.columnDef.meta
         const value = flexRender(cell.column.columnDef.cell, cell.getContext())
-        const shown = meta?.clip ? (
+        // The title column (the first) is capped at every width (a long
+        // discussion topic overran above md): cut to one line by default,
+        // or wrapped with `meta.wrap`; `maxWidth: 'none'` lifts the cap. A
+        // first column with its own `clip` or `maxWidth` keeps their meaning.
+        const isTitle =
+          index === 0 &&
+          cell.column.id !== ROW_ACTIONS_COLUMN_ID &&
+          (meta?.wrap || (!meta?.clip && meta?.maxWidth === undefined))
+        const shown = isTitle && meta?.wrap ? (
+          <div
+            data-slot="data-table-title"
+            className="whitespace-normal break-words"
+            style={{ maxWidth: `min(${meta.maxWidth ?? DEFAULT_CLIP_WIDTH}, 60cqw)` }}
+          >
+            {value}
+          </div>
+        ) : isTitle ? (
+          <ClippedText maxWidth={meta?.maxWidth ?? DEFAULT_CLIP_WIDTH} slot="data-table-title">
+            {value}
+          </ClippedText>
+        ) : meta?.clip ? (
           <ClippedText maxWidth={meta.maxWidth ?? DEFAULT_CLIP_WIDTH}>{value}</ClippedText>
-        ) : meta?.maxWidth ? (
+        ) : meta?.maxWidth && meta.maxWidth !== 'none' ? (
           <div className="whitespace-normal break-words" style={{ maxWidth: meta.maxWidth }}>
             {value}
           </div>
@@ -1488,13 +1647,10 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   // The row list a phone gets has no columns to pick.
   const showColumnsMenu = Boolean(columnsMenu) && !showPhoneRows
 
-  const content = (
-    <div
-      ref={root}
-      className="flex flex-col gap-4"
-      data-width={width}
-      data-layout={layouts?.length ? currentLayout : undefined}
-    >
+  // The pieces, placed as `look` says: plain, or a framed card.
+  const framed = look === 'framed'
+  const viewPills = (
+    <>
       {viewEntries.length > 0 ? (
         <ViewPills
           label={viewsLabel}
@@ -1506,81 +1662,106 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
           }}
         />
       ) : null}
-      {layouts?.length || groupings?.length || showColumnsMenu ? (
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-          {/* A basis, so on a phone the toolbar takes its own line and the
-              menus wrap under it rather than squeezing it to its content. */}
-          <div className="min-w-0 flex-1 basis-72">{toolbar}</div>
-          {showColumnsMenu ? (
-            <ColumnsMenu
-              label={columnsMenu?.label}
-              columns={menuColumns}
-              visible={shownColumns ?? leafIds}
-              fixed={fixedColumns}
-              pick={columnsPick}
-              onPickChange={setColumnsPick}
-              setByView={viewColumns !== undefined}
-            />
-          ) : null}
-          {groupings?.length ? (
-            <div className="flex items-center gap-2">
-              {activeGrouping && (
-                <Button variant="ghost" size="sm" data-slot="data-table-fold-all" disabled={!runs?.length} onClick={foldAll}>
-                  {allFolded ? 'Unfold all' : 'Fold all'}
-                </Button>
-              )}
-              <GroupMenu groupings={groupings} value={activeGrouping?.id ?? ''} onValueChange={setGrouping} />
-            </div>
-          ) : null}
-          {layouts?.length ? (
-            <LayoutSwitch
-              options={[
-                { id: 'table', label: tableLayout?.label ?? 'Table', icon: tableLayout?.icon ?? TableIcon },
-                ...layouts,
-              ]}
-              value={currentLayout}
-              onValueChange={setLayout}
-            />
-          ) : null}
-        </div>
-      ) : (
-        toolbar
-      )}
+    </>
+  )
 
-      {/* The table, its states and its pagination: what `width="content"`
-          fits to the columns, the toolbar above keeping the whole width. */}
-      <div
-        ref={body}
-        data-slot="data-table-body"
-        className={cn('flex flex-col gap-4', fitsColumns && CONTENT_WIDTH_CLASS)}
-        style={
-          fitsColumns && !isSuccessView && lastWidth !== null
-            ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
-            : undefined
-        }
-      >
-      {error ? (
-        <ErrorState error={error} onRetry={onRetry} />
-      ) : isLoading || isPastLastPage ? (
-        cardLayout ? (
-          <CardsSkeleton layout={cardLayout} />
-        ) : showPhoneRows ? (
-          <PhoneRowsSkeleton />
-        ) : (
-          <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
-        )
-      ) : isEmpty ? (
-        <Empty data-state="empty">
-          <EmptyHeader>
-            <EmptyTitle>{emptyTitle}</EmptyTitle>
-            {emptyDescription && <EmptyDescription>{emptyDescription}</EmptyDescription>}
-          </EmptyHeader>
-          {emptyAction}
-        </Empty>
-      ) : (
-        <DetailFrame
-          enabled={Boolean(detailPanel) && !cardLayout}
-          aside={
+  const foldAllButton = activeGrouping ? (
+    <Button variant="ghost" size="sm" data-slot="data-table-fold-all" disabled={!runs?.length} onClick={foldAll}>
+      {allFolded ? 'Unfold All' : 'Fold All'}
+    </Button>
+  ) : null
+  const columnsItems = showColumnsMenu
+    ? {
+        columns: menuColumns,
+        visible: shownColumns ?? leafIds,
+        fixed: fixedColumns,
+        pick: columnsPick,
+        onPickChange: setColumnsPick,
+        setByView: viewColumns !== undefined,
+      }
+    : undefined
+  const layoutSwitch = layouts?.length ? (
+    <LayoutSwitch
+      options={[
+        { id: 'table', label: tableLayout?.label ?? 'Table', icon: tableLayout?.icon ?? TableIcon },
+        ...layouts,
+      ]}
+      value={currentLayout}
+      onValueChange={setLayout}
+    />
+  ) : null
+  const hasTools = Boolean(layouts?.length || groupings?.length || showColumnsMenu)
+
+  // `plain`: the toolbar, then the Columns and Group menus as buttons.
+  const plainToolbar = hasTools ? (
+    <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+      {/* A basis, so on a phone the toolbar takes its own line and the
+          menus wrap under it rather than squeezing it to its content. */}
+      <div className="min-w-0 flex-1 basis-72">{toolbar}</div>
+      {columnsItems ? <ColumnsMenu label={columnsMenu?.label} {...columnsItems} /> : null}
+      {groupings?.length ? (
+        <div className="flex items-center gap-2">
+          {foldAllButton}
+          <GroupMenu groupings={groupings} value={activeGrouping?.id ?? ''} onValueChange={setGrouping} />
+        </div>
+      ) : null}
+      {layoutSwitch}
+    </div>
+  ) : (
+    toolbar
+  )
+
+  // `framed`: the card's top bar, one settings button in place of the two
+  // menus. Left out when there's nothing to put in it.
+  const framedToolbar =
+    toolbar || hasTools ? (
+      <div data-slot="data-table-top-bar" className={cn(FRAME_BAR_CLASS, 'border-b border-border')}>
+        {/* On a phone the settings button stays on the search's line. */}
+        <div className="min-w-0 flex-1 basis-72 max-md:basis-0">{toolbar}</div>
+        {hasTools ? (
+          <div className="flex items-center gap-2">
+            {foldAllButton}
+            {columnsItems || groupings?.length ? (
+              <TableSettingsMenu
+                columns={columnsItems}
+                grouping={
+                  groupings?.length
+                    ? { groupings, value: activeGrouping?.id ?? '', onValueChange: setGrouping }
+                    : undefined
+                }
+                changed={Boolean(columnsItems && (columnsPick || viewColumns !== undefined))}
+              />
+            ) : null}
+            {layoutSwitch}
+          </div>
+        ) : null}
+      </div>
+    ) : null
+
+  // Loading, empty or failed: in place of the rows.
+  const stateView = error ? (
+    <ErrorState error={error} onRetry={onRetry} />
+  ) : isLoading || isPastLastPage ? (
+    cardLayout ? (
+      <CardsSkeleton layout={cardLayout} />
+    ) : showPhoneRows ? (
+      <PhoneRowsSkeleton />
+    ) : (
+      <TableSkeleton columnCount={table.getVisibleLeafColumns().length} />
+    )
+  ) : isEmpty ? (
+    <Empty data-state="empty">
+      <EmptyHeader>
+        <EmptyTitle>{emptyTitle}</EmptyTitle>
+        {emptyDescription && <EmptyDescription>{emptyDescription}</EmptyDescription>}
+      </EmptyHeader>
+      {emptyAction}
+    </Empty>
+  ) : null
+
+  const detailAside = !isSuccessView
+    ? null
+    : (
             selectedRow && detailPanel && isWide ? (
               <aside
                 aria-label={detailLabel}
@@ -1602,8 +1783,10 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
                 {detailPanel(selectedRow.original)}
               </aside>
             ) : null
-          }
-        >
+      )
+
+  const rowsView = (
+    <>
           {cardLayout ? (
             <Cards
               layout={cardLayout}
@@ -1720,6 +1903,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
                               index === headerGroup.headers.length - 1 &&
                               PINNED_LAST_COLUMN_CLASS,
                             stickyGroups && showHeader && STICKY_HEAD_CELL_CLASS,
+                            showHeader && HEAD_CELL_CLASS,
                             alignClass(header.column.columnDef.meta?.align),
                           )}
                           aria-sort={
@@ -1851,9 +2035,15 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
           {viewAll && limit !== undefined && viewAllTotal > rows.length ? (
             <ViewAllLink viewAll={viewAll} total={viewAllTotal} navigator={navigation?.navigator} />
           ) : null}
+    </>
+  )
 
-          {limit === undefined && (
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2" data-slot="data-table-pagination">
+  const pagination =
+    limit === undefined ? (
+          <div
+            className={cn('flex flex-wrap items-center justify-between gap-x-4 gap-y-2', framed && [FRAME_BAR_CLASS, 'border-t border-border py-2'])}
+            data-slot="data-table-pagination"
+          >
             <p className="type-body text-muted-foreground">
               {total === 0 ? 0 : (page - 1) * pageSize + 1}
               {'–'}
@@ -1866,7 +2056,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="Previous page"
+                aria-label="Previous Page"
                 disabled={page <= 1}
                 onClick={() => onPageChange(page - 1)}
               >
@@ -1878,7 +2068,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="Next page"
+                aria-label="Next Page"
                 disabled={page >= pageCount}
                 onClick={() => onPageChange(page + 1)}
               >
@@ -1886,9 +2076,90 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
               </Button>
             </div>
           </div>
-          )}
-        </DetailFrame>
+    ) : null
+
+  // `width="content"`'s last width, kept while another state shows.
+  const lastWidthStyle =
+    fitsColumns && !isSuccessView && lastWidth !== null
+      ? ({ '--data-table-last-width': `${lastWidth}px` } as CSSProperties)
+      : undefined
+
+  // C3: with a header, the header, views and card are one box as wide as
+  // the table (the box fits its content, the card fills the box), so the
+  // header ends where the card does. CSS only: nothing is measured.
+  const sharedWidth = Boolean(pageHeader || pageBar) && fitsColumns
+  const content = framed ? (
+    <div
+      ref={root}
+      className={cn('flex flex-col gap-4', sharedWidth && CONTENT_WIDTH_CLASS)}
+      data-width={width}
+      data-look="framed"
+      data-shared-width={sharedWidth ? '' : undefined}
+      data-layout={layouts?.length ? currentLayout : undefined}
+    >
+      {pageHeader}
+      {pageBar && (
+        // contain-inline-size: the bar takes the box's width, never sets it.
+        <div data-slot="data-table-page-bar" className="min-w-0 contain-inline-size">
+          {pageBar}
+        </div>
       )}
+      {viewPills}
+      <DetailFrame enabled={Boolean(detailPanel) && !cardLayout} aside={detailAside}>
+        {/* The card: the tools, the rows and the pager as one box, as wide
+            as `width` makes the table, so the tools end at its edge. */}
+        <div
+          ref={body}
+          data-slot="data-table-frame"
+          className={cn(FRAME_CLASS, fitsColumns && !sharedWidth && CONTENT_WIDTH_CLASS)}
+          style={lastWidthStyle}
+        >
+          {framedToolbar}
+          <div
+            data-slot="data-table-body"
+            className={cn(
+              'flex flex-col gap-4',
+              (stateView || cardLayout) && 'p-3',
+              showPhoneRows && !stateView && FRAMED_PHONE_ROWS_CLASS,
+            )}
+          >
+            {stateView ?? rowsView}
+          </div>
+          {stateView ? null : pagination}
+        </div>
+      </DetailFrame>
+    </div>
+  ) : (
+    <div
+      ref={root}
+      className="flex flex-col gap-4"
+      data-width={width}
+      data-layout={layouts?.length ? currentLayout : undefined}
+    >
+      {pageHeader}
+      {pageBar && (
+        // contain-inline-size: the bar takes the box's width, never sets it.
+        <div data-slot="data-table-page-bar" className="min-w-0 contain-inline-size">
+          {pageBar}
+        </div>
+      )}
+      {viewPills}
+      {plainToolbar}
+
+      {/* The table, its states and its pagination: what `width="content"`
+          fits to the columns, the toolbar above keeping the whole width. */}
+      <div
+        ref={body}
+        data-slot="data-table-body"
+        className={cn('flex flex-col gap-4', fitsColumns && CONTENT_WIDTH_CLASS)}
+        style={lastWidthStyle}
+      >
+        {stateView ?? (
+          <DetailFrame enabled={Boolean(detailPanel) && !cardLayout} aside={detailAside}>
+            {rowsView}
+            {pagination}
+          </DetailFrame>
+        )}
       </div>
     </div>
   )

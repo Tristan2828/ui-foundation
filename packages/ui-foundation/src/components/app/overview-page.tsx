@@ -18,8 +18,15 @@
 // `onRetry` in the card), and `empty` (a part with nothing yet: "Nothing
 // yet" in the tile, PartEmpty with its one way to start in the card).
 //
+// `links` (4.120) are a short list of pages outside the app (the
+// module's account page, a supplier's site): one section after the parts,
+// titled `linksTitle` ("Links"), each link its label with its icon if it
+// has one and the external-link mark, opening in a new tab. In a row of
+// as many as fit from 48rem, one per line under it. None draws nothing.
+//
 // The breakpoint is read with matchMedia; on the server, or where it's
 // missing (a test's DOM), the page is drawn wide.
+import { ExternalLinkIcon } from 'lucide-react'
 import { useId, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from 'react'
 import type { To } from 'react-router'
 import { cn } from 'cn'
@@ -30,6 +37,7 @@ import { NeedsYou, type NeedsYouItem } from '@/components/app/needs-you'
 import type { PartEmptyState } from '@/components/app/part-empty'
 import { WidgetCard, WidgetCardGroup } from '@/components/app/widget-card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyText } from './empty-value'
 
 export type OverviewPart = {
   /** Unique on the page: the tile's and the card's id. */
@@ -54,6 +62,15 @@ export type OverviewPart = {
   onRetry?: () => void
 }
 
+/** A page outside the app (4.120), in the overview's Links section. */
+export type OverviewLink = {
+  label: string
+  /** The page's address: opened in a new tab. */
+  href: string
+  /** Decorative: the label names the page. */
+  icon?: IconComponent
+}
+
 export type OverviewPageProps = {
   /** The page's h1: the module's name. */
   title: string
@@ -64,6 +81,10 @@ export type OverviewPageProps = {
   stats?: ReactNode
   /** Controls at the title's end. */
   actions?: ReactNode
+  /** Pages outside the app (4.120): one section after the parts, each opening in a new tab. */
+  links?: readonly OverviewLink[]
+  /** The links section's heading. Defaults to "Links". */
+  linksTitle?: string
   /** The part open at first; none when left out. */
   defaultOpen?: string | null
   className?: string
@@ -90,9 +111,12 @@ export function OverviewPage({
   needs = [],
   stats,
   actions,
+  links = [],
+  linksTitle = 'Links',
   defaultOpen = null,
   className,
 }: OverviewPageProps) {
+  const linksId = useId()
   const wide = useIsWide()
   const detailId = useId()
   const [openId, setOpenId] = useState<string | null>(defaultOpen)
@@ -140,7 +164,42 @@ export function OverviewPage({
           ))}
         </WidgetCardGroup>
       )}
+      {links.length > 0 && (
+        <section data-slot="overview-links" aria-labelledby={linksId} className="flex flex-col gap-2">
+          <h2 id={linksId} className="type-section-title text-foreground">
+            {linksTitle}
+          </h2>
+          <ul className="flex flex-col md:flex-row md:flex-wrap md:gap-x-6 md:gap-y-1">
+            {links.map((link) => (
+              <li key={`${link.label}:${link.href}`} className="min-w-0">
+                <OverviewLinkItem link={link} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
+  )
+}
+
+function OverviewLinkItem({ link }: { link: OverviewLink }) {
+  const { icon: Icon } = link
+  return (
+    <a
+      href={link.href}
+      target="_blank"
+      rel="noreferrer"
+      data-slot="overview-link"
+      className={cn(
+        'inline-flex max-w-full items-center gap-1.5 rounded-sm py-1 type-body font-medium text-link underline-offset-4 outline-none',
+        'hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 max-md:min-h-11',
+      )}
+    >
+      {Icon && <Icon aria-hidden="true" className="size-4 shrink-0" />}
+      <span className="min-w-0 truncate">{link.label}</span>
+      <ExternalLinkIcon aria-hidden="true" className="size-3.5 shrink-0" />
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
   )
 }
 
@@ -208,10 +267,7 @@ function OverviewTile({
           <span className="sr-only">Loading</span>
         </>
       ) : state === 'error' ? (
-        <span data-state="error" className="type-numeric text-muted-foreground">
-          <span aria-hidden="true">—</span>
-          <span className="sr-only">Couldn't load</span>
-        </span>
+        <EmptyText data-state="error" label="Couldn't load" className="type-numeric text-muted-foreground" />
       ) : state === 'empty' ? (
         <span data-state="empty" className="py-0.5 type-body text-muted-foreground">
           Nothing yet

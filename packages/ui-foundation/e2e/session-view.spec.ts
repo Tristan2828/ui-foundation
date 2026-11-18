@@ -41,7 +41,7 @@ test('focus stays inside while open, Tab wrapping to the header', async ({ page 
     await expect.poll(focused).not.toBe('outside')
     order.push(await focused())
   }
-  expect(order).toEqual(['Mute', 'Full screen', 'Close', 'Start'])
+  expect(order).toEqual(['Mute', 'Full Screen', 'Close', 'Start'])
 })
 
 test('Esc closes it through onOpenChange, and focus goes back to what opened it', async ({ page }) => {
@@ -50,7 +50,7 @@ test('Esc closes it through onOpenChange, and focus goes back to what opened it'
   await expect(view(page)).toBeHidden()
   await expect(page.getByText('Session closed')).toBeVisible()
 
-  const opener = page.getByRole('button', { name: 'Open the session' })
+  const opener = page.getByRole('button', { name: 'Open the Session' })
   await opener.click()
   await expect(view(page)).toBeVisible()
   await view(page).getByRole('button', { name: 'Close' }).click()
@@ -119,7 +119,7 @@ test.describe('keepAwake', () => {
 test.describe('the Full screen control', () => {
   test('asks the browser for fullscreen, pressed while it holds, and leaves it on close', async ({ page }) => {
     await open(page)
-    const control = view(page).getByRole('button', { name: 'Full screen' })
+    const control = view(page).getByRole('button', { name: 'Full Screen' })
     await expect(control).toHaveAttribute('aria-pressed', 'false')
     await control.click()
     await expect(control).toHaveAttribute('aria-pressed', 'true')
@@ -133,7 +133,7 @@ test.describe('the Full screen control', () => {
     await page.addInitScript(() => Object.defineProperty(document, 'fullscreenEnabled', { get: () => false }))
     await open(page)
     await expect(view(page).getByRole('button', { name: 'Close' })).toBeVisible()
-    await expect(view(page).getByRole('button', { name: 'Full screen' })).toHaveCount(0)
+    await expect(view(page).getByRole('button', { name: 'Full Screen' })).toHaveCount(0)
   })
 })
 
@@ -172,7 +172,7 @@ test('closed, the clock holds; reopened, it carries on', async ({ page }) => {
   await page.keyboard.press('Escape')
   await expect(view(page)).toBeHidden()
   await page.clock.fastForward('02:00')
-  await page.getByRole('button', { name: 'Open the session' }).click()
+  await page.getByRole('button', { name: 'Open the Session' }).click()
   await expect(timeLeft(page)).toHaveText('0:50')
   await expect(status(page)).toHaveText('Running')
 })

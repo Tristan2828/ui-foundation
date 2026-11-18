@@ -203,7 +203,7 @@ export function EntityForm({
                   disabled={isSubmitting}
                   onClick={() => (onRetry ? onRetry() : form.current?.requestSubmit())}
                 >
-                  Try again
+                  Try Again
                 </Button>
               }
             >

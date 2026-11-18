@@ -28,7 +28,7 @@ a data source. For the design behind it, see
 
 | The app's (in its repo) | The package's (`@tristan2828/ui-foundation`) |
 |---|---|
-| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/` (except what `ui-foundation-backend` holds), `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell` (with the trail and search in its bar: `usePageTrail`, `useRecentRecord`), `DataTable`, `EntityView` and editing in place, printing a record's notes, a record opened in a dialog over its list (`RecordDialogRoute`, and a new record's form over it), `FormDialog`, `EntityForm` (with `FormSection`, `OptionSelect`, `ChoiceButtons` and `ReferenceCombobox`), the dialogs and feedback parts (`DeleteAction`, `notify`, `useAction`, `ActionError`, `JobStatus`, `OfflineNotice`), `Markdown` (and its task-item helpers `countTasks`, `toggleTaskAt`), `RichTextEditor`, `StageCircle`, `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `InlineCreate`, the timed-screen parts (`SessionView`, `useSessionClock`, `useWakeLock`, the audio cues, `useMuted`), reminders (`AllowReminders`, `usePushPermission`, the `pwa()` Vite plugin and its service worker), login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
+| `openapi.yaml` (except the foundation's part: `/auth/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/` (except what `ui-foundation-backend` holds), `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell` (with the trail and search in its bar: `usePageTrail`, `useRecentRecord`), `DataTable`, `EntityView` (and `EmptyText`, its empty value) and editing in place, printing a record's notes, a record opened in a dialog over its list (`RecordDialogRoute`, and a new record's form over it), `FormDialog`, `EntityForm` (with `FormSection`, `OptionSelect`, `ChoiceButtons` and `ReferenceCombobox`), the dialogs and feedback parts (`DeleteAction`, `notify`, `useAction`, `ActionError`, `JobStatus`, `OfflineNotice`), `Markdown` (and its task-item helpers `countTasks`, `toggleTaskAt`), `RichTextEditor`, `StageCircle`, `StatusMark` (a status's icon, colour and word), `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `InlineCreate`, the timed-screen parts (`SessionView`, `useSessionClock`, `useWakeLock`, the audio cues, `useMuted`), reminders (`AllowReminders`, `usePushPermission`, the `pwa()` Vite plugin and its service worker), login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, `titleCase` (a label built from a value), tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
 
 The app's column changes whenever the app wants. The package's column
 changes only through a release, which reaches every app.
@@ -53,6 +53,179 @@ one lists its upgrade steps in the changelog.
 `verify` makes the upgrade complete. `sync --check` fails until `sync` has
 run, `check-contract` fails if the foundation's part of the contract
 changed, and the lint rules and types flag whatever the release changed.
+
+## Moving a record off the rail (4.98)
+
+The record standard (4.98) has no right rail: a record's short facts are
+its last tab, Details, or, on a record with no tabs, the first sections
+in its one column. `layout="rail"` still works, so an app moves one view
+at a time:
+
+1. In the view, delete `layout="rail"`, `mobileOrder` and `railLabel`.
+   Keep `placement: 'rail'` on the facts sections: that's what makes them
+   the Details tab. `railFields` still sets how their labels sit.
+2. Long text in a rail section (notes, a summary written as prose)
+   leaves it: drop its `placement` and give it a `tab` of its own, or
+   leave it in the column. A box of short facts that belongs with one
+   tab (a dose beside the notes) can stay beside it: `placement: 'rail'`
+   with that `tab`.
+3. A record whose facts should be named other than Details passes
+   `detailsTab`.
+4. Specs: the rail's landmark (`getByRole('complementary', { name:
+   '<title> details' })`) is gone. On a record with tabs, open Details
+   first (`getByRole('tab', { name: 'Details' })`, or go to
+   `?tab=details`); on one without, Details is the first section. A
+   geometry test that put Details beside the main column checks there's
+   no rail and the labels sit beside their values instead (the
+   template's `e2e/widget-view.spec.ts`, "wide screens").
+5. The plan (`docs/entities/<entity>.md`): drop its `Layout: rail` line,
+   and write the facts' Placement as `details`.
+
+## Views that fill the filters (4.105)
+
+Since 4.105 a list's saved views can show what they mean in the filter
+bar, so a reader always sees why rows are hidden. Nothing changes until
+a list opts in; move one list at a time:
+
+1. **Write each view's whole meaning in its filters.** A view that was
+   `{}` and leaned on the server's default (a Current that hides the
+   stopped records) names its values instead:
+
+   ```ts
+   const VIEWS = {
+     current: { label: 'Current', multiFilters: { status: [...NOT_STOPPED] } },
+     stopped: { label: 'Stopped', multiFilters: { status: ['stopped'] } },
+     all: { label: 'All', multiFilters: { status: [...STATUSES] } },
+   }
+   ```
+
+2. **Name the view the list opens on**: `useTableUrlState(FILTERS,
+   MULTI, VIEWS, { ...listOptions, defaultView: 'current' })`. At the
+   plain address `multiFilters.status` is Current's statuses and its
+   pill is pressed. Build the query from `filters` and `multiFilters` as
+   they come: a fallback for "nothing in the URL" (`status.length ?
+   status : NOT_STOPPED`) is no longer needed, and the control's
+   placeholder for no picks says what no picks means ("Any status").
+3. **A part no control shows is the view's `rule`**: a computed
+   `overdue` or `upcoming` moves from `filters` to `rule` (`{ label:
+   'Overdue', rule: { overdue: 'true' }, multiFilters: { status: OPEN }
+   }`). Keep its name in the hook's filter names; the server reads it as
+   before. It applies while its view is on, and the reader's first
+   filter change clears it, so the rows are then what the bar shows.
+4. **Hand changes need nothing.** `setFilter`, `setFilters` and
+   `setMultiFilter` keep every other filter the bar shows (the default
+   view's too) and the pills follow: ticking every status presses All;
+   most changes press none. Emptying every filter by hand writes
+   `?view=none`, so the list stays unfiltered. `applyView({})` (Back to
+   the List, a "Clear filters" link) is the plain address: the default
+   view.
+5. **Specs**: at the plain address the default view's pill is now
+   pressed and its values are in the filters. A spec that changed a
+   filter while a view with a computed part was on and expected that part
+   to stay expects it cleared. A link from another page that names a
+   filter (`?status=active`) is the URL's own, as before.
+
+## A date filter a view fills (4.110)
+
+A view whose rule is a date ("Upcoming": from today on; "Overdue": due
+before today) used to be a `rule` the bar couldn't show. Since 4.110 the
+bar has a date filter, `FilterDate`, and the view fills it like any
+other. One list at a time:
+
+1. **Add the date to the filter names**, a single-value filter:
+   `useTableUrlState(['search', 'due'], MULTI, VIEWS, options)`.
+2. **Put the control in the bar**, usually behind Filters, with its chip:
+
+   ```tsx
+   const due = dateFilterText(filters.due)
+   <FilterBar
+     secondary={<FilterDate label="Due" value={filters.due} onValueChange={(value) => setFilter('due', value)} />}
+     active={due ? [{ id: 'due', label: `Due: ${due}`, onRemove: () => setFilter('due', '') }] : []}
+     onClear={() => setFilters({ due: '' })}
+   />
+   ```
+
+   `presets` picks which of Before today, Today and From today it offers;
+   `range={false}` leaves Between dates out.
+3. **The view sets the preset** in `filters`, in place of its `rule`:
+   `{ label: 'Overdue', filters: { due: 'before-today' }, multiFilters: {
+   status: OPEN } }`, `{ label: 'Upcoming', filters: { date: 'from-today' }
+   }`. Pressing it fills the filter and shows "Due: Before today ×"; the
+   reader can change or remove it like any filter, and picking the same
+   preset by hand presses the view.
+4. **The query reads the bounds**: `resolveDateFilter(filters.due)` gives
+   inclusive plain days, `{ from?, to? }`, read against the browser's
+   today when the list loads (`before-today` is `{ to: yesterday }`), or
+   null for no filter. Send them as the API's own range parameters
+   (`due_from`, `due_to`); a mock filters with `dateFilterKeeps(value,
+   day)`. A timestamp column compares its own day against them.
+5. **Specs**: a view's address is now `?due=before-today` where it was
+   `?overdue=true`, and the chip is there while it's on.
+
+## A record's facts rail (4.106)
+
+Since 4.106 a record's short facts can sit beside its tabs on a laptop
+(`factsRail`), instead of only in Details. Move one view at a time:
+
+1. Turn the facts section from `fields` into `facts`, one kind per fact:
+   - a status: `{ label: 'Status', kind: 'status', status: KINDS[r.status], word: LABELS[r.status] }`
+   - a date, a number or a person's name: `{ label: 'By', kind: 'text', text: formatDay(r.due) }`
+   - a few short labels: `{ label: 'Areas', kind: 'badges', items: r.areas.map(label) }`
+   - a count: `{ label: 'Open', kind: 'count', count: r.open, to: '/things?parent=3' }`
+   - a link out: `{ label: 'Task', kind: 'link', href: t.url, name: t.name }`
+   - another record with a short name: `{ label: 'From', kind: 'record', name: p.name, to: '/people/3', short: true }`
+
+   Keep its `placement: 'rail'`, and its `edit`s: they work as on a
+   field.
+2. A fact that's a sentence (a closing condition, a reason, notes)
+   stays a `fields` section placed `rail`. It remains in Details, the
+   only thing there.
+3. Linked records with long titles (a list of discussions, a log's
+   entries) are never facts: they stay a tab of their own, with its
+   count.
+4. Add `factsRail` to the view. On a laptop the facts move beside the
+   strip and the tabs, and Details shows only what's left (no Details
+   tab when nothing is). On a phone nothing changes.
+5. Specs: at a laptop width, read a fact in the rail (`getByRole(
+   'complementary', { name: '<title> facts' })`); a spec that opened
+   Details for it either does that or sets a phone width.
+
+## A list's header as wide as its table (4.106)
+
+On a list with the framed table, move the `<ListHeader … />` into the
+table as `pageHeader={<ListHeader … />}`. The header then ends on the
+card's right edge above a short table, and where the page ends above a
+wide one. A phone is unchanged, as is `width="full"`.
+
+## End-to-end tests on the mocks
+
+An app's Playwright suite runs on MSW: every `/api/` request is answered
+by the mock service worker in the browser. Two things keep it that way.
+
+- **A request that bypasses MSW fails the test.** The `test` from
+  `@tristan2828/ui-foundation/testing` watches each page's `/api/`
+  responses and fails the test, naming each one, when any didn't come
+  from the service worker (`watchMswBypass`; an app whose fixture opens
+  its own page calls it and then `check()` after the test). It's off
+  against the real API (`VITE_API=real`) and for a test that answers
+  requests itself (`page.route`, `context.route`, `routeFromHAR`). A file
+  or describe that expects a bypass opts out with
+  `test.use({ mswBypass: 'allow' })`. A bypass the app healed doesn't
+  count: since the mock worker can be stopped and restarted by the browser
+  at any time, forgetting the page, `startMockWorker` notices a request it
+  passed through, joins again and makes the request once more (#367), and
+  the check sees the worker answer it.
+- **The preview's `/api` proxy points at a port nothing listens on.** A
+  bypassed request goes to the preview server's proxy. Pointed at your
+  backend, it gets real answers (or changes real data) and the test may
+  pass on them. Point the proxy at a dead port for the e2e run instead, so
+  a bypass fails loudly. The template's `vite.config.ts` reads the proxy's
+  target from `BACKEND_URL`, and its `playwright.config.ts` sets
+  `BACKEND_URL=http://127.0.0.1:9` for the preview it starts unless
+  `VITE_API=real`. An app whose proxy reads another variable sets that one
+  the same way. Playwright reuses a preview that's already running outside
+  CI (`reuseExistingServer`), and that one keeps whatever proxy it was
+  started with.
 
 ## Changing the foundation
 
@@ -343,7 +516,8 @@ branch, with the app's `verify` green before and after.
      `@import "@tristan2828/ui-foundation/styles.css";`, plus the app's own
      rules after them
    - `src/main.tsx`: `<FoundationProviders mockMode={IS_MOCK_MODE}>`, and
-     `exposeMswForE2E(worker)` from `@tristan2828/ui-foundation/mocks`.
+     `await startMockWorker(worker)` from `@tristan2828/ui-foundation/mocks`
+     in place of `worker.start()` and `exposeMswForE2E(worker)`.
      Keep the *literal* `import.meta.env.VITE_API === 'real'` check around
      the MSW import, or `build:real` still bundles MSW
    - `src/mocks/`: spread `authHandlers` into the handler list and call

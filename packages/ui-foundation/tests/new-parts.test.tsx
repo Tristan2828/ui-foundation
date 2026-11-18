@@ -53,20 +53,20 @@ describe('Timeline', () => {
   const entries = (n: number): TimelineItem[] =>
     Array.from({ length: n }, (_, i) => ({ id: `e${i}`, date: `Nov ${i + 1}`, body: `Entry ${i + 1}` }))
 
-  it('shows the first five of a longer history, with Show all N', () => {
+  it('shows the first five of a longer history, with Show All N', () => {
     const html = render(<Timeline label="Changes" items={entries(7)} />)
     expect(html.match(/data-slot="timeline-item"/g)).toHaveLength(5)
     expect(html).toContain('Entry 5')
     expect(html).not.toContain('Entry 6')
-    expect(html).toContain('Show all 7')
+    expect(html).toContain('Show All 7')
     expect(html).toContain('aria-expanded="false"')
   })
 
-  it('has no Show all when it all fits, and takes another initial', () => {
-    expect(render(<Timeline label="Changes" items={entries(5)} />)).not.toContain('Show all')
+  it('has no Show All when it all fits, and takes another initial', () => {
+    expect(render(<Timeline label="Changes" items={entries(5)} />)).not.toContain('Show All')
     const html = render(<Timeline label="Changes" items={entries(4)} initial={2} />)
     expect(html.match(/data-slot="timeline-item"/g)).toHaveLength(2)
-    expect(html).toContain('Show all 4')
+    expect(html).toContain('Show All 4')
   })
 
   it("names the list, dates the entry for machines, and shows the kind and the entry's control", () => {
@@ -104,7 +104,7 @@ describe('NeedsYou', () => {
       />,
     )
     expect(html).toMatch(/<section aria-labelledby="[^"]+" data-slot="needs-you"/)
-    expect(html).toMatch(/<h2 id="[^"]+"[^>]*>Needs you<\/h2>/)
+    expect(html).toMatch(/<h2 id="[^"]+"[^>]*>Needs You<\/h2>/)
     expect(html).toContain('href="/accounts"')
     expect(html).toContain('href="/taxes"')
     expect(html).toContain('data-tone="warning"')
@@ -160,7 +160,7 @@ describe('ListHeader', () => {
     expect(html).not.toContain('list-header-more')
   })
 
-  it('keeps one related link out as a button, and Show deleted in a menu', () => {
+  it('keeps one related link out as a button, and Show Deleted in a menu', () => {
     const html = render(
       <ListHeader
         title="Medications"
@@ -192,7 +192,7 @@ describe('ListHeader', () => {
     expect(off).toMatch(/<div role="status"[^>]*><\/div>/)
     const on = render(<ListHeader title="Tasks" deleted={{ shown: true, onShownChange: () => {}, noun: 'tasks' }} />)
     expect(on).toContain('Showing deleted tasks.')
-    expect(on).toContain('Back to the list')
+    expect(on).toContain('Back to the List')
   })
 })
 

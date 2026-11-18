@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test } from '@playwright/test'
 
 // Every primitive the package ships with a story. Apps import these from
@@ -24,6 +24,7 @@ const PRIMITIVES = [
   'spinner',
   'switch',
   'table',
+  'tabs',
   'toast',
   'toggle',
   'tooltip',
@@ -64,6 +65,10 @@ const COMPOSITE_STORIES = [
   { id: 'ui-toast--all-tones', mustShow: 'Deleted Harbor Light' },
   { id: 'app-deleteaction--open', mustShow: 'It goes to Deleted, and Restore brings it back.' },
   { id: 'app-feedback--all-states', mustShow: 'Checked 12 · 2 deals' },
+  // A delete that asks a reason: its field, label and hint (4.96).
+  { id: 'app-deleteaction--open-with-reason', mustShow: 'Kept with its history.' },
+  // The record's empty value as an app draws it (4.96): the dash, words.
+  { id: 'app-emptytext--places', mustShow: 'No budget yet' },
   // Invalid fields with their typed values, on a card (4.63.2).
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
@@ -87,8 +92,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-colorswatch--in-a-badge', mustShow: 'secondary' },
   { id: 'app-colorswatch--in-a-table', mustShow: 'Errands' },
   { id: 'app-colorswatch--long-name', mustShow: 'A name longer than its column' },
-  { id: 'app-emojifield--default', mustShow: 'Routine emoji' },
-  { id: 'app-emojifield--open', mustShow: 'Morning and sleep' },
+  // <ColorField>: a stored colour on a form, its swatches as one radio group and Custom.
+  { id: 'app-colorfield--default', mustShow: 'Calendar Colour' },
+  { id: 'app-colorfield--own-colors', mustShow: 'Terracotta' },
+  { id: 'app-colorfield--invalid', mustShow: 'That colour is taken by another label' },
+  { id: 'app-emojifield--default', mustShow: 'Routine Emoji' },
+  { id: 'app-emojifield--open', mustShow: 'Morning and Sleep' },
   // <Board>: a list as columns of cards, every app's second view of a list.
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
   { id: 'app-board--empty-columns', mustShow: 'No planned projects' },
@@ -111,29 +120,55 @@ const COMPOSITE_STORIES = [
   // The edit-in-place presets at rest: a money value, a select's badge, a
   // reference, a pair read as one, links by label and by host.
   { id: 'app-editinplacepresets--presets', mustShow: '$1,234.56' },
-  { id: 'app-editinplacepresets--fields-as-one', mustShow: 'Hours and budget' },
+  { id: 'app-editinplacepresets--fields-as-one', mustShow: 'Hours and Budget' },
   { id: 'app-editinplacepresets--links', mustShow: 'docs.example.com' },
   // A list in place under group headings, and its filter beside it.
   { id: 'app-editablelist--grouped-and-filtered', mustShow: 'By room' },
   // A record open in a dialog over its list, and the dialog's loading and not-found states.
   { id: 'app-recorddialog--open', mustShow: 'after a dry day' },
-  { id: 'app-recorddialog--loading', mustShow: 'Open full page' },
+  { id: 'app-recorddialog--loading', mustShow: 'Open Full Page' },
   { id: 'app-recorddialog--not-found', mustShow: 'Back to Projects' },
   { id: 'app-recorddialog--dialog-only-deep-link', mustShow: 'after a dry day' },
   // A list at its own path (`listPath`) with a record open over it, and a sub-record over its parent's page.
   { id: 'app-recorddialog--list-at-its-own-path-open', mustShow: 'after a dry day' },
   { id: 'app-recorddialog--sub-record-open', mustShow: 'Sand the boards' },
   // A new record's form over its list (`newPath`), and a record's rail beside it at 1,120px (4.82).
-  { id: 'app-recorddialog--new-record-open', mustShow: 'Add project' },
+  { id: 'app-recorddialog--new-record-open', mustShow: 'Add Project' },
   { id: 'app-recorddialog--rail-beside', mustShow: 'after a dry day' },
   // FormDialog: open, and with a failed save's Notice (4.82).
-  { id: 'app-formdialog--default', mustShow: 'Add book' },
+  { id: 'app-formdialog--default', mustShow: 'Add Book' },
   { id: 'app-formdialog--failed-save', mustShow: "Couldn't add the book" },
   // EntityForm in the form standard: rows by size, required marks, a status's badge,
   // sections as cards, and a failed save's Notice (4.85).
-  { id: 'app-entityform--default', mustShow: 'Add book' },
-  { id: 'app-entityform--sections', mustShow: 'What it is' },
+  { id: 'app-entityform--default', mustShow: 'Add Book' },
+  { id: 'app-entityform--sections', mustShow: 'What It Is' },
   { id: 'app-entityform--failed-save', mustShow: "Couldn't add the book" },
+  // The record standard (4.98): the Details tab's record (a status mark in
+  // the header, the strip as wide as its numbers, a box beside Notes), the
+  // facts in the column, every status kind on the page, a card and a table,
+  // a tiny record's card dialog, and choice fields two to a row.
+  { id: 'app-entityview--details-tab', mustShow: 'Packing' },
+  { id: 'app-entityview--details-in-the-column', mustShow: 'No follow-ups' },
+  { id: 'app-statusmark--all-kinds', mustShow: 'Renew the permit' },
+  { id: 'app-recorddialog--card', mustShow: 'Display Order' },
+  // A record with tabs in the dialog, its 3B tab bar and counts (4.101).
+  { id: 'app-recorddialog--tabs-open', mustShow: 'Open Full Page' },
+  { id: 'app-formcontrols--choice-pairs', mustShow: 'Coats' },
+  // A status as a choice, its kinds' icons coloured, one picked in the theme colour (4.105).
+  { id: 'app-formcontrols--status-choices', mustShow: 'Status choices on a card' },
+  // The same kinds on OptionSelect, a status of five or more, on the page and a card (4.109).
+  { id: 'app-formcontrols--status-selects', mustShow: 'Status selects on a card' },
+  // A narrow MultiChoice filter's summary, cut off beside an Input (4.109).
+  { id: 'app-formcontrols--narrow-filters', mustShow: 'Shelf:' },
+  // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
+  { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
+  // Several items in a fact, each marked by its kind's icon or a bullet (4.111).
+  { id: 'app-factlist--links-box', mustShow: 'Moving day, the second weekend' },
+  { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
+  // Cards and no tabs: the rail level with the first card (4.108).
+  { id: 'app-entityview--facts-rail-no-tabs', mustShow: 'Not booked' },
+  // The status first with its action and hint, badges with icons, an editable strip (4.115).
+  { id: 'app-entityview--facts-rail-status', mustShow: 'Close…' },
   // A confirm (420px) and the discard prompt (4.82).
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
@@ -160,10 +195,20 @@ const COMPOSITE_STORIES = [
   { id: 'app-valuelist--default', mustShow: 'Example capsule B' },
   { id: 'app-valuelist--icons', mustShow: '+1' },
   { id: 'app-listheader--default', mustShow: 'Change log' },
-  { id: 'app-listheader--showing-deleted', mustShow: 'Back to the list' },
-  { id: 'app-timeline--default', mustShow: 'Show all 7' },
-  { id: 'app-timeline--in-a-narrow-card', mustShow: 'Show all 7' },
+  { id: 'app-listheader--showing-deleted', mustShow: 'Back to the List' },
+  { id: 'app-listheader--siblings', mustShow: 'Cuttings' },
+  { id: 'app-timeline--default', mustShow: 'Show All 7' },
+  { id: 'app-timeline--in-a-narrow-card', mustShow: 'Show All 7' },
   { id: 'app-timeline--few-entries', mustShow: 'Nothing yet' },
+  { id: 'app-equalitems--cards', mustShow: 'Best value' },
+  { id: 'app-equalitems--table-look', mustShow: 'Best value' },
+  { id: 'app-equalitems--featured', mustShow: 'Over budget' },
+  { id: 'app-equalitems--panels', mustShow: 'Best value' },
+  { id: 'app-equalitems--long-titles', mustShow: 'Long titles, panels' },
+  { id: 'app-equalitems--no-fields', mustShow: 'No fields, panels' },
+  { id: 'app-equalitems--one-item', mustShow: 'One item, panels' },
+  { id: 'app-equalitems--seven-items', mustShow: 'Seven items, panels' },
+  { id: 'app-equalitems--content-and-actions', mustShow: 'Stores, panels' },
   { id: 'app-needsyou--default', mustShow: 'Needs you today' },
   { id: 'app-freshness--default', mustShow: 'Projection from' },
   { id: 'app-partempty--default', mustShow: 'Add the first line' },
@@ -178,6 +223,8 @@ const COMPOSITE_STORIES = [
   // Delete as icons, the strip's icons, folded empties and the dash.
   { id: 'app-entityview--record-standard', mustShow: 'Timber and sheet goods' },
   { id: 'app-entityview--record-standard-long-title', mustShow: 'far side of the river' },
+  { id: 'app-entityview--record-standard-editable-title', mustShow: 'Dr. Example' },
+  { id: 'app-entityview--record-standard-editable-long-title', mustShow: 'far side of the river' },
   // <Notice>: every tone's wash, on the page and on a card.
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
   // A plain date on a form, required and optional (#157).
@@ -185,7 +232,7 @@ const COMPOSITE_STORIES = [
   // The form standard's controls (4.88): choice buttons, typed dates, a
   // reference with Create, a long multi-pick, and a record's rows edited in place.
   { id: 'app-datefield--typed', mustShow: '2026-09-02' },
-  { id: 'app-formcontrols--form', mustShow: 'Show all 40' },
+  { id: 'app-formcontrols--form', mustShow: 'Show All 40' },
   { id: 'app-formcontrols--edit-in-place', mustShow: 'The Quiet Harbour' },
   // A month and day with no year (4.78): set, empty and a stored value refused,
   // open on its days and on its months, and edited in place on a view.
@@ -193,9 +240,17 @@ const COMPOSITE_STORIES = [
   { id: 'app-monthdayfield--open-on-days', mustShow: 'March' },
   { id: 'app-monthdayfield--open-on-months', mustShow: 'Month' },
   { id: 'app-monthdayfield--edit-in-place', mustShow: 'Nov 1' },
+  // How something repeats (#326): presets pressed and not, a preview's label
+  // and next dates, a refusal; on a form, in place, and as list cells.
+  { id: 'app-recurrencefield--default', mustShow: 'Every 2nd Tue at 9:00 AM' },
+  { id: 'app-recurrencefield--in-form', mustShow: 'Save Chore' },
+  { id: 'app-recurrencefield--edit-in-place', mustShow: 'Every 2nd Tue at 9:00 AM' },
+  { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
+  // With no times and weeks from Sunday (4.119): dates only, WKST=SU's rules.
+  { id: 'app-recurrencefield--dates-only', mustShow: 'Sun, Nov 15' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
-  { id: 'app-imagefield--default', mustShow: 'Edit plant' },
+  { id: 'app-imagefield--default', mustShow: 'Edit Plant' },
   // Images in written text, and the editor that uploads them (its Image button).
   { id: 'app-markdown--images', mustShow: 'A view of the yard:' },
   { id: 'app-richtexteditor--image-uploads', mustShow: 'Paste or drop a photo here.' },
@@ -205,15 +260,15 @@ const COMPOSITE_STORIES = [
   { id: 'app-markdown--wide-table', mustShow: 'A table that scrolls sideways:' },
   { id: 'app-richtexteditor--heading-levels', mustShow: 'A form with notes' },
   { id: 'app-richtexteditor--wide-table', mustShow: 'wideTable' },
-  { id: 'app-markdown--folding', mustShow: 'Fold all' },
+  { id: 'app-markdown--folding', mustShow: 'Fold All' },
   // Task items ticked where they are read: checkboxes, nested and in a callout.
   { id: 'app-markdown--tickable-tasks', mustShow: '2/7 done' },
-  { id: 'app-richtexteditor--folding', mustShow: 'Fold all' },
+  { id: 'app-richtexteditor--folding', mustShow: 'Fold All' },
   // Allow reminders in every state, on a card (#167).
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
-  { id: 'app-datatable--grouped', mustShow: 'Earlier this week' },
+  { id: 'app-datatable--grouped', mustShow: 'Earlier This Week' },
   // Group headings pinned while scrolling: columns that fit, no header row, wide.
   { id: 'app-datatable--sticky-groups', mustShow: 'Thursday' },
   { id: 'app-datatable--sticky-groups-no-header', mustShow: 'Thursday' },
@@ -222,9 +277,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--sticky-groups-wide-below-a-bar', mustShow: 'Thursday' },
   // DataTable's card layouts (#252): a feed's grid and compact list under
   // day headings, and covers with a round Read button and a placeholder.
-  { id: 'app-datatable-layouts--feed', mustShow: 'Earlier this week' },
-  { id: 'app-datatable-layouts--feed-grid', mustShow: 'Earlier this week' },
-  { id: 'app-datatable-layouts--feed-compact', mustShow: 'Earlier this week' },
+  { id: 'app-datatable-layouts--feed', mustShow: 'Earlier This Week' },
+  { id: 'app-datatable-layouts--feed-grid', mustShow: 'Earlier This Week' },
+  { id: 'app-datatable-layouts--feed-compact', mustShow: 'Earlier This Week' },
   { id: 'app-datatable-layouts--covers', mustShow: 'Harbour Lights' },
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
   // A highlighted row's wash, with muted text inside it (#156).
@@ -234,6 +289,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--list-look', mustShow: '1–50 of 120' },
   { id: 'app-datatable--list-look-in-rows', mustShow: '1–50 of 120' },
   { id: 'app-datatable--list-look-striped', mustShow: '1–50 of 120' },
+  { id: 'app-datatable--title-column', mustShow: 'Shoes for the long walks' },
+  { id: 'app-datatable--title-column-wrap', mustShow: 'Shoes for the long walks' },
   // A list of sub-records, and one whose items open to edit, with Duplicate (#222).
   { id: 'app-listeditor--default', mustShow: 'Pack for the trip' },
   { id: 'app-listeditor--rows-that-open', mustShow: 'Romanian deadlift' },
@@ -245,7 +302,15 @@ const COMPOSITE_STORIES = [
   // The table tools: views, FilterBar, Columns, row actions, a capped related list.
   { id: 'app-datatable-tools--list-tools', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
-  { id: 'app-datatable-tools--related', mustShow: 'View all 19' },
+  { id: 'app-datatable-tools--related', mustShow: 'View All 19' },
+  { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
+  // Views that fill the filters (4.105): the default view's statuses in the Status filter.
+  { id: 'app-datatable-tools--views-fill-filters', mustShow: 'Needs Water' },
+  // A date filter a view fills (4.110): the Due filter behind Filters, and its chip.
+  { id: 'app-datatable-tools--date-views', mustShow: 'Repot the fig' },
+  { id: 'app-datatable-tools--date-views-overdue', mustShow: 'Due: Before today' },
+  // A list's header as wide as its framed table (4.106, C3).
+  { id: 'app-datatable-tools--header-at-table-edge', mustShow: 'New Plant' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
@@ -269,8 +334,14 @@ const COMPOSITE_STORIES = [
   // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
   { id: 'app-appshell--standard', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-rail', mustShow: 'Page at /finance/accounts/3' },
+  // The sidebar as icon tiles (#6C, navLook), and on the rail.
+  { id: 'app-appshell--standard-tiles', mustShow: 'Page at /finance/accounts/3' },
+  { id: 'app-appshell--standard-tiles-rail', mustShow: 'Page at /finance/accounts/3' },
   { id: 'app-appshell--standard-trail', mustShow: 'Bills and the paycheck' },
   { id: 'app-appshell--standard-search', mustShow: 'Page at /finance/budget' },
+  // A lapsed sign-in at a proxy in front of the app (kind proxy_auth):
+  // Sign In Again, full size, in a widget and on a module card.
+  { id: 'app-errorstate--sign-in-again', mustShow: 'Ready to Start' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   // A card titled with an outside service's mark (#211).
@@ -284,7 +355,7 @@ const COMPOSITE_STORIES = [
   // Customize sheet, open (#263).
   { id: 'app-widgetcard--folded-summary', mustShow: '3 ready' },
   { id: 'app-widgetcard--accordion', mustShow: 'Fix the gate latch' },
-  { id: 'app-widgetlayoutsheet--open', mustShow: 'Customize this page' },
+  { id: 'app-widgetlayoutsheet--open', mustShow: 'Customize This Page' },
   // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
   // slot under foreground text, the number, the note, the action, in
   // every state, and at compact.
@@ -321,6 +392,25 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
+  // Each status kind's icon (4.98, 5B) on the page, a card and a table row,
+  // and the header's on the Details tab's record.
+  { id: 'app-statusmark--all-kinds' },
+  // The same kinds' icons on ChoiceButtons, picked (the primary tint) and not, on the page and a card (4.105).
+  { id: 'app-formcontrols--status-choices' },
+  // OptionSelect's kind icons on the trigger, on the page and a card, and in its open list (4.109).
+  { id: 'app-formcontrols--status-selects' },
+  {
+    id: 'app-formcontrols--status-selects',
+    name: 'list open',
+    open: (page) => page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Stage' }).click(),
+  },
+  // The facts rail's status icon and external-link mark on its card (4.106).
+  { id: 'app-entityview--facts-rail' },
+  // A list fact's kind icons and external-link mark (4.111).
+  { id: 'app-factlist--links-box' },
+  // The status's hint mark and the badges' icons in the rail (4.115).
+  { id: 'app-entityview--facts-rail-status' },
+  { id: 'app-entityview--details-tab' },
   // Each toast's icon in its tone on the popover surface (4.90), and the
   // offline bar's, an action error's and a job's (the spinner and check).
   {
@@ -349,6 +439,8 @@ const GLYPH_STORIES: {
     open: (page) => page.getByRole('button', { name: /^2 holds/ }).click(),
   },
   { id: 'ui-toggle--default' },
+  // Sign In Again's icon, and the error icons beside it.
+  { id: 'app-errorstate--sign-in-again' },
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },
@@ -410,7 +502,8 @@ const GLYPH_STORIES: {
     id: 'app-richtexteditor--features',
     name: 'table menu',
     open: async (page) => {
-      await page.locator('[data-fixture="table"] td').first().click()
+      // The editor's own table, not the text shown while it loads (4.123).
+      await page.locator('[data-fixture="table"] [contenteditable] td').first().click()
       await page.waitForTimeout(100)
       await page.keyboard.press('Shift+F10')
     },
@@ -485,7 +578,7 @@ test.describe('composite stories have zero axe violations in both themes', () =>
       test(`${id} is accessible (${theme})`, async ({ page }) => {
         await page.goto(storyUrlById(id, theme))
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
-        await expect(page.getByText(mustShow)).toBeVisible()
+        await expect(page.getByText(mustShow).first()).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
       })
@@ -535,7 +628,7 @@ test.describe('stories have zero axe violations in each palette', () => {
       test(`${id} is accessible (${palette})`, async ({ page }) => {
         await page.goto(paletteUrl(id, palette))
         await expectPalette(page, palette)
-        if (mustShow) await expect(page.getByText(mustShow)).toBeVisible()
+        if (mustShow) await expect(page.getByText(mustShow).first()).toBeVisible()
         else await expect(page.locator('#root')).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
@@ -577,7 +670,7 @@ test.describe('composite stories have zero axe violations at the large density',
         await page.goto(storyUrlById(id, theme, 'large'))
         await expect(page.locator('html')).toHaveAttribute('data-density', 'large')
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
-        await expect(page.getByText(mustShow)).toBeVisible()
+        await expect(page.getByText(mustShow).first()).toBeVisible()
         const results = await analyzeStory(page)
         expect(results.violations).toEqual([])
       })
@@ -775,7 +868,7 @@ test.describe('primitives paint only token colours', () => {
       test(`${id} uses only tokens (${theme})`, async ({ page }) => {
         await page.goto(storyUrlById(id, theme))
         if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
-        await expect(page.getByText(mustShow)).toBeVisible()
+        await expect(page.getByText(mustShow).first()).toBeVisible()
         expect(await offTokenColors(page)).toEqual([])
       })
     }
@@ -1028,8 +1121,14 @@ const SWATCH_STORIES = [
   'app-colorswatch--in-a-badge',
   'app-colorswatch--in-a-table',
   'app-colorswatch--long-name',
+  'app-colorfield--default',
+  'app-colorfield--own-colors',
+  'app-colorfield--invalid',
 ]
 const SWATCH_RING: InkTarget = { selector: '[data-slot=color-swatch]', ink: 'borderTopColor', behind: 'parent' }
+// ColorField's Custom picker (<input type="color">) shows its colour the
+// same way, so its edge is held to the same 3:1.
+const PICKER_EDGE: InkTarget = { selector: '[data-slot=color-field-picker]', ink: 'borderTopColor', behind: 'parent' }
 
 test.describe('a stored colour', () => {
   for (const id of SWATCH_STORIES) {
@@ -1047,8 +1146,37 @@ test.describe('a stored colour', () => {
         if (process.env.PRINT_GLYPHS) console.log(id, theme, JSON.stringify(rings))
         expect(rings.length).toBeGreaterThan(0)
         expect(rings.filter(({ ratio }) => ratio < 3)).toEqual([])
+        if (id.startsWith('app-colorfield--')) {
+          const edges = await glyphContrasts(page, PICKER_EDGE)
+          expect(edges.length).toBeGreaterThan(0)
+          expect(edges.filter(({ ratio }) => ratio < 3)).toEqual([])
+        }
       })
     }
+  }
+
+  // ColorField's default colours are chosen to read on the card a form
+  // sits on: each fill against the card clears 3:1 in light, dark and the
+  // dark palettes, and 2.3:1 on Palm LCD, whose panel is a middle grey-green
+  // no middle colour can clear 3:1 on (the ring shows the edge there).
+  // Unpicked ones only, so it's the card behind them, not the picked one's
+  // wash: each colour is unpicked in at least one of the story's fields.
+  for (const theme of ['light', 'dark', ...PALETTES] as const) {
+    test(`app-colorfield--default: the default colours read on the card (${theme})`, async ({ page }) => {
+      if (theme === 'light' || theme === 'dark') {
+        await page.goto(storyUrlById('app-colorfield--default', theme))
+        if (theme === 'dark') await expect(page.locator('html')).toHaveClass(/dark/)
+      } else {
+        await page.goto(paletteUrl('app-colorfield--default', theme))
+        await expectPalette(page, theme)
+      }
+      const group = page.getByRole('radiogroup', { name: 'Label Colour' })
+      await expect(group.locator('[data-slot=color-swatch][data-color]')).toHaveCount(12)
+      const fills = (await glyphContrasts(page, { selector: '[data-slot=color-field-choice]:not(:has([data-checked])) [data-slot=color-swatch]', ink: 'backgroundColor', behind: 'parent' }))
+      if (process.env.PRINT_GLYPHS) console.log(theme, JSON.stringify(fills))
+      expect(fills.length).toBe(35)
+      expect(fills.filter(({ ratio }) => ratio < (theme === 'palm-lcd' ? 2.3 : 3))).toEqual([])
+    })
   }
 
   test('is filled with a valid stored colour, hidden, beside its name; a bad one paints nothing', async ({ page }) => {
@@ -1348,7 +1476,7 @@ test.describe('widget card', () => {
 
   test('each widget is a region named by its heading, in the page outline', async ({ page }) => {
     await page.goto(storyUrlById('app-widgetcard--default', 'light'))
-    for (const title of ['Ready to start', 'Waiting on', 'Saved links']) {
+    for (const title of ['Ready to Start', 'Waiting on', 'Saved links']) {
       await expect(page.getByRole('region', { name: title })).toBeVisible()
       await expect(page.getByRole('heading', { level: 2, name: title })).toBeVisible()
     }
@@ -1356,8 +1484,8 @@ test.describe('widget card', () => {
 
   test('a header link is described by its title, so two "All" links stay distinct', async ({ page }) => {
     await page.goto(storyUrlById('app-widgetcard--default', 'light'))
-    const ready = page.getByRole('region', { name: 'Ready to start' }).getByRole('link', { name: 'All', exact: true })
-    await expect(ready).toHaveAccessibleDescription('Ready to start')
+    const ready = page.getByRole('region', { name: 'Ready to Start' }).getByRole('link', { name: 'All', exact: true })
+    await expect(ready).toHaveAccessibleDescription('Ready to Start')
     const waiting = page.getByRole('region', { name: 'Waiting on' }).getByRole('link', { name: 'All', exact: true })
     await expect(waiting).toHaveAccessibleDescription('Waiting on')
   })
@@ -1384,7 +1512,7 @@ test.describe('widget card', () => {
     await expect(inState(page, 'empty').getByText('Nothing waiting')).toBeVisible()
     const errors = inState(page, 'error')
     await expect(errors.getByText('Connection problem')).toHaveCount(3)
-    await expect(errors.getByRole('button', { name: 'Try again' })).toHaveCount(3)
+    await expect(errors.getByRole('button', { name: 'Try Again' })).toHaveCount(3)
     await expect(errors.locator('[data-state=error][data-size=compact]')).toHaveCount(3)
     await expect(inState(page, 'success').getByRole('listitem')).toHaveCount(8)
   })
@@ -1393,7 +1521,7 @@ test.describe('widget card', () => {
   // keeps its height when its data arrives.
   test("a loading widget is its loaded height, within a few pixels", async ({ page }) => {
     await page.goto(storyUrlById(ALL, 'light'))
-    for (const title of ['Ready to start', 'Waiting on', 'Saved links']) {
+    for (const title of ['Ready to Start', 'Waiting on', 'Saved links']) {
       const height = async (state: string) =>
         (await page.getByRole('region', { name: `${title} (${state})` }).boundingBox())!.height
       expect(Math.abs((await height('loading')) - (await height('success')))).toBeLessThanOrEqual(4)

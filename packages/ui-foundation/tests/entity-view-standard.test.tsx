@@ -1,5 +1,5 @@
 // The record page standard in EntityView and KeyStats (4.81), as rendered
-// markup: badges on the title's line, Print notes as an icon, the dash
+// markup: badges on the title's line, Print Notes as an icon, the dash
 // for an empty value (read as "Not set"), the strip's icons, and
 // `emptyFields="fold"`'s count. The fold opening, the tooltips and the
 // layout at each width are e2e/entity-view-standard.spec.ts.
@@ -38,12 +38,12 @@ describe('EntityView header', () => {
     expect(html.indexOf('<b>Active</b>')).toBeLessThan(html.indexOf('data-slot="entity-view-subtitle"'))
   })
 
-  it('draws Print notes as an icon named by printLabel, or in words with printLook="words"', () => {
+  it('draws Print Notes as an icon named by printLabel, or in words with printLook="words"', () => {
     const sections: EntityViewSection[] = [{ title: 'Notes', print: true, content: 'Delivers on Tuesdays' }]
     const icon = render(view({ sections }))
     expect(icon).toContain('data-slot="icon-action"')
-    expect(icon).toContain('aria-label="Print notes"')
-    expect(icon).not.toContain('>Print notes<')
+    expect(icon).toContain('aria-label="Print Notes"')
+    expect(icon).not.toContain('>Print Notes<')
     const words = render(view({ sections, printLook: 'words', printLabel: 'Print the prep' }))
     expect(words).not.toContain('data-slot="icon-action"')
     expect(words).toContain('Print the prep')
@@ -73,12 +73,12 @@ describe('EntityView empty values', () => {
     expect(html).not.toContain('entity-view-empty-toggle')
   })
 
-  it('folds a card\'s empty fields behind "N empty" with emptyFields="fold"', () => {
+  it('folds a card\'s empty fields behind "N Empty" with emptyFields="fold"', () => {
     const html = render(view({ layout: 'rail', sections: [CONTACT], emptyFields: 'fold' }))
     expect(html).toContain('>Address</dt>')
     expect(html).not.toContain('>Phone</dt>')
     expect(html).not.toContain('>Tags</dt>')
-    expect(html).toMatch(/data-slot="entity-view-empty-toggle" aria-expanded="false"[^>]*>3 empty/)
+    expect(html).toMatch(/data-slot="entity-view-empty-toggle" aria-expanded="false"[^>]*>3 Empty/)
   })
 
   it('draws no toggle on a card with nothing empty', () => {

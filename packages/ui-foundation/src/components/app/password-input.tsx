@@ -47,7 +47,7 @@ export function PasswordInput({
       <InputGroupAddon align="inline-end">
         <InputGroupButton
           type="button"
-          aria-label={isVisible ? 'Hide password' : 'Show password'}
+          aria-label={isVisible ? 'Hide Password' : 'Show Password'}
           // aria-pressed would also be defensible; the changing label is
           // clearer, and announcing both is redundant.
           onClick={() => setIsVisible((shown) => !shown)}

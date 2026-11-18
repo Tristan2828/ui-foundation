@@ -107,9 +107,9 @@ export default meta
 export const Default: StoryObj<typeof ImageField> = {
   render: () => (
     <div className="flex flex-col gap-10">
-      <PlantPhotoForm title="New plant" upload={delayedUpload()} initial={{ name: 'Fern', photoId: null }} />
+      <PlantPhotoForm title="New Plant" upload={delayedUpload()} initial={{ name: 'Fern', photoId: null }} />
       <PlantPhotoForm
-        title="Edit plant"
+        title="Edit Plant"
         upload={delayedUpload()}
         initial={{ name: 'Monstera', photoId: 'file-saved', photoUrl: SAVED_PHOTO }}
       />
@@ -122,8 +122,8 @@ export const Default: StoryObj<typeof ImageField> = {
 export const Refusals: StoryObj<typeof ImageField> = {
   render: () => (
     <div className="flex flex-col gap-10">
-      <PlantPhotoForm title="Upload fails" upload={failingUpload()} initial={{ name: 'Cactus', photoId: null }} />
-      <PlantPhotoForm title="Size limit" upload={delayedUpload()} maxSize={MB} initial={{ name: 'Pothos', photoId: null }} />
+      <PlantPhotoForm title="Upload Fails" upload={failingUpload()} initial={{ name: 'Cactus', photoId: null }} />
+      <PlantPhotoForm title="Size Limit" upload={delayedUpload()} maxSize={MB} initial={{ name: 'Pothos', photoId: null }} />
     </div>
   ),
 }

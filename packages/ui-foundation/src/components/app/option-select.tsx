@@ -9,13 +9,29 @@
 // Base UI's Select shows its raw value unless told otherwise; this maps
 // each option to its index, so any string or number works as a value and
 // the trigger always shows the option's words or its `render`.
+//
+// An option can carry a status kind or an icon (4.109), as ChoiceButtons'
+// do: `kind` draws the kind's icon in its colour (StatusMark's) before the
+// words, on the trigger and on its item in the list, so a status of five
+// or more options reads like the one of four drawn as buttons. A
+// highlighted item takes the list's highlight colour, icon and all.
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { StatusKind } from '@/lib/status-kinds'
+import type { IconComponent } from './icon-component'
+import { OptionIcon } from './option-icon'
 
 const NONE = '__none__'
 
-export type OptionSelectOption<T> = { value: T; label: string }
+export type OptionSelectOption<T> = {
+  value: T
+  label: string
+  /** A status kind (4.109): its icon, in its colour, before the words, as StatusMark and ChoiceButtons draw it. */
+  kind?: StatusKind
+  /** An icon before the words; with `kind`, in place of the kind's. Uncoloured without a `kind`. */
+  icon?: IconComponent
+}
 
 export type OptionSelectProps<T extends string | number> = {
   id?: string
@@ -59,7 +75,12 @@ export function OptionSelect<T extends string | number>({
   className,
   ...aria
 }: OptionSelectProps<T>) {
-  const shown = (option: OptionSelectOption<T>) => (render ? render(option.value, option.label) : option.label)
+  const shown = (option: OptionSelectOption<T>) => (
+    <>
+      <OptionIcon kind={option.kind} icon={option.icon} slot="option-select-icon" />
+      {render ? render(option.value, option.label) : option.label}
+    </>
+  )
   const at = value == null ? -1 : options.findIndex((option) => option.value === value)
   const key = at === -1 ? (required ? null : NONE) : String(at)
   return (

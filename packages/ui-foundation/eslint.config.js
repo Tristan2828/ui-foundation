@@ -49,6 +49,12 @@ export default defineConfig([
     rules: { 'no-restricted-syntax': ['error', ...TOKEN_SYNTAX_RULES], 'no-restricted-imports': 'off' },
   },
   {
+    // Mock mode's boot probes its own service worker before any app code
+    // runs (src/mocks/start-worker.ts); the request never reaches a server.
+    files: ['src/mocks/start-worker.ts'],
+    rules: { 'no-restricted-syntax': ['error', ...TOKEN_SYNTAX_RULES] },
+  },
+  {
     // Barrels and the Playwright helpers re-export or register, they don't render.
     files: ['src/index.ts', 'src/testing/**/*.ts', 'src/components/app/foundation-providers.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },

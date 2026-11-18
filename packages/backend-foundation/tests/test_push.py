@@ -375,3 +375,47 @@ async def test_a_message_opens_a_path_in_the_app_only(session: AsyncSession, pus
     for url in ("https://example.com", "//example.com/x", "routines"):
         with pytest.raises(ValueError):
             await push.send_push(session, 1, "Hi", url=url)
+
+
+def test_a_message_carries_renotify_and_a_done_action_as_json() -> None:
+    action = push.PushAction("/api/reminders/7/done", {"occurrence": "2026-11-05T09:00:00+00:00"})
+    message = push.PushMessage("Water the plants", url="/reminders/7", tag="reminder-7", renotify=True, action=action)
+    assert json.loads(message.payload()) == {
+        "title": "Water the plants",
+        "body": "",
+        "url": "/reminders/7",
+        "tag": "reminder-7",
+        "renotify": True,
+        "action": {"title": "Done", "path": "/api/reminders/7/done", "body": {"occurrence": "2026-11-05T09:00:00+00:00"}},
+    }
+    # Without the new fields the payload is byte for byte what it was; renotify needs a tag.
+    assert json.loads(push.PushMessage("Hi", tag="t").payload()) == {"title": "Hi", "body": "", "url": "/", "tag": "t"}
+    assert "renotify" not in json.loads(push.PushMessage("Hi", renotify=True).payload())
+
+
+@pytest.mark.parametrize(
+    "path", ["https://example.com/done", "//example.com/done", "/\\example.com/done", "api/done", "/a\nb", "/a\\b"]
+)
+def test_an_action_posts_only_to_a_path_in_the_app(path: str) -> None:
+    with pytest.raises(ValueError, match="app's own"):
+        push.PushMessage("Hi", action=push.PushAction(path)).payload()
+
+
+def test_an_action_needs_a_title_and_a_body_that_fits() -> None:
+    with pytest.raises(ValueError, match="title"):
+        push.PushMessage("Hi", action=push.PushAction("/done", title=" ")).payload()
+    with pytest.raises(ValueError, match="at most"):
+        push.PushMessage("Hi", action=push.PushAction("/done", {"note": "x" * push.MAX_PAYLOAD_BYTES})).payload()
+
+
+async def test_send_push_carries_the_action_and_renotify_to_the_device(
+    session: AsyncSession, push_on: None, push_service: PushService
+) -> None:
+    phone = Device()
+    await _subscribe(session, phone, FCM)
+    action = push.PushAction("/api/reminders/3/done", {"occurrence": "2026-11-05T09:00:00+00:00"})
+    result = await push.send_push(session, 1, "Stretch", url="/routines/3", tag="reminder-3", renotify=True, action=action)
+    assert result.sent == 1
+    data = json.loads(phone.decrypt(push_service.sent[0]["body"]))
+    assert data["renotify"] is True
+    assert data["action"] == {"title": "Done", "path": "/api/reminders/3/done", "body": {"occurrence": "2026-11-05T09:00:00+00:00"}}

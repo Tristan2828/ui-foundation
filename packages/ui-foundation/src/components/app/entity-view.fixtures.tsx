@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactElement } from 'react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import {
   CalendarClockIcon,
@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import type { AppError } from '@/api/contracts'
+import { ActionHint } from './action-hint'
 import { editInPlace } from './edit-in-place'
 import { inPlace } from './edit-in-place-presets'
 import { EditableValue } from './editable-value'
@@ -40,6 +41,7 @@ import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { Notice } from './notice'
 import { RichTextEditor } from './rich-text-editor'
+import { StatusMark } from './status-mark'
 import { SourceCredit } from './source-credit'
 
 // One record in both layouts: `column` (the default) and `rail`, the
@@ -54,7 +56,10 @@ import { SourceCredit } from './source-credit'
 // opens on a click. Rail, main first is the rail layout with
 // `mobileOrder="main-first"`: the same at a desktop width, Notes straight
 // after the header on a phone. Tabs, Leading and Rail fields beside are
-// 4.76's opt-ins, measured in e2e/entity-view-tabs.spec.ts.
+// 4.76's opt-ins, measured in e2e/entity-view-tabs.spec.ts. Details tab
+// and Details in the column are 4.98's record standard (1A, 2A, 5B): the
+// `tabs` layout, the default, with no rail, measured in
+// e2e/entity-view-details.spec.ts.
 
 // Long enough to scroll past a rail, with a table wider than the column
 // layout's 896px (it scrolls sideways there) but not than the rail
@@ -319,6 +324,473 @@ export const Tabs: StoryObj = { render: () => <TabsInRouter layout="rail" /> }
 
 export const TabsColumn: StoryObj = { name: 'Tabs, column', render: () => <TabsInRouter layout="column" /> }
 
+// --- The record standard (4.98): no right rail -----------------------------
+// The `tabs` layout, the default (1A): Summary, the short facts placed
+// `rail`, is the last tab, Details; Notes has a small box of facts beside
+// it (placed `rail` with its `tab`), under it on a phone; the strip is as
+// wide as its numbers (2A); the status is a StatusMark (5B). The memory
+// router starts at the harness page's own `tab`, as Tabs does. The tab
+// bar is 3B's (4.101): Changes shows its count, and the bar sticks with
+// the record's name above it as Notes scrolls under it.
+
+function DetailsTabRecord() {
+  const location = useLocation()
+  const sections: EntityViewSection[] = [
+    {
+      title: 'Summary',
+      placement: 'rail',
+      fields: [
+        { label: 'Kind', value: 'Office move' },
+        { label: 'Floor', value: 'Third' },
+        { label: 'Starts', value: 'Mar 2, 2026' },
+        { label: 'Owner', value: null, emptyLabel: 'Unassigned' },
+        { label: 'Teams', value: <Badge variant="outline">Finance</Badge> },
+      ],
+    },
+    { title: 'Notes', tab: 'Notes', content: <Markdown>{NOTES}</Markdown> },
+    {
+      title: 'Packing',
+      tab: 'Notes',
+      placement: 'rail',
+      fields: [
+        { label: 'Boxes', value: '12' },
+        { label: 'Labels', value: 'By team' },
+      ],
+    },
+    {
+      title: 'Changes',
+      tab: 'Changes',
+      content: (
+        <ul className="flex list-disc flex-col gap-1 pl-5">
+          <li>Mar 1: the movers moved to the morning.</li>
+          <li>Feb 20: Support joins week 3.</li>
+        </ul>
+      ),
+    },
+  ]
+  return (
+    <>
+      <EntityView
+        isLoading={false}
+        back={{ to: '/', label: 'Projects' }}
+        title="Office move"
+        badges={<StatusMark kind="active">In Progress</StatusMark>}
+        actions={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+        tabCounts={{ Changes: 2 }}
+        strip={
+          <KeyStats
+            stats={[
+              { label: 'Boxes', value: '12', icon: PackageIcon },
+              { label: 'Starts', value: 'Mar 2', icon: CalendarIcon },
+              { label: 'Teams', value: '3', icon: HashIcon },
+            ]}
+          />
+        }
+        sections={sections}
+      />
+      <p data-testid="address" className="mt-6 type-caption text-muted-foreground">
+        Page at {location.pathname + location.search}
+      </p>
+    </>
+  )
+}
+
+function DetailsTabInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '/', element: <DetailsTabRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const DetailsTab: StoryObj = { name: 'Details tab', render: () => <DetailsTabInRouter /> }
+
+// --- The facts rail (4.106, A1) --------------------------------------------
+// `factsRail`: where the view has 60rem, the sections of short facts
+// (`facts`, placed `rail`) sit in a 300px column beside the open tab's
+// content (the strip above both, 4.108) and leave Details. FactsRail
+// keeps one long-text facts section (`fields`, the closing condition) in
+// Details; FactsRailOnly has nothing else, so it has no Details tab;
+// FactsRailNoTabs has cards and no tabs, the rail level with the first. A list of linked records with long
+// titles (the Linked tab) stays a tab. Narrower than 60rem (a phone),
+// every facts section is back in Details.
+
+const LINKED = [
+  'Ask the landlord whether the loading bay can be booked for the whole of the second morning',
+  'Find out which of the old desks the recycling firm will still take after the end of the month',
+]
+
+function FactsRailRecord({ only, untabbed = false }: { only: boolean; untabbed?: boolean }) {
+  const location = useLocation()
+  const tab = (name: string) => (untabbed ? {} : { tab: name })
+  const sections: EntityViewSection[] = [
+    { title: 'Purpose', ...tab('Purpose'), content: <Markdown>{'Move the team to the third floor over two weekends.'}</Markdown> },
+    {
+      title: 'Linked',
+      ...tab('Linked'),
+      content: (
+        <ul className="flex list-disc flex-col gap-1 pl-5">
+          {LINKED.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Status', kind: 'status', status: 'active', word: 'Open' },
+        { label: 'By', kind: 'text', text: 'Mar 2, 2026' },
+        { label: 'Boxes', kind: 'text', text: 12 },
+        { label: 'Owner', kind: 'record', name: 'Sam Example', to: '/people/3', short: true },
+        { label: 'Teams', kind: 'badges', items: ['Finance', 'Support'] },
+        { label: 'Open Tasks', kind: 'count', count: 4, to: '/tasks?project=1' },
+        { label: 'Floor Plan', kind: 'link', href: 'https://example.com/plan', name: 'Plan (PDF)' },
+        { label: 'Lift', kind: 'text', text: null, emptyLabel: 'Not booked' },
+      ],
+    },
+    ...(only
+      ? []
+      : [
+          {
+            title: 'Closing',
+            placement: 'rail' as const,
+            fields: [{ label: 'Closes When', value: 'Every team has unpacked and the old floor is handed back clean' }],
+          },
+        ]),
+  ]
+  return (
+    <>
+      <EntityView
+        isLoading={false}
+        back={{ to: '/', label: 'Projects' }}
+        title="Office move"
+        badges={<StatusMark kind="active">In Progress</StatusMark>}
+        actions={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />}
+        tabCounts={{ Linked: LINKED.length }}
+        factsRail
+        strip={
+          <KeyStats
+            stats={[
+              { label: 'Boxes', value: '12', icon: PackageIcon },
+              { label: 'Starts', value: 'Mar 2', icon: CalendarIcon },
+            ]}
+          />
+        }
+        sections={sections}
+      />
+      <p data-testid="address" className="mt-6 type-caption text-muted-foreground">
+        Page at {location.pathname + location.search}
+      </p>
+    </>
+  )
+}
+
+function FactsRailInRouter({ only, untabbed }: { only: boolean; untabbed?: boolean }) {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <FactsRailRecord only={only} untabbed={untabbed} /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const FactsRail: StoryObj = { name: 'Facts rail', render: () => <FactsRailInRouter only={false} /> }
+
+export const FactsRailOnly: StoryObj = { name: 'Facts rail, nothing else', render: () => <FactsRailInRouter only /> }
+
+export const FactsRailNoTabs: StoryObj = {
+  name: 'Facts rail, no tabs',
+  render: () => <FactsRailInRouter only untabbed />,
+}
+
+// --- The record's status in the rail (4.115) -------------------------------
+// The status first at the top of the rail, whatever its place: Status is
+// listed last in its section, and its section after Schedule. It changes
+// only through an action, so it's read-only, with "Close…" under it (the
+// app's own dialog, opened from the fact's button) and a hint saying why.
+// Teams are badges with icons. The strip's values are edited in place,
+// inline: nothing moves when one is hovered or focused, so the click
+// lands on the value under the mouse (e2e/facts-rail.spec.ts).
+
+function CloseDialog({ trigger, onClose }: { trigger: ReactElement; onClose: () => void }) {
+  return (
+    <Dialog>
+      <DialogTrigger render={trigger} />
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Close this project?</DialogTitle>
+          <DialogDescription>Closing records today's date and a reason.</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button />} onClick={onClose}>
+            Close Project
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+const STRIP_START = { boxes: 84, crates: 12, floor: 'Third', lift: 'Mar 9', budget: 4200, teams: 3 }
+
+function FactsRailStatusRecord() {
+  const [closed, setClosed] = useState(false)
+  const [strip, setStrip] = useState(STRIP_START)
+  const save = (patch: Partial<typeof STRIP_START>) =>
+    new Promise((resolve) => setTimeout(() => resolve(setStrip((was) => ({ ...was, ...patch }))), 200))
+  const number = (key: 'boxes' | 'crates' | 'budget' | 'teams', label: string) => ({
+    label,
+    value: (
+      <EditableValue
+        label={label}
+        layout="inline"
+        edit={inPlace.number({ value: strip[key], min: 0, save: (next) => save({ [key]: next ?? 0 }) })}
+      />
+    ),
+  })
+  const text = (key: 'floor' | 'lift', label: string) => ({
+    label,
+    value: <EditableValue label={label} layout="inline" edit={inPlace.text({ value: strip[key], save: (next) => save({ [key]: next ?? '' }) })} />,
+  })
+  const sections: EntityViewSection[] = [
+    { title: 'Purpose', tab: 'Purpose', content: <Markdown>{'Move the team to the third floor over two weekends.'}</Markdown> },
+    {
+      title: 'Schedule',
+      placement: 'rail',
+      facts: [
+        { label: 'Starts', kind: 'text', text: 'Mar 2, 2026' },
+        { label: 'Ends', kind: 'text', text: 'Mar 16, 2026' },
+      ],
+    },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Owner', kind: 'record', name: 'Sam Example', to: '/people/3', short: true },
+        {
+          label: 'Teams',
+          kind: 'badges',
+          items: [
+            { label: 'Finance', icon: HashIcon },
+            { label: 'Support', icon: <CircleDotIcon className="size-3" /> },
+            'Facilities',
+          ],
+        },
+        {
+          label: 'Status',
+          recordStatus: true,
+          kind: 'status',
+          status: closed ? 'done' : 'active',
+          word: closed ? 'Closed' : 'Open',
+          hint: 'Changes when the project is closed, which records a date and a reason.',
+          action: closed
+            ? undefined
+            : { label: 'Close…', render: (button) => <CloseDialog trigger={button} onClose={() => setClosed(true)} /> },
+        },
+      ],
+    },
+  ]
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Projects' }}
+      title="Office move"
+      factsRail
+      strip={
+        <KeyStats
+          stats={[
+            number('boxes', 'Boxes'),
+            number('crates', 'Crates'),
+            text('floor', 'Floor'),
+            text('lift', 'Lift'),
+            number('budget', 'Budget'),
+            number('teams', 'Teams'),
+          ]}
+        />
+      }
+      sections={sections}
+    />
+  )
+}
+
+function FactsRailStatusInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <FactsRailStatusRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const FactsRailStatus: StoryObj = { name: 'Facts rail, status', render: () => <FactsRailStatusInRouter /> }
+
+// A rating in the facts rail (4.117): a score out of five as stars,
+// edited in place (a pick saves), one as hearts, a quality level as the
+// step bar, and an empty one. Each drawn as the list's cells draw it, and
+// named "4 of 5". e2e/facts-rail-rating.spec.ts measures them.
+const SCORE_OPTIONS = [1, 2, 3, 4, 5].map((value) => ({ value, label: `${value} of 5` }))
+
+function FactsRailRatingRecord() {
+  const [rating, setRating] = useState<number | null>(4)
+  const sections: EntityViewSection[] = [
+    { title: 'Summary', tab: 'Summary', content: <Markdown>{'A long novel about a lighthouse keeper and the town below.'}</Markdown> },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Author', kind: 'text', text: 'A. Marsh' },
+        {
+          label: 'My Rating',
+          kind: 'rating',
+          value: rating,
+          edit: inPlace.select({
+            value: rating,
+            options: SCORE_OPTIONS,
+            emptyLabel: 'Not rated',
+            save: (next) => new Promise((resolve) => setTimeout(() => resolve(setRating(next)), 200)),
+          }),
+        },
+        { label: 'Loved', kind: 'rating', look: 'hearts', value: 3 },
+        { label: 'Print', kind: 'rating', look: 'bar', value: 4, word: 'High' },
+        { label: 'Critics', kind: 'rating', value: null, emptyLabel: 'Not rated' },
+        { label: 'Pages', kind: 'text', text: 412 },
+      ],
+    },
+  ]
+  return <EntityView isLoading={false} back={{ to: '/', label: 'Books' }} title="Harbour Lights" factsRail sections={sections} />
+}
+
+function FactsRailRatingInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <FactsRailRatingRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const FactsRailRating: StoryObj = { name: 'Facts rail, rating', render: () => <FactsRailRatingInRouter /> }
+
+// The record extras of 4.120: yes/no facts as switches in the rail (one
+// with on/off words and a slow save, one plain, one read-only with a hint
+// saying why), header badges edited in place that keep their pencil's
+// room, strip values with an info tip and an action, and a header button
+// with a hint line under it. e2e/record-extras.spec.ts measures them.
+const STAGE_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'review', label: 'In review' },
+  { value: 'final', label: 'Final' },
+]
+const KIND_OPTIONS = [
+  { value: 'guide', label: 'Guide' },
+  { value: 'note', label: 'Note' },
+]
+
+function RecordExtrasRecord() {
+  const [shared, setShared] = useState(true)
+  const [reminders, setReminders] = useState(false)
+  const [stage, setStage] = useState('review')
+  const [kind, setKind] = useState('guide')
+  const [checks, setChecks] = useState(0)
+  const [searches, setSearches] = useState(12)
+  const slow = (apply: () => void) => new Promise((resolve) => setTimeout(() => resolve(apply()), 300))
+  const sections: EntityViewSection[] = [
+    { title: 'Body', tab: 'Body', content: <Markdown>{'How the team hands work over at the end of a shift.'}</Markdown> },
+    {
+      title: 'Facts',
+      placement: 'rail',
+      facts: [
+        { label: 'Owner', kind: 'text', text: 'Sam Example' },
+        { label: 'Shared', kind: 'switch', checked: shared, on: 'With the team', off: 'Only me', onCheckedChange: (next) => slow(() => setShared(next)) },
+        { label: 'Reminders', kind: 'switch', checked: reminders, onCheckedChange: setReminders },
+        {
+          label: 'Archived',
+          kind: 'switch',
+          checked: false,
+          onCheckedChange: () => {},
+          disabled: true,
+          hint: 'A guide in review is never archived.',
+        },
+        { label: 'Pages', kind: 'text', text: 4 },
+      ],
+    },
+  ]
+  const badge = (label: string, value: string, options: typeof STAGE_OPTIONS, save: (next: string) => void) => (
+    <EditableValue
+      label={label}
+      layout="inline"
+      edit={inPlace.select({ value, options, save: (next) => slow(() => save(next ?? value)) })}
+    >
+      <Badge variant="outline">{options.find((option) => option.value === value)?.label}</Badge>
+    </EditableValue>
+  )
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Guides' }}
+      title="Shift handover"
+      factsRail
+      badges={
+        <>
+          {badge('Stage', stage, STAGE_OPTIONS, setStage)}
+          {badge('Kind', kind, KIND_OPTIONS, setKind)}
+          <Badge variant="outline">Team</Badge>
+        </>
+      }
+      strip={
+        <KeyStats
+          stats={[
+            { label: 'Readers', icon: HashIcon, value: '18', info: 'People who opened it this month.' },
+            {
+              label: 'Checks',
+              icon: CircleDotIcon,
+              value: String(checks),
+              action: { label: 'Check Now', onClick: () => setChecks((was) => was + 1) },
+            },
+            { label: 'Updated', icon: CalendarIcon, value: 'Nov 2' },
+          ]}
+        />
+      }
+      actions={
+        <>
+          <Button variant="outline">Print</Button>
+          <ActionHint hint={`${searches} searches left`}>
+            <Button onClick={() => setSearches((was) => Math.max(0, was - 1))}>Search</Button>
+          </ActionHint>
+        </>
+      }
+      sections={sections}
+    />
+  )
+}
+
+function RecordExtrasInRouter() {
+  const [router] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return createMemoryRouter([{ path: '*', element: <RecordExtrasRecord /> }], {
+      initialEntries: [tab ? `/?tab=${encodeURIComponent(tab)}` : '/'],
+    })
+  })
+  return <RouterProvider router={router} />
+}
+
+export const RecordExtras: StoryObj = { name: 'Record extras', render: () => <RecordExtrasInRouter /> }
+
+// The `tabs` layout with no other tab: the facts stay in the column, in
+// their place, their labels beside their values.
+export const DetailsInTheColumn: StoryObj = {
+  name: 'Details in the column',
+  render: () => <InRouter layout="tabs" />,
+}
+
 // --- A notice and a footer ------------------------------------------------
 
 // A held record: the notice across the page under the header, cleared by
@@ -340,7 +812,7 @@ function HeldRecord() {
             title="On hold"
             action={
               <Button size="sm" variant="outline" onClick={() => setHeld(false)}>
-                Release the hold
+                Release the Hold
               </Button>
             }
           >
@@ -455,7 +927,7 @@ function ListsRecord() {
     save: tasks.save,
     newItem: () => ({ text: '', done: false }),
     itemName: (index) => `item ${index + 1}`,
-    addLabel: 'Add item',
+    addLabel: 'Add Item',
     // A quick action: the box ticks and saves on its own; the text edits.
     renderShown: (task, index) => (
       <span className="flex items-start gap-2">
@@ -496,7 +968,7 @@ function ListsRecord() {
     save: links.save,
     newItem: () => ({ label: '', url: '' }),
     itemName: (index) => `link ${index + 1}`,
-    addLabel: 'Add link',
+    addLabel: 'Add Link',
     renderShown: (link) => (
       <a className="text-link underline underline-offset-4" href={link.url}>
         {link.label}
@@ -605,7 +1077,7 @@ function AutosaveRecord() {
       placement: 'rail',
       fields: [
         { label: 'Saves', value: String(saves) },
-        { label: 'Saved notes', value: <span data-testid="saved-notes">{saved.notes}</span> },
+        { label: 'Saved Notes', value: <span data-testid="saved-notes">{saved.notes}</span> },
       ],
     },
     { title: 'Summary', content: <Markdown>{saved.summary}</Markdown>, edit: longText('summary', false) },
@@ -903,7 +1375,9 @@ function DeleteAction({ name }: { name: string }) {
   )
 }
 
-function StandardRecord({ title }: { title: string }) {
+function StandardRecord({ title: initialTitle, editTitle = false }: { title: string; editTitle?: boolean }) {
+  const [savedTitle, , titleText] = useText(initialTitle)
+  const title = savedTitle ?? initialTitle
   const [, , rep] = useText('Sam Example')
   const [, setPhone, phone] = useText(null)
   const [, , fax] = useText(null)
@@ -919,7 +1393,7 @@ function StandardRecord({ title }: { title: string }) {
           <div>
             <Button size="sm" variant="outline" onClick={() => setPhone('555-0100')}>
               <PlusIcon />
-              Add the phone
+              Add the Phone
             </Button>
           </div>
         </div>
@@ -930,7 +1404,7 @@ function StandardRecord({ title }: { title: string }) {
       placement: 'rail',
       fields: [
         { label: 'Kind', value: 'Wholesale' },
-        { label: 'Account rep', edit: rep },
+        { label: 'Account Rep', edit: rep },
         { label: 'Terms', edit: terms },
         { label: 'Tax ID', value: null },
       ],
@@ -953,6 +1427,7 @@ function StandardRecord({ title }: { title: string }) {
       isLoading={false}
       back={{ to: '/', label: 'Suppliers' }}
       title={title}
+      titleEdit={editTitle ? { ...titleText, label: 'Name' } : undefined}
       subtitle="Timber and sheet goods for the workshop"
       badges={
         <>
@@ -974,7 +1449,7 @@ function StandardRecord({ title }: { title: string }) {
         <>
           <Button variant="outline">
             <PlusIcon />
-            New order
+            New Order
           </Button>
           <DeleteAction name={title} />
         </>
@@ -984,8 +1459,10 @@ function StandardRecord({ title }: { title: string }) {
   )
 }
 
-function StandardInRouter({ title }: { title: string }) {
-  const [router] = useState(() => createMemoryRouter([{ path: '/', element: <StandardRecord title={title} /> }]))
+function StandardInRouter({ title, editTitle }: { title: string; editTitle?: boolean }) {
+  const [router] = useState(() =>
+    createMemoryRouter([{ path: '/', element: <StandardRecord title={title} editTitle={editTitle} /> }]),
+  )
   return <RouterProvider router={router} />
 }
 
@@ -998,6 +1475,25 @@ export const RecordStandardLongTitle: StoryObj = {
   name: 'Record standard, long title',
   render: () => (
     <StandardInRouter title="Northwind Lumber and Sheet Goods, the warehouse on the far side of the river" />
+  ),
+}
+
+// The title edited in place (`titleEdit`): a short name stays on one
+// line beside its badges, never broken mid-word ("Dr. / Example" before
+// 4.94), and a long one wraps within its column. e2e/entity-view-standard
+// .spec.ts measures both at 1280px and 375px.
+export const RecordStandardEditableTitle: StoryObj = {
+  name: 'Record standard, title edited in place',
+  render: () => <StandardInRouter title="Dr. Example" editTitle />,
+}
+
+export const RecordStandardEditableLongTitle: StoryObj = {
+  name: 'Record standard, long title edited in place',
+  render: () => (
+    <StandardInRouter
+      title="Northwind Lumber and Sheet Goods, the warehouse on the far side of the river"
+      editTitle
+    />
   ),
 }
 

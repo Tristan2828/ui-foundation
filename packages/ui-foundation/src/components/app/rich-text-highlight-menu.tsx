@@ -92,7 +92,7 @@ export function RichTextHighlightMenu({ state, readOnly, tabIndex, onFocus, onKe
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={current === null} onClick={() => run('highlight-off')}>
           <RemoveFormattingIcon aria-hidden="true" />
-          Remove highlight
+          Remove Highlight
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

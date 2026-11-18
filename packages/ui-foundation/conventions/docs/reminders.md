@@ -13,7 +13,7 @@ to the device, where the app's service worker shows it.
 | `usePushPermission()` | the package | Whether this device gets reminders, and `enable`/`disable` |
 | `AllowReminders` | the package | The control: says what reminders are, then asks, on a click |
 | `/push/public-key`, `/push/subscriptions` | `openapi.yaml`, the foundation's part (optional) | The VAPID key to subscribe with; this device's subscription saved or dropped |
-| `foundation_backend.push` | `ui-foundation-backend` | `send_push(session, user_id, title, body, url)`: encrypted (RFC 8291), signed (VAPID), to every device the user allowed |
+| `foundation_backend.push` | `ui-foundation-backend` | `send_push(session, user_id, title, body, url)`: encrypted (RFC 8291), signed (VAPID), to every device the user allowed; optionally a `PushAction` button and `renotify` |
 | `foundation_backend.reminders`, `reminders` | `ui-foundation-backend` | A reminder row (when, which days, the text, the path), and the `send-reminders` job that sends each one when it's due |
 
 Off until the backend turns it on (`PUSH_ENABLED`, `docs/deploy.md`
@@ -39,8 +39,8 @@ const push = usePushPermission()
 
 | `status` | Means | Shows |
 |---|---|---|
-| `off` | Can be turned on | The description and "Allow reminders" |
-| `on` | This device gets them | "Reminders are on for this device", and "Turn off" |
+| `off` | Can be turned on | The description and "Allow Reminders" |
+| `on` | This device gets them | "Reminders are on for this device", and "Turn Off" |
 | `needs-install` | iPhone or iPad in a browser tab | How to add the app to the Home Screen |
 | `blocked` | The person said no | Where to allow it again |
 | `unsupported` | No push in this browser | That it can't |
@@ -110,6 +110,134 @@ Scope it to the signed-in user, as Widgets are.
 - **Time zones** come from the system's time zone database. On Windows
   that's the `tzdata` package, which the backend doesn't install: a
   Windows dev machine reads only `UTC` until it's added.
+
+## Repeating reminders (4.95)
+
+A weekday set and one time is the simple schedule. For anything more
+(every 2nd Tuesday, the last day of the month, several times a day, an
+end, "every! 3 days" counted from when it's done), a reminder carries a
+**recurrence**: the contract's `Recurrence` schema (in the package's
+`openapi/foundation.yaml`, marked `x-optional`: copy it into
+`components.schemas` and reference it from the reminder's schema), the
+package's `RecurrenceField` on the form and `inPlace.recurrence` on the
+view, and `foundation_backend.recurrence` on the server. Both sides read
+the same rules and agree on every next occurrence.
+
+- **The value**: `{ rule, start, times, timeZone, fromCompletion }`.
+  `rule` is RFC 5545's RRULE without DTSTART (`FREQ=MONTHLY;BYDAY=2TU`):
+  FREQ daily to yearly, INTERVAL, BYDAY with an nth (`2TU`, `-1FR`),
+  BYMONTHDAY (`-1` the last day), BYMONTH, UNTIL (a date) or COUNT, and
+  WKST (4.119, below).
+  `start` is the first day it can fall on; each of `times` is an
+  occurrence on every day the rule falls on, read in `timeZone`. A day a
+  month lacks is skipped (the 31st, Feb 29), as in RFC 5545.
+- **Which day a week starts on (WKST, 4.119)**: weeks start on Monday
+  unless the rule says `WKST=SU` (or any weekday; `WKST=MO` is the
+  default and isn't stored). It moves only an every-N-weeks rule with
+  days: from Wednesday 2026-11-04, `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE`
+  next falls on Sunday the 8th (its Monday week runs to the 8th), and
+  with `;WKST=SU` on Sunday the 15th (its Sunday week began on the 1st,
+  before the start). Both sides agree, as python-dateutil and `rrule` do.
+  An app whose weeks start on Sunday gives `RecurrenceField` and
+  `inPlace.recurrence` `weekStart="SU"`: every weekly rule they build
+  (the presets and what's typed) gets `WKST=SU`, and "weeks start mon"
+  typed says otherwise. Give the same `weekStart` to `formatRecurrence`
+  in a Repeats cell, which otherwise says ", weeks start Sun" on a rule
+  where it matters. A rule stored without WKST keeps counting from
+  Monday; an app that wants its old every-N-weeks rules counted from
+  Sunday rewrites them in a migration of its own (append `;WKST=SU`).
+  The rule pattern in `openapi/foundation.yaml` allows WKST since 4.119:
+  an app copies the new `Recurrence` when it stores one (an older copy
+  still passes `check-contract`, but its mocks and spec refuse WKST).
+- **The columns**: the app's reminders model inherits
+  `foundation_backend.recurrence_models.RecurringReminderFields` and its
+  migration adds them: `recurrence` (JSON), `next_at`, `sent_at`,
+  `last_sent_at`, `done_occurrence`, `done_at` (timestamps with time
+  zone), `nag_count` (integer, default 0), `nag_every_minutes` and
+  `nag_limit` (integers, null for no nagging). `days` and `time_of_day`
+  become nullable. Hand the model to the job as before
+  (`reminders.register(model=MyReminder)`).
+- **What the job does with a row whose `recurrence` is set**: each
+  occurrence is due from its time until 15 minutes have passed, so
+  several a day go out; one missed past that is skipped, not sent late
+  (the run's line says "1 missed"). Sent and not done, it's re-sent
+  every `nag_every_minutes`, at most `nag_limit` times (3 when only the
+  interval is set). The next occurrence coming round ends the wait; a
+  `fromCompletion` rule waits for done instead. A row with no
+  `recurrence` is the weekday set, as before.
+- **Done**: the app's Done button (or a notification action that calls
+  the app) runs `reminders.mark_done(row)` and commits: the occurrence is
+  recorded (`done_occurrence`, `done_at`), nagging stops, and the next is
+  pending; for `fromCompletion` it counts from the done time (and from
+  the notification itself: "A Done button on the notification" below).
+  After the rule itself changes, `reminders.schedule_changed(row)` forgets where it
+  was.
+- **Moving a simple schedule over**: `recurrence.from_weekdays(days,
+  time_of_day, time_zone, start=today)` (and the package's
+  `recurrenceFromWeekdays`) is the same schedule exactly; store its
+  `model_dump(by_alias=True, mode="json")` in `recurrence`.
+  `recurrence.as_weekdays(rule)` goes back when a rule is still that
+  simple.
+- **On screens**: `RecurrenceField` in the form (a `Controller`; check
+  with `recurrenceProblem`), `inPlace.recurrence` on the view, and in the
+  list `formatRecurrence` for a Repeats column and `nextOccurrence` with
+  `formatOccurrence` for a Next one (cell-patterns.md "A repeat and its
+  next time").
+- **A record whose times are its own fields** (a calendar event with a
+  start and an end, 4.119): `RecurrenceField times={false}` (and
+  `inPlace.recurrence({ times: false })`) says only dates: the preview
+  lists the next days from today on ("Sun, Nov 15"), the label and the
+  box leave the times out, and "at 9am" typed is refused. The value still
+  carries `times`, as the schema needs one: the value's own, else
+  `defaultTimes` (09:00 when not given; `['00:00']` reads best for a
+  calendar). In the list, `formatRecurrence(value, { times: false })` and
+  `formatOccurrence(next, zone, { time: false })`.
+
+## A Done button on the notification (4.104)
+
+A repeating reminder's push can carry a **Done** button that marks the
+occurrence done without opening the app. The app names its own endpoint;
+the job puts it on each occurrence's push:
+
+```python
+from foundation_backend import push, reminders
+
+reminders.register(
+    model=MyReminder,
+    done_action=lambda row, occurrence: push.PushAction(
+        f"/api/reminders/{row.id}/done", {"occurrence": occurrence.isoformat()}
+    ),
+)
+```
+
+- **The endpoint is the app's**: an ordinary signed-in route
+  (`POST /reminders/{id}/done`, body `{ occurrence }`) that loads the
+  user's own row, checks the occurrence is still the pending one (a tap
+  on an old notification marks nothing), runs `reminders.mark_done(row)`
+  and commits. Answer 2xx when done or already done; anything else counts
+  as a failure. Return nothing the worker needs to read.
+- **What the service worker does** (`/push-sw.js`, from `pwa()`): shows
+  the button where the browser has notification buttons (Chrome, Edge,
+  Firefox on desktop, Chrome on Android). Tapped, it POSTs the action's
+  body as JSON to its path on the app's own origin with the session
+  cookie (`credentials: 'same-origin'`), and opens no window. Done, the
+  notification closes. Refused (signed out, a 4xx or 5xx) or offline, it
+  opens the reminder's `url` instead, so the person can do it in the app.
+- **iOS Safari and any browser without buttons** shows the notification
+  without one; a tap opens the `url` as always. Keep a Done button on the
+  reminder's own page.
+- **Only the app's own paths.** `PushAction`'s `path` (like `url`) must
+  start with one `/`: `send_push` refuses `https://...`, `//host`, a
+  backslash or a control character, and the worker checks again and
+  drops a button whose path resolves to any other origin.
+- **Nags sound again.** A nag is re-sent under the same tag
+  (`reminder-{id}`), which a browser otherwise replaces silently; the job
+  sends it with `renotify`, so it rings again. `send_push(..., tag=...,
+  renotify=True, action=PushAction(...))` does the same for an app's own
+  pushes.
+- **A weekday-set reminder** (no `recurrence`) has no occurrence to mark,
+  so it gets no button. Left out, `done_action` adds none: pushes look as
+  before.
 
 ## Testing
 

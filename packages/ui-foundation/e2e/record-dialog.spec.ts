@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 // A record opened in a dialog over its list (app/RecordDialog stories), in
 // a real browser: the address follows the dialog, Back, Esc and Close go
-// back to the list as it was, "Open full page" and a deep link give the
+// back to the list as it was, "Open Full Page" and a deep link give the
 // page, focus stays in the dialog and comes back to the row, and the
 // required states show inside it. Axe in both themes is
 // e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
@@ -76,7 +76,7 @@ test('the keyboard: Enter on a row opens it, Tab stays inside, Esc gives focus b
 test('Open full page swaps the dialog for the page, and Back goes to the list', async ({ page }) => {
   await page.goto(story('open'))
   await expect(dialog(page).getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
-  await dialog(page).getByRole('link', { name: 'Open full page' }).click()
+  await dialog(page).getByRole('link', { name: 'Open Full Page' }).click()
 
   await expect(dialog(page)).toHaveCount(0)
   await expect(address(page)).toHaveText('/projects/1')
@@ -125,11 +125,11 @@ test('loading, an error with Retry, and not found show inside the dialog', async
   await page.goto(story('default'))
   await page.getByRole('link', { name: 'A project that fails' }).click()
   await expect(page.getByRole('dialog', { name: 'Project' })).toBeVisible()
-  await expect(dialog(page).getByRole('button', { name: 'Try again' })).toBeVisible()
+  await expect(dialog(page).getByRole('button', { name: 'Try Again' })).toBeVisible()
 
   await page.goto(story('not-found'))
   await expect(dialog(page).getByText('Not found', { exact: true })).toBeVisible()
-  await expect(dialog(page).getByRole('button', { name: 'Try again' })).toHaveCount(0)
+  await expect(dialog(page).getByRole('button', { name: 'Try Again' })).toHaveCount(0)
   // Its way out closes the dialog rather than pushing the list again.
   await dialog(page).getByRole('button', { name: 'Back to Projects' }).click()
   await expect(dialog(page)).toHaveCount(0)
@@ -174,7 +174,7 @@ test('a dialog only record has no Open full page', async ({ page }) => {
   await page.goto(story('dialog-only'))
   await openFromRow(page, 'Repaint the fence')
   await expect(dialog(page).getByRole('heading', { level: 1, name: 'Repaint the fence' })).toBeVisible()
-  await expect(dialog(page).getByRole('link', { name: 'Open full page' })).toHaveCount(0)
+  await expect(dialog(page).getByRole('link', { name: 'Open Full Page' })).toHaveCount(0)
   await dialog(page).getByRole('button', { name: 'Close' }).click()
   await expect(dialog(page)).toHaveCount(0)
   await expect(address(page)).toHaveText('/projects')
@@ -231,7 +231,7 @@ test('a list at its own path: Back closes the dialog, Open full page gives the p
   await expect(address(page)).toHaveText('/projects/list?q=re')
 
   await page.goto(story('list-at-its-own-path-open'))
-  await dialog(page).getByRole('link', { name: 'Open full page' }).click()
+  await dialog(page).getByRole('link', { name: 'Open Full Page' }).click()
   await expect(dialog(page)).toHaveCount(0)
   await expect(address(page)).toHaveText('/projects/1')
   await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/projects/list')
@@ -252,7 +252,7 @@ test("a sub-record opens over its parent's page, at its own address, and Esc goe
   await expect(address(page)).toHaveText('/projects/1/tasks/12')
   await expect(page.getByRole('dialog', { name: 'Buy the paint' })).toBeVisible()
   // No page of its own, so no Open full page; the parent stays behind it.
-  await expect(dialog(page).getByRole('link', { name: 'Open full page' })).toHaveCount(0)
+  await expect(dialog(page).getByRole('link', { name: 'Open Full Page' })).toHaveCount(0)
   await expect(page.getByRole('heading', { level: 1, name: 'Repaint the fence', includeHidden: true })).toHaveCount(1)
 
   await page.keyboard.press('Escape')
@@ -275,22 +275,22 @@ test("a reload of a sub-record's address is the dialog over its parent again", a
 // A new record over its list (`newPath`, 4.82): the `new` route is a
 // FormDialog over the list, from the list or a deep link, and Add opens
 // the new record over the same list.
-const form = (page: Page) => page.getByRole('dialog', { name: 'New project' })
+const form = (page: Page) => page.getByRole('dialog', { name: 'New Project' })
 
 test('New project opens the form over the list; Add opens the new record over it', async ({ page }) => {
   await page.goto(story('new-record'))
   await page.getByRole('textbox', { name: 'Search projects' }).fill('a')
-  await page.getByRole('link', { name: 'New project' }).click()
+  await page.getByRole('link', { name: 'New Project' }).click()
   await expect(address(page)).toHaveText('/projects/new')
   await expect(form(page)).toBeVisible()
   // One dialog: the form, with no record dialog round it.
   await expect(page.getByRole('dialog')).toHaveCount(1)
   await expect(page.getByRole('textbox', { name: 'Search projects', includeHidden: true })).toHaveValue('a')
 
-  await form(page).getByRole('button', { name: 'Add project' }).click()
+  await form(page).getByRole('button', { name: 'Add Project' }).click()
   await expect(form(page).getByText('Give it a name')).toBeVisible()
   await form(page).getByRole('textbox', { name: 'Name' }).fill('Paint the shed')
-  await form(page).getByRole('button', { name: 'Add project' }).click()
+  await form(page).getByRole('button', { name: 'Add Project' }).click()
 
   await expect(address(page)).toHaveText('/projects/5')
   await expect(page.getByRole('dialog', { name: 'Paint the shed' })).toBeVisible()
@@ -319,7 +319,7 @@ test("with a name typed, closing the new record's form asks first", async ({ pag
   await page.keyboard.press('Escape')
   const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
   await expect(prompt).toBeVisible()
-  await prompt.getByRole('button', { name: 'Keep editing' }).click()
+  await prompt.getByRole('button', { name: 'Keep Editing' }).click()
   await expect(address(page)).toHaveText('/projects/new')
   await form(page).getByRole('button', { name: 'Close' }).click()
   await prompt.getByRole('button', { name: 'Discard' }).click()
@@ -339,7 +339,7 @@ test("a deep link to the new record's form is the form over the list", async ({ 
 test('a failed save keeps the form open with the reason', async ({ page }) => {
   await page.goto(story('new-record-open'))
   await form(page).getByRole('textbox', { name: 'Name' }).fill('fail')
-  await form(page).getByRole('button', { name: 'Add project' }).click()
+  await form(page).getByRole('button', { name: 'Add Project' }).click()
   await expect(form(page).locator('[data-slot=notice]')).toContainText('The server had a problem')
   await expect(address(page)).toHaveText('/projects/new')
 })

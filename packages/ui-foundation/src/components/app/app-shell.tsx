@@ -7,8 +7,11 @@ import { BottomBar, BOTTOM_BAR_PADDING } from '@/components/app/app-shell-bottom
 import {
   activeNavTo,
   childItems,
+  childRuns,
   childrenOpen,
   isNavItemGroup,
+  navCountSpoken,
+  navCountText,
   navGroups,
   navPageLabel,
   navTooltip,
@@ -20,6 +23,7 @@ import {
   type NavGroup,
   type NavItem,
   type NavItemGroup,
+  type NavLook,
 } from '@/components/app/app-shell-nav'
 import { versionHref, versionLabel, type AppShellVersion } from '@/components/app/app-shell-version'
 import { ErrorState } from '@/components/app/error-state'
@@ -64,6 +68,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
+  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
@@ -71,7 +76,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { OfflineNotice } from '@/components/app/offline-notice'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
-export type { BottomBarItem, NavChild, NavEntry, NavItem, NavItemGroup, NavSection } from '@/components/app/app-shell-nav'
+export type { BottomBarItem, NavChild, NavEntry, NavItem, NavItemGroup, NavLook, NavSection } from '@/components/app/app-shell-nav'
 export type { AppShellVersion } from '@/components/app/app-shell-version'
 export type { AppShellSearch, RecentRecord, SearchRecord } from '@/components/app/search-palette'
 
@@ -141,6 +146,18 @@ export type AppShellProps = {
    * takes its place. The shell pads its content so nothing sits under the bar.
    */
   bottomBar?: readonly BottomBarItem[]
+  /**
+   * How the sidebar draws its groups (design-language.md "The sidebar and
+   * the phone's bar"): lists, icon beside label (`'list'`, the default),
+   * or `'tiles'`: each group a grid of tiles, icon over a short label,
+   * three to a row, with no visible headings (a section's label is kept
+   * for screen readers), and the current entry's pages listed under its
+   * group's grid, with hairlines in place of their headings. A section's
+   * own `look` wins. The icon rail is unchanged, and a `bottomBar` item
+   * for a tiles section opens its sheet as tiles, the current entry's
+   * pages under them. Keep the labels short: a word or two.
+   */
+  navLook?: NavLook
   /**
    * Search in the header (#N6): a box ("Search", or `placeholder`) from
    * md up and a button on a phone, both opening a palette (Ctrl K, ⌘K on
@@ -229,7 +246,7 @@ function LookMenu({ palette }: { palette: PaletteName | null }) {
       <DropdownMenuContent align="end" className="w-60">
         {palette && (
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Palette on this device</DropdownMenuLabel>
+            <DropdownMenuLabel>Palette on This Device</DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={palette}
               onValueChange={(next) => {
@@ -248,7 +265,7 @@ function LookMenu({ palette }: { palette: PaletteName | null }) {
         {palette && pickRows && <DropdownMenuSeparator />}
         {pickRows && (
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Rows on this device</DropdownMenuLabel>
+            <DropdownMenuLabel>Rows on This Device</DropdownMenuLabel>
             <DropdownMenuRadioGroup
               value={rows}
               onValueChange={(next) => {
@@ -275,7 +292,7 @@ function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon-sm"
-      aria-label="Toggle dark mode"
+      aria-label="Toggle Dark Mode"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}
@@ -306,7 +323,8 @@ const ACTIVE_MARK = 'data-active:shadow-[inset_3px_0_0_0_var(--primary)]'
 // An entry's count (#N3): a plain number at its end in the muted tone,
 // read with what it counts; on the icon rail, a dot on the icon.
 function NavCount({ count, countLabel }: { count?: number; countLabel?: string }) {
-  if (!count) return null
+  const text = navCountText(count)
+  if (text === undefined) return null
   return (
     <>
       <span
@@ -314,9 +332,9 @@ function NavCount({ count, countLabel }: { count?: number; countLabel?: string }
         data-slot="nav-count"
         className="ml-auto shrink-0 type-caption text-muted-foreground tabular-nums group-data-[collapsible=icon]:hidden"
       >
-        {count}
+        {text}
       </span>
-      <span className="sr-only">{countLabel ? `${count} ${countLabel}` : count}</span>
+      <span className="sr-only">{navCountSpoken(count, countLabel)}</span>
       <span
         aria-hidden="true"
         data-slot="nav-count-dot"
@@ -371,11 +389,20 @@ function NavSubGroup({ group, activeTo }: { group: NavItemGroup; activeTo: strin
 // in the page but hidden, as a folded section's are. The icon rail has no
 // room for them: there the entry looks current while one of them is, and
 // its tooltip names them (or their headings).
-function NavMenu({ items, activeTo }: { items: readonly NavItem[]; activeTo: string | undefined }) {
+function NavMenu({
+  items,
+  activeTo,
+  label,
+}: {
+  items: readonly NavItem[]
+  activeTo: string | undefined
+  /** Names the list, for a run of pages with no visible heading. */
+  label?: string
+}) {
   const { state, isMobile } = useSidebar()
   const rail = state === 'collapsed' && !isMobile
   return (
-    <SidebarMenu>
+    <SidebarMenu aria-label={label}>
       {items.map((item) => {
         const { to, label, icon: Icon, children, count, countLabel } = item
         const isActive = to === activeTo
@@ -407,6 +434,99 @@ function NavMenu({ items, activeTo }: { items: readonly NavItem[]; activeTo: str
         )
       })}
     </SidebarMenu>
+  )
+}
+
+// A tile in the tiles look (#6C): the entry's icon over its label, a
+// finger's target at least, its count in the corner. The current one,
+// or the one holding the current page, has the tint and a --primary ring.
+const NAV_TILE_CLASS =
+  'relative flex min-h-14 w-full min-w-0 flex-col items-center justify-center gap-1 rounded-lg bg-sidebar-accent/50 px-1 py-2 ' +
+  'text-center type-caption text-sidebar-foreground outline-hidden ring-sidebar-ring transition-colors ' +
+  'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 ' +
+  'data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground ' +
+  'data-active:shadow-[inset_0_0_0_1px_var(--primary)] [&>svg]:size-5 [&>svg]:shrink-0'
+
+function NavTile({ item, activeTo }: { item: NavItem; activeTo: string | undefined }) {
+  const { to, label, icon: Icon, count, countLabel } = item
+  // "page" on the entry's own page, "true" on one of its pages.
+  const current = to === activeTo ? 'page' : childItems(item).some((child) => child.to === activeTo) ? 'true' : undefined
+  return (
+    <li className="flex min-w-0">
+      <Link
+        to={to}
+        aria-current={current}
+        data-slot="nav-tile"
+        data-active={current ? '' : undefined}
+        className={NAV_TILE_CLASS}
+      >
+        <Icon aria-hidden="true" />
+        <span className="max-w-full break-words">{label}</span>
+        {navCountText(count) !== undefined ? (
+          <>
+            <span
+              aria-hidden="true"
+              data-slot="nav-count"
+              className="absolute top-1 right-1.5 type-caption leading-none text-sidebar-foreground tabular-nums"
+            >
+              {navCountText(count)}
+            </span>
+            <span className="sr-only">{navCountSpoken(count, countLabel)}</span>
+          </>
+        ) : null}
+      </Link>
+    </li>
+  )
+}
+
+// A group in the tiles look (#6C): its entries as a three-column grid,
+// its label for screen readers only (the grid is a list named by it), and
+// under the grid the pages of the entry you're in, as the list look's
+// children, each heading a hairline (its list still named by it). On the
+// icon rail it's the rail's icons, as every group.
+function TilesNavGroup({ group, activeTo }: { group: NavGroup; activeTo: string | undefined }) {
+  const { state, isMobile } = useSidebar()
+  const headingId = useId()
+  if (state === 'collapsed' && !isMobile) {
+    return (
+      <SidebarGroup>
+        {group.label !== undefined && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+        <SidebarGroupContent>
+          <NavMenu items={group.items} activeTo={activeTo} />
+        </SidebarGroupContent>
+      </SidebarGroup>
+    )
+  }
+  const open = group.items.filter((item) => childrenOpen(item, activeTo))
+  return (
+    <SidebarGroup data-nav-look="tiles">
+      {group.label !== undefined && (
+        <span id={headingId} className="sr-only">
+          {group.label}
+        </span>
+      )}
+      <SidebarGroupContent className="flex flex-col gap-2">
+        <ul
+          data-slot="nav-tiles"
+          aria-labelledby={group.label !== undefined ? headingId : undefined}
+          className="grid grid-cols-3 gap-1.5"
+        >
+          {group.items.map((item) => (
+            <NavTile key={item.to} item={item} activeTo={activeTo} />
+          ))}
+        </ul>
+        {open.map((item) => (
+          <div key={item.to} role="group" aria-label={`${item.label} pages`} data-slot="nav-tile-pages" className="flex flex-col gap-1">
+            {childRuns(item).map((run, runIndex) => (
+              <div key={run.label ?? `run:${runIndex}`} className="flex flex-col gap-1">
+                <SidebarSeparator className="mx-0" />
+                <NavMenu items={run.items} activeTo={activeTo} label={run.label} />
+              </div>
+            ))}
+          </div>
+        ))}
+      </SidebarGroupContent>
+    </SidebarGroup>
   )
 }
 
@@ -530,6 +650,7 @@ export function AppShell({
   defaultSidebarOpen = true,
   version,
   bottomBar,
+  navLook = 'list',
   search,
 }: AppShellProps) {
   const { user, status, error, retry, logout } = useAuth()
@@ -582,7 +703,13 @@ export function AppShell({
   const trail = ownTrail ?? navTrail(nav, location.pathname)
   const groups = navGroups(nav)
   const renderGroup = (group: NavGroup, groupIndex: number) =>
-    group.collapsible && group.label !== undefined ? (
+    (group.look ?? navLook) === 'tiles' ? (
+      <TilesNavGroup
+        key={`${group.placement ?? 'top'}:${groupIndex}:${group.label ?? ''}`}
+        group={group}
+        activeTo={activeTo}
+      />
+    ) : group.collapsible && group.label !== undefined ? (
       <CollapsibleNavGroup
         key={`${group.placement ?? 'top'}:${groupIndex}:${group.label}`}
         group={{ ...group, label: group.label }}
@@ -642,7 +769,7 @@ export function AppShell({
                 <span className="truncate type-caption text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
                   {user.name}
                 </span>
-                <Button variant="ghost" size="icon-sm" aria-label="Log out"
+                <Button variant="ghost" size="icon-sm" aria-label="Log Out"
                   onClick={() => {
                     setIsLoggingOut(true)
                     // The records opened lately are this person's: the
@@ -698,7 +825,7 @@ export function AppShell({
           </SidebarInset>
         </div>
         </PageTrailContext.Provider>
-        {bottomBar && bottomBar.length > 0 && <BottomBar items={bottomBar} nav={nav} activeTo={activeTo} />}
+        {bottomBar && bottomBar.length > 0 && <BottomBar items={bottomBar} nav={nav} activeTo={activeTo} navLook={navLook} />}
       </SidebarProvider>
       {/* Top centre, and at the bottom on a phone above its bars (4.90,
           ui/sonner.tsx): not sonner's bottom-right default, which sat on

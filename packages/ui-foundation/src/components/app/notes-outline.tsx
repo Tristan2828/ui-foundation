@@ -81,10 +81,10 @@ export function NotesOutline({
       {foldable.size > 0 && (
         <div className="flex flex-wrap gap-1">
           <Button size="xs" variant="outline" disabled={allFolded} onClick={() => setFolded(foldable)}>
-            Fold all
+            Fold All
           </Button>
           <Button size="xs" variant="outline" disabled={!anyFolded} onClick={() => setFolded(new Set())}>
-            Open all
+            Open All
           </Button>
         </div>
       )}

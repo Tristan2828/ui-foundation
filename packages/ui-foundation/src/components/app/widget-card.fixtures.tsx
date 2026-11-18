@@ -57,7 +57,7 @@ type Widget = {
 }
 
 const READY: Widget = {
-  title: 'Ready to start',
+  title: 'Ready to Start',
   icon: ListChecksIcon,
   link: { to: '/tasks?status=ready', label: 'All' },
   emptyMessage: 'Nothing waiting',

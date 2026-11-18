@@ -232,10 +232,10 @@ test.describe('EntityView, a list edited in place', () => {
     const checklist = region(page, 'Checklist')
     await expect(items(page, 'Checklist')).toHaveText(['Book the lift', 'Label the boxes', 'Return the keys'])
 
-    await checklist.getByRole('button', { name: 'Add item' }).focus()
+    await checklist.getByRole('button', { name: 'Add Item' }).focus()
     await page.keyboard.press('Enter')
     await expect(page.getByRole('textbox', { name: 'Item 4 text' })).toBeFocused()
-    await page.keyboard.type('Water the plants')
+    await page.keyboard.type('Water the Plants')
     await page.keyboard.press('Enter')
     await expect(page.getByRole('textbox', { name: 'Item 5 text' })).toBeFocused()
     await page.keyboard.type('Hand back the badge')
@@ -246,7 +246,7 @@ test.describe('EntityView, a list edited in place', () => {
       'Book the lift',
       'Label the boxes',
       'Return the keys',
-      'Water the plants',
+      'Water the Plants',
       'Hand back the badge',
     ])
 
@@ -269,7 +269,7 @@ test.describe('EntityView, a list edited in place', () => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto(story('lists'))
     const links = rail(page).getByRole('region', { name: 'Links' })
-    await links.getByRole('button', { name: 'Add link' }).click()
+    await links.getByRole('button', { name: 'Add Link' }).click()
     const label = page.getByRole('textbox', { name: 'Link 2 label' })
     await expect(label).toBeFocused()
     // The control fits the narrow column.
@@ -363,7 +363,7 @@ test.describe('EntityView, long text that autosaves', () => {
     await page.getByRole('link', { name: 'Projects' }).click()
     const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
     await expect(prompt).toBeVisible({ timeout: 5000 })
-    await prompt.getByRole('button', { name: 'Keep editing' }).click()
+    await prompt.getByRole('button', { name: 'Keep Editing' }).click()
     await expect(prompt).toHaveCount(0)
 
     // Fixed, then leaving: saved on the way out, no prompt.
@@ -414,7 +414,7 @@ test.describe('EntityView, notice and footer (#158, #159)', () => {
     // The notice itself isn't an alert: it was there when the page opened.
     await expect(page.getByRole('alert')).toHaveCount(0)
     await expect(status).toContainText('On hold')
-    await page.getByRole('button', { name: 'Release the hold' }).click()
+    await page.getByRole('button', { name: 'Release the Hold' }).click()
     await expect(notice(page)).toHaveCount(0)
     await expect(status).toHaveAttribute('role', 'status')
     await expect(status).toBeEmpty()

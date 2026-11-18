@@ -2,7 +2,7 @@ import { expect, test } from '@tristan2828/ui-foundation/testing'
 
 // `title`: the browser tab's, "<nav entry> · <app>", the app alone at home.
 const NAV_ENTRIES = [
-  { path: '/', label: 'Home', title: 'UI Foundation', content: { role: 'button', name: 'Get started' } },
+  { path: '/', label: 'Home', title: 'UI Foundation', content: { role: 'button', name: 'Get Started' } },
   { path: '/widgets', label: 'Widgets', title: 'Widgets · UI Foundation', content: { role: 'heading', name: 'Widgets' } },
 ] as const
 

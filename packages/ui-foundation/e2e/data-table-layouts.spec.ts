@@ -27,7 +27,7 @@ test.describe('DataTable layouts', () => {
     await expect(page.getByRole('table')).toHaveCount(0)
     await expect(page.getByRole('heading', { name: /^Today/ })).toBeVisible()
     await expect(page.locator('[data-slot="data-table-card"]')).toHaveCount(6)
-    await page.getByRole('button', { name: 'Next page' }).click()
+    await page.getByRole('button', { name: 'Next Page' }).click()
     await expect(page.locator('[data-slot="data-table-card"]')).toHaveCount(2)
     await expect(root(page)).toHaveAttribute('data-layout', 'grid')
 

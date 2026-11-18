@@ -29,7 +29,7 @@ export function ActionError({ action, title, className }: ActionErrorProps) {
           action={
             <Button type="button" size="sm" variant="outline" disabled={action.pending} onClick={() => void action.retry()}>
               {action.pending && <Spinner className="size-4" />}
-              Try again
+              Try Again
             </Button>
           }
         >

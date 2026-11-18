@@ -26,7 +26,7 @@ const meta: Meta = {
 export default meta
 
 const CARDS: Record<string, { title: string; rows: string[] }> = {
-  ready: { title: 'Ready to start', rows: ['Repaint the shed', 'Read chapter 4', 'Fix the gate latch'] },
+  ready: { title: 'Ready to Start', rows: ['Repaint the shed', 'Read chapter 4', 'Fix the gate latch'] },
   waiting: { title: 'Waiting on', rows: ['Parts arrive', 'Weather clears'] },
   links: { title: 'Saved links', rows: ['Gate latch fitting guide', 'Reading list'] },
   garden: { title: 'Garden', rows: ['Water the beds', 'Turn the compost'] },

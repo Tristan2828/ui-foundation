@@ -17,6 +17,7 @@ import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { acceptAttribute, DEFAULT_IMAGE_TYPES, imageRefusal, uploadFailure, type ImageUpload } from '@/lib/image-file'
+import { titleCase } from '@/lib/title-case'
 
 export type ImageFieldProps = {
   /** The main button's id (Add or Replace), for the field's `<FieldLabel htmlFor>`. */
@@ -142,7 +143,7 @@ export function ImageField({
   }
 
   const describedBy = [ariaDescribedBy, problem ? errorId : undefined].filter(Boolean).join(' ') || undefined
-  const mainLabel = busy ? `Uploading ${noun}…` : value !== null ? `Replace ${noun}` : `Add ${noun}`
+  const mainLabel = busy ? `Uploading ${noun}…` : value !== null ? `Replace ${titleCase(noun)}` : `Add ${titleCase(noun)}`
 
   return (
     <div
@@ -205,7 +206,7 @@ export function ImageField({
             ) : (
               <ImagePlusIcon aria-hidden="true" />
             )}
-            {busy ? 'Uploading…' : value !== null ? 'Replace' : `Add ${noun}`}
+            {busy ? 'Uploading…' : value !== null ? 'Replace' : `Add ${titleCase(noun)}`}
           </Button>
           {value !== null && (
             <Button type="button" variant="ghost" size="sm" aria-label={`Remove ${noun}`} disabled={busy || readOnly} onClick={remove}>

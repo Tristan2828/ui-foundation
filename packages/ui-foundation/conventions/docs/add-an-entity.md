@@ -3,29 +3,30 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 44–66
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 68–832
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 110–117
-  - Step 2: `npm run gen:api` · lines 118–119
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 120–131
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 132–141
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 142–146
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 147–719
-  - Step 7: Register routes · lines 720–735
-  - Step 8: Add Playwright specs for all three screens · lines 736–814
-  - Step 9: Register the nav entry and route names · lines 815–829
-  - Step 10: `npm run verify`. · lines 830–832
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 834–1144
-  - [The record view](#the-record-view) · lines 983–1022
-  - [Forms](#forms) · lines 1024–1076
-  - [Dialogs](#dialogs) · lines 1078–1103
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1105–1144
-- [What not to copy](#what-not-to-copy) · lines 1146–1172
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1174–1191
-- [Deleting](#deleting) · lines 1193–1224
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1226–1247
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1249–1258
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1261–1300
+- [The reference files](#the-reference-files) · lines 45–67
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–866
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
+  - Step 2: `npm run gen:api` · lines 119–120
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 133–142
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–754
+  - Step 7: Register routes · lines 755–770
+  - Step 8: Add Playwright specs for all three screens · lines 771–848
+  - Step 9: Register the nav entry and route names · lines 849–863
+  - Step 10: `npm run verify`. · lines 864–866
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 868–1337
+  - [The record view](#the-record-view) · lines 1021–1178
+  - [Forms](#forms) · lines 1180–1251
+  - [Dialogs](#dialogs) · lines 1253–1284
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1286–1337
+- [What not to copy](#what-not-to-copy) · lines 1339–1372
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1374–1391
+- [Deleting](#deleting) · lines 1393–1424
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1426–1447
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1449–1458
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1461–1503
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1505–1541
 
 <!-- /index -->
 
@@ -143,7 +144,9 @@ is a filled-in example while the Widgets demo is still here).
    tests pass, built on `safeFetch`/`toAppError` from
    `@tristan2828/ui-foundation/gateway` (see `src/api/gateway/widgets.ts`).
    Wire → `Page<T>` / `AppError` translation only; no hand-written types
-   (everything comes from `schema.d.ts`).
+   (everything comes from `schema.d.ts`). A proxy's sign-in page or redirect never
+   reaches it: `safeFetch` throws kind `proxy_auth` first
+   ([Behind a sign-in proxy](#behind-a-sign-in-proxy)).
 6. **Copy the reference files, one for one, not just the two screens**
    (the Widgets demo's, or the ones the app's `### Reference files` names) — shaped by the plan: table columns and sortable columns from
    its "List" column, toolbar filters from its "Filter" column, form fields
@@ -251,6 +254,27 @@ is a filled-in example while the Widgets demo is still here).
    rewritten to `'MM-DD'` by a migration; one it can't read stays as
    written, and the field shows it as written with nothing picked, refused
    until a day is picked.
+
+   **A `recurrence`** (how something repeats: a chore, a reminder, a
+   task) is the foundation's `Recurrence` schema: copy it from the
+   package's `openapi/foundation.yaml` into `components.schemas` (it's
+   `x-optional`, so `check-contract` holds it to the foundation's shape
+   once it's there) and reference it, nullable when it may not repeat.
+   On the form it's the foundation's `RecurrenceField` in a `Controller`
+   (presets, a phrase read as it's typed, and a preview of the next five);
+   the schema checks it with `recurrenceProblem(value)`, and a phrase the
+   field can't read gives `null`, so a required one is refused. The table
+   shows `formatRecurrence(value)` and a Next column (cell pattern 27);
+   editing in place is `inPlace.recurrence({ value, save })`. A record
+   whose times are fields of its own (an event's start and end) gives the
+   field and the preset `times={false}`: dates only, no "at". An app whose
+   weeks start on Sunday gives them `weekStart="SU"`, which adds
+   `WKST=SU` to the weekly rules they build (reminders.md "Repeating
+   reminders" says when that moves a day). The backend
+   column is JSON, read and checked with
+   `foundation_backend.recurrence.Recurrence` (a 422 on the field for a
+   rule it refuses); `next_after` and `occurrences` say when it falls
+   (reminders.md "Repeating reminders").
 
    **An image on a record** (a photo of it) is the stored file's id on the
    wire (`string`, nullable), and on the form the foundation's
@@ -401,7 +425,14 @@ is a filled-in example while the Widgets demo is still here).
      the Markdown long text's `RichTextEditor` (on the form whether or
      not it edits in place), given a `placeholder` and `maxLength` (the
      schema's limit, one constant both read, like Widget's
-     `DESCRIPTION_MAX_LENGTH`). Every other field's control stays inline in
+     `DESCRIPTION_MAX_LENGTH`) and an `onProblem` prop it passes on. **On
+     the form, bind `onProblem`** as `widget-form.tsx`'s
+     `onDescriptionProblem` does: the message becomes the field's error
+     (`setError`, type `refused`) and submit is refused while it stands.
+     An edit the editor can't save without rewriting text nobody touched
+     never reaches `onChange`, so a form without it would send the last
+     text that could be saved and say it worked. (An editor given no
+     `onProblem` says it inside the field itself.) Every other field's control stays inline in
      the form, as `widget-form.tsx`'s Category, Tags and Available From
      do. No `Edit in place` line and no Markdown long text: no fields
      file.
@@ -460,18 +491,18 @@ is a filled-in example while the Widgets demo is still here).
      section that holds one long text or one sub-record list is a block
      (`content`) with no label of its own, since a label would only repeat
      the heading.
-   - **Layout.** With the plan's `Layout: rail`, pass `layout="rail"` and
-     give each section its Placement (`placement: 'rail'`; `main` is the
-     default and needs nothing). Without a `Layout` line, drop `layout`
-     and every `placement` from the copied view (one column). Widget's
-     view is `rail`, with Details in the rail. The rail's sections come
-     first in the page (header, rail, main) at every width, so the
-     view's specs find them first too. When the plan says the main
-     column comes first on a phone (the record is opened for its notes
-     or its checklist), pass `mobileOrder="main-first"`: header, main,
-     rail where the columns stack, and in the DOM at every width, with
-     the rail still on the right two columns wide. Never re-order
-     `sections` by the window's width yourself.
+   - **Layout** (the record standard, 4.98: no right rail). Pass no
+     `layout`: the default, `tabs`, is every record's shape. Give the
+     section of short facts (the plan's Placement `details`) `placement:
+     'rail'`: on a record with tabs it's the last tab, Details, and on
+     one without, it stays in the column in its place, its labels beside
+     their values. Widget's view has no tabs, so its Details comes first
+     in the one column. A few short facts that explain one tab (a dose
+     beside the notes) can sit in a small box beside that tab's
+     sections, under them on a phone: `placement: 'rail'` with that
+     `tab`. Short facts only, never free text. Never `layout="rail"` in a
+     new view; it's kept for apps not yet moved (consuming.md "4.98").
+     Never re-order `sections` by the window's width yourself.
    - **A subtitle** (`subtitle`), only when the plan names a line that
      says what the record is for (a goal, a one-line summary): under the
      title in muted body type. When the plan marks it editable, wrap it
@@ -479,8 +510,8 @@ is a filled-in example while the Widgets demo is still here).
    - **Key numbers** (`strip`), only when the plan names a few figures
      read before anything else (done of total, time left, the next
      date): `<KeyStats stats={[{ label, value, hint? }]} />`, under the
-     header across the page, so on a phone it comes before the rail and
-     the main column. Three to five; more belong in a section.
+     header, as wide as its numbers (4.98), so on a phone it comes before
+     the sections. Three to five; more belong in a section.
    - **A notice** (`notice`), only when the plan names a state that
      decides what you do with the record (held, overdue, archived and
      read-only): a `<Notice tone=…>` saying what it means and what to do,
@@ -567,7 +598,7 @@ is a filled-in example while the Widgets demo is still here).
      of its own; a removed page (soft-deleted) shows "Page removed" and,
      with `onRestore` (the app's undelete, returning its promise),
      Restore. Give the editor `onCreatePage={(title) => createPage(title).then((page) => pagePath(page))}`
-     too: "/page" (and Turn into page on selected words) asks for a
+     too: "/page" (and Turn Into Page on selected words) asks for a
      title, awaits the new page's address and puts in the link; a
      rejection shows in the title box in the gateway's words and leaves
      the text as it was. The page's own screen puts `PageTrail` above its
@@ -578,11 +609,15 @@ is a filled-in example while the Widgets demo is still here).
      (under the record, or under the page whose note it's in).
    - **Notes worth taking on paper** (a visit's prep and questions, a
      guide, a checklist to tick by hand): mark each of those sections
-     `print: true`. The header gets a Print notes icon (`printLabel`
+     `print: true`. The header gets a Print Notes icon (`printLabel`
      renames its tooltip and name) that prints the marked sections alone, under the title
      and subtitle: no rail, no shell, no buttons, light paper in either
      theme, headings and bullets as written, nothing folded, tables
-     ruled with room in their empty cells. `print: { answerSpace: true }`
+     ruled with room in their empty cells. On a phone, whose print()
+     returns at once and fires `afterprint` before its preview exists, the
+     copy stays until the person next touches the page or presses a key
+     (4.124.1), so the preview prints the notes; the browser's own print
+     (Ctrl+P) in that gap prints them too. `print: { answerSpace: true }`
      also leaves space under each item of the section's numbered lists,
      for questions answered by hand. A section's own content that should
      print differently (a list of sub-items as plain text) reads
@@ -744,7 +779,7 @@ is a filled-in example while the Widgets demo is still here).
    start), and load once more if the server refused one of its files,
    so a spec's first expect never meets an empty page. The view's states are
    loading, not found (a 404: "Not found", the way back, no retry), error
-   (a failed load, then Try again recovering) and success (every section,
+   (a failed load, then Try Again recovering) and success (every section,
    each value as its cell shows it), plus the sparse record showing its
    "not set" labels and no blank value. Its flows: the table's title link
    opens it, saving and cancelling the form return to it, creating opens
@@ -774,11 +809,10 @@ is a filled-in example while the Widgets demo is still here).
    a heading, a list, a table, a link and raw HTML, and asserts the HTML
    shows as text. Add the view's spec to `playwright.config.ts`'s
    `mobile-chrome` `testMatch`, with a test that at phone width each
-   label sits above its value and nothing scrolls sideways. With
-   `Layout: rail`, that test also checks the rail's sections come before
-   the main ones, and another that on a wide screen the main column
-   starts beside the rail (copy `wide screens: …` in
-   `e2e/widget-view.spec.ts`).
+   label sits above its value and nothing scrolls sideways. With a
+   section placed `details`, that test checks its labels sit beside
+   their values, and another on a wide screen that there's no rail (copy
+   `wide screens: …` in `e2e/widget-view.spec.ts`).
    States forced via a first-load init script (loading, load-time error)
    need `page.addInitScript` before navigation; states forced after the
    page is already up (a mutation's error response) can use a
@@ -842,11 +876,15 @@ picks one per list (`docs/entities/<entity>.md` "List screen"):
 
 | `opens.kind` | The record opens | Use it for |
 | --- | --- | --- |
-| `dialog` | in a dialog over the list, with Open full page; the record also has its page | most records |
+| `dialog` | in a dialog over the list, with Open Full Page; the record also has its page | most records |
 | `dialog-only` | in a dialog over the list, and has no page of its own | a small record with no notes, where a page would only repeat the dialog |
 | `page` | on its own page, `/<entity>/:id` | a record too big for a dialog: a drawing, an ordered sub-list, long writing |
 | `panel` | in the panel beside the list (`detailPanel`) | reading records one after another |
 | `rows` | nowhere: every value is edited in its row (cell pattern 18) | a record of a field or two |
+
+A list's title, column headers, menus, view pills and buttons are Title
+Case ("Rows per Page", "Show Deleted", "View All"); its empty state and
+messages are sentences ("No books yet") ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
 
 Whichever it is, the record edits in place (cell pattern 18, EntityView's
 `edit`) rather than through an Edit button and a form page, wherever the
@@ -965,13 +1003,13 @@ const created = useNewRecordDialog()
   back to the list's entry (over every record opened inside the dialog,
   a linked one included). Focus goes back to the row, on its own link
   when it has one, or the link that opened it.
-- **Open full page**, in the dialog's bar (not with `fullPage={false}`),
+- **Open Full Page**, in the dialog's bar (not with `fullPage={false}`),
   swaps the entry for the same address as the full page; Back from there
   is the list.
 - **The view is unchanged.** `EntityView` sees the dialog: its title
   names the dialog (`label` names it while loading or on an error), the
   back link gives way to the dialog's bar, and not found's "Back to …"
-  closes the dialog. Loading, error with Try again, and the plain 404
+  closes the dialog. Loading, error with Try Again, and the plain 404
   show inside it. A screen that isn't an `EntityView` can read
   `useRecordDialog()` (null on the full page) for its `close`, as a
   Delete should, rather than navigating to the list:
@@ -984,37 +1022,155 @@ const created = useNewRecordDialog()
 
 Every record a list opens is an `EntityView`, the same one in a dialog
 and on its page, and every one has the same shape, so a change to the
-view reaches them all. A record uses the parts it has, in this order:
+view reaches them all. Its field labels, tab names and buttons are Title
+Case ("Print Notes", "Hide Empty"); an empty value's words and its
+messages are sentences ("Not set") ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
+A record uses the parts it has, in this order:
 
 - **Header**: the title, edited in place (`titleEdit`); under it a
   one-line summary field, edited in place (`subtitle`: a goal, a
   description); beside it the status as a quick action (a picker saved
-  at once) and other status-like fields as badges, edited in place. A
+  at once), drawn as its `StatusMark` (4.98: icon, colour and word), and
+  other status-like fields as badges, edited in place. A
   record with a face or a mark of its own (a person's avatar, a
   service's logo, a cover) puts it left of all that (`leading`, 4.76).
   `actions` holds the record's own commands in words (Run, New visit),
   then Delete (soft, with Undo) as an `IconAction`, never Edit. Print
   notes is an icon of EntityView's own.
 - **Strip**: the record's key numbers and ratings (`strip`, a
-  `KeyStats`), each edited in place where it's shown.
-- **Sections**: with long text (notes, a body) `layout="rail"` and
-  `mobileOrder="main-first"`: the label/value facts in the rail, the long
-  text in the main column, folded by its toggle headings (`foldKey`;
+  `KeyStats`, as wide as its numbers since 4.98), each edited in place
+  where it's shown. An inline `EditableValue` there keeps its pencil's room
+  at rest (4.115), so nothing moves on hover; an app's own wrapping row of
+  inline values passes `keepPencilRoom` for the same.
+- **Sections** (4.98, no right rail): one column. The label/value facts
+  are placed `rail`, which makes them the last tab, Details, on a record
+  with tabs, and keeps them in the column on one without; the long text
+  (notes, a body) is folded by its toggle headings (`foldKey`;
   `## Safety {toggle="true"}`, the only headings that fold) with an
-  Outline for a long one and Print notes (`print`). Without long text,
-  one column. Every value edited in place (`edit`), a sub-item list
-  included (`editInPlace({ kind: 'list' })`).
+  Outline for a long one and Print Notes (`print`). A small box of short
+  facts may sit beside the one tab it explains (placed `rail` with that
+  `tab`), never free text. Every value edited in place (`edit`), a
+  sub-item list included (`editInPlace({ kind: 'list' })`).
 - **Tabs** (4.76), for a main column with **three or more groups of
   long content** (the steps, where it's used, the reasoning): a `tab` on
   each main section groups them under a tab list, the selected one in
-  `?tab=`. Fewer groups stay one scroll, folded by headings. A record's
+  `?tab=`. Give each tab that holds records its count (`tabCounts={{
+  Updates: updates.length }}`); the bar sticks as the record scrolls,
+  with the record's name above it (4.101). Fewer groups stay one scroll, folded by headings. A record's
   Notes stay outside the tabs, above them, unless they are one tab's
-  content; the rail and the strip never go in a tab.
-- **Rail fields beside their labels** (`railFields`, `beside` by
-  default since 4.81), so a rail of short facts reads as a list of pairs
-  rather than a column of labels; keep labels to a word or two.
+  content; the strip never goes in a tab, and the facts are a tab of
+  their own (Details, `detailsTab` to name it otherwise).
+- **Facts beside their labels** (`railFields`, `beside` by default since
+  4.81), so the short facts read as a list of pairs rather than a column
+  of labels; keep labels to a word or two.
+- **The facts rail** (4.106, record standard A1): `factsRail` on the
+  view puts the record's short facts in a 300px column beside the
+  record's body where the view has room (60rem: a laptop's page, a record
+  dialog), so the page doesn't end 900px in. The strip stays above it at
+  full width, and the rail starts level with the first content under the
+  strip: the open tab's first section (beside the tab's content, not its
+  bar), or the first card when cards come before the tabs (4.108). Beside
+  the rail the record's cards fill the column up to it, as wide as the
+  tab bar (Details too, which elsewhere keeps a 42rem reading width), and
+  their rows keep a compact 10rem label so the values get the rest
+  (4.112). Only short values go in it,
+  and the API holds to that: a rail section is `facts`, not `fields`,
+  each fact one of a few kinds, never free markup:
+
+  ```tsx
+  { title: 'Facts', placement: 'rail', facts: [
+    { label: 'Status', kind: 'status', status: STATUS_KINDS[record.status], word: STATUS_LABELS[record.status] },
+    { label: 'By', kind: 'text', text: formatDay(record.due) },
+    { label: 'Areas', kind: 'badges', items: record.areas.map(areaLabel) },
+    { label: 'Flags', kind: 'badges', items: [{ label: 'Pinned', icon: PinIcon, tone: 'info' }] },
+    { label: 'From', kind: 'record', name: provider.name, to: `/providers/${provider.id}`, short: true },
+    { label: 'Open Tasks', kind: 'count', count: record.openTasks, to: `/tasks?project=${record.id}` },
+    { label: 'Task', kind: 'link', href: task.url, name: task.name },
+  ] }
+  ```
+
+  - `text` is a date, a number or a person's name: one line, cut with
+    its whole text on hover. `badges` are a few short labels.
+  - A link to another record is `record`, and must say `short: true`:
+    the app vouches its names are short (a person, a place). Records
+    with long titles (a list of discussions, a log's entries) never go in
+    the rail: they're a tab of their own, with its count.
+  - Anything else (a sentence, a closing condition, notes) is a
+    `fields` or `content` section: in Details, never the rail.
+  - What's in the rail isn't repeated in Details. A Details tab left with
+    nothing isn't drawn. On a phone (or a view under 60rem) the rail's
+    sections are back in Details, as rows.
+  - `edit` works on a fact as on a field; at rest it's drawn by its kind.
+  - **The status first** (4.115): a record's status is the first fact at
+    the top of the right rail, edited in place there; a status that
+    changes only through an action stays read-only, with the action as a
+    small button under it and a tooltip saying why. Mark it
+    `recordStatus: true` and the view puts it first, wherever it is in
+    `facts`:
+
+    ```tsx
+    { label: 'Status', recordStatus: true, kind: 'status', status: STATUS_KINDS[record.status], word: STATUS_LABELS[record.status],
+      // Editable in place:
+      edit: inPlace.select({ ... }),
+      // Or, changed only by an action (closing records a date and a reason):
+      hint: 'Changes when the record is closed.',
+      action: { label: 'Close…', render: (button) => <CloseRecord record={record} trigger={button} /> } }
+    ```
+
+    `action` is a small button under the value: `onClick`, or `render`,
+    which is given the button so the app's own action (its dialog) opens
+    from it with the same look (`<DialogTrigger render={button} />`).
+    `hint` is an info button after the value, its words in a tooltip on
+    hover and keyboard focus, and a line under the value on a touch
+    screen. Both are drawn in Details too, where the rail folds.
+  - A `badges` item may be `{ label, icon }` (4.115): the icon (a
+    component or a node) before the label, in the muted tone. With
+    `tone` (4.123: `success`, `warning`, `info`, `destructive`) a label
+    that is a state ("Pinned", "Overdue") is the outline badge in that
+    tone, its icon too; the word still says it.
+  - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
+    draw it, never as "4 of 5" text: stars (the default) or hearts for a
+    score out of `max` (5), the step bar for a quality level. `null` is
+    empty (its `emptyLabel`). Edited in place with `inPlace.select`:
+
+    ```tsx
+    { label: 'My Rating', kind: 'rating', look: 'hearts', value: record.rating, emptyLabel: 'Not rated',
+      edit: inPlace.select({ value: record.rating, options: [1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} of 5` })),
+        emptyLabel: 'Not rated', save: (rating) => save({ rating }) }) },
+    { label: 'Quality', kind: 'rating', look: 'bar', value: QUALITY[record.quality].value, word: QUALITY[record.quality].word },
+    ```
+  - **A yes/no** (4.120) is `kind: 'switch'`, a switch toggled where it
+    is, named by the label, never a two-choice select. Return the save's
+    promise: the switch shows the new state while it runs and goes back
+    if it fails. `on`/`off` words are optional (both or neither):
+
+    ```tsx
+    { label: 'Shared', kind: 'switch', checked: record.shared, on: 'With the team', off: 'Only me',
+      onCheckedChange: (shared) => save({ shared }) },
+    ```
+  - **The strip's values** take `info` (a tooltip on an info button) and
+    `action` (a small button under the value) as rail facts take `hint`
+    and `action` (4.120); a stat's `hint` stays its caption line. A
+    header button that needs a short line under it ("12 searches left")
+    is wrapped in `<ActionHint hint="…">`. Inline-edited header badges
+    keep their pencil's room on their own.
+- **A tiny record** (4.98: a few fields and no notes, like a lookup's
+  row) opens as a small card: `RecordDialogRoute look="card"`, usually
+  with `fullPage={false}`. A 420px dialog (a sheet on a phone), its
+  title, Delete, Open full page and Close on one line, its facts as
+  plain rows. The view's `strip` (KeyStats) is left out in the card
+  (4.105); `cardStrip` keeps it, and the record's own page still shows it.
 - **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
   what's known, then "N empty" opens the rest, still edited in place.
+- **A few equal things** (a plan's phases, a price at each store, a
+  handful of options) are one `EqualItems` (4.93) in a section, one look
+  per set: `cards` for little to say about each, `table` for things
+  compared on the same values, `featured` when one is current or best,
+  `panels` when each has several details (design-language.md "A few
+  equal things"). Never hand-made cards or a grid of their own. An item
+  edited or removed on its own carries its editor as `content` and its
+  Edit and Remove as `actions` (4.94), `wide` while the editor is open;
+  never an editor put in a field's value.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.
 
@@ -1036,20 +1192,39 @@ shape (4.85):
   takes one short partner (Series and Number). `<Field solo>` keeps a
   short one alone where a pairing would read wrong. Under 48rem every
   field takes its own row but two dates or two numbers (`DateField` says
-  so itself; a date picker of your own with `kind="date"`). Never a hand-made
-  `sm:grid-cols-2` row.
+  so itself; a date picker of your own with `kind="date"`). A choice
+  (`ChoiceButtons`, found by itself, 4.98, or a `ToggleGroup` that is the
+  field's own control, 4.123) shares a row only with another
+  choice, two to a row; on a phone two stay side by side while both
+  groups fit, and go one per row when they don't. Never a hand-made
+  `sm:grid-cols-2` row. The picked option is in the theme colour (4.105);
+  a status choice gives each option its `kind`, so its icons are
+  `StatusMark`'s in their colours (below).
 - **Order:** required first, the status next, long text last.
 - **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
   on the control it names). Nothing on an optional field: never
   "(optional)".
-- **Labels** above the box, sentence case ("My rating"). Help text
-  (`FieldDescription`) only where the label can't say it, one short line.
+- **Labels** above the box, in Title Case ("My Rating"), and the form's
+  title, section titles and buttons too ("Save Changes"); help text,
+  placeholders and messages stay sentence case ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
+  Help text (`FieldDescription`) only where the label can't say it, one short line.
   A placeholder only for a format the box needs (`https://`), never an
   example that looks like a value.
 - **Messages say what to do**, in the app's voice: "Give it a title",
   "Enter a full address, starting https://", never "Title is required".
-- **A status** is an `OptionSelect` with the same `render` (its badge) as
-  its cell and the record: `inPlace.select`'s `{ value, label }` options.
+- **A status** is an `OptionSelect` with the same `render` (its
+  `StatusMark`, 4.98) as its cell and the record: `inPlace.select`'s
+  `{ value, label }` options. A status of two to four is `ChoiceButtons`
+  (4.105) with each option's `kind`, its status kind:
+  `{ value: 'done', label: 'Done', kind: 'done' }` draws the kind's icon
+  in its colour before the word, the same as the record's `StatusMark`
+  (`icon` overrides the kind's icon; an `icon` with no `kind` stays
+  uncoloured). Map the enum to kinds once and use that map for both.
+  A status of five or more is an `OptionSelect` with the same `kind` on
+  each option (4.109): the kind's icon in its colour before the words, on
+  the trigger and on each item in its list (`inPlace.select` passes them
+  through). With `kind`, leave out a `render` that draws its own icon
+  (a `StatusMark`), or the option shows two.
 - **The controls** (4.88): a choice of two to four short options is
   `ChoiceButtons` (`inPlace.choice` in place), five or more an
   `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",
@@ -1057,7 +1232,7 @@ shape (4.85):
   `ReferenceCombobox` (`inPlace.reference` in place), several are
   `MultiReference`, and a set the app loads whole (tags, a few dozen
   records from its list query) is `MultiPick`, whose chips wrap and which
-  shows 30 before "Show all". Where a missing record stops the form, give
+  shows 30 before "Show All". Where a missing record stops the form, give
   the reference `onCreate(name)`: open the other entity's `FormDialog`
   with the name filled in, and resolve with the record it saves (or
   `null` on Cancel).
@@ -1070,7 +1245,7 @@ shape (4.85):
   `isSubmitting` (the save's own move to the record) doesn't. With
   `errors`, a refused Add moves to the first problem and the bar says
   "2 to fix". Both come free; the form draws a failed save as a `Notice`
-  with Try again in its bar, which sticks to the window's bottom on a long
+  with Try Again in its bar, which sticks to the window's bottom on a long
   form.
 - **The words:** "New book", "Add book" (the word Add on every create
   form), and the toast after it "Added The Long Walk".
@@ -1083,8 +1258,14 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
 | --- | --- | --- | --- |
 | `confirm` | 420px | a sheet from the bottom, the buttons full width, the action above Cancel | a question with two answers: a delete, "Discard your changes?" |
 | `form` | 640px | the whole screen, the title and buttons pinned | a small form (`FormDialog`, which is this size) |
-| `record` | 1,120px | full width, the rail under the main column | a record over its list (`RecordDialogRoute`, which is this size) |
+| `record` | 1,120px | full width, with a 1rem margin round it | a record over its list (`RecordDialogRoute`, which is this size) |
 
+A tiny record (a few fields, no notes) opens in the `confirm` width
+instead, as a small card: `RecordDialogRoute look="card"` (4.98).
+
+- **A dialog's title and buttons are Title Case** ("New Book", "Keep
+  Editing"); a question or a message in it is a sentence ("Discard your
+  changes?") ([design-language.md "Words on screen"](design-language.md#words-on-screen-title-case-and-sentence-case)).
 - **Never a width of its own** (`sm:max-w-…` on `DialogContent`). A
   confirm's buttons go in `DialogFooter`, Cancel first, so the phone's
   sheet stacks the action on top.
@@ -1096,7 +1277,7 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
   its own, for any other way of leaving with something unsaved.
 - **A form in a dialog is a `FormDialog`**: the title, the fields
   scrolling between it and the pinned Cancel and Add, a failed save as a
-  destructive `Notice` above the buttons with Try again, and `dirty`.
+  destructive `Notice` above the buttons with Try Again, and `dirty`.
   Opened from a page with `open`/`onOpenChange`; as a list's `new` route
   with neither (above).
 - **Always a dialog, never a side panel**, except a phone's filters
@@ -1113,7 +1294,7 @@ sight.** What happened where the person is looking says so there.
 | A delete (soft: with Undo) | `DeleteAction`'s toast, "Deleted The Long Walk" |
 | A record made, landing on its own page | a toast, "Added The Long Walk" |
 | An edit in place, a quick action, a toggle | the value itself and its "Saved" (cell pattern 18). **Never a toast** |
-| An action that failed, its button still there | `ActionError` beside the button: the reason and Try again |
+| An action that failed, its button still there | `ActionError` beside the button: the reason and Try Again |
 | An action that failed after its page was left | a toast that stays until it's closed (`useAction` does this) |
 | A job that takes a while | `JobStatus` beside its button: "Checking 3 of 12…", then the result stays |
 | A job that finished after its page was left | a toast (`useAction`'s `doneAway`) |
@@ -1128,7 +1309,19 @@ sight.** What happened where the person is looking says so there.
   the same component (`size="sm"`), or `trigger={null}` with
   `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
   `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
-  Never a delete without a confirm, never a hand-written dialog.
+  Never a delete without a confirm, never a hand-written dialog. Its icon
+  is named "Delete <name>" (4.123), so several on one page (a record's,
+  each of its rows') are told apart; its tooltip says "Delete". A test
+  finds one by `getByRole('button', { name: 'Delete The Long Walk' })`.
+- **A delete that asks a reason: `DeleteAction reason`** (4.96). One
+  optional field between the sentence and the buttons, a "Why" box:
+  `reason={{ label: 'Why remove it?', hint: 'Kept with its history.' }}`
+  and `onDelete={(why) => remove({ id, reason: why })}`, `why` trimmed
+  and `''` when nothing's typed. The rest is the same confirm: 420px, a
+  bottom sheet on a phone, Cancel then the filled destructive button, a
+  refusal in the dialog with Try Again (sending the same words), and
+  closing with something typed asks "Discard your changes?" first. One
+  field only: a confirm that needs more is a `FormDialog`.
 - **A toast's words come from `notify.done(verb, name, { undo })`**: the
   verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when
   given, then says "Restored The Long Walk". Never "X deleted", never
@@ -1162,6 +1355,13 @@ sight.** What happened where the person is looking says so there.
   takes the views, `activeView` says which one the filters are, and that
   view's `columns` go to `DataTable`'s `visibleColumns` (the table's own
   default list when no view is active, or `undefined` for every column).
+  Views fill the filters (4.105): write each view's whole meaning in its
+  `filters` and `multiFilters` (a "Current" view names its statuses, never
+  `{}` with the server's default doing the rest), name the one the list
+  opens on with `defaultView`, and put what no control can show (a
+  computed "overdue") in the view's `rule` (cell-patterns.md "Saved views
+  are pills"). The default view's `sort` is its plain address's too
+  (4.123): pressing it writes no `?sort=`, and the rows keep that order.
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.
@@ -1273,7 +1473,10 @@ Four more things an app sets for AI chats (4.71), each in
   must be found exactly once (missing, or found twice, is a refusal that
   says so and saves nothing), or `append` adds text on a new line at the
   end. It saves and logs as `update` does, so a long note isn't sent back
-  whole to change a line. Each must be a text field of `update_schema`
+  whole to change a line. A table's widths comment (design-language.md
+  "Written text (notes)") is hidden from every read answer and kept
+  in what's stored, so an edit never drops it (4.94); `search` leaves
+  out a record whose only match is inside it. Each must be a text field of `update_schema`
   and not `script_only`; the backend refuses to start otherwise.
 - **The server's instructions** a chat gets when it connects:
   `register_entities(ENTITIES, instructions="…")` (or
@@ -1298,3 +1501,41 @@ def note(caller, tool, arguments, entities):
 register_entities(ENTITIES, instructions="Amounts are in the account's currency.")
 register_answer_note(note)
 ```
+
+## Behind a sign-in proxy
+
+An app put behind an identity-aware proxy that has its own sign-in
+(Cloudflare Access is the usual one; an OAuth proxy or a VPN gateway's
+portal works the same way) can outlive that sign-in: the page stays open,
+the proxy's session lapses, and the next request gets the proxy's answer
+instead of the app's. The foundation handles it (4.107), with nothing for
+the app to write:
+
+- **The request asks for JSON as a script.** `safeFetch` sends
+  `Accept: application/json` and `X-Requested-With: XMLHttpRequest`
+  (unless the gateway module set its own) and doesn't follow redirects
+  (`redirect: "manual"`, unless the module passes `"follow"`), so a proxy
+  that can answers a script with a 401, and one that can't answers with a
+  redirect the browser doesn't chase to another origin.
+- **The proxy's answer becomes one `AppError`, kind `proxy_auth`.**
+  `safeFetch` throws it, before your gateway module sees the response,
+  for: a page (`text/html`) on a 2xx, 401 or 403; a 401 or 403 whose body
+  isn't JSON; a redirect not followed (an opaque redirect); and a redirect
+  followed to another origin. A step 5 gateway module needs no change.
+  The app's own answers are untouched: a JSON 401 is still `auth` (the
+  app's session, which sends the person to `/login`), and a 404, 422, 429
+  or 5xx, JSON or not, is what `toAppError` always made it.
+- **The screens say "Sign In Again".** `ErrorState` (every `DataTable`,
+  `EntityView`, `WidgetCard`, `Board`, the shell's own session check) and
+  `ModuleCard` show "Sign-in expired" with a **Sign In Again** button in
+  place of any retry. It reloads the whole page, so the proxy's sign-in
+  runs and brings the person back. A screen with its own error UI checks
+  `error.kind === 'proxy_auth'` and offers the same reload.
+- **Your contract tests don't change.** `openapi.yaml` and the step 3
+  gateway tests describe the app's own responses, never the proxy's; the
+  proxy isn't part of the contract. `proxyAuthError()` (from
+  `@tristan2828/ui-foundation/gateway`) is the error itself, for a mock or
+  a test of a screen's state.
+- **On the proxy's side**, nothing is required. Where it offers a 401 for
+  scripts instead of a redirect (Cloudflare Access does for requests with
+  `X-Requested-With`), either answer works.

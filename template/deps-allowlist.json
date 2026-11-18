@@ -1,8 +1,8 @@
 {
   "$comment": "Every dependency this app may install. Checked by `ui-foundation check-deps` (in `npm run verify:fast`) against package.json, and its `python` list by `python -m foundation_backend.scripts.check_deps` (in `npm run verify:backend`) against backend/pyproject.toml, each pinned there with ==. An addition here is a deliberate human decision, not something an agent edits on its own — see AGENTS.md.",
   "tools": {
-    "shadcn": "4.21.0",
-    "@playwright/test": "1.63.0",
+    "shadcn": "4.23.0",
+    "@playwright/test": "1.65.1",
     "$comment": "Exact versions for one-off CLI runs (`npx shadcn@<version> add <name>`). Never @latest."
   },
   "dependencies": [
@@ -63,12 +63,14 @@
     "python-dotenv",
     "email-validator",
     "cryptography",
+    "python-dateutil",
     "mypy",
     "pytest",
     "pytest-asyncio",
     "httpx",
     "pyyaml",
     "types-pyyaml",
+    "types-python-dateutil",
     "aiosqlite"
   ]
 }

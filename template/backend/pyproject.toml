@@ -10,14 +10,14 @@ dependencies = [
   # ui-foundation repo it stays unpinned and is installed editable from
   # packages/backend-foundation in the same pip call as this project.
   "ui-foundation-backend",
-  "fastapi==0.141.1",
-  "sqlmodel==0.0.42",
-  "alembic==1.20.0",
-  "asyncpg==0.31.0",
-  "uvicorn[standard]==0.53.0",
-  "pydantic==2.13.5",
-  "python-dotenv==1.2.3",
-  "email-validator==2.3.0",
+  "fastapi==0.163.0",
+  "sqlmodel[asyncio]==0.0.50",
+  "alembic==1.20.1",
+  "asyncpg==0.32.0",
+  "uvicorn[standard]==0.54.0",
+  "pydantic==2.14.3",
+  "python-dotenv==1.2.4",
+  "email-validator==2.4.0",
 ]
 
 [project.optional-dependencies]
@@ -30,12 +30,15 @@ push = [
 dev = [
   # The push extra too, for the app's start-up test with push on.
   "cryptography==50.0.2",
-  "mypy==2.3.1",
-  "pytest==9.1.1",
-  "pytest-asyncio==1.4.0",
+  "mypy==2.4.1",
+  "pytest==9.2.0",
+  "pytest-asyncio==1.5.0",
   "httpx==0.28.1",
   "pyyaml==6.0.3",
-  "types-pyyaml==6.0.12.20260906",
+  "types-pyyaml==6.0.12.20261113",
+  # ui-foundation-backend's recurrence reads dateutil (its own runtime
+  # dependency); mypy strict needs its stubs.
+  "types-python-dateutil==2.9.0.20261104",
   "aiosqlite==0.22.1",
 ]
 
@@ -50,6 +53,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
 [build-system]

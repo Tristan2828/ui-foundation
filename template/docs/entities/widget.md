@@ -64,12 +64,11 @@ pairs with, each with a note.
 
 - Title: `name`.
 - Badges beside the title: `status`, `checklistState`, `inStock`.
-- Layout: rail.
 - Sections, in order:
 
 | Section | Fields | Placement |
 |---|---|---|
-| Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail | rail |
+| Details | categoryId, extraCategoryIds, tags, availableFrom, price, assigneeEmail | details |
 | Description | description | main |
 | Checklist | checklist | main |
 | Pairings | pairings | main |

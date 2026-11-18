@@ -157,7 +157,7 @@ function FieldsAsOneRecord() {
       title: 'Assistant',
       fields: [
         {
-          label: 'Model and effort',
+          label: 'Model and Effort',
           edit: inPlace.fields({
             value: { model: project.model, effort: project.effort },
             fields: {
@@ -169,7 +169,7 @@ function FieldsAsOneRecord() {
           }),
         },
         {
-          label: 'Hours and budget',
+          label: 'Hours and Budget',
           edit: inPlace.fields({
             value: { hours: project.hours, budget: project.budget },
             fields: {

@@ -2,14 +2,18 @@ import type { Meta, StoryObj } from '@/fixtures/types'
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'
 import { DropletIcon, MoveRightIcon, Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
-import { createMemoryRouter, RouterProvider, useParams } from 'react-router'
+import { createMemoryRouter, RouterProvider, useLocation, useParams } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
-import { DataTable } from './data-table'
+import { DataTable, type DataTableGrouping } from './data-table'
 import type { DataTableRowAction } from './data-table-tools'
+import { dateFilterKeeps, dateFilterText } from '@/lib/date-filter'
+import { formatPlainDate } from '@/lib/plain-date'
 import { FilterBar, FilterSelect } from './filter-bar'
+import { FilterDate } from './filter-date'
+import { ListHeader } from './list-header'
 import { MultiChoice } from './multi-choice'
 import { RelatedTable } from './related-table'
 
@@ -24,6 +28,26 @@ import { RelatedTable } from './related-table'
 // - OneRowAction: a single action, drawn as its icon.
 // - Related: a record's related lists (R8): 19 visits capped at 10 with
 //   View all 19, and 3 with no link.
+// - Framed: the same list as `look="framed"` (4.100) under a ListHeader
+//   with a sibling-list switch (Houseplants / Cuttings / Seeds): views
+//   above a card whose top bar holds the filters and one settings button
+//   (the Columns ticks and Group By, by Status), its bottom bar the pager.
+//   e2e/data-table-framed.spec.ts.
+// - ViewsFillFilters: views that fill the filters (4.105). Current is the
+//   default view (the plain address), its statuses shown in the Status
+//   filter; Needs Water adds a rule no control shows (watered before
+//   Nov 5); All ticks every status. Changing a filter by hand keeps the
+//   rest and the pills follow. e2e/data-table-views.spec.ts.
+// - HeaderAtTableEdge, HeaderAtTableEdgeWide (4.106, C3): the ListHeader
+//   passed as `pageHeader`, so the header, views and card share the
+//   table's width: on a short table (three columns) ⋯ and New end on the
+//   card's right edge; on a wide one (every column) they're where the
+//   page ends. e2e/list-header-width.spec.ts.
+// - DateViews: a date filter a view fills (4.110). Upcoming is "due from
+//   today", Overdue "due before today", both in the Due filter behind
+//   Filters, its chip beside them ("Due: Before today"); Between dates
+//   takes a range. Today is fixed at Nov 13, 2026.
+//   e2e/date-filter.spec.ts.
 // The rows are made up.
 
 type State = 'loaded' | 'loading' | 'empty' | 'error'
@@ -106,7 +130,14 @@ const plantActions = (plant: Plant): DataTableRowAction[] => [
   { label: 'Delete', icon: Trash2Icon, tone: 'destructive', onSelect: noop },
 ]
 
-function PlantsList({ single = false }: { single?: boolean }) {
+const STATUS_GROUPING: DataTableGrouping<Plant> = {
+  id: 'status',
+  label: 'Status',
+  options: STATUSES.map((status) => ({ value: status, label: STATUS_LABELS[status] })),
+  value: (plant) => plant.status,
+}
+
+function PlantsList({ single = false, framed = false }: { single?: boolean; framed?: boolean }) {
   const [state, setState] = useState<State>('loaded')
   const { page, setPage, sorting, setSorting, filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView, applyView } =
     useTableUrlState(FILTERS, MULTI, VIEWS)
@@ -123,8 +154,24 @@ function PlantsList({ single = false }: { single?: boolean }) {
   return (
     <div className="flex flex-col gap-4 p-4">
       <StateSwitch state={state} onChange={setState} />
-      <h1 className="type-page-title">Houseplants</h1>
+      {framed ? (
+        <ListHeader
+          title="Houseplants"
+          count={PLANTS.length}
+          siblings={[
+            { label: 'Houseplants', to: '/', count: PLANTS.length },
+            { label: 'Cuttings', to: '/cuttings', count: 6 },
+            { label: 'Seeds', to: '/seeds', count: 3 },
+          ]}
+          deleted={{ shown: false, onShownChange: noop, noun: 'plants' }}
+          newAction={{ label: 'New plant', onClick: noop }}
+        />
+      ) : (
+        <h1 className="type-page-title">Houseplants</h1>
+      )}
       <DataTable
+        look={framed ? 'framed' : 'plain'}
+        groupings={framed ? [STATUS_GROUPING] : undefined}
         columns={plantColumns}
         opens={{ kind: 'page', to: (plant) => `/plants/${plant.id}` }}
         views={VIEWS}
@@ -209,6 +256,192 @@ function PlantsList({ single = false }: { single?: boolean }) {
   )
 }
 
+// --- views that fill the filters (4.105) ----------------------------------
+
+const LIVING = ['thriving', 'watch', 'resting'] as const
+const FILL_FILTERS = ['search', 'dry'] as const
+const FILL_MULTI = ['status'] as const
+const FILL_VIEWS = {
+  current: { label: 'Current', multiFilters: { status: [...LIVING] } },
+  dry: { label: 'Needs Water', rule: { dry: 'true' }, multiFilters: { status: [...LIVING] } },
+  all: { label: 'All', multiFilters: { status: [...STATUSES] } },
+}
+// The rule no control shows: watered before Nov 5 (the rows' dates are all 2026).
+const isDry = (plant: Plant) => new Date(`${plant.watered} 2026`) < new Date('Nov 5 2026')
+
+function ViewsFillFiltersList() {
+  const { filters, multiFilters, setFilter, setMultiFilter, setFilters, activeView, applyView, sorting, setSorting } =
+    useTableUrlState(FILL_FILTERS, FILL_MULTI, FILL_VIEWS, { defaultView: 'current' })
+  const location = useLocation()
+  const rows = PLANTS.filter(
+    (plant) =>
+      (!filters.search || plant.name.toLowerCase().includes(filters.search.toLowerCase())) &&
+      (multiFilters.status.length === 0 || multiFilters.status.includes(plant.status)) &&
+      (filters.dry !== 'true' || isDry(plant)),
+  )
+  const statusLabel = (status: string) => STATUS_LABELS[status as Status]
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <h1 className="type-page-title">Houseplants</h1>
+      <DataTable
+        columns={plantColumns}
+        opens={{ kind: 'page', to: (plant) => `/plants/${plant.id}` }}
+        views={FILL_VIEWS}
+        activeView={activeView}
+        onViewChange={applyView}
+        toolbar={
+          <FilterBar
+            search={{ value: filters.search, onChange: (value) => setFilter('search', value), placeholder: 'Search by name' }}
+            primary={
+              <MultiChoice
+                label="Status"
+                options={STATUSES}
+                value={multiFilters.status}
+                onValueChange={(statuses) => setMultiFilter('status', statuses)}
+                getLabel={statusLabel}
+                placeholder="Any status"
+                aria-label="Filter by status"
+                className="w-60 max-md:w-full"
+              />
+            }
+            primaryActive={
+              multiFilters.status.length
+                ? [{ id: 'status', label: `Status: ${multiFilters.status.map(statusLabel).join(', ')}`, onRemove: () => setMultiFilter('status', []) }]
+                : []
+            }
+            onClearAll={() => setFilters({ search: '', status: [] })}
+          />
+        }
+        data={rows}
+        total={rows.length}
+        page={1}
+        pageSize={50}
+        onPageChange={noop}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        isLoading={false}
+        getRowId={(plant) => String(plant.id)}
+        emptyTitle="No plants match your filters"
+        emptyDescription="Try different filters."
+      />
+      <p className="type-caption text-muted-foreground" data-testid="address">
+        Address: {location.search || '(plain)'}
+      </p>
+      <p className="type-caption text-muted-foreground" data-testid="status-filter">
+        Status filter: {multiFilters.status.join(', ') || 'none'}
+      </p>
+    </div>
+  )
+}
+
+// --- a date filter a view fills (4.110) -------------------------------------
+
+// The harness's today, so the presets keep the same rows on any day.
+const FIXTURE_TODAY = '2026-11-13'
+type Chore = { id: number; what: string; due: string }
+const CHORES: Chore[] = [
+  { id: 1, what: 'Repot the fig', due: '2026-11-02' },
+  { id: 2, what: 'Feed the lily', due: '2026-11-12' },
+  { id: 3, what: 'Prune the basil', due: '2026-11-13' },
+  { id: 4, what: 'Mist the fern', due: '2026-11-14' },
+  { id: 5, what: 'Turn the jade', due: '2026-11-20' },
+  { id: 6, what: 'Clean the leaves', due: '2026-12-01' },
+]
+const choreColumns: LegacyColumnDef<Chore, unknown>[] = [
+  { accessorKey: 'what', header: 'Chore', cell: ({ row }) => <span className="font-medium">{row.original.what}</span> },
+  { accessorKey: 'due', header: 'Due', cell: ({ row }) => formatPlainDate(row.original.due) },
+]
+const DATE_FILTERS = ['search', 'due'] as const
+const DATE_VIEWS = {
+  upcoming: { label: 'Upcoming', filters: { due: 'from-today' } },
+  overdue: { label: 'Overdue', filters: { due: 'before-today' } },
+  all: { label: 'All' },
+}
+
+function DateViewsList() {
+  const { filters, setFilter, setFilters, activeView, applyView, sorting, setSorting } = useTableUrlState(DATE_FILTERS, [], DATE_VIEWS)
+  const location = useLocation()
+  const rows = CHORES.filter(
+    (chore) =>
+      (!filters.search || chore.what.toLowerCase().includes(filters.search.toLowerCase())) &&
+      dateFilterKeeps(filters.due, chore.due, FIXTURE_TODAY),
+  )
+  const due = dateFilterText(filters.due)
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <h1 className="type-page-title">Chores</h1>
+      <DataTable
+        columns={choreColumns}
+        opens={{ kind: 'page', to: (chore) => `/plants/${chore.id}` }}
+        views={DATE_VIEWS}
+        activeView={activeView}
+        onViewChange={applyView}
+        toolbar={
+          <FilterBar
+            search={{ value: filters.search, onChange: (value) => setFilter('search', value), placeholder: 'Search chores' }}
+            secondary={<FilterDate label="Due" value={filters.due} onValueChange={(value) => setFilter('due', value)} />}
+            active={due ? [{ id: 'due', label: `Due: ${due}`, onRemove: () => setFilter('due', '') }] : []}
+            onClear={() => setFilters({ due: '' })}
+          />
+        }
+        data={rows}
+        total={rows.length}
+        page={1}
+        pageSize={50}
+        onPageChange={noop}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        isLoading={false}
+        getRowId={(chore) => String(chore.id)}
+        emptyTitle="No chores match your filters"
+        emptyDescription="Try different filters."
+      />
+      <p className="type-caption text-muted-foreground" data-testid="address">
+        Address: {location.search || '(plain)'}
+      </p>
+    </div>
+  )
+}
+
+// --- the header as wide as the table (4.106, C3) --------------------------
+
+const NARROW_COLUMNS = plantColumns.filter((column) => ['name', 'status', 'light'].includes(String((column as { accessorKey?: string }).accessorKey)))
+
+function HeaderAtTableEdgeList({ wide }: { wide: boolean }) {
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <DataTable
+        look="framed"
+        pageHeader={
+          <ListHeader
+            title="Houseplants"
+            count={PLANTS.length}
+            deleted={{ shown: false, onShownChange: noop, noun: 'plants' }}
+            newAction={{ label: 'New Plant', onClick: noop }}
+          />
+        }
+        columns={wide ? plantColumns : NARROW_COLUMNS}
+        opens={{ kind: 'page', to: (plant) => `/plants/${plant.id}` }}
+        views={VIEWS}
+        activeView={null}
+        onViewChange={noop}
+        phoneRow={{ title: (plant) => plant.name, facts: (plant) => [`${plant.light} light`] }}
+        toolbar={<FilterBar search={{ value: '', onChange: noop, placeholder: 'Search by name' }} />}
+        data={PLANTS}
+        total={PLANTS.length}
+        page={1}
+        pageSize={50}
+        onPageChange={noop}
+        sorting={[]}
+        onSortingChange={noop}
+        isLoading={false}
+        getRowId={(plant) => String(plant.id)}
+        emptyTitle="No plants yet"
+      />
+    </div>
+  )
+}
+
 function Opened() {
   const { id } = useParams()
   return <p className="p-4 type-body">Opened plant {id}</p>
@@ -221,6 +454,8 @@ function InRouter({ element, path }: { element: React.ReactNode; path: string })
         { path: '/', element },
         { path: '/plants/:id', element: <Opened /> },
         { path: '/visits', element: <p className="p-4 type-body">All visits</p> },
+        { path: '/cuttings', element: <p className="p-4 type-body">All cuttings</p> },
+        { path: '/seeds', element: <p className="p-4 type-body">All seeds</p> },
       ],
       { initialEntries: [path] },
     ),
@@ -315,3 +550,15 @@ export const ListToolsFiltered: StoryObj = {
 export const OneRowAction: StoryObj = { render: () => <InRouter element={<PlantsList single />} path="/" /> }
 
 export const Related: StoryObj = { render: () => <InRouter element={<RelatedLists />} path="/" /> }
+
+export const Framed: StoryObj = { render: () => <InRouter element={<PlantsList framed />} path="/" /> }
+
+export const ViewsFillFilters: StoryObj = { render: () => <InRouter element={<ViewsFillFiltersList />} path="/" /> }
+
+export const DateViews: StoryObj = { render: () => <InRouter element={<DateViewsList />} path="/" /> }
+
+export const DateViewsOverdue: StoryObj = { render: () => <InRouter element={<DateViewsList />} path="/?due=before-today" /> }
+
+export const HeaderAtTableEdge: StoryObj = { name: 'Header at the table edge', render: () => <InRouter element={<HeaderAtTableEdgeList wide={false} />} path="/" /> }
+
+export const HeaderAtTableEdgeWide: StoryObj = { name: 'Header at the table edge, wide', render: () => <InRouter element={<HeaderAtTableEdgeList wide />} path="/" /> }

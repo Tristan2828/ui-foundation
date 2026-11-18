@@ -133,7 +133,7 @@ export function MonthDayField({
         ref={popup}
         className="w-auto p-0"
         data-slot="month-day-field-picker"
-        aria-label="Month and day"
+        aria-label="Month and Day"
         // The button the keyboard starts from (the chosen day, else this
         // month): the one the grid makes tabbable. The popup would
         // otherwise take focus itself.
@@ -258,7 +258,7 @@ function Picker({ selected, locale, onPick }: PickerProps) {
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Previous month"
+          aria-label="Previous Month"
           onClick={() => showMonth(nextMonth(month, -1), active)}
         >
           <ChevronLeftIcon aria-hidden="true" />
@@ -280,7 +280,7 @@ function Picker({ selected, locale, onPick }: PickerProps) {
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Next month"
+          aria-label="Next Month"
           onClick={() => showMonth(nextMonth(month, 1), active)}
         >
           <ChevronRightIcon aria-hidden="true" />

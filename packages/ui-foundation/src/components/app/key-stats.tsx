@@ -9,11 +9,32 @@
 // before the label's word, in the label's muted tone, from the app's icon
 // vocabulary (a `CalendarIcon` for a date, `HashIcon` for a count). The
 // word stays: the icon is decorative.
+//
+// As wide as its numbers (4.98, record standard 2A): the box hugs them
+// (`width="content"`, the default) instead of running the page's width
+// into empty space, and wraps them inside the page when it's narrow.
+// `width="full"` keeps the box across the page, the look before 4.98.
+//
+// Nothing moves on hover or focus (4.115): an inline <EditableValue> as a
+// stat's value keeps its pencil's room at rest here (KeepPencilRoomContext),
+// as a table cell's does. Its room opening on hover moved the values after
+// it along and wrapped a nearly full row, so the hovered value slid out
+// from under the mouse and a click opened the next one.
+//
+// A value's extras (4.120), as a rail fact's (4.115): `info`, a few words
+// behind an info button after the value (a tooltip on hover and keyboard
+// focus, a line under the value on a touch screen, read with the value by
+// a screen reader), and `action`, a small button under the value. Both
+// are there at rest, so hovering moves nothing. `info` isn't `hint`:
+// a stat's `hint` was already its caption line ("of 12").
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH } from '@/lib/empty-value'
 import type { IconComponent } from './icon-component'
+import type { EntityViewFactAction } from './entity-view-facts'
+import { FactAction, FactHint } from './fact-extras'
+import { KeepPencilRoomContext } from './keep-pencil-room'
 
 export type KeyStat = {
   label: string
@@ -22,41 +43,72 @@ export type KeyStat = {
   hint?: ReactNode
   /** The concept's icon, drawn at 13px before the label (decorative: the label still says it). */
   icon?: IconComponent
+  /**
+   * A few words on the value (4.120), behind an info button after it: a
+   * tooltip on hover and keyboard focus, a line under the value on a touch
+   * screen. A screen reader reads it with the value.
+   */
+  info?: string
+  /** A small button under the value (4.120), as a rail fact's `action`. */
+  action?: EntityViewFactAction
 }
+
+/** A strip value's action: the same shape as a rail fact's. */
+export type KeyStatAction = EntityViewFactAction
 
 export type KeyStatsProps = {
   stats: readonly KeyStat[]
   /** What an empty value reads as. Defaults to a dash, read as "Not set". */
   emptyLabel?: string
+  /** `content` (the default since 4.98): as wide as its numbers. `full`: across the page. */
+  width?: 'content' | 'full'
   className?: string
 }
 
 const isEmpty = (value: ReactNode) => value === null || value === undefined || value === false || value === ''
 
-export function KeyStats({ stats, emptyLabel = EMPTY_DASH, className }: KeyStatsProps) {
+export function KeyStats({ stats, emptyLabel = EMPTY_DASH, width = 'content', className }: KeyStatsProps) {
+  const shown = (stat: KeyStat) =>
+    isEmpty(stat.value) ? <EmptyText text={emptyLabel} className="type-body text-muted-foreground" /> : stat.value
   return (
-    <dl
-      data-slot="key-stats"
-      className={cn(
-        'flex flex-wrap gap-x-8 gap-y-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground',
-        className,
-      )}
-    >
-      {stats.map((stat) => {
-        const Icon = stat.icon
-        return (
-          <div key={stat.label} className="flex min-w-0 flex-col gap-0.5">
-            <dt className={cn('type-caption text-muted-foreground', Icon && 'inline-flex items-center gap-1')}>
-              {Icon && <Icon aria-hidden="true" className="size-3.25 shrink-0" />}
-              {stat.label}
-            </dt>
-            <dd className="type-section-title tabular-nums break-words text-foreground">
-              {isEmpty(stat.value) ? <EmptyText text={emptyLabel} className="type-body text-muted-foreground" /> : stat.value}
-            </dd>
-            {stat.hint && <dd className="type-caption text-muted-foreground">{stat.hint}</dd>}
-          </div>
-        )
-      })}
-    </dl>
+    <KeepPencilRoomContext.Provider value>
+      <dl
+        data-slot="key-stats"
+        data-width={width}
+        className={cn(
+          'flex flex-wrap gap-x-8 gap-y-3 rounded-lg border border-border bg-card px-4 py-3 text-card-foreground',
+          width === 'content' && 'w-fit max-w-full',
+          className,
+        )}
+      >
+        {stats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <div key={stat.label} className="flex min-w-0 flex-col gap-0.5">
+              <dt className={cn('type-caption text-muted-foreground', Icon && 'inline-flex items-center gap-1')}>
+                {Icon && <Icon aria-hidden="true" className="size-3.25 shrink-0" />}
+                {stat.label}
+              </dt>
+              <dd className="type-section-title tabular-nums break-words text-foreground">
+                {stat.info ? (
+                  <span className="inline-flex max-w-full flex-wrap items-center gap-x-1">
+                    <span className="min-w-0 max-w-full">{shown(stat)}</span>
+                    <FactHint label={stat.label} hint={stat.info} />
+                  </span>
+                ) : (
+                  shown(stat)
+                )}
+              </dd>
+              {stat.hint && <dd className="type-caption text-muted-foreground">{stat.hint}</dd>}
+              {stat.action && (
+                <dd data-slot="key-stats-action" className="mt-1">
+                  <FactAction action={stat.action} />
+                </dd>
+              )}
+            </div>
+          )
+        })}
+      </dl>
+    </KeepPencilRoomContext.Provider>
   )
 }

@@ -57,12 +57,12 @@ export function byDay<TData>(
   return (row) => {
     const value = read(row)
     const date = value === null || value === undefined || value === '' ? null : new Date(value)
-    if (date === null || Number.isNaN(date.getTime())) return { key: 'none', label: 'No date' }
+    if (date === null || Number.isNaN(date.getTime())) return { key: 'none', label: 'No Date' }
     const day = dayOf(date)
     if (day > today) return { key: 'upcoming', label: 'Upcoming' }
     if (day === today) return { key: 'today', label: 'Today' }
     if (day === today - 1) return { key: 'yesterday', label: 'Yesterday' }
-    if (day >= thisWeek) return { key: 'this-week', label: 'Earlier this week' }
+    if (day >= thisWeek) return { key: 'this-week', label: 'Earlier This Week' }
     const week = weekStart(day)
     if (week >= thisWeek - WEEKS_BY_WEEK * 7) {
       return { key: `week:${isoDay(week)}`, label: `Week of ${dayMonth.format(new Date(week * DAY_MS))}` }

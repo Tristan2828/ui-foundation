@@ -54,7 +54,7 @@ export interface WidgetLayoutSheetProps {
 export function WidgetLayoutSheet({
   layout,
   titles,
-  title = 'Customize this page',
+  title = 'Customize This Page',
   description = 'Order the cards, and hide the ones you don’t need.',
   triggerLabel = 'Customize',
   open,

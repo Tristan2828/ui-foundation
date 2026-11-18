@@ -1,4 +1,4 @@
-import AxeBuilder from '@axe-core/playwright'
+import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 import { expectDataViewsLoaded } from '../src/testing'
 
@@ -16,6 +16,18 @@ const story = (id: string, theme: 'light' | 'dark' = 'light') =>
 const table = (page: Page) => page.locator('[data-width="content"] [data-slot="data-table-body"]')
 const width = async (page: Page) => (await table(page).boundingBox())!.width
 const areaWidth = async (page: Page) => (await page.locator('[data-width="content"]').boundingBox())!.width
+// The table's width once it holds still: fonts loaded, then the same width
+// on two animation frames in a row.
+const settledWidth = async (page: Page) => {
+  await page.evaluate(() => document.fonts.ready)
+  let previous = -1
+  for (;;) {
+    const current = await width(page)
+    if (Math.abs(current - previous) < 0.5) return current
+    previous = current
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  }
+}
 
 test.describe('DataTable width="content"', () => {
   test('on a wide screen, a few short columns take the width they need (at least 36rem), actions beside them', async ({ page }) => {
@@ -35,7 +47,7 @@ test.describe('DataTable width="content"', () => {
     const remove = (await page.getByRole('button', { name: 'Delete Work' }).boundingBox())!
     expect(remove.x + remove.width).toBeLessThanOrEqual(area.x + area.width)
     // The pagination lines up with it.
-    const next = (await page.getByRole('button', { name: 'Next page' }).boundingBox())!
+    const next = (await page.getByRole('button', { name: 'Next Page' }).boundingBox())!
     expect(next.x + next.width).toBeLessThanOrEqual(area.x + area.width + 1)
   })
 
@@ -59,13 +71,17 @@ test.describe('DataTable width="content"', () => {
     await page.setViewportSize({ width: 2560, height: 900 })
     await page.goto(story('content-width'))
     await expect(page.getByRole('cell', { name: 'Finance', exact: true })).toBeVisible()
-    const loaded = await width(page)
+    // Measured once the layout has settled (the font loaded, the same width
+    // two frames running): read mid-layout, it was off by a scrollbar's
+    // width now and then.
+    const loaded = await settledWidth(page)
     // Wider than the 36rem minimum, so it's the kept width being measured.
     expect(loaded).toBeGreaterThan(620)
     for (const state of ['loading', 'empty', 'error', 'loaded']) {
       await page.getByRole('group', { name: 'State' }).getByRole('button', { name: state }).click()
       await expect(table(page).locator(`[data-state]`).first()).toBeVisible()
-      expect(Math.abs((await width(page)) - loaded), state).toBeLessThanOrEqual(1)
+      // Polled, not read once: a wrong kept width stays wrong and fails.
+      await expect.poll(async () => Math.abs((await width(page)) - loaded), { message: state }).toBeLessThanOrEqual(1)
     }
   })
 })
@@ -132,7 +148,7 @@ test.describe('DataTable, editing in its rows', () => {
 
   test('InlineCreate: Enter adds a row and keeps the caret; a blank or taken name says why', async ({ page }) => {
     await open(page)
-    const box = page.getByRole('textbox', { name: "New category's name" })
+    const box = page.getByRole('textbox', { name: "New Category's Name" })
     await box.fill('Garden')
     await page.keyboard.press('Enter')
     await expect(row(page, 'Garden')).toBeVisible()
@@ -210,7 +226,7 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
 
   test('a heading row starts each day, spanning the row, with its summary', async ({ page }) => {
     await page.goto(story('grouped'))
-    await expect(headings(page)).toHaveText(['Today2 · 1 h', 'Yesterday2 · 42 m', 'Earlier this week2 · 1 h 4 m'])
+    await expect(headings(page)).toHaveText(['Today2 · 1 h', 'Yesterday2 · 42 m', 'Earlier This Week2 · 1 h 4 m'])
     const first = headings(page).first()
     await expect(first).toHaveAttribute('scope', 'rowgroup')
     await expect(first).toHaveAttribute('colspan', '2')
@@ -220,9 +236,9 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
 
   test('a group split across pages repeats its heading on the next', async ({ page }) => {
     await page.goto(story('grouped'))
-    await page.getByRole('button', { name: 'Next page' }).click()
+    await page.getByRole('button', { name: 'Next Page' }).click()
     await expect(headings(page)).toHaveText([
-      'Earlier this week1 · 7 m',
+      'Earlier This Week1 · 7 m',
       'Week of 5 Oct2 · 1 h 25 m',
       /^Week of 28 Sept?1 · 16 m$/,
       'August1 · 33 m',
@@ -241,7 +257,7 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
   test('one pill pressed at a time; pressing it again leaves it on; the filter returns to page 1', async ({ page }) => {
     await page.goto(story('grouped'))
     await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'true')
-    await page.getByRole('button', { name: 'Next page' }).click()
+    await page.getByRole('button', { name: 'Next Page' }).click()
     await pill(page, 'Video').click()
     await expect(pill(page, 'Video')).toHaveAttribute('aria-pressed', 'true')
     await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'false')
@@ -272,7 +288,7 @@ test.describe('DataTable, rows grouped under headings, with a pill filter', () =
     await expect(pill(page, 'Text')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByText('No text items')).toBeVisible()
     await expect(headings(page)).toHaveCount(0)
-    await page.getByRole('button', { name: 'Show all types' }).click()
+    await page.getByRole('button', { name: 'Show All Types' }).click()
     await expect(pill(page, 'All')).toHaveAttribute('aria-pressed', 'true')
     await expect(headings(page).first()).toHaveText('Today2 · 1 h')
   })
@@ -559,7 +575,7 @@ test.describe('DataTable list look (4.83)', () => {
   test('rows per page: 50 to start, a pick shows that many from page 1, and is remembered', async ({ page }) => {
     await page.goto(story('list-look'))
     await expect(page.locator('tbody tr')).toHaveCount(50)
-    await page.getByRole('button', { name: 'Next page' }).click()
+    await page.getByRole('button', { name: 'Next Page' }).click()
     await expect(page.getByText('Page 2 of 3')).toBeVisible()
     await page.getByRole('button', { name: '50 rows per page' }).click()
     await page.getByRole('menuitemradio', { name: '25' }).click()
@@ -577,5 +593,70 @@ test.describe('DataTable list look (4.83)', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375)
     const menu = (await page.getByRole('button', { name: '50 rows per page' }).boundingBox())!
     expect(menu.x + menu.width).toBeLessThanOrEqual(375)
+  })
+})
+
+// The title column (4.103): the first column, the row's name, capped at
+// every width so a long title can't push the other columns off (a long
+// discussion topic overran above md). Cut to one line by default, the whole
+// title in a tooltip on hover and on its link's focus; `meta.wrap` wraps
+// it at the cap instead. Axe and the token check at rest in both themes
+// are fixtures-visual's (title-column, title-column-wrap).
+test.describe('DataTable title column (4.103)', () => {
+  const LONG = 'Whether the morning stretches should move to the evening now that the days are shorter and the mornings colder'
+  const title = (page: Page, name: string) =>
+    page.locator('tbody tr', { has: page.getByRole('link', { name }) }).locator('[data-slot="data-table-title"]')
+
+  for (const width of [1920, 1024, 800, 390]) {
+    test(`at ${width}px the title is one line at most 24rem, and every column stays on screen`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto(story('title-column'))
+      const cut = title(page, LONG)
+      await expect(cut).toBeVisible()
+      const box = (await cut.boundingBox())!
+      expect(box.width).toBeLessThanOrEqual(Math.min(24 * 16, 0.6 * width) + 1)
+      expect(box.height).toBeLessThan(32)
+      expect(await cut.evaluate((element) => getComputedStyle(element).textOverflow)).toBe('ellipsis')
+      if (width >= 800) {
+        const status = (await page.getByRole('columnheader', { name: 'Status' }).boundingBox())!
+        expect(status.x + status.width).toBeLessThanOrEqual(width)
+      }
+    })
+  }
+
+  test('a cut title shows whole in a tooltip on hover and on its link’s focus, with no extra tab stop', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(story('title-column'))
+    const cut = title(page, LONG)
+    await expect(cut).toBeVisible()
+    const tooltip = page.locator('[data-slot="tooltip-content"]')
+    await cut.hover()
+    await expect(tooltip).toHaveText(LONG)
+    await page.mouse.move(0, 0)
+    await expect(tooltip).toHaveCount(0)
+    // The link is the tab stop; focusing it opens the tooltip.
+    await expect(cut).not.toHaveAttribute('tabindex')
+    await page.getByRole('link', { name: LONG }).focus()
+    await expect(tooltip).toHaveText(LONG)
+    // A screen reader reads the whole title from the link.
+    await expect(page.getByRole('link', { name: LONG })).toHaveText(LONG)
+    // A short title isn't cut: no tooltip.
+    await page.keyboard.press('Escape')
+    await title(page, 'Shoes for the long walks').hover()
+    await page.waitForTimeout(800)
+    await expect(tooltip).toHaveCount(0)
+  })
+
+  test('meta.wrap wraps the title at 24rem instead, with no tooltip', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(story('title-column-wrap'))
+    const wrapped = title(page, LONG)
+    await expect(wrapped).toBeVisible()
+    const box = (await wrapped.boundingBox())!
+    expect(box.width).toBeLessThanOrEqual(24 * 16 + 1)
+    expect(box.height).toBeGreaterThan(36)
+    await wrapped.hover()
+    await page.waitForTimeout(800)
+    await expect(page.locator('[data-slot="tooltip-content"]')).toHaveCount(0)
   })
 })

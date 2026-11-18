@@ -9,7 +9,10 @@ import buildInfo, { pwa } from '@tristan2828/ui-foundation/vite'
 // forwards /api to the FastAPI backend (Phase 8) started separately via
 // `uvicorn app.main:app` from backend/. MSW intercepts requests before they
 // reach the network otherwise, so this proxy is inert the rest of the time.
-const BACKEND_URL = 'http://localhost:8000'
+// BACKEND_URL moves it: the mock e2e run (playwright.config.ts) points it at
+// a port nothing listens on, so a request that slips past MSW fails there
+// instead of reaching a backend you have running.
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000'
 
 // Not Vite's defaults (5173, 4173): another Vite app on the same machine
 // is likely on those, and Playwright reuses whatever answers on the test

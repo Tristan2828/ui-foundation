@@ -193,7 +193,7 @@ function TypedDate({
           <Popover open={open} onOpenChange={changeOpen} modal={modal}>
             <PopoverTrigger
               render={
-                <InputGroupButton type="button" size="icon-xs" variant="ghost" disabled={readOnly} aria-label="Open calendar" />
+                <InputGroupButton type="button" size="icon-xs" variant="ghost" disabled={readOnly} aria-label="Open Calendar" />
               }
             >
               <CalendarIcon aria-hidden="true" />

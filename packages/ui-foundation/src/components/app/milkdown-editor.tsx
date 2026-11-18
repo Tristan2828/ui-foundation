@@ -36,7 +36,16 @@
 //   Markdown writes them (src/lib/markdown-table.ts).
 // - Edited blocks are written in the document's own bullet and rule marks.
 // - Markdown pasted as plain text arrives formatted (still no HTML), and a
-//   copy out of the editor is Markdown.
+//   copy out of the editor is Markdown. A paste keeps its lines, Word's
+//   and Notion's lists and to-dos, and code's language; an address pasted
+//   or typed becomes a link; a paste can't bring in a link that runs code
+//   or an image as `data:` (rich-text-paste.ts, rich-text-autolink.ts).
+// - An edit the merge refuses is never saved quietly: the field is marked
+//   invalid, and says why in itself when the app gives no `onProblem`
+//   (with one, the app shows it: a form's field error, editing in
+//   place's line).
+// - Full screen holds focus: the page behind it is inert until it ends
+//   (rich-text-full-screen.ts).
 // - A click on a link opens it in a new tab, as the read view's links do,
 //   so notes that are always the editor still follow their links
 //   (followLink). Ctrl/Cmd+K adds or edits a link (a box at the caret: web
@@ -89,16 +98,15 @@ import { history } from '@milkdown/kit/plugin/history'
 import {
   commands,
   headingSchema,
-  inputRules,
+  paragraphSchema,
   keymap,
-  markInputRules,
   plugins,
   remarkPreserveEmptyLinePlugin,
   schema,
 } from '@milkdown/kit/preset/commonmark'
 import type { NodeParserSpec } from '@milkdown/kit/transformer'
 import { gfm, tableCellSchema, tableHeaderSchema, tableSchema } from '@milkdown/kit/preset/gfm'
-import { Fragment, Slice, type Node as ProseNode } from '@milkdown/kit/prose/model'
+import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import { NodeSelection, Plugin, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
 import { isInTable, TableMap } from '@milkdown/kit/prose/tables'
 import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
@@ -140,11 +148,15 @@ import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry }
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
 import { splitTaskItem, taskInputRule } from './rich-text-tasks'
+import { typedInputRules } from './rich-text-input-rules'
+import { edges } from './rich-text-edges'
+import { withEmptyParagraphChildren } from './rich-text-empty-paragraph'
 import { toggleHeadingInputRule, toggleHeadingRemark, withToggle } from './rich-text-toggle-heading'
 import { addRowAtEnd, colorTableCells, fitAllColumns, handleTableKey, previewColumnWidth, runTableAction, setColumnWidth, tableLook as tableLookPlugin, tableWidthsOf, type TableAction, type TableColorScope } from './rich-text-table'
 import { TABLE_MENU_EVENT, TableGrips, type TableCell } from './rich-text-table-grips'
 import {
   applySlash,
+  clearSlash,
   closeSlash,
   slashItems,
   slashOptionId,
@@ -156,6 +168,9 @@ import {
 import { RichTextSlashMenu } from './rich-text-slash-menu'
 import { RichTextToolbar } from './rich-text-toolbar'
 import { RichTextToolsBar } from './rich-text-tools-bar'
+import { autolinkPlugin, linkWordBefore } from './rich-text-autolink'
+import { useHoldFocus } from './rich-text-full-screen'
+import { cleanPasted, NO_IMAGES_HERE, pasteHtml, pasteLinesIntoCell, pastePlainText, type PasteImages } from './rich-text-paste'
 import { CalloutKindMenu, TableBar } from './rich-text-widgets'
 
 // The commonmark preset, minus the plugin that writes `<br />`. A $remark
@@ -163,8 +178,7 @@ import { CalloutKindMenu, TableBar } from './rich-text-widgets'
 const LEFT_OUT: readonly MilkdownPlugin[] = remarkPreserveEmptyLinePlugin
 const COMMONMARK: MilkdownPlugin[] = [
   ...schema,
-  ...inputRules,
-  ...markInputRules,
+  ...typedInputRules,
   ...commands,
   ...keymap,
   ...plugins.filter((plugin) => !LEFT_OUT.includes(plugin)),
@@ -278,20 +292,9 @@ function emptyImageTitles(node: MdImage) {
 }
 const imageTitles = $remark('imageTitles', () => () => (tree: unknown) => emptyImageTitles(tree as MdImage))
 
-// Raw HTML pasted in as Milkdown's html chip becomes the plain text it
-// shows, so a paste can never add markup to the Markdown.
-function htmlToText(fragment: Fragment): Fragment {
-  const nodes: ProseNode[] = []
-  fragment.forEach((node) => {
-    if (node.type.name === 'html') {
-      const value = String(node.attrs.value ?? '')
-      if (value) nodes.push(node.type.schema.text(value))
-    } else {
-      nodes.push(node.copy(htmlToText(node.content)))
-    }
-  })
-  return Fragment.fromArray(nodes)
-}
+// What the field says when the merge refuses an edit (markdown-merge.ts):
+// to the app's `onProblem`, and in the field itself.
+const REFUSED_EDIT = "This change can't be saved without rewriting parts of the text you didn't edit. Undo it to go on saving."
 
 // A heading: the element `headingLevel` gives its level, the look its
 // level has. Marked as a band for PROSE_INSET (`#` and `##`).
@@ -591,10 +594,13 @@ export default function MilkdownEditor({
   const [pageBusy, setPageBusy] = useState(false)
   // Opens the title box: from the slash menu's keys (set up once) too.
   const startPageRef = useRef<(view: EditorView, span: PageSpan, title: string) => void>(() => {})
+  const pickSlashImageRef = useRef<(view: EditorView, span: SlashQuery) => void>(() => {})
   // The router's navigate, for a page link's click (NavigateBridge).
   const navigateRef = useRef<((href: string) => void) | null>(null)
   const inRouter = useInRouterContext()
   const [length, setLength] = useState(defaultValue.length)
+  // Why the last edit can't be saved, shown in the field (REFUSED_EDIT).
+  const [refused, setRefused] = useState<string | null>(null)
   // The editor's state after each change, for the toolbar's pressed buttons.
   const [editorState, setEditorState] = useState<EditorState | null>(null)
   const [editorView, setEditorView] = useState<EditorView | null>(null)
@@ -643,6 +649,8 @@ export default function MilkdownEditor({
       document.body.style.overflow = overflow
     }
   }, [fullScreen])
+  // The page behind full screen is inert meanwhile (rich-text-full-screen.ts).
+  useHoldFocus(field, fullScreen)
   // The toolbar's Image button opens this file picker.
   const imageInputRef = useRef<HTMLInputElement>(null)
 
@@ -653,12 +661,16 @@ export default function MilkdownEditor({
 
   const ids = useId()
   const counterId = `${ids}-count`
+  const problemId = `${ids}-problem`
   // The editable element's id: the app's, or one of its own, so the
   // toolbar can name what it controls.
   const editableId = id ?? `${ids}-text`
   // The count shows from 80% of the limit: below that it's noise.
   const showCount = maxLength !== undefined && length >= maxLength * 0.8
-  const describedBy = [ariaDescribedBy, showCount ? counterId : undefined].filter(Boolean).join(' ')
+  // The field says it itself when the app hears of it through no
+  // `onProblem` (a form that passes none would save the old text quietly).
+  const ownProblem = onProblem ? null : refused
+  const describedBy = [ariaDescribedBy, ownProblem ? problemId : undefined, showCount ? counterId : undefined].filter(Boolean).join(' ')
 
   const attributes: Record<string, string> = {
     'aria-multiline': 'true',
@@ -669,14 +681,14 @@ export default function MilkdownEditor({
   if (ariaLabel) attributes['aria-label'] = ariaLabel
   if (ariaLabelledBy) attributes['aria-labelledby'] = ariaLabelledBy
   if (describedBy) attributes['aria-describedby'] = describedBy
-  if (ariaInvalid) attributes['aria-invalid'] = 'true'
+  if (ariaInvalid || refused) attributes['aria-invalid'] = 'true'
   if (placeholder) attributes['aria-placeholder'] = placeholder
   if (menus) attributes['aria-keyshortcuts'] = 'Alt+F10'
 
   // The slash menu: open while a "/" typed at a line's start is followed
   // by something some block answers to, and the field has focus.
   const slash = menus && !readOnly && focused && editorState ? slashQuery(editorState) : null
-  const slashMatches = slash ? slashItems(slash.query, { page: Boolean(onCreatePage) }) : []
+  const slashMatches = slash ? slashItems(slash.query, { page: Boolean(onCreatePage), image: Boolean(upload), at: editorState ? { state: editorState, span: slash } : undefined }) : []
   const slashOpen = slash !== null && slashMatches.length > 0
   const slashMenuKey = slash ? `${slash.from}:${slash.query}` : ''
   const slashIndex = slashActive.key === slashMenuKey ? Math.min(slashActive.index, slashMatches.length - 1) : 0
@@ -707,12 +719,16 @@ export default function MilkdownEditor({
       const current = editor.action(getMarkdown())
       try {
         const merged = mergeMarkdown(original, baseline, current)
+        setRefused(null)
         latest.current.onProblem?.(null)
         latest.current.onChange(merged)
         setLength(merged.length)
       } catch (error) {
         if (!(error instanceof MarkdownMergeError)) throw error
-        latest.current.onProblem?.(error.message)
+        // onChange isn't called: the app keeps the last text that could
+        // be saved, and the field says why it stopped.
+        setRefused(REFUSED_EDIT)
+        latest.current.onProblem?.(REFUSED_EDIT)
       }
     }
 
@@ -729,7 +745,15 @@ export default function MilkdownEditor({
             },
           }),
           props: {
-            transformPasted: (slice) => new Slice(htmlToText(slice.content), slice.openStart, slice.openEnd),
+            // Word's lists, to-dos and code languages, before the HTML is read.
+            transformPastedHTML: (html) => pasteHtml(html),
+            // No HTML, no link that runs code, no image as `data:`; in a
+            // cell, one line (rich-text-paste.ts).
+            transformPasted: (slice, view) => {
+              const { slice: cleaned, images, dropped } = cleanPasted(view, slice, Boolean(latest.current.upload))
+              if (images.length > 0 || dropped > 0) setTimeout(() => pastedImagesLanded(view, { images, dropped }), 0)
+              return cleaned
+            },
           },
         }),
     )
@@ -785,6 +809,8 @@ export default function MilkdownEditor({
       pageLinksPlugin({ resolve: () => latest.current.pageLink, restore: restorePage, editable: () => !latest.current.readOnly }),
     )
     const pendingPages = $prose(() => pendingPagePlugin())
+    // An address typed and ended with a space becomes a link.
+    const autolink = $prose(() => autolinkPlugin())
 
     // Images pasted or dropped, uploaded through the app's `upload`; with
     // none given, a paste or drop is left to the handlers after this one,
@@ -796,24 +822,43 @@ export default function MilkdownEditor({
       uploadImages(view, files, at, { upload: send, accept, maxSize, onError: (message) => toast.error(message) })
       return true
     }
+    // Images a paste carried as `data:`: uploaded at the caret once the
+    // paste is in, or, with no `upload`, said no to.
+    const pastedImagesLanded = (view: EditorView, { images, dropped }: PasteImages) => {
+      if (cancelled || view.isDestroyed) return
+      if (images.length > 0) startUploads(view, images, null)
+      if (dropped > 0) toast.error(NO_IMAGES_HERE)
+    }
     const imageInput = $prose(
       () =>
         new Plugin({
           props: {
+            // Without `upload`, an image file pasted or dropped says it
+            // can't go in (any words with it still paste).
             handlePaste: (view, event) => {
-              if (!latest.current.upload || !view.editable) return false
+              if (!view.editable) return false
               const files = pastedImages(event.clipboardData)
               if (files.length === 0) return false
+              if (!latest.current.upload) {
+                toast.error(NO_IMAGES_HERE)
+                if (event.clipboardData?.getData('text/plain')) return false
+                event.preventDefault()
+                return true
+              }
               event.preventDefault()
               return startUploads(view, files, null)
             },
             // Files from outside (a text or an image moved within the
             // editor carries none).
             handleDrop: (view, event, _slice, moved) => {
-              if (moved || !latest.current.upload || !view.editable) return false
+              if (moved || !view.editable) return false
               const files = droppedFiles(event.dataTransfer)
               if (files.length === 0) return false
               event.preventDefault()
+              if (!latest.current.upload) {
+                toast.error(NO_IMAGES_HERE)
+                return true
+              }
               const at = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? view.state.selection.from
               return startUploads(view, files, at)
             },
@@ -828,23 +873,18 @@ export default function MilkdownEditor({
             // Plain text is read as Markdown, so `## Notes` or `**bold**`
             // copied from another app arrives formatted; raw HTML in it
             // still arrives as text. A paste with HTML of its own (from a
-            // web page) is ProseMirror's, through transformPasted above.
+            // web page) is ProseMirror's, through transformPasted above,
+            // but for an address pasted over words, which links them
+            // (rich-text-paste.ts).
             handlePaste: (view, event) => {
               const data = event.clipboardData
-              if (!data || !view.editable || data.getData('text/html')) return false
-              const text = data.getData('text/plain')
-              if (!text || view.state.selection.$from.parent.type.spec.code) return false
-              const parsed = ctx.get(parserCtx)(text)
-              if (!parsed || typeof parsed === 'string') return false
-              // Text with no Markdown in it (one plain paragraph) goes in
-              // exactly as typed, spaces at its ends kept.
-              const only = parsed.childCount === 1 ? parsed.firstChild : null
-              if (only?.type.name === 'paragraph' && only.childCount === 1 && only.textContent === text.trim()) {
-                view.dispatch(view.state.tr.insertText(text).scrollIntoView())
-                return true
-              }
-              view.dispatch(view.state.tr.replaceSelection(Slice.maxOpen(htmlToText(parsed.content))).scrollIntoView())
-              return true
+              if (!data || !view.editable) return false
+              return pastePlainText(view, data.getData('text/plain'), {
+                parse: (markdown) => ctx.get(parserCtx)(markdown) as ProseNode | string | null,
+                hasHtml: Boolean(data.getData('text/html')),
+                uploads: Boolean(latest.current.upload),
+                onImages: (images) => pastedImagesLanded(view, images),
+              })
             },
             // A copy is Markdown, so it pastes into a plain text field
             // (or another Markdown editor) as written.
@@ -952,10 +992,19 @@ export default function MilkdownEditor({
         }))
         // Headings carry `toggle` (rich-text-toggle-heading.ts).
         ctx.update(headingSchema.key, withToggle)
+        // An empty paragraph keeps its `children` (rich-text-empty-paragraph.ts).
+        ctx.update(paragraphSchema.key, withEmptyParagraphChildren)
         ctx.update(editorViewOptionsCtx, (options) => ({
           ...options,
           editable: () => !latest.current.readOnly,
           attributes,
+          // Lines pasted into a table cell: one line, before the table's
+          // own paste spreads them over the row (rich-text-paste.ts).
+          handlePaste: (view, event) => {
+            const data = event.clipboardData
+            if (!data || !view.editable || data.getData('text/html')) return false
+            return pasteLinesIntoCell(view, data.getData('text/plain'))
+          },
           // The slash menu's keys, the editor's own shortcuts and its table
           // keys, as view props: before Milkdown's own keymap, whose Enter
           // would split the line (or leave a table).
@@ -974,6 +1023,7 @@ export default function MilkdownEditor({
                 event.preventDefault()
                 const item = menu.items[menu.index]
                 if (item.id === 'page') startPageRef.current(view, menu.span, '')
+                else if (item.id === 'image') pickSlashImageRef.current(view, menu.span)
                 else applySlash(view, menu.span, item.id)
                 return true
               }
@@ -998,6 +1048,8 @@ export default function MilkdownEditor({
                 return true
               }
             }
+            // Enter after a typed address links it first (rich-text-autolink.ts).
+            if (event.key === 'Enter' && !event.isComposing && !event.metaKey && !event.ctrlKey) linkWordBefore(view)
             // Enter in a task item: the next one, unticked (rich-text-tasks.ts).
             if (event.key === 'Enter' && plain && !event.isComposing && splitTaskItem(view.state, view.dispatch)) return true
             // Ctrl/Cmd+Enter in a table is the field's (a save), not
@@ -1016,6 +1068,7 @@ export default function MilkdownEditor({
           },
         }))
       })
+      .use(edges)
       .use(COMMONMARK)
       .use(gfm)
       .use(taskInputRule)
@@ -1039,6 +1092,7 @@ export default function MilkdownEditor({
       .use(imageUploads)
       .use(imageInput)
       .use(input)
+      .use(autolink)
       .use(folds)
 
     void make.create().then((editor) => {
@@ -1093,6 +1147,14 @@ export default function MilkdownEditor({
   // The toolbar's Image button: the file picker, then each file picked
   // uploaded in place of the selection, and focus back in the text.
   const pickImages = () => imageInputRef.current?.click()
+  // The slash menu's Image (4.123): the "/…" goes, then the file picker;
+  // the images go in at the caret, where the "/" was.
+  // A tick later: Chrome opens no picker for a click made inside the
+  // editor's own keydown (Enter on the item); the key's activation lasts.
+  const pickSlashImage = (view: EditorView, span: SlashQuery) => {
+    clearSlash(view, span)
+    setTimeout(pickImages, 0)
+  }
   const imagesPicked = (files: File[]) => {
     const send = latest.current.upload
     if (!editorView || !send || files.length === 0) return
@@ -1247,6 +1309,7 @@ export default function MilkdownEditor({
   }
   useEffect(() => {
     startPageRef.current = startPage
+    pickSlashImageRef.current = pickSlashImage
   })
   // Selected words in one block (a double-click takes the space after a
   // word too: the link gets the words, the spaces stay).
@@ -1306,6 +1369,11 @@ export default function MilkdownEditor({
         data-slot="rich-text-editor"
         data-table-look={tableLook}
         data-full-screen={fullScreen || undefined}
+        // Full screen is a dialog over the page, named as the field is.
+        role={fullScreen ? 'dialog' : undefined}
+        aria-modal={fullScreen || undefined}
+        aria-labelledby={fullScreen ? ariaLabelledBy : undefined}
+        aria-label={fullScreen && !ariaLabelledBy ? (ariaLabel ?? 'Text') : undefined}
         onKeyDown={leaveFullScreen}
         className={cn(
           fullScreen ? 'fixed inset-0 z-50 h-dvh rounded-none! border-0! bg-background! ring-0!' : 'relative',
@@ -1393,6 +1461,18 @@ export default function MilkdownEditor({
             '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
           )}
         />
+        {ownProblem && (
+          // In the field, so it's seen wherever the field is (full screen
+          // too).
+          <p
+            id={problemId}
+            role="alert"
+            data-slot="rich-text-editor-problem"
+            className={cn('type-caption text-destructive-text', inline ? 'pt-1' : 'border-t border-border px-2.5 py-1.5', fullScreen && 'px-4 md:px-8')}
+          >
+            {ownProblem}
+          </p>
+        )}
         {widgets.map((widget) => {
           if (widget.type === 'callout')
             return createPortal(
@@ -1449,7 +1529,13 @@ export default function MilkdownEditor({
             items={slashMatches}
             active={slashIndex}
             onHighlight={(index) => setSlashActive({ key: slashMenuKey, index })}
-            onPick={(item) => (item === 'page' ? startPage(editorView, slash, '') : applySlash(editorView, slash, item))}
+            onPick={(item) =>
+              item === 'page'
+                ? startPage(editorView, slash, '')
+                : item === 'image'
+                  ? pickSlashImage(editorView, slash)
+                  : applySlash(editorView, slash, item)
+            }
           />
         )}
         {toolsOpen && (
@@ -1560,14 +1646,14 @@ function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => v
     <PopoverContent
       anchor={box.anchor}
       align="start"
-      aria-label={box.href ? 'Edit link' : 'Add link'}
+      aria-label={box.href ? 'Edit Link' : 'Add Link'}
       initialFocus={inputRef}
       finalFocus={false}
       className="w-80"
       onKeyDown={onKeyDown}
     >
       <Field data-invalid={error ? true : undefined}>
-        <FieldLabel htmlFor={inputId}>Link address</FieldLabel>
+        <FieldLabel htmlFor={inputId}>Link Address</FieldLabel>
         <Input
           ref={inputRef}
           id={inputId}
@@ -1589,7 +1675,7 @@ function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => v
         </Button>
         {box.href && (
           <Button size="sm" variant="outline" onClick={() => onApply('')}>
-            Remove link
+            Remove Link
           </Button>
         )}
       </div>
@@ -1636,7 +1722,7 @@ function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCrea
     <PopoverContent
       anchor={box.anchor}
       align="start"
-      aria-label="New page"
+      aria-label="New Page"
       initialFocus={inputRef}
       finalFocus={false}
       className="w-80"
@@ -1645,7 +1731,7 @@ function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCrea
       onKeyDown={onKeyDown}
     >
       <Field data-invalid={error ? true : undefined}>
-        <FieldLabel htmlFor={inputId}>Page title</FieldLabel>
+        <FieldLabel htmlFor={inputId}>Page Title</FieldLabel>
         <Input
           ref={inputRef}
           id={inputId}
@@ -1663,7 +1749,7 @@ function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCrea
       </Field>
       <div className="flex gap-2">
         <Button size="sm" onClick={create} disabled={busy}>
-          {busy ? 'Creating…' : 'Create page'}
+          {busy ? 'Creating…' : 'Create Page'}
         </Button>
       </div>
     </PopoverContent>

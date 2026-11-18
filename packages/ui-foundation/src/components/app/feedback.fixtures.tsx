@@ -30,7 +30,7 @@ function MarkAsRead() {
         <h2 className="type-section-title">Harbor Light</h2>
         <Button variant="outline" size="sm" disabled={markRead.pending} onClick={() => void markRead.run()}>
           {markRead.pending && <Spinner className="size-4" />}
-          Mark as read
+          Mark as Read
         </Button>
       </div>
       <ActionError action={markRead} />
@@ -67,7 +67,7 @@ function CheckPrices() {
           }}
         >
           <RefreshCwIcon aria-hidden="true" />
-          Check prices
+          Check Prices
         </Button>
       </div>
       <JobStatus verb="Checking" state={progress} result={result} />
@@ -83,10 +83,10 @@ function Connection() {
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={() => window.dispatchEvent(new Event('offline'))}>
           <WifiOffIcon aria-hidden="true" />
-          Lose the connection
+          Lose the Connection
         </Button>
         <Button variant="outline" size="sm" onClick={() => window.dispatchEvent(new Event('online'))}>
-          Get it back
+          Get It Back
         </Button>
       </div>
     </div>
@@ -134,10 +134,10 @@ function LoadingList() {
     <div className="flex max-w-md flex-col gap-3">
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={() => void load(100)}>
-          Load fast
+          Load Fast
         </Button>
         <Button variant="outline" size="sm" onClick={() => void load(1500)}>
-          Load slowly
+          Load Slowly
         </Button>
       </div>
       <ul className="flex flex-col divide-y rounded-lg border" data-state={state === 'loading' ? 'loading' : undefined}>
