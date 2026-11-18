@@ -1101,6 +1101,9 @@ test.describe('widget view: two writers', () => {
     const description = page.getByRole('region', { name: 'Description' })
     await expect(description.getByText(/changed elsewhere/)).toBeVisible({ timeout: 5000 })
     await expect(description.getByRole('button', { name: 'Keep Mine' })).toBeVisible()
+    // Its toast says what happened, not that the save failed.
+    await expect(page.getByText('Description changed elsewhere')).toBeVisible()
+    await expect(page.getByText("Couldn't save Description")).toHaveCount(0)
     expect(answers).toEqual([409])
     expect(sent[0]).toHaveProperty('baseUpdatedAt', '2026-11-01T09:00:01.000Z')
     // Nothing of this tab's was written over theirs, and it stays that way past the pause.

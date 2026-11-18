@@ -315,7 +315,9 @@ export function EditableField({
   // The first refusal or failed save of an autosaving field toasts too:
   // its line may be far from where the person is looking (F5). Once per
   // run of failures; a save that lands starts the count again.
+  // A conflict (saved elsewhere) isn't a failed save: its toast says so.
   const failure = state.status !== 'closed' ? state.error : null
+  const conflicted = state.status !== 'closed' && Boolean(state.conflict)
   const toasted = useRef(false)
   useEffect(() => {
     if (!autosave) return
@@ -325,8 +327,9 @@ export function EditableField({
     }
     if (toasted.current) return
     toasted.current = true
-    toast.error(`Couldn't save ${label}`, { description: failure })
-  }, [autosave, failure, label])
+    if (conflicted) toast.warning(`${label} changed elsewhere`, { description: 'Keep Mine or Show Saved, under it.' })
+    else toast.error(`Couldn't save ${label}`, { description: failure })
+  }, [autosave, failure, conflicted, label])
 
   useEffect(() => () => window.clearTimeout(blurTimer.current), [])
 
