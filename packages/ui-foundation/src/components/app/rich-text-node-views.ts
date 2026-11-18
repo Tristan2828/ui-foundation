@@ -143,7 +143,8 @@ export function tableView(
   const dom = document.createElement('div')
   dom.dataset.slot = 'rich-text-table'
   // As wide as the table (its columns fit their words), never wider than the text.
-  dom.className = 'group/table relative grid w-fit max-w-full grid-cols-[minmax(0,auto)_auto] gap-1'
+  // On a touch screen, room above for the column grip's tap area (review F11).
+  dom.className = 'group/table relative grid w-fit max-w-full grid-cols-[minmax(0,auto)_auto] gap-1 pointer-coarse:pt-3'
   const scroll = document.createElement('div')
   // Its look: styles/index.css "Tables in written text".
   scroll.className = cn('prose-table', TABLE_SCROLL_FOCUS)

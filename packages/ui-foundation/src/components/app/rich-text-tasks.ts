@@ -66,3 +66,25 @@ export function splitTaskItem(state: EditorState, dispatch: (tr: Transaction) =>
   dispatch(tr.scrollIntoView())
   return true
 }
+
+/**
+ * A task item's box in its hit area (review F11): the box as drawn, in a
+ * label whose invisible 40px square, on a touch screen, takes the tap
+ * (a press on a label is its checkbox's), and the item's row 40px tall
+ * there, so two items' squares never overlap. A laptop is unchanged.
+ */
+export const TASK_ROW = 'pointer-coarse:min-h-10 pointer-coarse:py-2'
+
+export function taskBoxHit(box: HTMLInputElement): HTMLLabelElement {
+  const hit = document.createElement('label')
+  hit.contentEditable = 'false'
+  hit.dataset.slot = 'task-box'
+  hit.className =
+    'relative flex shrink-0 pointer-coarse:before:absolute pointer-coarse:before:top-1/2 pointer-coarse:before:left-1/2 pointer-coarse:before:size-10 pointer-coarse:before:-translate-1/2 pointer-coarse:before:content-[""]'
+  // Over the square, so a press on the box itself is the box's.
+  box.className = 'relative z-10 mt-1 size-4 accent-primary'
+  // A press keeps the caret where it is, as on the box itself.
+  hit.addEventListener('mousedown', (event) => event.preventDefault())
+  hit.append(box)
+  return hit
+}

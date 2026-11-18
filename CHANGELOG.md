@@ -56,6 +56,62 @@ Merged with no version bump; the next release carries it.
     409 in `openapi.yaml`, the mock's check, and `withVersion` on its
     `useRecordUpdate` calls. Nothing changes for an entity that skips it.
 
+## 4.126.0 — The RichTextEditor review: no quiet losses, typing that keeps up, and a phone toolbar
+
+npm package and `ui-foundation-backend` 4.126.0 (the backend is unchanged
+apart from its version). The fixes from a full review of the
+RichTextEditor and editing in place (findings F1–F3, F5–F25; F4's
+server half, a version check with a 409, follows in its own release),
+plus two `/testing` changes. Three changes in behaviour are marked
+**(behaviour)**: Esc on a changed `long-text` draft asks, the template's
+notes are inline, and `goto()`/`reload()` wait for a page's API
+requests to settle.
+
+### How an app adopts it
+
+1. Bump `@tristan2828/ui-foundation` to `^4.126.0` (and
+   `ui-foundation-backend==4.126.0`) and run `ui-foundation sync`.
+2. Every form with a `RichTextEditor` passes `onProblem` and sets a field
+   error from it, so a refused edit blocks Save (the template's
+   `widget-form.tsx`). Without it the editor now shows the refusal in the
+   field itself, but the form still submits.
+3. Optional: make a record's notes inline (`inline: true`, the new
+   default in the docs), as the template's Widget Description is.
+4. Optional: an app fixture that waits for `/api/` requests to settle
+   before `goto()`/`reload()` can drop its copy; loading-state tests can
+   move from `delayMs` to `forceMswOverride(..., { hold: true })` and
+   `release()`.
+5. `<Toaster />` must be mounted (the shell already does): the first
+   refused or failed autosave of a run toasts.
+
+### The rest of this release, as merged
+
+- **RichTextEditor on a phone** (the RichTextEditor review's F11, the
+  looks picked as 1A, 2A, 3A and 4A). On a touch screen only (`pointer:
+  coarse`); a laptop, a narrow window included, is unchanged. Nothing an
+  app must change.
+  - The toolbar is one row pinned to the top of the keyboard while the
+    field has focus, in place of the rows above the text that scrolled
+    away: Aa, Task list, Bulleted list, Outdent, Indent, Insert (the slash
+    menu on a new line), Undo and Hide keyboard. Aa swaps the keyboard for
+    a panel of every format, by kind and named; the keyboard button brings
+    it back, the caret kept. `toolbar="floating"` fields get the same row
+    in place of their Editor tools strip. It shows once the tap that
+    focused the text is over, so a tap on the screen's bottom line (a link
+    there) isn't released onto it.
+  - With words selected the row shows Bold, Italic, Strikethrough, Code,
+    Highlight and Link first, and the floating toolbar no longer shows:
+    it landed under the system's Cut/Copy/Paste bar.
+  - The task checkbox, a table's grips, a heading's fold button and a
+    callout's icon each take a tap in an invisible 40px square, drawn as
+    before; task rows and table rows are 40px tall so two squares never
+    overlap. The row's buttons are 40px.
+  - The slash menu fits the space above the keyboard: capped to the room
+    on the caret's side, above the line when there's more room there, its
+    items 44px tall. It's now a tab stop (axe's
+    scrollable-region-focusable), never reached while it's open.
+  - The harness runs the editor specs on a phone too (a second Playwright
+    project, Pixel 7), with the hit sizes checked and axe in both themes.
 - **RichTextEditor: no typing lag on long notes** (the RichTextEditor
   review's F6). Each key used to turn the whole note back into Markdown
   and re-render the toolbar and every table's grips: about 0.2 s a key

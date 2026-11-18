@@ -26,25 +26,25 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 645–728
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 730–776
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 778–851
-- [18. Editable value](#18-editable-value) · lines 853–1598
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1230–1298
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1300–1336
-  - [A link and its label](#a-link-and-its-label) · lines 1338–1362
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1364–1497
-  - [In a table's rows](#in-a-tables-rows) · lines 1499–1584
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1586–1598
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1600–1666
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1668–1732
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1734–1832
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1834–1863
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1865–1903
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1905–1981
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1983–2069
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2008–2069
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2071–2296
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2225–2296
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2298–2334
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2336–2385
+- [18. Editable value](#18-editable-value) · lines 853–1603
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1235–1303
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1305–1341
+  - [A link and its label](#a-link-and-its-label) · lines 1343–1367
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1369–1502
+  - [In a table's rows](#in-a-tables-rows) · lines 1504–1589
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1591–1603
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1605–1671
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1673–1737
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1739–1837
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1839–1868
+- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1870–1908
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1910–1986
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1988–2074
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2013–2074
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2076–2301
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2230–2301
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2303–2339
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2341–2390
 
 <!-- /index -->
 
@@ -1205,7 +1205,12 @@ const price = editInPlace({
   saved by it), and on a touch screen or under 768px it carries Indent
   and Outdent for list items, where there is no Tab. A field with only the
   floating toolbar (`inline` notes) gets the same two in a small "Editor
-  tools" strip over its corner while it has focus. A new checklist item
+  tools" strip over its corner while it has focus. On a touch screen the
+  toolbar is instead one row pinned to the top of the keyboard while the
+  field has focus (Aa for every format, in the keyboard's place; the list
+  buttons, Insert and Undo; with words selected, their formats first, and
+  no floating bar under the system's Copy bar), and the checkbox, the
+  table grips, the fold button and the callout icon take a 40px tap. A new checklist item
   shows a "To-do" placeholder and the caret until you type. `[] ` (or
   `[x] `) at a line's start makes it a checklist item, a bulleted item
   too; Enter in one makes the next, its box unticked, and Enter in an

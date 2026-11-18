@@ -6,6 +6,7 @@
 // text, the selection kept. The popup is marked `data-rich-text-menu` so
 // the floating toolbar, which this menu also sits in, knows focus in it is
 // still the field's (milkdown-editor.tsx).
+import { cn } from 'cn'
 import { useRef, type KeyboardEvent, type Ref } from 'react'
 import type { EditorState } from '@milkdown/kit/prose/state'
 import { ChevronDownIcon, HighlighterIcon, RemoveFormattingIcon } from 'lucide-react'
@@ -41,10 +42,12 @@ export interface RichTextHighlightMenuProps {
   onFormat: (id: FormatId) => void
   /** The editable element, where focus goes once an item is picked. */
   text: () => HTMLElement | null
+  /** More for the trigger's look (a touch screen's 40px). */
+  className?: string
   ref?: Ref<HTMLButtonElement>
 }
 
-export function RichTextHighlightMenu({ state, readOnly, tabIndex, onFocus, onKeyDown, onFormat, text, ref }: RichTextHighlightMenuProps) {
+export function RichTextHighlightMenu({ state, readOnly, tabIndex, onFocus, onKeyDown, onFormat, text, className, ref }: RichTextHighlightMenuProps) {
   const current = state ? highlightColor(state) : null
   // Whether the menu is closing because an item was picked.
   const picked = useRef(false)
@@ -66,7 +69,7 @@ export function RichTextHighlightMenu({ state, readOnly, tabIndex, onFocus, onKe
         tabIndex={tabIndex}
         data-active={current !== null || undefined}
         // Shaped like the toolbar's toggles: on while the words are highlighted.
-        className={toggleVariants({ size: 'sm', className: 'gap-0.5 px-1.5 data-active:bg-muted data-active:text-foreground' })}
+        className={cn(toggleVariants({ size: 'sm', className: 'gap-0.5 px-1.5 data-active:bg-muted data-active:text-foreground' }), className)}
         // A mouse press keeps focus, and the selection, in the text.
         onMouseDown={(event) => event.preventDefault()}
         onFocus={onFocus}

@@ -242,8 +242,9 @@ export function RichTextEditor(props: RichTextEditorProps) {
           data-state="loading"
           className={cn('flex w-full flex-col', !props.inline && 'rounded-lg border border-input', props.className)}
         >
-          {/* The toolbar's height, so nothing moves when it arrives. */}
-          {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input" />}
+          {/* The toolbar's height, so nothing moves when it arrives (none on
+              a touch screen, whose toolbar is pinned to the keyboard). */}
+          {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input pointer-coarse:hidden" />}
           {/* The text itself while the editor loads (4.123): it's as tall as
               the editor will be, so nothing under it moves when the editor
               arrives (a phone's notes, edited in place above the facts).
