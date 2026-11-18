@@ -29,6 +29,7 @@ import { DiscardChangesDialog } from '@/components/ui/dialog'
 import { FieldGroup } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { countFormErrors } from '@/lib/form-errors'
+import { flushPendingEdits } from '@/lib/pending-edits'
 import { FormLeaveGuard } from './form-leave-guard'
 import { Notice } from './notice'
 
@@ -153,6 +154,9 @@ export function EntityForm({
   // the render that draws react-hook-form's marks, and looks for them.
   const [attempt, setAttempt] = useState(0)
   const submit = (event: FormEvent<HTMLFormElement>) => {
+    // A rich-text field reports its typing a pause after it stops: asked
+    // for now, so the submit reads the last of it (F6).
+    flushPendingEdits()
     const done = onSubmit(event)
     void Promise.resolve(done).then(() => setAttempt((count) => count + 1))
   }

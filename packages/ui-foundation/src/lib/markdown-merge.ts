@@ -190,7 +190,30 @@ function uses(node: MdNode, references: Set<string> = new Set(), urls: Set<strin
   return { references, urls }
 }
 
+// The blocks of the texts merged lately, by text: an editor merges the
+// same original and baseline against each edit, so each is parsed once
+// per mount, not once per merge (F6). A few, most recent last.
+const PARSED = 8
+const parsed = new Map<string, Block[]>()
+
 function blocks(markdown: string): Block[] {
+  const known = parsed.get(markdown)
+  if (known) {
+    parsed.delete(markdown)
+    parsed.set(markdown, known)
+    return known
+  }
+  const out = parseBlocks(markdown)
+  parsed.set(markdown, out)
+  if (parsed.size > PARSED) parsed.delete(parsed.keys().next().value as string)
+  return out
+}
+
+/** How many texts mergeMarkdown has parsed, for tests/markdown-merge-budget.test.ts. */
+export const mergeStats = { parses: 0 }
+
+function parseBlocks(markdown: string): Block[] {
+  mergeStats.parses += 1
   const tree = parse(markdown)
   const children = tree.children ?? []
   const definitions = new Map<string, MdNode>()
@@ -266,6 +289,24 @@ function shownOwnWay(originals: Block[], loaded: Block[], loadedToOriginal: Map<
   return shown
 }
 
+// The original's blocks matched to the baseline's, and which the editor
+// shows, worked out once per pair (both are the same for every merge an
+// editor makes).
+type Loaded = { loadedToOriginal: Map<number, number>; shown: Set<number> }
+const loadedPairs = new WeakMap<Block[], WeakMap<Block[], Loaded>>()
+
+function loadedAgainst(originals: Block[], loaded: Block[]): Loaded {
+  let byLoaded = loadedPairs.get(originals)
+  if (!byLoaded) loadedPairs.set(originals, (byLoaded = new WeakMap()))
+  let pair = byLoaded.get(loaded)
+  if (!pair) {
+    const loadedToOriginal = match(originals, loaded)
+    pair = { loadedToOriginal, shown: shownOwnWay(originals, loaded, loadedToOriginal) }
+    byLoaded.set(loaded, pair)
+  }
+  return pair
+}
+
 export class MarkdownMergeError extends Error {
   constructor() {
     super("This text can't be saved without changing parts you didn't edit. Undo the last change, or edit it in the form.")
@@ -295,7 +336,7 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
   const originals = blocks(original)
   const loaded = blocks(baseline)
   const edited = blocks(current)
-  const loadedToOriginal = match(originals, loaded)
+  const { loadedToOriginal, shown } = loadedAgainst(originals, loaded)
   const editedToLoaded = match(loaded, edited)
 
   // Each edited block's original, if it is one unchanged.
@@ -314,7 +355,6 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
 
   // Blocks the editor never showed (definitions, and any block it dropped
   // part of): after whatever came before them in the original.
-  const shown = shownOwnWay(originals, loaded, loadedToOriginal)
   originals.forEach((_block, index) => {
     if (shown.has(index)) return
     let position = 0

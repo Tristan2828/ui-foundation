@@ -11,6 +11,9 @@ import { NotesOutline } from './notes-outline'
 import { RichTextEditor, type RichTextEditorProps } from './rich-text-editor'
 import { MARKDOWN_FIXTURES } from './rich-text-editor.fixtures'
 import { delayedUpload, failingUpload, SAVED_PHOTO } from './image-upload.fixtures'
+import { longNote } from './rich-text-long-note.fixtures'
+
+const LONG_NOTE = longNote()
 
 // Every element the editor styles, on screen at once, so axe checks each
 // one's contrast and the token check each colour, in both themes.
@@ -145,6 +148,16 @@ export const Default: StoryObj<typeof RichTextEditor> = {
   render: () => (
     <div className="max-w-xl">
       <Labelled label="Notes" markdown={SAMPLE} />
+    </div>
+  ),
+}
+
+// A 5,000-word note with 13 tables, for the typing-lag budget
+// (e2e/rich-text-perf.spec.ts, F6 of the 2026-11-17 review).
+export const LongNote: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="max-w-3xl">
+      <Labelled label="long note" markdown={LONG_NOTE} />
     </div>
   ),
 }

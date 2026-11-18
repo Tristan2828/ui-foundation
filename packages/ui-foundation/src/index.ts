@@ -199,6 +199,9 @@ export { MultiReference } from '@/components/app/multi-reference'
 export { ListEditor } from '@/components/app/list-editor'
 export { PasswordInput } from '@/components/app/password-input'
 export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-text-editor'
+// Typing a RichTextEditor holds back until a pause, reported now: call it
+// before reading a rich-text field's value to save it in your own form.
+export { flushPendingEdits, hasPendingEdits } from '@/lib/pending-edits'
 export { RouteErrorBoundary } from '@/components/app/route-error-boundary'
 export { PillFilter, type PillFilterOption, type PillFilterProps } from '@/components/app/pill-filter'
 export { SecondaryFilters, type ActiveFilter, type SecondaryFiltersProps } from '@/components/app/secondary-filters'
