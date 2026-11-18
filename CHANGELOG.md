@@ -118,6 +118,25 @@ which assembles a rich-text save from the original Markdown.
   covers them in the browser; unit tests in `tests/markdown-merge.test.ts`.
   Each fails on the code before this change.
 
+### e2e: `goto()` and `reload()` let a page's API requests settle first
+
+Nothing an app must change. An app whose own fixture added the same
+wait can drop it once it takes the release.
+
+- **(behaviour) `withBootWait`, and so the exported `test`'s page, now
+  waits before navigating** until none of the page's own `/api/` requests
+  has been in flight for 150 ms, at most 3 s. Reaching the cap ends the
+  wait and never fails the test. Since 4.125.0 a test that left a page
+  right after a save could fail the MSW bypass check (about 1 run in 20
+  in one app): the save's follow-up refresh was sent by the unloading
+  page, after MSW had told the worker the page was gone, so it went to the
+  network. The refresh now lands on the page that sent it. A navigation
+  made without `goto()`/`reload()` (a link click, `location.assign`)
+  doesn't wait. `template/e2e/msw-leave-after-save.spec.ts` forces the
+  race, with a control that leaves without `goto()` and leaks.
+- **Docs:** `docs/consuming.md` "End-to-end tests on the mocks", and
+  step 8 of `add-an-entity.md`.
+
 ### e2e: a loading test holds the answer; table setters build on the address bar
 
 Nothing an app must change. Move loading-state specs that use

@@ -65,8 +65,65 @@ async function boot(page: Page, load: () => Promise<Response | null>, again: () 
   }
 }
 
+// A test that leaves a page right after a save: the save's answer comes
+// from the mocks, but its follow-up refresh is sent by the page as it
+// unloads, after MSW's client has said goodbye to the worker, so the
+// worker passes it to the network and the bypass check fails the test
+// (about 1 run in 20 in one app). So before the page navigates, wait
+// until none of its own /api/ requests has been in flight for SETTLE_QUIET_MS,
+// at most SETTLE_CAP_MS: the refresh then lands on the page that sent it.
+// The cap only bounds the wait (a request that never ends, a stream);
+// reaching it never fails the test.
+const SETTLE_QUIET_MS = 150
+const SETTLE_CAP_MS = 3000
+const SETTLE_POLL_MS = 25
+
+type ApiTracker = { settle: () => Promise<void> }
+const trackers = new WeakMap<Page, ApiTracker>()
+
+const isOwnApi = (page: Page, request: Request) => {
+  const url = new URL(request.url())
+  if (!url.pathname.startsWith('/api/')) return false
+  const pageUrl = page.url()
+  return !/^https?:/.test(pageUrl) || url.origin === new URL(pageUrl).origin
+}
+
+// The page's own /api/ requests in flight, from `request` until
+// `requestfinished` or `requestfailed`, and since when none has been.
+function trackApi(page: Page): ApiTracker {
+  const known = trackers.get(page)
+  if (known) return known
+  const inFlight = new Set<Request>()
+  let quietSince = -Infinity
+  page.on('request', (request) => {
+    if (isOwnApi(page, request)) inFlight.add(request)
+  })
+  const done = (request: Request) => {
+    if (inFlight.delete(request) && inFlight.size === 0) quietSince = Date.now()
+  }
+  page.on('requestfinished', done)
+  page.on('requestfailed', done)
+  const settle = async () => {
+    const deadline = Date.now() + SETTLE_CAP_MS
+    for (;;) {
+      const now = Date.now()
+      if (inFlight.size === 0 && now - quietSince >= SETTLE_QUIET_MS) return
+      if (now >= deadline) return
+      const wait = inFlight.size === 0 ? quietSince + SETTLE_QUIET_MS - now : SETTLE_POLL_MS
+      await new Promise((resolve) => setTimeout(resolve, Math.max(1, Math.min(wait, deadline - now))))
+    }
+  }
+  const tracker = { settle }
+  trackers.set(page, tracker)
+  return tracker
+}
+
 /**
- * Makes the page's `goto()` and `reload()` return once the app has
+ * Makes the page's `goto()` and `reload()` wait first until none of the
+ * page's own `/api/` requests has been in flight for 150 ms (at most 3 s,
+ * and reaching that never fails the test), so a save's follow-up refresh
+ * is answered by the page that sent it, on the mocks, not sent by the
+ * unloading page past them. They then return once the app has
  * booted (its first render into `#root`), not at the load event, and load
  * the page once more when one of the app's own files is refused before
  * then; a second refusal fails naming the file. The wait is bounded by
@@ -77,8 +134,15 @@ async function boot(page: Page, load: () => Promise<Response | null>, again: () 
 export function withBootWait(page: Page): Page {
   const goto = page.goto.bind(page)
   const reload = page.reload.bind(page)
-  page.goto = (url, options) => boot(page, () => goto(url, options), () => reload(options))
-  page.reload = (options) => boot(page, () => reload(options), () => reload(options))
+  const api = trackApi(page)
+  page.goto = async (url, options) => {
+    await api.settle()
+    return boot(page, () => goto(url, options), () => reload(options))
+  }
+  page.reload = async (options) => {
+    await api.settle()
+    return boot(page, () => reload(options), () => reload(options))
+  }
   return page
 }
 
