@@ -4,7 +4,7 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 45–67
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–870
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–873
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
   - Step 2: `npm run gen:api` · lines 119–120
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
@@ -12,21 +12,21 @@
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
   - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–758
   - Step 7: Register routes · lines 759–774
-  - Step 8: Add Playwright specs for all three screens · lines 775–852
-  - Step 9: Register the nav entry and route names · lines 853–867
-  - Step 10: `npm run verify`. · lines 868–870
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 872–1341
-  - [The record view](#the-record-view) · lines 1025–1182
-  - [Forms](#forms) · lines 1184–1255
-  - [Dialogs](#dialogs) · lines 1257–1288
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1290–1341
-- [What not to copy](#what-not-to-copy) · lines 1343–1376
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1378–1395
-- [Deleting](#deleting) · lines 1397–1428
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1430–1451
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1453–1462
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1465–1507
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1509–1545
+  - Step 8: Add Playwright specs for all three screens · lines 775–855
+  - Step 9: Register the nav entry and route names · lines 856–870
+  - Step 10: `npm run verify`. · lines 871–873
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 875–1344
+  - [The record view](#the-record-view) · lines 1028–1185
+  - [Forms](#forms) · lines 1187–1258
+  - [Dialogs](#dialogs) · lines 1260–1291
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1293–1344
+- [What not to copy](#what-not-to-copy) · lines 1346–1379
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1381–1398
+- [Deleting](#deleting) · lines 1400–1431
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1433–1454
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1456–1465
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1468–1510
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1512–1548
 
 <!-- /index -->
 
@@ -779,7 +779,10 @@ is a filled-in example while the Widgets demo is still here).
    `e2e/widgets-table.spec.ts`/`e2e/widget-form.spec.ts`/
    `e2e/widget-view.spec.ts` for the pattern. Import `test` and
    `expect` from there too, not from `@playwright/test`: its page's
-   `goto()` and `reload()` return once the app has rendered (after MSW's
+   `goto()` and `reload()` first wait for the page's `/api/` requests to
+   settle (150 ms with none in flight, at most 3 s, never a failure), so a
+   save's follow-up refresh isn't sent past the mocks by the page as it
+   unloads; then they return once the app has rendered (after MSW's
    start), and load once more if the server refused one of its files,
    so a spec's first expect never meets an empty page. The view's states are
    loading, not found (a 404: "Not found", the way back, no retry), error

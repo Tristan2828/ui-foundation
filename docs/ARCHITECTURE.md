@@ -465,6 +465,13 @@ Rules learned the hard way (each cost a phase to find):
   the template's e2e preview proxies `/api` to a dead port (`BACKEND_URL`).
   `template/e2e/msw-boot.spec.ts` restarts the worker over CDP, before
   the first request and after boot.
+- **A page's `goto()`/`reload()` settle its `/api/` first** (`withBootWait`:
+  150 ms with none in flight, capped at 3 s, never a failure). MSW's client
+  says goodbye to the worker on `beforeunload`, so a request the page sends
+  while unloading (a save's follow-up refresh) goes to the network and
+  fails the bypass check, after the page is gone and can't rejoin.
+  `template/e2e/msw-leave-after-save.spec.ts` holds the next document over
+  CDP to force it, with a control that leaves without `goto()`.
 - **Gate MSW on the literal `import.meta.env.VITE_API` check** in
   `main.tsx`. The bundler folds only that exact form, so behind an imported
   constant `build:real` still ships MSW (`consume-test.sh` asserts it).
