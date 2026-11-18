@@ -1,17 +1,22 @@
 import type { Page } from '@playwright/test'
-import { expect, expectNoAxeViolations, test } from '@tristan2828/ui-foundation/testing'
+import {
+  expect,
+  expectNoAxeViolations,
+  forceMswOverride,
+  test,
+  type MswOverride,
+  type MswOverrideOptions,
+} from '@tristan2828/ui-foundation/testing'
 
-// Forces the widgets list's *first* request via `page.addInitScript` —
-// registering the override this way, before any of the page's own scripts
-// run, means it applies before the app's first fetch, not a race against it.
-// See src/mocks/e2e-hooks.ts.
-async function forceWidgetsListOverride(
+// Forces the widgets list's *first* request: forceMswOverride registers it
+// before any of the page's own scripts run, so it applies before the app's
+// first fetch, not a race against it.
+function forceWidgetsListOverride(
   page: Page,
-  override: { status?: number; body?: unknown; delayMs?: number },
+  override: Pick<MswOverride, 'status' | 'body'>,
+  options?: MswOverrideOptions,
 ) {
-  await page.addInitScript((o) => {
-    window.__E2E_MSW_OVERRIDE__ = { method: 'get', path: '*/api/widgets', ...o }
-  }, override)
+  return forceMswOverride(page, { method: 'get', path: '*/api/widgets', ...override }, options)
 }
 
 // For an override registered *after* the page has already loaded (e.g. on a
@@ -42,11 +47,15 @@ async function pickFilter(page: Page, label: string, option: string) {
 }
 
 test.describe('widgets table', () => {
-  test('loading: a delayed response shows the skeleton first', async ({ page }) => {
-    await forceWidgetsListOverride(page, { delayMs: 1000, body: { items: [], total: 0 } })
+  test('loading: the skeleton shows until the list answers', async ({ page }) => {
+    // Held until released, not delayed: under load a delay can run out
+    // before the page first renders, and the skeleton is never seen.
+    const list = await forceWidgetsListOverride(page, { body: { items: [], total: 0 } }, { hold: true })
     await page.goto('/widgets')
     await expect(page.locator('[data-state="loading"]')).toBeVisible()
+    await list.release()
     await expect(page.getByText('No widgets yet')).toBeVisible()
+    await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
   })
 
   test('empty: a page with no rows shows the empty state', async ({ page }) => {

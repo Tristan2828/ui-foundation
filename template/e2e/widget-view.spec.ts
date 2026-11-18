@@ -64,11 +64,13 @@ function serverWidget(page: Page, id: number) {
 
 test.describe('widget view', () => {
   test('loading: a skeleton shows until the widget arrives', async ({ page }) => {
-    await forceMswOverride(page, { method: 'get', path: '*/api/widgets/1', delayMs: 1000, body: WIRELESS_MOUSE })
+    // Held until released, not delayed: see e2e/widgets-table.spec.ts.
+    const widget = await forceMswOverride(page, { method: 'get', path: '*/api/widgets/1', body: WIRELESS_MOUSE }, { hold: true })
     await page.goto('/widgets/1')
     await expect(page.locator('[data-state="loading"]')).toBeVisible()
     // The tab reads the nav's page until the record names it.
     await expect(page).toHaveTitle('Widgets · UI Foundation')
+    await widget.release()
     await expect(page.getByRole('heading', { level: 1, name: 'Wireless Mouse' })).toBeVisible()
     await expect(page.locator('[data-state="loading"]')).toHaveCount(0)
     await expect(page).toHaveTitle('Wireless Mouse · UI Foundation')

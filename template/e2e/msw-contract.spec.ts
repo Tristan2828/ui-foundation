@@ -1,4 +1,4 @@
-import { expect, test } from '@tristan2828/ui-foundation/testing'
+import { expect, forceMswOverride, releaseMswOverride, test } from '@tristan2828/ui-foundation/testing'
 
 // Phase 2 exit criterion: the app serves Page<Widget>-shaped data from MSW
 // with no backend process running at all. Runs against Playwright's
@@ -58,4 +58,39 @@ test('the e2e override can serve a binary body an <img> accepts', async ({ page 
   )
 
   expect(result).toBe('loaded 1x1')
+})
+
+// A held override (forceMswOverride's `hold`, for loading tests) answers
+// nothing until the test releases it, and everything after. "Not yet" is
+// checked after another request's full round trip through the same
+// worker, not after a wait: the held one was sent first, so had it not
+// been held it would have been answered by then.
+test('a held override answers only once released, then at once, on reloads too', async ({ page }) => {
+  const held = await forceMswOverride(
+    page,
+    { method: 'get', path: '*/api/e2e-held', body: { answered: true } },
+    { hold: true },
+  )
+  await page.goto('/')
+  await page.waitForFunction(() => window.__msw !== undefined)
+
+  type Probe = Window & { __heldAnswer?: unknown }
+  await page.evaluate(() => {
+    void fetch('/api/e2e-held')
+      .then((response) => response.json())
+      .then((body) => ((window as Probe).__heldAnswer = body))
+  })
+  const other = await page.evaluate(() => fetch('/api/widgets?offset=0&limit=1').then((response) => response.status))
+  expect(other).toBe(200)
+  expect(await page.evaluate(() => (window as Probe).__heldAnswer)).toBeUndefined()
+
+  await held.release()
+  await expect.poll(() => page.evaluate(() => (window as Probe).__heldAnswer)).toEqual({ answered: true })
+  // Released for good: later requests, and the next page's, aren't held.
+  expect(await page.evaluate(() => fetch('/api/e2e-held').then((response) => response.json()))).toEqual({ answered: true })
+  await page.reload()
+  await page.waitForFunction(() => window.__msw !== undefined)
+  expect(await page.evaluate(() => fetch('/api/e2e-held').then((response) => response.json()))).toEqual({ answered: true })
+  // Releasing again does nothing.
+  await releaseMswOverride(page)
 })

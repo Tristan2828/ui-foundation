@@ -56,6 +56,24 @@ export function applyUrlChanges(previous: URLSearchParams, changes: UrlChanges) 
   return next
 }
 
+// The query string an update builds on: the address bar's, not the one
+// the hook last rendered with. Two updates before the next render (two
+// setters in one handler, or another part of the page writing its own
+// param in the same tick) would otherwise each start from the rendered
+// params, and the last would undo the others. react-router writes the
+// address bar as it navigates, synchronously for a route with nothing to
+// load, so it's always the latest. Only when it's this router's address,
+// though: under a memory router (a fixture, a test) the address bar is
+// someone else's, its path isn't the rendered one, and the rendered params
+// are what there is.
+export function paramsToUpdate(
+  rendered: URLSearchParams,
+  renderedPath: string,
+  addressBar: { pathname: string; search: string } | undefined,
+) {
+  return addressBar !== undefined && addressBar.pathname === renderedPath ? new URLSearchParams(addressBar.search) : rendered
+}
+
 // A view is "this combination and nothing else": every filter and the sort
 // are set, and any the view doesn't name are cleared. Merging over the
 // current state instead would let a leftover filter silently show something

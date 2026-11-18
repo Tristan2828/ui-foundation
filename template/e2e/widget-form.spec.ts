@@ -1,16 +1,21 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@tristan2828/ui-foundation/testing'
+import {
+  expect,
+  forceMswOverride,
+  test,
+  type MswOverride,
+  type MswOverrideOptions,
+} from '@tristan2828/ui-foundation/testing'
 
-// Forces widget id 2's (Standing Desk) *first* GET via page.addInitScript —
-// see e2e/widgets-table.spec.ts and src/mocks/e2e-hooks.ts for why this
-// can't be a post-navigation worker.use() call for a first-load state.
-async function forceWidgetGetOverride(
+// Forces widget id 2's (Standing Desk) *first* GET, before the page's own
+// scripts run — see e2e/widgets-table.spec.ts for why this can't be a
+// post-navigation worker.use() call for a first-load state.
+function forceWidgetGetOverride(
   page: Page,
-  override: { status?: number; body?: unknown; delayMs?: number },
+  override: Pick<MswOverride, 'status' | 'body'>,
+  options?: MswOverrideOptions,
 ) {
-  await page.addInitScript((o) => {
-    window.__E2E_MSW_OVERRIDE__ = { method: 'get', path: '*/api/widgets/2', ...o }
-  }, override)
+  return forceMswOverride(page, { method: 'get', path: '*/api/widgets/2', ...override }, options)
 }
 
 // For an override registered *after* the page has already loaded: see
@@ -60,8 +65,8 @@ async function pickTag(page: Page, name: string) {
 
 test.describe('widget form', () => {
   test('loading: editing shows a skeleton before the widget loads', async ({ page }) => {
-    await forceWidgetGetOverride(page, {
-      delayMs: 1000,
+    // Held until released, not delayed: see e2e/widgets-table.spec.ts.
+    const widget = await forceWidgetGetOverride(page, {
       body: {
         id: 2,
         name: 'Standing Desk',
@@ -72,10 +77,12 @@ test.describe('widget form', () => {
         price: '349.00',
         description: 'Electric height-adjustable desk, 120x60cm top.',
       },
-    })
+    }, { hold: true })
     await page.goto('/widgets/2/edit')
     await expect(page.locator('[data-state="loading"]')).toBeVisible()
+    await widget.release()
     await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
+    await expect(page.locator('#widget-name')).toHaveValue('Standing Desk')
   })
 
   test('empty: a null assignee renders as an empty field, not a placeholder value', async ({

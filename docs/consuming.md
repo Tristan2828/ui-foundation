@@ -237,6 +237,41 @@ by the mock service worker in the browser. Two things keep it that way.
   CI (`reuseExistingServer`), and that one keeps whatever proxy it was
   started with.
 
+### Loading states: hold the answer, don't delay it
+
+A loading test holds the request until it has seen the skeleton, then
+lets it go. With `delayMs` the answer comes after a fixed time whether or
+not the page has rendered: under load the page's first render can come
+after it, so the skeleton is never on screen and the test flakes (a
+`Skeleton` also waits 300 ms before it shows, which a delay eats into).
+
+```ts
+import { expect, forceMswOverride, test } from '@tristan2828/ui-foundation/testing'
+
+test('loading: a skeleton shows until the list answers', async ({ page }) => {
+  const list = await forceMswOverride(
+    page,
+    { method: 'get', path: '*/api/tasks', body: { items: [], total: 0 } },
+    { hold: true },
+  )
+  await page.goto('/tasks')
+  await expect(page.locator('[data-state="loading"]')).toBeVisible()
+  await list.release()
+  await expect(page.getByText('No tasks yet')).toBeVisible()
+})
+```
+
+- **`release()`** (or `releaseMswOverride(page)`) answers every request
+  held so far, and every later one at once, on this page and any it
+  loads next. Release before the test navigates again: `goto()` and
+  `reload()` wait for the page's `/api/` requests to settle first.
+- **`delayMs` still works**, for a test about time itself (a spinner that
+  waits before showing). With `hold` too, the delay starts at the release.
+- **A state forced after load** (`window.__msw.worker.use(...)`) holds the
+  same way: the handler awaits a promise the test resolves through
+  `page.evaluate` (`e2e/auth.spec.ts`, "logging out drops the previous
+  session's cached data").
+
 ## Changing the foundation
 
 When an app needs something the package doesn't do:
