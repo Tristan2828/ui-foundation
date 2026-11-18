@@ -604,7 +604,10 @@ the popup, which for this toolbar is always) fail axe.
 
 **The slash menu (3.18)** (`rich-text-slash.ts`, `rich-text-slash-menu.tsx`)
 lists the blocks a line can become (Heading to Code block) after a "/"
-typed at the start of a top-level paragraph; what follows the "/"
+typed at the start of a line of text (4.126: any line but a code
+block's, in a list item, a quote, a callout or a table cell too, listing
+only the picks that can apply there, found by running each pick's
+command and dropping its transaction); what follows the "/"
 filters it (names and keywords: `/h2`, `/todo`). Only a typed "/" opens
 it (a plugin records where; one already in the text never does), and it
 closes for good once the span stops qualifying (the caret leaves it, a
@@ -615,6 +618,25 @@ while it's open. Its keys are view props, ahead of Milkdown's keymap,
 whose Enter would split the line. A pick is one transaction (one undo
 brings the "/…" back). Placed against the field like the floating
 toolbar, for the same reason.
+
+**Typing (4.126)** (`rich-text-input-rules.ts`, `rich-text-edges.ts`,
+`rich-text-shortcuts.ts`). Milkdown's input rules, with three swapped:
+typed `---` runs the Divider button's insert (a line under it, the caret
+there); `*words*` and `**words**` need a non-space against the marks, as
+CommonMark does, so `5 * 3 * 2` stays; and `==words==` highlights as
+typed. A paragraph's trailing spaces aren't written (`&#x20;` before). At
+the note's edges, ArrowDown past a last code block, table, quote, callout
+or divider (ArrowUp before a first one) adds a line, and a click under
+the last block (above the first) puts the caret on a line there: no
+trailing-paragraph rule, so nothing is saved until one is asked for, and
+no gap cursor, which can't stand by a code block. Backspace at a list
+item's start lifts it out of its list first; Tab and Shift+Tab move a
+list item and stay in the text, and indent a code block's lines; on a
+plain line Tab still leaves the editor. Undo and redo are taken outright:
+ProseMirror's keymap, with nothing to redo, ran Shift+Mod+Z's unshifted
+Mod+Z. The block keys reach across a heading and a list (out of the list
+first, a plain line first), and a new list beside one of its type joins
+it, since two lists side by side read back as one.
 
 **Highlight, full screen, Indent and Outdent, the new task item (4.48)**
 (`rich-text-highlight-menu.tsx`, `src/lib/markdown-highlight.ts`).
@@ -653,7 +675,35 @@ shows over its top right corner while it has focus (or is full screen).
 `PopoverContent` takes). Only web and email addresses, a path on the site
 or a heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
-code.
+code. Paste goes through the same rule (`rich-text-paste.ts`): a pasted
+link linkHref refuses keeps its words and loses the link, an image at a
+refused address is dropped, and one carried in the HTML as `data:` is
+uploaded through `upload` or left out with a toast, never saved as data.
+An address typed (ended by a space or Enter, `rich-text-autolink.ts`) or
+pasted alone becomes a link through linkHref, so it saves as an address,
+not as escaped text (`https\://`).
+
+**Paste's shapes** (`rich-text-paste.ts`): before ProseMirror reads a
+paste's HTML, Word's `mso-list` paragraphs become nested lists, a Notion
+(`ul.to-do-list`) or GitHub (a checkbox input) to-do a task item, and
+`language-*` on code the block's language. Plain text keeps its single
+line breaks as hard breaks. Into a table cell, a paste is one line
+(blocks joined with spaces), before prosemirror-tables' own paste, which
+would spread lines over the row. These are written against payloads made
+to match what those apps put on the clipboard; real ones vary by version.
+
+**A refused edit is never saved quietly.** The merge guard's refusal
+stops `onChange`, so a form holds the last text that could be saved.
+The editor marks itself `aria-invalid` and, given no `onProblem`, says
+why inside the field; the template's form binds `onProblem` to the
+field's error and refuses submit while it stands (add-an-entity.md).
+
+**Full screen holds focus** (`rich-text-full-screen.ts`): the field is a
+`role="dialog"` with `aria-modal`, every sibling of it and of its
+ancestors up to `<body>` is `inert` (the toasts' region kept live, and
+what a portal adds under `<body>` meanwhile is no such sibling), and Tab
+wraps from the field's last stop to its first. Each element gets its
+`inert` back on leaving.
 
 **Images (4.28)** show in the editor as `<Markdown>` shows them, at most
 the field's width. Until 4.28 the editor dropped every one as it loaded:

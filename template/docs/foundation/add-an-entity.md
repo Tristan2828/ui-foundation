@@ -4,29 +4,29 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 45–67
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–862
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–869
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
   - Step 2: `npm run gen:api` · lines 119–120
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
   - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 133–142
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–747
-  - Step 7: Register routes · lines 748–763
-  - Step 8: Add Playwright specs for all three screens · lines 764–844
-  - Step 9: Register the nav entry and route names · lines 845–859
-  - Step 10: `npm run verify`. · lines 860–862
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 864–1333
-  - [The record view](#the-record-view) · lines 1017–1174
-  - [Forms](#forms) · lines 1176–1247
-  - [Dialogs](#dialogs) · lines 1249–1280
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1282–1333
-- [What not to copy](#what-not-to-copy) · lines 1335–1368
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1370–1387
-- [Deleting](#deleting) · lines 1389–1420
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1422–1443
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1445–1454
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1457–1499
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1501–1537
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–754
+  - Step 7: Register routes · lines 755–770
+  - Step 8: Add Playwright specs for all three screens · lines 771–851
+  - Step 9: Register the nav entry and route names · lines 852–866
+  - Step 10: `npm run verify`. · lines 867–869
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 871–1340
+  - [The record view](#the-record-view) · lines 1024–1181
+  - [Forms](#forms) · lines 1183–1254
+  - [Dialogs](#dialogs) · lines 1256–1287
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1289–1340
+- [What not to copy](#what-not-to-copy) · lines 1342–1375
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1377–1394
+- [Deleting](#deleting) · lines 1396–1427
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1429–1450
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1452–1461
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1464–1506
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1508–1544
 
 <!-- /index -->
 
@@ -425,7 +425,14 @@ is a filled-in example while the Widgets demo is still here).
      the Markdown long text's `RichTextEditor` (on the form whether or
      not it edits in place), given a `placeholder` and `maxLength` (the
      schema's limit, one constant both read, like Widget's
-     `DESCRIPTION_MAX_LENGTH`). Every other field's control stays inline in
+     `DESCRIPTION_MAX_LENGTH`) and an `onProblem` prop it passes on. **On
+     the form, bind `onProblem`** as `widget-form.tsx`'s
+     `onDescriptionProblem` does: the message becomes the field's error
+     (`setError`, type `refused`) and submit is refused while it stands.
+     An edit the editor can't save without rewriting text nobody touched
+     never reaches `onChange`, so a form without it would send the last
+     text that could be saved and say it worked. (An editor given no
+     `onProblem` says it inside the field itself.) Every other field's control stays inline in
      the form, as `widget-form.tsx`'s Category, Tags and Available From
      do. No `Edit in place` line and no Markdown long text: no fields
      file.
