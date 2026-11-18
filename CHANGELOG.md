@@ -9,7 +9,63 @@ are listed on the
 
 ## Unreleased
 
-Merged with no version bump; the next release carries it.
+## 4.127.0 — Saves that don't overwrite, a stepper look, star ratings, and counts on view pills
+
+npm package and `ui-foundation-backend` 4.127.0 (the backend gains
+`foundation_backend.versions`, the server half of the RichTextEditor
+review's F4). Six changes, all additive: nothing changes for an app that
+doesn't take them.
+
+### How an app adopts it
+
+- Bump both packages to 4.127.0 and run `npx ui-foundation sync`.
+- **Saves that don't overwrite:** for each entity edited in more than one
+  place, follow add-an-entity.md "Saves that don't overwrite" (a version
+  column, the 409 in its contract, `useRecordUpdate({ withVersion })`).
+- **`EqualItems look="stepper"`:** an app with its own stepper over
+  `EqualItems`'s items moves onto it and deletes its own.
+- **`RatingInput` / `inPlace.rating`:** a score picked from stars, on a
+  form or edited in place.
+- **A view's `count`**, **toned flag badges** and **the floating
+  toolbar's Image button:** take them where they fit; see each entry.
+
+### What's in it
+
+- **A saved view's count on its pill** (Roadmap 376, question 4). A
+  `DataTable` view (`DataTableView`) takes `count?: number | null`, shown
+  after its label as "Needs a Look · 3" and part of the pill's name
+  ("Needs a Look, 3"). The app supplies it from its own query; the table
+  computes nothing. null, undefined and 0 show no count (as the sidebar's
+  counts and EntityView's tab counts), past 99 "99+". A view that has the
+  key, even `undefined` while it loads, keeps room for a two-digit count,
+  so no pill moves when it arrives, on a phone's scrolling row too.
+  Additive: views without `count` render as before. cell-patterns.md "A
+  view can carry a count".
+- **`RatingInput`: a score set by clicking a star** (Homebase review,
+  2026-11-18). The package had only the read-only `RatingScore`. All
+  additive; nothing to change in an app that doesn't use it.
+  - **`RatingInput`** (new export, with `RatingInputProps` and
+    `RatingInputSource`): `{ value, max = 5, glyph, onChange, label,
+    disabled }`. RatingScore's glyphs and tokens as a radio group named by
+    `label`: the arrow keys move and set it, a click or Space sets a star,
+    pressing the set star again clears it to `null`, a mouse's hover
+    previews it. 24px targets on a laptop, 44px on a touch screen.
+    `onChange`'s second argument says `pointer` or `keyboard`.
+  - **`inPlace.rating({ value, save, max?, glyph?, required? })`** (new
+    preset, with `InPlaceRatingConfig`): the stars are the value, always
+    there (no click to open), and a click on one saves it at once; an
+    arrow's value saves a pause after the last; a second press saves
+    `null` unless `required`. Use it as a `rating` fact's `edit` in the
+    facts rail, or in an `EditableValue` in a table's cell.
+    **To move a rating fact off `inPlace.select`**, swap its `edit` for
+    `inPlace.rating({ value, save })` (cell-patterns.md "Presets").
+  - **Editing in place:** a field that's always editable and one pick
+    (the stars) says "Saving…" and "Saved" as an icon beside it, the words
+    for a screen reader, and "Saved" goes after two seconds, so a rail's
+    row never grows. Long text is unchanged.
+  - **`EntityView`:** on a touch screen a field row holding a
+    `RatingInput` puts its label above the stars: five 44px targets don't
+    fit a narrow value column.
 
 - **The rich-text editor split into its parts** (the RichTextEditor
   review's F26). Internal only: `milkdown-editor.tsx` keeps the wiring,
@@ -28,6 +84,24 @@ Merged with no version bump; the next release carries it.
   `app/Fact Badge Tones`, `e2e/fact-badge-tones.spec.ts`). Untoned badges
   are unchanged. `add-an-entity.md` shows the flags example. Nothing to
   do to upgrade; an app tones its flags with `{ label, tone }` items.
+- **`EqualItems look="stepper"`**: a fifth look for a few equal things
+  (record standard R10, design-language.md "A few equal things"). The
+  items in order as a row of numbered steps joined by a line, each `done`
+  (filled, a check), `current` (ringed, "Current" under it) or `upcoming`
+  (an item's new `step`), picking the one item whose panel shows under
+  it, with its title line, fields and `content` as `featured` draws them.
+  It opens on `featuredId`, else the current step, else the first. The
+  steps are a tablist: arrow keys, Home and End move and pick. An app that
+  keeps the shown step (in the URL) passes `selectedId` and
+  `onSelectedChange`; an item's `attention` ("needs an answer") puts a
+  warning dot on its step and the words in its name. On a phone the row
+  scrolls sideways in its own box, the shown step in view, never folding
+  into a select. New type `EqualItemStep`. Additive: the other looks
+  ignore `step` and `attention`.
+  - **An app with its own stepper over `EqualItems`'s items** (a
+    program's phases picking a panel) moves onto `look="stepper"` and
+    deletes its own; the standard's exception for it goes.
+
 - **Saves that don't overwrite: a record's version and a 409** (the
   RichTextEditor review's F4, server half; #374 was the client half). A
   stale tab, a phone or an AI chat could replace what another writer
@@ -72,6 +146,20 @@ Merged with no version bump; the next release carries it.
     `baseUpdatedAt` on its update, `check_version` in the router and the
     409 in `openapi.yaml`, the mock's check, and `withVersion` on its
     `useRecordUpdate` calls. Nothing changes for an entity that skips it.
+- **An Image button with `toolbar="floating"`** (forms' notes, Roadmap
+  379 question 8). Additive: a `RichTextEditor` with `toolbar="floating"`
+  and `upload` now has the fixed toolbar's Image button on its "Editor
+  tools" strip (shown while the field has focus), and on a phone in the
+  row pinned to the keyboard (40px, beside Insert; until now it was only
+  in the Aa panel). Same file picker, accept list, `imageMaxSize`, upload
+  and `![](url)`, focus back in the text after; a refused or failed file
+  says why in the editor's toast, as everywhere else. No `upload`, no
+  button.
+  - **The form standard:** notes on a form use `toolbar="floating"` too
+    (`docs/foundation/add-an-entity.md` "Forms"), and the template's
+    Widget Description does. **To take it:** pass `toolbar="floating"`
+    (not `props.inline ? 'floating' : true`) to a notes field's
+    `RichTextEditor`, with the app's `upload` where pictures belong.
 
 ## 4.126.0 — The RichTextEditor review: no quiet losses, typing that keeps up, and a phone toolbar
 

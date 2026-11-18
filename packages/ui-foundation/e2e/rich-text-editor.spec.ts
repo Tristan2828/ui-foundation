@@ -1289,12 +1289,66 @@ test.describe('image upload', () => {
     await expect(editor(page, 'uploads').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
   })
 
-  test('with only the floating toolbar, paste still uploads (no bar, no button)', async ({ page }) => {
+  test('with only the floating toolbar, paste still uploads, and no bar shows until the field has focus', async ({ page }) => {
     const field = page.locator('[data-fixture="floating"]')
     await expect(field.getByRole('toolbar')).toHaveCount(0)
     await caretAtEnd(page, 'floating')
     await pasteFiles(page, 'floating', [photo()])
     await expect(editor(page, 'floating').locator('img[src^="blob:"]')).toHaveCount(1)
+  })
+
+  // `toolbar="floating"` (forms' notes, 17.2): the Image button is on the
+  // "Editor tools" strip while the field has focus, the fixed toolbar's
+  // button exactly: its file picker, types, upload and `![](url)`.
+  test.describe('the floating toolbar\'s Image button', () => {
+    test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has it in the row pinned to its keyboard (rich-text-phone.spec.ts)')
+    const tools = (page: Page) => page.locator('[data-fixture="floating"]').getByRole('toolbar', { name: 'Editor tools' })
+
+    test('picks images as the fixed toolbar does, they go in as ![](url), and focus stays in the text', async ({ page }) => {
+      await caretAtEnd(page, 'floating')
+      const button = tools(page).getByRole('button', { name: 'Image', exact: true })
+      await expect(button).toBeVisible()
+      // The same picker as the fixed toolbar's: the same types, several at once.
+      const fixedAccept = await page.locator('[data-fixture="uploads"] input[type=file]').getAttribute('accept')
+      expect(await page.locator('[data-fixture="floating"] input[type=file]').getAttribute('accept')).toBe(fixedAccept)
+      const chooser = page.waitForEvent('filechooser')
+      await button.click()
+      const picker = await chooser
+      expect(picker.isMultiple()).toBe(true)
+      await picker.setFiles([{ name: 'note.png', mimeType: 'image/png', buffer: Buffer.from(pngBytes()) }])
+      await expect(editor(page, 'floating').locator('[data-slot=rich-text-image-upload]')).toHaveText('Uploading note.png…')
+      await expect(editor(page, 'floating')).toBeFocused()
+      await expect(editor(page, 'floating').locator('img[src^="blob:"]')).toHaveCount(1)
+      await afterPause(page)
+      // No alt text, as the fixed toolbar's inserts it.
+      await expect(saved(page, 'floating')).toHaveText(/^No bar above: paste, drop or the Image button upload\.!\[\]\(blob:[^)]+\)\n$/)
+      await expect(editor(page, 'floating')).toBeFocused()
+    })
+
+    // Reached, not pressed: Chromium opens a file chooser for a keyboard
+    // press only some of the time under Playwright (docs/DEFERRED.md, the
+    // ImageField keyboard flake); the click it makes is the mouse's.
+    test('the keyboard reaches it (Alt+F10), and Esc goes back to the text', async ({ page }) => {
+      await caretAtEnd(page, 'floating')
+      await page.keyboard.press('Alt+F10')
+      await expect(tools(page).getByRole('button', { name: 'Image', exact: true })).toBeFocused()
+      await page.keyboard.press('Escape')
+      await expect(editor(page, 'floating')).toBeFocused()
+    })
+
+    test('a file it refuses says why in a toast and changes nothing', async ({ page }) => {
+      await caretAtEnd(page, 'floating')
+      const chooser = page.waitForEvent('filechooser')
+      await tools(page).getByRole('button', { name: 'Image', exact: true }).click()
+      const picker = await chooser
+      await picker.setFiles([{ name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from([37, 80, 68, 70]) }])
+      await expect(page.getByText('That file is a PDF. Choose a JPEG, PNG or WebP image.')).toBeVisible()
+      await expect(editor(page, 'floating')).toBeFocused()
+      await page.waitForTimeout(300)
+      await expect(editor(page, 'floating').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+      await afterPause(page)
+      expect(await saved(page, 'floating').textContent()).toBe('No bar above: paste, drop or the Image button upload.\n')
+    })
   })
 
   test("without `upload`: no button, and a pasted or dropped image changes nothing and says it can't go in", async ({ page }) => {

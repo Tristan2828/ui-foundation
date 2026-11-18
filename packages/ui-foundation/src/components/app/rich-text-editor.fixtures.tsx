@@ -202,8 +202,8 @@ export const Features: StoryObj<typeof RichTextEditor> = {
 // Images uploaded into the text, each editor with a fake upload: one
 // that stores the file after 1.2s (paste, drop or the toolbar's Image
 // button; a placeholder shows meanwhile), one whose uploads all fail, one
-// that takes files up to 1 MB, one with the floating toolbar only (paste
-// and drop, no button), and one without `upload`, which handles no files.
+// that takes files up to 1 MB, one with the floating toolbar only (its
+// Image button on the "Editor tools" strip while it has focus), and one without `upload`, which handles no files.
 // A refusal is a toast (e2e/rich-text-editor.spec.ts "image upload").
 export const ImageUploads: StoryObj<typeof RichTextEditor> = {
   render: () => (
@@ -211,7 +211,7 @@ export const ImageUploads: StoryObj<typeof RichTextEditor> = {
       <Labelled label="uploads" markdown={'Paste or drop a photo here.\n'} upload={delayedUpload()} />
       <Labelled label="failing" markdown={'Every upload fails here.\n'} upload={failingUpload()} />
       <Labelled label="sizeLimit" markdown={'Images up to 1 MB.\n'} upload={delayedUpload(300)} imageMaxSize={1024 * 1024} />
-      <Labelled label="floating" markdown={'No bar above, paste or drop still upload.\n'} upload={delayedUpload(300)} toolbar="floating" />
+      <Labelled label="floating" markdown={'No bar above: paste, drop or the Image button upload.\n'} upload={delayedUpload(300)} toolbar="floating" />
       <Labelled label="noUpload" markdown={'No upload: files are ignored.\n'} />
       <Toaster />
     </div>

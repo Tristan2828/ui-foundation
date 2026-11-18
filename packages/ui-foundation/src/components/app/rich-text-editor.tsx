@@ -22,8 +22,9 @@
 // keys scroll.
 //
 // Images in the text (`![alt](url)`) show, at most the field's width.
-// With `upload`, an image pasted, dropped or picked with the toolbar's
-// Image button is uploaded through the app's own storage and goes in as
+// With `upload`, an image pasted, dropped or picked with an Image button
+// (the fixed toolbar's, or the tools strip's with `toolbar="floating"`) is
+// uploaded through the app's own storage and goes in as
 // `![](url)`; while it uploads, a placeholder shows where it will go.
 //
 // A table's columns fit their words. Grips on its column and row (or a
@@ -123,8 +124,10 @@ export type RichTextEditorProps = {
   inline?: boolean
   /**
    * Images uploaded into the text: pasted, dropped, or picked with an
-   * Image button on the fixed toolbar or the slash menu's Image ("/image",
-   * 4.123, the way to pick one with only the floating toolbar). Each file goes through this (the
+   * Image button (on the fixed toolbar; with `toolbar="floating"`, on the
+   * "Editor tools" strip shown while the field has focus; on a phone, in
+   * the row pinned to the keyboard) or the slash menu's Image ("/image",
+   * 4.123). Each file goes through this (the
    * app's own storage: the package knows no endpoint) and goes in as
    * `![](url)`, from the result's `url`, else its `thumbUrl`. A
    * placeholder shows where it will go while it uploads (it isn't saved);

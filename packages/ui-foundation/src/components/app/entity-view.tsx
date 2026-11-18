@@ -465,6 +465,10 @@ function FieldRow({ field, place }: { field: RowField; place: FieldPlace }) {
         FIELD_ROW_BASE,
         FIELD_ROW[place],
         editable && cn(editRowClass, '-mx-2 px-2 first:pt-2 last:pb-2'),
+        // Stars to tap (RatingInput, 4.127) are five 44px targets on a
+        // touch screen: wider than a narrow row's value column, so the
+        // label goes above them there.
+        'pointer-coarse:has-[[data-slot=rating-input]]:flex!',
       )}
       onClick={editable ? onEditRowClick : undefined}
     >
