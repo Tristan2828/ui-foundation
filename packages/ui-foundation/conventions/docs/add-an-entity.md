@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1363
-  - [The record view](#the-record-view) · lines 1036–1204
-  - [Forms](#forms) · lines 1206–1277
-  - [Dialogs](#dialogs) · lines 1279–1310
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1312–1363
-- [What not to copy](#what-not-to-copy) · lines 1365–1398
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1400–1417
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1419–1465
-- [Deleting](#deleting) · lines 1467–1498
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1500–1521
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1523–1532
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1535–1577
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1579–1615
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1385
+  - [The record view](#the-record-view) · lines 1036–1215
+  - [Forms](#forms) · lines 1217–1299
+  - [Dialogs](#dialogs) · lines 1301–1332
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1334–1385
+- [What not to copy](#what-not-to-copy) · lines 1387–1422
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1424–1441
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1443–1489
+- [Deleting](#deleting) · lines 1491–1522
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1524–1545
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1547–1556
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1559–1601
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1603–1639
 
 <!-- /index -->
 
@@ -651,8 +651,8 @@ is a filled-in example while the Widgets demo is still here).
      a number or integer too), `long-text` (Markdown, `RichTextEditor`
      with `onProblem={props.onProblem}`; notes are `inline: true` by
      default, the control passing `inline={props.inline}` and
-     `toolbar={props.inline ? 'floating' : true}` with no `autoFocus`,
-     as Widget's Description does; a short one opened by a click is
+     `toolbar="floating"` (on the form too: "Forms" below) with no
+     `autoFocus`, as Widget's Description does; a short one opened by a click is
      `autosave: true` with `autoFocus`), `choice` (a
      select or a single reference: its list opens with the field,
      `defaultOpen`, non-modal, `onChange={(v) => props.commit(v)}`,
@@ -1157,14 +1157,23 @@ A record uses the parts it has, in this order:
   - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
     draw it, never as "4 of 5" text: stars (the default) or hearts for a
     score out of `max` (5), the step bar for a quality level. `null` is
-    empty (its `emptyLabel`). Edited in place with `inPlace.select`:
+    empty (its `emptyLabel`). A score the person gives (my rating) is
+    edited in place with **`inPlace.rating`** (4.127): the stars are then
+    the value, a click on one saves it, a second press on the set one
+    saves `null`, and an empty one shows five empty stars to click rather
+    than its `emptyLabel`. A score that isn't the person's to set (a
+    critics' average) stays read-only:
 
     ```tsx
-    { label: 'My Rating', kind: 'rating', look: 'hearts', value: record.rating, emptyLabel: 'Not rated',
-      edit: inPlace.select({ value: record.rating, options: [1, 2, 3, 4, 5].map((n) => ({ value: n, label: `${n} of 5` })),
-        emptyLabel: 'Not rated', save: (rating) => save({ rating }) }) },
+    { label: 'My Rating', kind: 'rating', value: record.rating,
+      edit: inPlace.rating({ value: record.rating, save: (rating) => save({ rating }) }) },
+    { label: 'Loved', kind: 'rating', look: 'hearts', value: record.loved,
+      edit: inPlace.rating({ value: record.loved, glyph: 'heart', save: (loved) => save({ loved }) }) },
     { label: 'Quality', kind: 'rating', look: 'bar', value: QUALITY[record.quality].value, word: QUALITY[record.quality].word },
     ```
+
+    A quality level drawn as the step bar is an enum, not a score: edit
+    it with `inPlace.select` over its levels.
   - **A yes/no** (4.120) is `kind: 'switch'`, a switch toggled where it
     is, named by the label, never a two-choice select. Return the save's
     promise: the switch shows the new state while it runs and goes back
@@ -1192,8 +1201,10 @@ A record uses the parts it has, in this order:
   handful of options) are one `EqualItems` (4.93) in a section, one look
   per set: `cards` for little to say about each, `table` for things
   compared on the same values, `featured` when one is current or best,
-  `panels` when each has several details (design-language.md "A few
-  equal things"). Never hand-made cards or a grid of their own. An item
+  `panels` when each has several details, `stepper` (4.127) for a
+  sequence with a current step whose items are looked at one at a time
+  (numbered steps picking the one panel shown; design-language.md "A few
+  equal things"). Never hand-made cards, a grid or a stepper of their own. An item
   edited or removed on its own carries its editor as `content` and its
   Edit and Remove as `actions` (4.94), `wide` while the editor is open;
   never an editor put in a field's value.
@@ -1227,6 +1238,17 @@ shape (4.85):
   a status choice gives each option its `kind`, so its icons are
   `StatusMark`'s in their colours (below).
 - **Order:** required first, the status next, long text last.
+- **Notes** (a Markdown long text: notes, a description, a body) are a
+  `RichTextEditor` with `toolbar="floating"` on the form as in place
+  (4.127): no bar above the text, the formats over selected words, every
+  block in the slash menu ("/"), and Image, Full Screen and (on a narrow
+  or touch screen) Indent and Outdent on the small "Editor tools" strip
+  while it has focus. On a phone the row pinned to the keyboard carries
+  them, Image included, at 40px. Give it the app's `upload` (the one
+  `ImageField` takes) for the Image button and for pasted and dropped
+  pictures, which go in as `![](url)`; a refused or failed picture says
+  why in a toast. Without `upload` there's no Image button, and a picture
+  can't go in at all.
 - **Required:** `<FieldLabel required>` (an asterisk, and `aria-required`
   on the control it names). Nothing on an optional field: never
   "(optional)".
@@ -1387,7 +1409,9 @@ sight.** What happened where the person is looking says so there.
   opens on with `defaultView`, and put what no control can show (a
   computed "overdue") in the view's `rule` (cell-patterns.md "Saved views
   are pills"). The default view's `sort` is its plain address's too
-  (4.123): pressing it writes no `?sort=`, and the rows keep that order.
+  (4.123): pressing it writes no `?sort=`, and the rows keep that order. A view the plan says
+  shows a count gets `count` from the app's own query, passed to
+  `DataTable`'s `views` (cell-patterns.md "A view can carry a count").
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.

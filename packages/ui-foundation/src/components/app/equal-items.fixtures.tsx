@@ -25,6 +25,7 @@ export default meta
 const PHASES: EqualItem[] = [
   {
     id: 'p1',
+    step: 'done',
     title: 'Phase 1',
     state: { label: 'Done', tone: 'success' },
     fields: [
@@ -35,6 +36,7 @@ const PHASES: EqualItem[] = [
   },
   {
     id: 'p2',
+    step: 'current',
     title: 'Phase 2',
     state: { label: 'Current', tone: 'info' },
     fields: [
@@ -92,12 +94,14 @@ const OPTIONS: EqualItem[] = [
 const LONG_TITLES: EqualItem[] = [
   {
     id: 'l1',
+    step: 'done',
     title: 'Getting back to an easy half hour without stopping, three mornings a week',
     state: { label: 'Done', tone: 'success' },
     fields: [{ label: 'Weeks', value: '1–6' }, { label: 'Focus', value: 'An unusually long description of the focus for this phase, to see it wrap' }],
   },
   {
     id: 'l2',
+    step: 'current',
     title: 'Building up the long run with one longer day at the end of each week',
     state: { label: 'Current', tone: 'info' },
     fields: [{ label: 'Weeks', value: '7–12' }, { label: 'Focus', value: 'Distance' }],
@@ -119,6 +123,7 @@ const EDGES: EqualItem[] = [
 const SEVEN: EqualItem[] = Array.from({ length: 7 }, (_, i) => ({
   id: `s${i + 1}`,
   title: `Week ${i + 1}`,
+  step: i < 3 ? ('done' as const) : i === 3 ? ('current' as const) : undefined,
   state: i < 3 ? { label: 'Done', tone: 'success' as const } : i === 3 ? { label: 'Current', tone: 'info' as const } : 'Planned',
   fields: [
     { label: 'Distance', value: `${12 + i * 2} km` },
@@ -126,7 +131,7 @@ const SEVEN: EqualItem[] = Array.from({ length: 7 }, (_, i) => ({
   ],
 }))
 
-const LOOKS: EqualItemsLook[] = ['cards', 'table', 'featured', 'panels']
+const LOOKS: EqualItemsLook[] = ['cards', 'table', 'featured', 'panels', 'stepper']
 
 function InSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -178,6 +183,79 @@ export const Panels: StoryObj = {
     <div className="flex flex-col gap-6">
       {one('panels', PHASES, 'Phases')}
       {one('panels', OPTIONS, 'Options')}
+    </div>
+  ),
+}
+
+// The stepper (4.127): a plan's phases in order, two done, one current
+// and one to come, the steps picking the one panel shown. The first opens
+// on its current step; the second keeps the shown step itself (as an app
+// keeps it in the URL) and starts on the last, and one of its steps needs
+// a look. e2e/equal-items.spec.ts uses the steps from the keyboard and
+// measures them at a phone's width.
+const STEPS: EqualItem[] = [
+  {
+    id: 'foundation',
+    title: 'Phase 1: Foundation',
+    step: 'done',
+    state: { label: 'Done', tone: 'success' },
+    fields: [
+      { label: 'Enter When', value: 'Any time' },
+      { label: 'Weeks', value: '1–3' },
+    ],
+  },
+  {
+    id: 'build',
+    title: 'Phase 2: Build',
+    step: 'done',
+    state: { label: 'Done', tone: 'success' },
+    fields: [
+      { label: 'Enter When', value: 'Three easy weeks in a row' },
+      { label: 'Weeks', value: '4–7' },
+    ],
+  },
+  {
+    id: 'peak',
+    title: 'Phase 3: Peak',
+    step: 'current',
+    state: { label: 'Current', tone: 'success' },
+    fields: [
+      { label: 'Enter When', value: 'The long run at 90 minutes' },
+      { label: 'Weeks', value: '8–10' },
+    ],
+    content: <p className="type-body text-muted-foreground">Two harder days a week, the rest easy.</p>,
+  },
+  {
+    id: 'taper',
+    title: 'Phase 4: Taper',
+    state: 'Planned',
+    fields: [
+      { label: 'Enter When', value: null },
+      { label: 'Weeks', value: '11–12' },
+    ],
+  },
+]
+
+function KeptByTheApp() {
+  const [shown, setShown] = useState('taper')
+  const items = STEPS.map((item) => (item.id === 'build' ? { ...item, attention: 'needs an answer' } : item))
+  return (
+    <InSection title="Phases, kept by the app">
+      <div className="flex flex-col gap-3">
+        <EqualItems look="stepper" items={items} label="Phases, kept by the app" selectedId={shown} onSelectedChange={setShown} />
+        <p className="type-body text-muted-foreground" data-testid="shown-step">
+          Shown: {shown}
+        </p>
+      </div>
+    </InSection>
+  )
+}
+
+export const Stepper: StoryObj = {
+  render: () => (
+    <div className="flex flex-col gap-6">
+      {one('stepper', STEPS, 'Phases')}
+      <KeptByTheApp />
     </div>
   ),
 }

@@ -27,6 +27,9 @@
 //   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
 // - `inline`: always editable, and the control is told to look like the
 //   value it edits (`inline` among its props).
+// - Always editable and a `choice` (4.127, `inPlace.rating`'s stars): a
+//   value on one line, so "Saving…" and "Saved" sit beside it, not on a
+//   line under it, and "Saved" goes after two seconds, as at rest.
 // - Saved (4.88, F16): once a save lands, "✓ Saved" shows beside the value
 //   for two seconds (`role="status"`).
 // - `layout="inline"` (4.102): the pencil takes no room until hover or
@@ -276,6 +279,21 @@ export function EditableField({
   useEffect(() => {
     refresh()
   }, [refresh, edit.value])
+
+  // Always editable and one pick (stars): its line is beside it (4.127).
+  const beside = always && edit.kind === 'choice'
+  const autosaved = state.status !== 'closed' && state.autosave === 'saved'
+  const [savedGone, setSavedGone] = useState(false)
+  const [seenSaved, setSeenSaved] = useState(autosaved)
+  if (seenSaved !== autosaved) {
+    setSeenSaved(autosaved)
+    setSavedGone(false)
+  }
+  useEffect(() => {
+    if (!beside || !autosaved) return
+    const timer = window.setTimeout(() => setSavedGone(true), SAVED_FOR_MS)
+    return () => window.clearTimeout(timer)
+  }, [beside, autosaved])
 
   const isOpen = state.status !== 'closed'
   const pinned = usePinnedStatus(container, autosave && (isOpen || always))
@@ -550,7 +568,12 @@ export function EditableField({
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         onFocus={onFocus}
-        className={cn('flex min-w-0 flex-col gap-1.5', layout === 'block' ? 'w-full' : 'w-fit max-w-full', className)}
+        className={cn(
+          'flex min-w-0',
+          beside ? 'flex-row flex-wrap items-center gap-x-2 gap-y-1' : 'flex-col gap-1.5',
+          layout === 'block' ? 'w-full' : 'w-fit max-w-full',
+          className,
+        )}
       >
         <Control
           key={open.revision ?? 0}
@@ -577,6 +600,8 @@ export function EditableField({
           style={pin ? { left: pin.left, maxWidth: pin.width } : undefined}
           className={cn(
             'type-body',
+            // Beside the value, a refusal takes the line under it.
+            beside && (lineError ? 'basis-full' : 'flex items-center'),
             pin && 'fixed bottom-3 z-30 w-fit rounded-md border border-border bg-popover px-2 py-1 text-popover-foreground shadow-md',
           )}
         >
@@ -588,17 +613,20 @@ export function EditableField({
               {lineError && <FieldError className="type-caption">{lineError}</FieldError>}
               {conflictActions}
               <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
+                {/* Beside a value on one line, the icon alone shows (the
+                    words are a screen reader's), so it fits a rail's row. */}
                 {autosaving ? (
                   <>
                     <Spinner aria-hidden="true" className="size-3.5" />
-                    Saving…
+                    <span className={cn(beside && 'sr-only')}>Saving…</span>
                   </>
                 ) : (
                   open.autosave === 'saved' &&
-                  !open.error && (
+                  !open.error &&
+                  !(beside && savedGone) && (
                     <>
-                      <CheckIcon aria-hidden="true" className="size-3.5" />
-                      Saved
+                      <CheckIcon aria-hidden="true" className={cn('size-3.5', beside && 'text-success-text')} />
+                      <span className={cn(beside && 'sr-only')}>Saved</span>
                     </>
                   )
                 )}

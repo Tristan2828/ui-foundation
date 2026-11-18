@@ -372,7 +372,8 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    * their order. One is pressed while it's `activeView`; none once the
    * filters move off every view. Under 48rem they stay on one line that
    * scrolls sideways. A view with `columns` shows those while it's on, over
-   * the Columns menu's pick.
+   * the Columns menu's pick. A view with `count` shows it after its label
+   * ("Needs a Look · 3", 4.127).
    */
   views?: Readonly<Record<string, TView>>
   /** The view on: useTableUrlState's `activeView`, or null. */
@@ -1654,7 +1655,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
       {viewEntries.length > 0 ? (
         <ViewPills
           label={viewsLabel}
-          views={viewEntries.map(([id, view]) => ({ id, label: view.label ?? id }))}
+          views={viewEntries.map(([id, view]) => ({ id, label: view.label ?? id, count: view.count, counted: 'count' in view }))}
           value={activeView}
           onValueChange={(id) => {
             const view = views?.[id]

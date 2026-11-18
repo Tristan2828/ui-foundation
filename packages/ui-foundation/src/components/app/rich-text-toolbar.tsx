@@ -239,7 +239,8 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
       )}
       {onImage && (
         <>
-          <Separator orientation="vertical" className="mx-1 h-5 self-center" />
+          {/* No divider when it's first (the tools strip on a laptop). */}
+          {(items.length > 0 || onPage) && <Separator orientation="vertical" className="mx-1 h-5 self-center" />}
           <Tooltip>
             <TooltipTrigger
               render={

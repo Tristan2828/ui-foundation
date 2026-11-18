@@ -30,14 +30,14 @@
 - [A list as cards](#a-list-as-cards) · lines 1308–1354
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1356–1392
 - [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1464
-- [A few equal things](#a-few-equal-things) · lines 1466–1550
-- [An overview page](#an-overview-page) · lines 1552–1623
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1624–1690
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1692–1816
-- [Picking at random](#picking-at-random) · lines 1818–1849
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1851–1918
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1920–1945
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1947–2043
+- [A few equal things](#a-few-equal-things) · lines 1466–1569
+- [An overview page](#an-overview-page) · lines 1571–1642
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1643–1709
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1711–1848
+- [Picking at random](#picking-at-random) · lines 1850–1881
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1883–1950
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1952–1977
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1979–2075
 
 <!-- /index -->
 
@@ -1467,8 +1467,8 @@ Every one is measured with axe and the glyph check in both themes
 
 `EqualItems` (4.93, record standard R10): a small set of equal, related
 things inside a record (a plan's phases, the stores a price is compared
-at, a handful of options), one data shape in four looks. A record picks
-one look per set; a fifth is asked for first.
+at, a handful of options), one data shape in five looks. A record picks
+one look per set; a sixth is asked for first.
 
 ```tsx
 <EqualItems
@@ -1490,6 +1490,7 @@ one look per set; a fifth is asked for first.
 | `table` | one compact row per item, the title as its row header, a column per field label (first-seen order), a dash where an item has none; scrolls sideways in its own box on a phone | things compared on the same values (a price at each store) |
 | `featured` | the item `featuredId` names in full, in a card with the accent border, then the rest as toggles that open in place | one is current or best (a program's phases) |
 | `panels` | a panel per item side by side, its title and state in a muted band, every detail labelled above its value; stacked on a phone | each has several details and must read as separate |
+| `stepper` (4.127) | a row of numbered steps joined by a line, each done, current or upcoming, picking the one item whose panel shows under it; opens on the current step; the row scrolls sideways in its own box on a phone | a sequence with one running and the others looked at in turn (a program's phases), where `featured`'s toggles would stack every phase's long content |
 
 - **A state is a badge**, the outline style in its tone (`state: 'Planned'`
   is the neutral one; `{ label, tone }` with `info`, `success`, `warning`
@@ -1501,6 +1502,24 @@ one look per set; a fifth is asked for first.
   Enter or Space opens one, Tab moves to the next, several can be open,
   `aria-expanded` says which. Never a link; `defaultOpenIds` opens some at
   first.
+- **The stepper** (4.127): each item's `step` is `done` (filled with
+  the primary, a check), `current` (ringed, "Current" under its name, its
+  panel's border the accent) or `upcoming` (outlined, the default); the
+  line into a step is the primary up to the current one. It opens on
+  `featuredId`, else the `current` step, else the first; the shown step
+  has a ring round its mark and its name semibold. The steps are a
+  tablist named `label`: arrow keys, Home and End move and pick, Tab goes
+  on into the panel, and the current step is `aria-current="step"`. A
+  step's name is what it shows plus hidden words ("Step 2: Phase 2:
+  Build, done"), never an `aria-label`. An app that keeps the shown step
+  (in the URL as `?phase=`) passes `selectedId` and `onSelectedChange`.
+  `attention` ("needs an answer") puts a small warning dot on a step and
+  those words in its name, for something in a panel not shown (an
+  unsaved change waiting on an answer). **On a phone** the row stays a
+  row: each step at least 4.5rem wide and 44px tall, scrolling sideways
+  in its own box (never the page) as the record's tab bar does, the
+  shown step kept in view; it never folds into a select, which would
+  hide the done and current marks the stepper is for.
 - **Empty**: no items reads `emptyText` ("Nothing yet"), an item with no
   fields `noFieldsText` ("No details"). `label` names the set for a screen
   reader (the list's name, the table's caption); titles are `h3` under a
@@ -1546,7 +1565,7 @@ items={stores.map((store) => ({
 
 Measured with axe, the token check and the glyph check in both themes and
 every palette (fixtures `app/EqualItems`, "Content and actions" among
-them), and from the keyboard and at a phone's width in
+them, and "Stepper"), and from the keyboard and at a phone's width in
 `e2e/equal-items.spec.ts`.
 
 ## An overview page
@@ -1776,8 +1795,21 @@ its short facts the last tab, Details. A mark goes left of the title.
   that's what a screen reader hears, one image named in words. The
   glyphs are a fixed size, so the value never moves on hover, and it's
   drawn the same in Details on a phone. An empty one reads its
-  `emptyLabel` ("Not rated"), not a row of empty stars. Edited in place
-  like any fact (`edit`), usually `inPlace.select` over the scores.
+  `emptyLabel` ("Not rated"), not a row of empty stars. A score the
+  person sets is edited with `inPlace.rating` (4.127): the stars become
+  `RatingInput`, set by a click where they're drawn (no select to open),
+  and an empty one is then five empty stars to click. "Saving…" and
+  "Saved" are an icon beside the stars, words for a screen reader, so the
+  row never grows. On a touch screen each star is a 44px target and the
+  row puts its label above them, which a narrow value column can't hold.
+- **`RatingInput`** (4.127): RatingScore's glyphs and tokens as a radio
+  group named by the field's label, each star a radio ("2 of 5"). The
+  arrow keys move and set it, a click or Space sets the star it's on,
+  pressing the set star again clears it. A mouse's hover previews the
+  score in the same ink (the filled count is the preview; leaving puts it
+  back); a finger gets no preview. 24px targets on a laptop, 44px on a
+  touch screen, fixed-size either way. Disabled, it's the score at half
+  opacity and ignores the pointer.
 - **A yes/no** (`kind: 'switch'`, 4.120) is a switch on the value's
   line, never a two-choice select: `checked`, `onCheckedChange` (return
   the save's promise and the switch shows the new state, busy, until it
