@@ -52,6 +52,16 @@ Merged with no version bump; the next release carries it.
   moves onto it (design-language.md "A few equal things"): pass the
   stepper's items as they are.
 
+- **An Open link on the done toast.** `notify.done(verb, name, { open })`
+  adds an **Open** link to the toast, for a record made where the person
+  stays (a dialog over a page of tiles): "Added The Long Walk" · Open.
+  `open` is a path (anything `Link`'s `to` takes) or `{ to, label }`. A
+  real link named "Open <name>", reached from the keyboard, that closes
+  the toast as it goes; the toast keeps its 4 seconds. With `undo` too,
+  both show. New export: the `NotifyOpen` type. Additive: every call
+  without `open` behaves as before. To adopt: replace a hand-built sonner
+  toast with an Open action by `notify.done('Added', name, { open })`
+  (add-an-entity.md "Toasts and feedback").
 - **The rich-text editor split into its parts** (the RichTextEditor
   review's F26). Internal only: `milkdown-editor.tsx` keeps the wiring,
   and the link box, the page box, the heading and task-item node views
