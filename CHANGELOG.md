@@ -41,6 +41,16 @@ Merged with no version bump; the next release carries it.
   `version.send(update)`, start the save's `onError` with
   `if (version.refused(error)) return`, and pass
   `conflict={version.conflict}` to `EntityForm` or `FormDialog`.
+- **`StepTrack`: the stepper's steps, read only** (new export, additive).
+  The row of numbered steps `EqualItems look="stepper"` draws, on its own
+  with no panels and nothing to pick, for a display such as a list card
+  showing a program's phases: the current step ringed, `caption` under it
+  ("Day 12") in place of "Current". A named list, not a tablist; on a
+  phone it scrolls sideways in its own box with the current step in view.
+  The stepper now draws its steps from the same parts, so the marks are
+  one; its markup is unchanged. An app that draws its own row of steps
+  moves onto it (design-language.md "A few equal things"): pass the
+  stepper's items as they are.
 
 - **The rich-text editor split into its parts** (the RichTextEditor
   review's F26). Internal only: `milkdown-editor.tsx` keeps the wiring,

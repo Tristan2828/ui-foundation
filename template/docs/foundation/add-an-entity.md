@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1387
-  - [The record view](#the-record-view) · lines 1036–1215
-  - [Forms](#forms) · lines 1217–1299
-  - [Dialogs](#dialogs) · lines 1301–1334
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1336–1387
-- [What not to copy](#what-not-to-copy) · lines 1389–1424
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1426–1443
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1445–1510
-- [Deleting](#deleting) · lines 1512–1543
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1545–1566
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1568–1577
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1580–1622
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1624–1660
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1389
+  - [The record view](#the-record-view) · lines 1036–1217
+  - [Forms](#forms) · lines 1219–1301
+  - [Dialogs](#dialogs) · lines 1303–1336
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1338–1389
+- [What not to copy](#what-not-to-copy) · lines 1391–1426
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1428–1445
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1447–1512
+- [Deleting](#deleting) · lines 1514–1545
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1547–1568
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1570–1579
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1582–1624
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1626–1662
 
 <!-- /index -->
 
@@ -1204,7 +1204,9 @@ A record uses the parts it has, in this order:
   `panels` when each has several details, `stepper` (4.127) for a
   sequence with a current step whose items are looked at one at a time
   (numbered steps picking the one panel shown; design-language.md "A few
-  equal things"). Never hand-made cards, a grid or a stepper of their own. An item
+  equal things"). The same steps read only, on a list card with a
+  caption under the current one ("Day 12"), are `StepTrack` (4.128).
+  Never hand-made cards, a grid or a stepper of their own. An item
   edited or removed on its own carries its editor as `content` and its
   Edit and Remove as `actions` (4.94), `wide` while the editor is open;
   never an editor put in a field's value.

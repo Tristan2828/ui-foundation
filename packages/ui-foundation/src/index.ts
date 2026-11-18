@@ -270,6 +270,12 @@ export {
   type EqualItemsLook,
   type EqualItemsProps,
 } from '@/components/app/equal-items'
+export {
+  StepTrack,
+  type StepTrackProps,
+  type StepTrackState,
+  type StepTrackStep,
+} from '@/components/app/step-track'
 export { NeedsYou, type NeedsYouItem, type NeedsYouProps, type NeedsYouTone } from '@/components/app/needs-you'
 export { Freshness, type FreshnessProps } from '@/components/app/freshness'
 export { isStale } from '@/lib/freshness'
