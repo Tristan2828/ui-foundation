@@ -9,7 +9,27 @@ are listed on the
 
 ## Unreleased
 
-Merged with no version bump; the next release carries it.
+## 4.127.0 — Saves that don't overwrite, a stepper look, star ratings, and counts on view pills
+
+npm package and `ui-foundation-backend` 4.127.0 (the backend gains
+`foundation_backend.versions`, the server half of the RichTextEditor
+review's F4). Six changes, all additive: nothing changes for an app that
+doesn't take them.
+
+### How an app adopts it
+
+- Bump both packages to 4.127.0 and run `npx ui-foundation sync`.
+- **Saves that don't overwrite:** for each entity edited in more than one
+  place, follow add-an-entity.md "Saves that don't overwrite" (a version
+  column, the 409 in its contract, `useRecordUpdate({ withVersion })`).
+- **`EqualItems look="stepper"`:** an app with its own stepper over
+  `EqualItems`'s items moves onto it and deletes its own.
+- **`RatingInput` / `inPlace.rating`:** a score picked from stars, on a
+  form or edited in place.
+- **A view's `count`**, **toned flag badges** and **the floating
+  toolbar's Image button:** take them where they fit; see each entry.
+
+### What's in it
 
 - **A saved view's count on its pill** (Roadmap 376, question 4). A
   `DataTable` view (`DataTableView`) takes `count?: number | null`, shown
