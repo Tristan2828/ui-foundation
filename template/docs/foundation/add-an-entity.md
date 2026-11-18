@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1385
-  - [The record view](#the-record-view) · lines 1036–1215
-  - [Forms](#forms) · lines 1217–1299
-  - [Dialogs](#dialogs) · lines 1301–1332
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1334–1385
-- [What not to copy](#what-not-to-copy) · lines 1387–1422
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1424–1441
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1443–1489
-- [Deleting](#deleting) · lines 1491–1522
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1524–1545
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1547–1556
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1559–1601
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1603–1639
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1402
+  - [The record view](#the-record-view) · lines 1036–1217
+  - [Forms](#forms) · lines 1219–1301
+  - [Dialogs](#dialogs) · lines 1303–1336
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1338–1402
+- [What not to copy](#what-not-to-copy) · lines 1404–1439
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1441–1458
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1460–1525
+- [Deleting](#deleting) · lines 1527–1558
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1560–1581
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1583–1592
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1595–1637
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1639–1675
 
 <!-- /index -->
 
@@ -1204,7 +1204,9 @@ A record uses the parts it has, in this order:
   `panels` when each has several details, `stepper` (4.127) for a
   sequence with a current step whose items are looked at one at a time
   (numbered steps picking the one panel shown; design-language.md "A few
-  equal things"). Never hand-made cards, a grid or a stepper of their own. An item
+  equal things"). The same steps read only, on a list card with a
+  caption under the current one ("Day 12"), are `StepTrack` (4.128).
+  Never hand-made cards, a grid or a stepper of their own. An item
   edited or removed on its own carries its editor as `content` and its
   Edit and Remove as `actions` (4.94), `wide` while the editor is open;
   never an editor put in a field's value.
@@ -1326,6 +1328,8 @@ instead, as a small card: `RecordDialogRoute look="card"` (4.98).
 - **A form in a dialog is a `FormDialog`**: the title, the fields
   scrolling between it and the pinned Cancel and Add, a failed save as a
   destructive `Notice` above the buttons with Try Again, and `dirty`.
+  An edit refused because the record changed elsewhere is its
+  `conflict` instead ("Saves that don't overwrite").
   Opened from a page with `open`/`onOpenChange`; as a list's `new` route
   with neither (above).
 - **Always a dialog, never a side panel**, except a phone's filters
@@ -1341,6 +1345,7 @@ sight.** What happened where the person is looking says so there.
 | --- | --- |
 | A delete (soft: with Undo) | `DeleteAction`'s toast, "Deleted The Long Walk" |
 | A record made, landing on its own page | a toast, "Added The Long Walk" |
+| A record made where the person stays (a dialog over a page of tiles) | a toast with Open, "Added The Long Walk" · Open (`notify.done`'s `open`) |
 | An edit in place, a quick action, a toggle | the value itself and its "Saved" (cell pattern 18). **Never a toast** |
 | An action that failed, its button still there | `ActionError` beside the button: the reason and Try Again |
 | An action that failed after its page was left | a toast that stays until it's closed (`useAction` does this) |
@@ -1374,6 +1379,18 @@ sight.** What happened where the person is looking says so there.
   verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when
   given, then says "Restored The Long Walk". Never "X deleted", never
   "Book deleted". Toasts last 4 seconds, Undo's too.
+- **A record made without leaving the page gets Open:**
+  ``notify.done('Added', book.title, { open: `/books/${book.id}` })``.
+  When saving closes a dialog and stays put (a homepage of tiles, a
+  `FormDialog` opened from a page), the toast says "Added The Long Walk"
+  with an **Open** link to the new record; never a hand-built sonner
+  toast. `open` is a path (anything `Link`'s `to` takes) or
+  `{ to, label }` for another word ("View"). It is a real link, named
+  "Open The Long Walk" for a screen reader, reached from the keyboard
+  (Alt+T to the toasts, then Tab), and closes the toast as it goes; the
+  toast keeps its 4 seconds. With `undo` too, both show, Open first. A
+  create that lands on the record's own
+  page doesn't need it: the person is already there.
 - **An error stays beside what failed**: `const save = useAction(mutation)`,
   `save.run(…)` on the button (`disabled={save.pending}`, a `Spinner` in
   it), `<ActionError action={save} />` next to it. Never
@@ -1477,6 +1494,24 @@ work. The fix is optimistic concurrency, the same for every entity:
   paragraph it says so, and only a second Keep Mine replaces theirs. Any
   other field's Keep Mine saves what's typed over theirs. An `editInPlace`
   takes its own `rebase`, or `rebase: false`.
+- **The edit form sends it too: `useFormVersion`**, with the same
+  `withVersion`. `useFormVersion({ record: query.data, withVersion,
+  refetch: query.refetch })` keeps the record the form opened with: the
+  form's `values` come from `version.record`, so a refetch in the
+  background never resets what's typed, and the save sends
+  `version.send(update)`, that record's version. In the save's `onError`,
+  `if (version.refused(error)) return` first: a 409 is the hook's (it
+  fetches the newer version), anything else the form's as before. Pass
+  `conflict={version.conflict}` to `EntityForm` (or `FormDialog`, for an
+  edit in a dialog): the bar shows a warning Notice, "Changed elsewhere",
+  saying nothing was saved and what's typed is still there, with **Keep
+  Mine** (saves the form as it is over theirs, built on the newer
+  version) and **Show Saved** (the form takes their record; the Notice
+  says the typing goes). Never Try Again: the same save would be refused
+  again. A form that stays open after a save (a dialog) calls
+  `version.saved(record)` in `onSuccess`, so its next save builds on it.
+  Keep Mine sends the whole form, so a field they changed and the form
+  didn't goes back to the form's value.
 - **A chat** gets the same check through the entity's `McpEntity.update`:
   the `update` tool tells it to send the `updatedAt` it read as
   `baseUpdatedAt`, and a 409 comes back as a refusal that says to fetch
@@ -1485,8 +1520,9 @@ work. The fix is optimistic concurrency, the same for every entity:
 - **Copy:** `template/backend/app/routers/widgets.py` (`update_widget`),
   migration `0017_widget_updated_at.py`, `WidgetOut.updated_at` and
   `WidgetUpdate.base_updated_at` in `app/schemas.py`, the PATCH mock in
-  `src/mocks/handlers.ts`, `withVersion` in `use-widgets.ts`, and the
-  "two writers" specs in `e2e/widget-edit-in-place.spec.ts`.
+  `src/mocks/handlers.ts`, `withVersion` in `use-widgets.ts`,
+  `useFormVersion` in `widget-form.tsx`, and the "two writers" specs in
+  `e2e/widget-edit-in-place.spec.ts` and `e2e/widget-form.spec.ts`.
 
 ## Deleting
 

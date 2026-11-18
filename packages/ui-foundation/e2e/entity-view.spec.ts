@@ -318,7 +318,14 @@ test.describe('EntityView, long text that autosaves', () => {
 
     await typeAtEnd(page, editor, ' Then desks.')
     // Saves on its own after the pause, the caret still in the text.
-    await expect(notes.getByRole('status')).toHaveText('Saving…')
+    // "Saving…" shows for the story's 500ms save: watched every frame, as
+    // expect()'s widening retries can step over it (seen on CI).
+    const notesElement = await notes.elementHandle()
+    await page.waitForFunction(
+      (element) => element?.querySelector('[role=status]')?.textContent === 'Saving…',
+      notesElement,
+      { polling: 'raf', timeout: 5000 },
+    )
     await expect(editor).toBeFocused()
     await expect(editor).toHaveAttribute('aria-readonly', 'false')
     // Typing mid-save is kept, and saved next.

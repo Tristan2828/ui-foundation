@@ -19,6 +19,9 @@
 //   than it; on a phone, two wide buttons. It sets
 //   `--toast-bottom-offset` on <html> to the room it takes, for anything
 //   pinned to the bottom of the window to sit above it.
+// - `conflict` (useFormVersion): a save refused because the record
+//   changed elsewhere is a warning Notice in the bar instead, with Keep
+//   Mine and Show Saved; what was typed stays until one is picked.
 // - `dirty`: leaving (a link, Back, the sidebar, Cancel) asks "Discard
 //   your changes?" first, and the browser asks before a reload. Nothing
 //   typed, nothing asked.
@@ -30,6 +33,8 @@ import { FieldGroup } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { countFormErrors } from '@/lib/form-errors'
 import { flushPendingEdits } from '@/lib/pending-edits'
+import type { FormConflict } from '@/hooks/use-form-version'
+import { FormConflictNotice } from './form-conflict-notice'
 import { FormLeaveGuard } from './form-leave-guard'
 import { Notice } from './notice'
 
@@ -43,6 +48,13 @@ export type EntityFormProps = {
   submitError?: AppError | null
   /** Try again's action. Defaults to submitting the form again. */
   onRetry?: () => void
+  /**
+   * The save was refused because the record changed elsewhere since the
+   * form opened (`useFormVersion`'s `conflict`): a warning Notice in the
+   * bar, in place of `submitError`'s, with Keep Mine (submits again, over
+   * the newer version) and Show Saved. Leave it out and nothing changes.
+   */
+  conflict?: FormConflict
   /** "Add book": the word Add on every create form. */
   submitLabel: string
   onCancel: () => void
@@ -97,6 +109,7 @@ export function EntityForm({
   isSubmitting,
   submitError,
   onRetry,
+  conflict,
   submitLabel,
   onCancel,
   danger,
@@ -196,7 +209,16 @@ export function EntityForm({
       >
         {/* Always there, so a failure that appears is announced. */}
         <div role="status" className="empty:hidden">
-          {submitError && (
+          {conflict ? (
+            <FormConflictNotice
+              conflict={conflict}
+              isSubmitting={isSubmitting}
+              onKeepMine={() => {
+                conflict.onKeepMine()
+                form.current?.requestSubmit()
+              }}
+            />
+          ) : submitError && (
             <Notice
               tone="destructive"
               action={

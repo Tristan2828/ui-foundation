@@ -18,6 +18,9 @@
 // the sidebar (FormLeaveGuard, 4.85), as EntityForm's does.
 // A failed save is a Notice above the buttons with Try again, which
 // submits again unless `onRetry` says otherwise; what was typed stays.
+// An edit refused because the record changed elsewhere (`conflict`, from
+// useFormVersion) is a warning Notice there instead, with Keep Mine and
+// Show Saved, as EntityForm's.
 //
 // The form is the app's: its fields, its schema and its react-hook-form
 // wiring, as with EntityForm. This draws the chrome around them.
@@ -28,6 +31,8 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { FieldGroup } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
+import type { FormConflict } from '@/hooks/use-form-version'
+import { FormConflictNotice } from './form-conflict-notice'
 import { FormLeaveGuard } from './form-leave-guard'
 import { Notice } from './notice'
 import { useNewRecordDialog } from './record-dialog-context'
@@ -52,6 +57,12 @@ export type FormDialogProps = {
   submitError?: AppError | null
   /** Try again's action. Defaults to submitting the form again. */
   onRetry?: () => void
+  /**
+   * An edit refused because the record changed elsewhere
+   * (`useFormVersion`'s `conflict`): a warning Notice in place of
+   * `submitError`'s, with Keep Mine and Show Saved.
+   */
+  conflict?: FormConflict
   /** Something was typed: closing asks "Discard your changes?" first. */
   dirty?: boolean
   /** The fields. */
@@ -69,6 +80,7 @@ export function FormDialog({
   submitLabel,
   submitError,
   onRetry,
+  conflict,
   dirty = false,
   children,
   className,
@@ -113,7 +125,16 @@ export function FormDialog({
           <div data-slot="form-dialog-bar" className="flex flex-col gap-3 border-t px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:px-6 md:pb-3">
             {/* Always there, so a failure that appears is announced. */}
             <div role="status" className="empty:hidden">
-              {submitError && (
+              {conflict ? (
+                <FormConflictNotice
+                  conflict={conflict}
+                  isSubmitting={isSubmitting}
+                  onKeepMine={() => {
+                    conflict.onKeepMine()
+                    form.current?.requestSubmit()
+                  }}
+                />
+              ) : submitError && (
                 <Notice
                   tone="destructive"
                   action={

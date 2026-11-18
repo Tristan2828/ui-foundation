@@ -30,14 +30,14 @@
 - [A list as cards](#a-list-as-cards) · lines 1308–1354
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1356–1392
 - [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1464
-- [A few equal things](#a-few-equal-things) · lines 1466–1569
-- [An overview page](#an-overview-page) · lines 1571–1642
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1643–1709
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1711–1848
-- [Picking at random](#picking-at-random) · lines 1850–1881
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1883–1950
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1952–1977
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1979–2075
+- [A few equal things](#a-few-equal-things) · lines 1466–1586
+- [An overview page](#an-overview-page) · lines 1588–1659
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1660–1726
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1728–1865
+- [Picking at random](#picking-at-random) · lines 1867–1898
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1900–1967
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1969–1994
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1996–2092
 
 <!-- /index -->
 
@@ -1520,6 +1520,23 @@ one look per set; a sixth is asked for first.
   in its own box (never the page) as the record's tab bar does, the
   shown step kept in view; it never folds into a select, which would
   hide the done and current marks the stepper is for.
+- **The same steps, read only** (4.128): `StepTrack` draws the stepper's
+  row on its own, with no panels and nothing to pick, for a display of
+  where a sequence is (a list card showing a program's phases). The
+  marks, the line and the sizes are the stepper's own parts, so the two
+  never differ; the current step is ringed and has "Current" under it,
+  or `caption` in its place ("Day 12"), its name still saying ", current"
+  to a screen reader. It's a named list (`<ol aria-label={label}>`), never
+  a tablist: steps are list items, not tabs or buttons. On a phone it
+  scrolls sideways in its own box with the current step in view, and
+  only while it overflows is the box a tab stop, so the arrow keys
+  scroll it. Pass the stepper's items as they are (an `EqualItem` is a
+  `StepTrackStep`); no steps reads `emptyText`. Never a hand-drawn row of
+  steps on a card.
+
+  ```tsx
+  <StepTrack label={`${program.name}, phases`} caption={`Day ${program.day}`} steps={phases} />
+  ```
 - **Empty**: no items reads `emptyText` ("Nothing yet"), an item with no
   fields `noFieldsText` ("No details"). `label` names the set for a screen
   reader (the list's name, the table's caption); titles are `h3` under a

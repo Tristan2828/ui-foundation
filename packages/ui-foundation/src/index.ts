@@ -141,7 +141,7 @@ export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
 // The dialogs and feedback standard (4.90): one delete, toasts' words, an
 // action's error beside it, a job's progress, and the offline bar.
 export { DeleteAction, type DeleteActionProps, type DeleteKind, type DeleteReason } from '@/components/app/delete-action'
-export { notify, doneMessage, pastTense, type NotifyDoneOptions } from '@/components/app/notify'
+export { notify, doneMessage, pastTense, type NotifyDoneOptions, type NotifyOpen } from '@/components/app/notify'
 export { useAction, type ActionOutcome, type ActionState, type UseActionOptions } from '@/hooks/use-action'
 export { ActionError, type ActionErrorProps } from '@/components/app/action-error'
 export { JobStatus, type JobProgress, type JobStatusProps } from '@/components/app/job-status'
@@ -270,6 +270,12 @@ export {
   type EqualItemsLook,
   type EqualItemsProps,
 } from '@/components/app/equal-items'
+export {
+  StepTrack,
+  type StepTrackProps,
+  type StepTrackState,
+  type StepTrackStep,
+} from '@/components/app/step-track'
 export { NeedsYou, type NeedsYouItem, type NeedsYouProps, type NeedsYouTone } from '@/components/app/needs-you'
 export { Freshness, type FreshnessProps } from '@/components/app/freshness'
 export { isStale } from '@/lib/freshness'
@@ -404,6 +410,12 @@ export {
   type RecordChange,
   type RecordUpdateOptions,
 } from '@/hooks/use-record-update'
+export {
+  useFormVersion,
+  type FormConflict,
+  type FormVersion,
+  type FormVersionOptions,
+} from '@/hooks/use-form-version'
 export { useIsMobile } from '@/hooks/use-mobile'
 // Timed screens (docs/foundation/timed-screens.md)
 export { useWakeLock } from '@/hooks/use-wake-lock'
