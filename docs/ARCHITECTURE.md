@@ -670,6 +670,30 @@ floating toolbar (4.50, `rich-text-tools-bar.tsx`) has no bar for the
 Full screen, Indent and Outdent buttons, so a small "Editor tools" strip
 shows over its top right corner while it has focus (or is full screen).
 
+**On a touch screen (the review's F11, picked 1A 2A 3A 4A)** every one of
+those bars gives way to one: `rich-text-keyboard-bar.tsx`, a 48px row
+pinned to the bottom of the visual viewport (`visualViewport`, so it sits
+on the keyboard), shown while the field has focus, on `(pointer: coarse)`
+only (`rich-text-touch.ts`; a narrow laptop window keeps the rows). It
+holds Aa, Task list, Bulleted list, Outdent, Indent, Insert (a "/" on a
+new line, through the slash plugin's own `handleTextInput`), Undo and
+Hide keyboard, each 40px; with words selected, Bold to Link come first,
+and the floating toolbar doesn't show (it would sit under the system's
+Copy bar). Aa opens every format, named, in the keyboard's place: the
+text keeps focus and sets `inputmode="none"`, so the caret and the
+selection stay. The bar is `position: fixed` inside the field (not a
+portal: the field's blur and edit-in-place treat it as the field's),
+offset by a probe at the containing block's 0,0 so a transformed
+ancestor (a dialog) doesn't move it; the caret is scrolled to stay above
+it. The slash menu on a touch screen is capped to the room above the bar
+on the caret's side, flipping above the line when there's more room
+there. The task box (in a `<label>`, whose press is its checkbox's), the
+table grips, the fold button and the callout icon get an invisible 40px
+`::before` on `pointer-coarse`, with task rows and table rows 40px tall
+there so neighbours' squares don't overlap. The harness runs the editor
+specs on a second Playwright project, `phone` (Pixel 7); a laptop-only
+test skips itself there with `isMobile`.
+
 **Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
 (a `Popover` with no trigger, placed through the `anchor` the package's
 `PopoverContent` takes). Only web and email addresses, a path on the site

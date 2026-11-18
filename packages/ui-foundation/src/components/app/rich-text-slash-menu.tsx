@@ -8,7 +8,8 @@
 //
 // Placed against the field's element like the floating toolbar, not in a
 // portal (rich-text-floating-toolbar.tsx says why): under the caret, or
-// over it when the window has no room below.
+// over it when there's more room there, and never taller than what is
+// visible on its side (above a phone's keyboard, review F11).
 import { useLayoutEffect, useState } from 'react'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { cn } from 'cn'
@@ -17,16 +18,47 @@ import { slashOptionId, type SlashItem } from './rich-text-slash'
 // Its gap from the caret's line.
 const GAP = 4
 
-type Placement = { top: number; left: number; side: 'top' | 'bottom' }
+type Placement = { top: number; left: number; side: 'top' | 'bottom'; maxHeight: number }
 
+// Its tallest: every block shows on a laptop.
+const TALLEST = 512
+// Below the caret while at least this much of it fits there.
+const ENOUGH = 170
+
+// What is visible of the window: above a phone's keyboard
+// (`visualViewport`), and above the bar pinned to it
+// (rich-text-keyboard-bar.tsx) when the field has one (review F11).
+function visibleArea(field: HTMLElement): { top: number; bottom: number } {
+  const viewport = window.visualViewport
+  const top = viewport?.offsetTop ?? 0
+  let bottom = top + (viewport?.height ?? window.innerHeight)
+  const bar = field.querySelector('[data-slot="rich-text-keyboard-bar"] [role="toolbar"]')
+  if (bar) bottom = Math.min(bottom, bar.getBoundingClientRect().top)
+  return { top, bottom }
+}
+
+// Under the caret, or over it; on a touch screen never taller than the
+// room on its side, so it never runs under the keyboard.
 function place(view: EditorView, at: number, field: HTMLElement, menu: HTMLElement): Placement {
   const caret = view.coordsAtPos(at)
   const box = field.getBoundingClientRect()
-  const { offsetWidth: width, offsetHeight: height } = menu
-  const below = caret.bottom + GAP + height <= window.innerHeight || caret.top - GAP - height < 0
+  const area = visibleArea(field)
+  const { offsetWidth: width } = menu
+  const natural = Math.min(menu.scrollHeight, TALLEST)
+  const roomBelow = area.bottom - caret.bottom - GAP * 2
+  const roomAbove = caret.top - area.top - GAP * 2
+  // A laptop's as before: below when it all fits there or can't above.
+  // A touch screen's: below while a few items fit, else wherever there's
+  // more room, and capped to it.
+  const touch = window.matchMedia('(pointer: coarse)').matches
+  const below = touch
+    ? roomBelow >= Math.min(natural, ENOUGH) || roomBelow >= roomAbove
+    : caret.bottom + GAP + natural <= window.innerHeight || caret.top - GAP - natural < 0
+  const maxHeight = touch ? Math.max(80, Math.min(TALLEST, below ? roomBelow : roomAbove)) : TALLEST
+  const height = Math.min(natural, maxHeight)
   const top = below ? caret.bottom + GAP : caret.top - GAP - height
   const left = Math.max(0, Math.min(caret.left - box.left, box.width - width))
-  return { top: top - box.top, left, side: below ? 'bottom' : 'top' }
+  return { top: top - box.top, left, side: below ? 'bottom' : 'top', maxHeight }
 }
 
 export interface RichTextSlashMenuProps {
@@ -55,7 +87,11 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
     const update = () => setPlacement(place(view, at, field, menu))
     update()
     window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
+    window.visualViewport?.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.visualViewport?.removeEventListener('resize', update)
+    }
   }, [view, at, field, menu, items.length])
 
   // The highlighted item stays in sight.
@@ -71,11 +107,12 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
       aria-label="Blocks"
       data-slot="rich-text-slash-menu"
       data-side={placement?.side}
-      // Tall enough for every block, but a filtered list can still scroll:
-      // focusable for axe (scrollable-region-focusable), never by a press.
-      tabIndex={-1}
+      // It can scroll (capped above a phone's keyboard, or in a short
+      // window): a tab stop for axe (scrollable-region-focusable), never
+      // reached while it's open (Tab picks), nor by a press.
+      tabIndex={0}
       onMouseDown={(event) => event.preventDefault()}
-      style={placement ? { top: placement.top, left: placement.left } : undefined}
+      style={placement ? { top: placement.top, left: placement.left, maxHeight: placement.maxHeight } : undefined}
       className={cn(
         'absolute z-50 flex max-h-128 w-56 flex-col gap-0.5 overflow-y-auto rounded-lg bg-popover p-1 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10',
         'animate-in fade-in-0 zoom-in-95 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2',
@@ -91,7 +128,8 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
             id={slashOptionId(id, index)}
             role="option"
             aria-selected={index === active}
-            className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 select-none aria-selected:bg-muted"
+            // 44px rows on a touch screen (review F11).
+            className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 select-none aria-selected:bg-muted pointer-coarse:min-h-11"
             // A press never takes focus from the text.
             onMouseDown={(event) => event.preventDefault()}
             onMouseMove={() => index !== active && onHighlight(index)}

@@ -438,7 +438,10 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
-  test('long text: the floating toolbar is part of the field; Esc hides it before saving', async ({ page }) => {
+  test('long text: the floating toolbar is part of the field; Esc hides it before saving', async ({ page, isMobile }) => {
+    // A touch screen has no floating toolbar: the row pinned to its
+    // keyboard has the words' formats.
+    test.skip(isMobile, 'a laptop: no floating toolbar on a touch screen')
     const bodies = patchBodies(page)
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })

@@ -149,7 +149,7 @@ import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, TOGGLE_HEADING_VAR
 import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry } from './rich-text-node-views'
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
-import { splitTaskItem, taskInputRule } from './rich-text-tasks'
+import { splitTaskItem, TASK_ROW, taskBoxHit, taskInputRule } from './rich-text-tasks'
 import { typedInputRules } from './rich-text-input-rules'
 import { edges } from './rich-text-edges'
 import { withEmptyParagraphChildren } from './rich-text-empty-paragraph'
@@ -170,6 +170,8 @@ import {
 import { RichTextSlashMenu } from './rich-text-slash-menu'
 import { RichTextToolbar } from './rich-text-toolbar'
 import { RichTextToolsBar } from './rich-text-tools-bar'
+import { RichTextKeyboardBar } from './rich-text-keyboard-bar'
+import { useCoarsePointer } from './rich-text-touch'
 import { autolinkPlugin, linkWordBefore } from './rich-text-autolink'
 import { useHoldFocus } from './rich-text-full-screen'
 import { cleanPasted, NO_IMAGES_HERE, pasteHtml, pasteLinesIntoCell, pastePlainText, type PasteImages } from './rich-text-paste'
@@ -428,7 +430,8 @@ function taskItemView(node: ProseNode, view: EditorView, getPos: () => number | 
   const contentDOM = document.createElement('div')
   // Takes the row's width, so an empty item's caret and placeholder show.
   contentDOM.className = 'min-w-0 flex-1'
-  dom.append(box, contentDOM)
+  dom.append(taskBoxHit(box), contentDOM)
+  dom.className = TASK_ROW
   dom.dataset.itemType = 'task'
 
   let current = node
@@ -455,8 +458,8 @@ function taskItemView(node: ProseNode, view: EditorView, getPos: () => number | 
       render()
       return true
     },
-    stopEvent: (event) => event.target === box,
-    ignoreMutation: (mutation) => mutation.target === box,
+    stopEvent: (event) => event.target === box || event.target === box.parentElement,
+    ignoreMutation: (mutation) => mutation.target === box || mutation.target === box.parentElement,
   }
 }
 
@@ -698,7 +701,10 @@ export default function MilkdownEditor({
 
   // The fixed bar above the text, and the menus over it (the floating
   // toolbar and the slash menu), which `'floating'` keeps on their own.
-  const fixedToolbar = toolbar === true
+  // On a touch screen, the bar pinned to the keyboard in their place
+  // (rich-text-keyboard-bar.tsx).
+  const coarse = useCoarsePointer()
+  const fixedToolbar = toolbar === true && !coarse
   const menus = toolbar !== false
 
   const ids = useId()
@@ -1355,6 +1361,7 @@ export default function MilkdownEditor({
   const selection = editorState?.selection
   const floatingOpen = Boolean(
     menus &&
+      !coarse &&
       !readOnly &&
       editorView &&
       focused &&
@@ -1372,7 +1379,7 @@ export default function MilkdownEditor({
   })
   const returnToText = () => editorView?.focus()
   // The tools strip of a field with only the floating toolbar.
-  const toolsOpen = Boolean(toolbar === 'floating' && editorView && (focused || fullScreen))
+  const toolsOpen = Boolean(toolbar === 'floating' && !coarse && editorView && (focused || fullScreen))
   const toggleFullScreen = () => {
     setFullScreen((on) => !on)
     editorView?.focus()
@@ -1533,7 +1540,6 @@ export default function MilkdownEditor({
             '[&_li[data-item-type=task]]:-ml-6 [&_li[data-item-type=task]]:flex [&_li[data-item-type=task]]:list-none [&_li[data-item-type=task]]:items-start [&_li[data-item-type=task]]:gap-2',
             // Highlighted words: the colour's wash, the text's own colour on it.
             '[&_mark]:rounded-sm [&_mark]:text-foreground [&_mark[data-color=amber]]:bg-highlight-amber [&_mark[data-color=yellow]]:bg-highlight-yellow [&_mark[data-color=green]]:bg-highlight-green [&_mark[data-color=red]]:bg-highlight-red',
-            '[&_li[data-item-type=task]>input]:mt-1 [&_li[data-item-type=task]>input]:size-4 [&_li[data-item-type=task]>input]:accent-primary',
             // Headings, callouts and tables are drawn by their node views;
             // these are the elements Milkdown draws itself.
             '[&_a]:cursor-pointer [&_a]:text-link [&_a]:underline [&_a]:decoration-link/40 [&_a]:underline-offset-4',
@@ -1627,6 +1633,25 @@ export default function MilkdownEditor({
                   ? pickSlashImage(editorView, slash)
                   : applySlash(editorView, slash, item)
             }
+          />
+        )}
+        {coarse && menus && editorView && (focused || fullScreen) && (
+          <RichTextKeyboardBar
+            ref={toolbarRef}
+            pressing={selecting}
+            view={editorView}
+            state={editorState}
+            readOnly={readOnly}
+            controls={editableId}
+            onFormat={runFormat}
+            onImage={upload ? pickImages : undefined}
+            onFullScreen={toggleFullScreen}
+            fullScreen={fullScreen}
+            text={textElement}
+            onBlur={(event) => {
+              const next = event.relatedTarget as Node | null
+              if (!editorView.dom.contains(next) && !inFloating(next)) setFocused(false)
+            }}
           />
         )}
         {toolsOpen && (

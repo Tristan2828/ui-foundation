@@ -39,6 +39,7 @@ const openColumnMenu = async (page: Page, name: string, column: number) => {
 }
 
 test.describe('rich-text table widths', () => {
+  test.skip(({ isMobile }) => isMobile, 'a laptop: a phone fits columns to their words, with no widths to set (rich-text-table-grips.tsx)')
   test.beforeEach(async ({ page }) => {
     await page.goto(STORY)
     await expect(table(page, 'plain')).toBeVisible()

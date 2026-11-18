@@ -17,6 +17,7 @@
 import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import type { EditorState } from '@milkdown/kit/prose/state'
 import { FileTextIcon, ImageIcon, Maximize2Icon, Minimize2Icon } from 'lucide-react'
+import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Toggle } from '@/components/ui/toggle'
@@ -34,6 +35,11 @@ const SETS = {
   // Outdent and Indent, for a field with no bar above the text (rich-text-tools-bar.tsx).
   tools: [[FORMAT_ITEMS.get('outdent')!, FORMAT_ITEMS.get('indent')!]],
   selection: [SELECTION.slice(0, 5), SELECTION.slice(5)].map((ids) => ids.map((id) => FORMAT_ITEMS.get(id)!)),
+  // The row pinned above a phone's keyboard (rich-text-keyboard-bar.tsx):
+  // what's used while typing a list, and with words selected, their formats
+  // first.
+  keyboard: [(['tasks', 'bullets', 'outdent', 'indent'] as FormatId[]).map((id) => FORMAT_ITEMS.get(id)!)],
+  keyboardWords: [SELECTION.map((id) => FORMAT_ITEMS.get(id)!), (['tasks', 'bullets'] as FormatId[]).map((id) => FORMAT_ITEMS.get(id)!)],
 } satisfies Record<string, FormatItem[][]>
 
 // A touch screen or a narrow one: where the keyboard has no Tab, so the
@@ -70,12 +76,14 @@ export type FormatButtonsProps = {
   fullScreen?: boolean
   /** The editable element, for the Highlight menu to give focus back to. */
   text?: () => HTMLElement | null
+  /** 40px buttons, for a touch screen (the keyboard bar's). */
+  touch?: boolean
 }
 
 // A toolbar's row of buttons: one tab stop, the last one used (ARIA's
 // toolbar pattern); the arrow keys, Home and End move along the row. The
 // toolbar's element (`role="toolbar"`, its name) is the caller's.
-export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onImage, onFullScreen, fullScreen = false, text = () => null }: FormatButtonsProps) {
+export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onImage, onFullScreen, fullScreen = false, text = () => null, touch = false }: FormatButtonsProps) {
   const apple = isApple()
   const compact = useCompact()
   const groups = SETS[formats].map((group) => group.filter((item) => compact || !item.touch)).filter((group) => group.length > 0)
@@ -84,6 +92,8 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
   const pageIndex = onPage ? items.length : -1
   const imageIndex = onImage ? items.length + (onPage ? 1 : 0) : -1
   const fullScreenIndex = onFullScreen ? items.length + (onPage ? 1 : 0) + (onImage ? 1 : 0) : -1
+  // A touch screen's 40px buttons; a laptop's 28px.
+  const sized = touch ? 'size-10 min-w-10 [&_svg]:size-5' : undefined
   const count = items.length + (onPage ? 1 : 0) + (onImage ? 1 : 0) + (onFullScreen ? 1 : 0)
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
   // The one button Tab reaches: the last one used.
@@ -112,7 +122,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
     <TooltipProvider delay={400}>
       {groups.map((group, groupIndex) => (
         <Fragment key={groupIndex}>
-          {groupIndex > 0 && <Separator orientation="vertical" className="mx-1 h-5 self-center" />}
+          {groupIndex > 0 && <Separator orientation="vertical" className={cn('mx-1 h-5 self-center', touch && 'h-6 data-vertical:self-center')} />}
           {group.map((item) => {
             const index = items.indexOf(item)
             if (item.id === 'highlight')
@@ -129,6 +139,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
                   onKeyDown={onKeyDown}
                   onFormat={onFormat}
                   text={text}
+                  className={touch ? 'h-10 min-w-10' : undefined}
                 />
               )
             const Icon = item.icon
@@ -150,6 +161,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
                         }}
                         variant="ghost"
                         size="icon-sm"
+                        className={sized}
                         aria-label={item.label}
                         // A table goes in only outside one.
                         disabled={readOnly || (item.id === 'table' && state !== null && formatOn(state, 'table'))}
@@ -180,7 +192,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
                       pressed={state ? formatOn(state, item.id) : false}
                       disabled={readOnly}
                       tabIndex={index === current ? 0 : -1}
-                      className="aria-pressed:bg-muted aria-pressed:text-foreground"
+                      className={cn('aria-pressed:bg-muted aria-pressed:text-foreground', sized)}
                       // A mouse press keeps focus, and the selection, in the text.
                       onMouseDown={(event) => event.preventDefault()}
                       onFocus={() => setCurrent(index)}
