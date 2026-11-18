@@ -8,7 +8,7 @@ import remarkParse from 'remark-parse'
 import { unified } from 'unified'
 import { describe, expect, it } from 'vitest'
 import { MARKDOWN_FIXTURES } from '../src/components/app/rich-text-editor.fixtures'
-import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '../src/lib/markdown-merge'
+import { MarkdownMergeError, markdownStyle, mergeMarkdown, mergeParts } from '../src/lib/markdown-merge'
 
 const processor = unified().use(remarkParse).use(remarkGfm)
 
@@ -147,6 +147,66 @@ describe('mergeMarkdown', () => {
     expect(mergeMarkdown('', '', '# New\n\nText.\n')).toBe('# New\n\nText.\n')
   })
 
+  // F2: the editor loads only a fence's language; the rest of its info
+  // string must survive an edit anywhere else.
+  it("keeps an untouched fence's info string (title, line marks) when another block is edited", () => {
+    const { markdown, editorWrites } = MARKDOWN_FIXTURES.fenceMeta
+    expect(editorWrites).not.toContain('title=')
+    expect(mergeMarkdown(markdown, editorWrites, editLastBlock(editorWrites))).toBe(
+      markdown.replace('paragraph.', 'paragraphEdited.'),
+    )
+  })
+
+  it("never swaps a fence for the editor's copy that lost its info string", () => {
+    // Even when the code itself doesn't match (made up here), the fence the
+    // editor shows without its title isn't "the same, nothing lost".
+    const original = 'Intro.\n\n```js title="app.js"\nlet   a = 1\n```\n\nOutro.\n'
+    const baseline = 'Intro.\n\n```js\nlet a = 1\n```\n\nOutro.\n'
+    const current = baseline.replace('Intro.', 'Intro, edited.')
+    expect(() => mergeMarkdown(original, baseline, current)).toThrow(MarkdownMergeError)
+  })
+
+  // F12: a Windows note's untouched blocks keep CRLF; what the editor
+  // writes goes back in CRLF too, so the note doesn't end up mixed.
+  it('keeps a CRLF note in CRLF when one block is edited', () => {
+    const { markdown, editorWrites } = MARKDOWN_FIXTURES.crlf
+    const merged = mergeMarkdown(markdown, editorWrites, editorWrites.replace('# Packing', '# PackingZ'))
+    expect(merged).toBe(markdown.replace('# Packing', '# PackingZ'))
+  })
+
+  it('writes an edited multi-line block of a CRLF note in CRLF', () => {
+    const { markdown, editorWrites } = MARKDOWN_FIXTURES.crlf
+    const merged = mergeMarkdown(markdown, editorWrites, editLastBlock(editorWrites))
+    expect(merged).toBe(markdown.replace('lines.', 'linesEdited.'))
+    expect(merged.replace(/\r\n/g, '')).not.toContain('\n')
+  })
+
+  it('writes a new block of a CRLF note in CRLF', () => {
+    const { markdown, editorWrites } = MARKDOWN_FIXTURES.crlf
+    const merged = mergeMarkdown(markdown, editorWrites, `${editorWrites}\nNew\nlines.\n`)
+    expect(merged).toBe(`${markdown}\r\nNew\r\nlines.\r\n`)
+  })
+
+  // F23: select all and delete leaves no invisible definition behind.
+  it('drops a definition once nothing uses it (select all, delete)', () => {
+    const { markdown, editorWrites } = MARKDOWN_FIXTURES.referenceLinks
+    expect(mergeMarkdown(markdown, editorWrites, '')).toBe('')
+    expect(mergeMarkdown('[r]: https://x.y\n\nSee [the site][r].\n', 'See [the site](https://x.y).\n', '')).toBe('')
+  })
+
+  it('drops a definition with the only paragraph that used it, keeping the rest', () => {
+    const { markdown, editorWrites } = MARKDOWN_FIXTURES.referenceLinks
+    const current = editorWrites.slice(editorWrites.indexOf('A closing'))
+    expect(mergeMarkdown(markdown, editorWrites, current)).toBe('A closing paragraph.\n')
+  })
+
+  it('keeps a definition something still uses, and one nothing used to begin with', () => {
+    const original = 'One [a][r].\n\nTwo [b][r].\n\n[r]: https://x.y\n\n[spare]: https://spare.example\n\nEnd.\n'
+    const baseline = 'One [a](https://x.y).\n\nTwo [b](https://x.y).\n\nEnd.\n'
+    const current = baseline.replace('One [a](https://x.y).\n\n', '')
+    expect(mergeMarkdown(original, baseline, current)).toBe('Two [b][r].\n\n[r]: https://x.y\n\n[spare]: https://spare.example\n\nEnd.\n')
+  })
+
   it("refuses, rather than save something that means other than what's on screen", () => {
     // The edited first block, written with the same bullet as the
     // untouched list after it, would fuse the two lists into one.
@@ -155,6 +215,61 @@ describe('mergeMarkdown', () => {
     const current = '- a\n\n* b\n'
     expect(() => mergeMarkdown(original, baseline, current)).toThrow(MarkdownMergeError)
   })
+})
+
+// `content` decides whether a block the editor shows its own way lost
+// nothing. A field `meaning` compares that `content` doesn't count is a
+// field the editor could drop on load with nobody told (F2: a fence's
+// info string). So: change any one field of any node, and if its meaning
+// changes, its content must too. A node's type is the exception by design
+// (`*a*` shown as `**a**` loses nothing).
+describe('mergeParts: content counts every field meaning compares', () => {
+  type Node = { type: string; children?: Node[]; [key: string]: unknown }
+  const { parse, meaning, content } = mergeParts
+  const samples = [
+    ...Object.values(MARKDOWN_FIXTURES).map((fixture) => fixture.markdown),
+    '3. three\n4. four\n\n#### Deep heading\n\n![alt](https://x.y/i.png "t")\n\n[t][r]\n\n[r]: https://x.y "T"\n',
+  ]
+  const changed = (value: unknown): unknown => {
+    if (typeof value === 'string') return `${value}x`
+    if (typeof value === 'number') return value + 1
+    if (typeof value === 'boolean') return !value
+    if (value === null) return 'x'
+    if (Array.isArray(value)) return [...value, 'x']
+    return value
+  }
+  const cases: { name: string; block: Node; path: number[]; key: string }[] = []
+  for (const markdown of samples) {
+    for (const block of (parse(markdown).children ?? []) as Node[]) {
+      const walk = (node: Node, path: number[]) => {
+        for (const key of Object.keys(node)) {
+          if (['type', 'children', 'position', 'data', 'spread', 'label', 'referenceType'].includes(key)) continue
+          cases.push({ name: `${node.type}.${key} in ${JSON.stringify(markdown.slice(0, 24))}`, block, path, key })
+        }
+        node.children?.forEach((child, index) => walk(child, [...path, index]))
+      }
+      walk(block, [])
+    }
+  }
+
+  it('finds fields to check', () => {
+    expect(cases.length).toBeGreaterThan(50)
+    expect(cases.some((c) => c.key === 'meta')).toBe(true)
+    expect(cases.some((c) => c.key === 'lang')).toBe(true)
+  })
+
+  for (const { name, block, path, key } of cases) {
+    it(name, () => {
+      const copy = structuredClone(block)
+      let node = copy
+      for (const index of path) node = node.children![index]
+      node[key] = changed(node[key])
+      const definitions = new Map()
+      if (JSON.stringify(meaning(copy, definitions)) !== JSON.stringify(meaning(block, definitions))) {
+        expect(content(copy, definitions)).not.toBe(content(block, definitions))
+      }
+    })
+  }
 })
 
 describe('markdownStyle', () => {

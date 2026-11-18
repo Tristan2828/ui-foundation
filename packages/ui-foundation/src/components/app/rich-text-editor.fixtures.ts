@@ -90,6 +90,18 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "An inline ![a chart](https://example.com/chart.png) image.\n\n![](https://example.com/photo.jpg)\n\n![Titled](https://example.com/t.png \"A title\")\n\n![ref image][pic]\n\n[pic]: https://example.com/ref.png\n\nAfter the images.\n",
     editorWrites: "An inline ![a chart](https://example.com/chart.png) image.\n\n![](https://example.com/photo.jpg)\n\n![Titled](https://example.com/t.png \"A title\")\n\n![ref image](https://example.com/ref.png)\n\nAfter the images.\n",
   },
+  // A code fence's info string past the language (F2): the editor keeps
+  // only the language, so an untouched fence must be kept as written.
+  fenceMeta: {
+    markdown: "Intro.\n\n```js title=\"app.js\"\nlet a = 1\n```\n\n``` js title=\"x.js\" {1,3}\nlet b = 2\n```\n\nSacrificial last paragraph.\n",
+    editorWrites: "Intro.\n\n```js\nlet a = 1\n```\n\n```js\nlet b = 2\n```\n\nSacrificial last paragraph.\n",
+  },
+  // Windows line endings (F12): an edit elsewhere leaves the multi-line
+  // blocks nobody touched in CRLF, and what the editor writes is CRLF too.
+  crlf: {
+    markdown: "# Packing\r\n\r\n> [!NOTE]\r\n> Measure twice.\r\n\r\n> [!TIP]\r\n> Label the boxes\r\n> by room.\r\n\r\n- tape\r\n- markers\r\n\r\nLast paragraph\r\nover two lines.\r\n",
+    editorWrites: "# Packing\n\n> [!NOTE]\n> Measure twice.\n\n> [!TIP]\n> Label the boxes\n> by room.\n\n- tape\n- markers\n\nLast paragraph\nover two lines.\n",
+  },
   mixed: {
     markdown: "# Plan\n\nIntro with a [link](https://example.com).\n\n- [ ] Task one\n- [x] Task two\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n1. Step\n   - sub\n",
     editorWrites: "# Plan\n\nIntro with a [link](https://example.com).\n\n- [ ] Task one\n- [x] Task two\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n1. Step\n   - sub\n",

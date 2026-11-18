@@ -28,6 +28,16 @@
 // - A table and the comment after it that keeps its column widths
 //   (markdown-table-widths.ts) are one block: a width changed in the editor
 //   is an edit to the table, and an unchanged one keeps the comment as written.
+// - A code fence's info string after the language (`title="app.js"`,
+//   `{1,3}`) is something the editor can't hold: it loads only the
+//   language. `meaning` leaves it out, so an untouched fence still matches
+//   and is kept as written; `content` counts it, so a fence is never
+//   swapped for the editor's copy that lost it.
+// - Line endings: a Windows (CRLF) note compares as if it were LF, and what
+//   the editor writes goes back in the document's own ending.
+// - A link definition goes once nothing in the text uses it any more (no
+//   reference to it and no link to its address): select all and delete
+//   leaves an empty text, not an invisible definition.
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
@@ -40,7 +50,18 @@ type MdNode = {
   [key: string]: unknown
 }
 
-type Block = { type: string; start: number; end: number; source: string; key: string; content: string }
+type Block = {
+  type: string
+  start: number
+  end: number
+  source: string
+  key: string
+  content: string
+  // References (by identifier) and link or image addresses in the block;
+  // for a definition, its own identifier and address.
+  references: Set<string>
+  urls: Set<string>
+}
 
 const processor = unified().use(remarkParse).use(remarkGfm)
 
@@ -50,6 +71,11 @@ function parse(markdown: string): MdNode {
 
 // Fields that are about how a node was written, not what it means.
 const STYLE_ONLY = new Set(['position', 'data', 'spread', 'label', 'referenceType'])
+
+// Fields the editor can't hold, so it loads a node without them: left out
+// of `meaning` (the block the editor shows still matches its original) but
+// counted by `content` (nothing is lost by writing the editor's copy).
+const EDITOR_DROPS = new Set(['meta'])
 
 // Nodes whose children are inline text: compared as runs of marked text.
 const INLINE_PARENTS = new Set(['paragraph', 'heading', 'tableCell'])
@@ -109,8 +135,11 @@ function meaning(node: unknown, definitions: Map<string, MdNode>): unknown {
   const md = resolved(node as MdNode, definitions)
   const out: Record<string, unknown> = {}
   for (const key of Object.keys(md).sort()) {
-    if (STYLE_ONLY.has(key)) continue
-    out[key] = key === 'children' && INLINE_PARENTS.has(md.type) ? runs(md.children ?? [], definitions) : meaning(md[key], definitions)
+    if (STYLE_ONLY.has(key) || EDITOR_DROPS.has(key)) continue
+    const value = md[key]
+    // CRLF and LF text mean the same.
+    if (typeof value === 'string') out[key] = value.replace(/\r\n?/g, '\n')
+    else out[key] = key === 'children' && INLINE_PARENTS.has(md.type) ? runs(md.children ?? [], definitions) : meaning(value, definitions)
   }
   if ((md.type === 'link' || md.type === 'image') && out.title === undefined) out.title = null
   if (md.type === 'table') {
@@ -126,18 +155,39 @@ function meaning(node: unknown, definitions: Map<string, MdNode>): unknown {
 }
 
 // Everything in a block a reader could lose: its text (spacing aside),
-// code, raw HTML, link and image addresses, image alt text, rules and
-// task boxes. Not how any of it is marked or laid out.
+// code, raw HTML, rules, and every other field `meaning` compares
+// (addresses, alt text, a code block's language, a heading's level, task
+// boxes), plus what the editor can't hold (`EDITOR_DROPS`). Taken from the
+// node's own fields, so a field `meaning` compares can't be missed here.
+// Not how any of it is marked or nested (a node's type), nor laid out.
 function content(node: MdNode, definitions: Map<string, MdNode>): string {
   const md = resolved(node, definitions)
   let out = ''
-  if (typeof md.value === 'string') out += md.value.replace(/\s+/g, '')
-  if (md.type === 'link' || md.type === 'image') out += `<${String(md.url)}>`
-  if (md.type === 'image' || md.type === 'imageReference') out += `![${String(md.alt ?? '')}]`
   if (md.type === 'thematicBreak') out += '<hr>'
-  if (md.type === 'listItem' && typeof md.checked === 'boolean') out += md.checked ? '[x]' : '[ ]'
+  for (const key of Object.keys(md).sort()) {
+    if (key === 'type' || key === 'children' || STYLE_ONLY.has(key)) continue
+    const value = md[key]
+    if (value === null || value === undefined) continue
+    // Text runs on across marks: `a *b*` and `**a b**` hold the same text.
+    if (key === 'value' && typeof value === 'string') out += value.replace(/\s+/g, '')
+    else out += `<${key}=${JSON.stringify(value)}>`
+  }
   for (const child of md.children ?? []) out += content(child, definitions)
   return out
+}
+
+// For tests/markdown-merge.test.ts: every field `meaning` compares must be
+// one `content` counts. Not part of the package's exports.
+export const mergeParts = { parse, meaning, content }
+
+// References and addresses a block uses (see `Block`).
+function uses(node: MdNode, references: Set<string> = new Set(), urls: Set<string> = new Set()) {
+  if (node.type === 'linkReference' || node.type === 'imageReference' || node.type === 'definition') {
+    references.add(String(node.identifier))
+  }
+  if (typeof node.url === 'string') urls.add(node.url)
+  for (const child of node.children ?? []) uses(child, references, urls)
+  return { references, urls }
 }
 
 function blocks(markdown: string): Block[] {
@@ -162,6 +212,7 @@ function blocks(markdown: string): Block[] {
       // Tables with no width set read as they always have.
       key: JSON.stringify(widths?.some((width) => width !== null) ? [key, widths] : key),
       content: content(child, definitions),
+      ...uses(child),
     })
   }
   return out
@@ -236,6 +287,10 @@ type Item = { original: number; at: number } | { written: Block; at: number }
  */
 export function mergeMarkdown(original: string, baseline: string, current: string): string {
   if (current === baseline) return original
+  // The document's own line ending (its first), for what the editor
+  // writes, which is always LF.
+  const eol = original[original.indexOf('\n') - 1] === '\r' ? '\r\n' : '\n'
+  const ownEnding = (text: string) => (eol === '\n' ? text : text.replace(/\r?\n/g, eol))
 
   const originals = blocks(original)
   const loaded = blocks(baseline)
@@ -272,6 +327,22 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
     items.splice(position, 0, { original: index, at: index })
   })
 
+  // A definition the original used and nothing uses now (no reference to
+  // it, no link to its address: the editor writes a reference link inline)
+  // goes with the text that used it.
+  const inText = (list: Block[]) => list.filter((block) => block.type !== 'definition')
+  const usedBefore = new Set(inText(originals).flatMap((block) => [...block.references]))
+  const kept = items.map((item) => ('original' in item ? originals[item.original] : item.written))
+  const referencesNow = new Set(inText(kept).flatMap((block) => [...block.references]))
+  const urlsNow = new Set(inText(kept).flatMap((block) => [...block.urls]))
+  for (let k = items.length - 1; k >= 0; k--) {
+    const block = kept[k]
+    if (block.type !== 'definition') continue
+    const [identifier] = block.references
+    const [url] = block.urls
+    if (usedBefore.has(identifier) && !referencesNow.has(identifier) && !urlsNow.has(url)) items.splice(k, 1)
+  }
+
   let out = ''
   items.forEach((item, k) => {
     const previous = items[k - 1]
@@ -280,9 +351,9 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
     } else if ('original' in previous && 'original' in item && item.original === previous.original + 1) {
       out += original.slice(originals[previous.original].end, originals[item.original].start)
     } else {
-      out += '\n\n'
+      out += eol + eol
     }
-    out += 'original' in item ? originals[item.original].source : item.written.source
+    out += 'original' in item ? originals[item.original].source : ownEnding(item.written.source)
   })
   // The document ends the way the original ended, whichever block is last
   // now: an edit to the last block adds no newline the person didn't type.
@@ -290,7 +361,7 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
   const ending =
     originals.length > 0
       ? original.slice(originals[originals.length - 1].end)
-      : current.slice(edited.at(-1)?.end ?? current.length)
+      : ownEnding(current.slice(edited.at(-1)?.end ?? current.length))
   if (items.length > 0) out += ending
 
   const saved = blocks(out)
