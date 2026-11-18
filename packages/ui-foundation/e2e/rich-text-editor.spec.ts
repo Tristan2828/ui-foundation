@@ -806,15 +806,14 @@ test.describe('slash menu', () => {
     await caretAtEnd(page, 'formats')
     await page.keyboard.type(' /')
     await expect(menu(page)).toHaveCount(0)
-    // In a list item.
+    // In a code block.
     await page.keyboard.press('Enter')
-    await page.keyboard.type('- item')
-    await page.keyboard.press('Enter')
+    await page.keyboard.press('Control+Shift+Digit8')
     await page.keyboard.type('/')
     await expect(menu(page)).toHaveCount(0)
+    await page.keyboard.press('Backspace')
+    await page.keyboard.press('Control+Shift+Digit0')
     // A "/" already at a line's start: the caret coming to it doesn't open it.
-    await page.keyboard.press('Enter')
-    await page.keyboard.press('Enter')
     await page.keyboard.type('/q')
     await page.keyboard.press('Escape')
     await page.keyboard.press('ArrowLeft')
@@ -1273,16 +1272,47 @@ test.describe('image upload', () => {
     await expect(editor(page, 'floating').locator('img[src^="blob:"]')).toHaveCount(1)
   })
 
-  test('without `upload`, files are left alone: no button, and a paste or drop of one changes nothing', async ({ page }) => {
+  test("without `upload`: no button, and a pasted or dropped image changes nothing and says it can't go in", async ({ page }) => {
     const field = page.locator('[data-fixture="noUpload"]')
     await expect(field.getByRole('button', { name: 'Image', exact: true })).toHaveCount(0)
     await expect(field.locator('input[type=file]')).toHaveCount(0)
     await caretAtEnd(page, 'noUpload')
     await pasteFiles(page, 'noUpload', [photo()])
+    await expect(page.getByText("Images can't be added here.")).toHaveCount(1)
     await dropFiles(page, 'noUpload', [photo()])
+    await expect(page.getByText("Images can't be added here.")).toHaveCount(2)
     await page.waitForTimeout(300)
     await expect(editor(page, 'noUpload').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
     expect(await saved(page, 'noUpload').textContent()).toBe('No upload: files are ignored.\n')
+  })
+
+  // An image a web page copies as `data:` in its HTML: never saved as
+  // that, but uploaded where the field takes images (the review's F14).
+  const DATA_PNG = `data:image/png;base64,${Buffer.from(pngBytes()).toString('base64')}`
+  const pastedPicture = { 'text/html': `<p>A picture: <img src="${DATA_PNG}" alt=""></p>`, 'text/plain': 'A picture:' }
+
+  test('a `data:` image in pasted HTML is uploaded, never saved as data', async ({ page }) => {
+    await caretAtEnd(page, 'uploads')
+    await page.keyboard.press('Enter')
+    await pasteFiles(page, 'uploads', [], pastedPicture)
+    await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(1)
+    const markdown = (await saved(page, 'uploads').textContent())!
+    expect(markdown).toContain('A picture:')
+    expect(markdown).toMatch(/!\[\]\(blob:/)
+    expect(markdown).not.toContain('data:')
+  })
+
+  test('without `upload`, a `data:` image in pasted HTML is left out and said so; its words paste', async ({ page }) => {
+    await caretAtEnd(page, 'noUpload')
+    await page.keyboard.press('Enter')
+    await pasteFiles(page, 'noUpload', [], pastedPicture)
+    await expect(page.getByText("Images can't be added here.")).toBeVisible()
+    const markdown = (await saved(page, 'noUpload').textContent())!
+    expect(markdown).toContain('A picture:')
+    expect(markdown).not.toContain('data:')
+    // Negative control: an image at a web address is kept as written.
+    await pasteFiles(page, 'noUpload', [], { 'text/html': '<p><img src="https://example.com/a.png" alt="web"></p>' })
+    await expect(saved(page, 'noUpload')).toContainText('![web](https://example.com/a.png')
   })
 
   for (const theme of ['light', 'dark'] as const) {
@@ -1532,5 +1562,470 @@ test.describe('a value that arrives later', () => {
     await page.getByRole('button', { name: 'Reset' }).click()
     await expect(box).toHaveText('')
     await expect(saved(page, 'lateValue')).toHaveText('')
+  })
+})
+
+// An edit the merge refuses, on an editor with no onProblem (a form that
+// passes none): it says so in the field and is marked invalid, and
+// nothing new is saved (RichTextEditor's review, F1).
+test.describe('a refused edit', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'refused')).toBeVisible()
+  })
+
+  const problem = (page: Page) => page.locator('[data-fixture="refused"] [data-slot=rich-text-editor-problem]')
+
+  test('with no onProblem, the field says why and is invalid; undoing the edit takes it back', async ({ page }) => {
+    const box = editor(page, 'refused')
+    // Negative control: an edit the merge takes says nothing.
+    await caretAtEnd(page, 'refused')
+    await page.keyboard.type(' Kept')
+    await expect(saved(page, 'refused')).toContainText('Tail paragraph. Kept')
+    await expect(problem(page)).toHaveCount(0)
+    await expect(box).not.toHaveAttribute('aria-invalid', 'true')
+
+    await box.locator('li').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' EDIT')
+    await expect(problem(page)).toBeVisible()
+    await expect(problem(page)).toHaveText(/can't be saved/)
+    await expect(problem(page)).not.toHaveText(/in the form/)
+    await expect(box).toHaveAttribute('aria-invalid', 'true')
+    const problemId = (await problem(page).getAttribute('id'))!
+    expect((await box.getAttribute('aria-describedby'))!.split(' ')).toContain(problemId)
+    // What would be saved is the last text that could be.
+    expect(await saved(page, 'refused').textContent()).toBe('1) a\n2) b\n10. ten\n11. eleven\n\nTail paragraph. Kept\n')
+
+    for (let i = 0; i < ' EDIT'.length; i++) await page.keyboard.press('Backspace')
+    await expect(problem(page)).toHaveCount(0)
+    await expect(box).not.toHaveAttribute('aria-invalid', 'true')
+  })
+})
+
+// Paste and typed addresses (the review's F9, F14, F19).
+test.describe('paste and addresses', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'links')).toBeVisible()
+  })
+
+  const text = async (page: Page, name: string) => (await saved(page, name).textContent())!
+
+  test('a typed address becomes a link on a space or Enter, saved unescaped', async ({ page }) => {
+    const box = editor(page, 'links')
+    await caretAtEnd(page, 'links')
+    // Negative control: a word that isn't an address stays a word.
+    await page.keyboard.type(' See example now ')
+    await expect(box.locator('a')).toHaveCount(1)
+    await page.keyboard.type('https://example.com/a_b now and www.site.org.')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('mail me@example.com ')
+    await expect(box.locator('a[href="https://example.com/a_b"]')).toHaveText('https://example.com/a_b')
+    await expect(box.locator('a[href="https://www.site.org"]')).toHaveText('www.site.org')
+    await expect(box.locator('a[href="mailto:me@example.com"]')).toHaveText('me@example.com')
+    const markdown = await text(page, 'links')
+    expect(markdown).not.toContain('\\:')
+    expect(markdown).not.toContain('www\\.')
+    expect(markdown).toContain('https://example.com/a_b')
+    expect(markdown).toContain('[www.site.org](https://www.site.org).')
+  })
+
+  test('an address in a code span stays text', async ({ page }) => {
+    const box = editor(page, 'links')
+    await caretAtEnd(page, 'links')
+    await page.keyboard.type(' `https://example.com` ')
+    await expect(box.locator('code')).toHaveText('https://example.com')
+    await expect(box.locator('code a, a code')).toHaveCount(0)
+  })
+
+  test('an address pasted as plain text is a link; pasted over words, it links them', async ({ page }) => {
+    const box = editor(page, 'links')
+    await caretAtEnd(page, 'links')
+    await paste(page, 'links', { 'text/plain': ' ' })
+    await paste(page, 'links', { 'text/plain': 'https://example.com/a_b?x=1&y=2' })
+    await expect(box.locator('a[href="https://example.com/a_b?x=1&y=2"]')).toHaveText('https://example.com/a_b?x=1&y=2')
+    let markdown = await text(page, 'links')
+    expect(markdown).not.toContain('\\:')
+    expect(markdown).not.toContain('\\&')
+
+    // Negative control: words that aren't an address replace the selection.
+    await selectFirstWord(page, 'links')
+    await paste(page, 'links', { 'text/plain': 'Simple' })
+    await expect(box).toContainText('Simple words here.')
+    await page.keyboard.press('Home')
+    for (let i = 0; i < 'Simple'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    await page.waitForTimeout(100)
+    await paste(page, 'links', { 'text/plain': 'https://example.com/guide', 'text/html': '<a href="https://example.com/guide">https://example.com/guide</a>' })
+    await expect(box.locator('a[href="https://example.com/guide"]')).toHaveText('Simple')
+    markdown = await text(page, 'links')
+    expect(markdown).toContain('[Simple](https://example.com/guide) words here.')
+  })
+
+  test('pasted HTML keeps a web link and drops one that runs code, keeping its words', async ({ page }) => {
+    await caretAtEnd(page, 'links')
+    await page.keyboard.press('Enter')
+    await paste(page, 'links', {
+      'text/html': '<p><a href="javascript:alert(1)">evil link</a> and <a href="https://ok.example/">good link</a></p>',
+      'text/plain': 'evil link and good link',
+    })
+    await expect(editor(page, 'links').getByText('evil link')).toBeVisible()
+    const markdown = await text(page, 'links')
+    expect(markdown).not.toContain('javascript')
+    expect(markdown).toContain('evil link and [good link](https://ok.example/)')
+  })
+
+  test('plain lines stay lines: single line breaks are hard breaks', async ({ page }) => {
+    const box = editor(page, 'links')
+    await caretAtEnd(page, 'links')
+    await page.keyboard.press('Enter')
+    await paste(page, 'links', { 'text/plain': '12 Harbour Road\nFlat 3\nOslo 0150' })
+    await expect(box.locator('p').filter({ hasText: 'Harbour' }).locator('br:not(.ProseMirror-trailingBreak)')).toHaveCount(2)
+    expect(await text(page, 'links')).toMatch(/12 Harbour Road(\\| {2,})\nFlat 3(\\| {2,})\nOslo 0150/)
+    // Negative control: a blank line between them still makes two paragraphs.
+    await page.keyboard.press('Enter')
+    await paste(page, 'links', { 'text/plain': 'First one\n\nSecond one' })
+    expect(await text(page, 'links')).toContain('First one\n\nSecond one')
+  })
+
+  test("Notion's to-dos are task items, and code keeps its language", async ({ page }) => {
+    await caretAtEnd(page, 'links')
+    await page.keyboard.press('Enter')
+    await paste(page, 'links', {
+      'text/html':
+        '<ul class="to-do-list"><li><div class="checkbox checkbox-on"></div> <span class="to-do-children-checked">Bought milk</span></li>' +
+        '<li><div class="checkbox checkbox-off"></div> <span class="to-do-children-unchecked">Call the plumber</span></li></ul>' +
+        '<pre><code class="language-JavaScript">let a = 1</code></pre>' +
+        '<ul><li>A plain bullet</li></ul>',
+      'text/plain': 'Bought milk\nCall the plumber\nlet a = 1\nA plain bullet',
+    })
+    const box = editor(page, 'links')
+    await expect(box.locator('li[data-item-type=task]')).toHaveCount(2)
+    const markdown = await text(page, 'links')
+    expect(markdown).toMatch(/[-*] \[x\] Bought milk\n[-*] \[ \] Call the plumber/)
+    expect(markdown).toContain('```javascript\nlet a = 1\n```')
+    // Negative control: a plain list item is no task.
+    expect(markdown).toMatch(/[-*] A plain bullet/)
+    expect(markdown).not.toMatch(/\[.\] A plain bullet/)
+  })
+
+  test("Word's list paragraphs are list items, without their marker", async ({ page }) => {
+    await caretAtEnd(page, 'links')
+    await page.keyboard.press('Enter')
+    const item = (level: number, marker: string, words: string) =>
+      `<p class=MsoListParagraphCxSpMiddle style='margin-left:.5in;mso-list:l0 level${level} lfo1'><![if !supportLists]><span style='mso-list:Ignore'>${marker}<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span><![endif]>${words}</p>`
+    await paste(page, 'links', {
+      'text/html': `<p class=MsoNormal>Before</p>${item(1, '·', 'First')}${item(2, 'o', 'Under first')}${item(1, '·', 'Second')}<p class=MsoNormal>After</p>${item(1, '1.', 'Numbered')}`,
+      'text/plain': 'Before\nFirst\nUnder first\nSecond\nAfter\nNumbered',
+    })
+    const box = editor(page, 'links')
+    await expect(box.locator('ul li')).toHaveCount(3)
+    await expect(box.locator('ol > li')).toHaveCount(1)
+    const markdown = await text(page, 'links')
+    expect(markdown).not.toContain('·')
+    expect(markdown).toMatch(/[-*] First\n\s+[-*] Under first\n[-*] Second/)
+    expect(markdown).toMatch(/1\. Numbered/)
+    // Negative control: Word's plain paragraphs stay paragraphs.
+    expect(markdown).toMatch(/\n\nBefore\n\n/)
+  })
+
+  test('lines pasted into a table cell join with spaces: no new column', async ({ page }) => {
+    const table = editor(page, 'table').locator('table')
+    await table.locator('td').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await paste(page, 'table', { 'text/plain': ' one\ntwo\nthree' })
+    await paste(page, 'table', { 'text/html': '<p>four</p><ul><li>five</li></ul>', 'text/plain': 'four\nfive' })
+    await expect(table.locator('tr').first().locator('th')).toHaveCount(2)
+    await expect(table.locator('tr')).toHaveCount(3)
+    const markdown = await text(page, 'table')
+    expect(markdown).toMatch(/\| Top one two three ?four five +\| 1 +\|/)
+    // Negative control: the row not pasted into is as it was.
+    expect(markdown).toMatch(/\| Leg +\| 4 +\|/)
+  })
+})
+
+// Full screen holds focus (the review's F20).
+test.describe('full screen', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(FEATURES)
+    await expect(editor(page, 'links')).toBeVisible()
+  })
+
+  const field = (page: Page) => page.locator('[data-fixture="links"] [data-slot=rich-text-editor]')
+  const focusInField = (page: Page) => field(page).evaluate((element) => element.contains(document.activeElement))
+
+  test('is a dialog; Tab stays in it; Esc gives the page back', async ({ page }) => {
+    await field(page).getByRole('button', { name: 'Full Screen' }).click()
+    await expect(field(page)).toHaveAttribute('data-full-screen', 'true')
+    await expect(page.getByRole('dialog', { name: 'links' })).toHaveAttribute('aria-modal', 'true')
+    await editor(page, 'links').click()
+    await page.waitForTimeout(100)
+    for (let i = 0; i < 8; i++) {
+      await page.keyboard.press('Tab')
+      expect(await focusInField(page)).toBe(true)
+    }
+    await expect(page.locator('[data-fixture="tasks"]')).toHaveJSProperty('inert', true)
+    await editor(page, 'links').click()
+    await page.keyboard.press('Escape')
+    await expect(field(page)).not.toHaveAttribute('data-full-screen', 'true')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    // Negative control: out of full screen, Tab leaves the field.
+    await expect(page.locator('[data-fixture="tasks"]')).toHaveJSProperty('inert', false)
+    await editor(page, 'links').click()
+    await page.waitForTimeout(100)
+    let left = false
+    for (let i = 0; i < 8 && !left; i++) {
+      await page.keyboard.press('Tab')
+      left = !(await focusInField(page))
+    }
+    expect(left).toBe(true)
+  })
+
+  test('the link box opened in full screen still takes typing', async ({ page }) => {
+    await field(page).getByRole('button', { name: 'Full Screen' }).click()
+    await selectFirstWord(page, 'links')
+    await page.keyboard.press('ControlOrMeta+k')
+    const address = page.getByRole('textbox', { name: 'Link Address' })
+    await expect(address).toBeFocused()
+    await address.fill('example.org')
+    await page.keyboard.press('Enter')
+    await expect(editor(page, 'links').locator('a[href="https://example.org"]')).toHaveText('Plain')
+  })
+})
+
+// How it behaves as you type (4.126, the RichTextEditor review's typing
+// findings), on the RichTextEditor Typing story: each editor's Markdown
+// beside it, as on the others.
+test.describe('typing', () => {
+  const TYPING = 'http://localhost:6180/story.html?id=app-richtexteditor-typing--typing'
+
+  // The caret at the start of the document.
+  async function caretAtStart(page: Page, name: string) {
+    await editor(page, name).locator(':scope > *').first().click()
+    await expect(editor(page, name)).toBeFocused()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+Home')
+  }
+
+  // The caret at the end of the line holding `text`.
+  async function caretAfter(page: Page, name: string, text: string) {
+    await editor(page, name).getByText(text, { exact: true }).click()
+    await expect(editor(page, name)).toBeFocused()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.waitForTimeout(100)
+  }
+
+  // A key that moves the caret, then the moment ProseMirror takes to read
+  // where it went.
+  async function move(page: Page, key: string) {
+    await page.keyboard.press(key)
+    await page.waitForTimeout(100)
+  }
+
+  // A click `dy` from the bottom of an editor's text, scrolled into view first.
+  async function clickNearBottom(page: Page, name: string, dy = 3) {
+    await editor(page, name).scrollIntoViewIfNeeded()
+    const box = (await editor(page, name).boundingBox())!
+    await page.mouse.click(box.x + 40, box.y + box.height - dy)
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(TYPING)
+    await expect(editor(page, 'writing')).toBeVisible()
+  })
+
+  // F10.
+  test('ArrowDown at the end of a last code block puts a line under it; a last paragraph gets none', async ({ page }) => {
+    await caretAtEnd(page, 'onlyCode')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.type('after')
+    await expect(saved(page, 'onlyCode')).toHaveText('```\nlast line\n```\n\nafter\n')
+    // Negative control: past a paragraph there's nothing to leave.
+    await caretAtEnd(page, 'plainLast')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.type('!')
+    await expect(saved(page, 'plainLast')).toHaveText('Only a line.!\n')
+  })
+
+  test('ArrowUp at the start of a first code block or table puts a line above it; ArrowDown in a last table leaves it', async ({ page }) => {
+    await caretAtStart(page, 'codeFirst')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.type('before')
+    await expect(saved(page, 'codeFirst')).toHaveText('before\n\n```\nfirst line\n```\n\nAfter the code.\n')
+
+    await editor(page, 'onlyTable').getByText('Part', { exact: true }).click()
+    await page.waitForTimeout(100)
+    await move(page, 'Home')
+    await page.keyboard.press('ArrowUp')
+    await page.keyboard.type('above')
+    await expect(saved(page, 'onlyTable')).toHaveText('above\n\n| Part | Count |\n| --- | --- |\n| Top | 1 |\n')
+    await editor(page, 'onlyTable').getByText('Top', { exact: true }).click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.type('below')
+    await expect(saved(page, 'onlyTable')).toContainText('| Top | 1 |\n\nbelow\n')
+  })
+
+  test('ArrowDown at the end of a last quote leaves it', async ({ page }) => {
+    await caretAtEnd(page, 'quoteLast')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.type('Out')
+    await expect(saved(page, 'quoteLast')).toHaveText('Before.\n\n> Quoted words.\n\nOut\n')
+  })
+
+  test('a click under a last code block puts the caret on a new line; under a paragraph, at its end', async ({ page }) => {
+    await clickNearBottom(page, 'onlyCode')
+    await expect(editor(page, 'onlyCode')).toBeFocused()
+    await page.keyboard.type('below')
+    await expect(saved(page, 'onlyCode')).toHaveText('```\nlast line\n```\n\nbelow\n')
+    await clickNearBottom(page, 'plainLast')
+    await page.keyboard.type('!')
+    await expect(saved(page, 'plainLast')).toHaveText('Only a line.!\n')
+  })
+
+  // F15.
+  test('typed --- is a divider with a line under it, the caret there', async ({ page }) => {
+    await caretAtEnd(page, 'writing')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('---', { delay: 50 })
+    await expect(editor(page, 'writing').locator('hr')).toHaveCount(1)
+    await page.keyboard.type('next')
+    await expect(saved(page, 'writing')).toHaveText('Start here.\n\n---\n\nnext\n')
+  })
+
+  // F16 and F22.
+  test('spaced stars stay as typed; *words*, **words** and ==words== format as typed', async ({ page }) => {
+    const box = editor(page, 'writing')
+    await caretAtEnd(page, 'writing')
+    await page.keyboard.type(' Cost is 5 * 3 * 2 and 2 ** 3 ** 4.', { delay: 20 })
+    await expect(box.locator('em, strong')).toHaveCount(0)
+    await expect(saved(page, 'writing')).toContainText('Cost is 5 \\* 3 \\* 2 and 2 \\*\\* 3 \\*\\* 4.')
+    await page.keyboard.type(' *one* **two** ==three== =={green}four== ', { delay: 20 })
+    await expect(box.locator('em')).toHaveText('one')
+    await expect(box.locator('strong')).toHaveText('two')
+    await expect(box.locator('mark[data-color=amber]')).toHaveText('three')
+    await expect(box.locator('mark[data-color=green]')).toHaveText('four')
+    await expect(saved(page, 'writing')).toContainText('*one* **two** ==three== =={green}four==')
+  })
+
+  // F22.
+  test("a paragraph's space at its end isn't saved (Markdown would drop it on reading)", async ({ page }) => {
+    await caretAtEnd(page, 'writing')
+    await page.keyboard.type(' more ')
+    // Exactly: toHaveText would fold the space away.
+    await expect.poll(() => saved(page, 'writing').textContent()).toBe('Start here. more\n')
+  })
+
+  // F17.
+  test("Backspace at an item's start lifts it out of the list; a second joins it to the line above", async ({ page }) => {
+    await caretAfter(page, 'list', 'two')
+    await move(page, 'Home')
+    await page.keyboard.press('Backspace')
+    await expect(saved(page, 'list')).toHaveText('Above.\n\n- one\n\ntwo\n')
+    await page.keyboard.press('Backspace')
+    await expect(saved(page, 'list')).toHaveText('Above.\n\n- onetwo\n')
+    // Mid-line, Backspace deletes a character as ever.
+    await page.keyboard.press('Backspace')
+    await expect(saved(page, 'list')).toHaveText('Above.\n\n- ontwo\n')
+    // A nested item goes up a level, a list item still (it was fused into
+    // the item above as a second paragraph).
+    await caretAfter(page, 'nested', 'two')
+    await move(page, 'Home')
+    await page.keyboard.press('Backspace')
+    await expect(saved(page, 'nested')).toHaveText('- one\n- two\n')
+  })
+
+  // The review's section 5: Tab and Shift+Tab.
+  test('Tab and Shift+Tab move a list item and stay in the text; in code they indent', async ({ page }) => {
+    await caretAfter(page, 'nested', 'one')
+    await page.keyboard.press('Tab')
+    await expect(editor(page, 'nested')).toBeFocused()
+    await expect(saved(page, 'nested')).toHaveText('- one\n  - two\n')
+    await caretAfter(page, 'nested', 'two')
+    await page.keyboard.press('Shift+Tab')
+    await expect(saved(page, 'nested')).toHaveText('- one\n- two\n')
+    await page.keyboard.press('Tab')
+    await expect(saved(page, 'nested')).toHaveText('- one\n  - two\n')
+
+    await caretAtStart(page, 'onlyCode')
+    await page.keyboard.press('Tab')
+    await expect(editor(page, 'onlyCode')).toBeFocused()
+    await expect(saved(page, 'onlyCode')).toHaveText('```\n  last line\n```\n')
+    await page.keyboard.press('Shift+Tab')
+    await expect(saved(page, 'onlyCode')).toHaveText('```\nlast line\n```\n')
+  })
+
+  // F18.
+  test('the slash menu opens in a list item, and a pick applies there; in a cell it lists only what fits', async ({ page }) => {
+    const menu = page.getByRole('listbox', { name: 'Blocks' })
+    await caretAfter(page, 'list', 'two')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/')
+    await expect(menu).toBeVisible()
+    await page.keyboard.type('h1')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Heading')
+    await expect(saved(page, 'list')).toHaveText('Above.\n\n- one\n- two\n\n# Heading\n')
+
+    await editor(page, 'cells').getByText('Top', { exact: true }).click()
+    await page.waitForTimeout(100)
+    await move(page, 'Home')
+    await page.keyboard.type('/')
+    await expect(menu).toBeVisible()
+    await expect(menu.getByRole('option', { name: 'Heading 1', exact: true })).toHaveCount(0)
+    await expect(menu.getByRole('option', { name: 'Table', exact: true })).toHaveCount(0)
+    await expect(menu.getByRole('option', { name: 'Green highlight', exact: true })).toBeVisible()
+  })
+
+  // F21.
+  test('redo after undoing through a slash pick brings back every word, and one too many does nothing', async ({ page }) => {
+    await caretAtEnd(page, 'writing')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/quo')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('quoted')
+    await page.waitForTimeout(700)
+    await page.keyboard.type(' more')
+    await expect(saved(page, 'writing')).toHaveText('Start here.\n\n> quoted more\n')
+    for (let i = 0; i < 12; i++) await page.keyboard.press('ControlOrMeta+z')
+    await expect(saved(page, 'writing')).toHaveText('Start here.\n')
+    // More presses than there are steps: the extra ones do nothing (with
+    // nothing to redo, ProseMirror's keymap ran Mod+Z for them, an undo).
+    for (let i = 0; i < 12; i++) await page.keyboard.press('ControlOrMeta+Shift+z')
+    await expect(saved(page, 'writing')).toHaveText('Start here.\n\n> quoted more\n')
+    await page.keyboard.press('ControlOrMeta+Shift+z')
+    await page.waitForTimeout(200)
+    await expect(saved(page, 'writing')).toHaveText('Start here.\n\n> quoted more\n')
+  })
+
+  // F24.
+  test('the block keys turn a heading into a list and an item into a heading; Ctrl/Cmd+Shift+H highlights', async ({ page }) => {
+    await caretAfter(page, 'heading', 'Title')
+    await page.keyboard.press('Control+Shift+Digit5')
+    // Into the list under it: two lists side by side are one in Markdown.
+    await expect(saved(page, 'heading')).toHaveText('- Title\n- item\n')
+    await caretAfter(page, 'heading', 'item')
+    await page.keyboard.press('Control+Shift+Digit1')
+    await expect(saved(page, 'heading')).toHaveText('- Title\n\n# item\n')
+    await move(page, 'Home')
+    for (let i = 0; i < 'item'.length; i++) await page.keyboard.press('Shift+ArrowRight')
+    await page.waitForTimeout(100)
+    await page.keyboard.press('ControlOrMeta+Shift+H')
+    await expect(saved(page, 'heading')).toContainText('# ==item==\n')
+    await page.keyboard.press('ControlOrMeta+Shift+H')
+    await expect(saved(page, 'heading')).toContainText('# item\n')
+  })
+
+  // F24.
+  test("ticking a task's box keeps focus in the text, so Ctrl/Cmd+Z takes the tick back", async ({ page }) => {
+    const box = page.locator('[data-fixture="tasks"]').getByRole('checkbox', { name: 'Done' }).first()
+    await box.click()
+    await expect(saved(page, 'tasks')).toContainText('- [x] Open item')
+    await expect(editor(page, 'tasks')).toBeFocused()
+    await page.keyboard.press('ControlOrMeta+z')
+    await expect(saved(page, 'tasks')).toContainText('- [ ] Open item')
   })
 })

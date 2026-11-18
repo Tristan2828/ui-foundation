@@ -1,12 +1,16 @@
-// The slash menu's logic: "/" typed at the start of a top-level paragraph
-// (or one in a callout) opens it, what's typed after the "/" filters it,
-// and picking an item turns the paragraph into that block, the "/…" gone.
-// The menu itself: rich-text-slash-menu.tsx; its keys and ARIA:
-// milkdown-editor.tsx.
+// The slash menu's logic: "/" typed at the start of a line of text opens
+// it, what's typed after the "/" filters it, and picking an item turns the
+// line into that block, the "/…" gone. The menu itself:
+// rich-text-slash-menu.tsx; its keys and ARIA: milkdown-editor.tsx.
+//
+// Any line of text (4.126, the RichTextEditor review's F18): a top-level
+// one or a heading, a list item's, a quote's or a callout's, a table
+// cell's. The menu lists only what can be made there: in a cell, the
+// highlights (a cell holds one line), not a heading or a list.
 //
 // Only a "/" typed there opens it: one already in the text (a path,
-// `/usr/bin`) never does, and neither does a "/" mid-line or inside a
-// list, a quote or a code block.
+// `/usr/bin`) never does, and neither does a "/" mid-line or in a code
+// block.
 import { Plugin, PluginKey, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { FileTextIcon, ImageIcon } from 'lucide-react'
@@ -24,12 +28,10 @@ export type SlashQuery = { from: number; to: number; query: string }
 // Longer than any item's name: past it, the person is writing, not picking.
 const MAX_QUERY = 24
 
-// A top-level paragraph's start, or one's in a callout (where picking a
-// kind of callout changes the callout's): where a "/" opens the menu.
+// A line of text's start, but a code block's: where a "/" opens the menu.
 function atParagraphStart(state: EditorState, pos: number): boolean {
   const $pos = state.doc.resolve(pos)
-  const placed = $pos.depth === 1 || ($pos.depth === 2 && $pos.node(1).type.name === 'callout')
-  return placed && $pos.parent.type.name === 'paragraph' && $pos.parentOffset === 0
+  return $pos.parent.isTextblock && !$pos.parent.type.spec.code && $pos.parentOffset === 0
 }
 
 // The menu's span, if the "/" at `from` still opens it: the caret after it
@@ -138,20 +140,38 @@ const IMAGE_KEYWORDS = ['image', 'picture', 'photo', 'img', 'upload']
 const PAGE_ITEM: SlashItem = { id: 'page', label: 'Page', icon: FileTextIcon }
 const PAGE_KEYWORDS = ['page', 'subpage', 'child', 'link', 'new']
 
+/** Where the menu is open, for `slashItems` to leave out what can't be made there. */
+export type SlashPlace = { state: EditorState; span: SlashQuery }
+
+// Whether picking `id` would do anything where the menu is: its command
+// run, with the "/…" gone, and its transaction dropped.
+function appliesAt(place: SlashPlace): (id: FormatId) => boolean {
+  const state = place.state.apply(place.state.tr.delete(place.span.from, place.span.to))
+  return (id) => toggleFormat(state, () => {}, id)
+}
+
 /**
  * The blocks matching what's typed after the "/": in the name, or the
  * start of a keyword. With `image`, an image too; with `page`, the new page.
+ * With `at`, only the blocks that can be made there.
  */
-export function slashItems(query: string, options: { page?: boolean; image?: boolean } = {}): SlashItem[] {
+export function slashItems(query: string, options: { page?: boolean; image?: boolean; at?: SlashPlace } = {}): SlashItem[] {
   const typed = query.trim().toLowerCase()
   const page = options.page && (!typed || 'page'.includes(typed) || PAGE_KEYWORDS.some((word) => word.startsWith(typed))) ? [PAGE_ITEM] : []
   const image = options.image && (!typed || IMAGE_KEYWORDS.some((word) => word.startsWith(typed))) ? [IMAGE_ITEM] : []
-  if (!typed) return [...BLOCKS, ...image, ...page]
+  const applies = options.at ? appliesAt(options.at) : () => true
+  if (!typed) {
+    // Where no block can go (a table cell), the highlights, which can.
+    const here = BLOCKS.filter((item) => applies(item.id))
+    return [...(here.length ? here : HIGHLIGHT_VARIANTS.filter((item) => applies(item.id))), ...image, ...page]
+  }
   const blocks = [...BLOCKS]
   blocks.splice(BLOCKS.findIndex((item) => item.id === 'callout') + 1, 0, ...CALLOUT_VARIANTS)
   blocks.push(...HIGHLIGHT_VARIANTS)
   const matches: SlashItem[] = [
-    ...blocks.filter((item) => item.label.toLowerCase().includes(typed) || KEYWORDS[item.id]!.some((word) => word.startsWith(typed))),
+    ...blocks.filter(
+      (item) => (item.label.toLowerCase().includes(typed) || KEYWORDS[item.id]!.some((word) => word.startsWith(typed))) && applies(item.id),
+    ),
     ...image,
   ]
   // "/page" puts the page first: it's what was asked for by name.

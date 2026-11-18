@@ -96,6 +96,64 @@ test.describe('widget form', () => {
     await expect(page.getByText('Widget 2 not found')).toBeVisible()
   })
 
+  // A description the editor's merge refuses an edit in (a `1)` list right
+  // before a `10.` one): the edit can't be saved as it stands, so the form
+  // says so on the field and Save sends nothing, rather than the old text
+  // with "Widget updated".
+  test('refused: an edit the description editor cannot save is the field’s error, and Save sends nothing', async ({ page }) => {
+    await forceWidgetGetOverride(page, {
+      body: {
+        id: 2,
+        name: 'Standing Desk',
+        categoryId: 2,
+        status: 'draft',
+        availableFrom: '2026-03-01T00:00:00Z',
+        assigneeEmail: null,
+        price: '349.00',
+        description: '1) a\n2) b\n10. ten\n11. eleven\n\nTail paragraph.\n',
+        tags: ['bulky', 'featured'],
+        inStock: true,
+        extraCategoryIds: [1, 3],
+        checklist: [],
+        pairings: [],
+        checklistState: 'none',
+      },
+    })
+    const patches: string[] = []
+    page.on('request', (request) => {
+      if (request.method() === 'PATCH' && /\/api\/widgets\/2$/.test(request.url())) patches.push(request.postData() ?? '')
+    })
+    await page.goto('/widgets/2/edit')
+    const box = page.getByRole('textbox', { name: 'Description' })
+    await expect(box.locator('li')).toHaveCount(4)
+    await box.locator('li').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' EDIT ONE')
+    const field = page.locator('[data-slot=field]').filter({ has: page.locator('#widget-description-label') })
+    await expect(field.getByText(/can't be saved/)).toBeVisible()
+    await expect(box).toHaveAttribute('aria-invalid', 'true')
+
+    await page.getByRole('button', { name: 'Save Changes' }).click()
+    await expect(page.getByRole('heading', { name: 'Edit Widget' })).toBeVisible()
+    await expect(field.getByText(/can't be saved/)).toBeVisible()
+    await page.waitForTimeout(500)
+    expect(patches).toEqual([])
+
+    // Negative control: undo the refused edit and Save goes through, with
+    // the edit the merge takes.
+    for (let i = 0; i < ' EDIT ONE'.length; i++) await page.keyboard.press('Backspace')
+    await expect(field.getByText(/can't be saved/)).toHaveCount(0)
+    await box.getByText('Tail paragraph.').click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' EDIT TWO')
+    await page.getByRole('button', { name: 'Save Changes' }).click()
+    await expect(page).toHaveURL('/widgets/2')
+    expect(patches).toHaveLength(1)
+    expect(patches[0]).toContain('Tail paragraph. EDIT TWO')
+  })
+
   test('validation: a 422 on submit binds the message to the right field', async ({ page }) => {
     await page.goto('/widgets/new')
     await waitForMswReady(page)

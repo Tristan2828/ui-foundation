@@ -10,7 +10,7 @@
 // where the user came from, not to the form they just left.
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -91,6 +91,7 @@ export function WidgetFormRoute() {
   }, [categoriesQuery.data])
 
   const [submitError, setSubmitError] = useState<AppError | null>(null)
+  const [descriptionProblem, setDescriptionProblem] = useState<string | null>(null)
 
   const form = useForm<WidgetFormValues>({
     resolver: zodResolver(widgetFormSchema),
@@ -116,7 +117,17 @@ export function WidgetFormRoute() {
 
   const isSubmitting = createWidget.isPending || updateWidget.isPending
 
-  const onSubmit = form.handleSubmit((values) => {
+  // The description's editor reports an edit it can't save (onProblem):
+  // the field's error, and Save refused while it stands. Without this the
+  // form would keep the last text that could be saved and send that,
+  // saying it worked.
+  const onDescriptionProblem = (message: string | null) => {
+    setDescriptionProblem(message)
+    if (message) form.setError('description', { type: 'refused', message })
+    else if (form.getFieldState('description').error?.type === 'refused') form.clearErrors('description')
+  }
+
+  const save = form.handleSubmit((values) => {
     setSubmitError(null)
 
     const onSuccess = (widget: Widget) => {
@@ -139,6 +150,14 @@ export function WidgetFormRoute() {
       createWidget.mutate(formValuesToWidgetCreate(values), { onSuccess, onError })
     }
   })
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (descriptionProblem) {
+      event.preventDefault()
+      form.setError('description', { type: 'refused', message: descriptionProblem }, { shouldFocus: true })
+      return
+    }
+    return save(event)
+  }
 
   return (
     <EntityForm
@@ -337,6 +356,7 @@ export function WidgetFormRoute() {
               aria-labelledby="widget-description-label"
               value={field.value}
               onChange={field.onChange}
+              onProblem={onDescriptionProblem}
               invalid={!!form.formState.errors.description}
             />
           )}
