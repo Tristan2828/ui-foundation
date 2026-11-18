@@ -41,10 +41,10 @@
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1910–1986
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1988–2074
   - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2013–2074
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2076–2301
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2230–2301
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2303–2339
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2341–2390
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2076–2317
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2246–2317
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2319–2355
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2357–2406
 
 <!-- /index -->
 
@@ -2126,6 +2126,22 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   once the filters move off every view. Under 48rem they stay on one line
   that scrolls sideways. Replaces a hand-written row of view buttons; a
   Deleted view goes in ListHeader's ⋯ menu as Show Deleted instead.
+- **A view can carry a count** (4.127): `count` on the view you pass
+  `DataTable`, shown after its label as "Needs a Look · 3" and read as
+  "Needs a Look, 3". The app counts with its own query (the list's
+  `total` under that view's filters, or a count endpoint); the table
+  computes nothing. null, undefined and 0 show no count, as the
+  sidebar's counts and a record's tab counts don't, and past 99 it reads
+  "99+". Count only views that ask you to act (Needs a Look, To Fill
+  In), not All. Give the view the key from the first render, `undefined`
+  while the query loads: a view with the key keeps room for a two-digit
+  count, so no pill moves when it arrives, on a phone's scrolling row
+  too.
+
+  ```tsx
+  const { data: needsLook } = useNewsSourcesQuery({ ...VIEWS.look.filters, pageSize: 1 })
+  <DataTable views={{ ...VIEWS, look: { ...VIEWS.look, count: needsLook?.total } }} … />
+  ```
 - **Views fill the filters** (4.105), so the bar always says why rows are
   hidden:
   - A view's `filters` and `multiFilters` are what the bar's controls
