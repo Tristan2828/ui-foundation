@@ -47,6 +47,7 @@ import { DiscardChangesDialog } from '@/components/ui/dialog'
 import { FieldError } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { clearPageLeaving, markPageLeaving } from '@/lib/page-leaving'
+import { flushPendingEdits, hasPendingEdits, subscribePendingEdits } from '@/lib/pending-edits'
 import { caretSpot, placeCaretWhenReady, spotAtPoint, type CaretSpot } from './edit-caret'
 import { EditInPlaceContext, type EditControlProps, type EditInPlace } from './edit-in-place'
 import type { EditInPlaceStore } from './edit-in-place-store'
@@ -641,7 +642,13 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
     () => store.savesOnLeave,
     () => store.savesOnLeave,
   )
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => store.dirty && currentLocation.pathname !== nextLocation.pathname)
+  // Typing a rich-text field holds back (F6) counts: the tab's prompt is
+  // set up from the first key, and a move reports it before it's judged.
+  const holding = useSyncExternalStore(subscribePendingEdits, hasPendingEdits, hasPendingEdits)
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    flushPendingEdits()
+    return store.dirty && currentLocation.pathname !== nextLocation.pathname
+  })
   const [saveFailed, setSaveFailed] = useState(false)
 
   const latestBlocker = useRef(blocker)
@@ -668,7 +675,7 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
   }, [blocker.state, store])
 
   useEffect(() => {
-    if (!dirty) return
+    if (!dirty && !holding) return
     // Saves started as the page goes ask the browser to finish them
     // (`keepalive`, lib/page-leaving.ts), F13.
     const saveAsLeaving = () => {
@@ -677,7 +684,8 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
     }
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       saveAsLeaving()
-      event.preventDefault()
+      // Held-back typing that turned out unchanged leaves nothing to ask about.
+      if (store.dirty) event.preventDefault()
     }
     // Hidden (another tab, a phone's home screen, often the last thing a
     // phone tells a page): save now, and while hidden don't wait for the
@@ -697,7 +705,7 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
       document.removeEventListener('visibilitychange', onVisibilityChange)
       store.hurry(false)
     }
-  }, [dirty, store])
+  }, [dirty, holding, store])
 
   return (
     <DiscardChangesDialog

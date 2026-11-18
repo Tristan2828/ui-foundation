@@ -1,6 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
 import { FOLDING_SAMPLE } from '../src/components/app/folding.fixtures'
 
+// RichTextEditor reports an edit a pause after typing stops (300 ms, F6
+// of the 2026-11-17 review): what it saved is read after that pause.
+const afterPause = (page: Page) => page.waitForTimeout(400)
+
 // Folding by headings (`foldKey`) and NotesOutline, on the Folding stories
 // of <Markdown> and the rich-text editor. Each opens with Watering folded
 // (unless something already is), the outline beside the text. Their axe
@@ -96,12 +100,14 @@ test.describe('folding in the rich-text editor', () => {
 
   test('folding never changes the Markdown, and an edit with sections folded keeps them', async ({ page }) => {
     await fold(page, 'Beds').click()
+    await afterPause(page)
     expect(await saved(page).textContent()).toBe(FOLDING_SAMPLE)
     await text(page).getByText('Twine').click()
     await page.waitForTimeout(100)
     await page.keyboard.press('End')
     await page.keyboard.type(' and labels')
     await expect(saved(page)).toContainText('Twine and labels')
+    await afterPause(page)
     expect(await saved(page).textContent()).toBe(FOLDING_SAMPLE.replace('Twine', 'Twine and labels'))
   })
 
@@ -143,6 +149,7 @@ test.describe('folding in the rich-text editor', () => {
     await page.keyboard.press('ControlOrMeta+z')
     await expect(fold(page, 'Beds')).toHaveAttribute('aria-expanded', 'true')
     await expect(text(page).getByText('Compost in March')).toBeVisible()
+    await afterPause(page)
     expect(await saved(page).textContent()).toBe(FOLDING_SAMPLE)
   })
 
