@@ -578,6 +578,7 @@ widths and with the phone's menu open. Both fail with the feature broken.
 become a `rating` fact; an extra action in ⋯ that a list uses all the
 time can become its `secondaryAction`.
 
+
 ## 4.115.0 — The record's status tops the facts rail; the strip holds still
 
 npm package and `ui-foundation-backend` 4.115.0 (no backend change).
@@ -624,6 +625,7 @@ status fact `recordStatus: true`; for one changed only by an action, drop
 its `edit` and give it `hint` and `action` (the app's own action through
 `render`). An app that worked around the strip's reflow can remove that.
 
+
 ## 4.114.0 — Mock mode's boot survives a restarted service worker
 
 npm package and `ui-foundation-backend` 4.114.0 (no backend change).
@@ -667,6 +669,7 @@ await startMockWorker(worker)
 Copying `template/e2e/msw-boot.spec.ts` is optional; its assertion that the
 home page shows "Get Started" is the template's, so use one of the app's
 own.
+
 
 ## 4.113.0 — Nav counts on a phone
 
