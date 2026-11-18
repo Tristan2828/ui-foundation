@@ -45,6 +45,7 @@ function TilePage({ books, onAdd }: { books: Book[]; onAdd: (title: string) => B
         open={open}
         onOpenChange={setOpen}
         onSubmit={submit}
+        isSubmitting={false}
         submitLabel="Add Book"
         dirty={title !== ''}
       >
