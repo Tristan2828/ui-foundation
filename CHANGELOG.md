@@ -22,6 +22,24 @@ Merged with no version bump; the next release carries it.
   `app/Fact Badge Tones`, `e2e/fact-badge-tones.spec.ts`). Untoned badges
   are unchanged. `add-an-entity.md` shows the flags example. Nothing to
   do to upgrade; an app tones its flags with `{ label, tone }` items.
+- **`EqualItems look="stepper"`**: a fifth look for a few equal things
+  (record standard R10, design-language.md "A few equal things"). The
+  items in order as a row of numbered steps joined by a line, each `done`
+  (filled, a check), `current` (ringed, "Current" under it) or `upcoming`
+  (an item's new `step`), picking the one item whose panel shows under
+  it, with its title line, fields and `content` as `featured` draws them.
+  It opens on `featuredId`, else the current step, else the first. The
+  steps are a tablist: arrow keys, Home and End move and pick. An app that
+  keeps the shown step (in the URL) passes `selectedId` and
+  `onSelectedChange`; an item's `attention` ("needs an answer") puts a
+  warning dot on its step and the words in its name. On a phone the row
+  scrolls sideways in its own box, the shown step in view, never folding
+  into a select. New type `EqualItemStep`. Additive: the other looks
+  ignore `step` and `attention`.
+  - **An app with its own stepper over `EqualItems`'s items** (a
+    program's phases picking a panel) moves onto `look="stepper"` and
+    deletes its own; the standard's exception for it goes.
+
 - **Saves that don't overwrite: a record's version and a 409** (the
   RichTextEditor review's F4, server half; #374 was the client half). A
   stale tab, a phone or an AI chat could replace what another writer

@@ -99,4 +99,28 @@ describe('EqualItems', () => {
     // The actions sit beside the toggle's button, not inside it.
     expect(featured).toMatch(/<\/button><\/h3><div data-slot="equal-item-actions"/)
   })
+
+  it('stepper: a tablist of numbered steps, opening on the current one, one panel shown', () => {
+    const steps: EqualItem[] = [
+      { id: 'a', title: 'Phase 1', step: 'done' },
+      { id: 'b', title: 'Phase 2', step: 'current', fields: [{ label: 'Weeks', value: '5–8' }] },
+      { id: 'c', title: 'Phase 3', attention: 'needs an answer' },
+    ]
+    const html = renderToStaticMarkup(<EqualItems look="stepper" label="Phases" items={steps} />)
+    expect(html).toContain('data-look="stepper"')
+    expect(html).toMatch(/role="tablist"[^>]*aria-label="Phases"|aria-label="Phases"[^>]*role="tablist"/)
+    expect(count(html, 'role="tab"')).toBe(3)
+    expect(html).toContain('aria-current="step"')
+    expect(html).toContain('<span class="sr-only">, done</span>')
+    expect(html).toContain('<span class="sr-only">, needs an answer</span>')
+    expect(count(html, 'data-slot="equal-item-step-attention"')).toBe(1)
+    // Only the current step's panel, its heading and fields.
+    expect(count(html, 'role="tabpanel"')).toBe(1)
+    expect(count(html, '<h3')).toBe(1)
+    expect(html).toContain('>Phase 2</h3>')
+    // featuredId and selectedId name another; one that matches none falls back.
+    expect(renderToStaticMarkup(<EqualItems look="stepper" featuredId="c" label="Phases" items={steps} />)).toContain('>Phase 3</h3>')
+    expect(renderToStaticMarkup(<EqualItems look="stepper" selectedId="a" label="Phases" items={steps} />)).toContain('>Phase 1</h3>')
+    expect(renderToStaticMarkup(<EqualItems look="stepper" selectedId="nope" label="Phases" items={steps} />)).toContain('>Phase 2</h3>')
+  })
 })

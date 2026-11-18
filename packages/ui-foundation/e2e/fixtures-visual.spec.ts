@@ -204,6 +204,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-equalitems--table-look', mustShow: 'Best value' },
   { id: 'app-equalitems--featured', mustShow: 'Over budget' },
   { id: 'app-equalitems--panels', mustShow: 'Best value' },
+  { id: 'app-equalitems--stepper', mustShow: 'Two harder days a week' },
   { id: 'app-equalitems--long-titles', mustShow: 'Long titles, panels' },
   { id: 'app-equalitems--no-fields', mustShow: 'No fields, panels' },
   { id: 'app-equalitems--one-item', mustShow: 'One item, panels' },
