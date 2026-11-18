@@ -34,7 +34,8 @@ test.describe('rich-text tables', () => {
     await expect(table(page, 'compactTable')).toBeVisible()
   })
 
-  test('columns fit their words: the table is narrower than the field, and a right-aligned column never wraps', async ({ page }) => {
+  test('columns fit their words: the table is narrower than the field, and a right-aligned column never wraps', async ({ page, isMobile }) => {
+    test.skip(isMobile, "a laptop's field: a phone's is too narrow for half of it")
     const field = await editor(page, 'compactTable').boundingBox()
     const box = await table(page, 'compactTable').boundingBox()
     expect(box!.width).toBeLessThan(field!.width / 2)

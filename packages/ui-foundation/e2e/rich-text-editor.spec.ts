@@ -47,7 +47,8 @@ test.describe('rich-text round trip', () => {
       await page.keyboard.type('xyz')
       await expect(saved(page, name)).toContainText('xyz')
       for (let i = 0; i < 3; i++) await page.keyboard.press('Backspace')
-      expect(await saved(page, name).textContent()).toBe(markdown)
+      // Polled: on a phone (Android) ProseMirror reads a Backspace from the DOM a moment later.
+      await expect.poll(() => saved(page, name).textContent()).toBe(markdown)
     })
 
     test(`${name}: editing the last block keeps every other block as written`, async ({ page }) => {
@@ -345,6 +346,8 @@ test.describe('toolbar', () => {
 
   const button = (page: Page, label: string) => toolbar(page, 'formats').getByRole('button', { name: label, exact: true })
 
+  test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)')
+
   test.beforeEach(async ({ page }) => {
     await page.goto(FEATURES)
     await expect(editor(page, 'formats')).toBeVisible()
@@ -508,6 +511,7 @@ test.describe('toolbar', () => {
 // The floating toolbar over selected words, on the Features story's
 // "formats" editor ("Format me here.", "Second line.", "Third line.").
 test.describe('floating toolbar', () => {
+  test.skip(({ isMobile }) => isMobile, 'a laptop: on a phone the bar pinned to its keyboard has the formats for words (rich-text-phone.spec.ts)')
   const floating = (page: Page) => page.getByRole('toolbar', { name: 'Format selection' })
   const floatingButton = (page: Page, label: string) => floating(page).getByRole('button', { name: label, exact: true })
   const fixed = (page: Page) => page.locator('[data-fixture="formats"]').getByRole('toolbar', { name: 'Formatting' })
@@ -987,7 +991,8 @@ test.describe('callouts', () => {
     await expect(saved(page, 'callout')).not.toContainText('[!')
   })
 
-  test("the toolbar's Callout puts the line in one, and takes it out again", async ({ page }) => {
+  test("the toolbar's Callout puts the line in one, and takes it out again", async ({ page, isMobile }) => {
+    test.skip(isMobile, "a laptop's toolbar: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)")
     await editor(page, 'formats').locator('p').first().click()
     await page.waitForTimeout(100)
     const button = page.locator('[data-fixture="formats"]').getByRole('button', { name: 'Callout', exact: true })
@@ -1087,7 +1092,9 @@ test.describe('tables', () => {
 
   test("in the header row, the row can't be deleted, moved or have one put above it; the toolbar's Table only puts one in outside a table", async ({
     page,
+    isMobile,
   }) => {
+    test.skip(isMobile, "a laptop's toolbar: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)")
     await caretIn(page, 0, 0)
     await expect(tableButton(page)).toBeDisabled()
     await page.keyboard.press('Shift+F10')
@@ -1213,7 +1220,8 @@ test.describe('image upload', () => {
     await expect(saved(page, 'uploads')).toHaveText(/^!\[\]\(blob:[^)]+\)Paste or drop a photo here\.\n$/)
   })
 
-  test("the toolbar's Image button picks files, which upload in order", async ({ page }) => {
+  test("the toolbar's Image button picks files, which upload in order", async ({ page, isMobile }) => {
+    test.skip(isMobile, "a laptop's toolbar: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)")
     await caretAtEnd(page, 'uploads')
     const button = page.locator('[data-fixture="uploads"]').getByRole('button', { name: 'Image', exact: true })
     const chooser = page.waitForEvent('filechooser')
@@ -1377,7 +1385,7 @@ test.describe('heading levels', () => {
       await page.keyboard.type('xyz')
       await expect(saved(page, name)).toContainText('xyz')
       for (let i = 0; i < 3; i++) await page.keyboard.press('Backspace')
-      expect(await saved(page, name).textContent()).toBe(opened)
+      await expect.poll(() => saved(page, name).textContent()).toBe(opened)
     }
     // A line made a Heading 1 under the page's title is an <h2>, saved as `#`.
     await editor(page, 'underPage').getByText('The last words.').click()
@@ -1620,6 +1628,8 @@ test.describe('typing', () => {
     await expect(editor(page, 'onlyCode')).toBeFocused()
     await page.keyboard.type('below')
     await expect(saved(page, 'onlyCode')).toHaveText('```\nlast line\n```\n\nbelow\n')
+    // Out of the field first: on a phone its keyboard bar would be over the next one.
+    await editor(page, 'onlyCode').blur()
     await clickNearBottom(page, 'plainLast')
     await page.keyboard.type('!')
     await expect(saved(page, 'plainLast')).toHaveText('Only a line.!\n')

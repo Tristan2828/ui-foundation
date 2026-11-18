@@ -401,6 +401,13 @@
 .prose-table th {
   text-align: start;
 }
+/* The rich-text editor on a touch screen (review F11): rows 40px tall, so
+   a row grip's 40px tap area stays in its own row. */
+@media (pointer: coarse) {
+  [data-slot="rich-text-editor"] .prose-table :is(td, th) {
+    height: 2.5rem;
+  }
+}
 .prose-table :is(td, th):is([style*="right"], [align="right"]) {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;

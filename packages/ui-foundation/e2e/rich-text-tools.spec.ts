@@ -22,6 +22,7 @@ async function selectFormat(page: Page) {
 const AXE_RULES = ['landmark-one-main', 'page-has-heading-one', 'region']
 
 test.describe('highlight', () => {
+  test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)')
   test('a colour from the toolbar menu is written as ==…== and read back', async ({ page }) => {
     await page.goto(FEATURES)
     await selectFormat(page)
@@ -80,6 +81,7 @@ test.describe('highlight', () => {
 })
 
 test.describe('full screen', () => {
+  test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)')
   test('fills the window, keeps the text, and Esc leaves', async ({ page }) => {
     await page.setViewportSize({ width: 1000, height: 700 })
     await page.goto(FEATURES)
@@ -120,6 +122,7 @@ test.describe('full screen', () => {
 })
 
 test.describe('indent and outdent', () => {
+  test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)')
   test('not on a wide screen with a mouse', async ({ page }) => {
     await page.goto(FEATURES)
     await expect(button(page, 'Indent', field(page, 'tasks'))).toHaveCount(0)

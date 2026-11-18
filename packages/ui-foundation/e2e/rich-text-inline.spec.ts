@@ -72,7 +72,8 @@ test.describe('rich text edited inline', () => {
     await expect(notes(page)).toBeFocused()
   })
 
-  test('a selection shows the floating toolbar, which formats it; Alt+F10 reaches it', async ({ page }) => {
+  test('a selection shows the floating toolbar, which formats it; Alt+F10 reaches it', async ({ page, isMobile }) => {
+    test.skip(isMobile, "a laptop's floating toolbar: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)")
     await openInline(page)
     await expect(floating(page)).toHaveCount(0)
     await pickWord(page)
@@ -109,7 +110,8 @@ test.describe('rich text edited inline', () => {
   })
 
   for (const theme of ['light', 'dark'] as const) {
-    test(`at rest, empty, and with the floating toolbar and the menu, zero axe violations (${theme})`, async ({ page }) => {
+    test(`at rest, empty, and with the floating toolbar and the menu, zero axe violations (${theme})`, async ({ page, isMobile }) => {
+      test.skip(isMobile, "a laptop's floating toolbar: the phone's bar is checked in rich-text-phone.spec.ts")
       await openInline(page, theme)
       const axe = () => new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
       expect((await axe()).violations).toEqual([])
@@ -128,6 +130,7 @@ test.describe('rich text edited inline', () => {
 // The tools strip a floating-toolbar field carries while it has focus:
 // Full screen, and Indent and Outdent on a phone (rich-text-tools-bar.tsx).
 test.describe('the tools strip', () => {
+  test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)')
   const tools = (page: Page) => page.getByRole('toolbar', { name: 'Editor tools' })
 
   test('only while the field has focus: Full screen, and no Indent with a mouse', async ({ page }) => {

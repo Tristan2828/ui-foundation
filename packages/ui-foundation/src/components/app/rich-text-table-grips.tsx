@@ -280,7 +280,10 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
     const middle = head.left + head.width / 2
     columnButton.hidden = middle < scroll.left || middle > scroll.right
     columnButton.style.left = `${middle - origin.left}px`
-    columnButton.style.top = `${head.top - origin.top}px`
+    // A touch screen's column grip sits a little higher, so its 40px
+    // square takes less of the header cell (the frame has room above).
+    const lift = window.matchMedia('(pointer: coarse)').matches ? 6 : 0
+    columnButton.style.top = `${head.top - origin.top - lift}px`
     rowButton.hidden = false
     rowButton.style.left = `${scroll.left - origin.left}px`
     rowButton.style.top = `${line.top - origin.top + line.height / 2}px`
@@ -500,7 +503,9 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
 
   const rowColor = there && tableColorEnabled(there, 'row')
   const finalFocus = () => text() ?? true
-  const grip = 'pointer-events-auto absolute flex items-center justify-center rounded-sm border border-border bg-muted text-muted-foreground shadow-xs outline-none hover:bg-primary hover:text-primary-foreground data-popup-open:bg-primary data-popup-open:text-primary-foreground'
+  const grip = 'pointer-events-auto absolute flex items-center justify-center rounded-sm border border-border bg-muted text-muted-foreground shadow-xs outline-none hover:bg-primary hover:text-primary-foreground data-popup-open:bg-primary data-popup-open:text-primary-foreground ' +
+    // On a touch screen, an invisible 40px square round each takes the tap (review F11).
+    "pointer-coarse:before:absolute pointer-coarse:before:top-1/2 pointer-coarse:before:left-1/2 pointer-coarse:before:size-10 pointer-coarse:before:-translate-1/2 pointer-coarse:before:content-['']"
 
   return (
     <>

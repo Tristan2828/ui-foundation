@@ -92,7 +92,7 @@ function frameOf(view: EditorView): HTMLElement {
 }
 
 function isTaskBox(target: EventTarget | null): target is HTMLInputElement {
-  return target instanceof HTMLInputElement && target.type === 'checkbox' && target.parentElement?.dataset.itemType === 'task'
+  return target instanceof HTMLInputElement && target.type === 'checkbox' && target.closest('li')?.dataset.itemType === 'task'
 }
 
 /** The plugin: the keys at the edges, a click past them, and focus kept on a ticked box. */

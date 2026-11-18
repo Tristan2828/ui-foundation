@@ -44,7 +44,7 @@ export function CalloutKindMenu({ kind, readOnly, onPick, onRemove, text }: Call
         disabled={readOnly}
         aria-label={`${look.label} callout: change its kind`}
         data-slot="rich-text-callout-kind"
-        className="flex size-5 items-center justify-center rounded-md outline-none hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none"
+        className="relative pointer-coarse:before:absolute pointer-coarse:before:top-1/2 pointer-coarse:before:left-1/2 pointer-coarse:before:size-10 pointer-coarse:before:-translate-1/2 pointer-coarse:before:content-[''] flex size-5 items-center justify-center rounded-md outline-none hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none"
       >
         <Icon aria-hidden="true" className={cn('size-4', look.tint)} />
       </DropdownMenuTrigger>

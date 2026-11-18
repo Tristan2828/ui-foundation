@@ -11,6 +11,31 @@ are listed on the
 
 Merged with no version bump; the next release carries it.
 
+- **RichTextEditor on a phone** (the RichTextEditor review's F11, the
+  looks picked as 1A, 2A, 3A and 4A). On a touch screen only (`pointer:
+  coarse`); a laptop, a narrow window included, is unchanged. Nothing an
+  app must change.
+  - The toolbar is one row pinned to the top of the keyboard while the
+    field has focus, in place of the rows above the text that scrolled
+    away: Aa, Task list, Bulleted list, Outdent, Indent, Insert (the slash
+    menu on a new line), Undo and Hide keyboard. Aa swaps the keyboard for
+    a panel of every format, by kind and named; the keyboard button brings
+    it back, the caret kept. `toolbar="floating"` fields get the same row
+    in place of their Editor tools strip.
+  - With words selected the row shows Bold, Italic, Strikethrough, Code,
+    Highlight and Link first, and the floating toolbar no longer shows:
+    it landed under the system's Cut/Copy/Paste bar.
+  - The task checkbox, a table's grips, a heading's fold button and a
+    callout's icon each take a tap in an invisible 40px square, drawn as
+    before; task rows and table rows are 40px tall so two squares never
+    overlap. The row's buttons are 40px.
+  - The slash menu fits the space above the keyboard: capped to the room
+    on the caret's side, above the line when there's more room there, its
+    items 44px tall. It's now a tab stop (axe's
+    scrollable-region-focusable), never reached while it's open.
+  - The harness runs the editor specs on a phone too (a second Playwright
+    project, Pixel 7), with the hit sizes checked and axe in both themes.
+
 - **RichTextEditor: typing behaves as in Notion and Obsidian** (the
   RichTextEditor review's F10, F15, F16, F17, F18, F21, F22, F24 and its
   Tab row). Nothing an app must change; a note's untouched text is still
