@@ -2,7 +2,10 @@
 // only (`toolbar="floating"`: notes edited where they're read), which has no
 // bar above the text to carry the buttons that aren't about selected words:
 // Outdent and Indent for list items (on a touch screen or a narrow one,
-// where the keyboard has no Tab) and Full screen. A small strip over the
+// where the keyboard has no Tab), Image when the editor uploads images
+// (the fixed toolbar's button: the same file picker, types and upload,
+// inserted as `![](url)` with focus back in the text) and Full screen.
+// A small strip over the
 // field's top right corner while the field has focus, or is full screen;
 // the same buttons, keys and tab stop as the fixed toolbar's
 // (rich-text-toolbar.tsx). Alt+F10 reaches it when nothing else is showing;
@@ -23,6 +26,8 @@ export interface RichTextToolsBarProps {
   /** The editable element's id, for `aria-controls`. */
   controls: string
   onFormat: (id: FormatId) => void
+  /** The Image button pressed: pick images to upload. No button without it (the editor has no `upload`). */
+  onImage?: () => void
   onFullScreen: () => void
   /** Esc: focus back to the text. */
   onReturn: () => void
@@ -31,7 +36,7 @@ export interface RichTextToolsBarProps {
   ref?: Ref<HTMLDivElement>
 }
 
-export function RichTextToolsBar({ state, readOnly, fullScreen, controls, onFormat, onFullScreen, onReturn, onBlur, ref }: RichTextToolsBarProps) {
+export function RichTextToolsBar({ state, readOnly, fullScreen, controls, onFormat, onImage, onFullScreen, onReturn, onBlur, ref }: RichTextToolsBarProps) {
   const onKeyDown = (event: KeyboardEvent) => {
     // Full screen's Esc is the field's (milkdown-editor.tsx); otherwise it
     // gives focus back to the text.
@@ -56,7 +61,7 @@ export function RichTextToolsBar({ state, readOnly, fullScreen, controls, onForm
       onKeyDown={onKeyDown}
       onBlur={onBlur}
     >
-      <FormatButtons formats="tools" state={state} readOnly={readOnly} onFormat={onFormat} onFullScreen={onFullScreen} fullScreen={fullScreen} />
+      <FormatButtons formats="tools" state={state} readOnly={readOnly} onFormat={onFormat} onImage={onImage} onFullScreen={onFullScreen} fullScreen={fullScreen} />
     </div>
   )
 }

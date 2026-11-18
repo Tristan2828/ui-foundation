@@ -10,6 +10,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 const FEATURES = 'http://localhost:6180/story.html?id=app-richtexteditor--features'
 const TABLES = 'http://localhost:6180/story.html?id=app-richtexteditor--tables'
 const FOLDING = 'http://localhost:6180/story.html?id=app-richtexteditor--folding'
+const IMAGE_UPLOADS = 'http://localhost:6180/story.html?id=app-richtexteditor--image-uploads'
 
 const editor = (page: Page, name: string) => page.getByRole('textbox', { name, exact: true })
 const saved = (page: Page, name: string) => page.getByTestId(`saved-${name}`)
@@ -98,6 +99,41 @@ test.describe('on a phone', () => {
     await bar(page).getByRole('button', { name: 'Undo', exact: true }).click()
     await expect(saved(page, 'formats')).not.toContainText('- Format me here.')
     await expect(editor(page, 'formats')).toBeFocused()
+  })
+
+  // `toolbar="floating"` with `upload` (forms' notes, 17.2): Image in the
+  // row, 40px, the fixed toolbar's picker; none without `upload`.
+  test('Image is in the row when the editor uploads: a 40px tap, the image goes in, focus stays in the text', async ({ page }) => {
+    await page.goto(FEATURES)
+    await tapText(page, 'formats')
+    await expect(bar(page).getByRole('button', { name: 'Image', exact: true })).toHaveCount(0)
+
+    await page.goto(IMAGE_UPLOADS)
+    await tapText(page, 'floating')
+    const button = bar(page).getByRole('button', { name: 'Image', exact: true })
+    await expect(button).toBeVisible()
+    await expectTappable(button)
+    const chooser = page.waitForEvent('filechooser')
+    await button.click()
+    const picker = await chooser
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+    await picker.setFiles([{ name: 'phone.png', mimeType: 'image/png', buffer: png }])
+    await expect(editor(page, 'floating')).toBeFocused()
+    await expect(editor(page, 'floating').locator('img[src^="blob:"]')).toHaveCount(1)
+    await expect(saved(page, 'floating')).toContainText('![](blob:')
+    await expect(bar(page)).toBeVisible()
+  })
+
+  test('a file the row\'s Image refuses says why in a toast and changes nothing', async ({ page }) => {
+    await page.goto(IMAGE_UPLOADS)
+    await tapText(page, 'floating')
+    const chooser = page.waitForEvent('filechooser')
+    await bar(page).getByRole('button', { name: 'Image', exact: true }).click()
+    const picker = await chooser
+    await picker.setFiles([{ name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from([37, 80, 68, 70]) }])
+    await expect(page.getByText('That file is a PDF. Choose a JPEG, PNG or WebP image.')).toBeVisible()
+    await expect(editor(page, 'floating')).toBeFocused()
+    await expect(editor(page, 'floating').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
   })
 
   test('selected words get their formats first in the row, and no floating bar', async ({ page }) => {

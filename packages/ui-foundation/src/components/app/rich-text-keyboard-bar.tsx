@@ -9,7 +9,8 @@
 // - Pinned to the bottom of what is visible (`visualViewport`), so it sits
 //   on the keyboard and follows it as it opens, closes and resizes.
 // - The row: Aa, then the list buttons used while typing (Task, Bulleted,
-//   Outdent, Indent), Insert (opens the slash menu on a new line) and
+//   Outdent, Indent), Insert (opens the slash menu on a new line), Image
+//   when the editor uploads images (the fixed toolbar's file picker), and
 //   Undo; with words selected, their formats first (Bold to Link), in
 //   place of the floating bar, which would land under the system's Copy
 //   bar. Hide keyboard last.
@@ -274,6 +275,19 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
               >
                 <PlusIcon aria-hidden="true" />
               </Button>
+              {onImage && (
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  aria-label="Image"
+                  disabled={readOnly}
+                  className="[&_svg]:size-5"
+                  onMouseDown={keep}
+                  onClick={onImage}
+                >
+                  <ImageIcon aria-hidden="true" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon-lg"
