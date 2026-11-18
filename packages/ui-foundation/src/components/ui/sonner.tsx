@@ -14,7 +14,7 @@
 // - Toasts last 4 seconds, Undo too. An error from `notify.failed` stays
 //   until it's closed.
 //
-// What a toast says and when one shows: `notify` (components/app/notify.ts).
+// What a toast says and when one shows: `notify` (components/app/notify.tsx).
 import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"

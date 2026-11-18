@@ -141,7 +141,7 @@ export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
 // The dialogs and feedback standard (4.90): one delete, toasts' words, an
 // action's error beside it, a job's progress, and the offline bar.
 export { DeleteAction, type DeleteActionProps, type DeleteKind, type DeleteReason } from '@/components/app/delete-action'
-export { notify, doneMessage, pastTense, type NotifyDoneOptions } from '@/components/app/notify'
+export { notify, doneMessage, pastTense, type NotifyDoneOptions, type NotifyOpen } from '@/components/app/notify'
 export { useAction, type ActionOutcome, type ActionState, type UseActionOptions } from '@/hooks/use-action'
 export { ActionError, type ActionErrorProps } from '@/components/app/action-error'
 export { JobStatus, type JobProgress, type JobStatusProps } from '@/components/app/job-status'

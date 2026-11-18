@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1385
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1398
   - [The record view](#the-record-view) · lines 1036–1215
   - [Forms](#forms) · lines 1217–1299
   - [Dialogs](#dialogs) · lines 1301–1332
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1334–1385
-- [What not to copy](#what-not-to-copy) · lines 1387–1422
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1424–1441
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1443–1489
-- [Deleting](#deleting) · lines 1491–1522
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1524–1545
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1547–1556
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1559–1601
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1603–1639
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1334–1398
+- [What not to copy](#what-not-to-copy) · lines 1400–1435
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1437–1454
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1456–1502
+- [Deleting](#deleting) · lines 1504–1535
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1537–1558
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1560–1569
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1572–1614
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1616–1652
 
 <!-- /index -->
 
@@ -1341,6 +1341,7 @@ sight.** What happened where the person is looking says so there.
 | --- | --- |
 | A delete (soft: with Undo) | `DeleteAction`'s toast, "Deleted The Long Walk" |
 | A record made, landing on its own page | a toast, "Added The Long Walk" |
+| A record made where the person stays (a dialog over a page of tiles) | a toast with Open, "Added The Long Walk" · Open (`notify.done`'s `open`) |
 | An edit in place, a quick action, a toggle | the value itself and its "Saved" (cell pattern 18). **Never a toast** |
 | An action that failed, its button still there | `ActionError` beside the button: the reason and Try Again |
 | An action that failed after its page was left | a toast that stays until it's closed (`useAction` does this) |
@@ -1374,6 +1375,18 @@ sight.** What happened where the person is looking says so there.
   verb first, "Deleted The Long Walk", "Added Paper Atlas"; Undo, when
   given, then says "Restored The Long Walk". Never "X deleted", never
   "Book deleted". Toasts last 4 seconds, Undo's too.
+- **A record made without leaving the page gets Open:**
+  ``notify.done('Added', book.title, { open: `/books/${book.id}` })``.
+  When saving closes a dialog and stays put (a homepage of tiles, a
+  `FormDialog` opened from a page), the toast says "Added The Long Walk"
+  with an **Open** link to the new record; never a hand-built sonner
+  toast. `open` is a path (anything `Link`'s `to` takes) or
+  `{ to, label }` for another word ("View"). It is a real link, named
+  "Open The Long Walk" for a screen reader, reached from the keyboard
+  (Alt+T to the toasts, then Tab), and closes the toast as it goes; the
+  toast keeps its 4 seconds. With `undo` too, both show, Open first. A
+  create that lands on the record's own
+  page doesn't need it: the person is already there.
 - **An error stays beside what failed**: `const save = useAction(mutation)`,
   `save.run(…)` on the button (`disabled={save.pending}`, a `Spinner` in
   it), `<ActionError action={save} />` next to it. Never
