@@ -1547,6 +1547,7 @@ export default function MilkdownEditor({
         {coarse && menus && editorView && (focused || fullScreen) && (
           <RichTextKeyboardBar
             ref={toolbarRef}
+            pressing={selecting}
             view={editorView}
             state={editorState}
             readOnly={readOnly}

@@ -69,6 +69,24 @@ test.describe('on a phone', () => {
     await expect(bar(page)).toHaveCount(0)
   })
 
+  test('the row waits for the tap that focused the text to end, so the release lands where it was pressed', async ({ page }) => {
+    await page.goto(FEATURES)
+    // Whether the row could take a press at the moment the finger lifts.
+    await page.evaluate(() => {
+      document.addEventListener(
+        'mouseup',
+        () => {
+          const row = document.querySelector('[data-slot=rich-text-keyboard-bar] [role=toolbar]')
+          ;(window as unknown as { rowAtRelease: string }).rowAtRelease = row ? getComputedStyle(row).visibility : 'none'
+        },
+        { capture: true, once: true },
+      )
+    })
+    await editor(page, 'formats').locator('p').first().click({ delay: 300 })
+    expect(await page.evaluate(() => (window as unknown as { rowAtRelease: string }).rowAtRelease)).not.toBe('visible')
+    await expect(bar(page)).toBeVisible()
+  })
+
   test('the row has the list buttons, Insert and Undo, and a press keeps focus in the text', async ({ page }) => {
     await page.goto(FEATURES)
     await tapText(page, 'formats')

@@ -21,7 +21,9 @@ Merged with no version bump; the next release carries it.
     menu on a new line), Undo and Hide keyboard. Aa swaps the keyboard for
     a panel of every format, by kind and named; the keyboard button brings
     it back, the caret kept. `toolbar="floating"` fields get the same row
-    in place of their Editor tools strip.
+    in place of their Editor tools strip. It shows once the tap that
+    focused the text is over, so a tap on the screen's bottom line (a link
+    there) isn't released onto it.
   - With words selected the row shows Bold, Italic, Strikethrough, Code,
     Highlight and Link first, and the floating toolbar no longer shows:
     it landed under the system's Cut/Copy/Paste bar.

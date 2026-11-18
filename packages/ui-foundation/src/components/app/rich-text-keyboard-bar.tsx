@@ -139,14 +139,26 @@ export interface RichTextKeyboardBarProps {
   text: () => HTMLElement | null
   /** Focus leaving one of its buttons, for the editor to tell whether it left the field. */
   onBlur: (event: FocusEvent) => void
+  /** A press in the text still down (the tap that focused it): the row waits for it to end. */
+  pressing?: boolean
   /** Its element, for Alt+F10 to reach it from the text. */
   ref?: Ref<HTMLDivElement>
 }
 
-export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat, onImage, onFullScreen, fullScreen = false, text, onBlur, ref }: RichTextKeyboardBarProps) {
+export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat, onImage, onFullScreen, fullScreen = false, text, onBlur, pressing = false, ref }: RichTextKeyboardBarProps) {
   const probe = useRef<HTMLSpanElement>(null)
   const row = useRef<HTMLDivElement>(null)
   const edge = useVisibleEdge(probe)
+  // Shown once the tap that focused the text is over: shown at once, the
+  // row would be under a finger pressing the screen's bottom line (a link
+  // there), and the release would land on the row.
+  const [ready, setReady] = useState(!pressing)
+  useEffect(() => {
+    if (ready || pressing) return
+    // After the press's click, which follows its release.
+    const settle = setTimeout(() => setReady(true))
+    return () => clearTimeout(settle)
+  }, [ready, pressing])
   const [panel, setPanel] = useState(false)
   const panelHeight = edge?.lastKeyboard || PANEL
 
@@ -166,7 +178,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
   // keeps it above the keyboard only.
   const selectionHead = state?.selection.head
   useLayoutEffect(() => {
-    if (!edge || selectionHead === undefined || !row.current) return
+    if (!edge || !ready || selectionHead === undefined || !row.current) return
     let caret: { bottom: number }
     try {
       caret = view.coordsAtPos(selectionHead)
@@ -179,7 +191,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
     const scrolling = scroller(view.dom as HTMLElement)
     if (scrolling) scrolling.scrollTop += over
     else window.scrollBy(0, over)
-  }, [view, selectionHead, edge, panel])
+  }, [view, selectionHead, edge, panel, ready])
 
   const selection = state?.selection
   const words = Boolean(selection && !selection.empty && !selection.$from.parent.type.spec.code)
@@ -192,7 +204,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
     view.focus()
   }
 
-  const shown = edge !== null
+  const shown = edge !== null && ready
   const bottom = edge ? edge.bottom - (panel ? panelHeight : 0) : 0
 
   return (
