@@ -424,7 +424,7 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
-  test('long text: the toolbar is part of the field; moving to it saves nothing', async ({ page }) => {
+  test('long text: the toolbar is part of the field; moving to it saves nothing', async ({ page, isMobile }) => {
     const bodies = patchBodies(page)
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })
@@ -442,17 +442,26 @@ test.describe('widget view: editing in place', () => {
     for (let i = 0; i < 'basic'.length; i++) await page.keyboard.press('Shift+ArrowRight')
     await page.waitForTimeout(100)
 
-    // Shift+Tab into the toolbar: still open, nothing sent.
-    await page.keyboard.press('Shift+Tab')
     const toolbar = description.getByRole('toolbar', { name: 'Formatting' })
-    await expect(toolbar.getByRole('button', { name: 'Bold', exact: true })).toBeFocused()
-    await page.waitForTimeout(100)
-    await expect(editor).toBeVisible()
-    expect(bodies).toEqual([])
+    if (isMobile) {
+      // A touch screen's toolbar is the row pinned to its keyboard, part of
+      // the field too: a press formats, and focus stays in the text.
+      await toolbar.getByRole('button', { name: 'Bold', exact: true }).click()
+      await expect(editor).toBeFocused()
+      await page.waitForTimeout(100)
+      expect(bodies).toEqual([])
+    } else {
+      // Shift+Tab into the toolbar: still open, nothing sent.
+      await page.keyboard.press('Shift+Tab')
+      await expect(toolbar.getByRole('button', { name: 'Bold', exact: true })).toBeFocused()
+      await page.waitForTimeout(100)
+      await expect(editor).toBeVisible()
+      expect(bodies).toEqual([])
 
-    // Enter formats, and focus goes back to the text; a click formats too.
-    await page.keyboard.press('Enter')
-    await expect(editor).toBeFocused()
+      // Enter formats, and focus goes back to the text; a click formats too.
+      await page.keyboard.press('Enter')
+      await expect(editor).toBeFocused()
+    }
     await toolbar.getByRole('button', { name: 'Italic', exact: true }).click()
     await expect(editor).toBeFocused()
     expect(bodies).toEqual([])
@@ -470,7 +479,10 @@ test.describe('widget view: editing in place', () => {
     ])
   })
 
-  test('long text: the floating toolbar is part of the field; Esc hides it before giving up', async ({ page }) => {
+  test('long text: the floating toolbar is part of the field; Esc hides it before giving up', async ({ page, isMobile }) => {
+    // A touch screen has no floating toolbar: the row pinned to its
+    // keyboard has the words' formats (the test above).
+    test.skip(isMobile, 'a laptop: no floating toolbar on a touch screen')
     const bodies = patchBodies(page)
     await openWidget(page)
     const description = page.getByRole('region', { name: 'Description' })
