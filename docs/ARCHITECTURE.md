@@ -899,6 +899,38 @@ or the next patch after the latest tag. It:
    and GitHub emails the developer. Re-run it by hand with
    `gh workflow run release-smoke.yml -f tag=v<version>`.
 
+**Several PRs ready at once: one release PR.** Open PRs that add to the
+same shared lines conflict again after each merge, and each fix costs
+another CI run. The shared lines are `CHANGELOG.md`'s `## Unreleased`, a
+doc's index block and its `template/docs/foundation/` copy, and the spec
+list in `playwright.harness.config.ts`. When several PRs are green
+together, fold them into one release PR instead (first done for 4.127.0,
+#386, which folded #382 to #385):
+
+1. In a worktree of its own, branch `claude/release-<version>` from
+   `origin/main`, then `git merge` each PR's branch into it, oldest first.
+   Each PR's own CI is green first, so a failure on the release branch
+   comes from the combination.
+2. Resolve the conflicts once:
+   - `CHANGELOG.md`: keep every entry.
+   - A doc's index: take either side, then run `node scripts/doc-index.mjs`
+     in `packages/ui-foundation` and copy each conventions doc over its
+     `template/docs/foundation/` copy.
+   - The harness spec list: keep both sides' specs.
+3. Check that every line each branch added is in the result. Taking one
+   side of a conflict in a doc can drop body text, not just index lines.
+4. Bump the version as above: `packages/ui-foundation/package.json`, its
+   `package-lock.json` entry, `packages/backend-foundation/pyproject.toml`
+   and its README's pin. Then turn `## Unreleased` into the version's
+   section, with one "How an app adopts it" for all of it.
+5. Open it as one PR. When its checks pass, squash-merge it. Then close
+   each folded PR with a note naming the release PR. GitHub shows them
+   as Closed, not Merged, even though their code shipped, so the note
+   says why.
+
+This takes one CI run and one pass at the conflicts, instead of one per
+PR. A single PR that's ready on its own still bumps and merges by itself.
+
 **What guards a release** (decided 2026-09-30; until then every version
 waited for the developer's passkey approval on npm): the PR gate. Branch
 protection on `main` requires a pull request and the `verify`,
