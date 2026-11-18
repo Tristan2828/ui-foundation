@@ -9,6 +9,45 @@ are listed on the
 
 ## Unreleased
 
+Merged with no version bump; the next release carries it.
+
+- **RichTextEditor: typing behaves as in Notion and Obsidian** (the
+  RichTextEditor review's F10, F15, F16, F17, F18, F21, F22, F24 and its
+  Tab row). Nothing an app must change; a note's untouched text is still
+  saved as written.
+  - A code block, table, quote, callout or divider at a note's end can be
+    left: ArrowDown at its end, or a click under it, puts a line under it
+    (ArrowUp, or a click above, a line above one that starts the note).
+    On a phone, where there's no Ctrl+Enter, a click under it was the
+    only way and did nothing.
+  - Typed `---` makes a divider with a line under it and the caret there;
+    the next key no longer replaces the divider.
+  - `5 * 3 * 2` stays as typed: `*words*` and `**words**` need a non-space
+    against the marks, as CommonMark does. `==words==` (and
+    `=={green}words==`) highlights as typed, not only after a reload.
+  - A paragraph's trailing spaces are no longer saved (Markdown drops them
+    on reading; some were written as `&#x20;`).
+  - Backspace at the start of a list item takes it out of the list (a
+    nested one up a level, where it was fused into the item above); a
+    second Backspace joins it to the line above. Tab and Shift+Tab move a list item and stay in the
+    text, and indent or outdent a code block's lines; on a plain line Tab
+    still leaves the editor.
+  - The slash menu opens at the start of any line of text (a list item, a
+    quote, a callout, a heading, a table cell), listing only what can be
+    made there. In a list item a heading, quote or code block takes the
+    line out of the list.
+  - Redo pressed more times than there are steps to redo now does
+    nothing. It undid a step (ProseMirror's keymap fell back to Mod+Z),
+    which is why a redo after a slash pick seemed to lose words.
+  - Ctrl+Shift+5, 4 or 6 turn a heading into a list, and Ctrl+Shift+1 to 3
+    and 8 turn a list item into a heading or code block. A new list beside
+    one of its kind joins it: two lists side by side read back as one, and
+    the edit was refused without a word. Ctrl/Cmd+Shift+H highlights the
+    selection (or takes the highlight off). Ticking a task's box keeps
+    focus in the text, so Ctrl+Z takes the tick back.
+  - `e2e/rich-text-editor.spec.ts` "typing" (on the new RichTextEditor
+    Typing story) and `tests/rich-text-typing.test.ts`.
+
 ### Rich text: an edit no longer rewrites what nobody touched (RichTextEditor review F2, F12, F23)
 
 Nothing an app must change. All three are in `src/lib/markdown-merge.ts`,
