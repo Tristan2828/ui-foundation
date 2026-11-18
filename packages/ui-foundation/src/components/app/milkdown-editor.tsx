@@ -90,9 +90,7 @@ import {
   commands,
   headingSchema,
   paragraphSchema,
-  inputRules,
   keymap,
-  markInputRules,
   plugins,
   remarkPreserveEmptyLinePlugin,
   schema,
@@ -141,6 +139,8 @@ import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry }
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
 import { splitTaskItem, taskInputRule } from './rich-text-tasks'
+import { typedInputRules } from './rich-text-input-rules'
+import { edges } from './rich-text-edges'
 import { withEmptyParagraphChildren } from './rich-text-empty-paragraph'
 import { toggleHeadingInputRule, toggleHeadingRemark, withToggle } from './rich-text-toggle-heading'
 import { addRowAtEnd, colorTableCells, fitAllColumns, handleTableKey, previewColumnWidth, runTableAction, setColumnWidth, tableLook as tableLookPlugin, tableWidthsOf, type TableAction, type TableColorScope } from './rich-text-table'
@@ -166,8 +166,7 @@ import { CalloutKindMenu, TableBar } from './rich-text-widgets'
 const LEFT_OUT: readonly MilkdownPlugin[] = remarkPreserveEmptyLinePlugin
 const COMMONMARK: MilkdownPlugin[] = [
   ...schema,
-  ...inputRules,
-  ...markInputRules,
+  ...typedInputRules,
   ...commands,
   ...keymap,
   ...plugins.filter((plugin) => !LEFT_OUT.includes(plugin)),
@@ -680,7 +679,7 @@ export default function MilkdownEditor({
   // The slash menu: open while a "/" typed at a line's start is followed
   // by something some block answers to, and the field has focus.
   const slash = menus && !readOnly && focused && editorState ? slashQuery(editorState) : null
-  const slashMatches = slash ? slashItems(slash.query, { page: Boolean(onCreatePage), image: Boolean(upload) }) : []
+  const slashMatches = slash ? slashItems(slash.query, { page: Boolean(onCreatePage), image: Boolean(upload), at: editorState ? { state: editorState, span: slash } : undefined }) : []
   const slashOpen = slash !== null && slashMatches.length > 0
   const slashMenuKey = slash ? `${slash.from}:${slash.query}` : ''
   const slashIndex = slashActive.key === slashMenuKey ? Math.min(slashActive.index, slashMatches.length - 1) : 0
@@ -1023,6 +1022,7 @@ export default function MilkdownEditor({
           },
         }))
       })
+      .use(edges)
       .use(COMMONMARK)
       .use(gfm)
       .use(taskInputRule)

@@ -3,14 +3,34 @@
 // and a digit turns the line into a block (0 plain text, 1 to 3 headings,
 // 4 tasks, 5 bullets, 6 numbers, 8 a code block), and Cmd+Option and the
 // digit does on a Mac, as in Notion (Cmd+Shift+3 to 5 are the Mac's
-// screenshots). Mod+Shift+S strikes through, also Notion's. Each runs the
-// same command as its toolbar button, so it toggles the same way.
+// screenshots). Mod+Shift+S strikes through, also Notion's, and
+// Mod+Shift+H highlights (4.126), Notion's too. Each runs the same command
+// as its toolbar button, so it toggles the same way.
 //
 // Read by the key's position (`event.code`), not the character it types:
 // Shift+5 types "%", and Option+5 "∞".
+//
+// And the editing keys Notion, Docs and Obsidian share (4.126, the
+// RichTextEditor review's F17 and its Tab row):
+// - Backspace at the start of a list item's first line lifts the item out
+//   of its list (a nested one up a level), its words kept as a line; a
+//   second Backspace joins it to the line above. Milkdown's (joinBackward)
+//   fused a nested item into the item above as its second paragraph.
+// - Tab and Shift+Tab in a list item indent and outdent it, and stay in
+//   the text where it can't move (a first item): Tab leaving the editor
+//   from one item and not the next was a surprise. In a code block they
+//   indent and outdent its lines by two spaces. On a plain line Tab still
+//   leaves the editor, the keyboard's way on to the rest of the page.
+// - Undo and redo (Mod+Z; Mod+Shift+Z, and Ctrl+Y off Apple) are taken
+//   here whether or not there is a step to take (the review's F21).
+//   ProseMirror's keymap, finding nothing to redo, ran Shift+Mod+Z's
+//   unshifted key, Mod+Z, so a redo pressed once too often undid a step.
+import { redo, undo } from '@milkdown/kit/prose/history'
+import { liftListItem, sinkListItem } from '@milkdown/kit/prose/schema-list'
 import type { EditorState, Transaction } from '@milkdown/kit/prose/state'
+import { DEFAULT_HIGHLIGHT } from '@/lib/markdown-highlight'
 import { BLOCK_KEYS } from './rich-text-format-items'
-import { toggleFormat, type FormatId } from './rich-text-formats'
+import { highlightColor, tableAt, toggleFormat, type FormatId } from './rich-text-formats'
 
 export function isApple(): boolean {
   return typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
@@ -49,7 +69,89 @@ function shortcutFormat(event: KeyboardEvent, apple: boolean): FormatId | null {
   if (digit && (ctrlShift || cmdOption)) return BLOCK_KEYS[digit] ?? null
   const mod = apple ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey
   if (mod && event.shiftKey && !event.altKey && event.code === 'KeyS') return 'strike'
+  if (mod && event.shiftKey && !event.altKey && event.code === 'KeyH') return 'highlight'
   return null
+}
+
+type Dispatch = (tr: Transaction) => void
+
+// Backspace at the start of a list item's first line: the item lifted out.
+function liftAtItemStart(state: EditorState, dispatch: Dispatch): boolean {
+  const { $from, empty } = state.selection
+  if (!empty || $from.parentOffset > 0 || $from.depth < 2 || !$from.parent.isTextblock) return false
+  const item = $from.node(-1)
+  if (item.type.name !== 'list_item' || $from.index(-1) !== 0) return false
+  return liftListItem(item.type)(state, dispatch)
+}
+
+// Two spaces in at the start of each line of a code block the selection
+// touches (`out`: up to two, or a tab, taken off). With nothing selected,
+// Tab puts them in at the caret.
+function indentCode(state: EditorState, dispatch: Dispatch, out: boolean): boolean {
+  const { $from, $to, from, to, empty } = state.selection
+  if (!$from.sameParent($to)) return false
+  if (!out && empty) {
+    dispatch(state.tr.insertText('  ').scrollIntoView())
+    return true
+  }
+  const start = $from.start()
+  const text = $from.parent.textContent
+  const lines: number[] = []
+  for (let line = text.lastIndexOf('\n', from - start - 1) + 1; ; ) {
+    lines.push(line)
+    const next = text.indexOf('\n', line)
+    if (next === -1 || next >= to - start) break
+    line = next + 1
+  }
+  const tr = state.tr
+  // From the last line up, so the earlier lines' places hold.
+  for (const line of lines.reverse()) {
+    if (!out) tr.insertText('  ', start + line)
+    else {
+      const lead = /^(?: {1,2}|\t)/.exec(text.slice(line))?.[0]
+      if (lead) tr.delete(start + line, start + line + lead.length)
+    }
+  }
+  dispatch(tr.scrollIntoView())
+  return true
+}
+
+// Tab (Shift+Tab) in a list item or a code block; false anywhere else,
+// where Tab is the browser's (a table's is its own, rich-text-table.ts).
+function handleTab(state: EditorState, dispatch: Dispatch, out: boolean): boolean {
+  const { $from } = state.selection
+  if ($from.parent.type.spec.code) return indentCode(state, dispatch, out)
+  if (tableAt(state)) return false
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth)
+    if (node.type.name !== 'list_item') continue
+    const move = out ? liftListItem(node.type) : sinkListItem(node.type)
+    move(state, dispatch)
+    return true
+  }
+  return false
+}
+
+// Undo or redo for a key press, or null when it's neither.
+function historyKey(event: KeyboardEvent, apple: boolean): 'undo' | 'redo' | null {
+  const mod = apple ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey
+  if (!mod || event.altKey) return null
+  if (event.code === 'KeyZ') return event.shiftKey ? 'redo' : 'undo'
+  return !apple && !event.shiftKey && event.code === 'KeyY' ? 'redo' : null
+}
+
+/** The editing keys: Backspace at a list item's start, Tab and Shift+Tab, undo and redo. True when the key was taken. */
+export function handleEditingKey(state: EditorState, dispatch: Dispatch, event: KeyboardEvent): boolean {
+  if (event.isComposing) return false
+  const step = historyKey(event, isApple())
+  if (step) {
+    ;(step === 'undo' ? undo : redo)(state, dispatch)
+    return true
+  }
+  if (event.metaKey || event.ctrlKey || event.altKey) return false
+  if (event.key === 'Backspace' && !event.shiftKey) return liftAtItemStart(state, dispatch)
+  if (event.key === 'Tab') return handleTab(state, dispatch, event.shiftKey)
+  return false
 }
 
 /**
@@ -57,9 +159,15 @@ function shortcutFormat(event: KeyboardEvent, apple: boolean): FormatId | null {
  * was (whether or not the format could apply where the caret is: the key
  * is taken either way, so the browser's own never runs).
  */
-export function handleShortcut(state: EditorState, dispatch: (tr: Transaction) => void, event: KeyboardEvent): boolean {
+export function handleShortcut(state: EditorState, dispatch: Dispatch, event: KeyboardEvent): boolean {
+  if (handleEditingKey(state, dispatch, event)) {
+    event.preventDefault()
+    return true
+  }
   const format = shortcutFormat(event, isApple())
   if (!format) return false
-  toggleFormat(state, dispatch, format)
+  // Highlight: the default colour on, or any colour off.
+  if (format === 'highlight') toggleFormat(state, dispatch, highlightColor(state) ? 'highlight-off' : `highlight-${DEFAULT_HIGHLIGHT}`)
+  else toggleFormat(state, dispatch, format)
   return true
 }
