@@ -12,6 +12,12 @@ export type MswOverride = {
   status?: number
   body?: unknown
   delayMs?: number
+  /**
+   * Holds every matching request until the test releases it
+   * (`forceMswOverride(page, override, { hold: true })` and its
+   * `release()`, or `releaseMswOverride(page)`). Set by `forceMswOverride`.
+   */
+  hold?: boolean
   // A non-JSON body, for stubbing what an <img>, <script> or stylesheet
   // loads. A JSON body with the wrong content type makes an <img> fire
   // onError, which looks exactly like the failure a test is ruling out.
@@ -37,5 +43,11 @@ declare global {
     // race against the app's own first fetch, which may already be in
     // flight by the time a Playwright `page.evaluate` call runs.
     __E2E_MSW_OVERRIDE__?: MswOverride
+    // A held override's gate (see MswOverride's `hold`): true once the test
+    // has released it, set by releaseMswOverride in this page and by an
+    // init script in every page loaded after.
+    __E2E_MSW_RELEASED__?: boolean
+    // Lets the requests held so far go, called by releaseMswOverride.
+    __E2E_MSW_RELEASE__?: () => void
   }
 }

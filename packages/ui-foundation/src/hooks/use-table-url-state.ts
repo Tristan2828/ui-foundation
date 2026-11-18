@@ -1,10 +1,11 @@
 import { useCallback, useSyncExternalStore } from 'react'
-import { useSearchParams } from 'react-router'
+import { useHref, useLocation, useSearchParams } from 'react-router'
 import type { SortingState } from '@/components/app/data-table'
 import {
   activeViewOf,
   applyUrlChanges,
   filterChanges,
+  paramsToUpdate,
   readFilterState,
   ruleFilterNames,
   serializeSort,
@@ -101,6 +102,8 @@ export function useTableUrlState<F extends string, M extends string = never, V e
   }: TableUrlStateViewOptions<NoInfer<V>> = {},
 ) {
   const [params, setParams] = useSearchParams()
+  // This router's address, as the address bar spells it (basename included).
+  const renderedPath = useHref({ pathname: useLocation().pathname })
   const rememberedPageSize = useRemembered(pageSizeStorageKey)
   const pageSize = resolvePageSize(pageSizes, params.get('size'), rememberedPageSize, defaultPageSize)
 
@@ -135,8 +138,12 @@ export function useTableUrlState<F extends string, M extends string = never, V e
   const changeFilters = (changes: Readonly<Record<string, string | string[] | undefined>>) =>
     update({ ...keptSort, ...filterChanges(state, changes, ruleNames, fallback !== undefined) })
 
+  // From the address bar, not setParams' `previous`: react-router hands
+  // that the params of the last render, so a second update before the
+  // next render undid the first. See paramsToUpdate.
   function update(changes: UrlChanges) {
-    setParams((previous) => applyUrlChanges(previous, changes), { replace: true })
+    const addressBar = typeof window === 'undefined' ? undefined : window.location
+    setParams(applyUrlChanges(paramsToUpdate(params, renderedPath, addressBar), changes), { replace: true })
   }
 
   return {
@@ -162,11 +169,11 @@ export function useTableUrlState<F extends string, M extends string = never, V e
       update({ sort: serializeSort(next) ?? (fallback?.sort && state.atDefault ? 'none' : null), page: null }),
     setFilter: (name: F, value: string) => changeFilters({ [name]: value }),
     // Several filters in one call — for any user action that changes more
-    // than one (both ends of a date range, "clear filters"). Two setters in
-    // the same tick lose all but the last: react-router hands each
-    // setSearchParams updater the params from the last render, not the
-    // ones the previous updater produced. Single-value filters take a
-    // string ('' clears), multi-value ones a list ([] clears).
+    // than one (both ends of a date range, "clear filters"). One call is
+    // still the rule: two setters in the same tick both land in a browser
+    // router (update() reads the address bar), but under a memory router
+    // all but the last are lost. Single-value filters take a string ('' clears),
+    // multi-value ones a list ([] clears).
     setFilters: (changes: Partial<Record<F, string>> & Partial<Record<M, string[]>>) => changeFilters(changes),
     setMultiFilter: (name: M, values: string[]) =>
       changeFilters({ [name]: values }),
