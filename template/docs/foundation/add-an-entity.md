@@ -4,7 +4,7 @@
 ## Index
 
 - [The reference files](#the-reference-files) · lines 45–67
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–866
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 69–873
   - Step 1: Add `<Entity>` to `openapi.yaml` · lines 111–118
   - Step 2: `npm run gen:api` · lines 119–120
   - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 121–132
@@ -12,21 +12,21 @@
   - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 143–149
   - Step 6: Copy the reference files, one for one, not just the two screens · lines 150–754
   - Step 7: Register routes · lines 755–770
-  - Step 8: Add Playwright specs for all three screens · lines 771–848
-  - Step 9: Register the nav entry and route names · lines 849–863
-  - Step 10: `npm run verify`. · lines 864–866
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 868–1337
-  - [The record view](#the-record-view) · lines 1021–1178
-  - [Forms](#forms) · lines 1180–1251
-  - [Dialogs](#dialogs) · lines 1253–1284
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1286–1337
-- [What not to copy](#what-not-to-copy) · lines 1339–1372
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1374–1391
-- [Deleting](#deleting) · lines 1393–1424
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1426–1447
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1449–1458
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1461–1503
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1505–1541
+  - Step 8: Add Playwright specs for all three screens · lines 771–855
+  - Step 9: Register the nav entry and route names · lines 856–870
+  - Step 10: `npm run verify`. · lines 871–873
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 875–1344
+  - [The record view](#the-record-view) · lines 1028–1185
+  - [Forms](#forms) · lines 1187–1258
+  - [Dialogs](#dialogs) · lines 1260–1291
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1293–1344
+- [What not to copy](#what-not-to-copy) · lines 1346–1379
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1381–1398
+- [Deleting](#deleting) · lines 1400–1431
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1433–1454
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1456–1465
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1468–1510
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1512–1548
 
 <!-- /index -->
 
@@ -813,6 +813,13 @@ is a filled-in example while the Widgets demo is still here).
    section placed `details`, that test checks its labels sit beside
    their values, and another on a wide screen that there's no rail (copy
    `wide screens: …` in `e2e/widget-view.spec.ts`).
+   **A loading test holds the answer, never delays it:**
+   `forceMswOverride(page, override, { hold: true })` returns a
+   `release()`; assert the skeleton, `await release()`, then assert the
+   data, so the test waits on nothing but its own steps. A `delayMs` can
+   run out before the page first renders under load, and the skeleton is
+   never seen. Copy `loading: …` in `e2e/widgets-table.spec.ts`; keep
+   `delayMs` for a test about time itself.
    States forced via a first-load init script (loading, load-time error)
    need `page.addInitScript` before navigation; states forced after the
    page is already up (a mutation's error response) can use a

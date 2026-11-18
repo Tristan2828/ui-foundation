@@ -15,8 +15,16 @@ export function exposeMswForE2E(worker: SetupWorker): void {
 
   const override = window.__E2E_MSW_OVERRIDE__
   if (override) {
+    // A held override answers once the test releases it: requests made
+    // before then wait, any made after go straight through.
+    const held: (() => void)[] = []
+    window.__E2E_MSW_RELEASE__ = () => {
+      window.__E2E_MSW_RELEASED__ = true
+      for (const go of held.splice(0)) go()
+    }
     worker.use(
       http[override.method](override.path, async () => {
+        if (override.hold && !window.__E2E_MSW_RELEASED__) await new Promise<void>((go) => held.push(go))
         if (override.delayMs) await delay(override.delayMs)
         if (override.bodyBase64 !== undefined) {
           const bytes = Uint8Array.from(atob(override.bodyBase64), (character) => character.charCodeAt(0))

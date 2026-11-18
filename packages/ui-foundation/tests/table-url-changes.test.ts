@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { activeViewOf, applyUrlChanges, filterChanges, readFilterState, viewToUrlChanges } from "../src/hooks/table-url-changes";
+import {
+  activeViewOf,
+  applyUrlChanges,
+  filterChanges,
+  paramsToUpdate,
+  readFilterState,
+  viewToUrlChanges,
+} from "../src/hooks/table-url-changes";
 
 // The URL-building half of useTableUrlState, the part with semantics worth
 // pinning. The hook itself only feeds these to setSearchParams in a single
@@ -184,5 +191,42 @@ describe("views fill the filters", () => {
     expect(applyUrlChanges(params, viewToUrlChanges(own, [], { filters: { view: "list" } })).get("view")).toBe("list");
     const state = readFilterState(params, own, []);
     expect(applyUrlChanges(params, filterChanges(state, { other: "x" }, [], false)).get("view")).toBe("grid");
+  });
+});
+
+// useTableUrlState's update(), as the hook runs it: each setter builds on
+// paramsToUpdate(rendered, path, window.location) and writes the result to
+// the address bar, the way react-router does for a route with nothing to
+// load, before the hook renders again.
+describe("paramsToUpdate", () => {
+  function browser(pathname: string, search: string) {
+    const addressBar = { pathname, search };
+    const rendered = new URLSearchParams(search);
+    const update = (changes: Parameters<typeof applyUrlChanges>[1], renderedPath = pathname) => {
+      addressBar.search = `?${applyUrlChanges(paramsToUpdate(rendered, renderedPath, addressBar), changes)}`;
+    };
+    return { addressBar, update };
+  }
+
+  it("two updates before the next render both land (a browser router)", () => {
+    const { addressBar, update } = browser("/tasks", "?page=3");
+    // One handler: group the list, then filter it (which returns to page 1).
+    update({ group: "status" });
+    update({ status: "active", page: null });
+    expect(new URLSearchParams(addressBar.search).toString()).toBe("group=status&status=active");
+  });
+
+  it("keeps a param another part of the page wrote in the same tick", () => {
+    const { addressBar, update } = browser("/tasks", "?search=fern");
+    addressBar.search = "?search=fern&selected=12";
+    update({ sort: "name:asc" });
+    expect(new URLSearchParams(addressBar.search).toString()).toBe("search=fern&selected=12&sort=name%3Aasc");
+  });
+
+  it("builds on the rendered params when the address bar isn't this router's (a memory router)", () => {
+    const rendered = new URLSearchParams("kind=novel");
+    const next = paramsToUpdate(rendered, "/", { pathname: "/story.html", search: "?id=app-datatable--feed" });
+    expect(next.toString()).toBe("kind=novel");
+    expect(paramsToUpdate(rendered, "/", undefined).toString()).toBe("kind=novel");
   });
 });

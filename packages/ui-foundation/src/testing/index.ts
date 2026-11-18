@@ -185,15 +185,65 @@ export const test = base.extend<{ mswBypass: 'fail' | 'allow' }>({
   },
 })
 
+export type MswOverrideOptions = {
+  /**
+   * Holds every matching request until the test calls `release()` (or
+   * `releaseMswOverride(page)`): the way to test a loading state. The
+   * skeleton is there for as long as the test needs, however slow the run,
+   * with no time to tune. `delayMs`, if set too, starts counting at the
+   * release.
+   */
+  hold?: boolean
+}
+
+export type MswOverrideControl = {
+  /** Lets the held requests answer, and every later one answer at once (this page and any it loads next). */
+  release: () => Promise<void>
+}
+
 /**
  * Forces a response for the page's *first* load: set before navigation, so
  * it wins the race against the app's own first fetch. For states forced
  * after load, use `waitForMswReady` and then `window.__msw.worker.use(...)`.
+ * The override applies to every page the test loads after, reloads included.
+ *
+ * `{ hold: true }` holds the requests until the test releases them, for a
+ * loading state (`tasksList` here is the list's `MswOverride`):
+ *
+ *     const list = await forceMswOverride(page, tasksList, { hold: true })
+ *     await page.goto('/tasks')
+ *     await expect(page.locator('[data-state="loading"]')).toBeVisible()
+ *     await list.release()
+ *     await expect(page.getByText('Water the ferns')).toBeVisible()
+ *
+ * Release before the test navigates again: `goto()` and `reload()` first
+ * wait for the page's `/api/` requests to settle, and a held one doesn't.
  */
-export async function forceMswOverride(page: Page, override: MswOverride): Promise<void> {
+export async function forceMswOverride(
+  page: Page,
+  override: MswOverride,
+  { hold = false }: MswOverrideOptions = {},
+): Promise<MswOverrideControl> {
   await page.addInitScript((spec) => {
     window.__E2E_MSW_OVERRIDE__ = spec
-  }, override)
+  }, hold ? { ...override, hold } : override)
+  return { release: () => releaseMswOverride(page) }
+}
+
+/**
+ * Releases a held override (`forceMswOverride(page, ..., { hold: true })`):
+ * the requests held so far answer, and later ones answer at once, on this
+ * page and every page the test loads after. Releasing twice, or an
+ * override that wasn't held, does nothing.
+ */
+export async function releaseMswOverride(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    window.__E2E_MSW_RELEASED__ = true
+  })
+  await page.evaluate(() => {
+    window.__E2E_MSW_RELEASED__ = true
+    window.__E2E_MSW_RELEASE__?.()
+  })
 }
 
 /** `window.__msw` is set only once the app's mocking has started — page.goto's load event doesn't wait for it. */
@@ -202,8 +252,8 @@ export async function waitForMswReady(page: Page): Promise<void> {
 }
 
 /** Starts the page logged out: GET /auth/me answers 401 on first load. */
-export function forceLoggedOut(page: Page): Promise<void> {
-  return forceMswOverride(page, {
+export async function forceLoggedOut(page: Page): Promise<void> {
+  await forceMswOverride(page, {
     method: 'get',
     path: '*/api/auth/me',
     status: 401,

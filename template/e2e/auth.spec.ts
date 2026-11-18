@@ -94,14 +94,18 @@ test.describe('auth', () => {
     await expect(page).toHaveURL('/login')
     await waitForMswReady(page)
 
-    // The next user's list is slow and empty. If the previous session's
-    // rows were still cached, the (client-side) navigation below would
-    // render them instantly instead of the loading state.
+    // The next user's list is empty and held until the test lets it go.
+    // If the previous session's rows were still cached, the (client-side)
+    // navigation below would render them instantly instead of the loading
+    // state. Held, not delayed: a delay can run out before the page renders.
     await page.evaluate(() => {
-      const { worker, http, HttpResponse, delay } = window.__msw
+      const { worker, http, HttpResponse } = window.__msw
+      const held = new Promise<void>((release) => {
+        ;(window as Window & { __releaseWidgets?: () => void }).__releaseWidgets = release
+      })
       worker.use(
         http.get('*/api/widgets', async () => {
-          await delay(1500)
+          await held
           return HttpResponse.json({ items: [], total: 0 })
         }),
       )
@@ -114,6 +118,7 @@ test.describe('auth', () => {
 
     await expect(page.locator('[data-state="loading"]')).toBeVisible()
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
+    await page.evaluate(() => (window as Window & { __releaseWidgets?: () => void }).__releaseWidgets?.())
     await expect(page.getByText('No widgets yet')).toBeVisible()
   })
 })

@@ -118,6 +118,37 @@ which assembles a rich-text save from the original Markdown.
   covers them in the browser; unit tests in `tests/markdown-merge.test.ts`.
   Each fails on the code before this change.
 
+### e2e: a loading test holds the answer; table setters build on the address bar
+
+Nothing an app must change. Move loading-state specs that use
+`delayMs` to `hold` (below); an app that patched `useTableUrlState`'s
+updates for itself can drop the patch once it takes the release.
+
+- **(new) `forceMswOverride(page, override, { hold: true })`** holds
+  every matching request until the test releases it, through the
+  returned `release()` or `releaseMswOverride(page)`. Released, the held
+  requests answer and later ones answer at once, on this page and any it
+  loads next. A loading test asserts the skeleton, releases, then asserts
+  the data, waiting on nothing but its own steps. With `delayMs: 1000` the
+  answer could come before the page's first render under load (and a
+  `Skeleton` shows only after 300 ms), so the skeleton was never seen and
+  the test flaked. `delayMs` still works; with `hold` it starts at the
+  release. `forceMswOverride` now returns `{ release }` (it returned
+  nothing); new types `MswOverrideOptions` and `MswOverrideControl`.
+- **(fix) `useTableUrlState`'s setters build on the address bar**
+  (`window.location.search`), not on `setSearchParams`' `previous`, which
+  react-router hands the params of the last render: two setters before the
+  next render (grouping then filtering in one handler, or another part of
+  the page writing its own param in the same tick) kept only the last.
+  Under a memory router, where the address bar isn't the router's, they
+  still build on the rendered params. Unit tests for `paramsToUpdate` in
+  `tests/table-url-changes.test.ts` fail on the old behaviour.
+- **Template:** the loading tests in `widgets-table`, `widget-form` and
+  `widget-view` hold instead of delaying, and `auth.spec.ts`'s cached-data
+  test holds its after-load handler on a promise it resolves itself.
+- **Docs:** `docs/consuming.md` "Loading states: hold the answer, don't
+  delay it", step 8 of `add-an-entity.md`, the package README.
+
 ## 4.125.0 — The tab bar holds the page still; mocks rejoin a restarted worker
 
 npm package and `ui-foundation-backend` 4.125.0 (the backend is unchanged
