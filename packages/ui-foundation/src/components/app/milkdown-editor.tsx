@@ -4,7 +4,8 @@
 // <Markdown> renders with. Why Milkdown, and what it costs:
 // docs/ARCHITECTURE.md "Decisions".
 //
-// What this file adds to Milkdown's own presets:
+// What this file (the wiring) and the rich-text-* files beside it add to
+// Milkdown's own presets:
 // - Saves go through mergeMarkdown: an untouched document, and every block
 //   the person didn't change, saves back as originally written.
 // - No HTML in, ever. The preset's "preserve empty line" plugin is left
@@ -17,8 +18,9 @@
 //   <h2>. `headingLevel` moves them to where the field sits in the page's
 //   outline, as it does <Markdown>'s; only the element moves, never the
 //   level the Markdown is saved with (a node view draws it, from the
-//   node's own level). They look like <Markdown>'s (prose-look.ts). A
-//   task-list item renders a real checkbox that toggles it.
+//   node's own level: rich-text-heading-view.ts). They look like
+//   <Markdown>'s (prose-look.ts). A task-list item renders a real checkbox
+//   that toggles it (rich-text-task-item-view.ts).
 // - Callouts (`> [!NOTE]`, src/lib/markdown-callout.ts): a node of their
 //   own, drawn as <Markdown> draws them, the icon a menu of kinds.
 // - Tables whose columns fit their words, in a box that scrolls sideways
@@ -48,7 +50,8 @@
 //   (rich-text-full-screen.ts).
 // - A click on a link opens it in a new tab, as the read view's links do,
 //   so notes that are always the editor still follow their links
-//   (followLink). Ctrl/Cmd+K adds or edits a link (a box at the caret: web
+//   (followLink, rich-text-links.ts). Ctrl/Cmd+K adds or edits a link (a
+//   box at the caret, rich-text-link-box.tsx: web
 //   and email addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
 //   in. `[] ` at a line's start makes a task item, and Enter in one the
 //   next, unticked (rich-text-tasks.ts). Ctrl/Cmd+Enter stays the field's
@@ -78,7 +81,7 @@
 // - `pageLink`: links the app marks as its pages drawn as page links
 //   (rich-text-page-links.ts), opened in this tab; `onCreatePage`: "/page"
 //   and Turn into page make one through the app and link it (a title box,
-//   PageForm). The Markdown stays a plain link.
+//   rich-text-page-box.tsx). The Markdown stays a plain link.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useInRouterContext, useNavigate } from 'react-router'
@@ -113,18 +116,13 @@ import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milk
 import { $markSchema, $nodeSchema, $prose, $remark, getMarkdown } from '@milkdown/kit/utils'
 import { cn } from 'cn'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Field, FieldError, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Popover, PopoverContent } from '@/components/ui/popover'
+import { Popover } from '@/components/ui/popover'
 import { acceptAttribute } from '@/lib/image-file'
-import { linkHref, linkRefusal } from '@/lib/link-href'
-import type { PageLinkResolver } from '@/lib/page-link'
-import { messageOf } from './edit-in-place-store'
+import { linkHref } from '@/lib/link-href'
+import { messageOf } from '@/lib/refusal'
 import { restorePage } from './page-restore'
 import {
   insertPageLink,
-  pageLinkInfo,
   pageLinksPlugin,
   pendingPagePlugin,
   refreshPageLinks,
@@ -140,16 +138,22 @@ import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown
 import { holdPendingEdit } from '@/lib/pending-edits'
 import { foldStore, listenForOtherTabs } from '@/hooks/fold-store'
 import { toggleFold } from '@/lib/markdown-fold'
-import { DEFAULT_HEADING_LEVEL, FOLD_BUTTON, FOLD_HEADING, headingBand, headingClass, headingTag, type HeadingLevel } from './prose-look'
-import { foldPlugin, foldSpecOf, setFolds, type FoldSpec } from './rich-text-fold'
+import { DEFAULT_HEADING_LEVEL } from './prose-look'
+import { foldPlugin, setFolds } from './rich-text-fold'
 import type { RichTextEditorProps } from './rich-text-editor'
+import { headingView } from './rich-text-heading-view'
+import { taskItemView, toggleTaskItem } from './rich-text-task-item-view'
+import { applyLink, followLink, linkTarget } from './rich-text-links'
+import { anchorAt } from './rich-text-box-anchor'
+import { LinkForm, type LinkBox } from './rich-text-link-box'
+import { PageForm, type PageBox } from './rich-text-page-box'
 import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
 import { formatOn, tableAt, toggleFormat, type FormatId } from './rich-text-formats'
 import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, TOGGLE_HEADING_VARIANTS } from './rich-text-format-items'
 import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry } from './rich-text-node-views'
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
-import { splitTaskItem, TASK_ROW, taskBoxHit, taskInputRule } from './rich-text-tasks'
+import { splitTaskItem, taskInputRule } from './rich-text-tasks'
 import { typedInputRules } from './rich-text-input-rules'
 import { edges } from './rich-text-edges'
 import { withEmptyParagraphChildren } from './rich-text-empty-paragraph'
@@ -332,224 +336,6 @@ function shownKey(state: EditorState): string {
 
 const REFUSED_EDIT = "This change can't be saved without rewriting parts of the text you didn't edit. Undo it to go on saving."
 
-// A heading: the element `headingLevel` gives its level, the look its
-// level has. Marked as a band for PROSE_INSET (`#` and `##`).
-//
-// With `foldKey` (`onFold`), a toggle heading sits beside its fold button,
-// as in <Markdown>: the look on the two together, the button out of the
-// tab order (Ctrl/Cmd+Alt+[ and ] and NotesOutline are the keyboard's
-// way), kept invisible where there's nothing under the heading to fold,
-// or the heading isn't at the top level. A plain heading has no button
-// and no room for one; its fold id still marks it, for NotesOutline.
-function headingView(
-  node: ProseNode,
-  top: HeadingLevel,
-  textTop: number,
-  decorations: readonly Decoration[],
-  onFold?: (id: string) => void,
-): NodeView {
-  const level = Number(node.attrs.level)
-  const heading = document.createElement(headingTag(level, top, textTop))
-  const sameLevel = (next: ProseNode) =>
-    next.type === node.type && next.attrs.level === node.attrs.level && Boolean(next.attrs.toggle) === Boolean(node.attrs.toggle)
-  if (node.attrs.toggle) heading.dataset.toggle = ''
-  if (!onFold || !node.attrs.toggle) {
-    heading.className = headingClass(level)
-    if (headingBand(level)) heading.dataset.band = ''
-    const mark = (decorations: readonly Decoration[]) => {
-      const spec = onFold ? foldSpecOf(decorations) : null
-      if (spec) heading.dataset.foldId = spec.id
-      else delete heading.dataset.foldId
-    }
-    mark(decorations)
-    return {
-      dom: heading,
-      contentDOM: heading,
-      update: (next, decorations) => {
-        if (!sameLevel(next)) return false
-        mark(decorations)
-        return true
-      },
-    }
-  }
-  const dom = document.createElement('div')
-  dom.dataset.toggle = ''
-  dom.className = cn(FOLD_HEADING, headingClass(level))
-  if (headingBand(level)) dom.dataset.band = ''
-  heading.className = 'min-w-0 flex-1'
-  const button = document.createElement('button')
-  button.type = 'button'
-  button.tabIndex = -1
-  button.contentEditable = 'false'
-  button.dataset.slot = 'fold-button'
-  const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  chevron.setAttribute('viewBox', '0 0 24 24')
-  chevron.setAttribute('aria-hidden', 'true')
-  chevron.innerHTML =
-    '<path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />'
-  button.append(chevron)
-  dom.append(button, heading)
-  let spec: FoldSpec | null = null
-  const render = (decorations: readonly Decoration[]) => {
-    spec = foldSpecOf(decorations)
-    button.className = cn(FOLD_BUTTON, !spec?.foldable && 'invisible')
-    chevron.setAttribute('class', cn('size-4 transition-transform', spec?.folded && '-rotate-90'))
-    button.setAttribute('aria-expanded', String(!spec?.folded))
-    button.setAttribute('aria-label', spec?.label || 'Section')
-    if (spec) dom.dataset.foldId = spec.id
-    else delete dom.dataset.foldId
-  }
-  render(decorations)
-  // A press keeps the caret where it is.
-  button.addEventListener('mousedown', (event) => event.preventDefault())
-  button.addEventListener('click', () => {
-    if (spec?.foldable) onFold(spec.id)
-  })
-  return {
-    dom,
-    contentDOM: heading,
-    update: (next, decorations) => {
-      if (!sameLevel(next)) return false
-      render(decorations)
-      return true
-    },
-    stopEvent: (event) => button.contains(event.target as Node),
-    ignoreMutation: (mutation) => mutation.type !== 'selection' && !heading.contains(mutation.target),
-  }
-}
-
-// A task-list item: its checkbox toggles `checked`. Any other list item
-// renders as Milkdown's own.
-function taskItemView(node: ProseNode, view: EditorView, getPos: () => number | undefined): NodeView {
-  const dom = document.createElement('li')
-  const box = document.createElement('input')
-  box.type = 'checkbox'
-  box.contentEditable = 'false'
-  box.tabIndex = -1
-  box.setAttribute('aria-label', 'Done')
-  const contentDOM = document.createElement('div')
-  // Takes the row's width, so an empty item's caret and placeholder show.
-  contentDOM.className = 'min-w-0 flex-1'
-  dom.append(taskBoxHit(box), contentDOM)
-  dom.className = TASK_ROW
-  dom.dataset.itemType = 'task'
-
-  let current = node
-  const render = () => {
-    box.checked = Boolean(current.attrs.checked)
-    dom.dataset.checked = String(Boolean(current.attrs.checked))
-  }
-  render()
-  box.addEventListener('mousedown', (event) => event.preventDefault())
-  // The browser's own toggle is left to happen (cancelling a checkbox's
-  // click puts its old state back after this handler), and the document
-  // follows it.
-  box.addEventListener('click', () => {
-    const pos = getPos()
-    if (pos === undefined || !view.editable) return
-    view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...current.attrs, checked: !current.attrs.checked }))
-  })
-  return {
-    dom,
-    contentDOM,
-    update: (next) => {
-      if (next.type !== current.type || next.attrs.checked == null) return false
-      current = next
-      render()
-      return true
-    },
-    stopEvent: (event) => event.target === box || event.target === box.parentElement,
-    ignoreMutation: (mutation) => mutation.target === box || mutation.target === box.parentElement,
-  }
-}
-
-// The task-list item the caret is in, ticked or unticked. False when the
-// caret isn't in one.
-function toggleTaskItem(view: EditorView): boolean {
-  const { $from } = view.state.selection
-  for (let depth = $from.depth; depth > 0; depth--) {
-    const node = $from.node(depth)
-    if (node.type.name === 'list_item' && node.attrs.checked != null) {
-      view.dispatch(view.state.tr.setNodeMarkup($from.before(depth), undefined, { ...node.attrs, checked: !node.attrs.checked }))
-      return true
-    }
-  }
-  return false
-}
-
-// What a link edit applies to: the selection, or with nothing selected
-// the whole link the caret is in (else just the caret), and the address it
-// has now (`''` when none).
-type LinkTarget = { from: number; to: number; href: string }
-
-function linkTarget(state: EditorState): LinkTarget {
-  const link = state.schema.marks.link
-  const { from, to, empty, $from } = state.selection
-  if (!empty) {
-    let href = ''
-    state.doc.nodesBetween(from, to, (node) => {
-      const mark = link.isInSet(node.marks)
-      if (mark && !href) href = String(mark.attrs.href)
-    })
-    return { from, to, href }
-  }
-  const mark = link.isInSet($from.marks())
-  if (!mark) return { from, to, href: '' }
-  const start = $from.start()
-  let target: LinkTarget = { from, to, href: String(mark.attrs.href) }
-  let runFrom = -1
-  $from.parent.forEach((child, offset) => {
-    const childFrom = start + offset
-    const childTo = childFrom + child.nodeSize
-    if (!mark.isInSet(child.marks)) {
-      runFrom = -1
-      return
-    }
-    if (runFrom < 0) runFrom = childFrom
-    if (runFrom <= from && from <= childTo) target = { from: runFrom, to: childTo, href: target.href }
-  })
-  return target
-}
-
-// A plain click (or a tap) on a link opens it in a new tab, the way the
-// read view's links open (markdown.tsx), so notes that are always the
-// editor still work as notes. Not when the click chose words (a drag ends
-// in a click too), extends the selection (Shift) or is Alt's; the address
-// goes through linkHref again, so a link that came in with the Markdown
-// can't run code (`javascript:`) either: that one stays text to click
-// into. Read-only too, where the browser would otherwise follow it in this
-// tab. To edit a link's words, put the caret in them from the keyboard or
-// drag over them; Ctrl/Cmd+K edits its address.
-//
-// A page link (`pageLink`) opens its page in this tab instead (`open`:
-// the router's, when there is one), and a removed page's link opens
-// nothing.
-function followLink(
-  view: EditorView,
-  event: MouseEvent,
-  pages: { resolve: PageLinkResolver | undefined; open: (href: string) => void },
-): boolean {
-  if (event.button !== 0 || event.shiftKey || event.altKey) return false
-  const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
-  if (!anchor || !view.dom.contains(anchor)) return false
-  if (!view.state.selection.empty) return false
-  const written = anchor.getAttribute('href') ?? ''
-  const page = pageLinkInfo(pages.resolve, written)
-  if (page) {
-    event.preventDefault()
-    if (page.removed) return false
-    const href = linkHref(written)
-    if (!href) return false
-    pages.open(href)
-    return true
-  }
-  const href = linkHref(written)
-  if (!href) return false
-  event.preventDefault()
-  window.open(href, '_blank', 'noopener,noreferrer')
-  return true
-}
-
 // The router's navigate, handed to the editor's callbacks: rendered only
 // inside a router, so an editor outside one still works (a page link
 // then loads the page).
@@ -562,39 +348,6 @@ function NavigateBridge({ targetRef }: { targetRef: RefObject<((href: string) =>
     }
   }, [navigate, targetRef])
   return null
-}
-
-// Sets (or, with `href` empty, removes) the link on the target. With
-// nothing selected and no link there, the address goes in as the link's
-// own text.
-function applyLink(view: EditorView, target: LinkTarget, href: string) {
-  const link = view.state.schema.marks.link
-  const tr = view.state.tr
-  if (target.from === target.to) {
-    if (!href) return
-    tr.insertText(href, target.from).addMark(target.from, target.from + href.length, link.create({ href }))
-  } else {
-    tr.removeMark(target.from, target.to, link)
-    if (href) tr.addMark(target.from, target.to, link.create({ href }))
-  }
-  view.dispatch(tr.scrollIntoView())
-}
-
-type BoxAnchor = { getBoundingClientRect: () => DOMRect; contextElement: Element }
-
-type LinkBox = LinkTarget & { anchor: BoxAnchor }
-
-// The new page's title box: what it starts with (the selected words, or
-// nothing after "/page"), placed at the start of where the link will go.
-type PageBox = { title: string; anchor: BoxAnchor }
-
-// A box's place: a point in the text.
-function anchorAt(view: EditorView, pos: number): BoxAnchor {
-  const point = view.coordsAtPos(pos)
-  return {
-    getBoundingClientRect: () => new DOMRect(point.left, point.top, 0, point.bottom - point.top),
-    contextElement: view.dom,
-  }
 }
 
 export default function MilkdownEditor({
@@ -1723,151 +1476,5 @@ export default function MilkdownEditor({
         )}
       </Popover>
     </>
-  )
-}
-
-// The link box: the address, Apply, and Remove link for an existing one.
-// Enter (Ctrl/Cmd+Enter too) applies the link and stays its own: editing
-// in place listens for Ctrl/Cmd+Enter through the portal, and would save
-// the field without it. Esc is the popover's: it closes the box only.
-function LinkForm({ box, onApply }: { box: LinkBox; onApply: (href: string) => void }) {
-  const [typed, setTyped] = useState(box.href)
-  const [error, setError] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const inputId = useId()
-  const errorId = `${inputId}-error`
-
-  const apply = () => {
-    const href = linkHref(typed)
-    if (href === null) {
-      setError(
-        linkRefusal(typed) === 'whitespace'
-          ? 'An address has no spaces. Remove them, or write each as %20.'
-          : 'Enter a web or email address, like https://example.com.',
-      )
-      return
-    }
-    onApply(href)
-  }
-
-  const onKeyDown = (event: ReactKeyboardEvent) => {
-    if (event.key === 'Enter' && event.target === inputRef.current) {
-      event.preventDefault()
-      event.stopPropagation()
-      apply()
-    }
-  }
-
-  return (
-    <PopoverContent
-      anchor={box.anchor}
-      align="start"
-      aria-label={box.href ? 'Edit Link' : 'Add Link'}
-      initialFocus={inputRef}
-      finalFocus={false}
-      className="w-80"
-      onKeyDown={onKeyDown}
-    >
-      <Field data-invalid={error ? true : undefined}>
-        <FieldLabel htmlFor={inputId}>Link Address</FieldLabel>
-        <Input
-          ref={inputRef}
-          id={inputId}
-          value={typed}
-          placeholder="https://"
-          autoComplete="off"
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          onChange={(event) => {
-            setTyped(event.target.value)
-            setError(null)
-          }}
-        />
-        {error && <FieldError id={errorId}>{error}</FieldError>}
-      </Field>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={apply}>
-          Apply
-        </Button>
-        {box.href && (
-          <Button size="sm" variant="outline" onClick={() => onApply('')}>
-            Remove Link
-          </Button>
-        )}
-      </div>
-    </PopoverContent>
-  )
-}
-
-// The new page's title box: the title (the selected words to start with),
-// and Create page. While the app makes the page it waits, its controls
-// held; a refusal shows under the title, in the gateway's words, and the
-// text is left as it was. Enter creates; Esc is the popover's, and closes
-// it (not while the app is still working).
-function PageForm({ box, busy, onCreate }: { box: PageBox; busy: boolean; onCreate: (title: string) => Promise<string | null> }) {
-  const [typed, setTyped] = useState(box.title)
-  const [error, setError] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const inputId = useId()
-  const errorId = `${inputId}-error`
-
-  const create = () => {
-    const title = typed.replace(/\s+/g, ' ').trim()
-    if (!title) {
-      setError('Give the page a title.')
-      return
-    }
-    setError(null)
-    void onCreate(title).then((refused) => {
-      if (refused) {
-        setError(refused)
-        inputRef.current?.focus()
-      }
-    })
-  }
-
-  const onKeyDown = (event: ReactKeyboardEvent) => {
-    if (event.key === 'Enter' && event.target === inputRef.current) {
-      event.preventDefault()
-      event.stopPropagation()
-      if (!busy) create()
-    }
-  }
-
-  return (
-    <PopoverContent
-      anchor={box.anchor}
-      align="start"
-      aria-label="New Page"
-      initialFocus={inputRef}
-      finalFocus={false}
-      className="w-80"
-      data-rich-text-menu=""
-      data-slot="page-form"
-      onKeyDown={onKeyDown}
-    >
-      <Field data-invalid={error ? true : undefined}>
-        <FieldLabel htmlFor={inputId}>Page Title</FieldLabel>
-        <Input
-          ref={inputRef}
-          id={inputId}
-          value={typed}
-          autoComplete="off"
-          readOnly={busy}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
-          onChange={(event) => {
-            setTyped(event.target.value)
-            setError(null)
-          }}
-        />
-        {error && <FieldError id={errorId}>{error}</FieldError>}
-      </Field>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={create} disabled={busy}>
-          {busy ? 'Creating…' : 'Create Page'}
-        </Button>
-      </div>
-    </PopoverContent>
   )
 }

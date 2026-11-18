@@ -10,7 +10,7 @@
 // - Picked: the slash menu's Toggle heading 1 to 3, and the toolbar's
 //   Toggle heading (rich-text-formats.ts).
 // Only a toggle heading folds, and only it has a fold button
-// (headingView in milkdown-editor.tsx, rich-text-fold.ts).
+// (rich-text-heading-view.ts, rich-text-fold.ts).
 import { headingSchema } from '@milkdown/kit/preset/commonmark'
 import { textblockTypeInputRule } from '@milkdown/kit/prose/inputrules'
 import type { NodeSchema } from '@milkdown/kit/transformer'
