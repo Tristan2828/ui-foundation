@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import type { AppError } from '../src/api/contracts'
-import { EditInPlaceStore, type EditFieldConfig } from '../src/components/app/edit-in-place-store'
+import { CONFLICT_MESSAGE, EditInPlaceStore, type EditFieldConfig } from '../src/components/app/edit-in-place-store'
 
 function deferredSave() {
   const calls: { value: unknown; resolve: () => void; reject: (error: unknown) => void }[] = []
@@ -353,6 +353,9 @@ describe('editing in place with autosave', () => {
     const { store, notes } = await autosaving()
     store.change('notes', 'One two')
     store.report('notes', "This text can't be saved without changing parts you didn't edit.")
+    // Unsaved at once, not only after the pause, and leaving asks rather than saving (F5).
+    expect(store.dirty).toBe(true)
+    expect(store.savesOnLeave).toBe(false)
     await vi.advanceTimersByTimeAsync(PAUSE)
     expect(notes.save).not.toHaveBeenCalled()
     expect(store.state('notes')).toMatchObject({ draft: 'One two', error: expect.stringContaining("can't be saved") })
@@ -408,6 +411,51 @@ describe('editing in place with autosave', () => {
     await vi.advanceTimersByTimeAsync(PAUSE)
     expect(notes.save).not.toHaveBeenCalled()
     expect(store.dirty).toBe(false)
+  })
+
+  it('a problem reported with nothing typed still counts as unsaved at once (negative control: none, clean)', async () => {
+    const { store } = await autosaving()
+    expect(store.dirty).toBe(false)
+    store.report('notes', "This text can't be saved without changing parts you didn't edit.")
+    expect(store.dirty).toBe(true)
+    store.report('notes', null)
+    expect(store.dirty).toBe(false)
+  })
+
+  it('a field leaving mid-save still sends what was typed after that save started (F3)', async () => {
+    vi.useFakeTimers()
+    const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
+    const save = deferredSave()
+    const unregister = store.register('notes', () => ({ value: 'Start.', autosave: true, save: save.save }))
+    await store.start('notes')
+    store.change('notes', 'Start. A')
+    await vi.advanceTimersByTimeAsync(PAUSE)
+    expect(save.calls).toHaveLength(1)
+    store.change('notes', 'Start. A B-typed-during-save')
+    unregister()
+    // Leaving the view doesn't end the job: it's still unsaved until sent.
+    expect(store.dirty).toBe(true)
+    save.calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(save.calls).toHaveLength(2)
+    expect(save.calls[1].value).toBe('Start. A B-typed-during-save')
+    save.calls[1].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(store.dirty).toBe(false)
+  })
+
+  it('a field leaving mid-save with nothing typed since sends nothing more (negative control)', async () => {
+    vi.useFakeTimers()
+    const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
+    const save = deferredSave()
+    const unregister = store.register('notes', () => ({ value: 'Start.', autosave: true, save: save.save }))
+    await store.start('notes')
+    store.change('notes', 'Start. A')
+    await vi.advanceTimersByTimeAsync(PAUSE)
+    unregister()
+    save.calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(PAUSE)
+    expect(save.calls).toHaveLength(1)
   })
 
   it('a field leaving the page with a save waiting for the pause sends it at once', async () => {
@@ -479,23 +527,104 @@ describe('an always-editable field', () => {
     expect(store.dirty).toBe(false)
   })
 
-  it('shows a value saved elsewhere, only while nothing of its own is unsaved', async () => {
+  it('shows a value saved elsewhere at once while nothing of its own is unsaved', async () => {
     const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
     const notes = always(store)
     store.change('notes', 'One two')
-    notes.setValue('Changed elsewhere')
-    expect(store.refresh('notes')).toBe(false)
-    expect(store.state('notes')).toMatchObject({ draft: 'One two' })
-
     const saved = store.commit('notes')
     notes.calls[0].resolve()
     await saved
     // Its own save, echoed back, isn't a change.
     notes.setValue('One two')
     expect(store.refresh('notes')).toBe(false)
+    expect(store.state('notes')).not.toHaveProperty('revision')
     notes.setValue('Changed elsewhere')
     expect(store.refresh('notes')).toBe(true)
     expect(store.state('notes')).toMatchObject({ draft: 'Changed elsewhere', initial: 'Changed elsewhere', revision: 1 })
+  })
+
+  it('a value saved elsewhere under unsaved typing is a conflict: nothing saves until the person picks (F4)', async () => {
+    vi.useFakeTimers()
+    const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
+    const notes = always(store, 'Para one.\n\nPara two.')
+    store.change('notes', 'Para one. edit in A\n\nPara two.')
+    notes.setValue('Para one.\n\nPara two.\n\nPara three ADDED IN TAB B.')
+    expect(store.refresh('notes')).toBe(false)
+    expect(store.state('notes')).toMatchObject({ conflict: true, error: CONFLICT_MESSAGE, draft: 'Para one. edit in A\n\nPara two.' })
+    // The pause, leaving the field, leaving the page: none of them saves over it.
+    await vi.advanceTimersByTimeAsync(PAUSE)
+    expect(await store.commit('notes')).toBe(false)
+    expect(await store.saveAll()).toBe(false)
+    expect(notes.save).not.toHaveBeenCalled()
+    expect(store.dirty).toBe(true)
+    expect(store.savesOnLeave).toBe(false)
+
+    // "Keep mine" saves what's typed over it.
+    const kept = store.keepMine('notes')
+    expect(notes.calls[0].value).toBe('Para one. edit in A\n\nPara two.')
+    notes.calls[0].resolve()
+    expect(await kept).toBe(true)
+    expect(store.state('notes')).toMatchObject({ conflict: false, error: null })
+  })
+
+  it('a conflict answered "show the saved one" starts over from it and sends nothing', async () => {
+    const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
+    const notes = always(store)
+    store.change('notes', 'One mine')
+    notes.setValue('One theirs')
+    store.refresh('notes')
+    store.takeSaved('notes')
+    expect(store.state('notes')).toMatchObject({ draft: 'One theirs', initial: 'One theirs', revision: 1 })
+    expect(store.state('notes')).not.toHaveProperty('conflict')
+    expect(store.dirty).toBe(false)
+    expect(notes.save).not.toHaveBeenCalled()
+  })
+
+  it('the saved value changing to what this field already holds is no conflict (negative control)', () => {
+    const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
+    const notes = always(store)
+    store.change('notes', 'One two')
+    notes.setValue('One')
+    expect(store.refresh('notes')).toBe(false)
+    expect(store.state('notes')).toMatchObject({ draft: 'One two', error: null })
+    expect(store.state('notes')).not.toMatchObject({ conflict: true })
+  })
+
+  it("the server trimming the text it was sent is its own echo: no start over, no conflict (F25)", async () => {
+    const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
+    const notes = always(store)
+    store.change('notes', 'One two  \n\n')
+    const saved = store.commit('notes')
+    notes.calls[0].resolve()
+    await saved
+    notes.setValue('One two')
+    expect(store.refresh('notes')).toBe(false)
+    expect(store.state('notes')).toMatchObject({ error: null })
+    expect(store.state('notes')).not.toHaveProperty('revision')
+    expect(store.dirty).toBe(false)
+    // Negative control: a real change after that still starts it over.
+    notes.setValue('One two three')
+    expect(store.refresh('notes')).toBe(true)
+  })
+
+  it('a hidden page saves at once rather than after the pause (F13)', async () => {
+    vi.useFakeTimers()
+    const store = new EditInPlaceStore({ autosaveDelay: PAUSE })
+    const notes = always(store)
+    store.change('notes', 'One two')
+    store.hurry(true)
+    expect(notes.calls[0].value).toBe('One two')
+    notes.calls[0].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    store.change('notes', 'One two three')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(notes.calls[1].value).toBe('One two three')
+    store.hurry(false)
+    notes.calls[1].resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    store.change('notes', 'One two three four')
+    await vi.advanceTimersByTimeAsync(PAUSE - 1)
+    expect(notes.calls).toHaveLength(2)
   })
 
   it('stops counting once it leaves the view', () => {
@@ -523,5 +652,18 @@ describe('leaving the page while autosaving', () => {
     expect(store.editing).toBe(true)
     release()
     expect(store.editing).toBe(false)
+  })
+})
+
+describe('a value changing under a field that does not save itself', () => {
+  it('is left alone: no reload, no conflict (a control that saves each pick itself)', async () => {
+    const store = new EditInPlaceStore()
+    let value: string[] = ['a']
+    store.register('labels', () => ({ value, kind: 'multi', save: () => Promise.resolve() }) as EditFieldConfig)
+    await store.start('labels')
+    value = ['a', 'b']
+    expect(store.refresh('labels')).toBe(false)
+    expect(store.state('labels')).not.toHaveProperty('conflict')
+    expect(store.state('labels')).not.toHaveProperty('revision')
   })
 })
