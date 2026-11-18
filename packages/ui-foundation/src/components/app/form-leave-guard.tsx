@@ -14,16 +14,19 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useBlocker } from 'react-router'
 import { DiscardChangesDialog } from '@/components/ui/dialog'
+import { flushPendingEdits } from '@/lib/pending-edits'
 
 export function FormLeaveGuard({ dirty, letThrough }: { dirty: boolean; letThrough: () => boolean }) {
   const latest = useRef({ dirty, letThrough })
   useLayoutEffect(() => {
     latest.current = { dirty, letThrough }
   })
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      latest.current.dirty && !latest.current.letThrough() && currentLocation.pathname !== nextLocation.pathname,
-  )
+  // Typing a rich-text field holds back (F6) is reported first; the form
+  // marks itself dirty from it as it does from any change.
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    flushPendingEdits()
+    return latest.current.dirty && !latest.current.letThrough() && currentLocation.pathname !== nextLocation.pathname
+  })
 
   useEffect(() => {
     if (!dirty) return

@@ -108,7 +108,7 @@ import type { NodeParserSpec } from '@milkdown/kit/transformer'
 import { gfm, tableCellSchema, tableHeaderSchema, tableSchema } from '@milkdown/kit/preset/gfm'
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import { NodeSelection, Plugin, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
-import { isInTable, TableMap } from '@milkdown/kit/prose/tables'
+import { isInTable, selectedRect, TableMap } from '@milkdown/kit/prose/tables'
 import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
 import { $markSchema, $nodeSchema, $prose, $remark, getMarkdown } from '@milkdown/kit/utils'
 import { cn } from 'cn'
@@ -137,13 +137,15 @@ import { formatTableWidths, remarkTableWidths } from '@/lib/markdown-table-width
 import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes, type HighlightColor } from '@/lib/markdown-highlight'
 import { textTopHeading } from '@/lib/markdown-top-heading'
 import { MarkdownMergeError, markdownStyle, mergeMarkdown } from '@/lib/markdown-merge'
+import { holdPendingEdit } from '@/lib/pending-edits'
 import { foldStore, listenForOtherTabs } from '@/hooks/fold-store'
 import { toggleFold } from '@/lib/markdown-fold'
 import { DEFAULT_HEADING_LEVEL, FOLD_BUTTON, FOLD_HEADING, headingBand, headingClass, headingTag, type HeadingLevel } from './prose-look'
 import { foldPlugin, foldSpecOf, setFolds, type FoldSpec } from './rich-text-fold'
 import type { RichTextEditorProps } from './rich-text-editor'
 import { RichTextFloatingToolbar } from './rich-text-floating-toolbar'
-import { tableAt, toggleFormat, type FormatId } from './rich-text-formats'
+import { formatOn, tableAt, toggleFormat, type FormatId } from './rich-text-formats'
+import { CALLOUT_VARIANTS, FORMAT_GROUPS, HIGHLIGHT_VARIANTS, TOGGLE_HEADING_VARIANTS } from './rich-text-format-items'
 import { calloutKind, calloutView, tableView, type Widget, type WidgetRegistry } from './rich-text-node-views'
 import { droppedFiles, imageUploadPlugin, pastedImages, uploadImages, uploadPlaceholders } from './rich-text-image-upload'
 import { handleShortcut } from './rich-text-shortcuts'
@@ -296,6 +298,38 @@ const imageTitles = $remark('imageTitles', () => () => (tree: unknown) => emptyI
 
 // What the field says when the merge refuses an edit (markdown-merge.ts):
 // to the app's `onProblem`, and in the field itself.
+// How long typing has to stop before the edit is turned back into
+// Markdown (mergeMarkdown) and reported through onChange (F6).
+export const MERGE_PAUSE_MS = 300
+
+// Every format a toolbar can show as on.
+const SHOWN_FORMATS: FormatId[] = [
+  ...new Set([...FORMAT_GROUPS.flat(), ...TOGGLE_HEADING_VARIANTS, ...CALLOUT_VARIANTS, ...HIGHLIGHT_VARIANTS].map((item) => item.id)),
+]
+
+// What the editor's React parts draw from its state, as one string: the
+// formats on, the selection (where only when there is one: a caret's
+// place matters to nothing drawn but the slash menu and a table's grips),
+// the slash menu's query, a table's caret cell and the uploads. A key
+// that doesn't change it re-renders nothing (F6).
+function shownKey(state: EditorState): string {
+  const { selection } = state
+  const parts: (string | number)[] = [selection.empty ? 'caret' : `${selection.from}-${selection.to}`]
+  if (selection instanceof NodeSelection) parts.push('node')
+  if (selection.$from.parent.type.spec.code) parts.push('code')
+  if (!selection.empty && selection.$from.sameParent(selection.$to)) parts.push('one-block')
+  parts.push(SHOWN_FORMATS.filter((id) => formatOn(state, id)).join(','))
+  const slash = slashQuery(state)
+  if (slash) parts.push(`slash:${slash.from}:${slash.to}:${slash.query}`)
+  const table = tableAt(state)
+  if (table && isInTable(state)) {
+    const { top, left } = selectedRect(state)
+    parts.push(`table:${table.pos}:${top}:${left}`)
+  }
+  parts.push(`uploads:${uploadPlaceholders(state).length}`)
+  return parts.join('|')
+}
+
 const REFUSED_EDIT = "This change can't be saved without rewriting parts of the text you didn't edit. Undo it to go on saving."
 
 // A heading: the element `headingLevel` gives its level, the look its
@@ -611,7 +645,15 @@ export default function MilkdownEditor({
   // toolbar), the mouse is down choosing words, and the selection Esc hid
   // it for.
   const [focused, setFocused] = useState(false)
-  const [selecting, setSelecting] = useState(false)
+  const [selecting, setSelectingState] = useState(false)
+  // Set only when it changes: a key sets it false, and React would draw
+  // the whole editor again for the first key after a click (F6).
+  const selectingRef = useRef(false)
+  const setSelecting = (next: boolean) => {
+    if (selectingRef.current === next) return
+    selectingRef.current = next
+    setSelectingState(next)
+  }
   const [dismissed, setDismissed] = useState<{ from: number; to: number } | null>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const floatingRef = useRef<HTMLDivElement>(null)
@@ -718,8 +760,28 @@ export default function MilkdownEditor({
     const textTop = headingFrom === 'text' ? textTopHeading(original) : 1
     let baseline: string | null = null
     let cancelled = false
+    // The last shownKey React drew.
+    let shown = ''
+
+    // The merge runs a pause after typing stops (MERGE_PAUSE_MS), not on
+    // every key: its cost grows with the note (F6). Anything about to read
+    // the value first asks for it (flushPendingEdits, src/lib/pending-edits.ts),
+    // and leaving the text, Esc, Ctrl/Cmd+Enter, hiding the page and
+    // unmounting report it at once.
+    let pause: ReturnType<typeof setTimeout> | undefined
+    let release: (() => void) | null = null
+    const editedSoon = () => {
+      clearTimeout(pause)
+      pause = setTimeout(emit, MERGE_PAUSE_MS)
+      if (!release) release = holdPendingEdit(emit)
+    }
 
     const emit = () => {
+      clearTimeout(pause)
+      pause = undefined
+      if (!release) return
+      release()
+      release = null
       const editor = editorRef.current
       if (!editor || baseline === null) return
       const current = editor.action(getMarkdown())
@@ -744,10 +806,16 @@ export default function MilkdownEditor({
           view: () => ({
             update: (view, previous) => {
               if (cancelled) return
-              setEditorState(view.state)
-              // Esc hides the floating toolbar for one selection only.
-              if (view.state.selection.empty) setDismissed(null)
-              if (!view.state.doc.eq(previous.doc)) emit()
+              // React hears of the state only when something it draws
+              // from it changed (shownKey): most keys re-render nothing.
+              const key = shownKey(view.state)
+              if (key !== shown) {
+                shown = key
+                setEditorState(view.state)
+                // Esc hides the floating toolbar for one selection only.
+                if (view.state.selection.empty) setDismissed(null)
+              }
+              if (!view.state.doc.eq(previous.doc)) editedSoon()
             },
           }),
           props: {
@@ -906,7 +974,9 @@ export default function MilkdownEditor({
                 return false
               },
               // Moving to the floating toolbar keeps it showing.
+              // Leaving the text reports what was typed (F6).
               blur: (_view, event) => {
+                emit()
                 if (!inFloating(event.relatedTarget as Node | null)) setFocused(false)
                 return false
               },
@@ -928,6 +998,9 @@ export default function MilkdownEditor({
             },
             handleKeyDown: (view, event) => {
               setSelecting(false)
+              // Esc and Ctrl/Cmd+Enter are the field's (save, close): what
+              // was typed is reported before they reach it (F6).
+              if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) emit()
               // Alt+F10: to the floating toolbar when it shows, else the
               // fixed one (the convention editors share).
               if (event.altKey && event.key === 'F10') {
@@ -1110,6 +1183,7 @@ export default function MilkdownEditor({
       baseline = editor.action(getMarkdown())
       const view = editor.action((ctx) => ctx.get(editorViewCtx))
       setEditorView(view)
+      shown = shownKey(view.state)
       setEditorState(view.state)
       if (autoFocus) editor.action((ctx) => ctx.get(editorViewCtx).focus())
       if (foldKey !== undefined) {
@@ -1118,7 +1192,19 @@ export default function MilkdownEditor({
       }
     })
 
+    // Hiding the page (another tab, a phone's home screen) reports what
+    // was typed: the page may not come back.
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') emit()
+    }
+    document.addEventListener('visibilitychange', onHidden)
+    window.addEventListener('pagehide', emit)
+
     return () => {
+      document.removeEventListener('visibilitychange', onHidden)
+      window.removeEventListener('pagehide', emit)
+      // Unmounting reports what was typed since the last pause.
+      emit()
       cancelled = true
       stopFolds()
       setEditorState(null)
@@ -1263,6 +1349,12 @@ export default function MilkdownEditor({
     editorView.focus()
   }
   const caretTable = editorState ? tableAt(editorState)?.pos : undefined
+  // The caret's cell, for its table's grips: only while the text has focus.
+  const caretCell: TableCell | null = (() => {
+    if (!focused || !editorState || caretTable === undefined || !isInTable(editorState)) return null
+    const { top, left } = selectedRect(editorState)
+    return { row: top, column: left }
+  })()
 
   // The floating toolbar: words selected, focus in the field, the mouse up,
   // and nothing else open over the text.
@@ -1508,13 +1600,12 @@ export default function MilkdownEditor({
               createPortal(
                 <TableGrips
                   view={editorView}
-                  state={editorState}
+                  caret={active ? caretCell : null}
                   getPos={widget.getPos}
                   frame={widget.frame}
                   box={widget.box}
                   table={widget.table}
                   readOnly={readOnly}
-                  focused={focused}
                   onAction={(cell, action) => runTableAt(widget.getPos, cell, action)}
                   onColor={(cell, scope, color) => colorTableAt(widget.getPos, cell, scope, color)}
                   onWidth={(column, width) => widthTableAt(widget.getPos, column, width)}

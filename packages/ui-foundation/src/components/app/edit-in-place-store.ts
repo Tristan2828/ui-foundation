@@ -40,6 +40,7 @@
 // opening another field leaves it alone.
 import type { AppError } from '@/api/contracts'
 import { refusalReason } from '@/hooks/use-record-update'
+import { flushPendingEdits } from '@/lib/pending-edits'
 
 type SafeParse = (
   value: unknown,
@@ -197,6 +198,9 @@ export class EditInPlaceStore {
       this.set(key, { status: 'open', draft: value, initial: value, error: null, problem: null })
     }
     return () => {
+      // A rich-text editor reports its typing a pause after it stops
+      // (src/lib/pending-edits.ts, F6): asked for now, before this reads it.
+      flushPendingEdits()
       const inFlight = this.autosaving.get(key)
       const state = this.state(key)
       const last = this.configs.get(key)?.()
@@ -367,6 +371,7 @@ export class EditInPlaceStore {
    * and resolves true once what's on screen is saved.
    */
   commit(key: string, draft?: unknown): Promise<boolean> {
+    flushPendingEdits()
     if (this.autosaves(key)) return this.commitAutosaved(key, draft)
     const inFlight = this.saving.get(key)
     if (inFlight) return inFlight
@@ -476,6 +481,8 @@ export class EditInPlaceStore {
    * sent is saved (or there was nothing to send).
    */
   private flush(key: string): Promise<boolean> {
+    // Typing an editor holds back is reported first (F6).
+    flushPendingEdits()
     this.clearTimer(key)
     const inFlight = this.autosaving.get(key)
     if (inFlight) {
@@ -544,6 +551,7 @@ export class EditInPlaceStore {
    * (leaving the page). Resolves true once nothing unsaved is left.
    */
   async saveAll(): Promise<boolean> {
+    flushPendingEdits()
     const keys = this.unsaved().filter((key) => this.autosaves(key))
     const results = await Promise.all([...keys.map((key) => this.flush(key)), ...this.detached])
     return results.every(Boolean) && !this.dirty
@@ -561,6 +569,8 @@ export class EditInPlaceStore {
    * its undo (F25).
    */
   refresh(key: string): boolean {
+    // Typing an editor holds back counts as unsaved (a conflict, not a reload).
+    flushPendingEdits()
     const state = this.state(key)
     const config = this.configs.get(key)?.()
     // Only a field that saves itself (notes): a field opened by a click
@@ -619,6 +629,7 @@ export class EditInPlaceStore {
    * flight, and never for an always-editable field.
    */
   cancel(key: string) {
+    flushPendingEdits()
     const state = this.state(key)
     if (state.status !== 'open' || this.always.has(key) || this.autosaving.has(key)) return
     this.clearTimer(key)
@@ -627,6 +638,8 @@ export class EditInPlaceStore {
 
   /** Leaving the page anyway: whatever is open is dropped, and nothing waiting to autosave is sent. */
   discard() {
+    // Reported now, so nothing held back lands after it's dropped.
+    flushPendingEdits()
     for (const key of [...this.timers.keys()]) this.clearTimer(key)
     if (this.openKey !== null) {
       if (this.autosaving.has(this.openKey)) this.set(this.openKey, CLOSED)

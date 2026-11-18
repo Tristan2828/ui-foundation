@@ -21,7 +21,7 @@
 // focus back to the text with the caret in that cell.
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { TextSelection, type EditorState } from '@milkdown/kit/prose/state'
-import { selectedRect, TableMap } from '@milkdown/kit/prose/tables'
+import { TableMap } from '@milkdown/kit/prose/tables'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import {
   AlignCenterIcon,
@@ -63,7 +63,6 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile'
 import { HIGHLIGHT_COLORS, type HighlightColor } from '@/lib/markdown-highlight'
 import { catchColumnWidth, clampColumnWidth, MAX_COLUMN_WIDTH, MIN_COLUMN_WIDTH } from '@/lib/markdown-table-widths'
-import { tableAt } from './rich-text-formats'
 import {
   cellColorAt,
   columnAlignment,
@@ -121,16 +120,19 @@ const ALIGNMENTS: { value: ColumnAlignment; action: TableAction; label: string; 
 
 export interface TableGripsProps {
   view: EditorView
-  /** The editor's state, so the grips follow each change. */
-  state: EditorState | null
+  /**
+   * The cell the caret is in when it's in this table and the text has
+   * focus, else null: all the grips draw from the editor's state, so a
+   * key that doesn't move it re-renders nothing (F6). What a menu offers
+   * is read from `view`'s state as it opens.
+   */
+  caret: TableCell | null
   getPos: () => number | undefined
   /** The node view's frame (the grips' layer is positioned in it), its scroll box and its table. */
   frame: HTMLElement
   box: HTMLElement
   table: HTMLTableElement
   readOnly: boolean
-  /** Whether focus is in the field: the caret's cell has grips only then. */
-  focused: boolean
   /** Runs a table action on a cell (the caret put there first), focus back in the text. */
   onAction: (cell: TableCell, action: TableAction) => void
   /** Colours a cell, its row or its column (null: no colour). */
@@ -185,7 +187,7 @@ function edgeAt(table: HTMLTableElement, box: HTMLElement, x: number, y: number)
   return best
 }
 
-export function TableGrips({ view, state, getPos, frame, box, table, readOnly, focused, onAction, onColor, onWidth, onPreviewWidth, text }: TableGripsProps) {
+export function TableGrips({ view, caret, getPos, frame, box, table, readOnly, onAction, onColor, onWidth, onPreviewWidth, text }: TableGripsProps) {
   const [hover, setHover] = useState<TableCell | null>(null)
   const [open, setOpen] = useState<Menu | null>(null)
   const [target, setTarget] = useState<TableCell | null>(null)
@@ -201,12 +203,6 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
   const phone = useIsMobile()
 
   const tablePos = getPos()
-  // The caret's cell, when it's in this table.
-  let caret: TableCell | null = null
-  if (focused && state && tablePos !== undefined && tableAt(state)?.pos === tablePos) {
-    const { top, left } = selectedRect(state)
-    caret = { row: top, column: left }
-  }
   // The caret's cell for the keyboard's menu, read by a listener set up once.
   const caretRef = useRef(caret)
   useLayoutEffect(() => {
@@ -310,7 +306,8 @@ export function TableGrips({ view, state, getPos, frame, box, table, readOnly, f
     handle.style.height = `${area.height}px`
   })
 
-  if (readOnly || tablePos === undefined || !state) return null
+  if (readOnly || tablePos === undefined) return null
+  const state = view.state
 
   const at = (cell: TableCell | null) => (cell ? stateAt(state, tablePos, cell) : null)
   const menuCell = open ? target : active

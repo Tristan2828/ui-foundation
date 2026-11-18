@@ -26,7 +26,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent, type RefObject, type Ref } from 'react'
 import type { EditorState } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
-import { undo, undoDepth } from '@milkdown/kit/prose/history'
+import { undo } from '@milkdown/kit/prose/history'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { ChevronDownIcon, ImageIcon, KeyboardIcon, Maximize2Icon, Minimize2Icon, PlusIcon, Undo2Icon } from 'lucide-react'
 import { cn } from 'cn'
@@ -175,28 +175,45 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
   }, [panel, view])
 
   // The caret stays in sight above the bar (and the panel): the browser
-  // keeps it above the keyboard only.
-  const selectionHead = state?.selection.head
+  // keeps it above the keyboard only. Checked on each edit and caret move
+  // in the text itself, as `state` only follows what the bar draws (F6:
+  // typing doesn't re-render it).
   useLayoutEffect(() => {
-    if (!edge || !ready || selectionHead === undefined || !row.current) return
-    let caret: { bottom: number }
-    try {
-      caret = view.coordsAtPos(selectionHead)
-    } catch {
-      return
+    if (!edge || !ready) return
+    const keepInSight = () => {
+      if (!row.current) return
+      let caret: { bottom: number }
+      try {
+        caret = view.coordsAtPos(view.state.selection.head)
+      } catch {
+        return
+      }
+      const limit = row.current.getBoundingClientRect().top - 8
+      const over = caret.bottom - limit
+      if (over <= 0) return
+      const scrolling = scroller(view.dom as HTMLElement)
+      if (scrolling) scrolling.scrollTop += over
+      else window.scrollBy(0, over)
     }
-    const limit = row.current.getBoundingClientRect().top - 8
-    const over = caret.bottom - limit
-    if (over <= 0) return
-    const scrolling = scroller(view.dom as HTMLElement)
-    if (scrolling) scrolling.scrollTop += over
-    else window.scrollBy(0, over)
-  }, [view, selectionHead, edge, panel, ready])
+    keepInSight()
+    let frame = 0
+    const soon = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(keepInSight)
+    }
+    const dom = view.dom as HTMLElement
+    dom.addEventListener('input', soon)
+    document.addEventListener('selectionchange', soon)
+    return () => {
+      cancelAnimationFrame(frame)
+      dom.removeEventListener('input', soon)
+      document.removeEventListener('selectionchange', soon)
+    }
+  }, [view, edge, panel, ready])
 
   const selection = state?.selection
   const words = Boolean(selection && !selection.empty && !selection.$from.parent.type.spec.code)
   const inCode = Boolean(selection?.$from.parent.type.spec.code)
-  const canUndo = state ? undoDepth(state) > 0 : false
   // A press never takes focus from the text, so the selection stays.
   const keep = (event: MouseEvent) => event.preventDefault()
   const press = (run: () => void) => () => {
@@ -261,7 +278,9 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
                 variant="ghost"
                 size="icon-lg"
                 aria-label="Undo"
-                disabled={readOnly || !canUndo}
+                // Always on: `state` doesn't follow typing (F6), and with nothing
+                // to undo it does nothing.
+                disabled={readOnly}
                 className="[&_svg]:size-5"
                 onMouseDown={keep}
                 onClick={press(() => undo(view.state, view.dispatch))}

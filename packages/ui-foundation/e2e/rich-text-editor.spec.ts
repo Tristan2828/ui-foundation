@@ -5,6 +5,10 @@ import remarkParse from 'remark-parse'
 import { unified } from 'unified'
 import { MARKDOWN_FIXTURES } from '../src/components/app/rich-text-editor.fixtures'
 
+// RichTextEditor reports an edit a pause after typing stops (300 ms, F6
+// of the 2026-11-17 review): what it saved is read after that pause.
+const afterPause = (page: Page) => page.waitForTimeout(400)
+
 // The rich-text editor's promise, in a real browser on the real editor:
 // Markdown in, Markdown out, nothing the person didn't touch rewritten,
 // and no HTML getting in. The RoundTrip story renders one editor per
@@ -47,7 +51,8 @@ test.describe('rich-text round trip', () => {
       await page.keyboard.type('xyz')
       await expect(saved(page, name)).toContainText('xyz')
       for (let i = 0; i < 3; i++) await page.keyboard.press('Backspace')
-      // Polled: on a phone (Android) ProseMirror reads a Backspace from the DOM a moment later.
+      await afterPause(page)
+      // Polled too: on a phone (Android) ProseMirror reads a Backspace from the DOM a moment later.
       await expect.poll(() => saved(page, name).textContent()).toBe(markdown)
     })
 
@@ -55,6 +60,7 @@ test.describe('rich-text round trip', () => {
       await caretAtEnd(page, name)
       await page.keyboard.type(' Edited')
       await expect(saved(page, name)).toContainText('Edited')
+      await afterPause(page)
       const text = (await saved(page, name).textContent())!
       const start = lastBlockStart(markdown)
       expect(text.slice(0, start)).toBe(markdown.slice(0, start))
@@ -86,6 +92,7 @@ test.describe('rich-text round trip', () => {
       element.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
     })
     await expect(saved(page, 'headings')).toContainText('Pasted **bold**')
+    await afterPause(page)
     const text = (await saved(page, 'headings').textContent())!
     // The chip's HTML is now text, escaped so it can never parse as markup.
     expect(text).not.toMatch(/(^|[^\\])<img/)
@@ -98,6 +105,7 @@ test.describe('rich-text round trip', () => {
     await page.keyboard.press('Enter')
     await page.keyboard.type('After a gap')
     await expect(saved(page, 'headings')).toContainText('After a gap')
+    await afterPause(page)
     expect(await saved(page, 'headings').textContent()).not.toContain('<br')
   })
 
@@ -175,6 +183,7 @@ test.describe('editing features', () => {
     await expect(box.locator('strong')).toHaveText('bold')
     await expect(box.locator('ul li')).toHaveCount(2)
     await expect(box.locator('b')).toHaveCount(0)
+    await afterPause(page)
     const text = (await saved(page, 'links').textContent())!
     expect(text).toContain('## Pasted\n\n**bold** and')
     expect(text).toContain('- one\n- two')
@@ -230,6 +239,7 @@ test.describe('editing features', () => {
 
   test('a click on a link opens it in a new tab; the text is left as it was', async ({ page }) => {
     await page.context().route('https://example.com/**', (route) => route.fulfill({ body: 'opened' }))
+    await afterPause(page)
     const before = await saved(page, 'links').textContent()
     const opened = page.waitForEvent('popup')
     await editor(page, 'links').getByRole('link', { name: 'setup guide' }).click()
@@ -238,6 +248,7 @@ test.describe('editing features', () => {
     // This page stays where it was, and nothing was typed or saved.
     expect(page.url()).toBe(FEATURES)
     await page.waitForTimeout(400)
+    await afterPause(page)
     expect(await saved(page, 'links').textContent()).toBe(before)
   })
 
@@ -259,6 +270,7 @@ test.describe('editing features', () => {
   })
 
   test('an address that could run code is refused; Esc closes the box', async ({ page }) => {
+    await afterPause(page)
     const before = await saved(page, 'links').textContent()
     await selectFirstWord(page, 'links')
     await page.keyboard.press('ControlOrMeta+k')
@@ -276,6 +288,7 @@ test.describe('editing features', () => {
     await page.keyboard.press('Escape')
     await expect(box).toHaveCount(0)
     await expect(editor(page, 'links')).toBeFocused()
+    await afterPause(page)
     expect(await saved(page, 'links').textContent()).toBe(before)
   })
 
@@ -1207,6 +1220,7 @@ test.describe('image upload', () => {
     await expect(placeholder).toHaveText('Uploading screenshot.png…')
     await expect(page.locator('[data-fixture="uploads"]').getByRole('status')).toHaveText('Uploading an image…')
     // The placeholder isn't in the document: the Markdown is as it was.
+    await afterPause(page)
     expect(await saved(page, 'uploads').textContent()).toBe('Paste or drop a photo here.\n')
 
     await expect(placeholder).toHaveCount(0)
@@ -1236,6 +1250,7 @@ test.describe('image upload', () => {
     await expect(page.locator('[data-fixture="uploads"]').getByRole('status')).toHaveText('Uploading 2 images…')
     await expect(editor(page, 'uploads')).toBeFocused()
     await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(2)
+    await afterPause(page)
     expect((await saved(page, 'uploads').textContent())!.match(/!\[\]\(blob:/g)).toHaveLength(2)
   })
 
@@ -1252,6 +1267,7 @@ test.describe('image upload', () => {
     await expect(editor(page, 'failing').locator('[data-slot=rich-text-image-upload]')).toHaveCount(1)
     await expect(page.getByText('Storage is full. Free some space and try again.')).toBeVisible()
     await expect(editor(page, 'failing').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+    await afterPause(page)
     expect(await saved(page, 'failing').textContent()).toBe('Every upload fails here.\n')
   })
 
@@ -1262,6 +1278,7 @@ test.describe('image upload', () => {
     await dropFiles(page, 'sizeLimit', [{ name: 'notes.pdf', type: 'application/pdf', bytes: [37, 80, 68, 70] }])
     await expect(page.getByText('That file is a PDF. Choose a JPEG, PNG or WebP image.')).toBeVisible()
     await expect(editor(page, 'sizeLimit').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+    await afterPause(page)
     expect(await saved(page, 'sizeLimit').textContent()).toBe('Images up to 1 MB.\n')
   })
 
@@ -1291,6 +1308,7 @@ test.describe('image upload', () => {
     await expect(page.getByText("Images can't be added here.")).toHaveCount(2)
     await page.waitForTimeout(300)
     await expect(editor(page, 'noUpload').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
+    await afterPause(page)
     expect(await saved(page, 'noUpload').textContent()).toBe('No upload: files are ignored.\n')
   })
 
@@ -1304,6 +1322,7 @@ test.describe('image upload', () => {
     await page.keyboard.press('Enter')
     await pasteFiles(page, 'uploads', [], pastedPicture)
     await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(1)
+    await afterPause(page)
     const markdown = (await saved(page, 'uploads').textContent())!
     expect(markdown).toContain('A picture:')
     expect(markdown).toMatch(/!\[\]\(blob:/)
@@ -1315,6 +1334,7 @@ test.describe('image upload', () => {
     await page.keyboard.press('Enter')
     await pasteFiles(page, 'noUpload', [], pastedPicture)
     await expect(page.getByText("Images can't be added here.")).toBeVisible()
+    await afterPause(page)
     const markdown = (await saved(page, 'noUpload').textContent())!
     expect(markdown).toContain('A picture:')
     expect(markdown).not.toContain('data:')
@@ -1410,12 +1430,15 @@ test.describe('heading levels', () => {
   test('the editor saves the Markdown it opened with: the level moves the element, never the `#`', async ({ page }) => {
     await page.goto(LEVELS.editor)
     for (const name of ['underPage', 'capped', 'fromText']) {
+      await afterPause(page)
       const opened = (await saved(page, name).textContent())!
       expect(opened.startsWith(name === 'fromText' ? '## Imported details\n' : '# Overview\n')).toBe(true)
       await caretAtEnd(page, name)
       await page.keyboard.type('xyz')
       await expect(saved(page, name)).toContainText('xyz')
       for (let i = 0; i < 3; i++) await page.keyboard.press('Backspace')
+      await afterPause(page)
+      // Polled too: on a phone (Android) ProseMirror reads a Backspace from the DOM a moment later.
       await expect.poll(() => saved(page, name).textContent()).toBe(opened)
     }
     // A line made a Heading 1 under the page's title is an <h2>, saved as `#`.
@@ -1486,6 +1509,7 @@ test.describe('table scroll', () => {
     await page.goto(TABLES.editor)
     const wide = editorTableBox(page, 'wideTable')
     await expect(wide).toHaveAttribute('tabindex', '0')
+    await afterPause(page)
     const opened = (await saved(page, 'wideTable').textContent())!
     await editor(page, 'wideTable').getByText('After the wide table.').click()
     await page.waitForTimeout(100)
@@ -1504,6 +1528,7 @@ test.describe('table scroll', () => {
     await page.keyboard.type('q')
     await page.keyboard.press('Enter')
     await page.waitForTimeout(200)
+    await afterPause(page)
     expect(await saved(page, 'wideTable').textContent()).toBe(opened)
   })
 
@@ -1604,6 +1629,7 @@ test.describe('a refused edit', () => {
     const problemId = (await problem(page).getAttribute('id'))!
     expect((await box.getAttribute('aria-describedby'))!.split(' ')).toContain(problemId)
     // What would be saved is the last text that could be.
+    await afterPause(page)
     expect(await saved(page, 'refused').textContent()).toBe('1) a\n2) b\n10. ten\n11. eleven\n\nTail paragraph. Kept\n')
 
     for (let i = 0; i < ' EDIT'.length; i++) await page.keyboard.press('Backspace')
@@ -1619,7 +1645,10 @@ test.describe('paste and addresses', () => {
     await expect(editor(page, 'links')).toBeVisible()
   })
 
-  const text = async (page: Page, name: string) => (await saved(page, name).textContent())!
+  const text = async (page: Page, name: string) => {
+    await afterPause(page)
+    return (await saved(page, name).textContent())!
+  }
 
   test('a typed address becomes a link on a space or Enter, saved unescaped', async ({ page }) => {
     const box = editor(page, 'links')

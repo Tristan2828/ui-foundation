@@ -56,7 +56,7 @@
 // Markdown never downloads it. Until it arrives the text shows as
 // <Markdown> draws it (4.123), the field's size, so nothing moves when the
 // editor takes its place; an empty one shows skeleton lines.
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
@@ -75,7 +75,16 @@ export type RichTextEditorProps = {
    * value it reported, passed back, changes nothing.
    */
   defaultValue: string
-  /** The Markdown to save, after every edit: untouched blocks as originally written. */
+  /**
+   * The Markdown to save, untouched blocks as originally written. Called a
+   * short pause after typing stops (300 ms), not on every
+   * key: turning a long note back into Markdown costs time in proportion
+   * to its length. Always called first, synchronously, when the
+   * text loses focus, on Esc and Ctrl/Cmd+Enter, when the page is hidden,
+   * when it unmounts, and when anything calls `flushPendingEdits()`
+   * (EntityForm's submit, the edit-in-place store's saves, the leave
+   * guards), so a save never reads a value from before the last key.
+   */
   onChange: (markdown: string) => void
   /**
    * Why the edit can't be saved as it stands, or `null` once it can. A form
@@ -219,6 +228,12 @@ function useOpenings(defaultValue: string) {
 export function RichTextEditor(props: RichTextEditorProps) {
   const { opening, report } = useOpenings(props.defaultValue)
   const { onChange } = props
+  // The editor reports what was typed as it unmounts (F6); one replaced
+  // by a new value (a reset) has nothing left to say.
+  const live = useRef(opening)
+  useLayoutEffect(() => {
+    live.current = opening
+  })
   return (
     <Suspense
       fallback={
@@ -261,6 +276,7 @@ export function RichTextEditor(props: RichTextEditorProps) {
         key={opening}
         {...props}
         onChange={(markdown) => {
+          if (live.current !== opening) return
           report(markdown)
           onChange(markdown)
         }}

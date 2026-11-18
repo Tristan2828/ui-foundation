@@ -37,6 +37,39 @@ Merged with no version bump; the next release carries it.
     scrollable-region-focusable), never reached while it's open.
   - The harness runs the editor specs on a phone too (a second Playwright
     project, Pixel 7), with the hit sizes checked and axe in both themes.
+- **RichTextEditor: no typing lag on long notes** (the RichTextEditor
+  review's F6). Each key used to turn the whole note back into Markdown
+  and re-render the toolbar and every table's grips: about 0.2 s a key
+  at 5,500 words on a laptop, 0.9 s on a phone. Now a key on a
+  5,000-word note with 13 tables is under 50 ms at 4× CPU throttling
+  (`e2e/rich-text-perf.spec.ts`; `origin/main` before this measured
+  670–820 ms a key in the same test).
+  - **Behaviour change to a documented prop: `onChange` now fires a
+    short pause after typing stops (300 ms), not on every key.** It always
+    fires first, synchronously, when the text loses focus, on Esc and
+    Ctrl/Cmd+Enter, when the page is hidden, when the editor unmounts,
+    and whenever anything calls the new `flushPendingEdits()`. EntityForm's
+    submit, the edit-in-place store (every save, commit, cancel, refresh,
+    discard and a field leaving) and both leave guards call it, so
+    nothing in the package saves a value from before the last key.
+    **An app with its own form or save path around a RichTextEditor**
+    (not EntityForm or editing in place) calls `flushPendingEdits()`
+    before it reads the field's value to save it. `hasPendingEdits()`
+    says whether any editor holds typing back. A refusal (`onProblem`)
+    and the length count follow the same pause.
+  - The toolbar, the table grips and the page links re-render only when
+    something they draw changes (the formats on, the selection, the
+    caret's table cell, the slash menu, uploads), not on each key.
+    `TableGrips` takes the caret's `caret` cell in place of `state` and
+    `focused` (internal).
+  - `mergeMarkdown` parses a note's original and baseline once per
+    editor, not on every merge (`tests/markdown-merge-budget.test.ts`).
+  - A test that reads what a RichTextEditor reported straight after
+    typing now waits for the pause (or blurs the field first); the
+    package's own specs do (`afterPause`).
+  - Still to do: the merge after each pause is one task of about 0.5 s
+    on a phone-speed CPU for a 5,000-word note (two parses and the
+    serialisation); a key pressed during it waits.
 
 - **RichTextEditor: typing behaves as in Notion and Obsidian** (the
   RichTextEditor review's F10, F15, F16, F17, F18, F21, F22, F24 and its
