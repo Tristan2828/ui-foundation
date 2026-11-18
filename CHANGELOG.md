@@ -11,6 +11,16 @@ are listed on the
 
 Merged with no version bump; the next release carries it.
 
+- **A saved view's count on its pill** (Roadmap 376, question 4). A
+  `DataTable` view (`DataTableView`) takes `count?: number | null`, shown
+  after its label as "Needs a Look · 3" and part of the pill's name
+  ("Needs a Look, 3"). The app supplies it from its own query; the table
+  computes nothing. null, undefined and 0 show no count (as the sidebar's
+  counts and EntityView's tab counts), past 99 "99+". A view that has the
+  key, even `undefined` while it loads, keeps room for a two-digit count,
+  so no pill moves when it arrives, on a phone's scrolling row too.
+  Additive: views without `count` render as before. cell-patterns.md "A
+  view can carry a count".
 - **A record's flags in their tone in the facts rail** (Roadmap 378): a
   set flag reads at a glance, "Blocked" in the destructive tone and
   "Needs you" in the warning tone. No new API: a `badges` fact's item

@@ -48,6 +48,11 @@ import { RelatedTable } from './related-table'
 //   Filters, its chip beside them ("Due: Before today"); Between dates
 //   takes a range. Today is fixed at Nov 13, 2026.
 //   e2e/date-filter.spec.ts.
+// - ViewCounts: views that carry a count (4.127). Needs a Look shows
+//   "· 2" once its count arrives, Resting holds 0 and shows none, Current
+//   and All have none. Counts Loading / Counts Loaded switches the app's
+//   count query, so the spec can check that no pill moves when it lands.
+//   e2e/data-table-view-counts.spec.ts.
 // The rows are made up.
 
 type State = 'loaded' | 'loading' | 'empty' | 'error'
@@ -334,6 +339,64 @@ function ViewsFillFiltersList() {
   )
 }
 
+// --- views that carry a count (4.127) ----------------------------------------
+
+const COUNT_FILTERS = ['search', 'status'] as const
+const COUNT_VIEWS = {
+  current: { label: 'Current' },
+  look: { label: 'Needs a Look', filters: { status: 'watch' } },
+  resting: { label: 'Resting', filters: { status: 'resting' } },
+  all: { label: 'All', filters: { status: '' } },
+}
+
+function ViewCountsList() {
+  const { filters, setFilter, activeView, applyView, sorting, setSorting } = useTableUrlState(COUNT_FILTERS, [], COUNT_VIEWS)
+  // The app's own count query, loading until the switch says it's back.
+  const [loaded, setLoaded] = useState(false)
+  const countOf = (status: Status) => (loaded ? PLANTS.filter((plant) => plant.status === status).length : undefined)
+  const views = {
+    ...COUNT_VIEWS,
+    look: { ...COUNT_VIEWS.look, count: countOf('watch') },
+    resting: { ...COUNT_VIEWS.resting, count: loaded ? 0 : null },
+  }
+  const rows = PLANTS.filter((plant) => !filters.status || plant.status === filters.status)
+  return (
+    <div className="flex flex-col gap-4 p-4">
+      <div role="group" aria-label="Count query" className="flex gap-1.5">
+        <Button size="sm" variant={loaded ? 'outline' : 'default'} aria-pressed={!loaded} onClick={() => setLoaded(false)}>
+          Counts Loading
+        </Button>
+        <Button size="sm" variant={loaded ? 'default' : 'outline'} aria-pressed={loaded} onClick={() => setLoaded(true)}>
+          Counts Loaded
+        </Button>
+      </div>
+      <h1 className="type-page-title">Houseplants</h1>
+      <DataTable
+        columns={plantColumns}
+        opens={{ kind: 'page', to: (plant) => `/plants/${plant.id}` }}
+        views={views}
+        activeView={activeView}
+        onViewChange={applyView}
+        toolbar={
+          <FilterBar search={{ value: filters.search, onChange: (value) => setFilter('search', value), placeholder: 'Search by name' }} />
+        }
+        phoneRow={{ title: (plant) => plant.name, facts: (plant) => [STATUS_LABELS[plant.status], `Watered ${plant.watered}`] }}
+        data={rows}
+        total={rows.length}
+        page={1}
+        pageSize={50}
+        onPageChange={noop}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        isLoading={false}
+        getRowId={(plant) => String(plant.id)}
+        emptyTitle="No plants match your filters"
+        emptyDescription="Try different filters."
+      />
+    </div>
+  )
+}
+
 // --- a date filter a view fills (4.110) -------------------------------------
 
 // The harness's today, so the presets keep the same rows on any day.
@@ -562,3 +625,5 @@ export const DateViewsOverdue: StoryObj = { render: () => <InRouter element={<Da
 export const HeaderAtTableEdge: StoryObj = { name: 'Header at the table edge', render: () => <InRouter element={<HeaderAtTableEdgeList wide={false} />} path="/" /> }
 
 export const HeaderAtTableEdgeWide: StoryObj = { name: 'Header at the table edge, wide', render: () => <InRouter element={<HeaderAtTableEdgeList wide />} path="/" /> }
+
+export const ViewCounts: StoryObj = { render: () => <InRouter element={<ViewCountsList />} path="/" /> }

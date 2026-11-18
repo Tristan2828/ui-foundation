@@ -20,14 +20,14 @@
   - [Forms](#forms) · lines 1208–1279
   - [Dialogs](#dialogs) · lines 1281–1312
   - [Toasts and feedback](#toasts-and-feedback) · lines 1314–1365
-- [What not to copy](#what-not-to-copy) · lines 1367–1400
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1402–1419
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1421–1467
-- [Deleting](#deleting) · lines 1469–1500
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1502–1523
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1525–1534
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1537–1579
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1581–1617
+- [What not to copy](#what-not-to-copy) · lines 1367–1402
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1404–1421
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1423–1469
+- [Deleting](#deleting) · lines 1471–1502
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1504–1525
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1527–1536
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1539–1581
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1583–1619
 
 <!-- /index -->
 
@@ -1389,7 +1389,9 @@ sight.** What happened where the person is looking says so there.
   opens on with `defaultView`, and put what no control can show (a
   computed "overdue") in the view's `rule` (cell-patterns.md "Saved views
   are pills"). The default view's `sort` is its plain address's too
-  (4.123): pressing it writes no `?sort=`, and the rows keep that order.
+  (4.123): pressing it writes no `?sort=`, and the rows keep that order. A view the plan says
+  shows a count gets `count` from the app's own query, passed to
+  `DataTable`'s `views` (cell-patterns.md "A view can carry a count").
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.
