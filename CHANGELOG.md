@@ -11,6 +11,17 @@ are listed on the
 
 Merged with no version bump; the next release carries it.
 
+- **A record's flags in their tone in the facts rail** (Roadmap 378): a
+  set flag reads at a glance, "Blocked" in the destructive tone and
+  "Needs you" in the warning tone. No new API: a `badges` fact's item
+  already takes `tone` (4.123: `success`, `warning`, `info`,
+  `destructive`), and now it's covered where flags are used: edited in
+  place (a pick saves, its badge comes in its tone), holding still under
+  the mouse and the pencil, folded into Details on a phone with its tone,
+  and axe in light and dark at both widths (story
+  `app/Fact Badge Tones`, `e2e/fact-badge-tones.spec.ts`). Untoned badges
+  are unchanged. `add-an-entity.md` shows the flags example. Nothing to
+  do to upgrade; an app tones its flags with `{ label, tone }` items.
 - **Saves that don't overwrite: a record's version and a 409** (the
   RichTextEditor review's F4, server half; #374 was the client half). A
   stale tab, a phone or an AI chat could replace what another writer

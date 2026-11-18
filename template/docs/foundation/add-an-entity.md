@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1363
-  - [The record view](#the-record-view) · lines 1036–1193
-  - [Forms](#forms) · lines 1195–1277
-  - [Dialogs](#dialogs) · lines 1279–1310
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1312–1363
-- [What not to copy](#what-not-to-copy) · lines 1365–1398
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1400–1417
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1419–1465
-- [Deleting](#deleting) · lines 1467–1498
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1500–1521
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1523–1532
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1535–1577
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1579–1615
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1374
+  - [The record view](#the-record-view) · lines 1036–1204
+  - [Forms](#forms) · lines 1206–1288
+  - [Dialogs](#dialogs) · lines 1290–1321
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1323–1374
+- [What not to copy](#what-not-to-copy) · lines 1376–1409
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1411–1428
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1430–1476
+- [Deleting](#deleting) · lines 1478–1509
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1511–1532
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1534–1543
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1546–1588
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1590–1626
 
 <!-- /index -->
 
@@ -1142,7 +1142,18 @@ A record uses the parts it has, in this order:
     component or a node) before the label, in the muted tone. With
     `tone` (4.123: `success`, `warning`, `info`, `destructive`) a label
     that is a state ("Pinned", "Overdue") is the outline badge in that
-    tone, its icon too; the word still says it.
+    tone, its icon too; the word still says it. A flag that's set reads
+    at a glance this way, edited in place as any badges fact (its `edit`
+    picks the flags; at rest each is drawn in its tone), and the tone
+    comes along where the rail folds into Details on a phone. Untoned
+    items are the plain outline. Give each state its tone from the design
+    language's badge tones, never a colour of the app's own:
+
+    ```tsx
+    const FLAG_BADGE = { blocked: { label: 'Blocked', tone: 'destructive' }, needsYou: { label: 'Needs you', tone: 'warning' } } as const
+    { label: 'Flags', kind: 'badges', items: record.flags.map((flag) => FLAG_BADGE[flag]), emptyLabel: 'None',
+      edit: editInPlace({ kind: 'multi', value: record.flags, save: (flags) => save({ flags }), control: (props) => <MultiPick options={FLAGS} value={props.value} onValueChange={props.onChange} aria-label={props.label} aria-describedby={props.describedBy} /> }) },
+    ```
   - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
     draw it, never as "4 of 5" text: stars (the default) or hearts for a
     score out of `max` (5), the step bar for a quality level. `null` is
