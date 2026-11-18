@@ -412,6 +412,100 @@ export function mergeMarkdown(original: string, baseline: string, current: strin
   return out
 }
 
+// One block of a rebased text, and the text it comes from.
+type Piece = { from: 'mine' | 'theirs'; index: number; block: Block }
+
+const keysOf = (list: readonly Block[]) => list.map((block) => block.key).join('\n')
+
+/**
+ * Both edits at once, block by block: `mine` and `theirs` each started from
+ * `base` (the same saved text, edited in two places: this tab and another
+ * tab, a phone or an AI chat). Every top-level block only one side changed
+ * takes that side's change; a block neither changed keeps `theirs`'s own
+ * bytes. Returns null when both changed the same stretch of blocks (or
+ * both added text at the same place), when it can't be done without
+ * losing one of them: the caller asks the person instead. A three-way
+ * merge (diff3) over blocks matched by meaning, as `mergeMarkdown`
+ * matches them; it never merges inside a block.
+ */
+export function rebaseMarkdown(base: string, mine: string, theirs: string): string | null {
+  if (mine === base || mine === theirs) return theirs
+  if (theirs === base) return mine
+  // What's written goes in theirs's own line ending (the text it lands in).
+  const eol = theirs[theirs.indexOf('\n') - 1] === '\r' ? '\r\n' : '\n'
+  const ownEnding = (text: string) => text.replace(/\r?\n/g, eol)
+
+  const based = blocks(base)
+  const lists = { mine: blocks(mine), theirs: blocks(theirs) }
+  const texts = { mine, theirs }
+  const theirsAt = new Map([...match(based, lists.theirs)].map(([to, from]) => [from, to]))
+
+  // Each side's changes, as stretches of the base replaced by its own
+  // blocks (an insertion is an empty stretch).
+  type Hunk = { side: Piece['from']; start: number; end: number; from: number; to: number }
+  const hunks = (side: Piece['from']): Hunk[] => {
+    const pairs = [...match(based, lists[side])].map(([to, from]) => [from, to]).sort((a, b) => a[0] - b[0])
+    const out: Hunk[] = []
+    let [b, s] = [-1, -1]
+    for (const [nextB, nextS] of [...pairs, [based.length, lists[side].length]]) {
+      if (nextB > b + 1 || nextS > s + 1) out.push({ side, start: b + 1, end: nextB, from: s + 1, to: nextS })
+      ;[b, s] = [nextB, nextS]
+    }
+    return out
+  }
+  const keysIn = (hunk: Hunk) => keysOf(lists[hunk.side].slice(hunk.from, hunk.to))
+  const mineHunks = hunks('mine')
+  const theirsHunks = hunks('theirs')
+  // Both changed the same stretch (or added at the same place) in
+  // different ways: no merge. The same change on both sides is one.
+  const kept: Hunk[] = [...theirsHunks]
+  for (const ours of mineHunks) {
+    const clash = theirsHunks.find(
+      (other) => (ours.start < other.end && other.start < ours.end) || ours.start === other.start,
+    )
+    if (!clash) kept.push(ours)
+    else if (clash.start !== ours.start || clash.end !== ours.end || keysIn(clash) !== keysIn(ours)) return null
+  }
+  // In base order; at one place, an insertion before a replacement.
+  kept.sort((a, b) => a.start - b.start || a.end - b.end)
+
+  const pieces: Piece[] = []
+  const add = (from: Piece['from'], index: number) => pieces.push({ from, index, block: lists[from][index] })
+  let next = 0
+  const keepBase = (until: number) => {
+    // Blocks no one changed: as theirs has them.
+    for (; next < until; next++) add('theirs', theirsAt.get(next) as number)
+  }
+  for (const hunk of kept) {
+    keepBase(hunk.start)
+    for (let index = hunk.from; index < hunk.to; index++) add(hunk.side, index)
+    next = Math.max(next, hunk.end)
+  }
+  keepBase(based.length)
+
+  let out = ''
+  pieces.forEach((piece, k) => {
+    const previous = pieces[k - 1]
+    const list = lists[piece.from]
+    if (!previous) {
+      if (piece.index === 0) out += ownEnding(texts[piece.from].slice(0, list[0].start))
+    } else if (previous.from === piece.from && previous.index === piece.index - 1) {
+      out += ownEnding(texts[piece.from].slice(list[previous.index].end, piece.block.start))
+    } else {
+      out += eol + eol
+    }
+    out += piece.from === 'theirs' ? piece.block.source : ownEnding(piece.block.source)
+  })
+  // The text ends the way theirs ends.
+  if (pieces.length > 0) {
+    const last = lists.theirs.at(-1)
+    out += last ? theirs.slice(last.end) : ownEnding(mine.slice(lists.mine.at(-1)?.end ?? mine.length))
+  }
+  // Guard, as in mergeMarkdown: the result must read as exactly the blocks
+  // picked (two blocks fusing across a seam would be something else).
+  return keysOf(blocks(out)) === keysOf(pieces.map((piece) => piece.block)) ? out : null
+}
+
 /**
  * The document's own marks, for writing a block the person edited the way
  * the rest is written: its bullet (`-`, `*`, `+`) and its thematic break.

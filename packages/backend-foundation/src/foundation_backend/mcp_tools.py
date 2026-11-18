@@ -39,6 +39,7 @@ from foundation_backend.error_reporting import ErrorContext, report_error
 from foundation_backend.mcp import ANSWER_NOTES, ENTITIES, ListArgs, McpEntity
 from foundation_backend.models import McpAuditEntry, User
 from foundation_backend.schemas import CamelModel
+from foundation_backend.versions import VersionConflict
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
@@ -140,6 +141,11 @@ def _int(value: Any, what: str, default: int, low: int, high: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
         raise ToolError(f"{what} must be a whole number from {low} to {high}.")
     return value
+
+
+def _has_version(entity: McpEntity) -> bool:
+    # An update that takes the version it was built on (foundation_backend.versions).
+    return entity.update_schema is not None and "base_updated_at" in entity.update_schema.model_fields
 
 
 def _dump(entity: McpEntity, record: Any) -> dict[str, Any]:
@@ -418,9 +424,18 @@ async def _save_update(
         updated = await entity.update(session, caller.user, record_id, payload)
     except RequestValidationError as exc:
         raise await _refused(session, caller, exc) from exc
+    except VersionConflict as exc:
+        # The baseUpdatedAt sent isn't the record's any more: someone (a
+        # person in the app, another chat) saved since it was read.
+        raise ToolError(
+            f"{exc.detail} Fetch {_address(entity, record_id)} again and make the change on what it says now, "
+            "sending its updatedAt as baseUpdatedAt."
+        ) from exc
     await session.refresh(caller.user)
     after_all = _dump(entity, updated)
-    changed = [key for key in after_all if after_all[key] != before_all.get(key)]
+    # A record's version (updatedAt) moves with every write: bookkeeping,
+    # not a change the chat made.
+    changed = [key for key in after_all if key != "updatedAt" and after_all[key] != before_all.get(key)]
     _shown(entity)
     text = await _render(session, caller.user, entity, after_all)
     await _audit(
@@ -699,6 +714,12 @@ def _build_definitions() -> list[dict[str, Any]]:
                     "Change some fields of a record; fields left out keep their value. Checked as the app's "
                     "own form is. "
                     + ("To change part of a long text, use edit_text instead. " if editable else "")
+                    + (
+                        "Where a record has updatedAt, send the one you read as baseUpdatedAt: if someone saved "
+                        "it since, the change is refused instead of overwriting theirs. "
+                        if any(_has_version(e) for e in changeable)
+                        else ""
+                    )
                     + " ".join(
                         f"{e.name}: {_describe_fields(e.update_schema, True, e.script_only)}."
                         for e in changeable

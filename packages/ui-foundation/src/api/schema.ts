@@ -331,6 +331,15 @@ export interface components {
                 "application/json": components["schemas"]["HTTPErrorBody"];
             };
         };
+        /** @description The record changed since the version the request was built on (another tab, device or AI chat saved in between). Nothing was written. The client fetches the record again and lets the person choose; the gateway's toAppError makes it AppError kind "conflict". */
+        ConflictError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["HTTPErrorBody"];
+            };
+        };
         /** @description The pending sign-in is missing, expired or out of tries. Start again with POST /auth/login. */
         SignInExpiredError: {
             headers: {

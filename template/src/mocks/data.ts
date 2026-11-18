@@ -42,6 +42,8 @@ const initialWidgets: Widget[] = [
       { categoryId: 2, note: "" },
     ],
     checklistState: "open",
+    // Its version (openapi.yaml Widget.updatedAt): a PATCH built on another is a 409.
+    updatedAt: "2026-11-01T09:00:01.000Z",
   },
   {
     id: 2,
@@ -58,6 +60,7 @@ const initialWidgets: Widget[] = [
     checklist: [],
     pairings: [],
     checklistState: "none",
+    updatedAt: "2026-11-01T09:00:02.000Z",
   },
   {
     id: 3,
@@ -74,6 +77,7 @@ const initialWidgets: Widget[] = [
     checklist: [],
     pairings: [],
     checklistState: "none",
+    updatedAt: "2026-11-01T09:00:03.000Z",
   },
   {
     // The deliberately sparse row: every optional field at its empty
@@ -97,6 +101,7 @@ const initialWidgets: Widget[] = [
     checklist: [],
     pairings: [],
     checklistState: "none",
+    updatedAt: "2026-11-01T09:00:04.000Z",
   },
 ];
 
@@ -119,4 +124,12 @@ export function resetMockData(): void {
 
 export function nextWidgetId(): number {
   return nextId++;
+}
+
+// A new version for a widget being written: now, and never the same as the
+// last one handed out (two writes in one millisecond still differ).
+let lastVersion = 0;
+export function nextWidgetVersion(): string {
+  lastVersion = Math.max(Date.now(), lastVersion + 1);
+  return new Date(lastVersion).toISOString();
 }

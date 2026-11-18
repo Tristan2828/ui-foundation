@@ -104,6 +104,10 @@ class WidgetOut(CamelModel):
     # Computed on every read (Widget.checklist_state); never accepted on
     # create or update, so it's absent from WidgetCreate/WidgetUpdate.
     checklist_state: WidgetChecklistState
+    # The widget's version: when it was last written. Send it back as an
+    # update's baseUpdatedAt and the update is refused (409) if another
+    # writer saved since (foundation_backend.versions).
+    updated_at: datetime
 
     @field_validator("price", mode="before")
     @classmethod
@@ -149,6 +153,10 @@ class WidgetUpdate(CamelModel):
     extra_category_ids: list[int] | None = Field(default=None, json_schema_extra={"uniqueItems": True})
     checklist: list[ChecklistItem] | None = Field(default=None, max_length=50)
     pairings: list[WidgetPairing] | None = Field(default=None, max_length=20)
+    # Not a field to set: the version (WidgetOut.updatedAt) this update was
+    # built on. Sent and no longer the widget's: a 409, nothing written.
+    # Left out: no check.
+    base_updated_at: datetime | None = None
 
     _check_tags = field_validator("tags")(_unique_tags)
     _check_extra_category_ids = field_validator("extra_category_ids")(_unique_ids)

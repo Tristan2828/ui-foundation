@@ -363,6 +363,11 @@ export interface components {
         /** @description One property per field type the foundation supports, so each maps unambiguously to the UI pattern it exercises and /new-entity has a reference to copy (docs/entities/widget.md). Six came from Phase 4; tags (multi choice) was added in Phase G because a real project needed it; inStock (yes/no) in 3.4.0, extraCategoryIds (multi reference) in 3.5.0, checklist (sub-records) in 3.6.0 and checklistState (computed) in 3.7.0 for the Task Dashboard app. Add a type only when a real app needs one. */
         Widget: {
             readonly id: number;
+            /**
+             * Format: date-time
+             * @description When the widget was last written: its version. Send it back as an update's baseUpdatedAt and the update is refused (409) if another writer (a tab, a phone, an AI chat) saved since, so no one overwrites another's change.
+             */
+            readonly updatedAt: string;
             /** @description Display label. Not one of the six forcing field types. */
             name: string;
             /** @description Foreign key to WidgetCategory.id — forces a combobox with async search (Phase 4). Required: every widget belongs to a category. */
@@ -428,6 +433,11 @@ export interface components {
             extraCategoryIds?: components["schemas"]["Widget"]["extraCategoryIds"];
             checklist?: components["schemas"]["Widget"]["checklist"];
             pairings?: components["schemas"]["Widget"]["pairings"];
+            /**
+             * Format: date-time
+             * @description Not a field to change: the updatedAt of the widget this update was built on. Sent and no longer the widget's, the update is a 409 (ConflictError) and nothing is written. Left out, no check.
+             */
+            baseUpdatedAt?: string;
         };
         /**
          * @description none: the checklist is empty. open: at least one item isn't done. complete: every item is done. Sorts in this order.
@@ -547,7 +557,7 @@ export interface components {
                 "application/json": components["schemas"]["HTTPErrorBody"];
             };
         };
-        /** @description Conflicts with what is already happening (a job already running). */
+        /** @description Conflicts with what is already happening (a job already running), or with what was saved since (an update whose baseUpdatedAt is no longer the record's). Nothing was written. */
         ConflictError: {
             headers: {
                 [name: string]: unknown;
@@ -926,6 +936,7 @@ export interface operations {
             };
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
+            409: components["responses"]["ConflictError"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["ServerError"];
         };

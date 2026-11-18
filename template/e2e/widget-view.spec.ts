@@ -39,11 +39,16 @@ function fieldValue(page: Page, label: string) {
     .locator('dd')
 }
 
-// The body of every PATCH the page sends, in order.
+// The body of every PATCH the page sends, in order, without the version
+// each one carries (baseUpdatedAt: the widget it was built on), which
+// widget-edit-in-place.spec.ts "two writers" checks on its own.
 function patchBodies(page: Page) {
   const bodies: unknown[] = []
   page.on('request', (request) => {
-    if (request.method() === 'PATCH') bodies.push(request.postDataJSON())
+    if (request.method() !== 'PATCH') return
+    const body = { ...(request.postDataJSON() as Record<string, unknown>) }
+    delete body.baseUpdatedAt
+    bodies.push(body)
   })
   return bodies
 }

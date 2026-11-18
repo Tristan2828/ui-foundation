@@ -74,6 +74,7 @@ export type EditInPlace = {
   shown?: ReactNode
   fieldErrors?: (cause: unknown) => Record<string, string> | null
   errorsOnFields?: boolean
+  rebase?: ((base: unknown, mine: unknown, theirs: unknown) => unknown) | false
 }
 
 export type EditInPlaceOptions<TDraft, TValue> = {
@@ -135,6 +136,16 @@ export type EditInPlaceOptions<TDraft, TValue> = {
    * its path inside the value. The control gets them as `errors`.
    */
   fieldErrors?: (cause: unknown) => Record<string, string> | null
+  /**
+   * "Keep Mine" after the value changed elsewhere (another tab, a phone,
+   * an AI chat): what's typed (`mine`, started from `base`) laid onto the
+   * value saved since (`theirs`), or null when both changed the same part
+   * (the person is told, and a second Keep Mine replaces theirs). Long
+   * text (`kind: 'long-text'`, a string) defaults to `rebaseMarkdown`,
+   * block by block; `false` turns that off, so Keep Mine saves what's
+   * typed over theirs, as every other kind does.
+   */
+  rebase?: ((base: TDraft, mine: TDraft, theirs: TDraft) => TDraft | null) | false
   /**
    * The control shows `errors` on its own fields, so a refusal about one
    * of them isn't repeated under the control; one about none still shows there.

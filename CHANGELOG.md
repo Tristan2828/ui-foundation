@@ -9,6 +9,53 @@ are listed on the
 
 ## Unreleased
 
+Merged with no version bump; the next release carries it.
+
+- **Saves that don't overwrite: a record's version and a 409** (the
+  RichTextEditor review's F4, server half; #374 was the client half). A
+  stale tab, a phone or an AI chat could replace what another writer
+  saved. Now a record can carry its `updatedAt`, each save sends the one it
+  was built on, and the server refuses a save built on an old one with a
+  409; nothing is written, and the person is asked. All additive: an app
+  that sends no version works as before.
+  - **`AppError` kind `conflict`**: `toAppError` makes a 409 one (until
+    now it was `server`). `ErrorState` titles it "Changed elsewhere".
+    **An app with its own exhaustive map over `AppError['kind']`**
+    (`Record<AppError['kind'], …>`) adds a `conflict` entry; a 409 an app
+    already had (a job already running) now arrives as `conflict`.
+  - **Contract (`openapi/foundation.yaml`): `components.responses.ConflictError`**,
+    a 409 with `HTTPErrorBody`, marked `x-optional`: `check-contract` asks
+    no app for it, and checks its shape where an app has one (the
+    template's already matched). `/auth/*`, `/environment` and the other
+    envelopes are unchanged.
+  - **`useRecordUpdate({ withVersion })`**: `(update, record) => ({
+    ...update, baseUpdatedAt: record.updatedAt })` adds the version to every
+    save, from the server's latest record (a burst chains through each
+    answer, so a save never conflicts with the tab's own). On a 409 it
+    refetches the record's detail.
+  - **Editing in place:** a save refused with a 409 is the "changed
+    elsewhere" conflict (Keep Mine / Show Saved), never a plain failure
+    that saving again pushes through. **Keep Mine on long text now keeps
+    both**, block by block (new export `rebaseMarkdown`); when both
+    changed the same paragraph it says so, and a second Keep Mine replaces
+    theirs. `editInPlace({ rebase })` sets a field's own, `rebase: false`
+    turns long text's off. Other kinds' Keep Mine saves over theirs, as before.
+  - **Backend (`ui-foundation-backend`):** `foundation_backend.versions`
+    (`check_version`, `touch`, `VersionConflict`),
+    `openapi_responses.VERSIONED_UPDATE_RESPONSES`. MCP's `update` tool tells
+    a chat to send the `updatedAt` it read as `baseUpdatedAt` (only where an
+    entity's update takes one), turns the 409 into a refusal that says to
+    fetch again, and no longer lists `updatedAt` among what it changed.
+  - **Template:** Widgets has the whole pattern (`updated_at`, migration
+    0017; `baseUpdatedAt`; the PATCH's 409 in `openapi.yaml`, the mocks and
+    the backend; `withVersion` in `use-widgets.ts`; "two writers" specs).
+  - **To take it, for each entity edited in more than one place:** follow
+    `docs/foundation/add-an-entity.md` "Saves that don't overwrite": an
+    `updated_at` every write sets (`touch()`), `updatedAt` on the record,
+    `baseUpdatedAt` on its update, `check_version` in the router and the
+    409 in `openapi.yaml`, the mock's check, and `withVersion` on its
+    `useRecordUpdate` calls. Nothing changes for an entity that skips it.
+
 ## 4.126.0 — The RichTextEditor review: no quiet losses, typing that keeps up, and a phone toolbar
 
 npm package and `ui-foundation-backend` 4.126.0 (the backend is unchanged

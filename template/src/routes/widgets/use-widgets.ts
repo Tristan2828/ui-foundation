@@ -95,6 +95,18 @@ export function useRestoreWidgetMutation() {
   })
 }
 
+// Each save says which version of the widget it was built on (its
+// updatedAt, from the widget this tab last had from the server): if another
+// tab, a phone or an AI chat saved since, the server refuses it (a 409, an
+// AppError of kind `conflict`), nothing is written, and the widget is
+// fetched again. A quick action's toast says so; a field edited in place
+// asks "This changed elsewhere" (docs/foundation/add-an-entity.md "Saves
+// that don't overwrite").
+const withVersion = (update: WidgetUpdate, widget: Widget): WidgetUpdate => ({
+  ...update,
+  baseUpdatedAt: widget.updatedAt,
+})
+
 // One widget's fields saved on their own, without the form: the table
 // row's In Stock switch and the view's quick actions (status, In Stock,
 // ticking checklist items). Optimistic in the detail and every list page,
@@ -109,6 +121,7 @@ export function useSaveWidgetField(id: number) {
     listsKey: [...widgetsKeys.all, 'list'],
     update: updateWidget,
     name: (widget) => widget.name,
+    withVersion,
   })
 }
 
@@ -124,6 +137,7 @@ export function useEditWidgetField(id: number) {
     listsKey: [...widgetsKeys.all, 'list'],
     update: updateWidget,
     name: (widget) => widget.name,
+    withVersion,
     optimistic: false,
     toastOnError: false,
   })

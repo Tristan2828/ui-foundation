@@ -31,9 +31,10 @@ from app.openapi_responses import (
     DELETE_RESPONSES,
     GET_RESPONSES,
     LIST_RESPONSES,
-    UPDATE_RESPONSES,
+    VERSIONED_UPDATE_RESPONSES,
 )
 from foundation_backend.routers.auth import get_current_user
+from foundation_backend.versions import check_version, touch
 from app.schemas import Page, WidgetCreate, WidgetOut, WidgetUpdate
 
 router = APIRouter(tags=["widgets"], dependencies=[Depends(get_current_user)])
@@ -101,8 +102,10 @@ async def _check_item_categories_exist(category_ids: list[int], field: str, sess
         raise RequestValidationError(issues)
 
 
-async def _get_or_404(widget_id: int, user: User, session: AsyncSession, *, deleted: bool = False) -> Widget:
-    widget = await session.get(Widget, widget_id)
+async def _get_or_404(
+    widget_id: int, user: User, session: AsyncSession, *, deleted: bool = False, lock: bool = False
+) -> Widget:
+    widget = await session.get(Widget, widget_id, with_for_update=lock)
     # Someone else's widget is indistinguishable from a missing one — a 403
     # would confirm the id exists. So is a deleted one (soft delete: it is
     # still in the table, but only restore, with deleted=True, can reach it).
@@ -201,16 +204,23 @@ async def get_widget(
     return await _get_or_404(widget_id, user, session)
 
 
-@router.patch("/widgets/{widget_id}", response_model=WidgetOut, responses=UPDATE_RESPONSES)
+@router.patch("/widgets/{widget_id}", response_model=WidgetOut, responses=VERSIONED_UPDATE_RESPONSES)
 async def update_widget(
     widget_id: int,
     payload: WidgetUpdate,
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> Widget:
-    widget = await _get_or_404(widget_id, user, session)
+    # Held until the commit when a version is sent, so two updates built on
+    # the same version can't both pass the check (Postgres; SQLite writes
+    # one at a time anyway).
+    widget = await _get_or_404(widget_id, user, session, lock=payload.base_updated_at is not None)
     # Only what was sent. WidgetUpdate has already refused a null it can't store.
     updates = payload.model_dump(exclude_unset=True)
+    # Built on a version that's no longer the widget's: another writer saved
+    # since. A 409, before anything changes.
+    check_version(widget.updated_at, updates.pop("base_updated_at", None))
+    widget.updated_at = touch()
     if "category_id" in updates:
         await _check_categories_exist([updates["category_id"]], "categoryId", session)
     if "tags" in updates:

@@ -26,6 +26,14 @@
 //   function change has nothing to build on and is refused like any other
 //   refusal. Both warn in the console, naming the keys searched.
 //
+// - **A version check, when the record has one** (`withVersion`). Each
+//   request carries the version of the record it was built on (its
+//   `updatedAt`), and the server answers 409 when another writer saved
+//   since: nothing is written, the save rejects with an AppError of kind
+//   `conflict`, and the record is fetched again so the screen shows what
+//   the other writer saved. Without `withVersion` nothing is sent and
+//   nothing is checked, as before.
+//
 // Editing in place uses the same save with `optimistic: false` and
 // `toastOnError: false`: nothing changes on screen until the server
 // agrees, and a refusal comes back to the field (`mutateAsync` rejects)
@@ -69,6 +77,18 @@ export type RecordUpdateOptions<TRecord extends { id: RecordId }, TUpdate extend
   listsKey: QueryKey
   /** The gateway's PATCH: sends `update`, resolves with the saved record, rejects with an `AppError`. */
   update: (id: TRecord['id'], update: TUpdate) => Promise<TRecord>
+  /**
+   * Adds the version the change was built on to what's sent, when the
+   * record has one: `(update, widget) => ({ ...update, baseUpdatedAt:
+   * widget.updatedAt })`. `record` is the server's latest record this tab
+   * knows (in a burst of saves, the one the previous save returned), so a
+   * save never conflicts with this tab's own. The server answers 409 when
+   * the record's version is no longer that one (AppError kind `conflict`):
+   * the record is refetched, and nothing was written. Leave it out and no
+   * version is sent (docs/foundation/add-an-entity.md "Saves that don't
+   * overwrite").
+   */
+  withVersion?: (update: TUpdate, record: TRecord) => TUpdate
   /** What a refusal's toast calls the record: "Couldn't update <name>: <reason>". */
   name: (record: TRecord) => string
   /**
@@ -146,6 +166,7 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
     listsKey,
     update,
     name,
+    withVersion,
     optimistic = true,
     toastOnError = true,
     onSuccess,
@@ -199,7 +220,10 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
     scope: { id: `record-update:${key}` },
     mutationFn: (change) => {
       const confirmed = map.get(key)?.confirmed ?? cached()
-      if (confirmed) return update(id, resolve(change, confirmed))
+      if (confirmed) {
+        const built = resolve(change, confirmed)
+        return update(id, withVersion ? withVersion(built, confirmed) : built)
+      }
       // The screen holds the record somewhere these keys don't reach (a
       // query gathering a related list's records, say). An object change
       // needs no current record, so it's still sent; a function change
@@ -235,6 +259,9 @@ export function recordUpdateMutationOptions<TRecord extends { id: RecordId }, TU
         const record = state.confirmed
         const sent = record ? resolve(change, record) : typeof change === 'function' ? undefined : change
         settle(state, context.entry)
+        // Another writer saved since: show what they saved (the detail;
+        // the lists refetch once the last save settles, in settle).
+        if (error.kind === 'conflict') void queryClient.invalidateQueries({ queryKey: detailKey })
         if (toastOnError) toast.error(`Couldn't update ${record ? name(record) : 'this record'}: ${refusalReason(error, sent)}`)
       }
       return onError?.(error, change)

@@ -306,6 +306,7 @@ paths:
               schema: { $ref: "#/components/schemas/Widget" }
         "401": { $ref: "#/components/responses/UnauthorizedError" }
         "404": { $ref: "#/components/responses/NotFoundError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
         "422": { $ref: "#/components/responses/ValidationError" }
         "500": { $ref: "#/components/responses/ServerError" }
     delete:
@@ -578,8 +579,18 @@ components:
         - checklist
         - pairings
         - checklistState
+        - updatedAt
       properties:
         id: { type: integer, readOnly: true }
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: >
+            When the widget was last written: its version. Send it back as
+            an update's baseUpdatedAt and the update is refused (409) if
+            another writer (a tab, a phone, an AI chat) saved since, so no
+            one overwrites another's change.
         name:
           type: string
           minLength: 1
@@ -718,6 +729,13 @@ components:
         extraCategoryIds: { $ref: "#/components/schemas/Widget/properties/extraCategoryIds" }
         checklist: { $ref: "#/components/schemas/Widget/properties/checklist" }
         pairings: { $ref: "#/components/schemas/Widget/properties/pairings" }
+        baseUpdatedAt:
+          type: string
+          format: date-time
+          description: >
+            Not a field to change: the updatedAt of the widget this update
+            was built on. Sent and no longer the widget's, the update is a
+            409 (ConflictError) and nothing is written. Left out, no check.
 
     WidgetChecklistState:
       type: string
@@ -895,7 +913,10 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/HTTPErrorBody" }
     ConflictError:
-      description: Conflicts with what is already happening (a job already running).
+      description: >
+        Conflicts with what is already happening (a job already running), or
+        with what was saved since (an update whose baseUpdatedAt is no longer
+        the record's). Nothing was written.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/HTTPErrorBody" }

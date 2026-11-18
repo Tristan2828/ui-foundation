@@ -16,8 +16,15 @@ export type AppError = {
    * lapsed, not from the app: a page or a redirect where JSON was
    * expected. Only a full page load signs in again. Not the app's own
    * session, which is `auth`.
+   *
+   * `conflict` (a 409): the save was refused because the record changed
+   * since the version it was built on (another tab, a phone, an AI chat
+   * saved in between). Nothing was written: fetch the record again and
+   * let the person choose. `useRecordUpdate` refetches it, and editing in
+   * place asks "This changed elsewhere" (docs/foundation/add-an-entity.md
+   * "Saves that don't overwrite").
    */
-  kind: "validation" | "notfound" | "auth" | "rate_limited" | "server" | "network" | "proxy_auth";
+  kind: "validation" | "notfound" | "auth" | "rate_limited" | "conflict" | "server" | "network" | "proxy_auth";
   message: string;
   fieldErrors?: Record<string, string[]>;
   /**

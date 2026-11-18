@@ -35,6 +35,16 @@
 //   saves until the person picks theirs or the saved one (`keepMine`,
 //   `takeSaved`). The server echoing a save back, even normalised
 //   (trimmed), is not a change.
+// - The server refusing a save because the record changed since the
+//   version it was built on (a 409, AppError kind `conflict`: a writer this
+//   tab hadn't heard from yet) is the same conflict: nothing was written,
+//   and the record's query refetches (useRecordUpdate) so the latest value
+//   arrives. Never a plain failure that saving again would push through.
+// - "Keep mine" keeps both where it can: with a `rebase` (long text's is
+//   block by block, rebaseMarkdown), what was typed is laid onto the latest
+//   saved value, and the control shows the result as it saves. When both
+//   changed the same part, it says so, and only a second "keep mine"
+//   replaces the other one.
 // A field marked `alwaysEditable` is also open from the moment it joins:
 // it's the value itself, never "the open field", so it never closes and
 // opening another field leaves it alone.
@@ -67,6 +77,13 @@ export type EditFieldConfig = {
    * value (`text`, `effort`). `null` or `{}` when it names none.
    */
   fieldErrors?: (cause: unknown) => Record<string, string> | null
+  /**
+   * "Keep mine" after a conflict: `mine` (what's typed, started from
+   * `base`) laid onto `theirs` (the value saved elsewhere since), or null
+   * when both changed the same part. Without it, "keep mine" saves what's
+   * typed over theirs. Long text's default is `rebaseMarkdown`.
+   */
+  rebase?: ((base: unknown, mine: unknown, theirs: unknown) => unknown) | false
 }
 
 export type EditFieldState = { status: 'closed' } | OpenFieldState
@@ -93,9 +110,15 @@ export type OpenFieldState = {
   /**
    * The saved value changed elsewhere while this held unsaved typing:
    * nothing saves until `keepMine` (save over it) or `takeSaved` (show it).
-   * `markConflict` sets it too: the seam for a server's 409 (Roadmap 405).
+   * A save the server refused with a 409 (AppError kind `conflict`) sets
+   * it too.
    */
   conflict?: boolean
+  /**
+   * "Keep mine" couldn't lay what's typed onto the value saved elsewhere:
+   * both changed the same part. Another "keep mine" replaces theirs.
+   */
+  overlap?: boolean
 }
 
 /** How long typing has to stop before an autosaving field saves. */
@@ -111,6 +134,23 @@ const CLOSED: EditFieldState = { status: 'closed' }
 /** What a field shows when the saved value changed under unsaved typing. */
 export const CONFLICT_MESSAGE =
   'This changed elsewhere (another tab, device or chat) since you started typing. Saving now replaces that.'
+
+/** The conflict's message for a field that can keep both (a `rebase`): Keep Mine adds what's typed to it. */
+export const CONFLICT_REBASE_MESSAGE =
+  'This changed elsewhere (another tab, device or chat) since you started typing. Keep Mine adds your changes to it.'
+
+/** "Keep mine" found both sides changed the same part. */
+export const OVERLAP_MESSAGE =
+  "Your changes and the ones saved elsewhere are in the same place, so both can't be kept. Keep Mine again replaces theirs; Show Saved drops yours."
+
+function conflictMessage(config: EditFieldConfig | undefined) {
+  return config?.rebase ? CONFLICT_REBASE_MESSAGE : CONFLICT_MESSAGE
+}
+
+/** Whether a save's rejection is the server's "changed since" (a 409, AppError kind `conflict`). */
+export function isConflict(error: unknown): boolean {
+  return Boolean(error && typeof error === 'object' && (error as { kind?: unknown }).kind === 'conflict')
+}
 
 // Line endings, trailing spaces on a line and blank lines at either end:
 // what a backend commonly normalises in text it's sent.
@@ -386,7 +426,7 @@ export class EditInPlaceStore {
     if (!config) return Promise.resolve(false)
 
     if (open.problem || open.conflict) {
-      this.set(key, { ...open, error: open.problem ?? CONFLICT_MESSAGE })
+      this.set(key, { ...open, error: open.problem ?? open.error ?? conflictMessage(config) })
       return Promise.resolve(false)
     }
     const isEqual = config.isEqual ?? sameAsJson
@@ -412,7 +452,10 @@ export class EditInPlaceStore {
           return true
         },
         (error: unknown) => {
-          this.set(key, { ...open, status: 'open', error: messageOf(error), fieldErrors: fieldErrorsOf(config, error) })
+          // Another writer saved since (a 409): nothing was written, and
+          // nothing saves until the person picks.
+          if (isConflict(error)) this.set(key, { ...open, status: 'open', conflict: true, error: conflictMessage(config) })
+          else this.set(key, { ...open, status: 'open', error: messageOf(error), fieldErrors: fieldErrorsOf(config, error) })
           return false
         },
       )
@@ -505,7 +548,7 @@ export class EditInPlaceStore {
     const config = this.configs.get(key)?.()
     if (!config) return Promise.resolve(false)
     if (state.problem || state.conflict) {
-      this.set(key, { ...state, error: state.problem ?? CONFLICT_MESSAGE })
+      this.set(key, { ...state, error: state.problem ?? state.error ?? conflictMessage(config) })
       return Promise.resolve(false)
     }
     const isEqual = config.isEqual ?? sameAsJson
@@ -537,7 +580,13 @@ export class EditInPlaceStore {
         },
         (error: unknown) => {
           const now = this.state(key)
-          if (now.status === 'open') this.set(key, { ...now, error: messageOf(error), fieldErrors: fieldErrorsOf(config, error), autosave: undefined })
+          if (now.status !== 'open') return false
+          // Another writer saved since (a 409): nothing was written, and
+          // nothing saves until the person picks.
+          if (isConflict(error)) {
+            this.clearTimer(key)
+            this.set(key, { ...now, conflict: true, overlap: false, error: conflictMessage(config), fieldErrors: undefined, autosave: undefined })
+          } else this.set(key, { ...now, error: messageOf(error), fieldErrors: fieldErrorsOf(config, error), autosave: undefined })
           return false
         },
       )
@@ -585,7 +634,9 @@ export class EditInPlaceStore {
     const busy = this.timers.has(key) || this.autosaving.has(key) || this.queued.has(key) || state.status === 'saving'
     const clean = !busy && state.error === null && state.problem === null && isEqual(state.draft, state.initial)
     if (!clean) {
-      this.set(key, { ...state, conflict: true, error: CONFLICT_MESSAGE })
+      // Already a conflict ("keep mine" found an overlap): the new value is
+      // what it's now against, and the person picks again.
+      this.set(key, { ...state, conflict: true, overlap: false, error: conflictMessage(config) })
       return false
     }
     const revision = (state.revision ?? 0) + 1
@@ -595,22 +646,44 @@ export class EditInPlaceStore {
 
   /**
    * The saved value changed under this field's unsaved typing, as a
-   * server's conflict answer says: the seam for a version check's 409
-   * (Roadmap 405). Nothing saves until the person picks.
+   * server's conflict answer says. A save refused with a 409 (AppError
+   * kind `conflict`) does this itself. Nothing saves until the person picks.
    */
   markConflict(key: string) {
     const state = this.state(key)
     if (state.status === 'closed') return
     this.clearTimer(key)
-    this.set(key, { ...state, status: 'open', conflict: true, error: CONFLICT_MESSAGE, autosave: undefined })
+    this.set(key, { ...state, status: 'open', conflict: true, error: conflictMessage(this.configs.get(key)?.()), autosave: undefined })
   }
 
-  /** A conflict, answered "keep mine": what's typed saves over the value saved elsewhere. */
+  /**
+   * A conflict, answered "keep mine". With a `rebase`, what's typed is laid
+   * onto the value saved elsewhere and the control starts over showing
+   * both (`revision`) as it saves; if both changed the same part it stays
+   * a conflict (`overlap`), and keeping mine again saves what's typed over
+   * theirs. Without a `rebase`, what's typed saves over it. The save
+   * carries the record's latest version, so a writer that saved again
+   * meanwhile is another conflict, not an overwrite.
+   */
   keepMine(key: string): Promise<boolean> {
     const state = this.state(key)
     const config = this.configs.get(key)?.()
     if (state.status !== 'open' || !state.conflict || !config) return Promise.resolve(false)
-    this.set(key, { ...state, conflict: false, error: null, initial: config.value })
+    let draft = state.draft
+    let revision = state.revision
+    if (config.rebase && !state.overlap) {
+      const merged = config.rebase(state.initial, state.draft, config.value)
+      if (merged === null || merged === undefined) {
+        this.set(key, { ...state, overlap: true, error: OVERLAP_MESSAGE })
+        return Promise.resolve(false)
+      }
+      if (!(config.isEqual ?? sameAsJson)(merged, state.draft)) {
+        draft = merged
+        revision = (state.revision ?? 0) + 1
+      }
+    }
+    this.seen.set(key, config.value)
+    this.set(key, { ...state, draft, revision, conflict: false, overlap: false, error: null, initial: config.value })
     return this.autosaves(key) ? this.flush(key) : this.commit(key)
   }
 
@@ -647,7 +720,7 @@ export class EditInPlaceStore {
     }
     for (const key of this.always) {
       const state = this.state(key)
-      if (state.status === 'open') this.set(key, { ...state, draft: state.initial, error: null, problem: null, conflict: false, autosave: undefined })
+      if (state.status === 'open') this.set(key, { ...state, draft: state.initial, error: null, problem: null, conflict: false, overlap: false, autosave: undefined })
     }
   }
 }

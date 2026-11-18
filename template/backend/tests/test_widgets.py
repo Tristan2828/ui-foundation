@@ -594,3 +594,44 @@ async def test_search_matches_like_wildcards_literally(client: AsyncClient, sess
     await session.commit()
     categories = (await client.get("/api/widget-categories", params={"search": "%"})).json()
     assert [c["name"] for c in categories] == ["50% off"]
+
+
+# Two writers (Roadmap 405, the RichTextEditor review's F4): an update built
+# on a version that's no longer the widget's is a 409, and nothing is written.
+async def test_an_update_with_the_current_version_saves_and_moves_it(client: AsyncClient) -> None:
+    before = (await client.get("/api/widgets/1")).json()
+    res = await client.patch("/api/widgets/1", json={"description": "Mine.", "baseUpdatedAt": before["updatedAt"]})
+    assert res.status_code == 200
+    assert res.json()["description"] == "Mine."
+    assert res.json()["updatedAt"] != before["updatedAt"]
+    assert "baseUpdatedAt" not in res.json()
+
+
+async def test_an_update_built_on_an_older_version_is_a_409_and_writes_nothing(client: AsyncClient) -> None:
+    opened = (await client.get("/api/widgets/1")).json()
+    # Another tab saves first.
+    theirs = await client.patch("/api/widgets/1", json={"description": "Theirs.", "baseUpdatedAt": opened["updatedAt"]})
+    assert theirs.status_code == 200
+    # This tab, still on the version it opened.
+    mine = await client.patch(
+        "/api/widgets/1", json={"description": "Mine.", "name": "Renamed", "baseUpdatedAt": opened["updatedAt"]}
+    )
+    assert mine.status_code == 409
+    assert "changed since you opened it" in mine.json()["detail"]
+    after = (await client.get("/api/widgets/1")).json()
+    assert after == theirs.json()
+
+
+async def test_an_update_with_no_version_is_not_checked(client: AsyncClient) -> None:
+    """Negative control: without baseUpdatedAt the same stale save goes through."""
+    await client.patch("/api/widgets/1", json={"description": "Theirs."})
+    res = await client.patch("/api/widgets/1", json={"description": "Mine."})
+    assert res.status_code == 200
+    assert res.json()["description"] == "Mine."
+
+
+async def test_every_write_moves_the_version(client: AsyncClient) -> None:
+    first = (await client.get("/api/widgets/1")).json()["updatedAt"]
+    second = (await client.patch("/api/widgets/1", json={"inStock": False})).json()["updatedAt"]
+    third = (await client.patch("/api/widgets/1", json={"inStock": True})).json()["updatedAt"]
+    assert len({first, second, third}) == 3
