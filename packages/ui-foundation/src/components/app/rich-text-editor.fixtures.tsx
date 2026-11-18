@@ -66,6 +66,10 @@ height = 72cm
 <b>Raw HTML shows as text</b>
 `
 
+// A note in which an edit to the first list can't be saved without
+// rewriting the second (a `1)` list right before a `10.` one).
+const REFUSED_NOTE = '1) a\n2) b\n10. ten\n11. eleven\n\nTail paragraph.\n'
+
 const meta: Meta<typeof RichTextEditor> = {
   title: 'app/RichTextEditor',
   component: RichTextEditor,
@@ -87,6 +91,7 @@ function Labelled({
   headingFrom,
   foldKey,
   tableLook,
+  noProblem,
 }: {
   label: string
   markdown: string
@@ -100,6 +105,8 @@ function Labelled({
   headingFrom?: RichTextEditorProps['headingFrom']
   foldKey?: string
   tableLook?: RichTextEditorProps['tableLook']
+  /** No `onProblem`: the editor says a refusal itself. */
+  noProblem?: boolean
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
@@ -113,7 +120,7 @@ function Labelled({
         aria-labelledby={labelId}
         defaultValue={markdown}
         onChange={setSaved}
-        onProblem={setProblem}
+        onProblem={noProblem ? undefined : setProblem}
         placeholder={placeholder}
         maxLength={maxLength}
         readOnly={readOnly}
@@ -173,6 +180,8 @@ export const Features: StoryObj<typeof RichTextEditor> = {
       <Labelled label="table" markdown={'| Part | Count |\n| --- | --- |\n| Top | 1 |\n| Leg | 4 |\n\nAfter the table.\n'} />
       <Labelled label="callout" markdown={'> [!NOTE]\n> Measure twice.\n\nAfter the callout.\n'} />
       <Labelled label="readOnly" markdown={'Saving, so nothing can change.\n'} readOnly />
+      {/* No onProblem: an edit the merge refuses is said in the field itself. */}
+      <Labelled label="refused" markdown={REFUSED_NOTE} noProblem />
     </div>
   ),
 }
