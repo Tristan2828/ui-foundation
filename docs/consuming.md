@@ -215,6 +215,16 @@ by the mock service worker in the browser. Two things keep it that way.
   at any time, forgetting the page, `startMockWorker` notices a request it
   passed through, joins again and makes the request once more (#367), and
   the check sees the worker answer it.
+- **A page settles before it navigates.** The same `test`'s `goto()` and
+  `reload()` (`withBootWait`) first wait until none of the page's own
+  `/api/` requests has been in flight for 150 ms, at most 3 s; reaching
+  the cap only ends the wait, it never fails the test. Without it, a test
+  that leaves a page right after a save could fail the check above: the
+  save is answered by the mocks, but its follow-up refresh is sent once
+  the page has started to unload, when MSW has already told the worker
+  the page is gone, so it goes to the network. A navigation the test makes
+  some other way (a click on a link, `location.assign`) doesn't wait;
+  wait for what the save changes on screen before it.
 - **The preview's `/api` proxy points at a port nothing listens on.** A
   bypassed request goes to the preview server's proxy. Pointed at your
   backend, it gets real answers (or changes real data) and the test may
