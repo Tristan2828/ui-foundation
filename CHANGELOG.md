@@ -11,8 +11,7 @@ are listed on the
 
 npm package and `ui-foundation-backend` 4.130.0 (the backend is unchanged
 apart from its version). Additive: nothing changes for an app that
-doesn't take it. It also carries the two synced-file changes below it
-(one "Scope and Stopping" section, and `spec-tester`'s own model).
+doesn't take it.
 
 ### How an app adopts it
 
@@ -22,8 +21,6 @@ doesn't take it. It also carries the two synced-file changes below it
   `ChoiceButtons` with `kind` or `icon`) passes that same options list:
   `options={STATUS_OPTIONS}` in place of bare values. Drop its `getLabel`
   if it only repeated the options' labels.
-- An app whose own notes point at "Before You Finish" should point at
-  "Scope and Stopping" (below).
 
 ### MultiChoice draws its options' icons
 
@@ -50,6 +47,33 @@ doesn't take it. It also carries the two synced-file changes below it
   themes and every palette (`fixtures-visual.spec.ts`), and markup checks
   in `tests/form-controls.test.tsx`. Docs: add-an-entity.md "Forms" (a
   status picked several at once) and cell-patterns.md 25 "The filters".
+## 4.129.2 — axe scans that don't open a page
+
+npm package and `ui-foundation-backend` 4.129.2 (the backend is unchanged
+apart from its version). No action for an app: bump both packages and run
+`npx ui-foundation sync`.
+
+### `expectNoAxeViolations` scans in axe's legacy mode
+
+`@axe-core/playwright`'s default mode finishes every scan in a fresh blank
+page (`context.newPage()`). When several browsers start at once (a run's
+first wave of workers, or the fresh workers Playwright starts after a
+failure), starting that page's renderer can stall for many seconds in every
+browser together, and single-scan a11y tests timed out at 30 s, then passed
+on retry. `expectNoAxeViolations`, and so `defineA11ySuite`, now builds
+`new AxeBuilder({ page }).setLegacyMode(true)`: axe runs inside the page
+and opens no other, so a scan no longer stalls at a run's start, and is
+faster cold or warm.
+
+What it costs: axe no longer reaches into cross-origin frames (a video
+player's embed, say). Same-origin frames are still scanned. An app that
+needs a cross-origin frame of its own checked builds its own `AxeBuilder`
+for that test.
+
+`e2e/a11y-suite.spec.ts` checks that a scan opens no page; it fails on the
+old helper.
+
+## 4.129.1 — The synced rules say when a task is done once
 
 ### The synced rules say when a task is done once, with its exceptions
 

@@ -341,13 +341,20 @@ export const POPUP_FOCUS_GUARDS = '[data-base-ui-focus-guard]'
  * by design (`disableRules: ['region']`) and brings focus guards
  * (`exclude: [POPUP_FOCUS_GUARDS]`), while every other rule, contrast
  * included, still checks the list.
+ *
+ * It scans in axe's legacy mode: axe runs inside the page and opens no
+ * other. The default mode finishes each scan in a fresh blank page, and
+ * starting that page's renderer stalled scans past a test's 30 s when
+ * several browsers started together (a run's first wave, or the fresh
+ * workers after a failure). The cost: cross-origin frames aren't scanned;
+ * same-origin frames still are.
  */
 export async function expectNoAxeViolations(
   page: Page,
   options: { disableRules?: string[]; exclude?: string[] } = {},
 ): Promise<void> {
   await waitForTransitions(page)
-  const builder = new AxeBuilder({ page })
+  const builder = new AxeBuilder({ page }).setLegacyMode(true)
   if (options.disableRules?.length) builder.disableRules(options.disableRules)
   for (const selector of options.exclude ?? []) builder.exclude(selector)
   const results = await builder.analyze()
