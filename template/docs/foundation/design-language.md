@@ -3,41 +3,42 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 50–159
-- [Glow](#glow) · lines 161–180
-- [Semantic tones](#semantic-tones) · lines 182–210
-- [The three badge styles](#the-three-badge-styles) · lines 212–229
-- [Status marks](#status-marks) · lines 231–276
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 278–307
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 309–322
-- [Logos and brand marks](#logos-and-brand-marks) · lines 324–368
-- [Categorical colour](#categorical-colour) · lines 370–440
-- [Heat scale](#heat-scale) · lines 442–503
-- [Depth ramps](#depth-ramps) · lines 505–590
-- [A stored colour](#a-stored-colour) · lines 592–649
-- [Shapes and sizes](#shapes-and-sizes) · lines 651–672
-- [Typography](#typography) · lines 674–845
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 708–741
-  - [Written text (notes)](#written-text-notes) · lines 743–845
-- [Density](#density) · lines 847–940
-  - [Rows on this device](#rows-on-this-device) · lines 913–940
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 942–1056
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1058–1135
-- [Notices](#notices) · lines 1137–1165
-- [A value over time](#a-value-over-time) · lines 1167–1253
-  - [Several values over time](#several-values-over-time) · lines 1216–1253
-- [A list as a board](#a-list-as-a-board) · lines 1255–1306
-- [A list as cards](#a-list-as-cards) · lines 1308–1354
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1356–1392
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1394–1464
-- [A few equal things](#a-few-equal-things) · lines 1466–1586
-- [An overview page](#an-overview-page) · lines 1588–1659
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1660–1726
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1728–1865
-- [Picking at random](#picking-at-random) · lines 1867–1898
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1900–1967
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1969–1994
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1996–2092
+- [Palettes](#palettes) · lines 51–160
+- [Glow](#glow) · lines 162–181
+- [Semantic tones](#semantic-tones) · lines 183–211
+- [The three badge styles](#the-three-badge-styles) · lines 213–230
+- [Status marks](#status-marks) · lines 232–277
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 279–308
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 310–323
+- [Logos and brand marks](#logos-and-brand-marks) · lines 325–369
+- [Categorical colour](#categorical-colour) · lines 371–441
+- [Heat scale](#heat-scale) · lines 443–504
+- [Depth ramps](#depth-ramps) · lines 506–591
+- [A stored colour](#a-stored-colour) · lines 593–650
+- [Shapes and sizes](#shapes-and-sizes) · lines 652–673
+- [Typography](#typography) · lines 675–846
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 709–742
+  - [Written text (notes)](#written-text-notes) · lines 744–846
+- [Density](#density) · lines 848–941
+  - [Rows on this device](#rows-on-this-device) · lines 914–941
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 943–1057
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1059–1136
+- [Notices](#notices) · lines 1138–1166
+- [A value over time](#a-value-over-time) · lines 1168–1254
+  - [Several values over time](#several-values-over-time) · lines 1217–1254
+- [A list as a board](#a-list-as-a-board) · lines 1256–1307
+- [A list as cards](#a-list-as-cards) · lines 1309–1355
+- [Images full screen](#images-full-screen) · lines 1357–1403
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1405–1441
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1443–1513
+- [A few equal things](#a-few-equal-things) · lines 1515–1635
+- [An overview page](#an-overview-page) · lines 1637–1708
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1709–1775
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1777–1914
+- [Picking at random](#picking-at-random) · lines 1916–1947
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1949–2016
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2018–2043
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2045–2141
 
 <!-- /index -->
 
@@ -1352,6 +1353,54 @@ const { layout, setLayout } = useTableLayout({
   dash. Never an action only one layout has.
 - `totals` and `highlightRow` are the table's alone. Sorting is the
   toolbar's in a card layout (there is no header to click).
+
+## Images full screen
+
+`ImageViewer` (4.129) shows one of an ordered list of images large, over
+the whole viewport: a cover clicked in a grid, a record's photos, the
+pages kept from a set. It's the package's modal dialog, so focus stays in
+it while it's open and goes back to the cover that opened it.
+
+```tsx
+const [shown, setShown] = useState<number | null>(null)
+
+<button aria-label={`Open ${book.title}`} onClick={() => setShown(i)}>
+  <Artwork src={book.coverUrl} aspect="2:3" />
+</button>
+
+<ImageViewer
+  title="Covers"
+  images={books.map((book) => ({ src: book.coverUrl, alt: `${book.title}, cover`, caption: book.title }))}
+  index={shown}
+  onIndexChange={setShown}
+  actions={(image, i) => <Button onClick={() => readFrom(books[i])}>Read From Here</Button>}
+/>
+```
+
+- **One value runs it:** `index` is the image shown, `null` while closed.
+  The viewer calls `onIndexChange` with the next index on a step and with
+  `null` on Esc and Close. An action that leaves (opens a page, starts a
+  reading) sets it to `null` itself.
+- **The dark stage, always**, whatever the app's theme: the frame is the
+  dark theme's tokens, so a picture's own colours never fight a light
+  page. The image fits the frame whole (`object-contain`), any shape.
+- **Moving:** the round buttons at the frame's sides, ←/→ (Home and End
+  for the ends), one image per wheel gesture, and a sideways swipe on a
+  touch screen. The list doesn't wrap: at an end the button stays in the
+  tab order, dimmed and `aria-disabled`, so focus is never dropped. The
+  images either side are fetched ahead.
+- **Told to a screen reader:** the dialog is named by `title`, and each
+  step announces "3 of 14: <alt>". So `alt` says what the image shows
+  ("Issue 3, cover"), not "image". The visible counter ("3 of 14") shows
+  with more than one image; with one there are no steps either.
+- **Below the image:** `caption` (a node: the name in semibold, the rest
+  muted) and, beside it, the app's own `actions(image, index)`, one or
+  two Buttons. On a phone they stack under the caption at full width.
+- **States in the frame:** a spinner while the image loads (the last one
+  is never left showing), and "This image couldn't be loaded." with its
+  `alt` and Try Again when it fails. The rest of the viewer still works.
+- Arrow keys typed into a control that uses them (a text box, a slider, a
+  menu an action opened) stay that control's.
 
 ## Key numbers on a record
 

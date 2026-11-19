@@ -375,6 +375,10 @@ const COMPOSITE_STORIES = [
   // Its dark stage (#253): dark inside the view in both app themes, the
   // lit time on the tone's glow, the quiet outline controls.
   { id: 'app-sessionview--dark-stage', mustShow: '1:00' },
+  // <ImageViewer>: an image large on the dark stage in both app themes, its
+  // counter, caption and an app's action, and the frame's failed state.
+  { id: 'app-imageviewer--default', mustShow: 'Start From Here' },
+  { id: 'app-imageviewer--failed', mustShow: 'This image couldn’t be loaded.' },
   // Every density, the primitives and DataTable in each (large is the one
   // that changes their type and sizes).
   { id: 'patterns-density--primitives', mustShow: 'data-density="large"' },
@@ -475,6 +479,18 @@ const GLYPH_STORIES: {
     id: 'app-sessionview--dark-stage',
     open: (page) => page.getByRole('dialog', { name: 'Morning stretch' }).waitFor(),
     shows: '[data-slot=session-view]',
+  },
+  // ImageViewer's Close and step buttons on the dark stage, and the failed
+  // frame's icon.
+  {
+    id: 'app-imageviewer--default',
+    open: (page) => page.getByRole('dialog', { name: 'Plates' }).waitFor(),
+    shows: '[data-slot=image-viewer]',
+  },
+  {
+    id: 'app-imageviewer--failed',
+    open: (page) => page.getByRole('alert').waitFor(),
+    shows: '[data-slot=image-viewer]',
   },
   // Category glyphs in DataTable rows at every density.
   { id: 'patterns-density--data-tables' },
