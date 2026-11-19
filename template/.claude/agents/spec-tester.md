@@ -2,6 +2,7 @@
 name: spec-tester
 description: Writes gateway translation tests from openapi.yaml and contracts.ts only. Used in Phase 2 and by the new-entity playbook — never invoked to test code it can read.
 tools: Read, Write, Bash(vitest *)
+model: sonnet
 hooks:
   PreToolUse:
     - matcher: "Read"

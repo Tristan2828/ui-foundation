@@ -9,6 +9,18 @@ are listed on the
 
 ## Unreleased
 
+### Synced subagents set their own model
+
+The synced `spec-tester` agent now names `model: sonnet` in its frontmatter.
+With no `model`, a subagent runs on the parent session's model, so in an
+Opus or Fable session it was billed at that model's price for work that
+needs no judgment (it writes gateway tests from `openapi.yaml` alone).
+Additive: run `npx ui-foundation sync` to take it. An app that wants a
+different model for it changes the `model:` line in its own
+`.claude/agents/spec-tester.md` after sync, or sets it through Claude Code's
+subagent settings. Allowed values are `sonnet`, `opus`, `haiku`, `fable`, a
+full model ID, or `inherit`.
+
 ## 4.128.0 — Forms that don't overwrite, a read-only step track, and an Open link on the done toast
 
 npm package and `ui-foundation-backend` 4.128.0 (the backend is unchanged
