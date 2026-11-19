@@ -1,5 +1,5 @@
-import { test } from '@playwright/test'
-import { defineA11ySuite } from '../src/testing'
+import { expect, test } from '@playwright/test'
+import { defineA11ySuite, expectNoAxeViolations } from '../src/testing'
 
 // defineA11ySuite's view check on a page with `<ModuleStrip mobile="row">`,
 // at a phone's width (Roadmap 172). On a phone each ModuleCard is hidden
@@ -20,4 +20,16 @@ test.describe('a ModuleStrip mobile="row" page, on a phone', () => {
 test.describe('a ModuleStrip mobile="row" page, at a desktop width', () => {
   test.use({ viewport: { width: 1440, height: 900 } })
   defineA11ySuite({ nav: [], checkSidebar: false, formRoutes: [], viewRoutes: [ROW_PAGE] })
+})
+
+// A scan runs axe inside the page (legacy mode) and opens no other page.
+// axe's default mode finishes each scan in a fresh blank page, and when
+// several browsers started at once, starting that page stalled single-scan
+// tests past their 30 s.
+test('an axe scan opens no page', async ({ page }) => {
+  await page.goto(ROW_PAGE)
+  let opened = 0
+  page.context().on('page', () => opened++)
+  await expectNoAxeViolations(page)
+  expect(opened).toBe(0)
 })

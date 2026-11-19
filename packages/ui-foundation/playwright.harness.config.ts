@@ -10,7 +10,7 @@ import { defineConfig, devices } from '@playwright/test'
 // in e2e/multi-pick.spec.ts, ImageField and images in <Markdown>
 // in e2e/images.spec.ts, ModuleStrip at desktop and phone widths in
 // e2e/module-card.spec.ts, defineA11ySuite's view check on a
-// `mobile="row"` page in e2e/a11y-suite.spec.ts, ListEditor's rows that open in
+// `mobile="row"` page and that a scan opens no page in e2e/a11y-suite.spec.ts, ListEditor's rows that open in
 // e2e/list-editor.spec.ts, DataTable's card layouts in
 // e2e/data-table-layouts.spec.ts, SpinWheel's spins in
 // e2e/spin-wheel.spec.ts, FillInQueue's records in e2e/fill-in-queue.spec.ts, a hub's
