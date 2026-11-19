@@ -21,6 +21,40 @@ different model for it changes the `model:` line in its own
 subagent settings. Allowed values are `sonnet`, `opus`, `haiku`, `fable`, a
 full model ID, or `inherit`.
 
+## 4.129.0 — A full-screen image viewer
+
+npm package and `ui-foundation-backend` 4.129.0 (the backend is unchanged
+apart from its version). One change, additive: nothing changes for an app
+that doesn't take it.
+
+### How an app adopts it
+
+- Bump both packages to 4.129.0 and run `npx ui-foundation sync`.
+- **`ImageViewer`:** an app with a grid of covers or a record's photos
+  makes each picture a button that sets the index shown, and renders one
+  `ImageViewer` with the list (design-language.md "Images full screen").
+  An app with its own lightbox moves onto it and deletes its own.
+
+### What's in it
+
+- **`ImageViewer`: images full screen** (new export, with `ImageViewerImage`
+  and `ImageViewerProps`). An ordered list of images (`src`, `alt`, an
+  optional `caption` node) shown one at a time over the whole viewport,
+  on the dark stage whatever the app's theme. Controlled by one value:
+  `index`, null while closed, and `onIndexChange`. Previous and next by
+  round buttons at the frame's sides, ←/→ with Home and End, one image
+  per wheel gesture and a sideways swipe on a touch screen; Esc and Close
+  leave, and focus goes back to what opened it (the package's modal
+  `Dialog`, Base UI's popup, as `SessionView`). A counter ("3 of 7"), the
+  caption, and `actions(image, index)` beside it for the app's own
+  buttons ("Read From Here"). Each step announces "3 of 7: <alt>". A
+  spinner while an image loads, and a message with Try Again in the frame
+  when one can't; the neighbours are fetched ahead. The list doesn't
+  wrap, and an end's button stays focusable, `aria-disabled`. The
+  harness's `app/ImageViewer` stories (open, failed, one image), driven
+  in `e2e/image-viewer.spec.ts` at laptop and phone widths, with axe,
+  tokens and glyphs in both themes and every palette.
+
 ## 4.128.0 — Forms that don't overwrite, a read-only step track, and an Open link on the done toast
 
 npm package and `ui-foundation-backend` 4.128.0 (the backend is unchanged
