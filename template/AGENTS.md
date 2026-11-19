@@ -120,13 +120,19 @@ Follow `docs/foundation/reminders.md`. Never ask for notification
 permission on page load: only from the click on "Allow Reminders".
 
 ## Scope and Stopping
-- Do the task you were given and nothing beyond it. A task is done when
-  `npm run verify` passes — not when it feels complete.
-- If verify cannot pass without breaking a Hard Rule, an instruction
+- Do the task you were given. Its tests, its docs and anything it breaks
+  are part of it; a refactor or a feature nobody asked for is not. Ideas
+  beyond the task go in the app's backlog, not in code.
+- A task is done when the app's gate passes, not when it feels complete:
+  `npm run verify`, unless the app's own section below names its gate. Do
+  not report a task complete on a failing gate. The developer reviews
+  results (the running app, a screenshot, an options page), not every
+  line, so the gates are the safety net.
+- If the gate cannot pass without breaking a Hard Rule, an instruction
   conflicts with current library docs, or the change would exceed the
-  task's scope: write `docs/BLOCKERS.md` (what, why, what you tried) and
-  stop. Do not guess, do not widen scope.
-- Ideas that are out of scope go in the app's backlog, not in code.
+  task's scope: stop. In a chat with the developer, ask them; working
+  alone, write `docs/BLOCKERS.md` (what, why, what you tried). Do not
+  guess past it, and do not widen the task to get around it.
 
 ## Correct Patterns
 ```tsx
@@ -154,12 +160,6 @@ Look up shadcn component APIs with `npx shadcn@<tools.shadcn> view <name>`
 before guessing props — component APIs move between releases and training
 data lags them. The package's own props are in its type declarations
 (`node_modules/@tristan2828/ui-foundation/dist/**/*.d.ts`).
-
-## Before You Finish
-Run `npm run verify`. It must pass. Do not report a task complete on a
-failing gate. The developer reviews results — the running app, a
-screenshot, an options page — not every line, so the gates are the safety
-net.
 
 ## Adding an Entity
 Follow `docs/foundation/add-an-entity.md` (in Claude Code, `/new-entity
