@@ -41,10 +41,10 @@
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1935–2011
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 2013–2099
   - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2038–2099
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2101–2342
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2271–2342
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2344–2380
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2382–2431
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2101–2347
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2276–2347
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2349–2385
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2387–2436
 
 <!-- /index -->
 
@@ -2210,8 +2210,13 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   `search.onKeyDown` (4.123) gives the search box's keys to the app
   first: Enter on "#12" opening record 12, `preventDefault()` keeping the
   key from the box. `MultiChoice`'s `label` makes it "Rooms: Hall +1"
-  instead of a chip per pick. Below 48rem search and Filters share a line
-  and every filter, primary ones too, is in Filters' bottom sheet, so pass
+  instead of a chip per pick. Given `OptionSelect`'s options
+  (`{ value, label, kind?, icon? }`, 4.130) in place of bare values,
+  `MultiChoice` draws each option's icon as OptionSelect does: in the
+  list, on each chip, and before the summary's first pick ("Status: ●
+  Active +1"), so a status filter that takes several keeps its icons.
+  Below 48rem search and Filters share a line and every filter, primary
+  ones too, is in Filters' bottom sheet, so pass
   `primaryActive` (their chips) and an `onClearAll` that clears them all
   in one `setFilters` call.
 - **A date filter** (4.110) is `FilterDate`: "Any due date" while off,

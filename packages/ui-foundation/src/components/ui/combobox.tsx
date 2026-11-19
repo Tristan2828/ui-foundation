@@ -238,9 +238,12 @@ function ComboboxChip({
   className,
   children,
   showRemove = true,
+  removeLabel,
   ...props
 }: ComboboxPrimitive.Chip.Props & {
   showRemove?: boolean
+  /** The chip's words, naming its remove button ("Remove <words>") when its children aren't plain text (ui-foundation, 4.130). */
+  removeLabel?: string
 }) {
   return (
     <ComboboxPrimitive.Chip
@@ -257,7 +260,7 @@ function ComboboxChip({
           // Patched (ui-foundation, Phase G): upstream's icon-only remove
           // button has no accessible name — a critical axe violation. Name
           // it after the chip ("Remove fragile") when the chip is plain text.
-          aria-label={typeof children === "string" ? `Remove ${children}` : "Remove"}
+          aria-label={removeLabel !== undefined ? `Remove ${removeLabel}` : typeof children === "string" ? `Remove ${children}` : "Remove"}
           render={<Button variant="ghost" size="icon-xs" />}
           className="-ml-1 opacity-50 hover:opacity-100"
           data-slot="combobox-chip-remove"

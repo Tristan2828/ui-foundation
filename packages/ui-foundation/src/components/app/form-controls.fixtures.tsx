@@ -49,6 +49,10 @@ import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 // - Narrow filters (4.109): a 192px MultiChoice filter with a long summary
 //   beside a 192px Input, the two the same height.
 //
+// - Status multi choices (4.130): MultiChoice with OptionSelect's options,
+//   each kind's icon in its colour (or a plain icon) on its chip, in the
+//   list and on a filter's summary, on the page and on a card.
+//
 // e2e/form-controls.spec.ts drives these; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
@@ -548,6 +552,52 @@ function StatusSelectsPage() {
   )
 }
 
+// MultiChoice with icons (4.130): STAGES and PICKUP, OptionSelect's own
+// options, as chips on a form and as a filter's summary.
+function StatusMultiChoiceFields({ prefix }: { prefix: string }) {
+  const [stages, setStages] = useState<string[]>(['stuck', 'sent'])
+  const [pickup, setPickup] = useState<string[]>(['van'])
+  const [filter, setFilter] = useState<string[]>(['drafting', 'idea'])
+  return (
+    <FieldGroup>
+      <Field>
+        <FieldLabel htmlFor={`${prefix}-stages`}>Stages</FieldLabel>
+        <MultiChoice id={`${prefix}-stages`} options={STAGES} value={stages} onValueChange={setStages} placeholder="Pick stages" />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor={`${prefix}-pickups`}>Pick Up</FieldLabel>
+        <MultiChoice id={`${prefix}-pickups`} options={PICKUP} value={pickup} onValueChange={setPickup} placeholder="Pick one or both" />
+      </Field>
+      <MultiChoice
+        label="Stage"
+        options={STAGES}
+        value={filter}
+        onValueChange={setFilter}
+        placeholder="Any stage"
+        aria-label="Filter by stage"
+        className="w-52"
+      />
+    </FieldGroup>
+  )
+}
+
+function StatusMultiChoicesPage() {
+  return (
+    <div className="flex max-w-sm flex-col gap-6">
+      <div data-testid="status-multi-choices-page">
+        <StatusMultiChoiceFields prefix="page" />
+      </div>
+      <div
+        data-testid="status-multi-choices-card"
+        className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 text-card-foreground"
+      >
+        <p className="type-caption text-muted-foreground">Status multi choices on a card</p>
+        <StatusMultiChoiceFields prefix="card" />
+      </div>
+    </div>
+  )
+}
+
 // A list's filters in a row (4.109): a 192px MultiChoice whose summary is
 // long, beside a 192px Input; the two stay one line, the same height.
 const FILTER_SHELVES = ['Hallway bookcase by the stairs', 'Study', 'Attic boxes', 'Kitchen'] as const
@@ -588,5 +638,7 @@ export const ChoicePairs: StoryObj = { name: 'Choice pairs', render: () => <Choi
 export const StatusChoices: StoryObj = { name: 'Status choices', render: () => <StatusChoicesPage /> }
 
 export const StatusSelects: StoryObj = { name: 'Status selects', render: () => <StatusSelectsPage /> }
+
+export const StatusMultiChoices: StoryObj = { name: 'Status multi choices', render: () => <StatusMultiChoicesPage /> }
 
 export const NarrowFilters: StoryObj = { name: 'Narrow filters', render: () => <NarrowFilterRow /> }

@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { ChoiceButtons } from '../src/components/app/choice-buttons'
 import { DateField } from '../src/components/app/date-field'
 import { editRowClass } from '../src/components/app/edit-row'
+import { MultiChoice } from '../src/components/app/multi-choice'
 import { OptionSelect } from '../src/components/app/option-select'
 import { namesRecord } from '../src/lib/names-record'
 import { parsePlainDate, plainDateExamples, unreadableDateMessage } from '../src/lib/plain-date'
@@ -139,6 +140,52 @@ describe('ChoiceButtons and OptionSelect draw a kind the same way', () => {
       html.match(new RegExp(`<svg[^>]*data-slot="${slot}"[^>]*>`))?.[0].match(/class="([^"]*)"/)?.[1]
     expect(iconClass(buttons, 'choice-buttons-icon')).toBeDefined()
     expect(iconClass(select, 'option-select-icon')).toBe(iconClass(buttons, 'choice-buttons-icon'))
+  })
+})
+
+describe('MultiChoice with icons (4.130)', () => {
+  const stages = [
+    { value: 'idea', label: 'Idea', kind: 'planned' },
+    { value: 'stuck', label: 'Stuck', kind: 'attention' },
+    { value: 'sent', label: 'Sent' },
+  ] as const
+  const iconTag = (html: string, slot: string) => html.match(new RegExp(`<svg[^>]*data-slot="${slot}"[^>]*>`))?.[0] ?? ''
+  const classOf = (tag: string) => tag.match(/class="([^"]*)"/)?.[1]
+
+  it("draws a chip's kind icon as OptionSelect draws it, decorative, and names its remove button by the words", () => {
+    const chips = renderToStaticMarkup(<MultiChoice aria-label="Stages" options={stages} value={['stuck']} onValueChange={() => {}} />)
+    const select = renderToStaticMarkup(<OptionSelect aria-label="Stage" options={stages} value="stuck" onValueChange={() => {}} />)
+    const icon = iconTag(chips, 'multi-choice-icon')
+    expect(icon).toContain('data-kind="attention"')
+    expect(icon).toContain('aria-hidden="true"')
+    expect(classOf(icon)).toBe(classOf(iconTag(select, 'option-select-icon')))
+    expect(chips).toContain('aria-label="Remove Stuck"')
+  })
+
+  it("puts the first pick's icon on a filter's summary, after its label", () => {
+    const html = renderToStaticMarkup(
+      <MultiChoice label="Stage" aria-label="Filter by stage" options={stages} value={['idea', 'stuck']} onValueChange={() => {}} />,
+    )
+    const summary = html.match(/<span data-slot="multi-choice-summary".*?<\/span><\/span><\/span>/)?.[0] ?? ''
+    expect(summary).toMatch(/Stage:<\/span><svg[^>]*data-kind="planned"/)
+    expect(summary).toContain('Idea')
+    expect(summary).toContain(' +1')
+  })
+
+  it('draws no icon for an option without one, and options as objects look as bare values do', () => {
+    const plain = renderToStaticMarkup(<MultiChoice aria-label="Stages" options={stages} value={['sent']} onValueChange={() => {}} />)
+    expect(plain).not.toContain('multi-choice-icon')
+    const objects = [{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }] as const
+    const labels: Record<string, string> = { a: 'Alpha', b: 'Beta' }
+    const asObjects = (label?: string) =>
+      renderToStaticMarkup(<MultiChoice label={label} aria-label="Pick" options={objects} value={['a', 'b']} onValueChange={() => {}} />)
+    const asValues = (label?: string) =>
+      renderToStaticMarkup(
+        <MultiChoice label={label} aria-label="Pick" options={['a', 'b']} getLabel={(v) => labels[v] ?? v} value={['a', 'b']} onValueChange={() => {}} />,
+      )
+    expect(asObjects()).toBe(asValues())
+    expect(asObjects('Letter')).toBe(asValues('Letter'))
+    expect(asObjects('Letter')).toContain('min-w-0 truncate pl-1')
   })
 })
 
