@@ -302,6 +302,7 @@ export { DateField, type DateFieldProps } from '@/components/app/date-field'
 export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
+export { ImageViewer, type ImageViewerImage, type ImageViewerProps } from '@/components/app/image-viewer'
 export { DEFAULT_IMAGE_TYPES, type ImageUpload, type ImageUploadResult } from '@/lib/image-file'
 export {
   formatPlainDate,
