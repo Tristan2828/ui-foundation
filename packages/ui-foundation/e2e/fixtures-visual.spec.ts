@@ -161,6 +161,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-formcontrols--status-choices', mustShow: 'Status choices on a card' },
   // The same kinds on OptionSelect, a status of five or more, on the page and a card (4.109).
   { id: 'app-formcontrols--status-selects', mustShow: 'Status selects on a card' },
+  // MultiChoice with OptionSelect's options: kind and plain icons on chips, a summary and (open) the list (4.130).
+  { id: 'app-formcontrols--status-multi-choices', mustShow: 'Status multi choices on a card' },
   // A narrow MultiChoice filter's summary, cut off beside an Input (4.109).
   { id: 'app-formcontrols--narrow-filters', mustShow: 'Shelf:' },
   // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
@@ -411,6 +413,13 @@ const GLYPH_STORIES: {
     id: 'app-formcontrols--status-selects',
     name: 'list open',
     open: (page) => page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Stage' }).click(),
+  },
+  // MultiChoice's kind icons on its chips and summary, on the page and a card, and in its open list (4.130).
+  { id: 'app-formcontrols--status-multi-choices' },
+  {
+    id: 'app-formcontrols--status-multi-choices',
+    name: 'list open',
+    open: (page) => page.getByTestId('status-multi-choices-page').getByRole('combobox', { name: 'Stages' }).click(),
   },
   // The facts rail's status icon and external-link mark on its card (4.106).
   { id: 'app-entityview--facts-rail' },

@@ -12,6 +12,12 @@
 // A toolbar filter's summary ("Status: Active +1", `label`) keeps the
 // control one line high however narrow it is (4.109): it truncates, and
 // the text box beside it takes no room until it's focused.
+//
+// An option can carry a status kind or an icon (4.130), as OptionSelect's
+// and ChoiceButtons' do, drawn by the same OptionIcon: pass the options as
+// `{ value, label, kind?, icon? }` (OptionSelectOption) in place of bare
+// values. The icon goes before the words on the option in the list, on its
+// chip and on the summary's first pick. Decorative: the words say it.
 import * as React from 'react'
 import { cn } from 'cn'
 import {
@@ -26,26 +32,26 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from '@/components/ui/combobox'
+import { OptionIcon } from './option-icon'
+import type { OptionSelectOption } from './option-select'
 
-export function MultiChoice<T extends string>({
-  options,
-  value,
-  onValueChange,
-  getLabel = String,
-  id,
-  placeholder,
-  label,
-  'aria-label': ariaLabel,
-  'aria-invalid': ariaInvalid,
-  className,
-}: {
-  /** Every allowed option, in display order. */
-  options: readonly T[]
+/** An option with its words and, optionally, its icon: OptionSelect's option, the same shape. */
+export type MultiChoiceOption<T extends string> = OptionSelectOption<T>
+
+export type MultiChoiceProps<T extends string> = {
+  /**
+   * Every allowed option, in display order: bare values, or (4.130)
+   * OptionSelect's `{ value, label, kind?, icon? }`, whose `label` names it
+   * and whose `kind` or `icon` is drawn before the words, as OptionSelect
+   * draws it.
+   */
+  options: readonly T[] | readonly MultiChoiceOption<T>[]
   value: T[]
   onValueChange: (value: T[]) => void
   /**
    * The text shown for an option: on its chip, in the dropdown, and what
-   * typing matches against. Defaults to the value itself.
+   * typing matches against. Defaults to the value itself, or to the
+   * option's `label` when options are objects.
    */
   getLabel?: (value: T) => string
   /** Id for the text input, so a <FieldLabel htmlFor> labels it. */
@@ -63,15 +69,48 @@ export function MultiChoice<T extends string>({
   'aria-label'?: string
   'aria-invalid'?: boolean
   className?: string
-}) {
+}
+
+export function MultiChoice<T extends string>({
+  options,
+  value,
+  onValueChange,
+  getLabel,
+  id,
+  placeholder,
+  label,
+  'aria-label': ariaLabel,
+  'aria-invalid': ariaInvalid,
+  className,
+}: MultiChoiceProps<T>) {
   const anchor = useComboboxAnchor()
+  // Bare values or option objects: the values are what the combobox holds,
+  // the objects (by value) give the words and the icon.
+  const { values, byValue } = React.useMemo(() => {
+    const byValue = new Map<T, MultiChoiceOption<T>>()
+    const values = options.map((option) => {
+      if (typeof option === 'string') return option
+      byValue.set(option.value, option)
+      return option.value
+    })
+    return { values, byValue }
+  }, [options])
+  const labelOf = (option: T) => (getLabel ? getLabel(option) : (byValue.get(option)?.label ?? String(option)))
+  const iconOf = (option: T, slot: string) => {
+    const found = byValue.get(option)
+    return found ? <OptionIcon kind={found.kind} icon={found.icon} slot={slot} /> : null
+  }
+  const hasIcon = (option: T) => {
+    const found = byValue.get(option)
+    return Boolean(found && (found.kind || found.icon))
+  }
   const summarised = label !== undefined && value.length > 0
 
   return (
     <Combobox
       multiple
       autoHighlight
-      items={options}
+      items={values}
       value={value}
       onValueChange={(next, details) => {
         // Base UI empties the value on Escape while the list is closed, so
@@ -86,7 +125,7 @@ export function MultiChoice<T extends string>({
         }
         onValueChange(next as T[])
       }}
-      itemToStringLabel={getLabel}
+      itemToStringLabel={labelOf}
     >
       {/* With a summary (4.109): one line at the control's own height. The
           row doesn't wrap, the summary truncates with an ellipsis, and the
@@ -97,15 +136,34 @@ export function MultiChoice<T extends string>({
           {(selected: T[]) => (
             <React.Fragment>
               {label !== undefined && selected.length > 0 ? (
-                <span data-slot="multi-choice-summary" className="min-w-0 truncate pl-1 type-body text-foreground">
-                  {label}: {getLabel(selected[0] as T)}
-                  {selected.length > 1 && <span className="text-muted-foreground"> +{selected.length - 1}</span>}
-                </span>
+                hasIcon(selected[0] as T) ? (
+                  // With an icon: "Status: <icon> Active +1", the label and
+                  // the icon kept whole and the rest truncating, on one line.
+                  <span
+                    data-slot="multi-choice-summary"
+                    className="flex min-w-0 items-center gap-1.5 pl-1 type-body text-foreground"
+                  >
+                    <span className="shrink-0">{label}:</span>
+                    {iconOf(selected[0] as T, 'multi-choice-icon')}
+                    <span className="min-w-0 truncate">
+                      {labelOf(selected[0] as T)}
+                      {selected.length > 1 && <span className="text-muted-foreground"> +{selected.length - 1}</span>}
+                    </span>
+                  </span>
+                ) : (
+                  <span data-slot="multi-choice-summary" className="min-w-0 truncate pl-1 type-body text-foreground">
+                    {label}: {labelOf(selected[0] as T)}
+                    {selected.length > 1 && <span className="text-muted-foreground"> +{selected.length - 1}</span>}
+                  </span>
+                )
               ) : null}
               {(label === undefined ? selected : []).map((option) => (
-                // A plain string child, so the chip's remove button is named
-                // "Remove <label>" (combobox.tsx).
-                <ComboboxChip key={option}>{getLabel(option)}</ComboboxChip>
+                // `removeLabel`, so the chip's remove button is named
+                // "Remove <label>" with an icon beside the words (combobox.tsx).
+                <ComboboxChip key={option} removeLabel={labelOf(option)}>
+                  {iconOf(option, 'multi-choice-icon')}
+                  {labelOf(option)}
+                </ComboboxChip>
               ))}
               <ComboboxChipsInput
                 id={id}
@@ -123,7 +181,8 @@ export function MultiChoice<T extends string>({
         <ComboboxList>
           {(option: T) => (
             <ComboboxItem key={option} value={option}>
-              {getLabel(option)}
+              {iconOf(option, 'multi-choice-icon')}
+              {labelOf(option)}
             </ComboboxItem>
           )}
         </ComboboxList>

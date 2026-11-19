@@ -7,7 +7,49 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## Unreleased
+## 4.130.0 — Icons on MultiChoice's options
+
+npm package and `ui-foundation-backend` 4.130.0 (the backend is unchanged
+apart from its version). Additive: nothing changes for an app that
+doesn't take it. It also carries the two synced-file changes below it
+(one "Scope and Stopping" section, and `spec-tester`'s own model).
+
+### How an app adopts it
+
+- Bump both packages to 4.130.0 and run `npx ui-foundation sync`.
+- **`MultiChoice` with icons:** a multi-value filter or field over a
+  status (or anything whose single-value control is an `OptionSelect` or
+  `ChoiceButtons` with `kind` or `icon`) passes that same options list:
+  `options={STATUS_OPTIONS}` in place of bare values. Drop its `getLabel`
+  if it only repeated the options' labels.
+- An app whose own notes point at "Before You Finish" should point at
+  "Scope and Stopping" (below).
+
+### MultiChoice draws its options' icons
+
+- **`options` takes `OptionSelect`'s options** (new types
+  `MultiChoiceOption`, the same shape as `OptionSelectOption`, and
+  `MultiChoiceProps`): `{ value, label, kind?, icon? }` as well as bare
+  values. A `kind` draws its status icon in its colour, an `icon` draws
+  that icon (in the kind's colour with a `kind`, uncoloured without), by
+  the same `OptionIcon` that `OptionSelect` and `ChoiceButtons` use: the
+  same size, colour and place before the words. Decorative
+  (`aria-hidden`); the words name the option.
+- **Where:** on each option in the list, on each pick's chip, and on a
+  filter's summary before its first pick ("Stage: ● Drafting +1"; the
+  label and icon stay whole, the rest truncates on one line). Bare values,
+  and options with no `kind` or `icon`, render exactly as before.
+- **The option's `label` names it** (chip, list, typing); `getLabel`,
+  when given, still wins.
+- **`ComboboxChip` takes `removeLabel`** (`/ui/combobox`, optional): the
+  words its remove button is named by ("Remove Stuck") when its children
+  aren't plain text.
+- The harness's `app/FormControls` "Status multi choices" story (on the
+  page and a card, kinds and plain icons, chips and a summary), driven in
+  `e2e/form-controls.spec.ts`, with axe, tokens and glyphs at 3:1 in both
+  themes and every palette (`fixtures-visual.spec.ts`), and markup checks
+  in `tests/form-controls.test.tsx`. Docs: add-an-entity.md "Forms" (a
+  status picked several at once) and cell-patterns.md 25 "The filters".
 
 ### The synced rules say when a task is done once, with its exceptions
 

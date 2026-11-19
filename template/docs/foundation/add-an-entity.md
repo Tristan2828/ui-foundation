@@ -15,19 +15,19 @@
   - Step 8: Add Playwright specs for all three screens · lines 776–863
   - Step 9: Register the nav entry and route names · lines 864–878
   - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1402
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1408
   - [The record view](#the-record-view) · lines 1036–1217
-  - [Forms](#forms) · lines 1219–1301
-  - [Dialogs](#dialogs) · lines 1303–1336
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1338–1402
-- [What not to copy](#what-not-to-copy) · lines 1404–1439
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1441–1458
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1460–1525
-- [Deleting](#deleting) · lines 1527–1558
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1560–1581
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1583–1592
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1595–1637
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1639–1675
+  - [Forms](#forms) · lines 1219–1307
+  - [Dialogs](#dialogs) · lines 1309–1342
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1344–1408
+- [What not to copy](#what-not-to-copy) · lines 1410–1445
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1447–1464
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1466–1531
+- [Deleting](#deleting) · lines 1533–1564
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1566–1587
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1589–1598
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1601–1643
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1645–1681
 
 <!-- /index -->
 
@@ -1275,6 +1275,12 @@ shape (4.85):
   the trigger and on each item in its list (`inPlace.select` passes them
   through). With `kind`, leave out a `render` that draws its own icon
   (a `StatusMark`), or the option shows two.
+  A status picked several at once (a multi-value status filter, a
+  "statuses" field) is a `MultiChoice` given those same options (4.130):
+  `options={STATUS_OPTIONS}` in place of bare values, so each option's
+  kind icon (or `icon`) is drawn before its words in the list, on its
+  chip, and on a filter's summary ("Status: ● Active +1"), and its
+  `label` names it with no `getLabel`.
 - **The controls** (4.88): a choice of two to four short options is
   `ChoiceButtons` (`inPlace.choice` in place), five or more an
   `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",

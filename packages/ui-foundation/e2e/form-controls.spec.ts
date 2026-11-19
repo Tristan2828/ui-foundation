@@ -396,3 +396,56 @@ test.describe('a status select draws its kinds', () => {
     expect(await colourOf(icon)).toBe(await colourOf(trigger.locator('[data-slot=select-value]')))
   })
 })
+
+// MultiChoice given OptionSelect's options (4.130): each kind's icon in its
+// colour in the list, on a picked one's chip and on a filter's summary.
+test.describe('a multi choice draws its options’ icons', () => {
+  const tokenColour = (page: Page, token: string) =>
+    page.evaluate((token) => {
+      const probe = document.createElement('div')
+      probe.style.color = `var(${token})`
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).color
+      probe.remove()
+      return colour
+    }, token)
+  const colourOf = (locator: Locator) => locator.evaluate((node) => getComputedStyle(node).color)
+
+  test('in the list, and on the chip of the one picked', async ({ page }) => {
+    await page.goto(story('status-multi-choices'))
+    const field = page.getByTestId('status-multi-choices-page')
+    const chips = field.locator('[data-slot=combobox-chips]').first()
+    const stuck = chips.locator('[data-slot=combobox-chip]', { hasText: 'Stuck' })
+    await expect(stuck.locator('[data-slot=multi-choice-icon]')).toHaveAttribute('data-kind', 'attention')
+    expect(await colourOf(stuck.locator('[data-slot=multi-choice-icon]'))).toBe(await tokenColour(page, '--destructive-text'))
+    await expect(field.getByRole('button', { name: 'Remove Stuck' })).toBeVisible()
+
+    await field.getByRole('combobox', { name: 'Stages' }).click()
+    const list = page.getByRole('listbox')
+    for (const [label, token] of Object.entries({ Idea: '--info-text', Drafting: '--success-text', Shelved: '--warning-text' })) {
+      const icon = list.getByRole('option', { name: label }).locator('[data-slot=multi-choice-icon]')
+      await expect(icon).toBeVisible()
+      expect(await colourOf(icon)).toBe(await tokenColour(page, token))
+    }
+    await list.getByRole('option', { name: 'Idea' }).click()
+    await expect(chips.locator('[data-slot=combobox-chip]', { hasText: 'Idea' }).locator('[data-slot=multi-choice-icon]')).toHaveAttribute(
+      'data-kind',
+      'planned',
+    )
+  })
+
+  test("a filter's summary shows its first pick's icon and stays one line", async ({ page }) => {
+    await page.goto(story('status-multi-choices'))
+    const filter = page.getByTestId('status-multi-choices-page').locator('[data-slot=combobox-chips]').filter({
+      has: page.getByRole('combobox', { name: 'Filter by stage' }),
+    })
+    const summary = filter.locator('[data-slot=multi-choice-summary]')
+    await expect(summary).toHaveText('Stage:Drafting +1')
+    await expect(summary.locator('[data-slot=multi-choice-icon]')).toHaveAttribute('data-kind', 'active')
+    const box = await filter.boundingBox()
+    const input = await page.getByTestId('status-multi-choices-page').getByRole('combobox', { name: 'Pick Up' }).evaluate(
+      (node) => node.closest('[data-slot=combobox-chips]')!.getBoundingClientRect().height,
+    )
+    expect(box?.height).toBe(input)
+  })
+})
