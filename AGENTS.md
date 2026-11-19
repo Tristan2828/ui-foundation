@@ -57,8 +57,9 @@ direction and the queue) and any open item in
 
 ## Scope and stopping
 
-- Do the task you were given and nothing beyond it. Out-of-scope ideas go
-  in `docs/DEFERRED.md`, never in code.
+- Do the task you were given. Its tests, its docs and anything it breaks
+  are part of it; a refactor or a feature nobody asked for is not. Ideas
+  beyond the task go in `docs/DEFERRED.md`, not in code.
 - A task is done when `npm run verify` (root) passes: the package's gate,
   then the template's against the package as built. Backend changes also
   need `npm run verify:backend`, and `template/scripts/check-backend-postgres.sh`
@@ -66,7 +67,8 @@ direction and the queue) and any open item in
   says what each gate covers.
 - If verify can't pass without breaking a rule, an instruction conflicts
   with current library docs, or the change would exceed the task's scope:
-  write `docs/BLOCKERS.md` (what, why, what you tried) and stop.
+  stop. In a chat with the developer, ask them; working alone, write
+  `docs/BLOCKERS.md` (what, why, what you tried).
 - A new check counts only after a negative control: break the thing, watch
   it fail, restore it.
 

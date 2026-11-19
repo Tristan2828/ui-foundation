@@ -9,6 +9,27 @@ are listed on the
 
 ## Unreleased
 
+### The synced rules say when a task is done once, with its exceptions
+
+The synced block of `AGENTS.md` had two sections that both said a task is
+done when `npm run verify` passes ("Scope and Stopping" and "Before You
+Finish"). They are one section now, "Scope and Stopping", and its three
+rules each say what they cover:
+
+- **The task** includes its tests, its docs and anything it breaks. A
+  refactor or a feature nobody asked for is still out.
+- **Done** is the app's gate passing: `npm run verify`, unless the app's own
+  section names its gate (an app whose gate runs verify's checks for what a
+  branch can break).
+- **Stopping** on a rule that can't be kept: in a chat with the developer,
+  ask them; working alone, write `docs/BLOCKERS.md`, as before.
+
+Newer Claude models follow an instruction closely, so a rule that states its
+scope and its exception is followed as meant, where "nothing beyond it" and
+an unconditional "run verify" were not. No rule a check enforces changed.
+Additive: run `npx ui-foundation sync` to take it. An app whose own notes
+point at "Before You Finish" should point at "Scope and Stopping".
+
 ### Synced subagents set their own model
 
 The synced `spec-tester` agent now names `model: sonnet` in its frontmatter.
