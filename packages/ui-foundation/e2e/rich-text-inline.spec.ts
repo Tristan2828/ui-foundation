@@ -231,6 +231,34 @@ test.describe('a long note edited inline', () => {
     })
   }
 
+  test('the line holds still when the note ends just above the screen bottom, within a line of it', async ({ page }) => {
+    await openLong(page)
+    await typeInFirst(page, ' refuse')
+    await expect(status(page).getByText('The server refused it, as a server would.')).toBeVisible({ timeout: 5000 })
+    // Scrolled so the note ends half a line above the screen's bottom: in
+    // place, the line would run past it, so it stays pinned. Judged by the
+    // field without its line, it flipped between pinned and in place every frame.
+    const field = region(page, 'Notes').locator('[data-slot="editable-value"]')
+    await expect(status(page)).toHaveAttribute('data-pinned', '')
+    const lineHeight = (await status(page).boundingBox())!.height
+    const end = (await field.boundingBox())!
+    await page.mouse.wheel(0, end.y + end.height - (900 - lineHeight / 2))
+    await expect.poll(async () => {
+      const box = (await field.boundingBox())!
+      return Math.round(box.y + box.height)
+    }).toBeLessThan(900)
+    const tops = await status(page).evaluate(async (line) => {
+      const seen: number[] = []
+      for (let i = 0; i < 20; i++) {
+        await new Promise((done) => requestAnimationFrame(done))
+        seen.push(Math.round(line.getBoundingClientRect().top))
+      }
+      return seen
+    })
+    expect(new Set(tops.slice(2)).size, `the line's top, frame by frame: ${tops.join(' ')}`).toBe(1)
+    expect(await inViewport(page)).toBe(true)
+  })
+
   test('a problem the editor reports asks at once when a link is clicked within the pause', async ({ page }) => {
     await openLong(page)
     await typeInFirst(page, ' unsavable')

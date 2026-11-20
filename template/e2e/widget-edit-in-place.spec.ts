@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { expect, forceMswOverride, test, waitForMswReady } from '@tristan2828/ui-foundation/testing'
 
 // Editing in place on the widget view (cell pattern 18): Name, Status,
@@ -65,6 +65,17 @@ async function openWidget(page: Page, id = 1) {
   // The notes' editor builds itself a moment after the page: a click
   // before it's there lands on nothing.
   await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible()
+}
+
+// The caret at the end of a paragraph, by a click on its last line's end.
+// A plain click hits the paragraph's middle, and on a phone, where it
+// wraps to two lines, that's the edge between them: which line it lands
+// on is the editor's call (prosemirror-view 1.43 picks the upper one, the
+// browser picked the lower), and End then goes to that line's end, mid-sentence.
+async function clickParagraphEnd(paragraph: Locator) {
+  const box = await paragraph.boundingBox()
+  if (!box) throw new Error('the paragraph is not on screen')
+  await paragraph.click({ position: { x: box.width - 2, y: box.height - 2 } })
 }
 
 // Description saved what's on screen: its line says "Saved".
@@ -191,7 +202,7 @@ test.describe('widget view: editing in place', () => {
     // Formatted, not Markdown syntax: the bold is bold, the list a list.
     await expect(editor.locator('strong')).toHaveText('2.4GHz')
     await expect(editor.locator('li')).toHaveCount(2)
-    await editor.locator('p').first().click()
+    await clickParagraphEnd(editor.locator('p').first())
     await page.waitForTimeout(100)
     await page.keyboard.press('End')
     await page.keyboard.type(' Quiet clicks.')
@@ -1081,7 +1092,7 @@ test.describe('widget view: two writers', () => {
   // Types at the end of the first paragraph: a different block from theirs.
   async function typeMine(page: Page, text: string) {
     const editor = page.getByRole('textbox', { name: 'Description' })
-    await editor.locator('p').first().click()
+    await clickParagraphEnd(editor.locator('p').first())
     await page.keyboard.press('End')
     await page.keyboard.type(text)
   }

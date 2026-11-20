@@ -144,7 +144,7 @@ import { foldPlugin, setFolds } from './rich-text-fold'
 import type { RichTextEditorProps } from './rich-text-editor'
 import { headingView } from './rich-text-heading-view'
 import { taskItemView, toggleTaskItem } from './rich-text-task-item-view'
-import { applyLink, followLink, linkTarget } from './rich-text-links'
+import { applyLink, followLink, linkTarget, notePress } from './rich-text-links'
 import { anchorAt } from './rich-text-box-anchor'
 import { LinkForm, type LinkBox } from './rich-text-link-box'
 import { PageForm, type PageBox } from './rich-text-page-box'
@@ -742,7 +742,8 @@ export default function MilkdownEditor({
                 }),
               // The floating toolbar waits for the mouse to be up: a drag
               // is still choosing the words.
-              mousedown: (_view, event) => {
+              mousedown: (view, event) => {
+                notePress(view, event)
                 if (event.button !== 0) return false
                 setDismissed(null)
                 setSelecting(true)
