@@ -38,3 +38,19 @@ def test_touch_is_a_new_aware_instant() -> None:
     first = touch()
     assert first.tzinfo is not None
     assert not same_version(first, AT)
+
+
+def test_touch_is_strictly_increasing_when_the_clock_stands_still(monkeypatch: pytest.MonkeyPatch) -> None:
+    from foundation_backend import versions
+
+    class FrozenClock(datetime):
+        @classmethod
+        def now(cls, tz=None):  # type: ignore[no-untyped-def]
+            return AT
+
+    monkeypatch.setattr(versions, "datetime", FrozenClock)
+    monkeypatch.setattr(versions, "_last_touch", None)
+    first = versions.touch()
+    second = versions.touch()
+    assert first != second
+    assert second > first

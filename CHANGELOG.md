@@ -7,6 +7,27 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.130.2 — The backend's `touch()` never repeats a version
+
+npm package and `ui-foundation-backend` 4.130.2 (the npm package is
+unchanged apart from its version). A fix: no API changes.
+
+### How an app adopts it
+
+- Bump both packages to 4.130.2. Nothing else changes.
+
+### Backend: `versions.touch()` is strictly increasing
+
+- **What was wrong:** `touch()` returned `datetime.now(timezone.utc)`. On
+  Windows with Python 3.11 that clock moves only about every 1.6 ms, so two
+  writes in quick succession got the same version: a record's new
+  `updated_at` equalled the old one. Tests asserting a write sets a new
+  version failed now and then, and a stale save could slip past the 409
+  version check.
+- **Now** `touch()` keeps the last value it returned (guarded by a lock) and
+  returns the later of now and that value plus one microsecond. Signature and
+  return type are unchanged. New test in `tests/test_versions.py`.
+
 ## 4.130.1 — A pinned save line that holds still; prosemirror-view 1.43
 
 npm package and `ui-foundation-backend` 4.130.1 (the backend is unchanged

@@ -20,7 +20,8 @@ docs/foundation/add-an-entity.md "Saves that don't overwrite" has the
 whole pattern; the template's Widgets entity uses it.
 """
 
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException
@@ -55,9 +56,22 @@ def check_version(current: datetime | None, base: datetime | None, *, detail: st
         raise VersionConflict(detail)
 
 
+_touch_lock = threading.Lock()
+_last_touch: datetime | None = None
+
+
 def touch() -> datetime:
-    """The new version for a record being written: now, in UTC."""
-    return datetime.now(timezone.utc)
+    """The new version for a record being written: now, in UTC, and strictly
+    later than the last one this process returned. (Windows' clock moves only
+    about every 1.6 ms, so two quick writes would otherwise share a version,
+    and a stale save could slip past the 409 check.)"""
+    global _last_touch
+    with _touch_lock:
+        now = datetime.now(timezone.utc)
+        if _last_touch is not None and now <= _last_touch:
+            now = _last_touch + timedelta(microseconds=1)
+        _last_touch = now
+        return now
 
 
 def pop_base_version(updates: dict[str, Any], key: str = "base_updated_at") -> datetime | None:
