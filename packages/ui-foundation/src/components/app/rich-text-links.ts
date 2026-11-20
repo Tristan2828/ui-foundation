@@ -53,6 +53,19 @@ export function linkTarget(state: EditorState): LinkTarget {
 // A page link (`pageLink`) opens its page in this tab instead (`open`:
 // the router's, when there is one), and a removed page's link opens
 // nothing.
+//
+// A drag is told by the pointer moving between the press and the click,
+// not only by the words it chose: whether a drag selects is the editor's
+// and the browser's call (prosemirror-view 1.43, handling the mouse
+// itself, leaves the caret where a drag with a mouse on a phone ended).
+const presses = new WeakMap<EditorView, { x: number; y: number }>()
+const DRAG_SLOP = 4
+
+/** Where the mouse went down in the editor: `followLink` doesn't follow a drag. */
+export function notePress(view: EditorView, event: MouseEvent) {
+  presses.set(view, { x: event.clientX, y: event.clientY })
+}
+
 export function followLink(
   view: EditorView,
   event: MouseEvent,
@@ -62,6 +75,8 @@ export function followLink(
   const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
   if (!anchor || !view.dom.contains(anchor)) return false
   if (!view.state.selection.empty) return false
+  const press = presses.get(view)
+  if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > DRAG_SLOP) return false
   const written = anchor.getAttribute('href') ?? ''
   const page = pageLinkInfo(pages.resolve, written)
   if (page) {

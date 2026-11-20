@@ -59,7 +59,14 @@ apart from its version). A fix: no API changes.
   - **ProseMirror now counts double clicks itself:** two clicks on the
     same spot within 500 ms are a double click even with keys pressed in
     between, and select a word. A spec that clicks one spot twice in quick
-    succession should wait out the half second. The repo's lock moves to prosemirror-view 1.43.0,
+    succession should wait out the half second.
+- **A drag over a link no longer opens it on a phone.** `followLink`
+  told a drag from a click only by the words it selected; on a phone, 1.43
+  leaves a mouse drag's caret where it ended with nothing selected, so the
+  click that ends the drag opened the link. It now also refuses a click
+  whose pointer moved more than 4px from where it went down. Negative
+  control: the existing phone spec ("a link opens only on a plain
+  click…") failed in 3 of 4 runs before the fix. The repo's lock moves to prosemirror-view 1.43.0,
   prosemirror-transform 1.12.7, prosemirror-inputrules 1.7.0,
   prosemirror-history 1.5.2 and prosemirror-schema-list 1.6.1, the
   versions a new app resolves, so the repo's own `verify` tests them.
