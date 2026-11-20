@@ -7,6 +7,51 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.130.1 — A pinned save line that holds still; prosemirror-view 1.43
+
+npm package and `ui-foundation-backend` 4.130.1 (the backend is unchanged
+apart from its version). A fix: no API changes.
+
+### How an app adopts it
+
+- Bump both packages to 4.130.1.
+- **If your Playwright specs type at the end of a rich-text paragraph**
+  with `locator('p').click()` then `End` (the template's
+  `widget-edit-in-place.spec.ts` did, and an entity copied from it may),
+  they can fail on prosemirror-view 1.43.0, which `@milkdown/kit` ^7.23
+  resolves to in any install made since 2026-11-19: the typing lands mid
+  sentence (`USB  Mine.receiver.`). Click the paragraph's last line's end
+  instead, as the template's `clickParagraphEnd` now does:
+  `paragraph.click({ position: { x: box.width - 2, y: box.height - 2 } })`.
+
+### The save line no longer hops when a field ends near the screen's bottom
+
+- **What was wrong:** an edited-in-place field's status line (Saving…,
+  Saved, a refusal, a conflict's Keep Mine and Show Saved) is pinned to the
+  screen's bottom while the field runs past it (F5). It was judged by the
+  field's box, which includes the line in place and not when pinned, so a
+  field ending within a line of the screen's bottom pinned, shrank,
+  unpinned, grew and pinned again every frame. On a phone the conflict's
+  buttons hopped 128px and Playwright could never click Keep Mine (the
+  template's "Keep Mine" spec timed out in about half its runs).
+- **Now** `EditableValue` judges by where the field ends with its line in
+  place, pinned or not, so the line stays put. New harness test in
+  `e2e/rich-text-inline.spec.ts` ("the line holds still…"); negative
+  control: on the old hook its top alternates 837/881 frame by frame.
+
+### prosemirror-view 1.43.0
+
+- Released 2026-11-19 and reached through `@milkdown/kit`; it handles
+  mouse selection itself instead of leaving it to the browser. A click at
+  a wrapped paragraph's exact middle (the edge between two lines, which is
+  where Playwright's plain `click()` lands) now puts the caret on the upper
+  line where the browser chose the lower, so `End` stops at that line's
+  end. Nothing in the package depended on it; the template's spec did, and
+  is fixed as above. The repo's lock moves to prosemirror-view 1.43.0,
+  prosemirror-transform 1.12.7, prosemirror-inputrules 1.7.0,
+  prosemirror-history 1.5.2 and prosemirror-schema-list 1.6.1, the
+  versions a new app resolves, so the repo's own `verify` tests them.
+
 ## 4.130.0 — Icons on MultiChoice's options
 
 npm package and `ui-foundation-backend` 4.130.0 (the backend is unchanged

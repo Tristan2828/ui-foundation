@@ -143,6 +143,13 @@ export type EditableFieldProps = EditableValueProps & {
 // field's left edge, so it's never off screen (F5). Not CSS sticky: a
 // section's card clips its content (`overflow-hidden`), which stops sticky
 // at the card. Returns where to pin it, or null while it shows in place.
+//
+// Judged by where the field ends with its line in place, pinned or not.
+// Pinning takes the line out of the field, so the field's own box is
+// shorter by the line while it's pinned: judged by that box, a field whose
+// end is within a line of the screen's bottom pinned, shrank, unpinned,
+// grew and pinned again, every frame (a conflict's two buttons hopping
+// 128px on a phone, never still enough to press).
 function usePinnedStatus(
   field: RefObject<HTMLElement | null>,
   enabled: boolean,
@@ -151,10 +158,27 @@ function usePinnedStatus(
   useLayoutEffect(() => {
     if (!enabled) return
     let frame = 0
+    // How far the line in place reaches below the rest of the field (the
+    // gap and the line), measured whenever it's in place.
+    let reserve = 0
     const measure = () => {
       frame = 0
-      const box = field.current?.getBoundingClientRect()
-      const runsPast = box !== undefined && box.top < window.innerHeight - 48 && box.bottom > window.innerHeight
+      const element = field.current
+      const box = element?.getBoundingClientRect()
+      let bottom = box?.bottom
+      const line = element?.querySelector<HTMLElement>(':scope > [data-slot="editable-value-status"]')
+      if (element && box && line) {
+        if (line.hasAttribute('data-pinned')) {
+          bottom = box.bottom + reserve
+        } else {
+          let rest = box.top
+          for (const child of element.children) {
+            if (child !== line) rest = Math.max(rest, child.getBoundingClientRect().bottom)
+          }
+          reserve = Math.max(0, box.bottom - rest)
+        }
+      }
+      const runsPast = box !== undefined && bottom !== undefined && box.top < window.innerHeight - 48 && bottom > window.innerHeight
       setPin((current) => {
         if (!runsPast) return null
         const next = { left: Math.round(box.left), width: Math.round(box.width) }
