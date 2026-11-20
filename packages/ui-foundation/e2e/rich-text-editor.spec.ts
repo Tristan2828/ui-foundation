@@ -1332,6 +1332,14 @@ test.describe('image upload', () => {
       await caretAtEnd(page, 'floating')
       await page.keyboard.press('Alt+F10')
       await expect(tools(page).getByRole('button', { name: 'Image', exact: true })).toBeFocused()
+      // Reached by the keyboard, so its tooltip is open: the first Esc
+      // closes it (as on the toolbars), the next one goes back to the text.
+      // Before prosemirror-view 1.43 the button wasn't :focus-visible after
+      // a click in the text, no tooltip opened, and one Esc did both.
+      await expect(page.locator('[data-slot=tooltip-content][data-open]')).toBeVisible()
+      await page.keyboard.press('Escape')
+      await expect(page.locator('[data-slot=tooltip-content][data-open]')).toHaveCount(0)
+      await expect(tools(page).getByRole('button', { name: 'Image', exact: true })).toBeFocused()
       await page.keyboard.press('Escape')
       await expect(editor(page, 'floating')).toBeFocused()
     })
@@ -1860,12 +1868,18 @@ test.describe('full screen', () => {
       expect(await focusInField(page)).toBe(true)
     }
     await expect(page.locator('[data-fixture="tasks"]')).toHaveJSProperty('inert', true)
+    // A second click on the same spot within half a second is a double
+    // click to ProseMirror (1.43 handles the mouse itself), which selects
+    // a word and opens the floating toolbar, and the first Esc is then the
+    // toolbar's. Each click here is a single one.
+    await page.waitForTimeout(600)
     await editor(page, 'links').click()
     await page.keyboard.press('Escape')
     await expect(field(page)).not.toHaveAttribute('data-full-screen', 'true')
     await expect(page.getByRole('dialog')).toHaveCount(0)
     // Negative control: out of full screen, Tab leaves the field.
     await expect(page.locator('[data-fixture="tasks"]')).toHaveJSProperty('inert', false)
+    await page.waitForTimeout(600)
     await editor(page, 'links').click()
     await page.waitForTimeout(100)
     let left = false

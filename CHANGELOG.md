@@ -47,7 +47,19 @@ apart from its version). A fix: no API changes.
   where Playwright's plain `click()` lands) now puts the caret on the upper
   line where the browser chose the lower, so `End` stops at that line's
   end. Nothing in the package depended on it; the template's spec did, and
-  is fixed as above. The repo's lock moves to prosemirror-view 1.43.0,
+  is fixed as above.
+- Two more effects, both seen in the package's own harness and neither a
+  change to how the package behaves:
+  - **A toolbar button reached with Alt+F10 after a click in the text is
+    now `:focus-visible`**, so its tooltip opens, and the first Esc closes
+    the tooltip and the second goes back to the text. That was already
+    the design for the toolbars ("Esc or Tab on it goes back to the text"),
+    and what a keyboard-only user got before; the tools strip's spec now
+    says so.
+  - **ProseMirror now counts double clicks itself:** two clicks on the
+    same spot within 500 ms are a double click even with keys pressed in
+    between, and select a word. A spec that clicks one spot twice in quick
+    succession should wait out the half second. The repo's lock moves to prosemirror-view 1.43.0,
   prosemirror-transform 1.12.7, prosemirror-inputrules 1.7.0,
   prosemirror-history 1.5.2 and prosemirror-schema-list 1.6.1, the
   versions a new app resolves, so the repo's own `verify` tests them.
