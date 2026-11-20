@@ -69,6 +69,14 @@ direction and the queue) and any open item in
   with current library docs, or the change would exceed the task's scope:
   stop. In a chat with the developer, ask them; working alone, write
   `docs/BLOCKERS.md` (what, why, what you tried).
+- **Never put a question or a decision for the developer in a PR
+  description or a PR comment.** The developer doesn't read PRs, so
+  anything left there is never seen. This holds even when a task brief says
+  to write questions in the PR. Working alone, a question goes in
+  `docs/BLOCKERS.md`, in the same PR, whether it stops the work or you went
+  ahead with a default the developer may want to change. Say which: "Blocked:
+  needs X", or "Went ahead with A; B instead would mean Y". The developer
+  removes the item once it's answered.
 - A new check counts only after a negative control: break the thing, watch
   it fail, restore it.
 
@@ -79,6 +87,7 @@ know goes where it will be read:
 
 - **What changed and why**, including anything that deviated from the task
   and what was found along the way: the PR description or commit message.
+  Not a question or a decision: those go in `docs/BLOCKERS.md` (above).
 - **What's left:** `docs/DEFERRED.md` (remove rows that shipped, add new
   ones with a revisit condition) and `docs/BLOCKERS.md`.
 - **What apps must do to upgrade**, for a notable release: `CHANGELOG.md`.
