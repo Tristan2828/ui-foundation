@@ -627,7 +627,8 @@ const RAIL_LAYOUT = {
 // first section of the open tab (beside the tab's content, never its bar),
 // or the first card when the record's first content isn't the tabs (4.108).
 const FACTS_RAIL = {
-  page: 'max-w-[calc(var(--container-4xl)+var(--spacing)*6+300px)]',
+  // Page width wide (data-width="wide" on <html>): no cap, the column fills the page.
+  page: 'max-w-[calc(var(--container-4xl)+var(--spacing)*6+300px)] page-wide:max-w-none',
   columns: 'grid grid-cols-[minmax(0,1fr)_300px] items-start gap-6',
   main: 'flex min-w-0 flex-col gap-6',
   rail: 'col-start-2 row-start-1 flex min-w-0 flex-col gap-6',
@@ -691,7 +692,7 @@ function EntityViewSkeleton({ layout, mobileOrder }: { layout: EntityViewLayout;
     )
   }
   return (
-    <div className="flex max-w-4xl flex-col gap-6" data-state="loading">
+    <div className="flex max-w-4xl flex-col gap-6 page-wide:max-w-none" data-state="loading">
       {header}
       {Array.from({ length: 2 }, (_, section) => (
         <SkeletonCard key={section} rows={4} stacked={false} />
@@ -1219,7 +1220,7 @@ export function EntityView({
       className={
         layout === 'rail' && !card
           ? RAIL_LAYOUT.page
-          : cn('flex flex-col', railFacts.length > 0 ? FACTS_RAIL.page : 'max-w-4xl', card ? 'gap-4' : 'gap-6')
+          : cn('flex flex-col', railFacts.length > 0 ? FACTS_RAIL.page : 'max-w-4xl page-wide:max-w-none', card ? 'gap-4' : 'gap-6')
       }
       data-facts-rail={railFacts.length > 0 ? '' : undefined}
       data-state="success"

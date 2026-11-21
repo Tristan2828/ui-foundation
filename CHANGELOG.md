@@ -7,6 +7,35 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.133.0 — A record page can fill a wide screen
+
+npm package and `ui-foundation-backend` 4.133.0 (the backend is unchanged
+apart from its version). Additive: without the attribute every page is as
+before.
+
+### How an app adopts it
+
+- Bump both packages to 4.133.0 and run `npx ui-foundation sync`.
+- To offer it: a Page Width setting of the app's own (Regular or Wide),
+  kept per browser and applied before first paint, that sets
+  `data-width="wide"` on `<html>` for Wide. See `design-language.md`
+  "Page width (a record on a wide screen)".
+
+### What changed
+
+- **`EntityView` honours `data-width="wide"`** on an ancestor (`<html>`):
+  the record's reading cap (`max-w-4xl`, or that plus the 300px facts
+  rail) is lifted, so the column fills the page and the rail stays 300px.
+  Inside `role="dialog"` the cap stays, so a record over its list keeps
+  the dialog's size; a phone is unchanged. The loading skeleton follows
+  it too.
+- **A `page-wide:` variant** in the package's CSS (`styles/index.css`),
+  with the same dialog rule, for anything else that should follow it.
+- Stories `app/EntityView` "Page width wide", "…, column" and "…, in a
+  dialog"; `e2e/entity-view-width.spec.ts` measures the column at 1920px
+  against Regular, the rail, a dialog and a phone, with no sideways
+  scroll; axe and the token check in both themes.
+
 ## 4.132.0 — StackedAreaChart: parts of a whole over time
 
 npm package and `ui-foundation-backend` 4.132.0 (the backend is unchanged
