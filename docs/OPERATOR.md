@@ -22,50 +22,38 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Decisions that are yours
 
-- **Releases publish themselves.** A merge that bumps the version in
-  `packages/ui-foundation/package.json` publishes it to npm and PyPI, then
-  `release-smoke` creates an app from it and writes the result into the
-  GitHub release's notes. A merge without a bump publishes nothing; it
-  goes out with the next one. A
-  failure emails you. Merging is the moment to look at the result: once
-  merged, it reaches every app that upgrades (`ARCHITECTURE.md`
-  "Releasing").
-- **Versions.** Every release is a version bump in
-  `packages/ui-foundation/package.json`, made in the PR that finishes the
-  work: a patch, a minor or a major. A forgotten bump: `gh workflow run
-  release.yml` releases `main` as it is, at the next patch.
-  Anything that breaks an app's code or its synced files is a major, with a
-  `CHANGELOG.md` entry and upgrade steps. When an agent's change looks
-  breaking, decide whether it's worth a major or should be made additive.
+- **Releases publish themselves.** A merge that bumps the version
+  publishes it, and a failure emails you (`ARCHITECTURE.md` "Releasing").
+  Merging is the moment to look at the result: once merged, it reaches
+  every app that upgrades.
+- **Versions.** When to bump, and a forgotten bump: `ARCHITECTURE.md`
+  "Releasing". What counts as breaking: `AGENTS.md` "The rules". When an
+  agent's change looks breaking, decide whether it's worth a major or
+  should be made additive.
 - **When an app upgrades.** Nothing upgrades an app behind its back. It
-  moves when someone runs `npm install …@<version> && npx ui-foundation
-  sync`. Upgrading each app regularly is what keeps the shared code shared.
+  moves when someone runs the upgrade ([`consuming.md`](consuming.md)
+  "Taking a later release"). Upgrading each app regularly is what keeps
+  the shared code shared.
 - **New dependencies.** An agent that needs one writes the case in
-  `docs/BLOCKERS.md` and stops. Decide in allowlist terms: the package has
-  `packages/ui-foundation/deps-allowlist.json`, each app has its own (its
-  `python` list is the backend's, checked by `verify:backend` since 4.34). Expect auto-mode to refuse the install
-  itself; you run it.
+  `docs/BLOCKERS.md` and stops (`AGENTS.md` "The rules"). Decide in
+  allowlist terms. Expect auto-mode to refuse the install itself; you run
+  it.
 - **Secrets.** Database passwords, tokens and API keys never go in a chat
   with an agent. Write them to the gitignored `backend/.env` yourself.
   Publishing to npm needs no token (trusted publishing from `release.yml`
   only). Keep it that way: never create an npm access token for CI.
-- **Merging.** `main` requires a pull request and its `verify`,
-  `verify-backend` and `install-test` checks, but no review, so you can
-  merge your own PRs. Force-pushes and deletion are blocked. Every merge
-  that bumps the version publishes a release, once `main`'s own verify of
-  the merged tree passes (about 11 minutes). A PR that changes only docs
-  (`docs/`, the root's `.claude/` and `*.md`) passes its checks in about a
-  minute, with their later steps skipped.
+- **Merging.** `main` requires a pull request and its checks but no
+  review, so you can merge your own PRs (`ARCHITECTURE.md` "Releasing",
+  "What guards a release"). Force-pushes and deletion are blocked.
 
 ## When a session goes sideways
 
 - **Work declared complete without a green gate:** don't accept it. Point
   it back at `npm run verify` (plus `npm run verify:backend` and
-  `template/scripts/check-backend-postgres.sh` for backend changes). A Fresh
-  UI Build PASS only counts after checking its transcript used the version
-  you meant to test.
+  `template/scripts/check-backend-postgres.sh` for backend changes;
+  `ARCHITECTURE.md` "Verification" has the rules for counting a pass).
 - **A gate is permanently red** (a check that only passes on one OS, for
-  example — why the pixel screenshot baselines were retired): fix the gate
+  example): fix the gate
   before anything else. A gate that's always red teaches the agent to
   ignore it.
 - **The agent disables or works around a check to get green:** revert that

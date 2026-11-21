@@ -37,14 +37,6 @@ backend at all.
 | Upgrade an app, change the foundation from an app, pick a data source, move a 2.x app onto the package | [`docs/consuming.md`](docs/consuming.md) |
 | See what the package exports | [`packages/ui-foundation/README.md`](packages/ui-foundation/README.md) |
 
-Upgrading an app is:
-
-```bash
-npm install @tristan2828/ui-foundation@<version>
-npx ui-foundation sync
-npm run verify
-```
-
 ## Working on the foundation
 
 ```bash

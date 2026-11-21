@@ -28,7 +28,7 @@ a data source. For the design behind it, see
 
 | The app's (in its repo) | The package's (`@tristan2828/ui-foundation`) |
 |---|---|
-| `openapi.yaml` (except the foundation's part, `openapi/foundation.yaml`: `/auth/*`, `/environment`, `/client-errors`, `/push/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/` (except what `ui-foundation-backend` holds), `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | primitives (`/ui/*`), `AppShell` (with the trail and search in its bar: `usePageTrail`, `useRecentRecord`), `DataTable`, `EntityView` (and `EmptyText`, its empty value) and editing in place, printing a record's notes, a record opened in a dialog over its list (`RecordDialogRoute`, and a new record's form over it), `FormDialog`, `EntityForm` (with `FormSection`, `OptionSelect`, `ChoiceButtons` and `ReferenceCombobox`), the dialogs and feedback parts (`DeleteAction`, `notify`, `useAction`, `ActionError`, `JobStatus`, `OfflineNotice`), `Markdown` (and its task-item helpers `countTasks`, `toggleTaskAt`), `RichTextEditor`, `StageCircle`, `StatusMark` (a status's icon, colour and word), `ErrorState`, `MultiChoice`, `MultiReference`, `ListEditor`, `InlineCreate`, the timed-screen parts (`SessionView`, `useSessionClock`, `useWakeLock`, the audio cues, `useMuted`), reminders (`AllowReminders`, `usePushPermission`, the `pwa()` Vite plugin and its service worker), login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, table-URL state, `titleCase` (a label built from a value), tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
+| `openapi.yaml` (except the foundation's part, `openapi/foundation.yaml`: `/auth/*`, `/environment`, `/client-errors`, `/push/*` and the error bodies), `src/` — routes, `nav.ts`, `App.tsx`, `main.tsx`, gateway modules, mocks — `tests/`, `e2e/`, `backend/` (except what `ui-foundation-backend` holds), `deps-allowlist.json`, `AGENTS.md` below the foundation block, `docs/` outside `docs/foundation/` | everything it exports ([its README](../packages/ui-foundation/README.md) "Entry points"): primitives (`/ui/*`), the composites, the app shell, login and register screens, auth, `Page`/`AppError`/`QuerySpec`, the gateway's `safeFetch`/`toAppError`, tokens and base CSS, the lint config, the Playwright suites, and what `sync` writes (the `AGENTS.md` block, `docs/foundation/`, `.claude/`/`.codex/` agent files) |
 
 The app's column changes whenever the app wants. The package's column
 changes only through a release, which reaches every app.
@@ -48,7 +48,7 @@ automatically on merge, and each one's notes open with its `release-smoke`
 result: a fresh app created from that release, verified. Take a release
 whose notes say it passed. A failed or still-running one says so there. Patch and minor
 releases don't change what the package exports in a breaking way. A major
-one lists its upgrade steps in the changelog.
+one has a changelog entry and its upgrade steps in this file.
 
 `verify` makes the upgrade complete. `sync --check` fails until `sync` has
 run, `check-contract` fails if the foundation's part of the contract
@@ -274,26 +274,12 @@ test('loading: a skeleton shows until the list answers', async ({ page }) => {
 
 ## Changing the foundation
 
-When an app needs something the package doesn't do:
-
-1. **Configure it.** The composites take props and slots for the variations
-   apps have actually needed. Check the type declarations before assuming a
-   change is needed.
-2. **Raise it for the foundation** if another app would want it too. Open
-   an issue or a PR against `packages/ui-foundation` in this repo. Once the
-   release ships, the app upgrades and builds its screen on it. This is how
-   Game List's forks became `setFilters`/`applyView`, `pinLastColumn`, the
-   binary MSW override and `EntityForm`'s `danger` slot.
-3. **Build on top of it** if it is genuinely the app's alone: a new
-   component in the app's `src/` that uses the package's exports. Never a
-   modified copy of a package file. Lint rejects importing the package's
-   internals, or a primitive it ships from anywhere but the package.
-
-A primitive the package doesn't ship: `npx shadcn@<tools.shadcn> add <name>`
-into the app's `src/components/ui/`, as usual. If shadcn also writes a
-primitive the package does ship (because the new one depends on it), delete
-that copy and point the import at the package. Lint names every such
-import.
+When an app needs something the package doesn't do, the three steps
+(configure it, raise it for the foundation, build on top of it) are in the
+app's own `AGENTS.md`, "Changing the Foundation"; a primitive the package
+doesn't ship is in its Hard Rules
+([`conventions/AGENTS.md`](../packages/ui-foundation/conventions/AGENTS.md)
+here).
 
 ## Choosing a data source: Postgres or the Notion API
 
