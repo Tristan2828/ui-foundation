@@ -16,8 +16,9 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
   working version, don't redesign it. Rows whose revisit condition is "next
   time X is touched" won't be picked up by an agent on its own. To do one
   now, hand it over as the session's named task.
-- **Before an app is reachable by strangers:** login rate limiting and
-  error reporting (`DEFERRED.md`, the app's `docs/deploy.md`). Not before.
+- **Before an app is reachable by strangers:** go through the app's
+  `docs/deploy.md` (login limits, two-step sign-in, error reporting). Not
+  before.
 
 ## Decisions that are yours
 

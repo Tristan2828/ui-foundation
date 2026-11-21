@@ -63,7 +63,7 @@ What it costs, and how the cost is kept small:
 
 ```
 packages/ui-foundation/     the npm package
-  src/                      components/{ui,app}, auth/, api/, hooks/, mocks/, testing/, routes/ (login, register)
+  src/                      components/{ui,app}, lib/, auth/, api/, gateway.ts, hooks/, error-reporting/, mocks/, testing/, fixtures/, routes/ (login, register)
   styles/                   theme.css (tokens) + index.css (what apps import)
   eslint/                   the shared flat config
   vite/                     buildInfo(): dist/build-info.json and the build's commit/PR
@@ -120,12 +120,13 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `AppError` and `QuerySpec`. Entity types pass through from the generated
   schema, with no hand-written domain types or mappers. A backend swap
   changes the gateway and nothing above it.
-- **The contract is split.** `/auth/*`, `/environment` and the error
-  envelopes are the foundation's (`openapi/foundation.yaml`), because the
-  package's own code calls them. An app's spec must contain them unchanged;
-  wording may differ, shapes may not (`ui-foundation check-contract`). A
-  path marked `x-optional` (`/auth/register`, `/environment`) may be left
-  out, with whatever only it uses. Everything else in the spec is the app's.
+- **The contract is split.** `/auth/*`, `/environment`, `/client-errors`,
+  `/push/*` and the error envelopes are the foundation's
+  (`openapi/foundation.yaml`), because the package's own code calls them.
+  An app's spec must contain them unchanged; wording may differ, shapes may
+  not (`ui-foundation check-contract`). A path marked `x-optional` (all but
+  `/auth/login`, `/auth/logout` and `/auth/me`) may be left out, with
+  whatever only it uses. Everything else in the spec is the app's.
 - **Which data the app is on** (3.19). Above the router sit two banners:
   `MockModeBanner` (MSW, from the app's build flag) and
   `DataEnvironmentBanner` (the real backend on data that isn't
@@ -139,7 +140,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
   reference backend refuses `APP_ENV=production` unless it says `real`,
   and `AppShell`'s `version` shows the commit, linking to its PR.
 - **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
-  sign-in in the reference backend (`foundation_backend.routers.mcp`, `oauth`). Tools come from
+  sign-in in the backend package (`foundation_backend.routers.mcp`, `oauth`). Tools come from
   one registry of entities (`app/mcp_entities.py`) and call the entities' own router
   functions, so the API's validation and per-user scoping apply. Delete is soft only
   (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
@@ -157,7 +158,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
 - **Reminders** (4.17, #167, off by default) are Web Push. The package's
   `pwa()` Vite plugin makes the app installable and writes `/push-sw.js`;
   `usePushPermission` and `AllowReminders` subscribe a device on a click.
-  The reference backend sends (`foundation_backend.push`: VAPID and RFC 8291 on
+  The backend package sends (`foundation_backend.push`: VAPID and RFC 8291 on
   `cryptography`, the optional `push` extra, the backend's one crypto
   dependency, by decision on #167), only to the browsers' push services,
   and the `send-reminders` job sends each due row of `reminders`.
@@ -185,7 +186,7 @@ src/main.tsx                           FoundationProviders (theme, query client,
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps
-  read it only through `useAuth()`, the only auth export.
+  read it only through `useAuth()`, the only way to read auth state.
 - **Error reporting** (4.1) is one seam on each side, off until an app
   turns it on: the backend's `report_error` (every 500, and app code),
   which logs and, with a DSN, sends a Sentry envelope; and the package's
@@ -353,7 +354,8 @@ the app:
 - the block between `<!-- ui-foundation:start -->` and `:end` in `AGENTS.md`
   (the app's own notes go below it),
 - `docs/foundation/`, which sync owns entirely (the entity playbook,
-  design language, cell patterns, column options, the entity-plan template),
+  design language, cell patterns, column options, the entity-plan template,
+  timed screens, reminders),
 - `.claude/skills/new-entity/`, `.codex/skills/new-entity/`,
   `.claude/agents/spec-tester.md` and its hook,
 - `CLAUDE.md` (`@AGENTS.md`), once, if missing.
@@ -427,8 +429,7 @@ the pin for a new app ([`consuming.md`](consuming.md) "Adopting the
 backend package").
 
 **Migrations stay the app's.** The package's `migrations/` are reference
-copies (`0002_auth`, `0010_login_limits_totp`, and `0011_mcp`'s OAuth
-tables as `0011_oauth`), never run from the package. `create-app.sh`
+copies (listed in its `migrations/README.md`), never run from the package. `create-app.sh`
 copies one into a new app only where the template has no revision of
 that number, so while the template carries its own (today), it copies
 nothing.
@@ -437,7 +438,7 @@ nothing.
 
 | Gate | Runs | Covers |
 |---|---|---|
-| `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
+| `npm run verify:fast` (root) | every change | the package: codegen drift, the docs' index, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
 | `npm run verify` (root) | before any PR; CI (`verify`, in parts: below) and on every push to `main` before a release | + the package's fixtures checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language fixtures clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
 | `npm run verify:backend` | backend changes; CI (`verify-backend`), on PRs and on `main` | `packages/backend-foundation`'s mypy strict and pytest (SQLite, against the package alone), then the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres (its own throwaway compose project per checkout, on a free port, deleted after the run, so worktrees and dev databases don't collide) |
@@ -473,8 +474,8 @@ one runner to about 11, and a docs-only PR's checks take under a minute):
   (`HARNESS_SHARDED`, `HARNESS_PHONE`, `HARNESS_PERF`). A step added to
   either `verify` script, or a new harness project, needs the matching
   change in `verify.yml`.
-- **Docs-only changes skip.** Every required job starts, and its first
-  step, `.github/scripts/docs-only.sh`, reads the change's files: a PR's
+- **Docs-only changes skip.** Every required job starts, and each part's
+  step after checkout, `.github/scripts/docs-only.sh`, reads the change's files: a PR's
   from the pulls API (a renamed file counts on both names), a push's from
   `git diff` against the push's `before`. When every path is under
   `docs/`, under the root's `.claude/`, or a root `*.md`, the job's later
@@ -860,8 +861,8 @@ column and out of the table from its last row; Ctrl/Cmd+Enter is the
 field's save. The toolbar's Table button only inserts one.
 
 What GFM can't store isn't offered: the header row can't be deleted,
-moved or have a row put above it, there are no column widths and no line
-breaks inside a cell. What it can store is reused rather than adding
+moved or have a row put above it, and there are no line breaks inside a
+cell. What it can store is reused rather than adding
 syntax (the developer's choice, 2026-11-04): a cell's colour is its whole
 text in one highlight (`=={green}$4.99==`), a header column is a first
 column of bold cells, and a sort rewrites the rows (what the editor shows

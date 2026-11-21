@@ -12,10 +12,6 @@ PRs (`AGENTS.md` "Scope and stopping").
 
 ## Open
 
-These were first raised in PR descriptions, which the developer doesn't
-read. Each is still open as of 2026-11-20: nothing later answered or
-replaced it.
-
 - **Print Notes on a real phone** ([#364](https://github.com/Tristan2828/ui-foundation/pull/364), 4.124.1).
   Blocked: needs someone to try Print Notes on Android Chrome and iOS
   Safari. The fix, which ignores an `afterprint` that fires early when
