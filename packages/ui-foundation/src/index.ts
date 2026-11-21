@@ -344,6 +344,22 @@ export {
   type RecurrencePhraseOptions,
 } from '@/lib/recurrence-phrase'
 export {
+  parseQuickAdd,
+  type QuickAddOptions,
+  type QuickAddRead,
+  type QuickAddReadKind,
+  type QuickAddResult,
+  type QuickAddSpan,
+  type QuickAddToken,
+  type QuickAddTokenRead,
+} from '@/lib/quick-add'
+export {
+  QuickAddChip,
+  QuickAddInput,
+  type QuickAddChipProps,
+  type QuickAddInputProps,
+} from '@/components/app/quick-add-input'
+export {
   formatOccurrence,
   formatRecurrence,
   todayIn,
