@@ -2,22 +2,24 @@
 name = "ui-foundation-backend"
 # The release workflow writes the release's version here, the same as
 # @tristan2828/ui-foundation's (packages/ui-foundation/package.json).
-version = "4.130.2"
+version = "4.130.3"
 description = "The auth and security layer shared by FastAPI + SQLModel backends built on ui-foundation: sessions, sign-in limits, TOTP, error reporting, deploy checks, AI chats' OAuth."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-# Exactly the template backend's versions (template/backend/pyproject.toml),
-# so an app that pins the same ones resolves to one set.
+# Each takes patch releases from the version CI tested, so an app can take
+# a bug fix or a security fix with no foundation release; a new minor still
+# waits for one. sqlmodel stays exact: its releases are 0.0.N, so every
+# release is effectively a minor and a patch range would be the pin itself.
 dependencies = [
-  "fastapi==0.163.0",
+  "fastapi>=0.163.0,<0.164",
   "sqlmodel[asyncio]==0.0.50",
-  "pydantic==2.14.3",
-  "python-dotenv==1.2.4",
-  "email-validator==2.4.0",
+  "pydantic>=2.14.3,<2.15",
+  "python-dotenv>=1.2.4,<1.3",
+  "email-validator>=2.4.0,<2.5",
   # Recurrence rules (foundation_backend.recurrence): its rrule, RFC 5545's
   # repeat rules, rather than date maths of our own.
-  "python-dateutil==2.9.0.post0",
+  "python-dateutil>=2.9.0.post0,<2.10",
 ]
 
 [project.urls]
@@ -29,7 +31,7 @@ Changelog = "https://github.com/Tristan2828/ui-foundation/blob/main/CHANGELOG.md
 # AES-GCM the standard library lacks. An app that sends reminders installs
 # it (its own push extra, or ui-foundation-backend[push]).
 push = [
-  "cryptography==50.0.2",
+  "cryptography>=50.0.2,<50.1",
 ]
 dev = [
   "cryptography==50.0.2",
