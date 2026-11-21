@@ -3,41 +3,60 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The reference files](#the-reference-files) · lines 46–68
-- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 70–881
-  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 112–119
-  - Step 2: `npm run gen:api` · lines 120–121
-  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 122–133
-  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 134–143
-  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 144–150
-  - Step 6: Copy the reference files, one for one, not just the two screens · lines 151–759
-  - Step 7: Register routes · lines 760–775
-  - Step 8: Add Playwright specs for all three screens · lines 776–863
-  - Step 9: Register the nav entry and route names · lines 864–878
-  - Step 10: `npm run verify`. · lines 879–881
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 883–1408
-  - [The record view](#the-record-view) · lines 1036–1217
-  - [Forms](#forms) · lines 1219–1307
-  - [Dialogs](#dialogs) · lines 1309–1342
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1344–1408
-- [What not to copy](#what-not-to-copy) · lines 1410–1445
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1447–1464
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1466–1531
-- [Deleting](#deleting) · lines 1533–1564
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1566–1587
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1589–1598
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1601–1643
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1645–1681
+- [The reference files](#the-reference-files) · lines 65–87
+- [Before anything: the entity plan](#before-anything-the-entity-plan) · lines 89–129
+- [The steps](#the-steps) · lines 131–351
+  - Step 1: Add `<Entity>` to `openapi.yaml` · lines 133–139
+  - Step 2: `npm run gen:api` · lines 140–141
+  - Step 3: Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from the spec · lines 142–150
+  - Step 4: Add MSW handlers in `src/mocks/<entity>.ts` · lines 151–156
+  - Step 5: Add a gateway module in `src/api/gateway/<entity>.ts` · lines 157–163
+  - Step 6: Copy the reference files, one for one, not just the two screens · lines 164–238
+  - Step 7: Register routes · lines 239–254
+  - Step 8: Add Playwright specs for all three screens · lines 255–335
+  - Step 9: Register the nav entry and route names · lines 336–349
+  - Step 10: `npm run verify`. · lines 350–351
+- [Step 6 in detail](#step-6-in-detail) · lines 353–929
+  - [A `reference`](#a-reference) · lines 358–360
+  - [A `single choice`](#a-single-choice) · lines 362–368
+  - [A `date-time`](#a-date-time) · lines 370–373
+  - [A `yes/no`](#a-yesno) · lines 375–382
+  - [A `multi choice`](#a-multi-choice) · lines 384–391
+  - [A `multi reference`](#a-multi-reference) · lines 393–405
+  - [Sub-records](#sub-records) · lines 407–423
+  - [A `computed` field](#a-computed-field) · lines 425–434
+  - [A `date`](#a-date) · lines 436–453
+  - [A `month-day`](#a-month-day) · lines 455–475
+  - [A `recurrence`](#a-recurrence) · lines 477–498
+  - [An image on a record](#an-image-on-a-record) · lines 500–528
+  - [A `reference` inside a sub-record item](#a-reference-inside-a-sub-record-item) · lines 530–589
+  - [A `yes/no` marked `toggle`](#a-yesno-marked-toggle) · lines 591–606
+  - [Keep column definitions stable](#keep-column-definitions-stable) · lines 608–616
+  - [The view](#the-view) · lines 618–736
+  - [The view: long text and notes](#the-view-long-text-and-notes) · lines 738–792
+  - [The view: quick actions and editing in place](#the-view-quick-actions-and-editing-in-place) · lines 794–852
+  - [The table opens the view, and the form returns to it](#the-table-opens-the-view-and-the-form-returns-to-it) · lines 854–865
+  - [`<SelectValue>` shows the value, not the label](#selectvalue-shows-the-value-not-the-label) · lines 867–913
+  - [Choosing how each column looks](#choosing-how-each-column-looks) · lines 915–929
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 931–1435
+  - [The record view](#the-record-view) · lines 1074–1254
+  - [Forms](#forms) · lines 1256–1339
+  - [Dialogs](#dialogs) · lines 1341–1374
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1376–1435
+- [What not to copy](#what-not-to-copy) · lines 1437–1464
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1466–1483
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1485–1545
+- [Deleting](#deleting) · lines 1547–1577
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1579–1598
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1600–1609
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1612–1654
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1656–1689
 
 <!-- /index -->
 
 The most-repeated task in this system: add a full CRUD entity — spec, mocks,
 gateway, tests, table, view, form, routes — following the patterns in
-`src/routes/widgets/`. This file is the only copy of the steps, written for
-**any AI coding tool or a person**: follow it directly ("add a Game entity
-following docs/foundation/add-an-entity.md"). In Claude Code,
-`/new-entity <Name>` is a shortcut that runs this same file. It is synced
-from `@tristan2828/ui-foundation` — don't edit it here.
+`src/routes/widgets/`. This file is the only copy of the steps.
 
 Do not skip steps or reorder them. Replace `<Entity>` with the PascalCase
 entity name (e.g. `Invoice`) and `<entity>` with its kebab-case form
@@ -109,36 +128,30 @@ is a filled-in example while the Widgets demo is still here).
   leave prompt, create (Enter, a blank name, a taken one), delete, and
   the in-place a11y states for a cell open and refused, in both themes.
 
+## The steps
+
 1. **Add `<Entity>` to `openapi.yaml`** — schema, list, get, create, update,
    delete — exactly as the plan specifies: its fields, types, required
    fields, option lists (as enums) and length/format rules, and a list
    query parameter for each field the plan marks as a filter. Reuse the
    `Page` and error components already in the spec; do not redefine
    pagination or error shapes per entity, and leave the foundation's part
-   of the spec (`/auth/*`, `/environment`, the error bodies) alone — `ui-foundation
-   check-contract` fails verify if it changes.
+   of the spec alone (AGENTS.md "Hard Rules").
 2. **`npm run gen:api`** to regenerate `src/api/schema.d.ts`. Never
    hand-edit it.
 3. **Add gateway tests in `tests/gateway/<entity>.test.ts`, derived from
    the spec** — `openapi.yaml` and the UI contracts (`Page<T>`, `AppError`,
-   `QuerySpec`) only, never the code in `src/api/gateway/`, so the tests assert
-   what the spec promises, not what an implementation happens to do. Write
+   `QuerySpec`) only, never the code in `src/api/gateway/`. Write
    them to fail first; the gateway that makes them pass doesn't exist yet.
-   - **If your tool can run an isolated subagent, use one** that can't see
-     those two folders. In Claude Code that's `spec-tester`
-     (`.claude/agents/spec-tester.md`), whose hook *blocks* reading it —
-     the enforced version of this rule.
+   - **If your tool can run an isolated subagent, use one** that can't read
+     `src/api/gateway/`. In Claude Code that's `spec-tester`
+     (`.claude/agents/spec-tester.md`), whose hook *blocks* reading it.
    - **Otherwise** write the tests yourself, now, before step 5 creates the
-     gateway, and don't open that folder while writing them. It's the
-     same rule, kept by discipline instead of a hook.
+     gateway, and don't open that folder while writing them.
 4. **Add MSW handlers in `src/mocks/<entity>.ts`** and register them in
    `src/mocks/handlers.ts`. **Include one deliberately sparse row** whose
    every optional field is empty at once (see `Blank Slate` in
-   `src/mocks/data.ts`). Rows that all populate every field are the reason
-   an "empty value" path goes untested: nothing ever loads a record with a
-   field unset, so an em dash that never renders, or a form control showing
-   a raw sentinel instead of a "not set" label, passes `verify` unnoticed.
-   One row costs nothing and step 8 asserts it. Extend `tests/mocks/conformance.test.ts` so the
+   `src/mocks/data.ts`); step 8 asserts it. Extend `tests/mocks/conformance.test.ts` so the
    new handlers are validated against `openapi.yaml`, the same way
    `widgets`/`widget-categories` already are.
 5. **Add a gateway module in `src/api/gateway/<entity>.ts`** until step 3's
@@ -151,235 +164,10 @@ is a filled-in example while the Widgets demo is still here).
 6. **Copy the reference files, one for one, not just the two screens**
    (the Widgets demo's, or the ones the app's `### Reference files` names) — shaped by the plan: table columns and sortable columns from
    its "List" column, toolbar filters from its "Filter" column, form fields
-   and labels from its field table, and field types by pattern (a
-   `reference` field copies Category's searchable combobox, a
-   `single choice` copies Status's select — each option shows its label,
-   never its wire value, from one `Record<value, label>`
-   (`WIDGET_STATUS_LABELS`) read by the options, the trigger (through
-   `<SelectValue>`'s children, which otherwise shows the raw value), the
-   toolbar filter and every badge — a `date-time` copies
-   Available From's date picker, a `date` (a day, no time) is the
-   foundation's `DateField` (see below), a `yes/no` copies In Stock — a `Switch`
-   (`@tristan2828/ui-foundation/ui/switch`) in a horizontal `Field` with
-   its label beside it on the form, cell pattern 12 (the word Yes/No) in
-   the table, and a three-way toolbar `Select` (either / yes / no) whose URL
-   value is `'true'`/`'false'` and whose `filters` value is a real boolean,
-   so `false` reaches the wire — and a `multi choice` copies Tags — the
-   `<MultiChoice>` control from the foundation on the
-   form and as a toolbar filter via `useTableUrlState`'s multi filters,
-   badges in the table, and a `filters` array the gateway sends as a
-   repeated parameter; each option shows its label, never its wire value
-   (`quick_win` reads "Quick win"): one `Record<value, label>`
-   (`WIDGET_TAG_LABELS`) feeds `MultiChoice`'s `getLabel` and the badges — and a `multi reference` copies Extra Categories:
-   the `<MultiReference>` control on the form and as a toolbar filter, an
-   array of ids on the wire, a repeated any-of list filter, and names from
-   a **lookup by id** on the referenced entity
-   (`GET /widget-categories?ids=1&ids=3`, `getWidgetCategoriesByIds`,
-   `useWidgetCategoriesByIdsQuery`), and `searching` from the search
-   query's `isPlaceholderData` so Enter waits for the results that match
-   what was typed. Add that `ids` parameter to the referenced
-   entity's list endpoint if it lacks one. Never name a picked id from
-   search results alone: a saved pick the current search doesn't return
-   would show without a name. The table looks up every id on its page in
-   one request; the backend rejects an unknown id as a 422 on the field,
-   never a foreign-key 500 — and each **sub-records** list copies
-   Checklist: an array of item objects on the wire, read and written
-   whole and in order (no item ids), a child table with a `position`
-   column, react-hook-form's `useFieldArray` feeding the foundation's
-   `<ListEditor>` inside a `FieldSet`/`FieldLegend` on the form, each row's
-   controls named by position ("Item 2 text"), a per-item `FieldError`
-   (a server 422 at `["body", "checklist", 2, "text"]` arrives as
-   `fieldErrors["checklist.2.text"]` and binds to that row). A list whose
-   items are rich (five or six fields each) and run to ten or more also
-   passes `summary={(i) => …}`, one line per item that opens to its
-   fields, one at a time, and `invalid={(i) => !!errors.<list>?.[i]}` so
-   an item the save refuses opens to show why. A list whose items repeat
-   with small changes passes
-   ``onDuplicate={(i) => insert(i + 1, { ...getValues(`<list>.${i}`) })}``,
-   leaving out any saved id; the copy lands after its original and opens.
-   Then a summary
-   in the table, never the items (an item with a `reference` field
-   copies Pairings, below) — and a `computed` field copies
-   Progress (`checklistState`): `readOnly` in `openapi.yaml` and absent
-   from `<Entity>Create`/`<Entity>Update`, one SQL expression in the
-   router that the filter and sort use (correlated `EXISTS`, or a scalar
-   subquery for a count, so they hold across pages), a Python mirror on
-   the model for the value each row reads back with, a test that the two
-   agree for every value, the mocks recomputing it on every write and
-   ignoring any client-sent value, a read-only column and a filter, and
-   nothing on the form):
-
-   **Keep column definitions stable.** Build them once
-   (`useMemo(() => build<Entity>Columns(), [])`) from nothing that loads
-   later. TanStack's `flexRender` treats each column's `cell` as a
-   component, so rebuilt columns remount every cell: focus is lost and the
-   table flickers when, say, reference names arrive after the rows. Data
-   that arrives later reaches the cells through context, as
-   `category-names.tsx` does for category names.
-
-   **A `date`** (a day with no time: when something was finished, a
-   due day) is `type: string, format: date` in `openapi.yaml`, so the
-   wire, the generated type and the form all hold `'YYYY-MM-DD'`, and
-   `''` on the form for an optional one not set (sent as `null`). No
-   `Date` object anywhere, so no time zone can move the day. On the form
-   it's the foundation's `DateField` in a `Controller` (`clearable` when
-   optional); the schema is the string (`z.string().min(1, …)` when
-   required). The table and the view show `formatPlainDate(value)`
-   ("Sep 2, 2026"), the not-set label when empty. `DateField` is typed
-   (4.88): a box that reads "3/14", "Mar 14", "2026-03-14" or "today",
-   with the calendar on its button, and something unreadable says "Try a
-   date like 3/14 or Mar 14" and gives `''`. Editing in place is
-   `inPlace.date({ value, save })`: Enter or leaving saves the day typed,
-   a day picked in the calendar saves at once. (`typing={false}` is the
-   button alone; in place then `editInPlace({ kind: 'choice', ... })` with
-   `defaultOpen`, `modal={false}` and `onChange={(day) => props.commit(day)}`,
-   the fixtures' `app/DateField` EditInPlace.) The backend column
-   is a SQL `date` (`datetime.date` in the model).
-
-   **A `month-day`** (a day that comes round every year, with no year:
-   when a season starts, a yearly deadline) is `type: string` with
-   `pattern: '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'` in
-   `openapi.yaml`, so the wire, the generated type and the form all hold
-   `'MM-DD'` (`'03-14'`), and `''` on the form for an optional one not set
-   (sent as `null`). It sorts as text in calendar order. On the form it's
-   the foundation's `MonthDayField` in a `Controller` (`clearable` when
-   optional); the schema is the string with
-   `.refine((v) => v === '' || isMonthDay(v), 'Pick a month and day')`
-   (`isMonthDay`: February 29 is a day, February 30 isn't), `min(1, …)`
-   too when required. The table and the view show `formatMonthDay(value)`
-   ("Mar 14"), the not-set label when empty. Editing in place is
-   `inPlace.monthDay({ value, save })` (cell pattern 18, "Presets"). The
-   backend column is `varchar(5)` (`str` in the model) and the router
-   refuses a day the month can't have as a 422 on the field (the pattern
-   alone lets `02-30` through). Values typed before as free text are
-   rewritten to `'MM-DD'` by a migration; one it can't read stays as
-   written, and the field shows it as written with nothing picked, refused
-   until a day is picked.
-
-   **A `recurrence`** (how something repeats: a chore, a reminder, a
-   task) is the foundation's `Recurrence` schema: copy it from the
-   package's `openapi/foundation.yaml` into `components.schemas` (it's
-   `x-optional`, so `check-contract` holds it to the foundation's shape
-   once it's there) and reference it, nullable when it may not repeat.
-   On the form it's the foundation's `RecurrenceField` in a `Controller`
-   (presets, a phrase read as it's typed, and a preview of the next five);
-   the schema checks it with `recurrenceProblem(value)`, and a phrase the
-   field can't read gives `null`, so a required one is refused. The table
-   shows `formatRecurrence(value)` and a Next column (cell pattern 27);
-   editing in place is `inPlace.recurrence({ value, save })`. A record
-   whose times are fields of its own (an event's start and end) gives the
-   field and the preset `times={false}`: dates only, no "at". An app whose
-   weeks start on Sunday gives them `weekStart="SU"`, which adds
-   `WKST=SU` to the weekly rules they build (reminders.md "Repeating
-   reminders" says when that moves a day). The backend
-   column is JSON, read and checked with
-   `foundation_backend.recurrence.Recurrence` (a 422 on the field for a
-   rule it refuses); `next_after` and `occurrences` say when it falls
-   (reminders.md "Repeating reminders").
-
-   **An image on a record** (a photo of it) is the stored file's id on the
-   wire (`string`, nullable), and on the form the foundation's
-   `ImageField` in a `Controller` (`z.string().nullable()`): `value` and
-   `onChange` are the id, `thumbUrl` the record's saved photo,
-   `onBusyChange` holds the submit while a file uploads (the fixtures'
-   `app/ImageField`). Its `upload` is the app's own, one function in the
-   gateway that sends the file to the app's endpoint and resolves to
-   `{ id, thumbUrl, url }` (the `ImageUploadResult`), rejecting with the
-   `AppError`; the same function goes to a notes field's
-   `RichTextEditor`, so pictures in its text use the same storage:
-
-   ```ts
-   // src/api/gateway/files.ts
-   export async function uploadImage(file: File): Promise<ImageUploadResult> {
-     const body = new FormData()
-     body.append('file', file)
-     const response = await safeFetch('/files', { method: 'POST', body })
-     if (response.status !== 201) throw toAppError(response.status, response.body, response.headers)
-     const { id } = response.body as components['schemas']['File']
-     return { id, thumbUrl: `/api/files/${id}/content?size=thumb`, url: `/api/files/${id}/content` }
-   }
-   ```
-
-   The types it takes default to JPEG, PNG and WebP; never add SVG or
-   HTML, which run script when served from the app's own domain. The
-   endpoint, the storage and serving the files are the app's (the
-   template has none); `<Markdown>` shows an image only from a web
-   address or a path on the site, so `url` is one of those.
-
-   **A `reference` inside a sub-record item** (a list whose items each
-   point at another entity's record) copies Pairings, Widget's
-   `pairings`: Checklist's list, with a reference in each item.
-   - *Wire:* the item carries the referenced id only, named as a
-     top-level reference is (`{ categoryId, note }`, `seriesId` for a
-     Series), never a name or a nested record. Every name, on the form
-     and on the view, comes from the other entity's lookup by id
-     (`GET /<other>?ids=…`), as for a `multi reference`; add `ids` to
-     its list endpoint if it lacks one. An optional text field beside it
-     is a required `string` that is `""` when empty (`note`), so an item
-     never holds a null. `openapi.yaml` describes the item as its own
-     schema (`WidgetPairing`), with `maxItems` on the list.
-   - *Backend:* a child table like the checklist's (`widget_pairings`:
-     `position`, and a foreign key to the referenced table, commented),
-     replaced whole on every write. Before saving, the router checks every
-     item's id in one query (`_check_item_categories_exist`): one that
-     isn't there, or, for a per-user entity, isn't this user's, is a 422 at
-     the item's own path, `["body", "pairings", 2, "categoryId"]`, never a
-     foreign-key 500. Its tests: order kept with repeats, replace and
-     clear, the note trimmed, an unknown id refused at its item on create
-     and on update with nothing saved, `null` and too many refused.
-   - *The mocks* refuse an unknown id at the same path, and trim the note.
-   - *The form's row* is one component shared with editing in place
-     (`WidgetPairingItemFields` in `widget-fields.tsx`): the referenced
-     record's combobox (`WidgetCategoryCombobox`, the form's Category
-     combobox with its own search per row, a lookup by id for the picked
-     record's name, and the picked name not counted as a search, so
-     opening the list offers every record) and the other fields, each
-     named by position ("Pairing 2 category"). On the form it sits in a
-     `Controller` over `<list>.<i>.<field>Id`, the rest `register`ed, and
-     a server 422 at that path (`fieldErrors["pairings.2.categoryId"]`)
-     binds to that row's picker. A new row starts with no pick, which the
-     schema refuses on that row ("Pick a category or remove the
-     pairing"), so a blank item is never sent.
-   - *The view* shows each item as the referenced record's name, from the
-     view's one lookup by id (add every item's id to the ids it already
-     looks up), then its other fields. The name links to the record's
-     view when that entity has one (`<Link to={`/<other>/${id}`}>`);
-     WidgetCategory has none, so Pairings shows it as plain text.
-   - *Editing in place* is `editInPlace({ kind: 'list', ... })` like
-     Checklist's (`pairings` in `widgetEdits`): `renderItem` is the
-     form's row, `renderShown` the item as the view shows it, `newItem`
-     starts with no pick. In the row, Enter in the open list picks
-     without saving; Enter in the row's text box saves the item, as does
-     leaving the row (a click on an option is still inside it), and the
-     item being added opens again after an Enter, as Checklist's does.
-   - *Specs* (copy the `pairings` tests): on the form, saved picks load
-     by name, a pick found by searching saves, a row with no pick is
-     caught on that row, and a server 422 at the item's reference binds
-     to that row's picker; on the view, the names and the sparse record's
-     not-set label; in place (`the pairings edited in place`), an item
-     added from the keyboard (search, Enter picks, Enter saves) with the
-     PATCH sending ids, an item's reference changed by a click, move and
-     remove, no pick never sent, and a refused id staying open with the
-     reason; and the in-place a11y block for a row open and refused.
-   - *Not built:* a "New …" option in the item's picker that creates the
-     referenced record inline. Create it on its own screen (or the
-     table's `InlineCreate`) first. AI chats (MCP) print an item's
-     reference as its id, not its name.
-
-   **A `yes/no` marked `toggle`** copies In Stock's cell
-   (`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
-   component that PATCHes the one field through `useSaveWidgetField`, the
-   entity's wrapper of the foundation's `useRecordUpdate` (the row and the
-   record's view update at once and go back if the save is refused, with
-   a toast naming the row and the server's reason; the lists refetch
-   after). Its specs cover a flip that saves, the keyboard, and a failed
-   save putting the switch back. Copy `useSaveWidgetField` whenever the
-   plan has a `toggle` or any quick action, and only then. It finds the
-   record under the entity's own detail and list keys: on a screen that
-   holds it in a query of its own, a plain change (`{ field: value }`) is
-   still sent but only shows once that query refetches, and a change
-   built from the record (`(record) => …`) is refused, with a console
-   warning naming the keys searched.
+   and labels from its field table, and field types by pattern. The rest
+   of this step is under [Step 6 in detail](#step-6-in-detail), after
+   step 10, and is part of it: a heading for each field type, then the
+   view, the way between the screens and the columns. The files:
    - `src/routes/widgets/use-widgets.ts`, `use-widget-categories.ts` →
      `src/routes/<entity>/use-<entity>.ts` (TanStack Query hooks over the
      new gateway module)
@@ -448,315 +236,6 @@ is a filled-in example while the Widgets demo is still here).
      delete). Swap the zod schema and fields, each `Field` with its
      `size` and the required ones' `<FieldLabel required>` ("Forms"
      below). Every way out lands on a view (below).
-
-   **The view** is the read-only page for one record, at `/<entity>/:id`
-   (apart from the plan's quick actions and fields edited in place, if it
-   lists any).
-   `<EntityView>` owns its loading skeleton, its not-found state (another
-   user's record is the same plain 404, with a way back to the list and
-   no retry) and its error state with retry. The screen supplies what the
-   plan's "View screen" section lists:
-
-   - **Title and badges.** The plan's title field is the page's `<h1>`.
-     Its badge fields sit on its line, after it (`badges`), each the same
-     `Badge` and variant map as its table cell. Edit (a `Button`
-     rendering a `Link` to `/<entity>/:id/edit`) and the delete action go
-     in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
-     label="Delete" tone="destructive"`, the dialog's trigger through
-     `render`).
-   - **The way back is a trail.** `back={{ to: '/widgets', label:
-     'Widgets', trail: [{ label: 'Inventory', href: '/inventory' }, {
-     label: 'Widgets', href: '/widgets' }] }}`: the crumbs above the
-     record, from the module down to its list; the record's title follows
-     them. In `AppShell` it is the trail in the bar ("The sidebar and the
-     phone's bar" in design-language.md), and the page has no back link;
-     on a phone the header's back arrow goes to the list. Without `trail`
-     the view keeps its "← Widgets" link. `to` and `label` are still the
-     not-found state's way out. Any other page below a nav entry (a
-     record's sub-page, a step of a task) names its trail with
-     `usePageTrail([...crumbs, { label: 'This page' }])` in place of a
-     back link. Once the record has loaded, call
-     `useRecentRecord({ title, to: `/widgets/${id}`, detail: 'Widget' })`
-     too, so search lists it before you type.
-   - **The browser tab** reads the record's title once it loads
-     ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
-     puts the nav's ("Widgets · <app>") back while loading, on an error
-     and when you leave. Nothing to add. `documentTitle` names the tab
-     otherwise, when the title alone wouldn't say what the tab is (a
-     record named by a date, say: `documentTitle={`Entry ${title}`}`);
-     `false` leaves the nav's. Any other screen names its tab with
-     `useDocumentTitle('New Widget')`, which wins over the nav's while the
-     screen is mounted.
-   - **Sections**, one per row of the plan's section table, in order.
-     Fields are label/value rows (`fields`), labelled as on the form. A
-     section that holds one long text or one sub-record list is a block
-     (`content`) with no label of its own, since a label would only repeat
-     the heading.
-   - **Layout** (the record standard, 4.98: no right rail). Pass no
-     `layout`: the default, `tabs`, is every record's shape. Give the
-     section of short facts (the plan's Placement `details`) `placement:
-     'rail'`: on a record with tabs it's the last tab, Details, and on
-     one without, it stays in the column in its place, its labels beside
-     their values. Widget's view has no tabs, so its Details comes first
-     in the one column. A few short facts that explain one tab (a dose
-     beside the notes) can sit in a small box beside that tab's
-     sections, under them on a phone: `placement: 'rail'` with that
-     `tab`. Short facts only, never free text. Never `layout="rail"` in a
-     new view; it's kept for apps not yet moved (consuming.md "4.98").
-     Never re-order `sections` by the window's width yourself.
-   - **A subtitle** (`subtitle`), only when the plan names a line that
-     says what the record is for (a goal, a one-line summary): under the
-     title in muted body type. When the plan marks it editable, wrap it
-     in `<EditableValue label=… edit={editInPlace(…)} layout="inline">`.
-   - **Key numbers** (`strip`), only when the plan names a few figures
-     read before anything else (done of total, time left, the next
-     date): `<KeyStats stats={[{ label, value, hint? }]} />`, under the
-     header, as wide as its numbers (4.98), so on a phone it comes before
-     the sections. Three to five; more belong in a section.
-   - **A notice** (`notice`), only when the plan names a state that
-     decides what you do with the record (held, overdue, archived and
-     read-only): a `<Notice tone=…>` saying what it means and what to do,
-     with at most one action. It goes under the header, across the page.
-     Pass `null` when the state doesn't hold; the view announces it
-     appearing or clearing. A badge still shows the state itself; the
-     notice is for the few states a badge is too quiet for.
-   - **A source credit** (`footer`), only when the record's data comes
-     from an outside service whose terms ask for one (many free APIs
-     do: a film database, a games catalogue): `<SourceCredit sources={[{
-     name, href, note, icon }]} />`, with `note` the sentence the terms ask
-     for, word for word, and `icon` the service's mark when the app has
-     one (the same component it shows for that service elsewhere; drawn
-     before the name, which stays the link's text). Logos and their rules
-     are the app's own.
-   - **Every value renders the way its table cell does**: badges, names
-     of linked records, a done-count, from the shared lookups in
-     `<entity>-format.ts`. Never re-derive one for the view.
-   - **An empty value is passed through as it is** (`null`, `''`, or
-     `list.length > 0 && …`), and `EntityView` shows a dash (read as "Not
-     set"), never a blank. A field's `emptyLabel` replaces it only where
-     words say more ("No budget yet"). A yes/no is never empty: it reads
-     Yes or No (cell pattern 12).
-   - **A reference links to the referenced record's view** when that
-     entity has one: the name, from the same lookup by id the table uses,
-     inside `<Link to={`/<other>/${id}`}>`. Without a view, the plain name
-     (Widget's categories have none).
-   - **Sub-records are read-only** unless the plan's `Quick actions`
-     names the list: the done-count, then each item in order with its
-     state as a glyph and words, never a checkbox. Widget's checklist is
-     a quick action, so this is the markup to use (the shape Widget's
-     view had before it was):
-
-     ```tsx
-     <div className="flex flex-col gap-2">
-       <p className="type-caption tabular-nums text-muted-foreground">{checklistDoneCount(items)}</p>
-       <ul aria-label="Checklist items" className="flex flex-col gap-1.5">
-         {items.map((item, index) => (
-           <li key={index} className="flex items-start gap-2">
-             {item.done ? (
-               <CircleCheckIcon role="img" aria-label="Done" className="mt-0.5 size-4 shrink-0 text-success-text" />
-             ) : (
-               <CircleIcon role="img" aria-label="Not done" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-             )}
-             <span className={item.done ? 'text-muted-foreground' : undefined}>{item.text}</span>
-           </li>
-         ))}
-       </ul>
-     </div>
-     ```
-
-     A list of links: each an
-     `<a target="_blank" rel="noreferrer">` with an `ExternalLinkIcon`
-     and a visually hidden "(opens in a new tab)".
-   - **Long text the plan marks Markdown** renders through the
-     foundation's `<Markdown>`: headings, lists, tables, callouts
-     (`> [!NOTE]`) and links, links opening in a new tab; raw HTML shows
-     as the characters typed, never as markup. The app needs no Markdown dependency of its own. Plain
-     long text renders as text (`whitespace-pre-line` keeps its line
-     breaks). Give `<Markdown>` and `RichTextEditor` a `headingLevel` for
-     where they sit: the default (3) in an `EntityView` section,
-     `headingLevel={2}` for a `RichTextEditor` on a form straight under
-     the page's `<h1>`. Text that's imported or pasted from another
-     tool (often starting at `##`) also gets `headingFrom="text"`.
-   - **A checklist kept in the text** (`- [ ] item`, `- [x] done`) is
-     ticked where it's read with `<Markdown onTasksChange={save}>`: each
-     box a checkbox named for its item, and a tick hands over the whole
-     text with only that box flipped, for the field's save
-     (`useEdit<Entity>Field`). Without the prop the boxes are pictures
-     and the text stays read-only. A list's "2/5" column counts them
-     with `countTasks(text)` (`{ done, total }`; `total` 0 for none).
-   - **Pages in the notes** (a record's notes linking to pages of their
-     own, each a title and its own Markdown at its own URL, and a page's
-     notes linking to pages under it, to any depth): the app keeps the
-     pages (a table, an API, a screen per page); the foundation only
-     draws and makes the links. A page is linked by an ordinary Markdown
-     link, `[Getting Started](/notes/12/pages/3)`, so the notes stay
-     Markdown and nothing about how they're stored changes. Give
-     `<Markdown>` and `RichTextEditor` the same `pageLink={(href) => …}`:
-     return `{ title, removed, onRestore }` for an address that is one of
-     the app's pages (look it up in the record's pages, already loaded),
-     `null` for any other link. A page link shows the page icon and the
-     page's title and opens it in this tab; alone on its line it's a row
-     of its own; a removed page (soft-deleted) shows "Page removed" and,
-     with `onRestore` (the app's undelete, returning its promise),
-     Restore. Give the editor `onCreatePage={(title) => createPage(title).then((page) => pagePath(page))}`
-     too: "/page" (and Turn Into Page on selected words) asks for a
-     title, awaits the new page's address and puts in the link; a
-     rejection shows in the title box in the gateway's words and leaves
-     the text as it was. The page's own screen puts `PageTrail` above its
-     title (`crumbs`: the list, the record, every page above this one,
-     then this one, last, with no `href`): it folds the middle into a "…"
-     menu when it doesn't fit. A page's notes take the same two props, so
-     nothing assumes one level: the app decides where a new page lives
-     (under the record, or under the page whose note it's in).
-   - **Notes worth taking on paper** (a visit's prep and questions, a
-     guide, a checklist to tick by hand): mark each of those sections
-     `print: true`. The header gets a Print Notes icon (`printLabel`
-     renames its tooltip and name) that prints the marked sections alone, under the title
-     and subtitle: no rail, no shell, no buttons, light paper in either
-     theme, headings and bullets as written, nothing folded, tables
-     ruled with room in their empty cells. On a phone, whose print()
-     returns at once and fires `afterprint` before its preview exists, the
-     copy stays until the person next touches the page or presses a key
-     (4.124.1), so the preview prints the notes; the browser's own print
-     (Ctrl+P) in that gap prints them too. `print: { answerSpace: true }`
-     also leaves space under each item of the section's numbered lists,
-     for questions answered by hand. A section's own content that should
-     print differently (a list of sub-items as plain text) reads
-     `usePrinting()`, true in the printed copy. The browser's own print
-     (Ctrl+P) still prints the whole page.
-   - **Quick actions: only the fields the plan's `Quick actions` line
-     names**, each a control that saves on its own (cell pattern 17,
-     `widget-quick-actions.tsx`). A `yes/no` is a
-     `Switch` with its words (`WidgetInStockSwitch`); a sub-record list's
-     yes/no item field is a checkbox per item in a named group
-     (`ChecklistItems`), whose change is a function of the record
-     (`(current) => ({ checklist: ... })`) so quick ticks build on each
-     other. Each control calls `useSave<Entity>Field(id)` itself and shows
-     its own "Saving" spinner; nothing is disabled. A control goes where
-     the field already shows (`badges`, a field's `value`, a section's
-     `content`): `EntityView` needs nothing new. **With no `Quick actions`
-     line, every value is read-only** and there is no quick-actions file:
-     the view is exactly the read-only one above.
-   - **Edit in place: only the fields the plan's `Edit in place` line
-     names** (cell pattern 18). Each becomes `editInPlace({ kind, value,
-     control, schema, save })` (`widgetEdits` in `widget-view.tsx`):
-     `value` is what the form's control starts from, `control` is the
-     shared control from `<entity>-fields.tsx` given the props it's
-     handed (`readOnly={props.disabled}`, `aria-label={props.label}`,
-     `aria-describedby={props.describedBy}`), `schema` is the form's own
-     rule (`<entity>FormSchema.shape.<field>`), and `save` is
-     `useEdit<Entity>Field(id).mutateAsync({ <field>: value })` (copy
-     `useEditWidgetField`: the single-field save with `optimistic: false,
-     toastOnError: false`). `kind` follows the control: `text` (one line;
-     a number or integer too), `long-text` (Markdown, `RichTextEditor`
-     with `onProblem={props.onProblem}`; notes are `inline: true` by
-     default, the control passing `inline={props.inline}` and
-     `toolbar="floating"` (on the form too: "Forms" below) with no
-     `autoFocus`, as Widget's Description does; a short one opened by a click is
-     `autosave: true` with `autoFocus`), `choice` (a
-     select or a single reference: its list opens with the field,
-     `defaultOpen`, non-modal, `onChange={(v) => props.commit(v)}`,
-     `onOpenChange={(open) => !open && props.cancel()}`; a yes/no switch
-     commits on change), `multi` (a multi reference; `isEqual` comparing
-     ids as a set; a field the plan marks `small` is `MultiPick`, on the
-     form too, every option loaded once, and saves each click itself:
-     `value` is the record's, `onPick` the single-field save as a
-     function of the record, cell pattern 18 "A small set"). A plain
-     text, number, money, date, single choice or single reference whose
-     form control is a plain box (no control of the entity's own) can be
-     the package's preset instead, one line with no control to wrap:
-     `{ label, edit: inPlace.money({ value, save }) }` (cell pattern 18,
-     "Presets"); a link with a label is `inPlace.link`, and two fields
-     that must agree are `inPlace.fields` with its `rule`. A field gets `edit`, a `content` section gets `edit`,
-     the title gets `titleEdit={{ label, ...edit }}`, and a header badge
-     wraps itself in `<EditableValue label edit layout="inline">`. The
-     shown value stays exactly as before. A sub-record list the line
-     names is `editInPlace({ kind: 'list', ... })` on its `content`
-     section (cell pattern 18, "A list of sub-items"; copy `checklist` in
-     `widgetEdits`): the form's row as `renderItem`, from one component
-     shared with the form (`WidgetChecklistItemFields`), the item as the
-     view shows it (its quick action, if any) as `renderShown`, the list's
-     schema, and `save: (change) => edit.mutateAsync((current) => ({
-     <field>: change(current.<field>) }))` (an item with a reference:
-     copy `pairings` in `widgetEdits`, above). **With no `Edit in place`
-     line, nothing is editable in place** and none of this is copied.
-     Never a computed field.
-
-   **The table opens the view, and the form returns to it.** The title
-   column's link is the way in (a `yes/no` marked `toggle` stays in its
-   row). Saving an edit, or cancelling one, goes back to the record's view;
-   creating opens the new record's view (the id the create returns);
-   cancelling a create goes back to the list. Each navigates with
-   `{ replace: true }`, so Back from the view doesn't reopen the form. The
-   create and update mutations put the saved record into its detail cache
-   (`setQueryData`), so the view shows the save at once, and the delete
-   mutation drops it (`removeQueries`), so the view it leaves never
-   refetches a record that's gone (`use-widgets.ts`).
-
-   **`<SelectValue>` shows the value, not the label.** Base UI renders the
-   raw *value*, and `placeholder` only applies when the value is `null`.
-   Any `Select` whose "nothing chosen" state is a sentinel rather than
-   `null` therefore displays that sentinel on screen unless you pass the
-   children function. This bit every `Select` in the first app built on
-   this foundation. Two cases, both needing it:
-
-   - **A toolbar filter**, where "no filter" is `'all'` — copied straight
-     from `widgets-table.tsx`, which now carries the shape to copy: a
-     label constant read by both the trigger and its `<SelectItem>`.
-   - **An optional `single choice` field**, which Widget has no example of
-     (its `status` is required and its `categoryId` is a combobox). A Base
-     UI `Select` item's value cannot be `''`, so the field's own unset
-     value is remapped through a sentinel:
-
-     ```tsx
-     const UNSET = '__unset__'
-     const UNSET_LABEL = 'Not set'   // the plan's "not set" label
-     // ...
-     <Controller
-       control={form.control}
-       name="priority"
-       render={({ field }) => (
-         <Select
-           value={field.value === '' ? UNSET : field.value}
-           onValueChange={(value) => field.onChange(value === UNSET ? '' : value)}
-         >
-           <SelectTrigger id="<entity>-priority">
-             {/* Without this the trigger reads the literal "__unset__" */}
-             <SelectValue>{(value) => (value === UNSET ? UNSET_LABEL : value)}</SelectValue>
-           </SelectTrigger>
-           <SelectContent>
-             <SelectItem value={UNSET}>{UNSET_LABEL}</SelectItem>
-             {PRIORITIES.map((option) => (
-               <SelectItem key={option} value={option}>{option}</SelectItem>
-             ))}
-           </SelectContent>
-         </Select>
-       )}
-     />
-     ```
-
-     The zod schema keeps `''` as the unset value and converts it to
-     `null` on the way to the wire, the way `widget-schema.ts` already
-     handles a blank `assigneeEmail`. Step 8's specs must assert the
-     **unset** display, not only a picked one — a select whose enum values
-     equal their labels passes either way, which is exactly how this
-     shipped unnoticed.
-
-   **Choosing how each column looks.** The plan says what a field *means*,
-   not how its cell should render. For most columns plain text is right and
-   there is nothing to decide. Where there is:
-
-   - [`cell-patterns.md`](cell-patterns.md) is the catalogue — icon + label,
-     icon in a badge, icon-only with a tooltip, enum → tone-mapped badge,
-     clustered multi-value, link button, relative date, ordinal scale,
-     summary + popover — each with the parts a first attempt gets wrong.
-     They are markup to copy, not components to import.
-   - If the developer doesn't have a preference, don't pick for them and
-     don't guess: follow [`column-options.md`](column-options.md) to build
-     a short page of numbered options over the same sample rows, and let
-     them choose. That is how every pattern in the catalogue was picked.
-   - Any colour involved: [`design-language.md`](design-language.md). Most
-     values should stay grey, and colour is never the only signal.
 7. **Register routes** for `/<entity>`, `/<entity>/new`, `/<entity>/:id`
    (the view) and `/<entity>/:id/edit` in `src/App.tsx`, and add a nav
    entry to `src/nav.ts`. Its label names the browser tab on the list and
@@ -779,13 +258,7 @@ is a filled-in example while the Widgets demo is still here).
    `window.__msw` handle from `@tristan2828/ui-foundation/testing`, and
    `e2e/widgets-table.spec.ts`/`e2e/widget-form.spec.ts`/
    `e2e/widget-view.spec.ts` for the pattern. Import `test` and
-   `expect` from there too, not from `@playwright/test`: its page's
-   `goto()` and `reload()` first wait for the page's `/api/` requests to
-   settle (150 ms with none in flight, at most 3 s, never a failure), so a
-   save's follow-up refresh isn't sent past the mocks by the page as it
-   unloads; then they return once the app has rendered (after MSW's
-   start), and load once more if the server refused one of its files,
-   so a spec's first expect never meets an empty page. The view's states are
+   `expect` from there too, not from `@playwright/test`. The view's states are
    loading, not found (a 404: "Not found", the way back, no retry), error
    (a failed load, then Try Again recovering) and success (every section,
    each value as its cell shows it), plus the sparse record showing its
@@ -820,7 +293,7 @@ is a filled-in example while the Widgets demo is still here).
    label sits above its value and nothing scrolls sideways. With a
    section placed `details`, that test checks its labels sit beside
    their values, and another on a wide screen that there's no rail (copy
-   `wide screens: …` in `e2e/widget-view.spec.ts`).
+   `wide screens (…)` in `e2e/widget-view.spec.ts`).
    **A loading test holds the answer, never delays it:**
    `forceMswOverride(page, override, { hold: true })` returns a
    `release()`; assert the skeleton, `await release()`, then assert the
@@ -831,8 +304,7 @@ is a filled-in example while the Widgets demo is still here).
    States forced via a first-load init script (loading, load-time error)
    need `page.addInitScript` before navigation; states forced after the
    page is already up (a mutation's error response) can use a
-   post-navigation `worker.use()` call gated on
-   `waitForFunction(() => window.__msw !== undefined)`. To stub what an
+   post-navigation `worker.use()` call after `waitForMswReady(page)`. To stub what an
    `<img>` loads (a cover or avatar cell), give the override `bodyBase64`
    and `contentType` instead of `body` — a JSON body makes the image fire
    `onError` — and stub it through the override, never `page.route`,
@@ -865,9 +337,8 @@ is a filled-in example while the Widgets demo is still here).
    `NAV_ENTRIES` so the shell smoke test covers the new screen, add
    `/<entity>/new` to `e2e/a11y.spec.ts`'s `formRoutes`, and add the view
    of a full record and of the sparse one to its `viewRoutes` (the table
-   page comes from `src/nav.ts`, which the suite is given as `nav`: each
-   nav page is a test of its own, so the suite's time per test stays flat
-   as the app grows; the form and the view aren't in the nav). An app
+   page comes from `src/nav.ts`, which the suite is given as `nav`; the
+   form and the view aren't in the nav). An app
    with one a11y spec per module (`e2e/a11y-<module>.spec.ts`) adds them
    to its module's file instead, which passes only that module's nav
    entries with `checkSidebar: false`; one file keeps the whole nav and
@@ -876,14 +347,591 @@ is a filled-in example while the Widgets demo is still here).
    the rich-text editor, an open list, a list edited in place (an item
    open, one being added, a refused change), and the leave prompt, in
    both themes.
-10. **`npm run verify`.** Fix until it passes. Then stop — do not add
-    anything beyond what this list covers; note ideas in the app's
-    backlog instead.
+10. **`npm run verify`.** Fix until it passes. Then stop (AGENTS.md
+    "Scope and Stopping").
+
+## Step 6 in detail
+
+The rest of step 6: each field type the plan can name, then the view,
+the way between the screens, and the columns.
+
+### A `reference`
+
+A `reference` field copies Category's searchable combobox.
+
+### A `single choice`
+
+A `single choice` copies Status's select — each option shows its label,
+never its wire value, from one `Record<value, label>`
+(`WIDGET_STATUS_LABELS`) read by the options, the trigger (through
+`<SelectValue>`'s children, which otherwise shows the raw value), the
+toolbar filter and every badge.
+
+### A `date-time`
+
+A `date-time` copies Available From's date picker, a `date` (a day, no time)
+is the foundation's `DateField` (see below).
+
+### A `yes/no`
+
+A `yes/no` copies In Stock — a `Switch`
+(`@tristan2828/ui-foundation/ui/switch`) in a horizontal `Field` with its
+label beside it on the form, cell pattern 12 (the word Yes/No) in the table,
+and a three-way toolbar `Select` (either / yes / no) whose URL value is
+`'true'`/`'false'` and whose `filters` value is a real boolean, so `false`
+reaches the wire.
+
+### A `multi choice`
+
+A `multi choice` copies Tags — the `<MultiChoice>` control from the
+foundation on the form and as a toolbar filter via `useTableUrlState`'s
+multi filters, badges in the table, and a `filters` array the gateway sends
+as a repeated parameter; each option shows its label, never its wire value
+(`quick_win` reads "Quick win"): one `Record<value, label>`
+(`WIDGET_TAG_LABELS`) feeds `MultiChoice`'s `getLabel` and the badges.
+
+### A `multi reference`
+
+A `multi reference` copies Extra Categories: the `<MultiReference>` control
+on the form and as a toolbar filter, an array of ids on the wire, a repeated
+any-of list filter, and names from a **lookup by id** on the referenced
+entity (`GET /widget-categories?ids=1&ids=3`, `getWidgetCategoriesByIds`,
+`useWidgetCategoriesByIdsQuery`), and `searching` from the search query's
+`isPlaceholderData` so Enter waits for the results that match what was
+typed. Add that `ids` parameter to the referenced entity's list endpoint if
+it lacks one. Never name a picked id from search results alone: a saved pick
+the current search doesn't return would show without a name. The table looks
+up every id on its page in one request; the backend rejects an unknown id as
+a 422 on the field, never a foreign-key 500.
+
+### Sub-records
+
+Each **sub-records** list copies Checklist: an array of item objects on the
+wire, read and written whole and in order (no item ids), a child table with
+a `position` column, react-hook-form's `useFieldArray` feeding the
+foundation's `<ListEditor>` inside a `FieldSet`/`FieldLegend` on the form,
+each row's controls named by position ("Item 2 text"), a per-item
+`FieldError` (a server 422 at `["body", "checklist", 2, "text"]` arrives as
+`fieldErrors["checklist.2.text"]` and binds to that row). A list whose items
+are rich (five or six fields each) and run to ten or more also passes
+`summary={(i) => …}`, one line per item that opens to its fields, one at a
+time, and `invalid={(i) => !!errors.<list>?.[i]}` so an item the save
+refuses opens to show why. A list whose items repeat with small changes
+passes ``onDuplicate={(i) => insert(i + 1, { ...getValues(`<list>.${i}`)
+})}``, leaving out any saved id; the copy lands after its original and
+opens. Then a summary in the table, never the items (an item with a
+`reference` field copies Pairings, below).
+
+### A `computed` field
+
+A `computed` field copies Progress (`checklistState`): `readOnly` in
+`openapi.yaml` and absent from `<Entity>Create`/`<Entity>Update`, one SQL
+expression in the router that the filter and sort use (correlated `EXISTS`,
+or a scalar subquery for a count, so they hold across pages), a Python
+mirror on the model for the value each row reads back with, a test that the
+two agree for every value, the mocks recomputing it on every write and
+ignoring any client-sent value, a read-only column and a filter, and nothing
+on the form.
+
+### A `date`
+
+**A `date`** (a day with no time: when something was finished, a
+due day) is `type: string, format: date` in `openapi.yaml`, so the
+wire, the generated type and the form all hold `'YYYY-MM-DD'`, and
+`''` on the form for an optional one not set (sent as `null`). No
+`Date` object anywhere, so no time zone can move the day. On the form
+it's the foundation's `DateField` in a `Controller` (`clearable` when
+optional); the schema is the string (`z.string().min(1, …)` when
+required). The table and the view show `formatPlainDate(value)`
+("Sep 2, 2026"), the not-set label when empty. `DateField` is typed: a box that reads "3/14", "Mar 14", "2026-03-14" or "today",
+with the calendar on its button, and something unreadable says "Try a
+date like 3/14 or Mar 14" and gives `''`. Editing in place is
+`inPlace.date({ value, save })`: Enter or leaving saves the day typed,
+a day picked in the calendar saves at once. (`typing={false}` is the
+button alone; in place then `editInPlace({ kind: 'choice', ... })` with
+`defaultOpen`, `modal={false}` and `onChange={(day) => props.commit(day)}`.) The backend column
+is a SQL `date` (`datetime.date` in the model).
+
+### A `month-day`
+
+**A `month-day`** (a day that comes round every year, with no year:
+when a season starts, a yearly deadline) is `type: string` with
+`pattern: '^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'` in
+`openapi.yaml`, so the wire, the generated type and the form all hold
+`'MM-DD'` (`'03-14'`), and `''` on the form for an optional one not set
+(sent as `null`). It sorts as text in calendar order. On the form it's
+the foundation's `MonthDayField` in a `Controller` (`clearable` when
+optional); the schema is the string with
+`.refine((v) => v === '' || isMonthDay(v), 'Pick a month and day')`
+(`isMonthDay`: February 29 is a day, February 30 isn't), `min(1, …)`
+too when required. The table and the view show `formatMonthDay(value)`
+("Mar 14"), the not-set label when empty. Editing in place is
+`inPlace.monthDay({ value, save })` (cell pattern 18, "Presets"). The
+backend column is `varchar(5)` (`str` in the model) and the router
+refuses a day the month can't have as a 422 on the field (the pattern
+alone lets `02-30` through). Values typed before as free text are
+rewritten to `'MM-DD'` by a migration; one it can't read stays as
+written, and the field shows it as written with nothing picked, refused
+until a day is picked.
+
+### A `recurrence`
+
+**A `recurrence`** (how something repeats: a chore, a reminder, a
+task) is the foundation's `Recurrence` schema: copy it from the
+package's `openapi/foundation.yaml` into `components.schemas` (it's
+`x-optional`, so `check-contract` holds it to the foundation's shape
+once it's there) and reference it, nullable when it may not repeat.
+On the form it's the foundation's `RecurrenceField` in a `Controller`
+(presets, a phrase read as it's typed, and a preview of the next five);
+the schema checks it with `recurrenceProblem(value)`, and a phrase the
+field can't read gives `null`, so a required one is refused. The table
+shows `formatRecurrence(value)` and a Next column (cell pattern 27);
+editing in place is `inPlace.recurrence({ value, save })`. A record
+whose times are fields of its own (an event's start and end) gives the
+field and the preset `times={false}`: dates only, no "at". An app whose
+weeks start on Sunday gives them `weekStart="SU"`, which adds
+`WKST=SU` to the weekly rules they build (reminders.md "Repeating
+reminders" says when that moves a day). The backend
+column is JSON, read and checked with
+`foundation_backend.recurrence.Recurrence` (a 422 on the field for a
+rule it refuses); `next_after` and `occurrences` say when it falls
+(reminders.md "Repeating reminders").
+
+### An image on a record
+
+**An image on a record** (a photo of it) is the stored file's id on the
+wire (`string`, nullable), and on the form the foundation's
+`ImageField` in a `Controller` (`z.string().nullable()`): `value` and
+`onChange` are the id, `thumbUrl` the record's saved photo,
+`onBusyChange` holds the submit while a file uploads. Its `upload` is the app's own, one function in the
+gateway that sends the file to the app's endpoint and resolves to
+`{ id, thumbUrl, url }` (the `ImageUploadResult`), rejecting with the
+`AppError`; the same function goes to a notes field's
+`RichTextEditor`, so pictures in its text use the same storage:
+
+```ts
+// src/api/gateway/files.ts
+export async function uploadImage(file: File): Promise<ImageUploadResult> {
+  const body = new FormData()
+  body.append('file', file)
+  const response = await safeFetch('/files', { method: 'POST', body })
+  if (response.status !== 201) throw toAppError(response.status, response.body, response.headers)
+  const { id } = response.body as components['schemas']['File']
+  return { id, thumbUrl: `/api/files/${id}/content?size=thumb`, url: `/api/files/${id}/content` }
+}
+```
+
+The types it takes default to JPEG, PNG and WebP; never add SVG or
+HTML, which run script when served from the app's own domain. The
+endpoint, the storage and serving the files are the app's (the
+template has none); `<Markdown>` shows an image only from a web
+address or a path on the site, so `url` is one of those.
+
+### A `reference` inside a sub-record item
+
+**A `reference` inside a sub-record item** (a list whose items each
+point at another entity's record) copies Pairings, Widget's
+`pairings`: Checklist's list, with a reference in each item.
+- *Wire:* the item carries the referenced id only, named as a
+  top-level reference is (`{ categoryId, note }`, `seriesId` for a
+  Series), never a name or a nested record. Every name, on the form
+  and on the view, comes from the other entity's lookup by id
+  (`GET /<other>?ids=…`), as for a `multi reference`. An optional text field beside it
+  is a required `string` that is `""` when empty (`note`), so an item
+  never holds a null. `openapi.yaml` describes the item as its own
+  schema (`WidgetPairing`), with `maxItems` on the list.
+- *Backend:* a child table like the checklist's (`widget_pairings`:
+  `position`, and a foreign key to the referenced table, commented),
+  replaced whole on every write. Before saving, the router checks every
+  item's id in one query (`_check_item_categories_exist`): one that
+  isn't there, or, for a per-user entity, isn't this user's, is a 422 at
+  the item's own path, `["body", "pairings", 2, "categoryId"]`, never a
+  foreign-key 500. Its tests: order kept with repeats, replace and
+  clear, the note trimmed, an unknown id refused at its item on create
+  and on update with nothing saved, `null` and too many refused.
+- *The mocks* refuse an unknown id at the same path, and trim the note.
+- *The form's row* is one component shared with editing in place
+  (`WidgetPairingItemFields` in `widget-fields.tsx`): the referenced
+  record's combobox (`WidgetCategoryCombobox`, the form's Category
+  combobox with its own search per row, a lookup by id for the picked
+  record's name, and the picked name not counted as a search, so
+  opening the list offers every record) and the other fields, each
+  named by position ("Pairing 2 category"). On the form it sits in a
+  `Controller` over `<list>.<i>.<field>Id`, the rest `register`ed, and
+  a server 422 at that path (`fieldErrors["pairings.2.categoryId"]`)
+  binds to that row's picker. A new row starts with no pick, which the
+  schema refuses on that row ("Pick a category or remove the
+  pairing"), so a blank item is never sent.
+- *The view* shows each item as the referenced record's name, from the
+  view's one lookup by id (add every item's id to the ids it already
+  looks up), then its other fields. The name links to the record's
+  view when that entity has one (`<Link to={`/<other>/${id}`}>`);
+  WidgetCategory has none, so Pairings shows it as plain text.
+- *Editing in place* is `editInPlace({ kind: 'list', ... })` like
+  Checklist's (`pairings` in `widgetEdits`): `renderItem` is the
+  form's row, `renderShown` the item as the view shows it, `newItem`
+  starts with no pick. In the row, Enter in the open list picks
+  without saving; Enter in the row's text box saves the item, as does
+  leaving the row (a click on an option is still inside it), and the
+  item being added opens again after an Enter, as Checklist's does.
+- *Specs* (copy the `pairings` tests): on the form, saved picks load
+  by name, a pick found by searching saves, a row with no pick is
+  caught on that row, and a server 422 at the item's reference binds
+  to that row's picker; on the view, the names and the sparse record's
+  not-set label; in place (`the pairings edited in place`), an item
+  added from the keyboard (search, Enter picks, Enter saves) with the
+  PATCH sending ids, an item's reference changed by a click, move and
+  remove, no pick never sent, and a refused id staying open with the
+  reason; and the in-place a11y block for a row open and refused.
+- *Not built:* a "New …" option in the item's picker that creates the
+  referenced record inline. Create it on its own screen (or the
+  table's `InlineCreate`) first. AI chats (MCP) print an item's
+  reference as its id, not its name.
+
+### A `yes/no` marked `toggle`
+
+**A `yes/no` marked `toggle`** copies In Stock's cell
+(`in-stock-toggle.tsx`, cell pattern 15): a `Switch` in its own
+component that PATCHes the one field through `useSaveWidgetField`, the
+entity's wrapper of the foundation's `useRecordUpdate` (the row and the
+record's view update at once and go back if the save is refused, with
+a toast naming the row and the server's reason; the lists refetch
+after). Its specs cover a flip that saves, the keyboard, and a failed
+save putting the switch back. Copy `useSaveWidgetField` whenever the
+plan has a `toggle` or any quick action, and only then. It finds the
+record under the entity's own detail and list keys: on a screen that
+holds it in a query of its own, a plain change (`{ field: value }`) is
+still sent but only shows once that query refetches, and a change
+built from the record (`(record) => …`) is refused, with a console
+warning naming the keys searched.
+
+### Keep column definitions stable
+
+**Keep column definitions stable.** Build them once
+(`useMemo(() => build<Entity>Columns(), [])`) from nothing that loads
+later. TanStack's `flexRender` treats each column's `cell` as a
+component, so rebuilt columns remount every cell: focus is lost and the
+table flickers when, say, reference names arrive after the rows. Data
+that arrives later reaches the cells through context, as
+`category-names.tsx` does for category names.
+
+### The view
+
+**The view** is the read-only page for one record, at `/<entity>/:id`
+(apart from the plan's quick actions and fields edited in place, if it
+lists any).
+`<EntityView>` owns its loading skeleton, its not-found state (another
+user's record is the same plain 404, with a way back to the list and
+no retry) and its error state with retry. The screen supplies what the
+plan's "View screen" section lists:
+
+- **Title and badges.** The plan's title field is the page's `<h1>`.
+  Its badge fields sit on its line, after it (`badges`), each the same
+  `Badge` and variant map as its table cell. Edit (a `Button`
+  rendering a `Link` to `/<entity>/:id/edit`) and the delete action go
+  in `actions`, Delete as an `IconAction` (`icon={Trash2Icon}
+  label="Delete" tone="destructive"`, the dialog's trigger through
+  `render`).
+- **The way back is a trail.** `back={{ to: '/widgets', label:
+  'Widgets', trail: [{ label: 'Inventory', href: '/inventory' }, {
+  label: 'Widgets', href: '/widgets' }] }}`: the crumbs above the
+  record, from the module down to its list; the record's title follows
+  them. In `AppShell` it is the trail in the bar ("The sidebar and the
+  phone's bar" in design-language.md), and the page has no back link;
+  on a phone the header's back arrow goes to the list. Without `trail`
+  the view keeps its "← Widgets" link. `to` and `label` are still the
+  not-found state's way out. Any other page below a nav entry (a
+  record's sub-page, a step of a task) names its trail with
+  `usePageTrail([...crumbs, { label: 'This page' }])` in place of a
+  back link. Once the record has loaded, call
+  `useRecentRecord({ title, to: `/widgets/${id}`, detail: 'Widget' })`
+  too, so search lists it before you type.
+- **The browser tab** reads the record's title once it loads
+  ("Wireless Mouse · <app>"): `EntityView` sets it from `title`, and
+  puts the nav's ("Widgets · <app>") back while loading, on an error
+  and when you leave. Nothing to add. `documentTitle` names the tab
+  otherwise, when the title alone wouldn't say what the tab is (a
+  record named by a date, say: `documentTitle={`Entry ${title}`}`);
+  `false` leaves the nav's. Any other screen names its tab with
+  `useDocumentTitle('New Widget')`, which wins over the nav's while the
+  screen is mounted.
+- **Sections**, one per row of the plan's section table, in order.
+  Fields are label/value rows (`fields`), labelled as on the form. A
+  section that holds one long text or one sub-record list is a block
+  (`content`) with no label of its own, since a label would only repeat
+  the heading.
+- **Layout** (the record standard: no right rail). Pass no
+  `layout`: the default, `tabs`, is every record's shape. Give the
+  section of short facts (the plan's Placement `details`) `placement:
+  'rail'`: on a record with tabs it's the last tab, Details, and on
+  one without, it stays in the column in its place, its labels beside
+  their values. Widget's view has no tabs, so its Details comes first
+  in the one column. A few short facts that explain one tab (a dose
+  beside the notes) can sit in a small box beside that tab's
+  sections, under them on a phone: `placement: 'rail'` with that
+  `tab`. Short facts only, never free text. Never `layout="rail"` in a
+  new view.
+  Never re-order `sections` by the window's width yourself.
+- **A subtitle** (`subtitle`), only when the plan names a line that
+  says what the record is for (a goal, a one-line summary): under the
+  title in muted body type. When the plan marks it editable, wrap it
+  in `<EditableValue label=… edit={editInPlace(…)} layout="inline">`.
+- **Key numbers** (`strip`), only when the plan names a few figures
+  read before anything else (done of total, time left, the next
+  date): `<KeyStats stats={[{ label, value, hint? }]} />`, under the
+  header, as wide as its numbers, so on a phone it comes before
+  the sections. Three to five; more belong in a section.
+- **A notice** (`notice`), only when the plan names a state that
+  decides what you do with the record (held, overdue, archived and
+  read-only): a `<Notice tone=…>` saying what it means and what to do,
+  with at most one action. It goes under the header, across the page.
+  Pass `null` when the state doesn't hold; the view announces it
+  appearing or clearing. A badge still shows the state itself; the
+  notice is for the few states a badge is too quiet for.
+- **A source credit** (`footer`), only when the record's data comes
+  from an outside service whose terms ask for one (many free APIs
+  do: a film database, a games catalogue): `<SourceCredit sources={[{
+  name, href, note, icon }]} />`, with `note` the sentence the terms ask
+  for, word for word, and `icon` the service's mark when the app has
+  one (the same component it shows for that service elsewhere; drawn
+  before the name, which stays the link's text). Logos and their rules
+  are the app's own.
+- **Every value renders the way its table cell does**: badges, names
+  of linked records, a done-count, from the shared lookups in
+  `<entity>-format.ts`. Never re-derive one for the view.
+- **An empty value is passed through as it is** (`null`, `''`, or
+  `list.length > 0 && …`), and `EntityView` shows a dash (read as "Not
+  set"), never a blank. A field's `emptyLabel` replaces it only where
+  words say more ("No budget yet"). A yes/no is never empty: it reads
+  Yes or No (cell pattern 12).
+- **A reference links to the referenced record's view** when that
+  entity has one: the name, from the same lookup by id the table uses,
+  inside `<Link to={`/<other>/${id}`}>`. Without a view, the plain name
+  (Widget's categories have none).
+- **Sub-records are read-only** unless the plan's `Quick actions`
+  names the list: the done-count, then each item in order with its
+  state as a glyph and words, never a checkbox. Widget's checklist is
+  a quick action, so this is the markup to use:
+
+  ```tsx
+  <div className="flex flex-col gap-2">
+    <p className="type-caption tabular-nums text-muted-foreground">{checklistDoneCount(items)}</p>
+    <ul aria-label="Checklist items" className="flex flex-col gap-1.5">
+      {items.map((item, index) => (
+        <li key={index} className="flex items-start gap-2">
+          {item.done ? (
+            <CircleCheckIcon role="img" aria-label="Done" className="mt-0.5 size-4 shrink-0 text-success-text" />
+          ) : (
+            <CircleIcon role="img" aria-label="Not done" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+          )}
+          <span className={item.done ? 'text-muted-foreground' : undefined}>{item.text}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+  ```
+
+  A list of links: each an
+  `<a target="_blank" rel="noreferrer">` with an `ExternalLinkIcon`
+  and a visually hidden "(opens in a new tab)".
+
+### The view: long text and notes
+
+- **Long text the plan marks Markdown** renders through the
+  foundation's `<Markdown>`: headings, lists, tables, callouts
+  (`> [!NOTE]`) and links, links opening in a new tab; raw HTML shows
+  as the characters typed, never as markup. The app needs no Markdown dependency of its own. Plain
+  long text renders as text (`whitespace-pre-line` keeps its line
+  breaks). Give `<Markdown>` and `RichTextEditor` a `headingLevel` for
+  where they sit: the default (3) in an `EntityView` section,
+  `headingLevel={2}` for a `RichTextEditor` on a form straight under
+  the page's `<h1>`. Text that's imported or pasted from another
+  tool (often starting at `##`) also gets `headingFrom="text"`.
+- **A checklist kept in the text** (`- [ ] item`, `- [x] done`) is
+  ticked where it's read with `<Markdown onTasksChange={save}>`: each
+  box a checkbox named for its item, and a tick hands over the whole
+  text with only that box flipped, for the field's save
+  (`useEdit<Entity>Field`). Without the prop the boxes are pictures
+  and the text stays read-only. A list's "2/5" column counts them
+  with `countTasks(text)` (`{ done, total }`; `total` 0 for none).
+- **Pages in the notes** (a record's notes linking to pages of their
+  own, each a title and its own Markdown at its own URL, and a page's
+  notes linking to pages under it, to any depth): the app keeps the
+  pages (a table, an API, a screen per page); the foundation only
+  draws and makes the links. A page is linked by an ordinary Markdown
+  link, `[Getting Started](/notes/12/pages/3)`, so the notes stay
+  Markdown and nothing about how they're stored changes. Give
+  `<Markdown>` and `RichTextEditor` the same `pageLink={(href) => …}`:
+  return `{ title, removed, onRestore }` for an address that is one of
+  the app's pages (look it up in the record's pages, already loaded),
+  `null` for any other link. A page link shows the page icon and the
+  page's title and opens it in this tab; alone on its line it's a row
+  of its own; a removed page (soft-deleted) shows "Page removed" and,
+  with `onRestore` (the app's undelete, returning its promise),
+  Restore. Give the editor `onCreatePage={(title) => createPage(title).then((page) => pagePath(page))}`
+  too: "/page" (and Turn Into Page on selected words) asks for a
+  title, awaits the new page's address and puts in the link; a
+  rejection shows in the title box in the gateway's words and leaves
+  the text as it was. The page's own screen puts `PageTrail` above its
+  title (`crumbs`: the list, the record, every page above this one,
+  then this one, last, with no `href`): it folds the middle into a "…"
+  menu when it doesn't fit. A page's notes take the same two props, so
+  nothing assumes one level: the app decides where a new page lives
+  (under the record, or under the page whose note it's in).
+- **Notes worth taking on paper** (a visit's prep and questions, a
+  guide, a checklist to tick by hand): mark each of those sections
+  `print: true`. The header gets a Print Notes icon (`printLabel`
+  renames its tooltip and name) that prints the marked sections alone, under the title
+  and subtitle: no rail, no shell, no buttons, light paper in either
+  theme, headings and bullets as written, nothing folded, tables
+  ruled with room in their empty cells. `print: { answerSpace: true }`
+  also leaves space under each item of the section's numbered lists,
+  for questions answered by hand. A section's own content that should
+  print differently (a list of sub-items as plain text) reads
+  `usePrinting()`, true in the printed copy. The browser's own print
+  (Ctrl+P) still prints the whole page.
+
+### The view: quick actions and editing in place
+
+- **Quick actions: only the fields the plan's `Quick actions` line
+  names**, each a control that saves on its own (cell pattern 17,
+  `widget-quick-actions.tsx`). A `yes/no` is a
+  `Switch` with its words (`WidgetInStockSwitch`); a sub-record list's
+  yes/no item field is a checkbox per item in a named group
+  (`ChecklistItem`), whose change is a function of the record
+  (`(current) => ({ checklist: ... })`) so quick ticks build on each
+  other. Each control calls `useSave<Entity>Field(id)` itself and shows
+  its own "Saving" spinner; nothing is disabled. A control goes where
+  the field already shows (`badges`, a field's `value`, a section's
+  `content`): `EntityView` needs nothing new. **With no `Quick actions`
+  line, every value is read-only** and there is no quick-actions file:
+  the view is exactly the read-only one above.
+- **Edit in place: only the fields the plan's `Edit in place` line
+  names** (cell pattern 18). Each becomes `editInPlace({ kind, value,
+  control, schema, save })` (`widgetEdits` in `widget-view.tsx`):
+  `value` is what the form's control starts from, `control` is the
+  shared control from `<entity>-fields.tsx` given the props it's
+  handed (`readOnly={props.disabled}`, `aria-label={props.label}`,
+  `aria-describedby={props.describedBy}`), `schema` is the form's own
+  rule (`<entity>FormSchema.shape.<field>`), and `save` is
+  `useEdit<Entity>Field(id).mutateAsync({ <field>: value })` (copy
+  `useEditWidgetField`: the single-field save with `optimistic: false,
+  toastOnError: false`). `kind` follows the control: `text` (one line;
+  a number or integer too), `long-text` (Markdown, `RichTextEditor`
+  with `onProblem={props.onProblem}`; notes are `inline: true` by
+  default, the control passing `inline={props.inline}` and
+  `toolbar="floating"` (on the form too: "Forms" below) with no
+  `autoFocus`, as Widget's Description does; a short one opened by a click is
+  `autosave: true` with `autoFocus`), `choice` (a
+  select or a single reference: its list opens with the field,
+  `defaultOpen`, non-modal, `onChange={(v) => props.commit(v)}`,
+  `onOpenChange={(open) => !open && props.cancel()}`; a yes/no switch
+  commits on change), `multi` (a multi reference; `isEqual` comparing
+  ids as a set; a field the plan marks `small` is `MultiPick`, on the
+  form too, every option loaded once, and saves each click itself:
+  `value` is the record's, `onPick` the single-field save as a
+  function of the record, cell pattern 18 "A small set"). A plain
+  text, number, money, date, single choice or single reference whose
+  form control is a plain box (no control of the entity's own) can be
+  the package's preset instead, one line with no control to wrap:
+  `{ label, edit: inPlace.money({ value, save }) }` (cell pattern 18,
+  "Presets"); a link with a label is `inPlace.link`, and two fields
+  that must agree are `inPlace.fields` with its `rule`. A field gets `edit`, a `content` section gets `edit`,
+  the title gets `titleEdit={{ label, ...edit }}`, and a header badge
+  wraps itself in `<EditableValue label edit layout="inline">`. The
+  shown value stays exactly as before. A sub-record list the line
+  names is `editInPlace({ kind: 'list', ... })` on its `content`
+  section (cell pattern 18, "A list of sub-items"; copy `checklist` in
+  `widgetEdits`): the form's row as `renderItem`, from one component
+  shared with the form (`WidgetChecklistItemFields`), the item as the
+  view shows it (its quick action, if any) as `renderShown`, the list's
+  schema, and `save: (change) => edit.mutateAsync((current) => ({
+  <field>: change(current.<field>) }))` (an item with a reference:
+  copy `pairings` in `widgetEdits`, above). **With no `Edit in place`
+  line, nothing is editable in place** and none of this is copied.
+  Never a computed field.
+
+### The table opens the view, and the form returns to it
+
+**The table opens the view, and the form returns to it.** The title
+column's link is the way in (a `yes/no` marked `toggle` stays in its
+row). Saving an edit, or cancelling one, goes back to the record's view;
+creating opens the new record's view (the id the create returns);
+cancelling a create goes back to the list. Each navigates with
+`{ replace: true }`, so Back from the view doesn't reopen the form. The
+create and update mutations put the saved record into its detail cache
+(`setQueryData`), so the view shows the save at once, and the delete
+mutation drops it (`removeQueries`), so the view it leaves never
+refetches a record that's gone (`use-widgets.ts`).
+
+### `<SelectValue>` shows the value, not the label
+
+**`<SelectValue>` shows the value, not the label.** Base UI renders the
+raw *value*, and `placeholder` only applies when the value is `null`.
+Any `Select` whose "nothing chosen" state is a sentinel rather than
+`null` therefore displays that sentinel on screen unless you pass the
+children function. Two cases, both needing it:
+
+- **A toolbar filter**, where "no filter" is `'all'` — copied straight
+  from `widgets-table.tsx`: a label constant read by both the trigger and its `<SelectItem>`.
+- **An optional `single choice` field**, which Widget has no example of
+  (its `status` is required and its `categoryId` is a combobox). A Base
+  UI `Select` item's value cannot be `''`, so the field's own unset
+  value is remapped through a sentinel:
+
+  ```tsx
+  const UNSET = '__unset__'
+  const UNSET_LABEL = 'Not set'   // the plan's "not set" label
+  // ...
+  <Controller
+    control={form.control}
+    name="priority"
+    render={({ field }) => (
+      <Select
+        value={field.value === '' ? UNSET : field.value}
+        onValueChange={(value) => field.onChange(value === UNSET ? '' : value)}
+      >
+        <SelectTrigger id="<entity>-priority">
+          {/* Without this the trigger reads the literal "__unset__" */}
+          <SelectValue>{(value) => (value === UNSET ? UNSET_LABEL : value)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={UNSET}>{UNSET_LABEL}</SelectItem>
+          {PRIORITIES.map((option) => (
+            <SelectItem key={option} value={option}>{option}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    )}
+  />
+  ```
+
+  The zod schema keeps `''` as the unset value and converts it to
+  `null` on the way to the wire, the way `widget-schema.ts` already
+  handles a blank `assigneeEmail`. Step 8's specs must assert the
+  **unset** display, not only a picked one — a select whose enum values
+  equal their labels passes either way.
+
+### Choosing how each column looks
+
+**Choosing how each column looks.** The plan says what a field *means*,
+not how its cell should render. For most columns plain text is right and
+there is nothing to decide. Where there is:
+
+- [`cell-patterns.md`](cell-patterns.md) is the catalogue, each
+  pattern with the parts a first attempt gets wrong.
+  They are markup to copy, not components to import.
+- If the developer doesn't have a preference, don't pick for them and
+  don't guess: follow [`column-options.md`](column-options.md) to build
+  a short page of numbered options over the same sample rows, and let
+  them choose.
+- Any colour involved: [`design-language.md`](design-language.md). Most
+  values should stay grey, and colour is never the only signal.
 
 ## How a list opens a record
 
 Every list opens its records one of a few ways, and says which on its
-`DataTable` with `opens` (4.65), so a change to how the foundation opens
+`DataTable` with `opens`, so a change to how the foundation opens
 a record reaches every list on the next upgrade. With
 `uiFoundation({ requireTableOpens: true })` in `eslint.config.js` (the
 template has it), a `DataTable` without `opens` fails lint. The plan
@@ -925,7 +973,7 @@ plan allows it.
 <Board renderCard={(item) => <RecordLink to={`/<entity>/${item.id}`}>{item.name}</RecordLink>} … />
 ```
 
-**A list that isn't the record's parent route** (4.71: the list at
+**A list that isn't the record's parent route** (the list at
 `/<entity>/list`, the record at `/<entity>/:id`): the route the two share
 wraps them, with `listPath`. The list's own route has no element (the
 `list` prop draws it), and every other child is a record. Opened from
@@ -940,7 +988,7 @@ the list, the record is the dialog over it; closing goes back to
 },
 ```
 
-**A sub-record over its parent's page** (4.71: a parent's documents,
+**A sub-record over its parent's page** (a parent's documents,
 `/<parents>/7/<children>/31`): the same dialog one level down. The
 parent's page is the `list`, the sub-record its child, and
 `fullPage={false}`, so a reload of the sub-record's address is the dialog
@@ -960,7 +1008,7 @@ the dialog.
 { path: '<parents>/:id/edit', element: <<Parent>FormRoute /> },   // a sibling, not a child
 ```
 
-**A new record over its list** (4.82), for a create form of up to about
+**A new record over its list**, for a create form of up to about
 8 fields (a longer one is its own page, `<entity>/new` beside the list as
 above): the list's `new` child route, named by `newPath`, is a
 `FormDialog` over the list, from the list's New button
@@ -982,8 +1030,8 @@ over the same list, in the form's history entry.
 // New<Entity>Route: the form's own fields and react-hook-form, in FormDialog (no `open`).
 const created = useNewRecordDialog()
 <FormDialog
-  title="New <entity>"
-  submitLabel="Add <entity>"
+  title="New <Entity>"
+  submitLabel="Add <Entity>"
   onSubmit={form.handleSubmit(async (values) => {
     const saved = await create.mutateAsync(values)
     created?.openRecord(`/<entity>/${saved.id}`)
@@ -1011,16 +1059,6 @@ const created = useNewRecordDialog()
   other than its list (a link on the home page). With `fullPage={false}`
   there is no page: a deep link or a link from another page opens the
   dialog over its list, at the list's plain address.
-- **The list stays as it was**: mounted underneath, reading the address
-  it was opened from, so its search, filters, sort, page and scroll are
-  unchanged when the dialog closes.
-- **Closing**: Back, Esc, the backdrop and the dialog's Close all go
-  back to the list's entry (over every record opened inside the dialog,
-  a linked one included). Focus goes back to the row, on its own link
-  when it has one, or the link that opened it.
-- **Open Full Page**, in the dialog's bar (not with `fullPage={false}`),
-  swaps the entry for the same address as the full page; Back from there
-  is the list.
 - **The view is unchanged.** `EntityView` sees the dialog: its title
   names the dialog (`label` names it while loading or on an error), the
   back link gives way to the dialog's bar, and not found's "Back to …"
@@ -1029,7 +1067,7 @@ const created = useNewRecordDialog()
   `useRecordDialog()` (null on the full page) for its `close`, as a
   Delete should, rather than navigating to the list:
   `onDeleted={() => (dialog ? dialog.close() : navigate('/<entity>'))}`.
-- Specs: the package's own (`e2e/record-dialog.spec.ts`) cover the
+- Specs: the package's own cover the
   dialog. An app's spec opens a record from the list, checks the
   address, closes it with Escape, and checks the list's filter survived.
 
@@ -1045,19 +1083,19 @@ A record uses the parts it has, in this order:
 - **Header**: the title, edited in place (`titleEdit`); under it a
   one-line summary field, edited in place (`subtitle`: a goal, a
   description); beside it the status as a quick action (a picker saved
-  at once), drawn as its `StatusMark` (4.98: icon, colour and word), and
+  at once), drawn as its `StatusMark` (icon, colour and word), and
   other status-like fields as badges, edited in place. A
   record with a face or a mark of its own (a person's avatar, a
-  service's logo, a cover) puts it left of all that (`leading`, 4.76).
-  `actions` holds the record's own commands in words (Run, New visit),
+  service's logo, a cover) puts it left of all that (`leading`).
+  `actions` holds the record's own commands in words (Run, New Visit),
   then Delete (soft, with Undo) as an `IconAction`, never Edit. Print
   notes is an icon of EntityView's own.
 - **Strip**: the record's key numbers and ratings (`strip`, a
-  `KeyStats`, as wide as its numbers since 4.98), each edited in place
+  `KeyStats`, as wide as its numbers), each edited in place
   where it's shown. An inline `EditableValue` there keeps its pencil's room
-  at rest (4.115), so nothing moves on hover; an app's own wrapping row of
+  at rest, so nothing moves on hover; an app's own wrapping row of
   inline values passes `keepPencilRoom` for the same.
-- **Sections** (4.98, no right rail): one column. The label/value facts
+- **Sections** (no right rail): one column. The label/value facts
   are placed `rail`, which makes them the last tab, Details, on a record
   with tabs, and keeps them in the column on one without; the long text
   (notes, a body) is folded by its toggle headings (`foldKey`;
@@ -1066,29 +1104,28 @@ A record uses the parts it has, in this order:
   facts may sit beside the one tab it explains (placed `rail` with that
   `tab`), never free text. Every value edited in place (`edit`), a
   sub-item list included (`editInPlace({ kind: 'list' })`).
-- **Tabs** (4.76), for a main column with **three or more groups of
+- **Tabs**, for a main column with **three or more groups of
   long content** (the steps, where it's used, the reasoning): a `tab` on
   each main section groups them under a tab list, the selected one in
   `?tab=`. Give each tab that holds records its count (`tabCounts={{
   Updates: updates.length }}`); the bar sticks as the record scrolls,
-  with the record's name above it (4.101). Fewer groups stay one scroll, folded by headings. A record's
+  with the record's name above it. Fewer groups stay one scroll, folded by headings. A record's
   Notes stay outside the tabs, above them, unless they are one tab's
   content; the strip never goes in a tab, and the facts are a tab of
   their own (Details, `detailsTab` to name it otherwise).
-- **Facts beside their labels** (`railFields`, `beside` by default since
-  4.81), so the short facts read as a list of pairs rather than a column
+- **Facts beside their labels** (`railFields`, `beside` by default), so the short facts read as a list of pairs rather than a column
   of labels; keep labels to a word or two.
-- **The facts rail** (4.106, record standard A1): `factsRail` on the
+- **The facts rail**: `factsRail` on the
   view puts the record's short facts in a 300px column beside the
   record's body where the view has room (60rem: a laptop's page, a record
   dialog), so the page doesn't end 900px in. The strip stays above it at
   full width, and the rail starts level with the first content under the
   strip: the open tab's first section (beside the tab's content, not its
-  bar), or the first card when cards come before the tabs (4.108). Beside
+  bar), or the first card when cards come before the tabs. Beside
   the rail the record's cards fill the column up to it, as wide as the
   tab bar (Details too, which elsewhere keeps a 42rem reading width), and
-  their rows keep a compact 10rem label so the values get the rest
-  (4.112). Only short values go in it,
+  their rows keep a compact 10rem label so the values get the rest.
+  Only short values go in it,
   and the API holds to that: a rail section is `facts`, not `fields`,
   each fact one of a few kinds, never free markup:
 
@@ -1116,7 +1153,7 @@ A record uses the parts it has, in this order:
     nothing isn't drawn. On a phone (or a view under 60rem) the rail's
     sections are back in Details, as rows.
   - `edit` works on a fact as on a field; at rest it's drawn by its kind.
-  - **The status first** (4.115): a record's status is the first fact at
+  - **The status first**: a record's status is the first fact at
     the top of the right rail, edited in place there; a status that
     changes only through an action stays read-only, with the action as a
     small button under it and a tooltip saying why. Mark it
@@ -1138,9 +1175,9 @@ A record uses the parts it has, in this order:
     `hint` is an info button after the value, its words in a tooltip on
     hover and keyboard focus, and a line under the value on a touch
     screen. Both are drawn in Details too, where the rail folds.
-  - A `badges` item may be `{ label, icon }` (4.115): the icon (a
+  - A `badges` item may be `{ label, icon }`: the icon (a
     component or a node) before the label, in the muted tone. With
-    `tone` (4.123: `success`, `warning`, `info`, `destructive`) a label
+    `tone` (`success`, `warning`, `info`, `destructive`) a label
     that is a state ("Pinned", "Overdue") is the outline badge in that
     tone, its icon too; the word still says it. A flag that's set reads
     at a glance this way, edited in place as any badges fact (its `edit`
@@ -1154,11 +1191,11 @@ A record uses the parts it has, in this order:
     { label: 'Flags', kind: 'badges', items: record.flags.map((flag) => FLAG_BADGE[flag]), emptyLabel: 'None',
       edit: editInPlace({ kind: 'multi', value: record.flags, save: (flags) => save({ flags }), control: (props) => <MultiPick options={FLAGS} value={props.value} onValueChange={props.onChange} aria-label={props.label} aria-describedby={props.describedBy} /> }) },
     ```
-  - **A rating** (4.117) is `kind: 'rating'`, drawn as the list's cells
+  - **A rating** is `kind: 'rating'`, drawn as the list's cells
     draw it, never as "4 of 5" text: stars (the default) or hearts for a
     score out of `max` (5), the step bar for a quality level. `null` is
     empty (its `emptyLabel`). A score the person gives (my rating) is
-    edited in place with **`inPlace.rating`** (4.127): the stars are then
+    edited in place with **`inPlace.rating`**: the stars are then
     the value, a click on one saves it, a second press on the set one
     saves `null`, and an empty one shows five empty stars to click rather
     than its `emptyLabel`. A score that isn't the person's to set (a
@@ -1174,7 +1211,7 @@ A record uses the parts it has, in this order:
 
     A quality level drawn as the step bar is an enum, not a score: edit
     it with `inPlace.select` over its levels.
-  - **A yes/no** (4.120) is `kind: 'switch'`, a switch toggled where it
+  - **A yes/no** is `kind: 'switch'`, a switch toggled where it
     is, named by the label, never a two-choice select. Return the save's
     promise: the switch shows the new state while it runs and goes back
     if it fails. `on`/`off` words are optional (both or neither):
@@ -1185,30 +1222,30 @@ A record uses the parts it has, in this order:
     ```
   - **The strip's values** take `info` (a tooltip on an info button) and
     `action` (a small button under the value) as rail facts take `hint`
-    and `action` (4.120); a stat's `hint` stays its caption line. A
+    and `action`; a stat's `hint` stays its caption line. A
     header button that needs a short line under it ("12 searches left")
     is wrapped in `<ActionHint hint="…">`. Inline-edited header badges
     keep their pencil's room on their own.
-- **A tiny record** (4.98: a few fields and no notes, like a lookup's
+- **A tiny record** (a few fields and no notes, like a lookup's
   row) opens as a small card: `RecordDialogRoute look="card"`, usually
   with `fullPage={false}`. A 420px dialog (a sheet on a phone), its
   title, Delete, Open full page and Close on one line, its facts as
-  plain rows. The view's `strip` (KeyStats) is left out in the card
-  (4.105); `cardStrip` keeps it, and the record's own page still shows it.
-- **Empty fields folded** (`emptyFields="fold"`, 4.81): each card shows
+  plain rows. The view's `strip` (KeyStats) is left out in the card;
+  `cardStrip` keeps it, and the record's own page still shows it.
+- **Empty fields folded** (`emptyFields="fold"`): each card shows
   what's known, then "N empty" opens the rest, still edited in place.
 - **A few equal things** (a plan's phases, a price at each store, a
-  handful of options) are one `EqualItems` (4.93) in a section, one look
+  handful of options) are one `EqualItems` in a section, one look
   per set: `cards` for little to say about each, `table` for things
   compared on the same values, `featured` when one is current or best,
-  `panels` when each has several details, `stepper` (4.127) for a
+  `panels` when each has several details, `stepper` for a
   sequence with a current step whose items are looked at one at a time
   (numbered steps picking the one panel shown; design-language.md "A few
   equal things"). The same steps read only, on a list card with a
-  caption under the current one ("Day 12"), are `StepTrack` (4.128).
+  caption under the current one ("Day 12"), are `StepTrack`.
   Never hand-made cards, a grid or a stepper of their own. An item
   edited or removed on its own carries its editor as `content` and its
-  Edit and Remove as `actions` (4.94), `wide` while the editor is open;
+  Edit and Remove as `actions`, `wide` while the editor is open;
   never an editor put in a field's value.
 - **A big record's own parts** (a drawing, a player, a checklist of
   documents) are sections in the view, not a screen of their own.
@@ -1220,7 +1257,7 @@ place yet; the plan says which, and the gap is raised for the package.
 
 Every create and edit form is an `EntityForm` (a page) or a `FormDialog`
 (up to about eight fields, over its list), and every one has the same
-shape (4.85):
+shape:
 
 - **One column, short fields sharing a row.** Give each `Field` its
   `size` and the form lays the rows out itself, from the order: `s` a
@@ -1232,21 +1269,17 @@ shape (4.85):
   short one alone where a pairing would read wrong. Under 48rem every
   field takes its own row but two dates or two numbers (`DateField` says
   so itself; a date picker of your own with `kind="date"`). A choice
-  (`ChoiceButtons`, found by itself, 4.98, or a `ToggleGroup` that is the
-  field's own control, 4.123) shares a row only with another
+  (`ChoiceButtons`, found by itself, or a `ToggleGroup` that is the
+  field's own control) shares a row only with another
   choice, two to a row; on a phone two stay side by side while both
   groups fit, and go one per row when they don't. Never a hand-made
-  `sm:grid-cols-2` row. The picked option is in the theme colour (4.105);
+  `sm:grid-cols-2` row. The picked option is in the theme colour;
   a status choice gives each option its `kind`, so its icons are
   `StatusMark`'s in their colours (below).
 - **Order:** required first, the status next, long text last.
 - **Notes** (a Markdown long text: notes, a description, a body) are a
-  `RichTextEditor` with `toolbar="floating"` on the form as in place
-  (4.127): no bar above the text, the formats over selected words, every
-  block in the slash menu ("/"), and Image, Full Screen and (on a narrow
-  or touch screen) Indent and Outdent on the small "Editor tools" strip
-  while it has focus. On a phone the row pinned to the keyboard carries
-  them, Image included, at 40px. Give it the app's `upload` (the one
+  `RichTextEditor` with `toolbar="floating"` on the form as in place.
+  Give it the app's `upload` (the one
   `ImageField` takes) for the Image button and for pasted and dropped
   pictures, which go in as `![](url)`; a refused or failed picture says
   why in a toast. Without `upload` there's no Image button, and a picture
@@ -1263,28 +1296,27 @@ shape (4.85):
 - **Messages say what to do**, in the app's voice: "Give it a title",
   "Enter a full address, starting https://", never "Title is required".
 - **A status** is an `OptionSelect` with the same `render` (its
-  `StatusMark`, 4.98) as its cell and the record: `inPlace.select`'s
+  `StatusMark`) as its cell and the record: `inPlace.select`'s
   `{ value, label }` options. A status of two to four is `ChoiceButtons`
-  (4.105) with each option's `kind`, its status kind:
+  with each option's `kind`, its status kind:
   `{ value: 'done', label: 'Done', kind: 'done' }` draws the kind's icon
   in its colour before the word, the same as the record's `StatusMark`
   (`icon` overrides the kind's icon; an `icon` with no `kind` stays
   uncoloured). Map the enum to kinds once and use that map for both.
   A status of five or more is an `OptionSelect` with the same `kind` on
-  each option (4.109): the kind's icon in its colour before the words, on
+  each option: the kind's icon in its colour before the words, on
   the trigger and on each item in its list (`inPlace.select` passes them
   through). With `kind`, leave out a `render` that draws its own icon
   (a `StatusMark`), or the option shows two.
   A status picked several at once (a multi-value status filter, a
-  "statuses" field) is a `MultiChoice` given those same options (4.130):
+  "statuses" field) is a `MultiChoice` given those same options:
   `options={STATUS_OPTIONS}` in place of bare values, so each option's
   kind icon (or `icon`) is drawn before its words in the list, on its
   chip, and on a filter's summary ("Status: ● Active +1"), and its
   `label` names it with no `getLabel`.
-- **The controls** (4.88): a choice of two to four short options is
+- **The controls**: a choice of two to four short options is
   `ChoiceButtons` (`inPlace.choice` in place), five or more an
-  `OptionSelect`. A date is `DateField`, typed ("3/14", "Mar 14",
-  "today") with the calendar on its button. A single reference is
+  `OptionSelect`. A date is `DateField`. A single reference is
   `ReferenceCombobox` (`inPlace.reference` in place), several are
   `MultiReference`, and a set the app loads whole (tags, a few dozen
   records from its list query) is `MultiPick`, whose chips wrap and which
@@ -1303,12 +1335,12 @@ shape (4.85):
   "2 to fix". Both come free; the form draws a failed save as a `Notice`
   with Try Again in its bar, which sticks to the window's bottom on a long
   form.
-- **The words:** "New book", "Add book" (the word Add on every create
+- **The words:** "New Book", "Add Book" (the word Add on every create
   form), and the toast after it "Added The Long Walk".
 
 ### Dialogs
 
-Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
+Every dialog is one of three widths, `DialogContent`'s `size`:
 
 | `size` | Width | On a phone (under 48rem) | Use it for |
 | --- | --- | --- | --- |
@@ -1317,7 +1349,7 @@ Every dialog is one of three widths, `DialogContent`'s `size` (4.82):
 | `record` | 1,120px | full width, with a 1rem margin round it | a record over its list (`RecordDialogRoute`, which is this size) |
 
 A tiny record (a few fields, no notes) opens in the `confirm` width
-instead, as a small card: `RecordDialogRoute look="card"` (4.98).
+instead, as a small card: `RecordDialogRoute look="card"`.
 
 - **A dialog's title and buttons are Title Case** ("New Book", "Keep
   Editing"); a question or a message in it is a sentence ("Discard your
@@ -1343,8 +1375,8 @@ instead, as a small card: `RecordDialogRoute look="card"` (4.98).
 
 ### Toasts and feedback
 
-What the app says after something happens (the dialogs and feedback
-standard, 4.90). The rule: **a toast is for what happened out of
+What the app says after something happens.
+The rule: **a toast is for what happened out of
 sight.** What happened where the person is looking says so there.
 
 | What happened | What says so |
@@ -1369,10 +1401,10 @@ sight.** What happened where the person is looking says so there.
   `open`/`onOpenChange`, opened by a `DataTable` `rowActions` entry's
   `onSelect` (a row's ⋯ menu). `verb="Retire"` for a retire.
   Never a delete without a confirm, never a hand-written dialog. Its icon
-  is named "Delete <name>" (4.123), so several on one page (a record's,
+  is named "Delete <name>", so several on one page (a record's,
   each of its rows') are told apart; its tooltip says "Delete". A test
   finds one by `getByRole('button', { name: 'Delete The Long Walk' })`.
-- **A delete that asks a reason: `DeleteAction reason`** (4.96). One
+- **A delete that asks a reason: `DeleteAction reason`**. One
   optional field between the sentence and the buttons, a "Why" box:
   `reason={{ label: 'Why remove it?', hint: 'Kept with its history.' }}`
   and `onDelete={(why) => remove({ id, reason: why })}`, `why` trimmed
@@ -1391,12 +1423,7 @@ sight.** What happened where the person is looking says so there.
   `FormDialog` opened from a page), the toast says "Added The Long Walk"
   with an **Open** link to the new record; never a hand-built sonner
   toast. `open` is a path (anything `Link`'s `to` takes) or
-  `{ to, label }` for another word ("View"). It is a real link, named
-  "Open The Long Walk" for a screen reader, reached from the keyboard
-  (Alt+T to the toasts, then Tab), and closes the toast as it goes; the
-  toast keeps its 4 seconds. With `undo` too, both show, Open first. A
-  create that lands on the record's own
-  page doesn't need it: the person is already there.
+  `{ to, label }` for another word ("View"). With `undo` too, both show, Open first.
 - **An error stays beside what failed**: `const save = useAction(mutation)`,
   `save.run(…)` on the button (`disabled={save.pending}`, a `Spinner` in
   it), `<ActionError action={save} />` next to it. Never
@@ -1409,15 +1436,9 @@ sight.** What happened where the person is looking says so there.
 
 ## What not to copy
 
-- `widget-quick-actions.tsx`, its `quick action: …` specs and
-  `useSaveWidgetField` unless the plan has a `Quick actions` line (or,
-  for the hook, a `yes/no` marked `toggle`). Copy only the controls for
-  the fields the line names: a plan naming only its yes/no gets the
-  switch, and the checklist's checkboxes are left out.
-- `widgetEdits`, `useEditWidgetField`, `widget-edit-in-place.spec.ts` and
-  the in-place a11y block unless the plan has an `Edit in place` line,
-  and then only for the fields it names.
-
+- Quick actions and editing in place (their files, hooks, specs and the
+  in-place a11y block) unless the plan has the line, and then only for
+  the fields it names (step 6).
 - `width="full"` on `DataTable` unless the plan's List screen says
   `Width: full` (`content`, the default, is right for almost every list).
 - The saved-views row in `widgets-table.tsx` (`VIEWS`, the "Saved views"
@@ -1426,23 +1447,21 @@ sight.** What happened where the person is looking says so there.
   takes the views, `activeView` says which one the filters are, and that
   view's `columns` go to `DataTable`'s `visibleColumns` (the table's own
   default list when no view is active, or `undefined` for every column).
-  Views fill the filters (4.105): write each view's whole meaning in its
+  Views fill the filters: write each view's whole meaning in its
   `filters` and `multiFilters` (a "Current" view names its statuses, never
   `{}` with the server's default doing the rest), name the one the list
   opens on with `defaultView`, and put what no control can show (a
   computed "overdue") in the view's `rule` (cell-patterns.md "Saved views
-  are pills"). The default view's `sort` is its plain address's too
-  (4.123): pressing it writes no `?sort=`, and the rows keep that order. A view the plan says
+  are pills"). The default view's `sort` is its plain address's too:
+  pressing it writes no `?sort=`, and the rows keep that order. A view the plan says
   shows a count gets `count` from the app's own query, passed to
   `DataTable`'s `views` (cell-patterns.md "A view can carry a count").
 - `src/api/gateway/widgets.ts`, `src/mocks/data.ts`, `src/mocks/handlers.ts`
   are demo-domain content — write the entity's own versions rather than
   adapting these by find-and-replace.
 - The composites (`DataTable`, `EntityForm`, `EntityView`, `Markdown`,
-  `ErrorState`, `AppShell`) are the foundation's and shared by every app. If a new entity needs a
-  capability they don't have (a new field-type widget, say), don't copy
-  one into `src/` to change it: raise it for the foundation (AGENTS.md
-  "Changing the Foundation") and build the screen once the release ships.
+  `ErrorState`, `AppShell`): never copied into `src/` to change one
+  (AGENTS.md "Hard Rules" and "Changing the Foundation").
 
 ## After a commit, in the backend
 
@@ -1466,16 +1485,11 @@ asyncio is a `MissingGreenlet` and a 500.
 ## Saves that don't overwrite
 
 A record edited in more than one place (a laptop tab, a phone, an AI chat
-through MCP) needs a version, or the last save wins: a phone left open on
-a note, typed into after the laptop changed it, replaces the laptop's
-work. The fix is optimistic concurrency, the same for every entity:
+through MCP) needs a version, or the last save wins. The fix is optimistic concurrency, the same for every entity:
 
 - **The record carries its version: `updatedAt`** (`updated_at`, a
   `timestamptz` every write sets with `foundation_backend.versions.touch()`,
-  never null, commented in its migration). Not a counter or an ETag: most
-  tables already have one, a person or an AI reading the row knows what it
-  means, and it rides in the JSON body, where an MCP tool call can send it
-  back too (an `If-Match` header can't reach a chat). It's compared for
+  never null, commented in its migration). It's compared for
   equality, never ordered, so clocks don't matter.
 - **An update may send the version it was built on: `baseUpdatedAt`**, an
   optional field of `<Entity>Update` that isn't a column. The router locks
@@ -1523,9 +1537,9 @@ work. The fix is optimistic concurrency, the same for every entity:
   `baseUpdatedAt`, and a 409 comes back as a refusal that says to fetch
   the record again. `edit_text` is safe without it (its `old` text must
   still be there).
-- **Copy:** `template/backend/app/routers/widgets.py` (`update_widget`),
+- **Copy:** `backend/app/routers/widgets.py` (`update_widget`),
   migration `0017_widget_updated_at.py`, `WidgetOut.updated_at` and
-  `WidgetUpdate.base_updated_at` in `app/schemas.py`, the PATCH mock in
+  `WidgetUpdate.base_updated_at` in `backend/app/schemas.py`, the PATCH mock in
   `src/mocks/handlers.ts`, `withVersion` in `use-widgets.ts`,
   `useFormVersion` in `widget-form.tsx`, and the "two writers" specs in
   `e2e/widget-edit-in-place.spec.ts` and `e2e/widget-form.spec.ts`.
@@ -1541,7 +1555,7 @@ soft one; copy it.
   - *Model and migration:* a nullable `deleted_at timestamptz`, commented
     in the migration (null means live; set by DELETE, cleared by restore).
     It is never on the wire. `backend/app/models.py`,
-    `migrations/versions/0012_widget_soft_delete.py`.
+    `backend/migrations/versions/0012_widget_soft_delete.py`.
   - *Router:* `DELETE /<entity>/{id}` sets `deleted_at`; `POST
     /<entity>/{id}/restore` clears it and returns the record (404 unless
     it is deleted); the list leaves deleted records out unless asked
@@ -1551,15 +1565,14 @@ soft one; copy it.
   - *Contract, gateway, mocks:* `restore<Entity>` in `openapi.yaml`, the
     gateway's `restore<Entity>`, a `useRestore<Entity>Mutation`, and mocks
     that move the record aside (`deletedWidgets` in `src/mocks/data.ts`).
-  - *Screens:* `DeleteAction kind="soft"`: the dialog says it can be
-    undone, and the toast "Deleted <name>" carries an Undo that restores
-    (`onRestore`; `delete-widget-action.tsx`).
+  - *Screens:* `DeleteAction kind="soft"` with `onRestore`
+    (`delete-widget-action.tsx`; "Toasts and feedback").
   - *MCP:* give the entity's `McpEntity` `delete` and `restore` (and add
     `deleted` to its filters). Chats then get `delete(url)`, marked
     destructive so the chat asks before each call, and `restore(url)`.
     Both are logged with the whole record.
 - **Hard-deleted:** `DELETE` removes the row. The screens use
-  `DeleteAction kind="hard"`: "This can't be undone.", and no Undo. Give the entity no `delete`
+  `DeleteAction kind="hard"` ("Toasts and feedback"). Give the entity no `delete`
   in `mcp_entities.py`: a chat that read planted instructions would
   destroy data that only a backup returns.
 
@@ -1568,9 +1581,7 @@ soft one; copy it.
 Some fields the API takes on create and update are for a script, not for
 the people or chats using the app: an importer that runs again and again
 stores each record's id in the source it came from, so a re-run finds the
-record even after it's renamed. The API has to accept that id, for the
-importer. A chat that changed or cleared it would break the matching, and
-the next run would create the record a second time.
+record even after it's renamed. A chat that changed or cleared it would break the matching.
 
 - *MCP:* list the field's wire name in the entity's `McpEntity`
   `script_only` (`script_only=("sourceId",)`). Chats still read it
@@ -1600,7 +1611,7 @@ entity with no group is searched only when no group is given.
 
 ## What a chat is told about an entity
 
-Four more things an app sets for AI chats (4.71), each in
+Four more things an app sets for AI chats, each in
 `backend/app/mcp_entities.py`:
 
 - **`description`** on the `McpEntity`: what the entity is, in a sentence
@@ -1615,7 +1626,7 @@ Four more things an app sets for AI chats (4.71), each in
   end. It saves and logs as `update` does, so a long note isn't sent back
   whole to change a line. A table's widths comment (design-language.md
   "Written text (notes)") is hidden from every read answer and kept
-  in what's stored, so an edit never drops it (4.94); `search` leaves
+  in what's stored, so an edit never drops it; `search` leaves
   out a record whose only match is inside it. Each must be a text field of `update_schema`
   and not `script_only`; the backend refuses to start otherwise.
 - **The server's instructions** a chat gets when it connects:
@@ -1648,7 +1659,7 @@ An app put behind an identity-aware proxy that has its own sign-in
 (Cloudflare Access is the usual one; an OAuth proxy or a VPN gateway's
 portal works the same way) can outlive that sign-in: the page stays open,
 the proxy's session lapses, and the next request gets the proxy's answer
-instead of the app's. The foundation handles it (4.107), with nothing for
+instead of the app's. The foundation handles it, with nothing for
 the app to write:
 
 - **The request asks for JSON as a script.** `safeFetch` sends
@@ -1676,6 +1687,3 @@ the app to write:
   proxy isn't part of the contract. `proxyAuthError()` (from
   `@tristan2828/ui-foundation/gateway`) is the error itself, for a mock or
   a test of a screen's state.
-- **On the proxy's side**, nothing is required. Where it offers a 401 for
-  scripts instead of a redirect (Cloudflare Access does for requests with
-  `X-Requested-With`), either answer works.

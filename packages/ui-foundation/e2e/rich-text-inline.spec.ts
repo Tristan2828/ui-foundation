@@ -100,6 +100,31 @@ test.describe('rich text edited inline', () => {
     await expect(page.getByTestId('saved-notes')).toContainText('Then the desks.\n\n## Later', { timeout: 5000 })
   })
 
+  // A section's card clips what overflows it (`overflow-hidden`): a menu
+  // opened on the note's last line once showed only its first item, so
+  // Toggle Heading 2 and 3 looked missing. Each item is the element on top
+  // at its own centre, so none is cut off.
+  test('on the last line of a note every item of the menu shows, none cut off by the card', async ({ page }) => {
+    await openInline(page)
+    await caretAtEnd(page)
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('/toggle')
+    const options = menu(page).getByRole('option')
+    await expect(options).toHaveText(['Toggle Heading 1', 'Toggle Heading 2', 'Toggle Heading 3'])
+    const covered = await options.evaluateAll((items) =>
+      items
+        .filter((item) => {
+          const box = item.getBoundingClientRect()
+          return !item.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2))
+        })
+        .map((item) => item.textContent),
+    )
+    expect(covered).toEqual([])
+    await options.nth(1).click()
+    await page.keyboard.type('Later')
+    await expect(page.getByTestId('saved-notes')).toContainText('## Later {toggle="true"}', { timeout: 5000 })
+  })
+
   test('leaving the page saves first and goes on, with no prompt', async ({ page }) => {
     await openInline(page)
     await caretAtEnd(page)

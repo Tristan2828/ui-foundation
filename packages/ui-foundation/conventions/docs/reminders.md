@@ -34,8 +34,7 @@ const push = usePushPermission()
   says what reminders are first; `enable()` asks then, from the click.
 - **Put it where reminders are set**: the top of the reminders list, or a
   settings page. One per device: each phone or browser allows its own.
-- **Every state says what to do next.** `AllowReminders` shows them all
-  (the package's fixtures, `app/AllowReminders`):
+- **Every state says what to do next.** `AllowReminders` shows them all:
 
 | `status` | Means | Shows |
 |---|---|---|
@@ -129,7 +128,7 @@ Scope it to the signed-in user, as Widgets are.
   that's the `tzdata` package, which the backend doesn't install: a
   Windows dev machine reads only `UTC` until it's added.
 
-## Repeating reminders (4.95)
+## Repeating reminders
 
 A weekday set and one time is the simple schedule. For anything more
 (every 2nd Tuesday, the last day of the month, several times a day, an
@@ -145,11 +144,11 @@ the same rules and agree on every next occurrence.
   `rule` is RFC 5545's RRULE without DTSTART (`FREQ=MONTHLY;BYDAY=2TU`):
   FREQ daily to yearly, INTERVAL, BYDAY with an nth (`2TU`, `-1FR`),
   BYMONTHDAY (`-1` the last day), BYMONTH, UNTIL (a date) or COUNT, and
-  WKST (4.119, below).
+  WKST (below).
   `start` is the first day it can fall on; each of `times` is an
   occurrence on every day the rule falls on, read in `timeZone`. A day a
   month lacks is skipped (the 31st, Feb 29), as in RFC 5545.
-- **Which day a week starts on (WKST, 4.119)**: weeks start on Monday
+- **Which day a week starts on (WKST)**: weeks start on Monday
   unless the rule says `WKST=SU` (or any weekday; `WKST=MO` is the
   default and isn't stored). It moves only an every-N-weeks rule with
   days: from Wednesday 2026-11-04, `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE`
@@ -164,7 +163,7 @@ the same rules and agree on every next occurrence.
   where it matters. A rule stored without WKST keeps counting from
   Monday; an app that wants its old every-N-weeks rules counted from
   Sunday rewrites them in a migration of its own (append `;WKST=SU`).
-  The rule pattern in `openapi/foundation.yaml` allows WKST since 4.119:
+  The rule pattern in `openapi/foundation.yaml` allows WKST:
   an app copies the new `Recurrence` when it stores one (an older copy
   still passes `check-contract`, but its mocks and spec refuse WKST).
 - **The columns**: the app's reminders model inherits
@@ -173,7 +172,7 @@ the same rules and agree on every next occurrence.
   `last_sent_at`, `done_occurrence`, `done_at` (timestamps with time
   zone), `nag_count` (integer, default 0), `nag_every_minutes` and
   `nag_limit` (integers, null for no nagging). `days` and `time_of_day`
-  become nullable. Hand the model to the job as before
+  become nullable. Hand the model to the job
   (`reminders.register(model=MyReminder)`).
 - **What the job does with a row whose `recurrence` is set**: each
   occurrence is due from its time until 15 minutes have passed, so
@@ -182,7 +181,7 @@ the same rules and agree on every next occurrence.
   every `nag_every_minutes`, at most `nag_limit` times (3 when only the
   interval is set). The next occurrence coming round ends the wait; a
   `fromCompletion` rule waits for done instead. A row with no
-  `recurrence` is the weekday set, as before.
+  `recurrence` is the weekday set.
 - **Done**: the app's Done button (or a notification action that calls
   the app) runs `reminders.mark_done(row)` and commits: the occurrence is
   recorded (`done_occurrence`, `done_at`), nagging stops, and the next is
@@ -196,13 +195,10 @@ the same rules and agree on every next occurrence.
   `model_dump(by_alias=True, mode="json")` in `recurrence`.
   `recurrence.as_weekdays(rule)` goes back when a rule is still that
   simple.
-- **On screens**: `RecurrenceField` in the form (a `Controller`; check
-  with `recurrenceProblem`), `inPlace.recurrence` on the view, and in the
-  list `formatRecurrence` for a Repeats column and `nextOccurrence` with
-  `formatOccurrence` for a Next one (cell-patterns.md "A repeat and its
-  next time").
+- **On screens**: add-an-entity.md "A `recurrence`" (the form and the
+  view) and cell-patterns.md "A repeat and its next time" (the list).
 - **A record whose times are its own fields** (a calendar event with a
-  start and an end, 4.119): `RecurrenceField times={false}` (and
+  start and an end): `RecurrenceField times={false}` (and
   `inPlace.recurrence({ times: false })`) says only dates: the preview
   lists the next days from today on ("Sun, Nov 15"), the label and the
   box leave the times out, and "at 9am" typed is refused. The value still
@@ -211,7 +207,7 @@ the same rules and agree on every next occurrence.
   calendar). In the list, `formatRecurrence(value, { times: false })` and
   `formatOccurrence(next, zone, { time: false })`.
 
-## A Done button on the notification (4.104)
+## A Done button on the notification
 
 A repeating reminder's push can carry a **Done** button that marks the
 occurrence done without opening the app. The app names its own endpoint;
@@ -254,8 +250,7 @@ reminders.register(
   renotify=True, action=PushAction(...))` does the same for an app's own
   pushes.
 - **A weekday-set reminder** (no `recurrence`) has no occurrence to mark,
-  so it gets no button. Left out, `done_action` adds none: pushes look as
-  before.
+  so it gets no button. Left out, `done_action` adds none.
 
 ## Testing
 

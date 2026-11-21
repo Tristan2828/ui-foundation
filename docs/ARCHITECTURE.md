@@ -28,29 +28,23 @@ Three things ship from this repo, under one version number:
 
 ### Why shared code (3.0, 2026-09-28)
 
-Until 3.0 the foundation was a shadcn registry. Apps installed files once
-and owned them, so no later fix reached an app unless someone copied it in
-by hand. The first real app (Game List) showed what that costs. It stayed
-on `v2.1.0` through seven releases and rebuilt things that had already
-shipped better here. It carried 16 declared forks, and it only caught up
-through a drift check built to make the divergence visible. "Owning every
-file" had meant maintaining every file twice.
+When apps install files once and own them (a shadcn registry, as this was
+before 3.0), no later fix reaches an app unless someone copies it in by
+hand, and "owning every file" means maintaining every file twice.
 
-The original case for a registry over npm was editability: shadcn
-components belong in the repo, not in a `node_modules` black box. That
-still holds for an app's *own* components. It stopped holding for the
-shared layer, because nobody edits that per app on purpose. They fork it
-by accident. So the shared layer is now a package, and each app keeps
+Editability, shadcn components in the repo and not in a `node_modules`
+black box, still holds for an app's *own* components. It doesn't hold for
+the shared layer, because nobody edits that per app on purpose. They fork
+it by accident. So the shared layer is a package, and each app keeps
 only what is genuinely its own: `openapi.yaml`, routes, nav, mocks,
 entities and backend.
 
 What it costs, and how the cost is kept small:
 
 - **An app can't edit a package component.** It configures one through
-  props and slots (`AppShell`'s `nav`/`sidebarExtra`/`defaultSidebarOpen`,
-  `EntityForm`'s `danger`, `LoginRoute`'s `registerPath`). Or it builds its
-  own component in `src/` on top of the package's exports. Or it raises the
-  change here. Every one of those props came from a real fork in Game List.
+  props and slots, builds its own component in `src/` on top of the
+  package's exports, or raises the change here (the app rules' "Changing
+  the Foundation", `packages/ui-foundation/conventions/AGENTS.md`).
 - **Lint makes the boundary hold.** Importing the package's internals, or a
   primitive the package ships from the app's own `src/components/ui/`, is
   an error. So "copy it and change it" can't happen quietly.
@@ -63,7 +57,7 @@ What it costs, and how the cost is kept small:
 
 ```
 packages/ui-foundation/     the npm package
-  src/                      components/{ui,app}, auth/, api/, hooks/, mocks/, testing/, routes/ (login, register)
+  src/                      components/{ui,app}, lib/, auth/, api/, gateway.ts, hooks/, error-reporting/, mocks/, testing/, fixtures/, routes/ (login, register)
   styles/                   theme.css (tokens) + index.css (what apps import)
   eslint/                   the shared flat config
   vite/                     buildInfo(): dist/build-info.json and the build's commit/PR
@@ -85,13 +79,10 @@ the template always runs against the package as built from the same
 commit. `npm install` builds the package (a root `postinstall`).
 
 The backend half has no workspace mechanism, so it has a rule instead:
-**install both editable in one pip call**,
-`pip install -e packages/backend-foundation -e 'template/backend[dev]'`
-(from `template/backend/`: `-e ../../packages/backend-foundation -e ".[dev]"`).
-`template/backend/pyproject.toml` lists `ui-foundation-backend` unpinned,
-and only that call makes it resolve to this commit's folder rather than
-PyPI. `template/backend/scripts/dev.sh`, the cloud session hook and CI's
-`verify-backend` all do it; there is one venv, `template/backend/.venv`.
+**install both editable in one pip call**, into the one venv,
+`template/backend/.venv`
+([the backend package's README](../packages/backend-foundation/README.md)
+"In this repo" has the command and why).
 
 ## The layers (in an app)
 
@@ -120,12 +111,13 @@ src/main.tsx                           FoundationProviders (theme, query client,
   `AppError` and `QuerySpec`. Entity types pass through from the generated
   schema, with no hand-written domain types or mappers. A backend swap
   changes the gateway and nothing above it.
-- **The contract is split.** `/auth/*`, `/environment` and the error
-  envelopes are the foundation's (`openapi/foundation.yaml`), because the
-  package's own code calls them. An app's spec must contain them unchanged;
-  wording may differ, shapes may not (`ui-foundation check-contract`). A
-  path marked `x-optional` (`/auth/register`, `/environment`) may be left
-  out, with whatever only it uses. Everything else in the spec is the app's.
+- **The contract is split.** `/auth/*`, `/environment`, `/client-errors`,
+  `/push/*` and the error envelopes are the foundation's
+  (`openapi/foundation.yaml`), because the package's own code calls them.
+  An app's spec must contain them unchanged; wording may differ, shapes may
+  not (`ui-foundation check-contract`). A path marked `x-optional` (all but
+  `/auth/login`, `/auth/logout` and `/auth/me`) may be left out, with
+  whatever only it uses. Everything else in the spec is the app's.
 - **Which data the app is on** (3.19). Above the router sit two banners:
   `MockModeBanner` (MSW, from the app's build flag) and
   `DataEnvironmentBanner` (the real backend on data that isn't
@@ -139,25 +131,20 @@ src/main.tsx                           FoundationProviders (theme, query client,
   reference backend refuses `APP_ENV=production` unless it says `real`,
   and `AppShell`'s `version` shows the commit, linking to its PR.
 - **AI chats** (4.2, off by default) reach records through `/mcp` and an OAuth 2.1
-  sign-in in the reference backend (`foundation_backend.routers.mcp`, `oauth`). Tools come from
+  sign-in in the backend package (`foundation_backend.routers.mcp`, `oauth`). Tools come from
   one registry of entities (`app/mcp_entities.py`) and call the entities' own router
   functions, so the API's validation and per-user scoping apply. Delete is soft only
   (`deleted_at`, with restore; 4.3, #137), never a hard delete; every write
-  is logged. Stdlib only, by decision (#132): no MCP SDK. What a chat is told
-  is the foundation's too (4.71): the server instructions are written from the
-  registry (what can be deleted, which texts `edit_text` changes) with the app's
-  own after them (`register_instructions`), and an app's `register_answer_note`
-  appends to answers, so apps don't patch the router.
+  is logged. Stdlib only, by decision (#132): no MCP SDK.
 - **Scheduled jobs** (4.7, #136) run inside the app's one process
   (`foundation_backend.jobs`): `register_job`, started from the lifespan when
   `JOBS_ENABLED`. A Postgres advisory lock keeps a job to one run at a
   time across processes, and a run within `every` of the last skips, so
-  replicas don't double up. Every run is a row in `job_runs`;
-  `GET /api/jobs` and `POST /api/jobs/{name}/run` show and start them.
+  replicas don't double up.
 - **Reminders** (4.17, #167, off by default) are Web Push. The package's
   `pwa()` Vite plugin makes the app installable and writes `/push-sw.js`;
   `usePushPermission` and `AllowReminders` subscribe a device on a click.
-  The reference backend sends (`foundation_backend.push`: VAPID and RFC 8291 on
+  The backend package sends (`foundation_backend.push`: VAPID and RFC 8291 on
   `cryptography`, the optional `push` extra, the backend's one crypto
   dependency, by decision on #167), only to the browsers' push services,
   and the `send-reminders` job sends each due row of `reminders`.
@@ -169,143 +156,24 @@ src/main.tsx                           FoundationProviders (theme, query client,
   (python-dateutil) walk only the days, as midnights with no zone, then
   put each day's times on them in the zone, so neither library's time
   zone handling is used and a DST change can't move a time. Both read
-  one fixture (`packages/ui-foundation/tests/fixtures/recurrence-cases.json`).
-  Both libraries check UNTIL only on a day they find, so a rule that can
-  never fall (a 30th of February) is refused before either walks.
-  `RecurrenceField` reads a phrase as it's typed
-  (`lib/recurrence-phrase.ts`); the `send-reminders` job follows a row's
-  `recurrence` occurrence by occurrence (`recurrence.step`). WKST (4.119)
-  is passed to both libraries (Monday when absent, set explicitly, since
-  dateutil's own default follows `calendar.firstweekday()`); a second
-  fixture (`recurrence-shapes.json`) pins 174 rule shapes' days as they
-  were before WKST, and with `WKST=SU`, for both suites. Widening the
-  rule's `pattern` used `x-earlier-patterns`: `check-contract` accepts an
-  app's copy of a component with an earlier pattern listed there, so a
-  pattern can widen without failing every app that copied the schema.
+  one fixture (`packages/ui-foundation/tests/fixtures/recurrence-cases.json`);
+  a second (`recurrence-shapes.json`) pins rule shapes' days for both
+  suites.
 - **Auth** is session cookies, same-origin. `AuthProvider` owns the session
   query, ends the session on any 401, clears user-scoped cache on every
   session change, and tells "logged out" apart from "backend down". Apps
-  read it only through `useAuth()`, the only auth export.
+  read it only through `useAuth()`, the only way to read auth state.
 - **Error reporting** (4.1) is one seam on each side, off until an app
   turns it on: the backend's `report_error` (every 500, and app code),
   which logs and, with a DSN, sends a Sentry envelope; and the package's
   reporter (`src/error-reporting/`), which posts crashes and `server`
   failures to the app's own `POST /client-errors` for the backend to
-  forward. A report holds patterns and ids, never request data. It drops
-  uncaught errors that can't be the app's (4.29, #205: `Script error.`,
-  every frame at a page address or in an extension), and nothing is
-  reported while the page reloads onto a new build: a lazy chunk gone
-  after a deploy (`vite:preloadError`) reloads it once
-  (`lib/stale-chunk-reload.ts`, #206), reporting on or off.
-- **A proxy's sign-in** (4.107). An app behind an identity-aware proxy
-  (Cloudflare Access, say) gets the proxy's page or a redirect once its
-  session lapses. `apiFetch` asks as a script (`Accept`,
-  `X-Requested-With`), doesn't follow redirects, and marks an answer that
-  can't be the app's JSON (`ApiResponse.foreign`); `safeFetch` throws
-  that as `AppError` kind `proxy_auth` (a page on a 2xx/401/403, a
-  non-JSON 401/403, an opaque or cross-origin redirect), and `ErrorState`
-  and `ModuleCard` offer Sign In Again, a full reload. The app's own
-  JSON errors never reach that path, so its contract doesn't name it.
-- **A small entity** (3.26) edits in its table's rows: `DataTable` runs
-  the same edit-in-place store as a view, so a cell that renders an
-  `EditableValue` edits where it's shown, and `InlineCreate` creates from
-  a name in the toolbar. `width="content"` (the default since 4.83) sizes
-  a table to its columns.
-- **A record over a page** (4.58, 4.71): `RecordDialogRoute` draws a
-  route's children in a dialog over its `list`, the history entry's state
-  saying dialog or page. The list can be a sibling route (`listPath`:
-  `/things/list` under `/things/12`), and a parent record's page can be
-  the `list` of its sub-records (`fullPage={false}`, so a reload is the
-  dialog over the parent again).
-- **Dialogs** (4.82): `DialogContent`'s `size` is one of three widths
-  (420, 640, 1,120px), written phone first with the laptop's look from
-  `md:`, so the base `sm:` classes can't leak into a phone's sheet or full
-  screen between 40 and 48rem. Its `dirty` guard lives in `Dialog` (the
-  Root): the content reports dirty through a context, the Root's
-  `onOpenChange` cancels a close and asks (`DiscardChangesDialog`), and
-  Discard closes through Base UI's `actionsRef.close()`, so controlled and
-  uncontrolled dialogs both close. `FormDialog` is the form's chrome in a
-  `size="form"` dialog; as `RecordDialogRoute`'s `newPath` route it opens
-  itself from `NewRecordDialogContext`, with no record dialog round it.
-- **The record standard** (4.98): no right rail. `EntityView`'s default
-  layout, `tabs`, turns the facts (sections placed `rail` with no `tab`)
-  into the last tab, Details, or keeps them in the column on a record
-  with no tabs; one placed `rail` with a `tab` is a box beside that tab.
-  `layout="rail"` stays for apps not yet moved. A tiny record opens as a
-  small card (`RecordDialogRoute look="card"`: the `confirm` width, its
-  controls handed to EntityView through the dialog's context, so they
-  sit on the record's title line). A status is a `StatusMark`, one of six
-  kinds whose icons are one map (`lib/status-kinds.ts`). FieldGroup finds
-  a choice (`ChoiceButtons`) by itself and pairs choices only with each
-  other (`fieldRows`), side by side on a phone while both fit (CSS
-  `flex: 1 1 max-content`, so the browser decides).
-- **A record's tab bar** (4.101, 3B) sticks to whatever scrolls: the page,
-  or a record dialog's body, which sets `--entity-view-sticky-top` to
-  minus its padding so the bar meets its top edge. Whether it's stuck is
-  measured (a marker above the bar against the bar's top, on any scroll
-  through a capture listener), and stuck it shows the record's name.
-- **The facts rail** (4.106, A1): `EntityView factsRail` measures the
-  view's parent (`useWideParent`, a layout effect and a ResizeObserver in
-  `entity-view-facts.tsx`) and, at 60rem, takes the `facts` sections
-  placed `rail` out of `tabsLayout`'s input, so Details is built from the
-  rest; the rail holds typed facts only (`EntityViewFactValue`), which is
-  how "short values only" is enforced. A list's header as wide as its
-  table (C3) is CSS only: DataTable's framed root takes the content-width
-  class when it has a `pageHeader`, and the card fills it.
-- **Views fill the filters** (4.105): `useTableUrlState` resolves the
-  filters the bar shows from the URL, or at a list's plain address from
-  its `defaultView`, and a hand change goes through `filterChanges`
-  (`hooks/table-url-changes.ts`, pure and unit-tested): it writes the
-  shown filters back, clears any view's `rule`, and writes `?view=none`
-  for a hand-emptied list with a default view. The pills follow from
-  `activeViewOf` as before.
-- **A record's tabs** (4.76, #303): a main section's `tab` groups it
-  under `EntityView`'s tab list, the selected tab in `?tab=`, changed by
-  replacing the entry with its state kept, so a record over its list stays
-  the dialog (the list under it sees its own address, so its view's tabs
-  don't follow). Every tab's sections stay mounted, hidden, so the edit
-  in place store sees one set of fields whatever is selected.
+  forward. A report holds patterns and ids, never request data.
 - **Tables** keep page, sort and filters in the URL (`useTableUrlState`,
   including `setFilters`/`applyView` for saved views). A saved view can
   name its columns (`DataTable`'s `visibleColumns`); they apply while the
   filters are still that view's (`activeView`), so they add nothing to
   the URL.
-- **The browser tab's title** (4.21, #186) is "<page> · <app>": `AppShell`
-  gives the app and the page its nav names (matched, like the current
-  entry, on each `to`'s path, so a `to` can open a saved view, #188), and
-  a screen's own (`useDocumentTitle`, `EntityView`'s record) wins while
-  it's mounted, whichever arrives first. The rules are one React-free
-  store (`createDocumentTitles`, `use-document-title.ts`), unit tested on
-  their own.
-- **Grouped rows** (4.8, #135): `DataTable`'s `groupBy` heads runs of
-  rows in the server's order (`byDay` for feeds and logs), one `<tbody>`
-  per group with a row header, and `PillFilter` is a quick filter as
-  pills, its value in the URL like the others. `stickyGroupHeadings`
-  (4.75) pins the heading and the column header with plain
-  `position: sticky`. The table's `overflow-x-auto` box would catch them
-  (it counts as scrolling on both axes), so the mode follows a measurement:
-  columns that fit make the box `overflow-x-clip`, which leaves the page's
-  scroll to stick to; wider ones bound it to the screen and it scrolls
-  both ways. The alternative, moving the cells from a scroll listener,
-  stutters on a phone.
-- **Timed screens** (4.16, #163–#166): `SessionView` is a modal over the
-  whole viewport (Base UI's dialog popup with its own classes, not
-  `DialogContent` overridden), with optional real fullscreen of the whole
-  page and a wake lock. `useSessionClock` reads `performance.now()` each
-  frame, never sums ticks. The audio cues are Web Audio and speech
-  synthesis, with no files. Each one's rules are a React-free factory
-  (`createWakeLock`, `createSessionClock`, `createAudioCues`,
-  `createMutedStore`), unit tested in node against fake browser APIs, and
-  the hooks and functions apps import are thin bindings to the real ones.
-  The browser side is `e2e/session-view.spec.ts` on the Timer story. In a
-  background tab (4.29, #193) cues are booked ahead on the Web Audio clock
-  (`at`, `cancelCues`), the clock ticks slowly while hidden, and it can
-  start from and seek to a time. When iOS stops the audio clock (speech,
-  a call, the lock screen), the cues resume the context, take back the
-  bookings it left on the stopped clock and say so (`onCuesRecovered`,
-  with `cuesInSync` as a tick's check), so the screen rebooks from where
-  its run is (4.30, #217); `keepAudioAlive` is the opt-in silent track
-  that keeps sound going with the phone locked.
 - **Saving without the form** (a row's switch, a quick action on the view)
   goes through `useRecordUpdate`: a PATCH that is optimistic in the
   record's detail query and every list page holding it, replaced by the
@@ -318,27 +186,14 @@ src/main.tsx                           FoundationProviders (theme, query client,
   own control where it's shown and saves when you leave it. The rules
   (one field at a time, a failed save keeps the draft, the leave-page
   prompt) live in one React-free store, `edit-in-place-store.ts`, unit
-  tested on their own. A sub-item list edits in place too (3.25,
-  `editable-list.tsx`): each item and the row being added are fields in
-  that store, and its saves are changes applied to the record's latest
-  list, so they build on a tick still saving. The leave prompt is React Router's `useBlocker`,
+  tested on their own. The leave prompt is React Router's `useBlocker`,
   so apps need a data router (`createBrowserRouter`), as the template
-  has. Long text can **autosave** (4.4, `autosave`): the same store saves
-  it a pause after typing stops, editable all the while, one save in
-  flight with the next queued behind it on the latest draft, and leaving
-  the page saves it before going on. `alwaysEditable` makes the editor
-  the value at rest, and `inline` (4.20, #183) draws it as the read view
-  (no box; `RichTextEditor`'s `inline` and `toolbar="floating"`). ProseMirror marks every Esc handled, so the editor
-  says which ones none of its menus used (`escape-passthrough.ts`).
-  Since 4.72 the plain kinds come ready-made (`inPlace.*`,
-  `edit-in-place-presets.tsx`): each preset is an ordinary `EditInPlace`
-  carrying its control, its check (as its `schema`) and its look at rest
-  (`shown`), and `inPlace.fields` edits several fields as one value with
-  a rule across them. A refusal can name the value's own fields
-  (`fieldErrors`), which the store keeps beside the message, so a pair's
-  part, a link's URL box or a list item's field shows its own; a list
-  item can be the form's react-hook-form row (`itemForm`: a form of the
-  list for the open item, whose changes are its draft).
+  has.
+- **Each composite's own design** (dialogs, a record's tabs and facts
+  rail, views and filters, grouped rows, timed screens, a proxy's sign-in,
+  autosave and the in-place presets) is in the header comment of its file
+  under `packages/ui-foundation/src/`; how an app uses each is in
+  `packages/ui-foundation/conventions/docs/`.
 
 Every boundary is enforced mechanically: see the Hard Rules in
 [`conventions/AGENTS.md`](../packages/ui-foundation/conventions/AGENTS.md),
@@ -353,7 +208,8 @@ the app:
 - the block between `<!-- ui-foundation:start -->` and `:end` in `AGENTS.md`
   (the app's own notes go below it),
 - `docs/foundation/`, which sync owns entirely (the entity playbook,
-  design language, cell patterns, column options, the entity-plan template),
+  design language, cell patterns, column options, the entity-plan template,
+  timed screens, reminders),
 - `.claude/skills/new-entity/`, `.codex/skills/new-entity/`,
   `.claude/agents/spec-tester.md` and its hook,
 - `CLAUDE.md` (`@AGENTS.md`), once, if missing.
@@ -373,71 +229,27 @@ fails when one is stale. After editing a doc there: `docs:index`, then
 
 ## backend-foundation (4.25)
 
-Until 4.25 every app copied `template/backend/` whole, so a security fix in
-sign-in reached an app only when someone remembered to copy it. Once two
-apps needed the same backend fixes, the layer apps never change on purpose
-became a pip package: **`ui-foundation-backend`**, import
-`foundation_backend`, in `packages/backend-foundation/`, released with the
-npm package under the same version
-([its README](../packages/backend-foundation/README.md)).
+The layer of the backend that apps never change on purpose is a pip
+package, so a security fix in sign-in reaches an app with a version bump
+and not a copy: **`ui-foundation-backend`**, import `foundation_backend`,
+in `packages/backend-foundation/`, released with the npm package under the
+same version.
 
-**What's in it:** the settings it reads (`config`), the engine and session
-dependency (`db`), the account tables (`users`, `sessions`,
-`login_failures`, `recovery_codes`, `pending_logins`, `oauth_clients`,
-`oauth_codes`, `oauth_grants`), the sign-in and error-envelope schemas
-with `CamelModel` and `Page`, password and token hashing, TOTP, sign-in
-limits, the rate window, error reporting and the error handlers, the
-production start-up checks, the SPA mount, the routers for `/auth/*`,
-`/environment`, `/client-errors` and the OAuth sign-in, the
-`set_password`/`enable_totp`/`disable_totp` scripts (`python -m
-foundation_backend.scripts.<name>`), and since 4.35 (#230) AI chats'
-tools and `/mcp` (`mcp`, `mcp_tools`, `routers.mcp`), the scheduled jobs
-(`jobs`, `routers.jobs`), Web Push and reminders (`push`, `reminders`,
-`routers.push`, the `push` extra), repeating schedules (`recurrence`,
-`recurrence_models`, 4.95), their tables (`mcp_audit_log`,
-`job_runs`, `push_subscriptions`, `reminders`) and scripts, the Python dependency check
-(`scripts.check_deps`: `backend/pyproject.toml` against
-`deps-allowlist.json`'s `python` list, run by the app's `verify.sh`), the `signed_in` test helper, and
-reference copies of the migrations that create its tables.
-
-**What stays copy-in:** everything that is the app's: its entities,
-models, routers, migration chain and `main.py`, its `McpEntity` list
-(`app/mcp_entities.py`, which calls `register_entities`), and the jobs it
-registers. Until 4.35 the MCP tools, jobs and push were copied too, and
-each release that touched them was a hand-applied step in every app
-(#230). The app's `app/config.py`, `db.py`, `models.py`,
-`schemas.py`, `openapi_responses.py`, `security.py`, `errors.py` and
-`spa.py` re-export the package's names, so `from app.models import User`
-works as before; `config.py` adds the app's own settings after a star
-import.
-
-**One design change, `register_router`:** `routers.auth` has two routers.
-`router` (login, the TOTP step, logout, me) is every app's;
-`register_router` (`POST /auth/register`) is included only by an app that
-lets people make their own account. An app without it leaves
-`/auth/register` out of its contract (`x-optional`) and passes
-`LoginRoute registerPath={null}`, as before; now it no longer has to
-delete a route from a copied file to get there.
-
-**How an app upgrades it:** bump `ui-foundation-backend==X.Y.Z` in
-`backend/pyproject.toml` with the npm package, run any migrations the
-changelog names for that release (the tables live in the app's own
-migration chain), then `npm run verify:backend`. `create-app.sh` writes
-the pin for a new app ([`consuming.md`](consuming.md) "Adopting the
-backend package").
+Its modules, what stays the app's own, how an app uses and upgrades it,
+and why `register_router` is a separate router are in
+[its README](../packages/backend-foundation/README.md). Moving an older
+app onto it is [`consuming.md`](consuming.md) "Adopting the backend
+package". `create-app.sh` writes the pin for a new app.
 
 **Migrations stay the app's.** The package's `migrations/` are reference
-copies (`0002_auth`, `0010_login_limits_totp`, and `0011_mcp`'s OAuth
-tables as `0011_oauth`), never run from the package. `create-app.sh`
-copies one into a new app only where the template has no revision of
-that number, so while the template carries its own (today), it copies
-nothing.
+copies, never run from the package
+([its README](../packages/backend-foundation/src/foundation_backend/migrations/README.md)).
 
 ## Verification
 
 | Gate | Runs | Covers |
 |---|---|---|
-| `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
+| `npm run verify:fast` (root) | every change | the package: codegen drift, the docs' index, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
 | `npm run verify` (root) | before any PR; CI (`verify`, in parts: below) and on every push to `main` before a release | + the package's fixtures checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language fixtures clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
 | `npm run verify:backend` | backend changes; CI (`verify-backend`), on PRs and on `main` | `packages/backend-foundation`'s mypy strict and pytest (SQLite, against the package alone), then the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres (its own throwaway compose project per checkout, on a free port, deleted after the run, so worktrees and dev databases don't collide) |
@@ -445,24 +257,18 @@ nothing.
 | `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on every PR (a required check on `main`) | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |
 | `scripts/consume-test.sh <Entity>`, the **Fresh UI Build** | on demand, when the playbook or a composite changes in a way that could confuse a fresh agent | a brand-new agent with no memory of this repo builds an entity in such an app from its plan; its `verify` passes |
 
-**How CI runs them** (`.github/workflows/verify.yml` and `package.yml`,
-since 2026-11-20: a code PR's `verify` went from a median 33 minutes on
-one runner to about 11, and a docs-only PR's checks take under a minute):
+**How CI runs them** (`.github/workflows/verify.yml` and `package.yml`;
+the reasons for each choice are in their comments):
 
-- **Required on `main`:** `verify`, `verify-backend` and `install-test`.
-  Branches needn't be up to date, which is why `main` is verified again
-  before a release ("Releasing").
+- **Required on `main`:** `verify`, `verify-backend` and `install-test`
+  ("Releasing", "What guards a release").
 - **`verify` runs `npm run verify` in parts at once.** `checks` runs the
   package's `verify:fast`, then the template's whole `verify`.
   `harness 1` to `harness 4` each run a quarter of the fixtures harness's
   `chromium` project (`--shard`), building the harness themselves.
   `harness-perf` runs its `phone` project, then the typing budget (`perf`)
   alone on that runner: it is CPU-throttled, and other specs on the same
-  CPU would be measured with it. A bare `--shard` doesn't split this
-  suite, since `perf` depends on the other two projects and every shard
-  would run them in full. Only `chromium` is sharded because a shard is a
-  run of tests in order: with `phone` in the shards, the last one got the
-  rich-text specs on both projects and took 12 minutes against 4 to 9. The
+  CPU would be measured with it. The
   `verify` job, the required check, passes only when every
   part's result is `success`: a part that failed, was skipped or was
   cancelled turns it red.
@@ -473,8 +279,8 @@ one runner to about 11, and a docs-only PR's checks take under a minute):
   (`HARNESS_SHARDED`, `HARNESS_PHONE`, `HARNESS_PERF`). A step added to
   either `verify` script, or a new harness project, needs the matching
   change in `verify.yml`.
-- **Docs-only changes skip.** Every required job starts, and its first
-  step, `.github/scripts/docs-only.sh`, reads the change's files: a PR's
+- **Docs-only changes skip.** Every required job starts, and each part's
+  step after checkout, `.github/scripts/docs-only.sh`, reads the change's files: a PR's
   from the pulls API (a renamed file counts on both names), a push's from
   `git diff` against the push's `before`. When every path is under
   `docs/`, under the root's `.claude/`, or a root `*.md`, the job's later
@@ -483,46 +289,28 @@ one runner to about 11, and a docs-only PR's checks take under a minute):
   3,000 files), an event it doesn't know, a release. A list it can't read
   fails the job. Markdown anywhere else is shipped, synced or a script's
   input (`scripts/fixtures/entity-plans/`), so it runs everything.
-  `.github/scripts/docs-only.test.sh` holds its cases. Why not
-  `paths-ignore`: a required check that never starts stays pending
-  forever. Why not one `changes` job the others depend on: a job skipped
-  because its dependency failed reports success.
+  `.github/scripts/docs-only.test.sh` holds its cases.
 - **A newer push to a PR cancels its older runs** of `verify` and
   `package`. Never on `main`.
 - **Playwright's system packages come from the Actions cache**
   (`.github/actions/with-apt-cache`, in every `verify` part and around
-  `install-test`'s `consume-test.sh`). `install --with-deps` downloads
-  fonts and mesa from the Ubuntu mirror, which took over 3 minutes in 31
-  of 171 installs in the week before, once 10.5. A stale cache is safe:
+  `install-test`'s `consume-test.sh`). A stale cache is safe:
   apt checks each file against its index and fetches what's missing.
 
-Rules learned the hard way (each cost a phase to find):
+Rules learned the hard way:
 
-- **A new check counts only after a negative control**: break the thing,
-  watch the check fail, restore it.
+- **A new check counts only after a negative control** (`AGENTS.md` "Scope
+  and stopping").
 - **A Fresh UI Build PASS counts only after reading its transcript**:
   confirm the agent used the version under test and reported no
   workarounds.
 - **SQLite passing proves nothing about Postgres**, timestamp columns in
   particular. `check-backend-postgres.sh` writes through the ORM for this.
-- **Mock mode survives a worker restart** (#367). The browser can stop
-  MSW's service worker at any time, and the restarted worker has an empty
-  client list, so it passes the page's requests to the network. No page
-  event says so (it's the same `controller`). `startMockWorker` probes
-  until mocked at boot, then guards `fetch`: a request settled without
-  MSW's `request:start` was bypassed, so the page sends `MOCK_ACTIVATE`,
-  probes, and makes it once more. The `/testing` `test` fails any `/api/`
-  response that wasn't the worker's and wasn't answered by it after, and
-  the template's e2e preview proxies `/api` to a dead port (`BACKEND_URL`).
-  `template/e2e/msw-boot.spec.ts` restarts the worker over CDP, before
-  the first request and after boot.
-- **A page's `goto()`/`reload()` settle its `/api/` first** (`withBootWait`:
-  150 ms with none in flight, capped at 3 s, never a failure). MSW's client
-  says goodbye to the worker on `beforeunload`, so a request the page sends
-  while unloading (a save's follow-up refresh) goes to the network and
-  fails the bypass check, after the page is gone and can't rejoin.
-  `template/e2e/msw-leave-after-save.spec.ts` holds the next document over
-  CDP to force it, with a control that leaves without `goto()`.
+- **Mock mode survives a worker restart, and a page's `goto()`/`reload()`
+  settle its `/api/` first** ([`consuming.md`](consuming.md) "End-to-end
+  tests on the mocks"). `template/e2e/msw-boot.spec.ts` restarts the
+  worker over CDP, and `template/e2e/msw-leave-after-save.spec.ts` holds
+  the next document to force a request sent while unloading.
 - **Gate MSW on the literal `import.meta.env.VITE_API` check** in
   `main.tsx`. The bundler folds only that exact form, so behind an imported
   constant `build:real` still ships MSW (`consume-test.sh` asserts it).
@@ -532,18 +320,11 @@ Rules learned the hard way (each cost a phase to find):
   `playwright.harness.config.ts` names its specs in `testMatch`, so a new
   `e2e/<name>.spec.ts` is silently skipped (and `playwright test <path>`
   says "No tests found") until it's added there. Check that the run's test
-  count went up. (2026-10-19: one PR's spec never ran under verify.)
-- **Short of memory, run the gates one by one with fewer workers.** On a
-  16 GB Windows machine with other apps open, `npm run verify`'s parallel
-  Playwright runs crashed their workers (exit 3221225794), and Claude
-  Code's background-shell reaper stopped the run. The same gates in
-  sequence pass: the package's `verify:fast`, then `npx playwright test -c
-  playwright.harness.config.ts --workers=1` in `packages/ui-foundation/`,
-  then the template's `verify:fast` and `npx playwright test --workers=1`.
-  A thousand failures at once with "worker process exited unexpectedly"
-  is this, not the code. Since 4.121 `PW_WORKERS=1 npm run verify` (or
-  `PW_WORKERS=50%`) sets both Playwright configs' worker count, so the
-  one command runs with fewer workers too.
+  count went up.
+- **Short of memory, run with fewer workers.** `PW_WORKERS=1 npm run
+  verify` (or `PW_WORKERS=50%`) sets both Playwright configs' worker
+  count. A thousand failures at once with "worker process exited
+  unexpectedly" is this, not the code.
 - **The package's specs build axe from `e2e/axe.ts`**, never from
   `@axe-core/playwright` directly (4.121). Its `analyze()` first waits out
   the page's transitions, as `expectNoAxeViolations` does, so a menu or
@@ -581,23 +362,15 @@ those sessions, so `check-backend-postgres.sh` can't run there
 ## The rich-text editor (3.13)
 
 Long text written as Markdown edits as formatted text (Notion-style), on
-the form and in place, through the package's `RichTextEditor`. It needed
-a new dependency, so this is its case, the one the developer asked for
-before it went on the allowlist (`packages/ui-foundation/deps-allowlist.json`:
-`@milkdown/kit`, plus `unified` and `remark-parse`, already in the tree
-through `react-markdown` and now imported directly).
+the form and in place, through the package's `RichTextEditor`, built on
+Milkdown (`@milkdown/kit`, with `unified` and `remark-parse` imported
+directly; `packages/ui-foundation/deps-allowlist.json`). It is loaded on
+first use (`React.lazy`), so a view's own chunk doesn't grow.
 
 **The bar:** notes are stored as Markdown, and saving must never rewrite
-what the person didn't change. If no editor met that, the plan was to
-stop and say so rather than ship a lossy one.
-
-| Criterion | Milkdown 7.22 (`@milkdown/kit`) |
-|---|---|
-| Maintained | Releases through 2026 (7.22.2 on 2026-09-23); ProseMirror underneath, itself long-lived |
-| React 19 | Framework-agnostic core, mounted by our own component; no React peer |
-| Markdown round trip | remark in and out: the same parser and GFM extension `<Markdown>` renders with, so what's edited is what's shown. Faithful to meaning on every fixture (headings, nested lists, tables, links, task lists, raw HTML), but it writes its own style: `*` bullets, padded tables, `***` rules, `\` hard breaks, inline links for reference links. Hence the merge below |
-| Accessible | A `role="textbox"` contenteditable with `aria-multiline`, named by `aria-label`/`aria-labelledby`; axe-clean in both themes (its fixture); keyboard throughout |
-| Bundle | ~106 KB gzipped in the app's build, about 47 KB of it remark/micromark that `react-markdown` already ships. Loaded on first use (`React.lazy`): the view's own chunk doesn't grow |
+what the person didn't change. Milkdown is faithful to meaning but writes
+its own style (`*` bullets, padded tables, `***` rules, `\` hard breaks,
+inline links for reference links). Hence the merge below.
 
 **What closes the gap: block-by-block saving** (`src/lib/markdown-merge.ts`).
 An untouched document saves back byte for byte (nothing changed → no
@@ -606,21 +379,18 @@ didn't change exactly as it was written; only a changed or new block is
 written by the editor, in the document's own bullet and rule marks.
 Blocks are matched by what a reader sees, not how the tree is nested:
 inline text as runs with their set of marks (so `[**a**](u)` is
-`**[a](u)**`), a table's rows padded to its widest (3.16.2: the editor
-pads short rows, and both had made every edit refuse). A block the editor
+`**[a](u)**`), a table's rows padded to its widest. A block the editor
 shows some other way the matching misses is written as the editor shows
 it, but only if nothing in it is lost (no text, address or image). If
-something would be, it's kept as written and the guard refuses (until 4.28 the editor
-dropped images on load, and this was what kept them). A
+something would be, it's kept as written and the guard refuses. A
 guard re-parses the result and refuses to save if it would mean anything
 other than what's on screen (the draft stays, with a message). Tested in
 node over the editor's real output (`tests/markdown-merge.test.ts`) and
 in a browser on the real editor (`e2e/rich-text-editor.spec.ts`).
 
 **What's left of the gap:** inside a block the person edited, the
-editor's style applies: a table edited gets padded cells, a reference
-link in an edited paragraph becomes inline (its definition is kept).
-Meaning is never lost; formatting inside the edited block may be.
+editor's style applies ([`DEFERRED.md`](DEFERRED.md)). Meaning is never
+lost.
 
 **No HTML gets in:** raw HTML already in the text shows as its characters
 (an uneditable chip), HTML pasted as such a chip becomes escaped text,
@@ -631,141 +401,33 @@ directly, past the guard, so raw HTML in pasted text would have been
 saved as HTML. Ours runs the same guard. Plain text with no Markdown in
 it goes in exactly as typed.
 
-**The toolbar (3.16)** (`rich-text-toolbar.tsx`) is ARIA's toolbar
-pattern: one tab stop, the arrow keys along the row, each button
-`aria-pressed` for whether its format is on where the caret is, with its
-shortcut in `aria-keyshortcuts` and its tooltip. A press runs a plain
-ProseMirror command (`rich-text-formats.ts`), one undo step like its
-shortcut, and a mouse press never takes focus from the text. It sits
-inside the field's wrapper, so editing in place counts moving to it as
-staying.
-
-**The floating toolbar (3.17)** (`rich-text-floating-toolbar.tsx`) is the
-same buttons for selected words only (Bold, Italic, Strikethrough, Code ·
-Link), over the selection once the mouse is up. Alt+F10 reaches it (the
-fixed one when it isn't showing); Esc or Tab goes back to the text, the
-selection kept, and Esc hides it until the selection changes, before the
-field's own Esc. It's placed against the field's element, not portaled:
-above the words, below them when there's no room inside the text, so it
-never covers the fixed toolbar. `toolbar="floating"` (4.20) keeps it
-and the slash menu without the fixed one, for an `inline` field. Base
-UI's Popover was tried first, and
-its focus guards (tabbable `aria-hidden` spans while focus is outside
-the popup, which for this toolbar is always) fail axe.
-
-**The slash menu (3.18)** (`rich-text-slash.ts`, `rich-text-slash-menu.tsx`)
-lists the blocks a line can become (Heading to Code block) after a "/"
-typed at the start of a line of text (4.126: any line but a code
-block's, in a list item, a quote, a callout or a table cell too, listing
-only the picks that can apply there, found by running each pick's
-command and dropping its transaction); what follows the "/"
-filters it (names and keywords: `/h2`, `/todo`). Only a typed "/" opens
-it (a plugin records where; one already in the text never does), and it
-closes for good once the span stops qualifying (the caret leaves it, a
-space first, no match keeps it hidden). It's ARIA's combobox pattern
-with the text as the input: focus never leaves the text, which names the
-list (`aria-controls`) and the highlighted item (`aria-activedescendant`)
-while it's open. Its keys are view props, ahead of Milkdown's keymap,
-whose Enter would split the line. A pick is one transaction (one undo
-brings the "/…" back). Placed against the field like the floating
-toolbar, for the same reason.
-
-**Typing (4.126)** (`rich-text-input-rules.ts`, `rich-text-edges.ts`,
-`rich-text-shortcuts.ts`). Milkdown's input rules, with three swapped:
-typed `---` runs the Divider button's insert (a line under it, the caret
-there); `*words*` and `**words**` need a non-space against the marks, as
-CommonMark does, so `5 * 3 * 2` stays; and `==words==` highlights as
-typed. A paragraph's trailing spaces aren't written (`&#x20;` before). At
-the note's edges, ArrowDown past a last code block, table, quote, callout
-or divider (ArrowUp before a first one) adds a line, and a click under
-the last block (above the first) puts the caret on a line there: no
-trailing-paragraph rule, so nothing is saved until one is asked for, and
-no gap cursor, which can't stand by a code block. Backspace at a list
-item's start lifts it out of its list first; Tab and Shift+Tab move a
-list item and stay in the text, and indent a code block's lines; on a
-plain line Tab still leaves the editor. Undo and redo are taken outright:
-ProseMirror's keymap, with nothing to redo, ran Shift+Mod+Z's unshifted
-Mod+Z. The block keys reach across a heading and a list (out of the list
-first, a plain line first), and a new list beside one of its type joins
-it, since two lists side by side read back as one.
-
-**Highlight, full screen, Indent and Outdent, the new task item (4.48)**
+**Highlight and full screen (4.48)**
 (`rich-text-highlight-menu.tsx`, `src/lib/markdown-highlight.ts`).
 *Highlight* is a `highlight` mark with a colour, stored as plain Markdown:
 `==words==` (amber, the default) and `=={green}words==` (`yellow`,
 `green`, `red`). HTML was never an option: `<Markdown>` shows raw HTML as
-its characters and the editor refuses to write any. remark has no
-highlight, so two small plugins read the marks out of the parsed text
-nodes (`remarkHighlights` for `<Markdown>`, a `<mark data-color>`;
-`remarkHighlightNodes` for the editor, a `highlight` mark written back
-by `highlightHandler`). Marks pair inside one parent, so words wrap bold
-or a link but never run across blocks; the merge needs nothing, since to
-it the marks are text. The colours are `--highlight-*` tokens. The
-Highlight menu is on the fixed and the floating toolbar (its popup is
-marked `data-rich-text-menu` so focus in it still counts as the
-field's), and `/highlight` in the slash menu (typed only) sets the mark
-for what is typed next. *Full screen* is the field itself made
-`fixed inset-0` (the fixed toolbar's last button), not a dialog or the
-Fullscreen API: the editor stays mounted so nothing is lost, and
-popovers and toasts, which portal to the body, stay above it (the
-Fullscreen API's top layer would hide them). Inside a transformed
-ancestor (a dialog) it fills that ancestor. Esc leaves, after the
-floating toolbar and the slash menu take theirs. *Indent* and *Outdent*
-(`sinkListItem`/`liftListItem`) are in the toolbar only on a touch
-screen or under 768px (`(pointer: coarse), (max-width: 767px)`), where
-there is no Tab. A *new task item* took no width (its text box was a
-shrink-to-fit flex child), so the caret was zero-width and nothing named
-the line; it fills the row now and shows a "To-do" placeholder (a node
-decoration) while it is empty and the caret is in it. A field with only the
-floating toolbar (4.50, `rich-text-tools-bar.tsx`) has no bar for the
-Full screen, Indent and Outdent buttons, so a small "Editor tools" strip
-shows over its top right corner while it has focus (or is full screen).
+its characters and the editor refuses to write any. *Full screen* is the
+field itself made `fixed inset-0`, not a dialog or the Fullscreen API:
+the editor stays mounted so nothing is lost, and popovers and toasts,
+which portal to the body, stay above it (the Fullscreen API's top layer
+would hide them).
 
-**On a touch screen (the review's F11, picked 1A 2A 3A 4A)** every one of
-those bars gives way to one: `rich-text-keyboard-bar.tsx`, a 48px row
-pinned to the bottom of the visual viewport (`visualViewport`, so it sits
-on the keyboard), shown while the field has focus, on `(pointer: coarse)`
-only (`rich-text-touch.ts`; a narrow laptop window keeps the rows). It
-holds Aa, Task list, Bulleted list, Outdent, Indent, Insert (a "/" on a
-new line, through the slash plugin's own `handleTextInput`), Undo and
-Hide keyboard, each 40px; with words selected, Bold to Link come first,
-and the floating toolbar doesn't show (it would sit under the system's
-Copy bar). Aa opens every format, named, in the keyboard's place: the
-text keeps focus and sets `inputmode="none"`, so the caret and the
-selection stay. The bar is `position: fixed` inside the field (not a
-portal: the field's blur and edit-in-place treat it as the field's),
-offset by a probe at the containing block's 0,0 so a transformed
-ancestor (a dialog) doesn't move it; the caret is scrolled to stay above
-it. The slash menu on a touch screen is capped to the room above the bar
-on the caret's side, flipping above the line when there's more room
-there. The task box (in a `<label>`, whose press is its checkbox's), the
-table grips, the fold button and the callout icon get an invisible 40px
-`::before` on `pointer-coarse`, with task rows and table rows 40px tall
-there so neighbours' squares don't overlap. The harness runs the editor
-specs on a second Playwright project, `phone` (Pixel 7); a laptop-only
-test skips itself there with `isMobile`.
+**On a touch screen** the bars give way to one pinned to the keyboard
+(`rich-text-keyboard-bar.tsx`). The harness runs the editor specs on a
+second Playwright project, `phone` (Pixel 7); a laptop-only test skips
+itself there with `isMobile`.
 
-**Links (3.15)** are added with Ctrl/Cmd+K, in a small box at the caret
-(a `Popover` with no trigger, placed through the `anchor` the package's
-`PopoverContent` takes). Only web and email addresses, a path on the site
-or a heading are accepted (`src/lib/link-href.ts`): another scheme
+**Links (3.15)**: only web and email addresses, a path on the site or a
+heading are accepted (`src/lib/link-href.ts`): another scheme
 (`javascript:`, `data:`, `file:`) is refused, so a saved link can't run
-code. Paste goes through the same rule (`rich-text-paste.ts`): a pasted
-link linkHref refuses keeps its words and loses the link, an image at a
-refused address is dropped, and one carried in the HTML as `data:` is
-uploaded through `upload` or left out with a toast, never saved as data.
-An address typed (ended by a space or Enter, `rich-text-autolink.ts`) or
-pasted alone becomes a link through linkHref, so it saves as an address,
-not as escaped text (`https\://`).
+code. Paste goes through the same rule (`rich-text-paste.ts`).
 
 **Paste's shapes** (`rich-text-paste.ts`): before ProseMirror reads a
 paste's HTML, Word's `mso-list` paragraphs become nested lists, a Notion
 (`ul.to-do-list`) or GitHub (a checkbox input) to-do a task item, and
-`language-*` on code the block's language. Plain text keeps its single
-line breaks as hard breaks. Into a table cell, a paste is one line
-(blocks joined with spaces), before prosemirror-tables' own paste, which
-would spread lines over the row. These are written against payloads made
-to match what those apps put on the clipboard; real ones vary by version.
+`language-*` on code the block's language. These are written against
+payloads made to match what those apps put on the clipboard; real ones
+vary by version.
 
 **A refused edit is never saved quietly.** The merge guard's refusal
 stops `onChange`, so a form holds the last text that could be saved.
@@ -773,104 +435,44 @@ The editor marks itself `aria-invalid` and, given no `onProblem`, says
 why inside the field; the template's form binds `onProblem` to the
 field's error and refuses submit while it stands (add-an-entity.md).
 
-**Full screen holds focus** (`rich-text-full-screen.ts`): the field is a
-`role="dialog"` with `aria-modal`, every sibling of it and of its
-ancestors up to `<body>` is `inert` (the toasts' region kept live, and
-what a portal adds under `<body>` meanwhile is no such sibling), and Tab
-wraps from the field's last stop to its first. Each element gets its
-`inert` back on leaving.
-
 **Images (4.28)** show in the editor as `<Markdown>` shows them, at most
-the field's width. Until 4.28 the editor dropped every one as it loaded:
-Milkdown's image node wants a string title and remark gives `null` for
-none, so a small remark plugin makes it `''` (written back as none).
+the field's width.
 With the app's `upload` (`RichTextEditor`'s prop; the package knows no
 endpoint), an image pasted, dropped or picked with the toolbar's Image
 button is uploaded and inserted as `![](url)`
 (`rich-text-image-upload.ts`). While it uploads, a placeholder is a
 decoration, never part of the document, so no save (an autosave
-included) ever holds one; it moves with the text, and the image goes in
-where it is when the upload resolves, several in the order the files
-came. A refusal (type, size: `src/lib/image-file.ts`, shared with
-`ImageField`) or a failure removes it and is a toast. Milkdown's own
+included) ever holds one. Milkdown's own
 `plugin/upload` was the obvious choice and wasn't used: it keeps the
 placeholder forever when an upload fails, and takes no part in our
-paste handling. A paste uploads only when it holds files and no HTML
-with words in it: an office app copies a picture of the selection with
-its text, and that paste is the text. Without `upload`, none of this
-runs. `ImageField` (a photo on a record) is the form's side of the same
-`upload`: the value is the stored file's id.
-
-**Written text's look (3.21)** (`prose-look.ts`), shared by the editor
-and `<Markdown>`: three heading roles (`type-heading-1` to `-3`, 26, 20
-and 17px over the 14px body, each with a left bar that thins by level:
-5px and 3px in `--heading-bar`, 2px in `--rule`), links in `--link` as well
-as underlined, a `---` divider as a 2px line in `--rule`. Headings still
-render from `<h3>`; only how they look changed.
+paste handling. `ImageField` (a photo on a record) is the form's side of
+the same `upload`: the value is the stored file's id.
 
 **Callouts (3.21)** (`src/lib/markdown-callout.ts`) are GitHub's alert
 syntax, a quote whose first line is `[!NOTE]` (or tip, important,
 warning, caution), so a note stays plain Markdown that GitHub and
-Obsidian also render as a callout. remark parses one as a quote; a remark
-plugin reads the marker, into a `callout` node for the editor (its own
-schema, written back by a stringify handler) and into a
-`<div data-callout>` for `<Markdown>`. The merge needs neither: to it a
-callout is the quote it's written as. The marker is kept as written
-(`[!note]` stays lower case) unless the kind changes, so an untouched
-callout reads as untouched. In the editor a callout's icon is a menu of
-kinds (a React widget portaled into the node view's slot,
-`rich-text-node-views.ts`, `rich-text-widgets.tsx`); from the keyboard,
-"/" at a line's start inside a callout lists the kinds.
+Obsidian also render as a callout. The merge needs nothing: to it a
+callout is the quote it's written as.
 
 **Folding by headings (4.54)** (`src/lib/markdown-fold.ts`,
 `rich-text-fold.ts`, `notes-outline.tsx`, `src/hooks/fold-store.ts`):
-`foldKey` on `<Markdown>` and the editor puts a fold button before each
-top-level toggle heading; it folds the blocks after it up to the next
-heading of its level or higher. Since 4.66 only a toggle heading folds
-(`src/lib/markdown-toggle.ts`, `rich-text-toggle-heading.ts`): Notion's
-`{toggle="true"}` at a heading's end, taken off by a remark plugin as it's
-read (so its fold id is the same plain or toggle) and written back by the
-editor's heading schema, which carries a `toggle` attribute. A plain
-heading has no button and hides nothing, even with its id stored as
-folded, but still ends the sections above it and is still in the
-outline. Folding is the reader's, never the text's: what's
+only a toggle heading folds (`src/lib/markdown-toggle.ts`,
+`rich-text-toggle-heading.ts`): Notion's `{toggle="true"}` at a heading's
+end. Folding is the reader's, never the text's: what's
 folded is a set of heading ids (level and words, `2:Beds`, numbered when
 repeated) kept in localStorage under the key, so the Markdown and the
-merge never see it. `<Markdown>` hides a section's blocks with a rehype
-plugin (`hidden` on each top-level element); the editor with node
-decorations, the heading's node view drawing the button from its
-decoration's spec. The caret put inside a folded section opens it, a
-fold around the caret moves it to the heading, and the arrow keys pass
-over folded text as the browser does. `NotesOutline` lists the headings
-beside either, given the same key, with Fold all and Open all; a jump
-opens the sections around the heading and focuses its button. Find in
-page doesn't see folded text (`hidden="until-found"` would; DEFERRED).
+merge never see it.
 
 **Tables (3.21; grips and looks 4.62)** (`rich-text-table.ts`,
 `rich-text-table-grips.tsx`, `src/lib/markdown-table.ts`, styles/index.css
-"Tables in written text"): the node view puts a table in a box that
-scrolls sideways, as wide as its columns' words, with Notion's "add a
-row" and "add a column" bars and grips (mouse shortcuts, out of the tab
-order). The grips sit on the hovered (or caret's) column and row, each a
-menu (Base UI's, shadcn's `dropdown-menu`): insert, move and delete rows
-and columns, align a column, sort the rows by it, the header column, and
-colours. A right-click or Shift+F10 in a cell opens the cell's menu, the
-keyboard's way in. Tab in the last cell adds a row; Enter goes down a
-column and out of the table from its last row; Ctrl/Cmd+Enter is the
-field's save. The toolbar's Table button only inserts one.
-
+"Tables in written text").
 What GFM can't store isn't offered: the header row can't be deleted,
-moved or have a row put above it, there are no column widths and no line
-breaks inside a cell. What it can store is reused rather than adding
+moved or have a row put above it, and there are no line breaks inside a
+cell. What it can store is reused rather than adding
 syntax (the developer's choice, 2026-11-04): a cell's colour is its whole
 text in one highlight (`=={green}$4.99==`), a header column is a first
 column of bold cells, and a sort rewrites the rows (what the editor shows
-is what it saves; one undo step). Both renderers read them with the same
-rule (`cellColor`, `isHeaderColumn`): <Markdown> through `rehypeTables`
-(cells marked `data-color`, row headers as `<th scope="row">`), the editor
-through decorations. Two looks, `tableLook`: compact (a full grid, the
-header on the heading band; the default) and boxed (roomier, a muted
-header), both with zebra rows, the same CSS for both renderers.
+is what it saves; one undo step).
 
 **Page links (4.73)** (`src/lib/page-link.ts`, `page-link.tsx`,
 `rich-text-page-links.ts`, `page-trail.tsx`): child pages in notes, to any
@@ -880,29 +482,12 @@ an ordinary Markdown link, `[Title](/notes/12/pages/3)`, and the merge
 needs nothing. The app answers `pageLink(href)` (title, removed,
 `onRestore`) for each link, or `null`; the package never knows where
 pages live or whose they are, so a page's own note takes the same props.
-`<Markdown>` draws a page link through its `a` and `p` components; the
-editor with decorations only (the icon a widget inside the link's mark,
-the page-line look a node decoration, "Page removed" and Restore a widget
-after it), redrawn when the app's answers change (a signature of them,
-compared on each render, so an inline `pageLink` doesn't loop). A click on
-a page link navigates in this tab (the router's `navigate`, through a
-bridge rendered only inside a router), unlike other links. `onCreatePage`
-adds "/page" to the slash menu and Turn into page to the floating
-toolbar: a title box (`PageForm`), the app's promise, then the link
-replaces the "/page" typed or the words selected, the span kept in step
-by a plugin meanwhile; a refusal is the box's message (`messageOf`) and
-the text is untouched. `PageTrail` is shadcn's Breadcrumb on one line: an
-unseen copy measures each crumb, and `crumbsToFold` folds from the second
-crumb down into a "…" menu until it fits, the first and the page itself
-always shown.
 
-**Shortcuts (3.21)** (`rich-text-shortcuts.ts`) are Notion's where it has
-one: Ctrl+Shift+0 to 6 and 8 turn the line into text, a heading, a list
-or a code block, and Ctrl/Cmd+Shift+S strikes through. On a Mac they're
-Cmd+Option and the digit, as in Notion: Cmd+Shift+3 to 5 are the system's
-screenshots. Read by `event.code`, since Shift+5 types "%". Cmd+Option
-counts on Apple only: Ctrl+Alt on Windows is AltGr, which types
-characters. Milkdown's own (Ctrl+Alt+1, Mod+Alt+X, …) still work.
+**Everything else** (the toolbars, the slash menu, typing rules, keyboard
+shortcuts, the phone's bar, full screen's focus, written text's look) is
+in the header comment of its file: `src/components/app/rich-text-*.ts(x)`,
+`milkdown-editor.tsx`, `prose-look.ts` and `src/lib/markdown-*.ts`, with
+`e2e/rich-text-*.spec.ts` on the real editor.
 
 **Considered:** Tiptap 3 with `@tiptap/markdown` (maintained, React 19;
 parses with marked, so what's edited could differ from what `<Markdown>`
@@ -928,9 +513,8 @@ everything merged since the last tag as that one version, under one
 `CHANGELOG.md` entry with one "How an app adopts it". A merge with no
 bump (a step of a feature that isn't finished, a Dependabot update)
 releases nothing and goes out with the next bump; a Dependabot security
-fix an app needs now gets a patch bump pushed to its PR. Why: until 4.34 every
-merge released a patch, 116 tags in six weeks, and an app reads every
-release it hasn't applied. Run by hand (`gh workflow run release.yml`),
+fix an app needs now gets a patch bump pushed to its PR. Why: an app reads
+every release it hasn't applied. Run by hand (`gh workflow run release.yml`),
 it releases `main` as it is, for a forgotten bump: at the bumped version,
 or the next patch after the latest tag. It:
 
@@ -939,11 +523,9 @@ or the next patch after the latest tag. It:
    of `npm run verify` and the backend's gate, on the merged tree. Nothing
    builds or publishes until it passes. Every push runs it, released or
    not, so a red `main` is seen; a docs-only push skips it as a PR would,
-   but a release always runs all of it (`full`). Why (2026-11-20): until
-   then the release trusted the PR's run and published about 9 minutes
-   after the merge, and since branches needn't be up to date, two PRs
-   green on their own could be published merged before anything had
-   tested them together. It adds about 11 minutes before a release.
+   but a release always runs all of it (`full`). Why: branches needn't be
+   up to date, so two PRs green on their own could otherwise be published
+   merged before anything had tested them together.
 3. builds and packs the npm package (`build` job), and builds the pip
    package's sdist and wheel with that version written in (`build-py`),
 4. **publishes** `@tristan2828/ui-foundation@<version>` to npm through
@@ -965,8 +547,7 @@ same shared lines conflict again after each merge, and each fix costs
 another CI run. The shared lines are `CHANGELOG.md`'s `## Unreleased`, a
 doc's index block and its `template/docs/foundation/` copy, and the spec
 list in `playwright.harness.config.ts`. When several PRs are green
-together, fold them into one release PR instead (first done for 4.127.0,
-#386, which folded #382 to #385):
+together, fold them into one release PR instead:
 
 1. In a worktree of its own, branch `claude/release-<version>` from
    `origin/main`, then `git merge` each PR's branch into it, oldest first.
@@ -992,9 +573,7 @@ together, fold them into one release PR instead (first done for 4.127.0,
 This takes one CI run and one pass at the conflicts, instead of one per
 PR. A single PR that's ready on its own still bumps and merges by itself.
 
-**What guards a release** (decided 2026-09-30; until then every version
-waited for the developer's passkey approval on npm): the PR gate, then
-`main`'s own verify. Branch protection on `main` requires a pull request
+**What guards a release:** the PR gate, then `main`'s own verify. Branch protection on `main` requires a pull request
 and the `verify`, `verify-backend` and `install-test` checks, with no
 reviewer and without requiring the branch to be up to date, so every
 published version's PR passed the install test, and the merged tree
@@ -1026,8 +605,7 @@ version:
 
 What that gives up: a malicious change that passes the checks and gets
 merged reaches every app installing `^4.x`, with no human look at the
-built package. The passkey step cost one manual approval per release;
-the developer chose automation over it.
+built package.
 
 **A bad release** keeps its version: npm and PyPI versions can't be
 reused. Ship the fix as the next patch (bump the patch number in the
@@ -1037,24 +615,14 @@ so installs warn (on PyPI, yank the version on pypi.org, which pins
 `==<version>` still install). `release-smoke` marks its notes if it failed.
 
 **A breaking change** to anything the package exports, or to what `sync`
-writes, gets a major version, a `CHANGELOG.md` entry and upgrade steps in
-[`consuming.md`](consuming.md).
+writes: `AGENTS.md` "The rules".
 
-**PyPI setup** (done 2026-10-21, before 4.25.0): the project
-`ui-foundation-backend` was created on pypi.org as a pending trusted
-publisher (repository `Tristan2828/ui-foundation`, workflow `release.yml`,
-environment any). The first `publish-py` run turns it into the project's
-trusted publisher. The token names the workflow file it ran in, so
+**`publish-py` stays in `release.yml`.** PyPI's trusted publisher is
+repository `Tristan2828/ui-foundation`, workflow `release.yml`,
+environment any. The token names the workflow file it ran in, so
 `publish-py` must stay a job of `release.yml` itself, never moved into a
 reusable workflow it calls. (`release.yml` calls `verify.yml` the other way
 round: the verify is the reusable part, and both publishing jobs stay in
 `release.yml`.)
-
-**npm setup** (done 2026-09-28): the account `tristan2828` has passkey 2FA.
-3.0.0 was published by hand, because trusted publishing can only be
-configured on a package that already exists. The trusted publisher is
-GitHub Actions, `Tristan2828/ui-foundation`, workflow `release.yml`. It
-allowed staging only until 2026-09-30, when "allow npm publish" was turned
-on. 3.1.0 was the last staged release.
 
 Deploying an app: `template/docs/deploy.md`.

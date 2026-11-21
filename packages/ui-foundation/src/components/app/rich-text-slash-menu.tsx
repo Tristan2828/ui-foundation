@@ -9,7 +9,9 @@
 // Placed against the field's element like the floating toolbar, not in a
 // portal (rich-text-floating-toolbar.tsx says why): under the caret, or
 // over it when there's more room there, and never taller than what is
-// visible on its side (above a phone's keyboard).
+// visible on its side (above a phone's keyboard). Visible
+// means inside whatever clips the field too: a card's `overflow-hidden`
+// would cut a menu opened on a note's last line down to its first item.
 import { useLayoutEffect, useState } from 'react'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { cn } from 'cn'
@@ -25,14 +27,22 @@ const TALLEST = 512
 const ENOUGH = 170
 
 // What is visible of the window: above a phone's keyboard
-// (`visualViewport`), and above the bar pinned to it
-// (rich-text-keyboard-bar.tsx) when the field has one.
+// (`visualViewport`), above the bar pinned to it
+// (rich-text-keyboard-bar.tsx) when the field has one, and
+// inside every element around the field that clips what overflows it (a
+// card, a dialog's scrolling body).
 function visibleArea(field: HTMLElement): { top: number; bottom: number } {
   const viewport = window.visualViewport
-  const top = viewport?.offsetTop ?? 0
+  let top = viewport?.offsetTop ?? 0
   let bottom = top + (viewport?.height ?? window.innerHeight)
   const bar = field.querySelector('[data-slot="rich-text-keyboard-bar"] [role="toolbar"]')
   if (bar) bottom = Math.min(bottom, bar.getBoundingClientRect().top)
+  for (let element: HTMLElement | null = field; element && element !== document.body; element = element.parentElement) {
+    if (getComputedStyle(element).overflowY === 'visible') continue
+    const box = element.getBoundingClientRect()
+    top = Math.max(top, box.top)
+    bottom = Math.min(bottom, box.bottom)
+  }
   return { top, bottom }
 }
 
@@ -46,14 +56,15 @@ function place(view: EditorView, at: number, field: HTMLElement, menu: HTMLEleme
   const natural = Math.min(menu.scrollHeight, TALLEST)
   const roomBelow = area.bottom - caret.bottom - GAP * 2
   const roomAbove = caret.top - area.top - GAP * 2
-  // A laptop's: below when it all fits there or can't above.
-  // A touch screen's: below while a few items fit, else wherever there's
-  // more room, and capped to it.
+  // A laptop's: below when it all fits there, else above when it fits
+  // there, else wherever there's more room. A touch screen's: below while
+  // a few items fit, else wherever there's more room. Either way capped to
+  // the room on its side, so it scrolls rather than being cut off.
   const touch = window.matchMedia('(pointer: coarse)').matches
   const below = touch
     ? roomBelow >= Math.min(natural, ENOUGH) || roomBelow >= roomAbove
-    : caret.bottom + GAP + natural <= window.innerHeight || caret.top - GAP - natural < 0
-  const maxHeight = touch ? Math.max(80, Math.min(TALLEST, below ? roomBelow : roomAbove)) : TALLEST
+    : natural <= roomBelow || (natural > roomAbove && roomBelow >= roomAbove)
+  const maxHeight = Math.max(80, Math.min(TALLEST, below ? roomBelow : roomAbove))
   const height = Math.min(natural, maxHeight)
   const top = below ? caret.bottom + GAP : caret.top - GAP - height
   const left = Math.max(0, Math.min(caret.left - box.left, box.width - width))

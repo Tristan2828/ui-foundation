@@ -5,9 +5,8 @@ who knows what the data *means* but not what it should look like.
 
 Instead of the agent picking a cell style and the developer reacting to it,
 the agent builds a page of numbered options rendering **the same sample
-rows** in each style, and the developer replies with a number. That has now
-picked eight columns across a real app, and the choices it produced are
-[`cell-patterns.md`](cell-patterns.md).
+rows** in each style, and the developer replies with a number. The choices
+it has produced are [`cell-patterns.md`](cell-patterns.md).
 
 Run it per column, and only for columns where it isn't obvious. A plain
 text column doesn't need a page.
@@ -95,15 +94,10 @@ change, not a one-line cell change.
 
 ## The one recurring failure: drift
 
-Every options page so far re-implemented the cells in vanilla CSS with
-copied tokens, and every one drifted:
-
-- an amber the app had no token for
-- a text shade of `oklch(0.42)` where the app shipped `0.5`
-- lucide glyph paths typed from memory
-- a `color-mix` tinted fill the design system had no variant for — and that
-  one **changed the outcome**: the developer picked it, and it had to be
-  rebuilt as the app's existing `secondary` fill
+An options page that re-implements the cells in vanilla CSS with copied
+tokens drifts from the app: a colour the app has no token for, glyph
+paths typed from memory, a tinted fill the design system has no variant
+for.
 
 An option using a fill the design system can't produce is being judged as
 something the app can't render.

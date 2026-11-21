@@ -38,9 +38,8 @@ mock API.
 - **Adding an entity:** write its plan in `docs/entities/<entity>.md`, then
   follow [`docs/foundation/add-an-entity.md`](docs/foundation/add-an-entity.md)
   (`/new-entity <Name>` in Claude Code).
-- **Upgrading the foundation:**
-  `npm install @tristan2828/ui-foundation@<version> && npx ui-foundation sync`,
-  then `npm run verify`.
+- **Upgrading the foundation:** [`AGENTS.md`](AGENTS.md) "Upgrading the
+  Foundation".
 - **The backend** (`backend/`) is a FastAPI + SQLModel reference
   implementation of `openapi.yaml`, copied in with the template and yours
   from then on. A new entity's backend side is written by hand against the
