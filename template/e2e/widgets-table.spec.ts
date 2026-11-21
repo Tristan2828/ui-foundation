@@ -208,7 +208,7 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Wireless Mouse', exact: true })).toHaveCount(0)
   })
 
-  // Issue #94: chips that fit on one line keep the control one line high,
+  // chips that fit on one line keep the control one line high,
   // level with the Selects beside it; its text box no longer wraps onto an
   // empty line of its own.
   test('multi choice filter: chips that fit keep it as tall as the selects beside it', async ({ page }, testInfo) => {
@@ -266,7 +266,7 @@ test.describe('widgets table', () => {
     await expect(page.getByRole('cell', { name: 'Fountain Pen', exact: true })).toBeVisible()
   })
 
-  // Issue #93: the less-used filters sit behind a Filters button, so the
+  // the less-used filters sit behind a Filters button, so the
   // table starts near the top; what's on still shows, as chips beside it.
   test.describe('filters behind the Filters button', () => {
     // With every filter in the toolbar the table started 198px under the
@@ -484,7 +484,7 @@ test.describe('widgets table', () => {
     expect(after!.x).toBeCloseTo(before!.x, 0)
   })
 
-  // Issue #91: a pinned first column sized to a long title was wider than
+  // a pinned first column sized to a long title was wider than
   // a phone's scroll area, so every other column scrolled underneath it
   // and none could ever be seen.
   test('on a phone a long pinned first column leaves room to scroll the others into view', async ({ page }) => {
@@ -593,10 +593,9 @@ test.describe('widgets table', () => {
     for (const alpha of alphas) expect(alpha).toBe(1)
   })
 
-  // The whole row lights on hover (4.83, the list page standard): every
+  // The whole row lights on hover (the list page standard): every
   // cell, both pinned ones included, in one solid tint, the same on every
-  // row, with a bar on the first cell only. Before 4.83 only the pinned
-  // first cell lit, because the zebra stripe outranked a row hover.
+  // row, with a bar on the first cell only.
   for (const colorScheme of ['light', 'dark'] as const) {
     test(`hovering lights every cell of the row, pinned ones included, with a bar at its start (${colorScheme})`, async ({
       page,
@@ -634,13 +633,13 @@ test.describe('widgets table', () => {
         expect(hovered[0].boxShadow).toContain('inset')
         expect(hovered.at(-1)!.boxShadow).toBe('none')
       }
-      // The same on either side of where a stripe used to fall.
+      // The same on either side of where a stripe would fall.
       expect(rows[1].hovered[0].background).toBe(rows[0].hovered[0].background)
     })
   }
 
-  // No zebra stripes on lists (4.83): rows are told apart by the line under
-  // each, and the pinned columns (opaque, issue #92) match the row.
+  // No zebra stripes on lists: rows are told apart by the line under
+  // each, and the pinned columns (opaque) match the row.
   for (const colorScheme of ['light', 'dark'] as const) {
     test(`rows carry no stripe, and the pinned columns match them (${colorScheme})`, async ({ page }) => {
       await page.emulateMedia({ colorScheme })

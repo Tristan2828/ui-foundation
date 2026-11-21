@@ -65,15 +65,9 @@ async function boot(page: Page, load: () => Promise<Response | null>, again: () 
   }
 }
 
-// A test that leaves a page right after a save: the save's answer comes
-// from the mocks, but its follow-up refresh is sent by the page as it
-// unloads, after MSW's client has said goodbye to the worker, so the
-// worker passes it to the network and the bypass check fails the test
-// (about 1 run in 20 in one app). So before the page navigates, wait
-// until none of its own /api/ requests has been in flight for SETTLE_QUIET_MS,
-// at most SETTLE_CAP_MS: the refresh then lands on the page that sent it.
-// The cap only bounds the wait (a request that never ends, a stream);
-// reaching it never fails the test.
+// The settle wait before a navigation (why: `withBootWait`'s JSDoc). Quiet for
+// SETTLE_QUIET_MS, at most SETTLE_CAP_MS; the cap only bounds the wait (a
+// request that never ends, a stream) and never fails the test.
 const SETTLE_QUIET_MS = 150
 const SETTLE_CAP_MS = 3000
 const SETTLE_POLL_MS = 25
@@ -121,9 +115,12 @@ function trackApi(page: Page): ApiTracker {
 /**
  * Makes the page's `goto()` and `reload()` wait first until none of the
  * page's own `/api/` requests has been in flight for 150 ms (at most 3 s,
- * and reaching that never fails the test), so a save's follow-up refresh
- * is answered by the page that sent it, on the mocks, not sent by the
- * unloading page past them. They then return once the app has
+ * and reaching that never fails the test). Why: a save's answer comes from
+ * the mocks, but its follow-up refresh is sent by the page as it unloads,
+ * after MSW's client has told the worker the page is gone, so the worker
+ * passes it to the network and the bypass check fails the test (about 1 run
+ * in 20 in one app). Waiting lets the page that sent the refresh get its
+ * answer on the mocks. They then return once the app has
  * booted (its first render into `#root`), not at the load event, and load
  * the page once more when one of the app's own files is refused before
  * then; a second refusal fails naming the file. The wait is bounded by
@@ -169,7 +166,7 @@ export type MswBypassWatch = {
  * the mock service worker (`response.fromServiceWorker()` false), which
  * means the request went to the network: to the preview server's proxy,
  * and from there to whatever listens on its port. A test that passed on
- * data from there didn't test the mocks (#367).
+ * data from there didn't test the mocks.
  *
  * A bypass the app healed doesn't count: since the rejoin in
  * `startMockWorker`, a page whose worker forgot it makes the request again

@@ -1,15 +1,8 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// EntityView's facts rail (4.106, record standard A1): on a laptop the
-// short facts sit in a 300px column beside the record's body, and aren't
-// repeated in Details; with nothing else, there's no Details tab. The strip
-// stays above at full width, and the rail starts level with the first
-// content under it: the open tab's first section (never the tab bar), or
-// the first card with no tabs (4.108). On a phone they fold back into
-// Details. Axe in both themes and every palette is fixtures-visual.spec.ts's
-// (the stories named there); the rail itself is measured here at desktop
-// width, where it's drawn.
+// EntityView's facts rail (record standard A1): beside the record's body on a laptop, folded into Details on a phone.
+// Axe in both themes and every palette is fixtures-visual.spec.ts's; the rail itself is measured here.
 const HARNESS = 'http://localhost:6180/story.html?id='
 
 const rail = (page: Page) => page.getByRole('complementary', { name: 'Office move facts' })
@@ -85,7 +78,7 @@ test("what's in the rail isn't repeated in Details; Details keeps the rest", asy
   await expect(rail(page).getByText(/loading bay/)).toHaveCount(0)
 })
 
-// Beside the rail the record's column fills the room up to it (4.112): the
+// Beside the rail the record's column fills the room up to it: the
 // Details cards as wide as the tab bar over them, not a 42rem reading width
 // that left a blank band before the rail, and their labels a compact 10rem,
 // so a value that wrapped at the old width (a 12rem label in a 42rem card)

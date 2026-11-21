@@ -1,6 +1,5 @@
 // The rich-text editor's typed Markdown: Milkdown's input rules, three of
-// them swapped for the editor's own (4.126, the RichTextEditor review's
-// F15, F16 and F22).
+// them swapped for the editor's own:
 // - `---` (or `***`, `___` and a space) on an empty line puts in a divider
 //   the way the Divider button does: a line under it, the caret there.
 //   Milkdown's left the rule selected, and the next key replaced it.

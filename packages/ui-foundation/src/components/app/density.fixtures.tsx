@@ -264,7 +264,7 @@ function DemoSidebar({ density }: { density: Density }) {
 
 // --- Hub cards ----------------------------------------------------------------
 
-// compact reaches a hub's cards too (#224): WidgetCard's padding and rows,
+// compact reaches a hub's cards too: WidgetCard's padding and rows,
 // and ModuleCard's band and body. Text keeps its size.
 function HubSample({ density }: { density: Density }) {
   return (

@@ -1,4 +1,4 @@
-// The form standard's pure parts (4.85): which fields share a row, how
+// The form standard's pure parts: which fields share a row, how
 // many problems react-hook-form's errors hold, and the markup Field,
 // FieldLabel and FormSection draw. The layout in a browser, the bar, the
 // move to the first problem and the leave guard are

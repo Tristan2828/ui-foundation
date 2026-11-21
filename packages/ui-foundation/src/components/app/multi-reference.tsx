@@ -16,7 +16,7 @@
 //   results, its first still highlighted. `searching` says so: Enter
 //   waits rather than picking from the old list (where it could even
 //   remove a pick: the highlighted item may be one already picked).
-// - `onCreate` (4.88, F14): Create "<typed>" as the list's last item when
+// - `onCreate`: Create "<typed>" as the list's last item when
 //   what's typed names no option; the app's create form resolves with the
 //   new record, which joins the picks (its name kept here until the app's
 //   lookup has it).
@@ -134,7 +134,7 @@ export function MultiReference<Id extends string | number>({
       value={value}
       onValueChange={(next, details) => {
         // Base UI empties the value on Escape while the list is closed, so
-        // a second Escape after a pick wiped every chip (issue #123). Escape
+        // a second Escape after a pick wiped every chip. Escape
         // never removes picks here: a chip's remove button, Backspace or
         // unpicking in the list does. Let the key go on, so a dialog or an
         // edit in place gets its own Escape.

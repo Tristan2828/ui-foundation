@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { defineA11ySuite, expectNoAxeViolations } from '../src/testing'
 
 // defineA11ySuite's view check on a page with `<ModuleStrip mobile="row">`,
-// at a phone's width (Roadmap 172). On a phone each ModuleCard is hidden
+// at a phone's width. On a phone each ModuleCard is hidden
 // beside its chip and both carry `data-state="success"`; the card comes
 // first, so expectDataViewsLoaded waited for a hidden element and every
 // view check on such a page timed out. The page is the Row page fixture,

@@ -1,4 +1,4 @@
-// Keeps a page's audio going with the phone locked (#217, #261). iOS pauses a
+// Keeps a page's audio going with the phone locked. iOS pauses a
 // page's sound on the lock screen unless the page is playing media, so
 // keepAudioAlive() plays a silent looped track, which also puts the page's
 // title and a Pause and Play on the lock screen (the Media Session). It's

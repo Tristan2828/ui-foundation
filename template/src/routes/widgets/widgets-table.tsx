@@ -138,7 +138,6 @@ export function WidgetsTableRoute() {
   )
   const [extraCategorySearch, setExtraCategorySearch] = useState('')
   const extraCategoryOptionsQuery = useWidgetCategoriesQuery(extraCategorySearch)
-  // The input shows `search` live; the request waits for typing to pause.
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS)
 
   const query: QuerySpec = useMemo(

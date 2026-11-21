@@ -448,7 +448,7 @@ test.describe('widget view', () => {
     await expect(checklist.getByRole('checkbox', { name: 'Done: Pair the receiver' })).toBeChecked()
   })
 
-  // The record standard (4.98): no right rail. With no tabs, Details (the
+  // The record standard: no right rail. With no tabs, Details (the
   // facts) comes first in the one column, Description under it.
   for (const width of [1280, 2289]) {
     test(`wide screens (${width}px): no rail, Details first in one column, labels beside values`, async ({ page, isMobile }) => {

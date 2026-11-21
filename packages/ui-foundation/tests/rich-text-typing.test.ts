@@ -1,8 +1,8 @@
-// The rich-text editor's typing (4.126, the RichTextEditor review's typing
+// The rich-text editor's typing (the RichTextEditor review's typing
 // findings), in node on a schema with the editor's node names: the typed
-// marks' patterns (F16, F22), the block keys between a heading and a list
-// (F24), Backspace at an item's start (F17), Tab in lists and code, and
-// the slash menu's picks where it's open (F18). The browser half is
+// marks' patterns, the block keys between a heading and a list
+//, Backspace at an item's start, Tab in lists and code, and
+// the slash menu's picks where it's open. The browser half is
 // e2e/rich-text-editor.spec.ts "typing".
 import { Schema, type Node as ProseNode } from '@milkdown/kit/prose/model'
 import { history } from '@milkdown/kit/prose/history'

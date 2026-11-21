@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// AppShell's bottom bar on a phone (#240), on the BottomBar story (a page
+// AppShell's bottom bar on a phone, on the BottomBar story (a page
 // inside Collections): each item, a section's sheet (its entries and
 // children, focus inside, Escape and navigation closing it), the content
 // padded clear of the bar, nothing at a desktop width, and axe in both

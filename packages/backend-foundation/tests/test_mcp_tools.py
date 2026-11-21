@@ -156,7 +156,7 @@ async def test_an_error_in_an_entity_is_a_failed_tool_naming_it(session: AsyncSe
     # Not a 500 (a chat's connector says only "isn't responding"): the
     # tool fails with the error's class and message, and it is reported.
     # The user is the session's own, as over /mcp: the rollback expires it,
-    # so the report must not read caller.user (MissingGreenlet, 4.47.1).
+    # so the report must not read caller.user (MissingGreenlet).
     user = await session.get(User, 1)
     assert user is not None
     caller = Caller(user=user, client_id="chat")
@@ -214,7 +214,7 @@ def test_check_entities_refuses_a_group_that_isnt_a_slug() -> None:
         check_entities({"notes": replace(NOTE, group="Health")})
 
 
-# ------------------------------------------- 4.71: instructions, descriptions, text edits, notes
+# ------------------------------------------------ instructions, descriptions, text edits, notes
 
 
 class MemoOut(CamelModel):
@@ -386,8 +386,8 @@ async def test_edit_text_appends_on_a_new_line(session: AsyncSession, writer: Ca
     assert MEMOS[1].body == "Start over."
 
 
-# A table's column widths (4.79.0) are a comment straight after the table,
-# which a read answer hides and the stored text keeps (#321).
+# A table's column widths are a comment straight after the table,
+# which a read answer hides and the stored text keeps.
 TABLE = "Costs:\n\n| Item | Cost |\n| --- | ---: |\n| Paint | $42 |\n\n<!-- table widths: Item=140, Cost=72 -->\n\nPaint twice."
 SHOWN = "Costs:\n\n| Item | Cost |\n| --- | ---: |\n| Paint | $42 |\n\nPaint twice."
 

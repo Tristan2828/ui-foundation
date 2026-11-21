@@ -7,14 +7,13 @@ import type { NodeSchema } from '@milkdown/kit/transformer'
  * and closes the node with nothing in it, and its serializer then leaves
  * `children` out. mdast says a paragraph always has the array, and
  * mdast-util-gfm-task-list-item 2.0.1 reads its length: an empty task item
- * ("- [ ] ", Enter at a list's end) threw there, and the edit was never
- * saved.
+ * ("- [ ] ", Enter at a list's end) would throw there and the edit would
+ * never be saved.
  *
- * And a paragraph's spaces at its end are left out (4.126, the
- * RichTextEditor review's F22). Markdown drops them on reading, so a pause
- * after a space saved a note that read back without it (and remark-stringify
- * sometimes wrote it as `&#x20;`). A hard break's spaces aren't these: it is
- * a node of its own.
+ * And a paragraph's spaces at its end are left out: Markdown drops them on
+ * reading, so a pause after a space would save a note that reads back
+ * without it, and remark-stringify sometimes writes it as `&#x20;`. A hard
+ * break's spaces aren't these: it is a node of its own.
  */
 export function withEmptyParagraphChildren<Ctx>(previous: (ctx: Ctx) => NodeSchema): (ctx: Ctx) => NodeSchema {
   return (ctx) => {

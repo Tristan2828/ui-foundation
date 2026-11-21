@@ -182,7 +182,7 @@ def test_a_redirect_from_the_endpoint_is_not_followed() -> None:
             hits.append(self.path)
             # Read the body before answering, as a real server does: closing
             # a socket with unread data on it is a TCP reset on Windows, which
-            # the client can see before the 302 (#226).
+            # the client can see before the 302.
             self.rfile.read(int(self.headers.get("Content-Length", 0)))
             self.send_response(302)
             self.send_header("Location", "/elsewhere")

@@ -1,4 +1,4 @@
-// watchMswBypass (#367): an /api/ answer that didn't come from the mock
+// watchMswBypass: an /api/ answer that didn't come from the mock
 // service worker fails the test, unless the test routes requests itself,
 // the app runs on the real API, or the same request was then answered by
 // the worker (the rejoin healed it). The Page is a stand-in whose responses

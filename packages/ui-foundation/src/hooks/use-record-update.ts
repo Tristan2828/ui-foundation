@@ -44,7 +44,7 @@
 // `onError` or `onSettled`, not `mutate(change, { onSuccess })`: TanStack
 // runs a `mutate()` callback only while the calling component is still
 // mounted, so a popover closed mid-save would skip it. These run on the
-// mutation, after the package's own cache work, either way (#250).
+// mutation, after the package's own cache work, either way.
 import {
   hashKey,
   useMutation,

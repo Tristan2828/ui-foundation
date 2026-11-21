@@ -16,8 +16,8 @@
 //    only a runtime handler answers is made first; until it comes back
 //    mocked, the page joins the list again.
 //
-// After boot the same restart can happen mid-session (#367: requests from a
-// booted page went to the network, five at once from one page). Nothing in
+// After boot the same restart can happen mid-session (requests from a
+// booted page go to the network). Nothing in
 // the page hears it: a restarted worker is the same `controller`, so no
 // `controllerchange` fires. What the page can see is a request the worker
 // never handed it: MSW's client emits `request:start` for every request the

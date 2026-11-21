@@ -14,7 +14,7 @@ import { WidgetCard, WidgetCardGroup, WidgetList, WidgetListItem } from './widge
 // title linking with a chevron, a value, a line and freshness, folded on
 // a phone to its value. Axe and the glyph check measure them in both
 // themes (e2e/fixtures-visual.spec.ts); e2e/overview-page.spec.ts clicks
-// the tiles and the accordion. Links (4.120): three pages outside the
+// the tiles and the accordion. Links: three pages outside the
 // app after the parts (e2e/overview-links.spec.ts).
 const meta: Meta = {
   title: 'app/OverviewPage',

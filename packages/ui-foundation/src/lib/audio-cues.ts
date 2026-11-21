@@ -8,7 +8,7 @@
 // here is a no-op where the browser can't make the sound
 // (docs/foundation/timed-screens.md "Sound").
 //
-// A chime can be booked ahead (`at`, #193): it's scheduled on the Web
+// A chime can be booked ahead (`at`): it's scheduled on the Web
 // Audio clock, so it strikes on time in a background tab, whose timers
 // and frames the browser slows or stops. cancelCues() takes back every
 // booked strike that hasn't sounded yet (on pause, skip or leaving), so a
@@ -18,7 +18,7 @@
 // speaking, a call, the lock screen) and booked strikes go silent or late.
 // The context is resumed as soon as it stops, and once it runs again every
 // booking is taken back and onCuesRecovered() callbacks fire, so the screen
-// rebooks from where its run is now (#217). cuesInSync() catches the case
+// rebooks from where its run is now. cuesInSync() catches the case
 // where no statechange came, by comparing the audio clock with Date.now().
 //
 // createAudioCues takes the browser's APIs, so the rules are unit tested

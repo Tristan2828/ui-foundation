@@ -1,4 +1,4 @@
-// Several items in one fact (4.111): a list of linked records, a few tasks,
+// Several items in one fact: a list of linked records, a few tasks,
 // whatever a box lists, each item marked so where one ends and the next
 // begins is plain even when a long title wraps. Each item leads with its
 // kind's icon when the app gives one (the record standard's 4I), or a

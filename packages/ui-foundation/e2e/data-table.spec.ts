@@ -3,9 +3,9 @@ import { expect, test, type Page } from '@playwright/test'
 import { expectDataViewsLoaded } from '../src/testing'
 
 // DataTable's opt-ins for a small entity (app/DataTable stories), in a
-// real browser: `width="content"` (issue #104), editing in its rows
-// with InlineCreate (issue #105), and rows grouped under headings with a
-// PillFilter and no header row (issue #135). Axe and the token check on the stories
+// real browser: `width="content"`, editing in its rows
+// with InlineCreate, and rows grouped under headings with a
+// PillFilter and no header row. Axe and the token check on the stories
 // at rest, in both themes, are e2e/fixtures-visual.spec.ts's
 // COMPOSITE_STORIES; a cell open is checked here.
 const story = (id: string, theme: 'light' | 'dark' = 'light') =>
@@ -188,7 +188,7 @@ test.describe('DataTable, editing in its rows', () => {
     await box.fill('javascript:alert(1)')
     await page.keyboard.press('Enter')
     await expect(page.getByRole('row').filter({ has: box }).getByRole('alert')).toHaveText('Use a web or email address')
-    // Two words are not an address: never saved as https://finance wiki (#177).
+    // Two words are not an address: never saved as https://finance wiki.
     await box.fill('finance wiki')
     await page.keyboard.press('Enter')
     await expect(page.getByRole('row').filter({ has: box }).getByRole('alert')).toHaveText('An address has no spaces')
@@ -333,7 +333,7 @@ test.describe('DataTable highlightRow (#156)', () => {
   })
 })
 
-// `totals` (issue #225): a footer row of sums under the columns they add
+// `totals`: a footer row of sums under the columns they add
 // up. Axe and the token check at rest, in both themes, are
 // fixtures-visual's.
 test.describe('DataTable totals (#225)', () => {
@@ -363,7 +363,7 @@ test.describe('DataTable totals (#225)', () => {
       expect(Math.abs(cell.x - header.x), `column ${index} left`).toBeLessThanOrEqual(1)
       expect(Math.abs(cell.x + cell.width - (header.x + header.width)), `column ${index} right`).toBeLessThanOrEqual(1)
     }
-    // A right-aligned column (#237): a sum's text ends where its column's
+    // A right-aligned column: a sum's text ends where its column's
     // values do, and so does the header's label.
     const price = page.getByRole('cell', { name: '$34.50', exact: true }).locator('span')
     const priceTotal = cells.nth(3)
@@ -471,7 +471,7 @@ test.describe('several tables on one page (expectDataViewsLoaded)', () => {
   })
 })
 
-// A list's look (4.83, the list page standard): the row hover, no stripes
+// A list's look (the list page standard): the row hover, no stripes
 // unless `striped`, long text on one line (`meta.clip`), content width by
 // default, and rows per page. Axe and the token check at rest in both
 // themes are fixtures-visual's; the hovered row's contrast is checked here.
@@ -596,7 +596,7 @@ test.describe('DataTable list look (4.83)', () => {
   })
 })
 
-// The title column (4.103): the first column, the row's name, capped at
+// The title column: the first column, the row's name, capped at
 // every width so a long title can't push the other columns off (a long
 // discussion topic overran above md). Cut to one line by default, the whole
 // title in a tooltip on hover and on its link's focus; `meta.wrap` wraps

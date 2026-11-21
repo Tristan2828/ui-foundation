@@ -5,23 +5,23 @@
 // screen's own markup, formatted as its cells are (a count, a date, a
 // badge), and an empty one reads as `emptyLabel` (a dash), never a blank.
 //
-// `icon` (record page standard 5.2, #R4): the concept's icon at 13px
+// `icon` (record page standard 5.2): the concept's icon at 13px
 // before the label's word, in the label's muted tone, from the app's icon
 // vocabulary (a `CalendarIcon` for a date, `HashIcon` for a count). The
 // word stays: the icon is decorative.
 //
-// As wide as its numbers (4.98, record standard 2A): the box hugs them
+// As wide as its numbers (record standard 2A): the box hugs them
 // (`width="content"`, the default) instead of running the page's width
 // into empty space, and wraps them inside the page when it's narrow.
-// `width="full"` keeps the box across the page, the look before 4.98.
+// `width="full"` keeps the box across the page.
 //
-// Nothing moves on hover or focus (4.115): an inline <EditableValue> as a
+// Nothing moves on hover or focus: an inline <EditableValue> as a
 // stat's value keeps its pencil's room at rest here (KeepPencilRoomContext),
 // as a table cell's does. Its room opening on hover moved the values after
 // it along and wrapped a nearly full row, so the hovered value slid out
 // from under the mouse and a click opened the next one.
 //
-// A value's extras (4.120), as a rail fact's (4.115): `info`, a few words
+// A value's extras, as a rail fact's: `info`, a few words
 // behind an info button after the value (a tooltip on hover and keyboard
 // focus, a line under the value on a touch screen, read with the value by
 // a screen reader), and `action`, a small button under the value. Both
@@ -44,12 +44,12 @@ export type KeyStat = {
   /** The concept's icon, drawn at 13px before the label (decorative: the label still says it). */
   icon?: IconComponent
   /**
-   * A few words on the value (4.120), behind an info button after it: a
+   * A few words on the value, behind an info button after it: a
    * tooltip on hover and keyboard focus, a line under the value on a touch
    * screen. A screen reader reads it with the value.
    */
   info?: string
-  /** A small button under the value (4.120), as a rail fact's `action`. */
+  /** A small button under the value, as a rail fact's `action`. */
   action?: EntityViewFactAction
 }
 
@@ -60,7 +60,7 @@ export type KeyStatsProps = {
   stats: readonly KeyStat[]
   /** What an empty value reads as. Defaults to a dash, read as "Not set". */
   emptyLabel?: string
-  /** `content` (the default since 4.98): as wide as its numbers. `full`: across the page. */
+  /** `content` (the default): as wide as its numbers. `full`: across the page. */
   width?: 'content' | 'full'
   className?: string
 }

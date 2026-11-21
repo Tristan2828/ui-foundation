@@ -1,6 +1,6 @@
-// A fact's extras (4.115), shared by the facts rail, Details and the
-// strip's values (KeyStats, 4.120): a hint behind an info button, and a
-// small action button under the value. And a `switch` fact's switch (4.120).
+// A fact's extras, shared by the facts rail, Details and the
+// strip's values (KeyStats): a hint behind an info button, and a
+// small action button under the value. And a `switch` fact's switch.
 import { useId, useState } from 'react'
 import { InfoIcon } from 'lucide-react'
 import { cn } from 'cn'
@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { EntityViewFactAction, EntityViewFactValue } from './entity-view-facts'
 import { usePrinting } from './print-context'
 
-// A fact's hint (4.115): an info button after the value, its words in a
+// A fact's hint: an info button after the value, its words in a
 // tooltip on hover and on keyboard focus. On a touch screen, where a
 // tooltip has no hover to open it, the words are a line under the value
 // instead (and the button goes). A screen reader reads the words with the
@@ -43,7 +43,7 @@ export function FactHint({ label, hint }: { label: string; hint: string }) {
   )
 }
 
-// A fact's action (4.115): a small button under its value, or the app's
+// A fact's action: a small button under its value, or the app's
 // own action given that button (`render`), so its dialog opens from it.
 export function FactAction({ action }: { action: EntityViewFactAction }) {
   const Icon = action.icon

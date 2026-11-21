@@ -2,10 +2,9 @@ import type { Meta, StoryObj } from '@/fixtures/types'
 import { useId, useState } from 'react'
 import { RichTextEditor } from './rich-text-editor'
 
-// How the editor behaves as you type (4.126, the RichTextEditor review's
-// typing findings): leaving a block at a note's edge, typed Markdown,
-// Backspace and Tab in lists, the slash menu on any line. Each editor has
-// the Markdown it would save beside it (e2e/rich-text-typing.spec.ts).
+// How the editor behaves as you type: leaving a block at a note's
+// edge, typed Markdown, Backspace and Tab in lists, the slash menu on any line. Each editor has
+// the Markdown it would save beside it (e2e/rich-text-editor.spec.ts).
 const meta: Meta<typeof RichTextEditor> = {
   title: 'app/RichTextEditor Typing',
   component: RichTextEditor,

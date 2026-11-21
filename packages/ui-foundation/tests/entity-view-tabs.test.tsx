@@ -1,4 +1,4 @@
-// EntityView's tabs (#303), leading slot and rail fields beside, as
+// EntityView's tabs, leading slot and rail fields beside, as
 // rendered markup: which sections go under which tab, the address's
 // tab, and nothing new without the props. The layouts, keyboard and the
 // address changing on a click are e2e/entity-view-tabs.spec.ts.

@@ -1,4 +1,4 @@
-// AppShell's bottom bar on a phone (#240): Home and a few of the nav's
+// AppShell's bottom bar on a phone: Home and a few of the nav's
 // sections in thumb reach, where the sidebar is a sheet behind the
 // header's menu button. An item is a link, or a nav section by its label,
 // which opens a sheet from the bottom listing that section's entries (and
@@ -184,7 +184,7 @@ const PAGE_TILE_CLASS =
   'text-foreground outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 ' +
   'aria-[current=page]:bg-accent aria-[current=page]:font-medium [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground'
 
-// The current entry's pages under a tiles section's tiles (#6C): a
+// The current entry's pages under a tiles section's tiles: a
 // hairline, then its pages as small tiles, each heading a hairline of its
 // own with its list still named by it.
 function SheetPageTiles({ items, activeTo }: { items: readonly NavItem[]; activeTo: string | undefined }) {
@@ -215,8 +215,8 @@ function SheetPageTiles({ items, activeTo }: { items: readonly NavItem[]; active
   ))
 }
 
-// The tiles (#N8): one per entry. Its pages are left to the module itself,
-// unless the section's look is tiles (#6C): then the current entry's are
+// The tiles: one per entry. Its pages are left to the module itself,
+// unless the section's look is tiles: then the current entry's are
 // under the tiles. The tile holding the current page, its own or one of
 // its pages, is marked.
 function SheetTiles({

@@ -9,15 +9,14 @@
 // Placed against the field's element like the floating toolbar, not in a
 // portal (rich-text-floating-toolbar.tsx says why): under the caret, or
 // over it when there's more room there, and never taller than what is
-// visible on its side (above a phone's keyboard, review F11). Visible
+// visible on its side (above a phone's keyboard). Visible
 // means inside whatever clips the field too: a card's `overflow-hidden`
-// cut a menu opened on a note's last line down to its first item.
+// would cut a menu opened on a note's last line down to its first item.
 import { useLayoutEffect, useState } from 'react'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { cn } from 'cn'
 import { slashOptionId, type SlashItem } from './rich-text-slash'
 
-// Its gap from the caret's line.
 const GAP = 4
 
 type Placement = { top: number; left: number; side: 'top' | 'bottom'; maxHeight: number }
@@ -29,7 +28,7 @@ const ENOUGH = 170
 
 // What is visible of the window: above a phone's keyboard
 // (`visualViewport`), above the bar pinned to it
-// (rich-text-keyboard-bar.tsx) when the field has one (review F11), and
+// (rich-text-keyboard-bar.tsx) when the field has one, and
 // inside every element around the field that clips what overflows it (a
 // card, a dialog's scrolling body).
 function visibleArea(field: HTMLElement): { top: number; bottom: number } {
@@ -105,7 +104,6 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
     }
   }, [view, at, field, menu, items.length])
 
-  // The highlighted item stays in sight.
   useLayoutEffect(() => {
     menu?.querySelector(`#${CSS.escape(slashOptionId(id, active))}`)?.scrollIntoView({ block: 'nearest' })
   }, [menu, id, active])
@@ -139,7 +137,7 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
             id={slashOptionId(id, index)}
             role="option"
             aria-selected={index === active}
-            // 44px rows on a touch screen (review F11).
+            // 44px rows on a touch screen.
             className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 select-none aria-selected:bg-muted pointer-coarse:min-h-11"
             // A press never takes focus from the text.
             onMouseDown={(event) => event.preventDefault()}

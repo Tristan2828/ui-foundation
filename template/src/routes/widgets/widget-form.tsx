@@ -226,14 +226,9 @@ export function WidgetFormRoute() {
           name="categoryId"
           render={({ field }) => (
             <Combobox
-              // `items` must carry the same shape as `value` (a plain
-              // category id), not the raw Category objects — Base UI's
-              // default isItemEqualToValue is Object.is(item, value), so
-              // handing it {id,name} objects can never match a numeric
-              // value and itemToStringLabel is never invoked, leaving the
-              // input blank even when a category IS selected (only visible
-              // in edit mode, where a value arrives pre-set instead of
-              // through a user pick).
+              // `items` must carry the same shape as `value` (a plain category id), not the raw
+              // Category objects: Base UI compares with Object.is, so objects never match a numeric
+              // value and the input stays blank in edit mode.
               items={(categoriesQuery.data ?? []).map((category) => category.id)}
               // Base UI decides controlled-vs-uncontrolled from whether
               // `value` is `undefined` on the FIRST render, not on every
@@ -244,17 +239,9 @@ export function WidgetFormRoute() {
               // is a defined "nothing selected" value the field never had.
               value={field.value ?? null}
               onValueChange={(value) => field.onChange(value)}
-              // Deliberately uncontrolled: only listening via
-              // onInputValueChange (to drive the server-side search query),
-              // not also feeding categorySearch back in as `inputValue`.
-              // Controlling inputValue makes it the single source of truth
-              // for the box's displayed text, and it only ever changes via
-              // this callback — so a categoryId set from outside (editing an
-              // existing widget, never typed by the user) has no path to
-              // ever populate it, and the box shows blank forever despite a
-              // real selection. Left uncontrolled, Base UI resolves the
-              // displayed text itself from value + itemToStringLabel,
-              // including on first render.
+              // Deliberately uncontrolled: only listening via onInputValueChange (for the server-side
+              // search). Controlling inputValue would leave a categoryId set from outside (editing)
+              // with no path to populate the box; uncontrolled, Base UI resolves the text itself.
               onInputValueChange={setCategorySearch}
               itemToStringLabel={(id: number) => categoriesById[id] ?? ''}
               filter={null}

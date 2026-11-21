@@ -21,7 +21,7 @@
 //   padded, marks it nested differently) and that `meaning` still misses is
 //   written as the editor shows it, as long as nothing in it is lost
 //   (`content`): no text, address or image. A block the editor drops part
-//   of (until 4.28, every image) is kept as written, and the guard refuses.
+//   of (an image, say) is kept as written, and the guard refuses.
 // - Guard: the result must mean exactly what the editor shows. If it
 //   wouldn't (two blocks fusing, say), the merge throws instead of saving
 //   something else; the draft stays on screen.
@@ -192,7 +192,7 @@ function uses(node: MdNode, references: Set<string> = new Set(), urls: Set<strin
 
 // The blocks of the texts merged lately, by text: an editor merges the
 // same original and baseline against each edit, so each is parsed once
-// per mount, not once per merge (F6). A few, most recent last.
+// per mount, not once per merge. A few, most recent last.
 const PARSED = 8
 const parsed = new Map<string, Block[]>()
 

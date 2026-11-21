@@ -1,4 +1,4 @@
-// Whether the app can reach its server (4.90, the dialogs and feedback
+// Whether the app can reach its server (the dialogs and feedback
 // standard D9): what OfflineNotice reads. Offline when the browser says so
 // (`navigator.onLine`, its `offline` event) or when a request couldn't get
 // an answer at all (safeFetch's network failure); online again when the

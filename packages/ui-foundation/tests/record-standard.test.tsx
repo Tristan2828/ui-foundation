@@ -1,9 +1,9 @@
-// The record standard's looks (4.98: 1A, 2A, 5B, 8A, 9C) as rendered
+// The record standard's looks (1A, 2A, 5B, 8A, 9C) as rendered
 // markup and pure rules: the facts as a Details tab and never a rail by
 // default, a small box beside a tab, the card dialog's record, the strip
 // as wide as its numbers, the status kinds, and choice fields two to a
 // row. The geometry (widths, wrapping, a phone) is
-// e2e/entity-view-details.spec.ts, e2e/record-dialog.spec.ts and
+// e2e/entity-view-standard.spec.ts, e2e/record-dialog.spec.ts and
 // e2e/form-controls.spec.ts.
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'

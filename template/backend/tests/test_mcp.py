@@ -901,7 +901,7 @@ async def test_restore_brings_a_deleted_record_back_and_logs_it(
 
     actions = [entry.action for entry in (await session.exec(select(McpAuditEntry).order_by(col(McpAuditEntry.id)))).all()]
     assert actions == ["delete", "restore"]
-    # Nothing is deleted any more, so there is nothing to restore.
+    # Nothing is deleted, so there is nothing to restore.
     assert (await call(web, token, "restore", {"url": "/widgets/1"})) == ("No deleted widget at /widgets/1.", True)
 
 
@@ -1090,7 +1090,7 @@ async def test_a_grouped_api_address_reads_the_record(
     assert not is_error
     assert updated.startswith("Updated widget /inventory/widgets/1. Changed name.")
 
-    # The flat form no longer names widgets.
+    # The flat form doesn't name widgets.
     text, is_error = await call(web, token, "fetch", {"url": "/api/widgets/1"})
     assert is_error and text.startswith("'/api/widgets/1' isn't a record address.")
 

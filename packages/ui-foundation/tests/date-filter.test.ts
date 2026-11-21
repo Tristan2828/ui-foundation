@@ -1,4 +1,4 @@
-// A list's date filter (src/lib/date-filter.ts, 4.110): one string a URL
+// A list's date filter (src/lib/date-filter.ts): one string a URL
 // and a saved view can hold, read against today for the query.
 import { describe, expect, it } from 'vitest'
 import { activeViewOf, viewToUrlChanges } from '../src/hooks/table-url-changes'

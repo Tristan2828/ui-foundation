@@ -13,12 +13,12 @@ import { SessionStage, SessionView, sessionStageLit, sessionStageMain, sessionSt
 // SessionView over the page, a one-minute useSessionClock, a chime on
 // start and a closing pair and a spoken line on done, a remembered mute,
 // and a breathing circle that becomes a still one under reduced motion.
-// For a background tab (#193): the closing pair is booked ahead on the
+// For a background tab: the closing pair is booked ahead on the
 // audio clock when the run starts, resumes or skips, and taken back on
 // pause or close; Skip seeks the clock; the tab's title counts down.
 // Opened on load so axe sees it (e2e/fixtures-visual.spec.ts), and driven
 // through its states in e2e/session-view.spec.ts. DarkStage is the same run
-// on the dark stage (#253): the view dark whatever the theme, a SessionStage
+// on the dark stage: the view dark whatever the theme, a SessionStage
 // glowing in the run's tone (success while it counts), the time lit in it,
 // the controls quiet outlines.
 const LENGTH = 60_000

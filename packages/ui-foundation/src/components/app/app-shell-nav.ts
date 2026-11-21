@@ -246,7 +246,7 @@ export function navBackTarget(nav: readonly NavEntry[], pathname: string): { lab
 }
 
 /**
- * The bar's trail for a page that names none of its own (#N5): the active
+ * The bar's trail for a page that names none of its own: the active
  * entry, after the entry it sits under when it's one of a module's own
  * pages ("Finance / Accounts"). The entry is the trail's last crumb even
  * on a page below it. Nothing on a page no entry covers.

@@ -8,7 +8,7 @@
 // fullscreen and quietly isn't there where the browser can't (iOS Safari
 // on a phone), and keepAwake, which holds a screen wake lock while open.
 // `dark` renders the view in the dark theme whatever the app's (the dark
-// stage, #253): the dark tokens are scoped to the view, so the page under
+// stage): the dark tokens are scoped to the view, so the page under
 // it keeps its own. SessionStage, below, is the stage under the header.
 // Recipes for its states in Playwright: docs/foundation/timed-screens.md.
 import * as React from 'react'

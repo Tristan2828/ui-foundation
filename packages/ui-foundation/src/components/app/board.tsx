@@ -15,14 +15,14 @@
 //   columns' values, in `items`' order; a record whose value has no column
 //   isn't shown. `renderCard` is the card's content: the title (a link to
 //   the record's page) and a few values.
-// - Groups (4.131): a column with `groups` splits its cards by `getGroup`,
+// - Groups: a column with `groups` splits its cards by `getGroup`,
 //   each group a heading with its count that folds its cards. A card whose
 //   group isn't one of the column's isn't shown.
-// - Order (4.131): with `ordered`, cards keep `items`' order and a drag
+// - Order: with `ordered`, cards keep `items`' order and a drag
 //   within a column (or a group) reorders them, a line showing where the
 //   card will land; the menu has Move Up, Move Down and Move to Top. A
 //   column with `ordered: false` (a Done column, by date) has none of it.
-// - Paging (4.131): with `pageSize`, a column or a group shows its first
+// - Paging: with `pageSize`, a column or a group shows its first
 //   cards, then "Show N More". `pageKey` changing (the filters) folds every
 //   one back to its first page.
 // - Moving: with `onMove`, a card drags to another column (a pointer) and
@@ -123,19 +123,19 @@ export type BoardColumn<V extends string, G extends string = string> = {
   empty?: ReactNode
   /** Under the cards: "Showing 100 of 240", a link to the whole list. */
   footer?: ReactNode
-  /** The column's groups, in order (4.131). Needs the board's `getGroup`. */
+  /** The column's groups, in order. Needs the board's `getGroup`. */
   groups?: readonly BoardGroup<G>[]
-  /** Default: the board's `ordered`. `false` gives this column no order (4.131). */
+  /** Default: the board's `ordered`. `false` gives this column no order. */
   ordered?: boolean
-  /** A caption under the column's name (4.131). */
+  /** A caption under the column's name. */
   description?: ReactNode
-  /** A control at the end of the header, a + (4.131). */
+  /** A control at the end of the header, a +. */
   action?: ReactNode
-  /** Short muted text in the header before the action: "3 need review" (4.131). */
+  /** Short muted text in the header before the action: "3 need review". */
   note?: ReactNode
-  /** The lead column, outlined: where the list starts (4.131). */
+  /** The lead column, outlined: where the list starts. */
   lead?: boolean
-  /** Its name in the phone's row of counts (4.131). Default: its name. */
+  /** Its name in the phone's row of counts. Default: its name. */
   shortName?: string
 }
 
@@ -159,17 +159,17 @@ export type BoardProps<T, V extends string, G extends string = string> = {
   moveTo?: readonly BoardMoveTarget<V>[]
   /** The columns' heading level: 2 under the page's h1 (the default), deeper under a section. */
   headingLevel?: 2 | 3 | 4 | 5 | 6
-  /** Cards keep `items`' order and can be reordered (4.131). Only with `onMove`. */
+  /** Cards keep `items`' order and can be reordered. Only with `onMove`. */
   ordered?: boolean
-  /** Which group of its column a card is in (4.131), for a column with `groups`. */
+  /** Which group of its column a card is in, for a column with `groups`. */
   getGroup?: (item: T) => G
-  /** Each column, or group, shows this many cards, then "Show N More" (4.131). */
+  /** Each column, or group, shows this many cards, then "Show N More". */
   pageSize?: number
-  /** When it changes, every column and group goes back to its first page (4.131). */
+  /** When it changes, every column and group goes back to its first page. */
   pageKey?: string
-  /** The app's own items, after the board's in the card's menu (4.131). */
+  /** The app's own items, after the board's in the card's menu. */
   menu?: (item: T) => ReactNode
-  /** Below lg: one column with the next one's edge (`swipe`, the default), or a row of counts that picks it (4.131). */
+  /** Below lg: one column with the next one's edge (`swipe`, the default), or a row of counts that picks it. */
   phone?: 'swipe' | 'counts'
   isLoading?: boolean
   error?: AppError | null

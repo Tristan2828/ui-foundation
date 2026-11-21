@@ -28,7 +28,7 @@ export type FilterBarSearch = {
   /** The box's accessible name: "Search" unless set. */
   label?: string
   /**
-   * A key pressed in the box (4.123): Enter opening the one match, or
+   * A key pressed in the box: Enter opening the one match, or
    * "#12" going straight to record 12. Called before the box's own
    * handling; `event.preventDefault()` keeps the key from it.
    */

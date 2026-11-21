@@ -34,7 +34,6 @@ export type NotesOutlineProps = {
   className?: string
 }
 
-// Each level's indent, from the highest listed.
 const INDENT = ['pl-2', 'pl-6', 'pl-10', 'pl-14', 'pl-18', 'pl-22']
 
 // The element showing the heading `id` in the text under `foldKey`.

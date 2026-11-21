@@ -81,7 +81,7 @@ describe('<Markdown headingLevel>', () => {
   })
 })
 
-// headingFrom="text" (#235): the text's own highest heading takes
+// headingFrom="text": the text's own highest heading takes
 // headingLevel, for notes that start at `##` or deeper.
 describe('textTopHeading', () => {
   it("finds the text's highest heading, nested ones included", () => {

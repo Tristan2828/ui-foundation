@@ -1,7 +1,7 @@
-// A small titled card on a hub page (issue #121): a few rows from one part
-// of the app, loaded on their own. It owns the four required states the
-// way DataTable and EntityView do, so every widget on a page skeletons,
-// empties and fails alike:
+// A small titled card on a hub page: a few rows from one part of the app,
+// loaded on their own. It owns the four required states the way DataTable
+// and EntityView do, so every widget on a page skeletons, empties and
+// fails alike:
 //
 // - loading: `skeletonRows` rows shaped like the list's, so the card
 //   keeps its height when the data arrives;
@@ -15,33 +15,32 @@
 // outline and its landmarks. Height follows content (`self-start` in a
 // grid), so a short widget doesn't stretch to its tallest neighbour.
 //
-// `collapsible` (#233) folds a card to its header, for a hub with more
-// widgets than a phone screen holds: a chevron button at the header's end
-// (named by the title, `aria-expanded`, `aria-controls` the body), the
-// header's link still there while folded. With `storageKey` the choice is
+// `collapsible` folds a card to its header, for a hub with more widgets
+// than a phone screen holds: a chevron button at the header's end (named
+// by the title, `aria-expanded`, `aria-controls` the body), the header's
+// link still there while folded. With `storageKey` the choice is
 // remembered on this device (useRememberedFlag: localStorage, in memory
 // where that's blocked). The body is hidden, not unmounted, so whatever
 // the app keeps in it stays put.
 //
-// `summary` (#263) is one short value a folded card shows in its header
-// ("3", "Due today"), so a hub of folded cards still reads at a glance.
-// It follows the card's state: a small skeleton while loading, a muted
-// dash ("Couldn't load" to a screen reader) on an error, `emptySummary`
-// (or nothing) when empty. Opened, the summary goes and the body shows,
-// the error in it as before. The chevron is described by it.
+// `summary` is one short value a folded card shows in its header ("3",
+// "Due today"). It follows the card's state: a small skeleton while
+// loading, a muted dash ("Couldn't load" to a screen reader) on an error,
+// `emptySummary` (or nothing) when empty. Opened, the summary goes and the
+// body shows. The chevron is described by it.
 //
-// WidgetCardGroup (#263) makes its cards an accordion: every card in it
-// folds, opening one folds the others, and a click anywhere on a header
-// (not on its link or another control) toggles it; the chevron stays the
+// WidgetCardGroup makes its cards an accordion: every card in it folds,
+// opening one folds the others, and a click anywhere on a header (not on
+// its link or another control) toggles it; the chevron stays the
 // keyboard's way in. `accordion="mobile"` does that only below the
 // sidebar's breakpoint (useIsMobile), so a desktop hub keeps each card's
 // own `collapsible`. While the accordion is on it owns the folding and a
 // card's `storageKey` is left alone.
 //
 // The header's link is an app route (`to`) or, for a widget about a
-// service outside the app, its address (`href`, #248): that one opens in a
-// new tab, with the outside-link mark and a screen reader's "(opens in a
-// new tab)", as WidgetListItem's `href` does.
+// service outside the app, its address (`href`): that one opens in a new
+// tab, with the outside-link mark and a screen reader's "(opens in a new
+// tab)", as WidgetListItem's `href` does.
 //
 // WidgetList and WidgetListItem are the common body: rows with dividers,
 // each a primary link (or plain text) truncated to one line, an optional
@@ -50,18 +49,15 @@
 // function and it gets the id to put in `aria-labelledby`.
 //
 // One card anatomy (overview standard O4), shared with OverviewPage's
-// parts so the hub's widgets and an overview's parts read alike: `to`
-// makes the title the link to everything the card sums up, with a
-// chevron after it; `value` is its headline in the numeric type, `line`
-// one muted line under it, and `freshness` how old the number is
+// parts: `to` makes the title the link to everything the card sums up,
+// with a chevron after it; `value` is its headline in the numeric type,
+// `line` one muted line under it, and `freshness` how old the number is
 // (Freshness) at the body's end. A folded card shows `value` as its
-// summary when no `summary` is given. All optional: a card without them
-// is drawn as before, and its folding on a phone is unchanged.
+// summary when no `summary` is given. All optional.
 //
-// Under data-density="compact" (#224) the card's padding drops to 12px and
-// a row's to 4px, for a dense hub; text stays at type-body. On a phone a
-// compact row is 44px tall and its link fills that height, so it stays a
-// finger's target.
+// Under data-density="compact" the card's padding drops to 12px and a
+// row's to 4px; text stays at type-body. On a phone a compact row is 44px
+// tall and its link fills that height, so it stays a finger's target.
 import { createContext, useContext, useId, useState, type MouseEvent, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
 import { ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon } from 'lucide-react'

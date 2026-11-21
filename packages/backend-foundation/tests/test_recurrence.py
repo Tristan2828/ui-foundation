@@ -43,7 +43,7 @@ from foundation_backend.recurrence_models import RecurringReminderFields
 CASES_FILE = Path(__file__).resolve().parents[2] / "ui-foundation" / "tests" / "fixtures" / "recurrence-cases.json"
 CASES: list[dict[str, Any]] = json.loads(CASES_FILE.read_text(encoding="utf-8"))["cases"]
 # Rule shapes without WKST and their days before WKST was supported, with
-# the same rule's days under WKST=SU (4.119); the package's suite checks them too.
+# the same rule's days under WKST=SU; the package's suite checks them too.
 SHAPES_FILE = CASES_FILE.with_name("recurrence-shapes.json")
 SHAPES: list[dict[str, Any]] = json.loads(SHAPES_FILE.read_text(encoding="utf-8"))["shapes"]
 

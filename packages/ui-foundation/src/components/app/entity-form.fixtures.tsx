@@ -12,7 +12,7 @@ import { EntityForm } from './entity-form'
 import { FormSection } from './form-section'
 import { OptionSelect, type OptionSelectOption } from './option-select'
 
-// EntityForm in the form standard (4.85), on made-up books, in a data
+// EntityForm in the form standard, on made-up books, in a data
 // router so the leave guard works: `/books/new` is the form, `/books` the
 // list Cancel and the "Books" link go to, `/books/added` where a save
 // lands.

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// The dialogs and feedback standard (4.90) in a real browser: DeleteAction
+// The dialogs and feedback standard in a real browser: DeleteAction
 // (D1), the toaster's place and lifetimes (D5), an action's error beside
 // it (D6), the skeleton's delay (D7), a job's progress (D8) and the
 // offline bar (D9). Axe in both themes and the icons' 3:1 are

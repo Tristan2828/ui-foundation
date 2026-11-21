@@ -4,27 +4,27 @@
 // 4 tasks, 5 bullets, 6 numbers, 8 a code block), and Cmd+Option and the
 // digit does on a Mac, as in Notion (Cmd+Shift+3 to 5 are the Mac's
 // screenshots). Mod+Shift+S strikes through, also Notion's, and
-// Mod+Shift+H highlights (4.126), Notion's too. Each runs the same command
+// Mod+Shift+H highlights, Notion's too. Each runs the same command
 // as its toolbar button, so it toggles the same way.
 //
 // Read by the key's position (`event.code`), not the character it types:
 // Shift+5 types "%", and Option+5 "∞".
 //
-// And the editing keys Notion, Docs and Obsidian share (4.126, the
-// RichTextEditor review's F17 and its Tab row):
+// And the editing keys Notion, Docs and Obsidian share (each is
+// taken here, before Milkdown's own keymap):
 // - Backspace at the start of a list item's first line lifts the item out
 //   of its list (a nested one up a level), its words kept as a line; a
 //   second Backspace joins it to the line above. Milkdown's (joinBackward)
-//   fused a nested item into the item above as its second paragraph.
+//   would fuse a nested item into the item above as its second paragraph.
 // - Tab and Shift+Tab in a list item indent and outdent it, and stay in
 //   the text where it can't move (a first item): Tab leaving the editor
-//   from one item and not the next was a surprise. In a code block they
+//   from one item and not the next would be a surprise. In a code block they
 //   indent and outdent its lines by two spaces. On a plain line Tab still
 //   leaves the editor, the keyboard's way on to the rest of the page.
 // - Undo and redo (Mod+Z; Mod+Shift+Z, and Ctrl+Y off Apple) are taken
-//   here whether or not there is a step to take (the review's F21).
-//   ProseMirror's keymap, finding nothing to redo, ran Shift+Mod+Z's
-//   unshifted key, Mod+Z, so a redo pressed once too often undid a step.
+//   here whether or not there is a step to take: ProseMirror's keymap,
+//   finding nothing to redo, would run Shift+Mod+Z's unshifted key, Mod+Z,
+//   so a redo pressed once too often would undo a step.
 import { redo, undo } from '@milkdown/kit/prose/history'
 import { liftListItem, sinkListItem } from '@milkdown/kit/prose/schema-list'
 import type { EditorState, Transaction } from '@milkdown/kit/prose/state'

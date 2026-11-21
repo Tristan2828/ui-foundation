@@ -12,7 +12,7 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "# Title\n\nIntro paragraph.\n\n## Second level\n\nText under it.\n\n### Third level\n\nMore text.\n",
     editorWrites: "# Title\n\nIntro paragraph.\n\n## Second level\n\nText under it.\n\n### Third level\n\nMore text.\n",
   },
-  // Toggle headings (4.66): the marker is kept, and a plain heading stays plain.
+  // Toggle headings: the marker is kept, and a plain heading stays plain.
   toggleHeadings: {
     markdown: '# Plan {toggle="true"}\n\nIntro.\n\n## Safety {toggle="true"}\n\nGloves on.\n\n## Plain\n\nNot a toggle.\n\n### **Bold** words {toggle="true"}\n\nUnder it.\n',
     editorWrites: '# Plan {toggle="true"}\n\nIntro.\n\n## Safety {toggle="true"}\n\nGloves on.\n\n## Plain\n\nNot a toggle.\n\n### **Bold** words {toggle="true"}\n\nUnder it.\n',
@@ -33,7 +33,7 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "See the [setup guide](https://example.com/setup) and [titled](https://example.com \"Title\").\n\nAn autolink <https://example.com/auto> and a bare https://example.com/bare one.\n",
     editorWrites: "See the [setup guide](https://example.com/setup) and [titled](https://example.com \"Title\").\n\nAn autolink <https://example.com/auto> and a bare <https://example.com/bare> one.\n",
   },
-  // Page links (4.73): ordinary links an app marks as its pages, one alone
+  // Page links: ordinary links an app marks as its pages, one alone
   // on its line (a page line), one inline. Nothing about them is written
   // differently.
   pageLinks: {
@@ -84,19 +84,19 @@ export const MARKDOWN_FIXTURES: Record<string, MarkdownFixture> = {
     markdown: "> [!NOTE]\n> Measure twice.\n\n> [!warning]\n> Lower-case marker, kept.\n\n> [!TIP]\n>\n> - a list first\n> - two items\n\n> A plain quote.\n\nAfter the callouts.\n",
     editorWrites: "> [!NOTE]\n> Measure twice.\n\n> [!warning]\n> Lower-case marker, kept.\n\n> [!TIP]\n>\n> - a list first\n> - two items\n\n> A plain quote.\n\nAfter the callouts.\n",
   },
-  // Images show in the editor (4.28; until then it dropped every one as
-  // it loaded). A reference image is written inline, as a reference link is.
+  // Images show in the editor (the editor keeps every one
+  // as it loads). A reference image is written inline, as a reference link is.
   images: {
     markdown: "An inline ![a chart](https://example.com/chart.png) image.\n\n![](https://example.com/photo.jpg)\n\n![Titled](https://example.com/t.png \"A title\")\n\n![ref image][pic]\n\n[pic]: https://example.com/ref.png\n\nAfter the images.\n",
     editorWrites: "An inline ![a chart](https://example.com/chart.png) image.\n\n![](https://example.com/photo.jpg)\n\n![Titled](https://example.com/t.png \"A title\")\n\n![ref image](https://example.com/ref.png)\n\nAfter the images.\n",
   },
-  // A code fence's info string past the language (F2): the editor keeps
+  // A code fence's info string past the language: the editor keeps
   // only the language, so an untouched fence must be kept as written.
   fenceMeta: {
     markdown: "Intro.\n\n```js title=\"app.js\"\nlet a = 1\n```\n\n``` js title=\"x.js\" {1,3}\nlet b = 2\n```\n\nSacrificial last paragraph.\n",
     editorWrites: "Intro.\n\n```js\nlet a = 1\n```\n\n```js\nlet b = 2\n```\n\nSacrificial last paragraph.\n",
   },
-  // Windows line endings (F12): an edit elsewhere leaves the multi-line
+  // Windows line endings: an edit elsewhere leaves the multi-line
   // blocks nobody touched in CRLF, and what the editor writes is CRLF too.
   crlf: {
     markdown: "# Packing\r\n\r\n> [!NOTE]\r\n> Measure twice.\r\n\r\n> [!TIP]\r\n> Label the boxes\r\n> by room.\r\n\r\n- tape\r\n- markers\r\n\r\nLast paragraph\r\nover two lines.\r\n",

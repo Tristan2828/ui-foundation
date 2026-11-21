@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "cn"
 
-// `delay` (4.90, the dialogs and feedback standard D7): nothing shows for
+// `delay` (the dialogs and feedback standard D7): nothing shows for
 // the first 300ms, so a fast load just appears instead of flashing grey
 // shapes; a slow one shows its shape after that. It keeps its room while
 // it waits (invisible, not absent), so nothing moves when it shows.

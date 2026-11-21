@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// ListHeader's secondary action (4.117): one outline button beside New,
+// ListHeader's secondary action: one outline button beside New,
 // before it, New still the primary (filled). On a phone it folds into ⋯
 // as the menu's first item; a list with nothing else in ⋯ shows ⋯ on a
 // phone only. Disabled (a refresh in flight) it's disabled in both

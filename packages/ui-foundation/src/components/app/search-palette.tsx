@@ -1,4 +1,4 @@
-// Search in AppShell's bar (#N6): a box in the header (a button on a
+// Search in AppShell's bar: a box in the header (a button on a
 // phone) and Ctrl K (⌘K on a Mac) open a palette that finds a page or a
 // record by name, and Enter opens it. Before you type it lists the
 // records you opened lately (useRecentRecord), then the first pages.
@@ -48,7 +48,6 @@ export type AppShellSearch = {
   recent?: number | false
 }
 
-// How long typing pauses before findRecords is asked.
 const SEARCH_DELAY_MS = 150
 const PAGES_BEFORE_TYPING = 5
 const PAGES_MATCHED = 6

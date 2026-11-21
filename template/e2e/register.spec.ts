@@ -24,7 +24,7 @@ test.describe('register', () => {
   }) => {
     await page.goto('/register')
     await page.getByLabel('Name').fill('Dev User')
-    // Same email as the seeded dev user (src/mocks/data.ts's mockUser).
+    // Same email as the seeded dev user (MOCK_USER in the package's src/mocks/auth.ts).
     await page.getByLabel('Email').fill('dev@example.com')
     await page.getByLabel('Password', { exact: true }).fill('a-strong-password')
     await page.getByLabel('Confirm Password', { exact: true }).fill('a-strong-password')

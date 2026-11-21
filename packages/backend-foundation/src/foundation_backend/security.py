@@ -21,7 +21,7 @@ _MAXMEM = 64 * 1024 * 1024
 # Other parameters still verify (needs_rehash replaces them), up to this.
 _MAX_P = 16
 
-# Hashes from before 4.122: PBKDF2-HMAC-SHA256,
+# Old hashes: PBKDF2-HMAC-SHA256,
 # `pbkdf2_sha256$<iterations>$<salt hex>$<digest hex>`. Still verified, and
 # replaced with scrypt on the account's next successful sign-in
 # (needs_rehash).

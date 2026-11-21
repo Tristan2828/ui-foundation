@@ -9,7 +9,6 @@ export default defineConfig({
     // normal occurrence in an agent-built repo — without this, one
     // session's in-progress specs run in another session's verify.
     exclude: ['**/node_modules/**', 'e2e/**', '**/.claude/worktrees/**'],
-    // No test files exist before Phase 2 (gateway/mock-conformance tests).
     // Without this, an empty suite is a hard failure instead of a no-op.
     passWithNoTests: true,
   },

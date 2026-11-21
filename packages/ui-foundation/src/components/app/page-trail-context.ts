@@ -1,4 +1,4 @@
-// The trail in AppShell's bar (#N5): a page names where it is with
+// The trail in AppShell's bar: a page names where it is with
 // `usePageTrail`, and the shell draws it between the menu button and the
 // search box. Pages that set none get their nav entry's (navTrail).
 import { createContext, useContext, useLayoutEffect } from 'react'

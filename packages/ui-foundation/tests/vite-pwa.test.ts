@@ -1,4 +1,4 @@
-// pwa() from `@tristan2828/ui-foundation/vite` (issue #167): the manifest,
+// pwa() from `@tristan2828/ui-foundation/vite`: the manifest,
 // the icons (each PNG decoded here, CRCs and all), the service worker, the
 // tags in index.html, and the dev server serving the same files.
 import fs from 'node:fs'

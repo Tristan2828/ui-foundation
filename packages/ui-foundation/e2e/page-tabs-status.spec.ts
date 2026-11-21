@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// 4.110's looks, in a real browser and every theme: a page's line tabs
+// The looks, in a real browser and every theme: a page's line tabs
 // (ui/Tabs) draw the open tab's name in --primary-text and its line in
 // --primary, the way a record's tabs do; and StatusMark's done and ended
 // kinds have colours of their own, apart from active's and attention's

@@ -1,4 +1,4 @@
-// A small value-over-time chart for a record's page (#238): one series (a
+// A small value-over-time chart for a record's page: one series (a
 // price checked daily, a weight, a balance) against an optional dashed
 // target, with its lowest, highest or latest point marked. Plain SVG, no
 // chart library: one line, a few dozen points, nothing to zoom.
@@ -14,12 +14,12 @@
 // a summary (first, last, lowest, highest, the target) and a table of
 // every point, all visually hidden.
 //
-// A `projection` (4.51) carries the line on past its last point, dashed in
+// A `projection` carries the line on past its last point, dashed in
 // the same colour: where a balance may go, not where it went. It shares
 // the plot's x and y ranges, so the target and the projection meet where
 // they would.
 //
-// `levels` (4.64) is for a value that is one of a few named steps (a
+// `levels` is for a value that is one of a few named steps (a
 // confidence, Very low to High): each y is its step's index. The steps
 // are named down the plot's left with a faint rule at each, the range is
 // every step, and the line holds each value until the next point, then
@@ -51,7 +51,7 @@ export type LineChartProps = {
   /**
    * Named steps, lowest first: `['Very low', 'Low', 'Moderate', 'High']`.
    * Each point's y is its step's index. The steps are named on the plot's
-   * left, the range is all of them, and the line steps (4.64).
+   * left, the range is all of them, and the line steps.
    */
   levels?: readonly string[]
   /** A value as shown: `usd`. Defaults to the number as the browser writes it. */

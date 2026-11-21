@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The record page standard in EntityView (4.81; app/EntityView "Record
+// The record page standard in EntityView (app/EntityView "Record
 // standard" and "Record standard, long title") in a real browser: the
 // badges on the title's line, Print notes and Delete as icons with their
 // tooltips, the strip's icons, and folded empties opening, edited in
@@ -122,9 +122,7 @@ test.describe('EntityView folded empties', () => {
 })
 
 // The title edited in place (app/EntityView "Record standard, title edited
-// in place", and its long title). Before 4.94 the editable box's negative
-// margins made the title 0.75rem too narrow for its own text, so a short
-// name broke over two lines ("Dr. / Example").
+// in place", and its long title). The editable box's negative margins must not make the title too narrow for its own text, which would break a short name over two lines ("Dr. / Example").
 test.describe('EntityView title edited in place', () => {
   // The lines the title's text sits on, and the words broken across two.
   const titleLines = (page: Page) =>

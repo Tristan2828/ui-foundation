@@ -1,15 +1,8 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The record extras of 4.120. A yes/no fact (`kind: 'switch'`) is a
-// switch named by its label, toggled in place by a click or the keyboard,
-// its on/off word keeping its room so nothing after it moves, busy while a
-// slow save runs; a read-only one is disabled with its hint; the rail
-// folds into Details on a phone with the switches working there. Header
-// badges edited in place keep their pencil's room, so hovering one moves
-// nothing. A strip value carries an info tip and an action, as a rail
-// fact does. A header button carries a hint line under it, level with
-// the buttons beside it.
+// The record extras: a `kind: 'switch'` fact toggled in place, badges edited in place keeping their
+// pencil's room, strip values with an info tip and action, and a header button's hint line.
 const HARNESS = 'http://localhost:6180/story.html?id=app-entityview--record-extras'
 
 const rail = (page: Page) => page.getByRole('complementary', { name: 'Shift handover facts' })

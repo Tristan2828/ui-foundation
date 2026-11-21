@@ -10,10 +10,10 @@
 // typed-text match all use the label, and the value is what's emitted.
 //
 // A toolbar filter's summary ("Status: Active +1", `label`) keeps the
-// control one line high however narrow it is (4.109): it truncates, and
+// control one line high however narrow it is: it truncates, and
 // the text box beside it takes no room until it's focused.
 //
-// An option can carry a status kind or an icon (4.130), as OptionSelect's
+// An option can carry a status kind or an icon, as OptionSelect's
 // and ChoiceButtons' do, drawn by the same OptionIcon: pass the options as
 // `{ value, label, kind?, icon? }` (OptionSelectOption) in place of bare
 // values. The icon goes before the words on the option in the list, on its
@@ -40,7 +40,7 @@ export type MultiChoiceOption<T extends string> = OptionSelectOption<T>
 
 export type MultiChoiceProps<T extends string> = {
   /**
-   * Every allowed option, in display order: bare values, or (4.130)
+   * Every allowed option, in display order: bare values, or
    * OptionSelect's `{ value, label, kind?, icon? }`, whose `label` names it
    * and whose `kind` or `icon` is drawn before the words, as OptionSelect
    * draws it.
@@ -114,7 +114,7 @@ export function MultiChoice<T extends string>({
       value={value}
       onValueChange={(next, details) => {
         // Base UI empties the value on Escape while the list is closed, so
-        // a second Escape after a pick wiped every chip (issue #123). Escape
+        // a second Escape after a pick wiped every chip. Escape
         // never removes picks here: a chip's remove button, Backspace or
         // unpicking in the list does. Let the key go on, so a dialog or an
         // edit in place gets its own Escape.
@@ -127,7 +127,7 @@ export function MultiChoice<T extends string>({
       }}
       itemToStringLabel={labelOf}
     >
-      {/* With a summary (4.109): one line at the control's own height. The
+      {/* With a summary: one line at the control's own height. The
           row doesn't wrap, the summary truncates with an ellipsis, and the
           text box takes no room until it's focused, so "Status: Active +1"
           in a narrow filter stays as tall as the inputs beside it. */}

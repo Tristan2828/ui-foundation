@@ -6,14 +6,14 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { fieldRows, type FieldKind, type FieldSize } from "@/lib/field-rows"
 
-// The foundation's additions to shadcn's Field (4.85, the form standard):
+// The foundation's additions to shadcn's Field (the form standard):
 //
 // - FieldGroup lays its fields out itself: consecutive short fields
 //   (`<Field size="s" | "m" | "l">`) share a row, up to three, each as
 //   wide as its size; `<Field solo>` keeps a short one alone
 //   (lib/field-rows.ts has the rule). Below 48rem each takes its own row
-//   but two dates or two numbers. A choice (a Field holding ChoiceButtons,
-//   4.98) shares a row only with another choice, and two choices stay side
+//   but two dates or two numbers. A choice (a Field holding ChoiceButtons)
+//   shares a row only with another choice, and two choices stay side
 //   by side on a phone while both fit. The rows are worked out from the DOM, so
 //   a Field inside the app's own component still counts.
 // - Compact: 14px between fields and 32px controls (40px under 48rem or
@@ -56,12 +56,12 @@ function FieldLegend({
 
 // What a Field holds, when it doesn't say (`kind`): a date or a number
 // box keeps its partner on a phone.
-// DateField marks its own box (`data-kind="date"`, 4.88).
+// DateField marks its own box (`data-kind="date"`).
 const DATE_CONTROL = "input[type=date], [data-kind=date]"
 const NUMBER_CONTROL = "input[type=number], input[inputmode=numeric], input[inputmode=decimal]"
 
-// A row of choice buttons (ChoiceButtons, 4.98): two to a row (9C). A
-// ToggleGroup that is the field's own control (4.123) is one too; one
+// A row of choice buttons (ChoiceButtons): two to a row (9C). A
+// ToggleGroup that is the field's own control is one too; one
 // nested deeper (a RecurrenceField's weekdays) isn't.
 const CHOICE_CONTROL = "[data-slot=choice-buttons], :scope > [data-slot=toggle-group]"
 
@@ -183,7 +183,7 @@ function Field({
      * A date or a number: two of a kind stay side by side on a phone.
      * `choice`: two to a row, side by side on a phone while both fit.
      * Found by itself for a date or number `<input>`, DateField (which
-     * marks itself, 4.88) and ChoiceButtons; say it for a control of your own.
+     * marks itself) and ChoiceButtons; say it for a control of your own.
      */
     kind?: FieldKind
   }) {

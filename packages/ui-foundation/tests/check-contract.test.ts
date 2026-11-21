@@ -107,7 +107,7 @@ describe('check-contract', () => {
     expect(result.output).toContain('missing components.schemas.User')
   })
 
-  // Every app before 3.19 has neither: the banner's path is additive.
+  // An app without the banner has neither: the banner's path is additive.
   it('passes an app without the data-environment banner: no /environment and no DataEnvironment', () => {
     const spec = foundation()
     delete spec.paths['/environment']

@@ -1,4 +1,4 @@
-// The note's two edges (4.126, the RichTextEditor review's F10): a code
+// The note's two edges: a code
 // block, a table, a quote, a callout or a divider that ends a note had no
 // way past it (Ctrl+Enter, shown nowhere, and none on a phone), and one
 // that starts it nothing above it.
@@ -10,7 +10,7 @@
 //   a short note) puts the caret on a line under it: a new one, unless the
 //   last block is already a paragraph. A click above the first block, a
 //   line above it when that block isn't one.
-// - Ticking a task's box keeps focus in the text (the review's F24), so
+// - Ticking a task's box keeps focus in the text, so
 //   Ctrl+Z takes the tick back: from outside, the caret lands in that item.
 // No trailing-paragraph rule: a note isn't given a line nobody typed, so
 // nothing is saved until one is asked for. And no gap cursor, which can't

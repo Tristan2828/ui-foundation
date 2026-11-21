@@ -1,5 +1,5 @@
 // One action's run, its pending state and its error, kept beside the
-// button that started it (4.90, the dialogs and feedback standard D6).
+// button that started it (the dialogs and feedback standard D6).
 //
 //   const markRead = useAction(markReadMutation, { failed: "Couldn't mark The Long Walk as read" })
 //   <Button onClick={() => markRead.run(book.id)} disabled={markRead.pending}>…</Button>

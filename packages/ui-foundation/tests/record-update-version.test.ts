@@ -1,4 +1,4 @@
-// useRecordUpdate's version check (`withVersion`, Roadmap 405 / review F4):
+// useRecordUpdate's version check (`withVersion`):
 // each save carries the version of the record it was built on, a burst of
 // saves chains through the versions the server hands back (never a
 // conflict with this tab's own save), and a 409 refetches the record.

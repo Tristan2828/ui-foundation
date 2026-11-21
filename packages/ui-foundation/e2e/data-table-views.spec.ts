@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// Views that fill the filters (4.105), on the harness's ViewsFillFilters
+// Views that fill the filters, on the harness's ViewsFillFilters
 // list: Current is the default view (the plain address) and its statuses
 // show in the Status filter; Needs Water adds a rule no control shows;
 // All ticks every status. A filter changed by hand keeps the rest and the

@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // Tabs in both looks. The line look is a page's sub-navigation: a row of
 // tabs under a small section heading, the open one's name and line in the
-// theme colour (4.110), the way EntityView's record tabs draw theirs. The
+// theme colour, the way EntityView's record tabs draw theirs. The
 // default look is the segmented pill. Each shows an open tab and closed
 // ones at once, so axe and the token check see both states.
 const meta: Meta = {

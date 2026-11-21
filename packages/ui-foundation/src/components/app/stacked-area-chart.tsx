@@ -1,4 +1,4 @@
-// Parts of a whole over time (4.132): several amounts that add up to a
+// Parts of a whole over time: several amounts that add up to a
 // total, each a category (a portfolio by asset class), stacked from zero
 // so the top edge is the total and both the growth and the mix show.
 // MultiLineChart's sibling, plain SVG the same way: each band is its own

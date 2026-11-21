@@ -1,6 +1,6 @@
 // The page is going away (closing the tab, hidden on a phone): requests
 // started now ask the browser to finish them after the page is gone
-// (`keepalive`), so the last autosave still arrives (F13). LeaveGuard
+// (`keepalive`), so the last autosave still arrives. LeaveGuard
 // marks it; the transport reads it. Only a body that fits the browser's
 // keepalive budget (64 KB across the page's keepalive requests) goes
 // that way: a longer note's save goes as an ordinary request, which the

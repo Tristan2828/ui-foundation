@@ -149,7 +149,6 @@ MCP_REQUESTS_PER_MINUTE: int = int(os.environ.get("MCP_REQUESTS_PER_MINUTE", "12
 # with APP_ENV=production, off otherwise, so a dev server or a test runs a
 # job only when asked (POST /api/jobs/{name}/run, or JOBS_ENABLED=true).
 JOBS_ENABLED: bool = os.environ.get("JOBS_ENABLED", "true" if APP_ENV == "production" else "false").lower() == "true"
-# How long a job's runs are kept in job_runs.
 JOB_RUNS_KEEP_DAYS: int = int(os.environ.get("JOB_RUNS_KEEP_DAYS", "30"))
 
 # Reminders through Web Push (foundation_backend.push and .reminders, the

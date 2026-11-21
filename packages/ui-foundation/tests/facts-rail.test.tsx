@@ -1,4 +1,4 @@
-// EntityView's facts (4.106, record standard A1) as rendered markup: each
+// EntityView's facts (record standard A1) as rendered markup: each
 // kind's one short line, what counts as empty, and the facts in Details
 // where the view has no room measured (server markup, a phone). The rail
 // beside the tabs, at a desktop width, is e2e/facts-rail.spec.ts. The

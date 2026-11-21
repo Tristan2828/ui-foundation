@@ -1,15 +1,8 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// A hub's folded summaries, accordion and Customize sheet (#263):
-// WidgetCard's `summary` in each state on Folded summary, WidgetCardGroup
-// holding one card open on Accordion (and only on a phone with
-// `accordion="mobile"`, on WidgetLayoutSheet's Default, where a folded
-// card ends at its header), and the sheet
-// ordering and hiding cards from the keyboard, the focus staying on the
-// button pressed, remembered after a reload and undone by Reset. Axe runs
-// on each in both themes; the token and glyph checks at rest are
-// e2e/fixtures-visual.spec.ts's.
+// A hub's folded summaries, accordion and Customize sheet (WidgetCard, WidgetCardGroup, WidgetLayoutSheet).
+// Axe in both themes; the token and glyph checks at rest are e2e/fixtures-visual.spec.ts's.
 const story = (id: string, theme = 'light') =>
   `http://localhost:6180/story.html?id=${id}&theme=${theme}`
 

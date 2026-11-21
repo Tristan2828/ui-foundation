@@ -1,11 +1,5 @@
-// The audio cues (src/lib/audio-cues.ts) against a fake Web Audio and
-// speech synthesis that record what they're asked: nothing sounds before
-// unlockAudio(), a chime's envelope rises fast and fades slow, a sequence
-// spaces its strikes, a new spoken line cuts off the last, and every cue
-// is a no-op where the browser has no such API. A chime booked `at` a
-// later time is scheduled that far ahead on the audio clock, and a cancel
-// takes back only the strikes that haven't sounded (#193). canVibrate() and the shared
-// vibrate() read the same navigator.vibrate, so they never disagree.
+// The audio cues (src/lib/audio-cues.ts) against a fake Web Audio and speech synthesis that record what
+// they're asked: silent before unlockAudio(), envelopes, sequences, booked chimes and cancels, and no-ops without the API.
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAudioCues } from '../src/lib/audio-cues'
 
@@ -276,7 +270,7 @@ describe('audio cues', () => {
   })
 })
 
-// #217: on iOS the audio clock stops while the context is interrupted. The
+// On iOS the audio clock stops while the context is interrupted. The
 // cues resume it, take back what was booked on the stopped clock, and say so.
 describe('recovering from an interruption', () => {
   function fakePage() {

@@ -21,39 +21,21 @@ import { RelatedTable } from './related-table'
 // DataTable's table tools from the list and record page standards, in a
 // real browser (e2e/data-table-tools.spec.ts), with axe and the token
 // check in both themes (e2e/fixtures-visual.spec.ts):
-// - ListTools: saved views as pills (L3), FilterBar with search, two
-//   filters that name themselves and the rest behind Filters (L4), a
-//   Columns menu remembered under `fixtures:plants:columns` (L5), a ⋯ menu
-//   per row (L9) and a row list under 48rem (L11). A switch between the
-//   four states. Every row opens /plants/:id.
-// - OneRowAction: a single action, drawn as its icon.
+// - ListTools: saved views (L3), FilterBar (L4), the Columns menu remembered
+//   under `fixtures:plants:columns` (L5), row actions (L9) and the phone row
+//   list (L11). Every row opens /plants/:id.
 // - Related: a record's related lists (R8): 19 visits capped at 10 with
 //   View all 19, and 3 with no link.
-// - Framed: the same list as `look="framed"` (4.100) under a ListHeader
-//   with a sibling-list switch (Houseplants / Cuttings / Seeds): views
-//   above a card whose top bar holds the filters and one settings button
-//   (the Columns ticks and Group By, by Status), its bottom bar the pager.
-//   e2e/data-table-framed.spec.ts.
-// - ViewsFillFilters: views that fill the filters (4.105). Current is the
-//   default view (the plain address), its statuses shown in the Status
-//   filter; Needs Water adds a rule no control shows (watered before
-//   Nov 5); All ticks every status. Changing a filter by hand keeps the
-//   rest and the pills follow. e2e/data-table-views.spec.ts.
-// - HeaderAtTableEdge, HeaderAtTableEdgeWide (4.106, C3): the ListHeader
-//   passed as `pageHeader`, so the header, views and card share the
-//   table's width: on a short table (three columns) ⋯ and New end on the
-//   card's right edge; on a wide one (every column) they're where the
-//   page ends. e2e/list-header-width.spec.ts.
-// - DateViews: a date filter a view fills (4.110). Upcoming is "due from
-//   today", Overdue "due before today", both in the Due filter behind
-//   Filters, its chip beside them ("Due: Before today"); Between dates
-//   takes a range. Today is fixed at Nov 13, 2026.
-//   e2e/date-filter.spec.ts.
-// - ViewCounts: views that carry a count (4.127). Needs a Look shows
-//   "· 2" once its count arrives, Resting holds 0 and shows none, Current
-//   and All have none. Counts Loading / Counts Loaded switches the app's
-//   count query, so the spec can check that no pill moves when it lands.
-//   e2e/data-table-view-counts.spec.ts.
+// - Framed: `look="framed"` under a ListHeader (e2e/data-table-framed.spec.ts).
+// - ViewsFillFilters: Needs Water adds a rule no control shows (watered
+//   before Nov 5); changing a filter by hand keeps the rest and the pills
+//   follow (e2e/data-table-views.spec.ts).
+// - HeaderAtTableEdge: the ListHeader passed as `pageHeader` shares the
+//   table's width (C3; e2e/list-header-width.spec.ts).
+// - DateViews: Today is fixed at Nov 13, 2026 (e2e/date-filter.spec.ts).
+// - ViewCounts: Counts Loading / Counts Loaded switches the app's count
+//   query, so the spec can check that no pill moves when it lands
+//   (e2e/data-table-view-counts.spec.ts).
 // The rows are made up.
 
 type State = 'loaded' | 'loading' | 'empty' | 'error'
@@ -273,7 +255,7 @@ function PlantsList({ single = false, framed = false, lead = false }: { single?:
   )
 }
 
-// --- views that fill the filters (4.105) ----------------------------------
+// --- views that fill the filters ----------------------------------
 
 const LIVING = ['thriving', 'watch', 'resting'] as const
 const FILL_FILTERS = ['search', 'dry'] as const
@@ -351,7 +333,7 @@ function ViewsFillFiltersList() {
   )
 }
 
-// --- views that carry a count (4.127) ----------------------------------------
+// --- views that carry a count ----------------------------------------
 
 const COUNT_FILTERS = ['search', 'status'] as const
 const COUNT_VIEWS = {
@@ -409,7 +391,7 @@ function ViewCountsList() {
   )
 }
 
-// --- a date filter a view fills (4.110) -------------------------------------
+// --- a date filter a view fills -------------------------------------
 
 // The harness's today, so the presets keep the same rows on any day.
 const FIXTURE_TODAY = '2026-11-13'
@@ -478,7 +460,7 @@ function DateViewsList() {
   )
 }
 
-// --- the header as wide as the table (4.106, C3) --------------------------
+// --- the header as wide as the table (C3) --------------------------
 
 const NARROW_COLUMNS = plantColumns.filter((column) => ['name', 'status', 'light'].includes(String((column as { accessorKey?: string }).accessorKey)))
 

@@ -1,4 +1,4 @@
-// Several values over time on one plot (4.51): a net worth beside its
+// Several values over time on one plot: a net worth beside its
 // assets and debts, or a balance's history beside low, middle and high
 // projections. LineChart's sibling, plain SVG the same way: each series is
 // its own <svg> drawing in currentColor in a text tone, so the package's

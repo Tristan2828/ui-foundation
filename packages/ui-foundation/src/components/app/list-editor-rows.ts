@@ -1,5 +1,5 @@
 // Which of ListEditor's items are open, when its items show as summary
-// lines (`summary`, #222). One item is open at a time, held by its stable
+// lines (`summary`). One item is open at a time, held by its stable
 // id (useFieldArray's `field.id`), so it stays open while rows move and
 // closes when it's removed. An item that was just added or duplicated
 // opens, and one with a validation error is open whatever else is.

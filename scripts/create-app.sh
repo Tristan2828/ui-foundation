@@ -35,7 +35,7 @@ git config user.email >/dev/null || [ -n "${GIT_AUTHOR_EMAIL:-}" ] ||
 
 mkdir "$APP_NAME"
 # The backend package's reference migrations at the same ref, if it has
-# them (packages/backend-foundation, 4.25.0 on), for the step after npm.
+# them (packages/backend-foundation), for the step after npm.
 BACKEND_PACKAGE="packages/backend-foundation"
 REFERENCE_MIGRATIONS="$BACKEND_PACKAGE/src/foundation_backend/migrations"
 DOWNLOAD="$(mktemp -d)"
@@ -93,7 +93,7 @@ fs.writeFileSync('index.html', html.replace('<title>UI Foundation</title>', '<ti
 
 # The backend's foundation package (PyPI ui-foundation-backend) at exactly
 # the same release: the template lists it unpinned, which only works inside
-# the ui-foundation repo. Templates before 4.25.0 don't list it.
+# the ui-foundation repo. An older template doesn't list it.
 if grep -q '^  "ui-foundation-backend",$' backend/pyproject.toml; then
   [ -n "$BACKEND_VERSION" ] || fail "can't tell which ui-foundation-backend version '$REF' is"
   echo "create-app: backend/pyproject.toml pins ui-foundation-backend==$BACKEND_VERSION"

@@ -2,7 +2,7 @@ import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
 // <EditableValue layout="inline"> in a summary line (app/EditableValue
-// stories, 4.102): at rest its pencil takes no room, so the "·" after a
+// stories): at rest its pencil takes no room, so the "·" after a
 // value sits a space after it, not a pencil's width, yet the pencil is
 // still a whole 24px target (a test or a person can click it); hover or
 // focus makes its room; Tab still reaches it and Enter opens the value.

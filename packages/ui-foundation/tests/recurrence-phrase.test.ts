@@ -3,7 +3,7 @@ import { formatOccurrence, formatRecurrence, todayIn } from '@/lib/recurrence-fo
 import { parseRecurrencePhrase, recurrencePhrase, type PhraseOptions } from '@/lib/recurrence-phrase'
 import { nextOccurrences, type Recurrence } from '@/lib/recurrence'
 
-// The phrase reader, its way back, and the label (#326). Today is Thursday
+// The phrase reader, its way back, and the label. Today is Thursday
 // 2026-11-12 in every test.
 const TODAY = '2026-11-12'
 const options = { today: TODAY, timeZone: 'America/Chicago' }

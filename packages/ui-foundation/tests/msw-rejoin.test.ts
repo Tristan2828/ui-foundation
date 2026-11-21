@@ -1,4 +1,4 @@
-// guardFetch, the rejoin after boot (#367): a request the mock worker never
+// guardFetch, the rejoin after boot: a request the mock worker never
 // handed to MSW (no `request:start`) went to the network, so the page joins
 // the worker again and makes it once more. The worker and the network are
 // stand-ins here; the template's e2e/msw-boot.spec.ts restarts a real one.

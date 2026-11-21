@@ -1,13 +1,13 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// A rating in the facts rail (4.117): `kind: 'rating'` draws a score out
+// A rating in the facts rail: `kind: 'rating'` draws a score out
 // of five as stars (the default) or hearts (RatingScore), a quality level
 // as the step bar (StepBar), each one image named in words ("4 of 5"). An
 // empty one reads its `emptyLabel`. Edited in place, a pick saves and the
 // rail redraws the new score. The rail folds into Details on a phone, the
 // rating drawn the same there, and hovering the editable rating moves
-// nothing (4.115's rule): a click where the mouse rests opens it.
+// nothing (the rail's rule): a click where the mouse rests opens it.
 const HARNESS = 'http://localhost:6180/story.html?id=app-entityview--facts-rail-rating'
 
 const rail = (page: Page) => page.getByRole('complementary', { name: 'Harbour Lights facts' })

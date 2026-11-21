@@ -35,8 +35,8 @@ export type DataTableView = {
   /** The columns this view shows; while it's on they win over the Columns menu. */
   columns?: readonly string[]
   /**
-   * How many records the view holds, after its label: "Needs a Look · 3"
-   * (4.127). The app counts them with its own query; the table doesn't.
+   * How many records the view holds, after its label: "Needs a Look · 3".
+   * The app counts them with its own query; the table doesn't.
    * null, undefined and 0 show no count, as the sidebar's counts and
    * EntityView's tab counts don't, and past 99 it reads "99+". It's part
    * of the pill's name ("Needs a Look, 3"). A view that has the key at all,
@@ -222,7 +222,7 @@ export type DataTablePhoneRow<TData> = {
   /** The facts that matter (two, usually) on one muted line under it, between dots; empty ones are left out. */
   facts?: (row: TData) => readonly ReactNode[]
   /**
-   * A control at the row's start, outside the link (4.134): the tick that
+   * A control at the row's start, outside the link: the tick that
    * completes a to-do from its row, say. Its clicks are its own, so it
    * never opens the record; it gets a 44px-wide column, centred, and its
    * own label (the row's title is in the link, not around it).

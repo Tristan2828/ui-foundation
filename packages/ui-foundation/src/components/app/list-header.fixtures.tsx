@@ -8,10 +8,10 @@ import { ListHeader } from './list-header'
 // out as a button; several folded into ⋯ with the page's extras and Show
 // deleted; and Show deleted on, with its notice and Back to the list.
 // Siblings: a switch between three peer lists beside the title, the
-// current one marked, ⋯ keeping only Show deleted. Secondary action
-// (4.117): one more button beside New, on a list with ⋯ and one without;
+// current one marked, ⋯ keeping only Show deleted. Secondary action:
+// one more button beside New, on a list with ⋯ and one without;
 // on a phone it's ⋯'s first item (e2e/list-header-secondary.spec.ts).
-// Description and hint (4.120): a line of context under the title, and a
+// Description and hint: a line of context under the title, and a
 // hint line under the second button (e2e/list-header-description.spec.ts). Axe
 // and the glyph check measure them in both themes
 // (e2e/fixtures-visual.spec.ts).
@@ -90,7 +90,7 @@ export const Siblings: StoryObj = {
   ),
 }
 
-// One more button beside New (4.117): "Refresh Now" on a list with a ⋯
+// One more button beside New: "Refresh Now" on a list with a ⋯
 // menu (a refresh in flight disables it for a moment), and "Add from
 // Catalog" on one with nothing else in ⋯, so ⋯ shows on a phone only.
 function SecondaryGallery() {
@@ -129,7 +129,7 @@ function SecondaryGallery() {
 
 export const SecondaryAction: StoryObj = { name: 'Secondary action', render: () => <SecondaryGallery /> }
 
-// A line of context under the title (4.120), and a hint under the second
+// A line of context under the title, and a hint under the second
 // button ("12 searches left"); and a long description that wraps.
 function DescriptionGallery() {
   const [searches, setSearches] = useState(12)

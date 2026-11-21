@@ -21,8 +21,8 @@
 // title marked `edit` turns into its form control where it's shown, and
 // saves when you leave it. This component runs it (one field open at a
 // time, the leave-page prompt); EditableValue is each value's side, and a
-// header badge uses it directly. A field not marked renders exactly as
-// before. Edit, in `actions`, stays for everything else. A sub-item list
+// header badge uses it directly. A field not marked is read-only.
+// Edit, in `actions`, stays for everything else. A sub-item list
 // edits in place too (editInPlace's `list` kind, editable-list.tsx): its
 // items added, edited, moved and removed on the page. Long text can
 // autosave as it's typed (`autosave`), and be the editor itself, with no
@@ -44,25 +44,20 @@
 // button, which prints those sections alone under the title and
 // subtitle, with no rail, shell or buttons, on light paper.
 //
-// Three layouts. `tabs` (the default since 4.98, record standard 1A):
-// every section in one column capped at max-w-4xl, with no right rail. The
-// short facts (sections placed `rail` with no `tab`) are the record's last
-// tab, Details (`detailsTab`), beside its other tabs; a record with no other
-// tab shows them in the column, in their place. A section placed `rail`
-// *with* a `tab` is a narrow box beside that tab's sections (on a phone,
-// under them): short facts only, never free text. `column`: one column,
-// `placement` ignored, as before 4.98. `rail` (kept for apps not yet
-// moved; consuming.md "4.98"): the page takes the
-// content area's whole width, sections placed `rail` go in a narrow column
-// on the right that stays in view while the main column scrolls (an issue
-// tracker's shape), and the rest fill the main column. Below the width two
-// columns need, one column: header, rail, main, or header, main, rail with
-// `mobileOrder="main-first"` (a record whose long content is what you open
-// it for: notes, a checklist). The DOM is in that order at every width, so
-// reading and tab order match the screen: beside each other, the columns'
-// places come from the grid, not the DOM.
+// Three layouts. `tabs` (the default, record standard 1A): every section in
+// one column capped at max-w-4xl, with no right rail. The short facts
+// (sections placed `rail` with no `tab`) are the record's last tab, Details
+// (`detailsTab`); a record with no other tab shows them in the column. A
+// section placed `rail` *with* a `tab` is a narrow box beside that tab's
+// sections (on a phone, under them): short facts only, never free text.
+// `column`: one column, `placement` ignored. `rail` (legacy; consuming.md
+// "4.98"): a narrow column on the right that stays in view while the main
+// column scrolls, one column below the width two need (`mobileOrder`). The
+// DOM is in that order at every width, so reading and tab order match the
+// screen: beside each other, the columns' places come from the grid, not
+// the DOM.
 //
-// Tabs (4.76, #303): a main section with a `tab` goes under a tab list at
+// Tabs: a main section with a `tab` goes under a tab list at
 // the top of the main column, one tab per distinct name in the order the
 // sections first give it, and only the selected tab's sections show. The
 // rest of the main column stays above the list, and the rail always shows.
@@ -72,10 +67,10 @@
 // sections stay mounted, hidden, so a field open in place survives a
 // switch. With no `tab` on any section, nothing changes.
 //
-// The tab bar (4.101, record standard 3B): bigger underline tabs (16px
-// semibold, 14px on a phone), the open one plainly marked (4.111): a 3px
+// The tab bar (record standard 3B): bigger underline tabs (16px
+// semibold, 14px on a phone), the open one plainly marked: a 3px
 // primary line, a primary tint behind it (ui/tabs' line look) and its name
-// bold in the theme colour (`text-primary-text`, 4.105), each
+// bold in the theme colour (`text-primary-text`), each
 // tab's count beside its name (`tabCounts`; none for zero). The bar sticks
 // to the top of whatever scrolls (the page, or a record dialog's body) as
 // the record scrolls under it, `tabsStickyTop` below the top, and once
@@ -85,11 +80,11 @@
 //
 // `leading`, left of the title: the record's mark or avatar, with the
 // title, subtitle and badges beside it at every width. A rail field's
-// label sits to the left of its value (`railFields`, `beside` by default
-// since 4.81), as in an issue tracker's sidebar, stacked again where the
+// label sits to the left of its value (`railFields`, `beside` by default),
+// as in an issue tracker's sidebar, stacked again where the
 // rail's list is too narrow for both.
 //
-// The record page standard (4.81): `badges` sit on the title's line,
+// The record page standard: `badges` sit on the title's line,
 // wrapping under a long title; Print notes is an icon (`IconAction`, its
 // words the tooltip and name); an empty value reads as a dash
 // (`emptyText`), and `emptyFields="fold"` folds each fields card's empty
@@ -165,7 +160,7 @@ export type EntityViewSection = (
       /** The section's heading. */
       title: string
       /**
-       * Short facts only (4.106, A1): each a typed kind (a status, short
+       * Short facts only (A1): each a typed kind (a status, short
        * text, badges, a count, a link, a short-named record), never free
        * markup. Placed `rail` with no `tab`, the section goes in the facts
        * rail beside the tabs where the view has room (`factsRail`), else
@@ -219,10 +214,10 @@ export type EntityViewSection = (
 export type EntityViewPlacement = 'main' | 'rail'
 
 /**
- * `tabs` (the default since 4.98): one column, at most max-w-4xl wide, the
+ * `tabs` (the default): one column, at most max-w-4xl wide, the
  * short facts (sections placed `rail`) in a Details tab after the record's
- * other tabs. `column`: one column, `placement` ignored. `rail` (before
- * 4.98's record standard; move off it, consuming.md "4.98"): the content
+ * other tabs. `column`: one column, `placement` ignored. `rail` (legacy;
+ * consuming.md "4.98"): the content
  * area's whole width, with the sections placed `rail` in a narrow column
  * on the right (one column on a narrow screen, rail first).
  */
@@ -298,11 +293,11 @@ export type EntityViewProps = {
    * its notice, across the page at every width: in the rail layout above
    * both columns, so on a phone it comes before the rail and the main
    * column. Left out in a small card dialog (RecordDialogRoute
-   * `look="card"`, 4.105): a tiny record's facts are its few rows, so
+   * `look="card"`): a tiny record's facts are its few rows, so
    * `cardStrip` keeps it there.
    */
   strip?: ReactNode
-  /** Show `strip` in a small card dialog too (4.105); off by default. */
+  /** Show `strip` in a small card dialog too; off by default. */
   cardStrip?: boolean
   sections: EntityViewSection[]
   /**
@@ -312,11 +307,11 @@ export type EntityViewProps = {
    */
   footer?: ReactNode
   /**
-   * `tabs` (the default since 4.98): the sections placed `rail` are a
+   * `tabs` (the default): the sections placed `rail` are a
    * Details tab after the other tabs (in the column where there's no other
    * tab). `column`: one column, `placement` ignored. `rail`: the sections
-   * placed `rail` in a column on the right, the shape before 4.98's record
-   * standard (no right rail); drop it to move to `tabs`.
+   * placed `rail` in a column on the right (legacy; drop it to move to
+   * `tabs`).
    */
   layout?: EntityViewLayout
   /**
@@ -350,19 +345,19 @@ export type EntityViewProps = {
    * to "Print notes".
    */
   printLabel?: string
-  /** Print notes as an icon (`icon`, the default since 4.81) or a button with its words (`words`). */
+  /** Print notes as an icon (`icon`, the default) or a button with its words (`words`). */
   printLook?: 'icon' | 'words'
   /** The rail's landmark name (its `<aside>`). Defaults to the title + " details". */
   railLabel?: string
   /**
-   * The facts rail (4.106, record standard A1), in the `tabs` layout:
+   * The facts rail (record standard A1), in the `tabs` layout:
    * where the view has room (60rem beside it: a laptop's page, a record
    * dialog), the sections of short facts (`facts`, placed `rail`, no
    * `tab`) go in a 300px column beside the record's body, and leave
    * Details. The strip stays above, full width; the rail starts level with
    * the first content under it (the open tab's first section, or the first
-   * card when cards come before the tabs; 4.108). A Details tab left with
-   * nothing isn't drawn. Narrower (a phone), they're in Details as before. Sections with `fields` or
+   * card when cards come before the tabs). A Details tab left with
+   * nothing isn't drawn. Narrower (a phone), they're in Details. Sections with `fields` or
    * `content` never go in it: a rail holds short values only.
    */
   factsRail?: boolean
@@ -370,7 +365,7 @@ export type EntityViewProps = {
   factsRailLabel?: string
   /**
    * In the `rail` layout, a rail section's fields: each label to the left
-   * of its value (`beside`, the default since 4.81), falling back to
+   * of its value (`beside`, the default), falling back to
    * stacked where the rail is too narrow for both, or above it
    * (`stacked`). Once the rail's sections stack full width on a narrower
    * screen, labels sit beside values either way.
@@ -396,10 +391,10 @@ export type EntityViewProps = {
   onRetry?: () => void
   /**
    * The entity's list: a link above the title, and the not-found state's
-   * way out. With `trail` (#R2), the crumbs above the record, from the top
+   * way out. With `trail`, the crumbs above the record, from the top
    * down ("Finance", "Accounts"), the record's title follows them as the
    * page's own crumb and the trail takes the link's place: in AppShell's
-   * bar (`usePageTrail`, #N5), or, outside the shell, above the title
+   * bar (`usePageTrail`), or, outside the shell, above the title
    * (PageTrail). A record in a dialog shows neither: the dialog's bar
    * is its way back.
    */
@@ -410,12 +405,12 @@ export type EntityViewProps = {
 // for every section without threading them through each layout.
 const EmptyContext = createContext<{ text: string; fold: boolean }>({ text: EMPTY_DASH, fold: false })
 
-// Whether the facts rail is drawn (4.112): the record's column then fills
+// Whether the facts rail is drawn: the record's column then fills
 // the room up to the rail (Details' reading-width cap off), and its fields
 // rows keep a compact label (`FIELD_ROW.wide`) so the values get the rest.
 const BesideFactsRailContext = createContext(false)
 
-// The record's trail (#R2): the crumbs above it, then its own title
+// The record's trail: the crumbs above it, then its own title
 // once it has loaded; the list's crumb is the last until then.
 function recordTrail(back: EntityViewProps['back'], title: string | undefined): PageCrumb[] | null {
   if (!back.trail) return null
@@ -444,12 +439,12 @@ const fieldValue = (field: EntityViewField) => (field.value !== undefined ? fiel
 
 type FieldPlace = keyof typeof FIELD_ROW
 
-// A row as drawn: a field, or a fact with what only a fact has (4.115).
+// A row as drawn: a field, or a fact with what only a fact has.
 type RowField = EntityViewField & { hint?: string; action?: EntityViewFactAction; recordStatus?: boolean }
 
 function FieldRow({ field, place }: { field: RowField; place: FieldPlace }) {
   const value = fieldValue(field)
-  // An editable row is the target as a whole (4.88, F15/F18): the list's
+  // An editable row is the target as a whole: the list's
   // row hover, its pencil at the end, a chevron on a phone.
   const editable = Boolean(field.edit)
   const shown = field.edit ? (
@@ -465,7 +460,7 @@ function FieldRow({ field, place }: { field: RowField; place: FieldPlace }) {
         FIELD_ROW_BASE,
         FIELD_ROW[place],
         editable && cn(editRowClass, '-mx-2 px-2 first:pt-2 last:pb-2'),
-        // Stars to tap (RatingInput, 4.127) are five 44px targets on a
+        // Stars to tap (RatingInput) are five 44px targets on a
         // touch screen: wider than a narrow row's value column, so the
         // label goes above them there.
         'pointer-coarse:has-[[data-slot=rating-input]]:flex!',
@@ -625,7 +620,7 @@ const RAIL_LAYOUT = {
 // (max-w-4xl) and a 300px rail beside it. The strip stays above both, at
 // full width; the rail starts level with the first content under it: the
 // first section of the open tab (beside the tab's content, never its bar),
-// or the first card when the record's first content isn't the tabs (4.108).
+// or the first card when the record's first content isn't the tabs.
 const FACTS_RAIL = {
   // Page width wide (data-width="wide" on <html>): no cap, the column fills the page.
   page: 'max-w-[calc(var(--container-4xl)+var(--spacing)*6+300px)] page-wide:max-w-none',
@@ -794,7 +789,7 @@ function TabBody({ tab, railFields }: { tab: ViewTab; railFields: EntityViewRail
   if (tab.details) {
     // The facts on their own: a reading width, never the whole page. Beside
     // the facts rail the column is already that (the page's own cap), so
-    // they fill it up to the rail, level with the tab bar (4.112).
+    // they fill it up to the rail, level with the tab bar.
     return (
       <div data-slot="entity-view-details" className={cn('flex w-full min-w-0 flex-col gap-6', !besideFactsRail && 'max-w-2xl')}>
         {tab.sections.map((section) => (
@@ -1033,7 +1028,7 @@ export function EntityView({
   onRetry,
   back,
 }: EntityViewProps) {
-  // The record's status first among the sections in its place (4.115).
+  // The record's status first among the sections in its place.
   const sections = statusSectionFirst(givenSections)
   // Editing in place: one store per view, and the leave-page prompt only
   // while a field is open (or one is always editable).
@@ -1257,7 +1252,7 @@ export function EntityView({
               {titleEdit ? (
                 // The title keeps its pencil's room: it ends its line, and a
                 // long one fills its column, which a pencil hung past the
-                // text would push the page wider than (4.102).
+                // text would push the page wider than.
                 <EditableField label={titleEdit.label} edit={titleEdit} layout="inline" keepPencilRoom>
                   {title}
                 </EditableField>
@@ -1267,7 +1262,7 @@ export function EntityView({
             </h1>
             {badges && (
               // An inline-edited badge keeps its pencil's room at rest
-              // (4.120), as a strip value does: its room opening on hover
+              // as a strip value does: its room opening on hover
               // moved the badges after it and could wrap the line.
               <KeepPencilRoomContext.Provider value>
                 <div data-slot="entity-view-badges" className="flex flex-wrap items-center gap-1.5">
@@ -1291,7 +1286,7 @@ export function EntityView({
           </div>
         ) : (
           (actions || printButton) && (
-            // A button with a hint line under it (ActionHint, 4.120): the
+            // A button with a hint line under it (ActionHint): the
             // buttons line up by their tops, so it stays level with the rest.
             <div className="flex min-w-0 flex-wrap items-center gap-2 has-[[data-slot=action-hint]]:items-start sm:justify-end">
               {printButton}

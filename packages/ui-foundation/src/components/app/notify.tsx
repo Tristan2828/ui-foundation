@@ -1,8 +1,8 @@
-// The words and the lifetimes of the app's toasts (4.90, the dialogs and
+// The words and the lifetimes of the app's toasts (the dialogs and
 // feedback standard D5, D6). A toast is for what happened out of sight: a
 // delete (with Undo), a record made somewhere else, a job that finished
 // after the page was left. Never after an edit in place, which shows its
-// own "Saved" (cell-patterns.md, add-an-entity.md "When a toast shows").
+// own "Saved" (cell-patterns.md, add-an-entity.md "Toasts and feedback").
 //
 // - `notify.done("Deleted", "The Long Walk", { undo })`: "Deleted The Long
 //   Walk", the verb first, the same way everywhere, for 4 seconds. With

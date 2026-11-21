@@ -9,7 +9,7 @@
 // useFieldArray `fields`, `append`, `remove` and `move`, so the items save
 // with the parent's form and their errors bind like any other field.
 //
-// A long list of rich items (#222) can show each item as one line instead
+// A long list of rich items can show each item as one line instead
 // (`summary`): the line is a button that opens the item to its fields,
 // one item at a time (list-editor-rows.ts), with the row buttons beside
 // it. And `onDuplicate` puts a Duplicate button beside Remove, for lists

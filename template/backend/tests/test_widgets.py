@@ -227,7 +227,7 @@ async def test_deleting_a_tagged_widget_removes_its_tags(client: AsyncClient) ->
     assert res.json()["total"] == 0
 
 
-# --- inStock: the yes/no field (3.4.0) --------------------------------------
+# --- inStock: the yes/no field --------------------------------------
 
 
 async def test_in_stock_defaults_to_true_and_is_always_present_on_read(client: AsyncClient) -> None:
@@ -266,7 +266,7 @@ async def test_null_or_non_boolean_in_stock_is_a_field_error(client: AsyncClient
     assert any(item["loc"][-1] == "inStock" for item in garbage.json()["detail"])
 
 
-# --- extraCategoryIds: the multi-reference field (3.5.0) --------------------
+# --- extraCategoryIds: the multi-reference field --------------------
 
 
 async def _add_categories(session: AsyncSession) -> None:
@@ -338,7 +338,7 @@ async def test_categories_by_ids_returns_exactly_those_ignoring_unknown(
     assert sorted(c["id"] for c in res.json()) == [1, 3]
 
 
-# --- checklist: the sub-records pattern (3.6.0) -----------------------------
+# --- checklist: the sub-records pattern -----------------------------
 
 
 async def test_checklist_defaults_to_empty_and_keeps_the_order_saved(client: AsyncClient) -> None:
@@ -395,7 +395,7 @@ async def test_a_deleted_widget_keeps_its_checklist_for_restore(client: AsyncCli
     assert restored.json()["checklist"] == created["checklist"]
 
 
-# --- pairings: sub-records whose items hold a reference (4.27.0) ------------
+# --- pairings: sub-records whose items hold a reference ------------
 
 
 async def test_pairings_default_to_empty_and_keep_the_order_saved_with_repeats(
@@ -466,7 +466,7 @@ async def test_too_many_null_or_idless_pairings_are_field_errors(client: AsyncCl
     assert any(item["loc"] == ["body", "pairings", 0, "categoryId"] for item in idless.json()["detail"])
 
 
-# --- checklistState: the computed, read-only field (3.7.0) ------------------
+# --- checklistState: the computed, read-only field ------------------
 
 _STATES = {
     "Empty": [],
@@ -522,7 +522,7 @@ async def test_sort_by_checklist_state_uses_the_enum_order_not_alphabetical(clie
     assert desc == ["AllDone", "Half", "Empty"]
 
 
-# --- PATCH null, unknown references, stable paging, search (2026-10-10 review) ---
+# --- PATCH null, unknown references, stable paging, search ---
 
 
 @pytest.mark.parametrize(
@@ -596,7 +596,7 @@ async def test_search_matches_like_wildcards_literally(client: AsyncClient, sess
     assert [c["name"] for c in categories] == ["50% off"]
 
 
-# Two writers (Roadmap 405, the RichTextEditor review's F4): an update built
+# Two writers: an update built
 # on a version that's no longer the widget's is a 409, and nothing is written.
 async def test_an_update_with_the_current_version_saves_and_moves_it(client: AsyncClient) -> None:
     before = (await client.get("/api/widgets/1")).json()

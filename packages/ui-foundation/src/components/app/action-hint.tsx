@@ -1,4 +1,4 @@
-// A short line under a header button (4.120): what the button has left
+// A short line under a header button: what the button has left
 // or costs ("12 searches left"), in caption type and the muted tone,
 // centred under it on one line. The row it's in lines its buttons up by
 // their tops (ListHeader and EntityView do, while one has a hint), so the

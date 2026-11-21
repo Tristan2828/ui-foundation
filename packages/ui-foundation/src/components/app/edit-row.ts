@@ -1,7 +1,7 @@
-// A record's field row as the target of its value edited in place (4.88,
-// the form standard's F15 and F18): EditableValue's `look="row"`. The row
+// A record's field row as the target of its value edited in place (the
+// form standard): EditableValue's `look="row"`. The row
 // wears the list's row hover (the `--table-hover` tint and the 3px
-// `--primary` bar at its start, as DataTable's rows do since 4.83), its
+// `--primary` bar at its start, as DataTable's rows do), its
 // muted words read as foreground on the tint, and under 48rem or on a
 // touch screen it's 44px tall at least. Clicking anywhere on it opens the
 // value. EntityView's field rows wear it; a field list of the app's own can too:

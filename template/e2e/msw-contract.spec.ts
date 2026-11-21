@@ -1,6 +1,6 @@
 import { expect, forceMswOverride, releaseMswOverride, test } from '@tristan2828/ui-foundation/testing'
 
-// Phase 2 exit criterion: the app serves Page<Widget>-shaped data from MSW
+// The app serves Page<Widget>-shaped data from MSW
 // with no backend process running at all. Runs against Playwright's
 // preview (production) build, so MSW must be active there too — see the
 // VITE_API flag in src/main.tsx.

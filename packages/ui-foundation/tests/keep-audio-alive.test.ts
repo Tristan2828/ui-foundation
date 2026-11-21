@@ -1,4 +1,4 @@
-// keepAudioAlive (src/lib/keep-audio-alive.ts, #217) against a fake audio
+// keepAudioAlive (src/lib/keep-audio-alive.ts) against a fake audio
 // element and Media Session that record what they're asked: a silent
 // looped track plays, the lock screen gets the title and a Pause and Play
 // that call back, pause() and stop() undo it, Safari's audio session is

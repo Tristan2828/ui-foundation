@@ -70,7 +70,7 @@ const headings = (html: string) =>
   [...html.matchAll(/<button type="button" aria-expanded="true"[^>]*>.*?<span class="type-label[^"]*">([^<]+)<\/span><span[^>]*>(\d+)<\/span><\/button>(?:<span[^>]*>([^<]*)<\/span>)?/g)].map(
     ([, label, count, summary]) => [label, Number(count), summary].filter((part) => part !== undefined).join(' '),
   )
-// The title column's text sits in its cut span (4.103).
+// The title column's text sits in its cut span.
 const titles = (html: string) =>
   [...html.matchAll(/<td[^>]*>(?:<span[^>]*>)?(Kettle|Leaves|Bins|Keys)(?:<\/span>)?<\/td>/g)].map(([, title]) => title)
 

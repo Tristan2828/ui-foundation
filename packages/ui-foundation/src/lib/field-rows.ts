@@ -1,4 +1,4 @@
-// Which fields of a form share a row (4.85, the form standard's F1),
+// Which fields of a form share a row (the form standard's F1),
 // worked out from their order, never listed by hand. A field says how
 // much it holds (`Field size`); consecutive short ones share a row, up to
 // three, each as wide as its size: s 1, m 1.4, l 2.6 parts of the row.
@@ -12,7 +12,7 @@
 // numbers next to each other in a row, which stay side by side
 // (`phonePair`).
 //
-// A choice (4.98, record standard 9C: a Field holding ChoiceButtons, found
+// A choice (record standard 9C: a Field holding ChoiceButtons, found
 // by itself) shares its row only with another choice, two to a row, so a
 // group of buttons has room to stay joined: three choices are two on a row
 // and the third on the next, and a choice beside a date starts a row of

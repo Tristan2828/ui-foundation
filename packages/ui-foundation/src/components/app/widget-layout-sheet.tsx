@@ -1,4 +1,4 @@
-// A hub page's Customize sheet (#263): every card the page has, in the
+// A hub page's Customize sheet: every card the page has, in the
 // person's order, each row with Up and Down buttons and a Show switch,
 // and Reset at the foot. It edits a useWidgetLayout, which keeps the
 // order (on this device by default) and which the page renders its cards

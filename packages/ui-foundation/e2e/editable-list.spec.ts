@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// A list item's row edited in place (app/EditableList ItemRows, #187): the
+// A list item's row edited in place (app/EditableList ItemRows): the
 // form's row, a done box then the text box, sits side by side while the
 // item is edited and while one is added, as in the form's ListEditor. A
 // row the app already wrapped in its own flex row still fills the width.
@@ -47,11 +47,11 @@ for (const { section, name } of [
   })
 }
 
-// A list added by upload (app/EditableList AddedByUpload, #256): the
+// A list added by upload (app/EditableList AddedByUpload): the
 // list's own `add` puts the uploaded file at the end through `save`, and
 // it then edits, moves and removes like any item; a refused upload says
 // why under the list. A muted value on the hover and focus tint reads as
-// foreground (#257): axe with the caret on a pencil, in both themes.
+// foreground: axe with the caret on a pencil, in both themes.
 const uploads = 'http://localhost:6180/story.html?id=app-editablelist--added-by-upload'
 
 async function openUploads(page: Page, theme: 'light' | 'dark' = 'light') {

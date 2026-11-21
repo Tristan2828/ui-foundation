@@ -1,6 +1,6 @@
 // Where the caret is in a block of text, kept across the control starting
 // over (editable-value.tsx): a value saved elsewhere reloading under the
-// caret (F4), and a click-to-open note opening where it was clicked (F8),
+// caret, and a click-to-open note opening where it was clicked,
 // the read view's text becoming the editor's.
 //
 // A spot is the innermost block holding the caret (a paragraph, a list

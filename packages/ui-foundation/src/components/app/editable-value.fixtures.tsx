@@ -5,7 +5,7 @@ import { inPlace } from './edit-in-place-presets'
 import { EditableValue } from './editable-value'
 import { EntityView, type EntityViewSection } from './entity-view'
 
-// <EditableValue layout="inline"> in a summary line (4.102): two values
+// <EditableValue layout="inline"> in a summary line: two values
 // joined by "·", each edited where it's shown. At rest a pencil takes no
 // room, so each "·" sits a space after its value; hover or focus opens
 // the pencil out beside the value. e2e/editable-value.spec.ts measures

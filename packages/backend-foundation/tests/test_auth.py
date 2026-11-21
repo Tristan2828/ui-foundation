@@ -50,7 +50,7 @@ async def test_login_success_sets_cookie_and_returns_user(auth_client: AsyncClie
 
 
 async def test_a_pbkdf2_hash_is_replaced_with_scrypt_on_sign_in(auth_client: AsyncClient, session: AsyncSession) -> None:
-    # Hashes from before 4.122: the next sign-in with the right password
+    # Old PBKDF2 hashes: the next sign-in with the right password
     # rewrites them, so old accounts move without a reset.
     from tests.test_password_hash import pbkdf2_hash
 

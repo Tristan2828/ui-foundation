@@ -1,16 +1,9 @@
 import type { CDPSession, Page } from '@playwright/test'
 import { expect, test } from '@tristan2828/ui-foundation/testing'
 
-// A test that leaves a page right after a save. The save is answered by
-// the mocks, but its follow-up refresh is sent once the page has started
-// to unload, when MSW's client has already told the worker it's gone, so
-// the worker passes the refresh to the network (the preview's proxy, a dead
-// port during e2e) and the bypass check fails the test (unless the page lives long enough
-// for #367's rejoin to make it again, which a test that has moved on
-// doesn't wait for). One app saw it
-// about 1 run in 20. The page's goto() and reload() (withBootWait) now
-// first wait until none of the page's /api/ requests has been in flight for
-// 150 ms, so the refresh lands on the page that sent it.
+// A test that leaves a page right after a save: goto() and reload()
+// (withBootWait, whose JSDoc explains why) wait for in-flight /api/ requests
+// first, so the save's follow-up refresh lands on the page that sent it.
 //
 // Forced here: the save's PATCH is held 300 ms, and the next page's
 // document is held 1 s over CDP, so the old page is still alive (and has
@@ -48,7 +41,7 @@ async function startSlowSave(page: Page) {
 }
 
 // Every /api/ answer that didn't come from the worker, healed or not: in
-// the case this covers the page is gone before #367's rejoin could make
+// the case this covers the page is gone before the worker rejoin could make
 // the request again, so any answer from the network is the leak.
 function pastMsw(page: Page): string[] {
   const seen: string[] = []

@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The first module's review fixes (4.105), in a real browser: the open
+// The first module's review fixes, in a real browser: the open
 // tab's name in the theme colour, a picked choice in it too, a status
 // choice's icons in their kinds' colours, the column header row's fill,
 // the ⋯ menu on one line, and no strip in a small card dialog. Axe and

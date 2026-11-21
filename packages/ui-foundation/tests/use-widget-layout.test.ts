@@ -1,4 +1,4 @@
-// useWidgetLayout's rules (#263): the saved order merged with the page's
+// useWidgetLayout's rules: the saved order merged with the page's
 // ids (removed ones drop out, new ones fall in at their default place),
 // a move one place either way, and the store keeping a layout where
 // storage refuses it and handing back the same object until it changes.

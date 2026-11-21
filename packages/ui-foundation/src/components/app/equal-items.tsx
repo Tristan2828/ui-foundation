@@ -14,14 +14,14 @@
 // - `panels`: a panel per item side by side, every detail labelled above
 //   its value, stacking on a phone. For things with several details each
 //   that need to read as separate.
-// - `stepper` (4.127): the items in order as a row of numbered steps, each
+// - `stepper`: the items in order as a row of numbered steps, each
 //   done, current or upcoming (an item's `step`), picking the one item
 //   whose panel shows under it; it opens on the current step. For a
 //   sequence where one is running and the others are looked at in turn (a
 //   plan's phases). The steps are a tablist: arrow keys, Home and End move
 //   and pick; on a phone the row scrolls sideways in its own box, as the
-//   record's tab bar does. Its marks are StepTrack's (step-track.tsx,
-//   4.128), the same row read only, for a display with no panels.
+//   record's tab bar does. Its marks are StepTrack's (step-track.tsx),
+//   the same row read only, for a display with no panels.
 //
 // The parts are the record's own: a state is a `Badge` in the outline
 // style (design-language.md "The three badge styles"), a field is the
@@ -30,7 +30,7 @@
 // no items reads `emptyText` ("Nothing yet"), an item with no fields
 // `noFieldsText` ("No details").
 //
-// An item can carry its own parts too (4.94): `content`, anything of the
+// An item can carry its own parts too: `content`, anything of the
 // app's (an editor of several fields, a note, a chart), drawn under its
 // fields at the item's full width, never in the label/value grid; and
 // `actions`, its own buttons (Edit, Remove), at the end of its title line,

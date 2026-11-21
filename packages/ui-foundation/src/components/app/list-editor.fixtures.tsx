@@ -12,7 +12,7 @@ import { ListEditor } from './list-editor'
 // useFieldArray, zod), each form showing the value it would save.
 // - Default: every item shows its fields, a sub-records section as the
 //   entity playbook builds it (no `summary`, no `onDuplicate`).
-// - RowsThatOpen (#222): a long list of rich, repetitive items. Each shows
+// - RowsThatOpen: a long list of rich, repetitive items. Each shows
 //   as one line that opens to its fields, one at a time; Duplicate copies
 //   an item in right after it. An item the save refuses opens to show why.
 // e2e/list-editor.spec.ts drives both.

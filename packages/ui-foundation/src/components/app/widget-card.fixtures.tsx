@@ -8,14 +8,14 @@ import { Switch } from '@/components/ui/switch'
 import type { IconComponent } from './icon-component'
 import { WidgetCard, WidgetCardGroup, WidgetList, WidgetListItem, type WidgetCardLink } from './widget-card'
 
-// A hub page's widgets (issue #121): three made-up widgets, each a list
+// A hub page's widgets: three made-up widgets, each a list
 // with a different trailing element (a tone badge, a note and a switch, a
-// muted time on external links, and the header linking out, #248). Default is the page as loaded; All
+// muted time on external links, and the header linking out). Default is the page as loaded; All
 // states is every widget in each of the four states; Brand mark is a card
-// about an outside service, titled with that service's mark (#211);
-// Collapsible folds and remembers each card (#233); Folded summary is a
+// about an outside service, titled with that service's mark;
+// Collapsible folds and remembers each card; Folded summary is a
 // folded card's one value in each state, and Accordion a WidgetCardGroup
-// holding one card open at a time (#263). Axe, the token check
+// holding one card open at a time. Axe, the token check
 // and the glyph check measure both in both themes and at the large
 // density (e2e/fixtures-visual.spec.ts).
 const meta: Meta = {
@@ -51,7 +51,7 @@ type Widget = {
   link?: WidgetCardLink
   emptyMessage: string
   rows: number
-  /** The folded card's one value (#263). */
+  /** The folded card's one value. */
   summary: string
   body: ReactNode
 }
@@ -100,7 +100,7 @@ const WAITING_ON: Widget = {
 const SAVED_LINKS: Widget = {
   title: 'Saved links',
   icon: LinkIcon,
-  // An outside address in the header (#248): it opens in a new tab.
+  // An outside address in the header: it opens in a new tab.
   link: { href: 'https://example.com/saved', label: 'Open saved' },
   emptyMessage: 'No links saved yet',
   rows: 3,
@@ -220,7 +220,7 @@ export const BrandMark: StoryObj = {
   ),
 }
 
-// A hub with more widgets than a phone holds (#233): each folds to its
+// A hub with more widgets than a phone holds: each folds to its
 // header with the chevron, remembered on this device (`storageKey`).
 // Saved links starts folded (`defaultCollapsed`) until someone opens it
 // (e2e/widget-card.spec.ts).
@@ -250,7 +250,7 @@ export const Collapsible: StoryObj = {
   ),
 }
 
-// A folded card's one value (#263), in each of the four states: the
+// A folded card's one value, in each of the four states: the
 // number, a small skeleton, a muted dash (the error waits in the body:
 // open it), and `emptySummary`'s word. Each card opens with its chevron.
 export const FoldedSummary: StoryObj = {
@@ -281,7 +281,7 @@ export const FoldedSummary: StoryObj = {
   ),
 }
 
-// One card open at a time (#263): opening a card folds the one that was
+// One card open at a time: opening a card folds the one that was
 // open, and a click anywhere on a header (not its link) toggles it.
 // `accordion` here is on at every width so the story shows it on a
 // desktop; a hub passes `accordion="mobile"` to keep a desktop's cards

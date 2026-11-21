@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The form standard's controls (4.88, F10 to F18), on app/FormControls:
+// The form standard's controls, on app/FormControls:
 // a choice as buttons, a typed date, Create from a reference picker (single
 // and multi), a long multi-pick, and the same fields edited in place on a
 // record's rows (the row hover, "✓ Saved", a phone's chevron).
@@ -270,7 +270,7 @@ test.describe('edited in place', () => {
 test.describe('a choice in a narrow box', () => {
   // Every button inside the box with its whole border, the group not
   // scrolling, the first line still joined and the rest wrapped below it:
-  // never cut off (4.97, app/FormControls Narrow).
+  // never cut off (app/FormControls Narrow).
   async function fitsIn(box: Locator, group: Locator) {
     await expect(group.getByRole('button')).toHaveCount(4)
     const edge = (await box.boundingBox())!
@@ -303,7 +303,7 @@ test.describe('a choice in a narrow box', () => {
     await fitsIn(box, box.getByRole('group', { name: 'Binding' }))
   })
 
-  // Since 4.98 (9C) a choice shares its row only with another choice: in
+  // A choice (9C) shares its row only with another choice: in
   // the dialog Binding has half the row beside Condition, too narrow for
   // its four buttons, and the two dates take the next row together.
   test('in a dialog, sharing a row with another choice, the buttons wrap inside their field', async ({ page }) => {
@@ -323,7 +323,7 @@ test.describe('a choice in a narrow box', () => {
   })
 })
 
-// A list's filter with a summary stays one line (4.109): with picks,
+// A list's filter with a summary stays one line: with picks,
 // "Shelf: <first> +1" truncates and the text box takes no room until
 // focused, so in a 192px box it's as tall as the Input beside it.
 test.describe('a narrow MultiChoice filter with a summary', () => {
@@ -347,7 +347,7 @@ test.describe('a narrow MultiChoice filter with a summary', () => {
   })
 })
 
-// A status of five or more as OptionSelect (4.109): each option's kind icon
+// A status of five or more as OptionSelect: each option's kind icon
 // in its colour on the trigger and in the list, as ChoiceButtons draws it.
 test.describe('a status select draws its kinds', () => {
   const tokenColour = (page: Page, token: string) =>
@@ -397,7 +397,7 @@ test.describe('a status select draws its kinds', () => {
   })
 })
 
-// MultiChoice given OptionSelect's options (4.130): each kind's icon in its
+// MultiChoice given OptionSelect's options: each kind's icon in its
 // colour in the list, on a picked one's chip and on a filter's summary.
 test.describe('a multi choice draws its options’ icons', () => {
   const tokenColour = (page: Page, token: string) =>

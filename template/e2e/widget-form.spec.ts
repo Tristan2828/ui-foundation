@@ -309,8 +309,8 @@ test.describe('widget form', () => {
     await expect(fieldValue(page, 'Extra Categories')).toHaveText('Stationery')
   })
 
-  // Issue #123: Base UI empties a multiple combobox on Escape with its list
-  // closed, so a second Escape after a pick used to wipe every chip.
+  // Base UI empties a multiple combobox on Escape with its list
+  // closed, so a second Escape after a pick would wipe every chip.
   test('multi choice: Escape never clears the picks; Backspace removes one', async ({ page }) => {
     await page.goto('/widgets/1/edit')
     const tags = page.locator('#widget-tags')
@@ -362,7 +362,7 @@ test.describe('widget form', () => {
     // Standing Desk (id 2) has Electronics and Stationery. The list opens
     // on every category, Electronics (already picked) highlighted. Typing
     // "furn" starts a slow search: until it answers, the list still shows
-    // that old list, and Enter there used to unpick Electronics.
+    // that old list, and Enter there would unpick Electronics.
     await page.goto('/widgets/2/edit')
     await expect(page.getByRole('button', { name: 'Remove Electronics' })).toBeVisible()
     await waitForMswReady(page)

@@ -15,7 +15,7 @@ import {
   type Recurrence,
 } from '@/lib/recurrence'
 
-// src/lib/recurrence.ts (#326). The shared cases are the ones the backend's
+// src/lib/recurrence.ts. The shared cases are the ones the backend's
 // packages/backend-foundation/tests/test_recurrence.py checks, so a screen
 // and the server agree on every next occurrence.
 type Case = {

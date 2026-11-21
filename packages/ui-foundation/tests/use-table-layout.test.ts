@@ -1,4 +1,4 @@
-// useTableLayout's rules (issue #252): the URL's layout, then the one
+// useTableLayout's rules: the URL's layout, then the one
 // remembered for the table, then its default, skipping any id the table
 // doesn't have; and the store keeping a pick where storage refuses it.
 import { describe, expect, it } from 'vitest'

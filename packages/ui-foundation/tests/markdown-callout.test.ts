@@ -2,7 +2,7 @@
 // callouts, what's left of them once the marker is read, and the marker
 // they're written back with. The editor's own round trip of the same
 // Markdown is the `callouts` fixture (markdown-merge.test.ts here, and the
-// Storybook spec in a browser).
+// e2e/rich-text-editor.spec.ts in a browser).
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'

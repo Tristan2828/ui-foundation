@@ -19,8 +19,7 @@ import { MultiReference } from './multi-reference'
 import { OptionSelect } from './option-select'
 import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 
-// The form and in-place controls of the form standard (4.88, F10 to F18),
-// on made-up books.
+// The form and in-place controls of the form standard, on made-up books.
 //
 // - Form: a choice of three as buttons (ChoiceButtons), two typed dates
 //   (DateField, sharing a row on a phone too), a series picked or created
@@ -31,27 +30,22 @@ import { ReferenceCombobox, type ReferenceRecord } from './reference-combobox'
 // - Record: the same fields edited in place on a record (EntityView's
 //   field rows wear the list's row hover; a phone gets a chevron), each
 //   save a moment long, then "✓ Saved". "Fail" as an author is refused.
-//
 // - Narrow: ChoiceButtons of four in a 280px box, on a form, edited in
 //   place on a record, and in a dialog's row beside a second choice (two
-//   choices share a row, 4.98), the two dates on the next: the buttons
-//   wrap onto a second line, never past the box's edge.
-//
-// - Choice pairs (4.98, 9C): five choice fields in a 460px form, two to
-//   a row and the fifth on a row of its own; on a phone Side and Coats
-//   stay side by side (both fit), Room and Effort each take a row (too
-//   wide for half of one).
-//
-// - Status selects (4.109): a status of five or more as OptionSelect, each
+//   choices share a row), the two dates on the next: the buttons wrap onto
+//   a second line, never past the box's edge.
+// - Choice pairs (9C): five choice fields in a 460px form, two to a row
+//   and the fifth on a row of its own; on a phone Side and Coats stay side
+//   by side (both fit), Room and Effort each take a row (too wide for half
+//   of one).
+// - Status selects: a status of five or more as OptionSelect, each
 //   option's kind icon in its colour on the trigger and in the list, as
 //   ChoiceButtons draws it, on the page and on a card.
-//
-// - Narrow filters (4.109): a 192px MultiChoice filter with a long summary
-//   beside a 192px Input, the two the same height.
-//
-// - Status multi choices (4.130): MultiChoice with OptionSelect's options,
-//   each kind's icon in its colour (or a plain icon) on its chip, in the
-//   list and on a filter's summary, on the page and on a card.
+// - Narrow filters: a 192px MultiChoice filter with a long summary beside
+//   a 192px Input, the two the same height.
+// - Status multi choices: MultiChoice with OptionSelect's options, each
+//   kind's icon in its colour (or a plain icon) on its chip, in the list
+//   and on a filter's summary, on the page and on a card.
 //
 // e2e/form-controls.spec.ts drives these; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
@@ -370,7 +364,7 @@ function NarrowControls() {
               onValueChange={setDialogBinding}
             />
           </Field>
-          {/* A second choice: the two share the row (9C, 4.98), so Binding
+          {/* A second choice: the two share the row (9C), so Binding
               has half of it and its four buttons wrap inside its field. */}
           <Field size="m">
             <FieldLabel id="dialog-condition-label">Condition</FieldLabel>
@@ -452,7 +446,7 @@ function ChoicePairForm() {
   )
 }
 
-// A status as a choice (4.105): each option a status kind, its icon in the
+// A status as a choice: each option a status kind, its icon in the
 // kind's colour as StatusMark draws it, on the page and on a card, one
 // picked in the theme colour; and an option with a plain icon.
 const OUTCOMES = [
@@ -506,7 +500,7 @@ function StatusChoicesPage() {
   )
 }
 
-// A status of five or more (4.109): OptionSelect, each option's kind icon
+// A status of five or more: OptionSelect, each option's kind icon
 // in its colour, on the trigger and in the list; and one with plain icons.
 const STAGES = [
   { value: 'idea', label: 'Idea', kind: 'planned' },
@@ -552,7 +546,7 @@ function StatusSelectsPage() {
   )
 }
 
-// MultiChoice with icons (4.130): STAGES and PICKUP, OptionSelect's own
+// MultiChoice with icons: STAGES and PICKUP, OptionSelect's own
 // options, as chips on a form and as a filter's summary.
 function StatusMultiChoiceFields({ prefix }: { prefix: string }) {
   const [stages, setStages] = useState<string[]>(['stuck', 'sent'])
@@ -598,7 +592,7 @@ function StatusMultiChoicesPage() {
   )
 }
 
-// A list's filters in a row (4.109): a 192px MultiChoice whose summary is
+// A list's filters in a row: a 192px MultiChoice whose summary is
 // long, beside a 192px Input; the two stay one line, the same height.
 const FILTER_SHELVES = ['Hallway bookcase by the stairs', 'Study', 'Attic boxes', 'Kitchen'] as const
 

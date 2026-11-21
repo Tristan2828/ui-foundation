@@ -1,4 +1,4 @@
-// How a repeat is typed (#326): a task app's phrases ("every 2nd tue at
+// How a repeat is typed: a task app's phrases ("every 2nd tue at
 // 9am", "every! 3 days", "every jan 1 until mar 1") read into a Recurrence
 // as you type, with a clear refusal for what can't be read, and the way
 // back, a Recurrence written as a phrase the reader takes again.
@@ -14,7 +14,7 @@
 //
 // then, in any order: `at 9am, 5:30pm` (`noon`, `17:00`), `starting dec 1`
 // (`from`), `until mar 1` (`ending`), `for 10 times`, `weeks start sun`
-// (WKST, 4.114). A day with no year is the next one: from today for
+// (WKST). A day with no year is the next one: from today for
 // `starting`, from the start for `until`.
 import {
   formatRule,
@@ -38,7 +38,7 @@ export type PhraseOptions = {
   /** The start when the phrase has no "starting". Defaults to `today`. */
   start?: string
   /**
-   * The day weeks start on (4.114): a weekly rule read with no "weeks
+   * The day weeks start on: a weekly rule read with no "weeks
    * start" gets it as its WKST (`'SU'` adds `WKST=SU`). Defaults to
    * Monday, which is no WKST.
    */

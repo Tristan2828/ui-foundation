@@ -100,7 +100,7 @@ describe("activeViewOf", () => {
   });
 });
 
-// Views fill the filters (4.105): the default view at the plain address,
+// Views fill the filters: the default view at the plain address,
 // a view's rule that no control shows, and a hand change that keeps what
 // the bar shows.
 describe("views fill the filters", () => {

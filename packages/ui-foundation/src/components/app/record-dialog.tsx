@@ -27,47 +27,32 @@
 // another page opens the dialog over its own list, at the list's plain
 // address.
 //
-// A list that isn't the record's parent route (`listPath`, 4.71): the
-// list at /things/list, the record at /things/12, siblings. The route the
-// two share wraps them, its `list` drawn at `listPath` (whose own route
-// has no element) and every other child the record:
+// Variants, all the same route shape:
+// - `listPath`: a list that isn't the record's parent route (the list at
+//   /things/list, the record at /things/12). The shared route wraps both,
+//   its `list` drawn at `listPath` (whose own route has no element) and
+//   every other child the record:
+//   `{ path: 'things', element: <RecordDialogRoute list={<ThingsList />} listPath="list" label="Thing" />, children: [{ path: 'list' }, { path: ':id', element: <ThingView /> }] }`
+// - A sub-record over its parent's page: the parent's page is the `list`,
+//   the sub-record its child, with `fullPage={false}`, so a reload of
+//   /parents/7/children/31 is the dialog over the parent again.
+// - `newPath`: the list's `new` child route (`/widgets/new`) is the create
+//   form, drawn as its own FormDialog over the list, always (a form of up
+//   to about 8 fields has no page of its own). It has no record dialog
+//   round it; FormDialog opens itself from the route's context
+//   (useNewRecordDialog), closing goes back as a record's dialog does, and
+//   `openRecord` after the save swaps the entry for the new record over
+//   the same list.
 //
-//   { path: 'things', element: <RecordDialogRoute list={<ThingsList />} listPath="list" label="Thing" />,
-//     children: [{ path: 'list' }, { path: ':id', element: <ThingView /> }] }
+// The record dialog is 1,120px (DialogContent `size="record"`), so an
+// EntityView with `layout="rail"` keeps its rail beside the main column, as
+// on its page; a narrower screen stacks them.
 //
-// Opened from the list, /things/12 is the dialog over /things/list, and
-// closing goes back to it; a deep link is the full page, as above.
-//
-// A sub-record over its parent's page (4.71) is the same route one level
-// down: the parent's page is the `list`, the sub-record its child, and
-// `fullPage={false}`, so a reload of /parents/7/children/31 is the dialog
-// over the parent again:
-//
-//   { path: 'parents/:id', element: <RecordDialogRoute list={<ParentView />} label="Document" fullPage={false} />,
-//     children: [{ path: 'children/:childId', element: <ChildView /> }] }
-//
-// A new record over its list (4.82, `newPath`): the list's `new` child
-// route (`/widgets/new`) is the create form, drawn as its own FormDialog
-// over the list, always: opened from the list, from anywhere else, or a
-// deep link (a form of up to about 8 fields has no page of its own). It
-// has no record dialog round it; FormDialog opens itself from the
-// route's context (useNewRecordDialog), closing goes back as a record's
-// dialog does, and `openRecord` after the save swaps the entry for the new
-// record over the same list:
-//
-//   { path: 'widgets', element: <RecordDialogRoute list={<WidgetsTableRoute />} label="Widget" newPath="new" />,
-//     children: [{ path: 'new', element: <NewWidgetRoute /> }, { path: ':id', element: <WidgetViewRoute /> }] }
-//
-// The record dialog is 1,120px (DialogContent `size="record"`, 4.82), so
-// an EntityView with `layout="rail"` keeps its rail beside the main
-// column, as on its page; a narrower screen stacks them.
-//
-// A tiny record (4.98, record standard 8A: a few fields and no notes)
-// opens as a small card instead, `look="card"`: a 420px dialog (a bottom
-// sheet on a phone, DialogContent `size="confirm"`) with no bar. The
-// record's title, its actions (Delete as an icon), Open full page (an
-// icon, when it has a page) and Close share one line, and its facts are
-// plain rows under it, with no cards.
+// A tiny record (record standard 8A: a few fields and no notes) opens as a
+// small card instead, `look="card"`: a 420px dialog (a bottom sheet on a
+// phone, DialogContent `size="confirm"`) with no bar. The record's title,
+// its actions (Delete as an icon), Open full page (an icon, when it has a
+// page) and Close share one line, and its facts are plain rows under it.
 //
 // Inside, the record's route renders as it always does. EntityView sees
 // the dialog (useRecordDialog): its heading names the dialog, its back link
@@ -297,7 +282,7 @@ export function RecordDialogRoute({
             className={cn(
               'min-h-0 overflow-y-auto',
               // A record's tab bar sticks to the body's top edge, not inside
-              // its padding (4.101): minus the padding, for EntityView.
+              // its padding: minus the padding, for EntityView.
               card
                 ? 'p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [--entity-view-sticky-top:-1rem] md:p-5 md:[--entity-view-sticky-top:-1.25rem]'
                 : 'p-4 [--entity-view-sticky-top:-1rem] sm:p-6 sm:[--entity-view-sticky-top:-1.5rem]',

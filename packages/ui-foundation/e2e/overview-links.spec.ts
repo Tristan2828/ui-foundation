@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// OverviewPage's links (4.120): pages outside the app, one section after
+// OverviewPage's links: pages outside the app, one section after
 // the parts, under its heading. Each link is its label (with its icon if
 // it has one) and the external-link mark, opening in a new tab, said to a
 // screen reader. In a row from 48rem, one per line on a phone, each a

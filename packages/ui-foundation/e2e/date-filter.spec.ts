@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// A date filter a view fills (4.110), on the harness's DateViews list
+// A date filter a view fills, on the harness's DateViews list
 // (today fixed at Nov 13, 2026): Overdue is "due before today", Upcoming
 // "due from today", both in the Due filter behind Filters with a chip
 // beside it; Between dates takes a range. The address under the table is

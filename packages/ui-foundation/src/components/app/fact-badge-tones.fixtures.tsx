@@ -8,7 +8,7 @@ import { EntityView, type EntityViewSection } from './entity-view'
 import type { EntityViewFactBadge } from './entity-view-facts'
 import { MultiPick } from './multi-pick'
 
-// A record's flags as toned badges in the facts rail (4.123's `tone` on a
+// A record's flags as toned badges in the facts rail (`tone` on a
 // badge item), on a made-up record: "Blocked" in the destructive tone and
 // "Needs you" in the warning tone, edited in place with MultiPick, beside
 // an untoned badges fact. On a phone the rail folds into Details and the

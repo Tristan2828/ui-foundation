@@ -281,7 +281,7 @@ test.describe('editing features', () => {
     await expect(box.getByRole('textbox', { name: 'Link Address' })).toHaveAccessibleDescription(
       'Enter a web or email address, like https://example.com.',
     )
-    // Two words are not an address either (#177).
+    // Two words are not an address either.
     await box.getByRole('textbox', { name: 'Link Address' }).fill('setup guide')
     await page.keyboard.press('Enter')
     await expect(box.getByRole('alert')).toHaveText('An address has no spaces. Remove them, or write each as %20.')
@@ -864,7 +864,7 @@ test.describe('slash menu', () => {
   }
 })
 
-// How written text looks, in the editor and in <Markdown> (#184): `#` and
+// How written text looks, in the editor and in <Markdown>: `#` and
 // `##` on tinted bands, `#`'s stronger with a 2px rule along its foot,
 // `###` a small uppercase label, the rest of the text lined up with the
 // words in the band, links in their own colour.
@@ -1375,7 +1375,7 @@ test.describe('image upload', () => {
   })
 
   // An image a web page copies as `data:` in its HTML: never saved as
-  // that, but uploaded where the field takes images (the review's F14).
+  // that, but uploaded where the field takes images.
   const DATA_PNG = `data:image/png;base64,${Buffer.from(pngBytes()).toString('base64')}`
   const pastedPicture = { 'text/html': `<p>A picture: <img src="${DATA_PNG}" alt=""></p>`, 'text/plain': 'A picture:' }
 
@@ -1439,7 +1439,7 @@ test.describe('heading levels', () => {
     underPage: ['h2 Overview', 'h3 Details', 'h4 Small print'],
     underSection: ['h3 Overview', 'h4 Details', 'h5 Small print'],
     capped: ['h5 Overview', 'h6 Details', 'h6 Small print'],
-    // headingFrom="text" (#235): the text's own highest heading takes headingLevel.
+    // headingFrom="text": the text's own highest heading takes headingLevel.
     fromText: ['h2 Imported details', 'h3 Imported small print'],
     fromTextDeep: ['h2 Deep small print'],
   }
@@ -1662,7 +1662,7 @@ test.describe('a value that arrives later', () => {
 
 // An edit the merge refuses, on an editor with no onProblem (a form that
 // passes none): it says so in the field and is marked invalid, and
-// nothing new is saved (RichTextEditor's review, F1).
+// nothing new is saved.
 test.describe('a refused edit', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(FEATURES)
@@ -1700,7 +1700,7 @@ test.describe('a refused edit', () => {
   })
 })
 
-// Paste and typed addresses (the review's F9, F14, F19).
+// Paste and typed addresses.
 test.describe('paste and addresses', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(FEATURES)
@@ -1846,7 +1846,7 @@ test.describe('paste and addresses', () => {
   })
 })
 
-// Full screen holds focus (the review's F20).
+// Full screen holds focus.
 test.describe('full screen', () => {
   test.skip(({ isMobile }) => isMobile, "a laptop's toolbar button: on a phone it's in the keyboard bar's Aa panel (rich-text-phone.spec.ts)")
   test.beforeEach(async ({ page }) => {
@@ -1902,7 +1902,7 @@ test.describe('full screen', () => {
   })
 })
 
-// How it behaves as you type (4.126, the RichTextEditor review's typing
+// How it behaves as you type (the RichTextEditor review's typing
 // findings), on the RichTextEditor Typing story: each editor's Markdown
 // beside it, as on the others.
 test.describe('typing', () => {
@@ -1944,7 +1944,6 @@ test.describe('typing', () => {
     await expect(editor(page, 'writing')).toBeVisible()
   })
 
-  // F10.
   test('ArrowDown at the end of a last code block puts a line under it; a last paragraph gets none', async ({ page }) => {
     await caretAtEnd(page, 'onlyCode')
     await page.keyboard.press('ArrowDown')
@@ -1995,7 +1994,6 @@ test.describe('typing', () => {
     await expect(saved(page, 'plainLast')).toHaveText('Only a line.!\n')
   })
 
-  // F15.
   test('typed --- is a divider with a line under it, the caret there', async ({ page }) => {
     await caretAtEnd(page, 'writing')
     await page.keyboard.press('Enter')
@@ -2005,7 +2003,6 @@ test.describe('typing', () => {
     await expect(saved(page, 'writing')).toHaveText('Start here.\n\n---\n\nnext\n')
   })
 
-  // F16 and F22.
   test('spaced stars stay as typed; *words*, **words** and ==words== format as typed', async ({ page }) => {
     const box = editor(page, 'writing')
     await caretAtEnd(page, 'writing')
@@ -2020,7 +2017,6 @@ test.describe('typing', () => {
     await expect(saved(page, 'writing')).toContainText('*one* **two** ==three== =={green}four==')
   })
 
-  // F22.
   test("a paragraph's space at its end isn't saved (Markdown would drop it on reading)", async ({ page }) => {
     await caretAtEnd(page, 'writing')
     await page.keyboard.type(' more ')
@@ -2028,7 +2024,6 @@ test.describe('typing', () => {
     await expect.poll(() => saved(page, 'writing').textContent()).toBe('Start here. more\n')
   })
 
-  // F17.
   test("Backspace at an item's start lifts it out of the list; a second joins it to the line above", async ({ page }) => {
     await caretAfter(page, 'list', 'two')
     await move(page, 'Home')
@@ -2067,7 +2062,6 @@ test.describe('typing', () => {
     await expect(saved(page, 'onlyCode')).toHaveText('```\nlast line\n```\n')
   })
 
-  // F18.
   test('the slash menu opens in a list item, and a pick applies there; in a cell it lists only what fits', async ({ page }) => {
     const menu = page.getByRole('listbox', { name: 'Blocks' })
     await caretAfter(page, 'list', 'two')
@@ -2089,7 +2083,6 @@ test.describe('typing', () => {
     await expect(menu.getByRole('option', { name: 'Green highlight', exact: true })).toBeVisible()
   })
 
-  // F21.
   test('redo after undoing through a slash pick brings back every word, and one too many does nothing', async ({ page }) => {
     await caretAtEnd(page, 'writing')
     await page.keyboard.press('Enter')
@@ -2110,7 +2103,6 @@ test.describe('typing', () => {
     await expect(saved(page, 'writing')).toHaveText('Start here.\n\n> quoted more\n')
   })
 
-  // F24.
   test('the block keys turn a heading into a list and an item into a heading; Ctrl/Cmd+Shift+H highlights', async ({ page }) => {
     await caretAfter(page, 'heading', 'Title')
     await page.keyboard.press('Control+Shift+Digit5')
@@ -2128,7 +2120,6 @@ test.describe('typing', () => {
     await expect(saved(page, 'heading')).toContainText('# item\n')
   })
 
-  // F24.
   test("ticking a task's box keeps focus in the text, so Ctrl/Cmd+Z takes the tick back", async ({ page }) => {
     const box = page.locator('[data-fixture="tasks"]').getByRole('checkbox', { name: 'Done' }).first()
     await box.click()

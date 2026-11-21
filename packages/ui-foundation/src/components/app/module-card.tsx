@@ -1,4 +1,4 @@
-// A place on a hub page (issue #224): one of the app's modules, or a site
+// A place on a hub page: one of the app's modules, or a site
 // outside it, as a small card in a strip across the top of the page.
 //
 // - The band: the place's icon, tinted with its categorical slot, and its
@@ -25,12 +25,11 @@
 // the sidebar's breakpoint (md) instead, so a hub's widgets start on the
 // first screen: each place's icon in its slot's colour, its name and its
 // number, a skeleton while that loads and a dash when it fails (Retry is
-// the card's; the place's own page says what went wrong). Each ModuleCard
-// renders its chip beside its card, one shown at each width. The row
-// scrolls inside itself and is `relative`, so a chip's sr-only text
-// (absolutely placed) scrolls with it instead of widening the page.
-// `noteOnChip` adds the note after the number, on the chip's one line and
-// cut off at a fixed width, so a long note can't crowd the row.
+// the card's). Each ModuleCard renders its chip beside its card, one shown
+// at each width. The row scrolls inside itself and is `relative`, so a
+// chip's sr-only text (absolutely placed) scrolls with it instead of
+// widening the page. `noteOnChip` adds the note after the number, cut off
+// at a fixed width so a long note can't crowd the row.
 import { Children, createContext, useContext, useId, type ReactNode } from 'react'
 import { Link, type To } from 'react-router'
 import { AlertCircleIcon, ExternalLinkIcon } from 'lucide-react'

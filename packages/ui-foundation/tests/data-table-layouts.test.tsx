@@ -1,4 +1,4 @@
-// DataTable's card layouts (issue #252): the switch, each card layout's
+// DataTable's card layouts: the switch, each card layout's
 // cards in a list, `groupBy` headings over them, and each state. Sizes and
 // the switch in use are e2e/data-table-layouts.spec.ts's.
 import type { LegacyColumnDef } from '@tanstack/react-table/legacy'

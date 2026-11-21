@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { formatPlainDate } from '@/lib/plain-date'
 import { LineChart, type LineChartPoint } from './line-chart'
 
-// LineChart (#238), on a card as a record's page puts it: a price checked
+// LineChart, on a card as a record's page puts it: a price checked
 // most days against a "Buy at" target, its lowest point marked. All
 // states is each of the four (loading, no points, one point, the chart)
 // and the other marks. Axe, the token check and the glyph check (the line
@@ -82,7 +82,7 @@ export const AllStates: StoryObj = {
   ),
 }
 
-// A balance's history carried on dashed (4.51): where it may go by 2030,
+// A balance's history carried on dashed: where it may go by 2030,
 // against the target it's meant to reach.
 const BALANCES: LineChartPoint[] = [
   { x: '2024-01-01', y: 41000 },
@@ -118,7 +118,7 @@ export const Projection: StoryObj = {
   ),
 }
 
-// `levels` (4.64): a value that is one of a few named steps, held until
+// `levels`: a value that is one of a few named steps, held until
 // the next change. A confidence that rose twice, then dropped a step.
 const CONFIDENCE = ['Very low', 'Low', 'Low-moderate', 'Moderate', 'High']
 const ASSESSED: LineChartPoint[] = [

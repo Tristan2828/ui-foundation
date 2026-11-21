@@ -234,13 +234,13 @@ export class EditInPlaceStore {
     }
     return () => {
       // A rich-text editor reports its typing a pause after it stops
-      // (src/lib/pending-edits.ts, F6): asked for now, before this reads it.
+      // (src/lib/pending-edits.ts): asked for now, before this reads it.
       flushPendingEdits()
       const inFlight = this.autosaving.get(key)
       const state = this.state(key)
       const last = this.configs.get(key)?.()
       // With a save in flight, what was typed since goes once it lands,
-      // from this draft and config: the field is gone by then (F3).
+      // from this draft and config: the field is gone by then.
       if (inFlight) {
         this.clearTimer(key)
         if (state.status === 'open' && last) this.sendDetached(inFlight, state, last)
@@ -335,7 +335,7 @@ export class EditInPlaceStore {
       const state = this.state(key)
       if (state.status === 'closed') return false
       if (state.status === 'saving' || this.autosaving.has(key) || state.error !== null) return true
-      // A reported problem is unsaved at once, not only after the pause (F5).
+      // A reported problem is unsaved at once, not only after the pause.
       if (state.problem !== null || state.conflict) return true
       return !this.isEqual(key)(state.draft, state.initial)
     })
@@ -486,7 +486,7 @@ export class EditInPlaceStore {
   }
 
   /**
-   * The page is hidden (another tab, a phone's home screen, F13): while it
+   * The page is hidden (another tab, a phone's home screen): while it
    * is, an autosave goes without the pause, and one waiting goes now.
    */
   hurry(hidden: boolean) {
@@ -519,7 +519,7 @@ export class EditInPlaceStore {
    * sent is saved (or there was nothing to send).
    */
   private flush(key: string): Promise<boolean> {
-    // Typing an editor holds back is reported first (F6).
+    // Typing an editor holds back is reported first.
     flushPendingEdits()
     this.clearTimer(key)
     const inFlight = this.autosaving.get(key)
@@ -606,11 +606,11 @@ export class EditInPlaceStore {
    * elsewhere: another tab, a phone, an AI chat, the form. Call it whenever
    * the value changes. An open autosaving field with nothing of its own unsaved or
    * saving shows it, starting its control over (`revision`): true when it
-   * did, so the caret can be put back (F4). One with unsaved typing gets a
+   * did, so the caret can be put back. One with unsaved typing gets a
    * conflict (`conflict`, its message), and nothing saves until the person
    * picks. The field's own save coming back, as sent or as the server
    * normalised it (trimmed), is no change: the control keeps its text and
-   * its undo (F25).
+   * its undo.
    */
   refresh(key: string): boolean {
     // Typing an editor holds back counts as unsaved (a conflict, not a reload).

@@ -68,7 +68,7 @@ export function splitTaskItem(state: EditorState, dispatch: (tr: Transaction) =>
 }
 
 /**
- * A task item's box in its hit area (review F11): the box as drawn, in a
+ * A task item's box in its hit area: the box as drawn, in a
  * label whose invisible 40px square, on a touch screen, takes the tap
  * (a press on a label is its checkbox's), and the item's row 40px tall
  * there, so two items' squares never overlap. A laptop is unchanged.

@@ -278,7 +278,7 @@ export function toggleFormat(state: EditorState, dispatch: Dispatch, id: FormatI
         return true
       }
       // A heading or a code block is made a plain line first: a list
-      // item starts with one (Ctrl+Shift+5 on a heading, the review's F24).
+      // item starts with one (Ctrl+Shift+5 on a heading).
       const parent = state.selection.$from.parent
       if (parent.type !== paragraph && parent.isTextblock) return chain(state, dispatch, [setBlockType(paragraph), toList])
       return toList(state, dispatch)
@@ -308,7 +308,7 @@ function chain(state: EditorState, dispatch: Dispatch, commands: Command[]): boo
 
 // `command` on the caret's line once it's out of every list it's in: a
 // list item's line can't be a heading or a code block (Ctrl+Shift+1 on an
-// item, the review's F24).
+// item).
 function outOfLists(state: EditorState, dispatch: Dispatch, command: Command): boolean {
   if (!ancestor(state, isList)) return command(state, dispatch)
   const lift = liftListItem(state.schema.nodes.list_item)

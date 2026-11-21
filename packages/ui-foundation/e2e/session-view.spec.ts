@@ -195,7 +195,7 @@ test('reduced motion swaps the breathing circle for a still one', async ({ page 
   await expect(circle).toHaveAttribute('data-motion', 'reduced')
 })
 
-// A background tab (#193), as docs/foundation/timed-screens.md "Background
+// A background tab, as docs/foundation/timed-screens.md "Background
 // tabs" tells an app to test it: the page's visibility set by the test,
 // no animation frames while hidden, the fake clock fast-forwarded, and a
 // Web Audio that records what it's asked to book.
@@ -339,7 +339,7 @@ test.describe('in a background tab', () => {
   })
 })
 
-// The dark stage (#253): `dark` scopes the dark tokens to the view, so on a
+// The dark stage: `dark` scopes the dark tokens to the view, so on a
 // light app the view is black and the page under it stays light; the
 // stage glows in the run's tone and the time is lit in its text shade.
 test.describe('the dark stage', () => {

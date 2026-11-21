@@ -1,15 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// EntityForm in the form standard (4.85; app/EntityForm stories) in a
-// real browser: short fields sharing rows by size, 32px controls 14px
-// apart (40px on a phone, one field a row but two dates), the required
-// marks, a refused Add moving to the problem and counting it, a failed
-// save's Notice with Try again, the bar stuck to the window's bottom, the
-// status drawn as its badge, and "Discard your changes?" before leaving
-// with something typed. The last test is FormDialog's route guard, on
-// RecordDialog's New record story. Axe in both themes and every palette
-// is e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES; the row rule itself
-// is tests/form-standard.test.tsx.
+// EntityForm in the form standard (app/EntityForm stories), in a real browser: field rows, spacing,
+// required marks, a failed save's Notice, the sticky bar and the discard prompt; FormDialog's route guard.
+// Axe is e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES; the row rule itself is tests/form-standard.test.tsx.
 const story = (id: string) => `http://localhost:6180/story.html?id=app-entityform--${id}`
 
 const LAPTOP = { width: 1280, height: 900 }

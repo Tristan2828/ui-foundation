@@ -134,8 +134,7 @@ declare module '@tanstack/table-core' {
      * The title column (the table's first, the row's name): wrap at
      * `maxWidth` (`'24rem'` unless set) instead of the default, one line cut
      * at 24rem with an ellipsis. For a title worth reading whole in the row.
-     * A title column with `maxWidth: 'none'` has no cap at all (the look
-     * before 4.103); one with its own `clip` or `maxWidth` is cut or wrapped
+     * A title column with `maxWidth: 'none'` has no cap at all; one with its own `clip` or `maxWidth` is cut or wrapped
      * at it, as any column is.
      */
     wrap?: boolean
@@ -207,7 +206,7 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    */
   visibleColumns?: readonly string[]
   /**
-   * `content` (the default, 4.83): the table and its pagination are as wide
+   * `content` (the default): the table and its pagination are as wide
    * as the columns need, at least 36rem (or the whole width, when that's
    * less), with empty space at the right, so a name stays close to its
    * values at any screen size; wider than the area, the table scrolls
@@ -215,13 +214,12 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    * don't move between lists. While loading, empty or failed after a
    * load, it keeps the width it last had, so paging and filtering don't
    * move it (only the first load can). `full`: the table takes the whole
-   * width too (the default before 4.83). A card layout takes the whole
+   * width too. A card layout takes the whole
    * width either way.
    */
   width?: DataTableWidth
   /**
-   * Zebra stripes on the body rows (every other row tinted), as before
-   * 4.83. Off by default: rows are told apart by the line under each.
+   * Zebra stripes on the body rows (every other row tinted). Off by default: rows are told apart by the line under each.
    */
   striped?: boolean
   /**
@@ -306,8 +304,8 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
   detailPanel?: (row: TData) => ReactNode
   /**
    * What a click on a row (or Enter on it) does: open its page, or open it
-   * in a dialog over the list (`useOpenRecord`, add-an-entity.md "Opening a
-   * record over its list"). The rows then take a pointer and the keyboard
+   * in a dialog over the list (`useOpenRecord`, add-an-entity.md "How a list
+   * opens a record"). The rows then take a pointer and the keyboard
    * (↑/↓ between rows, Enter). A link or control inside the row keeps its
    * own click. With a `detailPanel` it replaces picking the row, and the
    * panel is then opened from the app's own control through `detailRow`.
@@ -373,7 +371,7 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    * filters move off every view. Under 48rem they stay on one line that
    * scrolls sideways. A view with `columns` shows those while it's on, over
    * the Columns menu's pick. A view with `count` shows it after its label
-   * ("Needs a Look · 3", 4.127).
+   * ("Needs a Look · 3").
    */
   views?: Readonly<Record<string, TView>>
   /** The view on: useTableUrlState's `activeView`, or null. */
@@ -383,17 +381,17 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
   /** The pills' group name: "Views" unless set. */
   viewsLabel?: string
   /**
-   * The list page's header (4.106, the list standard's C3): its
+   * The list page's header (the list standard's C3): its
    * `<ListHeader>`, drawn above the views. In the framed look with
    * `width="content"` the header, the views and the card share one width,
    * the table's, so the header's ⋯ and New end on the card's right edge
    * above a short table instead of at the page's far edge. With
    * `width="full"`, a table wider than the page, or the row list on a
-   * phone, it spans the page as before.
+   * phone, it spans the page.
    */
   pageHeader?: ReactNode
   /**
-   * A bar between the page header and the list (4.123): something about
+   * A bar between the page header and the list: something about
    * the whole page that belongs above its rows, such as a deals bar, an
    * "Allow reminders" notice or a budget's totals. Drawn under
    * `pageHeader` and above the views, so C3 holds: the header, the bar and
@@ -439,7 +437,7 @@ export type DataTableProps<TData extends Record<string, unknown>, TView extends 
    */
   viewAll?: DataTableViewAll
   /**
-   * How the list is drawn around its rows (4.100). `plain` (the default):
+   * How the list is drawn around its rows. `plain` (the default):
    * the toolbar above the whole width, the Columns and Group menus as
    * buttons at its end, the pagination under the rows. `framed`: the
    * list is a card with a border, as wide as the table under `width`'s
@@ -892,7 +890,7 @@ function TableSkeleton({ columnCount }: { columnCount: number }) {
 // the columns scrolling behind show through at 40% opacity — exactly the
 // bleed-through a solid background avoids. With `striped`, on an even row
 // it's the stripe pre-mixed onto the page (--table-stripe), so the stripe
-// runs the whole row's width (issue #92); `:where()` keeps that rule's
+// runs the whole row's width; `:where()` keeps that rule's
 // specificity at the background's, so the row's hover below still wins.
 const PINNED_CELL_CLASS = 'z-10 bg-background'
 const PINNED_STRIPED_CELL_CLASS = '[:where(tbody>tr:nth-child(even))>&]:bg-(--table-stripe)'
@@ -904,12 +902,12 @@ const PINNED_LAST_COLUMN_CLASS = `sticky right-0 border-l ${PINNED_CELL_CLASS}`
 // same opaque cell, with no hover, since the row isn't one to pick.
 const PINNED_TOTALS_LABEL_CLASS = PINNED_COLUMN_CLASS
 
-// `striped` off (the default, 4.83): table.tsx's zebra taken back off the
+// `striped` off (the default): table.tsx's zebra taken back off the
 // body (tailwind-merge drops its even-row tint for this one), so rows are
 // told apart by the line under each.
 const UNSTRIPED_BODY_CLASS = '[&_tr:nth-child(even)]:bg-transparent'
 
-// A body row under the pointer (4.83): every cell, pinned ones included,
+// A body row under the pointer: every cell, pinned ones included,
 // in --table-hover (solid, so a pinned cell can wear it), with a bar in
 // --primary on the first cell, so it reads without colour too; an inset
 // shadow rather than a border, so nothing reflows. On a cell, not the row,
@@ -937,7 +935,7 @@ const TITLE_CLIP_CLASS = cn(CLIP_CLASS, '-m-1 p-1')
 // A pinned first column's content, capped below md at 45% of the table's
 // scroll area (`cqw`: the container is an inline-size query container)
 // and wrapping, so a long title can't widen the column past the screen
-// and leave every other column scrolling underneath it (issue #91).
+// and leave every other column scrolling underneath it.
 // The title inside is capped at every width too (cut at 24rem, or
 // wrapped with `meta.wrap`), so wider screens don't overrun either.
 const PINNED_FIRST_CONTENT_CLASS = 'max-md:max-w-[45cqw] max-md:whitespace-normal max-md:break-words'
@@ -968,7 +966,7 @@ const TOTALS_LABEL_CLASS = 'h-auto py-(--table-cell-py)'
 // is its name in an sr-only span, in a cell with no height or padding.
 const HIDDEN_HEAD_CLASS = 'h-0 p-0'
 
-// The column header row (4.105): the muted fill on every header cell, so
+// The column header row: the muted fill on every header cell, so
 // the row of names reads apart from the rows of data, in the plain and
 // framed looks alike. On the cells, not the row, so a pinned or stuck
 // header cell (opaque, bg-background above) wears it too: listed after

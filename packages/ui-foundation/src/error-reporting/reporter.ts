@@ -1,4 +1,4 @@
-// Error reporting in the browser (issue #126), React-free so it's tested on
+// Error reporting in the browser, React-free so it's tested on
 // its own. FoundationProviders' `errorReporting` turns it on; off, nothing
 // here runs.
 //
@@ -10,13 +10,13 @@
 //   `auth`, `notfound`, `validation`, `rate_limited` or `network`: those are
 //   expected answers or the connection, not bugs.
 //
-// What it never reports (#205): a `window` or `unhandledrejection` error
+// What it never reports: a `window` or `unhandledrejection` error
 // that can't be the app's. That's `Script error.` with nothing else (a
 // script on another origin), and an error none of whose stack frames is in
 // a script: every frame is at a page's own address (a script the browser
 // or an extension injected, such as Firefox for iOS's `__firefox__`; a
 // Vite build has no inline scripts) or in an extension. An app drops more
-// with `ignore`. While the page reloads onto a new build (#206), nothing
+// with `ignore`. While the page reloads onto a new build, nothing
 // is reported: what fails then is the old build going away.
 //
 // What a report holds: the error's type, message and stack, the route
@@ -134,7 +134,7 @@ function outsideAppScripts(url: string, page: string): boolean {
 }
 
 /**
- * Whether an uncaught error can't be the app's (#205): `Script error.` with
+ * Whether an uncaught error can't be the app's: `Script error.` with
  * nothing else, or every frame of its stack (else the event's file) outside
  * the app's scripts. An error with no location at all is kept: a thrown
  * string may well be the app's.

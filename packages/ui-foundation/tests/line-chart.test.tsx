@@ -1,7 +1,7 @@
-// LineChart (#238): where its points, target and mark go
+// LineChart: where its points, target and mark go
 // (src/lib/line-chart-layout.ts), and what it renders for each state and
 // for a screen reader. How it looks and its contrast are
-// e2e/line-chart.spec.ts's and storybook-visual's.
+// e2e/line-chart.spec.ts's and e2e/fixtures-visual.spec.ts's.
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { LineChart } from '../src/components/app/line-chart'

@@ -1,14 +1,8 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// The trail in AppShell's bar and search (the app/AppShell StandardTrail…
-// and StandardSearch… stories, app/EntityView Record trail): a record's
-// trail from EntityView's back.trail in the bar, not the page (R2, N5); a
-// page's own from usePageTrail, its parent the phone's back arrow; a nav
-// entry's label on a page that names none; and the palette (N6): Ctrl K
-// or the box, the nav's pages and the app's records under their kinds,
-// the arrows and Enter, the records opened lately before typing, and a
-// search that fails. Axe in both themes, wide and on a phone, palette open.
+// The trail in AppShell's bar and the search palette (app/AppShell StandardTrail and StandardSearch stories,
+// app/EntityView Record trail; R2, N5, N6): trails, back arrow, nav labels, Ctrl K, results and a failing search. Axe in both themes.
 const story = (id: string, theme?: 'light' | 'dark') =>
   `http://localhost:6180/story.html?id=${id}${theme ? `&theme=${theme}` : ''}`
 

@@ -21,7 +21,7 @@ import { MultiPick } from './multi-pick'
 import { Notice } from './notice'
 import { RichTextEditor } from './rich-text-editor'
 
-// The page standards' gaps that apps worked around (4.123), on made-up
+// The page standards' gaps that apps worked around, on made-up
 // records: an icon action that is a link, a search box's own keys, toned
 // badges in the facts rail, a default view that keeps its sort off the
 // address, filter selects named by their label, a ToggleGroup paired with

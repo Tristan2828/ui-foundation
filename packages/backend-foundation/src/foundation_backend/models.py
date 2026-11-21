@@ -185,7 +185,7 @@ class JobRunRecord(SQLModel, table=True):
     summary: str | None = Field(default=None, max_length=500)
 
 
-# `from foundation_backend.models import PushSubscription` (the 4.35 form)
+# `from foundation_backend.models import PushSubscription` (the old import path)
 # keeps working, and registers the table only then.
 _LAZY = {
     "PushSubscription": "foundation_backend.push_models",

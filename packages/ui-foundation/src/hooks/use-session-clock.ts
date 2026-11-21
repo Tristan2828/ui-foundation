@@ -11,7 +11,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 // A hidden tab draws no frames, so while it's hidden a slow timer reads
 // the time instead (once a second, or as often as the browser lets a
 // background tab's timers run), enough for a countdown in the tab's
-// title; the first frame back catches up exactly (#193). A run can start
+// title; the first frame back catches up exactly. A run can start
 // from a given elapsed time and seek, for a run resumed from storage and
 // for Skip and Back.
 //

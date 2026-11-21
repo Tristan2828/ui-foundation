@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// A list's header as wide as its framed table (4.106, the list standard's
+// A list's header as wide as its framed table (the list standard's
 // C3): with the ListHeader passed as DataTable's `pageHeader`, the header,
 // the views and the card share the table's width, so New ends on the
 // card's right edge above a short table, and further out on a wider one

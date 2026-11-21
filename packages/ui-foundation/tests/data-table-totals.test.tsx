@@ -1,4 +1,4 @@
-// DataTable's `totals` (issue #225): a <tfoot> row, its label a row
+// DataTable's `totals`: a <tfoot> row, its label a row
 // header in the first visible column, each value under its own column, a
 // hidden column's left out, and no row at all beside no rows. Where it
 // sits on screen (aligned, pinned, scrolling) is e2e/data-table.spec.ts's.

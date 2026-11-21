@@ -4,12 +4,12 @@ import { useWidgetLayout } from '@/hooks/use-widget-layout'
 import { WidgetCard, WidgetCardGroup, WidgetList, WidgetListItem } from './widget-card'
 import { WidgetLayoutSheet } from './widget-layout-sheet'
 
-// A hub's Customize sheet (#263): the page renders its cards by
+// A hub's Customize sheet: the page renders its cards by
 // useWidgetLayout's `visible`, and the sheet orders them and hides some,
 // kept on this device. Default is the hub with its Customize button (the
 // cards an accordion on a phone, side by side on a desktop); Open is the
 // sheet as opened, for axe and the token check in both themes
-// (e2e/fixtures-visual.spec.ts). e2e/widget-layout-sheet.spec.ts drives
+// (e2e/fixtures-visual.spec.ts). e2e/widget-hub.spec.ts drives
 // it from the keyboard.
 const meta: Meta = {
   title: 'app/WidgetLayoutSheet',

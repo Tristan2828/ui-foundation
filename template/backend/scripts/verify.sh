@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backend verify gate (Phase 8 item 7): mypy is the compiler-equivalent
+# Backend verify gate: mypy is the compiler-equivalent
 # check; pytest exercises app wiring against SQLite (see tests/conftest.py
 # for why, and its limits — it does not replace the Postgres-backed run in
 # scripts/check-backend-postgres.sh).

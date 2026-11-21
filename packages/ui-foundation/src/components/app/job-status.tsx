@@ -1,4 +1,4 @@
-// A job's progress beside the button that started it (4.90, the dialogs
+// A job's progress beside the button that started it (the dialogs
 // and feedback standard D8): "Checking 3 of 12…" with a spinner while it
 // runs, then the result line ("Checked 12 · 2 deals"), which stays. Quiet:
 // the muted caption, the result's check in the success tone. No toast

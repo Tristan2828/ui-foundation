@@ -1,14 +1,8 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// The sidebar as icon tiles (#6C, AppShell's `navLook="tiles"`, the
-// app/AppShell StandardTiles stories, on a record below Finance's
-// Accounts): each area a grid of tiles, icon over label, with no visible
-// heading but a list named by it; the current module's pages under its
-// area's grid with hairlines in place of their headings; a section's own
-// `look` kept (Tools, a list at the foot); the icon rail unchanged; the
-// keyboard through the tiles; and on a phone each area's sheet as tiles
-// with the current module's pages under them. Axe in both themes.
+// The sidebar as icon tiles (AppShell's `navLook="tiles"`, app/AppShell StandardTiles stories): the grid,
+// the current module's pages, a section's own `look`, the icon rail, keyboard and phone sheets. Axe in both themes.
 const story = (id: string, theme?: 'light' | 'dark') =>
   `http://localhost:6180/story.html?id=app-appshell--${id}${theme ? `&theme=${theme}` : ''}`
 

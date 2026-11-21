@@ -5,7 +5,7 @@ import { CalendarIcon, FileTextIcon, MessageSquareIcon } from 'lucide-react'
 import { EntityView } from './entity-view'
 import { FactList, FactListItem } from './fact-list'
 
-// Several items in one fact (4.111), e2e/fact-list.spec.ts: a record's
+// Several items in one fact, e2e/fact-list.spec.ts: a record's
 // Links box, whose Related row lists linked records with long titles that
 // wrap, each led by its kind's icon (4I); For, one record with no icon (a
 // bullet); and a Tasks box an app draws itself with FactList, plain

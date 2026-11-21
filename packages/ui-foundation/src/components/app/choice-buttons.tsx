@@ -1,4 +1,4 @@
-// A small choice as a row of buttons (4.88, the form standard's F10): two
+// A small choice as a row of buttons (the form standard): two
 // to four short options, every one in view and one click away, instead of
 // a select. Five or more, or long words, keep a select (OptionSelect).
 //
@@ -12,21 +12,21 @@
 // emptied, by its buttons. `clearable` lets the picked one be pressed off
 // (an optional field), giving `null`.
 //
-// Never cut off (4.97): in a box narrower than the row (a field sharing a
+// Never cut off: in a box narrower than the row (a field sharing a
 // form's row, a dialog's column, a narrow panel) the buttons wrap onto a
 // second line, each keeping its whole border, instead of spilling past the
 // box's edge. The first line stays joined; a wrapped line starts a new row
 // of joined buttons a little below it.
 //
-// The picked one in the theme colour (4.105): a primary-tinted fill, a
+// The picked one in the theme colour: a primary-tinted fill, a
 // primary border and its word in `text-primary-text`, so a pick reads at a
 // glance, not only as a grey tint.
 //
-// An option can carry an icon, or a status kind (4.105): `kind` draws the
+// An option can carry an icon, or a status kind: `kind` draws the
 // kind's icon in its colour (StatusMark's, lib/status-kinds.ts), so a
 // status choice on a form looks like the status on the record. The word
 // keeps the button's own colour; the kind's icon colour stays, picked or
-// not. OptionSelect draws the same (4.109).
+// not. OptionSelect draws the same.
 import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -37,7 +37,7 @@ import { OptionIcon } from './option-icon'
 export type ChoiceButtonsOption<T> = {
   value: T
   label: string
-  /** A status kind (4.105): its icon, in its colour, before the word, as StatusMark draws it. */
+  /** A status kind: its icon, in its colour, before the word, as StatusMark draws it. */
   kind?: StatusKind
   /** An icon before the word; with `kind`, in place of the kind's. Uncoloured without a `kind`. */
   icon?: IconComponent

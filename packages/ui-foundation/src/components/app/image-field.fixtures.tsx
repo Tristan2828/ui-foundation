@@ -13,7 +13,7 @@ import { delayedUpload, failingUpload, SAVED_PHOTO } from './image-upload.fixtur
 // One photo on a record, on the package's form layer (EntityForm,
 // react-hook-form, zod), with a fake upload: a delayed store, a refusal
 // from the "server", and a size limit. Each form shows the value it would
-// save (e2e/image-field.spec.ts; axe in both themes there, in every state,
+// save (e2e/images.spec.ts; axe in both themes there, in every state,
 // and here through e2e/fixtures-visual.spec.ts).
 
 const MB = 1024 * 1024

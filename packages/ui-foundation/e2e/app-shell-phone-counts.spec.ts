@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// A nav entry's count on a phone (4.113, the app/AppShell
+// A nav entry's count on a phone (the app/AppShell
 // StandardTilesCounts and StandardCountsList stories, at 375 wide): a
 // badge on a bar item's icon (a page's own count, or the sum of its
 // area's), "99+" past 99 and nothing at 0; in the corner of a sheet's

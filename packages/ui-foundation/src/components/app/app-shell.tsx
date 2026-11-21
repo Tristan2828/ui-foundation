@@ -159,7 +159,7 @@ export type AppShellProps = {
    */
   navLook?: NavLook
   /**
-   * Search in the header (#N6): a box ("Search", or `placeholder`) from
+   * Search in the header: a box ("Search", or `placeholder`) from
    * md up and a button on a phone, both opening a palette (Ctrl K, ⌘K on
    * a Mac) that finds the nav's pages by name and, with `findRecords`,
    * the app's records, listed under their kinds; Enter opens the one
@@ -315,12 +315,12 @@ function VersionEntry({ version }: { version: AppShellVersion }) {
   )
 }
 
-// The current entry's mark (#N2): the sidebar's tint and a 3px bar in
+// The current entry's mark: the sidebar's tint and a 3px bar in
 // the accent at its start, the same mark as a selected or hovered table
 // row, in the sidebar and on the rail.
 const ACTIVE_MARK = 'data-active:shadow-[inset_3px_0_0_0_var(--primary)]'
 
-// An entry's count (#N3): a plain number at its end in the muted tone,
+// An entry's count: a plain number at its end in the muted tone,
 // read with what it counts; on the icon rail, a dot on the icon.
 function NavCount({ count, countLabel }: { count?: number; countLabel?: string }) {
   const text = navCountText(count)
@@ -362,7 +362,7 @@ function NavSubLink({ item, activeTo }: { item: NavItem; activeTo: string | unde
   )
 }
 
-// A heading among a module's pages (#N1): a small label over its pages,
+// A heading among a module's pages: a small label over its pages,
 // a list named by it, so a screen reader hears "Money, list".
 function NavSubGroup({ group, activeTo }: { group: NavItemGroup; activeTo: string | undefined }) {
   const headingId = useId()
@@ -384,7 +384,7 @@ function NavSubGroup({ group, activeTo }: { group: NavItemGroup; activeTo: strin
 // matching entry current, and only the most specific one should be
 // (activeNavTo).
 //
-// An entry's children (#239) are a list inside its item, so they're read
+// An entry's children are a list inside its item, so they're read
 // as its pages, shown while you're in them (childrenOpen) and otherwise
 // in the page but hidden, as a folded section's are. The icon rail has no
 // room for them: there the entry looks current while one of them is, and
@@ -437,7 +437,7 @@ function NavMenu({
   )
 }
 
-// A tile in the tiles look (#6C): the entry's icon over its label, a
+// A tile in the tiles look: the entry's icon over its label, a
 // finger's target at least, its count in the corner. The current one,
 // or the one holding the current page, has the tint and a --primary ring.
 const NAV_TILE_CLASS =
@@ -479,7 +479,7 @@ function NavTile({ item, activeTo }: { item: NavItem; activeTo: string | undefin
   )
 }
 
-// A group in the tiles look (#6C): its entries as a three-column grid,
+// A group in the tiles look: its entries as a three-column grid,
 // its label for screen readers only (the grid is a list named by it), and
 // under the grid the pages of the entry you're in, as the list look's
 // children, each heading a hairline (its list still named by it). On the
@@ -552,7 +552,7 @@ function storeSectionOpen(label: string, open: boolean) {
   }
 }
 
-// A section whose label folds it (#152). On the icon rail (the collapsed
+// A section whose label folds it. On the icon rail (the collapsed
 // sidebar on a wide screen) its items always show and its label stays the
 // rail's hidden one, so no page is out of reach and no hidden button
 // takes a tab stop. The section holding the current page is always open:
@@ -610,7 +610,7 @@ function CollapsibleNavGroup({ group, activeTo }: { group: NavGroup & { label: s
   )
 }
 
-// The phone's back arrow (#N7), below the md breakpoint only: the
+// The phone's back arrow, below the md breakpoint only: the
 // shell's own way up from a page below a nav entry. Its label is the
 // place it goes, so it reads "Back to Accounts".
 function PhoneBack({ back }: { back: { label: string; to: string } }) {
@@ -662,7 +662,7 @@ export function AppShell({
   // component then renders starts a second navigation that wins.
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   useShellDocumentTitle(title, navPageLabel(nav, location.pathname))
-  // The trail a page put up (usePageTrail, #N5), for the bar.
+  // The trail a page put up (usePageTrail), for the bar.
   const [pageTrail, setPageTrail] = useState<{ owner: object; crumbs: readonly PageCrumb[] } | null>(null)
   const set = useCallback((owner: object, crumbs: readonly PageCrumb[]) => setPageTrail({ owner, crumbs }), [])
   const clear = useCallback(
@@ -752,7 +752,7 @@ export function AppShell({
             <SidebarContent>
               {groups.filter((group) => !group.placement).map(renderGroup)}
               {sidebarExtra}
-              {/* Sections placed at the bottom (#N4): at the sidebar's foot,
+              {/* Sections placed at the bottom: at the sidebar's foot,
                   under everything else, pushed down by the space above. */}
               {groups.some((group) => group.placement) && (
                 <div data-slot="nav-foot" className="mt-auto flex flex-col">
@@ -801,13 +801,13 @@ export function AppShell({
         <div data-slot="app-shell-column" className="flex w-full min-w-0 flex-1 flex-col bg-background">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
             {/* On a phone, a page below a nav entry gets a way back up to
-                it (#N7): "‹ Accounts" on a record. With a bottom bar to get
+                it: "‹ Accounts" on a record. With a bottom bar to get
                 around by, it takes the menu button's place; without one
                 the menu button stays beside it. Entries' own pages, and
                 every width from md up, keep the menu button. */}
             {back && <PhoneBack back={back} />}
             <SidebarTrigger className={cn(back && bottomBar?.length && 'max-md:hidden')} />
-            {/* The trail (#N5), from md up: the page's own (usePageTrail,
+            {/* The trail, from md up: the page's own (usePageTrail,
                 EntityView's back.trail), or its nav entry's. A phone has
                 the back arrow instead. */}
             <div data-slot="app-shell-trail" className="min-w-0 flex-1">
@@ -816,7 +816,7 @@ export function AppShell({
             {search && <SearchPalette search={search} nav={nav} />}
             <LookControl />
           </header>
-          {/* "You're offline", over every page while the server can't be reached (4.90). */}
+          {/* "You're offline", over every page while the server can't be reached. */}
           <OfflineNotice />
           <SidebarInset className="min-w-0">
             <div className={cn('flex-1 p-6', bottomBar?.length && BOTTOM_BAR_PADDING)}>
@@ -827,8 +827,7 @@ export function AppShell({
         </PageTrailContext.Provider>
         {bottomBar && bottomBar.length > 0 && <BottomBar items={bottomBar} nav={nav} activeTo={activeTo} navLook={navLook} />}
       </SidebarProvider>
-      {/* Top centre, and at the bottom on a phone above its bars (4.90,
-          ui/sonner.tsx): not sonner's bottom-right default, which sat on
+      {/* Top centre, and at the bottom on a phone above its bars (ui/sonner.tsx): not sonner's bottom-right default, which sat on
           DataTable's pagination buttons; top-right would collide with
           the theme toggle. */}
       <Toaster />

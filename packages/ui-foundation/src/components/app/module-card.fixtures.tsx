@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { ModuleCard, ModuleStrip, type ModuleCardProps, type ModuleStripMobile } from './module-card'
 import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 
-// A hub page's places (issue #224): a strip of made-up modules above a
+// A hub page's places: a strip of made-up modules above a
 // widget, as an app's home screen would have them. Default is the page as
 // loaded; All states is a strip in each state (loading, failed, with and
 // without a number, a place with no slot); Compact is Default under

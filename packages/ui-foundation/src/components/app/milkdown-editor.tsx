@@ -5,7 +5,7 @@
 // docs/ARCHITECTURE.md "Decisions".
 //
 // What this file (the wiring) and the rich-text-* files beside it add to
-// Milkdown's own presets:
+// Milkdown's own presets; each feature's detail is in its own file:
 // - Saves go through mergeMarkdown: an untouched document, and every block
 //   the person didn't change, saves back as originally written.
 // - No HTML in, ever. The preset's "preserve empty line" plugin is left
@@ -19,70 +19,48 @@
 //   outline, as it does <Markdown>'s; only the element moves, never the
 //   level the Markdown is saved with (a node view draws it, from the
 //   node's own level: rich-text-heading-view.ts). They look like
-//   <Markdown>'s (prose-look.ts). A task-list item renders a real checkbox
-//   that toggles it (rich-text-task-item-view.ts).
-// - Callouts (`> [!NOTE]`, src/lib/markdown-callout.ts): a node of their
-//   own, drawn as <Markdown> draws them, the icon a menu of kinds.
-// - Tables whose columns fit their words, in a box that scrolls sideways
-//   (a tab stop the arrow keys scroll while it does: rich-text-node-views.ts),
-//   in one of two looks (`tableLook`: styles/index.css "Tables in written
-//   text"). Notion's "add a row" and "add a column" bars, and its grips: one
-//   on the column and one on the row the pointer or the caret is in, each
-//   a menu to insert, move, delete, align, sort and colour
-//   (rich-text-table-grips.tsx); right-click or Shift+F10 in a cell opens
-//   the cell's. A column's right edge drags to a width (double-click:
-//   back to fit its words), and the menus hold Narrower, Wider and Fit to
-//   content; none of that on a phone, which fits columns to their words.
-//   Tab in the last cell adds a row and Enter goes down a
-//   column (rich-text-table.ts). Colours and a header column are kept as
-//   Markdown writes them (src/lib/markdown-table.ts).
-// - Edited blocks are written in the document's own bullet and rule marks.
+//   <Markdown>'s (prose-look.ts).
+// - Callouts (src/lib/markdown-callout.ts), highlighted words
+//   (src/lib/markdown-highlight.ts), toggle headings
+//   (rich-text-toggle-heading.ts), task items (rich-text-tasks.ts), page
+//   links (rich-text-page-links.ts) and tables (rich-text-table.ts,
+//   rich-text-table-grips.tsx, rich-text-node-views.ts) are nodes and
+//   plugins of their own, drawn as <Markdown> draws them. None of the
+//   table's menus or grips show on a phone, which fits columns to their
+//   words. Edited blocks are written in the document's own bullet and rule
+//   marks.
 // - Markdown pasted as plain text arrives formatted (still no HTML), and a
-//   copy out of the editor is Markdown. A paste keeps its lines, Word's
-//   and Notion's lists and to-dos, and code's language; an address pasted
-//   or typed becomes a link; a paste can't bring in a link that runs code
-//   or an image as `data:` (rich-text-paste.ts, rich-text-autolink.ts).
+//   copy out of the editor is Markdown. A paste can't bring in a link that
+//   runs code or an image as `data:` (rich-text-paste.ts,
+//   rich-text-autolink.ts).
 // - An edit the merge refuses is never saved quietly: the field is marked
 //   invalid, and says why in itself when the app gives no `onProblem`
 //   (with one, the app shows it: a form's field error, editing in
 //   place's line).
 // - Full screen holds focus: the page behind it is inert until it ends
 //   (rich-text-full-screen.ts).
-// - A click on a link opens it in a new tab, as the read view's links do,
-//   so notes that are always the editor still follow their links
-//   (followLink, rich-text-links.ts). Ctrl/Cmd+K adds or edits a link (a
-//   box at the caret, rich-text-link-box.tsx: web
-//   and email addresses only); Ctrl/Cmd+Shift+Enter ticks the task item the caret is
-//   in. `[] ` at a line's start makes a task item, and Enter in one the
-//   next, unticked (rich-text-tasks.ts). Ctrl/Cmd+Enter stays the field's
-//   save, in a table too. Notion's block keys (Ctrl+Shift+1 for a
-//   heading, +5 for bullets, …: rich-text-shortcuts.ts).
-// - A placeholder in an empty document, and a count of the Markdown's
-//   length as it nears `maxLength`.
-// - A fixed toolbar above the text (rich-text-toolbar.tsx), and a
-//   floating one over selected words (rich-text-floating-toolbar.tsx),
-//   unless `toolbar={false}`; `toolbar="floating"` leaves out the fixed
-//   one. Alt+F10 reaches the floating one when it shows, else the fixed one.
-// - A slash menu (rich-text-slash.ts, rich-text-slash-menu.tsx): "/" at a
-//   line's start lists the blocks it can become, also unless
-//   `toolbar={false}`.
+// - A click on a link opens it in a new tab, as the read view's links do
+//   (followLink, rich-text-links.ts). Ctrl/Cmd+K adds or edits a link
+//   (rich-text-link-box.tsx: web and email addresses only).
+//   Ctrl/Cmd+Enter stays the field's save, in a table too. The editing
+//   keys are in rich-text-shortcuts.ts.
+// - A fixed toolbar above the text (rich-text-toolbar.tsx) and a floating
+//   one over selected words (rich-text-floating-toolbar.tsx), unless
+//   `toolbar={false}`; `toolbar="floating"` leaves out the fixed one.
+//   Alt+F10 reaches the floating one when it shows, else the fixed one.
+//   The slash menu (rich-text-slash.ts) goes with them.
 // - `inline`: the field drawn as the text it edits (no border, no box),
 //   for notes that are always editable where they're read.
-// - Images in the text show (`![alt](url)`), at most the field's width.
-//   With `upload`, an image pasted, dropped or picked with the toolbar's
-//   Image button (the fixed toolbar's, the tools strip's with
-//   `toolbar="floating"`, the phone's row) is uploaded through it and goes in as `![](url)`
+// - Images show at most the field's width. With `upload`, an image pasted,
+//   dropped or picked is uploaded through it and goes in as `![](url)`
 //   (rich-text-image-upload.ts); a refusal or a failed upload is a toast.
-// - Toggle headings (`## Safety {toggle="true"}`, rich-text-toggle-heading.ts):
-//   a heading's `toggle` attribute, typed as `>## `, picked from the slash
-//   menu or the toolbar. A plain heading is the default.
 // - `foldKey`: the text folds by its toggle headings, as <Markdown> does
 //   (rich-text-fold.ts), remembered on this device and shared with
 //   NotesOutline; the document never changes.
-// - `pageLink`: links the app marks as its pages drawn as page links
-//   (rich-text-page-links.ts), opened in this tab; `onCreatePage`: "/page"
-//   and Turn into page make one through the app and link it (a title box,
-//   rich-text-page-box.tsx). The Markdown stays a plain link.
+// - `pageLink`: links the app marks as its pages drawn as page links,
+//   opened in this tab; `onCreatePage`: "/page" and Turn into page make
+//   one through the app and link it (a title box, rich-text-page-box.tsx).
+//   The Markdown stays a plain link.
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useInRouterContext, useNavigate } from 'react-router'
@@ -304,10 +282,9 @@ const imageTitles = $remark('imageTitles', () => () => (tree: unknown) => emptyI
 // What the field says when the merge refuses an edit (markdown-merge.ts):
 // to the app's `onProblem`, and in the field itself.
 // How long typing has to stop before the edit is turned back into
-// Markdown (mergeMarkdown) and reported through onChange (F6).
+// Markdown (mergeMarkdown) and reported through onChange.
 export const MERGE_PAUSE_MS = 300
 
-// Every format a toolbar can show as on.
 const SHOWN_FORMATS: FormatId[] = [
   ...new Set([...FORMAT_GROUPS.flat(), ...TOGGLE_HEADING_VARIANTS, ...CALLOUT_VARIANTS, ...HIGHLIGHT_VARIANTS].map((item) => item.id)),
 ]
@@ -316,7 +293,7 @@ const SHOWN_FORMATS: FormatId[] = [
 // formats on, the selection (where only when there is one: a caret's
 // place matters to nothing drawn but the slash menu and a table's grips),
 // the slash menu's query, a table's caret cell and the uploads. A key
-// that doesn't change it re-renders nothing (F6).
+// that doesn't change it re-renders nothing.
 function shownKey(state: EditorState): string {
   const { selection } = state
   const parts: (string | number)[] = [selection.empty ? 'caret' : `${selection.from}-${selection.to}`]
@@ -401,7 +378,7 @@ export default function MilkdownEditor({
   const [focused, setFocused] = useState(false)
   const [selecting, setSelectingState] = useState(false)
   // Set only when it changes: a key sets it false, and React would draw
-  // the whole editor again for the first key after a click (F6).
+  // the whole editor again for the first key after a click.
   const selectingRef = useRef(false)
   const setSelecting = (next: boolean) => {
     if (selectingRef.current === next) return
@@ -450,7 +427,6 @@ export default function MilkdownEditor({
   }, [fullScreen])
   // The page behind full screen is inert meanwhile (rich-text-full-screen.ts).
   useHoldFocus(field, fullScreen)
-  // The toolbar's Image button opens this file picker.
   const imageInputRef = useRef<HTMLInputElement>(null)
 
   // The fixed bar above the text, and the menus over it (the floating
@@ -514,11 +490,10 @@ export default function MilkdownEditor({
     const textTop = headingFrom === 'text' ? textTopHeading(original) : 1
     let baseline: string | null = null
     let cancelled = false
-    // The last shownKey React drew.
     let shown = ''
 
     // The merge runs a pause after typing stops (MERGE_PAUSE_MS), not on
-    // every key: its cost grows with the note (F6). Anything about to read
+    // every key: its cost grows with the note. Anything about to read
     // the value first asks for it (flushPendingEdits, src/lib/pending-edits.ts),
     // and leaving the text, Esc, Ctrl/Cmd+Enter, hiding the page and
     // unmounting report it at once.
@@ -728,7 +703,7 @@ export default function MilkdownEditor({
                 return false
               },
               // Moving to the floating toolbar keeps it showing.
-              // Leaving the text reports what was typed (F6).
+              // Leaving the text reports what was typed.
               blur: (_view, event) => {
                 emit()
                 if (!inFloating(event.relatedTarget as Node | null)) setFocused(false)
@@ -754,7 +729,7 @@ export default function MilkdownEditor({
             handleKeyDown: (view, event) => {
               setSelecting(false)
               // Esc and Ctrl/Cmd+Enter are the field's (save, close): what
-              // was typed is reported before they reach it (F6).
+              // was typed is reported before they reach it.
               if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) emit()
               // Alt+F10: to the floating toolbar when it shows, else the
               // fixed one (the convention editors share).
@@ -994,7 +969,7 @@ export default function MilkdownEditor({
   // The toolbar's Image button: the file picker, then each file picked
   // uploaded in place of the selection, and focus back in the text.
   const pickImages = () => imageInputRef.current?.click()
-  // The slash menu's Image (4.123): the "/…" goes, then the file picker;
+  // The slash menu's Image: the "/…" goes, then the file picker;
   // the images go in at the caret, where the "/" was.
   // A tick later: Chrome opens no picker for a click made inside the
   // editor's own keydown (Enter on the item); the key's activation lasts.

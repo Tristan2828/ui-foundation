@@ -1,4 +1,4 @@
-// The six status kinds (4.98, record standard 5B) and how each is drawn:
+// The six status kinds (record standard 5B) and how each is drawn:
 // StatusMark (components/app/status-mark.tsx) reads these. The icons are
 // one map, STATUS_KIND_ICONS: changing one here changes it everywhere.
 import {
@@ -38,7 +38,7 @@ export const STATUS_KIND_LABELS: Record<StatusKind, string> = {
 
 /**
  * Each kind's colour, for the icon and the word: *-text tokens only. Done
- * is a teal and ended a soft rose (4.110, --status-done-text and
+ * is a teal and ended a soft rose (--status-done-text and
  * --status-ended-text), so a finished or stopped record no longer reads as
  * a grey, disabled one.
  */

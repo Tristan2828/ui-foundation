@@ -1,5 +1,5 @@
 // Reloading onto a new build when a lazy chunk is gone (src/lib/
-// stale-chunk-reload.ts, #206): the first `vite:preloadError` reloads once
+// stale-chunk-reload.ts): the first `vite:preloadError` reloads once
 // and is handled, a second within the window is let through to the error
 // boundary, and without storage to remember the reload nothing reloads.
 import { describe, expect, it } from 'vitest'
