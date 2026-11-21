@@ -6,5 +6,5 @@
 
 ## Scope
 
-- [ ] Stayed within one phase / one task (see `AGENTS.md` — Scope and Stopping)
+- [ ] Stayed within the task (see `AGENTS.md` — Scope and stopping)
 - [ ] Anything out of scope went in `docs/BLOCKERS.md` or `docs/DEFERRED.md`, not into this diff

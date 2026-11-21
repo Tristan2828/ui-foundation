@@ -1,7 +1,6 @@
 # <Entity> — entity plan
 
-The input to the entity playbook (`docs/foundation/add-an-entity.md`, which any AI
-tool can follow; Claude Code's `/new-entity` is a shortcut). It builds
+The input to the entity playbook (`docs/foundation/add-an-entity.md`). It builds
 exactly what this file says — no invented fields, options or rules. Copy
 this file to `docs/entities/<entity>.md` (kebab-case, singular: `game.md`)
 and fill it in, or ask your AI tool to plan the entity with you and it
@@ -59,7 +58,9 @@ One or two sentences: what one record is, and who uses the screens.
     foundation's `Recurrence` schema and `RecurrenceField`; say whether
     it's optional, whether its times are the record's own fields
     (`times={false}`), and the day the app's weeks start on when it
-    isn't Monday (`weekStart`)).
+    isn't Monday (`weekStart`)), `image` (a photo of the record: the
+    stored file's id; the foundation's `ImageField`; the upload endpoint
+    and the storage are the app's own).
   - *Not supported yet:* a yes/no that can also be unset (three states),
     file, and anything else.
     Write it anyway with a note; the playbook will stop and raise it
@@ -168,7 +169,7 @@ does, except the quick actions, if any.
 - Sections, in order. Each lists its fields in the order they show. A
   section holding a single long text or a single sub-records list shows
   it under the section's heading, with no label of its own. Placement
-  (the record standard, 4.98: no right rail): `details` for the short
+  (the record standard: no right rail): `details` for the short
   label/value facts, which are the record's last tab, Details, when it
   has tabs (Tab), and stay in the column, labels beside values, when it
   has none; `main` for everything else. A `details` section with a Tab is
@@ -183,7 +184,7 @@ does, except the quick actions, if any.
 
 - "Not set" labels: what an empty optional field reads as on the view
   (`dueDate`: No due date; `checklist`: No items). A field not listed here
-  reads "Not set". A `yes/no` is never empty: it reads Yes or No.
+  shows a dash (read aloud as "Not set"). A `yes/no` is never empty: it reads Yes or No.
 - Quick actions (optional; delete if none): the values the view changes
   with one click, each saved on its own the moment it changes, without
   the form: a `yes/no` (a switch), or a sub-records list (its yes/no item
@@ -199,8 +200,9 @@ does, except the quick actions, if any.
   their form control where the view shows them and save when you leave
   them (cell pattern 18): the title, a badge field, a field row, a long
   text, a sub-records list (its items added, edited, moved and removed on
-  the view). Text, long text, a single choice, an integer or a rating, a
-  yes/no, a single or multi reference, a sub-records list. Never a
+  the view). Text, long text, an integer or a decimal, a date, a
+  month-day, a recurrence, a single choice, a yes/no, a single or multi
+  reference, a multi marked `small`, a sub-records list. Never a
   computed field. Every value not named here, or under Quick actions,
   stays read-only. Say any rule the server enforces on one (its refusal
   shows under the field) and any side effect:

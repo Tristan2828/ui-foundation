@@ -3,14 +3,14 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The view](#the-view) · lines 36–109
-  - [The dark stage](#the-dark-stage) · lines 73–109
+- [The view](#the-view) · lines 37–109
+  - [The dark stage](#the-dark-stage) · lines 74–109
 - [The clock](#the-clock) · lines 111–141
-- [Sound](#sound) · lines 143–193
-- [Background tabs](#background-tabs) · lines 195–249
-  - [Interruptions](#interruptions) · lines 229–249
-- [Motion](#motion) · lines 251–255
-- [Testing a timed screen in Playwright](#testing-a-timed-screen-in-playwright) · lines 257–411
+- [Sound](#sound) · lines 143–192
+- [Background tabs](#background-tabs) · lines 194–248
+  - [Interruptions](#interruptions) · lines 228–248
+- [Motion](#motion) · lines 250–254
+- [Testing a timed screen in Playwright](#testing-a-timed-screen-in-playwright) · lines 256–408
 
 <!-- /index -->
 
@@ -29,9 +29,10 @@ package has the parts, so a screen like this is assembled, not rebuilt:
 | `useMuted` | A mute toggle remembered on this device |
 | `usePrefersReducedMotion` | Whether to swap movement for a fade |
 
-All of them are imported from `@tristan2828/ui-foundation`. The package's
-The package's fixtures have the whole thing working together: `app/SessionView`, the
-Timer story, and the same run on the dark stage, DarkStage.
+All of them are imported from `@tristan2828/ui-foundation`. In the
+foundation repo, the package's fixtures have the whole thing working
+together (`session-view.fixtures.tsx`): the Timer story, and the same run
+on the dark stage, DarkStage.
 
 ## The view
 
@@ -101,12 +102,11 @@ outlines.
   on an outline `Button`: no fill, a faint border, dimmed text that
   brightens on hover. **`sessionStageMain`** on the main control (Start,
   Done, `variant="outline"`): an outline too, in the foreground colour.
-- **Contrast is checked in dark only**, since the stage is never light:
-  the package's axe run covers the DarkStage story in both app themes. An
+- **Contrast is checked in dark only**, since the stage is never light. An
   app's own Playwright runs axe on its screen with the stage on, under a
   light and a dark app theme.
 - **Make it a setting**, remembered per device like Mute, when the app's
-  own look is the default: off, the view and stage are as before.
+  own look is the default.
 
 ## The clock
 
@@ -160,8 +160,7 @@ Browsers block sound until the person has clicked or tapped. So:
   session stops or the view closes.
 - `vibrate(pattern)` only works on Android. Elsewhere it does nothing.
 - **A Vibrate setting is offered only where `canVibrate()` is true.**
-  iPhone browsers can't vibrate, so a toggle there would set something
-  that does nothing. `canVibrate()` is the same test `vibrate()` makes, so
+  `canVibrate()` is the same test `vibrate()` makes, so
   the two never disagree. Read it once, since it doesn't change during a
   session: `const [vibrates] = useState(canVibrate)`. Show the toggle (a
   pressed button named "Vibrate", like Mute) only when `vibrates` is
@@ -214,7 +213,7 @@ phase ends. Web Audio's own clock keeps time, so:
   closing cue is sounding then.
 - **Do it in the handlers**, where you know why counting stopped, not in
   an effect on `paused`: an effect's cleanup can't tell pause from done.
-  The Timer story (`app/SessionView`) does exactly this.
+  The Timer story does exactly this.
 - **Speech can't be booked.** `say()` still comes when the clock's slow
   tick reaches the moment, so in a background tab it may be late. Keep
   what must be on time to chimes.
@@ -279,8 +278,7 @@ test('running, paused and done', async ({ page }) => {
 
 - **`fastForward`, not `runFor`.** `runFor` over a long span doesn't fire
   every animation frame. A screen that adds time up per frame comes out
-  short: a one-minute session ended about 20 seconds early in a real
-  app's tests. `useSessionClock` reads the time each frame, so one frame
+  short. `useSessionClock` reads the time each frame, so one frame
   after `fastForward` lands on the right state.
 - Give the time on screen `role="timer"` and a name, and the state line
   `role="status"`, so tests (and screen readers) find them by role.
@@ -404,8 +402,7 @@ test('the hold counts up until the tap', async ({ page }) => {
   Never at one read after it (`pauseAt(Date.now() + 50)` after Start):
   until the pause lands the page's fake clock runs in real time, so a
   slow round trip or a busy first frame puts it past that time, and
-  `pauseAt` fails with "Cannot fast-forward to the past". A time a minute
-  on from `install` is still ahead however slow the machine is.
+  `pauseAt` fails with "Cannot fast-forward to the past".
 - **`clock.resume()` before axe or closing the view.** With the clock
   paused, axe's scan never finishes and the dialog's close animation
   never ends, so the test times out with nothing pointing at the clock.
