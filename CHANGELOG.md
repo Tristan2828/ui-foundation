@@ -7,6 +7,38 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.132.0 — StackedAreaChart: parts of a whole over time
+
+npm package and `ui-foundation-backend` 4.132.0 (the backend is unchanged
+apart from its version). Additive.
+
+### How an app adopts it
+
+- Bump both packages to 4.132.0 and run `npx ui-foundation sync`.
+- Nothing else is needed. To use it, see `design-language.md` "Parts of a
+  whole over time".
+
+### What changed
+
+- **`StackedAreaChart`** (new, with `StackedAreaChartProps`,
+  `StackedSeries` and `StackedLayout`): several amounts over one shared
+  `xs`, each band a categorical slot stacked from zero so the top edge is
+  the total, with a 1px card line between neighbouring bands. A missing
+  or negative value counts as 0. Its legend lists the top band first with
+  its latest value and share, then the total. A single snapshot draws as
+  one stacked column mid-plot. A screen reader gets a summary and a table
+  with a column per band and a Total column. It has loading, empty and
+  success states, as MultiLineChart has.
+- **`stackedLayout`** in `line-chart-layout.ts`: the stack's edges, the
+  totals and x placed as `seriesLayout` places it. It is unit tested.
+- Stories `app/StackedAreaChart` Default and AllStates are in the axe, token
+  and glyph checks in both themes and every palette.
+  `e2e/stacked-area-chart.spec.ts` checks the bands, the states, the
+  summary and table, and a 393px phone.
+- `design-language.md`: new "Parts of a whole over time"; "Several values
+  over time" now says stacked areas are this component (bars are still a
+  request).
+
 ## 4.131.0 — Board orders cards in a column, and groups a column
 
 npm package and `ui-foundation-backend` 4.131.0 (the backend is unchanged

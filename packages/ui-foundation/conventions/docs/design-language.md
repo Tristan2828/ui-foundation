@@ -3,43 +3,44 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 52–161
-- [Glow](#glow) · lines 163–182
-- [Semantic tones](#semantic-tones) · lines 184–212
-- [The three badge styles](#the-three-badge-styles) · lines 214–231
-- [Status marks](#status-marks) · lines 233–278
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 280–309
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 311–324
-- [Logos and brand marks](#logos-and-brand-marks) · lines 326–370
-- [Categorical colour](#categorical-colour) · lines 372–442
-- [Heat scale](#heat-scale) · lines 444–505
-- [Depth ramps](#depth-ramps) · lines 507–592
-- [A stored colour](#a-stored-colour) · lines 594–651
-- [Shapes and sizes](#shapes-and-sizes) · lines 653–674
-- [Typography](#typography) · lines 676–847
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 710–743
-  - [Written text (notes)](#written-text-notes) · lines 745–847
-- [Density](#density) · lines 849–942
-  - [Rows on this device](#rows-on-this-device) · lines 915–942
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 944–1058
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1060–1137
-- [Notices](#notices) · lines 1139–1167
-- [A value over time](#a-value-over-time) · lines 1169–1255
-  - [Several values over time](#several-values-over-time) · lines 1218–1255
-- [A list as a board](#a-list-as-a-board) · lines 1257–1373
-  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1310–1373
-- [A list as cards](#a-list-as-cards) · lines 1375–1421
-- [Images full screen](#images-full-screen) · lines 1423–1469
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1471–1507
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1509–1579
-- [A few equal things](#a-few-equal-things) · lines 1581–1701
-- [An overview page](#an-overview-page) · lines 1703–1774
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1775–1841
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1843–1980
-- [Picking at random](#picking-at-random) · lines 1982–2013
-- [Filling in what's missing](#filling-in-whats-missing) · lines 2015–2082
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2084–2109
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2111–2207
+- [Palettes](#palettes) · lines 53–162
+- [Glow](#glow) · lines 164–183
+- [Semantic tones](#semantic-tones) · lines 185–213
+- [The three badge styles](#the-three-badge-styles) · lines 215–232
+- [Status marks](#status-marks) · lines 234–279
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 281–310
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 312–325
+- [Logos and brand marks](#logos-and-brand-marks) · lines 327–371
+- [Categorical colour](#categorical-colour) · lines 373–443
+- [Heat scale](#heat-scale) · lines 445–506
+- [Depth ramps](#depth-ramps) · lines 508–593
+- [A stored colour](#a-stored-colour) · lines 595–652
+- [Shapes and sizes](#shapes-and-sizes) · lines 654–675
+- [Typography](#typography) · lines 677–848
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 711–744
+  - [Written text (notes)](#written-text-notes) · lines 746–848
+- [Density](#density) · lines 850–943
+  - [Rows on this device](#rows-on-this-device) · lines 916–943
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 945–1059
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1061–1138
+- [Notices](#notices) · lines 1140–1168
+- [A value over time](#a-value-over-time) · lines 1170–1300
+  - [Several values over time](#several-values-over-time) · lines 1219–1257
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1259–1300
+- [A list as a board](#a-list-as-a-board) · lines 1302–1418
+  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1355–1418
+- [A list as cards](#a-list-as-cards) · lines 1420–1466
+- [Images full screen](#images-full-screen) · lines 1468–1514
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1516–1552
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1554–1624
+- [A few equal things](#a-few-equal-things) · lines 1626–1746
+- [An overview page](#an-overview-page) · lines 1748–1819
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1820–1886
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1888–2025
+- [Picking at random](#picking-at-random) · lines 2027–2058
+- [Filling in what's missing](#filling-in-whats-missing) · lines 2060–2127
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2129–2154
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2156–2252
 
 <!-- /index -->
 
@@ -1251,8 +1252,52 @@ balance's history beside low, middle and high projections.
   when no series has a point, a dot for a series of one point.
 - **A screen reader gets a summary** (each series from first to last
   value, and the target) and a table with a column per series.
-- Up to four or five series. More than that, or bars and stacked areas,
-  are a request for the foundation.
+- Up to four or five series. More than that, or bars, are a request for
+  the foundation. Amounts that add up to a total are a stacked area:
+  `StackedAreaChart`, "Parts of a whole over time" below.
+
+### Parts of a whole over time
+
+`StackedAreaChart` (4.132) shows several amounts that add up to a total,
+each a category, over time: a portfolio by asset class, a budget by
+envelope. Each band is stacked on the one below, from zero, so the top
+edge is the total and both the growth and the mix show.
+
+```tsx
+<StackedAreaChart
+  label="Allocation over time"
+  xs={snapshotDates}
+  series={[
+    { label: 'US stocks', values: usStocks },
+    { label: 'International', values: international },
+    { label: 'Bonds', values: bonds },
+    { label: 'Cash', values: cash },
+  ]}
+  formatY={usd}
+  formatX={month}
+  isLoading={isLoading}
+/>
+```
+
+- **Colours are categorical slots**, in order (band 1 takes
+  `category-1`, unless it gives its own `category`), opaque, with a 1px
+  card-coloured line between neighbouring bands. Keep it to about six:
+  the first six slots stay apart for colour-blind readers.
+- **Amounts, stacked from zero:** the range is 0 to the largest total,
+  with room above. There is no share (100%) mode.
+- **One shared `xs`**, oldest first; each band's `values` line up with
+  it. A missing or negative value counts as 0 everywhere (the plot, the
+  legend, the table), so a gap is a 0, not a hole.
+- **The legend** lists the top band first, as the picture reads, each
+  with its latest value and its share of the latest total (rounded, so
+  they may not add to exactly 100), then the total.
+- **The states:** a skeleton at its height while loading; one quiet line
+  when there are no xs, no bands, or only zeros; one stacked column
+  mid-plot for a single snapshot (it turns into bands at the second);
+  the bands.
+- **A screen reader gets a summary** (the total from first to last, each
+  band's latest value and share) and a table with a column per band and
+  a Total column.
 
 ## A list as a board
 
