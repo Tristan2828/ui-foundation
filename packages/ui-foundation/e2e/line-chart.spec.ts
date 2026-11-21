@@ -130,3 +130,32 @@ test('several series, every state; on a phone nothing spills out', async ({ page
   const spill = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   expect(spill).toBe(0)
 })
+
+// The screen reader's table is as wide as its widest row, and a table ignores
+// sr-only's 1px width. In a story the card clips it and the rows are short; in
+// an app's page nothing may clip, and dates and series can run to 800px. So
+// every ancestor's clipping and positioning is taken away, and a header cell
+// is made that wide.
+test('on a phone with nothing around the chart clipping, the hidden table adds no width', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  for (const url of [story('projection'), multi('default'), multi('projections'), 'http://localhost:6180/story.html?id=app-stackedareachart--default']) {
+    await page.goto(url)
+    await expect(page.getByRole('figure').first()).toBeVisible()
+    const spill = await page.evaluate(() => {
+      for (const figure of document.querySelectorAll('figure')) {
+        const cell = figure.querySelector('table th')
+        if (cell instanceof HTMLElement) {
+          cell.style.whiteSpace = 'nowrap'
+          cell.textContent = 'When '.repeat(40)
+        }
+        for (let el = figure.parentElement; el; el = el.parentElement) {
+          el.style.setProperty('overflow', 'visible', 'important')
+          el.style.setProperty('position', 'static', 'important')
+          el.style.setProperty('contain', 'none', 'important')
+        }
+      }
+      return document.documentElement.scrollWidth - document.documentElement.clientWidth
+    })
+    expect(spill, url).toBe(0)
+  }
+})

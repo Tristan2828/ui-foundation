@@ -258,31 +258,34 @@ export function LineChart({
         {(points.length > 1 || ahead.length > 0) && <span>{formatX(lastX)}</span>}
       </div>
       <figcaption className="sr-only">{steps ? `${summary}; one of ${levels!.join(', ')}` : summary}</figcaption>
-      <table className="sr-only">
-        <caption>{label}</caption>
-        <thead>
-          <tr>
-            <th scope="col">When</th>
-            <th scope="col">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {points.map((point, index) => (
-            <tr key={index}>
-              <th scope="row">{formatX(point.x)}</th>
-              <td>{formatY(point.y)}</td>
+      {/* A table ignores its own width, so a hidden box holds it: its widest row can spill past a phone. */}
+      <div className="sr-only">
+        <table>
+          <caption>{label}</caption>
+          <thead>
+            <tr>
+              <th scope="col">When</th>
+              <th scope="col">Value</th>
             </tr>
-          ))}
-          {ahead.map((point, index) => (
-            <tr key={`ahead-${index}`}>
-              <th scope="row">{formatX(point.x)}</th>
-              <td>
-                {formatY(point.y)} ({projection!.label})
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {points.map((point, index) => (
+              <tr key={index}>
+                <th scope="row">{formatX(point.x)}</th>
+                <td>{formatY(point.y)}</td>
+              </tr>
+            ))}
+            {ahead.map((point, index) => (
+              <tr key={`ahead-${index}`}>
+                <th scope="row">{formatX(point.x)}</th>
+                <td>
+                  {formatY(point.y)} ({projection!.label})
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   )
 }

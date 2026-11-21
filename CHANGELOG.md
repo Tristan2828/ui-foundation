@@ -7,6 +7,42 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.137.1 — A chart's hidden table no longer widens a phone's page
+
+npm package and `ui-foundation-backend` 4.137.1 (the backend is unchanged
+apart from its version). A fix: nothing for an app to change.
+
+### How an app adopts it
+
+- Bump both packages to 4.137.1 and run `npx ui-foundation sync`.
+- An app that wrapped a `LineChart` or `MultiLineChart` in
+  `relative overflow-hidden` to stop a phone's page scrolling sideways
+  can drop the wrapper.
+
+### What changed
+
+- **`LineChart` and `MultiLineChart` keep their screen reader table
+  inside a hidden box** (#324). The table carried `sr-only` itself, but a
+  table ignores a width narrower than its rows, so with long dates or
+  several series it stayed its full width (787px in one app) and pushed
+  a phone's page sideways unless an ancestor clipped it. It now sits in
+  a `<div className="sr-only">`, as `StackedAreaChart`'s already did.
+  What a screen reader gets is unchanged.
+- `e2e/line-chart.spec.ts`: at 375px, with every ancestor's clipping
+  taken away and a header cell 800px wide, the line, multi-line and
+  stacked charts add no width to the page.
+- Also in this release: comments that carried release and review tags
+  say the same without them, and `design-language.md`'s heading "Order,
+  groups and the header" loses its "(4.131)" (`sync` writes it). One of
+  the package's own specs builds axe from `e2e/axe.ts`.
+- **`minimatch` 11 everywhere** (GHSA-g3hv-75wg-m249, a crafted glob
+  pattern could spend unbounded CPU and memory). `typescript-eslint` moves
+  to `^8.73.0` in the package and the template, and the template's
+  `overrides` send `minimatch@>=7 <11.0.1` to `^11.0.1` for shadcn's
+  `ts-morph`. Only tools run on an app's own patterns used it, so this is
+  optional for an existing app: to take it, set `typescript-eslint` to
+  `^8.73.0` and copy that override into the app's `package.json`.
+
 ## 4.137.0 — MonthCalendar: a month of days with the app's items
 
 npm package and `ui-foundation-backend` 4.137.0 (the backend is unchanged

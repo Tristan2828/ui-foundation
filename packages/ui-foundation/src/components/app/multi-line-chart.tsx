@@ -205,30 +205,33 @@ export function MultiLineChart({
         ))}
       </ul>
       <figcaption className="sr-only">{summary}</figcaption>
-      <table className="sr-only">
-        <caption>{label}</caption>
-        <thead>
-          <tr>
-            <th scope="col">When</th>
-            {drawn.map((one, s) => (
-              <th key={s} scope="col">
-                {one.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((x) => (
-            <tr key={String(x)}>
-              <th scope="row">{formatX(x)}</th>
-              {drawn.map((one, s) => {
-                const point = one.points.find((p) => String(p.x) === String(x))
-                return <td key={s}>{point ? formatY(point.y) : ''}</td>
-              })}
+      {/* A table ignores its own width, so a hidden box holds it: a column per series would spill past a phone. */}
+      <div className="sr-only">
+        <table>
+          <caption>{label}</caption>
+          <thead>
+            <tr>
+              <th scope="col">When</th>
+              {drawn.map((one, s) => (
+                <th key={s} scope="col">
+                  {one.label}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((x) => (
+              <tr key={String(x)}>
+                <th scope="row">{formatX(x)}</th>
+                {drawn.map((one, s) => {
+                  const point = one.points.find((p) => String(p.x) === String(x))
+                  return <td key={s}>{point ? formatY(point.y) : ''}</td>
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   )
 }
