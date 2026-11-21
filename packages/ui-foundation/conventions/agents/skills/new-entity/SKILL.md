@@ -7,8 +7,11 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent
 Add a full CRUD entity end to end. The entity name is this skill's
 argument — if none was given, ask for one before proceeding.
 
-Read `docs/foundation/add-an-entity.md` in full, then follow it exactly, in order —
-starting with its "Before anything: the entity plan" section. Never guess
+Follow `docs/foundation/add-an-entity.md` exactly, in order. Read its
+index, "Before anything: the entity plan" and "The steps" (steps 1 to 10)
+in full. Then reach "Step 6 in detail" and the sections after it through
+the index, reading each one the entity's plan calls for: every field type
+it has, and the standard for every screen it builds. Never guess
 what the entity is: every field comes from `docs/entities/<entity>.md`,
 and if that file doesn't exist you plan it with the developer and wait for
 their go-ahead before building anything. That file is the only copy of the
