@@ -1,7 +1,9 @@
 name: release
 
-# On a push to main that bumps the version in
-# packages/ui-foundation/package.json past the latest tag: publish
+# On every push to main: verify it (verify.yml, called here, so main isn't
+# verified twice). On a push that also bumps the version in
+# packages/ui-foundation/package.json past the latest tag, once that verify
+# passes: publish
 # @tristan2828/ui-foundation to npm and
 # ui-foundation-backend to PyPI, tag the commit vX.Y.Z with a GitHub release,
 # then create an app from the live release and verify it (release-smoke).
@@ -17,8 +19,10 @@ name: release
 # runs only `npm publish <tarball>`, and `publish-py` only the PyPA publish
 # action on the files `build-py` made. Third-party actions are pinned to
 # commit SHAs. What stands between a change and every
-# app is the PR gate (verify, install-test), which branch protection on main
-# requires (docs/ARCHITECTURE.md "Releasing").
+# app is the PR gate (verify, verify-backend, install-test), which branch
+# protection on main requires, and then main's own verify of the merged
+# tree: branches needn't be up to date, so two PRs green on their own can
+# merge into a tree nothing has tested (docs/ARCHITECTURE.md "Releasing").
 #
 # The version (#231): the one in packages/ui-foundation/package.json. A PR
 # that finishes a feature, or a fix an app needs now, bumps it (a patch, a
@@ -37,7 +41,10 @@ on:
 
 permissions: {}
 
-# Releases in merge order, never two at once.
+# Releases in merge order, never two at once. With verify inside, later
+# pushes wait, and GitHub keeps only the newest waiting run: a skipped run
+# loses no release, since `decide` compares the version to the latest tag,
+# so the newest run releases everything merged since it.
 concurrency:
   group: release
   cancel-in-progress: false
@@ -93,8 +100,19 @@ jobs:
           echo "Next version: $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-  build:
+  verify:
+    # Every push to main, released or not, so a red main is seen. A release
+    # always runs all of it, even when only docs changed since the last push.
     needs: decide
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ./.github/workflows/verify.yml
+    with:
+      full: ${{ needs.decide.outputs.version != '' }}
+
+  build:
+    needs: [decide, verify]
     if: needs.decide.outputs.version != ''
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -173,7 +191,7 @@ jobs:
           fi
 
   build-py:
-    needs: decide
+    needs: [decide, verify]
     if: needs.decide.outputs.version != ''
     runs-on: ubuntu-latest
     timeout-minutes: 20

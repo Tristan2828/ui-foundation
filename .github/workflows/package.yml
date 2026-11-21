@@ -9,32 +9,52 @@ name: package
 #
 # Runs on every PR, not only ones touching the package: branch protection
 # on main requires it, and a required check that never starts would block
-# a docs-only PR forever. Merging to main publishes with no further review
-# (release.yml), so this is the last check before every app.
+# a docs-only PR forever. Its first step (.github/scripts/docs-only.sh)
+# skips the rest when only docs changed, so it still reports, as success.
+# Merging to main publishes once main's own verify passes (release.yml), so
+# this is the last check of a created app before every app.
 
 on:
   pull_request:
 
-# Reads the repo and nothing else; release.yml is the only workflow that
-# writes or publishes.
+# Reads the repo and the PR's file list, nothing else; release.yml is the
+# only workflow that writes or publishes.
 permissions:
   contents: read
+  pull-requests: read
+
+# A newer push to the PR cancels its older run.
+concurrency:
+  group: package-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   install-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # The PR's head commit, not the default merge commit: the result
           # should belong to the commit that will be merged.
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - id: changes
+        name: Docs only?
+        run: bash .github/scripts/docs-only.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - if: steps.changes.outputs.run == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - if: steps.changes.outputs.run == 'true'
+        run: npm ci
       # No `playwright install` here: the app consume-test.sh creates can
       # resolve a newer Playwright than this repo's lock, so the script
-      # installs the app's own browsers (CI only).
-      - run: bash scripts/consume-test.sh --install-only
+      # installs the app's own browsers and their system packages (CI only),
+      # the packages from the cache when they can be.
+      - if: steps.changes.outputs.run == 'true'
+        uses: ./.github/actions/with-apt-cache
+        with:
+          run: bash scripts/consume-test.sh --install-only

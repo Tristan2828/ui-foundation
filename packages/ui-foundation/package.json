@@ -70,7 +70,8 @@
     "build-harness": "vite build -c vite.harness.config.ts",
     "preview-harness": "vite preview -c vite.harness.config.ts",
     "verify:fast": "npm run gen:api && git diff --exit-code -- src/api/schema.ts && node scripts/doc-index.mjs --check && tsc -b && eslint . --max-warnings 0 && node bin/ui-foundation.mjs check-deps && npm run build && vitest run",
-    "verify": "npm run verify:fast && playwright test -c playwright.harness.config.ts"
+    "verify:harness": "playwright test -c playwright.harness.config.ts",
+    "verify": "npm run verify:fast && npm run verify:harness"
   },
   "peerDependencies": {
     "@axe-core/playwright": "^4.13.0",
