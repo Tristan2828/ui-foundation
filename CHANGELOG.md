@@ -7,6 +7,49 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.131.0 — Board orders cards in a column, and groups a column
+
+npm package and `ui-foundation-backend` 4.131.0 (the backend is unchanged
+apart from its version). Additive: a board that uses none of the new props
+renders exactly as 4.130 did.
+
+### How an app adopts it
+
+- Bump both packages to 4.131.0 and run `npx ui-foundation sync`.
+- Nothing else is needed. To use the new parts, see `design-language.md`
+  "A list as a board" › "Order, groups and the header (4.131)".
+
+### What changed
+
+- **`Board` orders cards** (`ordered`): cards keep `items`' order within a
+  column; a drag within a column reorders them, with a 3px line in the
+  text colour where the card will land, and the card's menu gains Move Up,
+  Move Down and Move to Top (disabled where they can't apply). A column
+  with `ordered: false` keeps today's behaviour.
+- **`onMove(item, value, place)`** gains a third argument, `BoardPlace`:
+  the card's `group` and its new neighbours `beforeId` and `afterId`,
+  among all of `items` in that column (and group), not only those shown.
+  Existing two-argument handlers keep working. A drop that leaves a card
+  where it was calls nothing.
+- **Groups** (`BoardColumn.groups`, `getGroup`, new type `BoardGroup`): a
+  column's cards under headings in small capitals with a chevron and a
+  count, each folding its cards (`defaultOpen`). A drop on a folded
+  group's heading lands at its end.
+- **Paging** (`pageSize`, `pageKey`): each column or group shows its first
+  cards, then "Show N More".
+- **The header's slots**: `description` (a caption), `note`, `action` (a
+  +), `lead` (the outlined column) and `shortName`.
+- **`phone="counts"`**: below `lg`, a row of the columns' counts that picks
+  the one column shown.
+- **`menu(item)`**: the app's own items in the card's menu, whose button
+  becomes ⋯ ("Actions for <name>").
+- A card is dragged whole, from its title link too (the drag image is the
+  card).
+- Stories `app/Board` Ordered, Grouped and Slots (axe and the token check
+  in both themes); `board.spec.ts` and `board.test.tsx` cover the drag,
+  the line, the Order items and focus, groups, paging and the counts row,
+  and a snapshot keeps the old markup.
+
 ## 4.130.3 — The backend's dependencies take patch releases
 
 npm package and `ui-foundation-backend` 4.130.3 (the npm package is

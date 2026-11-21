@@ -3,42 +3,43 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 51–160
-- [Glow](#glow) · lines 162–181
-- [Semantic tones](#semantic-tones) · lines 183–211
-- [The three badge styles](#the-three-badge-styles) · lines 213–230
-- [Status marks](#status-marks) · lines 232–277
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 279–308
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 310–323
-- [Logos and brand marks](#logos-and-brand-marks) · lines 325–369
-- [Categorical colour](#categorical-colour) · lines 371–441
-- [Heat scale](#heat-scale) · lines 443–504
-- [Depth ramps](#depth-ramps) · lines 506–591
-- [A stored colour](#a-stored-colour) · lines 593–650
-- [Shapes and sizes](#shapes-and-sizes) · lines 652–673
-- [Typography](#typography) · lines 675–846
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 709–742
-  - [Written text (notes)](#written-text-notes) · lines 744–846
-- [Density](#density) · lines 848–941
-  - [Rows on this device](#rows-on-this-device) · lines 914–941
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 943–1057
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1059–1136
-- [Notices](#notices) · lines 1138–1166
-- [A value over time](#a-value-over-time) · lines 1168–1254
-  - [Several values over time](#several-values-over-time) · lines 1217–1254
-- [A list as a board](#a-list-as-a-board) · lines 1256–1307
-- [A list as cards](#a-list-as-cards) · lines 1309–1355
-- [Images full screen](#images-full-screen) · lines 1357–1403
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1405–1441
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1443–1513
-- [A few equal things](#a-few-equal-things) · lines 1515–1635
-- [An overview page](#an-overview-page) · lines 1637–1708
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1709–1775
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1777–1914
-- [Picking at random](#picking-at-random) · lines 1916–1947
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1949–2016
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2018–2043
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2045–2141
+- [Palettes](#palettes) · lines 52–161
+- [Glow](#glow) · lines 163–182
+- [Semantic tones](#semantic-tones) · lines 184–212
+- [The three badge styles](#the-three-badge-styles) · lines 214–231
+- [Status marks](#status-marks) · lines 233–278
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 280–309
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 311–324
+- [Logos and brand marks](#logos-and-brand-marks) · lines 326–370
+- [Categorical colour](#categorical-colour) · lines 372–442
+- [Heat scale](#heat-scale) · lines 444–505
+- [Depth ramps](#depth-ramps) · lines 507–592
+- [A stored colour](#a-stored-colour) · lines 594–651
+- [Shapes and sizes](#shapes-and-sizes) · lines 653–674
+- [Typography](#typography) · lines 676–847
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 710–743
+  - [Written text (notes)](#written-text-notes) · lines 745–847
+- [Density](#density) · lines 849–942
+  - [Rows on this device](#rows-on-this-device) · lines 915–942
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 944–1058
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1060–1137
+- [Notices](#notices) · lines 1139–1167
+- [A value over time](#a-value-over-time) · lines 1169–1255
+  - [Several values over time](#several-values-over-time) · lines 1218–1255
+- [A list as a board](#a-list-as-a-board) · lines 1257–1373
+  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1310–1373
+- [A list as cards](#a-list-as-cards) · lines 1375–1421
+- [Images full screen](#images-full-screen) · lines 1423–1469
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1471–1507
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1509–1579
+- [A few equal things](#a-few-equal-things) · lines 1581–1701
+- [An overview page](#an-overview-page) · lines 1703–1774
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1775–1841
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1843–1980
+- [Picking at random](#picking-at-random) · lines 1982–2013
+- [Filling in what's missing](#filling-in-whats-missing) · lines 2015–2082
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2084–2109
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2111–2207
 
 <!-- /index -->
 
@@ -1305,6 +1306,71 @@ the table's.
   columns share the width, at least 16rem each, and scroll sideways with
   snap points; a phone shows one column at a time, with the edge of the
   next one showing.
+
+### Order, groups and the header (4.131)
+
+```tsx
+<Board<Job, Stage, Size>
+  aria-label="Jobs"
+  columns={[
+    { value: 'idea', label: 'Idea', lead: true, action: <AddButton />, description: 'Worth doing one day',
+      groups: [{ value: 'quick', label: 'Quick' }, { value: 'big', label: 'Big', defaultOpen: false }],
+      footer: <Link to="/jobs?size=someday">Someday {somedayCount}</Link> },
+    { value: 'active', label: 'Active', note: `${waiting} waiting` },
+    { value: 'done', label: 'Done', ordered: false },
+  ]}
+  getGroup={(job) => job.size}
+  ordered
+  pageSize={20}
+  pageKey={filtersKey}
+  phone="counts"
+  menu={(job) => <JobMenuItems job={job} />}
+  onMove={(job, stage, place) => save(job, stage, place.group, place.beforeId ?? afterOf(place.afterId))}
+  {...rest}
+/>
+```
+
+- **Order:** with `ordered`, cards keep `items`' order within their
+  column (and group). A drag within a column reorders, and a 3px line in
+  the text colour (`data-slot="board-drop-line"`) in the gap shows where
+  the card lands; the card dragged is faded where it was. The card's menu
+  has an Order section (Move Up, Move Down, Move to Top, disabled where
+  they can't apply). After any menu move the focus is on the card's menu
+  button wherever it now is, and the status line says "Moved <name> up"
+  (or "down", "to the top"), "to <column>, <group>", or "to place 3 of 8
+  in <column>" for a drag.
+- **`onMove(item, value, place)`:** `place.beforeId` is the card it now
+  sits before and `place.afterId` the one after, among `items` in that
+  column (and group), null at the end and the start. A server that orders
+  by "before this id" takes `beforeId`; one that keeps a position takes
+  the halfway point. The place counts every card in `items`, not only
+  those shown: a drop after the last shown card is before the first one
+  "Show N More" hides. A drop that leaves the card where it was calls
+  nothing. A column with `ordered: false` (Done, by date) has no line, no
+  Order items, and a drop there only changes the column.
+- **Groups:** a column's `groups` split its cards by `getGroup`, each a
+  heading one level under the column's: a chevron, the label in small
+  capitals and its count, a button that folds the group (`defaultOpen:
+  false` starts folded). A drop on a group's cards reports that group; a
+  drop on a folded group's heading outlines it and lands at the group's
+  end. A card whose group isn't one of the column's isn't on the board.
+  The keyboard's way to change group is the app's own field in `menu`
+  (Priority, Size): Board's menu has no group section.
+- **Paging:** `pageSize` shows a column's (or each group's) first cards,
+  then "Show N More"; `pageKey` changing (the filters) folds them back.
+- **The header's slots:** `description` is a caption under the name,
+  `note` short muted text, `action` a control at the end (a +; the other
+  columns keep the header's height), and `lead` outlines the column a
+  list starts in.
+- **The phone's counts:** `phone="counts"` puts a row of buttons over the
+  columns below `lg`, each a column's count over its `shortName`, that
+  shows that one column (`aria-pressed`); from `lg` up, the columns as
+  usual.
+- **The menu:** `menu(item)` appends the app's own items after a
+  separator; the button is then ⋯, "Actions for <name>", holding Move To,
+  Order and the app's items. Without it, the Move button as before.
+- **No grip:** a card that drags shows a grab hand over it, and is picked
+  up whole, from its title link too.
 
 ## A list as cards
 
