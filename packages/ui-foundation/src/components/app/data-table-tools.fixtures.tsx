@@ -6,6 +6,7 @@ import { createMemoryRouter, RouterProvider, useLocation, useParams } from 'reac
 import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { DataTable, type DataTableGrouping } from './data-table'
 import type { DataTableRowAction } from './data-table-tools'
@@ -142,7 +143,8 @@ const STATUS_GROUPING: DataTableGrouping<Plant> = {
   value: (plant) => plant.status,
 }
 
-function PlantsList({ single = false, framed = false }: { single?: boolean; framed?: boolean }) {
+function PlantsList({ single = false, framed = false, lead = false }: { single?: boolean; framed?: boolean; lead?: boolean }) {
+  const [watered, setWatered] = useState<ReadonlySet<number>>(new Set())
   const [state, setState] = useState<State>('loaded')
   const { page, setPage, sorting, setSorting, filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView, applyView } =
     useTableUrlState(FILTERS, MULTI, VIEWS)
@@ -188,6 +190,16 @@ function PlantsList({ single = false, framed = false }: { single?: boolean; fram
           title: (plant) => plant.name,
           status: (plant) => <Badge variant={STATUS_BADGE[plant.status]}>{STATUS_LABELS[plant.status]}</Badge>,
           facts: (plant) => [`${plant.light} light`, `Watered ${plant.watered}`],
+          lead: lead
+            ? (plant) => (
+                <Checkbox
+                  checked={watered.has(plant.id)}
+                  onCheckedChange={(on) => setWatered((was) => (on ? new Set(was).add(plant.id) : new Set([...was].filter((id) => id !== plant.id))))}
+                  aria-label={`Watered ${plant.name}`}
+                  className="size-5 rounded-full"
+                />
+              )
+            : undefined,
         }}
         toolbar={
           <FilterBar
@@ -609,6 +621,8 @@ export const ListTools: StoryObj = { render: () => <InRouter element={<PlantsLis
 export const ListToolsFiltered: StoryObj = {
   render: () => <InRouter element={<PlantsList />} path="/?status=thriving&rooms=Hall&light=Medium" />,
 }
+
+export const PhoneRowLead: StoryObj = { render: () => <InRouter element={<PlantsList lead />} path="/" /> }
 
 export const OneRowAction: StoryObj = { render: () => <InRouter element={<PlantsList single />} path="/" /> }
 

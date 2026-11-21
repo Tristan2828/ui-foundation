@@ -314,6 +314,7 @@ const COMPOSITE_STORIES = [
   // The table tools: views, FilterBar, Columns, row actions, a capped related list.
   { id: 'app-datatable-tools--list-tools', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
+  { id: 'app-datatable-tools--phone-row-lead', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--related', mustShow: 'View All 19' },
   { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
   // Views that fill the filters (4.105): the default view's statuses in the Status filter.

@@ -7,6 +7,26 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.134.0 — A control at the start of a phone's row
+
+npm package and `ui-foundation-backend` 4.134.0 (the backend is unchanged
+apart from its version). Additive: a `phoneRow` without `lead` is as
+before.
+
+### How an app adopts it
+
+- Bump both packages to 4.134.0 and run `npx ui-foundation sync`.
+- To tick a row from a phone's row list: give `phoneRow` a `lead` that
+  renders the same control as the table's tick column, with its own
+  `aria-label`.
+
+### What changed
+
+- **`DataTablePhoneRow.lead`**: one control drawn at the row's start, in a
+  44px-wide column outside the row's link or button, so a tap on it never
+  opens the record. `cell-patterns.md` §25 says how; the fixtures'
+  PhoneRowLead story and `e2e/data-table-tools.spec.ts` cover it.
+
 ## 4.133.0 — A record page can fill a wide screen
 
 npm package and `ui-foundation-backend` 4.133.0 (the backend is unchanged
