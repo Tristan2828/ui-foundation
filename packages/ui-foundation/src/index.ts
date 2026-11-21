@@ -300,6 +300,12 @@ export {
   type StackedSeries,
 } from '@/components/app/stacked-area-chart'
 export type { StackedLayout } from '@/lib/line-chart-layout'
+export {
+  MonthCalendar,
+  type MonthCalendarItem,
+  type MonthCalendarProps,
+  type MonthCalendarTone,
+} from '@/components/app/month-calendar'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { RatingScore, type RatingScoreGlyph, type RatingScoreProps } from '@/components/app/rating-score'

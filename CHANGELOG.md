@@ -7,6 +7,36 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.137.0 — MonthCalendar: a month of days with the app's items
+
+npm package and `ui-foundation-backend` 4.137.0 (the backend is unchanged
+apart from its version). Additive.
+
+### How an app adopts it
+
+- Bump both packages to 4.137.0 and run `npx ui-foundation sync`.
+- Nothing else is needed. To use it, see `design-language.md` "A month
+  calendar".
+
+### What changed
+
+- **`MonthCalendar`** (new, with `MonthCalendarProps`, `MonthCalendarItem`
+  and `MonthCalendarTone`): a month of day cells holding the app's items
+  (a title, a time, a tone, a link, a detail). On a laptop each day shows
+  two titles by time and folds the rest to "+N more"; on a phone each day
+  shows a dot per item in its tone. The picked day's list is under the
+  month, with the app's `dayActions` beside its heading. Previous and next
+  month, Today, and picking a day by mouse or keys (a grid with one tab
+  stop: arrows, Home, End, Page Up, Page Down, past the edge into the next
+  month); `weekStart="SU"` starts weeks on Sunday. Loading, error (with
+  retry), empty and success states.
+- Stories `app/MonthCalendar` Default, WeeksFromSunday and States are in
+  the axe and token checks in both themes and every palette.
+  `e2e/month-calendar.spec.ts` checks the titles and count, the day's list
+  and action, months, Today and the keys, Sunday weeks, the phone's dots,
+  the states, and axe at laptop and phone widths.
+- `design-language.md`: new "A month calendar".
+
 ## 4.136.1 — The slash menu is never cut off by a card
 
 npm package and `ui-foundation-backend` 4.136.1 (the backend is unchanged
