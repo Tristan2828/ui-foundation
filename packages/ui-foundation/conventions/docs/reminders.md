@@ -54,6 +54,24 @@ there is no push at all, so `usePushPermission` says `needs-install` and
 `AllowReminders` shows the steps. `pwa()`'s manifest (`display:
 standalone`) is what makes the Home Screen app an app.
 
+## Home-screen shortcuts
+
+`pwa({ name, shortcuts: [{ name: 'Add To-Do', url: '/todo/add' }] })` writes
+the manifest's `shortcuts`: actions on the installed icon that open the
+app at a path. `url` is a path inside the app (it gets the Vite `base`);
+`shortName` and a square `icon` PNG (192×192 or more) are optional. Left
+out, the manifest is unchanged.
+
+| Platform | What it does with them |
+|---|---|
+| Android (Chrome, installed app) | Long-press the icon: the shortcuts list above it, and can be dragged to the Home Screen. Most launchers show about four |
+| Desktop Chrome and Edge | Right-click the installed app's icon (taskbar, dock or Start menu) |
+| iPhone and iPad | Ignored: the Home Screen app's long-press menu has none from the manifest. Safari supports `shortcuts` only on macOS (since 17.4), per [firt.dev's iOS PWA compatibility notes](https://firt.dev/notes/pwa-ios/), updated October 2026. Give the action somewhere in the app too |
+
+Treat a shortcut as a convenience, never the only way to an action. A
+phone caches the manifest, so a changed list can take a reinstall or a day
+to show.
+
 ## A reminder is the app's own row
 
 The reference backend has a `reminders` table and the job that sends it;

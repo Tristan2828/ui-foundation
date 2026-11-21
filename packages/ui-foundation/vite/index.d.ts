@@ -48,6 +48,23 @@ export type PwaOptions = {
    * root). Replaces the generated ones everywhere.
    */
   icon?: string
+  /**
+   * Home-screen shortcuts: actions offered when the installed icon is
+   * long-pressed (Android, Chrome and Edge on desktop). Left out, the manifest
+   * has none. iOS and iPadOS ignore them.
+   */
+  shortcuts?: PwaShortcut[]
+}
+
+export type PwaShortcut = {
+  /** The action's label, e.g. "Add To-Do". */
+  name: string
+  /** A shorter label where space is tight. */
+  shortName?: string
+  /** A path inside the app, starting with `/`, e.g. `/todo/add`. Prefixed with the base. */
+  url: string
+  /** A square PNG of at least 192×192 (path from the Vite root). Without one the OS uses the app's icon. */
+  icon?: string
 }
 
 /**
