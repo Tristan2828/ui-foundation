@@ -3,48 +3,48 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 76–99
-- [1. Plain text](#1-plain-text) · lines 101–156
-- [2. Icon + label](#2-icon--label) · lines 158–181
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 183–196
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 198–275
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 223–275
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 277–297
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 299–311
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 313–334
-- [8. Date, relative](#8-date-relative) · lines 336–373
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 375–453
-  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 393–453
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 455–505
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 473–505
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 507–547
-- [12. Boolean](#12-boolean) · lines 549–579
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 581–617
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 601–617
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 619–636
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 638–747
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 664–747
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 749–795
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 797–870
-- [18. Editable value](#18-editable-value) · lines 872–1628
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1257–1328
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1330–1366
-  - [A link and its label](#a-link-and-its-label) · lines 1368–1392
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1394–1527
-  - [In a table's rows](#in-a-tables-rows) · lines 1529–1614
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1616–1628
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1630–1696
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1698–1762
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1764–1862
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1864–1893
-- [24. A list's rows: hover, lines, rows per page](#24-a-lists-rows-hover-lines-rows-per-page) · lines 1895–1933
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1935–2011
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 2013–2099
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2038–2099
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2101–2351
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2280–2351
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2353–2389
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2391–2440
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 63–86
+- [1. Plain text](#1-plain-text) · lines 88–137
+- [2. Icon + label](#2-icon--label) · lines 139–162
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 164–177
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 179–255
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 204–255
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 257–277
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 279–291
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 293–314
+- [8. Date, relative](#8-date-relative) · lines 316–353
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 355–431
+  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 373–431
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 433–482
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 451–482
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 484–524
+- [12. Boolean](#12-boolean) · lines 526–554
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 556–590
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 575–590
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 592–610
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 612–714
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 635–714
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 716–757
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 759–831
+- [18. Editable value](#18-editable-value) · lines 833–1571
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1217–1289
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1291–1327
+  - [A link and its label](#a-link-and-its-label) · lines 1329–1353
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1355–1488
+  - [In a table's rows](#in-a-tables-rows) · lines 1490–1564
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1566–1571
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1573–1639
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1641–1695
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1697–1779
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1781–1806
+- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1808–1841
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1843–1894
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1896–1970
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1916–1970
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1972–2183
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2132–2183
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2185–2219
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2221–2268
 
 <!-- /index -->
 
@@ -53,30 +53,17 @@ first attempt gets wrong — **not components**: the lookup maps are always
 per-entity, and only the shape is reusable. Copy the markup into your
 `<entity>-columns.tsx`.
 
-Patterns 1–10 were each chosen for a real column, from a page of
-alternatives ([`column-options.md`](column-options.md)), not designed in the abstract.
-Patterns 12 (boolean), 15 (yes/no flipped in the row), 16 (title linking
-to its view), 17 (quick action on the view) and 18 (editable value) are
-the template's own references: Widget's In Stock and Name columns and its
-view render them, and their specs pin them. Patterns 19 (stage circle),
-20 (count linking to the related records) and 22 (a highlighted row),
-the multi-value variant of 4, the step bar and star in 9, the dependency
-list in 10, the ring in 13 and the pressed icon in 15 were each built
-for a real app's screen first; the package's fixtures renders
-them (`app/StageCircle`, `app/CountLink`, `patterns/CellPatterns`,
-`patterns/Scales`, `app/DataTable`), and
-its checks pin their accessibility and contrast in both themes. The
-other patterns from 11 on are marked **Unproven**: written ahead of a
-real column, so no app has tested them on real data yet. Prefer a proven
-pattern when one fits. When you use an unproven one, say so in the
-entity's plan, and raise what you learned for the foundation, so the
-entry can lose its label. A pattern that proves generic is worth raising
-too, so it ships here for every app.
+A pattern marked **Unproven** was written ahead of a real column, so no
+app has tested it on real data yet. Prefer a proven pattern when one
+fits. When you use an unproven one, say so in the entity's plan, and
+raise what you learned for the foundation, so the entry can lose its
+label. A pattern that proves generic is worth raising too, so it ships
+here for every app.
 
 ## The rules that apply to every cell
 
 - **An empty value renders an em dash**, never a blank cell: a blank reads
-  as a rendering bug. Draw it with the package's `EmptyText` (4.96), the
+  as a rendering bug. Draw it with the package's `EmptyText`, the
   record's own dash, read by a screen reader as "Not set" (`label` for
   other words): `const emptyCell = <EmptyText />` once per columns file,
   used everywhere. Never a hand-written dash. The one exception is a value whose "nothing" state
@@ -104,8 +91,8 @@ The default, and it wins more often than it looks like it should. Reach for
 something else only when the extra ink buys a decision the reader would
 otherwise have to make themselves.
 
-Always offer a plain-text option when exploring a column — in practice it
-gets picked about as often as the visual ones.
+Always offer a plain-text option when exploring a column
+([`column-options.md`](column-options.md)).
 
 **Markdown in a one-line value.** A short field the app lets people write
 Markdown in (a summary, a status note, a title with a link) shows in a
@@ -144,16 +131,10 @@ can't make the whole table thousands of pixels wide:
 { id: 'notes', header: 'Notes', meta: { clip: true }, cell: ({ row }) => row.original.notes }
 ```
 
-- One line, cut at `meta.maxWidth` (`'24rem'` unless set, and never over
-  60% of the table's area, so a phone keeps room for the name) with an
-  ellipsis.
-- The whole text shows in a tooltip on hover and on focus: a cell that's
-  actually cut takes a tab stop, one that fits takes none. A screen reader
-  reads the whole text either way, and the record shows it too.
 - `meta.maxWidth` alone caps the column and lets its text wrap, for a
   value worth reading whole in the row.
 - The title column (the first) is cut this way already, with no `meta`
-  (pattern 16, 4.103).
+  (pattern 16).
 
 ## 2. Icon + label
 
@@ -223,8 +204,7 @@ narrow.
 ### Several values: the icons side by side, every name in one tooltip
 
 A multi value (several categories on one record) where each value has
-its own icon and colour slot, and the column is narrow. The package's
-fixtures render it (`patterns/CellPatterns`, "Icons with one tooltip").
+its own icon and colour slot, and the column is narrow.
 
 ```tsx
 // values: the row's categories, `undefined` for one still loading.
@@ -280,7 +260,7 @@ A many-valued enum that collapses to good / neutral / bad. **The grouping
 is the decision, not the style** — see
 [`design-language.md`](design-language.md#mapping-an-enum-to-tones).
 
-**A record's status** is not this pattern since 4.98: it's a
+**A record's status** is not this pattern: it's a
 `StatusMark` (an icon, a colour and the word, one of six kinds; see
 [`design-language.md` "Status marks"](design-language.md#status-marks)),
 `<StatusMark kind={STATUS_KIND[status]}>{STATUS_LABELS[status]}</StatusMark>`
@@ -392,9 +372,7 @@ own state.
 
 ### Three variants the package draws: a step bar, a star and a score
 
-Both are in the package's fixtures (`patterns/Scales`), every value on
-the page and on a card, measured by axe and the glyph check in both
-themes. Each is one image to a screen reader, named in words.
+Each is one image to a screen reader, named in words.
 
 - **`StepBar`, an ordered enum of a few bands** (best to worst): a short
   bar of steps, the first `value` filled in `foreground`, the rest the
@@ -419,7 +397,7 @@ themes. Each is one image to a screen reader, named in words.
   <RatingStar value={OWNED[o].value /* 'full' | 'half' | 'empty' */} word={OWNED[o].word} />
   ```
 
-- **`RatingScore`, a score out of a few** (4.117): `max` stars (the
+- **`RatingScore`, a score out of a few**: `max` stars (the
   default) or hearts (`glyph="heart"`), the first `value` filled in
   `foreground`, the rest outlines in `muted-foreground` (which clears 3:1,
   so an empty glyph is still seen). Named "4 of 5";
@@ -427,10 +405,10 @@ themes. Each is one image to a screen reader, named in words.
   rail's `rating` fact draws it too.
 
   ```tsx
-  {row.rating === null ? <Muted>Not rated</Muted> : <RatingScore value={row.rating} glyph="heart" />}
+  {row.rating === null ? <span className="text-muted-foreground">Not rated</span> : <RatingScore value={row.rating} glyph="heart" />}
   ```
 
-- **`RatingInput`, the same score set by a click** (4.127): RatingScore's
+- **`RatingInput`, the same score set by a click**: RatingScore's
   glyphs and tokens as a radio group named by `label`, one radio per
   star ("2 of 5"). A click (or Space) sets a star, a click on the set one
   clears it to `null`, the arrow keys move and set it, a mouse's hover
@@ -449,7 +427,7 @@ themes. Each is one image to a screen reader, named in words.
   ),
   ```
 
-- All three draw in `foreground`. Tone one only as pattern 5 would (a `*-text`
+- All of them draw in `foreground`. Tone one only as pattern 5 would (a `*-text`
   class in `className`), never by band alone.
 
 ## 10. Summary in the cell, detail in a popover
@@ -474,8 +452,7 @@ A one-to-many value (`★ 4.7 (3)` opening a per-person breakdown).
 
 The records a row waits on (parts it needs, a date that has to pass,
 other records that have to finish), summarised in the cell, listed in
-the popover. The package's fixtures render it
-(`patterns/CellPatterns`, "Dependency list").
+the popover.
 
 - **The cell: a computed summary.** "Ready" when nothing holds the row,
   else the count of what does ("1 hold", "2 holds"). Compute it where the
@@ -548,9 +525,7 @@ const priceFormatter = new Intl.NumberFormat(undefined, { style: 'currency', cur
 
 ## 12. Boolean
 
-A yes/no field. Widget's In Stock column (`src/routes/widgets/widgets-columns.tsx`)
-is the reference; its value is never null, so it drops the `emptyCell`
-branch below.
+A yes/no field.
 
 ```tsx
 cell: ({ getValue }) => {
@@ -582,9 +557,8 @@ cell: ({ getValue }) => {
 
 A percentage, or a count out of a total (`7 of 12 done`).
 
-- The package doesn't ship `progress`. Install shadcn's into
-  `src/components/ui/` (`npx shadcn@<tools.shadcn> add progress`, after
-  checking its dependencies against `deps-allowlist.json`).
+- The package ships `progress`: import it from
+  `@tristan2828/ui-foundation/ui/progress`.
 - **Always print the number** beside the bar (`72%`, `7 / 12`). The bar
   shows roughly how far; the number says exactly.
 - Fix the bar's width (`w-24`) so bars compare down the column. A bar that
@@ -602,8 +576,7 @@ A percentage, or a count out of a total (`7 of 12 done`).
 
 Done out of total (a checklist, how far through an ordered list, the
 steps of a process) as a small ring filling clockwise beside the count
-("4/6"). Proven in an app's table cells and on its view; the package
-ships it, so this needs no `progress` install.
+("4/6"). The package ships it.
 
 ```tsx
 <ProgressRing done={row.original.doneCount} total={row.original.itemCount} />
@@ -620,8 +593,9 @@ ships it, so this needs no `progress` install.
 
 A person: an assignee or an owner.
 
-- The package doesn't ship `avatar`. Install shadcn's the same way as
-  pattern 13.
+- The package doesn't ship `avatar`. Install shadcn's into
+  `src/components/ui/` (`npx shadcn@<tools.shadcn> add avatar`, after
+  checking its dependencies against `deps-allowlist.json`).
 - **Always render the fallback** (initials). Images fail, load slowly, or
   aren't set, and the cell must still look intentional.
 - The image is decorative (`alt=""`) because the name is right beside
@@ -645,15 +619,12 @@ now", "happened"). Widget's In Stock column is the reference
   reads as "select this row".
 - **It saves on its own:** a PATCH of that one field, not the form,
   through the foundation's `useRecordUpdate` (Widget's
-  `useSaveWidgetField`). The new value shows at once, in the table and on
-  the record's view, and goes back, with a toast naming the row and the
-  server's reason, if the save is refused.
-- **Saving blocks nothing.** The switch stays usable (a second flip waits
-  for the first and builds on it), and a "Saving" spinner shows beside it
-  in a slot that's always there, so the cell never changes width.
+  `useSaveWidgetField`), and saving blocks nothing. Pattern 17 has the
+  rules (the value at once, a refusal put back with a toast, the "Saving"
+  slot that's always there); they're the same in a row.
 - **Keep the word beside it** (pattern 12), `aria-hidden` since the switch
   announces its own state. Give the switch a row-specific name
-  (`In stock: ${row.original.name}`).
+  (`In Stock: ${row.original.name}`).
 - Its own component in its own file, rendered from the column's `cell`,
   so the hook lives in a component and the columns stay stable
   ([`add-an-entity.md`](add-an-entity.md) "Keep column definitions
@@ -666,8 +637,7 @@ now", "happened"). Widget's In Stock column is the reference
 A yes/no that belongs to another value rather than having a column of
 its own: a "focus" flag that only exists while the status is "doing", a
 "pinned" mark on an open item. It's a small icon button inside the owning
-value's cell, beside its word. The package's fixtures render it
-(`patterns/CellPatterns`, "Pressed icon in a cell").
+value's cell, beside its word.
 
 **Pick it over the Switch** when the yes/no only means something while
 another value allows it, or when a Switch and its words would crowd that
@@ -719,8 +689,7 @@ export function FocusToggle({ item }: { item: Item }) {
   faintest step that still clears WCAG's 3:1 non-text minimum in light
   mode (3.2:1; dark is 5.2:1). `/70` measures 2.7:1, and a control a
   reader can't see fails them. Hover lifts it to full
-  `muted-foreground`. axe doesn't measure icons, so the package's
-  fixtures glyph check does.
+  `muted-foreground`. axe doesn't measure icons.
 - **Tone: `destructive-text`, read as "flagged", not "error".** A flag
   claims attention ahead of the rest of the row, and the destructive
   tone is the one with that pull. The other tones are taken where it
@@ -731,12 +700,10 @@ export function FocusToggle({ item }: { item: Item }) {
   broken) and because no word beside it says error. If a flag is common,
   or does mean "something's wrong", it's an enum with a verdict
   (pattern 5) instead.
-- **It saves on its own, through `useRecordUpdate`**, like the Switch: the
-  new value shows at once, and a refusal (a cap the server enforces)
-  puts it back with the toast giving the server's reason. The hook does
-  both; add nothing.
-- **The "Saving" slot is always there**, after the toggle, so nothing
-  moves while it saves, and nothing is disabled.
+- **It saves on its own, through `useRecordUpdate`**, like the Switch
+  (pattern 17's rules): a refusal (a cap the server enforces) puts it
+  back with the toast, and the "Saving" slot after the toggle is always
+  there. The hook does both; add nothing.
 - **Only rendered while the owning value allows it.** When the status
   moves on, the toggle goes; what the server does with the flag then (it
   clears it, or keeps it for next time) is the plan's rule, and shows
@@ -782,17 +749,12 @@ cell: ({ row }) => (
 - **Cost:** none to speak of. Specs that match the title as a cell still
   work (`getByRole('cell', { name })` reads the link's text); ones that
   opened the form from a row button go through the view's Edit instead.
-- **DataTable caps the title column (4.103).** The first column is the
-  title column: at every width it's cut to one line at 24rem (never over
-  60% of the table's area) with an ellipsis, so a long title (a
-  discussion's topic) can't push the other columns off. A cut title shows
-  whole in a tooltip on hover and when its link takes focus; the link
-  stays the row's only tab stop, and a screen reader reads it whole. Put
-  the title column first and write no clip of your own (`truncate`,
-  `max-w-*`) around it. `meta: { wrap: true }` wraps it at the cap
-  instead, for a title worth reading whole in the row;
-  `meta: { maxWidth: 'none' }` lifts the cap. Its own `meta.clip` or
-  `meta.maxWidth` works as on any column (cut, or wrapped, at that width).
+- **DataTable caps the title column.** The first column is the title
+  column, cut to one line at 24rem with an ellipsis, its whole text in a
+  tooltip. Put the title column first and write no clip of your own
+  (`truncate`, `max-w-*`) around it. `meta: { wrap: true }` wraps it at
+  the cap instead, for a title worth reading whole in the row;
+  `meta: { maxWidth: 'none' }` lifts the cap.
 
 ## 17. Quick action on the view
 
@@ -808,20 +770,19 @@ place`, pattern 18); everything else renders as its table cell does, and
 changes through Edit. A quick action is for a value people change often
 and can change back as easily: never anything destructive. Anything you
 type or pick from a list (text, a status) edits in place instead
-(pattern 18); a status was a quick action in 3.12, and moved there in
-3.13.
+(pattern 18).
 
 | The plan's field | The control | Accessible name |
 |---|---|---|
-| `yes/no`, in the header or a field row | A `Switch` (`size="sm"`) with the value in words beside it, `aria-hidden` (pattern 15) | The field's label: `In stock` |
+| `yes/no`, in the header or a field row | A `Switch` (`size="sm"`) with the value in words beside it, `aria-hidden` (pattern 15) | The field's label: `In Stock` |
 | A `yes/no` that belongs to another value (pattern 15's variant), beside that value in the header | The same pressed icon `Toggle` as in the table's cell | The field's label: `Focus` |
-| A sub-record list's `yes/no` item field | Each item a `Checkbox` inside a `<label>` with the item's text, so the text ticks it too; the list in one `role="group"` named for the list, described by the done-count | `Done: <item text>` (a visually hidden `Done: ` inside the label) |
+| A sub-record list's `yes/no` item field | Each item a `Checkbox` beside the item's text; the text isn't part of the box (a click on it edits the item in place, pattern 18) | `Done: <item text>` (the box's `aria-label`) |
 
 ```tsx
 const save = useSaveWidgetField(widget.id) // one per control
 
 // A value: send the field.
-<Switch size="sm" checked={widget.inStock} aria-label="In stock"
+<Switch size="sm" checked={widget.inStock} aria-label="In Stock"
   onCheckedChange={(inStock) => save.mutate({ inStock })} />
 
 // A list item: send the whole list, built from the latest record.
@@ -875,7 +836,7 @@ A value on the record's view that turns into **the form's own control**
 where it's shown, and saves when you leave it: a title, a status, a
 price, notes, a list of linked records. Widget's view is the reference
 (`src/routes/widgets/widget-view.tsx`): Name (the title), Status (its
-header badge), Price, Description (rich text edited where it's read,
+header `StatusMark`), Price, Description (rich text edited where it's read,
 `inline`) and Extra Categories, with the controls in `widget-fields.tsx`,
 the same ones the form uses.
 
@@ -913,9 +874,8 @@ link inside it (a reference to a record with a view, a link in the
 notes), which still navigates. The tint reaches 0.375rem past the value
 on each side without moving it, and never wraps it: a short title or
 badge edited in place (`layout="inline"`) stays on one line, and a long
-one wraps between words within its column (4.94; before, a title like
-"Dr. Example" broke over two lines).
-Inline, the pencil takes no room at rest (4.102): a value in a summary
+one wraps between words within its column.
+Inline, the pencil takes no room at rest: a value in a summary
 line ("Harbor Office · Tuesdays") is followed by its separator a space
 after it, not a pencil's width. The pencil keeps its 24px box out of the
 flow, hidden just past the value over the separator, so it's still a
@@ -926,7 +886,7 @@ screen keeps the room open. `DataTable`'s cells keep the room at rest
 (a column never widens on hover), and so does `EntityView`'s title,
 which ends its line and can fill it. An app needs no override for this.
 
-**In a field list, the row is the target** (4.88, `look="row"`, which
+**In a field list, the row is the target** (`look="row"`, which
 EntityView's field rows use). The row wears the list's row hover, the
 `--table-hover` tint and the 3px `--primary` bar at its start, as a
 DataTable row does, with its label readable on it and the pencil at its
@@ -960,7 +920,7 @@ dozen labels, a short tag list) uses `MultiPick` instead, on the form
 and in place: every option a toggle chip with its icon or colour where
 the app draws one (`icon`), the picked ones pressed with a check, and a
 filter box above them, not in front of them. The chips wrap at every
-width (4.88); past 30 options (`limit`) it shows the picked ones and the
+width; past 30 options (`limit`) it shows the picked ones and the
 first 30, then "Show All N", and a filter searches them all. The options
 can be the app's list of records (its query's rows as `{ id, label }`,
 `loading` meanwhile), so links to a few dozen other records use it too.
@@ -987,7 +947,7 @@ Larger sets, or ones that grow with the data, keep `MultiReference`
 - **Keyboard:** opening puts the caret in the filter box; Down goes to
   the chips, Left/Right (Home/End) move along them, Space or Enter
   toggles one, Up goes back to the box.
-- **Create "<typed>"** (4.102, `onCreate`): when what's typed names no
+- **Create "<typed>"** (`onCreate`): when what's typed names no
   option (ignoring case), a Create "<typed>" button shows under the
   chips; Enter in the box does the same when nothing matches, and Down
   reaches it when there are no chips. It calls `onCreate(name)`, which
@@ -1007,21 +967,21 @@ Larger sets, or ones that grow with the data, keep `MultiReference`
   form's whole-set save, never called in place.
 
 ```tsx
-const editField = useEditWidgetField(widget.id) // optimistic: false, toastOnError: false
+const editField = useEditTaskField(task.id) // optimistic: false, toastOnError: false
 labels: editInPlace({
   kind: 'multi',
-  value: widget.labelIds,
+  value: task.labelIds,
   isEqual: sameIds,
   save: (labelIds) => editField.mutateAsync({ labelIds }),
   control: (props) => (
-    <WidgetLabelsPicker id={props.id} value={widget.labelIds}
+    <TaskLabelsPicker id={props.id} value={task.labelIds}
       onPick={(id, picked) => editField.mutateAsync((current) => ({
         labelIds: [...current.labelIds.filter((other) => other !== id), ...(picked ? [id] : [])],
       }))}
       aria-label={props.label} aria-describedby={props.describedBy} />
   ),
 }),
-// WidgetLabelsPicker: <MultiPick options={labels.map((l) => ({ id: l.id, label: l.name,
+// TaskLabelsPicker: <MultiPick options={labels.map((l) => ({ id: l.id, label: l.name,
 //   icon: <TagIcon className={LABEL_COLOUR[l.slot]} /> }))} value onPick aria-label aria-describedby />
 // On the form, the same control with onValueChange={field.onChange} instead of onPick.
 ```
@@ -1035,7 +995,7 @@ open.
 **Saving: still open, read-only, and says so.** Under the control,
 "Saving…" with a spinner (`role="status"`) until the server agrees, then
 it closes on the saved value, with "✓ Saved" beside it for two seconds
-(4.88, `role="status"`). **Not optimistic**: the value only shows as
+(`role="status"`). **Not optimistic**: the value only shows as
 saved once it is, and the view shows the record the server returned (a
 side effect included). The rest of the page stays usable.
 
@@ -1095,8 +1055,8 @@ nobody has to click away to save notes. Opt in per field:
   fits (about 30 KB of JSON), so the browser finishes it after the page
   is gone; a longer note's save goes as an ordinary request.
 
-**Notes are edited where they're read by default (`inline: true`)** (the
-developer, 2026-11-17): a record's notes, a description, any long text
+**Notes are edited where they're read by default (`inline: true`)**: a
+record's notes, a description, any long text
 the page is for. `alwaysEditable` (the boxed editor at rest) and
 `autosave` alone (the read view at rest, a click opens the editor) are
 for where that doesn't fit, such as a short summary beside other values.
@@ -1110,7 +1070,7 @@ the caret where it is. It sits beside the one open value rather than
 being it: opening another value leaves it alone. Don't give its control
 `autoFocus`. The cost: at rest the page shows the editor, not the read
 view, and the editor loads on every visit. A click on a link in the
-notes still opens it in a new tab (4.70.0); its words are edited from the
+notes still opens it in a new tab; its words are edited from the
 keyboard or by dragging over them, and Ctrl/Cmd+K edits its address. Use it where the notes are what the page is
 for; elsewhere `autosave` alone keeps the read view at rest.
 
@@ -1125,19 +1085,19 @@ but drops the bar above the text. An empty one shows the editor's
 `placeholder` (say "or type / for blocks" in it), not the view's "Not
 set". It saves like any always-editable value (a pause after typing,
 leaving the page saves first) and is otherwise the same: on the form the
-control is the boxed editor, with the floating toolbar too (4.127,
-[add-an-entity.md "Forms"](add-an-entity.md#forms)).
+control is the boxed editor, with the floating toolbar too
+([add-an-entity.md "Forms"](add-an-entity.md#forms)).
 
 ```tsx
-notes: editInPlace({
+description: editInPlace({
   kind: 'long-text',
   inline: true,
-  value: widget.notes,
-  schema: widgetFormSchema.shape.notes,
-  save: (notes) => editField.mutateAsync({ notes }),
+  value: widget.description,
+  schema: widgetFormSchema.shape.description,
+  save: (description) => editField.mutateAsync({ description }),
   // The form's own control, spreading what it gets onto RichTextEditor:
   // inline={props.inline} toolbar={props.inline ? 'floating' : true}
-  control: (props) => <WidgetNotesEditor {...} />,
+  control: (props) => <WidgetDescriptionEditor … />,
 }),
 ```
 
@@ -1145,10 +1105,10 @@ notes: editInPlace({
 summary: editInPlace({
   kind: 'long-text',
   autosave: true,                // not notes: a click opens it (autoFocus on the control)
-  value: widget.summary,
-  schema: widgetFormSchema.shape.summary,
+  value: project.summary,
+  schema: projectFormSchema.shape.summary,
   save: (summary) => editField.mutateAsync({ summary }),
-  control: (props) => <WidgetSummaryEditor {...} />,
+  control: (props) => <ProjectSummaryEditor … />,
 }),
 ```
 
@@ -1172,7 +1132,7 @@ const price = editInPlace({
 })
 // A field: { label: 'Price', value: <…as the table shows it…>, edit: price }
 // The title: <EntityView titleEdit={{ label: 'Name', ...name }} />
-// A badge: <EditableValue label="Status" edit={status} layout="inline"><Badge>…</Badge></EditableValue>
+// The status: <EditableValue label="Status" edit={status} layout="inline"><StatusMark …>…</StatusMark></EditableValue>
 ```
 
 - **One control per field, shared with the form** (`<entity>-fields.tsx`):
@@ -1226,7 +1186,7 @@ const price = editInPlace({
   and Outdent for list items, where there is no Tab. A field with only the
   floating toolbar (`inline` notes, and notes on a form) gets the same
   two in a small "Editor tools" strip over its corner while it has focus,
-  with the Image button too when the editor has `upload` (4.127). On a touch screen the
+  with the Image button too when the editor has `upload`. On a touch screen the
   toolbar is instead one row pinned to the top of the keyboard while the
   field has focus (Aa for every format, in the keyboard's place; the list
   buttons, Insert, Image (with `upload`) and Undo; with words selected, their formats first, and
@@ -1309,6 +1269,7 @@ fields: [
   `reference` on the pick (a list opens with the field), `rating` on a
   click of a star (it's always open: the stars are the value).
   `required: true` types the save without `null`.
+- **`inPlace.recurrence`** (how something repeats) is in reminders.md.
 - **`reference` searches through the app.** The package knows no
   endpoint: `search(text)` is the app's (its gateway's search by name,
   `''` when the list opens), called a pause after typing stops; a
@@ -1535,22 +1496,13 @@ row`), every editable cell is an editable value, exactly as on a view.
 one is open, "Saving…" and a refusal in the cell. There's no pencil
 column and no edit route.
 
-- **A cell is one of the package's three row-edit cells**, or an
+- **A cell is one of the package's three row-edit cells** (`NameCell`
+  for a one-line name, `ChoiceCell` for a pick from a list, `LinkCell`
+  for a link, checked as `inPlace.link`'s is), or an
   `<EditableValue label="<Column> of <name>" layout="inline"
   edit={editInPlace({ ... })}>` for anything else. The label names the
   column and the row, so its pencil reads "Edit Colour of Work" and its
   control "Colour of Work".
-  - **`NameCell`**: one line; Enter saves, the form's rule (`schema`)
-    runs first, a taken name's 422 shows in the cell. `children` is how
-    the name shows at rest (an icon beside it).
-  - **`ChoiceCell<T>`** (`options`, `render`): the list opens with the
-    cell, non-modal; a pick saves, closing it with no pick gives up.
-    `render` draws a value at rest, on the trigger and in the list.
-  - **`LinkCell`** (`linkText`, `emptyLabel`, `save(link | null)`): a
-    link opening in a new tab (said to screen readers), or the not-set
-    label; edited as one line. A bare `example.com` gains `https://`,
-    another scheme (`javascript:`) is refused in the cell, and a blank
-    box saves `null`. Clicking the link follows it; the pencil edits.
 - **A cell is a component** (`<Entity><Field>Cell`) that calls
   `useEdit<Entity>Field(row.id)` for its save, the view's single-field
   save, and renders the package's cell with it. A hook can't be called
@@ -1609,31 +1561,21 @@ const CATEGORY_COLUMNS: LegacyColumnDef<Category, unknown>[] = [
     create={(name) => createCategory.mutateAsync({ name, colour: 'blue', icon: 'house' })} />} … />
 ```
 
-The worked example is the package's fixture `app/DataTable`
-"Edit in the rows" (`data-table.fixtures.tsx`); the template has no small
-entity yet.
+The template has no small entity yet.
 
 ### A table of a few short columns: `width="content"`
 
 On a wide screen a table of a few short columns (a name, a colour, a
 count, its delete) spread across the page puts the row's actions far
-from its name. `width="content"`, the default since 4.83 (it was an
-opt-in from 80rem), sizes the table and its pagination to its columns at
-every width, never under 36rem (or the whole width, when that's less),
-with empty space at the right; the toolbar keeps the whole width, so its
-controls sit in the same place on every list. A table wider than its
-area scrolls sideways inside it. While it's loading, empty or failed
-after a load, it keeps the width it last had, so paging and filtering
-don't move it; only the first load can. `width="full"` takes the whole
-width, the look before 4.83; a card layout always does.
+from its name. `width="content"`, the default, sizes the table and its
+pagination to its columns; `width="full"` takes the whole width.
 
 ## 19. Stage circle for an ordered status
 
 A status that's an ordered lifecycle (each record moves through the same
 stages, in the same order, toward one that means *done*), with one or
 more exit states off the side. A small circle beside the word fills as
-the record moves on. The package ships it: `StageCircle`, rendered with
-every stage and tone in its fixtures (`app/StageCircle`).
+the record moves on. The package ships it: `StageCircle`.
 
 | Stage (`stage`) | Drawn as | Say it for |
 |---|---|---|
@@ -1674,7 +1616,7 @@ cell: ({ getValue }) => {
 - **Tone it like pattern 5:** the stage in progress is `info` ("notice
   this"), complete is `success`, and the rest stay `muted` (the default).
   The tones are the `*-text` shades, so the circle clears 3:1 on the page
-  in both themes, measured by the package's glyph check. An exit is
+  in both themes. An exit is
   muted: dropped is an end, not a failure. Give it `destructive` only if
   the exit really is bad news (failed, rejected).
 - **Map the stages in order**, the first `0`, the final `'complete'`, the
@@ -1688,7 +1630,8 @@ cell: ({ getValue }) => {
   Widget's Status is the second kind: `draft` → `active` → `archived` is
   an order in time, but `archived` is retirement, not completion, and its
   good state is the middle one. A tick on `archived` would say "done"
-  where nothing was finished, so it stays a tone badge.
+  where nothing was finished, so it isn't a stage circle (the demo draws
+  it as a `StatusMark`).
 - **On the record's view** it's the same markup in the header, beside the
   title; editing the status in place (pattern 18) wraps it in
   `<EditableValue>` like a badge.
@@ -1700,8 +1643,7 @@ cell: ({ getValue }) => {
 A count of the records in another table that point at this row (open
 Tasks per Project, items per Tag), which opens that table already filtered
 to them. The count is a `computed` integer (the entity plan's type).
-The package ships it: `CountLink`, rendered in its fixtures
-(`app/CountLink`).
+The package ships it: `CountLink`.
 
 ```tsx
 import { CountLink } from '@tristan2828/ui-foundation'
@@ -1718,20 +1660,11 @@ cell: ({ row }) => {
 }
 ```
 
-What the component decides, so a cell doesn't have to:
-
-- **Underlined at rest**, not only on hover as in pattern 16. A title
-  reads as a name to open; a bare number doesn't look like it goes
-  anywhere until it's underlined. Hover thickens the line. Foreground,
-  not `text-link`: `--link` is for links in written text, and a column of
-  blue numbers pulls the eye from every other column.
-- **Zero is a plain `0`**, not a link (a link to an empty list is a dead
-  end) and not an em dash: zero is a value (pattern 11). Same
-  `tabular-nums`, so it lines up with the links.
-- **The accessible name is the count, then `label`**: `3 open tasks in
-  Kitchen remodel`. Every row's link text is just a number, so `3` alone
-  isn't distinct, and starting with it keeps the link findable by what
-  it shows (speech input, `getByRole('link', { name: /^3 / })`).
+What the component decides, so a cell doesn't have to: underlined at
+rest, in foreground (not `text-link`); zero a plain `0`, not a link and
+not an em dash (zero is a value, pattern 11); and an accessible name
+that is the count, then `label` (`3 open tasks in Kitchen remodel`), so
+the link is found by what it shows (`getByRole('link', { name: /^3 / })`).
 
 What the cell decides:
 
@@ -1769,9 +1702,6 @@ months), each heading with a count and a summary ("4 · 1 h 12 m"). The
 same screens usually want one quick filter as pills above the rows (All /
 Video / Audio / Text, one pressed at a time) rather than a dropdown: there
 are few values, and switching between them is the main thing people do.
-Raised for an app's feed (issue #135); the package's fixtures renders it
-(`app/DataTable` "Grouped" and "Grouped no matches"), with axe in both
-themes.
 
 ```tsx
 import { byDay, DataTable, PillFilter } from '@tristan2828/ui-foundation'
@@ -1811,23 +1741,14 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   as it names its column. It stays in view while a wide table scrolls
   sideways.
 - **`stickyGroupHeadings`** pins the headings while their groups scroll,
-  for a list long enough that "which day is this?" gets lost: each
-  heading sticks below the column header, which is pinned with it (with
-  `header={false}`, at the very top), until the next group's slides
-  over it. It works under `groupBy` and a grouping alike, and does nothing
-  to a table that isn't grouped or to a card layout. When the columns fit
-  (a feed, most lists on a phone) they stick to the page's own scroll.
-  When they're wider than the screen the table has to scroll sideways, and
-  a box that scrolls sideways is what sticky cells stick to, so the table
-  becomes a box no taller than the screen and scrolls both ways inside
-  it. An ancestor of your own with `overflow` set (a card with
+  for a list long enough that "which day is this?" gets lost. An
+  ancestor of your own with `overflow` set (a card with
   `overflow-hidden`, say) takes the place of the page: leave it off such a
   table's ancestors.
 - **`stickyTop`**, with `stickyGroupHeadings`, for a page that pins a bar
   of its own to the top (a page header, a filter bar): how far down the
   header and headings pin, so they sit under the bar and never behind it.
-  Any CSS length, resolved at the table, so a variable the page sets per
-  breakpoint gives a phone its own offset:
+  A variable the page sets per breakpoint gives a phone its own offset:
 
   ```tsx
   <main className="[--page-bar:3.5rem] md:[--page-bar:3rem]">
@@ -1836,16 +1757,12 @@ const { page, filters, setFilter, setPage } = useTableUrlState(['kind'])
   </main>
   ```
 
-  When the columns are wider than their box, the box is that much shorter
-  than the screen instead, so once the page is scrolled to it, it fits
-  under the bar and its header pins at its own top. Focus moved to a row
-  clears the bar too. Give the bar a `z-index` above the table's (`z-40`).
+  Focus moved to a row clears the bar too. Give the bar a `z-index`
+  above the table's (`z-40`).
 - **`header={false}`** for a list-like table whose columns explain
-  themselves (a thumbnail with a title block, then actions). The header
-  row takes no room but stays in the table, so the columns keep their
-  names for a screen reader; sorting, if any, moves to the toolbar.
-  Fewer, wider columns read as a list: put the thumbnail inside the
-  title's cell rather than a column of its own.
+  themselves (a thumbnail with a title block, then actions); sorting, if
+  any, moves to the toolbar. Fewer, wider columns read as a list: put the
+  thumbnail inside the title's cell rather than a column of its own.
 - **`PillFilter` is a filter like the others**: its value is in the URL
   (`useTableUrlState`, '' for All) and `setFilter` sets it, so it returns
   to page 1 and survives a refresh, back and forward. Pressing the
@@ -1873,7 +1790,7 @@ current one. `DataTable`'s `highlightRow` returns true for it.
 - **A wash of info on every cell**, over a stripe (`striped`) and the
   pinned columns' opaque backgrounds (`--table-highlight`, pre-mixed onto
   the page), and a bar in `info-text` at the row's start, so it reads
-  without colour too. The pointer's hover (pattern 24) leaves it as it
+  without colour too. The pointer's hover (pattern 28) leaves it as it
   is, so "next up" never reads as the hovered row. Still **say why in the row** (a "Next up" word or badge):
   the wash says "look here", not what it is.
 - **Muted text inside it is darkened for you.** `muted-foreground`
@@ -1887,15 +1804,11 @@ current one. `DataTable`'s `highlightRow` returns true for it.
   `opacity-50` (or `text-foreground/60`) drops their text under 4.5:1 the
   same way. Render their text in `text-muted-foreground`, which is
   measured, and keep the word that says done.
-- The fixtures' `app/DataTable` Highlighted story has two highlighted rows
-  (one striped), pinned columns and muted text inside them, under axe and
-  the token check in both themes; `e2e/data-table.spec.ts` checks every
-  cell wears the wash.
 
-## 24. A list's rows: hover, lines, rows per page
+## 28. A list's rows: hover, lines, rows per page
 
-What every `DataTable` does by default since 4.83 (the list page
-standard), and the two choices it leaves an app.
+What every `DataTable` does by default, and the two choices it leaves
+an app.
 
 - **The row under the pointer** lights whole: every cell, pinned ones
   included, in `--table-hover` (the muted fill, solid), with a 3px bar in
@@ -1908,7 +1821,7 @@ standard), and the two choices it leaves an app.
   their own look.
 - **No zebra stripes:** rows are told apart by the line under each.
   `striped` brings the stripes back for an app that wants them. Tables in
-  notes keep theirs (4.67.1).
+  notes keep theirs.
 - **Rows per Page:** a menu in the pagination bar, from
   `useTableUrlState`, which keeps the pick in the URL (`?size=`) and on
   this device:
@@ -1925,12 +1838,7 @@ const query = useRecipes({ page, pageSize, ... })
   A pick returns to page 1. A size in the URL or storage that isn't one
   of `pageSizes` is ignored, so `?size=100000` can't ask the server for
   everything. Without `pageSizes` and `onPageSizeChange` the bar has no
-  menu, as before.
-- The fixtures' `app/DataTable` ListLook, ListLookInRows and
-  ListLookStriped stories hold all of it (with a `meta.clip` Notes
-  column, pattern 1), under axe and the token check in both themes;
-  `e2e/data-table.spec.ts` "list look" checks the hover on every cell,
-  the cursors, the stripes, the tooltip, the widths and the menu.
+  menu.
 
 ## 23. A Group menu, and a record read beside the list
 
@@ -1939,9 +1847,7 @@ columns: **grouped by one of its choice fields**, picked by the reader
 (by status to see what's moving, by area to plan a trip round the
 house), and **one record at a time without leaving the list**, its notes
 and key facts in a panel beside the rows. `DataTable`'s `groupings` and
-`detailPanel` (4.46) do both. Raised for an app's task list; the
-package's fixtures render it (`app/DataTable grouping`), with axe in
-both themes and its specs in a real browser.
+`detailPanel` do both.
 
 ```tsx
 const GROUPINGS: DataTableGrouping<Task>[] = [   // module level
@@ -1963,43 +1869,20 @@ const { grouping, setGrouping, ...table } = useTableUrlState(FILTERS, MULTI, VIE
   … />
 ```
 
-- **None is the default**, and the table is exactly as it was until a
-  grouping is picked. The Group menu sits at the end of the toolbar
-  (before a layout switch): None, then each grouping. While grouped a
-  Fold All button joins it, and the menu says which ("Group: Status").
 - **Only choice fields**: each group is one of the field's options, in
   the options' order (the order the form lists them), so give the same
-  options list the column and the form use. A multi-value field (an
-  array) shows the row under each of its values; a row with none goes
-  last, under `emptyLabel` ("Not set" unless set). A yes/no field is two
+  options list the column and the form use. A yes/no field is two
   options, worded as headings ("Can do now", "Not yet").
 - **The grouped column is hidden** while grouped (its value is the
   heading), so a grouping's `id` is its column's id.
-- **A heading is a button** (`aria-expanded`) that folds its rows away:
-  a chevron, the label, the count, then `groupSummary`'s line, given the
-  group's rows *on this page* and the group itself. Folds reset when the
-  grouping changes.
-- **Remembered like the layout**: `useTableUrlState`'s `grouping` is
-  `?group=` in the URL, then the one remembered under `groupStorageKey`
-  on this device, then None. A saved view can name a `group` (''
-  for None) to turn one on when pressed; a view that names none keeps
-  the grouping that's on. Grouping doesn't change which rows are shown,
-  so it keeps the page and doesn't count toward the active view.
-- **It groups the page's rows**: paging pages rows, not groups, so a
-  list that groups wants a page size that holds it (a working list of a
-  few dozen), and a summary that must count a whole group across pages
-  comes from the API. A grouping, while on, takes the place of
+- **Remembered like the layout**: `useTableUrlState`'s `grouping`
+  (`?group=`, then `groupStorageKey`). A saved view can name a `group`.
+  Grouping doesn't change which rows are shown, so it keeps the page and
+  doesn't count toward the active view.
+- **It groups the page's rows**: paging pages rows, not groups (pattern
+  21), so a list that groups wants a page size that holds it (a working
+  list of a few dozen). A grouping, while on, takes the place of
   `groupBy`'s headings.
-- **The detail panel** opens on a click on a row, or Enter on it (its
-  title link included: a plain click picks the row, a modified one still
-  opens the link in a new tab, and the panel's own "Open page" link
-  leaves). A control in a cell (a button, a switch, an editable value)
-  stays the control's. The picked row is marked (`aria-selected`, the
-  muted fill and a bar in `--primary` at its start); ↑ and ↓ move the pick
-  while the list has focus, and Escape or Close closes it, focus back on
-  the row. On a wide screen (64rem and up) the panel sits beside the
-  table and stays in view as the page scrolls; below that it is a
-  bottom sheet.
 - **The panel is the app's**: a heading-sized title, a few badges, a
   short notes preview (a few lines of the record's notes, not the whole
   editor), and an "Open page" link (a `<Link>` in `text-link`, so it's
@@ -2024,20 +1907,15 @@ import { ColorSwatch } from '@tristan2828/ui-foundation'
 ```
 
 - **The label is required**: the colour's name, else the value (the hex),
-  else "No colour". The swatch is decorative; the word carries it.
-- **A missing or invalid value** draws the empty swatch, a dashed ring,
-  and never paints. Validate on the form with `storedColor`.
+  else "No colour".
+- **A missing or invalid value** draws the empty swatch. Validate on the
+  form with `storedColor`.
 - **In a badge** (a label shown as a tag): `size="sm"` inside the
   `Badge`, which sizes it like the badge's icons (pattern 3).
-- **A colour picked from a few** is a categorical slot, a tinted glyph
-  (design-language.md "Categorical colour"), not a stored hex.
-
-The package's fixture `app/ColorSwatch` "In a table" renders it; its
-checks measure the ring at 3:1 in both themes and every palette.
 
 ### Picking one on a form: `ColorField`
 
-The same colour on the record's form (4.124): a grid of named swatches
+The same colour on the record's form: a grid of named swatches
 and **Custom**, which opens the browser's own colour picker. One control
 for a react-hook-form `Controller`, like `DateField`.
 
@@ -2091,25 +1969,17 @@ import { ColorField, storedColor } from '@tristan2828/ui-foundation'
   change. Swap the `Input` for `ColorField` in the same `Controller`;
   values already stored that aren't in the set show as Custom.
 
-The package's fixture `app/ColorField` renders it on a card (a named
-colour, a Custom hex, a required one left empty, an app's own list, a
-refused value); its checks run axe, the token check, each swatch's ring
-and the picker's edge at 3:1, and each default fill against the card, in
-both themes and every palette. `e2e/color-field.spec.ts` drives the
-pointer, the keyboard and Custom.
-
 ## 25. A list's tools: views, filters, columns, row actions, a phone's rows
 
-The rest of the list page standard (4.86): what sits above a list's rows,
-at the end of each row, and what a phone gets instead of the table. Each
-is a prop or a part; leave it out and the list is as before.
+What sits above a list's rows, at the end of each row, and what a phone
+gets instead of the table. Each is a prop or a part.
 
 ```tsx
 import { DataTable, FilterBar, FilterSelect, MultiChoice } from '@tristan2828/ui-foundation'
 
 const VIEWS = {
   current: { label: 'Current', filters: { status: 'active' } },
-  review: { label: 'To review', filters: { status: 'watch' }, columns: ['name', 'status', 'notes'] },
+  review: { label: 'To Review', filters: { status: 'watch' }, columns: ['name', 'status', 'notes'] },
   all: { label: 'All' },
 }
 const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView, applyView, ... } =
@@ -2124,7 +1994,7 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   ]}
   phoneRow={{
     title: (plant) => plant.name,
-    status: (plant) => <StatusBadge status={plant.status} />,
+    status: (plant) => <StatusMark kind={STATUS_KIND[plant.status]}>{STATUS_LABELS[plant.status]}</StatusMark>,
     facts: (plant) => [plant.light, `Watered ${plant.watered}`],
   }}
   toolbar={
@@ -2146,28 +2016,22 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   … />
 ```
 
-- **Saved views are pills** above the toolbar (L3): useTableUrlState's
-  views, each with its `label`, in order. The view on is pressed; none is
-  once the filters move off every view. Under 48rem they stay on one line
-  that scrolls sideways. Replaces a hand-written row of view buttons; a
-  Deleted view goes in ListHeader's ⋯ menu as Show Deleted instead.
-- **A view can carry a count** (4.127): `count` on the view you pass
-  `DataTable`, shown after its label as "Needs a Look · 3" and read as
-  "Needs a Look, 3". The app counts with its own query (the list's
-  `total` under that view's filters, or a count endpoint); the table
-  computes nothing. null, undefined and 0 show no count, as the
-  sidebar's counts and a record's tab counts don't, and past 99 it reads
-  "99+". Count only views that ask you to act (Needs a Look, To Fill
+- **Saved views are pills** above the toolbar: useTableUrlState's
+  views, each with its `label`, in order. Replaces a hand-written row of
+  view buttons; a Deleted view goes in ListHeader's ⋯ menu as Show
+  Deleted instead.
+- **A view can carry a count**: `count` on the view you pass
+  `DataTable`. The app counts with its own query (the list's `total`
+  under that view's filters, or a count endpoint); the table computes
+  nothing. Count only views that ask you to act (Needs a Look, To Fill
   In), not All. Give the view the key from the first render, `undefined`
-  while the query loads: a view with the key keeps room for a two-digit
-  count, so no pill moves when it arrives, on a phone's scrolling row
-  too.
+  while the query loads, so no pill moves when it arrives.
 
   ```tsx
   const { data: needsLook } = useNewsSourcesQuery({ ...VIEWS.look.filters, pageSize: 1 })
   <DataTable views={{ ...VIEWS, look: { ...VIEWS.look, count: needsLook?.total } }} … />
   ```
-- **Views fill the filters** (4.105), so the bar always says why rows are
+- **Views fill the filters**, so the bar always says why rows are
   hidden:
   - A view's `filters` and `multiFilters` are what the bar's controls
     show while it's on: write its whole meaning there. A "Current" view
@@ -2196,22 +2060,22 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   }
   const table = useTableUrlState(['search', 'overdue'], ['status'], VIEWS, { defaultView: 'current' })
   ```
-- **The column header row** (4.105) wears the muted fill on every cell,
+- **The column header row** wears the muted fill on every cell,
   pinned and stuck ones too, in the plain and framed looks, so the names
   read apart from the rows; its words stay `--foreground`.
-- **The filters** (L4): `FilterBar` holds search, the two filters used
+- **The filters**: `FilterBar` holds search, the two filters used
   most (`primary`), and the rest behind Filters (`secondary`, with their
   chips, as `SecondaryFilters` draws them). No captions over controls:
   each names itself. `FilterSelect` says "Any status" while off and
-  "Status: Active" on, and is named by its label first (4.123): "Status"
+  "Status: Active" on, and is named by its label first: "Status"
   while it shows "Any status", "Status: Active", "Status: All reminders"
   for an `anyLabel` that doesn't say the label (`FilterDate` the same), so
   a test finds it by `getByRole('combobox', { name: /^Status/ })`.
-  `search.onKeyDown` (4.123) gives the search box's keys to the app
+  `search.onKeyDown` gives the search box's keys to the app
   first: Enter on "#12" opening record 12, `preventDefault()` keeping the
   key from the box. `MultiChoice`'s `label` makes it "Rooms: Hall +1"
   instead of a chip per pick. Given `OptionSelect`'s options
-  (`{ value, label, kind?, icon? }`, 4.130) in place of bare values,
+  (`{ value, label, kind?, icon? }`) in place of bare values,
   `MultiChoice` draws each option's icon as OptionSelect does: in the
   list, on each chip, and before the summary's first pick ("Status: ●
   Active +1"), so a status filter that takes several keeps its icons.
@@ -2219,7 +2083,7 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   ones too, is in Filters' bottom sheet, so pass
   `primaryActive` (their chips) and an `onClearAll` that clears them all
   in one `setFilters` call.
-- **A date filter** (4.110) is `FilterDate`: "Any due date" while off,
+- **A date filter** is `FilterDate`: "Any due date" while off,
   "Due: Before today" on, with the presets Before today, Today and From
   today (`presets` picks which) and Between dates, a From and a To day
   beside it. Its value is one string in the URL (`before-today`,
@@ -2247,40 +2111,28 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
     onClear={() => setFilter('due', '')}
   />
   ```
-- **The Columns menu** (L5) sits at the end of the toolbar: a tick for
-  every column but the first (the name) and the actions, remembered on
-  this device under `storageKey` as every column's id in order and the
-  unticked ones, so a column added later shows. Until something is ticked
-  it starts from `visibleColumns`. While a view with `columns` is on, the
-  view's columns show and the ticks can't change. A column whose `header`
-  isn't a string names itself in the menu with `meta.label`. It isn't
-  shown with the phone's row list.
-- **Row actions** (L9) take a column of their own, pinned to the right
+- **The Columns menu** (`columnsMenu`) sits at the end of the toolbar,
+  its ticks remembered on this device under `storageKey`; a column added
+  later shows. A column whose `header` isn't a string names itself in the
+  menu with `meta.label`. It isn't shown with the phone's row list.
+- **Row actions** take a column of their own, pinned to the right
   edge with its header for screen readers only. One action is its icon,
   its label the tooltip and accessible name; two or more are a ⋯ menu.
   A click on them never opens the row. Return `[]` for a row with none.
   Drop a hand-made Actions column and `pinLastColumn` when moving to it.
-- **A phone gets a row list** (L11) under 48rem: the `title`, the
+- **A phone gets a row list** (`phoneRow`) under 48rem: the `title`, the
   `status` at the line's end and one muted line of the `facts` that matter
-  (two, usually), between dots. The whole row is the target, 44px at
-  least, and opens as `opens` says: a link to the record, so a long press
-  or a modified click works as a link's does. `title` is plain text (the
-  row is already the link). Row actions sit at the row's end; headings,
-  paging and every state hold. A card layout, when picked, wins.
-- **`lead`** (4.134) puts one control at the row's start, outside the
-  link, in a 44px-wide column: the tick that completes a to-do from its
-  row. Its clicks never open the record, so it carries its own label
-  (`Complete <title>`), as the table's tick column does.
-- The fixtures' `app/DataTable tools` ListTools, ListToolsFiltered,
-  OneRowAction and PhoneRowLead stories hold all of it, under axe and the token check in
-  both themes; `e2e/data-table-tools.spec.ts` checks the pills, the stored
-  pick and a view's columns winning, the ⋯ menu, the 44px rows, the
-  phone's line and sheet.
+  (two, usually). `title` is plain text (the row is already the link). A
+  card layout, when picked, wins.
+- **`lead`** puts one control at the row's start, outside the link: the
+  tick that completes a to-do from its row. Its clicks never open the
+  record, so it carries its own label (`Complete <title>`), as the
+  table's tick column does.
 
 ### The framed look, and sibling lists beside the title
 
-The toolbar a list-page review picked (4.100): `look="framed"` on
-`DataTable`, and `siblings` on `ListHeader`. Both are opt-in.
+`look="framed"` on `DataTable`, and `siblings` on `ListHeader`. Both are
+opt-in.
 
 ```tsx
 <ListHeader
@@ -2288,7 +2140,7 @@ The toolbar a list-page review picked (4.100): `look="framed"` on
   siblings={[
     { label: 'Exercises', to: '/training/exercises', count: 5 },
     { label: 'Targets', to: '/training/targets', count: 9 },
-    { label: 'Weak spots', to: '/training/weak-spots', count: 4 },
+    { label: 'Weak Spots', to: '/training/weak-spots', count: 4 },
   ]}
   deleted={{ shown, onShownChange: setShown, noun: 'exercises' }}
   newAction={{ label: 'New Exercise', to: '/training/exercises/new' }}
@@ -2296,34 +2148,23 @@ The toolbar a list-page review picked (4.100): `look="framed"` on
 <DataTable look="framed" views={VIEWS} columnsMenu={…} groupings={…} toolbar={<FilterBar … />} … />
 ```
 
-Since 4.106 (C3) the header goes in the table, as `pageHeader`, so the
-header row ends where the card does:
+The header goes in the table, as `pageHeader`, so the header row ends
+where the card does:
 
 ```tsx
 <DataTable look="framed" pageHeader={<ListHeader title="Exercises" … />} views={VIEWS} toolbar={…} … />
 ```
 
-- **The card**: the toolbar in its top bar (search and Filters keep their
-  words), the rows, then the count and pager in its bottom bar. Saved
-  views sit above it, outside the bar. Loading, empty and error show
-  inside it.
-- **The tools end at the table's edge**: the card is as wide as `width`
-  makes the table, tools and pager with it, so nothing sits off at the
-  far right of a wide page. `width="full"` fills the area as before.
-- **So does the header** (4.106, C3), passed as `pageHeader`: the
-  header (title, siblings, ⋯ and New), the views and the card are one
-  box as wide as the table (CSS `fit-content` with the table's minimum
-  and the page as its maximum; nothing is measured), so above a short
-  table ⋯ and New sit over the card's right edge, and above a wide one
-  where the page ends. A header wider than the table widens the card to
-  match. `width="full"` and the phone's row list span the page as before.
-  A ListHeader left outside the table spans the page, as before 4.106.
-- **One settings button** in place of Columns and Group: the Columns
-  ticks, then Group By, in one menu. Its name says the grouping that's on
-  ("Table Settings, Grouped by Status") and a dot marks it. Fold All
-  stays a button of its own while grouped. On a phone it holds Group By
-  alone.
-- **One more button beside New** (`secondaryAction`, 4.117), in the
+- **The card** holds the toolbar, the rows and the pager, as wide as
+  `width` makes the table, so nothing sits off at the far right of a wide
+  page. Saved views sit above it.
+- **So does the header**, passed as `pageHeader`: the header, the views
+  and the card are one box as wide as the table. A ListHeader left
+  outside the table spans the page.
+- **One settings button** in place of Columns and Group. Its name says
+  the grouping that's on ("Table Settings, Grouped by Status"). Fold All
+  stays a button of its own while grouped.
+- **One more button beside New** (`secondaryAction`), in the
   header in or out of the table: a list's second most common action, as
   an outline button just before New, which stays the primary.
 
@@ -2335,26 +2176,17 @@ header row ends where the card does:
 
   One at most: a third action goes in ⋯ (`more`). On a phone it's ⋯'s
   first item, so the row keeps the title, ⋯ and New; ⋯ shows on a phone
-  for it alone when nothing else is in the menu. The fixtures'
-  `app/ListHeader` Secondary action story, and
-  `e2e/list-header-secondary.spec.ts` (its place, the fold, axe in both
-  themes at both widths).
+  for it alone when nothing else is in the menu.
 - **Siblings** are the page's peers, a switch of links beside the title,
   the current one marked (`aria-current="page"`); they don't go in ⋯,
   which keeps what's left. Two or more; on a phone the switch has its own
   line. Pass `current` when the siblings differ only by query string.
-- The fixtures' `app/DataTable tools` Framed and `app/ListHeader`
-  Siblings stories hold it, under axe and the token check in both
-  themes; `e2e/data-table-framed.spec.ts` checks the edges, the menu
-  from the mouse and the keyboard, the switch and the phone, and
-  `e2e/list-header-width.spec.ts` the header's edge at 1440 and 1920
-  (`Header at the table edge` stories).
 
 ## 26. A record's related list, capped
 
 A list of records related to this one, in a section of its view (a
 provider's visits, a project's tasks): the ten newest, then View All N to
-the whole list filtered to this record (R8), so a long list doesn't push
+the whole list filtered to this record, so a long list doesn't push
 the rest of the record away. With tabs (EntityView's), each such list
 counts as a group.
 
@@ -2385,8 +2217,6 @@ const visits = useVisits({ provider: provider.id, sort: 'date:desc', page: 1, pa
 - **`opens` is required**, as on any list. Everything else a DataTable
   takes for its rows (`rowActions`, `phoneRow`, `highlightRow`) works.
 - On a DataTable of your own, `limit` and `viewAll` do the same.
-- The fixture `app/DataTable tools` Related draws a capped list and a
-  short one with no link; the spec follows View All.
 
 ## 27. A repeat and its next time
 
@@ -2436,5 +2266,3 @@ import { formatOccurrence, formatRecurrence, nextOccurrence, EmptyText } from '@
   done, use the server's `next_at` if it sends one; `nextOccurrence`
   counts from the schedule's start.
 - **Sorting by Next** is the server's (`next_at`), not the cell's text.
-- The fixture `app/RecurrenceField` List cells draws both on six chores;
-  its spec reads each cell.

@@ -3,45 +3,45 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 54–163
-- [Glow](#glow) · lines 165–184
-- [Semantic tones](#semantic-tones) · lines 186–214
-- [The three badge styles](#the-three-badge-styles) · lines 216–233
-- [Status marks](#status-marks) · lines 235–280
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 282–311
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 313–326
-- [Logos and brand marks](#logos-and-brand-marks) · lines 328–372
-- [Categorical colour](#categorical-colour) · lines 374–444
-- [Heat scale](#heat-scale) · lines 446–507
-- [Depth ramps](#depth-ramps) · lines 509–594
-- [A stored colour](#a-stored-colour) · lines 596–653
-- [Shapes and sizes](#shapes-and-sizes) · lines 655–676
-- [Typography](#typography) · lines 678–849
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 712–745
-  - [Written text (notes)](#written-text-notes) · lines 747–849
-- [Density](#density) · lines 851–971
-  - [Rows on this device](#rows-on-this-device) · lines 917–944
-  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 946–971
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 973–1087
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1089–1166
-- [Notices](#notices) · lines 1168–1196
-- [A value over time](#a-value-over-time) · lines 1198–1328
-  - [Several values over time](#several-values-over-time) · lines 1247–1285
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1287–1328
-- [A list as a board](#a-list-as-a-board) · lines 1330–1446
-  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1383–1446
-- [A list as cards](#a-list-as-cards) · lines 1448–1494
-- [Images full screen](#images-full-screen) · lines 1496–1542
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1544–1580
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1582–1652
-- [A few equal things](#a-few-equal-things) · lines 1654–1774
-- [An overview page](#an-overview-page) · lines 1776–1847
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1848–1914
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1916–2053
-- [Picking at random](#picking-at-random) · lines 2055–2086
-- [Filling in what's missing](#filling-in-whats-missing) · lines 2088–2155
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2157–2182
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2184–2280
+- [Palettes](#palettes) · lines 54–136
+- [Glow](#glow) · lines 138–157
+- [Semantic tones](#semantic-tones) · lines 159–187
+- [The three badge styles](#the-three-badge-styles) · lines 189–206
+- [Status marks](#status-marks) · lines 208–251
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 253–282
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 284–295
+- [Logos and brand marks](#logos-and-brand-marks) · lines 297–337
+- [Categorical colour](#categorical-colour) · lines 339–404
+- [Heat scale](#heat-scale) · lines 406–458
+- [Depth ramps](#depth-ramps) · lines 460–527
+- [A stored colour](#a-stored-colour) · lines 529–576
+- [Shapes and sizes](#shapes-and-sizes) · lines 578–599
+- [Typography](#typography) · lines 601–771
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 635–667
+  - [Written text (notes)](#written-text-notes) · lines 669–771
+- [Density](#density) · lines 773–884
+  - [Rows on this device](#rows-on-this-device) · lines 831–858
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 860–884
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 886–996
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 998–1070
+- [Notices](#notices) · lines 1072–1099
+- [A value over time](#a-value-over-time) · lines 1101–1231
+  - [Several values over time](#several-values-over-time) · lines 1150–1188
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1190–1231
+- [A list as a board](#a-list-as-a-board) · lines 1233–1343
+  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1286–1343
+- [A list as cards](#a-list-as-cards) · lines 1345–1392
+- [Images full screen](#images-full-screen) · lines 1394–1440
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1442–1478
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1480–1516
+- [A few equal things](#a-few-equal-things) · lines 1518–1633
+- [An overview page](#an-overview-page) · lines 1635–1700
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1702–1765
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1767–1854
+- [Picking at random](#picking-at-random) · lines 1856–1887
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1889–1956
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1958–1977
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 1979–2031
 
 <!-- /index -->
 
@@ -54,8 +54,7 @@ composites don't grow that way; they are built against a real app's screen.
 ## Palettes
 
 A palette is an app's own look: its surfaces, text, accent and a
-second colour. Four dark ones were chosen once for every app the
-foundation serves, in the order they were ranked:
+second colour. Four dark ones serve every app:
 
 | Name | `palette` | Accent | Second colour |
 |---|---|---|---|
@@ -91,25 +90,21 @@ uses no raw colours:
 
 - **Surfaces.** `--background`, `--card` and `--popover` are the LCD green
   (`#c9d1b2`). `--muted`, `--secondary` and `--accent` are a step darker.
-- **Ink.** `--foreground` is the mockup's ink (`#1d2416`, 10.1:1).
+- **Ink.** `--foreground` is the ink (`#1d2416`, 10.1:1).
   `--primary` and `--ring` are ink too, with the green on the primary fill,
   as a pressed button looks on the device.
-- **Dimmed text.** `--muted-foreground` is `#464e39`, 5.50:1. The mockup's
-  `#5c6650` measured 3.82, under 4.5.
+- **Dimmed text.** `--muted-foreground` is `#464e39`, 5.50:1.
 - **The dotted rules between rows.** The colour is a token: `--rule` and
   `--border` are the LCD's line colour (`#a3ad8f`). The style is the
   app's, a Tailwind border utility: `border-b border-dotted border-rule`.
   A table's own rows wear the colour, solid.
-- **Status text and links.** Status text is a quarter darker than the
-  mockup's green, rust and blue, so it still reads on its own tinted wash
-  (7.0:1 or more on the green). `--link` is the mockup's blue.
-- **Glyphs and fills.** The light theme's categorical slots, heat steps
-  and depth steps were tuned for white, and measure 1.5 to 3 on the
-  green. Palm LCD has its own set, each darker than about oklch 0.57, so
-  it clears 3:1 on both greens. It keeps the light theme's floors for how
-  far apart they must look. Each depth ramp holds its Palm LCD slot's
-  hue and gets darker at every step, as in light ([Depth ramps](#depth-ramps)).
-  Every heat and depth fill takes white text.
+- **Status text and links.** Status text reads on its own tinted wash
+  (7.0:1 or more on the green). `--link` is a blue.
+- **Glyphs and fills.** Palm LCD has its own categorical slots, heat
+  steps and depth steps, each clearing 3:1 on both greens. Each depth
+  ramp holds its Palm LCD slot's hue and gets darker at every step, as
+  in light ([Depth ramps](#depth-ramps)). Every heat and depth fill
+  takes white text.
 
 **Where it lives.** `styles/theme.css`: each palette's colours as
 primitives (`--palette-<name>-*`, ratios beside them), and one block per
@@ -119,39 +114,17 @@ on top of `:root`, for Palm LCD. `data-palette` goes on `<html>`, so popups
 portaled to `<body>` wear it too. An installed app's colours follow it with
 `pwa({ palette })`. For Palm LCD that is the ink and the green.
 
-**Why some tokens aren't the guide's colour as written.**
-
-- **The focus ring is the accent** (4.24 to 5.25:1 on the page), not the
-  guide's accent deep, which measured 2.30 to 2.91, under the 3:1 a focus
-  indicator needs.
-- **Links are accent light** (`--link`, 8.5:1 or more). The accent fails
-  4.5:1 as small text on Indigo and Rose and on Violet, and on every
-  palette's cards but Indigo and Cyan, so it is never small text: it is
-  the ring, the primary fill and the active item's tint. The `link`
-  Button variant is `text-link` for the same reason, and the theme
-  colour as text (`--primary-text`, 4.105: the open tab's name, a picked
-  choice's word) is accent light too.
-- **The status colours are text shades.** The guide's success, warning
-  and danger are `--success-text`, `--warning-text` and
-  `--destructive-text` (soft badges, icons, coloured words). Solid fills
-  keep the deeper shades with white text: white on the guide's success
-  green measures 1.80. Info keeps its blue.
-- **Violet's text on its accent** is `#110823`, a shade darker than the
-  guide's `#130925`, which measured 4.496:1 (under 4.5).
-- **Danger text** is `#df7a72`, a shade lighter than the guide's
-  `#dc726a`, which measured 4.37 on Graphite's raised surface and 4.46 on
-  an outline button's fill (an invalid image field's message).
-- **Field borders** (`--input`, the guide's strong border) measure 2.5 to
-  2.9 against the page, under 3:1. It is already the lightest grey each
-  palette has, so it is kept as designed; axe doesn't check borders.
-
-The package's `e2e/fixtures-visual.spec.ts` runs every primitive,
-composite and tone story through axe in each palette (Palm LCD in light,
-the others in dark), and measures every glyph, categorical slot, heat
-step and depth step against each palette's page and card.
-`tests/category-slots.test.ts`, `heat-scale.test.ts` and
-`depth-ramps.test.ts` hold Palm LCD's own shades to the light theme's
-floors.
+**The accent is never small text.** It fails 4.5:1 as small text on
+Indigo and Rose and on Violet, and on every palette's cards but Indigo
+and Cyan: it is the ring, the primary fill and the active item's tint.
+Links are accent light (`--link`, 8.5:1 or more; the `link` Button
+variant is `text-link`), and so is the theme colour as text
+(`--primary-text`: the open tab's name, a picked choice's word). The
+status colours as text are `--success-text`, `--warning-text` and
+`--destructive-text` (soft badges, icons, coloured words); solid fills
+keep the deeper shades with white text. Field borders (`--input`)
+measure 2.5 to 2.9 against the page, under 3:1; axe doesn't check
+borders.
 
 **An app's own axe specs** check its palettes instead of light and dark:
 `defineA11ySuite({ …, palettes: ['indigo-cyan'] })` (and
@@ -209,9 +182,9 @@ shade in both themes, because it always carries white text and the page
 behind it never enters the calculation.
 
 Measured ratios (WCAG 2.x, sRGB) are recorded next to each primitive in
-the package's `styles/theme.css`, and its `e2e/fixtures-visual.spec.ts` re-checks all
-twelve tone/style combinations with axe against the rendered DOM in both
-themes. **A new tone or style is not done until it appears in that story.**
+the package's `styles/theme.css`, and the package re-checks all twelve
+tone/style combinations with axe against the rendered DOM in both
+themes. **A new tone or style is not done until it is in that check.**
 
 ## The three badge styles
 
@@ -234,7 +207,7 @@ columns makes the difference look meaningful when it isn't.
 
 ## Status marks
 
-A record's status (4.98, the record standard's 5B) is a `StatusMark`: an
+A record's status is a `StatusMark`: an
 icon, a colour and the status's own word, the same in its cell, the
 record's header and the select's options. Every status sorts into one of
 six kinds; the kind decides the icon and the colour, so it reads by
@@ -264,18 +237,16 @@ export const STATUS_KIND: Record<WidgetStatus, StatusKind> = {
   `paused`, "Idea" and "Up next" `planned`, "Retired" `ended`.
   `attention` is for a state that wants a look now, often worked out
   rather than stored (a review date past due).
-- **The icons are one map** (`STATUS_KIND_ICONS`, `lib/status-kinds.ts`
-  in the package): changing one there changes it in every app. A screen
-  can pass `icon` for one place; don't.
-- **Done and ended have colours of their own** (4.110): a teal for
+- **The icons are one map** (`STATUS_KIND_ICONS`): changing one there
+  changes it in every app. A screen can pass `icon` for one place; don't.
+- **Done and ended have colours of their own**: a teal for
   finished, a hue away from `active`'s green, and a soft rose for no
   longer going, a hue away from `attention`'s red. Neither is grey, so a
   finished record never reads as a disabled one. They're text shades
   (`--status-done-text`, `--status-ended-text`, in every palette and both
   themes); nothing fills with them.
 - **Measured:** every kind's word clears 4.5:1 and its icon 3:1 on the
-  page, a card and a table row, in both themes and every palette
-  (`app-statusmark--all-kinds`).
+  page, a card and a table row, in both themes and every palette.
 - Badges stay for everything else status-like (a computed progress, a
   tag): the tone rules below.
 
@@ -314,10 +285,8 @@ Two rules that keep this honest:
 
 An icon that carries meaning on its own (a stage circle, a category's
 icon, a pressed flag) must clear WCAG's **3:1 non-text minimum** against
-the background behind it, in both themes. axe measures text only, so the
-package's fixtures have a glyph check of its own: every `<svg>` in its
-design-language stories, its ink (with any opacity modifier painted over
-its background) against what's behind it. Every `*-text` tone, every
+the background behind it, in both themes. axe measures text only. Every
+`*-text` tone, every
 category slot and `muted-foreground` clear it as they are. An opacity
 modifier is where it goes wrong: `text-muted-foreground/80` is the
 faintest step that still clears it in light mode (3.2:1), and `/70`
@@ -367,10 +336,6 @@ Colour them in one of two ways:
   where it vanishes in one, give it a `currentColor` outline or use the
   one-colour mark there.
 
-The package's own stories show the slots with made-up marks in
-`currentColor` (`app/AppShell` With logo, `app/WidgetCard` Brand mark,
-`app/EntityView` Notice and footer).
-
 ## Categorical colour
 
 Tones say good, bad or *notice this*. A value that is merely *different* from its
@@ -413,8 +378,7 @@ Five things about them:
   circle and vary lightness and chroma as well, so a light lime sits next
   to a deep navy rather than two mid-tone hues 25° apart. Every pair is at
   least 17.9 apart in CIEDE2000 ΔE (the perceived difference; 10 and up
-  reads as a different colour), in both themes. A unit test holds every
-  pair to 15.
+  reads as a different colour), in both themes.
 - **A category is not a tone.** Red, orange, brown and green are slots
   because a category is a tinted glyph beside its name, never a status
   badge, and doesn't read as good or bad there. Where it still could, keep
@@ -423,7 +387,7 @@ Five things about them:
   categories off slot 1, the one near info's blue.
 - **They are ordered for small sets.** An app using the first few gets the
   most separable few, for everyone: the first six also stay apart (ΔE 10
-  or more, tested) for readers with deuteranopia or protanopia, the common
+  or more) for readers with deuteranopia or protanopia, the common
   red-green deficiencies. Past six, some pairs merge for those readers
   (gold and lime are nearly one colour), so the glyph and the name carry
   the meaning and the colour only reinforces it.
@@ -431,13 +395,9 @@ Five things about them:
   `text-foreground`, so readability never depends on the hue. A slot used
   as a background needs its own contrast check, which nothing here does
   for you.
-- **The glyph check re-measures them.** All twelve clear the 3:1
-  non-text minimum in both themes, on the page and on a card (recorded in
-  `theme.css`). axe checks text contrast, not icon contrast, so the
-  package's fixtures glyph check draws an icon in each slot on both
-  surfaces (`patterns/CategoricalColour`) and fails a change that takes
-  one below 3:1. Its `SideBySide` story shows both themes at once, under
-  normal vision and simulated deuteranopia and protanopia.
+- **All twelve clear the 3:1 non-text minimum** in both themes, on the
+  page and on a card (recorded in `theme.css`). axe checks text
+  contrast, not icon contrast.
 
 If you find yourself wanting a thirteenth, that is a sign the column should
 be showing a shape or a label rather than more colours: there is no more
@@ -497,15 +457,6 @@ const HEAT = [
 - **Five steps, not more.** Past five, neighbours stop being readable as
   different. Bin the values rather than interpolating between steps.
 
-The package's fixtures render it (`patterns/HeatScale`). Its Default story
-runs through axe and the token check in light and dark, axe in every
-palette too, and a check that measures every step, as a fill and as a
-cell, against the page and a card in each. `tests/heat-scale.test.ts`
-holds the distance between neighbours, the order of lightness and every
-step against every palette's card and raised surface. `SideBySide` shows
-both themes at once, under normal vision and simulated deuteranopia and
-protanopia.
-
 ## Depth ramps
 
 For **depth within one category**: the levels of one kind of thing, where
@@ -536,13 +487,10 @@ and `text-category-N-depth-M-foreground` (text on that cell).
 - **Depth, not amount.** A ramp says "a level of this", never "more of
   this is worse". A count or a total over many categories is the heat
   scale; a status is a tone.
-- **Opaque, at full strength.** Each step clears 3:1 against the card and
-  the page in light, dark and every palette (3.03:1 at the least, light
-  on `--muted`), so a shape stands out with no outline. An opacity
-  modifier (`bg-category-3-depth-2/50`) gives that up.
-- **Text on a fill takes its own foreground.** Which text colour is right
-  depends on the step and the theme: pair the two as below. It measures
-  4.55:1 at the least.
+- **Opaque, at full strength, and text on a fill takes its own
+  foreground**, as on the heat scale: each step clears 3:1 (3.03:1 at the
+  least, light on `--muted`) and its text 4.55:1 at the least, paired as
+  below. An opacity modifier (`bg-category-3-depth-2/50`) gives that up.
 - **Neighbours are closer than the heat scale's, so keep a boundary.**
   Neighbouring steps are at least ΔE 9.6 apart in light and 8.7 in dark,
   and 6.9 under simulated deuteranopia and protanopia. Five steps of one
@@ -577,21 +525,6 @@ const GREEN_DEPTH = [
 <rect className={`${GREEN_DEPTH[level - 1].fill} stroke-card`} />
 <td className={GREEN_DEPTH[level - 1].cell}>{name}</td>
 ```
-
-The package's fixtures render every ramp (`patterns/DepthRamps`). Its
-Default story runs through axe and the token check in light and dark, axe
-in every palette too, and a check that measures every step of every
-slot, as a fill and as a cell, against the page and a card in each.
-`tests/depth-ramps.test.ts` computes from the token values one hue per
-slot, the order of lightness, the distance between neighbours (ΔE 8, and
-6 with deuteranopia and protanopia), the distance from the neutral greys
-(6), text on every fill and every step against every palette's card and
-raised surface, and fails if a change to `theme.css` breaks one. Palm LCD,
-the light palette, has its own ramps on the same rules (its slot's hue,
-darker at every step, ΔE 6 from its own greys).
-`SideBySide` shows both themes at once, each ramp beside its theme's
-muted greys, under normal vision and simulated deuteranopia and
-protanopia.
 
 ## A stored colour
 
@@ -630,27 +563,17 @@ import { ColorSwatch } from '@tristan2828/ui-foundation'
   name stays on one line, cut, its whole text in a tooltip.
 - **The fill is the one colour that isn't a token.** The swatch's
   `backgroundColor` is an inline style from the prop, which the ESLint
-  token rule allows (it forbids hex *literals* in a `style`). The
-  fixtures' token check exempts exactly that: a swatch's background while
-  it equals its own `data-color`. Nothing else may paint a stored colour,
+  token rule allows (it forbids hex *literals* in a `style`). Nothing
+  else may paint a stored colour,
   and a stored colour never paints text, a surface or a border: a
   colour the user picked from a few is a categorical slot (above), not a
   hex.
 
-The package's fixtures render it (`app/ColorSwatch`: on each surface,
-invalid and missing, in a Badge, in a `DataTable`, a long name, every
-palette side by side), with axe, the token check and the ring's ratio
-measured in light, dark and every palette. Cell pattern 24 is it in a
-column.
+Cell pattern 24 is it in a column.
 
-**Picking one on a form is `ColorField`** (4.124): the same swatches,
-each beside its name, as one radio group, and Custom for the browser's
-own picker. Its default twelve (`COLOR_CHOICES`) sit at a middle
-lightness, so each fill clears 3:1 against a card in light, dark and the
-dark palettes, and 2.3:1 on Palm LCD, whose mid-light panel no middle
-colour clears 3:1 on (the ring shows the edge there). The picked one is
-marked by its radio's dot and a primary border, never by its colour
-alone. Cell pattern 24 has its markup.
+**Picking one on a form is `ColorField`**: the same swatches, each
+beside its name, as one radio group, and Custom for the browser's own
+picker. Cell pattern 24 has its markup and its rules.
 
 ## Shapes and sizes
 
@@ -711,8 +634,7 @@ height and weight together, from tokens in the package's `styles/theme.css`:
 
 ### Words on screen: Title Case and sentence case
 
-Two cases, chosen by what the words are (4.97; before it, everything was
-sentence case):
+Two cases, chosen by what the words are:
 
 - **Title Case names a thing you can see or press:** page, dialog, sheet,
   form, card and section titles; buttons and links that act like
@@ -785,8 +707,8 @@ least), a column's menu has Narrower, Wider, Fit to content and Fit all
 columns, and a double-click on the edge fits it again. The width is kept
 in the Markdown as a comment after the table, naming its columns
 (`<!-- table widths: Item=140, Cost=72 -->`), which `<Markdown>` and the
-editor read and never show; nor do the backend's MCP read tools (4.94:
-`fetch`, `list`, `search`, and `update`'s answer), while `edit_text` and
+editor read and never show; nor do the backend's MCP read tools (`fetch`,
+`list`, `search`, and `update`'s answer), while `edit_text` and
 `update` keep it in what's stored. A column named nowhere fits its words. A
 phone ignores the widths and can't set them; on paper they scale to the
 page.
@@ -797,11 +719,11 @@ columns ("Item, Size, Colour, …"), so two such tables keep distinct
 names; the arrow keys scroll it (in the editor Home and End too), with
 the `ring` focus ring. A table that fits gets no tab stop and no region.
 
-**The theme colour as text** (4.105) is `--primary-text`
+**The theme colour as text** is `--primary-text`
 (`text-primary-text`): what's picked or open, in the primary's own colour
 where that reads as small text. The open record tab's name, the open tab
 of any line tab list (`TabsList variant="line"`, a page's sub-navigation
-under a section heading, 4.110) and a picked `ChoiceButtons` option wear
+under a section heading) and a picked `ChoiceButtons` option wear
 it (each tab with a 3px `bg-primary` line and a `bg-primary/12` tint, the choice with
 a `border-primary` and a `bg-primary/12` fill). The pill look
 (`TabsList`'s default) keeps its open tab in `--foreground` on the page
@@ -840,7 +762,7 @@ Highlighted words (`==words==` in the Markdown) have four colour tokens:
 `--highlight-green` and `--highlight-red` (`bg-highlight-amber`, …). Each
 is a wash behind words that keep `--foreground`, so the pair is the
 contrast that counts: light washes in the light theme and deep ones in the
-dark, each pair checked by axe in both (the Default story's four marks).
+dark, each pair checked by axe in both.
 Use them as a background behind written text only, never as a tone: a
 status is `success`, `warning`, `destructive` or `info`.
 
@@ -869,7 +791,7 @@ set, not a `DataTable` prop:
 
 - `compact` and `comfortable` change padding only. Text keeps
   `type-body`, so compact never drops below a readable size.
-- **Forms are compact at every density but `large`** (4.85): inside a
+- **Forms are compact at every density but `large`**: inside a
   `FieldGroup` (every `EntityForm`, `FormDialog` and `FormSection`) the
   inputs, selects, combobox boxes and default buttons are 32px, the
   compact table's row, with 14px between fields; under 48rem or on a
@@ -900,19 +822,11 @@ set, not a `DataTable` prop:
 - Under the hood, the table primitive's cells read `--table-cell-px`,
   `--table-cell-py` and `--table-head-height`. `large` also redefines
   Tailwind's own scale (`--spacing`, `--text-*`, `--radius`), the `--type-*`
-  roles and `--control-text-sm` (the small Button and Toggle).
-  `DataTable`'s totals row reads the body cells' tokens, so it is a row's
-  height at every density. Each
-  default is the value it always had, so a screen without `data-density`
-  doesn't change. The selectors are in `styles/theme.css`. A composite
-  reaches `compact` with the `density-compact:` variant (`styles/index.css`:
-  any ancestor with `data-density="compact"`), the way `WidgetCard` and
-  `ModuleCard` do; an app's own card can use it too. the package's
-  fixtures page shows any fixture at a density, and `patterns/Density`
-  shows the primitives, `DataTable`, the sidebar and the hub cards at
-  each. Its checks
-  measure that every step changes what it should, and that the default
-  keeps today's sizes.
+  roles and `--control-text-sm` (the small Button and Toggle). The
+  selectors are in `styles/theme.css`. A composite reaches `compact` with
+  the `density-compact:` variant (`styles/index.css`: any ancestor with
+  `data-density="compact"`), the way `WidgetCard` and `ModuleCard` do; an
+  app's own card can use it too.
 
 ### Rows on this device
 
@@ -928,7 +842,7 @@ toggle in an app without a palette).
 | Rows | Table cell padding (vertical) | Header height |
 |---|---|---|
 | Compact *(the default)* | 4px | 32px |
-| Regular | 8px | 40px, the size before 4.63 |
+| Regular | 8px | 40px |
 
 - The choice is kept in this device's `localStorage`
   (`ui-foundation:rows`), like the palette, so a phone and a laptop can
@@ -948,7 +862,7 @@ toggle in an app without a palette).
 A record page (`EntityView`) keeps a reading width: its column is at most
 `max-w-4xl`, and with a facts rail the page is that plus the 300px rail.
 On a TV the right of the page is then empty. `data-width="wide"` on
-`<html>` (4.133) lifts the cap: the column fills the page and the rail
+`<html>` lifts the cap: the column fills the page and the rail
 stays 300px, moving right with it.
 
 ```ts
@@ -958,8 +872,7 @@ document.documentElement.dataset.width = wide ? 'wide' : ''
 
 - **The app owns the setting**, as it owns Text Size: a field on its
   settings page, kept in `localStorage`, set on `<html>` by a script in
-  `index.html` so the first paint has it. Regular (no attribute) is the
-  layout as it always was.
+  `index.html` so the first paint has it. Regular is no attribute.
 - **Only the record page widens.** A record in a dialog over its list
   keeps the dialog's size (the rule skips anything inside
   `role="dialog"`); a phone is unchanged, since the column already fills
@@ -984,7 +897,7 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
 
 <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,--spacing(72)),1fr))] gap-4">
   <WidgetCard
-    title="Ready to start"
+    title="Ready to Start"
     icon={ListChecksIcon}
     link={{ to: '/tasks?status=ready', label: 'All' }}
     isLoading={isLoading}
@@ -1056,7 +969,7 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
   backend.
 
 ```tsx
-const HUB_CARDS = { ready: 'Ready to start', waiting: 'Waiting on', links: 'Saved links' }
+const HUB_CARDS = { ready: 'Ready to Start', waiting: 'Waiting On', links: 'Saved Links' }
 const layout = useWidgetLayout('my-app:hub', Object.keys(HUB_CARDS))
 
 <div className="flex items-center justify-between gap-3">
@@ -1081,10 +994,6 @@ const layout = useWidgetLayout('my-app:hub', Object.keys(HUB_CARDS))
   equal columns that wraps (the class above: one column on a phone, as
   many 288px-or-wider columns as fit). Each card is as tall as its rows;
   it doesn't stretch to its tallest neighbour.
-- The fixtures' `app/WidgetCard` shows three widgets on a page and every
-  one in each state, a folded summary in each state and an accordion,
-  and `app/WidgetLayoutSheet` a hub with its Customize sheet; its checks run axe and the token and glyph checks in
-  both themes and at `large`.
 
 ## Module cards (a hub's places)
 
@@ -1159,11 +1068,6 @@ const { data, isLoading, error, refetch } = useProjectsSummaryQuery()
   (the whole note is still read out), so every chip keeps its height and
   a long note can't take over the row. It stays while the number loads,
   so the chip doesn't change width, and goes on an error, as on the card.
-- The fixtures' `app/ModuleCard` shows a hub with a strip and a widget,
-  every state, both at `compact`, and both again as a row of chips (Row,
-  Row states, Row notes); its checks run axe and the token and glyph checks in both
-  themes and at `large`, measure the strip at a desktop and a phone
-  width, and run axe on the chips at a phone's.
 
 ## Notices
 
@@ -1174,7 +1078,7 @@ badge and stays until the state changes, unlike a toast. `EntityView`'s
 under its own header.
 
 ```tsx
-<Notice tone="warning" title="On hold" action={<Button size="sm" variant="outline">Release the hold</Button>}>
+<Notice tone="warning" title="On hold" action={<Button size="sm" variant="outline">Release the Hold</Button>}>
   Read “Hyperion” first: this one follows it.
 </Notice>
 ```
@@ -1185,8 +1089,7 @@ under its own header.
   swaps the tone's own icon for a better one (a lock for read-only).
 - **A wash, not a fill:** the tone at 10% (20% in dark) with `foreground`
   text and the tone's `*-text` icon. The message reads as body text, so
-  nothing inside it is muted. The fixtures' `app/Notice` measures every
-  tone with axe and the glyph check in both themes.
+  nothing inside it is muted.
 - **One or two sentences and at most one action**: what the state means
   and what to do about it. More than that belongs in a section.
 - **Not an alert.** A notice there when the page opens is part of the
@@ -1197,7 +1100,7 @@ under its own header.
 
 ## A value over time
 
-`LineChart` (4.34) is the one chart: a single series on a record's page
+`LineChart` is the chart for a single series on a record's page
 (a price checked daily, a weight, a balance), oldest first, with an
 optional dashed `target` and one point marked (`mark`: `'min'`, `'max'`
 or `'last'`) with its value.
@@ -1227,13 +1130,13 @@ or `'last'`) with its value.
   named by `label`, with a summary (first, last, lowest, highest, the
   target) and a table of every point. Give it the same `formatY` and
   `formatX` the page uses for those values elsewhere.
-- **A projection** (4.51): `projection={{ label: 'Projected', points }}`
+- **A projection**: `projection={{ label: 'Projected', points }}`
   carries the line on past its last point, dashed in the same colour, for
   where a value may go (a balance at a rate of return), never for what was
   measured. Its points come after the last of `points`; the mark stays on
   `points`, and a screen reader gets the projection's end in the summary
   and its rows in the table, each named by `label`.
-- **Levels** (4.64): for a value that is one of a few named steps and
+- **Levels**: for a value that is one of a few named steps and
   holds until it changes (a confidence, a severity, a stage), pass
   `levels`, lowest first, and give each point its step's index as y:
   `levels={['Very low', 'Low', 'Moderate', 'High']}`. The steps are named
@@ -1246,7 +1149,7 @@ or `'last'`) with its value.
 
 ### Several values over time
 
-`MultiLineChart` (4.51) puts several series on one plot, sharing one x
+`MultiLineChart` puts several series on one plot, sharing one x
 and one y range: a net worth beside its assets and what's owed, or a
 balance's history beside low, middle and high projections.
 
@@ -1286,7 +1189,7 @@ balance's history beside low, middle and high projections.
 
 ### Parts of a whole over time
 
-`StackedAreaChart` (4.132) shows several amounts that add up to a total,
+`StackedAreaChart` shows several amounts that add up to a total,
 each a category, over time: a portfolio by asset class, a budget by
 envelope. Each band is stacked on the one below, from zero, so the top
 edge is the total and both the growth and the mix show.
@@ -1329,7 +1232,7 @@ edge is the total and both the growth and the mix show.
 
 ## A list as a board
 
-`Board` (4.36) shows a list as a column per value of one choice field (a
+`Board` shows a list as a column per value of one choice field (a
 status, a stage), a card per record, and moves a record by moving its
 card. It is a second view of a list, on its own page beside the
 `DataTable`, never a replacement: filters, sorting and saved views stay
@@ -1429,25 +1332,19 @@ the table's.
   end. A card whose group isn't one of the column's isn't on the board.
   The keyboard's way to change group is the app's own field in `menu`
   (Priority, Size): Board's menu has no group section.
-- **Paging:** `pageSize` shows a column's (or each group's) first cards,
-  then "Show N More"; `pageKey` changing (the filters) folds them back.
-- **The header's slots:** `description` is a caption under the name,
-  `note` short muted text, `action` a control at the end (a +; the other
-  columns keep the header's height), and `lead` outlines the column a
-  list starts in.
-- **The phone's counts:** `phone="counts"` puts a row of buttons over the
-  columns below `lg`, each a column's count over its `shortName`, that
-  shows that one column (`aria-pressed`); from `lg` up, the columns as
-  usual.
+- **Paging, the header's slots and the phone's counts** are props, each
+  in the example above: `pageSize` with `pageKey` (the filters, which
+  fold the pages back); a column's `description`, `note`, `action` and
+  `lead`; `phone="counts"`.
 - **The menu:** `menu(item)` appends the app's own items after a
   separator; the button is then ⋯, "Actions for <name>", holding Move To,
-  Order and the app's items. Without it, the Move button as before.
+  Order and the app's items. Without it, the Move button.
 - **No grip:** a card that drags shows a grab hand over it, and is picked
   up whole, from its title link too.
 
 ## A list as cards
 
-`DataTable`'s `layouts` (4.39) draw the same rows as cards beside the
+`DataTable`'s `layouts` draw the same rows as cards beside the
 table: a thumbnail grid for a feed, covers for a collection, a dense line
 each for clearing a backlog. They are layouts of one list, not other
 pages: the toolbar, filters, saved views, paging, `groupBy` headings
@@ -1476,8 +1373,9 @@ const { layout, setLayout } = useTableLayout({
   layout it is read in most: covers for something browsed by its art, the
   table for something compared by its columns.
 - **A grid's sizes** are the package's: `sm` for covers (three across on
-  a phone), `md` for thumbnails (two), `lg` for big ones (one). `list`
-  is one card per line in a bordered box, divided like rows.
+  a phone), `md` for thumbnails (two), `lg` for big ones (one).
+  `arrange: 'list'` is one card per line in a bordered box, divided like
+  rows.
 - **The picture** is `Artwork`: a fixed shape (2:3 posters and books,
   1:1 square art, 16:9 video), the record's image or a neutral
   placeholder (the list's icon, and the title where most records have no
@@ -1495,7 +1393,7 @@ const { layout, setLayout } = useTableLayout({
 
 ## Images full screen
 
-`ImageViewer` (4.129) shows one of an ordered list of images large, over
+`ImageViewer` shows one of an ordered list of images large, over
 the whole viewport: a cover clicked in a grid, a record's photos, the
 pages kept from a set. It's the package's modal dialog, so focus stays in
 it while it's open and goes back to the cover that opened it.
@@ -1543,7 +1441,7 @@ const [shown, setShown] = useState<number | null>(null)
 
 ## Key numbers on a record
 
-`KeyStats` (4.46), in `EntityView`'s `strip`: the few figures a record's
+`KeyStats`, in `EntityView`'s `strip`: the few figures a record's
 page is read for first (done of total, time left, the next date), in a
 row under the header, across the page at every width.
 
@@ -1558,16 +1456,16 @@ row under the header, across the page at every width.
   value in the section title's size and tabular figures, a `hint`
   under it in caption type. One bordered card, the figures side by side,
   wrapping on a phone. A `<dl>`, so each label is read with its value.
-- **An icon with the word** (`icon`, 4.81): the concept's icon at 13px
+- **An icon with the word** (`icon`): the concept's icon at 13px
   before the label, in the label's muted tone, one icon per meaning
   across the app (Lucide: a date `CalendarIcon`, next and review on
   `CalendarClockIcon`, when and length `ClockIcon`, a count `HashIcon`,
   status `CircleDotIcon`, price `DollarSignIcon`). The word stays; the
   icon is decorative. Never an icon alone in the strip.
-- **An empty value reads as a dash** (`emptyLabel`, 4.81; "Not set"
-  before), in body type and muted, read by a screen reader as "Not set".
+- **An empty value reads as a dash** (`emptyLabel`), in body type and
+  muted, read by a screen reader as "Not set".
   Never a blank.
-- **A tip and an action on a value** (4.120), as a rail fact has:
+- **A tip and an action on a value**, as a rail fact has:
   `info` is a few words behind a small info button after the value (a
   tooltip on hover and keyboard focus, a caption line under the value on
   a touch screen, read with the value by a screen reader), and `action`
@@ -1581,79 +1479,45 @@ row under the header, across the page at every width.
 
 ## Parts of the page standards
 
-Six small parts the list, record and overview standards share. Each is
-generic and standalone: an app (or a later foundation release) wires it
-into a table, a record or an overview.
+Small parts the list, record and overview standards share. Each is
+generic and standalone: an app wires it into a table, a record or an
+overview. Their props are in the type declarations.
 
 - **`ValueList`: several values in a cell.** `<ValueList items={[{ label }]} max={2} />`
-  shows two values on one line and the rest as `+N`, every folded value in
-  its tooltip (the `+N` is a button, so a keyboard and a tap reach it). A
-  value is a chip by default, or the app's own `node` (an icon, a
-  `ColorSwatch`) with its `label` as the plain text. An empty cell is a
-  muted dash that reads "None".
+  shows two values on one line and the rest as `+N`. A value is a chip by
+  default, or the app's own `node` (an icon, a `ColorSwatch`) with its
+  `label` as the plain text.
 - **`ListHeader`: a list's header.** The title (the page's h1) with its
-  `count`, `newAction` alone beside it, and one ⋯ menu for the rest. One
-  related link in `links` stays a button; two or more fold into ⋯ with
-  `more` (the page's own actions). `deleted={{ shown, onShownChange }}` adds
-  "Show Deleted" as the menu's last item and, while it's on, an info
-  `Notice` with "Back to the List" in a `role="status"` region that is
-  always there. It holds no state: the app keeps `shown`. Passed as a
-  framed DataTable's `pageHeader` (4.106, C3) it's as wide as the
-  table, so ⋯ and New end on the card's right edge. The menu is as
-  wide as its longest item and never wraps one (4.105), as is a row's ⋯
-  menu. **One more button beside New** (`secondaryAction`, 4.117) for
-  the list's second most common action ("Refresh Now", "Add from
-  Catalog"): `{ label, icon?, onClick | to, disabled? }`, an outline
-  button just before New, which stays the one filled button. Only one:
-  anything else is in ⋯. On a phone it folds into ⋯ as the menu's first
-  item (⋯ shows there for it alone if nothing else is in the menu).
-  Its `hint` (4.120) is a short line under the button ("12 searches
-  left"), in caption type and the muted tone, describing the button to a
-  screen reader; the buttons stay level, the line hanging below. On a
-  phone it's under the words of ⋯'s first item. **A line of context**
-  (`description`, 4.120): one short muted sentence under the title, for a
-  list that needs it ("Each search runs against the catalog once a
-  day."). It wraps in the header's width and never widens a framed
-  table's shared width; on a phone it's under the title and its buttons.
-  A `more` item that can't be used now (4.123, `disabled: true`: an
-  import already running) stays in ⋯, greyed, never hidden.
-- **A bar between the header and the list** (`DataTable pageBar`, 4.123):
+  `count`, `newAction` alone beside it, and one ⋯ menu for the rest
+  (`links`, `more`, and `deleted`'s "Show Deleted"). It holds no state:
+  the app keeps `shown`. `secondaryAction` (the list's second most
+  common action, one at most, with an optional `hint` line under it),
+  `siblings` and passing it as a framed DataTable's `pageHeader` are in
+  cell pattern 25. **A line of context** (`description`): one short
+  muted sentence under the title, for a list that needs it ("Each search
+  runs against the catalog once a day."). A `more` item that can't be
+  used now (`disabled: true`: an import already running) stays in ⋯,
+  greyed, never hidden.
+- **A bar between the header and the list** (`DataTable pageBar`):
   something about the whole page that belongs above its rows, such as a
-  deals bar, "Allow Reminders" or a budget's totals. It's drawn under
-  `pageHeader` and above the views, in the same box, so C3 holds: the
-  header, the bar and the card share the table's width, and the bar
-  wraps in it rather than widening it. Never a bar put between a
-  separate `ListHeader` and the table, which loses the shared width.
-  One sentence: anything longer belongs in a help page.
-- **`Timeline`: a record's dated history.** `items` newest first
-  (`{ id, date, dateTime?, kind?, body, edit? }`): dates in a tabular
-  column on the left, a dot and a thin line, the entry on the right with
-  its `kind` as a muted line under it and `edit` (the entry's own
-  control) at its end. The first `initial` (5) show, then "Show All N";
-  under 24rem of its own width the date moves above its entry. Empty
-  reads `emptyText` ("Nothing yet").
-- **`NeedsYou`: what waits on the user.** `items={[{ text, to, tone? }]}`:
-  one region at the top of an overview, a warning wash with the `*-text`
-  icon, each line a link; `tone: 'destructive'` for an overdue one.
+  deals bar, "Allow Reminders" or a budget's totals. Never a bar put
+  between a separate `ListHeader` and the table, which loses the shared
+  width. One sentence: anything longer belongs in a help page.
+- **`Timeline`: a record's dated history**, its `items` newest first.
+- **`NeedsYou`: what waits on the user.** One region at the top of an
+  overview, each line a link; `tone: 'destructive'` for an overdue one.
   Nothing renders for an empty list.
 - **`Freshness`: how old a number is.** `<Freshness label="Balances entered"
   at="2026-08-02" staleAfter="2026-11-02" />` reads "Balances entered Aug
-  2" in caption type and the muted tone, and once `staleAfter` has passed
-  the warning tone with a warning icon and ", out of date" for a screen
-  reader. The app owns the rule (entered plus 90 days); this only compares.
-  A plain `'YYYY-MM-DD'` day is never shifted by the time zone.
+  2", in the warning tone once `staleAfter` has passed. The app owns the
+  rule (entered plus 90 days); this only compares.
 - **`PartEmpty` and `WidgetCard`'s `empty`: a part with nothing yet.**
   `empty={{ text?, action }}` draws "Nothing here yet" and one outline
-  button (a link `to`, or `onClick`) in place of the card's plain
-  `emptyMessage` line, the foundation's `Empty` at card size.
-
-Every one is measured with axe and the glyph check in both themes
-(fixtures `app/ValueList`, `ListHeader`, `Timeline`, `NeedsYou`,
-`Freshness`, `PartEmpty`).
+  button in place of the card's plain `emptyMessage` line.
 
 ## A few equal things
 
-`EqualItems` (4.93, record standard R10): a small set of equal, related
+`EqualItems`: a small set of equal, related
 things inside a record (a plan's phases, the stores a price is compared
 at, a handful of options), one data shape in five looks. A record picks
 one look per set; a sixth is asked for first.
@@ -1678,19 +1542,19 @@ one look per set; a sixth is asked for first.
 | `table` | one compact row per item, the title as its row header, a column per field label (first-seen order), a dash where an item has none; scrolls sideways in its own box on a phone | things compared on the same values (a price at each store) |
 | `featured` | the item `featuredId` names in full, in a card with the accent border, then the rest as toggles that open in place | one is current or best (a program's phases) |
 | `panels` | a panel per item side by side, its title and state in a muted band, every detail labelled above its value; stacked on a phone | each has several details and must read as separate |
-| `stepper` (4.127) | a row of numbered steps joined by a line, each done, current or upcoming, picking the one item whose panel shows under it; opens on the current step; the row scrolls sideways in its own box on a phone | a sequence with one running and the others looked at in turn (a program's phases), where `featured`'s toggles would stack every phase's long content |
+| `stepper` | a row of numbered steps joined by a line, each done, current or upcoming, picking the one item whose panel shows under it; opens on the current step; the row scrolls sideways in its own box on a phone | a sequence with one running and the others looked at in turn (a program's phases), where `featured`'s toggles would stack every phase's long content |
 
 - **A state is a badge**, the outline style in its tone (`state: 'Planned'`
   is the neutral one; `{ label, tone }` with `info`, `success`, `warning`
   or `destructive`). Most states stay neutral ("Mapping an enum to tones").
 - **A field is the record's row**: the label in label type and muted, the
   value in body type; an empty value is the record's dash, read as "Not
-  set". `featured` uses the rail's beside rows (field-rows.ts).
+  set". `featured` uses the rail's beside rows.
 - **Featured's toggles** are buttons inside headings at the items' level:
   Enter or Space opens one, Tab moves to the next, several can be open,
   `aria-expanded` says which. Never a link; `defaultOpenIds` opens some at
   first.
-- **The stepper** (4.127): each item's `step` is `done` (filled with
+- **The stepper**: each item's `step` is `done` (filled with
   the primary, a check), `current` (ringed, "Current" under its name, its
   panel's border the accent) or `upcoming` (outlined, the default); the
   line into a step is the primary up to the current one. It opens on
@@ -1708,7 +1572,7 @@ one look per set; a sixth is asked for first.
   in its own box (never the page) as the record's tab bar does, the
   shown step kept in view; it never folds into a select, which would
   hide the done and current marks the stepper is for.
-- **The same steps, read only** (4.128): `StepTrack` draws the stepper's
+- **The same steps, read only**: `StepTrack` draws the stepper's
   row on its own, with no panels and nothing to pick, for a display of
   where a sequence is (a list card showing a program's phases). The
   marks, the line and the sizes are the stepper's own parts, so the two
@@ -1730,7 +1594,7 @@ one look per set; a sixth is asked for first.
   reader (the list's name, the table's caption); titles are `h3` under a
   section's `h2` (`headingLevel`).
 
-**An item's own content and actions** (4.94). When an item holds more
+**An item's own content and actions.** When an item holds more
 than label/value rows (an editor of several fields, a note, a chart), it
 carries them itself, never as a field's value, where the label/value grid
 squeezes them into its narrow value column:
@@ -1768,14 +1632,9 @@ items={stores.map((store) => ({
 - **Editing one item swaps its fields for its editor** (the content), then
   back on Save or Cancel. The set's other items stay as they are.
 
-Measured with axe, the token check and the glyph check in both themes and
-every palette (fixtures `app/EqualItems`, "Content and actions" among
-them, and "Stepper"), and from the keyboard and at a phone's width in
-`e2e/equal-items.spec.ts`.
-
 ## An overview page
 
-The overview standard (4.89): a module's first page when it has three
+The overview standard: a module's first page when it has three
 or more lists, saying how things stand and what waits on the user, each
 part one click from its list. `OverviewPage` draws the whole page; the
 hub's `WidgetCard`s take the same card anatomy, so a hub and an overview
@@ -1801,7 +1660,7 @@ read alike.
       onRetry: refetch,
     },
     { id: 'budget', title: 'Budget', icon: WalletIcon, to: '/budget',
-      empty: { action: { label: 'Add the first line', to: '/budget/new' } } },
+      empty: { action: { label: 'Add the First Line', to: '/budget/new' } } },
   ]}
 />
 ```
@@ -1826,7 +1685,7 @@ read alike.
   `ErrorState` in the card), and `empty` (a part with nothing yet: "Nothing
   yet" in the tile, `PartEmpty` and its one way to start in the card). An
   empty part stays on the page: hiding it makes the part forgotten.
-- **Links out** (`links`, 4.120): a short list of pages outside the app
+- **Links out** (`links`): a short list of pages outside the app
   (`{ label, href, icon? }`), one section after the parts under a
   "Links" heading (`linksTitle`). Each link is its label, its icon
   before it if it has one, and the external-link mark, opening in a new
@@ -1838,24 +1697,19 @@ read alike.
   headline in the numeric type, `line` one muted line under it, and
   `freshness` the `Freshness` line at the body's end, after the
   children. A folded card shows `value` when it has no `summary`. All
-  optional: a card without them is drawn as before, and its folding on a
-  phone is unchanged.
+  optional.
 
-Measured with axe and the glyph check in both themes and every palette
-(fixture `app/OverviewPage`); `e2e/overview-page.spec.ts` clicks the
-tiles, Escape and the accordion, and `e2e/overview-links.spec.ts` checks
-the links.
 ## A record's header and empty values
 
-The record page standard (4.81): the same header on every record, the
-data on each its own.
+The record page standard: the same header on every record, the data on
+each its own.
 
 ```tsx
 <EntityView
   title={name}
   badges={<><StatusSelect … /><Badge variant="outline">Wholesale</Badge></>}
   subtitle={summary}
-  actions={<><Button variant="outline"><PlusIcon />New order</Button><DeleteSupplier … /></>}
+  actions={<><Button variant="outline"><PlusIcon />New Order</Button><DeleteSupplier … /></>}
   emptyFields="fold"
   … />
 // Delete: <DialogTrigger render={<IconAction icon={Trash2Icon} label="Delete" tone="destructive" />} />
@@ -1866,33 +1720,30 @@ data on each its own.
   too long for both pushes them to the next line, starting under it.
   `subtitle` is the line below, in muted body type.
 - **Badges edited in place** (an inline `EditableValue` around a
-  `Badge`) keep their pencil's room at rest (4.120), as the strip's values
+  `Badge`) keep their pencil's room at rest, as the strip's values
   do, so hovering one moves nothing after it and never wraps the line.
-- **A hint under a header button** (`ActionHint`, 4.120): `<ActionHint
+- **A hint under a header button** (`ActionHint`): `<ActionHint
   hint="12 searches left"><Button>Search</Button></ActionHint>` draws a
   short caption line under the button, describing it; the header's
   buttons line up by their tops, so it stays level with the rest.
-- **Actions**: the record's own commands in words (New visit, Mark
-  done), then the universal ones as `IconAction`s: Print Notes
+- **Actions**: the record's own commands in words (New Visit, Mark
+  Done), then the universal ones as `IconAction`s: Print Notes
   (`printer`, EntityView's own) and Delete (`trash-2`, the destructive
   tone). Each is a square outline button at the header's 36px with its
   words as both its tooltip and its accessible name. An `IconAction`
   that goes somewhere (Open Site, Print to a page) takes the link as
-  `render` (4.123, `render={<Link to="/print" />}` or `render={<a href=…
+  `render` (`render={<Link to="/print" />}` or `render={<a href=…
   target="_blank" />}`) and is drawn as that link. `accessibleName` says
   more than the tooltip where several are on one page: `DeleteAction`'s
-  icon is named "Delete <name>" (4.123), its tooltip still "Delete". Icon alone is for
-  the universal actions only (Delete, Print Notes, Copy link, Pin, Open
-  site, Restore, Open Full Page, Close, More); everything else keeps its
+  icon is named "Delete <name>", its tooltip still "Delete". Icon alone is for
+  the universal actions only (Delete, Print Notes, Copy Link, Pin, Open
+  Site, Restore, Open Full Page, Close, More); everything else keeps its
   word. `printLook="words"` keeps Print Notes as a button with its words.
-  Print Notes prints a hidden copy of the notes: a desktop browser takes it
-  away when its dialog closes, a phone's (print() returns at once) when the
-  person next touches the page (4.124.1).
 - **An empty value** reads as a dash (`emptyText`, default `'—'`), in the
   muted text tone, read by a screen reader as "Not set": the same on
   every field, the presets' included. A field's own `emptyLabel` still
   wins where words say more than a dash ("No budget yet").
-- **The same dash off the record: `EmptyText`** (4.96). An app's own
+- **The same dash off the record: `EmptyText`.** An app's own
   strip, summary line or cell with nothing in it draws
   `isEmptyValue(value) ? <EmptyText /> : value`, never a dash and an
   `sr-only` of its own. `label` is what a screen reader says for the
@@ -1915,9 +1766,10 @@ data on each its own.
 
 ## A record's tabs, mark and facts
 
-The record standard (4.98): no right rail. A record is one column, its
-long content grouped under tabs where it has three or more groups, and
-its short facts the last tab, Details. A mark goes left of the title.
+A record is one column, its long content grouped under tabs where it has
+three or more groups, and its short facts the last tab, Details (or,
+with `factsRail`, a column beside the record's body). A mark goes left
+of the title.
 
 ```tsx
 <EntityView
@@ -1934,105 +1786,57 @@ its short facts the last tab, Details. A mark goes left of the title.
 
 - **Tabs** (`tab` on a section): a line tab list under the strip and any
   sections with no tab, one tab per name in the order the sections first
-  give it. The look is the record standard's 3B (4.101): 44px tabs in
-  16px semibold (14px under 48rem), the others muted. The selected one is
-  plainly marked (4.111): its name bold in the theme colour
-  (`--primary-text`, 4.105), a 3px primary line under it and a primary
-  tint behind it (`bg-primary/12`, as a picked choice); every tab is as
-  wide as its bold name, so choosing one moves none. A page's own line
-  tabs (`TabsList variant="line"`) are marked the same way, semibold
-  over medium. The list's own
-  bottom border runs the column's width. A tab's count (`tabCounts`, by
-  name: the records it holds) sits beside its name in a small muted
-  pill; a tab with none shows no count. A list wider than the column
-  scrolls sideways on its own, never the page.
-- **The tab bar sticks** (4.101) to the top of whatever scrolls (the
-  page, or a record dialog's body) while the record scrolls under it,
-  and once stuck shows the record's name above the tabs, so you always
-  see which record and which other tabs there are. A page with a bar of
-  its own pinned to the top passes `tabsStickyTop` (any CSS length). Arrow keys move
-  between tabs and select (Home, End), and Tab goes on into the panel.
-  The address holds the selected tab (`?tab=used-in`,
+  give it, the open one marked in `--primary-text` ("The theme colour as
+  text" above), as a page's own line tabs (`TabsList variant="line"`)
+  are. A tab's count is `tabCounts`. Short tab names, one or two words;
+  no icons in them.
+- **The tab bar sticks** to the top of whatever scrolls; a page with a
+  bar of its own pinned to the top passes `tabsStickyTop` (any CSS
+  length). The address holds the selected tab (`?tab=used-in`,
   `entityViewTabSlug`), replaced rather than pushed, so Back leaves the
   record, not the tab. Every tab's sections stay mounted, so a value open
-  in place survives a switch. Short tab names, one or two words; no
-  counts or icons in them yet.
+  in place survives a switch.
 - **The facts** (`placement: 'rail'` with no `tab`): the last tab,
-  Details (`detailsTab` names it otherwise), their cards no wider than
-  42rem, labels beside values. A record with no other tab keeps them in
-  the column, in their place.
+  Details (`detailsTab` names it otherwise). A record with no other tab
+  keeps them in the column, in their place. With `factsRail`, sections of
+  `facts` go in a column beside the record's body where the view has
+  room, and leave Details.
 - **A box beside a tab** (`placement: 'rail'` with a `tab`): a few short
   facts that explain that tab's content (a dose beside the notes), in a
   18rem column beside its sections once the tab is 42rem wide, under
   them below that. Short facts only, never free text: run-on text in a
   narrow box is what the standard took away.
-- **Several items in one fact** (4.111): linked records, a few tasks,
-  each item marked so a long title that wraps doesn't run into the next.
-  A `list` fact (`{ label: 'Related', kind: 'list', items: [{ name, to,
-  icon }] }`) draws them; an app's own box of several things uses the
-  same `FactList` and `FactListItem`. Each item leads with its kind's
-  icon (the record standard's 4I) when the app gives one, a neutral
-  bullet otherwise, in the muted colour; a wrapped line starts after the
-  mark (a hanging indent), and items have a little room between them.
-  Never a bare stack of links.
-- **The record's status** (4.115): a record's status is the first fact at
-  the top of the right rail, edited in place there; a status that changes
-  only through an action stays read-only, with the action as a small
-  button under it and a tooltip saying why. Mark it `recordStatus: true`
-  and EntityView draws it first, whatever its place in `facts` and its
-  section's among the rail's, and first in Details where the rail folds.
-  One per record.
-- **An action under a fact** (`action`, 4.115): a small outline button
-  (`xs`, 44px tall on a touch screen) under the value, its words a verb
-  ("Close…", an ellipsis when it opens a dialog), an icon before them if
-  the app's actions have one. For the status above, and for any read-only
-  fact that one action changes. Never several: more belong in the
-  header's actions.
-- **Why a fact can't be edited here** (`hint`, 4.115): a few words, in a
-  tooltip on a small info button after the value, shown on hover and on
-  keyboard focus, and read with the button by a screen reader. A touch
-  screen has no hover, so there the words are a caption line under the
-  value instead. Nothing that only hover shows.
-- **A rating** (`kind: 'rating'`, 4.117) is drawn as the list's cells
-  draw it: a score out of `max` (5) as stars (`RatingScore`, the
-  default) or hearts (`look: 'hearts'`), a quality level as the step bar
-  (`look: 'bar'`, `StepBar`, with its `word`). Never "4 of 5" as text:
-  that's what a screen reader hears, one image named in words. The
-  glyphs are a fixed size, so the value never moves on hover, and it's
-  drawn the same in Details on a phone. An empty one reads its
-  `emptyLabel` ("Not rated"), not a row of empty stars. A score the
-  person sets is edited with `inPlace.rating` (4.127): the stars become
-  `RatingInput`, set by a click where they're drawn (no select to open),
-  and an empty one is then five empty stars to click. "Saving…" and
-  "Saved" are an icon beside the stars, words for a screen reader, so the
-  row never grows. On a touch screen each star is a 44px target and the
-  row puts its label above them, which a narrow value column can't hold.
-- **`RatingInput`** (4.127): RatingScore's glyphs and tokens as a radio
-  group named by the field's label, each star a radio ("2 of 5"). The
-  arrow keys move and set it, a click or Space sets the star it's on,
-  pressing the set star again clears it. A mouse's hover previews the
-  score in the same ink (the filled count is the preview; leaving puts it
-  back); a finger gets no preview. 24px targets on a laptop, 44px on a
-  touch screen, fixed-size either way. Disabled, it's the score at half
-  opacity and ignores the pointer.
-- **A yes/no** (`kind: 'switch'`, 4.120) is a switch on the value's
-  line, never a two-choice select: `checked`, `onCheckedChange` (return
-  the save's promise and the switch shows the new state, busy, until it
-  lands, going back if it fails), and optional `on`/`off` words after it
-  ("With the team", "Only me"). Its accessible name is the fact's label;
-  a click, Space or Enter toggles it. Both words keep their room, so
-  toggling or hovering moves nothing, and it works the same in Details on
-  a phone. `disabled` with a `hint` for one that can't change here.
-  Printed, it's its word (or Yes/No).
-- **Icons on badges** (4.115): a `badges` fact's items may each carry an
-  icon (a component or a node) before the label, at the badge's icon size
-  in the muted tone a list's item icons have; items without one stay
-  words alone. The label always stays.
+- **Several items in one fact**: linked records, a few tasks. A `list`
+  fact (`{ label: 'Related', kind: 'list', items: [{ name, to, icon }] }`)
+  draws them; an app's own box of several things uses the same
+  `FactList` and `FactListItem`. Never a bare stack of links.
+- **The record's status** is the first fact (`recordStatus: true`, one
+  per record: EntityView draws it first in the facts rail and in
+  Details), edited in place there; a status that changes only through an
+  action stays read-only, with the action as a small button under it and
+  a tooltip saying why.
+- **An action under a fact** (`action`): a small outline button under
+  the value, its words a verb ("Close…", an ellipsis when it opens a
+  dialog). For the status above, and for any read-only fact that one
+  action changes. Never several: more belong in the header's actions.
+- **Why a fact can't be edited here** (`hint`): a few words, in a tooltip
+  on a small info button after the value, and a caption line under the
+  value on a touch screen. Nothing that only hover shows.
+- **A rating** (`kind: 'rating'`) is drawn as the list's cells draw it
+  (cell pattern 9): stars, hearts (`look: 'hearts'`) or the step bar
+  (`look: 'bar'`, with its `word`). Never "4 of 5" as text. An empty one
+  reads its `emptyLabel` ("Not rated"), not a row of empty stars. A score
+  the person sets is edited with `inPlace.rating` (`RatingInput`, cell
+  pattern 9).
+- **A yes/no** (`kind: 'switch'`) is a switch on the value's line, never
+  a two-choice select; return the save's promise from `onCheckedChange`.
+  `disabled` with a `hint` for one that can't change here.
+- **Icons on badges**: a `badges` fact's items may each carry an icon
+  before the label. The label always stays.
 - **The strip** (`KeyStats`) is as wide as its numbers (`width="content"`,
-  the default since 4.98), not the page's width. **Nothing in it moves on
-  hover or focus** (4.115): a value edited in place inline keeps its
-  pencil's room at rest there, as in a table cell, so a click lands on the
-  value under the mouse, wrapped onto two lines on a phone too.
+  the default), not the page's width. **Nothing in it moves on hover or
+  focus**: a value edited in place inline keeps its pencil's room at rest
+  there, as in a table cell.
 - **A mark or avatar** (`leading`): left of the title, top-aligned,
   with the title, subtitle and badges beside it at every width. 40 to
   64px (`size-10` to `size-16`): an avatar round (`rounded-full`), a
@@ -2040,21 +1844,18 @@ its short facts the last tab, Details. A mark goes left of the title.
   the title names the record (`alt=""`, `aria-hidden`); initials in
   foreground on `bg-muted`, an icon in muted foreground on the card
   with its border. "Logos and brand marks" above holds for a logo here.
-- **Facts beside their labels** (`railFields`, `beside` by default since
-  4.81; `stacked` puts each label above its value): the label in a 6 to
-  7rem column left of its value, baseline-aligned, rows a little tighter
-  than stacked, stacked again where the list is under 18rem (a phone
-  narrower than ~350px).
+- **Facts beside their labels** (`railFields`, `beside` by default;
+  `stacked` puts each label above its value).
 - **A tiny record** (a few fields, no notes): `RecordDialogRoute
   look="card"`, a 420px card dialog (a sheet on a phone) with its title,
-  Delete, Open full page and Close on one line and the facts as plain
+  Delete, Open Full Page and Close on one line and the facts as plain
   rows, no cards.
-- **The rail layout** (`layout="rail"`) is the shape before 4.98, kept
-  for apps not yet moved; a new record never uses it.
+- **The rail layout** (`layout="rail"`) is kept for apps not yet moved;
+  a new record never uses it.
 
 ## Picking at random
 
-`SpinWheel` (4.42) picks one of a few candidates by chance, for "what do
+`SpinWheel` picks one of a few candidates by chance, for "what do
 I do next?" when every one would do: a wheel of slices, a pointer at the
 top and a Spin button.
 
@@ -2087,7 +1888,7 @@ const [picked, setPicked] = useState<SpinWheelItem | null>(null)
 
 ## Filling in what's missing
 
-`FillInQueue` (4.42) walks a list of records that are each missing a
+`FillInQueue` walks a list of records that are each missing a
 value, one record at a time: a size for every project without one, a
 category for each unsorted purchase. It is a screen of its own for
 clearing a backlog of blanks, linked from the list ("12 without a
@@ -2136,7 +1937,7 @@ size"); the list stays where a record is edited one field at a time.
 - A refused save keeps the record and says why under the buttons, not
   in a toast. It owns its states: skeletons, `ErrorState`, and the
   empty queue, which is the good news ("Every project has a size").
-- **Other kinds of value** (4.53): `FillInInput` is the row for text,
+- **Other kinds of value**: `FillInInput` is the row for text,
   long text, a number, money (the currency's symbol before it) or a date
   (`DateField`), and `FillInSelect` for a list too long for buttons (a
   reference to another record). Each has the label above and a
@@ -2158,36 +1959,28 @@ size"); the list stays where a record is edited one field at a time.
 
 The `inPlace` presets (cell pattern 18, "Presets") draw a value the same
 way everywhere it's edited in place, so a record's view reads alike
-across apps. Their fixture is `app/EditInPlacePresets`, axe-checked in
-both themes and every palette.
+across apps. That pattern's table has how each reads at rest; beyond it:
 
-- **Money** reads as the currency formats it, `$1,234.56`, two decimals
-  always; its box has the symbol before it (an `InputGroup` addon in the
-  muted text tone), as `FillInInput`'s money does.
-- **A number with a unit** reads `12 h`, the unit after a space; its box
-  has the unit after it, in the same addon tone.
+- **Money**'s box has the symbol before it (an `InputGroup` addon in the
+  muted text tone), as `FillInInput`'s money does; **a number with a
+  unit** has the unit after it, in the same addon tone.
 - **A date** reads `Sep 2, 2026` (`dateStyle: 'medium'`), never shifted
   by the time zone.
-- **A select** reads as its option's label, or as the app's `render`
-  (a badge in its tone), the same on the trigger and in the list.
-- **A link** reads as its label, else the address's host, in `--link`,
-  underlined, with the external-link mark: `LinkOut`, LinkCell's look.
-- **Several fields edited as one** read at rest as their values joined
-  by " · " (`Small · Low`). Open, each part has its label over it in
-  `type-caption text-muted-foreground`, and a part's refusal under it in
-  the destructive text tone, as a form field's; the pair's own refusal is
-  under them all.
+- **A link** reads in `--link`, underlined, with the external-link mark:
+  `LinkOut`, LinkCell's look.
+- **Several fields edited as one**: open, each part has its label over
+  it in `type-caption text-muted-foreground`, and a part's refusal under
+  it in the destructive text tone, as a form field's; the pair's own
+  refusal is under them all.
 - **A list in place under group headings** heads each group in
   `type-label text-muted-foreground` (an `<h3>` under the section's
   title), with `gap-4` between groups and the list's own `gap-2` inside.
 
 ## The sidebar and the phone's bar
 
-`AppShell`'s navigation (4.80), all set in the app's `nav` and
-`bottomBar`, and (4.87) the trail and search in the bar; an app that
-sets none of it looks as it did, except the current entry's bar, the
-phone's back arrow and the nav entry's name in the bar, which every app
-gets.
+`AppShell`'s navigation, all set in the app's `nav` and `bottomBar`, and
+the trail and search in the bar. Their props are in the type
+declarations.
 
 ```tsx
 const nav: NavEntry[] = [
@@ -2209,72 +2002,30 @@ const bottomBar: BottomBarItem[] = [
   at its start, the same mark as a selected or hovered table row, in the
   sidebar and on the icon rail.
 - **Headings among a module's pages** (a group `{ label, items }` in an
-  entry's `children`): small caption headings in the sidebar's muted
-  text, each heading's pages a list named by it. Use them for a module
-  with more than about six pages, a few words each; the rail's tooltip
-  names the headings ("Finance: Money, Spending").
+  entry's `children`): use them for a module with more than about six
+  pages, a few words each.
 - **Counts** (`count`, `countLabel`): a plain number at the entry's end
-  in the muted text tone, never a coloured badge; on the icon rail a dot
-  in `--primary` on the icon. Only on entries that ask you to act
-  (unread, to fill in, new); 0 shows nothing, nor does a count still
-  loading, and past 99 it reads "99+". `countLabel` is what the number
-  counts, read after the entry's name ("News 24 unread"). On a phone
-  (4.113) the bottom bar has no room at an item's end, so its count is
-  a small `--primary` badge on the item's icon, ringed in the bar's
-  background: a page's own count, or a section's sum of its entries'
-  (with their `countLabel` when they share one). The sheet's tiles carry
-  theirs in the corner and its list links at their end, as the sidebar
-  does. Each is read after its name ("News, 7 new").
-- **A section at the foot** (`placement: 'bottom'`): under every other
-  section and `sidebarExtra`, pushed to the sidebar's foot when there's
-  room; for tools rather than modules.
+  in the muted text tone, never a coloured badge. Only on entries that
+  ask you to act (unread, to fill in, new). `countLabel` is what the
+  number counts, read after the entry's name ("News 24 unread").
+- **A section at the foot** (`placement: 'bottom'`): for tools rather
+  than modules.
 - **A phone's back arrow:** below 48rem, a page below a nav entry (a
-  record under Accounts) shows "‹ Accounts" in `--link` at the header's
-  start, linking to the entry. With a `bottomBar` it takes the menu
-  button's place; without one the menu button stays beside it. An
-  entry's own page keeps the menu button.
-- **An area's sheet as tiles** (`sheet: 'tiles'`): a three-column grid,
-  one tile per entry, the icon in `--link` over the label, bordered,
-  44px tall at least; the tile holding the page has a `--primary`
-  border. The entries' own pages are left to the module.
+  record under Accounts) shows "‹ Accounts" at the header's start,
+  linking to the entry.
+- **An area's sheet as tiles** (`sheet: 'tiles'`): a grid of tiles, one
+  per entry, in place of a list.
 - **The sidebar as icon tiles** (`navLook="tiles"` on `AppShell`, or a
-  section's own `look: 'tiles'`; 4.99): fewer words, more icons. Each
-  group is a three-column grid of tiles, the icon (20px) over a short
-  label in the caption size, on the sidebar's tint at half strength; no
-  visible headings (a section's label names its grid for screen
-  readers). The tile you're in, or the one holding the page, has the
-  full tint and a 1px `--primary` ring; a count sits in its top corner
-  in the sidebar's text tone. The pages of the entry you're in list
-  under its group's grid as the list look's, a hairline in place of
-  each heading (each run still a list named by it). A tiles section
-  doesn't fold. The icon rail is the rail's icons, as in the list look,
-  and the sidebar's phone sheet shows the tiles. A `bottomBar` item for
-  a tiles section with no `sheet` of its own opens its sheet as tiles,
-  with the current entry's pages under them as smaller tiles, four to a
-  row, 44px at least. Keep tile labels to a word or two; a section that
-  should stay a list (Tools at the foot) sets `look: 'list'`.
+  section's own `look: 'tiles'`): fewer words, more icons. Keep tile
+  labels to a word or two; a section that should stay a list (Tools at
+  the foot) sets `look: 'list'`.
 - **The trail in the bar** (`usePageTrail`, `EntityView`'s
-  `back.trail`): between the menu button and the search box, from 48rem
-  up, `PageTrail` at 14px: every crumb but the last a
-  link in the muted text tone, the page itself in the foreground, a `›`
-  between them, the middle folded into "…" when it doesn't fit. A page
-  that names none shows its nav entry's ("Finance › Accounts" for one of
-  Finance's pages, "Home" on the hub). On a phone the trail is hidden and
-  the back arrow goes to its closest crumb above the page that links.
-  It replaces a page's own back link; the bar sits outside `<main>`, so
-  the page's links are still the only ones in it.
+  `back.trail`): from 48rem up; a page that names none shows its nav
+  entry's ("Finance › Accounts" for one of Finance's pages, "Home" on
+  the hub). It replaces a page's own back link; the bar sits outside
+  `<main>`, so the page's links are still the only ones in it.
 - **Search in the bar** (`search={{ placeholder, findRecords, recent }}`):
-  a box from 48rem up, 14rem wide (16rem from 64rem), bordered in
-  `--input` on the page's background, the placeholder in the muted
-  tone and the shortcut (Ctrl K, ⌘K on a Mac) in a `kbd` at its end; a
-  search button on a phone. Both, and the shortcut, open a palette: a
-  dialog 32rem wide at 12% from the top, the field over a list of
-  options under caption headings in the muted tone. Before typing:
-  Recent (the records opened lately on this device, `useRecentRecord`),
-  then the nav's first pages. Typing: Pages (a module's own named
-  "Finance · Accounts", the closest name first), then the app's records
-  under their `kind`, a `detail` in the caption size at the end. The
-  highlighted option has `bg-muted`, its detail in the foreground; a
-  spinner while records are found, "Couldn't search records" (the pages
-  still listed) when the search fails, "Nothing found for …" when
-  nothing matches.
+  a box from 48rem up, a search button on a phone, and the shortcut
+  (Ctrl K, ⌘K on a Mac) open a palette of the nav's pages, the records
+  opened lately on this device (`useRecentRecord`) and the app's records
+  under their `kind`.
