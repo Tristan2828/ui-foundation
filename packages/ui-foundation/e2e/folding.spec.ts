@@ -126,6 +126,29 @@ test.describe('folding in the rich-text editor', () => {
     await expect(text(page).getByText('Compost in March')).toBeVisible()
   })
 
+  // Roadmap-style report: a toggle `##` once seemed to have no way to fold.
+  // A toggle heading of each level, typed at the end (">#… "), gets its
+  // button, and the button folds and opens what is under it.
+  for (const level of [1, 2, 3]) {
+    test(`a toggle heading ${level} typed in the editor shows its button and folds`, async ({ page }) => {
+      await text(page).getByText('Twine').click()
+      await page.waitForTimeout(100)
+      await page.keyboard.press('End')
+      // Twine is a list's last item: a second Enter leaves the list.
+      await page.keyboard.press('Enter')
+      await page.keyboard.press('Enter')
+      await page.keyboard.type(`>${'#'.repeat(level)} Deep ${level}`)
+      await page.keyboard.press('Enter')
+      await page.keyboard.type('Under the deep one.')
+      await expect(saved(page)).toContainText(`${'#'.repeat(level)} Deep ${level} {toggle="true"}`)
+      await expect(fold(page, `Deep ${level}`)).toBeVisible()
+      await fold(page, `Deep ${level}`).click()
+      await expect(text(page).getByText('Under the deep one.')).toBeHidden()
+      await fold(page, `Deep ${level}`).click()
+      await expect(text(page).getByText('Under the deep one.')).toBeVisible()
+    })
+  }
+
   test('a plain heading has no fold button and no marker; only toggle headings fold', async ({ page }) => {
     await expect(text(page).getByRole('heading', { name: 'Soil' })).toBeVisible()
     await expect(fold(page, 'Soil')).toHaveCount(0)

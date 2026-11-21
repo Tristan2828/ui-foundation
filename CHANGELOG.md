@@ -30,6 +30,10 @@ apart from its version). A fix: nothing for an app to change.
 - `e2e/rich-text-inline.spec.ts`: on a note's last line every item of
   "/toggle" shows, none covered, and Toggle Heading 2 makes a toggle
   `##`, at laptop and phone widths.
+- Folding at each level: `e2e/folding.spec.ts` types a toggle heading 1,
+  2 and 3 in the editor and folds and opens each;
+  `tests/markdown-fold-render.test.tsx` checks `<Markdown>` gives each
+  level its fold button. Folding itself had no level-specific bug.
 
 ## 4.133.0 — A record page can fill a wide screen
 

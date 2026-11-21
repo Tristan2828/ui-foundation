@@ -31,6 +31,17 @@ describe('Markdown foldKey', () => {
     expect(html).not.toContain('{toggle')
   })
 
+  // A toggle `##` was once reported to have no way to fold: each level, 1
+  // to 3, gets its button, its section's id at its own level.
+  it.each([1, 2, 3])('a toggle heading %i gets an open fold button', (level) => {
+    const html = renderToStaticMarkup(<Markdown foldKey={`test:level-${level}`}>{`${'#'.repeat(level)} Deep${T}
+
+Under it.
+`}</Markdown>)
+    expect(html).toContain(`data-fold-id="${level}:Deep"`)
+    expect(html).toContain('aria-expanded="true" aria-label="Deep"')
+  })
+
   it('draws a plain heading plain: no button, no room for one, still found by its fold id', () => {
     const html = renderToStaticMarkup(<Markdown foldKey="test:plain">{'## Plain\n\nUnder it.\n\n## Toggle {toggle="true"}\n\nUnder that.\n'}</Markdown>)
     expect(html.match(/data-slot="fold-button"/g)).toHaveLength(1)
