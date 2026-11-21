@@ -34,10 +34,6 @@ apart from its version). A fix: nothing for an app to change.
   2 and 3 in the editor and folds and opens each;
   `tests/markdown-fold-render.test.tsx` checks `<Markdown>` gives each
   level its fold button. Folding itself had no level-specific bug.
-- Folding at each level: `e2e/folding.spec.ts` types a toggle heading 1,
-  2 and 3 in the editor and folds and opens each;
-  `tests/markdown-fold-render.test.tsx` checks `<Markdown>` gives each
-  level its fold button. Folding itself had no level-specific bug.
 
 ## 4.135.0 — Home-screen shortcuts in pwa()
 
