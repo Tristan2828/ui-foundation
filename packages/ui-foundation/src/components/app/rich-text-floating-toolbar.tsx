@@ -129,7 +129,7 @@ export function RichTextFloatingToolbar({
         else if (ref) ref.current = element
       }}
       role="toolbar"
-      aria-label="Format selection"
+      aria-label="Format Selection"
       aria-controls={controls}
       data-slot="rich-text-floating-toolbar"
       data-side={placement?.side}

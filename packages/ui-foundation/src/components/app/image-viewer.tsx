@@ -230,7 +230,7 @@ function ViewerImage({ image }: { image: ImageViewerImage }) {
       )}
       {state === 'loading' && (
         <div data-slot="image-viewer-loading" className="absolute inset-0 flex items-center justify-center">
-          <Spinner className="size-8 text-muted-foreground" aria-label="Loading image" />
+          <Spinner className="size-8 text-muted-foreground" aria-label="Loading Image" />
         </div>
       )}
       {state === 'failed' && (

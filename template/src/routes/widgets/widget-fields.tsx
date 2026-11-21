@@ -128,7 +128,7 @@ export function WidgetDescriptionEditor({
       inline={inline}
       // The floating toolbar on the form too (the form standard: notes on a
       // form): formats over selected words, the rest in the slash menu
-      // and the "Editor tools" strip (Image there when given `upload`).
+      // and the "Editor Tools" strip (Image there when given `upload`).
       toolbar="floating"
       placeholder={inline ? 'Describe the widget, or type / for blocks' : 'Describe the widget'}
       maxLength={DESCRIPTION_MAX_LENGTH}

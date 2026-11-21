@@ -203,7 +203,7 @@ export const Features: StoryObj<typeof RichTextEditor> = {
 // that stores the file after 1.2s (paste, drop or the toolbar's Image
 // button; a placeholder shows meanwhile), one whose uploads all fail, one
 // that takes files up to 1 MB, one with the floating toolbar only (its
-// Image button on the "Editor tools" strip while it has focus), and one without `upload`, which handles no files.
+// Image button on the "Editor Tools" strip while it has focus), and one without `upload`, which handles no files.
 // A refusal is a toast (e2e/rich-text-editor.spec.ts "image upload").
 export const ImageUploads: StoryObj<typeof RichTextEditor> = {
   render: () => (

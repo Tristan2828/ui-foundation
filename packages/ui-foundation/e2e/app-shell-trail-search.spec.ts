@@ -20,7 +20,7 @@ async function openWide(page: Page, id: string, theme?: 'light' | 'dark') {
 async function openPhone(page: Page, id: string, theme?: 'light' | 'dark') {
   await page.setViewportSize({ width: 393, height: 852 })
   await page.goto(story(`app-appshell--${id}`, theme))
-  await expect(page.getByRole('navigation', { name: 'Bottom bar' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Bottom Bar' })).toBeVisible()
 }
 
 test("R2, N5: a record's trail is in the bar, its title last, and the page has no back link", async ({ page }) => {

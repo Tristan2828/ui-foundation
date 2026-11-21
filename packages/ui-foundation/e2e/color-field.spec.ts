@@ -39,7 +39,7 @@ test('a colour that is none of them shows Custom with its hex, and the value goe
   const calendar = page.getByRole('radiogroup', { name: 'Calendar Colour' })
   await expect(calendar.getByRole('radio', { name: 'Custom' })).toBeChecked()
   await expect(calendar.locator('[data-slot=color-field-hex]')).toHaveText('#c0ffee')
-  await expect(calendar.getByLabel('Custom colour')).toHaveValue('#c0ffee')
+  await expect(calendar.getByLabel('Custom Colour')).toHaveValue('#c0ffee')
   await expect(values(page)).toHaveText('#2563eb · C0FFEE · empty')
 
   // An app's own list: a value stored uppercase is still its name, and
@@ -84,10 +84,10 @@ test('the keyboard: one tab stop, arrows move and pick with a visible ring, Tab 
   await page.keyboard.press('Space')
   expect(await pickerOpens(page)).toBe(0)
   await page.keyboard.press('Tab')
-  await expect(label.getByLabel('Custom colour')).toBeFocused()
+  await expect(label.getByLabel('Custom Colour')).toBeFocused()
   // Arrows on the picker don't move the group.
   await page.keyboard.press('ArrowLeft')
-  await expect(label.getByLabel('Custom colour')).toBeFocused()
+  await expect(label.getByLabel('Custom Colour')).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('radiogroup', { name: 'Calendar Colour' }).getByRole('radio', { name: 'Custom' })).toBeFocused()
 })
@@ -100,7 +100,7 @@ test('Custom by pointer opens the browser’s picker, and its colour goes out in
   await expect(label.getByRole('radio', { name: 'Custom' })).toBeChecked()
   expect(await pickerOpens(page)).toBe(1)
 
-  await label.getByLabel('Custom colour').fill('#123abc')
+  await label.getByLabel('Custom Colour').fill('#123abc')
   await expect(label.locator('[data-slot=color-field-hex]')).toHaveText('#123abc')
   await expect(values(page)).toHaveText('#123abc · C0FFEE · empty')
   await expect(label.getByRole('radio', { name: 'Custom' })).toBeChecked()

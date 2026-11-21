@@ -48,7 +48,7 @@ test.describe('highlight', () => {
   test('the floating toolbar has the menu, and stays open through it', async ({ page }) => {
     await page.goto(FEATURES)
     await selectFormat(page)
-    const bar = page.getByRole('toolbar', { name: 'Format selection' })
+    const bar = page.getByRole('toolbar', { name: 'Format Selection' })
     await bar.getByRole('button', { name: 'Highlight' }).click()
     await page.getByRole('menuitemradio', { name: 'Red' }).click()
     await expect(saved(page, 'formats')).toContainText('=={red}Format== me here.')

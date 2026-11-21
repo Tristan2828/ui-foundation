@@ -112,7 +112,7 @@ export type RichTextEditorProps = {
   /**
    * Images uploaded into the text: pasted, dropped, or picked with an
    * Image button (on the fixed toolbar; with `toolbar="floating"`, on the
-   * "Editor tools" strip shown while the field has focus; on a phone, in
+   * "Editor Tools" strip shown while the field has focus; on a phone, in
    * the row pinned to the keyboard) or the slash menu's Image ("/image"). Each file goes
    * through this (the app's own storage: the package knows no endpoint) and goes in as
    * `![](url)`, from the result's `url`, else its `thumbUrl`. A

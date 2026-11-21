@@ -7,6 +7,31 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.137.2 — The last sentence-case labels in Title Case
+
+npm package and `ui-foundation-backend` 4.137.2 (the backend is unchanged
+apart from its version). Roadmap-style upkeep: the Title Case rule of 4.97
+had missed a few accessible names. Nothing for an app to change unless a
+test names one of them by exact case (Playwright's string `name` matches
+case-insensitively, so most do not).
+
+### Strings changed
+
+| Where | Old | New |
+| --- | --- | --- |
+| `EmojiField` search box | Search emoji | Search Emoji |
+| Rich text floating toolbar | Format selection | Format Selection |
+| Rich text tools strip | Editor tools | Editor Tools |
+| `MonthCalendar` month buttons | Previous month / Next month | Previous Month / Next Month |
+| App shell bottom bar landmark | Bottom bar | Bottom Bar |
+| `ImageViewer` spinner | Loading image | Loading Image |
+| `ColorField` hex box | Custom colour | Custom Colour |
+
+Left as written because they are sentences or data: the "You are here"
+trail landmark, "Put the words back in the title", "Read from the line",
+the star and "Not done" screen reader names, and values such as "All day".
+Show Deleted, Columns, Try Again and the rest were already Title Case.
+
 ## 4.137.1 — A chart's hidden table no longer widens a phone's page
 
 npm package and `ui-foundation-backend` 4.137.1 (the backend is unchanged

@@ -3,7 +3,7 @@
 // The related screens (Board, Change log) stay out as buttons while
 // there's one; two or more fold into the menu with the page's other
 // extras, so the row is the same on a list with no siblings and one with
-// four. "Show deleted" is the menu's last item, and while it's on a notice
+// four. "Show Deleted" is the menu's last item, and while it's on a notice
 // says so with "Back to the list", so the ⋯ menu and the notice are one
 // component and a list can't show deleted records without saying so.
 //
@@ -15,7 +15,7 @@
 // one thing seen three ways (Exercises / Targets / Weak spots): links in a
 // segmented row, the one on marked as the current page. They're the
 // page's own peers, so they aren't in ⋯, which keeps only what's left
-// (Show deleted). On a phone the switch takes its own line under the
+// (Show Deleted). On a phone the switch takes its own line under the
 // title and scrolls sideways if it must.
 //
 // `secondaryAction` is one more button, beside New and before it, for a
@@ -101,7 +101,7 @@ export type ListHeaderProps = {
   /** The page's other actions (Export, Import), in ⋯ after the folded links. */
   more?: readonly ListHeaderAction[]
   /**
-   * Soft-deleted records, for a list that has them: "Show deleted" in ⋯,
+   * Soft-deleted records, for a list that has them: "Show Deleted" in ⋯,
    * and the notice while it is on. `noun` completes "Showing deleted
    * <noun>" (default "records").
    */

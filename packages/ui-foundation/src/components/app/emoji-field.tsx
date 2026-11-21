@@ -88,7 +88,7 @@ export function EmojiField({
         <Input
           type="search"
           autoComplete="off"
-          aria-label="Search emoji"
+          aria-label="Search Emoji"
           placeholder="Search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}

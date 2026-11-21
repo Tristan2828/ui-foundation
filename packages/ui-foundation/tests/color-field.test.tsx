@@ -87,7 +87,7 @@ describe('ColorField', () => {
     expect(html).toMatch(/role="radiogroup"[^>]*id="colour"|id="colour"[^>]*role="radiogroup"/)
     expect(radios(html).map(({ name }) => name)).toEqual(['White', 'Brick', 'Half-clear', 'Custom'])
     expect(html).toContain('style="background-color:#c0392b"')
-    expect(html).toContain('aria-label="Custom colour"')
+    expect(html).toContain('aria-label="Custom Colour"')
     expect(html).toContain('type="color"')
   })
 
