@@ -36,6 +36,13 @@ apart from its version). Additive.
   and action, months, Today and the keys, Sunday weeks, the phone's dots,
   the states, and axe at laptop and phone widths.
 - `design-language.md`: new "A month calendar".
+- The shipped conventions were corrected and trimmed; no rule, step or
+  pattern was removed. Two numbers moved: in `cell-patterns.md` the list
+  rows pattern ("A list's rows: hover, lines, rows per page") is now 28,
+  since two patterns were numbered 24 ("A stored colour beside its name"
+  keeps 24); in `add-an-entity.md` step 6's detail on each field type is
+  under "Step 6 in detail", and steps 1 to 10 keep their numbers. An app
+  whose own notes cite "cell pattern 24" for list rows means 28.
 
 ## 4.136.1 — The slash menu is never cut off by a card
 
