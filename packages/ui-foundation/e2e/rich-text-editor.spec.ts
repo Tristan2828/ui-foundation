@@ -525,7 +525,7 @@ test.describe('toolbar', () => {
 // "formats" editor ("Format me here.", "Second line.", "Third line.").
 test.describe('floating toolbar', () => {
   test.skip(({ isMobile }) => isMobile, 'a laptop: on a phone the bar pinned to its keyboard has the formats for words (rich-text-phone.spec.ts)')
-  const floating = (page: Page) => page.getByRole('toolbar', { name: 'Format selection' })
+  const floating = (page: Page) => page.getByRole('toolbar', { name: 'Format Selection' })
   const floatingButton = (page: Page, label: string) => floating(page).getByRole('button', { name: label, exact: true })
   const fixed = (page: Page) => page.locator('[data-fixture="formats"]').getByRole('toolbar', { name: 'Formatting' })
 
@@ -1298,11 +1298,11 @@ test.describe('image upload', () => {
   })
 
   // `toolbar="floating"` (forms' notes, 17.2): the Image button is on the
-  // "Editor tools" strip while the field has focus, the fixed toolbar's
+  // "Editor Tools" strip while the field has focus, the fixed toolbar's
   // button exactly: its file picker, types, upload and `![](url)`.
   test.describe('the floating toolbar\'s Image button', () => {
     test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has it in the row pinned to its keyboard (rich-text-phone.spec.ts)')
-    const tools = (page: Page) => page.locator('[data-fixture="floating"]').getByRole('toolbar', { name: 'Editor tools' })
+    const tools = (page: Page) => page.locator('[data-fixture="floating"]').getByRole('toolbar', { name: 'Editor Tools' })
 
     test('picks images as the fixed toolbar does, they go in as ![](url), and focus stays in the text', async ({ page }) => {
       await caretAtEnd(page, 'floating')

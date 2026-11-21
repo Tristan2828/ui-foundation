@@ -17,7 +17,7 @@ function story(id: string, look: 'light' | 'dark' | (typeof PALETTES)[number] = 
   return `${base}&theme=${look === 'palm-lcd' ? 'light' : 'dark'}&palette=${look}`
 }
 
-const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom bar' })
+const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom Bar' })
 
 async function openPhone(page: Page, id: string, look?: Parameters<typeof story>[1]) {
   await page.setViewportSize({ width: 375, height: 812 })

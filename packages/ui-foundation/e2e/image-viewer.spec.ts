@@ -154,7 +154,7 @@ test('a spinner shows while the next image loads, then the image', async ({ page
   await expect(counter(page)).toHaveText('4 of 7')
   await next(page).click()
   await expect(counter(page)).toHaveText('5 of 7')
-  const loading = viewer(page).getByRole('status', { name: 'Loading image' })
+  const loading = viewer(page).getByRole('status', { name: 'Loading Image' })
   await expect(loading).toBeVisible()
   await expect(shown(page)).toHaveCSS('opacity', '0')
   release()

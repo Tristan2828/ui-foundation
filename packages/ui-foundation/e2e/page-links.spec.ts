@@ -132,7 +132,7 @@ test.describe('page links, edited', () => {
     await page.waitForTimeout(100)
     await words.dblclick({ position: { x: 8, y: 8 } })
     await page.waitForTimeout(100)
-    await expect(page.getByRole('toolbar', { name: 'Format selection' })).toBeVisible()
+    await expect(page.getByRole('toolbar', { name: 'Format Selection' })).toBeVisible()
     await page.getByRole('button', { name: 'Turn Into Page' }).click()
     const title = page.getByRole('textbox', { name: 'Page Title' })
     await expect(title).toHaveValue('Type')

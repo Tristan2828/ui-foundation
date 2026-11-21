@@ -42,7 +42,7 @@ test('a laptop shows titles in the days, two then a count, and the picked day un
 test('months, Today and the keys', async ({ page }) => {
   await page.setViewportSize(LAPTOP)
   await page.goto(story('default'))
-  await page.getByRole('button', { name: 'Next month' }).click()
+  await page.getByRole('button', { name: 'Next Month' }).click()
   await expect(page.getByRole('grid', { name: 'Events, December 2026' })).toBeVisible()
   await expect(day(page, '2026-12-09').locator('li')).toHaveText(['Dentist'])
   await page.getByRole('button', { name: 'Today' }).click()

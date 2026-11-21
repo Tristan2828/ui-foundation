@@ -11,7 +11,7 @@ const story = (id: string, theme?: 'light' | 'dark') =>
   `http://localhost:6180/story.html?id=app-appshell--${id}${theme ? `&theme=${theme}` : ''}`
 
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Primary' })
-const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom bar' })
+const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom Bar' })
 
 async function openWide(page: Page, id: string, theme?: 'light' | 'dark') {
   await page.setViewportSize({ width: 1280, height: 800 })

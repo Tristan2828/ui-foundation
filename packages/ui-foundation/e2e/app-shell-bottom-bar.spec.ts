@@ -8,7 +8,7 @@ import { expect, test, type Page } from '@playwright/test'
 // themes.
 const STORY = 'http://localhost:6180/story.html?id=app-appshell--bottom-bar'
 
-const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom bar' })
+const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom Bar' })
 
 async function openAtPhoneWidth(page: Page, theme?: 'light' | 'dark') {
   await page.setViewportSize({ width: 393, height: 852 })

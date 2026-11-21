@@ -222,13 +222,13 @@ export function MonthCalendar({
         <h2 className="mr-auto type-body font-semibold text-foreground" aria-live="polite">
           {monthName}
         </h2>
-        <Button variant="outline" size="icon-sm" aria-label="Previous month" onClick={() => showMonth(shiftMonth(shown, -1))}>
+        <Button variant="outline" size="icon-sm" aria-label="Previous Month" onClick={() => showMonth(shiftMonth(shown, -1))}>
           <ChevronLeftIcon aria-hidden="true" />
         </Button>
         <Button variant="outline" size="sm" onClick={() => pick(today)}>
           Today
         </Button>
-        <Button variant="outline" size="icon-sm" aria-label="Next month" onClick={() => showMonth(shiftMonth(shown, 1))}>
+        <Button variant="outline" size="icon-sm" aria-label="Next Month" onClick={() => showMonth(shiftMonth(shown, 1))}>
           <ChevronRightIcon aria-hidden="true" />
         </Button>
       </div>

@@ -9,7 +9,7 @@ const INLINE = 'http://localhost:6180/story.html?id=app-richtexteditor--inline'
 
 const region = (page: Page, name: string) => page.getByRole('region', { name, exact: true })
 const notes = (page: Page) => region(page, 'Notes').getByRole('textbox', { name: 'Notes' })
-const floating = (page: Page) => page.getByRole('toolbar', { name: 'Format selection' })
+const floating = (page: Page) => page.getByRole('toolbar', { name: 'Format Selection' })
 const menu = (page: Page) => page.getByRole('listbox', { name: 'Blocks' })
 
 async function openInline(page: Page, theme?: 'light' | 'dark') {
@@ -156,7 +156,7 @@ test.describe('rich text edited inline', () => {
 // Full screen, and Indent and Outdent on a phone (rich-text-tools-bar.tsx).
 test.describe('the tools strip', () => {
   test.skip(({ isMobile }) => isMobile, 'a laptop: a phone has the bar pinned to its keyboard (rich-text-phone.spec.ts)')
-  const tools = (page: Page) => page.getByRole('toolbar', { name: 'Editor tools' })
+  const tools = (page: Page) => page.getByRole('toolbar', { name: 'Editor Tools' })
 
   // No `upload` here, so no Image (rich-text-editor.spec.ts has it).
   test('only while the field has focus: Full screen, and no Indent with a mouse', async ({ page }) => {

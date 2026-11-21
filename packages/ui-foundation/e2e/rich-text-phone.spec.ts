@@ -140,7 +140,7 @@ test.describe('on a phone', () => {
     await page.goto(FEATURES)
     await editor(page, 'formats').locator('p').first().dblclick({ position: { x: 8, y: 8 } })
     await expect(bar(page).getByRole('button').nth(1)).toHaveAccessibleName('Bold')
-    await expect(page.getByRole('toolbar', { name: 'Format selection' })).toHaveCount(0)
+    await expect(page.getByRole('toolbar', { name: 'Format Selection' })).toHaveCount(0)
     await bar(page).getByRole('button', { name: 'Bold', exact: true }).click()
     await expect(saved(page, 'formats')).toContainText('**Format** me here.')
     await expect(bar(page).getByRole('button', { name: 'Bold', exact: true })).toHaveAttribute('aria-pressed', 'true')
@@ -267,7 +267,7 @@ test.describe('on a laptop', () => {
     await page.goto(FEATURES)
     await expect(fixture(page, 'formats').getByRole('toolbar', { name: 'Formatting' })).toBeVisible()
     await editor(page, 'formats').locator('p').first().dblclick({ position: { x: 8, y: 8 } })
-    await expect(page.getByRole('toolbar', { name: 'Format selection' })).toBeVisible()
+    await expect(page.getByRole('toolbar', { name: 'Format Selection' })).toBeVisible()
     await expect(page.locator('[data-slot=rich-text-keyboard-bar]')).toHaveCount(0)
     // The task box as it was: 16px, its row as tall as its line.
     const hit = fixture(page, 'tasks').locator('[data-slot=task-box]').first()

@@ -286,7 +286,7 @@ export function BottomBar({
   return (
     <>
       <nav
-        aria-label="Bottom bar"
+        aria-label="Bottom Bar"
         data-slot="app-shell-bottom-bar"
         className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
       >

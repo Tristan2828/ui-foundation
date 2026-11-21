@@ -50,7 +50,7 @@ export function RichTextToolsBar({ state, readOnly, fullScreen, controls, onForm
     <div
       ref={ref}
       role="toolbar"
-      aria-label="Editor tools"
+      aria-label="Editor Tools"
       aria-controls={controls}
       data-slot="rich-text-tools-bar"
       className={cn(

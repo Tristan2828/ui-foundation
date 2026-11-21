@@ -473,7 +473,7 @@ test.describe('widget view: editing in place', () => {
     await page.waitForTimeout(100)
 
     // Alt+F10 into it: still open, nothing sent.
-    const floating = description.getByRole('toolbar', { name: 'Format selection' })
+    const floating = description.getByRole('toolbar', { name: 'Format Selection' })
     await expect(floating).toBeVisible()
     await page.keyboard.press('Alt+F10')
     await expect(floating.getByRole('button', { name: 'Bold', exact: true })).toBeFocused()

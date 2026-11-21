@@ -1185,7 +1185,7 @@ const price = editInPlace({
   saved by it), and on a touch screen or under 768px it carries Indent
   and Outdent for list items, where there is no Tab. A field with only the
   floating toolbar (`inline` notes, and notes on a form) gets the same
-  two in a small "Editor tools" strip over its corner while it has focus,
+  two in a small "Editor Tools" strip over its corner while it has focus,
   with the Image button too when the editor has `upload`. On a touch screen the
   toolbar is instead one row pinned to the top of the keyboard while the
   field has focus (Aa for every format, in the keyboard's place; the list

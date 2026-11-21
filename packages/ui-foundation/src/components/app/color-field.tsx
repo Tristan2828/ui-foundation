@@ -137,7 +137,7 @@ export function ColorField({
             ref={picker}
             type="color"
             data-slot="color-field-picker"
-            aria-label="Custom colour"
+            aria-label="Custom Colour"
             value={pickerHex(value)}
             disabled={disabled}
             onChange={(event) => {
