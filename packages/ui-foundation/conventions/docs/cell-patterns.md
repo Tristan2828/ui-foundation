@@ -41,10 +41,10 @@
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1935–2011
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 2013–2099
   - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2038–2099
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2101–2347
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2276–2347
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2349–2385
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2387–2436
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2101–2351
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2280–2351
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2353–2389
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2391–2440
 
 <!-- /index -->
 
@@ -2267,8 +2267,12 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   or a modified click works as a link's does. `title` is plain text (the
   row is already the link). Row actions sit at the row's end; headings,
   paging and every state hold. A card layout, when picked, wins.
-- The fixtures' `app/DataTable tools` ListTools, ListToolsFiltered and
-  OneRowAction stories hold all of it, under axe and the token check in
+- **`lead`** (4.134) puts one control at the row's start, outside the
+  link, in a 44px-wide column: the tick that completes a to-do from its
+  row. Its clicks never open the record, so it carries its own label
+  (`Complete <title>`), as the table's tick column does.
+- The fixtures' `app/DataTable tools` ListTools, ListToolsFiltered,
+  OneRowAction and PhoneRowLead stories hold all of it, under axe and the token check in
   both themes; `e2e/data-table-tools.spec.ts` checks the pills, the stored
   pick and a view's columns winning, the ⋯ menu, the 44px rows, the
   phone's line and sheet.

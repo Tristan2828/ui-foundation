@@ -3,42 +3,45 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 51–160
-- [Glow](#glow) · lines 162–181
-- [Semantic tones](#semantic-tones) · lines 183–211
-- [The three badge styles](#the-three-badge-styles) · lines 213–230
-- [Status marks](#status-marks) · lines 232–277
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 279–308
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 310–323
-- [Logos and brand marks](#logos-and-brand-marks) · lines 325–369
-- [Categorical colour](#categorical-colour) · lines 371–441
-- [Heat scale](#heat-scale) · lines 443–504
-- [Depth ramps](#depth-ramps) · lines 506–591
-- [A stored colour](#a-stored-colour) · lines 593–650
-- [Shapes and sizes](#shapes-and-sizes) · lines 652–673
-- [Typography](#typography) · lines 675–846
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 709–742
-  - [Written text (notes)](#written-text-notes) · lines 744–846
-- [Density](#density) · lines 848–941
-  - [Rows on this device](#rows-on-this-device) · lines 914–941
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 943–1057
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1059–1136
-- [Notices](#notices) · lines 1138–1166
-- [A value over time](#a-value-over-time) · lines 1168–1254
-  - [Several values over time](#several-values-over-time) · lines 1217–1254
-- [A list as a board](#a-list-as-a-board) · lines 1256–1307
-- [A list as cards](#a-list-as-cards) · lines 1309–1355
-- [Images full screen](#images-full-screen) · lines 1357–1403
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1405–1441
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1443–1513
-- [A few equal things](#a-few-equal-things) · lines 1515–1635
-- [An overview page](#an-overview-page) · lines 1637–1708
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1709–1775
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1777–1914
-- [Picking at random](#picking-at-random) · lines 1916–1947
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1949–2016
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2018–2043
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2045–2141
+- [Palettes](#palettes) · lines 54–163
+- [Glow](#glow) · lines 165–184
+- [Semantic tones](#semantic-tones) · lines 186–214
+- [The three badge styles](#the-three-badge-styles) · lines 216–233
+- [Status marks](#status-marks) · lines 235–280
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 282–311
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 313–326
+- [Logos and brand marks](#logos-and-brand-marks) · lines 328–372
+- [Categorical colour](#categorical-colour) · lines 374–444
+- [Heat scale](#heat-scale) · lines 446–507
+- [Depth ramps](#depth-ramps) · lines 509–594
+- [A stored colour](#a-stored-colour) · lines 596–653
+- [Shapes and sizes](#shapes-and-sizes) · lines 655–676
+- [Typography](#typography) · lines 678–849
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 712–745
+  - [Written text (notes)](#written-text-notes) · lines 747–849
+- [Density](#density) · lines 851–971
+  - [Rows on this device](#rows-on-this-device) · lines 917–944
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 946–971
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 973–1087
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1089–1166
+- [Notices](#notices) · lines 1168–1196
+- [A value over time](#a-value-over-time) · lines 1198–1328
+  - [Several values over time](#several-values-over-time) · lines 1247–1285
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1287–1328
+- [A list as a board](#a-list-as-a-board) · lines 1330–1446
+  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1383–1446
+- [A list as cards](#a-list-as-cards) · lines 1448–1494
+- [Images full screen](#images-full-screen) · lines 1496–1542
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1544–1580
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1582–1652
+- [A few equal things](#a-few-equal-things) · lines 1654–1774
+- [An overview page](#an-overview-page) · lines 1776–1847
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1848–1914
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1916–2053
+- [Picking at random](#picking-at-random) · lines 2055–2086
+- [Filling in what's missing](#filling-in-whats-missing) · lines 2088–2155
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2157–2182
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2184–2280
 
 <!-- /index -->
 
@@ -940,6 +943,33 @@ toggle in an app without a palette).
 - Content inside cells (an inline editor, a button, a badge) must fit both
   heights; check a cell like that at both.
 
+### Page width (a record on a wide screen)
+
+A record page (`EntityView`) keeps a reading width: its column is at most
+`max-w-4xl`, and with a facts rail the page is that plus the 300px rail.
+On a TV the right of the page is then empty. `data-width="wide"` on
+`<html>` (4.133) lifts the cap: the column fills the page and the rail
+stays 300px, moving right with it.
+
+```ts
+// The app's own Page Width setting, kept per browser, applied before first paint.
+document.documentElement.dataset.width = wide ? 'wide' : ''
+```
+
+- **The app owns the setting**, as it owns Text Size: a field on its
+  settings page, kept in `localStorage`, set on `<html>` by a script in
+  `index.html` so the first paint has it. Regular (no attribute) is the
+  layout as it always was.
+- **Only the record page widens.** A record in a dialog over its list
+  keeps the dialog's size (the rule skips anything inside
+  `role="dialog"`); a phone is unchanged, since the column already fills
+  it; lists already take the content's width.
+- **Long text reflows to the column**: notes and tabs fill it; the
+  Details tab keeps its own 42rem.
+- Anything else of the package's that should follow it uses the
+  `page-wide:` variant (`page-wide:max-w-none`), which has the same
+  dialog rule.
+
 ## Widget cards (hub pages)
 
 A hub page (an app's home screen) shows a few small widgets from
@@ -1250,8 +1280,52 @@ balance's history beside low, middle and high projections.
   when no series has a point, a dot for a series of one point.
 - **A screen reader gets a summary** (each series from first to last
   value, and the target) and a table with a column per series.
-- Up to four or five series. More than that, or bars and stacked areas,
-  are a request for the foundation.
+- Up to four or five series. More than that, or bars, are a request for
+  the foundation. Amounts that add up to a total are a stacked area:
+  `StackedAreaChart`, "Parts of a whole over time" below.
+
+### Parts of a whole over time
+
+`StackedAreaChart` (4.132) shows several amounts that add up to a total,
+each a category, over time: a portfolio by asset class, a budget by
+envelope. Each band is stacked on the one below, from zero, so the top
+edge is the total and both the growth and the mix show.
+
+```tsx
+<StackedAreaChart
+  label="Allocation over time"
+  xs={snapshotDates}
+  series={[
+    { label: 'US stocks', values: usStocks },
+    { label: 'International', values: international },
+    { label: 'Bonds', values: bonds },
+    { label: 'Cash', values: cash },
+  ]}
+  formatY={usd}
+  formatX={month}
+  isLoading={isLoading}
+/>
+```
+
+- **Colours are categorical slots**, in order (band 1 takes
+  `category-1`, unless it gives its own `category`), opaque, with a 1px
+  card-coloured line between neighbouring bands. Keep it to about six:
+  the first six slots stay apart for colour-blind readers.
+- **Amounts, stacked from zero:** the range is 0 to the largest total,
+  with room above. There is no share (100%) mode.
+- **One shared `xs`**, oldest first; each band's `values` line up with
+  it. A missing or negative value counts as 0 everywhere (the plot, the
+  legend, the table), so a gap is a 0, not a hole.
+- **The legend** lists the top band first, as the picture reads, each
+  with its latest value and its share of the latest total (rounded, so
+  they may not add to exactly 100), then the total.
+- **The states:** a skeleton at its height while loading; one quiet line
+  when there are no xs, no bands, or only zeros; one stacked column
+  mid-plot for a single snapshot (it turns into bands at the second);
+  the bands.
+- **A screen reader gets a summary** (the total from first to last, each
+  band's latest value and share) and a table with a column per band and
+  a Total column.
 
 ## A list as a board
 
@@ -1305,6 +1379,71 @@ the table's.
   columns share the width, at least 16rem each, and scroll sideways with
   snap points; a phone shows one column at a time, with the edge of the
   next one showing.
+
+### Order, groups and the header (4.131)
+
+```tsx
+<Board<Job, Stage, Size>
+  aria-label="Jobs"
+  columns={[
+    { value: 'idea', label: 'Idea', lead: true, action: <AddButton />, description: 'Worth doing one day',
+      groups: [{ value: 'quick', label: 'Quick' }, { value: 'big', label: 'Big', defaultOpen: false }],
+      footer: <Link to="/jobs?size=someday">Someday {somedayCount}</Link> },
+    { value: 'active', label: 'Active', note: `${waiting} waiting` },
+    { value: 'done', label: 'Done', ordered: false },
+  ]}
+  getGroup={(job) => job.size}
+  ordered
+  pageSize={20}
+  pageKey={filtersKey}
+  phone="counts"
+  menu={(job) => <JobMenuItems job={job} />}
+  onMove={(job, stage, place) => save(job, stage, place.group, place.beforeId ?? afterOf(place.afterId))}
+  {...rest}
+/>
+```
+
+- **Order:** with `ordered`, cards keep `items`' order within their
+  column (and group). A drag within a column reorders, and a 3px line in
+  the text colour (`data-slot="board-drop-line"`) in the gap shows where
+  the card lands; the card dragged is faded where it was. The card's menu
+  has an Order section (Move Up, Move Down, Move to Top, disabled where
+  they can't apply). After any menu move the focus is on the card's menu
+  button wherever it now is, and the status line says "Moved <name> up"
+  (or "down", "to the top"), "to <column>, <group>", or "to place 3 of 8
+  in <column>" for a drag.
+- **`onMove(item, value, place)`:** `place.beforeId` is the card it now
+  sits before and `place.afterId` the one after, among `items` in that
+  column (and group), null at the end and the start. A server that orders
+  by "before this id" takes `beforeId`; one that keeps a position takes
+  the halfway point. The place counts every card in `items`, not only
+  those shown: a drop after the last shown card is before the first one
+  "Show N More" hides. A drop that leaves the card where it was calls
+  nothing. A column with `ordered: false` (Done, by date) has no line, no
+  Order items, and a drop there only changes the column.
+- **Groups:** a column's `groups` split its cards by `getGroup`, each a
+  heading one level under the column's: a chevron, the label in small
+  capitals and its count, a button that folds the group (`defaultOpen:
+  false` starts folded). A drop on a group's cards reports that group; a
+  drop on a folded group's heading outlines it and lands at the group's
+  end. A card whose group isn't one of the column's isn't on the board.
+  The keyboard's way to change group is the app's own field in `menu`
+  (Priority, Size): Board's menu has no group section.
+- **Paging:** `pageSize` shows a column's (or each group's) first cards,
+  then "Show N More"; `pageKey` changing (the filters) folds them back.
+- **The header's slots:** `description` is a caption under the name,
+  `note` short muted text, `action` a control at the end (a +; the other
+  columns keep the header's height), and `lead` outlines the column a
+  list starts in.
+- **The phone's counts:** `phone="counts"` puts a row of buttons over the
+  columns below `lg`, each a column's count over its `shortName`, that
+  shows that one column (`aria-pressed`); from `lg` up, the columns as
+  usual.
+- **The menu:** `menu(item)` appends the app's own items after a
+  separator; the button is then ⋯, "Actions for <name>", holding Move To,
+  Order and the app's items. Without it, the Move button as before.
+- **No grip:** a card that drags shows a grab hand over it, and is picked
+  up whole, from its title link too.
 
 ## A list as cards
 

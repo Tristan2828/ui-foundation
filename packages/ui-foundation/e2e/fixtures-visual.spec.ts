@@ -105,6 +105,10 @@ const COMPOSITE_STORIES = [
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
   { id: 'app-board--empty-columns', mustShow: 'No planned projects' },
   { id: 'app-board--states', mustShow: 'No projects yet' },
+  // 4.131: an ordered board with the ⋯ menu, a grouped column (one group folded), and the header's slots.
+  { id: 'app-board--ordered', mustShow: 'Show 2 More' },
+  { id: 'app-board--grouped', mustShow: 'Someday 4' },
+  { id: 'app-board--slots', mustShow: '1 waiting on parts' },
   // <SpinWheel>: its slices' fills and labels, a picked and a tinted slice, the empty wheel.
   { id: 'app-spinwheel--default', mustShow: 'Spin to pick what to do next.' },
   { id: 'app-spinwheel--all-states', mustShow: 'No items yet' },
@@ -167,6 +171,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-formcontrols--narrow-filters', mustShow: 'Shelf:' },
   // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
   { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
+  // Page width wide (4.133): the record fills the page, the rail stays 300px.
+  { id: 'app-entityview--page-wide', mustShow: 'Sam Example' },
   // Several items in a fact, each marked by its kind's icon or a bullet (4.111).
   { id: 'app-factlist--links-box', mustShow: 'Moving day, the second weekend' },
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
@@ -308,6 +314,7 @@ const COMPOSITE_STORIES = [
   // The table tools: views, FilterBar, Columns, row actions, a capped related list.
   { id: 'app-datatable-tools--list-tools', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--list-tools-filtered', mustShow: 'Status: Thriving' },
+  { id: 'app-datatable-tools--phone-row-lead', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--related', mustShow: 'View All 19' },
   { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
   // Views that fill the filters (4.105): the default view's statuses in the Status filter.
@@ -355,6 +362,9 @@ const COMPOSITE_STORIES = [
   // A value over time against a target, every state (#238).
   { id: 'app-linechart--default', mustShow: 'Standing desk' },
   { id: 'app-linechart--all-states', mustShow: 'No points yet' },
+  // StackedAreaChart (4.132): four bands stacked from zero with the legend; and loading, no points, one snapshot as a column, a shorter one.
+  { id: 'app-stackedareachart--default', mustShow: 'US stocks' },
+  { id: 'app-stackedareachart--all-states', mustShow: 'No points yet' },
   // Cards that fold to their header, one folded at rest (#233).
   { id: 'app-widgetcard--collapsible', mustShow: 'Fix the gate latch' },
   // A folded card's value in each state, an accordion, and a hub's
@@ -466,6 +476,9 @@ const GLYPH_STORIES: {
   // A chart's line (info-text) and target (success-text) on a card (#238).
   { id: 'app-linechart--default' },
   { id: 'app-linechart--all-states' },
+  // Every band, segment and legend swatch of StackedAreaChart, in its categorical slot.
+  { id: 'app-stackedareachart--default' },
+  { id: 'app-stackedareachart--all-states' },
   // The fold chevrons (#233).
   { id: 'app-widgetcard--collapsible' },
   // The accordion's chevrons, and the sheet's arrows (#263).

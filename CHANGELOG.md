@@ -7,6 +7,145 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.135.0 — Home-screen shortcuts in pwa()
+
+npm package and `ui-foundation-backend` 4.135.0 (the backend is unchanged
+apart from its version). Additive: a `pwa()` without `shortcuts` writes the
+manifest it did before.
+
+### How an app adopts it
+
+- Bump both packages to 4.135.0 and run `npx ui-foundation sync`.
+- To offer an action on the installed icon, pass
+  `pwa({ name, shortcuts: [{ name: 'Add To-Do', url: '/todo/add' }] })`
+  (`shortName` and a square PNG `icon` optional). Android and desktop
+  Chrome/Edge show them; iPhone and iPad ignore them. See
+  `docs/foundation/reminders.md` "Home-screen shortcuts".
+
+## 4.134.0 — A control at the start of a phone's row
+
+npm package and `ui-foundation-backend` 4.134.0 (the backend is unchanged
+apart from its version). Additive: a `phoneRow` without `lead` is as
+before.
+
+### How an app adopts it
+
+- Bump both packages to 4.134.0 and run `npx ui-foundation sync`.
+- To tick a row from a phone's row list: give `phoneRow` a `lead` that
+  renders the same control as the table's tick column, with its own
+  `aria-label`.
+
+### What changed
+
+- **`DataTablePhoneRow.lead`**: one control drawn at the row's start, in a
+  44px-wide column outside the row's link or button, so a tap on it never
+  opens the record. `cell-patterns.md` §25 says how; the fixtures'
+  PhoneRowLead story and `e2e/data-table-tools.spec.ts` cover it.
+
+## 4.133.0 — A record page can fill a wide screen
+
+npm package and `ui-foundation-backend` 4.133.0 (the backend is unchanged
+apart from its version). Additive: without the attribute every page is as
+before.
+
+### How an app adopts it
+
+- Bump both packages to 4.133.0 and run `npx ui-foundation sync`.
+- To offer it: a Page Width setting of the app's own (Regular or Wide),
+  kept per browser and applied before first paint, that sets
+  `data-width="wide"` on `<html>` for Wide. See `design-language.md`
+  "Page width (a record on a wide screen)".
+
+### What changed
+
+- **`EntityView` honours `data-width="wide"`** on an ancestor (`<html>`):
+  the record's reading cap (`max-w-4xl`, or that plus the 300px facts
+  rail) is lifted, so the column fills the page and the rail stays 300px.
+  Inside `role="dialog"` the cap stays, so a record over its list keeps
+  the dialog's size; a phone is unchanged. The loading skeleton follows
+  it too.
+- **A `page-wide:` variant** in the package's CSS (`styles/index.css`),
+  with the same dialog rule, for anything else that should follow it.
+- Stories `app/EntityView` "Page width wide", "…, column" and "…, in a
+  dialog"; `e2e/entity-view-width.spec.ts` measures the column at 1920px
+  against Regular, the rail, a dialog and a phone, with no sideways
+  scroll; axe and the token check in both themes.
+
+## 4.132.0 — StackedAreaChart: parts of a whole over time
+
+npm package and `ui-foundation-backend` 4.132.0 (the backend is unchanged
+apart from its version). Additive.
+
+### How an app adopts it
+
+- Bump both packages to 4.132.0 and run `npx ui-foundation sync`.
+- Nothing else is needed. To use it, see `design-language.md` "Parts of a
+  whole over time".
+
+### What changed
+
+- **`StackedAreaChart`** (new, with `StackedAreaChartProps`,
+  `StackedSeries` and `StackedLayout`): several amounts over one shared
+  `xs`, each band a categorical slot stacked from zero so the top edge is
+  the total, with a 1px card line between neighbouring bands. A missing
+  or negative value counts as 0. Its legend lists the top band first with
+  its latest value and share, then the total. A single snapshot draws as
+  one stacked column mid-plot. A screen reader gets a summary and a table
+  with a column per band and a Total column. It has loading, empty and
+  success states, as MultiLineChart has.
+- **`stackedLayout`** in `line-chart-layout.ts`: the stack's edges, the
+  totals and x placed as `seriesLayout` places it. It is unit tested.
+- Stories `app/StackedAreaChart` Default and AllStates are in the axe, token
+  and glyph checks in both themes and every palette.
+  `e2e/stacked-area-chart.spec.ts` checks the bands, the states, the
+  summary and table, and a 393px phone.
+- `design-language.md`: new "Parts of a whole over time"; "Several values
+  over time" now says stacked areas are this component (bars are still a
+  request).
+
+## 4.131.0 — Board orders cards in a column, and groups a column
+
+npm package and `ui-foundation-backend` 4.131.0 (the backend is unchanged
+apart from its version). Additive: a board that uses none of the new props
+renders exactly as 4.130 did.
+
+### How an app adopts it
+
+- Bump both packages to 4.131.0 and run `npx ui-foundation sync`.
+- Nothing else is needed. To use the new parts, see `design-language.md`
+  "A list as a board" › "Order, groups and the header (4.131)".
+
+### What changed
+
+- **`Board` orders cards** (`ordered`): cards keep `items`' order within a
+  column; a drag within a column reorders them, with a 3px line in the
+  text colour where the card will land, and the card's menu gains Move Up,
+  Move Down and Move to Top (disabled where they can't apply). A column
+  with `ordered: false` keeps today's behaviour.
+- **`onMove(item, value, place)`** gains a third argument, `BoardPlace`:
+  the card's `group` and its new neighbours `beforeId` and `afterId`,
+  among all of `items` in that column (and group), not only those shown.
+  Existing two-argument handlers keep working. A drop that leaves a card
+  where it was calls nothing.
+- **Groups** (`BoardColumn.groups`, `getGroup`, new type `BoardGroup`): a
+  column's cards under headings in small capitals with a chevron and a
+  count, each folding its cards (`defaultOpen`). A drop on a folded
+  group's heading lands at its end.
+- **Paging** (`pageSize`, `pageKey`): each column or group shows its first
+  cards, then "Show N More".
+- **The header's slots**: `description` (a caption), `note`, `action` (a
+  +), `lead` (the outlined column) and `shortName`.
+- **`phone="counts"`**: below `lg`, a row of the columns' counts that picks
+  the one column shown.
+- **`menu(item)`**: the app's own items in the card's menu, whose button
+  becomes ⋯ ("Actions for <name>").
+- A card is dragged whole, from its title link too (the drag image is the
+  card).
+- Stories `app/Board` Ordered, Grouped and Slots (axe and the token check
+  in both themes); `board.spec.ts` and `board.test.tsx` cover the drag,
+  the line, the Order items and focus, groups, paging and the counts row,
+  and a snapshot keeps the old markup.
+
 ## 4.130.3 — The backend's dependencies take patch releases
 
 npm package and `ui-foundation-backend` 4.130.3 (the npm package is

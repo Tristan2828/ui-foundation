@@ -18,7 +18,7 @@ export {
   type NavSection,
 } from '@/components/app/app-shell'
 export type { IconComponent } from '@/components/app/icon-component'
-export { Board, type BoardColumn, type BoardMoveTarget, type BoardProps } from '@/components/app/board'
+export { Board, type BoardColumn, type BoardGroup, type BoardMoveTarget, type BoardPlace, type BoardProps } from '@/components/app/board'
 export { SpinWheel, type SpinWheelProps } from '@/components/app/spin-wheel'
 export { pickSpinWheelIndex, type SpinWheelItem } from '@/components/app/spin-wheel-pick'
 export {
@@ -294,6 +294,12 @@ export {
   type ChartTone,
   type MultiLineChartProps,
 } from '@/components/app/multi-line-chart'
+export {
+  StackedAreaChart,
+  type StackedAreaChartProps,
+  type StackedSeries,
+} from '@/components/app/stacked-area-chart'
+export type { StackedLayout } from '@/lib/line-chart-layout'
 export { StepBar, type StepBarProps } from '@/components/app/step-bar'
 export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/components/app/rating-star'
 export { RatingScore, type RatingScoreGlyph, type RatingScoreProps } from '@/components/app/rating-score'
