@@ -34,6 +34,13 @@ direction and the queue) and any open item in
   the template's `.claude/`/`.codex/` agent files are written by `sync`.
   Edit `packages/ui-foundation/conventions/`, run `npm run sync`, and
   commit both. `verify` fails if they differ.
+- **Comments and the shipped conventions say what is true now.** No
+  release tags ("(4.105)", "since 4.98"), review or finding IDs, issue or
+  PR numbers, decision dates or "before 4.x" history in a code comment or
+  in `packages/ui-foundation/conventions/`: `git blame` and `CHANGELOG.md`
+  hold those. Naming a doc's section or a numbered pattern ("cell pattern
+  18") is fine. `CHANGELOG.md`, `docs/DEFERRED.md` and `docs/consuming.md`'s
+  upgrade sections are about versions and keep them.
 - **Two tracks** ([`docs/DEFERRED.md`](docs/DEFERRED.md) "Direction"):
   design language (tokens, tones, variants, cell patterns, typography,
   density) grows freely, with axe contrast coverage in both themes.

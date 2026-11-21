@@ -430,8 +430,13 @@ them (in `backend/`):
 
 4.2 adds an MCP endpoint to the reference backend. The package and the
 contract don't change, so an app without a backend, or one that doesn't
-want chats reaching its data, does nothing. Otherwise (the backend is
-copied in, so by hand):
+want chats reaching its data, does nothing.
+
+An app on 4.35 or later has the tools, the routers and the tables from
+`ui-foundation-backend`, so it does only steps 3 to 5: its own
+`app/mcp_entities.py` (ending with `register_entities(ENTITIES)`),
+`tests/test_mcp.py` and the settings. The first two steps are for an app
+whose backend is still copied in:
 
 1. From the template at the 4.2.0 tag, copy `app/mcp_entities.py`,
    `app/mcp_tools.py`, `app/rate_window.py`, `app/routers/mcp.py`,
@@ -494,7 +499,8 @@ copied in, so by hand):
    `docs/deploy.md` "Sign-in limits" (uvicorn's `--proxy-headers`, the
    lockout trade-off) and "Two-step sign-in" (the scripts, recovery, and
    encrypted backups). Then turn TOTP on per account with
-   `scripts/enable_totp.py`.
+   `scripts/enable_totp.py` (once the app is on the backend package, 4.25:
+   `python -m foundation_backend.scripts.enable_totp`).
 6. `npm run verify` and `npm run verify:backend`.
 
 ## Moving a 2.x app onto the package (3.0)
@@ -597,6 +603,8 @@ and only for entities whose plan says "soft-deleted":
    then `npm run gen:api`, the gateway's `restore`, a restore mutation, the
    mocks, and an Undo on the delete toast.
 4. For MCP: set `delete` and `restore` on the entity's `McpEntity`, add
-   `deleted` to its filters, and copy `tool_delete` / `tool_restore` and
-   their definitions from `app/mcp_tools.py`.
+   `deleted` to its filters. From 4.35 that is all: the package's
+   `foundation_backend.mcp_tools` has `tool_delete` and `tool_restore`. An
+   app whose `app/mcp_tools.py` is still its own copy also copies those
+   two and their definitions from the template at the 4.3.0 tag.
 5. `npm run verify` and `npm run verify:backend`.
