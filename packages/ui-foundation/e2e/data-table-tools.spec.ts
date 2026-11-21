@@ -98,6 +98,19 @@ test.describe('on a phone', () => {
     await expect(page.getByText('Opened plant 3')).toBeVisible()
   })
 
+  test('a lead control sits before the link and ticks without opening the row', async ({ page }) => {
+    await page.goto(story('app-datatable-tools--phone-row-lead'))
+    const row = page.locator('[data-slot="data-table-phone-row"]').filter({ hasText: 'Snake plant' })
+    const tick = row.getByRole('checkbox', { name: 'Watered Snake plant' })
+    const box = (await tick.boundingBox())!
+    const link = (await row.getByRole('link').boundingBox())!
+    expect(box.x + box.width).toBeLessThanOrEqual(link.x)
+    await tick.tap()
+    await expect(tick).toBeChecked()
+    await expect(page.getByText('Opened plant 3')).toHaveCount(0)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  })
+
   test('search and Filters share a line, and every filter is in the sheet', async ({ page }) => {
     await page.goto(story('app-datatable-tools--list-tools-filtered'))
     const search = await page.getByRole('searchbox', { name: 'Search' }).boundingBox()

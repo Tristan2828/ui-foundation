@@ -221,6 +221,13 @@ export type DataTablePhoneRow<TData> = {
   status?: (row: TData) => ReactNode
   /** The facts that matter (two, usually) on one muted line under it, between dots; empty ones are left out. */
   facts?: (row: TData) => readonly ReactNode[]
+  /**
+   * A control at the row's start, outside the link (4.134): the tick that
+   * completes a to-do from its row, say. Its clicks are its own, so it
+   * never opens the record; it gets a 44px-wide column, centred, and its
+   * own label (the row's title is in the link, not around it).
+   */
+  lead?: (row: TData) => ReactNode
 }
 
 // The whole row is the target, 44px at least, lit as a table row is on hover.
@@ -280,6 +287,11 @@ export function PhoneRow<TData>({
           '[--muted-foreground:var(--table-highlight-muted-foreground)] bg-(--table-highlight) shadow-[inset_3px_0_0_0_var(--info-text)]',
       )}
     >
+      {phoneRow.lead ? (
+        <span data-slot="data-table-phone-row-lead" className="flex w-11 shrink-0 items-center justify-center self-stretch">
+          {phoneRow.lead(row)}
+        </span>
+      ) : null}
       {href !== undefined ? (
         <a
           href={href}
