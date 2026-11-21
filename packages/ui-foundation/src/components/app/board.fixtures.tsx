@@ -129,7 +129,7 @@ export const States: StoryObj = {
   ),
 }
 
-// 4.131: order, groups and the header's slots. Each story keeps its own
+// Order, groups and the header's slots. Each story keeps its own
 // projects in state, so a move shows, and prints the last onMove call in a
 // sr-only line (e2e/board.spec.ts reads it).
 type Sized = Project & { size: Size }

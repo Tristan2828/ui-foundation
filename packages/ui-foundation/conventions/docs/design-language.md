@@ -29,7 +29,7 @@
   - [Several values over time](#several-values-over-time) · lines 1152–1190
   - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1192–1233
 - [A list as a board](#a-list-as-a-board) · lines 1235–1345
-  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1288–1345
+  - [Order, groups and the header](#order-groups-and-the-header) · lines 1288–1345
 - [A list as cards](#a-list-as-cards) · lines 1347–1394
 - [Images full screen](#images-full-screen) · lines 1396–1442
 - [Key numbers on a record](#key-numbers-on-a-record) · lines 1444–1480
@@ -1285,7 +1285,7 @@ the table's.
   snap points; a phone shows one column at a time, with the edge of the
   next one showing.
 
-### Order, groups and the header (4.131)
+### Order, groups and the header
 
 ```tsx
 <Board<Job, Stage, Size>

@@ -1,4 +1,4 @@
-// A quick add's one line (F1, look I4): what parseQuickAdd reads is
+// A quick add's one line: what parseQuickAdd reads is
 // marked in the box as you type and shown under it as chips, so a misread
 // is seen at once. ✕ on a read chip gives its words back to the title
 // (the "sun" that wasn't Sunday). The app passes its own chips, the ones

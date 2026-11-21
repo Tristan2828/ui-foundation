@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import type { QuickAddOptions, QuickAddResult } from '@/lib/quick-add'
 import { QuickAddChip, QuickAddInput } from './quick-add-input'
 
-// QuickAddInput (F1, look I4) on made-up chores, read on a fixed day
+// QuickAddInput on made-up chores, read on a fixed day
 // (Friday 2026-11-20 in New York) so every run reads the same:
 //
 // - Default: a line with a day, a repeat from completion and a list read,

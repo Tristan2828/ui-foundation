@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from './axe'
 
-// QuickAddInput (F1, app/QuickAddInput): what's read is marked in the box
+// QuickAddInput (app/QuickAddInput): what's read is marked in the box
 // under the typed words and shown as chips; ✕ gives a chip's words back to
 // the title; the app's chips come after; Enter adds; no menu on a symbol;
 // axe in both themes at a laptop's and a phone's width.

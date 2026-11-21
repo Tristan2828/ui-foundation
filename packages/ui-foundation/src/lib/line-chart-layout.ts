@@ -127,7 +127,7 @@ export type StackedLayout = {
   domain: { min: 0; max: number }
 }
 
-// Amounts stacked from zero (StackedAreaChart, 4.132): every band shares
+// Amounts stacked from zero (StackedAreaChart): every band shares
 // `xs`, a band's bottom is the sum of the bands below it and its top adds
 // its own value, so the top band's top is the total. The range is 0 to the
 // largest total with room above only. `values` are already cleaned: one per

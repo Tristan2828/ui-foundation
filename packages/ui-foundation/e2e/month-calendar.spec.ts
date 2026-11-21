@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from './axe'
 
-// MonthCalendar (F2, app/MonthCalendar): titles in the days on a laptop,
+// MonthCalendar (app/MonthCalendar): titles in the days on a laptop,
 // two then a count; dots on a phone; the picked day's list under the
 // month with its links and the app's action; months, Today, picking by
 // mouse and keys; the four states; axe in both themes at both widths.
