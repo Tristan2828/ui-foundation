@@ -4,12 +4,13 @@
 //
 // 1. The verify scripts are the ones the parts were cut from. CI runs the
 //    package's verify:fast, the template's verify, and the package's
-//    verify:harness split in two (below). A step added to either verify
+//    verify:harness in three runs (below). A step added to either verify
 //    script fails here until verify.yml runs it too.
-// 2. The harness split loses no test. The shards name their projects
-//    ($HARNESS_SPLIT) and perf runs on its own ($HARNESS_PERF, which runs
-//    alone on its runner: it is a CPU-throttled typing budget). A project
-//    added to playwright.harness.config.ts and named in neither fails here.
+// 2. The harness split loses no test. CI runs it in three parts that name
+//    their projects: the shards ($HARNESS_SHARDED), phone ($HARNESS_PHONE)
+//    and perf ($HARNESS_PERF, alone on its runner: it is a CPU-throttled
+//    typing budget). A project added to playwright.harness.config.ts and
+//    named in none fails here, and so does one named in two.
 //
 // Run from the repo root after `npm ci`: node .github/scripts/check-ci-split.mjs
 import { spawnSync } from 'node:child_process'
@@ -29,10 +30,12 @@ for (const [path, name, value] of expected) {
   }
 }
 
-const split = (process.env.HARNESS_SPLIT ?? '').split(/\s+/).filter(Boolean)
-const perf = (process.env.HARNESS_PERF ?? '').split(/\s+/).filter(Boolean)
-if (split.length === 0 || perf.length === 0) {
-  problems.push('HARNESS_SPLIT and HARNESS_PERF must be set (verify.yml sets them).')
+const parts = ['HARNESS_SHARDED', 'HARNESS_PHONE', 'HARNESS_PERF'].map((name) => ({
+  name,
+  args: (process.env[name] ?? '').split(/\s+/).filter(Boolean),
+}))
+for (const { name, args } of parts) {
+  if (args.length === 0) problems.push(`${name} must be set (verify.yml sets it).`)
 }
 
 const count = (args) => {
@@ -51,11 +54,11 @@ const count = (args) => {
 
 if (problems.length === 0) {
   const all = count([])
-  const shards = count(split)
-  const alone = count(perf)
-  console.log(`Harness tests: ${all} in all; ${shards} in the shards (${split.join(' ')}); ${alone} alone (${perf.join(' ')}).`)
-  if (shards === 0 || alone === 0 || shards + alone !== all) {
-    problems.push(`The shards and the perf run list ${shards} + ${alone} tests, but the harness has ${all}: a project isn't run in CI. Name it in HARNESS_SPLIT or HARNESS_PERF in verify.yml.`)
+  const counted = parts.map((part) => ({ ...part, tests: count(part.args) }))
+  const sum = counted.reduce((total, { tests }) => total + tests, 0)
+  console.log(`Harness tests: ${all} in all; ${counted.map(({ name, args, tests }) => `${tests} in ${name} (${args.join(' ')})`).join(', ')}.`)
+  if (counted.some(({ tests }) => tests === 0) || sum !== all) {
+    problems.push(`CI's harness runs list ${sum} tests, but the harness has ${all}: a project is run in none of them, or in two. Fix HARNESS_SHARDED, HARNESS_PHONE or HARNESS_PERF in verify.yml.`)
   }
 }
 

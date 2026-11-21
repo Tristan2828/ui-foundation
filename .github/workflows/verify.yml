@@ -6,7 +6,8 @@ name: verify
 #
 # `npm run verify` runs in parts at once: `checks` (the package's
 # verify:fast, then the template's whole verify), the package's fixtures
-# harness in 4 shards, and its perf project alone on its own runner. The
+# harness's chromium project in 4 shards, and harness-perf: its phone
+# project, then its perf project alone on that runner. The
 # `verify` job, the required check, passes only when every part did.
 # harness-perf's first check (.github/scripts/check-ci-split.mjs) fails if
 # the parts stop adding up to `npm run verify`.
@@ -38,11 +39,15 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # The harness's projects, in two runs (check-ci-split.mjs checks they hold
-  # every test). perf depends on chromium and phone, so a bare --shard would
-  # run both in full on every shard; and it is a CPU-throttled typing
-  # budget, so it runs alone on its own runner.
-  HARNESS_SPLIT: --project=chromium --project=phone
+  # The harness's projects, in three runs (check-ci-split.mjs checks they
+  # hold every test). Only chromium is sharded: a shard is a run of tests
+  # in order, so with phone in the shards the last one got the rich-text
+  # specs on both and ran twice as long as the rest (12 minutes against 4
+  # to 9). perf depends on chromium and phone, so a bare --shard would run
+  # both in full on every shard; and it is a CPU-throttled typing budget,
+  # so it runs alone, after phone, on harness-perf's runner.
+  HARNESS_SHARDED: --project=chromium
+  HARNESS_PHONE: --project=phone
   HARNESS_PERF: --project=perf --no-deps
 
 jobs:
@@ -78,7 +83,8 @@ jobs:
   harness:
     # The fixtures harness on every primitive (axe in both themes, every
     # colour a token, icon contrast), the rich-text editor's round trip, and
-    # the rest of the package's e2e specs: a quarter of the tests each.
+    # the rest of the package's e2e specs, at desktop size: a quarter of the
+    # tests each.
     name: harness ${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -102,7 +108,7 @@ jobs:
           INDEX: ${{ strategy.job-index }}
           TOTAL: ${{ strategy.job-total }}
         # The shard builds the harness itself (the config's webServer).
-        run: npm run verify:harness -w @tristan2828/ui-foundation -- $HARNESS_SPLIT --shard=$((INDEX + 1))/$TOTAL
+        run: npm run verify:harness -w @tristan2828/ui-foundation -- $HARNESS_SHARDED --shard=$((INDEX + 1))/$TOTAL
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
@@ -112,7 +118,8 @@ jobs:
 
   harness-perf:
     # CI's own checks (the docs-only detector's cases; the parts still add
-    # up to npm run verify), then the harness's perf project alone.
+    # up to npm run verify), then the harness's phone project (the editor on
+    # a touch screen), then its perf project alone.
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -130,6 +137,8 @@ jobs:
         run: |
           bash .github/scripts/docs-only.test.sh
           node .github/scripts/check-ci-split.mjs
+      - if: steps.changes.outputs.run == 'true'
+        run: npm run verify:harness -w @tristan2828/ui-foundation -- $HARNESS_PHONE
       - if: steps.changes.outputs.run == 'true'
         run: npm run verify:harness -w @tristan2828/ui-foundation -- $HARNESS_PERF
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

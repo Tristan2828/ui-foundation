@@ -454,19 +454,22 @@ since 2026-11-20, when a code PR's checks took a median 33 minutes):
 - **`verify` runs `npm run verify` in parts at once.** `checks` runs the
   package's `verify:fast`, then the template's whole `verify`.
   `harness 1` to `harness 4` each run a quarter of the fixtures harness's
-  `chromium` and `phone` projects (`--shard`), building the harness
-  themselves. `harness-perf` runs the typing budget (`perf`) alone on its
-  own runner: it is CPU-throttled, and other specs on the same CPU would be
-  measured with it. A bare `--shard` doesn't split this suite, since `perf`
-  depends on the other two projects and every shard would run them in
-  full. The `verify` job, the required check, passes only when every
+  `chromium` project (`--shard`), building the harness themselves.
+  `harness-perf` runs its `phone` project, then the typing budget (`perf`)
+  alone on that runner: it is CPU-throttled, and other specs on the same
+  CPU would be measured with it. A bare `--shard` doesn't split this
+  suite, since `perf` depends on the other two projects and every shard
+  would run them in full. Only `chromium` is sharded because a shard is a
+  run of tests in order: with `phone` in the shards, the last one got the
+  rich-text specs on both projects and took 12 minutes against 4 to 9. The
+  `verify` job, the required check, passes only when every
   part's result is `success`: a part that failed, was skipped or was
   cancelled turns it red.
 - **The parts must add up to `npm run verify`.**
   `.github/scripts/check-ci-split.mjs` (in `harness-perf`) fails if the
   root's or the package's `verify` script isn't the one the parts were cut
-  from, or if a harness project is in neither the shards
-  (`HARNESS_SPLIT`) nor the perf run (`HARNESS_PERF`). A step added to
+  from, or if a harness project is in none of its three runs, or in two
+  (`HARNESS_SHARDED`, `HARNESS_PHONE`, `HARNESS_PERF`). A step added to
   either `verify` script, or a new harness project, needs the matching
   change in `verify.yml`.
 - **Docs-only changes skip.** Every required job starts, and its first
