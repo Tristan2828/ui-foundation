@@ -1,9 +1,10 @@
 # Working in the ui-foundation repo
 
-This repo ships two things under one version: the npm package
+This repo ships three things under one version: the npm package
 **`@tristan2828/ui-foundation`** (`packages/ui-foundation/`), which holds
-everything apps share, and **the template** (`template/`), the app every
-new app starts as. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) at
+everything apps share; the pip package **`ui-foundation-backend`**
+(`packages/backend-foundation/`), the backend's shared layer; and **the
+template** (`template/`), the app every new app starts as. Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) at
 the start of every session, then [`docs/DEFERRED.md`](docs/DEFERRED.md) (the
 direction and the queue) and any open item in
 [`docs/BLOCKERS.md`](docs/BLOCKERS.md).
