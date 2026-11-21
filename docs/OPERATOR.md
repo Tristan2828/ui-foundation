@@ -52,7 +52,7 @@ How the repo works is [`ARCHITECTURE.md`](ARCHITECTURE.md).
   `verify-backend` and `install-test` checks, but no review, so you can
   merge your own PRs. Force-pushes and deletion are blocked. Every merge
   that bumps the version publishes a release, once `main`'s own verify of
-  the merged tree passes (about 10 minutes). A PR that changes only docs
+  the merged tree passes (about 11 minutes). A PR that changes only docs
   (`docs/`, the root's `.claude/` and `*.md`) passes its checks in about a
   minute, with their later steps skipped.
 

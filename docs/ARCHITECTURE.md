@@ -445,8 +445,9 @@ nothing.
 | `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on every PR (a required check on `main`) | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |
 | `scripts/consume-test.sh <Entity>`, the **Fresh UI Build** | on demand, when the playbook or a composite changes in a way that could confuse a fresh agent | a brand-new agent with no memory of this repo builds an entity in such an app from its plan; its `verify` passes |
 
-**How CI runs them** (`.github/workflows/verify.yml` and `package.yml`;
-since 2026-11-20, when a code PR's checks took a median 33 minutes):
+**How CI runs them** (`.github/workflows/verify.yml` and `package.yml`,
+since 2026-11-20: a code PR's `verify` went from a median 33 minutes on
+one runner to about 11, and a docs-only PR's checks take under a minute):
 
 - **Required on `main`:** `verify`, `verify-backend` and `install-test`.
   Branches needn't be up to date, which is why `main` is verified again
@@ -942,7 +943,7 @@ or the next patch after the latest tag. It:
    then the release trusted the PR's run and published about 9 minutes
    after the merge, and since branches needn't be up to date, two PRs
    green on their own could be published merged before anything had
-   tested them together. It adds about 10 minutes before a release.
+   tested them together. It adds about 11 minutes before a release.
 3. builds and packs the npm package (`build` job), and builds the pip
    package's sdist and wheel with that version written in (`build-py`),
 4. **publishes** `@tristan2828/ui-foundation@<version>` to npm through
