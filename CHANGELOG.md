@@ -7,6 +7,34 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.135.1 — The slash menu is never cut off by a card
+
+npm package and `ui-foundation-backend` 4.135.1 (the backend is unchanged
+apart from its version). A fix: nothing for an app to change.
+
+### How an app adopts it
+
+- Bump both packages to 4.135.1 and run `npx ui-foundation sync`.
+
+### What changed
+
+- **The rich-text editor's slash menu fits inside what clips it.** It was
+  placed by the window's height, but an editor in an `EntityView`
+  section sits in a card with `overflow-hidden`: a menu opened on a
+  note's last line was cut off at the card's edge, so "/toggle" showed
+  only Toggle Heading 1 and levels 2 and 3 looked missing. The room it
+  is placed in is now also bounded by every ancestor that clips
+  overflow. On a laptop it opens below when it fits there, else above
+  when it fits there, else on the roomier side, capped to that room
+  (it scrolls) as it already was on a touch screen.
+- `e2e/rich-text-inline.spec.ts`: on a note's last line every item of
+  "/toggle" shows, none covered, and Toggle Heading 2 makes a toggle
+  `##`, at laptop and phone widths.
+- Folding at each level: `e2e/folding.spec.ts` types a toggle heading 1,
+  2 and 3 in the editor and folds and opens each;
+  `tests/markdown-fold-render.test.tsx` checks `<Markdown>` gives each
+  level its fold button. Folding itself had no level-specific bug.
+
 ## 4.135.0 — Home-screen shortcuts in pwa()
 
 npm package and `ui-foundation-backend` 4.135.0 (the backend is unchanged
