@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// ModuleStrip and ModuleCard (app/ModuleCard, #224): the strip's columns at
+// ModuleStrip and ModuleCard (app/ModuleCard): the strip's columns at
 // a desktop width and a phone's, the phone tile as one link, and
 // `mobile="row"`'s chips. Axe, the token check and the glyph check are
 // e2e/fixtures-visual.spec.ts's, except for the chips, which only show at a

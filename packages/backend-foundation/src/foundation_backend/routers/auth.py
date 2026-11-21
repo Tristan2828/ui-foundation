@@ -187,7 +187,7 @@ async def login(
         # Deliberately generic — never confirm whether the email exists.
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    # A hash from before 4.122 (PBKDF2), or scrypt at older settings: the
+    # An old PBKDF2 hash, or scrypt at older settings: the
     # password is known now, so it's rehashed and saved by the commit below
     # (both paths commit).
     if needs_rehash(user.password_hash):

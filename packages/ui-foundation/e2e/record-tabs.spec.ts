@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// A record's tab bar (4.101, record standard 3B): bigger underline tabs with
+// A record's tab bar (record standard 3B): bigger underline tabs with
 // counts, a 3px primary line under the open one, and the bar sticking to the
 // top of what scrolls (the page, or a record dialog's body) with the
 // record's name above it once stuck, at desktop and phone width. Axe in
@@ -19,7 +19,7 @@ const bar = (page: Page) => page.locator('[data-slot=entity-view-tab-bar]').firs
 
 // Where the open tab's panel starts in what scrolls (the page, or a dialog's
 // body), not on screen: a bar that grows as it sticks must not move it, or a
-// click in progress lands on what slid under the pointer (#366).
+// click in progress lands on what slid under the pointer.
 const panelTop = (panel: Locator, scroller?: Locator) =>
   panel.evaluate((node, scrolled) => {
     const top = node.getBoundingClientRect().top
@@ -36,7 +36,7 @@ test.describe('the look (3B)', () => {
     const notes = tabs.getByRole('tab', { name: 'Notes' })
     await expect(notes).toHaveAttribute('aria-selected', 'true')
     expect(await notes.evaluate((node) => getComputedStyle(node).fontSize)).toBe('16px')
-    // Open: bold (4.110); closed: semibold, each as wide as its bold name, so choosing one moves none.
+    // Open: bold; closed: semibold, each as wide as its bold name, so choosing one moves none.
     expect(await notes.evaluate((node) => getComputedStyle(node).fontWeight)).toBe('700')
     const details = tabs.getByRole('tab', { name: 'Details' })
     expect(await details.evaluate((node) => getComputedStyle(node).fontWeight)).toBe('600')
@@ -97,7 +97,7 @@ test.describe('the bar sticks with the record name above it', () => {
       await expect(bar(page)).toHaveAttribute('data-stuck', '')
       await expect(page.locator('[data-slot=entity-view-tab-bar-title]')).toHaveText('Office move')
       expect(Math.abs((await box(bar(page))).y)).toBeLessThan(2)
-      // The name above the tabs takes no room from the page: nothing under the bar moves (#366).
+      // The name above the tabs takes no room from the page: nothing under the bar moves.
       expect(Math.abs((await panelTop(panel)) - restingTop)).toBeLessThan(1)
       // The tabs still work stuck: Changes opens, the bar stays at the top.
       await page.getByRole('tab', { name: 'Changes 2' }).click()

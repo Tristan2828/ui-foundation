@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-// LineChart (#238), on its stories: the chart's shape on a card, its four
+// LineChart, on its stories: the chart's shape on a card, its four
 // states, a phone's width, and what a screen reader gets. Axe, the token
 // check and the line's and target's 3:1 (the glyph check) are
 // e2e/fixtures-visual.spec.ts's, in both themes.

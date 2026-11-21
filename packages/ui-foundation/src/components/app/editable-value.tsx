@@ -15,28 +15,28 @@
 //   Ctrl/Cmd+Enter and Esc save what's left now and close it. On a note
 //   longer than the screen the line under it is pinned to the screen's
 //   bottom edge, so a refusal or a failed save is never off screen, and
-//   the first one also toasts (F5).
+//   the first one also toasts.
 // - `long-text` without `autosave`: Esc on a changed draft asks
-//   ("Discard your changes?") rather than dropping it (F7).
+//   ("Discard your changes?") rather than dropping it.
 // - Opening by a click puts the caret where the click was, not at the
-//   top, and the page doesn't move (F8).
+//   top, and the page doesn't move.
 // - The saved value changing elsewhere shows at once when nothing here is
 //   unsaved, the caret keeping its block; under unsaved typing the line
-//   says so, with "Keep Mine" and "Show Saved" (F4).
+//   says so, with "Keep Mine" and "Show Saved".
 // - `alwaysEditable`: the control is shown at rest, with no pencil and no
 //   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
 // - `inline`: always editable, and the control is told to look like the
 //   value it edits (`inline` among its props).
-// - Always editable and a `choice` (4.127, `inPlace.rating`'s stars): a
+// - Always editable and a `choice` (`inPlace.rating`'s stars): a
 //   value on one line, so "Saving…" and "Saved" sit beside it, not on a
 //   line under it, and "Saved" goes after two seconds, as at rest.
-// - Saved (4.88, F16): once a save lands, "✓ Saved" shows beside the value
+// - Saved: once a save lands, "✓ Saved" shows beside the value
 //   for two seconds (`role="status"`).
-// - `layout="inline"` (4.102): the pencil takes no room until hover or
+// - `layout="inline"`: the pencil takes no room until hover or
 //   focus, so nothing gaps before what follows the value on its line.
-//   `keepPencilRoom` (and every value inside a KeyStats, 4.115) keeps it
+//   `keepPencilRoom` (and every value inside a KeyStats) keeps it
 //   at rest instead, so nothing moves on hover or focus.
-// - `look="row"` (4.88, F15 and F18): in a record's field list the row is
+// - `look="row"`: in a record's field list the row is
 //   the target (edit-row.ts): it wears the list's row hover and the pencil
 //   sits at its end; under 48rem or on a touch screen there's a chevron
 //   instead of the pencil. The control still opens in the row.
@@ -97,10 +97,10 @@ export type EditableValueProps = {
    */
   look?: 'value' | 'row'
   /**
-   * Inline, the pencil's room is kept at rest, as before 4.102, so nothing
+   * Inline, the pencil's room is kept at rest, so nothing
    * moves on hover or focus: a table cell (row-edit-cells.tsx), whose
    * column would otherwise widen, EntityView's title, which ends its line
-   * and can fill it, and every value inside a <KeyStats> (4.115, which
+   * and can fill it, and every value inside a <KeyStats> (which
    * sets it for them: a wrapping row moved the values after it along).
    */
   keepPencilRoom?: boolean
@@ -140,7 +140,7 @@ export type EditableFieldProps = EditableValueProps & {
 
 // While a field runs past the bottom of the screen, its status line (the
 // save's state, a refusal) is pinned to the screen's bottom edge, under the
-// field's left edge, so it's never off screen (F5). Not CSS sticky: a
+// field's left edge, so it's never off screen. Not CSS sticky: a
 // section's card clips its content (`overflow-hidden`), which stops sticky
 // at the card. Returns where to pin it, or null while it shows in place.
 //
@@ -282,7 +282,7 @@ export function EditableField({
   const blurTimer = useRef<number | undefined>(undefined)
 
   // Where the caret goes once the control shows or starts over: the spot
-  // clicked in the read view (F8), or the caret's own block (F4).
+  // clicked in the read view, or the caret's own block.
   const caretTarget = useRef<CaretSpot | null>(null)
   const stopPlacing = useRef<() => void>(() => {})
   useEffect(() => () => stopPlacing.current(), [])
@@ -304,7 +304,7 @@ export function EditableField({
     refresh()
   }, [refresh, edit.value])
 
-  // Always editable and one pick (stars): its line is beside it (4.127).
+  // Always editable and one pick (stars): its line is beside it.
   const beside = always && edit.kind === 'choice'
   const autosaved = state.status !== 'closed' && state.autosave === 'saved'
   const [savedGone, setSavedGone] = useState(false)
@@ -347,7 +347,7 @@ export function EditableField({
     wasOpen.current = isOpen
   }, [isOpen, always, placeCaretSoon])
 
-  // Esc on a changed long text that doesn't autosave: asks first (F7).
+  // Esc on a changed long text that doesn't autosave: asks first.
   const [askingDiscard, setAskingDiscard] = useState(false)
   const asking = useRef(false)
   useLayoutEffect(() => {
@@ -355,7 +355,7 @@ export function EditableField({
   })
 
   // The first refusal or failed save of an autosaving field toasts too:
-  // its line may be far from where the person is looking (F5). Once per
+  // its line may be far from where the person is looking. Once per
   // run of failures; a save that lands starts the count again.
   // A conflict (saved elsewhere) isn't a failed save: its toast says so.
   const failure = state.status !== 'closed' ? state.error : null
@@ -413,7 +413,7 @@ export function EditableField({
 
   const onShownClick = (event: MouseEvent) => {
     if ((event.target as Element).closest(INTERACTIVE)) return
-    // Long text opens with the caret where it was clicked (F8).
+    // Long text opens with the caret where it was clicked.
     if (edit.kind === 'long-text') caretTarget.current = spotAtPoint(event.currentTarget, event.clientX, event.clientY)
     start()
   }
@@ -493,7 +493,7 @@ export function EditableField({
           // Inline, the cap is its column plus the 0.75rem the negative
           // margins give back: a parent sized to its content (a title on
           // its line) is sized to the margin box, 0.75rem under the box,
-          // and `max-w-full` then wrapped a short value mid-word (4.94).
+          // and `max-w-full` then wrapped a short value mid-word.
           layout === 'block' ? 'flex w-full' : cn('inline-flex align-top', row ? 'max-w-full' : 'max-w-[calc(100%+0.75rem)]'),
           className,
         )}
@@ -522,7 +522,7 @@ export function EditableField({
             )}
           </span>
         </span>
-        {/* Inline (4.102): the pencil sits in a spacer that takes no room
+        {/* Inline: the pencil sits in a spacer that takes no room
             at rest, so a value in a line ("Harbor Office · Tuesdays") is
             followed by its separator with no gap. The pencil keeps its
             24px box out of the flow, hidden just past the value over what
@@ -572,7 +572,7 @@ export function EditableField({
   // Something to say: a save in flight, saved, or why it can't save.
   const hasStatus = autosaving || open.autosave === 'saved' || lineError !== null
   const pin = hasStatus ? pinned : null
-  // The saved value changed elsewhere under unsaved typing: the person picks (F4).
+  // The saved value changed elsewhere under unsaved typing: the person picks.
   const conflictActions = 'conflict' in open && open.conflict && (
     <span className="mt-1 flex flex-wrap gap-2">
       <Button type="button" size="xs" variant="outline" onClick={() => void store.keepMine(key)}>
@@ -620,7 +620,7 @@ export function EditableField({
           data-slot="editable-value-status"
           data-pinned={pin ? '' : undefined}
           // Pinned to the screen's bottom edge while the field runs past
-          // it, so the save's state and a refusal stay in view (F5).
+          // it, so the save's state and a refusal stay in view.
           style={pin ? { left: pin.left, maxWidth: pin.width } : undefined}
           className={cn(
             'type-body',
@@ -709,7 +709,7 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
     () => store.savesOnLeave,
     () => store.savesOnLeave,
   )
-  // Typing a rich-text field holds back (F6) counts: the tab's prompt is
+  // Typing a rich-text field holds back counts: the tab's prompt is
   // set up from the first key, and a move reports it before it's judged.
   const holding = useSyncExternalStore(subscribePendingEdits, hasPendingEdits, hasPendingEdits)
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
@@ -744,7 +744,7 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
   useEffect(() => {
     if (!dirty && !holding) return
     // Saves started as the page goes ask the browser to finish them
-    // (`keepalive`, lib/page-leaving.ts), F13.
+    // (`keepalive`, lib/page-leaving.ts).
     const saveAsLeaving = () => {
       markPageLeaving()
       void store.saveAll()

@@ -68,7 +68,6 @@ export const Default: StoryObj = { render: () => <Picker items={DOZEN} /> }
 // Bigger slices are likelier: weight 5 is five times weight 1.
 export const Weighted: StoryObj = { render: () => <Picker items={WEIGHTED} /> }
 
-// Flagged items are tinted slices.
 export const Emphasis: StoryObj = { render: () => <Picker items={EMPHASIS} /> }
 
 // A fixed `random`, so a test knows what it picks: 0.5 of a dozen equal

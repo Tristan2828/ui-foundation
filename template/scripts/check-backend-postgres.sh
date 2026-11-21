@@ -44,7 +44,7 @@ unset DATABASE_SSL_CA_FILE
 # Exported, so uvicorn serves it and the data-environment banner suite
 # expects it.
 export DATA_LABEL=local
-# AI chats through MCP (4.2.0) are on for this run, so the live check below
+# AI chats through MCP are on for this run, so the live check below
 # can walk the whole sign-in and every tool.
 export MCP_ENABLED=true
 export MCP_PUBLIC_URL=http://localhost:8000
@@ -99,7 +99,7 @@ mkdir -p logs # gitignored, so absent in a fresh clone
 (cd backend && exec "../$PY" -m uvicorn app.main:app --port 8000 >"$REPO_ROOT/logs/backend-postgres-uvicorn.log" 2>&1) &
 UVICORN_PID=$!
 for i in $(seq 1 30); do
-  # /api/widget-categories now requires auth (Phase 10) — 401 still proves uvicorn
+  # /api/widget-categories requires auth — 401 still proves uvicorn
   # is up and enforcing the contract; `curl -f` alone would treat that 401
   # as "not ready yet" and this loop would never break.
   status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/widget-categories 2>/dev/null || echo "000")
@@ -146,7 +146,7 @@ seed_widget_status=$(curl -s -b "$COOKIE_JAR" -o /dev/null -w '%{http_code}' htt
 # Every check above only *reads* widgets, and pytest runs on SQLite, which
 # ignores column timezone-awareness — so nothing had ever written a
 # timestamp column through the ORM against real Postgres. That's how
-# Phase 10's Session.expires_at bug (tz-naive ORM mapping vs. a tz-aware
+# The Session.expires_at bug (tz-naive ORM mapping vs. a tz-aware
 # column) hid until a real login; Widget.available_from is the same class.
 echo "check-backend-postgres: create and update a widget against real Postgres (audit Phase C)"
 WIDGET_BODY=$(mktemp)
@@ -173,7 +173,7 @@ grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "tags filter didn't return w
 none_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' "http://localhost:8000/api/widgets?tags=fragile")
 grep -q '"total":0' "$WIDGET_BODY" || fail "tags=fragile should match nothing after the replace (status $none_status): $(cat "$WIDGET_BODY")"
 
-# inStock (3.4.0): migration 0006's server default, a PATCH and the filter,
+# inStock: migration 0006's server default, a PATCH and the filter,
 # against the real column type rather than SQLite's integer-backed boolean.
 echo "check-backend-postgres: inStock default, update and filter against real Postgres (3.4.0)"
 seed_stock_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' "http://localhost:8000/api/widgets/$widget_id")
@@ -187,7 +187,7 @@ grep -q "\"id\":$widget_id," "$WIDGET_BODY" || fail "inStock=false filter didn't
 curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widgets?inStock=true"
 grep -q '"total":0' "$WIDGET_BODY" || fail "inStock=true should match nothing for this user now: $(cat "$WIDGET_BODY")"
 
-# extraCategoryIds (3.5.0): a join table with two foreign keys (migration
+# extraCategoryIds: a join table with two foreign keys (migration
 # 0007), the any-of filter, an unknown id as a 422 rather than a
 # foreign-key 500, and GET /widget-categories?ids=... for naming them.
 echo "check-backend-postgres: extraCategoryIds links, filter, unknown id and widget-categories?ids against real Postgres (3.5.0)"
@@ -201,7 +201,7 @@ unknown_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X
 curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" "http://localhost:8000/api/widget-categories?ids=3&ids=9999"
 grep -q '"id":3' "$WIDGET_BODY" && ! grep -q '"id":1,' "$WIDGET_BODY" || fail "widget-categories?ids=3 should return only category 3: $(cat "$WIDGET_BODY")"
 
-# checklist (3.6.0): a child table with a position column (migration 0008),
+# checklist: a child table with a position column (migration 0008),
 # order kept across a replace, and a blank item as a 422 on its own path.
 echo "check-backend-postgres: checklist order, replace and per-item 422 against real Postgres (3.6.0)"
 list_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"checklist":[{"text":"Second","done":true},{"text":"First","done":false}]}')
@@ -210,7 +210,7 @@ grep -q '"checklist":\[{"text":"Second","done":true},{"text":"First","done":fals
 blank_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"checklist":[{"text":"  ","done":false}]}')
 [ "$blank_status" = "422" ] || fail "a blank checklist item returned $blank_status, expected 422: $(cat "$WIDGET_BODY")"
 grep -q '"loc":\["body","checklist",0,"text"\]' "$WIDGET_BODY" || fail "a blank item's 422 should be keyed to checklist.0.text: $(cat "$WIDGET_BODY")"
-# pairings (4.27.0): sub-records whose items hold a reference (migration
+# pairings: sub-records whose items hold a reference (migration
 # 0016), order kept, and an unknown category a 422 at its item, never the
 # foreign-key error Postgres would raise at commit.
 echo "check-backend-postgres: pairings order and a per-item reference 422 against real Postgres (4.27.0)"
@@ -220,7 +220,7 @@ grep -q '"pairings":\[{"categoryId":3,"note":"Second"},{"categoryId":2,"note":""
 ref_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"pairings":[{"categoryId":2,"note":""},{"categoryId":9999,"note":""}]}')
 [ "$ref_status" = "422" ] || fail "an unknown pairing category returned $ref_status, expected 422: $(cat "$WIDGET_BODY")"
 grep -q '"loc":\["body","pairings",1,"categoryId"\]' "$WIDGET_BODY" || fail "an unknown pairing category's 422 should be keyed to pairings.1.categoryId: $(cat "$WIDGET_BODY")"
-# Sign-in limits and TOTP (4.0.0): login_failures.failed_at and
+# Sign-in limits and TOTP: login_failures.failed_at and
 # pending_logins.expires_at are timestamp columns written through the ORM,
 # the class of bug SQLite-backed pytest can't see (Phase C).
 echo "check-backend-postgres: a failed sign-in is counted, then a TOTP sign-in completes against real Postgres (4.0.0)"
@@ -246,7 +246,7 @@ me_status=$(curl -s -b "$TOTP_JAR" -o /dev/null -w '%{http_code}' http://localho
 [ "$me_status" = "200" ] || fail "GET /api/auth/me after the TOTP step returned $me_status, expected 200"
 rm -f "$TOTP_JAR"
 
-# MCP (4.2.0): oauth_codes, oauth_grants and mcp_audit_log are written with
+# MCP: oauth_codes, oauth_grants and mcp_audit_log are written with
 # timestamps through the ORM, which SQLite-backed pytest can't check. The
 # script signs in as the fresh user, approves a chat, calls every tool and
 # refreshes; then the audit log must hold the two writes it made.

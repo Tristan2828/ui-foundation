@@ -1,4 +1,4 @@
-// A list's date filter (4.110), for FilterBar: a select that names itself
+// A list's date filter, for FilterBar: a select that names itself
 // like FilterSelect ("Any due date" while off, "Due: Before today" on),
 // with the relative presets (lib/date-filter.ts) and Between dates, which
 // shows a From and a To day beside it. Its value is one string, so it's a

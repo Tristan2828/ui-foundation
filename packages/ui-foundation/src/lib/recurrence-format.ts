@@ -1,4 +1,4 @@
-// A repeat in words (#326): its label for a list's Repeats cell and the
+// A repeat in words: its label for a list's Repeats cell and the
 // field's preview ("Every 2nd Tue at 9:00 AM"), and an occurrence's
 // date and time for a Next cell ("Tue, Dec 8, 9:00 AM"), both read in the
 // rule's own zone. Day and month names and times come from Intl, in the
@@ -12,7 +12,7 @@ export type RecurrenceFormatOptions = {
   /** Leave the times out ("Every 2nd Tue"), for a cell beside a separate time. */
   times?: boolean
   /**
-   * The app's week start (4.114; Monday when left out). An every-N-weeks
+   * The app's week start (Monday when left out). An every-N-weeks
    * rule whose WKST differs says so: "Every other week on Sun and Wed,
    * weeks start Sun".
    */
@@ -146,7 +146,7 @@ export type OccurrenceFormatOptions = {
   locale?: string
   /** What "now" is, for leaving out this year. Defaults to the clock. */
   now?: Date
-  /** Leave the time out ("Tue, Dec 8"), for a record whose times are its own (4.114). */
+  /** Leave the time out ("Tue, Dec 8"), for a record whose times are its own. */
   time?: boolean
 }
 

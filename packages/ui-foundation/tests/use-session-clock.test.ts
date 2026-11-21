@@ -129,7 +129,7 @@ describe('createSessionClock', () => {
   })
 })
 
-// Starting from and seeking to a given elapsed time (#193): a run resumed
+// Starting from and seeking to a given elapsed time: a run resumed
 // from storage, and Skip and Back, with pause and resume still exact.
 describe('createSessionClock: start from, and seek', () => {
   it('starts from a given elapsed time and counts on from it', () => {

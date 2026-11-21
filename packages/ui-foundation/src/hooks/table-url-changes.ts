@@ -13,7 +13,7 @@ export type TableView<F extends string, M extends string> = {
   filters?: Partial<Record<F, string>>
   multiFilters?: Partial<Record<M, string[]>>
   /**
-   * The part of the view the filter bar has no control for (4.105): a
+   * The part of the view the filter bar has no control for: a
    * computed rule the server applies, such as `{ overdue: 'true' }`. It's
    * in the URL like a filter and counts toward the view being on, but the
    * reader can't see or change it, so it lasts only while the view does:
@@ -77,7 +77,7 @@ export function paramsToUpdate(
 // A view is "this combination and nothing else": every filter and the sort
 // are set, and any the view doesn't name are cleared. Merging over the
 // current state instead would let a leftover filter silently show something
-// other than the view. Decided with the developer on 2026-09-28.
+// other than the view.
 //
 // The view the list opens on (`asDefault`, useTableUrlState's
 // `defaultView`) is written as no filters at all, so the list's plain
@@ -94,7 +94,7 @@ export function viewToUrlChanges<F extends string, M extends string>(
     [NO_VIEW_PARAM]: null,
     ...Object.fromEntries(filterNames.map((name) => [name, own[name] ?? ''])),
     ...Object.fromEntries(multiFilterNames.map((name) => [name, asDefault ? [] : (view.multiFilters?.[name] ?? [])])),
-    // The default view's sort is its plain address's (4.123): not written.
+    // The default view's sort is its plain address's: not written.
     sort: view.sort && !asDefault ? serializeSort(view.sort) : null,
     ...(view.group === undefined ? {} : { group: view.group || null }),
     page: null,
@@ -108,7 +108,7 @@ function viewFilters<F extends string, M extends string>(view: TableView<F, M>):
 
 /**
  * The query parameter that says "no view, no filters" on a list with a
- * `defaultView` (4.105): `?view=none`. Without it a list's plain address
+ * `defaultView`: `?view=none`. Without it a list's plain address
  * is its default view, so clearing the last filter by hand writes it, or
  * the default view's filters would come straight back.
  */
@@ -159,7 +159,7 @@ export function readFilterState<F extends string, M extends string>(
 }
 
 // The URL changes for the reader changing filters by hand (setFilter,
-// setFilters, setMultiFilter), 4.105:
+// setFilters, setMultiFilter):
 // - every filter they didn't touch keeps the value the bar shows, even at
 //   the plain address where those come from the default view, so their
 //   change is the only change;
@@ -194,8 +194,7 @@ export function filterChanges<F extends string, M extends string>(
 // nothing else", so adding or changing any filter returns the table to its
 // default columns: a view's columns are chosen for the records its filters
 // select, and would hide a field those other records fill. Sort and page
-// don't change which records are shown, so they don't count. Decided with
-// the developer on 2026-10-05.
+// don't change which records are shown, so they don't count.
 export function activeViewOf<F extends string, M extends string, V extends string>(
   views: Readonly<Record<V, TableView<F, M>>>,
   filters: Readonly<Record<F, string>>,

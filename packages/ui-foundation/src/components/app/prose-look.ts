@@ -50,7 +50,7 @@ export const PROSE = {
  */
 export const FOLD_BUTTON =
   '-ml-1 flex h-[1lh] w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50' +
-  // On a touch screen, an invisible 40px square round it takes the tap (review F11).
+  // On a touch screen, an invisible 40px square round it takes the tap.
   " relative pointer-coarse:before:absolute pointer-coarse:before:top-1/2 pointer-coarse:before:left-1/2 pointer-coarse:before:size-10 pointer-coarse:before:-translate-1/2 pointer-coarse:before:content-['']"
 
 /** A heading with a fold button: the button and the words side by side, the look on both. */

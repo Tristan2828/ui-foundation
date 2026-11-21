@@ -1,6 +1,5 @@
 // What a GFM table holds beyond its cells, read from the Markdown it
-// already has, so nothing new is written into the text (the developer's
-// choice A, 2026-11-04):
+// already has, so nothing new is written into the text :
 //
 // - A column's alignment: GFM's own (`:---:`, `---:`).
 // - A cell's colour: its whole text in one highlight, `=={green}$4.99==`

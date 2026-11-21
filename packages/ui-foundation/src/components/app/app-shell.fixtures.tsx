@@ -34,29 +34,12 @@ import { EntityView } from './entity-view'
 import { usePageTrail } from './page-trail-context'
 import { clearRecentRecords, rememberRecentRecord } from '@/lib/search-palette'
 
-// AppShell's sidebar: a flat nav (one "Navigation" group) and a nav with
-// sections (a labelled group per module). Each story opens on a page below
-// one of the entries, so only the most specific match is current: Categories,
-// not Projects, on /projects/categories/2. Signed in through AuthContext
-// directly, so nothing is fetched. Axe in both themes is
-// e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES; e2e/app-shell.spec.ts
-// checks the groups, the current entry and the version entry, sections
-// that fold (Collapsible, and on the icon rail CollapsibleRail), an entry
-// opening a list on a saved view (SavedView, #188), and the browser tab's
-// title from the nav and from a record's view (Home, WithView…, #186),
-// the app's logo beside its title and alone on the rail (WithLogo…,
-// #211), a module's pages under its entry (Nested…, #239), and the
-// phone's bottom bar (BottomBar, #240; e2e/app-shell-bottom-bar.spec.ts),
-// and an app with a palette, fixed or picked (WithPalette…,
-// e2e/palettes.spec.ts). The navigation standard (Standard…,
-// e2e/app-shell-standard.spec.ts): headings among a module's pages, the
-// current entry's bar, counts, a Tools section at the sidebar's foot, the
-// phone's back arrow and an area's sheet as tiles; the sidebar as icon
-// tiles (StandardTiles…, e2e/app-shell-tiles.spec.ts). The trail in the bar
-// and search (StandardTrail…, StandardSearch…,
-// e2e/app-shell-trail-search.spec.ts): a record's trail from EntityView,
-// a page's own from usePageTrail, the nav entry's otherwise, and the
-// palette over the nav's pages and made-up records.
+// AppShell's sidebar, flat and with sections. Each story opens on a page
+// below one of the entries, so only the most specific match is current:
+// Categories, not Projects, on /projects/categories/2. Signed in through
+// AuthContext directly, so nothing is fetched. Axe in both themes is
+// e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES; the behaviour is
+// checked by e2e/app-shell*.spec.ts and e2e/palettes.spec.ts.
 
 const SIGNED_IN: AuthContextValue = {
   user: { id: 1, name: 'Sam Example', email: 'sam@example.com' },
@@ -113,7 +96,7 @@ const COLLAPSIBLE: NavEntry[] = [
   },
 ]
 
-// A sidebar entry that opens its list on a saved view (#188), inside a
+// A sidebar entry that opens its list on a saved view, inside a
 // section folded by default: arriving on the view marks it and opens it.
 const SAVED_VIEW: NavEntry[] = [
   { to: '/', label: 'Home', icon: HomeIcon, end: true },
@@ -126,7 +109,7 @@ const SAVED_VIEW: NavEntry[] = [
   },
 ]
 
-// A module's pages under its entry (#239): YouTube's and Comics' show
+// A module's pages under its entry: YouTube's and Comics' show
 // while you're in that module; Budget's always.
 const NESTED: NavEntry[] = [
   { to: '/', label: 'Home', icon: HomeIcon, end: true },
@@ -225,7 +208,7 @@ const STANDARD: NavEntry[] = [
   },
 ]
 
-// The navigation standard drawn as tiles (#6C, `navLook="tiles"`): the
+// The navigation standard drawn as tiles (`navLook="tiles"`): the
 // same nav, its Tools at the foot kept a list by its own `look`.
 const STANDARD_TILES: NavEntry[] = STANDARD.map((entry) =>
   'items' in entry && entry.label === 'Tools' ? { ...entry, look: 'list' as const } : entry,
@@ -239,7 +222,7 @@ const STANDARD_TILES_BAR: BottomBarItem[] = [
   { group: 'Home and money', label: 'Household', icon: WalletIcon },
 ]
 
-// The tiles look with counts on a phone (4.113): News a page of its own
+// The tiles look with counts on a phone: News a page of its own
 // on the bar with 7 new, Videos past 99, Timers at 0 (nothing drawn).
 // Every day's badge is its entries' sum, Collections' reads "99+".
 const STANDARD_TILES_COUNTS: NavEntry[] = STANDARD_TILES.map((entry) =>
@@ -275,7 +258,7 @@ const STANDARD_BAR: BottomBarItem[] = [
   { group: 'Home and money', label: 'Household', icon: WalletIcon, sheet: 'tiles' },
 ]
 
-// One project's view, for the tab's title (#186). `loaded` false holds it
+// One project's view, for the tab's title. `loaded` false holds it
 // in its loading state until "Finish loading" is pressed, so the record's
 // title arrives after the nav's; true has it from the first render, so
 // the view's title is set before AppShell's (a child's effect runs first).
@@ -301,7 +284,7 @@ function ProjectView({ loaded: loadedAtFirst, documentTitle }: { loaded: boolean
 
 type ShellView = { loaded: boolean; documentTitle?: string | false }
 
-// An account's record, its trail above it (#R2): Finance, Accounts, then
+// An account's record, its trail above it: Finance, Accounts, then
 // its own title, in the shell's bar.
 function AccountView() {
   return (
@@ -322,7 +305,7 @@ function AccountView() {
   )
 }
 
-// A page below a record, naming its own trail (#N5): on a phone its back
+// A page below a record, naming its own trail: on a phone its back
 // arrow goes to the record, the trail's closest crumb above it.
 function StatementPage() {
   usePageTrail([
@@ -474,7 +457,7 @@ export const Sections: Story = { args: { nav: SECTIONS, path: '/projects/categor
 
 export const Flat: Story = { args: { nav: FLAT, path: '/projects/7' } }
 
-// Collapsible sections (#152): open, folded, and the one holding the page.
+// Collapsible sections: open, folded, and the one holding the page.
 export const Collapsible: Story = { args: { nav: COLLAPSIBLE, path: '/projects/categories/2' } }
 
 // A page inside Media, for arriving in a section folded earlier.
@@ -495,13 +478,13 @@ export const Version: Story = {
   },
 }
 
-// An entry whose `to` opens its list on a saved view (#188).
+// An entry whose `to` opens its list on a saved view.
 export const SavedView: Story = { args: { nav: SAVED_VIEW, path: '/reading?status=unread&sort=title:asc' } }
 
-// The home entry: the tab reads the app's title alone (#186).
+// The home entry: the tab reads the app's title alone.
 export const Home: Story = { args: { nav: FLAT, path: '/' } }
 
-// A record's view inside the shell (#186): its title from the first render…
+// A record's view inside the shell: its title from the first render…
 export const WithView: Story = { args: { nav: SECTIONS, path: '/projects/7', view: { loaded: true } } }
 
 // …after the nav's (still loading until "Finish loading")…
@@ -515,18 +498,18 @@ export const WithViewNoDocumentTitle: Story = {
   args: { nav: SECTIONS, path: '/projects/7', view: { loaded: true, documentTitle: false } },
 }
 
-// The app's logo (#211): before the title, and alone at the top of the rail.
+// The app's logo: before the title, and alone at the top of the rail.
 export const WithLogo: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true } }
 export const WithLogoRail: Story = { args: { nav: SECTIONS, path: '/projects/7', logo: true, sidebarOpen: false } }
 
-// A module's pages under its entry (#239), on one of them, on the module's
+// A module's pages under its entry, on one of them, on the module's
 // own entry, elsewhere, and on the icon rail.
 export const Nested: Story = { args: { nav: NESTED, path: '/media/channels/3' } }
 export const NestedOnParent: Story = { args: { nav: NESTED, path: '/media/videos' } }
 export const NestedElsewhere: Story = { args: { nav: NESTED, path: '/' } }
 export const NestedRail: Story = { args: { nav: NESTED, path: '/media/channels/3', sidebarOpen: false } }
 
-// The phone's bottom bar (#240): Home, two sections (one with a shorter
+// The phone's bottom bar: Home, two sections (one with a shorter
 // label) and a page, on a page inside Collections. Below the md breakpoint
 // only, so open it at a phone's width.
 const BOTTOM_BAR: BottomBarItem[] = [
@@ -566,7 +549,7 @@ export const StandardRail: Story = {
 export const StandardOnEntry: Story = { args: { nav: STANDARD, path: '/finance/accounts', bottomBar: STANDARD_BAR } }
 export const StandardNoBar: Story = { args: { nav: STANDARD, path: '/finance/accounts/3' } }
 
-// The trail in the bar (#N5, #R2) and search (#N6). A record's trail from
+// The trail in the bar and search. A record's trail from
 // EntityView, a page's own (usePageTrail), and the nav entry's on a page
 // that names none; the palette over the nav's pages and made-up records,
 // with three opened lately, over the pages only, and with a search that
@@ -590,7 +573,7 @@ export const StandardSearchFailing: Story = {
   args: { nav: STANDARD, path: '/finance/budget', bottomBar: STANDARD_BAR, search: 'failing' },
 }
 
-// The sidebar as icon tiles (#6C, `navLook="tiles"`): each area a grid of
+// The sidebar as icon tiles (`navLook="tiles"`): each area a grid of
 // tiles with no visible heading, Finance's pages listed under its area's
 // grid with hairlines for their headings, Tools kept a list at the foot;
 // on the icon rail, on a module's own page with no pages open, and on a
@@ -606,7 +589,7 @@ export const StandardTilesOnHome: Story = {
   args: { nav: STANDARD_TILES, path: '/', bottomBar: STANDARD_TILES_BAR, navLook: 'tiles' },
 }
 
-// Counts on a phone (4.113): a badge on a bar item's icon, a page's own
+// Counts on a phone: a badge on a bar item's icon, a page's own
 // or its area's sum, "99+" past 99, nothing at 0; in a sheet's tiles'
 // corners. e2e/app-shell-phone-counts.spec.ts.
 export const StandardTilesCounts: Story = {

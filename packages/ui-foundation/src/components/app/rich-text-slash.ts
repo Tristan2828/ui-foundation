@@ -3,7 +3,7 @@
 // line into that block, the "/…" gone. The menu itself:
 // rich-text-slash-menu.tsx; its keys and ARIA: milkdown-editor.tsx.
 //
-// Any line of text (4.126, the RichTextEditor review's F18): a top-level
+// Any line of text: a top-level
 // one or a heading, a list item's, a quote's or a callout's, a table
 // cell's. The menu lists only what can be made there: in a cell, the
 // highlights (a cell holds one line), not a heading or a list.
@@ -124,12 +124,12 @@ const BLOCKS = FORMAT_GROUPS.flat().filter((item) => KEYWORDS[item.id])
 BLOCKS.splice(BLOCKS.findIndex((item) => item.id === 'heading3') + 1, 0, ...TOGGLE_HEADING_VARIANTS)
 
 /**
- * A slash menu item: a block, an image (only with the editor's `upload`,
- * 4.123) or the new page (only with the app's `onCreatePage`).
+ * A slash menu item: a block, an image (only with the editor's `upload`)
+ * or the new page (only with the app's `onCreatePage`).
  */
 export type SlashItem = Omit<FormatItem, 'id'> & { id: FormatId | 'image' | 'page' }
 
-// An image (4.123): the file picker, the image going where the "/" was.
+// An image: the file picker, the image going where the "/" was.
 // The Image button's job for an editor with no fixed toolbar
 // (`toolbar="floating"`), and a quicker way with one.
 const IMAGE_ITEM: SlashItem = { id: 'image', label: 'Image', icon: ImageIcon }

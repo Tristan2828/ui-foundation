@@ -10,42 +10,29 @@
 // stays on screen, nothing is saved in its place), the editor marks itself
 // invalid, and `onProblem` says why; with no `onProblem`, the editor says
 // it itself, inside the field. A form gives `onProblem` and holds its
-// submit on it (add-an-entity.md "The form"), or Save would send the last
+// submit on it (add-an-entity.md "Forms"), or Save would send the last
 // text that could be saved and say it worked.
 //
 // Raw HTML in the text shows as its characters, as <Markdown> shows it,
 // and nothing pasted or typed can add markup.
 //
-// Headings in the text sit under the page's outline (`headingLevel`, from
-// <h3> by default), as <Markdown>'s do. A table wider than the field
-// scrolls sideways, and while it does, its box is a tab stop the arrow
-// keys scroll.
-//
-// Images in the text (`![alt](url)`) show, at most the field's width.
-// With `upload`, an image pasted, dropped or picked with an Image button
-// (the fixed toolbar's, or the tools strip's with `toolbar="floating"`) is
-// uploaded through the app's own storage and goes in as
-// `![](url)`; while it uploads, a placeholder shows where it will go.
-//
-// A table's columns fit their words. Grips on its column and row (or a
-// right-click, or Shift+F10, in a cell) open menus to insert, move,
-// delete, align, sort and colour; a header column and cell colours are
-// kept as Markdown already writes them (src/lib/markdown-table.ts).
-// `tableLook` picks compact (the default) or boxed, as on <Markdown>.
-//
-// With `foldKey`, the text folds by its toggle headings (NotesOutline
-// lists every heading beside it), the Markdown untouched. A toggle heading
+// Headings, tables, page links, `foldKey` and `tableLook` follow
+// <Markdown>'s (`headingLevel`, from <h3> by default; a table wider than
+// the field scrolls in a tab stop the arrow keys scroll). Grips on a
+// table's column and row (or a right-click, or Shift+F10, in a cell) open
+// menus to insert, move, delete, align, sort and colour. A toggle heading
 // is `## Safety {toggle="true"}` in the Markdown: typed as `>## `, picked
-// from the slash menu (Toggle heading 1 to 3) or made from the heading the
-// caret is in with the toolbar's Toggle heading. Plain is the default.
+// from the slash menu or made with the toolbar's Toggle heading.
 //
-// With `pageLink`, links the app marks as its pages (src/lib/page-link.ts)
-// draw as page links, as on <Markdown>: the page icon, a row of their own
-// when alone in a paragraph, "Page removed" with Restore. A click opens the
-// page in this tab. With `onCreatePage`, "/page" (or Turn into page on
-// selected words) asks for a title, has the app make the page, and puts
-// in `[title](href)`. Pages may nest to any depth: a page's own note takes
-// the same props. The Markdown stays plain links.
+// Images in the text (`![alt](url)`) show, at most the field's width. With
+// `upload`, an image pasted, dropped or picked with an Image button is
+// uploaded through the app's own storage and goes in as `![](url)`; while
+// it uploads, a placeholder shows where it will go.
+//
+// With `onCreatePage`, "/page" (or Turn into page on selected words) asks
+// for a title, has the app make the page, and puts in `[title](href)`.
+// Pages may nest to any depth: a page's own note takes the same props.
+// The Markdown stays plain links.
 //
 // `defaultValue` is read when it mounts, then followed: a new value the
 // editor didn't report itself (a form's loaded record arriving after the
@@ -55,8 +42,8 @@
 //
 // The editor (Milkdown) is loaded on first use, so a page that only reads
 // Markdown never downloads it. Until it arrives the text shows as
-// <Markdown> draws it (4.123), the field's size, so nothing moves when the
-// editor takes its place; an empty one shows skeleton lines.
+// <Markdown> draws it, the field's size, so nothing moves when the editor
+// takes its place; an empty one shows skeleton lines.
 import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -126,9 +113,8 @@ export type RichTextEditorProps = {
    * Images uploaded into the text: pasted, dropped, or picked with an
    * Image button (on the fixed toolbar; with `toolbar="floating"`, on the
    * "Editor tools" strip shown while the field has focus; on a phone, in
-   * the row pinned to the keyboard) or the slash menu's Image ("/image",
-   * 4.123). Each file goes through this (the
-   * app's own storage: the package knows no endpoint) and goes in as
+   * the row pinned to the keyboard) or the slash menu's Image ("/image"). Each file goes
+   * through this (the app's own storage: the package knows no endpoint) and goes in as
    * `![](url)`, from the result's `url`, else its `thumbUrl`. A
    * placeholder shows where it will go while it uploads (it isn't saved);
    * a refused file or a failed upload takes it away and says why in a
@@ -231,7 +217,7 @@ function useOpenings(defaultValue: string) {
 export function RichTextEditor(props: RichTextEditorProps) {
   const { opening, report } = useOpenings(props.defaultValue)
   const { onChange } = props
-  // The editor reports what was typed as it unmounts (F6); one replaced
+  // The editor reports what was typed as it unmounts; one replaced
   // by a new value (a reset) has nothing left to say.
   const live = useRef(opening)
   useLayoutEffect(() => {
@@ -248,7 +234,7 @@ export function RichTextEditor(props: RichTextEditorProps) {
           {/* The toolbar's height, so nothing moves when it arrives (none on
               a touch screen, whose toolbar is pinned to the keyboard). */}
           {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input pointer-coarse:hidden" />}
-          {/* The text itself while the editor loads (4.123): it's as tall as
+          {/* The text itself while the editor loads: it's as tall as
               the editor will be, so nothing under it moves when the editor
               arrives (a phone's notes, edited in place above the facts).
               Skeleton lines only for an empty one. */}

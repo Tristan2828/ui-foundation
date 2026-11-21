@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
-// The order of a hub page's cards, and which are hidden (#263): what
+// The order of a hub page's cards, and which are hidden: what
 // WidgetLayoutSheet edits and the page renders by. The app names its cards
 // in their default order; the person's own order is kept under the page's
 // key, and merged with the app's ids every time it's read:

@@ -1,8 +1,8 @@
-// What an empty value reads as on a record (form standard 22.2, #F17): a
+// What an empty value reads as on a record (form standard 22.2): a
 // dash in the muted text tone, everywhere, with "Not set" as what a screen
 // reader says for it. Words given instead ("No budget yet") read as they
 // are. EntityView, its strip (KeyStats), EqualItems and the inPlace
-// presets' fields all show it, and it's exported (4.96) so an app's own
+// presets' fields all show it, and it's exported so an app's own
 // strips, summary lines and cells draw the same dash, not one of their own.
 import type { ComponentProps } from 'react'
 import { EMPTY_DASH } from '@/lib/empty-value'

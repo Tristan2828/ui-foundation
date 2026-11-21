@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// EntityView's 4.76 opt-ins in a real browser: tabs over the main column
-// (#303; app/EntityView Tabs, Tabs column), the `leading` mark left of
+// EntityView's opt-ins in a real browser: tabs over the main column
+// (app/EntityView Tabs, Tabs column), the `leading` mark left of
 // the title (Leading) and rail fields beside their labels (Rail, the
-// default since 4.81; Rail fields stacked opts out), each at a desktop's
+// default; Rail fields stacked opts out), each at a desktop's
 // and a phone's width. Axe and the token
 // check in both themes are e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
 const story = (id: string, query = '') => `http://localhost:6180/story.html?id=app-entityview--${id}${query}`

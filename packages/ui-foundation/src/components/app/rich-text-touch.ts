@@ -1,4 +1,4 @@
-// Whether the editor is on a touch screen (review F11): where its toolbar
+// Whether the editor is on a touch screen: where its toolbar
 // is the bar pinned to the keyboard (rich-text-keyboard-bar.tsx), the
 // floating bar over selected words gives way to the system's own, and the
 // slash menu is capped to what the keyboard leaves visible.

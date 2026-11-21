@@ -353,7 +353,7 @@ describe('editing in place with autosave', () => {
     const { store, notes } = await autosaving()
     store.change('notes', 'One two')
     store.report('notes', "This text can't be saved without changing parts you didn't edit.")
-    // Unsaved at once, not only after the pause, and leaving asks rather than saving (F5).
+    // Unsaved at once, not only after the pause, and leaving asks rather than saving.
     expect(store.dirty).toBe(true)
     expect(store.savesOnLeave).toBe(false)
     await vi.advanceTimersByTimeAsync(PAUSE)

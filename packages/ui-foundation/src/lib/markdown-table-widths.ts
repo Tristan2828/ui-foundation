@@ -1,5 +1,5 @@
 // A table's column widths, kept in the Markdown as one comment after the
-// table, naming its columns (the developer's choice, 2026-11-09):
+// table, naming its columns:
 //
 //   | Item | Room | Cost |
 //   | ---- | ---- | ---: |

@@ -1,5 +1,5 @@
-// Where LineChart's points, target and mark go (#238), React-free so the
-// rules are unit tested on their own (tests/line-chart-layout.test.ts).
+// Where LineChart's points, target and mark go, React-free so the
+// rules are unit tested on their own (tests/line-chart.test.tsx).
 // Positions are fractions of the plot, 0…1, x from the left and y from
 // the top, so the chart fills whatever width it's given.
 
@@ -34,7 +34,7 @@ function along(x: string | number): number {
 // never runs along the plot's edge.
 const PAD = 0.1
 
-// `levels` (4.64): the count of named steps a value is one of (a
+// `levels`: the count of named steps a value is one of (a
 // confidence, Very low to High), each value its step's index. The range is
 // then every step, whatever the values, so a move from one step to the
 // next looks as big as it is, not the plot's whole height.

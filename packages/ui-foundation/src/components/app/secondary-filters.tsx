@@ -1,7 +1,6 @@
 // A table toolbar's less-used filters behind one "Filters" button, so a
-// table with many filters still starts near the top of the page (issue
-// #93). The primary filters (search, status, whatever most visits use)
-// stay in the toolbar; this goes beside them, holding the rest:
+// table with many filters still starts near the top of the page. The primary filters (search, status, whatever most
+// visits use) stay in the toolbar; this goes beside them, holding the rest:
 //
 // - The button says how many of its filters are on ("Filters 2", named
 //   "Filters, 2 active"), and opens them in a popover, or a sheet from the

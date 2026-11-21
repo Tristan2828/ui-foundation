@@ -164,7 +164,7 @@ async def _record(session: AsyncSession, user: User, entity: McpEntity, record_i
     return record
 
 
-# A table's column widths (4.79.0): the rich-text editor keeps them as one
+# A table's column widths: the rich-text editor keeps them as one
 # comment line straight after the table (`<!-- table widths: Item=140 -->`,
 # the package's src/lib/markdown-table-widths.ts), which every renderer
 # hides. A read answer hides it too, with the blank lines before it; the

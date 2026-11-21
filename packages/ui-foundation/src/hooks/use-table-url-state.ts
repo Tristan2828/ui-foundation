@@ -40,7 +40,7 @@ export type TableUrlStateOptions = {
 /** useTableUrlState's options, with the view the list opens on. */
 export type TableUrlStateViewOptions<V extends string> = TableUrlStateOptions & {
   /**
-   * The view the list opens on (4.105): at the list's plain address its
+   * The view the list opens on: at the list's plain address its
    * filters fill the bar and its pill is pressed. Write that view's whole
    * meaning in its filters (`{ status: ['active', 'paused'] }`, not `{}`
    * with the server's default doing the rest), so the bar shows it.
@@ -65,7 +65,7 @@ const DEFAULT_PAGE_SIZES = [25, 50, 100] as const
 // counts as active); pass that view's `columns` to DataTable. A view is
 // pressed with applyView().
 //
-// Views fill the filters (4.105). A view's `filters` and `multiFilters` are
+// Views fill the filters. A view's `filters` and `multiFilters` are
 // what the bar's controls show while it's on, so the bar says why rows are
 // hidden; write each view's whole meaning there. `defaultView` names the
 // view the list opens on: at the list's plain address (no filter in the
@@ -120,7 +120,7 @@ export function useTableUrlState<F extends string, M extends string = never, V e
   const { filters, multiFilters } = state
 
   // The URL's sort, else the default view's at the list's plain address
-  // (4.123): pressing the default view writes no `?sort=`, as it writes no
+  //: pressing the default view writes no `?sort=`, as it writes no
   // filters, and its sort still holds.
   const urlSort = params.get('sort')
   const [sortField, sortDir] = (urlSort ?? '').split(':')

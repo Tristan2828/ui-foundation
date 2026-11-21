@@ -1,4 +1,4 @@
-// defineA11ySuite (issue #234): which tests it registers for the options
+// defineA11ySuite: which tests it registers for the options
 // given, so a modular app can split it into a spec per module. Playwright's
 // `test` is replaced by a recorder; the tests themselves run in the
 // template's e2e/a11y.spec.ts.

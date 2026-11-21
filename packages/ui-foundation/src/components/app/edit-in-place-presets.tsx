@@ -145,9 +145,9 @@ export type InPlaceRecurrenceConfig<TRequired extends boolean = boolean> = {
   timeZone?: string
   /** The times a new repeat starts with. Defaults to 09:00. */
   defaultTimes?: string[]
-  /** RecurrenceField's `times` (4.114): false for a record whose times are its own fields; the value at rest says no times either. */
+  /** RecurrenceField's `times`: false for a record whose times are its own fields; the value at rest says no times either. */
   times?: boolean
-  /** RecurrenceField's `weekStart` (4.114): `'SU'` for an app whose weeks start on Sunday. */
+  /** RecurrenceField's `weekStart`: `'SU'` for an app whose weeks start on Sunday. */
   weekStart?: WeekdayCode
   /** Today, `'YYYY-MM-DD'`, and "now", for a fixed preview (tests). Default to the clock. */
   today?: string
@@ -157,7 +157,7 @@ export type InPlaceRecurrenceConfig<TRequired extends boolean = boolean> = {
 
 /**
  * One option of a select: its value and its words. `kind` and `icon`
- * (4.105) are ChoiceButtons': drawn by both looks (the select's since 4.109).
+ * are ChoiceButtons': drawn by both looks.
  */
 export type InPlaceOption<T> = ChoiceButtonsOption<T>
 
@@ -182,7 +182,7 @@ export type InPlaceSelectConfig<T extends string | number, TRequired extends boo
 }
 
 /**
- * A score out of a few, set by clicking a star (RatingInput, 4.127). The
+ * A score out of a few, set by clicking a star (RatingInput). The
  * stars are the value: shown at rest, with no click to open, a click on a
  * star saving it at once. Pressing the set star again saves `null` (none)
  * unless `required`; the arrow keys move and set it, saved a pause after

@@ -1,4 +1,4 @@
-// The index at the top of each long convention doc (#232): one line per
+// The index at the top of each long convention doc: one line per
 // section (and per numbered step), its anchor and the lines it spans, so
 // an agent reads the index and then only the lines it needs, not the
 // whole file. Written from the headings, never by hand:

@@ -11,7 +11,7 @@ import { EntityView, type EntityViewSection } from './entity-view'
 import { Markdown } from './markdown'
 import { RatingInput } from './rating-input'
 
-// RatingInput (4.127): a score set by clicking a star. Default holds every
+// RatingInput: a score set by clicking a star. Default holds every
 // state on a card (set, empty, hearts out of ten, disabled), each with its
 // value written beside it, so e2e/rating-input.spec.ts can read what a
 // click, a key or a second press did. InARecord is `inPlace.rating` in the

@@ -123,7 +123,7 @@ export interface TableGripsProps {
   /**
    * The cell the caret is in when it's in this table and the text has
    * focus, else null: all the grips draw from the editor's state, so a
-   * key that doesn't move it re-renders nothing (F6). What a menu offers
+   * key that doesn't move it re-renders nothing. What a menu offers
    * is read from `view`'s state as it opens.
    */
   caret: TableCell | null
@@ -166,7 +166,6 @@ function stateAt(state: EditorState, tablePos: number, cell: TableCell): EditorS
 
 // How far either side of a column's right edge the pointer can be to take it.
 const EDGE_REACH = 6
-// How much Narrower and Wider change a column.
 const WIDTH_STEP = 16
 
 // The column whose right edge is nearest a point within the table, if one's in reach.
@@ -501,7 +500,7 @@ export function TableGrips({ view, caret, getPos, frame, box, table, readOnly, o
   const rowColor = there && tableColorEnabled(there, 'row')
   const finalFocus = () => text() ?? true
   const grip = 'pointer-events-auto absolute flex items-center justify-center rounded-sm border border-border bg-muted text-muted-foreground shadow-xs outline-none hover:bg-primary hover:text-primary-foreground data-popup-open:bg-primary data-popup-open:text-primary-foreground ' +
-    // On a touch screen, an invisible 40px square round each takes the tap (review F11).
+    // On a touch screen, an invisible 40px square round each takes the tap.
     "pointer-coarse:before:absolute pointer-coarse:before:top-1/2 pointer-coarse:before:left-1/2 pointer-coarse:before:size-10 pointer-coarse:before:-translate-1/2 pointer-coarse:before:content-['']"
 
   return (

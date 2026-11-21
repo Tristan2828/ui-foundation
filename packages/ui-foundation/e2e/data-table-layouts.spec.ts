@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// DataTable's card layouts (issue #252, app/DataTable layouts stories) in
+// DataTable's card layouts (app/DataTable layouts stories) in
 // a real browser: the switch, the URL and the remembered pick, the grid's
 // columns from the table's width, groups and paging in every layout, and
 // every state. Axe and the token check on the stories at rest, in both

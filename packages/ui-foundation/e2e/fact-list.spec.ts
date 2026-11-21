@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test'
 
-// Several items in one fact (4.111), on the harness's FactList "Links box":
+// Several items in one fact, on the harness's FactList "Links box":
 // a Related row of long linked titles with kind icons, a For row with a
 // bullet, and a Tasks box drawn with FactList. Each item is marked, the
 // marks sit on the item's first line, a wrapped line starts where the

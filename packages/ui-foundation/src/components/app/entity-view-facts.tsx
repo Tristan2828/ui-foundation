@@ -1,4 +1,4 @@
-// A record's short facts (4.106, record standard A1): the values a
+// A record's short facts (record standard A1): the values a
 // facts rail beside the tabs may hold, and how each is drawn.
 //
 // A rail holds short values only, so a fact isn't free markup: it's one
@@ -13,7 +13,7 @@
 // a tab. Anything else is a section with `fields` or `content`, in a tab
 // or in Details, never the rail.
 //
-// The record's status (4.115, record standard A1): a fact marked
+// The record's status (record standard A1): a fact marked
 // `recordStatus: true` is drawn first, at the top of the rail (and of
 // Details where the rail folds), whatever its place in `facts` and
 // whichever rail section holds it. It's edited in place there (`edit`); a
@@ -21,7 +21,7 @@
 // date and a reason) stays read-only, with the action as a small button
 // under it (`action`) and a `hint` saying why it can't be edited here.
 //
-// A yes/no (4.120): `kind: 'switch'` is a switch on the value's line,
+// A yes/no: `kind: 'switch'` is a switch on the value's line,
 // toggled where it is (a click, Space or Enter), named by the fact's
 // label. It's drawn the same in the rail and in Details where the rail
 // folds. An `on`/`off` word after it says the state in words; both words
@@ -49,7 +49,7 @@ export type EntityViewFactValue =
   | { kind: 'status'; status: StatusKind; word?: string }
   /** Short text: a date, a number, a person's name. One line, cut with its whole text on hover. `null` is empty. */
   | { kind: 'text'; text: string | number | null | undefined }
-  /** A few short labels (areas, tags) as badges, each with its icon if it has one (4.115). None is empty. */
+  /** A few short labels (areas, tags) as badges, each with its icon if it has one. None is empty. */
   | { kind: 'badges'; items: readonly (string | EntityViewFactBadge)[] }
   /** A count, and where it links to, if anywhere (`/discussions?provider=3`). */
   | { kind: 'count'; count: number; to?: string }
@@ -62,14 +62,14 @@ export type EntityViewFactValue =
    */
   | { kind: 'record'; name: string; to: string; short: true }
   /**
-   * Several items (4.111): linked records, links out, or plain words, each
+   * Several items: linked records, links out, or plain words, each
    * marked by its kind's `icon` or a bullet (FactList), so long titles
    * that wrap still read apart. An item with `to` links in the app, with
    * `href` out of it (a new tab), with neither is its words. None is empty.
    */
   | { kind: 'list'; items: readonly EntityViewFactListItem[] }
   /**
-   * A rating (4.117), drawn as the list's cells draw it: `stars` (the
+   * A rating, drawn as the list's cells draw it: `stars` (the
    * default) or `hearts` for a score out of `max` (RatingScore), `bar` for a
    * quality level of `max` steps (StepBar). `value` is how many are
    * filled; `null` is empty. Named "4 of 5" for a screen reader (with
@@ -77,7 +77,7 @@ export type EntityViewFactValue =
    */
   | { kind: 'rating'; value: number | null | undefined; max?: number; look?: EntityViewFactRatingLook; word?: string }
   /**
-   * A yes/no (4.120), toggled in place by a switch named by the fact's
+   * A yes/no, toggled in place by a switch named by the fact's
    * label. `onCheckedChange` saves it: while a promise it returns is
    * pending the switch shows the new state and is busy, and if it rejects
    * the switch goes back. `on`/`off` are words after the switch ("Shared",
@@ -108,20 +108,20 @@ export type EntityViewFactListItem = {
   icon?: IconComponent
 }
 
-/** One item of a `badges` fact with an icon (4.115): the icon before its label, in the muted tone. */
+/** One item of a `badges` fact with an icon: the icon before its label, in the muted tone. */
 export type EntityViewFactBadge = {
   label: string
   /** An icon component (a `LucideIcon`, an app's own mark) or a node drawn as it is. Decorative: the label says it. */
   icon?: IconComponent | ReactNode
   /**
-   * The badge's tone (4.123), for a label that is a state ("Pinned",
+   * The badge's tone, for a label that is a state ("Pinned",
    * "Overdue"): the outline badge in that tone's text colour, its icon
    * too. Neutral (the outline) unless set. The word still says it.
    */
   tone?: EntityViewFactBadgeTone
 }
 
-/** A badge item's tone (4.123): the design language's four, as outline badges. */
+/** A badge item's tone: the design language's four, as outline badges. */
 export type EntityViewFactBadgeTone = 'success' | 'warning' | 'info' | 'destructive'
 
 const BADGE_TONE = {
@@ -131,7 +131,7 @@ const BADGE_TONE = {
   destructive: 'outline-destructive',
 } as const satisfies Record<EntityViewFactBadgeTone, string>
 
-/** A small button under a fact's value (4.115): "Close…" under a status that changes only through it. */
+/** A small button under a fact's value: "Close…" under a status that changes only through it. */
 export type EntityViewFactAction = {
   /** The button's words ("Close…"; an ellipsis when it opens a dialog). */
   label: string
@@ -155,19 +155,19 @@ export type EntityViewFact = EntityViewFactValue & {
   /** Editable in place, as a field is (`inPlace.select`, `inPlace.date`); it's drawn by its kind at rest. */
   edit?: EditInPlace
   /**
-   * The record's status (4.115): drawn first, at the top of the rail (or
+   * The record's status: drawn first, at the top of the rail (or
    * of Details), whatever its place in `facts` or its section's among the
    * rail's. One per record; usually a `kind: 'status'` fact.
    */
   recordStatus?: boolean
   /**
-   * A few words on the value (4.115), such as why it can't be edited here
+   * A few words on the value, such as why it can't be edited here
    * ("Changes when the record is closed"). An info button after the value
    * shows it on hover and keyboard focus; a touch screen shows it as a
    * line under the value instead. A screen reader reads it with the value.
    */
   hint?: string
-  /** A small button under the value (4.115), drawn in the rail and in Details alike. */
+  /** A small button under the value, drawn in the rail and in Details alike. */
   action?: EntityViewFactAction
 }
 
@@ -297,7 +297,7 @@ function statusFirst(facts: readonly EntityViewFact[]): readonly EntityViewFact[
 }
 
 /**
- * The sections with the one holding the status fact (4.115) moved before
+ * The sections with the one holding the status fact moved before
  * the other sections that share its place (the rail, or a tab's
  * side), so the status is the first fact there. Nothing else moves.
  */

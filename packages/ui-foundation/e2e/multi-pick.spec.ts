@@ -157,7 +157,7 @@ test('MultiPick on a form: a click changes the value, Space too', async ({ page 
   await expect(page.getByTestId('form-value')).toHaveText('Value: Finance')
 })
 
-// onCreate (4.102): Create "<typed>" when what's typed names no label.
+// onCreate: Create "<typed>" when what's typed names no label.
 test.describe('MultiPick Create', () => {
   const box = (page: Page) => page.getByRole('searchbox', { name: 'Filter Labels' })
   const createButton = (page: Page) => page.locator('[data-slot="multi-pick"] [data-create]')

@@ -1,7 +1,7 @@
 // After a deploy, a tab opened on the build before it still runs that
 // build, and its content-hashed chunks are gone from the server: the next
 // lazy import (the rich-text editor's, say) fails with "Failed to fetch
-// dynamically imported module" (#206). Vite's preload helper announces it
+// dynamically imported module". Vite's preload helper announces it
 // first as a cancelable `vite:preloadError` on `window`, for the package's
 // own lazy chunks too once the app's build bundles them. On it, the page
 // reloads once onto the new build, and the failure is not reported.

@@ -1,4 +1,4 @@
-// A record's tab bar (4.101, record standard 3B) as rendered markup: the
+// A record's tab bar (record standard 3B) as rendered markup: the
 // counts beside the names (by name, none for zero), the bar that sticks,
 // at the dialog's offset unless the screen gives one. Sticking and its
 // name are e2e/record-tabs.spec.ts.

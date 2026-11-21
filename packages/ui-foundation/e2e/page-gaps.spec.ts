@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The page standards' gaps apps worked around (4.123): src/components/app/page-gaps.fixtures.tsx.
+// The page standards' gaps apps worked around: src/components/app/page-gaps.fixtures.tsx.
 const STORY = (id: string, theme: 'light' | 'dark' = 'light') => `http://localhost:6180/story.html?id=app-page-gaps--${id}&theme=${theme}`
 const box = async (locator: Locator) => (await locator.boundingBox())!
 

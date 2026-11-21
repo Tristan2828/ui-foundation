@@ -33,7 +33,7 @@ export const Default: Story = {}
 // Fields refused by the server, with what was typed still in them, on a
 // card the way a form sits. An invalid Field turns its text the danger
 // shade; under a palette the typed value stays foreground, since the
-// danger shade measured 4.28:1 on a palette's input fill (4.63.2).
+// danger shade measured 4.28:1 on a palette's input fill.
 export const InvalidWithValues: Story = {
   render: () => (
     <div className="bg-card p-4 text-card-foreground">

@@ -1,14 +1,8 @@
 import AxeBuilder from './axe'
 import { devices, expect, test, type Page } from '@playwright/test'
 
-// RatingInput (4.127): a score set by clicking a star. A click sets it,
-// a click on the set star clears it, the arrow keys move and set it,
-// hovering previews it, and a disabled one ignores all of it. As
-// `inPlace.rating` in a record's facts rail and a table's rows, a click
-// saves at once (Saving…, then the new score), a second press saves none,
-// a refusal shows under it, and the arrow keys save once, after the last.
-// On a phone every star is a 44px target and the row puts its label
-// above the stars, so nothing runs past the screen.
+// RatingInput: a score set by clicking a star, by keyboard and hover; as `inPlace.rating` in a record's
+// facts rail and a table's rows it saves once, shows a refusal, and sizes its stars for a phone.
 const STATES = 'http://localhost:6180/story.html?id=app-ratinginput--default'
 const RECORD = 'http://localhost:6180/story.html?id=app-ratinginput--in-a-record'
 

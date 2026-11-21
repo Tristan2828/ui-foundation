@@ -1,12 +1,12 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// RecurrenceField (app/RecurrenceField stories, #326) in a real browser: a
+// RecurrenceField (app/RecurrenceField stories) in a real browser: a
 // phrase read as it's typed, with its label and next five dates, and a
 // clear refusal; the presets; on a form; edited in place (Enter saves, a
 // phrase it can't read doesn't); the list cells; a phone's width; axe in
 // both themes with a refusal showing; dates only, with weeks from Sunday
-// (4.114), and its axe in both themes. Every story is on Thursday
+//, and its axe in both themes. Every story is on Thursday
 // 2026-11-12, noon in Chicago.
 const story = (id: string) => `http://localhost:6180/story.html?id=app-recurrencefield--${id}`
 const field = (page: Page, name: string) => page.locator('[data-slot="recurrence-field"]').filter({ has: page.getByRole('textbox', { name, exact: true }) })

@@ -57,7 +57,7 @@ test.describe('featured', () => {
   })
 })
 
-// The stepper (4.127, app/EqualItems "Stepper"): numbered steps picking
+// The stepper (app/EqualItems "Stepper"): numbered steps picking
 // the one panel shown, a tablist from the keyboard, opening on the current
 // step; the app can keep the shown step; on a phone the row scrolls
 // sideways in its own box with the shown step in view.

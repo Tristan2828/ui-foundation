@@ -1,4 +1,4 @@
-// One of a fixed list on a form (4.85, the form standard's F11), drawn the
+// One of a fixed list on a form (the form standard), drawn the
 // way the value is drawn everywhere else: `render` (a status's badge in
 // its tone) on the trigger and on every item, as `inPlace.select`'s
 // `render` does in place, so a status reads the same in the box, in its
@@ -10,7 +10,7 @@
 // each option to its index, so any string or number works as a value and
 // the trigger always shows the option's words or its `render`.
 //
-// An option can carry a status kind or an icon (4.109), as ChoiceButtons'
+// An option can carry a status kind or an icon, as ChoiceButtons'
 // do: `kind` draws the kind's icon in its colour (StatusMark's) before the
 // words, on the trigger and on its item in the list, so a status of five
 // or more options reads like the one of four drawn as buttons. A
@@ -27,7 +27,7 @@ const NONE = '__none__'
 export type OptionSelectOption<T> = {
   value: T
   label: string
-  /** A status kind (4.109): its icon, in its colour, before the words, as StatusMark and ChoiceButtons draw it. */
+  /** A status kind: its icon, in its colour, before the words, as StatusMark and ChoiceButtons draw it. */
   kind?: StatusKind
   /** An icon before the words; with `kind`, in place of the kind's. Uncoloured without a `kind`. */
   icon?: IconComponent

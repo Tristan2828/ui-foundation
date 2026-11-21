@@ -161,7 +161,7 @@ function normalise(value) {
 const same = (a, b) => JSON.stringify(normalise(a)) === JSON.stringify(normalise(b))
 
 // A pattern the foundation widened keeps the ones before it
-// (`x-earlier-patterns`, Recurrence's rule since 4.119), and an app's copy
+// (`x-earlier-patterns`, Recurrence's rule), and an app's copy
 // with an earlier one still matches: it allows less, so the package reads
 // everything it can hold, and the app copies the new one when it wants
 // what that allows. The nth earlier version takes every such node's nth.

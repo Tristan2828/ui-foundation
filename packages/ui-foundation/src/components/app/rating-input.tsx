@@ -1,4 +1,4 @@
-// A score out of a few, set by clicking a star (cell pattern 9, 4.127):
+// A score out of a few, set by clicking a star (cell pattern 9):
 // RatingScore's glyphs and tokens, as a control. "My Rating" as ★★★★☆,
 // where a click on the second star makes it 2.
 //

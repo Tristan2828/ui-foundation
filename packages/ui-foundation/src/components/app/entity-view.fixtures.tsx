@@ -57,10 +57,10 @@ import { SourceCredit } from './source-credit'
 // opens on a click. Rail, main first is the rail layout with
 // `mobileOrder="main-first"`: the same at a desktop width, Notes straight
 // after the header on a phone. Tabs, Leading and Rail fields beside are
-// 4.76's opt-ins, measured in e2e/entity-view-tabs.spec.ts. Details tab
-// and Details in the column are 4.98's record standard (1A, 2A, 5B): the
-// `tabs` layout, the default, with no rail, measured in
-// e2e/entity-view-details.spec.ts.
+// opt-ins, measured in e2e/entity-view-tabs.spec.ts. Details tab
+// and Details in the column are the record standard's (1A, 2A, 5B): the
+// `tabs` layout, the default, with no rail, also measured in
+// e2e/entity-view-tabs.spec.ts.
 
 // Long enough to scroll past a rail, with a table wider than the column
 // layout's 896px (it scrolls sideways there) but not than the rail
@@ -215,14 +215,14 @@ function LoadingRail() {
 export const RailLoading: StoryObj = { render: () => <LoadingRail /> }
 
 // Rail fields stacked: `railFields="stacked"`, each rail label above its
-// value, as every rail was before 4.81 made `beside` the default (Rail).
+// value (Rail has them beside).
 export const RailFieldsStacked: StoryObj = {
   name: 'Rail fields stacked',
   render: () => <InRouter layout="rail" railFields="stacked" />,
 }
 
 // --- Tabs -------------------------------------------------------------------
-// A how-to record whose main column is grouped under tabs (#303): Overview
+// A how-to record whose main column is grouped under tabs: Overview
 // has no tab and stays above the list; Steps, Used in and Reasoning are
 // tabs, the second with two sections. The rail always shows. The selected
 // tab is `?tab=`: the story's memory router starts at the harness page's
@@ -325,13 +325,13 @@ export const Tabs: StoryObj = { render: () => <TabsInRouter layout="rail" /> }
 
 export const TabsColumn: StoryObj = { name: 'Tabs, column', render: () => <TabsInRouter layout="column" /> }
 
-// --- The record standard (4.98): no right rail -----------------------------
+// --- The record standard: no right rail -----------------------------
 // The `tabs` layout, the default (1A): Summary, the short facts placed
 // `rail`, is the last tab, Details; Notes has a small box of facts beside
 // it (placed `rail` with its `tab`), under it on a phone; the strip is as
 // wide as its numbers (2A); the status is a StatusMark (5B). The memory
 // router starts at the harness page's own `tab`, as Tabs does. The tab
-// bar is 3B's (4.101): Changes shows its count, and the bar sticks with
+// bar is 3B's: Changes shows its count, and the bar sticks with
 // the record's name above it as Notes scrolls under it.
 
 function DetailsTabRecord() {
@@ -408,10 +408,10 @@ function DetailsTabInRouter() {
 
 export const DetailsTab: StoryObj = { name: 'Details tab', render: () => <DetailsTabInRouter /> }
 
-// --- The facts rail (4.106, A1) --------------------------------------------
+// --- The facts rail (A1) --------------------------------------------
 // `factsRail`: where the view has 60rem, the sections of short facts
 // (`facts`, placed `rail`) sit in a 300px column beside the open tab's
-// content (the strip above both, 4.108) and leave Details. FactsRail
+// content (the strip above both) and leave Details. FactsRail
 // keeps one long-text facts section (`fields`, the closing condition) in
 // Details; FactsRailOnly has nothing else, so it has no Details tab;
 // FactsRailNoTabs has cards and no tabs, the rail level with the first. A list of linked records with long
@@ -509,7 +509,7 @@ export const FactsRailNoTabs: StoryObj = {
   render: () => <FactsRailInRouter only untabbed />,
 }
 
-// --- The record's status in the rail (4.115) -------------------------------
+// --- The record's status in the rail -------------------------------
 // The status first at the top of the rail, whatever its place: Status is
 // listed last in its section, and its section after Schedule. It changes
 // only through an action, so it's read-only, with "Close…" under it (the
@@ -632,7 +632,7 @@ function FactsRailStatusInRouter() {
 
 export const FactsRailStatus: StoryObj = { name: 'Facts rail, status', render: () => <FactsRailStatusInRouter /> }
 
-// A rating in the facts rail (4.117): a score out of five as stars,
+// A rating in the facts rail: a score out of five as stars,
 // edited in place (a pick saves), one as hearts, a quality level as the
 // step bar, and an empty one. Each drawn as the list's cells draw it, and
 // named "4 of 5". e2e/facts-rail-rating.spec.ts measures them.
@@ -680,7 +680,7 @@ function FactsRailRatingInRouter() {
 
 export const FactsRailRating: StoryObj = { name: 'Facts rail, rating', render: () => <FactsRailRatingInRouter /> }
 
-// The record extras of 4.120: yes/no facts as switches in the rail (one
+// The record extras: yes/no facts as switches in the rail (one
 // with on/off words and a slow save, one plain, one read-only with a hint
 // saying why), header badges edited in place that keep their pencil's
 // room, strip values with an info tip and an action, and a header button
@@ -1125,7 +1125,7 @@ function AutosaveInRouter() {
 export const Autosave: StoryObj = { render: () => <AutosaveInRouter /> }
 
 // A long note edited where it's read (`inline`), 80 paragraphs, in a
-// 900px window: the save's line and a refusal must stay in view (F5).
+// 900px window: the save's line and a refusal must stay in view.
 // Text with "refuse" in it is refused the way a 500 is; text with
 // "unsavable" makes the control report a problem instead of a change (as
 // RichTextEditor does when it can't save without rewriting what wasn't
@@ -1330,8 +1330,8 @@ export const LeadingMark: StoryObj = { name: 'Leading, a mark', render: () => <L
 
 // --- Many actions -----------------------------------------------------------
 // A record with eight header actions at 36px: the title keeps its room and
-// the actions wrap under one another, right-aligned (4.63.2; before, they
-// took the whole row and left the title 0px wide).
+// the actions wrap under one another, right-aligned, so the title
+// keeps its room.
 
 function ManyActionsRecord() {
   const labels = ['Print notes', 'Step back', 'Advance', 'Save as version', 'Compare with…', 'Print', 'Edit', 'Delete']
@@ -1437,7 +1437,7 @@ function PrintInRouter() {
 
 export const PrintNotes: StoryObj = { name: 'Print notes', render: () => <PrintInRouter /> }
 
-// --- Record standard (4.81) ---------------------------------------------------
+// --- Record standard ---------------------------------------------------
 // The record page standard together: the status and a badge on the title's
 // line (a long title pushes them under it: Record standard, long title),
 // the record's own command in words and Print notes and Delete as icons
@@ -1579,8 +1579,7 @@ export const RecordStandardLongTitle: StoryObj = {
 }
 
 // The title edited in place (`titleEdit`): a short name stays on one
-// line beside its badges, never broken mid-word ("Dr. / Example" before
-// 4.94), and a long one wraps within its column. e2e/entity-view-standard
+// line beside its badges, never broken mid-word ("Dr. / Example"), and a long one wraps within its column. e2e/entity-view-standard
 // .spec.ts measures both at 1280px and 375px.
 export const RecordStandardEditableTitle: StoryObj = {
   name: 'Record standard, title edited in place',
@@ -1597,7 +1596,7 @@ export const RecordStandardEditableLongTitle: StoryObj = {
   ),
 }
 
-// A record's trail outside AppShell (#R2): back.trail, then the record's
+// A record's trail outside AppShell: back.trail, then the record's
 // own title, drawn above the title in the back link's place. In the shell
 // it goes up in the bar instead (app/AppShell StandardTrail).
 function TrailInRouter() {
@@ -1629,7 +1628,7 @@ function TrailInRouter() {
 
 export const RecordTrail: StoryObj = { name: 'Record trail', render: () => <TrailInRouter /> }
 
-// --- Page width wide (4.133) ------------------------------------------------
+// --- Page width wide ------------------------------------------------
 // data-width="wide" on an ancestor (an app sets it on <html>, from its own
 // Page Width setting) lifts the record's reading cap: the column fills the
 // page and the facts rail stays 300px. Inside a dialog the cap stays, so a

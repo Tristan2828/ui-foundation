@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 import AxeBuilder from './axe'
 
-// A view's count on its pill (4.127), on the harness's ViewCounts list:
+// A view's count on its pill, on the harness's ViewCounts list:
 // Needs a Look's count is the app's query (2 once it's back), Resting's
 // is 0, Current and All have none. Counts Loading / Counts Loaded switches
 // the query, so the pills can be measured before and after it lands.

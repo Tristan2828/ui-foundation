@@ -1,4 +1,4 @@
-// An action's error beside its button (4.90, the dialogs and feedback
+// An action's error beside its button (the dialogs and feedback
 // standard D6): a destructive Notice with the reason and Try again, which
 // runs the action again. Not a toast: the error stays next to what failed
 // until it's tried again or the action works. Give it a useAction.

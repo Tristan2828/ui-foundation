@@ -98,7 +98,6 @@ function columnsOf(node: ProseNode): string[] {
   return columns
 }
 
-// How far an arrow key scrolls the table's box.
 const SCROLL_STEP = 40
 
 // The keys a focused table box takes: the arrow keys, Home and End scroll
@@ -143,7 +142,7 @@ export function tableView(
   const dom = document.createElement('div')
   dom.dataset.slot = 'rich-text-table'
   // As wide as the table (its columns fit their words), never wider than the text.
-  // On a touch screen, room above for the column grip's tap area (review F11).
+  // On a touch screen, room above for the column grip's tap area.
   dom.className = 'group/table relative grid w-fit max-w-full grid-cols-[minmax(0,auto)_auto] gap-1 pointer-coarse:pt-3'
   const scroll = document.createElement('div')
   // Its look: styles/index.css "Tables in written text".

@@ -1,6 +1,6 @@
 /**
  * How many problems react-hook-form's `formState.errors` hold: one per
- * field, one per list's own (`root`), however deep (4.85, EntityForm's
+ * field, one per list's own (`root`), however deep (EntityForm's
  * "N to fix").
  */
 export function countFormErrors(errors: unknown): number {

@@ -1,6 +1,6 @@
 {
   // What `npm run build` emits into dist/: JavaScript plus declarations,
-  // without the stories or the story/test fixtures. scripts/build.mjs then rewrites the `@/` alias
+  // without the fixtures. scripts/build.mjs then rewrites the `@/` alias
   // and adds file extensions, since tsc leaves specifiers as written.
   "extends": "./tsconfig.src.json",
   "compilerOptions": {

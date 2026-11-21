@@ -187,7 +187,7 @@ export const Panels: StoryObj = {
   ),
 }
 
-// The stepper (4.127): a plan's phases in order, two done, one current
+// The stepper: a plan's phases in order, two done, one current
 // and one to come, the steps picking the one panel shown. The first opens
 // on its current step; the second keeps the shown step itself (as an app
 // keeps it in the URL) and starts on the last, and one of its steps needs
@@ -300,7 +300,7 @@ export const SevenItems: StoryObj = {
   ),
 }
 
-// An item's own content and actions (4.94): the stores a price is
+// An item's own content and actions: the stores a price is
 // compared at, each with Edit and Remove at its title line's end (the
 // table's last column). Edit swaps the item's fields for an editor of
 // several fields, as its `content`, and makes it `wide`: the whole row of

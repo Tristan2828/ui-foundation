@@ -27,7 +27,7 @@ function ComboboxTrigger({
   return (
     <ComboboxPrimitive.Trigger
       data-slot="combobox-trigger"
-      // Patched (ui-foundation, audit Phase E): upstream's icon-only trigger
+      // Patched (ui-foundation): upstream's icon-only trigger
       // has no accessible name — a critical axe violation on every form
       // with a combobox. Overridable; shipped as a registry:file for that.
       aria-label="Show Options"
@@ -242,7 +242,7 @@ function ComboboxChip({
   ...props
 }: ComboboxPrimitive.Chip.Props & {
   showRemove?: boolean
-  /** The chip's words, naming its remove button ("Remove <words>") when its children aren't plain text (ui-foundation, 4.130). */
+  /** The chip's words, naming its remove button ("Remove <words>") when its children aren't plain text (ui-foundation). */
   removeLabel?: string
 }) {
   return (
@@ -257,7 +257,7 @@ function ComboboxChip({
       {children}
       {showRemove && (
         <ComboboxPrimitive.ChipRemove
-          // Patched (ui-foundation, Phase G): upstream's icon-only remove
+          // Patched (ui-foundation): upstream's icon-only remove
           // button has no accessible name — a critical axe violation. Name
           // it after the chip ("Remove fragile") when the chip is plain text.
           aria-label={removeLabel !== undefined ? `Remove ${removeLabel}` : typeof children === "string" ? `Remove ${children}` : "Remove"}
@@ -272,7 +272,7 @@ function ComboboxChip({
   )
 }
 
-// Patched (ui-foundation, issue #94): upstream's input always keeps 4rem,
+// Patched (ui-foundation): upstream's input always keeps 4rem,
 // so chips that fit on one line still pushed it onto an empty second one
 // and the control stood twice as tall as a Select beside it. With chips
 // in and no focus it takes only what's left of the chips' line (none, if

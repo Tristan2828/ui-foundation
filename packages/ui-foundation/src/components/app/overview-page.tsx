@@ -18,7 +18,7 @@
 // `onRetry` in the card), and `empty` (a part with nothing yet: "Nothing
 // yet" in the tile, PartEmpty with its one way to start in the card).
 //
-// `links` (4.120) are a short list of pages outside the app (the
+// `links` are a short list of pages outside the app (the
 // module's account page, a supplier's site): one section after the parts,
 // titled `linksTitle` ("Links"), each link its label with its icon if it
 // has one and the external-link mark, opening in a new tab. In a row of
@@ -62,7 +62,7 @@ export type OverviewPart = {
   onRetry?: () => void
 }
 
-/** A page outside the app (4.120), in the overview's Links section. */
+/** A page outside the app, in the overview's Links section. */
 export type OverviewLink = {
   label: string
   /** The page's address: opened in a new tab. */
@@ -81,7 +81,7 @@ export type OverviewPageProps = {
   stats?: ReactNode
   /** Controls at the title's end. */
   actions?: ReactNode
-  /** Pages outside the app (4.120): one section after the parts, each opening in a new tab. */
+  /** Pages outside the app: one section after the parts, each opening in a new tab. */
   links?: readonly OverviewLink[]
   /** The links section's heading. Defaults to "Links". */
   linksTitle?: string

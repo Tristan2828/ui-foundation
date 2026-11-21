@@ -1,4 +1,4 @@
-// An option's icon, shared by ChoiceButtons and OptionSelect (4.109): a
+// An option's icon, shared by ChoiceButtons and OptionSelect: a
 // status kind's icon in its colour (StatusMark's, lib/status-kinds.ts), or
 // the option's own icon, uncoloured without a kind. Decorative: the
 // option's word says it.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { followOpenItem, isItemOpen } from '@/components/app/list-editor-rows'
 
-// ListEditor's summary lines (#222): the open item is held by id, follows
+// ListEditor's summary lines: the open item is held by id, follows
 // moves, closes on remove, and an add or a duplicate opens what it made.
 describe('followOpenItem', () => {
   it('keeps the open item open while rows move', () => {

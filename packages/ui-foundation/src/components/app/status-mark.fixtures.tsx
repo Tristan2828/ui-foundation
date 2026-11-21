@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { STATUS_KINDS, STATUS_KIND_LABELS } from '@/lib/status-kinds'
 import { StatusMark } from './status-mark'
 
-// Every status kind (4.98, record standard 5B) on the page, on a card and
+// Every status kind (record standard 5B) on the page, on a card and
 // in a table's rows, with a status's own word ("As Needed", "On Hold")
 // beside the kind's: axe measures each word and the glyph check each icon
 // against what's behind it, in both themes and every palette
@@ -17,7 +17,6 @@ const meta: Meta = {
 
 export default meta
 
-// A made-up list's statuses, each sorted into its kind.
 const ROWS = [
   { name: 'Repaint the fence', kind: 'active', word: 'Active' },
   { name: 'Water the hedge', kind: 'active', word: 'As Needed' },

@@ -1,4 +1,4 @@
-// A small form in a dialog (4.82): a new record of up to about eight
+// A small form in a dialog: a new record of up to about eight
 // fields over its list, or any short form a page opens (a weak spot, a
 // quick add). The title and the buttons stay put and the fields scroll
 // between them; 640px wide (DialogContent `size="form"`), the whole screen
@@ -15,7 +15,7 @@
 // `dirty` (react-hook-form's `formState.isDirty`) makes Esc, the close
 // button, a click outside and Cancel ask "Discard your changes?" first.
 // As a list's `new` route, `dirty` also guards leaving by a link, Back or
-// the sidebar (FormLeaveGuard, 4.85), as EntityForm's does.
+// the sidebar (FormLeaveGuard), as EntityForm's does.
 // A failed save is a Notice above the buttons with Try again, which
 // submits again unless `onRetry` says otherwise; what was typed stays.
 // An edit refused because the record changed elsewhere (`conflict`, from

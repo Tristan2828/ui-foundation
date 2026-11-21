@@ -1,4 +1,4 @@
-// A group of a form's fields in a card (4.85, the form standard's F2),
+// A group of a form's fields in a card (the form standard),
 // drawn as a record's section is (EntityView): the card surface, its title
 // on the heading band. Only on a form of eight fields or more, and never
 // in a dialog; a short form is one run of fields. Its fields are a

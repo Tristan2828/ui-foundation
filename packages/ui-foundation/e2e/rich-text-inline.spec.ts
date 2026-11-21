@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// Notes edited where they're read (#183), on the RichTextEditor Inline
+// Notes edited where they're read, on the RichTextEditor Inline
 // story: `editInPlace`'s `inline` over RichTextEditor's `inline` and
 // `toolbar="floating"`. Notes holds "Pack the **shared** shelves first."
 // and "Then the desks."; Next steps is empty. Each save takes 300ms.
@@ -190,7 +190,7 @@ test.describe('the tools strip', () => {
 
 // A long note edited inline (the EntityView LongInline story: 80
 // paragraphs, a 900px window). The save's line and a refusal stay in view
-// wherever the typing is (F5), and a problem the editor reports is unsaved
+// wherever the typing is, and a problem the editor reports is unsaved
 // at once, so a link clicked within the pause asks.
 test.describe('a long note edited inline', () => {
   const LONG = 'http://localhost:6180/story.html?id=app-entityview--long-inline'

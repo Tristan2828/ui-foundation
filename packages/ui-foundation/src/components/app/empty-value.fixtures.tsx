@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
 import { EmptyText } from './empty-value'
 
-// EmptyText (4.96), the record's empty value, where an app draws it on its
+// EmptyText, the record's empty value, where an app draws it on its
 // own: a strip of numbers, a summary line, a list's cells. The dash in the
 // muted tone, read as "Not set" or the words given, and words instead of
 // the dash. Axe in both themes (e2e/fixtures-visual.spec.ts); what a

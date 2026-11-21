@@ -94,7 +94,7 @@ export {
   STATUS_KIND_TONES,
   type StatusKind,
 } from '@/lib/status-kinds'
-// The record's empty value (4.96): a muted dash read as "Not set", for an
+// The record's empty value: a muted dash read as "Not set", for an
 // app's own strips, summary lines and cells.
 export { EmptyText, type EmptyTextProps } from '@/components/app/empty-value'
 export { isEmptyValue } from '@/lib/empty-value'
@@ -138,7 +138,7 @@ export {
   type RecordDialogState,
 } from '@/components/app/record-dialog-context'
 export { FormDialog, type FormDialogProps } from '@/components/app/form-dialog'
-// The dialogs and feedback standard (4.90): one delete, toasts' words, an
+// The dialogs and feedback standard: one delete, toasts' words, an
 // action's error beside it, a job's progress, and the offline bar.
 export { DeleteAction, type DeleteActionProps, type DeleteKind, type DeleteReason } from '@/components/app/delete-action'
 export { notify, doneMessage, pastTense, type NotifyDoneOptions, type NotifyOpen } from '@/components/app/notify'

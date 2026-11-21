@@ -1,6 +1,6 @@
 // A row of numbered steps joined by a line, each done, current or upcoming:
-// the marks of `EqualItems look="stepper"` (4.127), on their own and read
-// only (4.128). For a display of where a sequence is (a list card showing a
+// the marks of `EqualItems look="stepper"`, on their own and read
+// only. For a display of where a sequence is (a list card showing a
 // program's phases, a caption such as "Day 12" under the current one),
 // where nothing is picked and no panel shows.
 //
@@ -154,7 +154,7 @@ function useOverflows(rowRef: RefObject<HTMLElement | null>) {
 }
 
 /**
- * A read-only row of numbered steps (4.128): the stepper look's marks
+ * A read-only row of numbered steps: the stepper look's marks
  * without its panels, for showing where a sequence is (a list card's
  * phases), with a `caption` under the current step.
  *

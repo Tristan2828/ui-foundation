@@ -1,14 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// EntityView's Print notes (app/EntityView "Print Notes"), in a real
-// browser with print media emulated: the button mounts the printed copy
-// and opens the print dialog (stubbed here, counting calls); on paper the
-// copy is all there is (no rail, no shell, no buttons), folded text is
-// whole, tables are ruled with room in their cells, numbered questions
-// have space under them, and a dark screen still prints light, in a
-// palette too. Where print() blocks (a desktop browser) the copy goes when
-// the dialog closes (afterprint); where it returns at once and fires
-// afterprint early (a phone) it stays until the next pointerdown or key.
+// EntityView's Print notes (app/EntityView "Print Notes"), in a real browser with print media emulated:
+// the printed copy is all there is on paper, and it goes when the dialog closes (afterprint) or, on a phone, on the next input.
 const STORY = 'http://localhost:6180/story.html?id=app-entityview--print-notes'
 
 // How the browser's window.print() behaves: `blocking` waits for the dialog

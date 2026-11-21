@@ -1,4 +1,4 @@
-// "You're offline" across the top of the app (4.90, the dialogs and
+// "You're offline" across the top of the app (the dialogs and
 // feedback standard D9), while the server can't be reached: the browser
 // says it's offline, or a request got no answer at all. Gone as soon as
 // the browser is back online or any request gets an answer. AppShell

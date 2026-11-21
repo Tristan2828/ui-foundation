@@ -1,6 +1,6 @@
 // Toggle headings (Notion's): the only headings that fold. A plain
 // heading never folds and never shows a fold button; a toggle heading
-// folds its section, as every heading did before 4.66.0.
+// folds its section.
 //
 // In Markdown a toggle heading is a heading whose line ends in Notion's
 // own attribute, so a chat that writes Notion's Markdown writes it, and a

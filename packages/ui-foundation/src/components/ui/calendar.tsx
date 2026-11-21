@@ -196,7 +196,7 @@ function CalendarDayButton({
 
   return (
     <Button
-      // Patched (ui-foundation, #157): upstream makes this ref but never
+      // Patched (ui-foundation): upstream makes this ref but never
       // passes it, so the effect above focused nothing and the arrow keys
       // moved react-day-picker's focused day without moving focus.
       ref={ref}

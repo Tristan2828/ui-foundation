@@ -123,7 +123,7 @@ test.describe('collapsible sections (#152)', () => {
   })
 })
 
-// #188: `to` carries a query string, the list's saved view.
+// `to` carries a query string, the list's saved view.
 test.describe('an entry opening a list on a saved view', () => {
   test('is current on its page and opens its folded section', async ({ page }) => {
     await open(page, 'saved-view')
@@ -134,7 +134,7 @@ test.describe('an entry opening a list on a saved view', () => {
   })
 })
 
-// #186: "<page> · <app>" from the nav, the record's title from EntityView.
+// "<page> · <app>" from the nav, the record's title from EntityView.
 test.describe("the browser tab's title", () => {
   test("names the nav's page with the app", async ({ page }) => {
     await open(page, 'sections')
@@ -209,7 +209,7 @@ test.describe("the app's logo (#211)", () => {
   })
 })
 
-// #239: a module's own pages under its entry.
+// a module's own pages under its entry.
 test.describe('nested entries', () => {
   const entry = (page: Page, name: string) =>
     nav(page).locator('[data-sidebar="menu-item"]').filter({ has: page.getByRole('link', { name, exact: true }) }).first()

@@ -79,7 +79,7 @@ describe('activeNavTo', () => {
     expect(activeNavTo([home], '/tasks')).toBeUndefined()
   })
 
-  // #188: a `to` that opens a list on a saved view.
+  // a `to` that opens a list on a saved view.
   describe('a `to` with a query string', () => {
     const activeTasks: NavItem = { to: '/tasks?status=active&sort=name:asc', label: 'Active tasks', icon: ListIcon }
     const withQuery: NavEntry[] = [home, { label: 'Tasks', items: [activeTasks, categories] }]
@@ -148,7 +148,7 @@ describe('navPageLabel', () => {
   })
 })
 
-// #239: a module's own pages under its entry.
+// a module's own pages under its entry.
 describe('children', () => {
   const channels: NavItem = { to: '/media/channels', label: 'Channels', icon: TagIcon }
   const playlists: NavItem = { to: '/media/playlists', label: 'Playlists', icon: TagIcon }
@@ -171,7 +171,7 @@ describe('children', () => {
   })
 })
 
-// #240: which item of the phone's bottom bar holds the current page.
+// which item of the phone's bottom bar holds the current page.
 describe('bottomBarCurrent', () => {
   const channels: NavItem = { to: '/media/channels', label: 'Channels', icon: TagIcon }
   const youtube: NavItem = { to: '/media/videos', label: 'YouTube', icon: ListIcon, children: [channels] }

@@ -1,4 +1,4 @@
-// A long note, for the typing-lag budgets (F6 of the 2026-11-17 review):
+// A long note, for the typing-lag budgets:
 // about 5,000 words in what real notes hold (headings, paragraphs with
 // marks and links, nested and task lists, quotes, code, 13 tables).
 // The same every time (no randomness), so a budget measures the same

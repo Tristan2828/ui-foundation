@@ -21,15 +21,15 @@
 // - Keyboard: the filter box first; Down goes to the chips, Left/Right
 //   (Home/End) move along them, Up goes back to the box, and Space or
 //   Enter toggles a chip.
-// - Every multi-pick (4.88, the form standard's F13): the chips wrap at
-//   every width, under the filter box. Past `limit` options (30) it shows
-//   the picked ones and the first 30, then "Show all N"; a filter searches
-//   them all. The options can be the app's list of records (its query's
-//   rows as `{ id, label }`, `loading` while it loads), so a link to
-//   several other records uses it too.
-// - `onCreate` (4.102): when what's typed names no option, Create "<typed>"
-//   shows under the chips (Enter in the box does the same when nothing
-//   matches; Down reaches it when there are no chips). It calls the app's
+// - Every multi-pick: the chips wrap at every width, under the filter box
+//   (the form standard). Past `limit` options (30) it shows the picked ones
+//   and the first 30, then "Show all N"; a filter searches them all. The
+//   options can be the app's list of records (its query's rows as
+//   `{ id, label }`, `loading` while it loads), so a link to several other
+//   records uses it too.
+// - `onCreate`: when what's typed names no option, Create "<typed>" shows
+//   under the chips (Enter in the box does the same when nothing matches;
+//   Down reaches it when there are no chips). It calls the app's
 //   `onCreate(name)`: its small create form with the name filled in, or a
 //   save straight away. While that's out the button reads Creating
 //   "<typed>"… (`aria-busy`), the box can't change, and an edit in place
@@ -188,7 +188,6 @@ export function MultiPick<Id extends string | number>({
       return next
     })
 
-  // Edited in place: one pick saved on its own.
   const savePick = (option: MultiPickOption<Id>, picked: boolean, save: NonNullable<typeof onPick>) => {
     setRefused((current) => without(current, option.id))
     setPending((current) => new Map(current).set(option.id, { picked, inFlight: (current.get(option.id)?.inFlight ?? 0) + 1 }))

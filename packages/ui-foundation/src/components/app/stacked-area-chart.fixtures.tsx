@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import type { LineChartPoint } from '@/lib/line-chart-layout'
 import { StackedAreaChart, type StackedSeries } from './stacked-area-chart'
 
-// StackedAreaChart (4.132), on a card: holdings by kind over six month-ends,
+// StackedAreaChart, on a card: holdings by kind over six month-ends,
 // each band a categorical slot stacked from zero, its top edge the total.
 // All states is loading, no points, one snapshot (a stacked column) and a
 // shorter chart of two bands. Axe, the token check and the glyph check

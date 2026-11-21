@@ -16,42 +16,28 @@ import { ChoiceCell, LinkCell, NameCell } from './row-edit-cells'
 
 // DataTable's two opt-ins for a small entity, in a real browser
 // (e2e/data-table.spec.ts), with axe and the token check in both themes:
-// - ContentWidth: `width="content"`, a few short columns sized to fit on a
-//   wide screen, with a switch between the four states.
-// - EditInTheRows: every cell an editable value (NameCell, ChoiceCell,
-//   LinkCell), InlineCreate in the
-//   toolbar, a delete in the pinned last column. Saves take ~0.4s; a name
-//   another category has is refused the way a server's 422 is. "Elsewhere"
-//   is a link that leaves the page, for the leave prompt.
-// - Sticky groups (five stories): `stickyGroupHeadings` on a list that fits,
-//   one with no header row, and one wider than its box; then the first and
-//   the wide one below a bar the page pins (`stickyTop`), taller on a phone.
-// - Grouped: a feed under day headings (`groupBy: byDay`), no header row,
-//   and a PillFilter in the toolbar, its value and the page in the URL.
-//   Six rows a page, so This week's group carries on to page 2. Today is
-//   pinned (15 Oct 2026, UTC) so the headings never drift.
+// - EditInTheRows: saves take ~0.4s; a name another category has is refused
+//   the way a server's 422 is. "Elsewhere" is a link that leaves the page,
+//   for the leave prompt.
+// - Sticky groups: the first and the wide one also sit below a bar the page
+//   pins (`stickyTop`), taller on a phone.
+// - Grouped: six rows a page, so This week's group carries on to page 2.
+//   Today is pinned (15 Oct 2026, UTC) so the headings never drift.
 //   GroupedNoMatches opens on a type with no items: the empty state with
 //   a way to take the filter off.
-// - SeveralTables: two tables on one page, the second loading a moment
-//   after the first has its rows, for the testing helper that waits on
-//   every data view of a page (`expectDataViewsLoaded`).
-// - Highlighted: `highlightRow`, two rows to look at (cell pattern 22),
-//   `striped`, so the wash is measured over a stripe.
-// - ListLook (4.83): a list's defaults: content width, no stripes, the
-//   row hover with the hand cursor (the rows open a page), a Notes column
-//   cut to one line (`meta.clip`), and rows per page (`pageSizes`, through
-//   useTableUrlState, remembered under a storage key). ListLookInRows: the
-//   same rows edited in place (`opens: rows`), so the arrow cursor.
-//   ListLookStriped: `striped` and `width="full"`, the look before 4.83.
-// - TitleColumn (4.103): Discussions whose long topics are cut to one line
-//   at 24rem at every width, the whole topic in a tooltip on hover and on
-//   the link's focus. TitleColumnWrap: the same with `meta.wrap`, so the
-//   topics wrap at 24rem instead.
-// - Totals: `totals`, sums under Quantity, Price and Target price for
-//   every matching row (eight, over two pages), right-aligned like their
-//   columns (Price sortable, its arrow left of its label), with the first and last
-//   columns pinned, a Weight column hidden by `visibleColumns` (its total
-//   with it), and a switch between the four states.
+// - SeveralTables: the second table loads a moment after the first has its
+//   rows, for the testing helper that waits on every data view of a page
+//   (`expectDataViewsLoaded`).
+// - Highlighted: `striped`, so the wash is measured over a stripe (cell
+//   pattern 22).
+// - ListLook: the list defaults (content width, no stripes, row hover with
+//   the hand cursor, a Notes column cut with `meta.clip`, `pageSizes`).
+//   ListLookInRows is edited in place (`opens: rows`), so the arrow cursor.
+// - TitleColumn: long topics are cut at 24rem at every width, the whole
+//   topic in a tooltip on hover and on the link's focus; TitleColumnWrap
+//   wraps them at 24rem instead.
+// - Totals: sums cover every matching row (eight, over two pages), not the
+//   page; a Weight column hidden by `visibleColumns` hides its total too.
 
 const ICONS = { house: HouseIcon, wallet: WalletIcon, briefcase: BriefcaseIcon, heart: HeartIcon, plane: PlaneIcon, book: BookOpenIcon } satisfies Record<string, LucideIcon>
 type IconKey = keyof typeof ICONS
@@ -720,7 +706,7 @@ function SeveralTablesPage() {
   )
 }
 
-// --- a list's look (4.83) -------------------------------------------------------
+// --- a list's look -------------------------------------------------------
 
 type Recipe = { id: number; name: string; course: string; minutes: number; notes: string }
 
@@ -801,7 +787,7 @@ function RecipesInRouter({ variant }: { variant: 'opens' | 'rows' | 'striped' })
   return <RouterProvider router={router} />
 }
 
-// --- the title column (4.103) ----------------------------------------------------
+// --- the title column ----------------------------------------------------
 
 type Discussion = { id: number; topic: string; started: string; replies: number; status: string }
 

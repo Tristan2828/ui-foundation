@@ -8,7 +8,7 @@ import {
   waitForMswReady,
 } from '@tristan2828/ui-foundation/testing'
 
-// Two-step sign-in (4.0) and the too-many-attempts refusal, against the
+// Two-step sign-in and the too-many-attempts refusal, against the
 // package's mocks: two-step@example.com takes the usual password, then
 // 123456 or the recovery code abcd-efgh (MOCK_TOTP_USER, MOCK_TOTP_CODE,
 // MOCK_RECOVERY_CODE in @tristan2828/ui-foundation/mocks).

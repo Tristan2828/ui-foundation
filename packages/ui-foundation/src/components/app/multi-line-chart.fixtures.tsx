@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import type { LineChartPoint } from '@/lib/line-chart-layout'
 import { MultiLineChart, type ChartSeries } from './multi-line-chart'
 
-// MultiLineChart (4.51), on a card: a net worth beside its assets and
+// MultiLineChart, on a card: a net worth beside its assets and
 // what's owed, and a balance's history running into low, middle and high
 // projections against a target. All states is each of the four. Axe, the
 // token check and the glyph check (every series and legend swatch is an

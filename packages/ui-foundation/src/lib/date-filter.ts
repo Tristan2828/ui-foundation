@@ -1,4 +1,4 @@
-// A list's date filter (4.110): FilterDate's value, as one string, so it
+// A list's date filter: FilterDate's value, as one string, so it
 // lives in the URL like any single-value filter (useTableUrlState) and a
 // saved view can set it (`filters: { due: 'before-today' }`). It's either
 // a preset, read against today when the list loads, or a range of plain

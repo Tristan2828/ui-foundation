@@ -4,7 +4,7 @@
 // wiring; this component does not attempt to generate fields from a
 // schema.
 //
-// The form standard (4.85) is drawn here and in Field:
+// The form standard is drawn here and in Field:
 //
 // - Fields are a FieldGroup, so short ones share a row (`Field size`),
 //   compact (32px controls, 14px between). `FormSection` groups them in
@@ -168,7 +168,7 @@ export function EntityForm({
   const [attempt, setAttempt] = useState(0)
   const submit = (event: FormEvent<HTMLFormElement>) => {
     // A rich-text field reports its typing a pause after it stops: asked
-    // for now, so the submit reads the last of it (F6).
+    // for now, so the submit reads the last of it.
     flushPendingEdits()
     const done = onSubmit(event)
     void Promise.resolve(done).then(() => setAttempt((count) => count + 1))

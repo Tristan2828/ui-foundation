@@ -45,7 +45,7 @@ test('a mock worker restarted before the first request still serves the app', as
   expect(pastMsw).toEqual([])
 })
 
-// The same restart after boot (#367): the worker forgets the page mid-session
+// The same restart after boot: the worker forgets the page mid-session
 // and passes its next requests to the network (the preview's proxy, which
 // points at a dead port during e2e). The page notices a request the worker
 // never handed to MSW, joins again, and makes it once more, so the screen

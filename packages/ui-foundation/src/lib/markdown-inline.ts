@@ -41,7 +41,6 @@ function plain(node: Node): string {
 
 const hasWords = (nodes: Node[]) => nodes.some((node) => plain(node).trim() !== '')
 
-// Parts joined with a separator, leaving out the empty ones.
 function join(parts: Node[][], separator: string): Node[] {
   const out: Node[] = []
   for (const part of parts.filter(hasWords)) {
@@ -198,7 +197,6 @@ function blocks(nodes: Node[]): Node[] {
   return trim(out)
 }
 
-// No space at either end of the line.
 function trim(nodes: Node[]): Node[] {
   const out = [...nodes]
   if (out[0]?.type === 'text') out[0] = text((out[0].value ?? '').trimStart())

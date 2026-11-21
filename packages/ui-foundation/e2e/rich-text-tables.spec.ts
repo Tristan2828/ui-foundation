@@ -149,8 +149,7 @@ test.describe('rich-text tables', () => {
     await expect(cell(page, 'compactTable', 2, 1)).toHaveCSS('border-left-width', '1px')
   })
 
-  // Until 4.67.1 only boxed striped: a compact table (the default) had its
-  // header row on the band and every body row bare.
+  // Compact and boxed tables both stripe: a compact table (the default) has its header row on the band and its body rows striped.
   test('compact stripes its body rows too, in the editor and in <Markdown>, the header row on the band', async ({ page }) => {
     const background = (locator: ReturnType<Page['locator']>) =>
       locator.evaluate((element) => getComputedStyle(element).backgroundColor)

@@ -1,7 +1,7 @@
-// MultiLineChart (4.51) and LineChart's projection: where several series
+// MultiLineChart and LineChart's projection: where several series
 // go on one plot (src/lib/line-chart-layout.ts seriesLayout), and what
 // each renders for a screen reader. How they look and their contrast are
-// e2e/line-chart.spec.ts's and storybook-visual's.
+// e2e/line-chart.spec.ts's and e2e/fixtures-visual.spec.ts's.
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { LineChart } from '../src/components/app/line-chart'

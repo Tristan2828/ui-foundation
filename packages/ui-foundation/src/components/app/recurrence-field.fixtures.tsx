@@ -13,7 +13,7 @@ import { EntityForm } from './entity-form'
 import { EntityView } from './entity-view'
 import { RecurrenceField } from './recurrence-field'
 
-// RecurrenceField (#326) on made-up chores, all on a fixed day (Thursday
+// RecurrenceField on made-up chores, all on a fixed day (Thursday
 // 2026-11-12, 12:00 in Chicago) so the presets and the previews read the
 // same every run:
 //
@@ -24,7 +24,7 @@ import { RecurrenceField } from './recurrence-field'
 // - EditInPlace: on a record's view (`inPlace.recurrence`).
 // - Cells: the Repeats label and the Next cell in a list's rows
 //   (cell-patterns.md "A repeat and its next time").
-// - DatesOnly (4.114): events whose times are their own fields, in an app
+// - DatesOnly: events whose times are their own fields, in an app
 //   whose weeks start on Sunday (`times={false}`, `weekStart="SU"`): one
 //   set every other week on Sun and Wed, one empty, and one edited in place.
 //

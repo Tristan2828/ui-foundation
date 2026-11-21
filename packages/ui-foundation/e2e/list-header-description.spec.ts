@@ -1,7 +1,7 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// ListHeader's description and the secondary action's hint (4.120): one
+// ListHeader's description and the secondary action's hint: one
 // muted line under the title, wrapping in the header's width (and never
 // widening a framed table's shared width); a short line under the second
 // button ("12 searches left") that describes it, the buttons level; on a

@@ -1,12 +1,12 @@
-// How something repeats (#326): a reminder's or a task's schedule. The
+// How something repeats: a reminder's or a task's schedule. The
 // value is the contract's `Recurrence` (`lib/recurrence.ts`), or `null`
 // for none.
 //
 // Three parts, one under the other:
-// - **Presets**, a row of toggle buttons: Daily, Weekdays, Weekly on Thu,
-//   Monthly on the 12th, Monthly on the 2nd Thu, Yearly on Nov 12 (each
-//   from the start day) and Custom. The one the value is stays pressed;
-//   Custom is pressed for anything else, and moves to the phrase box.
+// - **Presets**, a row of toggle buttons: Daily, Weekdays, Weekly, Monthly
+//   (on the day or the nth weekday), Yearly (each from the start day) and
+//   Custom. The one the value is stays pressed; Custom is pressed for
+//   anything else, and moves to the phrase box.
 // - **The phrase box**, read as you type (`parseRecurrencePhrase`): "every
 //   2nd tue at 9am", "every! 3 days", "every jan 1 until mar 1". What it
 //   can't read is said under it, and the field gives `null`, so a form
@@ -14,7 +14,7 @@
 // - **The preview**: the rule's label ("Every 2nd Tue at 9:00 AM") and its
 //   next five occurrences, in the rule's zone, or why it can't be read.
 //
-// Two options an app's own records may want (4.114):
+// Two options an app's own records may want:
 // - `times={false}`, for a record whose times are fields of its own (a
 //   calendar's events): the preview lists dates only ("Tue, Dec 8", from
 //   today on), the label and the box say no times, and typing "at 9am" is

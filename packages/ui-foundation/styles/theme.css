@@ -7,9 +7,7 @@
  * text-muted-foreground, ...). Remapped per theme/mode; primitives are not.
  *
  * The values below are shadcn's generated defaults (Nova preset),
- * reorganized into the two-layer shape. Phase 1 only needs the structure to
- * exist; Phase 5 is where the primitive palette itself is deliberately
- * chosen and this file's diff should be small.
+ * reorganized into the two-layer shape.
  */
 
 :root {
@@ -42,7 +40,7 @@
    * Reusing a fill shade as text is the classic failure: it was chosen to
    * contrast with white, not with the page behind it. Every ratio below is
    * measured (WCAG 2.x, sRGB), and axe re-checks them against the rendered
-   * DOM in both themes — see e2e/storybook-visual.spec.ts.
+   * DOM in both themes — see e2e/fixtures-visual.spec.ts.
    */
   --red-500: oklch(0.577 0.245 27.325); /* white on it: 4.76 */
   --red-700: oklch(0.5 0.21 27.325); /* on white: 6.57 */
@@ -56,7 +54,7 @@
   --blue-700: oklch(0.52 0.17 255); /* white on it: 5.59 */
   --blue-800: oklch(0.45 0.15 255); /* on white: 7.54 */
   --blue-400: oklch(0.75 0.12 255); /* on near-black: 8.90 */
-  /* The two status kinds that have stopped (4.110, StatusMark's done and
+  /* The two status kinds that have stopped (StatusMark's done and
      ended): text shades only, nothing fills with them. A teal for done,
      a hue away from success's green, and a soft rose for ended, a hue
      away from destructive's red. On white / gray-100 / gray-200, and on
@@ -75,7 +73,7 @@
    * to a slot in its own columns file, so a new enum value costs a line
    * there rather than three tokens here.
    *
-   * Chosen to be told apart (#108), not spaced by hue: twelve colours a
+   * Chosen to be told apart, not spaced by hue: twelve colours a
    * person names differently, from the whole hue circle, with lightness and
    * chroma varied per slot as well as hue. Red, orange, brown and green are
    * in: a category is a tinted glyph beside its name, never a status badge,
@@ -91,8 +89,7 @@
    *
    * Ratios are against the page, measured (WCAG 2.x, sRGB): all clear the
    * 3:1 non-text minimum in both themes (3.75:1 at the least, orange and
-   * teal on white). axe does NOT check icon contrast; the Storybook glyph
-   * check re-measures every slot on the page and on a card
+   * teal on white). axe does NOT check icon contrast; the glyph check in e2e/fixtures-visual.spec.ts re-measures every slot on the page and on a card
    * (patterns/CategoricalColour).
    */
   --category-1-700: oklch(0.44 0.11 245); /* blue */
@@ -160,10 +157,7 @@
    * One hue per slot, the slot's own (its --category-N hue), across all five
    * steps in both themes; only lightness and chroma change. Depth is
    * contrast with the page, so a higher step is darker in light and
-   * brighter in dark, and the order survives in greyscale. (Until 4.91 hue
-   * was bent a little to push neighbours apart, which read as drift, orange
-   * to pink and purple to magenta, and dark ran the wrong way, a higher
-   * step darker, ending in a step almost grey.) Chroma follows what the
+   * brighter in dark, and the order survives in greyscale. Chroma follows what the
    * gamut allows at each lightness, so each ramp reads as one tint, and no
    * step falls under oklch chroma 0.03. Every dark palette takes dark's;
    * Palm LCD, the light one, has its own on the same rule (its primitives).
@@ -395,7 +389,7 @@
   --palette-success: #66d69a;
   --palette-warning: #e0b152;
   --palette-danger: #df7a72;
-  /* Done (a teal) and ended (a soft rose), the stopped status kinds (4.110).
+  /* Done (a teal) and ended (a soft rose), the stopped status kinds.
      On bg / card / raised, the lowest palette: done 8.86 / 7.86 / 6.80,
      ended 7.37 / 6.54 / 5.66. */
   --palette-done: #56c6cf;
@@ -658,14 +652,14 @@
   --success-text: var(--green-800);
   --warning-text: var(--amber-800);
   --info-text: var(--blue-800);
-  /* The status kinds that have stopped (4.110): done and ended, for
+  /* The status kinds that have stopped: done and ended, for
      StatusMark's icon and word (lib/status-kinds.ts). */
   --status-done-text: var(--teal-800);
   --status-ended-text: var(--rose-700);
   /* A link in written text: coloured as well as underlined, so it reads
      as a link at a glance (on white: 5.59). */
   --link: var(--blue-700);
-  /* The theme colour as text (4.105): what's picked or open, such as the
+  /* The theme colour as text: what's picked or open, such as the
      open tab's name and a picked choice, in the primary's own colour where
      it reads as text. Here it's the primary (near-black, 17.7 on white). */
   --primary-text: var(--primary);
@@ -682,8 +676,8 @@
   /* The band behind a `#` heading in written text: one step stronger than
      --muted, which `##`'s band takes. Its foot is a 2px --rule. */
   --heading-band: var(--gray-200);
-  /* Written text's headings drew a bar in this until 4.24.0; nothing in
-     the package uses it now. Kept for an app that does (on white: 5.59). */
+  /* A heading bar colour; nothing in the package uses it. Kept for an app
+     that does (on white: 5.59). */
   --heading-bar: var(--blue-700);
   /* Categorical slots — a glyph tint, never a fill behind text. */
   --category-1: var(--category-1-700);
@@ -835,14 +829,14 @@
      matches the row without letting scrolled columns show through. Mixed
      in sRGB, as the browser composites the translucent stripe. */
   --table-stripe: color-mix(in srgb, var(--muted) 40%, var(--background));
-  /* A highlighted row (DataTable's highlightRow, #156): info's wash
+  /* A highlighted row (DataTable's highlightRow): info's wash
      pre-mixed onto the page, opaque so pinned cells can wear it. Muted
      text measures 4.09:1 on it (below 4.5 at 12px; no lighter tint gets
      there: 4.47 at 4%), so inside the row muted text takes a darker grey:
      6.75:1. In dark the usual muted already clears it (6.61:1). */
   --table-highlight: color-mix(in srgb, var(--info) 10%, var(--background));
   --table-highlight-muted-foreground: var(--gray-600);
-  /* A body row under the pointer (DataTable, 4.83): the muted fill, solid
+  /* A body row under the pointer (DataTable): the muted fill, solid
      so pinned cells can wear it. Muted text measures 4.34:1 on it, so the
      row takes --table-highlight-muted-foreground's darker grey (7.0:1).
      In dark the usual muted clears it (5.9:1); a palette's dim, 5.8. */
@@ -879,7 +873,7 @@
 /*
  * Regular rows, a device's pick in the shell's look menu (lib/rows.ts,
  * FoundationProviders' rowsPicker): RowsProvider puts data-rows on <html>.
- * The size every table had before 4.63. A data-density on a nearer
+ * The compact row size. A data-density on a nearer
  * ancestor still wins, since it is declared closer to the cells.
  */
 [data-rows="regular"] {

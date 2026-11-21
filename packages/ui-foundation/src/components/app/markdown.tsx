@@ -23,30 +23,26 @@
 // sit: `#` and `##` on a tinted band, `###` a small uppercase label, and
 // the text under them lined up with the words in the band (prose-look.ts).
 //
-// A table's columns fit their words (a cell wraps at 18rem; a right-
-// aligned column, numbers, never wraps), in one of two looks
-// (`tableLook`, as on RichTextEditor: styles/index.css "Tables in written
-// text"). A cell whose whole text is one highlight is painted in it, and
-// a first column of bold cells is row headers (src/lib/markdown-table.ts).
-// A column the rich-text editor set a width for keeps it, from the comment
-// after the table (src/lib/markdown-table-widths.ts); on a phone columns
-// still fit their words, and on paper the widths scale to the page.
-// A table wider than the text scrolls sideways, and while it does, its
-// box is a tab stop, named for its columns, that the arrow keys scroll
-// (prose-table-scroll.ts). Its cells wrap first, so that's only a table
-// with many columns, or a long word in one.
+// A table's columns fit their words (a cell wraps at 18rem; a right-aligned
+// column never wraps), in one of two looks (`tableLook`, as on
+// RichTextEditor: styles/index.css "Tables in written text"). A cell whose
+// whole text is one highlight is painted in it, and a first column of bold
+// cells is row headers (src/lib/markdown-table.ts). Column widths the
+// rich-text editor set are read from the comment after the table
+// (src/lib/markdown-table-widths.ts); a phone still fits columns to their
+// words, and on paper the widths scale to the page. A table wider than the
+// text scrolls sideways in a tab stop, named for its columns, that the
+// arrow keys scroll (prose-table-scroll.ts).
 //
-// An image (`![alt](url)`, one the rich-text editor uploaded) stays inside
-// the text's width, loads only as it nears the screen, and keeps its alt
-// text; with none (`![](url)`) it's decorative to a screen reader. Its
-// address goes through the same urlTransform: a web address or a path on
-// the site (`/api/files/7/content`), never `javascript:` or `data:`.
+// An image stays inside the text's width, loads as it nears the screen and
+// keeps its alt text; with none (`![](url)`) it's decorative to a screen
+// reader. Its address goes through the same urlTransform: a web address or
+// a path on the site (`/api/files/7/content`), never `javascript:` or
+// `data:`.
 //
-// A quote that starts `[!NOTE]` (GitHub's alert syntax) is a callout: a
-// tinted box with its kind's icon (src/lib/markdown-callout.ts).
-//
-// `==words==` is highlighted words (amber, or `=={green}words==`: yellow,
-// green, red): a <mark> on the colour's wash (src/lib/markdown-highlight.ts).
+// A quote that starts `[!NOTE]` (GitHub's alert syntax) is a callout
+// (src/lib/markdown-callout.ts); `==words==` is highlighted words, or
+// `=={green}words==` (src/lib/markdown-highlight.ts).
 //
 // With `foldKey`, each toggle heading (`## Safety {toggle="true"}`,
 // src/lib/markdown-toggle.ts) at the text's top level has a button before
@@ -58,27 +54,24 @@
 // Printed (EntityView's Print notes, PrintingContext), it's the whole
 // text: nothing folded, no fold buttons, task boxes as glyphs.
 //
-// With `pageLink`, a link the app says is one of its pages (a child page
-// of the record, or of a page, to any depth: src/lib/page-link.ts) is a
-// page link: the page icon and the page's title, opening the page in this
-// tab. Alone in its paragraph, it's a page line, a row of its own. A page
-// the app reports removed shows "Page removed", with Restore when the app
-// gives one. Every other link is as it was; the text is never changed.
+// With `pageLink`, a link the app says is one of its pages (src/lib/page-link.ts)
+// is a page link: the page icon and the page's title, opening the page in
+// this tab, a row of its own when alone in a paragraph. A page the app
+// reports removed shows "Page removed", with Restore when the app gives
+// one. Every other link is untouched, and so is the text.
 //
 // With `inline`, it's a one-line value's Markdown (a table cell, a card's
 // line): bold, italic, code and links on one run of words, in the font and
 // colour of wherever it sits, with no block margins, so a row it's in
 // keeps its height. Blocks written in it become their words, joined so
-// they still read (a list's items with " · ", a table's rows as
-// `Header: value` pairs: src/lib/markdown-inline.ts). A link's click and
-// Enter stay its own: they never reach a row or card it sits in.
+// they still read (src/lib/markdown-inline.ts). A link's click and Enter
+// stay its own: they never reach a row or card it sits in.
 //
-// A task item (`- [ ] to do`, `- [x] done`) shows its box as a glyph
-// with its state in words: read-only text has nothing to tick. With
-// `onTasksChange`, each box is a real checkbox, named for its item's
-// words, that ticks or unticks the item in the text and hands the whole
-// new text over to save (src/lib/markdown-tasks.ts): only that item's
-// `[ ]` or `[x]` changes, the rest stays exactly as written.
+// A task item (`- [ ] to do`) shows its box as a glyph with its state in
+// words: read-only text has nothing to tick. With `onTasksChange`, each box
+// is a real checkbox, named for its item's words, that ticks or unticks the
+// item and hands the whole new text over to save (src/lib/markdown-tasks.ts):
+// only that item's `[ ]` or `[x]` changes.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import type { PluggableList } from 'unified'

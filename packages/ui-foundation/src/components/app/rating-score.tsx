@@ -1,4 +1,4 @@
-// A score out of a few (cell pattern 9, 4.117): `max` stars or hearts,
+// A score out of a few (cell pattern 9): `max` stars or hearts,
 // the first `value` filled. "My Rating: 4 of 5" as ★★★★☆. The count of
 // filled glyphs carries the value, so it survives greyscale.
 //

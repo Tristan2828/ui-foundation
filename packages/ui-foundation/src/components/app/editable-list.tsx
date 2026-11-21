@@ -1,5 +1,5 @@
 // A list of sub-items edited in place on a record's view (cell-patterns.md
-// "Editable list"): editInPlace's `list` kind, on a `content` section of
+// "A list of sub-items"): editInPlace's `list` kind, on a `content` section of
 // EntityView. Built on ListEditor, so the rows and their buttons are the
 // form's, with the same names ("Move item 2 up", "Remove item 2").
 //
@@ -55,8 +55,7 @@ function locate(current: readonly unknown[], item: unknown, index: number) {
 
 // The form's row, in place too: ListEditor lays `renderItem` out in a
 // row, so its parts (a done box, then the text box) sit side by side
-// there and here alike. One element (an app's own row) fills it, as it
-// filled the field's column before.
+// there and here alike. One element (an app's own row) fills it.
 function ItemRow({ children }: { children: ReactNode }) {
   return <span className="flex min-w-0 items-start gap-2 [&>:only-child]:flex-1">{children}</span>
 }

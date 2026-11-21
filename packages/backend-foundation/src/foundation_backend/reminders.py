@@ -95,7 +95,7 @@ def due_on(
     # DST change (02:30 on the spring-forward night) resolves an hour on.
     scheduled = datetime.combine(today, time_of_day, tzinfo=tz)
     # In UTC: two times in one zone subtract as wall-clock times, which
-    # made that skipped 02:30 an hour late and never sent (#326).
+    # made that skipped 02:30 an hour late and never sent.
     late = now.astimezone(timezone.utc) - scheduled.astimezone(timezone.utc)
     if late < timedelta(0) or late > grace:
         return None

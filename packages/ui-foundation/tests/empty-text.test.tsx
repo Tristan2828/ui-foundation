@@ -1,4 +1,4 @@
-// EmptyText (4.96), the record's empty value as an export: the dash hidden
+// EmptyText, the record's empty value as an export: the dash hidden
 // from a screen reader and its words read instead, words shown as they are,
 // and the package's own parts drawing through it. Axe in both themes is
 // e2e/fixtures-visual.spec.ts's (app-emptytext--places).

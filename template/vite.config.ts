@@ -6,7 +6,7 @@ import buildInfo, { pwa } from '@tristan2828/ui-foundation/vite'
 
 // https://vite.dev/config/
 // Only reached when VITE_API=real (src/main.tsx skips MSW in that mode) —
-// forwards /api to the FastAPI backend (Phase 8) started separately via
+// forwards /api to the FastAPI backend started separately via
 // `uvicorn app.main:app` from backend/. MSW intercepts requests before they
 // reach the network otherwise, so this proxy is inert the rest of the time.
 // BACKEND_URL moves it: the mock e2e run (playwright.config.ts) points it at

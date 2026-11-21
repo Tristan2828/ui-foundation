@@ -1065,7 +1065,7 @@ test.describe('widget view: the pairings edited in place (a reference in each it
   })
 })
 
-// Two writers (Roadmap 405, the RichTextEditor review's F4): another tab, a
+// Two writers: another tab, a
 // phone or an AI chat saves the widget while this tab has it open and
 // doesn't know. Each save carries the version it was built on
 // (baseUpdatedAt), so this tab's stale save is refused (a 409), nothing is

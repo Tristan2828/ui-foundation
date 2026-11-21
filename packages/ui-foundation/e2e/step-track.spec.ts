@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from './axe'
 
-// StepTrack (4.128, app/StepTrack): the stepper look's steps read only.
+// StepTrack (app/StepTrack): the stepper look's steps read only.
 // A named list with nothing to press; the current step ringed with its
 // caption under it; on a laptop one row, on a phone the row scrolls
 // sideways in its own box (a tab stop then, so the keys can scroll it)

@@ -1,4 +1,4 @@
-// Leaving a form with something typed (4.85, the form standard's F8):
+// Leaving a form with something typed (the form standard):
 // "Discard your changes?" (Keep editing, Discard), the prompt a dialog
 // and a value edited in place ask with, before a link, Back or the
 // sidebar moves to another page; the browser's own prompt before a reload
@@ -21,7 +21,7 @@ export function FormLeaveGuard({ dirty, letThrough }: { dirty: boolean; letThrou
   useLayoutEffect(() => {
     latest.current = { dirty, letThrough }
   })
-  // Typing a rich-text field holds back (F6) is reported first; the form
+  // A rich-text field's held-back typing is reported first; the form
   // marks itself dirty from it as it does from any change.
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     flushPendingEdits()

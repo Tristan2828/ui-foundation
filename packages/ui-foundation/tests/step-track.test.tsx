@@ -1,4 +1,4 @@
-// StepTrack (4.128): the stepper look's steps read only, by markup. Widths
+// StepTrack: the stepper look's steps read only, by markup. Widths
 // and axe are e2e/step-track.spec.ts and e2e/fixtures-visual.spec.ts.
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'

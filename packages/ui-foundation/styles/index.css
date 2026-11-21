@@ -636,7 +636,7 @@
   margin-inline: 0;
 }
 
-/* Forms (4.85, the form standard; field.tsx and entity-form.tsx).
+/* Forms (the form standard; field.tsx and entity-form.tsx).
    Compact: controls inside a FieldGroup and on a form's bar read
    --control-height (Input, SelectTrigger, InputGroup, the combobox's chips
    box and a default Button), 32px, or 40px under 48rem or on a touch
@@ -680,7 +680,7 @@
   [data-slot="field-group"] > [data-field-row][data-phone-pair] {
     width: calc((100% - var(--spacing) * 3) / 2 - 0.05px);
   }
-  /* Two choices (4.98, 9C): each starts as wide as its buttons on one
+  /* Two choices (9C): each starts as wide as its buttons on one
      line (up to the row), so two that fit share the row, growing into
      what's left, and when they don't the second wraps under the first
      and each grows to the row. */
@@ -705,7 +705,7 @@
   }
 }
 
-/* Toasts on a phone sit at the bottom (4.90, ui/sonner.tsx), above
+/* Toasts on a phone sit at the bottom (ui/sonner.tsx), above
    whatever is pinned there: EntityForm's stuck bar sets
    --toast-bottom-offset itself; failing that, the shell's bottom bar is
    the room to clear, or the phone's safe area. */

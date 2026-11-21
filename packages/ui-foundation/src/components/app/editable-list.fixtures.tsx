@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewSection } from './entity-view'
 
-// A list item's row edited in place (#187): the same `renderItem` lays out
+// A list item's row edited in place: the same `renderItem` lays out
 // as in the form's ListEditor row. Checklist's row is a fragment, a done
 // box then a Field with the text box (the form's shape); Steps' row is an
 // app's own flex row around the same two, which still fills the width.
@@ -67,7 +67,7 @@ function taskList(list: ReturnType<typeof useSavedList>, name: string, wrapped: 
           </Field>
         </>
       )
-      // An app that wrapped its row before the list laid it out (#187).
+      // An app that wrapped its row before the list laid it out.
       return wrapped ? <div className="flex items-start gap-2">{parts}</div> : parts
     },
   })
@@ -91,11 +91,11 @@ function RowsInRouter() {
   return <RouterProvider router={router} />
 }
 
-// A list added by upload (#256): the list's own `add` is an "Add files"
+// A list added by upload: the list's own `add` is an "Add files"
 // button that "uploads" (a short wait), then adds the file at the end
 // through `save`; "Refuse an upload" reports why under the list. Each
 // file reads as its name and caption, a missing caption the muted "No
-// caption", which turns foreground on the hover and focus tint (#257), as
+// caption", which turns foreground on the hover and focus tint, as
 // the view's own "Not set" does. e2e/editable-list.spec.ts adds, moves,
 // removes, and runs axe with the caret on a pencil in both themes.
 

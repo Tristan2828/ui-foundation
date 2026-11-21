@@ -1,4 +1,4 @@
-// The app's toaster (4.90, the dialogs and feedback standard D5).
+// The app's toaster (the dialogs and feedback standard D5).
 //
 // - Each icon in its tone's `*-text` shade (a green check, a red octagon,
 //   an amber triangle, a blue i), through `--toast-icon-*` (styles/

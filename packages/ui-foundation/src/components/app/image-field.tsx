@@ -78,7 +78,6 @@ export function ImageField({
   const input = useRef<HTMLInputElement>(null)
   const main = useRef<HTMLButtonElement>(null)
   const [busy, setBusy] = useState(false)
-  // Why the last file picked isn't the field's image.
   const [problem, setProblem] = useState<string | null>(null)
   // What a screen reader hears of an upload: started, done.
   const [status, setStatus] = useState('')

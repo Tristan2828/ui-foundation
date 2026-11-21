@@ -45,8 +45,8 @@ export function PillFilter({ label, options, value, onValueChange, allLabel = 'A
 }
 
 /**
- * One pill as PillGroup draws it: a PillFilterOption, and for DataTable's
- * views (4.127) a count after the label, "Needs a Look · 3".
+ * One pill as PillGroup draws it: a PillFilterOption, and, for DataTable's
+ * views, a count after the label, "Needs a Look · 3".
  */
 export type PillGroupOption = PillFilterOption & {
   /** The number shown after the label; null, undefined or 0 shows none, past 99 "99+". */

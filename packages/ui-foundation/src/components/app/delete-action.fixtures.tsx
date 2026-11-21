@@ -7,8 +7,7 @@ import { DeleteAction } from './delete-action'
 // DeleteAction (D1) on made-up books: a soft delete from a row's icon (the
 // toast's Undo puts the row back), a hard delete in words, a Retire, one
 // the server refuses until the second try, and an open confirm for axe in
-// both themes (e2e/fixtures-visual.spec.ts). A remove that asks a reason
-// (4.96), refused once, shows what reached `onDelete`. e2e/feedback.spec.ts
+// both themes (e2e/fixtures-visual.spec.ts). A remove that asks a reason, refused once, shows what reached `onDelete`. e2e/feedback.spec.ts
 // drives them.
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

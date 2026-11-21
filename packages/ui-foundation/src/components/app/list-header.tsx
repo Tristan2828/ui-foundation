@@ -11,21 +11,21 @@
 // are routes, `more` are the app's own actions. The ⋯ button has an
 // accessible name and is left out when the menu would be empty.
 //
-// `siblings` (4.100) is a switch beside the title between lists that are
+// `siblings` is a switch beside the title between lists that are
 // one thing seen three ways (Exercises / Targets / Weak spots): links in a
 // segmented row, the one on marked as the current page. They're the
 // page's own peers, so they aren't in ⋯, which keeps only what's left
 // (Show deleted). On a phone the switch takes its own line under the
 // title and scrolls sideways if it must.
 //
-// `secondaryAction` (4.117) is one more button, beside New and before it,
-// for a list's second most common action ("Refresh Now", "Add from
-// Catalog"): an outline button, so New stays the primary. On a phone it
-// folds into ⋯, the menu's first item, so the row keeps the title, ⋯ and
-// New. Its `hint` (4.120) is a short line under the button ("12 searches
-// left", ActionHint), and the line under its words in ⋯ on a phone.
+// `secondaryAction` is one more button, beside New and before it, for a
+// list's second most common action ("Refresh Now", "Add from Catalog"): an
+// outline button, so New stays the primary. On a phone it folds into ⋯,
+// the menu's first item, so the row keeps the title, ⋯ and New. Its `hint`
+// is a short line under the button ("12 searches left", ActionHint), and
+// the line under its words in ⋯ on a phone.
 //
-// `description` (4.120) is one short muted line under the title, for a
+// `description` is one short muted line under the title, for a
 // list that needs a sentence of context ("Searches run against the
 // catalog once a day."). It wraps in the header's width (under a framed
 // table's, where DataTable's `pageHeader` shares it), never widening it,
@@ -51,17 +51,17 @@ export type ListHeaderAction = {
   label: string
   onSelect: () => void
   icon?: IconComponent
-  /** Can't be used now (4.123): an import already running, nothing to export. The item stays in ⋯, greyed. */
+  /** Can't be used now: an import already running, nothing to export. The item stays in ⋯, greyed. */
   disabled?: boolean
 }
-/** The one button beside New (4.117): a link to a page, or a function. */
+/** The one button beside New: a link to a page, or a function. */
 export type ListHeaderSecondaryAction = {
   label: string
   /** Drawn before the words, in the button and in ⋯. */
   icon?: IconComponent
   /** Can't be used now (a refresh in flight): the button and its menu item are disabled. */
   disabled?: boolean
-  /** A few words under the button (4.120): "12 searches left". In ⋯ on a phone, under its words. */
+  /** A few words under the button: "12 searches left". In ⋯ on a phone, under its words. */
   hint?: string
 } & ({ to: To; onClick?: never } | { onClick: () => void; to?: never })
 /** One list in the `siblings` switch. */
@@ -84,7 +84,7 @@ export type ListHeaderProps = {
   /** How many records there are, beside the title in the muted tone. Left out while loading. */
   count?: number
   /**
-   * One short line under the title (4.120), in the muted tone: a sentence
+   * One short line under the title, in the muted tone: a sentence
    * of context for a list that needs it. Wraps in the header's width.
    */
   description?: string
@@ -93,7 +93,7 @@ export type ListHeaderProps = {
   /** The New button: a link to the new-record page, or a function that opens its dialog. */
   newAction?: { label: string; to: To; onClick?: never } | { label: string; onClick: () => void; to?: never }
   /**
-   * One more button beside New (4.117), for the list's second most common
+   * One more button beside New, for the list's second most common
    * action ("Refresh Now", "Add from Catalog"). An outline button before
    * New, which stays the primary. On a phone it's the first item in ⋯.
    */
@@ -107,7 +107,7 @@ export type ListHeaderProps = {
    */
   deleted?: { shown: boolean; onShownChange: (shown: boolean) => void; noun?: string }
   /**
-   * Lists that are this one's peers (4.100): a switch beside the title,
+   * Lists that are this one's peers: a switch beside the title,
    * this list among them. Two or more; fewer draws nothing.
    */
   siblings?: readonly ListHeaderSibling[]
@@ -249,7 +249,7 @@ export function ListHeader({
                 <EllipsisIcon aria-hidden="true" />
               </DropdownMenuTrigger>
               {/* As wide as its longest item, never wrapping one
-                  ("Show Deleted" on one line, 4.105): the trigger is a
+                  ("Show Deleted" on one line): the trigger is a
                   small icon, so the menu's default width (the trigger's)
                   is too narrow. */}
               <DropdownMenuContent align="end" className="w-max max-w-(--available-width) whitespace-nowrap">

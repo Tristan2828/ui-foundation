@@ -1,4 +1,4 @@
-// A record's status as an icon, a colour and its word (4.98, record
+// A record's status as an icon, a colour and its word (record
 // standard 5B), the same in a table's cell, a record's header and a
 // select's options. Every status an app has sorts into one of six kinds,
 // and the kind decides the icon and the colour; the word is the status's

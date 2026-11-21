@@ -1,4 +1,4 @@
-// The one delete (4.90, the dialogs and feedback standard D1): a record's
+// The one delete (the dialogs and feedback standard D1): a record's
 // Delete in its header and a row's delete in a table both use it.
 //
 // - The confirm asks "Delete <name>?" and says what happens, by `kind`:
@@ -13,14 +13,14 @@
 // - `verb` covers the other ways something leaves a list: `verb="Retire"`
 //   asks "Retire <name>?" on a "Retire" button and says "Retired <name>".
 //
-// - `reason` (4.96) puts one field between the sentence and the buttons, a
+// - `reason` puts one field between the sentence and the buttons, a
 //   "Why" box, optional: what's typed (trimmed, '' for nothing) is
 //   `onDelete`'s argument, and Try again sends it again. While something's
 //   typed, closing asks "Discard your changes?" first (the dialog
 //   standard's `dirty`). Width, words and the buttons stay as they are.
 //
-// The trigger is an icon (IconAction's Trash2, named "Delete <name>" since
-// 4.123, its tooltip "Delete") unless `trigger` says
+// The trigger is an icon (IconAction's Trash2, named "Delete <name>", its
+// tooltip "Delete") unless `trigger` says
 // otherwise: `"button"` for a "Delete" button in words, an element of the
 // caller's, or `null` for none, opened with `open`/`onOpenChange` (a row's
 // menu item).
@@ -47,7 +47,7 @@ import { notify, pastTense } from './notify'
 
 export type DeleteKind = 'soft' | 'hard'
 
-/** The one field a confirm can ask (4.96): an optional reason, in a textarea. */
+/** The one field a confirm can ask: an optional reason, in a textarea. */
 export type DeleteReason = {
   /** The field's label: "Why" unless set ("Why remove it?"). */
   label?: string
@@ -144,7 +144,7 @@ export function DeleteAction({
       }}
     >
       {trigger === 'icon' && (
-        // Named for the record (4.123), "Delete The Long Walk", so several on
+        // Named for the record, "Delete The Long Walk", so several on
         // one page are told apart; the tooltip still says the verb alone.
         <DialogTrigger
           render={<IconAction icon={Trash2Icon} label={verb} accessibleName={`${verb} ${name}`} tone="destructive" size={size} />}

@@ -13,7 +13,7 @@ import { Artwork, ArtworkTag, ArtworkToggle } from './artwork'
 import { DataTable, type DataTableCardLayout } from './data-table'
 import { PillFilter } from './pill-filter'
 
-// DataTable's card layouts (issue #252), in a real browser
+// DataTable's card layouts, in a real browser
 // (e2e/data-table-layouts.spec.ts), with axe and the token check in both
 // themes (e2e/fixtures-visual.spec.ts):
 // - Feed: a list-like table under day headings with Rows (the table, its

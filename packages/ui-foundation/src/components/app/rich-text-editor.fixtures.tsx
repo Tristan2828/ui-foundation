@@ -153,7 +153,7 @@ export const Default: StoryObj<typeof RichTextEditor> = {
 }
 
 // A 5,000-word note with 13 tables, for the typing-lag budget
-// (e2e/rich-text-perf.spec.ts, F6 of the 2026-11-17 review).
+// (e2e/rich-text-perf.spec.ts).
 export const LongNote: StoryObj<typeof RichTextEditor> = {
   render: () => (
     <div className="max-w-3xl">

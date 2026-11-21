@@ -4,13 +4,13 @@ import { deltaE, DEUTERANOPIA, linearRgb, type Oklch, PROTANOPIA, type Rgb, simu
 
 // The categorical slots (theme.css "Categorical slots") are only worth
 // having while each looks different from every other. Contrast is measured
-// in Storybook (the glyph check); this measures distinctness, which nothing
+// in e2e/fixtures-visual.spec.ts (the glyph check); this measures distinctness, which nothing
 // in a browser does: the perceived difference (CIEDE2000 ΔE) between every
 // pair of slots, in each theme, from the values theme.css declares.
 const css = readFileSync(new URL('../styles/theme.css', import.meta.url), 'utf-8')
 const tailwind = readFileSync(new URL('../styles/index.css', import.meta.url), 'utf-8')
 
-// The closest pair is 17.9 (#108). The hue-spaced slots before them got to
+// The closest pair is 17.9. The hue-spaced slots before them got to
 // 8.8, two blues 25° apart, which users couldn't tell apart in a table: a
 // slot closer than 15 to another is a second name for a colour already there.
 const MIN_DELTA_E = 15

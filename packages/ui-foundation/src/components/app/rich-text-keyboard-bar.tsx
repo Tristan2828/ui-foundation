@@ -1,6 +1,5 @@
-// The rich-text editor's toolbar on a touch screen (review F11, picked
-// 2026-11-18 as 1A and 4A): a short row pinned to the top of the phone's
-// keyboard, in place of the rows above the text, which scroll away and
+// The rich-text editor's toolbar on a touch screen: a short row pinned to the top of the
+// phone's keyboard, in place of the rows above the text, which scroll away and
 // take a third of what's left of the note while the keyboard is open.
 //
 // - Shown while the field has focus (or is full screen), on a coarse
@@ -18,7 +17,7 @@
 //   the keyboard button in its place brings the keyboard back. Focus stays
 //   in the text the whole time (`inputmode="none"` hides the keyboard), so
 //   the selection and the caret are kept.
-// - Its buttons are 40px (the review's floor), on semantic tokens only.
+// - Its buttons are 40px, on semantic tokens only.
 //
 // Placed inside the field's element, not in a portal, like the floating
 // toolbar (rich-text-floating-toolbar.tsx says why): `position: fixed`,
@@ -177,8 +176,8 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
 
   // The caret stays in sight above the bar (and the panel): the browser
   // keeps it above the keyboard only. Checked on each edit and caret move
-  // in the text itself, as `state` only follows what the bar draws (F6:
-  // typing doesn't re-render it).
+  // in the text itself, as `state` only follows what the bar draws (typing
+  // doesn't re-render it).
   useLayoutEffect(() => {
     if (!edge || !ready) return
     const keepInSight = () => {
@@ -292,7 +291,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
                 variant="ghost"
                 size="icon-lg"
                 aria-label="Undo"
-                // Always on: `state` doesn't follow typing (F6), and with nothing
+                // Always on: `state` doesn't follow typing, and with nothing
                 // to undo it does nothing.
                 disabled={readOnly}
                 className="[&_svg]:size-5"

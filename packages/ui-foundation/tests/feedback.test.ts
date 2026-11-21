@@ -1,4 +1,4 @@
-// The dialogs and feedback standard's logic (4.90): the connection store
+// The dialogs and feedback standard's logic: the connection store
 // OfflineNotice reads, fed by safeFetch (D9), and the words a toast and a
 // delete use (D1, D6). The components themselves run in the browser
 // (e2e/feedback.spec.ts).

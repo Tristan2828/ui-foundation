@@ -4,8 +4,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 // Images on a record, in a real browser: ImageField on the form layer
 // (EntityForm, react-hook-form, zod) with a fake upload, in every state
 // and in both themes, and images in <Markdown> kept inside the text's
-// width. The stories: src/components/app/image-field.stories.tsx and
-// markdown.stories.tsx.
+// width. The fixtures: src/components/app/image-field.fixtures.tsx and markdown.fixtures.tsx.
 const HARNESS_URL = 'http://localhost:6180'
 
 function story(id: string, theme: 'light' | 'dark' = 'light') {

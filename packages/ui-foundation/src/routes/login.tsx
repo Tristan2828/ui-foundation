@@ -5,7 +5,7 @@
 // destination — so this uses the same mandated FieldGroup/Field primitives
 // directly (AGENTS.md "Correct Patterns").
 //
-// Two steps when the account has TOTP (4.0): the password, then a code
+// Two steps when the account has TOTP: the password, then a code
 // from an authenticator app or a recovery code. No session exists between
 // them; the server keeps a pending sign-in for a few minutes, and when it
 // has gone (expired, out of tries) the screen goes back to the password

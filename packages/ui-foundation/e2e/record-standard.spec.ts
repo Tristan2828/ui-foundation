@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The record standard's looks (4.98), in the browser: the facts as a
+// The record standard's looks, in the browser: the facts as a
 // Details tab with no rail (1A), the strip as wide as its numbers (2A), a
 // box of facts beside a tab and under it on a phone, a tiny record as a
 // small card dialog (8A), and choice fields two to a row (9C). The status
@@ -21,7 +21,7 @@ test.describe('the Details tab (1A)', () => {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto(`${HARNESS}app-entityview--details-tab`)
     const tabs = page.getByRole('tablist', { name: 'Office move sections' })
-    // Changes carries its count (4.101's tab bar).
+    // Changes carries its count (the record's tab bar).
     await expect(tabs.getByRole('tab')).toHaveText(['Notes', /^Changes/, 'Details'])
     await expect(page.getByRole('complementary', { name: 'Office move details' })).toHaveCount(0)
     await expect(page.getByRole('region', { name: 'Summary' })).toBeHidden()

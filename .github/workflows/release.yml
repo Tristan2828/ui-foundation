@@ -24,7 +24,7 @@ name: release
 # tree: branches needn't be up to date, so two PRs green on their own can
 # merge into a tree nothing has tested (docs/ARCHITECTURE.md "Releasing").
 #
-# The version (#231): the one in packages/ui-foundation/package.json. A PR
+# The version: the one in packages/ui-foundation/package.json. A PR
 # that finishes a feature, or a fix an app needs now, bumps it (a patch, a
 # minor or a major), and its merge releases everything merged since the
 # last tag as that one version, with one CHANGELOG entry. A push with no

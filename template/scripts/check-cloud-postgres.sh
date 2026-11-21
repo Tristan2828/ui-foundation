@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DATABASE_SSL against a real hosted Postgres (Phase 12 — docs/cloud-postgres.md).
+# DATABASE_SSL against a real hosted Postgres (docs/cloud-postgres.md).
 # Additive, not a replacement: docker-compose.yml stays the default local
 # path, proven at the end of this script by chaining onto check-backend-postgres.sh
 # unmodified. This script's own job is proving DATABASE_SSL against a real

@@ -1,6 +1,6 @@
 // `pwa()` from `@tristan2828/ui-foundation/vite`: the app installable (a web
 // manifest and icons) and the service worker reminders arrive through
-// (issue #167). An app's vite.config.ts:
+//. An app's vite.config.ts:
 //
 //   import buildInfo, { pwa } from '@tristan2828/ui-foundation/vite'
 //   plugins: [react(), tailwindcss(), buildInfo(), pwa({ name: 'Morning Routines', shortName: 'Routines' })]

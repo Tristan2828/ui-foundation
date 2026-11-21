@@ -59,7 +59,7 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         "group-data-[variant=line]/tabs-list:rounded-b-none group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-primary/12 dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-primary/12",
         "data-active:bg-background group-data-[variant=default]/tabs-list:data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 dark:group-data-[variant=default]/tabs-list:data-active:text-foreground",
         // The line look (a page's sub-navigation, a record's tabs): the open
-        // tab stands out (4.111): its name semibold in --primary-text (the
+        // tab stands out: its name semibold in --primary-text (the
         // primary where it's too faint for small text), a 3px primary line,
         // and a primary tint behind it, as a picked ChoiceButtons option
         // (bg-primary/12). A closed one is muted and medium weight. (A closed pill is the text

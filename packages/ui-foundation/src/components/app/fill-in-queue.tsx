@@ -25,8 +25,8 @@
 //   and, when the group has its own `progress`, "3 of 12 filled" beside
 //   it. With more than one group counted, each one's count is listed
 //   under the bar.
-// - States: `loading` (skeletons), `error` (ErrorState, with `onRetry`),
-//   and an empty queue (`empty`, default "Nothing left to fill in").
+// - States: `loading`, `error` (with `onRetry`) and an empty queue
+//   (`empty`).
 //
 // The record is a centred column, 40rem at most; the buttons sit under it,
 // Skip at the start and Save and next at the end.
@@ -188,7 +188,6 @@ export function FillInQueue<T>({
   // (adjusting state while rendering, so nothing draws the old one).
   if (index !== -1 && (held.key !== currentKey || held.index !== index)) setHeld({ key: currentKey, index })
 
-  // The app moving the queue to an index.
   const appliedIndex = useRef(indexProp)
   useEffect(() => {
     if (indexProp === undefined || indexProp === appliedIndex.current) return

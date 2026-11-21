@@ -10,7 +10,7 @@
 // empty value through as it is: EntityView shows the plan's "not set"
 // label for it, never a blank.
 //
-// The record standard (4.98): no right rail. Details, the short
+// The record standard: no right rail. Details, the short
 // label/value section, is placed `rail`: it's the facts, which EntityView's
 // `tabs` layout (the default) shows as the record's last tab, Details,
 // when the record has tabs, and here, with none, first in the one column,

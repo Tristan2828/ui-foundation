@@ -1,13 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// ListEditor's rows that open and its Duplicate (app/ListEditor, #222).
-// RowsThatOpen: a leg day of eight exercises, each a summary line that
-// opens to its fields, one at a time, held by the row's id so it stays open
-// through a move; every item the save refuses opens (the form's focus on
-// the first error makes that one the open item); Add
-// and Duplicate open what they make, and Duplicate stops at the list's max
-// (10), as Add does. Default: without `summary` or `onDuplicate`, every
-// item shows its fields and there's no Duplicate, as before.
+// ListEditor's rows that open and its Duplicate (app/ListEditor): RowsThatOpen opens one row at a time, a
+// refused item opens, Add and Duplicate open what they make; Default has no summary and no Duplicate.
 const stories = {
   default: 'http://localhost:6180/story.html?id=app-listeditor--default',
   rows: 'http://localhost:6180/story.html?id=app-listeditor--rows-that-open',

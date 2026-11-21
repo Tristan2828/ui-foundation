@@ -37,45 +37,29 @@ const PRIMITIVES = [
 // adding it here would ship an unmeasured color.
 const TONE_STORY_IDS = ['ui-badge--all-tones']
 
-// Composites whose job is design language rather than structure: <Markdown>
-// styles every app's long text (headings, lists, links, tables, code), so
-// it answers for its contrast and its colours the way a primitive does.
-// Each id comes with text the story must show, so a page that rendered
-// nothing can't pass every rule trivially.
-// <RichTextEditor> is the same text being edited, so it answers the same way.
-// The banners above the router (MockModeBanner, DataEnvironmentBanner) are
-// safety cues on every screen, so their solid fills answer too.
-// <StageCircle> and the cell patterns' markup (patterns/CellPatterns) are
-// design language too: each also has its glyphs measured below.
-// <CountLink> is a link style every parent table's counts share.
-// The categorical slots, every one on the page and on a card.
-// <EntityView>'s two layouts are every record's page: the rail's narrow
-// column and its stacked fields answer for their contrast too.
-// Its Lists story is the list edited in place: its rows and buttons.
-// <DataTable>'s opt-ins for a small entity: sized to its columns, and
-// edited in its rows (every cell's pencil, InlineCreate).
-// <WidgetCard> is every hub page's widget: its header link, a row's tone
-// badge, muted note and switch, and the compact error, in every state.
+// Composites whose job is design language rather than structure (<Markdown>, <RichTextEditor>, the banners,
+// the cell patterns, the categorical slots, <EntityView>, <DataTable>, <WidgetCard>): each answers for its contrast and
+// colours the way a primitive does. Each id comes with text the story must show, so a page that rendered nothing can't pass trivially.
 const COMPOSITE_STORIES = [
   // Every Button variant: the link one reads in --link, never the accent.
   { id: 'ui-button--variants', mustShow: 'Secondary' },
-  // The dialogs and feedback standard (4.90): every toast tone held open,
+  // The dialogs and feedback standard: every toast tone held open,
   // a delete's confirm, and an action's error, a job's lines and the
   // offline bar together.
   { id: 'ui-toast--all-tones', mustShow: 'Deleted Harbor Light' },
   { id: 'app-deleteaction--open', mustShow: 'It goes to Deleted, and Restore brings it back.' },
   { id: 'app-feedback--all-states', mustShow: 'Checked 12 · 2 deals' },
-  // A delete that asks a reason: its field, label and hint (4.96).
+  // A delete that asks a reason: its field, label and hint.
   { id: 'app-deleteaction--open-with-reason', mustShow: 'Kept with its history.' },
-  // The record's empty value as an app draws it (4.96): the dash, words.
+  // The record's empty value as an app draws it: the dash, words.
   { id: 'app-emptytext--places', mustShow: 'No budget yet' },
-  // Invalid fields with their typed values, on a card (4.63.2).
+  // Invalid fields with their typed values, on a card.
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   // One-line values (`inline`) in a table's cells and a card's lines.
   { id: 'app-markdown--inline', mustShow: 'Waiting on the landlord' },
   { id: 'app-richtexteditor--default', mustShow: 'Measure twice, cut once.' },
-  // Page links read and edited (removed, Restore), and PageTrail folded (4.73).
+  // Page links read and edited (removed, Restore), and PageTrail folded.
   { id: 'app-pagelinks--read', mustShow: 'Lost notes' },
   { id: 'app-pagelinks--edit', mustShow: 'Type / and pick Page' },
   { id: 'app-pagelinks--trail', mustShow: 'Five levels deep, narrow' },
@@ -86,7 +70,7 @@ const COMPOSITE_STORIES = [
   { id: 'patterns-cellpatterns--icons-with-one-tooltip', mustShow: 'Standing mat' },
   { id: 'patterns-cellpatterns--dependency-list', mustShow: '2 holds' },
   { id: 'app-countlink--default', mustShow: 'Move house' },
-  // <ColorSwatch>: a stored colour beside its name, its ring on every surface (Roadmap 17).
+  // <ColorSwatch>: a stored colour beside its name, its ring on every surface.
   { id: 'app-colorswatch--default', mustShow: 'On a muted surface' },
   { id: 'app-colorswatch--invalid-and-missing', mustShow: 'Typed wrong' },
   { id: 'app-colorswatch--in-a-badge', mustShow: 'secondary' },
@@ -96,7 +80,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-colorfield--default', mustShow: 'Calendar Colour' },
   { id: 'app-colorfield--own-colors', mustShow: 'Terracotta' },
   { id: 'app-colorfield--invalid', mustShow: 'That colour is taken by another label' },
-  // <RatingInput>: stars to click, every state on a card, and inPlace.rating in a record's rail and rows (4.127).
+  // <RatingInput>: stars to click, every state on a card, and inPlace.rating in a record's rail and rows.
   { id: 'app-ratinginput--default', mustShow: 'Locked' },
   { id: 'app-ratinginput--in-a-record', mustShow: 'My Rating' },
   { id: 'app-emojifield--default', mustShow: 'Routine Emoji' },
@@ -139,18 +123,18 @@ const COMPOSITE_STORIES = [
   // A list at its own path (`listPath`) with a record open over it, and a sub-record over its parent's page.
   { id: 'app-recorddialog--list-at-its-own-path-open', mustShow: 'after a dry day' },
   { id: 'app-recorddialog--sub-record-open', mustShow: 'Sand the boards' },
-  // A new record's form over its list (`newPath`), and a record's rail beside it at 1,120px (4.82).
+  // A new record's form over its list (`newPath`), and a record's rail beside it at 1,120px.
   { id: 'app-recorddialog--new-record-open', mustShow: 'Add Project' },
   { id: 'app-recorddialog--rail-beside', mustShow: 'after a dry day' },
-  // FormDialog: open, and with a failed save's Notice (4.82).
+  // FormDialog: open, and with a failed save's Notice.
   { id: 'app-formdialog--default', mustShow: 'Add Book' },
   { id: 'app-formdialog--failed-save', mustShow: "Couldn't add the book" },
   // EntityForm in the form standard: rows by size, required marks, a status's badge,
-  // sections as cards, and a failed save's Notice (4.85).
+  // sections as cards, and a failed save's Notice.
   { id: 'app-entityform--default', mustShow: 'Add Book' },
   { id: 'app-entityform--sections', mustShow: 'What It Is' },
   { id: 'app-entityform--failed-save', mustShow: "Couldn't add the book" },
-  // The record standard (4.98): the Details tab's record (a status mark in
+  // The record standard: the Details tab's record (a status mark in
   // the header, the strip as wide as its numbers, a box beside Notes), the
   // facts in the column, every status kind on the page, a card and a table,
   // a tiny record's card dialog, and choice fields two to a row.
@@ -158,44 +142,44 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--details-in-the-column', mustShow: 'No follow-ups' },
   { id: 'app-statusmark--all-kinds', mustShow: 'Renew the permit' },
   { id: 'app-recorddialog--card', mustShow: 'Display Order' },
-  // A record with tabs in the dialog, its 3B tab bar and counts (4.101).
+  // A record with tabs in the dialog, its 3B tab bar and counts.
   { id: 'app-recorddialog--tabs-open', mustShow: 'Open Full Page' },
   { id: 'app-formcontrols--choice-pairs', mustShow: 'Coats' },
-  // A status as a choice, its kinds' icons coloured, one picked in the theme colour (4.105).
+  // A status as a choice, its kinds' icons coloured, one picked in the theme colour.
   { id: 'app-formcontrols--status-choices', mustShow: 'Status choices on a card' },
-  // The same kinds on OptionSelect, a status of five or more, on the page and a card (4.109).
+  // The same kinds on OptionSelect, a status of five or more, on the page and a card.
   { id: 'app-formcontrols--status-selects', mustShow: 'Status selects on a card' },
-  // MultiChoice with OptionSelect's options: kind and plain icons on chips, a summary and (open) the list (4.130).
+  // MultiChoice with OptionSelect's options: kind and plain icons on chips, a summary and (open) the list.
   { id: 'app-formcontrols--status-multi-choices', mustShow: 'Status multi choices on a card' },
-  // A narrow MultiChoice filter's summary, cut off beside an Input (4.109).
+  // A narrow MultiChoice filter's summary, cut off beside an Input.
   { id: 'app-formcontrols--narrow-filters', mustShow: 'Shelf:' },
-  // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
+  // EntityView's facts rail (A1); the harness's desktop width draws it beside the tabs.
   { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
-  // Page width wide (4.133): the record fills the page, the rail stays 300px.
+  // Page width wide: the record fills the page, the rail stays 300px.
   { id: 'app-entityview--page-wide', mustShow: 'Sam Example' },
-  // Several items in a fact, each marked by its kind's icon or a bullet (4.111).
+  // Several items in a fact, each marked by its kind's icon or a bullet.
   { id: 'app-factlist--links-box', mustShow: 'Moving day, the second weekend' },
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },
-  // Cards and no tabs: the rail level with the first card (4.108).
+  // Cards and no tabs: the rail level with the first card.
   { id: 'app-entityview--facts-rail-no-tabs', mustShow: 'Not booked' },
-  // The status first with its action and hint, badges with icons, an editable strip (4.115).
+  // The status first with its action and hint, badges with icons, an editable strip.
   { id: 'app-entityview--facts-rail-status', mustShow: 'Close…' },
-  // A confirm (420px) and the discard prompt (4.82).
+  // A confirm (420px) and the discard prompt.
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
   { id: 'app-entityview--column', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail', mustShow: 'Measure twice, cut once.' },
   { id: 'app-entityview--rail-main-first', mustShow: 'Measure twice, cut once.' },
-  // A record's trail above its title, outside AppShell (4.87, R2).
+  // A record's trail above its title, outside AppShell (R2).
   { id: 'app-entityview--record-trail', mustShow: 'Timber and sheet goods' },
   { id: 'app-entityview--lists', mustShow: 'Return the keys' },
   { id: 'app-entityview--autosave', mustShow: 'Moving to the third floor.' },
   { id: 'app-entityview--print-notes', mustShow: 'Climbing the stairs' },
   // A notice across the page and a source credit under both columns.
   { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },
-  // Tabs over the main column (#303), in both layouts: the line list, its
+  // Tabs over the main column, in both layouts: the line list, its
   // selected and muted tabs; a mark and an avatar left of the title; rail
-  // labels beside their values (4.76).
+  // labels beside their values.
   { id: 'app-entityview--tabs', mustShow: 'Empty the shared shelves first.' },
   { id: 'app-entityview--tabs-column', mustShow: 'Empty the shared shelves first.' },
   { id: 'app-entityview--leading', mustShow: 'Facilities lead, third floor' },
@@ -231,7 +215,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-overviewpage--states', mustShow: "Couldn't reach the server." },
   { id: 'app-overviewpage--card-anatomy', mustShow: 'Add a plan' },
   { id: 'app-entityview--rail-fields-stacked', mustShow: 'No budget yet' },
-  // The record standard (4.81): badges on the title's line, Print notes and
+  // The record standard: badges on the title's line, Print notes and
   // Delete as icons, the strip's icons, folded empties and the dash.
   { id: 'app-entityview--record-standard', mustShow: 'Timber and sheet goods' },
   { id: 'app-entityview--record-standard-long-title', mustShow: 'far side of the river' },
@@ -239,26 +223,26 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--record-standard-editable-long-title', mustShow: 'far side of the river' },
   // <Notice>: every tone's wash, on the page and on a card.
   { id: 'app-notice--default', mustShow: 'This record is read-only.' },
-  // A plain date on a form, required and optional (#157).
+  // A plain date on a form, required and optional.
   { id: 'app-datefield--default', mustShow: 'No due date' },
-  // The form standard's controls (4.88): choice buttons, typed dates, a
+  // The form standard's controls: choice buttons, typed dates, a
   // reference with Create, a long multi-pick, and a record's rows edited in place.
   { id: 'app-datefield--typed', mustShow: '2026-09-02' },
   { id: 'app-formcontrols--form', mustShow: 'Show All 40' },
   { id: 'app-formcontrols--edit-in-place', mustShow: 'The Quiet Harbour' },
-  // A month and day with no year (4.78): set, empty and a stored value refused,
+  // A month and day with no year: set, empty and a stored value refused,
   // open on its days and on its months, and edited in place on a view.
   { id: 'app-monthdayfield--default', mustShow: 'No end day' },
   { id: 'app-monthdayfield--open-on-days', mustShow: 'March' },
   { id: 'app-monthdayfield--open-on-months', mustShow: 'Month' },
   { id: 'app-monthdayfield--edit-in-place', mustShow: 'Nov 1' },
-  // How something repeats (#326): presets pressed and not, a preview's label
+  // How something repeats: presets pressed and not, a preview's label
   // and next dates, a refusal; on a form, in place, and as list cells.
   { id: 'app-recurrencefield--default', mustShow: 'Every 2nd Tue at 9:00 AM' },
   { id: 'app-recurrencefield--in-form', mustShow: 'Save Chore' },
   { id: 'app-recurrencefield--edit-in-place', mustShow: 'Every 2nd Tue at 9:00 AM' },
   { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
-  // With no times and weeks from Sunday (4.119): dates only, WKST=SU's rules.
+  // With no times and weeks from Sunday: dates only, WKST=SU's rules.
   { id: 'app-recurrencefield--dates-only', mustShow: 'Sun, Nov 15' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
@@ -267,7 +251,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-markdown--images', mustShow: 'A view of the yard:' },
   { id: 'app-richtexteditor--image-uploads', mustShow: 'Paste or drop a photo here.' },
   // Written text under a page's h1 and a section's h2 (headingLevel), and
-  // a wide table's box, a named tab stop while it scrolls (#223).
+  // a wide table's box, a named tab stop while it scrolls.
   { id: 'app-markdown--heading-levels', mustShow: 'A page of notes' },
   { id: 'app-markdown--wide-table', mustShow: 'A table that scrolls sideways:' },
   { id: 'app-richtexteditor--heading-levels', mustShow: 'A form with notes' },
@@ -276,7 +260,7 @@ const COMPOSITE_STORIES = [
   // Task items ticked where they are read: checkboxes, nested and in a callout.
   { id: 'app-markdown--tickable-tasks', mustShow: '2/7 done' },
   { id: 'app-richtexteditor--folding', mustShow: 'Fold All' },
-  // Allow reminders in every state, on a card (#167).
+  // Allow reminders in every state, on a card.
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },
   { id: 'app-datatable--edit-in-the-rows', mustShow: 'Finance' },
@@ -287,26 +271,26 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable--sticky-groups-wide', mustShow: 'Thursday' },
   { id: 'app-datatable--sticky-groups-below-a-bar', mustShow: 'Thursday' },
   { id: 'app-datatable--sticky-groups-wide-below-a-bar', mustShow: 'Thursday' },
-  // DataTable's card layouts (#252): a feed's grid and compact list under
+  // DataTable's card layouts: a feed's grid and compact list under
   // day headings, and covers with a round Read button and a placeholder.
   { id: 'app-datatable-layouts--feed', mustShow: 'Earlier This Week' },
   { id: 'app-datatable-layouts--feed-grid', mustShow: 'Earlier This Week' },
   { id: 'app-datatable-layouts--feed-compact', mustShow: 'Earlier This Week' },
   { id: 'app-datatable-layouts--covers', mustShow: 'Harbour Lights' },
   { id: 'app-datatable--grouped-no-matches', mustShow: 'No text items' },
-  // A highlighted row's wash, with muted text inside it (#156).
+  // A highlighted row's wash, with muted text inside it.
   { id: 'app-datatable--highlighted', mustShow: 'Health' },
-  // A list's look (4.83): no stripes, content width, Notes cut to one
+  // A list's look: no stripes, content width, Notes cut to one
   // line, the rows-per-page menu; and the striped, full-width opt-ins.
   { id: 'app-datatable--list-look', mustShow: '1–50 of 120' },
   { id: 'app-datatable--list-look-in-rows', mustShow: '1–50 of 120' },
   { id: 'app-datatable--list-look-striped', mustShow: '1–50 of 120' },
   { id: 'app-datatable--title-column', mustShow: 'Shoes for the long walks' },
   { id: 'app-datatable--title-column-wrap', mustShow: 'Shoes for the long walks' },
-  // A list of sub-records, and one whose items open to edit, with Duplicate (#222).
+  // A list of sub-records, and one whose items open to edit, with Duplicate.
   { id: 'app-listeditor--default', mustShow: 'Pack for the trip' },
   { id: 'app-listeditor--rows-that-open', mustShow: 'Romanian deadlift' },
-  // A totals row under the columns it adds up, a pinned label (#225).
+  // A totals row under the columns it adds up, a pinned label.
   { id: 'app-datatable--totals', mustShow: 'Total · 8 items' },
   // The Group menu at None, rows grouped by a multi-value field (folding
   // headings, counts, summaries), the list with a detail panel, and a
@@ -317,31 +301,31 @@ const COMPOSITE_STORIES = [
   { id: 'app-datatable-tools--phone-row-lead', mustShow: 'Needs a look' },
   { id: 'app-datatable-tools--related', mustShow: 'View All 19' },
   { id: 'app-datatable-tools--framed', mustShow: 'Seeds' },
-  // Views that fill the filters (4.105): the default view's statuses in the Status filter.
+  // Views that fill the filters: the default view's statuses in the Status filter.
   { id: 'app-datatable-tools--views-fill-filters', mustShow: 'Needs Water' },
-  // A date filter a view fills (4.110): the Due filter behind Filters, and its chip.
+  // A date filter a view fills: the Due filter behind Filters, and its chip.
   { id: 'app-datatable-tools--date-views', mustShow: 'Repot the fig' },
   { id: 'app-datatable-tools--date-views-overdue', mustShow: 'Due: Before today' },
-  // A list's header as wide as its framed table (4.106, C3).
+  // A list's header as wide as its framed table (C3).
   { id: 'app-datatable-tools--header-at-table-edge', mustShow: 'New Plant' },
   { id: 'app-datatable-grouping--chores', mustShow: 'Descale the kettle' },
   { id: 'app-datatable-grouping--chores-by-area', mustShow: 'No area' },
   { id: 'app-datatable-grouping--chores-with-panel', mustShow: 'Descale the kettle' },
   { id: 'app-entityview--header-slots', mustShow: 'Boxes packed' },
-  // Cell pattern 9's step bar and star, and pattern 13's ring (#154, #156).
+  // Cell pattern 9's step bar and star, and pattern 13's ring.
   { id: 'patterns-scales--default', mustShow: 'On a card' },
   { id: 'app-appshell--sections', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--flat', mustShow: 'Page at /projects/7' },
-  // Sections that fold, open and folded (#152).
+  // Sections that fold, open and folded.
   { id: 'app-appshell--collapsible', mustShow: 'Page at /projects/categories/2' },
   { id: 'app-appshell--version', mustShow: 'Version 3655449 · PR #139' },
-  // An entry opening a list on a saved view (#188), and a record's view in the shell (#186).
+  // An entry opening a list on a saved view, and a record's view in the shell.
   { id: 'app-appshell--saved-view', mustShow: 'Page at /reading?status=unread&sort=title:asc' },
   { id: 'app-appshell--with-view', mustShow: 'Pat Owner' },
-  // The app's logo beside its title, and alone on the rail (#211).
+  // The app's logo beside its title, and alone on the rail.
   { id: 'app-appshell--with-logo', mustShow: 'Page at /projects/7' },
   { id: 'app-appshell--with-logo-rail', mustShow: 'Page at /projects/7' },
-  // A module's pages under its entry, open, and on the rail (#239).
+  // A module's pages under its entry, open, and on the rail.
   { id: 'app-appshell--nested', mustShow: 'Page at /media/channels/3' },
   { id: 'app-appshell--nested-rail', mustShow: 'Page at /media/channels/3' },
   // The navigation standard: headings, the current entry's bar, counts and a Tools section at the foot, open and on the rail.
@@ -357,22 +341,22 @@ const COMPOSITE_STORIES = [
   { id: 'app-errorstate--sign-in-again', mustShow: 'Ready to Start' },
   { id: 'app-widgetcard--default', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
-  // A card titled with an outside service's mark (#211).
+  // A card titled with an outside service's mark.
   { id: 'app-widgetcard--brand-mark', mustShow: 'Timber stains compared' },
-  // A value over time against a target, every state (#238).
+  // A value over time against a target, every state.
   { id: 'app-linechart--default', mustShow: 'Standing desk' },
   { id: 'app-linechart--all-states', mustShow: 'No points yet' },
-  // StackedAreaChart (4.132): four bands stacked from zero with the legend; and loading, no points, one snapshot as a column, a shorter one.
+  // StackedAreaChart: four bands stacked from zero with the legend; and loading, no points, one snapshot as a column, a shorter one.
   { id: 'app-stackedareachart--default', mustShow: 'US stocks' },
   { id: 'app-stackedareachart--all-states', mustShow: 'No points yet' },
-  // Cards that fold to their header, one folded at rest (#233).
+  // Cards that fold to their header, one folded at rest.
   { id: 'app-widgetcard--collapsible', mustShow: 'Fix the gate latch' },
   // A folded card's value in each state, an accordion, and a hub's
-  // Customize sheet, open (#263).
+  // Customize sheet, open.
   { id: 'app-widgetcard--folded-summary', mustShow: '3 ready' },
   { id: 'app-widgetcard--accordion', mustShow: 'Fix the gate latch' },
   { id: 'app-widgetlayoutsheet--open', mustShow: 'Customize This Page' },
-  // <ModuleCard> is every hub's places (#224): the band's 10% wash of each
+  // <ModuleCard> is every hub's places: the band's 10% wash of each
   // slot under foreground text, the number, the note, the action, in
   // every state, and at compact.
   { id: 'app-modulecard--default', mustShow: 'beds planted' },
@@ -384,7 +368,7 @@ const COMPOSITE_STORIES = [
   // <SessionView> is a timed screen's whole viewport: its header controls
   // and a timer's own (the big digits, the status line, a pressed toggle).
   { id: 'app-sessionview--timer', mustShow: '1:00' },
-  // Its dark stage (#253): dark inside the view in both app themes, the
+  // Its dark stage: dark inside the view in both app themes, the
   // lit time on the tone's glow, the quiet outline controls.
   { id: 'app-sessionview--dark-stage', mustShow: '1:00' },
   // <ImageViewer>: an image large on the dark stage in both app themes, its
@@ -412,33 +396,33 @@ const GLYPH_STORIES: {
   name?: string
 }[] = [
   { id: 'app-stagecircle--default' },
-  // Each status kind's icon (4.98, 5B) on the page, a card and a table row,
+  // Each status kind's icon (5B) on the page, a card and a table row,
   // and the header's on the Details tab's record.
   { id: 'app-statusmark--all-kinds' },
-  // The same kinds' icons on ChoiceButtons, picked (the primary tint) and not, on the page and a card (4.105).
+  // The same kinds' icons on ChoiceButtons, picked (the primary tint) and not, on the page and a card.
   { id: 'app-formcontrols--status-choices' },
-  // OptionSelect's kind icons on the trigger, on the page and a card, and in its open list (4.109).
+  // OptionSelect's kind icons on the trigger, on the page and a card, and in its open list.
   { id: 'app-formcontrols--status-selects' },
   {
     id: 'app-formcontrols--status-selects',
     name: 'list open',
     open: (page) => page.getByTestId('status-selects-page').getByRole('combobox', { name: 'Stage' }).click(),
   },
-  // MultiChoice's kind icons on its chips and summary, on the page and a card, and in its open list (4.130).
+  // MultiChoice's kind icons on its chips and summary, on the page and a card, and in its open list.
   { id: 'app-formcontrols--status-multi-choices' },
   {
     id: 'app-formcontrols--status-multi-choices',
     name: 'list open',
     open: (page) => page.getByTestId('status-multi-choices-page').getByRole('combobox', { name: 'Stages' }).click(),
   },
-  // The facts rail's status icon and external-link mark on its card (4.106).
+  // The facts rail's status icon and external-link mark on its card.
   { id: 'app-entityview--facts-rail' },
-  // A list fact's kind icons and external-link mark (4.111).
+  // A list fact's kind icons and external-link mark.
   { id: 'app-factlist--links-box' },
-  // The status's hint mark and the badges' icons in the rail (4.115).
+  // The status's hint mark and the badges' icons in the rail.
   { id: 'app-entityview--facts-rail-status' },
   { id: 'app-entityview--details-tab' },
-  // Each toast's icon in its tone on the popover surface (4.90), and the
+  // Each toast's icon in its tone on the popover surface, and the
   // offline bar's, an action error's and a job's (the spinner and check).
   {
     id: 'ui-toast--all-tones',
@@ -448,14 +432,14 @@ const GLYPH_STORIES: {
   { id: 'app-feedback--all-states' },
   // The ring's arc, the step bar's filled steps, the star in each shape.
   { id: 'patterns-scales--default' },
-  // RatingInput's empty stars and hearts, outlines in muted-foreground on a card (4.127).
+  // RatingInput's empty stars and hearts, outlines in muted-foreground on a card.
   { id: 'app-ratinginput--default' },
   { id: 'app-banners--default' },
   // Each tone's icon on its own wash, and the source credit's link marks.
   { id: 'app-notice--default' },
   { id: 'app-entityview--notice-and-footer' },
   // The strip's concept icons, Print notes and Delete as icons, and the
-  // folded empties' chevron (4.81).
+  // folded empties' chevron.
   { id: 'app-entityview--record-standard' },
   // The bells on the button, in the on notice and the blocked one.
   { id: 'app-allowreminders--default' },
@@ -473,18 +457,18 @@ const GLYPH_STORIES: {
   // A widget's title icon, external-link mark and compact error icon.
   { id: 'app-widgetcard--all-states' },
   { id: 'app-widgetcard--brand-mark' },
-  // A chart's line (info-text) and target (success-text) on a card (#238).
+  // A chart's line (info-text) and target (success-text) on a card.
   { id: 'app-linechart--default' },
   { id: 'app-linechart--all-states' },
   // Every band, segment and legend swatch of StackedAreaChart, in its categorical slot.
   { id: 'app-stackedareachart--default' },
   { id: 'app-stackedareachart--all-states' },
-  // The fold chevrons (#233).
+  // The fold chevrons.
   { id: 'app-widgetcard--collapsible' },
-  // The accordion's chevrons, and the sheet's arrows (#263).
+  // The accordion's chevrons, and the sheet's arrows.
   { id: 'app-widgetcard--accordion' },
   { id: 'app-widgetlayoutsheet--open' },
-  // A summary line's chevron and the row's Move, Duplicate and Remove icons (#222).
+  // A summary line's chevron and the row's Move, Duplicate and Remove icons.
   { id: 'app-listeditor--rows-that-open' },
   // A place's slot-tinted icon on its own wash, the external mark, a brand
   // mark, and the error icon.
@@ -546,7 +530,7 @@ const GLYPH_STORIES: {
     id: 'app-richtexteditor--features',
     name: 'table menu',
     open: async (page) => {
-      // The editor's own table, not the text shown while it loads (4.123).
+      // The editor's own table, not the text shown while it loads.
       await page.locator('[data-fixture="table"] [contenteditable] td').first().click()
       await page.waitForTimeout(100)
       await page.keyboard.press('Shift+F10')
@@ -996,7 +980,7 @@ test('large density grows the primitives; every other density keeps their size',
 })
 
 // compact reaches a hub's cards through the density-compact variant
-// (#224), which nothing type-checks. In the Hub cards story, compact must
+//, which nothing type-checks. In the Hub cards story, compact must
 // tighten WidgetCard's padding and rows and ModuleCard's band and body;
 // every other density keeps today's (large grows them, as it grows all).
 // Text stays at type-body: the rows' text keeps its 14px.

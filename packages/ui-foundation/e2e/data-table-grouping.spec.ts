@@ -1,15 +1,8 @@
 import AxeBuilder from './axe'
 import { expect, test, type Page } from '@playwright/test'
 
-// DataTable's Group menu (`groupings`) and detail panel (`detailPanel`),
-// app/DataTable grouping stories, in a real browser: None by default, a
-// pick grouping the rows (the grouped column hidden), a multi-value row
-// under each value, folding one heading and all of them, the pick in the
-// URL, remembered and set by a saved view; then the panel: a click, Enter,
-// ↑/↓, Escape and Close, a title link picking instead of leaving, and the
-// phone's bottom sheet. Axe on the stories at rest is
-// e2e/fixtures-visual.spec.ts's; the open panel and a folded heading are
-// checked here, in both themes.
+// DataTable's Group menu (`groupings`) and detail panel (`detailPanel`), app/DataTable grouping stories,
+// in a real browser. Axe at rest is e2e/fixtures-visual.spec.ts's; the open panel and a folded heading are checked here.
 const story = (id: string, query = '', theme: 'light' | 'dark' = 'light') =>
   `http://localhost:6180/story.html?id=app-datatable-grouping--${id}&theme=${theme}${query}`
 

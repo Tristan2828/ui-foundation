@@ -9,13 +9,12 @@
 // Placed against the field's element like the floating toolbar, not in a
 // portal (rich-text-floating-toolbar.tsx says why): under the caret, or
 // over it when there's more room there, and never taller than what is
-// visible on its side (above a phone's keyboard, review F11).
+// visible on its side (above a phone's keyboard).
 import { useLayoutEffect, useState } from 'react'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { cn } from 'cn'
 import { slashOptionId, type SlashItem } from './rich-text-slash'
 
-// Its gap from the caret's line.
 const GAP = 4
 
 type Placement = { top: number; left: number; side: 'top' | 'bottom'; maxHeight: number }
@@ -27,7 +26,7 @@ const ENOUGH = 170
 
 // What is visible of the window: above a phone's keyboard
 // (`visualViewport`), and above the bar pinned to it
-// (rich-text-keyboard-bar.tsx) when the field has one (review F11).
+// (rich-text-keyboard-bar.tsx) when the field has one.
 function visibleArea(field: HTMLElement): { top: number; bottom: number } {
   const viewport = window.visualViewport
   const top = viewport?.offsetTop ?? 0
@@ -47,7 +46,7 @@ function place(view: EditorView, at: number, field: HTMLElement, menu: HTMLEleme
   const natural = Math.min(menu.scrollHeight, TALLEST)
   const roomBelow = area.bottom - caret.bottom - GAP * 2
   const roomAbove = caret.top - area.top - GAP * 2
-  // A laptop's as before: below when it all fits there or can't above.
+  // A laptop's: below when it all fits there or can't above.
   // A touch screen's: below while a few items fit, else wherever there's
   // more room, and capped to it.
   const touch = window.matchMedia('(pointer: coarse)').matches
@@ -94,7 +93,6 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
     }
   }, [view, at, field, menu, items.length])
 
-  // The highlighted item stays in sight.
   useLayoutEffect(() => {
     menu?.querySelector(`#${CSS.escape(slashOptionId(id, active))}`)?.scrollIntoView({ block: 'nearest' })
   }, [menu, id, active])
@@ -128,7 +126,7 @@ export function RichTextSlashMenu({ id, view, at, field, items, active, onHighli
             id={slashOptionId(id, index)}
             role="option"
             aria-selected={index === active}
-            // 44px rows on a touch screen (review F11).
+            // 44px rows on a touch screen.
             className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 select-none aria-selected:bg-muted pointer-coarse:min-h-11"
             // A press never takes focus from the text.
             onMouseDown={(event) => event.preventDefault()}

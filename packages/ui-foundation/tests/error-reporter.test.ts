@@ -1,5 +1,4 @@
-// Error reporting in the browser (src/error-reporting/reporter.ts, issue
-// #126): each source reports once with reporting on and never with it off,
+// Error reporting in the browser (src/error-reporting/reporter.ts): each source reports once with reporting on and never with it off,
 // expected AppError kinds are never reported, and a report carries no
 // query string.
 import { QueryClient } from '@tanstack/react-query'

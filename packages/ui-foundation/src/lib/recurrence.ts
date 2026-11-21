@@ -1,4 +1,4 @@
-// Repeating schedules (#326): one rule, stored RRULE-shaped (RFC 5545), and
+// Repeating schedules: one rule, stored RRULE-shaped (RFC 5545), and
 // when it falls next. The backend's `foundation_backend.recurrence` is the
 // same rules in Python; both read tests/fixtures/recurrence-cases.json, so
 // a screen and the server agree on every next occurrence.
@@ -17,7 +17,7 @@
 // days, Feb 29 only in leap years, and -1 is every month's last day. COUNT
 // counts occurrences, each time of each day.
 //
-// WKST (4.114) says which day a week starts on, for the weeks an
+// WKST says which day a week starts on, for the weeks an
 // every-N-weeks rule counts: `FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,WE;WKST=SU`
 // from Wednesday 2026-11-04 next falls on Sunday the 15th (with weeks from
 // Monday, the default, on the 8th). It changes nothing else here; a rule
@@ -55,7 +55,7 @@ export type RuleParts = {
   /**
    * WKST: the day weeks start on (Monday 0 to Sunday 6), or null for
    * Monday, RFC 5545's default. `WKST=MO` reads as null, so it isn't stored.
-   * Optional (4.114), so parts an app builds without it still are parts.
+   * Optional, so parts an app builds without it still are parts.
    */
   weekStart?: number | null
 }

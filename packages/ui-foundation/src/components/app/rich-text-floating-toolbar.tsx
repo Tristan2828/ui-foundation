@@ -27,7 +27,6 @@ import { cn } from 'cn'
 import type { FormatId } from './rich-text-formats'
 import { FormatButtons } from './rich-text-toolbar'
 
-// Its gap from the words.
 const GAP = 8
 
 // The selection's box on screen: the words themselves on one line, the

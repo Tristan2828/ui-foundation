@@ -76,7 +76,6 @@ function moveInGrid(key: string, at: number, count: number, columns: number): nu
   return Math.min(Math.max(next, 0), count - 1)
 }
 
-// The month after (or before) one, round the year.
 const nextMonth = (month: number, by: 1 | -1) => ((month - 1 + by + 12) % 12) + 1
 
 export function MonthDayField({

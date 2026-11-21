@@ -2,7 +2,7 @@
 // to Markdown keeps every block the person didn't touch exactly as it was
 // written. Runs on what the real editor serializes each fixture to
 // (rich-text-editor.fixtures.ts); the browser round-trip lives in the
-// Storybook spec.
+// e2e/rich-text-editor.spec.ts.
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
@@ -78,8 +78,7 @@ describe('mergeMarkdown', () => {
   })
 
   it('refuses, rather than save a block the editor dropped part of (an image)', () => {
-    // Until 4.28 the editor dropped every image as it loaded; writing its
-    // version would have deleted them. Any part dropped is still refused.
+    // The editor drops an image's data as it loads; writing its version would delete it. Any part dropped is refused.
     const original = 'Intro.\n\nText ![a chart](chart.png) more.\n\nOutro.\n'
     const baseline = 'Intro.\n\nText  more.\n\nOutro.\n'
     const current = baseline.replace('Intro.', 'Intro, edited.')

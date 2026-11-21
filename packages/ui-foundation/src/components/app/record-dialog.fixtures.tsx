@@ -27,24 +27,17 @@ import { recordDialogState, useNewRecordDialog } from './record-dialog-context'
 // loads. Owner is edited in place (its Esc is the field's, not the
 // dialog's). Open, Loading and Not found start with a record open over the
 // list, the list's entry before it, so Back closes it.
-// The Dialog only stories are the same list with `fullPage={false}` (no
-// page behind the dialog: a deep link opens it over the list), and Rows
-// open their page has `opens` kind `page`. The name cell is a plain link
-// to the record: `opens` makes a click on it open the record as the row
-// does.
-// The List at its own path stories have the list at /projects/list and the
-// record at /projects/:id, siblings under one RecordDialogRoute with
-// `listPath="list"`. The Sub-records stories are a project's page with its
-// tasks, each opening at /projects/:id/tasks/:taskId in the dialog over the
-// project's page (`fullPage={false}`: a reload is the dialog again).
-// The New record stories (4.82) have a `new` child route (`newPath`): New
-// project opens a FormDialog over the list, a deep link to /projects/new
-// too, and Add opens the new project over the list. A name of "fail" is
-// refused. The Rail stories' records use EntityView's `rail` layout, its
-// rail beside the main column at the dialog's 1,120px. The Card stories
-// (4.98, 8A) open a tiny record (a name and a few facts, no notes) as a
-// small 420px card, `look="card"`: its Delete, Open full page and Close
-// on the title's line; Card, dialog only has no full page.
+// The Dialog only stories are the same list with `fullPage={false}`, and
+// Rows open their page has `opens` kind `page`. The name cell is a plain
+// link to the record: `opens` makes a click on it open the record as the
+// row does. The List at its own path stories use `listPath="list"`; the
+// Sub-records stories open /projects/:id/tasks/:taskId over the project's
+// page (`fullPage={false}`). The New record stories have a `new` child
+// route (`newPath`): New project opens a FormDialog over the list, a deep
+// link to /projects/new too, and a name of "fail" is refused. The Rail
+// stories use EntityView's `rail` layout at the dialog's 1,120px. The Card
+// stories (record standard 8A) open a tiny record as a small 420px card,
+// `look="card"`; Card, dialog only has no full page.
 // e2e/record-dialog.spec.ts drives it; axe in both themes is
 // fixtures-visual.spec.ts's COMPOSITE_STORIES.
 
@@ -237,7 +230,7 @@ const TASK_COLUMNS: LegacyColumnDef<Task, unknown>[] = [
 ]
 
 // A tiny record for the card dialog (8A): its name, three facts, Delete.
-// Its strip of key numbers is left out in the card (4.105); the same view
+// Its strip of key numbers is left out in the card; the same view
 // on its own page shows it.
 function ProjectCard() {
   const { id } = useParams()
@@ -266,7 +259,7 @@ function ProjectCard() {
   )
 }
 
-// A record with tabs in the dialog (4.101, 3B): long enough that its body
+// A record with tabs in the dialog (3B): long enough that its body
 // scrolls, and the tab bar sticks to the top of it with the name above.
 const LONG_NOTES = Array.from(
   { length: 30 },
@@ -502,7 +495,6 @@ function Projects({
   return <RouterProvider router={router} />
 }
 
-// The list's entry, then the record opened over it.
 const openOver = (id: string, search = '', listAt = '/projects', record = `/projects/${id}`): InitialEntry[] => {
   const list = { pathname: listAt, search, hash: '' }
   return [list, { pathname: record, state: recordDialogState({ ...list, state: null }) }]

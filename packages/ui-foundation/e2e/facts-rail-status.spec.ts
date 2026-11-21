@@ -1,16 +1,8 @@
 import AxeBuilder from './axe'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-// The record's status in the facts rail (4.115): a fact marked
-// `recordStatus` is the first fact at the top of the rail, whatever its
-// place in `facts` and its section's among the rail's, and in Details
-// where the rail folds on a phone. Read-only here, it has a small action
-// button under it (the app's own dialog, opened from the fact's button)
-// and a hint saying why: a tooltip on an info button, by hover or keyboard
-// focus, and a line under the value on a touch screen. Badges carry
-// icons. The strip's values are edited in place, inline: hovering one
-// moves nothing, so a click where the mouse rests opens that value, at a
-// laptop's width and a phone's (where the strip wraps).
+// The record's status in the facts rail: a `recordStatus` fact leads the rail and Details,
+// with its action and hint (tooltip or inline line), badges with icons, and a strip edited in place.
 const HARNESS = 'http://localhost:6180/story.html?id=app-entityview--facts-rail-status'
 
 const rail = (page: Page) => page.getByRole('complementary', { name: 'Office move facts' })
@@ -119,9 +111,7 @@ test.describe('on a touch screen', () => {
 
 // The strip (KeyStats) with values edited in place: hovering a value
 // keeps every value where it was, and a click where the mouse rests opens
-// that value, never the next one. Before 4.115 an inline value's pencil
-// took its room only on hover, moving the values after it along and
-// wrapping a nearly full row.
+// that value, never the next one. An inline value's pencil keeps its room, so a nearly full row doesn't wrap.
 for (const width of [1440, 375]) {
   test(`hovering a strip value moves nothing; a click there opens it (${width})`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })

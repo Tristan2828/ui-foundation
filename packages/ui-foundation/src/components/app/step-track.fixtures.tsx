@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { EqualItems, type EqualItem } from './equal-items'
 import { StepTrack, type StepTrackStep } from './step-track'
 
-// StepTrack (4.128), all made up: the stepper look's steps read only, as
+// StepTrack, all made up: the stepper look's steps read only, as
 // a list card shows a program's phases with a caption under the current
 // one. Then the edges: no caption, a step that needs a look, long titles,
 // seven steps (the row scrolls sideways on a phone), none, and the

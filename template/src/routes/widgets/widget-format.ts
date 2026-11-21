@@ -9,7 +9,7 @@ import type { components } from '@/api/schema'
 type WidgetStatus = components['schemas']['WidgetStatus']
 type WidgetChecklistState = components['schemas']['WidgetChecklistState']
 
-// A status: its kind (the record standard's six, 4.98: icon, colour and
+// A status: its kind (the record standard's six: icon, colour and
 // word, StatusMark). Sort each value by what it *means*: a draft hasn't
 // started (planned), an active one is in use, an archived one stopped
 // without anything being wrong (ended, a muted grey, never red). The word
