@@ -171,6 +171,8 @@ const COMPOSITE_STORIES = [
   { id: 'app-formcontrols--narrow-filters', mustShow: 'Shelf:' },
   // EntityView's facts rail (4.106, A1); the harness's desktop width draws it beside the tabs.
   { id: 'app-entityview--facts-rail', mustShow: 'Sam Example' },
+  // Page width wide (4.133): the record fills the page, the rail stays 300px.
+  { id: 'app-entityview--page-wide', mustShow: 'Sam Example' },
   // Several items in a fact, each marked by its kind's icon or a bullet (4.111).
   { id: 'app-factlist--links-box', mustShow: 'Moving day, the second weekend' },
   { id: 'app-entityview--facts-rail-only', mustShow: 'Not booked' },

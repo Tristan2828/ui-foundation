@@ -3,44 +3,45 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 53–162
-- [Glow](#glow) · lines 164–183
-- [Semantic tones](#semantic-tones) · lines 185–213
-- [The three badge styles](#the-three-badge-styles) · lines 215–232
-- [Status marks](#status-marks) · lines 234–279
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 281–310
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 312–325
-- [Logos and brand marks](#logos-and-brand-marks) · lines 327–371
-- [Categorical colour](#categorical-colour) · lines 373–443
-- [Heat scale](#heat-scale) · lines 445–506
-- [Depth ramps](#depth-ramps) · lines 508–593
-- [A stored colour](#a-stored-colour) · lines 595–652
-- [Shapes and sizes](#shapes-and-sizes) · lines 654–675
-- [Typography](#typography) · lines 677–848
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 711–744
-  - [Written text (notes)](#written-text-notes) · lines 746–848
-- [Density](#density) · lines 850–943
-  - [Rows on this device](#rows-on-this-device) · lines 916–943
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 945–1059
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1061–1138
-- [Notices](#notices) · lines 1140–1168
-- [A value over time](#a-value-over-time) · lines 1170–1300
-  - [Several values over time](#several-values-over-time) · lines 1219–1257
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1259–1300
-- [A list as a board](#a-list-as-a-board) · lines 1302–1418
-  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1355–1418
-- [A list as cards](#a-list-as-cards) · lines 1420–1466
-- [Images full screen](#images-full-screen) · lines 1468–1514
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1516–1552
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1554–1624
-- [A few equal things](#a-few-equal-things) · lines 1626–1746
-- [An overview page](#an-overview-page) · lines 1748–1819
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1820–1886
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1888–2025
-- [Picking at random](#picking-at-random) · lines 2027–2058
-- [Filling in what's missing](#filling-in-whats-missing) · lines 2060–2127
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2129–2154
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2156–2252
+- [Palettes](#palettes) · lines 54–163
+- [Glow](#glow) · lines 165–184
+- [Semantic tones](#semantic-tones) · lines 186–214
+- [The three badge styles](#the-three-badge-styles) · lines 216–233
+- [Status marks](#status-marks) · lines 235–280
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 282–311
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 313–326
+- [Logos and brand marks](#logos-and-brand-marks) · lines 328–372
+- [Categorical colour](#categorical-colour) · lines 374–444
+- [Heat scale](#heat-scale) · lines 446–507
+- [Depth ramps](#depth-ramps) · lines 509–594
+- [A stored colour](#a-stored-colour) · lines 596–653
+- [Shapes and sizes](#shapes-and-sizes) · lines 655–676
+- [Typography](#typography) · lines 678–849
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 712–745
+  - [Written text (notes)](#written-text-notes) · lines 747–849
+- [Density](#density) · lines 851–971
+  - [Rows on this device](#rows-on-this-device) · lines 917–944
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 946–971
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 973–1087
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1089–1166
+- [Notices](#notices) · lines 1168–1196
+- [A value over time](#a-value-over-time) · lines 1198–1328
+  - [Several values over time](#several-values-over-time) · lines 1247–1285
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1287–1328
+- [A list as a board](#a-list-as-a-board) · lines 1330–1446
+  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1383–1446
+- [A list as cards](#a-list-as-cards) · lines 1448–1494
+- [Images full screen](#images-full-screen) · lines 1496–1542
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1544–1580
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1582–1652
+- [A few equal things](#a-few-equal-things) · lines 1654–1774
+- [An overview page](#an-overview-page) · lines 1776–1847
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1848–1914
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1916–2053
+- [Picking at random](#picking-at-random) · lines 2055–2086
+- [Filling in what's missing](#filling-in-whats-missing) · lines 2088–2155
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2157–2182
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2184–2280
 
 <!-- /index -->
 
@@ -941,6 +942,33 @@ toggle in an app without a palette).
   sizes. `useRows()` reads the choice, for a screen that must know it.
 - Content inside cells (an inline editor, a button, a badge) must fit both
   heights; check a cell like that at both.
+
+### Page width (a record on a wide screen)
+
+A record page (`EntityView`) keeps a reading width: its column is at most
+`max-w-4xl`, and with a facts rail the page is that plus the 300px rail.
+On a TV the right of the page is then empty. `data-width="wide"` on
+`<html>` (4.133) lifts the cap: the column fills the page and the rail
+stays 300px, moving right with it.
+
+```ts
+// The app's own Page Width setting, kept per browser, applied before first paint.
+document.documentElement.dataset.width = wide ? 'wide' : ''
+```
+
+- **The app owns the setting**, as it owns Text Size: a field on its
+  settings page, kept in `localStorage`, set on `<html>` by a script in
+  `index.html` so the first paint has it. Regular (no attribute) is the
+  layout as it always was.
+- **Only the record page widens.** A record in a dialog over its list
+  keeps the dialog's size (the rule skips anything inside
+  `role="dialog"`); a phone is unchanged, since the column already fills
+  it; lists already take the content's width.
+- **Long text reflows to the column**: notes and tabs fill it; the
+  Details tab keeps its own 42rem.
+- Anything else of the package's that should follow it uses the
+  `page-wide:` variant (`page-wide:max-w-none`), which has the same
+  dialog rule.
 
 ## Widget cards (hub pages)
 

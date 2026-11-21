@@ -1628,3 +1628,37 @@ function TrailInRouter() {
 }
 
 export const RecordTrail: StoryObj = { name: 'Record trail', render: () => <TrailInRouter /> }
+
+// --- Page width wide (4.133) ------------------------------------------------
+// data-width="wide" on an ancestor (an app sets it on <html>, from its own
+// Page Width setting) lifts the record's reading cap: the column fills the
+// page and the facts rail stays 300px. Inside a dialog the cap stays, so a
+// record over its list keeps the dialog's size. e2e/entity-view-width.spec.ts.
+export const PageWide: StoryObj = {
+  name: 'Page width wide',
+  render: () => (
+    <div data-width="wide">
+      <FactsRailInRouter only={false} />
+    </div>
+  ),
+}
+
+export const PageWideColumn: StoryObj = {
+  name: 'Page width wide, column',
+  render: () => (
+    <div data-width="wide">
+      <TabsInRouter layout="column" />
+    </div>
+  ),
+}
+
+export const PageWideInDialog: StoryObj = {
+  name: 'Page width wide, in a dialog',
+  render: () => (
+    <div data-width="wide">
+      <div role="dialog" aria-label="Record over its list">
+        <FactsRailInRouter only={false} />
+      </div>
+    </div>
+  ),
+}
