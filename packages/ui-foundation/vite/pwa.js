@@ -188,6 +188,28 @@ export function pwaFiles(options, base = '/', root = process.cwd()) {
     ]
     touchIcon = 'icons/apple-touch-icon.png'
   }
+  const shortcuts = (options.shortcuts ?? []).map((shortcut, index) => {
+    const label = shortcut?.name?.trim()
+    const url = shortcut?.url?.trim()
+    if (!label) throw new Error(`pwa: shortcuts[${index}] needs a \`name\`.`)
+    if (!url?.startsWith('/') || url.startsWith('//')) {
+      throw new Error(`pwa: shortcuts[${index}].url must be a path inside the app, starting with "/" (got "${shortcut?.url}").`)
+    }
+    let icon
+    if (shortcut.icon) {
+      const own = path.resolve(root, shortcut.icon)
+      if (!own.endsWith('.png') || !fs.existsSync(own)) throw new Error(`pwa: shortcuts[${index}].icon must be a PNG file; ${own} isn't one.`)
+      const file = `icons/shortcut-${index}.png`
+      files.set(file, { type: 'image/png', source: fs.readFileSync(own) })
+      icon = [{ src: at(file), sizes: '192x192', type: 'image/png' }]
+    }
+    return {
+      name: label,
+      ...(shortcut.shortName?.trim() ? { short_name: shortcut.shortName.trim() } : {}),
+      url: `${base.replace(/\/$/, '')}${url}`,
+      ...(icon ? { icons: icon } : {}),
+    }
+  })
   const manifest = {
     name,
     short_name: shortName,
@@ -198,6 +220,7 @@ export function pwaFiles(options, base = '/', root = process.cwd()) {
     theme_color: theme,
     background_color: background,
     icons,
+    ...(shortcuts.length ? { shortcuts } : {}),
   }
   files.set('manifest.webmanifest', {
     type: 'application/manifest+json',

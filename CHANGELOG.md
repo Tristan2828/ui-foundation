@@ -7,6 +7,21 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.135.0 — Home-screen shortcuts in pwa()
+
+npm package and `ui-foundation-backend` 4.135.0 (the backend is unchanged
+apart from its version). Additive: a `pwa()` without `shortcuts` writes the
+manifest it did before.
+
+### How an app adopts it
+
+- Bump both packages to 4.135.0 and run `npx ui-foundation sync`.
+- To offer an action on the installed icon, pass
+  `pwa({ name, shortcuts: [{ name: 'Add To-Do', url: '/todo/add' }] })`
+  (`shortName` and a square PNG `icon` optional). Android and desktop
+  Chrome/Edge show them; iPhone and iPad ignore them. See
+  `docs/foundation/reminders.md` "Home-screen shortcuts".
+
 ## 4.134.0 — A control at the start of a phone's row
 
 npm package and `ui-foundation-backend` 4.134.0 (the backend is unchanged
