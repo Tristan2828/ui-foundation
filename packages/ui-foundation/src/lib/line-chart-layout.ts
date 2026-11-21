@@ -116,3 +116,38 @@ export function seriesLayout(series: readonly (readonly LineChartPoint[])[], tar
     targetY: shared.targetY,
   }
 }
+
+export type StackedLayout = {
+  /** Each x's place across the plot, 0…1. */
+  across: number[]
+  /** Each band's top and bottom edge at each x, as fractions from the plot's top, bottom band first. */
+  bands: { top: number[]; bottom: number[] }[]
+  /** Each x's total. */
+  totals: number[]
+  domain: { min: 0; max: number }
+}
+
+// Amounts stacked from zero (StackedAreaChart, 4.132): every band shares
+// `xs`, a band's bottom is the sum of the bands below it and its top adds
+// its own value, so the top band's top is the total. The range is 0 to the
+// largest total with room above only. `values` are already cleaned: one per
+// x, 0 or more. x is placed as seriesLayout places it.
+export function stackedLayout(xs: readonly LineChartPoint['x'][], values: readonly (readonly number[])[]): StackedLayout {
+  const totals = xs.map((_, i) => values.reduce((sum, band) => sum + (band[i] ?? 0), 0))
+  const max = (Math.max(0, ...totals) || 1) * (1 + PAD)
+  const height = (y: number) => (max - y) / max
+  const times = xs.map(along)
+  const timed = times.every(Number.isFinite) && new Set(times).size > 1
+  const first = timed ? Math.min(...times) : 0
+  const span = timed ? Math.max(...times) - first : xs.length - 1
+  const across = xs.map((_, i) => (span === 0 ? 0.5 : ((timed ? times[i] : i) - first) / span))
+  const below = xs.map(() => 0)
+  const bands = values.map((band) => {
+    const bottom = below.map(height)
+    xs.forEach((_, i) => {
+      below[i] += band[i] ?? 0
+    })
+    return { top: below.map(height), bottom }
+  })
+  return { across, bands, totals, domain: { min: 0, max } }
+}

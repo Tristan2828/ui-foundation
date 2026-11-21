@@ -359,6 +359,9 @@ const COMPOSITE_STORIES = [
   // A value over time against a target, every state (#238).
   { id: 'app-linechart--default', mustShow: 'Standing desk' },
   { id: 'app-linechart--all-states', mustShow: 'No points yet' },
+  // StackedAreaChart (4.132): four bands stacked from zero with the legend; and loading, no points, one snapshot as a column, a shorter one.
+  { id: 'app-stackedareachart--default', mustShow: 'US stocks' },
+  { id: 'app-stackedareachart--all-states', mustShow: 'No points yet' },
   // Cards that fold to their header, one folded at rest (#233).
   { id: 'app-widgetcard--collapsible', mustShow: 'Fix the gate latch' },
   // A folded card's value in each state, an accordion, and a hub's
@@ -470,6 +473,9 @@ const GLYPH_STORIES: {
   // A chart's line (info-text) and target (success-text) on a card (#238).
   { id: 'app-linechart--default' },
   { id: 'app-linechart--all-states' },
+  // Every band, segment and legend swatch of StackedAreaChart, in its categorical slot.
+  { id: 'app-stackedareachart--default' },
+  { id: 'app-stackedareachart--all-states' },
   // The fold chevrons (#233).
   { id: 'app-widgetcard--collapsible' },
   // The accordion's chevrons, and the sheet's arrows (#263).
