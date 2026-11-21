@@ -7,14 +7,14 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.135.0 — A quick add line: parseQuickAdd and QuickAddInput
+## 4.136.0 — A quick add line: parseQuickAdd and QuickAddInput
 
-npm package and `ui-foundation-backend` 4.135.0 (the backend is unchanged
+npm package and `ui-foundation-backend` 4.136.0 (the backend is unchanged
 apart from its version). Additive.
 
 ### How an app adopts it
 
-- Bump both packages to 4.135.0 and run `npx ui-foundation sync`.
+- Bump both packages to 4.136.0 and run `npx ui-foundation sync`.
 - Nothing else is needed. To use it, see `design-language.md` "A quick add
   line".
 
@@ -42,6 +42,21 @@ apart from its version). Additive.
   `e2e/quick-add-input.spec.ts` checks the marks sit under their words,
   reading as you type, ✕, Enter, and axe at laptop and phone widths.
 - `design-language.md`: new "A quick add line".
+
+## 4.135.0 — Home-screen shortcuts in pwa()
+
+npm package and `ui-foundation-backend` 4.135.0 (the backend is unchanged
+apart from its version). Additive: a `pwa()` without `shortcuts` writes the
+manifest it did before.
+
+### How an app adopts it
+
+- Bump both packages to 4.135.0 and run `npx ui-foundation sync`.
+- To offer an action on the installed icon, pass
+  `pwa({ name, shortcuts: [{ name: 'Add To-Do', url: '/todo/add' }] })`
+  (`shortName` and a square PNG `icon` optional). Android and desktop
+  Chrome/Edge show them; iPhone and iPad ignore them. See
+  `docs/foundation/reminders.md` "Home-screen shortcuts".
 
 ## 4.134.0 — A control at the start of a phone's row
 

@@ -2185,7 +2185,7 @@ both themes and every palette.
 ## A quick add line
 
 One line that becomes a record ("pay rent tomorrow at 3pm #home"): the
-package's `QuickAddInput` over `parseQuickAdd` (4.135). Dates, times and
+package's `QuickAddInput` over `parseQuickAdd` (4.136). Dates, times and
 repeats are typed in words; the app's own choices (a list, a place) are a
 symbol and a few letters, or a chip pressed.
 

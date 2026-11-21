@@ -50,6 +50,38 @@ describe('colours', () => {
   })
 })
 
+describe('shortcuts', () => {
+  it('leaves the manifest as it was without any', () => {
+    expect(manifest(pwaFiles({ name: 'Demo' }))).not.toHaveProperty('shortcuts')
+    expect(manifest(pwaFiles({ name: 'Demo', shortcuts: [] }))).not.toHaveProperty('shortcuts')
+  })
+
+  it('writes them under the base, with only what was given', () => {
+    const built = pwaFiles({ name: 'Demo', shortcuts: [{ name: 'Add To-Do', shortName: 'Add', url: '/todo/add' }, { name: 'Today', url: '/today' }] }, '/app/')
+    expect(manifest(built).shortcuts).toEqual([
+      { name: 'Add To-Do', short_name: 'Add', url: '/app/todo/add' },
+      { name: 'Today', url: '/app/today' },
+    ])
+    expect(pwaFiles({ name: 'Demo', shortcuts: [{ name: 'Add', url: '/add' }] }).files.get('manifest.webmanifest')).toBeDefined()
+    expect(manifest(pwaFiles({ name: 'Demo', shortcuts: [{ name: 'Add', url: '/add' }] })).shortcuts).toEqual([{ name: 'Add', url: '/add' }])
+  })
+
+  it('serves a shortcut’s own icon', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pwa-shortcut-'))
+    dirs.push(dir)
+    fs.writeFileSync(path.join(dir, 's.png'), solidPng(192, '#123456'))
+    const built = pwaFiles({ name: 'Demo', shortcuts: [{ name: 'Add', url: '/add', icon: 's.png' }] }, '/', dir)
+    expect(manifest(built).shortcuts).toEqual([{ name: 'Add', url: '/add', icons: [{ src: '/icons/shortcut-0.png', sizes: '192x192', type: 'image/png' }] }])
+    expect(built.files.has('icons/shortcut-0.png')).toBe(true)
+  })
+
+  it('refuses a shortcut with no name, or a url that leaves the app', () => {
+    expect(() => pwaFiles({ name: 'Demo', shortcuts: [{ name: ' ', url: '/a' }] })).toThrow(/needs a `name`/)
+    expect(() => pwaFiles({ name: 'Demo', shortcuts: [{ name: 'A', url: 'https://x.test/' }] })).toThrow(/path inside the app/)
+    expect(() => pwaFiles({ name: 'Demo', shortcuts: [{ name: 'A', url: '//x.test/' }] })).toThrow(/path inside the app/)
+  })
+})
+
 describe('icons', () => {
   it('draws a valid PNG of one colour at the size asked', () => {
     expect(readPng(solidPng(180, '#1a2b3c'))).toEqual({ width: 180, height: 180, hex: '#1a2b3c', end: true })
