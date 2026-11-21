@@ -3,45 +3,46 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 54–163
-- [Glow](#glow) · lines 165–184
-- [Semantic tones](#semantic-tones) · lines 186–214
-- [The three badge styles](#the-three-badge-styles) · lines 216–233
-- [Status marks](#status-marks) · lines 235–280
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 282–311
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 313–326
-- [Logos and brand marks](#logos-and-brand-marks) · lines 328–372
-- [Categorical colour](#categorical-colour) · lines 374–444
-- [Heat scale](#heat-scale) · lines 446–507
-- [Depth ramps](#depth-ramps) · lines 509–594
-- [A stored colour](#a-stored-colour) · lines 596–653
-- [Shapes and sizes](#shapes-and-sizes) · lines 655–676
-- [Typography](#typography) · lines 678–849
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 712–745
-  - [Written text (notes)](#written-text-notes) · lines 747–849
-- [Density](#density) · lines 851–971
-  - [Rows on this device](#rows-on-this-device) · lines 917–944
-  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 946–971
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 973–1087
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1089–1166
-- [Notices](#notices) · lines 1168–1196
-- [A value over time](#a-value-over-time) · lines 1198–1328
-  - [Several values over time](#several-values-over-time) · lines 1247–1285
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1287–1328
-- [A list as a board](#a-list-as-a-board) · lines 1330–1446
-  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1383–1446
-- [A list as cards](#a-list-as-cards) · lines 1448–1494
-- [Images full screen](#images-full-screen) · lines 1496–1542
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1544–1580
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1582–1652
-- [A few equal things](#a-few-equal-things) · lines 1654–1774
-- [An overview page](#an-overview-page) · lines 1776–1847
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1848–1914
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1916–2053
-- [Picking at random](#picking-at-random) · lines 2055–2086
-- [Filling in what's missing](#filling-in-whats-missing) · lines 2088–2155
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2157–2182
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2184–2280
+- [Palettes](#palettes) · lines 55–164
+- [Glow](#glow) · lines 166–185
+- [Semantic tones](#semantic-tones) · lines 187–215
+- [The three badge styles](#the-three-badge-styles) · lines 217–234
+- [Status marks](#status-marks) · lines 236–281
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 283–312
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 314–327
+- [Logos and brand marks](#logos-and-brand-marks) · lines 329–373
+- [Categorical colour](#categorical-colour) · lines 375–445
+- [Heat scale](#heat-scale) · lines 447–508
+- [Depth ramps](#depth-ramps) · lines 510–595
+- [A stored colour](#a-stored-colour) · lines 597–654
+- [Shapes and sizes](#shapes-and-sizes) · lines 656–677
+- [Typography](#typography) · lines 679–850
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 713–746
+  - [Written text (notes)](#written-text-notes) · lines 748–850
+- [Density](#density) · lines 852–972
+  - [Rows on this device](#rows-on-this-device) · lines 918–945
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 947–972
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 974–1088
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1090–1167
+- [Notices](#notices) · lines 1169–1197
+- [A value over time](#a-value-over-time) · lines 1199–1329
+  - [Several values over time](#several-values-over-time) · lines 1248–1286
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1288–1329
+- [A list as a board](#a-list-as-a-board) · lines 1331–1447
+  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1384–1447
+- [A list as cards](#a-list-as-cards) · lines 1449–1495
+- [Images full screen](#images-full-screen) · lines 1497–1543
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1545–1581
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1583–1653
+- [A few equal things](#a-few-equal-things) · lines 1655–1775
+- [An overview page](#an-overview-page) · lines 1777–1848
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1849–1915
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1917–2054
+- [Picking at random](#picking-at-random) · lines 2056–2087
+- [Filling in what's missing](#filling-in-whats-missing) · lines 2089–2156
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2158–2183
+- [A quick add line](#a-quick-add-line) · lines 2185–2213
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2215–2311
 
 <!-- /index -->
 
@@ -2180,6 +2181,36 @@ both themes and every palette.
 - **A list in place under group headings** heads each group in
   `type-label text-muted-foreground` (an `<h3>` under the section's
   title), with `gap-4` between groups and the list's own `gap-2` inside.
+
+## A quick add line
+
+One line that becomes a record ("pay rent tomorrow at 3pm #home"): the
+package's `QuickAddInput` over `parseQuickAdd` (4.136). Dates, times and
+repeats are typed in words; the app's own choices (a list, a place) are a
+symbol and a few letters, or a chip pressed.
+
+- **What was read is marked in the box** as you type (a wash of `info`
+  under the words), and shown under it as chips: Due (the day and time),
+  Repeats, and one per token typed. A misread is seen where it was typed.
+- **✕ on a read chip gives its words back to the title**, for a word that
+  only looked like a day ("the sun article"). They stay given back while
+  they're in the line.
+- **The app's chips come after the read ones** (`chips`, usually
+  `QuickAddChip`): dashed while they show a default ("List Home ▾", "+
+  Place"), solid once pressed. The app drops its chip for a kind the line
+  typed (`result.tokens`).
+- **No menu opens on a symbol.** A symbol that names nothing stays in the
+  title; a few letters pick the first name that starts with them, then the
+  first that holds them.
+- **Enter adds** (`onSubmit` with the reading). A line with nothing read
+  is a title. Give the box a visible label and, the first times, a `hint`
+  saying what can be typed.
+
+What `parseQuickAdd` reads, and how a day with no year, a time with no
+day and a repeat with no day come out, is in its source's header
+(`src/lib/quick-add.ts`); `options.today` and `timeZone` come from the app's
+own day (`todayIn`). A repeat is a `Recurrence`, read by
+`parseRecurrencePhrase` (`every!` repeats from completion).
 
 ## The sidebar and the phone's bar
 

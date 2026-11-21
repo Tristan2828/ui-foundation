@@ -7,14 +7,14 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.135.1 — The slash menu is never cut off by a card
+## 4.136.1 — The slash menu is never cut off by a card
 
-npm package and `ui-foundation-backend` 4.135.1 (the backend is unchanged
+npm package and `ui-foundation-backend` 4.136.1 (the backend is unchanged
 apart from its version). A fix: nothing for an app to change.
 
 ### How an app adopts it
 
-- Bump both packages to 4.135.1 and run `npx ui-foundation sync`.
+- Bump both packages to 4.136.1 and run `npx ui-foundation sync`.
 
 ### What changed
 
@@ -34,6 +34,42 @@ apart from its version). A fix: nothing for an app to change.
   2 and 3 in the editor and folds and opens each;
   `tests/markdown-fold-render.test.tsx` checks `<Markdown>` gives each
   level its fold button. Folding itself had no level-specific bug.
+
+## 4.136.0 — A quick add line: parseQuickAdd and QuickAddInput
+
+npm package and `ui-foundation-backend` 4.136.0 (the backend is unchanged
+apart from its version). Additive.
+
+### How an app adopts it
+
+- Bump both packages to 4.136.0 and run `npx ui-foundation sync`.
+- Nothing else is needed. To use it, see `design-language.md` "A quick add
+  line".
+
+### What changed
+
+- **`parseQuickAdd(text, options)`** (new, with `QuickAddOptions`,
+  `QuickAddResult`, `QuickAddToken`, `QuickAddTokenRead`, `QuickAddRead`,
+  `QuickAddReadKind` and `QuickAddSpan`): one line read into the title
+  left over, a day, a time, a `Recurrence` and the app's own tokens, each
+  with the span of the line it came from. Days in words (today, tomorrow,
+  weekday names, next <weekday>, in N days or weeks, Mar 14, 14 Mar, 3/14
+  in the locale's order; a day with no year is the next one), times (3pm,
+  3:30 pm, at 15:00, at noon), repeats through `parseRecurrencePhrase`
+  (`every!` from completion), and tokens as a symbol and a few letters of
+  a name. A time with no day is today; a repeat with no day is first due
+  on its first day; a day typed beside a repeat is its start. Spans in
+  `ignore` are never read. Unit tested (`tests/quick-add.test.ts`).
+- **`QuickAddInput`** (new, with `QuickAddInputProps`) and
+  **`QuickAddChip`**: the line with what was read marked in the box as you
+  type and shown as chips (Due, Repeats, one per token); ✕ on a read chip
+  gives its words back to the title; the app passes its own chips; Enter
+  submits the reading. No menu opens on a symbol.
+- Stories `app/QuickAddInput` Default, Lines, GivenBack and Empty are in
+  the axe and token checks in both themes and every palette.
+  `e2e/quick-add-input.spec.ts` checks the marks sit under their words,
+  reading as you type, ✕, Enter, and axe at laptop and phone widths.
+- `design-language.md`: new "A quick add line".
 
 ## 4.135.0 — Home-screen shortcuts in pwa()
 
