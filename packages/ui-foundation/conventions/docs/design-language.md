@@ -3,46 +3,47 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 55–164
-- [Glow](#glow) · lines 166–185
-- [Semantic tones](#semantic-tones) · lines 187–215
-- [The three badge styles](#the-three-badge-styles) · lines 217–234
-- [Status marks](#status-marks) · lines 236–281
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 283–312
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 314–327
-- [Logos and brand marks](#logos-and-brand-marks) · lines 329–373
-- [Categorical colour](#categorical-colour) · lines 375–445
-- [Heat scale](#heat-scale) · lines 447–508
-- [Depth ramps](#depth-ramps) · lines 510–595
-- [A stored colour](#a-stored-colour) · lines 597–654
-- [Shapes and sizes](#shapes-and-sizes) · lines 656–677
-- [Typography](#typography) · lines 679–850
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 713–746
-  - [Written text (notes)](#written-text-notes) · lines 748–850
-- [Density](#density) · lines 852–972
-  - [Rows on this device](#rows-on-this-device) · lines 918–945
-  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 947–972
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 974–1088
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1090–1167
-- [Notices](#notices) · lines 1169–1197
-- [A value over time](#a-value-over-time) · lines 1199–1329
-  - [Several values over time](#several-values-over-time) · lines 1248–1286
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1288–1329
-- [A list as a board](#a-list-as-a-board) · lines 1331–1447
-  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1384–1447
-- [A list as cards](#a-list-as-cards) · lines 1449–1495
-- [Images full screen](#images-full-screen) · lines 1497–1543
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1545–1581
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1583–1653
-- [A few equal things](#a-few-equal-things) · lines 1655–1775
-- [An overview page](#an-overview-page) · lines 1777–1848
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1849–1915
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1917–2054
-- [Picking at random](#picking-at-random) · lines 2056–2087
-- [Filling in what's missing](#filling-in-whats-missing) · lines 2089–2156
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2158–2183
-- [A quick add line](#a-quick-add-line) · lines 2185–2213
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2215–2311
+- [Palettes](#palettes) · lines 56–165
+- [Glow](#glow) · lines 167–186
+- [Semantic tones](#semantic-tones) · lines 188–216
+- [The three badge styles](#the-three-badge-styles) · lines 218–235
+- [Status marks](#status-marks) · lines 237–282
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 284–313
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 315–328
+- [Logos and brand marks](#logos-and-brand-marks) · lines 330–374
+- [Categorical colour](#categorical-colour) · lines 376–446
+- [Heat scale](#heat-scale) · lines 448–509
+- [Depth ramps](#depth-ramps) · lines 511–596
+- [A stored colour](#a-stored-colour) · lines 598–655
+- [Shapes and sizes](#shapes-and-sizes) · lines 657–678
+- [Typography](#typography) · lines 680–851
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 714–747
+  - [Written text (notes)](#written-text-notes) · lines 749–851
+- [Density](#density) · lines 853–973
+  - [Rows on this device](#rows-on-this-device) · lines 919–946
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 948–973
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 975–1089
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1091–1168
+- [Notices](#notices) · lines 1170–1198
+- [A value over time](#a-value-over-time) · lines 1200–1330
+  - [Several values over time](#several-values-over-time) · lines 1249–1287
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1289–1330
+- [A list as a board](#a-list-as-a-board) · lines 1332–1448
+  - [Order, groups and the header (4.131)](#order-groups-and-the-header-4131) · lines 1385–1448
+- [A list as cards](#a-list-as-cards) · lines 1450–1496
+- [Images full screen](#images-full-screen) · lines 1498–1544
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1546–1582
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1584–1654
+- [A few equal things](#a-few-equal-things) · lines 1656–1776
+- [An overview page](#an-overview-page) · lines 1778–1849
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1850–1916
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1918–2055
+- [Picking at random](#picking-at-random) · lines 2057–2088
+- [Filling in what's missing](#filling-in-whats-missing) · lines 2090–2157
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2159–2184
+- [A quick add line](#a-quick-add-line) · lines 2186–2214
+- [A month calendar](#a-month-calendar) · lines 2216–2240
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2242–2338
 
 <!-- /index -->
 
@@ -2211,6 +2212,32 @@ day and a repeat with no day come out, is in its source's header
 (`src/lib/quick-add.ts`); `options.today` and `timeZone` come from the app's
 own day (`todayIn`). A repeat is a `Recurrence`, read by
 `parseRecurrencePhrase` (`every!` repeats from completion).
+
+## A month calendar
+
+A month of days holding the app's dated things (events, visits): the
+package's `MonthCalendar` (4.137). Not a date picker, which is
+`Calendar`; not the place for to-dos, which belong in a list by day.
+
+- **On a laptop the days hold titles** (J1): two to a day, by time, each
+  after a dot in its tone, and the rest folded to "+N more". **On a phone
+  they hold dots** (K1), one per item in its tone, up to four.
+- **The picked day's list is under the month**, every item with its time
+  ("All day" without one), its `detail` and a link (`to`). The app's own
+  actions for that day sit beside its heading (`dayActions`, an Add
+  button); what picking a day does beyond that is the app's (`onSelect`).
+- **Tones** are the semantic ones plus `neutral` (design-language
+  "Semantic tones"): pick one per kind of thing (an event `info`, a visit
+  `success`), not per item, and say in the list's `detail` what it is.
+- **Months, Today and the keys**: the arrows beside the month's name and
+  Today; in the grid one tab stop, the arrows a day or a week, Home and End
+  the week's ends, Page Up and Page Down a month, past the edge into the
+  next. Weeks start on Monday, `weekStart="SU"` for Sunday.
+- **Four states**: `isLoading` draws the month's frame with placeholders,
+  `error` puts ErrorState (with `onRetry`) where the days were, a month
+  with nothing says so over the days (`emptyText`), and success.
+- `today` comes from the app's own day (`todayIn`); every day is a plain
+  `'YYYY-MM-DD'`, so no zone moves one.
 
 ## The sidebar and the phone's bar
 

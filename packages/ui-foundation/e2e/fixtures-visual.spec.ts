@@ -265,6 +265,10 @@ const COMPOSITE_STORIES = [
   { id: 'app-quickaddinput--lines', mustShow: 'Every Mon and Thu' },
   { id: 'app-quickaddinput--given-back', mustShow: 'Sun, Nov 22' },
   { id: 'app-quickaddinput--empty', mustShow: 'a few letters are enough' },
+  // A month of days with the app's items (F2): titles, a folded count, the picked day's list; weeks from Sunday; loading, empty, error.
+  { id: 'app-monthcalendar--default', mustShow: 'Holiday dinner' },
+  { id: 'app-monthcalendar--weeks-from-sunday', mustShow: 'Book club' },
+  { id: 'app-monthcalendar--states', mustShow: 'Nothing this month' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
   { id: 'app-imagefield--default', mustShow: 'Edit Plant' },
