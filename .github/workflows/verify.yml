@@ -1,39 +1,162 @@
 name: verify
 
-on:
-  push:
-    branches: [main]
-  pull_request:
+# `npm run verify` and the backend's gate, on every PR, and on every push to
+# main as the first part of release.yml (which calls this, so main isn't
+# verified twice, and publishes only once it passes).
+#
+# `npm run verify` runs in parts at once: `checks` (the package's
+# verify:fast, then the template's whole verify), the package's fixtures
+# harness in 4 shards, and its perf project alone on its own runner. The
+# `verify` job, the required check, passes only when every part did.
+# harness-perf's first check (.github/scripts/check-ci-split.mjs) fails if
+# the parts stop adding up to `npm run verify`.
+#
+# Every job starts, and its first step (.github/scripts/docs-only.sh) skips
+# the rest when only docs changed (docs/, the root's .claude/ and *.md), so
+# the required checks still report, as success. A release always runs
+# everything (`full`).
 
-# Reads the repo and nothing else; release.yml is the only workflow that
-# writes or publishes.
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      full:
+        description: Run everything even when only docs changed (release.yml sets it for a release).
+        type: boolean
+        default: false
+
+# Reads the repo and the PR's file list, nothing else; release.yml is the
+# only workflow that writes or publishes.
 permissions:
   contents: read
+  pull-requests: read
+
+# A newer push to a PR cancels its older run. Never on main: there each run
+# is its own group (github.workflow is the caller's name, release, there).
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The harness's projects, in two runs (check-ci-split.mjs checks they hold
+  # every test). perf depends on chromium and phone, so a bare --shard would
+  # run both in full on every shard; and it is a CPU-throttled typing
+  # budget, so it runs alone on its own runner.
+  HARNESS_SPLIT: --project=chromium --project=phone
+  HARNESS_PERF: --project=perf --no-deps
 
 jobs:
-  verify:
-    # The package's gate (codegen, types, lint, deps, build, unit tests,
-    # the fixtures harness's accessibility and token checks), then the template's (the
-    # same checks an app runs, plus every Playwright screen test) against
-    # the package as built.
+  checks:
+    # The package's fast gate (codegen, types, lint, deps, build, unit
+    # tests), then the template's whole verify (the same checks an app runs,
+    # plus every Playwright screen test) against the package as built.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run verify
+      - id: changes
+        name: Docs only?
+        run: bash .github/scripts/docs-only.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FULL: ${{ inputs.full }}
+      - if: steps.changes.outputs.run == 'true'
+        uses: ./.github/actions/setup-frontend
+      - if: steps.changes.outputs.run == 'true'
+        run: npm run verify:fast -w @tristan2828/ui-foundation
+      - if: steps.changes.outputs.run == 'true'
+        run: npm run verify -w template
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
-          name: playwright-test-results
+          name: playwright-results-checks
           path: |
             template/test-results/
             packages/ui-foundation/test-results/
           retention-days: 7
+
+  harness:
+    # The fixtures harness on every primitive (axe in both themes, every
+    # colour a token, icon contrast), the rich-text editor's round trip, and
+    # the rest of the package's e2e specs: a quarter of the tests each.
+    name: harness ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # Only the count matters: the shard is the job's index.
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - id: changes
+        name: Docs only?
+        run: bash .github/scripts/docs-only.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FULL: ${{ inputs.full }}
+      - if: steps.changes.outputs.run == 'true'
+        uses: ./.github/actions/setup-frontend
+      - if: steps.changes.outputs.run == 'true'
+        env:
+          INDEX: ${{ strategy.job-index }}
+          TOTAL: ${{ strategy.job-total }}
+        # The shard builds the harness itself (the config's webServer).
+        run: npm run verify:harness -w @tristan2828/ui-foundation -- $HARNESS_SPLIT --shard=$((INDEX + 1))/$TOTAL
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: playwright-results-harness-${{ matrix.shard }}
+          path: packages/ui-foundation/test-results/
+          retention-days: 7
+
+  harness-perf:
+    # CI's own checks (the docs-only detector's cases; the parts still add
+    # up to npm run verify), then the harness's perf project alone.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - id: changes
+        name: Docs only?
+        run: bash .github/scripts/docs-only.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FULL: ${{ inputs.full }}
+      - if: steps.changes.outputs.run == 'true'
+        uses: ./.github/actions/setup-frontend
+      - if: steps.changes.outputs.run == 'true'
+        name: CI runs every part of npm run verify
+        run: |
+          bash .github/scripts/docs-only.test.sh
+          node .github/scripts/check-ci-split.mjs
+      - if: steps.changes.outputs.run == 'true'
+        run: npm run verify:harness -w @tristan2828/ui-foundation -- $HARNESS_PERF
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: playwright-results-harness-perf
+          path: packages/ui-foundation/test-results/
+          retention-days: 7
+
+  verify:
+    # The required check. Passes only when every part passed: a part that
+    # failed, was skipped or was cancelled turns it red. (A part that found
+    # only docs changed passed, with its later steps skipped.)
+    needs: [checks, harness, harness-perf]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every part passed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if ! echo "$NEEDS" | jq -e '[.[].result] | length > 0 and all(. == "success")' > /dev/null; then
+            echo "::error::Not every part of verify passed."
+            exit 1
+          fi
 
   verify-backend:
     # The backend package's gate (packages/backend-foundation: mypy, pytest),
@@ -45,6 +168,7 @@ jobs:
     # template/scripts/check-backend-postgres.sh, run locally for backend
     # changes (it needs Docker).
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         # Same image and credentials as template/docker-compose.yml.
@@ -65,7 +189,15 @@ jobs:
         working-directory: template/backend
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - id: changes
+        name: Docs only?
+        working-directory: .
+        run: bash .github/scripts/docs-only.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FULL: ${{ inputs.full }}
+      - if: steps.changes.outputs.run == 'true'
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
           cache: pip
@@ -75,10 +207,14 @@ jobs:
       # Both editable in one pip call: the template depends on
       # ui-foundation-backend unpinned, and only this way does it resolve to
       # this commit's packages/backend-foundation rather than PyPI.
-      - run: pip install -e ../../packages/backend-foundation -e ".[dev]"
-      - run: bash ../../packages/backend-foundation/scripts/verify.sh
-      - run: bash scripts/verify.sh
-      - name: Migrations and COMMENT ON check against Postgres
+      - if: steps.changes.outputs.run == 'true'
+        run: pip install -e ../../packages/backend-foundation -e ".[dev]"
+      - if: steps.changes.outputs.run == 'true'
+        run: bash ../../packages/backend-foundation/scripts/verify.sh
+      - if: steps.changes.outputs.run == 'true'
+        run: bash scripts/verify.sh
+      - if: steps.changes.outputs.run == 'true'
+        name: Migrations and COMMENT ON check against Postgres
         env:
           DATABASE_URL: postgresql+asyncpg://ui_foundation:ui_foundation@localhost:5432/ui_foundation
           DATABASE_SSL: "false"

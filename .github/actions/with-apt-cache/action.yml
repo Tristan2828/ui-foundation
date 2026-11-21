@@ -1,0 +1,61 @@
+name: with-apt-cache
+description: >-
+  Runs a command that installs Ubuntu packages (Playwright's
+  `install --with-deps`), with the .deb files apt downloads kept in the
+  Actions cache. On 2026-11-18, 31 of 171 browser installs took over 3
+  minutes, one 10.5: fetching 32 MB of fonts and mesa from the Ubuntu mirror
+  at 56 kB/s, not the browser. With the files in apt's own cache folder, apt
+  checks each against its index and downloads only what is missing or
+  changed, so a stale cache is still safe.
+
+inputs:
+  run:
+    description: The command (it runs in bash, from the repo root).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - id: key
+      shell: bash
+      # One cache per runner image: a new image brings new packages.
+      run: echo "key=playwright-apt-${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+    - id: restore
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/playwright-apt
+        key: ${{ steps.key.outputs.key }}
+        restore-keys: playwright-apt-
+    - name: Put the cached .deb files where apt looks
+      shell: bash
+      run: |
+        # apt's folder is root's, so the cache restores to a user folder.
+        mkdir -p ~/.cache/playwright-apt
+        shopt -s nullglob
+        debs=(~/.cache/playwright-apt/*.deb)
+        if [ "${#debs[@]}" -gt 0 ]; then
+          sudo cp "${debs[@]}" /var/cache/apt/archives/
+        fi
+        echo "${#debs[@]} cached .deb files (${{ steps.restore.outputs.cache-matched-key || 'no cache' }})."
+    - shell: bash
+      run: ${{ inputs.run }}
+    - name: Keep the .deb files apt used
+      if: steps.restore.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        # Only the versions now installed, so files from older images drop out.
+        rm -f ~/.cache/playwright-apt/*.deb
+        shopt -s nullglob
+        for deb in /var/cache/apt/archives/*.deb; do
+          package=$(dpkg-deb -f "$deb" Package)
+          version=$(dpkg-deb -f "$deb" Version)
+          if [ "$(dpkg-query -W -f='${Version}' "$package" 2>/dev/null)" = "$version" ]; then
+            cp "$deb" ~/.cache/playwright-apt/
+          fi
+        done
+        ls -l ~/.cache/playwright-apt
+    - if: steps.restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/playwright-apt
+        key: ${{ steps.key.outputs.key }}
