@@ -86,7 +86,7 @@ test('the columns share a desktop’s width and scroll sideways on a phone', asy
   expect(columnWidth).toBeLessThan(boardWidth)
 })
 
-// 4.131: order, groups and the header's slots (app-board--ordered, --grouped, --slots).
+// Order, groups and the header's slots (app-board--ordered, --grouped, --slots).
 const lastMove = (page: Page) => page.getByTestId('last-move')
 const cardNames = (page: Page, name: string) => column(page, name).locator('[data-slot=board-card] a')
 const half = async (page: Page, name: string, where: 'top' | 'bottom') => {

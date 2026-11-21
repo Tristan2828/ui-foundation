@@ -28,7 +28,7 @@
 
 @custom-variant density-compact (&:where([data-density="compact"], [data-density="compact"] *));
 
-/* Page width (4.133): data-width="wide" on <html> (an app's own setting,
+/* Page width: data-width="wide" on <html> (an app's own setting,
    kept per browser as Text Size's data-density is) lifts a record page's
    reading cap, so its column fills a wide screen; the facts rail stays
    300px. A record in a dialog keeps the dialog's size. `page-wide:max-w-none`. */

@@ -89,7 +89,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
   { id: 'app-board--empty-columns', mustShow: 'No planned projects' },
   { id: 'app-board--states', mustShow: 'No projects yet' },
-  // 4.131: an ordered board with the ⋯ menu, a grouped column (one group folded), and the header's slots.
+  // An ordered board with the ⋯ menu, a grouped column (one group folded), and the header's slots.
   { id: 'app-board--ordered', mustShow: 'Show 2 More' },
   { id: 'app-board--grouped', mustShow: 'Someday 4' },
   { id: 'app-board--slots', mustShow: '1 waiting on parts' },
@@ -244,12 +244,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
   // With no times and weeks from Sunday: dates only, WKST=SU's rules.
   { id: 'app-recurrencefield--dates-only', mustShow: 'Sun, Nov 15' },
-  // A quick add's line (F1): reads marked in the box and shown as chips, the app's chips after.
+  // A quick add's line: reads marked in the box and shown as chips, the app's chips after.
   { id: 'app-quickaddinput--default', mustShow: 'Every other week on Mon after done' },
   { id: 'app-quickaddinput--lines', mustShow: 'Every Mon and Thu' },
   { id: 'app-quickaddinput--given-back', mustShow: 'Sun, Nov 22' },
   { id: 'app-quickaddinput--empty', mustShow: 'a few letters are enough' },
-  // A month of days with the app's items (F2): titles, a folded count, the picked day's list; weeks from Sunday; loading, empty, error.
+  // A month of days with the app's items: titles, a folded count, the picked day's list; weeks from Sunday; loading, empty, error.
   { id: 'app-monthcalendar--default', mustShow: 'Holiday dinner' },
   { id: 'app-monthcalendar--weeks-from-sunday', mustShow: 'Book club' },
   { id: 'app-monthcalendar--states', mustShow: 'Nothing this month' },

@@ -78,7 +78,7 @@ describe('Board', () => {
 })
 
 describe('Board with none of the 4.131 props', () => {
-  // The markup as 4.130 rendered it, but for React's generated ids.
+  // The markup of a board given none of the order, group or header props, but for React's generated ids.
   const markup = (p: BoardProps<Item, Item['stage']>) => render(p).replace(/_R_[A-Za-z0-9]+_/g, '«id»')
   it('renders the same markup as 4.130 did', () => {
     expect(markup(props())).toMatchSnapshot()

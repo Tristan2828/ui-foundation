@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// EntityView's page width (4.133): data-width="wide" on an ancestor lifts
+// EntityView's page width: data-width="wide" on an ancestor lifts
 // the record's reading cap, so on a TV the column fills the page and the
 // facts rail stays 300px; a dialog keeps its cap; a phone is unchanged.
 // Axe and the token check in both themes are e2e/fixtures-visual.spec.ts's.
