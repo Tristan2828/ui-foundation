@@ -260,6 +260,11 @@ const COMPOSITE_STORIES = [
   { id: 'app-recurrencefield--list-cells', mustShow: 'Every last day of the month at 9:00 AM' },
   // With no times and weeks from Sunday (4.119): dates only, WKST=SU's rules.
   { id: 'app-recurrencefield--dates-only', mustShow: 'Sun, Nov 15' },
+  // A quick add's line (F1): reads marked in the box and shown as chips, the app's chips after.
+  { id: 'app-quickaddinput--default', mustShow: 'Every other week on Mon after done' },
+  { id: 'app-quickaddinput--lines', mustShow: 'Every Mon and Thu' },
+  { id: 'app-quickaddinput--given-back', mustShow: 'Sun, Nov 22' },
+  { id: 'app-quickaddinput--empty', mustShow: 'a few letters are enough' },
   // One image on a record: every look of ImageField, and on a form.
   { id: 'app-imagefield--all-looks', mustShow: 'Add a photo of the plant.' },
   { id: 'app-imagefield--default', mustShow: 'Edit Plant' },
