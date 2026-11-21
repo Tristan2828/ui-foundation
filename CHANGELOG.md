@@ -35,6 +35,13 @@ apart from its version). A fix: nothing for an app to change.
   say the same without them, and `design-language.md`'s heading "Order,
   groups and the header" loses its "(4.131)" (`sync` writes it). One of
   the package's own specs builds axe from `e2e/axe.ts`.
+- **`minimatch` 11 everywhere** (GHSA-g3hv-75wg-m249, a crafted glob
+  pattern could spend unbounded CPU and memory). `typescript-eslint` moves
+  to `^8.73.0` in the package and the template, and the template's
+  `overrides` send `minimatch@>=7 <11.0.1` to `^11.0.1` for shadcn's
+  `ts-morph`. Only tools run on an app's own patterns used it, so this is
+  optional for an existing app: to take it, set `typescript-eslint` to
+  `^8.73.0` and copy that override into the app's `package.json`.
 
 ## 4.137.0 — MonthCalendar: a month of days with the app's items
 
