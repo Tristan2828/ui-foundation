@@ -373,7 +373,7 @@ test.describe('widget view', () => {
     await expect(inStock).not.toBeChecked()
     await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible()
     await expect.poll(() => bodies).toEqual([{ inStock: false }])
-    expect((await serverWidget(page, 1)).inStock).toBe(false)
+    await expect.poll(async () => (await serverWidget(page, 1)).inStock).toBe(false)
 
     await page.getByRole('main').getByRole('link', { name: 'Widgets', exact: true }).click()
     await expect(page.getByRole('switch', { name: 'In Stock: Wireless Mouse' })).not.toBeChecked()

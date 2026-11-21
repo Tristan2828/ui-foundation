@@ -7,6 +7,30 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.130.3 — The backend's dependencies take patch releases
+
+npm package and `ui-foundation-backend` 4.130.3 (the npm package is
+unchanged apart from its version). No API changes.
+
+### How an app adopts it
+
+- Bump both packages to 4.130.3. Nothing else changes.
+
+### What changed
+
+- **Backend dependency ranges:** `ui-foundation-backend`'s runtime
+  dependencies (`fastapi`, `pydantic`, `python-dotenv`, `email-validator`,
+  `python-dateutil`) and the `push` extra's `cryptography` now take patch
+  releases from the version CI tested (`fastapi>=0.163.0,<0.164`, and so
+  on), so an app can take a dependency's bug or security fix with no
+  foundation release. A new minor still waits for one. `sqlmodel` stays
+  `==`: its releases are `0.0.N`, so a patch range would be the pin itself.
+  An app's own `==` pins still resolve, as long as they fall in these ranges.
+- **Template e2e:** "quick action: In stock flips on the page and saves"
+  waits for the mock store with `expect.poll`, which fixes an occasional
+  failure under load.
+- `docs/BLOCKERS.md` now lists only the Print Notes phone check.
+
 ## 4.130.2 — The backend's `touch()` never repeats a version
 
 npm package and `ui-foundation-backend` 4.130.2 (the npm package is
