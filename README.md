@@ -1,7 +1,6 @@
 # UI Foundation
 
 [![npm](https://img.shields.io/npm/v/@tristan2828/ui-foundation)](https://www.npmjs.com/package/@tristan2828/ui-foundation)
-[![verify](https://github.com/Tristan2828/ui-foundation/actions/workflows/verify.yml/badge.svg)](https://github.com/Tristan2828/ui-foundation/actions/workflows/verify.yml)
 [![release](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml/badge.svg)](https://github.com/Tristan2828/ui-foundation/actions/workflows/release.yml)
 
 Shared code for small, contract-first, database-backed web apps (tables of
@@ -73,8 +72,9 @@ imports it for Claude Code).
 
 Invite-only for now. Every change goes through a PR: `main` requires one,
 with its `verify`, `verify-backend` and `install-test` checks green. A
-merge that touches the package or the template publishes a release to npm
-on its own (`docs/ARCHITECTURE.md` "Releasing").
+merge that bumps the version publishes a release to npm on its own, once
+`main`'s own verify passes (`docs/ARCHITECTURE.md` "Releasing"). The
+`release` badge above is that verify and the release.
 
 ## License
 

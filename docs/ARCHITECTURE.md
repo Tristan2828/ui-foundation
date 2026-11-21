@@ -438,12 +438,59 @@ nothing.
 | Gate | Runs | Covers |
 |---|---|---|
 | `npm run verify:fast` (root) | every change | the package: codegen drift, `tsc -b`, ESLint, allowlist, build, vitest. Then the template: codegen drift, `sync --check`, `check-contract`, `check-deps`, `tsc -b`, ESLint, vitest |
-| `npm run verify` (root) | before any PR; CI (`verify`) | + the package's fixtures checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language fixtures clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
-| `npm run verify:backend` | backend changes; CI (`verify-backend`) | `packages/backend-foundation`'s mypy strict and pytest (SQLite, against the package alone), then the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
+| `npm run verify` (root) | before any PR; CI (`verify`, in parts: below) and on every push to `main` before a release | + the package's fixtures checks on every primitive (axe in both themes; every colour it paints resolves to a token; every icon in the design-language fixtures clears 3:1 against what's behind it, which axe doesn't measure), the rich-text editor's Markdown round trip on the real editor, and the template's Playwright suite (every screen's states, auth, `a11y.spec.ts` in light and dark, a phone-width project) |
+| `npm run verify:backend` | backend changes; CI (`verify-backend`), on PRs and on `main` | `packages/backend-foundation`'s mypy strict and pytest (SQLite, against the package alone), then the template backend's mypy strict, pytest (SQLite; the MCP/OAuth flow in `tests/test_mcp.py`), spec conformance. In CI the job then migrates a `postgres:18` service to head and runs `check_db_comments.py` (every table and column has a `COMMENT ON`) |
 | `template/scripts/check-backend-postgres.sh` | backend changes (needs Docker) | all of the above + `check_db_comments.py` + a live server on real Postgres (its own throwaway compose project per checkout, on a free port, deleted after the run, so worktrees and dev databases don't collide) |
 | `template/scripts/check-cloud-postgres.sh` | DB connection changes | TLS against a hosted Postgres (`CLOUD_DATABASE_URL`) |
 | `scripts/consume-test.sh --install-only` | **automatic**: the `package` workflow, on every PR (a required check on `main`) | `npm pack`, then `create-app.sh` builds an app outside the repo from the tarball (installed, not linked), and that app's full `verify` and a mock-free `build:real` must pass |
 | `scripts/consume-test.sh <Entity>`, the **Fresh UI Build** | on demand, when the playbook or a composite changes in a way that could confuse a fresh agent | a brand-new agent with no memory of this repo builds an entity in such an app from its plan; its `verify` passes |
+
+**How CI runs them** (`.github/workflows/verify.yml` and `package.yml`;
+since 2026-11-20, when a code PR's checks took a median 33 minutes):
+
+- **Required on `main`:** `verify`, `verify-backend` and `install-test`.
+  Branches needn't be up to date, which is why `main` is verified again
+  before a release ("Releasing").
+- **`verify` runs `npm run verify` in parts at once.** `checks` runs the
+  package's `verify:fast`, then the template's whole `verify`.
+  `harness 1` to `harness 4` each run a quarter of the fixtures harness's
+  `chromium` and `phone` projects (`--shard`), building the harness
+  themselves. `harness-perf` runs the typing budget (`perf`) alone on its
+  own runner: it is CPU-throttled, and other specs on the same CPU would be
+  measured with it. A bare `--shard` doesn't split this suite, since `perf`
+  depends on the other two projects and every shard would run them in
+  full. The `verify` job, the required check, passes only when every
+  part's result is `success`: a part that failed, was skipped or was
+  cancelled turns it red.
+- **The parts must add up to `npm run verify`.**
+  `.github/scripts/check-ci-split.mjs` (in `harness-perf`) fails if the
+  root's or the package's `verify` script isn't the one the parts were cut
+  from, or if a harness project is in neither the shards
+  (`HARNESS_SPLIT`) nor the perf run (`HARNESS_PERF`). A step added to
+  either `verify` script, or a new harness project, needs the matching
+  change in `verify.yml`.
+- **Docs-only changes skip.** Every required job starts, and its first
+  step, `.github/scripts/docs-only.sh`, reads the change's files: a PR's
+  from the pulls API (a renamed file counts on both names), a push's from
+  `git diff` against the push's `before`. When every path is under
+  `docs/`, under the root's `.claude/`, or a root `*.md`, the job's later
+  steps are skipped and it passes. Anything else runs everything: another
+  path, an empty list, a list that may be short (the API lists at most
+  3,000 files), an event it doesn't know, a release. A list it can't read
+  fails the job. Markdown anywhere else is shipped, synced or a script's
+  input (`scripts/fixtures/entity-plans/`), so it runs everything.
+  `.github/scripts/docs-only.test.sh` holds its cases. Why not
+  `paths-ignore`: a required check that never starts stays pending
+  forever. Why not one `changes` job the others depend on: a job skipped
+  because its dependency failed reports success.
+- **A newer push to a PR cancels its older runs** of `verify` and
+  `package`. Never on `main`.
+- **Playwright's system packages come from the Actions cache**
+  (`.github/actions/with-apt-cache`, in every `verify` part and around
+  `install-test`'s `consume-test.sh`). `install --with-deps` downloads
+  fonts and mesa from the Ubuntu mirror, which took over 3 minutes in 31
+  of 171 installs in the week before, once 10.5. A stale cache is safe:
+  apt checks each file against its index and fetches what's missing.
 
 Rules learned the hard way (each cost a phase to find):
 
@@ -865,11 +912,12 @@ by measurement.
 ## Releasing
 
 Releases are cut and published automatically; no step needs a person.
-`.github/workflows/release.yml` runs on every push to `main` that changes
-`packages/ui-foundation/`, `packages/backend-foundation/`, `template/` or
-`scripts/create-app.sh`, and **releases only when the version in
+`.github/workflows/release.yml` runs on every push to `main`. It verifies
+the pushed tree, and **releases only when the version in
 `packages/ui-foundation/package.json` is past the latest `v*` tag** (#231,
-since 4.34). A PR that finishes a feature, or a fix an app needs now,
+since 4.34) and something under `packages/ui-foundation/`,
+`packages/backend-foundation/`, `template/` or `scripts/create-app.sh`
+changed since that tag. A PR that finishes a feature, or a fix an app needs now,
 bumps it (and `packages/backend-foundation/pyproject.toml` and its
 README's pin to match): a patch, a minor or a major. Its merge releases
 everything merged since the last tag as that one version, under one
@@ -883,16 +931,25 @@ it releases `main` as it is, for a forgotten bump: at the bumped version,
 or the next patch after the latest tag. It:
 
 1. decides the version as above. Nothing is committed back.
-2. builds and packs the npm package (`build` job), and builds the pip
+2. **verifies `main`** (its `verify` job calls `verify.yml`): every part
+   of `npm run verify` and the backend's gate, on the merged tree. Nothing
+   builds or publishes until it passes. Every push runs it, released or
+   not, so a red `main` is seen; a docs-only push skips it as a PR would,
+   but a release always runs all of it (`full`). Why (2026-11-20): until
+   then the release trusted the PR's run and published about 9 minutes
+   after the merge, and since branches needn't be up to date, two PRs
+   green on their own could be published merged before anything had
+   tested them together. It adds about 10 minutes before a release.
+3. builds and packs the npm package (`build` job), and builds the pip
    package's sdist and wheel with that version written in (`build-py`),
-3. **publishes** `@tristan2828/ui-foundation@<version>` to npm through
+4. **publishes** `@tristan2828/ui-foundation@<version>` to npm through
    trusted publishing, with provenance (`publish` job; OIDC, no stored
    token), and `ui-foundation-backend==<version>` to PyPI the same way
    (`publish-py`, `pypa/gh-action-pypi-publish` pinned to a SHA),
-4. tags the commit `v<version>` and creates a GitHub release, once both
+5. tags the commit `v<version>` and creates a GitHub release, once both
    are published. The template at that tag and the packages at that
    version always belong together.
-5. runs `release-smoke`: an app created from the live release, with its
+6. runs `release-smoke`: an app created from the live release, with its
    full `verify` and its backend's (`ui-foundation-backend` from PyPI),
    the one check of exactly what apps get. It writes the
    result at the top of the release notes. A failure also fails the run,
@@ -932,11 +989,19 @@ This takes one CI run and one pass at the conflicts, instead of one per
 PR. A single PR that's ready on its own still bumps and merges by itself.
 
 **What guards a release** (decided 2026-09-30; until then every version
-waited for the developer's passkey approval on npm): the PR gate. Branch
-protection on `main` requires a pull request and the `verify`,
-`verify-backend` and `install-test` checks, with no reviewer, so every
-published version has passed the install test. Beyond that, the workflow
-limits what could publish a bad version:
+waited for the developer's passkey approval on npm): the PR gate, then
+`main`'s own verify. Branch protection on `main` requires a pull request
+and the `verify`, `verify-backend` and `install-test` checks, with no
+reviewer and without requiring the branch to be up to date, so every
+published version's PR passed the install test, and the merged tree
+passed `verify` and `verify-backend` before publishing (`install-test` isn't
+run again on `main`; `release-smoke` checks the live release after). Releases
+run one at a time (`concurrency: release`). A push that lands while one
+runs waits, and GitHub keeps only the newest waiting run, so a push can go
+unverified on `main` on its own. No release is lost: `decide` compares
+the version with the latest tag, so the newest run releases everything
+merged since it. Beyond that, the workflow limits what could publish a bad
+version:
 
 - Only the `publish` and `publish-py` jobs can publish, and neither runs
   code from the repo or its dependency trees: no checkout, no `npm ci` or
@@ -977,7 +1042,9 @@ publisher (repository `Tristan2828/ui-foundation`, workflow `release.yml`,
 environment any). The first `publish-py` run turns it into the project's
 trusted publisher. The token names the workflow file it ran in, so
 `publish-py` must stay a job of `release.yml` itself, never moved into a
-reusable workflow it calls.
+reusable workflow it calls. (`release.yml` calls `verify.yml` the other way
+round: the verify is the reusable part, and both publishing jobs stay in
+`release.yml`.)
 
 **npm setup** (done 2026-09-28): the account `tristan2828` has passkey 2FA.
 3.0.0 was published by hand, because trusted publishing can only be
