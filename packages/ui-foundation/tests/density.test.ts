@@ -16,8 +16,8 @@ function tokens(density: string) {
 }
 
 const px = (value: string | undefined) => {
-  expect(value, 'a literal in rem').toMatch(/^[\d.]+rem$/)
-  return parseFloat(value!) * 16
+  expect(value, 'a literal').toMatch(/^[\d.]+(rem|px)$/)
+  return parseFloat(value!) * (value!.endsWith('rem') ? 16 : 1)
 }
 
 const large = tokens('large')

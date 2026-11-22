@@ -66,6 +66,29 @@ for (const density of ['large', 'extra-large']) {
   }
 }
 
+// The rail is a fixed width; at 300px the extra-large rows would be 3px too
+// narrow for a label beside its value, so only that density widens it.
+for (const [density, railWidth] of [['default', 300], ['large', 300], ['extra-large', 336]] as const) {
+  test(`the facts rail keeps each label beside its value (${density})`, async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.goto(story('app-entityview--facts-rail', density))
+    const rail = page.locator('[data-slot=entity-view-facts-rail]')
+    await expect(rail).toBeVisible()
+    expect((await rail.boundingBox())!.width).toBeCloseTo(railWidth, 0)
+    const rows = await rail.locator('dl > div').evaluateAll((all) =>
+      all.map((row) => {
+        const [label, value] = [row.querySelector('dt')!, row.querySelector('dd')!].map((el) => el.getBoundingClientRect())
+        return { beside: value!.left >= label!.right, fits: value!.right <= row.closest('[data-slot=card]')!.getBoundingClientRect().right }
+      }),
+    )
+    expect(rows.length).toBeGreaterThan(3)
+    expect(rows.every((row) => row.beside && row.fits)).toBe(true)
+    // The tab bar stops short of the rail, as it does at the default.
+    const bar = (await page.getByRole('tablist').boundingBox())!
+    expect(bar.x + bar.width).toBeLessThanOrEqual((await rail.boundingBox())!.x)
+  })
+}
+
 test('popups follow extra-large: a dialog on <body> takes its text and its control height', async ({ page }) => {
   await page.goto(story('app-formdialog--default', 'extra-large'))
   const dialog = page.getByRole('dialog')

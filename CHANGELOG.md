@@ -27,8 +27,9 @@ own Text Size setting adds the value to it. CSS of the app's own that names
 
 ### What to know
 
-- Containers and breakpoints keep their widths, as at `large`. A record's
-  facts rail stays 300px, where each label now goes above its value.
+- Containers and breakpoints keep their widths, as at `large`. The one
+  exception is a record's facts rail, 336px instead of 300px (the new
+  `--facts-rail-width` token), so a label still sits beside its value.
 - A table with many columns scrolls sideways in its box sooner than at
   `large`.
 
