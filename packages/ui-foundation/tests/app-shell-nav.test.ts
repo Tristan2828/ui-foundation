@@ -9,6 +9,8 @@ import {
   activeNavTo,
   bottomBarCount,
   bottomBarCurrent,
+  bottomBarHasSearch,
+  bottomBarItems,
   bottomBarTiles,
   childItems,
   childRuns,
@@ -23,6 +25,7 @@ import {
   navTargets,
   navTrail,
   trailBackTarget,
+  type BottomBarItem,
   type NavEntry,
   type NavItem,
 } from '../src/components/app/app-shell-nav'
@@ -193,6 +196,58 @@ describe('bottomBarCurrent', () => {
   it('is none off the nav, or for a section the nav lacks', () => {
     expect(bottomBarCurrent(bar, nav, undefined)).toBeUndefined()
     expect(bottomBarCurrent([{ group: 'Missing', icon: ListIcon }], nav, '/tasks')).toBeUndefined()
+  })
+})
+
+// Search on the phone's bar: drawn only with the shell's search, never
+// current, never counted, never a sheet.
+describe('Search on the bottom bar', () => {
+  const search: BottomBarItem = { search: true, icon: ListIcon }
+  const homeItem: BottomBarItem = { to: '/', label: 'Home', icon: HomeIcon }
+  const tasksItem: BottomBarItem = { group: 'Tasks', icon: ListIcon }
+  const nav: NavEntry[] = [{ ...home, count: 3 }, { label: 'Tasks', items: [{ ...tasks, count: 5 }] }]
+
+  it('is drawn in its place with search, and left out without', () => {
+    expect(bottomBarItems([homeItem, search, tasksItem], true)).toEqual([homeItem, search, tasksItem])
+    expect(bottomBarItems([homeItem, search, tasksItem], false)).toEqual([homeItem, tasksItem])
+    expect(bottomBarItems([search], false)).toEqual([])
+    expect(bottomBarItems(undefined, true)).toEqual([])
+  })
+
+  it('leaves a bar with no Search as it is: five at most, with search or without', () => {
+    const six: BottomBarItem[] = ['/a', '/b', '/c', '/d', '/e', '/f'].map((to) => ({ to, label: to, icon: ListIcon }))
+    expect(bottomBarItems(six, true)).toEqual(six.slice(0, 5))
+    expect(bottomBarItems(six, false)).toEqual(six.slice(0, 5))
+    expect(bottomBarItems([search, ...six], true)).toEqual([search, ...six.slice(0, 4)])
+    expect(bottomBarItems([search, ...six], false)).toEqual(six.slice(0, 5))
+  })
+
+  it('counts as on the bar only where it is drawn: not past the fifth, and not without search', () => {
+    const five: BottomBarItem[] = ['/a', '/b', '/c', '/d', '/e'].map((to) => ({ to, label: to, icon: ListIcon }))
+    const onBar = (items: BottomBarItem[] | undefined, hasSearch: boolean) =>
+      bottomBarHasSearch(bottomBarItems(items, hasSearch))
+    expect(onBar([...five.slice(0, 4), search], true)).toBe(true)
+    expect(onBar([...five, search], true)).toBe(false)
+    expect(onBar([search], false)).toBe(false)
+    expect(onBar(five, true)).toBe(false)
+    expect(onBar(undefined, true)).toBe(false)
+  })
+
+  it('is never the current item', () => {
+    const bar = [search, homeItem, tasksItem]
+    expect(bottomBarCurrent(bar, nav, '/')).toBe(1)
+    expect(bottomBarCurrent(bar, nav, '/tasks')).toBe(2)
+    expect(bottomBarCurrent([search], nav, '/')).toBeUndefined()
+  })
+
+  it('has no count and no sheet', () => {
+    expect(bottomBarCount(search, nav)).toEqual({})
+    expect(bottomBarTiles(search, undefined, 'tiles')).toBe(false)
+  })
+
+  it("keeps `icon` on every item, so BottomBarItem['icon'] still types an app's own list", () => {
+    const icons: BottomBarItem['icon'][] = [search, homeItem, tasksItem].map((item) => item.icon)
+    expect(icons).toEqual([ListIcon, HomeIcon, ListIcon])
   })
 })
 

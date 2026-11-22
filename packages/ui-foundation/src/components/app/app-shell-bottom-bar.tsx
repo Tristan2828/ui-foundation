@@ -5,7 +5,8 @@
 // their children, under them, by heading where they have them), or with
 // `sheet: 'tiles'` a grid of the entries as tiles, icon over label, like
 // a phone's home screen. The sheet closes on navigation, as the
-// sidebar's does. The item holding the current page is marked
+// sidebar's does. Or an item is Search, a button that opens the header's
+// own palette (search-palette.tsx), in place of the header's button. The item holding the current page is marked
 // (`aria-current`). An entry's `count` shows on the phone as it does in
 // the sidebar: a badge on a bar item's icon (a page's own, or the sum of a
 // section's), in a tile's corner, at a sheet link's end; nothing at 0 or
@@ -261,12 +262,16 @@ export function BottomBar({
   nav,
   activeTo,
   navLook = 'list',
+  onSearch,
 }: {
+  /** The items drawn (bottomBarItems). */
   items: readonly BottomBarItem[]
   nav: readonly NavEntry[]
   activeTo: string | undefined
   /** The shell's `navLook`: a section's sheet follows its look when its item sets no `sheet`. */
   navLook?: NavLook
+  /** Opens the search palette, for the button pressed. */
+  onSearch: (opener: HTMLElement) => void
 }) {
   // The section open, and the location it was opened at: following a link
   // in the sheet (or anywhere) moves to a new location, which closes it.
@@ -275,11 +280,9 @@ export function BottomBar({
   const openGroup = opened?.at === key ? opened.group : null
   const setOpenGroup = (group: string | null) => setOpened(group === null ? null : { group, at: key })
 
-  // At most five: a sixth wouldn't fit a phone's width with its label.
-  const shown = items.slice(0, 5)
-  const current = bottomBarCurrent(shown, nav, activeTo)
+  const current = bottomBarCurrent(items, nav, activeTo)
   const section = openGroup === null ? undefined : bottomBarSection(nav, openGroup)
-  const openItem = shown.find((item) => 'group' in item && item.group === openGroup)
+  const openItem = items.find((item) => 'group' in item && item.group === openGroup)
   const tiles = openItem !== undefined && bottomBarTiles(openItem, section, navLook)
   // The current entry's pages show under the tiles when the section's own look is tiles.
   const withPages = (section?.look ?? navLook) === 'tiles'
@@ -292,7 +295,23 @@ export function BottomBar({
         className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         <ul className="flex h-16 items-stretch gap-1 px-2 py-1.5">
-          {shown.map((item, index) => {
+          {items.map((item, index) => {
+            if ('search' in item) {
+              return (
+                <li key="search" className="flex min-w-0 flex-1">
+                  <button
+                    type="button"
+                    data-slot="bottom-bar-search"
+                    aria-haspopup="dialog"
+                    onClick={(event) => onSearch(event.currentTarget)}
+                    className={ITEM_CLASS}
+                  >
+                    <BarIcon icon={item.icon} />
+                    <span className="max-w-full truncate">Search</span>
+                  </button>
+                </li>
+              )
+            }
             const isCurrent = index === current
             const { count, countLabel } = bottomBarCount(item, nav)
             if ('to' in item) {

@@ -43,7 +43,7 @@
 - [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1970–1989
 - [A quick add line](#a-quick-add-line) · lines 1991–2019
 - [A month calendar](#a-month-calendar) · lines 2021–2051
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2053–2105
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2053–2112
 
 <!-- /index -->
 
@@ -2069,6 +2069,7 @@ const nav: NavEntry[] = [
 const bottomBar: BottomBarItem[] = [
   { to: '/', label: 'Home', icon: HouseIcon },
   { group: 'Every day', icon: SunIcon, sheet: 'tiles' },
+  { search: true, icon: SearchIcon },
 ]
 ```
 
@@ -2099,7 +2100,13 @@ const bottomBar: BottomBarItem[] = [
   the hub). It replaces a page's own back link; the bar sits outside
   `<main>`, so the page's links are still the only ones in it.
 - **Search in the bar** (`search={{ placeholder, findRecords, recent }}`):
-  a box from 48rem up, a search button on a phone, and the shortcut
-  (Ctrl K, ⌘K on a Mac) open a palette of the nav's pages, the records
+  a box from 48rem up, a search button on a phone (the bar's instead,
+  where it has Search), and the shortcut (Ctrl K, ⌘K on a Mac) open a palette of the nav's pages, the records
   opened lately on this device (`useRecentRecord`) and the app's records
   under their `kind`.
+- **Search on the phone's bar** (`{ search: true, icon: SearchIcon }` in
+  `bottomBar`): a button named Search among the bar's items, opening the
+  same palette in thumb reach. It is an action, not a place: never the
+  current item and never counted. It takes the place of the header's
+  button on a phone, so there is one Search. Without `search`, or past the
+  bar's fifth item, it isn't drawn and the header is as without it.

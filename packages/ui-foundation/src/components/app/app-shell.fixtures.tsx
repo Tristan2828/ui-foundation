@@ -8,6 +8,7 @@ import {
   NewspaperIcon,
   PiggyBankIcon,
   ReceiptIcon,
+  SearchIcon,
   ShoppingCartIcon,
   SunIcon,
   TimerIcon,
@@ -520,6 +521,40 @@ const BOTTOM_BAR: BottomBarItem[] = [
 ]
 
 export const BottomBar: Story = { args: { nav: NESTED, path: '/media/channels/3', bottomBar: BOTTOM_BAR } }
+
+// Search on the bar, opening the header's palette; without `search` it
+// isn't drawn, and a bar of Search alone is no bar.
+const SEARCH_BAR: BottomBarItem[] = [
+  { to: '/', label: 'Home', icon: HouseIcon },
+  { to: '/news', label: 'News', icon: NewspaperIcon },
+  { search: true, icon: SearchIcon },
+  { group: 'Collections', icon: LibraryIcon },
+  { group: 'Home and money', label: 'Household', icon: WalletIcon },
+]
+
+export const BottomBarSearch: Story = {
+  args: { nav: STANDARD_TILES_COUNTS, navLook: 'tiles', path: '/finance/budget', bottomBar: SEARCH_BAR, search: 'records' },
+}
+export const BottomBarSearchWithout: Story = {
+  args: { nav: STANDARD_TILES_COUNTS, navLook: 'tiles', path: '/finance/budget', bottomBar: SEARCH_BAR },
+}
+// On a page below an entry, so the header has its back arrow.
+export const BottomBarSearchBack: Story = {
+  args: { nav: STANDARD_TILES_COUNTS, navLook: 'tiles', path: '/finance/accounts/3', bottomBar: SEARCH_BAR, search: 'records', trail: true },
+}
+// Search sixth, past the five drawn: the header keeps its button.
+export const BottomBarSearchSixth: Story = {
+  args: {
+    nav: STANDARD_TILES_COUNTS,
+    navLook: 'tiles',
+    path: '/finance/budget',
+    bottomBar: [...SEARCH_BAR.filter((item) => !('search' in item)), { to: '/tasks', label: 'Tasks', icon: ListChecksIcon }, { search: true, icon: SearchIcon }],
+    search: 'records',
+  },
+}
+export const BottomBarSearchOnlyWithout: Story = {
+  args: { nav: STANDARD, path: '/finance/accounts/3', bottomBar: [{ search: true, icon: SearchIcon }] },
+}
 
 // An app with a palette (design-language.md "Palettes"): no light/dark
 // toggle in the header; with the picker, the palette menu in its place.
