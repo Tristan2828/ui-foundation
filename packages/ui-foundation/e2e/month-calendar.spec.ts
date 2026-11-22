@@ -88,6 +88,42 @@ test('a phone shows dots in the days, one per item in its tone, and the list und
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true)
 })
 
+// `opens="dialog"`: the calendar a list under RecordDialogRoute.
+test('with opens="dialog" an item opens in a dialog over the month, and Open Full Page goes to its page', async ({ page }) => {
+  await page.setViewportSize(LAPTOP)
+  await page.goto(story('opens-dialog'))
+  const address = page.getByTestId('address')
+  await expect(address).toHaveText('/events')
+  await page.getByRole('group', { name: 'Friday, November 20, today' }).getByRole('link', { name: /Book club/ }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(address).toHaveText('/events/1')
+  await expect(dialog.getByRole('heading', { level: 1, name: 'Book club' })).toBeVisible()
+  // The month is still there, under the dialog (hidden from a screen reader while it's open).
+  await expect(page.locator('[data-slot="month-calendar"]')).toBeAttached()
+
+  // Close goes back to the month.
+  await dialog.getByRole('button', { name: 'Close' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(address).toHaveText('/events')
+
+  // Open Full Page swaps the dialog for the event's own page.
+  await page.getByRole('group', { name: 'Friday, November 20, today' }).getByRole('link', { name: /Book club/ }).click()
+  await dialog.getByRole('link', { name: 'Open Full Page' }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(address).toHaveText('/events/1')
+  await expect(page.getByRole('heading', { level: 1, name: 'Book club' })).toBeVisible()
+  await expect(page.getByRole('grid')).toHaveCount(0)
+})
+
+test('without opens an item links straight to its page, with no dialog state', async ({ page }) => {
+  await page.setViewportSize(LAPTOP)
+  await page.goto(story('default'))
+  await page.getByRole('group', { name: 'Friday, November 20, today' }).getByRole('link', { name: /Book club/ }).click()
+  await expect(page.getByText('Opened a record.')).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
 test('loading, empty and error', async ({ page }) => {
   await page.setViewportSize(LAPTOP)
   await page.goto(story('states'))
@@ -103,7 +139,7 @@ for (const theme of ['light', 'dark']) {
   for (const [name, size] of [['laptop', LAPTOP], ['phone', PHONE]] as const) {
     test(`axe, ${theme}, ${name}: no violations and no sideways scroll`, async ({ page }) => {
       await page.setViewportSize(size)
-      for (const id of ['default', 'states']) {
+      for (const id of ['default', 'states', 'opens-dialog']) {
         await page.goto(story(id, theme))
         await expect(page.getByRole('grid').first()).toBeVisible()
         const results = await new AxeBuilder({ page }).disableRules(['landmark-one-main', 'page-has-heading-one', 'region']).analyze()
