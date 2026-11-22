@@ -3,15 +3,18 @@ import { expect, test, type Page } from '@playwright/test'
 
 // Search on AppShell's bottom bar, at phone widths (the BottomBarSearch
 // stories): a button like its neighbours that opens the header's own
-// palette, focus back on it however the palette closes, never current,
-// nothing without the shell's search, nothing from md up, and axe in both
-// themes with the bar and with the palette open.
+// palette in place of the header's button, focus back on it however the
+// palette closes (resized across md too), never current, nothing without
+// the shell's search, nothing from md up, and axe in both themes with the
+// bar and with the palette open.
 const story = (id: string, theme?: 'light' | 'dark') =>
   `http://localhost:6180/story.html?id=app-appshell--${id}${theme ? `&theme=${theme}` : ''}`
 
 const bar = (page: Page) => page.getByRole('navigation', { name: 'Bottom Bar' })
 const search = (page: Page) => bar(page).getByRole('button', { name: 'Search', exact: true })
 const palette = (page: Page) => page.getByRole('dialog', { name: 'Search Example' })
+const headerButton = (page: Page) => page.getByRole('button', { name: 'Search Example', exact: true })
+const headerBox = (page: Page) => page.getByRole('button', { name: /Search Example.*Ctrl K/ })
 const box = (page: Page) => palette(page).getByRole('combobox', { name: 'Search Example' })
 
 async function openPhone(page: Page, id: string, { width = 390, theme }: { width?: number; theme?: 'light' | 'dark' } = {}) {
@@ -76,8 +79,7 @@ for (const [how, close] of [
 
 test('focus goes back to it where a press never focused it, as a tap in some browsers', async ({ page }) => {
   await openPhone(page, 'bottom-bar-search')
-  const header = page.getByRole('button', { name: 'Search Example', exact: true })
-  await header.focus()
+  await page.getByRole('button', { name: 'Toggle Sidebar' }).focus()
   // click() from script: the button is pressed, focus stays where it was.
   await search(page).evaluate((button: HTMLElement) => button.click())
   await expect(box(page)).toBeFocused()
@@ -85,16 +87,82 @@ test('focus goes back to it where a press never focused it, as a tap in some bro
   await expect(search(page)).toBeFocused()
 })
 
-test("the header's button keeps its own focus, after the bar's was used", async ({ page }) => {
+for (const [id, has] of [
+  ['bottom-bar-search', 'the bar draws Search'],
+  ['bottom-bar-search-back', 'the bar draws Search, on a page with the back arrow'],
+] as const) {
+  test(`one Search on a phone, the bar's: ${has}`, async ({ page }) => {
+    for (const width of [360, 390]) {
+      await openPhone(page, id, { width })
+      await expect(page.getByRole('button', { name: /^Search/ })).toHaveCount(1)
+      await expect(search(page)).toBeVisible()
+      await expect(page.locator('[data-slot="app-shell-search-button"]')).toHaveCount(0)
+    }
+  })
+}
+
+test('the header keeps its button where the bar does not draw Search: none on it, or past the fifth', async ({ page }) => {
+  for (const id of ['standard-search', 'bottom-bar-search-sixth']) {
+    await openPhone(page, id)
+    await expect(search(page)).toHaveCount(0)
+    await headerButton(page).click()
+    await expect(box(page)).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(headerButton(page)).toBeFocused()
+  }
+})
+
+test("the header's other parts keep their places, the theme toggle still at its end", async ({ page }) => {
+  for (const id of ['bottom-bar-search', 'bottom-bar-search-back']) {
+    await openPhone(page, id, { width: 360 })
+    const header = (await page.locator('header').first().boundingBox())!
+    const start = id === 'bottom-bar-search' ? page.getByRole('button', { name: 'Toggle Sidebar' }) : page.getByRole('link', { name: 'Back to Accounts' })
+    const toggle = (await page.locator('header').first().getByRole('button').last().boundingBox())!
+    expect((await start.boundingBox())!.x - header.x).toBeLessThanOrEqual(16)
+    expect(header.x + header.width - (toggle.x + toggle.width)).toBeCloseTo(16, 0)
+  }
+})
+
+test('Ctrl K at a phone width, from the page and from a button: focus goes back where it was', async ({ page }) => {
   await openPhone(page, 'bottom-bar-search')
-  await search(page).click()
-  await page.keyboard.press('Escape')
-  await expect(search(page)).toBeFocused()
-  const header = page.getByRole('button', { name: 'Search Example', exact: true })
-  await header.click()
+  await page.keyboard.press('Control+k')
   await expect(box(page)).toBeFocused()
   await page.keyboard.press('Escape')
-  await expect(header).toBeFocused()
+  await expect(palette(page)).toBeHidden()
+  // Nothing had focus: it isn't on something that can't be seen.
+  expect(await page.evaluate(() => document.activeElement!.getClientRects().length)).toBeGreaterThan(0)
+  const menu = page.getByRole('button', { name: 'Toggle Sidebar' })
+  await menu.focus()
+  await page.keyboard.press('Control+k')
+  await expect(box(page)).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(menu).toBeFocused()
+})
+
+test('resized across md while open, focus goes to the one shown in its place', async ({ page }) => {
+  const wide = () => page.setViewportSize({ width: 1280, height: 800 })
+  const phone = () => page.setViewportSize({ width: 390, height: 844 })
+  await openPhone(page, 'bottom-bar-search')
+  await search(page).click()
+  await expect(box(page)).toBeFocused()
+  await wide()
+  await expect(page.locator('[data-slot="app-shell-bottom-bar"]')).toBeHidden()
+  await page.keyboard.press('Escape')
+  await expect(palette(page)).toBeHidden()
+  await expect(headerBox(page)).toBeFocused()
+
+  // The other way, from the header's box, pressed and by Ctrl K on it.
+  for (const press of ['Enter', 'Control+k']) {
+    await headerBox(page).focus()
+    await page.keyboard.press(press)
+    await expect(box(page)).toBeFocused()
+    await phone()
+    await expect(page.locator('[data-slot="app-shell-bottom-bar"]')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(search(page)).toBeFocused()
+    await wide()
+    await expect(headerBox(page)).toBeVisible()
+  }
 })
 
 test('choosing a result goes to its page, marks its item and leaves Search unmarked', async ({ page }) => {

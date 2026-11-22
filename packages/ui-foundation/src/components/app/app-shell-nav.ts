@@ -302,8 +302,9 @@ export type BottomBarItem =
   | {
       /**
        * A button named Search that opens the shell's search palette, the
-       * one its header opens. Never the current page, and never counted.
-       * Drawn only with the shell's `search`.
+       * one its header opens, in place of the header's own button on a
+       * phone. Never the current page, and never counted. Drawn only with
+       * the shell's `search`.
        */
       search: true
       /** The header's is lucide's `SearchIcon`. */
@@ -378,6 +379,11 @@ export function bottomBarCurrent(
       'group' in item && withChildren(bottomBarSection(nav, item.group)?.items ?? []).some((entry) => entry.to === activeTo),
   )
   return group === -1 ? undefined : group
+}
+
+/** Whether the bar draws Search, of its drawn items (bottomBarItems). */
+export function bottomBarHasSearch(drawn: readonly BottomBarItem[]): boolean {
+  return drawn.some((item) => 'search' in item)
 }
 
 /**

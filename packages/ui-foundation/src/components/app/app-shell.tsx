@@ -6,6 +6,7 @@ import { useAuth } from '@/auth/use-auth'
 import { BottomBar, BOTTOM_BAR_PADDING } from '@/components/app/app-shell-bottom-bar'
 import {
   activeNavTo,
+  bottomBarHasSearch,
   bottomBarItems,
   childItems,
   childRuns,
@@ -142,7 +143,8 @@ export type AppShellProps = {
    * (`{ group: 'Every day', icon }`, with an optional shorter `label`),
    * which opens a sheet of that section's entries (as tiles with
    * `sheet: 'tiles'`), or Search (`{ search: true, icon: SearchIcon }`),
-   * a button that opens `search`'s palette, drawn only with `search`. The item holding the
+   * a button that opens `search`'s palette, drawn only with `search` and
+   * in place of the header's button on a phone. The item holding the
    * current page is marked. The header's menu button stays, for
    * everything, except on a page below a nav entry, where the back arrow
    * takes its place. The shell pads its content so nothing sits under the bar.
@@ -162,8 +164,8 @@ export type AppShellProps = {
   navLook?: NavLook
   /**
    * Search in the header: a box ("Search", or `placeholder`) from
-   * md up and a button on a phone, both opening a palette (Ctrl K, ⌘K on
-   * a Mac) that finds the nav's pages by name and, with `findRecords`,
+   * md up and a button on a phone (the bottom bar's Search instead, where
+   * `bottomBar` has it), both opening a palette (Ctrl K, ⌘K on a Mac) that finds the nav's pages by name and, with `findRecords`,
    * the app's records, listed under their kinds; Enter opens the one
    * highlighted. Before you type it lists the records opened lately
    * (`useRecentRecord`), `recent` of them. No search, no box.
@@ -819,7 +821,7 @@ export function AppShell({
             <div data-slot="app-shell-trail" className="min-w-0 flex-1">
               {trail.length > 0 && <PageTrail crumbs={trail} aria-label="You are here" className="max-md:hidden" />}
             </div>
-            {search && <SearchPalette ref={paletteRef} search={search} nav={nav} />}
+            {search && <SearchPalette ref={paletteRef} search={search} nav={nav} onBar={bottomBarHasSearch(barItems)} />}
             <LookControl />
           </header>
           {/* "You're offline", over every page while the server can't be reached. */}

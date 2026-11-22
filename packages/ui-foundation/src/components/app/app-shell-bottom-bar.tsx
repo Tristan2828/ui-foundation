@@ -6,7 +6,7 @@
 // `sheet: 'tiles'` a grid of the entries as tiles, icon over label, like
 // a phone's home screen. The sheet closes on navigation, as the
 // sidebar's does. Or an item is Search, a button that opens the header's
-// own palette (search-palette.tsx). The item holding the current page is marked
+// own palette (search-palette.tsx), in place of the header's button. The item holding the current page is marked
 // (`aria-current`). An entry's `count` shows on the phone as it does in
 // the sidebar: a badge on a bar item's icon (a page's own, or the sum of a
 // section's), in a tile's corner, at a sheet link's end; nothing at 0 or
@@ -301,6 +301,7 @@ export function BottomBar({
                 <li key="search" className="flex min-w-0 flex-1">
                   <button
                     type="button"
+                    data-slot="bottom-bar-search"
                     aria-haspopup="dialog"
                     onClick={(event) => onSearch(event.currentTarget)}
                     className={ITEM_CLASS}

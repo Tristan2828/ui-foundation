@@ -9,6 +9,7 @@ import {
   activeNavTo,
   bottomBarCount,
   bottomBarCurrent,
+  bottomBarHasSearch,
   bottomBarItems,
   bottomBarTiles,
   childItems,
@@ -219,6 +220,17 @@ describe('Search on the bottom bar', () => {
     expect(bottomBarItems(six, false)).toEqual(six.slice(0, 5))
     expect(bottomBarItems([search, ...six], true)).toEqual([search, ...six.slice(0, 4)])
     expect(bottomBarItems([search, ...six], false)).toEqual(six.slice(0, 5))
+  })
+
+  it('counts as on the bar only where it is drawn: not past the fifth, and not without search', () => {
+    const five: BottomBarItem[] = ['/a', '/b', '/c', '/d', '/e'].map((to) => ({ to, label: to, icon: ListIcon }))
+    const onBar = (items: BottomBarItem[] | undefined, hasSearch: boolean) =>
+      bottomBarHasSearch(bottomBarItems(items, hasSearch))
+    expect(onBar([...five.slice(0, 4), search], true)).toBe(true)
+    expect(onBar([...five, search], true)).toBe(false)
+    expect(onBar([search], false)).toBe(false)
+    expect(onBar(five, true)).toBe(false)
+    expect(onBar(undefined, true)).toBe(false)
   })
 
   it('is never the current item', () => {

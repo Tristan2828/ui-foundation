@@ -1,8 +1,8 @@
-// Search in AppShell's bar: a box in the header (a button on a
-// phone, and the bottom bar's Search) and Ctrl K (⌘K on a Mac) open a
-// palette that finds a page or a
-// record by name, and Enter opens it. Before you type it lists the
-// records you opened lately (useRecentRecord), then the first pages.
+// Search in AppShell's bar: a box in the header (on a phone a button
+// there, or the bottom bar's Search in its place) and Ctrl K (⌘K on a Mac)
+// open a palette that finds a page or a record by name, and Enter opens
+// it. Before you type it lists the records you opened lately
+// (useRecentRecord), then the first pages.
 //
 // A combobox over a listbox in a dialog (WAI-ARIA's "combobox with
 // listbox popup"): focus stays in the box, the arrows move the
@@ -69,21 +69,43 @@ export type SearchPaletteHandle = { openFrom: (opener: HTMLElement) => void }
 
 const CLOSED = { open: false, opener: null }
 
-/** The box (md and up) and the button (a phone) that open the palette, and the palette. */
+// What opens the palette: the header's box, its phone button, and the
+// bottom bar's Search (app-shell-bottom-bar.tsx). One is shown at a width.
+const OPENERS = '[data-slot="app-shell-search"], [data-slot="app-shell-search-button"], [data-slot="bottom-bar-search"]'
+
+const isShown = (element: Element) => element.getClientRects().length > 0
+
+// Where focus goes as the palette closes: what opened it, or where that is
+// hidden now (the window was resized across md meanwhile), the one shown
+// in its place. `true` is the dialog's own default.
+function focusAfter(opener: HTMLElement | null): HTMLElement | true {
+  if (!opener?.isConnected) return true
+  if (isShown(opener)) return opener
+  return [...document.querySelectorAll<HTMLElement>(OPENERS)].find(isShown) ?? true
+}
+
+/**
+ * The header's box (md and up) and button (a phone, unless the bottom bar
+ * has Search: `onBar`) that open the palette, and the palette.
+ */
 export function SearchPalette({
   search,
   nav,
+  onBar,
   ref,
 }: {
   search: AppShellSearch
   nav: readonly NavEntry[]
+  /** The bottom bar draws Search, so the header's phone button isn't drawn. */
+  onBar: boolean
   ref?: Ref<SearchPaletteHandle>
 }) {
-  // `opener` is the button that asked through the handle. Focus goes back
-  // to that button itself: a tap doesn't focus one in every browser, so
-  // what had focus before can't be relied on.
+  // `opener` is the button pressed, or for Ctrl K what had focus (null for
+  // nothing). Focus goes back to a pressed button itself: a tap doesn't
+  // focus one in every browser, so what had focus can't be relied on.
   const [{ open, opener }, setState] = useState<{ open: boolean; opener: HTMLElement | null }>(CLOSED)
-  const setOpen = (next: boolean) => setState(next ? { open: true, opener: null } : CLOSED)
+  const openFrom = (from: HTMLElement) => setState({ open: true, opener: from })
+  const close = () => setState(CLOSED)
   useImperativeHandle(ref, () => ({ openFrom: (from) => setState({ open: true, opener: from }) }), [])
   const placeholder = search.placeholder ?? 'Search'
   const shortcut = isMac() ? '⌘K' : 'Ctrl K'
@@ -95,7 +117,9 @@ export function SearchPalette({
       if (event.defaultPrevented || event.altKey || event.shiftKey) return
       if (event.key.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey)) return
       event.preventDefault()
-      setState((current) => (current.open ? CLOSED : { open: true, opener: null }))
+      const focused = document.activeElement
+      const from = focused instanceof HTMLElement && focused !== document.body ? focused : null
+      setState((current) => (current.open ? CLOSED : { open: true, opener: from }))
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
@@ -108,7 +132,7 @@ export function SearchPalette({
         data-slot="app-shell-search"
         aria-keyshortcuts="Control+K Meta+K"
         aria-haspopup="dialog"
-        onClick={() => setOpen(true)}
+        onClick={(event) => openFrom(event.currentTarget)}
         className="hidden h-8 w-56 shrink-0 items-center gap-2 rounded-lg border border-input bg-background px-2.5 text-sm text-muted-foreground transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:flex lg:w-64"
       >
         <SearchIcon aria-hidden="true" className="size-4 shrink-0" />
@@ -117,19 +141,21 @@ export function SearchPalette({
           {shortcut}
         </kbd>
       </button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        data-slot="app-shell-search-button"
-        aria-label={placeholder}
-        aria-haspopup="dialog"
-        className="md:hidden"
-        onClick={() => setOpen(true)}
-      >
-        <SearchIcon />
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        {open && <Palette search={search} nav={nav} placeholder={placeholder} opener={opener} onClose={() => setOpen(false)} />}
+      {!onBar && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          data-slot="app-shell-search-button"
+          aria-label={placeholder}
+          aria-haspopup="dialog"
+          className="md:hidden"
+          onClick={(event) => openFrom(event.currentTarget)}
+        >
+          <SearchIcon />
+        </Button>
+      )}
+      <Dialog open={open} onOpenChange={(next) => !next && close()}>
+        {open && <Palette search={search} nav={nav} placeholder={placeholder} opener={opener} onClose={close} />}
       </Dialog>
     </>
   )
@@ -145,7 +171,7 @@ function Palette({
   search: AppShellSearch
   nav: readonly NavEntry[]
   placeholder: string
-  /** Where focus goes when it closes; null is where it was. */
+  /** What opened it (focusAfter). */
   opener: HTMLElement | null
   onClose: () => void
 }) {
@@ -252,7 +278,7 @@ function Palette({
   return (
     <DialogContent
       showCloseButton={false}
-      finalFocus={opener ? () => opener : undefined}
+      finalFocus={() => focusAfter(opener)}
       data-slot="search-palette"
       className="top-[12vh] max-h-[76vh] translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:max-w-lg"
     >

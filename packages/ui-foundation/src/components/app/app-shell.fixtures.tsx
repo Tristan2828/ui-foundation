@@ -538,6 +538,20 @@ export const BottomBarSearch: Story = {
 export const BottomBarSearchWithout: Story = {
   args: { nav: STANDARD_TILES_COUNTS, navLook: 'tiles', path: '/finance/budget', bottomBar: SEARCH_BAR },
 }
+// On a page below an entry, so the header has its back arrow.
+export const BottomBarSearchBack: Story = {
+  args: { nav: STANDARD_TILES_COUNTS, navLook: 'tiles', path: '/finance/accounts/3', bottomBar: SEARCH_BAR, search: 'records', trail: true },
+}
+// Search sixth, past the five drawn: the header keeps its button.
+export const BottomBarSearchSixth: Story = {
+  args: {
+    nav: STANDARD_TILES_COUNTS,
+    navLook: 'tiles',
+    path: '/finance/budget',
+    bottomBar: [...SEARCH_BAR.filter((item) => !('search' in item)), { to: '/tasks', label: 'Tasks', icon: ListChecksIcon }, { search: true, icon: SearchIcon }],
+    search: 'records',
+  },
+}
 export const BottomBarSearchOnlyWithout: Story = {
   args: { nav: STANDARD, path: '/finance/accounts/3', bottomBar: [{ search: true, icon: SearchIcon }] },
 }
