@@ -641,7 +641,8 @@
    --control-height (Input, SelectTrigger, InputGroup, the combobox's chips
    box and a default Button), 32px, or 40px under 48rem or on a touch
    screen, for the finger. Anywhere else they keep their 36px. Each is a
-   calc of --spacing, resolved here, so the large density grows it. */
+   calc of --spacing, resolved here, so the large and extra-large densities
+   grow it. */
 [data-slot="field-group"],
 [data-slot="entity-form-bar"],
 [data-slot="form-dialog-bar"] {

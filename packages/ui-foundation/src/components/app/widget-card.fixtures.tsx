@@ -16,8 +16,8 @@ import { WidgetCard, WidgetCardGroup, WidgetList, WidgetListItem, type WidgetCar
 // Collapsible folds and remembers each card; Folded summary is a
 // folded card's one value in each state, and Accordion a WidgetCardGroup
 // holding one card open at a time. Axe, the token check
-// and the glyph check measure both in both themes and at the large
-// density (e2e/fixtures-visual.spec.ts).
+// and the glyph check measure both in both themes and at the two
+// large densities (e2e/fixtures-visual.spec.ts).
 const meta: Meta = {
   title: 'app/WidgetCard',
   parameters: { controls: { disable: true } },

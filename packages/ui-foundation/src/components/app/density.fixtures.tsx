@@ -33,8 +33,8 @@ import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 // Not a component: every density (styles/theme.css, design-language.md
 // "Density") with the same primitives in each, so a reviewer sees what
 // each one changes. compact and comfortable retune table rows (compact
-// also a hub's cards: Hub cards); large
-// grows everything (type, spacing, control heights, icons, the sidebar)
+// also a hub's cards: Hub cards); large, and extra-large a step further,
+// grow everything (type, spacing, control heights, icons, the sidebar)
 // for a screen read from across the room. Each sample sets data-density on
 // its own section, so leave the toolbar's Density at "default" here; the
 // toolbar sets it on <html> instead, for viewing any other story (and its
@@ -42,9 +42,10 @@ import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 //
 // e2e/fixtures-visual.spec.ts runs axe and the token check on each story
 // in both themes, and measures the data-measure elements: each equals
-// today's size at the default, and is larger at large. Made-up data only.
+// today's size at the default, is larger at large, and larger again at
+// extra-large. Made-up data only.
 
-const DENSITIES = ['compact', 'default', 'comfortable', 'large'] as const
+const DENSITIES = ['compact', 'default', 'comfortable', 'large', 'extra-large'] as const
 type Density = (typeof DENSITIES)[number]
 
 function Sample({ density, children, className }: { density: Density; children: ReactNode; className?: string }) {
@@ -343,12 +344,12 @@ export const DataTables: StoryObj = {
   ),
 }
 
-// compact and comfortable don't touch the sidebar, so only the two that differ.
+// compact and comfortable don't touch the sidebar, so only the three that differ.
 export const Sidebars: StoryObj = {
   name: 'Sidebar',
   render: () => (
     <div className="flex flex-wrap items-start gap-6">
-      {(['default', 'large'] as const).map((density) => (
+      {(['default', 'large', 'extra-large'] as const).map((density) => (
         <Sample key={density} density={density}>
           <DemoSidebar density={density} />
         </Sample>

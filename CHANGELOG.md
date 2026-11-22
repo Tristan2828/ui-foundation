@@ -7,6 +7,31 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.139.0 — An extra-large density
+
+npm package and `ui-foundation-backend` 4.139.0 (the backend is unchanged
+apart from its version). `data-density="extra-large"` is the step after
+`large`, for a screen read from further back, such as a couch: body text is
+20px where `large` has 18px, captions 17px where it has 15px, spacing 5.6px
+where it has 5px, and every other size `large` sets is scaled in proportion.
+Nothing changes for an app that doesn't set it: the default, `compact`,
+`comfortable` and `large` are as they were.
+
+### How an app adopts it
+
+Set it on `<html>`, as `large` is, so popups follow it:
+`document.documentElement.dataset.density = 'extra-large'`. An app with its
+own Text Size setting adds the value to it. CSS of the app's own that names
+`[data-density="large"]` needs the new value beside it (design-language.md
+"Density").
+
+### What to know
+
+- Containers and breakpoints keep their widths, as at `large`. A record's
+  facts rail stays 300px, where each label now goes above its value.
+- A table with many columns scrolls sideways in its box sooner than at
+  `large`.
+
 ## 4.138.0 — A month calendar's items open in a record dialog
 
 npm package and `ui-foundation-backend` 4.138.0 (the backend is unchanged

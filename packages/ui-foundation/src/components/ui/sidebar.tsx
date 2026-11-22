@@ -26,9 +26,9 @@ import { PanelLeftIcon } from "lucide-react"
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 // This repo's patch: the widths are steps of Tailwind's spacing scale, not
-// rem literals (upstream's 16rem, 18rem, 3rem), so data-density="large"
-// widens the sidebar with everything in it and the icon rail still fits
-// its buttons (styles/theme.css). Diff against upstream before taking a
+// rem literals (upstream's 16rem, 18rem, 3rem), so data-density="large" (and
+// "extra-large") widens the sidebar with everything in it and the icon rail
+// still fits its buttons (styles/theme.css). Diff against upstream before taking a
 // new version of this file.
 const SIDEBAR_WIDTH = "calc(var(--spacing) * 64)"
 const SIDEBAR_WIDTH_MOBILE = "calc(var(--spacing) * 72)"
