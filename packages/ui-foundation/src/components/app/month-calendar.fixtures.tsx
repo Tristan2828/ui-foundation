@@ -1,9 +1,11 @@
 import { useState, type ReactNode } from 'react'
-import { createMemoryRouter, RouterProvider } from 'react-router'
+import { createMemoryRouter, Outlet, RouterProvider, useLocation, useParams } from 'react-router'
 import type { Meta, StoryObj } from '@/fixtures/types'
 import { Button } from '@/components/ui/button'
 import type { PlainDate } from '@/lib/plain-date'
+import { EntityView } from './entity-view'
 import { MonthCalendar, type MonthCalendarItem } from './month-calendar'
+import { RecordDialogRoute } from './record-dialog'
 
 // MonthCalendar on made-up events, with today fixed
 // at Friday 2026-11-20 so every run draws the same month:
@@ -14,6 +16,9 @@ import { MonthCalendar, type MonthCalendarItem } from './month-calendar'
 //   On a phone the days hold dots.
 // - WeeksFromSunday: the same month with Sunday first.
 // - States: loading, empty (a month with nothing) and an error with Try Again.
+// - OpensDialog: the same month at /events under a RecordDialogRoute, with
+//   `opens="dialog"`: an event's link opens it in a dialog over the month,
+//   with Open Full Page. The address shows above it, for the spec.
 //
 // e2e/month-calendar.spec.ts moves months, picks days by mouse and keys and
 // measures both widths; axe and the token check run every story in both
@@ -117,4 +122,66 @@ export const States: StoryObj = {
       </div>
     </Routed>
   ),
+}
+
+// The calendar a list under RecordDialogRoute: its events open over it.
+function EventView() {
+  const { id } = useParams()
+  const item = ITEMS.find((candidate) => String(candidate.id) === id)
+  return (
+    <EntityView
+      title={item?.title}
+      isLoading={false}
+      error={item ? null : { kind: 'notfound', message: "This event doesn't exist." }}
+      back={{ to: '/events', label: 'Events' }}
+      sections={[{ title: 'Details', fields: [{ label: 'Day', value: item?.day }] }]}
+    />
+  )
+}
+
+function Address() {
+  const location = useLocation()
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="type-caption text-muted-foreground">
+        Address: <output data-testid="address">{location.pathname}</output>
+      </p>
+      <Outlet />
+    </div>
+  )
+}
+
+function DialogRouted() {
+  const [router] = useState(() =>
+    createMemoryRouter(
+      [
+        {
+          path: '/',
+          element: <Address />,
+          children: [
+            {
+              path: 'events',
+              element: (
+                <RecordDialogRoute
+                  label="Event"
+                  list={
+                    <div className="max-w-4xl">
+                      <MonthCalendar label="Events" items={ITEMS} today={TODAY} opens="dialog" locale="en-US" />
+                    </div>
+                  }
+                />
+              ),
+              children: [{ path: ':id', element: <EventView /> }],
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/events'] },
+    ),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const OpensDialog: StoryObj = {
+  render: () => <DialogRouted />,
 }

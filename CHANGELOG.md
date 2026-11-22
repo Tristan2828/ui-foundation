@@ -7,6 +7,27 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.138.0 — A month calendar's items open in a record dialog
+
+npm package and `ui-foundation-backend` 4.138.0 (the backend is unchanged
+apart from its version). `MonthCalendar` takes `opens`, DataTable's kinds:
+`dialog` (or `dialog-only`) opens an item's `to` in a dialog over the
+month, with Open Full Page, as any list's records open. Left out
+(`page`), an item links straight to its page as before, so nothing
+changes for an app that doesn't pass it.
+
+### How an app adopts it
+
+1. Make the calendar's route a `RecordDialogRoute` with the calendar's
+   page as its `list` and the record's view as its child (`/events` and
+   `/events/:id`), as for a table (add-an-entity.md "How a list opens a
+   record").
+2. Pass `opens="dialog"` to `MonthCalendar`, and give each item a `to`
+   under that route.
+3. A dialog-only route kept only to get a dialog from the calendar (one
+   with `fullPage={false}` the record doesn't otherwise need) can go: the
+   record's own route now opens over the calendar, Open Full Page and all.
+
 ## 4.137.2 — The last sentence-case labels in Title Case
 
 npm package and `ui-foundation-backend` 4.137.2 (the backend is unchanged

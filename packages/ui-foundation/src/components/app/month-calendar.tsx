@@ -11,18 +11,24 @@
 // past the month's edge turns the page. Every day is a plain day
 // (`'YYYY-MM-DD'`), never an instant, so no zone shifts one.
 //
+// How an item's link opens its record is `opens`, DataTable's words: a
+// dialog over the calendar (`dialog`, `dialog-only`: the link carries
+// RecordDialogRoute's state, as a RecordLink does) or its page (`page`,
+// the default).
+//
 // Four states: loading (the month's frame with placeholders), error
 // (ErrorState in place of the days, the arrows still there), empty
 // ("Nothing this month" over the days) and success.
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
-import { Link, type To } from 'react-router'
+import { Link, UNSAFE_LocationContext as LocationContext, type Location, type To } from 'react-router'
 import { cn } from 'cn'
 import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPlainDate, localToPlainDate, type PlainDate } from '@/lib/plain-date'
 import { ErrorState } from './error-state'
+import { recordDialogState } from './record-dialog-context'
 
 export type MonthCalendarTone = 'neutral' | 'info' | 'success' | 'warning' | 'destructive'
 
@@ -36,7 +42,7 @@ export type MonthCalendarItem = {
   time?: string | null
   /** Its dot and mark (design-language.md "Semantic tones"). Defaults to `info`. */
   tone?: MonthCalendarTone
-  /** Where its row in the day's list goes. */
+  /** Where its row in the day's list goes (how, `opens`). */
   to?: To
   /** A word after the time in the day's list ("Visit"). */
   detail?: string
@@ -57,6 +63,14 @@ export type MonthCalendarProps = {
   onMonthChange?: (month: string) => void
   /** The app's actions for the picked day, beside its heading (an Add button). */
   dayActions?: (day: PlainDate) => ReactNode
+  /**
+   * How an item's link opens its record, DataTable's `opens` kinds
+   * (add-an-entity.md "How a list opens a record"): `dialog` and
+   * `dialog-only` open it over the calendar (the calendar's route a
+   * `RecordDialogRoute`, the record one of its children); `page`, the
+   * default, goes to its page.
+   */
+  opens?: 'dialog' | 'dialog-only' | 'page'
   /** The first day of the week. Defaults to Monday. */
   weekStart?: 'MO' | 'SU'
   isLoading?: boolean
@@ -126,6 +140,7 @@ export function MonthCalendar({
   month,
   onMonthChange,
   dayActions,
+  opens = 'page',
   weekStart = 'MO',
   isLoading,
   error,
@@ -138,6 +153,10 @@ export function MonthCalendar({
   const picked = selected ?? ownSelected
   const [ownMonth, setOwnMonth] = useState<string>(month ?? monthOf(picked))
   const shown = month ?? ownMonth
+  // Read through the router's context, not useLocation, so a calendar
+  // with no links outside a router still renders (as DataTable does).
+  const routerLocation = useContext(LocationContext) as { location: Location } | null
+  const linkState = opens !== 'page' && routerLocation ? recordDialogState(routerLocation.location) : undefined
   const gridRef = useRef<HTMLTableElement>(null)
   const focusAfter = useRef(false)
 
@@ -374,6 +393,7 @@ export function MonthCalendar({
                       {item.to ? (
                         <Link
                           to={item.to}
+                          state={linkState}
                           className="flex min-h-10 items-center gap-2 py-1.5 text-sm text-foreground outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
                         >
                           {body}

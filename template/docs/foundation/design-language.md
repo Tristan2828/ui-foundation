@@ -42,8 +42,8 @@
 - [Filling in what's missing](#filling-in-whats-missing) · lines 1891–1958
 - [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1960–1979
 - [A quick add line](#a-quick-add-line) · lines 1981–2009
-- [A month calendar](#a-month-calendar) · lines 2011–2035
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2037–2089
+- [A month calendar](#a-month-calendar) · lines 2011–2041
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2043–2095
 
 <!-- /index -->
 
@@ -2021,6 +2021,12 @@ package's `MonthCalendar`. Not a date picker, which is
   ("All day" without one), its `detail` and a link (`to`). The app's own
   actions for that day sit beside its heading (`dayActions`, an Add
   button); what picking a day does beyond that is the app's (`onSelect`).
+- **How an item opens its record** is `opens`, DataTable's kinds
+  (add-an-entity.md "How a list opens a record"). Left out (`page`), a
+  link goes to the record's page. `dialog` (or `dialog-only`) opens it in
+  a dialog over the month, Open Full Page and all: the calendar's route is
+  a `RecordDialogRoute` with the calendar as its `list` and the records
+  as its children, as any list's is.
 - **Tones** are the semantic ones plus `neutral` (design-language
   "Semantic tones"): pick one per kind of thing (an event `info`, a visit
   `success`), not per item, and say in the list's `detail` what it is.
