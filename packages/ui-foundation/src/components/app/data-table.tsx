@@ -1006,7 +1006,7 @@ const STICKY_GROUP_HEADING_CLASS =
   `sticky top-[calc(var(--data-table-pin-top)+var(--data-table-head-height))] z-20 pt-2 ${STICKY_RULE_CLASS}`
 
 // What focus scrolls to clears the stuck header and heading (3rem covers a
-// heading's height, large density included).
+// heading's height, the large densities included).
 const STICKY_FOCUS_CLASS =
   '[&_tbody_*]:scroll-mt-[calc(var(--data-table-pin-top)+var(--data-table-head-height)+--spacing(12))]'
 

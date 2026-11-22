@@ -95,7 +95,8 @@ function TileCount({ count }: { count?: number }) {
 
 // A bar item's icon, with its count as a badge on its corner: the
 // primary's fill, ringed in the bar's background so it stands off the
-// icon. Sized in em, so it grows with the type at large density.
+// icon. Sized in em, so it grows with the type at large and
+// extra-large density.
 function BarIcon({ icon: Icon, count }: { icon: BottomBarItem['icon']; count?: number }) {
   const text = navCountText(count)
   return (

@@ -15,7 +15,7 @@ import { WidgetCard, WidgetList, WidgetListItem } from './widget-card'
 // that row with each card's `noteOnChip`, in every state; Row page is
 // the strip alone on a page, for defineA11ySuite. Axe, the
 // token check and the glyph check
-// measure each in both themes, and Default at the large density too
+// measure each in both themes, and Default at the two large densities too
 // (e2e/fixtures-visual.spec.ts); e2e/module-card.spec.ts measures the
 // strip at desktop and phone widths, and runs axe on the row at a phone's.
 const meta: Meta = {

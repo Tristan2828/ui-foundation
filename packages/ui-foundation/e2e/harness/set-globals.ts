@@ -9,7 +9,7 @@ import { LIGHT_PALETTES, PALETTES, isLightPaletteName } from '@/lib/palettes'
 
 export const THEMES = ['light', 'dark'] as const
 export const PALETTE_OPTIONS = ['none', ...PALETTES, ...LIGHT_PALETTES] as const
-export const DENSITIES = ['default', 'compact', 'comfortable', 'large'] as const
+export const DENSITIES = ['default', 'compact', 'comfortable', 'large', 'extra-large'] as const
 
 export function setGlobals(params: URLSearchParams) {
   const root = document.documentElement

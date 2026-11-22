@@ -353,7 +353,7 @@ export type EntityViewProps = {
    * The facts rail (record standard A1), in the `tabs` layout:
    * where the view has room (60rem beside it: a laptop's page, a record
    * dialog), the sections of short facts (`facts`, placed `rail`, no
-   * `tab`) go in a 300px column beside the record's body, and leave
+   * `tab`) go in a column (300px, `--facts-rail-width`) beside the record's body, and leave
    * Details. The strip stays above, full width; the rail starts level with
    * the first content under it (the open tab's first section, or the first
    * card when cards come before the tabs). A Details tab left with
@@ -533,7 +533,7 @@ function ViewSection({
   railFields?: EntityViewRailFields
   /** In a tab's own narrow side column (`TAB_SIDE`): never the wide rows. */
   side?: boolean
-  /** In the facts rail (A1): its rows side by side in the 300px card. */
+  /** In the facts rail (A1): its rows side by side in the rail's narrow card. */
   factsRail?: boolean
   /**
    * In a small card dialog (RecordDialogRoute `look="card"`, record
@@ -617,19 +617,20 @@ const RAIL_LAYOUT = {
 }
 
 // The facts rail (A1): the record's column at its usual reading width
-// (max-w-4xl) and a 300px rail beside it. The strip stays above both, at
+// (max-w-4xl) and a 300px rail beside it (`--facts-rail-width`, 336px at extra-large
+// density). The strip stays above both, at
 // full width; the rail starts level with the first content under it: the
 // first section of the open tab (beside the tab's content, never its bar),
 // or the first card when the record's first content isn't the tabs.
 const FACTS_RAIL = {
   // Page width wide (data-width="wide" on <html>): no cap, the column fills the page.
-  page: 'max-w-[calc(var(--container-4xl)+var(--spacing)*6+300px)] page-wide:max-w-none',
-  columns: 'grid grid-cols-[minmax(0,1fr)_300px] items-start gap-6',
+  page: 'max-w-[calc(var(--container-4xl)+var(--spacing)*6+var(--facts-rail-width))] page-wide:max-w-none',
+  columns: 'grid grid-cols-[minmax(0,1fr)_var(--facts-rail-width)] items-start gap-6',
   main: 'flex min-w-0 flex-col gap-6',
   rail: 'col-start-2 row-start-1 flex min-w-0 flex-col gap-6',
-  // The tab bar over the column only: the rail's 300px and the gap (the
+  // The tab bar over the column only: the rail's width and the gap (the
   // bar's own -mx-1 bleed kept on its left).
-  barBeside: 'mr-[calc(300px+var(--spacing)*5)]',
+  barBeside: 'mr-[calc(var(--facts-rail-width)+var(--spacing)*5)]',
 }
 
 /** A section of short facts placed `rail` with no tab: the facts rail's, where it's drawn. */

@@ -19,31 +19,31 @@
 - [Typography](#typography) · lines 603–773
   - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 637–669
   - [Written text (notes)](#written-text-notes) · lines 671–773
-- [Density](#density) · lines 775–886
-  - [Rows on this device](#rows-on-this-device) · lines 833–860
-  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 862–886
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 888–998
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1000–1072
-- [Notices](#notices) · lines 1074–1101
-- [A value over time](#a-value-over-time) · lines 1103–1233
-  - [Several values over time](#several-values-over-time) · lines 1152–1190
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1192–1233
-- [A list as a board](#a-list-as-a-board) · lines 1235–1345
-  - [Order, groups and the header](#order-groups-and-the-header) · lines 1288–1345
-- [A list as cards](#a-list-as-cards) · lines 1347–1394
-- [Images full screen](#images-full-screen) · lines 1396–1442
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1444–1480
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1482–1518
-- [A few equal things](#a-few-equal-things) · lines 1520–1635
-- [An overview page](#an-overview-page) · lines 1637–1702
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1704–1767
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1769–1856
-- [Picking at random](#picking-at-random) · lines 1858–1889
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1891–1958
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1960–1979
-- [A quick add line](#a-quick-add-line) · lines 1981–2009
-- [A month calendar](#a-month-calendar) · lines 2011–2041
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2043–2095
+- [Density](#density) · lines 775–896
+  - [Rows on this device](#rows-on-this-device) · lines 842–869
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 871–896
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 898–1008
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1010–1082
+- [Notices](#notices) · lines 1084–1111
+- [A value over time](#a-value-over-time) · lines 1113–1243
+  - [Several values over time](#several-values-over-time) · lines 1162–1200
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1202–1243
+- [A list as a board](#a-list-as-a-board) · lines 1245–1355
+  - [Order, groups and the header](#order-groups-and-the-header) · lines 1298–1355
+- [A list as cards](#a-list-as-cards) · lines 1357–1404
+- [Images full screen](#images-full-screen) · lines 1406–1452
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1454–1490
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1492–1528
+- [A few equal things](#a-few-equal-things) · lines 1530–1645
+- [An overview page](#an-overview-page) · lines 1647–1712
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1714–1777
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1779–1866
+- [Picking at random](#picking-at-random) · lines 1868–1899
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1901–1968
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1970–1989
+- [A quick add line](#a-quick-add-line) · lines 1991–2019
+- [A month calendar](#a-month-calendar) · lines 2021–2051
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2053–2105
 
 <!-- /index -->
 
@@ -774,7 +774,7 @@ pulls the eye from every other column (cell patterns 16 and 20).
 
 ## Density
 
-Four densities, set with `data-density` on **any ancestor** (a wrapper
+Five densities, set with `data-density` on **any ancestor** (a wrapper
 `<div>`, a route's layout, or `<html>` for the whole app). It is a token
 set, not a `DataTable` prop:
 
@@ -790,16 +790,18 @@ set, not a `DataTable` prop:
 | `compact` | a hub's cards (`WidgetCard`, `WidgetList` rows, `ModuleCard`); table rows stay the default's | 4px | 32px | a dense hub |
 | `comfortable` | table rows only | 12px | 48px | short tables, or rows people read rather than scan |
 | `large` | **everything**: type, spacing, control heights, icons, the sidebar, table rows | 12px | 56px | a screen read from a distance: a TV used as the desktop monitor, with a mouse and keyboard |
+| `extra-large` | **everything**, a step past `large` | 13px | 63px | the same screen read from further back, such as a couch |
 
 - `compact` and `comfortable` change padding only. Text keeps
   `type-body`, so compact never drops below a readable size.
-- **Forms are compact at every density but `large`**: inside a
+- **Forms are compact at every density but the two large ones**: inside a
   `FieldGroup` (every `EntityForm`, `FormDialog` and `FormSection`) the
   inputs, selects, combobox boxes and default buttons are 32px, the
   compact table's row, with 14px between fields; under 48rem or on a
   touch screen 40px, for the finger. They read `--control-height`, which
-  `FieldGroup` and the forms' bars set from `--spacing`, so `large` grows
-  them as it grows everything. Outside a form a control keeps its 36px.
+  `FieldGroup` and the forms' bars set from `--spacing`, so `large` and
+  `extra-large` grow them as they grow everything. Outside a form a control
+  keeps its 36px.
 - On a hub, `compact` takes a `WidgetCard`'s padding from 16px to 12px,
   a `WidgetList` row from 36px to 32px (6px around its line) and a
   `ModuleCard`'s band and body by 4px each. On a phone a compact row is
@@ -810,20 +812,27 @@ set, not a `DataTable` prop:
   Breakpoints and `max-w-*` containers stay where they are, which is
   what browser zoom can't do (zoom narrows the viewport in CSS pixels, so
   a wide screen can fall into the phone layout).
-- For `large`, set it on **`<html>`**. Menus, selects, dialogs and
-  tooltips are portaled to `<body>`, so a wrapper `<div>` doesn't reach
+- `extra-large` is `large` about a ninth bigger again: body text 18 → 20px,
+  captions 15 → 17px, spacing 5 → 5.6px (controls 45px tall, icons 22px, the
+  sidebar 358px), and every other size in proportion. It sets every token
+  `large` sets, so whatever follows `large` follows it. It also widens a
+  record's facts rail to 336px (`--facts-rail-width`; 300px at every other
+  density), so a label still sits beside its value.
+- For `large` and `extra-large`, set it on **`<html>`**. Menus, selects,
+  dialogs and tooltips are portaled to `<body>`, so a wrapper `<div>` doesn't reach
   them. `compact` and `comfortable` only touch tables and hub cards, so a
   wrapper is fine.
 - Pick **one density per screen**. Two tables at different densities side
   by side look like a mistake.
-- Size things the way the package does and `large` reaches them for free:
+- Size things the way the package does and `large` and `extra-large` reach
+  them for free:
   Tailwind's spacing and size utilities (`h-8`, `size-4`, `gap-2`, `w-64`)
   and `text-*`/`type-*`. A fixed `h-[18px]`, `w-[240px]` or
-  `text-[13px]` stays its size at `large`; write it as a step of the scale
+  `text-[13px]` stays its size at both; write it as a step of the scale
   (`h-[--spacing(4.5)]`) instead.
 - Under the hood, the table primitive's cells read `--table-cell-px`,
-  `--table-cell-py` and `--table-head-height`. `large` also redefines
-  Tailwind's own scale (`--spacing`, `--text-*`, `--radius`), the `--type-*`
+  `--table-cell-py` and `--table-head-height`. `large` and `extra-large` also
+  redefine Tailwind's own scale (`--spacing`, `--text-*`, `--radius`), the `--type-*`
   roles and `--control-text-sm` (the small Button and Toggle). The
   selectors are in `styles/theme.css`. A composite reaches `compact` with
   the `density-compact:` variant (`styles/index.css`: any ancestor with
@@ -862,10 +871,11 @@ toggle in an app without a palette).
 ### Page width (a record on a wide screen)
 
 A record page (`EntityView`) keeps a reading width: its column is at most
-`max-w-4xl`, and with a facts rail the page is that plus the 300px rail.
+`max-w-4xl`, and with a facts rail the page is that plus the 300px rail (336px
+at `extra-large` density).
 On a TV the right of the page is then empty. `data-width="wide"` on
 `<html>` lifts the cap: the column fills the page and the rail
-stays 300px, moving right with it.
+keeps its width, moving right with it.
 
 ```ts
 // The app's own Page Width setting, kept per browser, applied before first paint.

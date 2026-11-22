@@ -16,7 +16,7 @@ for (const viewport of [
   test.describe(`<Markdown inline> at ${viewport.name}'s width`, () => {
     test.use({ viewport: { width: viewport.width, height: viewport.height } })
 
-    for (const density of [undefined, 'compact', 'large']) {
+    for (const density of [undefined, 'compact', 'large', 'extra-large']) {
       test(`each row is as tall as the plain one (${density ?? 'default'})`, async ({ page }) => {
         await page.goto(INLINE('light', density))
         await expect(page.getByText('Waiting on the landlord')).toBeVisible()

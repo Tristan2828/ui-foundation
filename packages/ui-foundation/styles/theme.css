@@ -616,8 +616,12 @@
 
   /* The small size of Button and Toggle (and the calendar's weekdays):
      between text-xs and text-sm, so it has a token of its own for the
-     large density to scale. */
+     large and extra-large densities to scale. */
   --control-text-sm: 0.8rem;
+
+  /* A record's facts rail (EntityView): a fixed width, wide enough for a
+     label beside its value. Only extra-large widens it. */
+  --facts-rail-width: 300px;
 
   /* Layer 2 — semantic (light) */
   --background: var(--white);
@@ -908,7 +912,7 @@
  * built from --spacing on :root would keep :root's value under here.
  *
  * Popups (menus, selects, dialogs, tooltips) are portaled to <body>, so
- * they only grow when data-density="large" is on <html>.
+ * they only grow when data-density="large" (or "extra-large") is on <html>.
  */
 [data-density="large"] {
   --spacing: 0.3125rem; /* 4px → 5px: h-8 is 40px, size-4 is 20px */
@@ -941,6 +945,52 @@
   --table-cell-px: 0.75rem;
   --table-cell-py: 0.75rem;
   --table-head-height: 3.5rem;
+
+  --facts-rail-width: 300px; /* the default's: its rows still fit side by side */
+}
+
+/*
+ * Extra large: the step after large, for a screen read from further back
+ * (a couch). It sets every token large sets, the same way and for the same
+ * reasons; tests/density.test.ts fails if one is set in only one of them.
+ * Body text is 20px where large's is 18px, captions 17px where they're
+ * 15px, spacing 5.6px where it's 5px. Every other size is large's scaled by
+ * the nearest of those (text and its leading by body's 10/9, caption-sized
+ * text by captions' 17/15, boxes by spacing's 1.12), to the nearest pixel.
+ */
+[data-density="extra-large"] {
+  --spacing: 0.35rem; /* large's 5px → 5.6px: h-8 is 44.8px, size-4 is 22.4px */
+  --text-xs: 1.0625rem; /* 15 → 17px */
+  --text-sm: 1.25rem; /* 18 → 20px: most UI text */
+  --text-base: 1.375rem; /* 20 → 22px */
+  --text-lg: 1.5rem; /* 22 → 24px */
+  --text-xl: 1.75rem; /* 25 → 28px */
+  --text-2xl: 2.0625rem; /* 30 → 33px */
+  --control-text-sm: 1.125rem; /* 16 → 18px */
+  --radius: 0.75rem; /* 11 → 12px */
+
+  --type-page-title-size: 2.4375rem; /* 35 → 39px */
+  --type-section-title-size: 1.375rem;
+  --type-section-title-leading: 2.0625rem;
+  --type-body-size: 1.25rem;
+  --type-label-size: 1.25rem;
+  --type-label-leading: 1.8125rem;
+  --type-caption-size: 1.0625rem;
+  --type-caption-leading: 1.4375rem;
+  --type-numeric-size: 1.9375rem;
+  --type-numeric-leading: 2.5rem;
+  --type-heading-1-size: 2.4375rem;
+  --type-heading-1-leading: 3.125rem;
+  --type-heading-2-size: 1.75rem;
+  --type-heading-2-leading: 2.375rem;
+  --type-heading-3-size: 1.0625rem;
+  --type-heading-3-leading: 1.75rem;
+
+  --table-cell-px: 0.8125rem;
+  --table-cell-py: 0.8125rem;
+  --table-head-height: 3.9375rem;
+
+  --facts-rail-width: 336px; /* 300px, so a label still fits beside its value */
 }
 
 .dark {

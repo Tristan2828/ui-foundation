@@ -1116,7 +1116,7 @@ A record uses the parts it has, in this order:
 - **Facts beside their labels** (`railFields`, `beside` by default), so the short facts read as a list of pairs rather than a column
   of labels; keep labels to a word or two.
 - **The facts rail**: `factsRail` on the
-  view puts the record's short facts in a 300px column beside the
+  view puts the record's short facts in a narrow column beside the
   record's body where the view has room (60rem: a laptop's page, a record
   dialog), so the page doesn't end 900px in. The strip stays above it at
   full width, and the rail starts level with the first content under the

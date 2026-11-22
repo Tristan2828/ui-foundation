@@ -258,15 +258,15 @@ test.describe('DataTable stickyGroupHeadings', () => {
     test.describe(`at ${viewport.name}'s width`, () => {
       test.use({ viewport: { width: viewport.width, height: viewport.height } })
 
-      for (const density of [undefined, 'compact', 'comfortable', 'large']) {
+      for (const density of [undefined, 'compact', 'comfortable', 'large', 'extra-large']) {
         test(`the heading pins under the column header on the page's scroll (${density ?? 'default'})`, async ({ page }) => {
           await page.goto(stickyStory('sticky-groups', density))
           await expect(page.getByText('Thursday')).toBeVisible()
           // Tuesday's rows are 13 to 24.
           const at = await measure(page, 'Tuesday', 'Entry 18')
-          // At large on a phone these four columns no longer fit, so the
-          // table takes its own box there.
-          const overflows = viewport.width < 768 && density === 'large'
+          // At the two large densities on a phone these four columns no
+          // longer fit, so the table takes its own box there.
+          const overflows = viewport.width < 768 && (density === 'large' || density === 'extra-large')
           expect(at.ownScroll).toBe(overflows)
           expect(at.overflowX).toBe(overflows ? 'auto' : 'clip')
           expect(at.headTop).toBeCloseTo(at.top, 0)
@@ -285,7 +285,7 @@ test.describe('DataTable stickyGroupHeadings', () => {
         expect(at.onTop).toContain('Wednesday')
       })
 
-      for (const density of [undefined, 'large']) {
+      for (const density of [undefined, 'large', 'extra-large']) {
         test(`a table wider than its box scrolls in a box of its own, and pins inside it (${density ?? 'default'})`, async ({ page }) => {
           await page.goto(stickyStory('sticky-groups-wide', density))
           await expect(page.getByText('Thursday')).toBeVisible()
