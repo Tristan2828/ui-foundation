@@ -1,5 +1,6 @@
 // Search in AppShell's bar: a box in the header (a button on a
-// phone) and Ctrl K (⌘K on a Mac) open a palette that finds a page or a
+// phone, and the bottom bar's Search) and Ctrl K (⌘K on a Mac) open a
+// palette that finds a page or a
 // record by name, and Enter opens it. Before you type it lists the
 // records you opened lately (useRecentRecord), then the first pages.
 //
@@ -9,7 +10,7 @@
 // closes. Hand-rolled because shadcn's Command needs cmdk, which isn't
 // on the package's allowlist; the dialog is the foundation's own.
 import { SearchIcon } from 'lucide-react'
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import { useNavigate } from 'react-router'
 import { cn } from 'cn'
 import type { NavEntry } from '@/components/app/app-shell-nav'
@@ -63,9 +64,27 @@ function isMac(): boolean {
   return typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
 }
 
+/** Opens the palette for a button elsewhere in the shell, where focus returns when it closes. */
+export type SearchPaletteHandle = { openFrom: (opener: HTMLElement) => void }
+
+const CLOSED = { open: false, opener: null }
+
 /** The box (md and up) and the button (a phone) that open the palette, and the palette. */
-export function SearchPalette({ search, nav }: { search: AppShellSearch; nav: readonly NavEntry[] }) {
-  const [open, setOpen] = useState(false)
+export function SearchPalette({
+  search,
+  nav,
+  ref,
+}: {
+  search: AppShellSearch
+  nav: readonly NavEntry[]
+  ref?: Ref<SearchPaletteHandle>
+}) {
+  // `opener` is the button that asked through the handle. Focus goes back
+  // to that button itself: a tap doesn't focus one in every browser, so
+  // what had focus before can't be relied on.
+  const [{ open, opener }, setState] = useState<{ open: boolean; opener: HTMLElement | null }>(CLOSED)
+  const setOpen = (next: boolean) => setState(next ? { open: true, opener: null } : CLOSED)
+  useImperativeHandle(ref, () => ({ openFrom: (from) => setState({ open: true, opener: from }) }), [])
   const placeholder = search.placeholder ?? 'Search'
   const shortcut = isMac() ? '⌘K' : 'Ctrl K'
 
@@ -76,7 +95,7 @@ export function SearchPalette({ search, nav }: { search: AppShellSearch; nav: re
       if (event.defaultPrevented || event.altKey || event.shiftKey) return
       if (event.key.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey)) return
       event.preventDefault()
-      setOpen((current) => !current)
+      setState((current) => (current.open ? CLOSED : { open: true, opener: null }))
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
@@ -110,7 +129,7 @@ export function SearchPalette({ search, nav }: { search: AppShellSearch; nav: re
         <SearchIcon />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        {open && <Palette search={search} nav={nav} placeholder={placeholder} onClose={() => setOpen(false)} />}
+        {open && <Palette search={search} nav={nav} placeholder={placeholder} opener={opener} onClose={() => setOpen(false)} />}
       </Dialog>
     </>
   )
@@ -120,11 +139,14 @@ function Palette({
   search,
   nav,
   placeholder,
+  opener,
   onClose,
 }: {
   search: AppShellSearch
   nav: readonly NavEntry[]
   placeholder: string
+  /** Where focus goes when it closes; null is where it was. */
+  opener: HTMLElement | null
   onClose: () => void
 }) {
   const navigate = useNavigate()
@@ -230,6 +252,7 @@ function Palette({
   return (
     <DialogContent
       showCloseButton={false}
+      finalFocus={opener ? () => opener : undefined}
       data-slot="search-palette"
       className="top-[12vh] max-h-[76vh] translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:max-w-lg"
     >

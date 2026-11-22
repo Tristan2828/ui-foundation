@@ -1,11 +1,12 @@
 import { ChevronLeftIcon, ChevronRightIcon, LogOutIcon, MoonIcon, PaletteIcon, Rows3Icon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from '@/auth/use-auth'
 import { BottomBar, BOTTOM_BAR_PADDING } from '@/components/app/app-shell-bottom-bar'
 import {
   activeNavTo,
+  bottomBarItems,
   childItems,
   childRuns,
   childrenOpen,
@@ -29,7 +30,7 @@ import { versionHref, versionLabel, type AppShellVersion } from '@/components/ap
 import { ErrorState } from '@/components/app/error-state'
 import { PageTrail, type PageCrumb } from '@/components/app/page-trail'
 import { PageTrailContext, type PageTrailSlot } from '@/components/app/page-trail-context'
-import { SearchPalette, type AppShellSearch } from '@/components/app/search-palette'
+import { SearchPalette, type AppShellSearch, type SearchPaletteHandle } from '@/components/app/search-palette'
 import type { IconComponent } from '@/components/app/icon-component'
 import { useErrorReporter } from '@/error-reporting/error-reporting-context'
 import { ReportRoutePattern } from '@/error-reporting/error-reporting-provider'
@@ -137,10 +138,11 @@ export type AppShellProps = {
   /**
    * A bar of shortcuts at the bottom of a phone's screen (below the md
    * breakpoint), in thumb reach: at most five, each a page
-   * (`{ to, label, icon }`) or a nav section by its label
+   * (`{ to, label, icon }`), a nav section by its label
    * (`{ group: 'Every day', icon }`, with an optional shorter `label`),
    * which opens a sheet of that section's entries (as tiles with
-   * `sheet: 'tiles'`). The item holding the
+   * `sheet: 'tiles'`), or Search (`{ search: true, icon: SearchIcon }`),
+   * a button that opens `search`'s palette, drawn only with `search`. The item holding the
    * current page is marked. The header's menu button stays, for
    * everything, except on a page below a nav entry, where the back arrow
    * takes its place. The shell pads its content so nothing sits under the bar.
@@ -669,6 +671,8 @@ export function AppShell({
     (owner: object) => setPageTrail((current) => (current?.owner === owner ? null : current)),
     [],
   )
+  // The header's palette, for the bottom bar's Search.
+  const paletteRef = useRef<SearchPaletteHandle>(null)
   const trailSlot = useMemo<PageTrailSlot>(() => ({ set, clear }), [set, clear])
 
   if (status === 'loading') {
@@ -698,6 +702,8 @@ export function AppShell({
   }
 
   const activeTo = activeNavTo(nav, location.pathname)
+  const barItems = bottomBarItems(bottomBar, search !== undefined)
+  const hasBar = barItems.length > 0
   const ownTrail = pageTrail?.crumbs ?? null
   const back = trailBackTarget(nav, location.pathname, ownTrail)
   const trail = ownTrail ?? navTrail(nav, location.pathname)
@@ -806,26 +812,34 @@ export function AppShell({
                 the menu button stays beside it. Entries' own pages, and
                 every width from md up, keep the menu button. */}
             {back && <PhoneBack back={back} />}
-            <SidebarTrigger className={cn(back && bottomBar?.length && 'max-md:hidden')} />
+            <SidebarTrigger className={cn(back && hasBar && 'max-md:hidden')} />
             {/* The trail, from md up: the page's own (usePageTrail,
                 EntityView's back.trail), or its nav entry's. A phone has
                 the back arrow instead. */}
             <div data-slot="app-shell-trail" className="min-w-0 flex-1">
               {trail.length > 0 && <PageTrail crumbs={trail} aria-label="You are here" className="max-md:hidden" />}
             </div>
-            {search && <SearchPalette search={search} nav={nav} />}
+            {search && <SearchPalette ref={paletteRef} search={search} nav={nav} />}
             <LookControl />
           </header>
           {/* "You're offline", over every page while the server can't be reached. */}
           <OfflineNotice />
           <SidebarInset className="min-w-0">
-            <div className={cn('flex-1 p-6', bottomBar?.length && BOTTOM_BAR_PADDING)}>
+            <div className={cn('flex-1 p-6', hasBar && BOTTOM_BAR_PADDING)}>
               <Outlet />
             </div>
           </SidebarInset>
         </div>
         </PageTrailContext.Provider>
-        {bottomBar && bottomBar.length > 0 && <BottomBar items={bottomBar} nav={nav} activeTo={activeTo} navLook={navLook} />}
+        {hasBar && (
+          <BottomBar
+            items={barItems}
+            nav={nav}
+            activeTo={activeTo}
+            navLook={navLook}
+            onSearch={(opener) => paletteRef.current?.openFrom(opener)}
+          />
+        )}
       </SidebarProvider>
       {/* Top centre, and at the bottom on a phone above its bars (ui/sonner.tsx): not sonner's bottom-right default, which sat on
           DataTable's pagination buttons; top-right would collide with

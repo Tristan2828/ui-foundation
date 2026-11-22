@@ -281,9 +281,9 @@ export function trailBackTarget(
 
 /**
  * One item of `AppShell`'s `bottomBar`, the phone's bar of shortcuts: a
- * page, or one of the nav's sections by its label, which opens a sheet of
- * that section's entries. `label` is a shorter name for the bar
- * ("Household" for "Home and money").
+ * page, one of the nav's sections by its label, which opens a sheet of
+ * that section's entries, or Search. A section's `label` is a shorter name
+ * for the bar ("Household" for "Home and money").
  */
 export type BottomBarItem =
   | { to: string; label: string; icon: IconComponent }
@@ -299,6 +299,26 @@ export type BottomBarItem =
        */
       sheet?: 'list' | 'tiles'
     }
+  | {
+      /**
+       * A button named Search that opens the shell's search palette, the
+       * one its header opens. Never the current page, and never counted.
+       * Drawn only with the shell's `search`.
+       */
+      search: true
+      /** The header's is lucide's `SearchIcon`. */
+      icon: IconComponent
+    }
+
+/**
+ * The bar's items that are drawn: Search only when the shell has it, so
+ * without it an item after it takes its place, and a bar of Search alone
+ * is no bar.
+ */
+export function bottomBarItems(items: readonly BottomBarItem[] | undefined, hasSearch: boolean): readonly BottomBarItem[] {
+  // At most five: a sixth wouldn't fit a phone's width with its label.
+  return (items ?? []).filter((item) => hasSearch || !('search' in item)).slice(0, 5)
+}
 
 /**
  * Whether a bottom bar item's sheet is tiles: its own `sheet`, or else
@@ -343,6 +363,7 @@ export function bottomBarSection(nav: readonly NavEntry[], label: string): NavSe
 /**
  * Which bar item holds the current page (`activeTo`, from activeNavTo):
  * the page's own link, or else the section it's in, children included.
+ * Never Search.
  */
 export function bottomBarCurrent(
   items: readonly BottomBarItem[],
@@ -383,11 +404,13 @@ export function navCountSpoken(count: number | undefined, countLabel?: string): 
  * A bottom bar item's count: a page's, from its nav entry, or a
  * section's, the sum of its entries' and their pages'. A section's
  * `countLabel` is its entries' when they share one, and none otherwise.
+ * Search has none.
  */
 export function bottomBarCount(
   item: BottomBarItem,
   nav: readonly NavEntry[],
 ): { count?: number; countLabel?: string } {
+  if ('search' in item) return {}
   if ('to' in item) {
     const entry = navItems(nav).find((other) => other.to === item.to)
     return entry ? { count: entry.count, countLabel: entry.countLabel } : {}

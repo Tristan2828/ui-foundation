@@ -7,6 +7,30 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.140.0 — Search on the phone's bottom bar
+
+npm package and `ui-foundation-backend` 4.140.0 (the backend is unchanged
+apart from its version). `AppShell`'s `bottomBar` takes a third kind of
+item, Search: a button that opens the palette the header's search opens.
+Nothing changes for an app that doesn't use it.
+
+### How an app adopts it
+
+Put it among the bar's items, which are still five at most, with lucide's
+`SearchIcon` (the header's):
+`{ search: true, icon: SearchIcon }`. The app needs `search` on its
+`AppShell`; without it the item isn't drawn.
+
+### What to know
+
+- It is a button named Search, never the current item and never counted.
+  Focus goes back to it when the palette closes.
+- The header's search button stays on a phone, so both are there.
+- `BottomBarItem` is a union with one more member. Passing items is
+  unchanged, and every member has an `icon`; code of an app's own that
+  reads items by telling two kinds apart (`'to' in item`, else a section)
+  has a third to tell apart.
+
 ## 4.139.0 — An extra-large density
 
 npm package and `ui-foundation-backend` 4.139.0 (the backend is unchanged
