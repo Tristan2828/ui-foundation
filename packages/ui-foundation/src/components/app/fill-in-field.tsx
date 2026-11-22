@@ -22,6 +22,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { formatPlainDate } from '@/lib/plain-date'
+import type { WeekdayCode } from '@/lib/recurrence'
 
 export type FillInInputKind = 'text' | 'longText' | 'number' | 'money' | 'date'
 
@@ -41,6 +42,8 @@ export interface FillInInputProps {
   suggestion?: FillInSuggestion<string>
   /** The currency of a money value, for its symbol and the suggestion. Default "USD". */
   currency?: string
+  /** DateField's `weekStart`, for a date's calendar. */
+  weekStart?: WeekdayCode
   locale?: string
   placeholder?: string
   className?: string
@@ -67,6 +70,7 @@ export function FillInInput({
   onChange,
   suggestion,
   currency = 'USD',
+  weekStart,
   locale,
   placeholder,
   className,
@@ -75,7 +79,7 @@ export function FillInInput({
   const control = (() => {
     switch (kind) {
       case 'date':
-        return <DateField id={id} value={value} onChange={onChange} clearable locale={locale} />
+        return <DateField id={id} value={value} onChange={onChange} clearable weekStart={weekStart} locale={locale} />
       case 'longText':
         return <Textarea id={id} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
       case 'money':
@@ -226,6 +230,8 @@ export interface FillInFieldProps {
   /** The number keys pick in this field when it's drawn as a row of choices. One per record. */
   shortcut?: boolean
   currency?: string
+  /** DateField's `weekStart`, for a date's calendar. */
+  weekStart?: WeekdayCode
   locale?: string
   className?: string
 }
@@ -235,7 +241,7 @@ const isNumeric = (kind: FillInFieldKind) => kind === 'number' || kind === 'mone
 const toText = (value: FillInValue | undefined) => (value === null || value === undefined ? '' : String(value))
 
 /** The row a field's kind calls for: FillInChoice, FillInSelect or FillInInput. */
-export function FillInField({ field, value, onChange, shortcut, currency, locale, className }: FillInFieldProps) {
+export function FillInField({ field, value, onChange, shortcut, currency, weekStart, locale, className }: FillInFieldProps) {
   const { kind, label, choices = [], suggestion } = field
   // A number's text as typed ("1." on the way to "1.5"), kept while it
   // still reads as the draft's value; replaced when the draft changes.
@@ -281,6 +287,7 @@ export function FillInField({ field, value, onChange, shortcut, currency, locale
       }}
       suggestion={suggestion === undefined ? undefined : { value: String(suggestion.value), note: suggestion.note }}
       currency={currency}
+      weekStart={weekStart}
       locale={locale}
       className={className}
     />

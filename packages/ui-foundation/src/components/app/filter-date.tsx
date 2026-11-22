@@ -16,6 +16,7 @@ import {
   parseDateFilter,
   type DateFilterPreset,
 } from '@/lib/date-filter'
+import type { WeekdayCode } from '@/lib/recurrence'
 import { DateField } from './date-field'
 import { filterName } from './filter-name'
 
@@ -33,6 +34,8 @@ export type FilterDateProps = {
   anyLabel?: string
   /** How a range's days are shown. Defaults to `{ dateStyle: 'medium' }`. */
   format?: Intl.DateTimeFormatOptions
+  /** DateField's `weekStart`, for the From and To days' calendars. */
+  weekStart?: WeekdayCode
   locale?: string
   className?: string
 }
@@ -54,6 +57,7 @@ export function FilterDate({
   range = true,
   anyLabel,
   format,
+  weekStart,
   locale,
   className,
 }: FilterDateProps) {
@@ -109,6 +113,7 @@ export function FilterDate({
             aria-label={`${label} From`}
             placeholder="From"
             format={format}
+            weekStart={weekStart}
             locale={locale}
             className="w-40"
           />
@@ -118,6 +123,7 @@ export function FilterDate({
             aria-label={`${label} To`}
             placeholder="To"
             format={format}
+            weekStart={weekStart}
             locale={locale}
             className="w-40"
           />

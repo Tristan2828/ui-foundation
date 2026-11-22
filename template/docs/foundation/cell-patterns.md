@@ -41,10 +41,10 @@
 - [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1843–1894
 - [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1896–1970
   - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1916–1970
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1972–2183
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2132–2183
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2185–2219
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2221–2268
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1972–2184
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2133–2184
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2186–2220
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2222–2269
 
 <!-- /index -->
 
@@ -2094,7 +2094,8 @@ const { filters, multiFilters, setFilter, setFilters, setMultiFilter, activeView
   inclusive plain days (`{ to: yesterday }`, `{ from: today }`), read
   against today when the list loads; its chip's words are
   `dateFilterText(value)`. A list filtered in the browser (or a mock) uses
-  `dateFilterKeeps(value, day)`.
+  `dateFilterKeeps(value, day)`. Its calendars' weeks start on Monday,
+  `weekStart="SU"` for Sunday.
 
   ```tsx
   const VIEWS = {

@@ -13,6 +13,10 @@
 // `clearable` adds Clear to the calendar for an optional field. Either way
 // the control carries `data-kind="date"`, so two dates keep sharing a row
 // on a phone without their Field saying `kind="date"`.
+//
+// The calendar's weeks start on Monday, MonthCalendar's and
+// RecurrenceField's default; `weekStart="SU"` for an app whose weeks start
+// on Sunday.
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import { CalendarIcon } from 'lucide-react'
 import { cn } from 'cn'
@@ -29,6 +33,7 @@ import {
   unreadableDateMessage,
   type PlainDate,
 } from '@/lib/plain-date'
+import type { WeekdayCode } from '@/lib/recurrence'
 
 export type DateFieldProps = {
   /** The box's id (the button's with `typing={false}`), for the field's `<FieldLabel htmlFor>`. */
@@ -72,6 +77,8 @@ export type DateFieldProps = {
   onOpenChange?: (open: boolean) => void
   /** How the day is shown. Defaults to `{ dateStyle: 'medium' }`. */
   format?: Intl.DateTimeFormatOptions
+  /** The day the calendar's weeks start on (`'MO'` to `'SU'`; Monday when left out). */
+  weekStart?: WeekdayCode
   locale?: string
   className?: string
   'aria-label'?: string
@@ -84,6 +91,9 @@ export function DateField({ typing = true, onProblem, ...props }: DateFieldProps
 }
 
 type ModeProps = Omit<DateFieldProps, 'typing'>
+
+// Calendar's `weekStartsOn` by code. Left out, it's Calendar's own default (Monday).
+const WEEK_STARTS_ON = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 } as const satisfies Record<WeekdayCode, number>
 
 function TypedDate({
   id,
@@ -99,6 +109,7 @@ function TypedDate({
   modal,
   onOpenChange,
   format,
+  weekStart,
   locale,
   className,
   'aria-describedby': describedBy,
@@ -204,6 +215,7 @@ function TypedDate({
               align="start"
               className="w-auto p-0"
               data-slot="date-field-calendar"
+              aria-label="Calendar"
               // The day the keyboard starts from (the chosen one, else today).
               initialFocus={() => popup.current?.querySelector<HTMLElement>('button[data-day][tabindex="0"]') ?? true}
               // Back to the box, where typing goes on.
@@ -215,6 +227,7 @@ function TypedDate({
                 required
                 selected={selected}
                 defaultMonth={selected}
+                weekStartsOn={weekStart && WEEK_STARTS_ON[weekStart]}
                 onSelect={(date: Date) => pick(localToPlainDate(date))}
               />
               {clearable && given && (
@@ -250,6 +263,7 @@ function DateButton({
   modal,
   onOpenChange,
   format,
+  weekStart,
   locale,
   className,
   ...aria
@@ -292,6 +306,7 @@ function DateButton({
         ref={popup}
         className="w-auto p-0"
         data-slot="date-field-calendar"
+        aria-label="Calendar"
         // The day the keyboard starts from (the chosen one, else today):
         // the one day react-day-picker makes tabbable. The popup would
         // otherwise take focus itself, past the Calendar's autoFocus.
@@ -303,6 +318,7 @@ function DateButton({
           required
           selected={selected}
           defaultMonth={selected}
+          weekStartsOn={weekStart && WEEK_STARTS_ON[weekStart]}
           onSelect={(date: Date) => pick(localToPlainDate(date))}
         />
         {clearable && value && (
