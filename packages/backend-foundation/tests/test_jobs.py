@@ -259,12 +259,181 @@ async def test_the_schedule_goes_on_when_a_run_cannot_be_recorded(
     assert isinstance(reported[0][0], ConnectionError)
 
 
-async def test_nothing_runs_on_a_schedule_until_the_first_interval(engine: AsyncEngine) -> None:
+async def test_a_job_that_ran_recently_does_not_run_at_start(engine: AsyncEngine) -> None:
     jobs.register_job("later", every=timedelta(hours=1), run=_says("x"))
+    await _add_run(engine, "later", datetime.now(timezone.utc) - timedelta(minutes=1), "ok")
     schedules = jobs.start_jobs(engine)
     await asyncio.sleep(0.05)
     await jobs.stop_jobs(schedules)
-    assert await _runs(engine, "later") == []
+    assert [r.outcome for r in await _runs(engine, "later")] == ["ok"]
+
+
+# ------------------------------------------------- the first wait after start
+#
+# Fake time: `_now` is fixed, the jitter is a known number, and the loop's
+# sleep records how long it was asked to wait instead of waiting.
+
+NOW = datetime.now(timezone.utc).replace(microsecond=0)
+JITTER = 7.0
+DAY = timedelta(days=1)
+
+
+class _Stop(Exception):
+    """Ends a schedule's loop from inside its sleep."""
+
+
+@pytest.fixture
+def fake_time(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    """The waits the loop asked for. The first returns at once (time jumps
+    to the tick); the second stops the loop."""
+    waits: list[float] = []
+
+    async def sleep(delay: float) -> None:
+        waits.append(delay)
+        if len(waits) > 1:
+            raise _Stop
+
+    monkeypatch.setattr(jobs, "_now", lambda: NOW)
+    monkeypatch.setattr(jobs, "_jitter", lambda job: JITTER)
+    monkeypatch.setattr(jobs, "_sleep", sleep)
+    return waits
+
+
+async def _add_run(engine: AsyncEngine, name: str, started_at: datetime, outcome: jobs.Outcome) -> None:
+    async with AsyncSession(engine) as session:
+        session.add(
+            JobRunRecord(job=name, trigger="schedule", started_at=started_at, finished_at=started_at, outcome=outcome)
+        )
+        await session.commit()
+
+
+async def _start(engine: AsyncEngine, job: jobs.Job) -> None:
+    """One process starting: its loop's first wait, then its first tick."""
+    with pytest.raises(_Stop):
+        await jobs._loop(engine, job)
+
+
+async def test_a_job_overdue_at_start_runs_within_its_jitter(engine: AsyncEngine, fake_time: list[float]) -> None:
+    calls: list[int] = []
+
+    async def run(_: AsyncSession) -> None:
+        calls.append(1)
+
+    job = jobs.register_job("daily-sync", every=DAY, run=run)
+    await _add_run(engine, "daily-sync", NOW - DAY - timedelta(hours=3), "ok")
+    await _start(engine, job)
+    assert fake_time[0] == JITTER
+    assert calls == [1]
+    assert [r.outcome for r in await _runs(engine, "daily-sync")] == ["ok", "ok"]
+    # Then the ordinary interval from this run.
+    assert fake_time[1] == DAY.total_seconds() + JITTER
+
+
+async def test_a_job_that_ran_recently_waits_out_the_rest(engine: AsyncEngine, fake_time: list[float]) -> None:
+    job = jobs.register_job("daily-sync", every=DAY, run=_says("x"))
+    await _add_run(engine, "daily-sync", NOW - timedelta(hours=20), "ok")
+    assert await jobs._first_delay(engine, job) == timedelta(hours=4).total_seconds() + JITTER
+
+
+async def test_a_weekly_job_redeployed_daily_still_runs_weekly(engine: AsyncEngine, fake_time: list[float]) -> None:
+    # Six restarts a day apart wait out the week; the seventh finds it due.
+    week = timedelta(days=7)
+    job = jobs.register_job("weekly-sync", every=week, run=_says("x"))
+    await _add_run(engine, "weekly-sync", NOW - timedelta(days=6, hours=23), "ok")
+    assert await jobs._first_delay(engine, job) == timedelta(hours=1).total_seconds() + JITTER
+
+
+async def test_a_job_never_run_runs_within_its_jitter(engine: AsyncEngine, fake_time: list[float]) -> None:
+    job = jobs.register_job("weekly-sync", every=timedelta(days=7), run=_says("first"))
+    await _start(engine, job)
+    assert fake_time[0] == JITTER
+    assert [(r.outcome, r.summary) for r in await _runs(engine, "weekly-sync")] == [("ok", "first")]
+
+
+async def test_a_job_whose_runs_aged_out_runs_within_its_jitter(engine: AsyncEngine, fake_time: list[float]) -> None:
+    # Only another job's runs are kept: this one's are past the keep window.
+    job = jobs.register_job("weekly-sync", every=timedelta(days=7), run=_says("x"))
+    await _add_run(engine, "other-sync", NOW - timedelta(hours=1), "ok")
+    assert await jobs._first_delay(engine, job) == JITTER
+
+
+async def test_a_skipped_tick_is_not_a_run(engine: AsyncEngine, fake_time: list[float]) -> None:
+    job = jobs.register_job("daily-sync", every=DAY, run=_says("x"))
+    await _add_run(engine, "daily-sync", NOW - timedelta(days=2), "ok")
+    await _add_run(engine, "daily-sync", NOW - timedelta(minutes=5), "skipped")
+    assert await jobs._first_delay(engine, job) == JITTER
+
+
+async def test_a_failed_run_counts_so_a_failing_job_is_not_retried_at_every_start(
+    engine: AsyncEngine, fake_time: list[float]
+) -> None:
+    job = jobs.register_job("daily-sync", every=DAY, run=_says("x"))
+    await _add_run(engine, "daily-sync", NOW - timedelta(days=2), "ok")
+    await _add_run(engine, "daily-sync", NOW - timedelta(hours=18), "failed")
+    assert await jobs._first_delay(engine, job) == timedelta(hours=6).total_seconds() + JITTER
+
+
+async def test_a_run_by_hand_counts(engine: AsyncEngine, fake_time: list[float]) -> None:
+    job = jobs.register_job("daily-sync", every=DAY, run=_says("x"))
+    await (await jobs.start_job(engine, job))  # started "now", by the fake clock
+    assert await jobs._first_delay(engine, job) == DAY.total_seconds() + JITTER
+
+
+async def test_a_start_in_the_future_waits_no_more_than_every(engine: AsyncEngine, fake_time: list[float]) -> None:
+    job = jobs.register_job("daily-sync", every=DAY, run=_says("x"))
+    await _add_run(engine, "daily-sync", NOW + timedelta(hours=5), "ok")
+    assert await jobs._first_delay(engine, job) == DAY.total_seconds() + JITTER
+
+
+async def test_run_at_start_runs_within_its_jitter_even_after_a_recent_run(
+    engine: AsyncEngine, fake_time: list[float]
+) -> None:
+    # Unchanged: the tick comes at once, and the skip check decides.
+    job = jobs.register_job("warm-cache", every=DAY, run=_says("x"), run_at_start=True)
+    await _add_run(engine, "warm-cache", NOW - timedelta(hours=1), "ok")
+    await _start(engine, job)
+    assert fake_time[0] == JITTER
+    runs = await _runs(engine, "warm-cache")
+    assert [r.outcome for r in runs] == ["ok", "skipped"]
+    assert runs[1].summary == "Ran 3600 s ago, in another process."
+
+
+async def test_job_runs_unreadable_at_start_waits_a_whole_interval(
+    engine: AsyncEngine, monkeypatch: pytest.MonkeyPatch, fake_time: list[float]
+) -> None:
+    async def down(engine: AsyncEngine, name: str) -> datetime | None:
+        raise ConnectionError("database down")
+
+    monkeypatch.setattr(jobs, "_last_started", down)
+    job = jobs.register_job("daily-sync", every=DAY, run=_says("x"))
+    assert await jobs._first_delay(engine, job) == DAY.total_seconds() + JITTER
+
+
+async def test_processes_starting_together_run_an_overdue_job_once(engine: AsyncEngine, fake_time: list[float]) -> None:
+    calls: list[int] = []
+
+    async def run(_: AsyncSession) -> None:
+        calls.append(1)
+
+    job = jobs.register_job("daily-sync", every=DAY, run=run)
+    await _add_run(engine, "daily-sync", NOW - timedelta(days=3), "ok")
+    # Two schedules of the same job at once, as two replicas starting after a
+    # deploy: both find it overdue; the lock or the skip check stops one.
+    waits: dict[asyncio.Task[object] | None, list[float]] = {}
+
+    async def sleep(delay: float) -> None:
+        mine = waits.setdefault(asyncio.current_task(), [])
+        mine.append(delay)
+        if len(mine) > 1:
+            raise _Stop
+
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(jobs, "_sleep", sleep)
+        results = await asyncio.gather(jobs._loop(engine, job), jobs._loop(engine, job), return_exceptions=True)
+    assert all(isinstance(r, _Stop) for r in results)
+    assert [w[0] for w in waits.values()] == [JITTER, JITTER]
+    assert calls == [1]
+    assert sorted(r.outcome for r in (await _runs(engine, "daily-sync"))[1:]) == ["ok", "skipped"]
 
 
 # ---------------------------------------------------------------- the API

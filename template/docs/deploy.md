@@ -336,7 +336,11 @@ register_job("sync-feeds", every=timedelta(minutes=15), run=sync_feeds)
   `APP_ENV=production` and off otherwise, so a dev server and the tests run
   a job only when asked. Each job waits `every` after its last run, plus a
   jitter (up to a tenth of `every`, at most a minute), so jobs started
-  together don't fire on the same second.
+  together don't fire on the same second. A restart keeps the schedule:
+  the first wait is counted from the job's last run in `job_runs`, so a job
+  that's due (or has no run kept) runs within its jitter of startup, and one
+  that ran recently waits out the rest of `every`. A daily job still runs
+  daily on an app redeployed several times a day.
 - **One run at a time, once per interval, across processes.** On Postgres
   each run holds an advisory lock for the job. Another process (a second
   replica, a reload's overlap) skips rather than waits. A scheduled run

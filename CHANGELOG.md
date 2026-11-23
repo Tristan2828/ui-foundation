@@ -7,6 +7,37 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.142.1 — A job's schedule survives a deploy
+
+npm package and `ui-foundation-backend` 4.142.1 (the npm package is
+unchanged apart from its version). A daily or weekly job no longer waits a
+full period after every deploy. A job without `run_at_start` used to count
+its first wait from the process's start, so on an app redeployed more often
+than its `every`, it never ran. Now the first wait comes from the job's last
+run in `job_runs`:
+
+- **Due, or no run kept** (never run, or its rows past
+  `JOB_RUNS_KEEP_DAYS`): it runs within its jitter of startup (up to a
+  tenth of `every`, at most a minute). Each job runs once; a fresh install's
+  jobs run once each in their first minute, not repeatedly.
+- **Ran recently:** it waits out the rest of `every` from that run's start,
+  plus the jitter.
+- **Which run counts:** the last that started, `ok`, `failed` or by hand
+  (so a failing job isn't retried at every start). A `skipped` tick isn't a
+  run, and a run cut off by the restart left no row.
+- **If `job_runs` can't be read at startup,** the wait is a whole `every`,
+  as before.
+
+Unchanged: `run_at_start` jobs (within the jitter, whatever the history),
+the skip check that stops a second process running a job that just ran,
+Run Now, timeouts, and `JOBS_ENABLED` (off outside production, so a dev
+server and the tests still run nothing on their own).
+
+### How an app adopts it
+
+Nothing to change: bump both pins. After the deploy, a job that's overdue
+runs within a minute of startup and shows in `GET /api/jobs`.
+
 ## 4.142.0 — A settings page
 
 npm package and `ui-foundation-backend` 4.142.0 (the backend is unchanged
