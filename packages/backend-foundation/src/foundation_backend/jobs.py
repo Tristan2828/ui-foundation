@@ -19,6 +19,11 @@ run a job only when asked). What every job gets without writing it:
   job started less than `every` ago (another replica, or the process before
   a reload) skips too. Each process waits `every` after its own run, plus a
   jitter, so jobs started together don't fire on the same second.
+- **A restart keeps the schedule.** The first wait after start is counted
+  from the job's last run in job_runs, not from the start: an overdue job,
+  or one with no run kept, runs within its jitter, and one that ran
+  recently waits out the rest of `every`. So a daily job still runs daily
+  when the app is redeployed more often than that.
 - **Every run is a row in job_runs**: started, finished, outcome (ok,
   failed, skipped), the error, and the job's own summary ("12 new"). Rows
   older than config.JOB_RUNS_KEEP_DAYS are trimmed after each run.
@@ -311,14 +316,49 @@ async def start_job(engine: AsyncEngine, job: Job) -> asyncio.Task[JobRunRecord]
 # ---------------------------------------------------------------- schedule
 
 
+# The schedule's own sleep, apart from asyncio's so a test can fake time.
+_sleep = asyncio.sleep
+
+
 def _jitter(job: Job) -> float:
     return random.uniform(0, min(MAX_JITTER_SECONDS, job.every.total_seconds() / 10))
 
 
+async def _first_delay(engine: AsyncEngine, job: Job) -> float:
+    """Seconds until the schedule's first tick in this process, carried on
+    from the job's own history so a restart doesn't put it back a whole
+    `every`. Always at least the jitter, so processes started together
+    spread out (and the skip check stops a second run).
+
+    - `run_at_start`: the jitter, whatever the history.
+    - Last run older than `every`, or none in job_runs (never run, or its
+      rows aged out): the jitter, so it runs soon after start. Each job
+      runs once; nothing repeats until `every` has passed.
+    - Last run recent: the rest of `every` from that start, plus the jitter.
+
+    The last run is the last one that started, ok, failed or by hand; a
+    skipped tick didn't run, and a run cut off before it finished left no
+    row. If job_runs can't be read, the wait is a whole `every`, as if the
+    job had just run."""
+    jitter = _jitter(job)
+    if job.run_at_start:
+        return jitter
+    try:
+        last = await _last_started(engine, job.name)
+    except Exception:
+        logger.exception("job %s: its last run couldn't be read; waiting a whole interval", job.name)
+        return job.every.total_seconds() + jitter
+    if last is None:
+        return jitter
+    # A start in the future (a clock moved back) waits no more than `every`.
+    rest = min(job.every, last + job.every - _now()).total_seconds()
+    return jitter + max(0.0, rest)
+
+
 async def _loop(engine: AsyncEngine, job: Job) -> None:
-    delay = _jitter(job) if job.run_at_start else job.every.total_seconds() + _jitter(job)
+    delay = await _first_delay(engine, job)
     while True:
-        await asyncio.sleep(delay)
+        await _sleep(delay)
         try:
             await run_scheduled(engine, job)
         except Exception as exc:
