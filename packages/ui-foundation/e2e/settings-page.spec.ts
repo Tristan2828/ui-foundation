@@ -334,6 +334,9 @@ test.describe('on a phone', () => {
     await open(page, story('with-table'))
     const container = page.locator('[data-slot="table-container"]')
     expect(await container.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeGreaterThan(0)
+    // It scrolls, and only it: the frame stays inside the window.
+    expect(await container.evaluate((el) => ((el.scrollLeft = 40), el.scrollLeft))).toBeGreaterThan(0)
+    expect(right(await box(page.locator('[data-slot="data-table-frame"]')))).toBeLessThanOrEqual(375)
     expect(await sideways(page)).toBeLessThanOrEqual(0)
   })
 })
