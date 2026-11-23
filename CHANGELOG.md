@@ -43,6 +43,12 @@ day by its place in the grid, and not by its name, needs a look.
   does.
 - `DateField`'s popup is named Calendar to a screen reader; it had no
   name.
+- A month that starts on a Sunday now takes six rows where it took five
+  (30 or 31 days), so its calendar is a row taller. **An app with a picker
+  of its own, copied from the template's widget form,** closes it on a
+  pick, as `DateField` does: left open, the last row can cover the field
+  below, and a press meant for that field picks another day. The
+  template's form now does (and picking the chosen day again keeps it).
 
 ## 4.140.0 — Search on the phone's bottom bar
 
