@@ -163,6 +163,17 @@ export type AppShellProps = {
    */
   navLook?: NavLook
   /**
+   * The header's look menu: the palettes and the table rows, for a device
+   * to pick from. Drawn where the app lets a device pick
+   * (`FoundationProviders`' `palettePicker` and `rowsPicker`). `false`
+   * draws none, for an app that offers them on a settings page instead;
+   * what a device picked still applies. Put `PaletteSetting` and
+   * `RowsSetting` on a page first: with the menu off and neither on a
+   * page, a device that picked has no way to change back. The light/dark
+   * toggle of an app without a palette isn't part of it and stays.
+   */
+  lookMenu?: boolean
+  /**
    * Search in the header: a box ("Search", or `placeholder`) from
    * md up and a button on a phone (the bottom bar's Search instead, where
    * `bottomBar` has it), both opening a palette (Ctrl K, ⌘K on a Mac) that finds the nav's pages by name and, with `findRecords`,
@@ -199,15 +210,17 @@ function CloseMobileSidebarOnNavigate() {
 // with a light palette, always light), so it has no light/dark toggle, and with the picker on it gets the look menu
 // in its place (design-language.md "Palettes"). With the rows picker the
 // same menu offers the table rows (design-language.md "Density"); an app
-// without a palette keeps its toggle beside it.
-function LookControl() {
+// without a palette keeps its toggle beside it. With `menu` off (AppShell's
+// `lookMenu`) only the toggle is left, and the choices are a settings
+// page's (look-settings.tsx).
+function LookControl({ menu }: { menu: boolean }) {
   const { palette, picker } = usePalette()
   const rows = useRows()
   const pickPalette = picker && isPaletteName(palette) ? palette : null
   return (
     <>
       {!palette && <ThemeToggle />}
-      {(pickPalette || rows.picker) && <LookMenu palette={pickPalette} />}
+      {menu && (pickPalette || rows.picker) && <LookMenu palette={pickPalette} />}
     </>
   )
 }
@@ -655,6 +668,7 @@ export function AppShell({
   version,
   bottomBar,
   navLook = 'list',
+  lookMenu = true,
   search,
 }: AppShellProps) {
   const { user, status, error, retry, logout } = useAuth()
@@ -822,7 +836,7 @@ export function AppShell({
               {trail.length > 0 && <PageTrail crumbs={trail} aria-label="You are here" className="max-md:hidden" />}
             </div>
             {search && <SearchPalette ref={paletteRef} search={search} nav={nav} onBar={bottomBarHasSearch(barItems)} />}
-            <LookControl />
+            <LookControl menu={lookMenu} />
           </header>
           {/* "You're offline", over every page while the server can't be reached. */}
           <OfflineNotice />

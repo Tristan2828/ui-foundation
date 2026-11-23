@@ -197,16 +197,18 @@ function matches(path: string, end: boolean | undefined, pathname: string): bool
 }
 
 /**
- * The one entry to mark active: the most specific that matches, by the path
- * of its `to` (its query string ignored). With '/tasks' and
- * '/tasks/categories' both in the nav, '/tasks/categories/2' marks
- * Categories only, and '/tasks/3' marks Tasks. Of two entries with the same
- * path, the first.
+ * The one of a list of links that `pathname` is at or under: the most
+ * specific that matches, by the path of its `to` (its query string
+ * ignored). Of two with the same path, the first. The rule for the nav's
+ * entries (activeNavItem) and for a settings page's groups.
  */
-export function activeNavItem(nav: readonly NavEntry[], pathname: string): NavItem | undefined {
-  let best: NavItem | undefined
+export function mostSpecificTo<T extends { to: string; end?: boolean }>(
+  items: readonly T[],
+  pathname: string,
+): T | undefined {
+  let best: T | undefined
   let bestLength = -1
-  for (const item of navItems(nav)) {
+  for (const item of items) {
     const path = navPathname(item.to)
     if (matches(path, item.end, pathname) && path.length > bestLength) {
       best = item
@@ -214,6 +216,15 @@ export function activeNavItem(nav: readonly NavEntry[], pathname: string): NavIt
     }
   }
   return best
+}
+
+/**
+ * The one entry to mark active: the most specific that matches
+ * (mostSpecificTo). With '/tasks' and '/tasks/categories' both in the nav,
+ * '/tasks/categories/2' marks Categories only, and '/tasks/3' marks Tasks.
+ */
+export function activeNavItem(nav: readonly NavEntry[], pathname: string): NavItem | undefined {
+  return mostSpecificTo(navItems(nav), pathname)
 }
 
 /** The `to` of the one entry to mark active (`activeNavItem`). */

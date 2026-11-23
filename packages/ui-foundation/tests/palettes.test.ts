@@ -128,9 +128,9 @@ describe('the palettes', () => {
     }
   })
 
-  it('the swatches in the shell read primitives every palette has', () => {
+  it("the shell's swatches and the settings' tiles read primitives every palette has", () => {
     for (const name of PALETTES) {
-      for (const part of ['background', 'accent', 'second']) expect(css).toContain(`--palette-${name}-${part}:`)
+      for (const part of ['background', 'accent', 'second', 'panel', 'dim']) expect(css).toContain(`--palette-${name}-${part}:`)
     }
   })
 })

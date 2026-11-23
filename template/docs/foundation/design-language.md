@@ -3,47 +3,48 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 56–138
-- [Glow](#glow) · lines 140–159
-- [Semantic tones](#semantic-tones) · lines 161–189
-- [The three badge styles](#the-three-badge-styles) · lines 191–208
-- [Status marks](#status-marks) · lines 210–253
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 255–284
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 286–297
-- [Logos and brand marks](#logos-and-brand-marks) · lines 299–339
-- [Categorical colour](#categorical-colour) · lines 341–406
-- [Heat scale](#heat-scale) · lines 408–460
-- [Depth ramps](#depth-ramps) · lines 462–529
-- [A stored colour](#a-stored-colour) · lines 531–578
-- [Shapes and sizes](#shapes-and-sizes) · lines 580–601
-- [Typography](#typography) · lines 603–773
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 637–669
-  - [Written text (notes)](#written-text-notes) · lines 671–773
-- [Density](#density) · lines 775–896
-  - [Rows on this device](#rows-on-this-device) · lines 842–869
-  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 871–896
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 898–1008
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1010–1082
-- [Notices](#notices) · lines 1084–1111
-- [A value over time](#a-value-over-time) · lines 1113–1243
-  - [Several values over time](#several-values-over-time) · lines 1162–1200
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1202–1243
-- [A list as a board](#a-list-as-a-board) · lines 1245–1355
-  - [Order, groups and the header](#order-groups-and-the-header) · lines 1298–1355
-- [A list as cards](#a-list-as-cards) · lines 1357–1404
-- [Images full screen](#images-full-screen) · lines 1406–1452
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1454–1490
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1492–1528
-- [A few equal things](#a-few-equal-things) · lines 1530–1645
-- [An overview page](#an-overview-page) · lines 1647–1712
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1714–1777
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1779–1866
-- [Picking at random](#picking-at-random) · lines 1868–1899
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1901–1968
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1970–1989
-- [A quick add line](#a-quick-add-line) · lines 1991–2019
-- [A month calendar](#a-month-calendar) · lines 2021–2051
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2053–2112
+- [Palettes](#palettes) · lines 57–140
+- [Glow](#glow) · lines 142–161
+- [Semantic tones](#semantic-tones) · lines 163–191
+- [The three badge styles](#the-three-badge-styles) · lines 193–210
+- [Status marks](#status-marks) · lines 212–255
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 257–286
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 288–299
+- [Logos and brand marks](#logos-and-brand-marks) · lines 301–341
+- [Categorical colour](#categorical-colour) · lines 343–408
+- [Heat scale](#heat-scale) · lines 410–462
+- [Depth ramps](#depth-ramps) · lines 464–531
+- [A stored colour](#a-stored-colour) · lines 533–580
+- [Shapes and sizes](#shapes-and-sizes) · lines 582–603
+- [Typography](#typography) · lines 605–775
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 639–671
+  - [Written text (notes)](#written-text-notes) · lines 673–775
+- [Density](#density) · lines 777–899
+  - [Rows on this device](#rows-on-this-device) · lines 844–872
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 874–899
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 901–1011
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1013–1085
+- [Notices](#notices) · lines 1087–1114
+- [A value over time](#a-value-over-time) · lines 1116–1246
+  - [Several values over time](#several-values-over-time) · lines 1165–1203
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1205–1246
+- [A list as a board](#a-list-as-a-board) · lines 1248–1358
+  - [Order, groups and the header](#order-groups-and-the-header) · lines 1301–1358
+- [A list as cards](#a-list-as-cards) · lines 1360–1407
+- [Images full screen](#images-full-screen) · lines 1409–1455
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1457–1493
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1495–1531
+- [A few equal things](#a-few-equal-things) · lines 1533–1648
+- [An overview page](#an-overview-page) · lines 1650–1715
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1717–1780
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1782–1869
+- [Picking at random](#picking-at-random) · lines 1871–1902
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1904–1971
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1973–1992
+- [A quick add line](#a-quick-add-line) · lines 1994–2022
+- [A month calendar](#a-month-calendar) · lines 2024–2054
+- [A settings page](#a-settings-page) · lines 2056–2113
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2115–2174
 
 <!-- /index -->
 
@@ -73,7 +74,8 @@ And one light one, which an app opts into by name (`LIGHT_PALETTES`):
 
 **How an app picks one.** `<FoundationProviders palette="indigo-cyan">`
 names the app's default. Add `palettePicker` and the app shell's header
-offers the four dark ones (with swatches); the one picked is remembered
+offers the four dark ones (with swatches), or a page does, as tiles
+(`PaletteSetting`, "A settings page"); the one picked is remembered
 on that device, and a new device starts on the default. `usePalette()`
 reads the palette on screen. Without `palette`, nothing changes: light and
 dark follow the system, with the toggle in the header.
@@ -844,7 +846,8 @@ set, not a `DataTable` prop:
 An app can let each device choose its table rows: `rowsPicker` on
 `FoundationProviders` adds **Rows on this device** to the shell's look
 menu (under the palettes, or a menu of its own beside the light/dark
-toggle in an app without a palette).
+toggle in an app without a palette). `RowsSetting` offers the same choice
+on a page ("A settings page").
 
 ```tsx
 <FoundationProviders palette="indigo-cyan" palettePicker rowsPicker …>
@@ -2049,6 +2052,65 @@ package's `MonthCalendar`. Not a date picker, which is
   with nothing says so over the days (`emptyText`), and success.
 - `today` comes from the app's own day (`todayIn`); every day is a plain
   `'YYYY-MM-DD'`, so no zone moves one.
+
+## A settings page
+
+One page for what an app lets a person choose: the groups listed down the
+side, the one you're on beside them as a card of rows. Parts the app puts
+together, so a group's routes, its rows and where a choice is kept are the
+app's:
+
+```tsx
+const GROUPS = [
+  { to: '/settings', label: 'Look' },
+  { to: '/settings/notifications', label: 'Notifications' },
+]
+
+// the layout route
+<SettingsPage title="Settings" groups={GROUPS}><Outlet /></SettingsPage>
+
+// a group's route
+<SettingsCard>
+  <SettingsRow
+    label="Text Size"
+    help="For this browser only."
+    control={(aria) => <ChoiceButtons {...aria} options={SIZES} value={size} onValueChange={save} />}
+  />
+  <PaletteSetting />
+  <RowsSetting />
+</SettingsCard>
+```
+
+- **Each group is a route**, so it has an address, Back and a deep link.
+  The first is the layout's index route, at the page's own address. A
+  group that holds nothing is left out, and has no route: send an unknown
+  path under the page to the first group.
+- **The current group** is marked as the sidebar marks its entry, a tint
+  and a 3px bar, and stays marked on a page below it. Past the first, the
+  bar's trail reads "Settings / Notifications" and a phone's back arrow
+  goes to the first; a page below a group puts up its own trail.
+- **In a box under 40rem** (a phone, or a window the sidebar has narrowed)
+  the groups wrap in a row above the card, each 40px tall.
+- **A row** is its label, one short line of help and its control. Spread
+  what the `control` function is handed on the control: it names it by the
+  label and the help. A control that is one thing (a select, a switch)
+  also gets an `id`, and the row its `htmlFor`.
+- **`layout="below"`** is for a control with a size of its own: tiles, a
+  list to order. Everything that fits on a line stays beside its label;
+  it drops under the words by itself where it doesn't fit.
+- **A table goes after the card**, as any framed list: a
+  `DataTable look="framed"` under its `ListHeader`. The card stops at 832px
+  and the table doesn't.
+- **A choice kept on the device says so** in its help: "For this browser
+  only." A row has no saving state: a device's choice saves at once, and a
+  control that saves to a server shows its own.
+- **`PaletteSetting` and `RowsSetting`** are the shell's look menu as rows,
+  kept under the same keys. Each draws nothing where the app doesn't let a
+  device pick, so a page can always render them.
+- **With both on a page, `<AppShell lookMenu={false}>`** takes the look menu
+  out of the header. `palettePicker` and `rowsPicker` stay on: they say a
+  device may choose, and its choice applies. Don't turn the menu off before
+  the page has the two: a device that picked would have no way back.
 
 ## The sidebar and the phone's bar
 

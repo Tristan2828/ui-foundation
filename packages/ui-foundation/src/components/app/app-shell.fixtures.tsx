@@ -374,6 +374,7 @@ function Shell({
   recent = false,
   trail = false,
   navLook,
+  lookMenu,
 }: {
   nav: NavEntry[]
   path: string
@@ -396,6 +397,8 @@ function Shell({
   trail?: boolean
   /** The sidebar's look (AppShell's `navLook`). */
   navLook?: 'list' | 'tiles'
+  /** The header's look menu (AppShell's `lookMenu`). */
+  lookMenu?: boolean
 }) {
   // Once, before the palette can read them.
   useState(() => seedRecent(recent))
@@ -412,6 +415,7 @@ function Shell({
             version={version}
             bottomBar={bottomBar}
             navLook={navLook}
+            lookMenu={lookMenu}
             search={search ? SEARCH[search] : undefined}
           />
         ),
@@ -572,6 +576,16 @@ export const WithPalettePickerAndRows: Story = {
   args: { nav: SECTIONS, path: '/projects/7', palette: 'picker', rows: true },
 }
 export const WithRowsPicker: Story = { args: { nav: SECTIONS, path: '/projects/7', rows: true } }
+
+// Both pickers on and no look menu (`lookMenu={false}`): an app that offers
+// them on a settings page, where a saved choice still applies; and the same
+// without a palette, where the light/dark toggle stays.
+export const WithoutLookMenu: Story = {
+  args: { nav: SECTIONS, path: '/projects/7', palette: 'picker', rows: true, lookMenu: false },
+}
+export const WithoutLookMenuOrPalette: Story = {
+  args: { nav: SECTIONS, path: '/projects/7', rows: true, lookMenu: false },
+}
 
 // The navigation standard: on a record below Accounts (Finance's pages
 // under their headings, Accounts marked), on the icon rail, and on a

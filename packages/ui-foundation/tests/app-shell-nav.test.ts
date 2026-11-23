@@ -15,6 +15,7 @@ import {
   childItems,
   childRuns,
   childrenOpen,
+  mostSpecificTo,
   navBackTarget,
   navCountSpoken,
   navCountText,
@@ -60,6 +61,39 @@ describe('navGroups', () => {
       { label: 'Reading', items: [categories], collapsible: true, defaultOpen: false },
       { label: 'Plain', items: [home] },
     ])
+  })
+})
+
+// The one rule for the nav's entries and a settings page's groups.
+describe('mostSpecificTo', () => {
+  const groups = [
+    { to: '/settings', label: 'Look' },
+    { to: '/settings/labels?sort=name:asc', label: 'Labels' },
+  ]
+  const label = (pathname: string) => mostSpecificTo(groups, pathname)?.label
+
+  it('is the most specific match, by the path of its to', () => {
+    expect(label('/settings')).toBe('Look')
+    expect(label('/settings/labels')).toBe('Labels')
+  })
+
+  it('matches on a path-segment boundary, with or without a trailing slash', () => {
+    expect(label('/settings/labels-archive')).toBe('Look')
+    expect(label('/settings-archive')).toBeUndefined()
+    expect(label('/settings/labels/')).toBe('Labels')
+  })
+
+  it('keeps the link current on a page below it', () => {
+    expect(label('/settings/labels/3/edit')).toBe('Labels')
+  })
+
+  it('is none on a page none of them covers', () => {
+    expect(label('/')).toBeUndefined()
+    expect(mostSpecificTo([], '/settings')).toBeUndefined()
+  })
+
+  it('is the first of two with the same path', () => {
+    expect(mostSpecificTo([...groups, { to: '/settings', label: 'Again' }], '/settings')?.label).toBe('Look')
   })
 })
 

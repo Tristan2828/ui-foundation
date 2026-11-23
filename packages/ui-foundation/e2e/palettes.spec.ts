@@ -122,6 +122,30 @@ test('a saved Regular is ignored without the rows picker', async ({ page }) => {
   await expect(page.getByText('Rows on This Device')).toHaveCount(0)
 })
 
+// AppShell's `lookMenu={false}`: the app offers the choices on a settings
+// page (e2e/settings-page.spec.ts), so the menu goes and what this device
+// picked stays.
+test('without the look menu a saved palette and rows still apply', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('ui-foundation:palette', 'violet')
+    localStorage.setItem('ui-foundation:rows', 'regular')
+  })
+  await open(page, 'without-look-menu')
+  await expect(page.getByRole('button', { name: /^(Palette|Rows):/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Toggle Dark Mode' })).toHaveCount(0)
+  await expect(html(page)).toHaveAttribute('data-palette', 'violet')
+  await expect(html(page)).toHaveAttribute('data-rows', 'regular')
+  // With the menu, the same two choices are offered.
+  await open(page, 'with-palette-picker-and-rows')
+  await expect(page.getByRole('button', { name: 'Palette: Violet' })).toBeVisible()
+})
+
+test('without the look menu or a palette the light/dark toggle stays', async ({ page }) => {
+  await open(page, 'without-look-menu-or-palette', 'theme=light')
+  await expect(page.getByRole('button', { name: 'Toggle Dark Mode' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Rows:/ })).toHaveCount(0)
+})
+
 test('the link button reads in the palette’s link colour, not its accent', async ({ page }) => {
   await page.goto('http://localhost:6180/story.html?id=ui-button--variants&theme=dark&palette=indigo-rose')
   await expect(html(page)).toHaveAttribute('data-palette', 'indigo-rose')
