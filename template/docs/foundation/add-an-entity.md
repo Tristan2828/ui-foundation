@@ -16,7 +16,7 @@
   - Step 8: Add Playwright specs for all three screens · lines 255–335
   - Step 9: Register the nav entry and route names · lines 336–349
   - Step 10: `npm run verify`. · lines 350–351
-- [Step 6 in detail](#step-6-in-detail) · lines 353–929
+- [Step 6 in detail](#step-6-in-detail) · lines 353–933
   - [A `reference`](#a-reference) · lines 358–360
   - [A `single choice`](#a-single-choice) · lines 362–368
   - [A `date-time`](#a-date-time) · lines 370–373
@@ -25,32 +25,32 @@
   - [A `multi reference`](#a-multi-reference) · lines 393–405
   - [Sub-records](#sub-records) · lines 407–423
   - [A `computed` field](#a-computed-field) · lines 425–434
-  - [A `date`](#a-date) · lines 436–453
-  - [A `month-day`](#a-month-day) · lines 455–475
-  - [A `recurrence`](#a-recurrence) · lines 477–498
-  - [An image on a record](#an-image-on-a-record) · lines 500–528
-  - [A `reference` inside a sub-record item](#a-reference-inside-a-sub-record-item) · lines 530–589
-  - [A `yes/no` marked `toggle`](#a-yesno-marked-toggle) · lines 591–606
-  - [Keep column definitions stable](#keep-column-definitions-stable) · lines 608–616
-  - [The view](#the-view) · lines 618–736
-  - [The view: long text and notes](#the-view-long-text-and-notes) · lines 738–792
-  - [The view: quick actions and editing in place](#the-view-quick-actions-and-editing-in-place) · lines 794–852
-  - [The table opens the view, and the form returns to it](#the-table-opens-the-view-and-the-form-returns-to-it) · lines 854–865
-  - [`<SelectValue>` shows the value, not the label](#selectvalue-shows-the-value-not-the-label) · lines 867–913
-  - [Choosing how each column looks](#choosing-how-each-column-looks) · lines 915–929
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 931–1435
-  - [The record view](#the-record-view) · lines 1074–1254
-  - [Forms](#forms) · lines 1256–1339
-  - [Dialogs](#dialogs) · lines 1341–1374
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1376–1435
-- [What not to copy](#what-not-to-copy) · lines 1437–1464
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1466–1483
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1485–1545
-- [Deleting](#deleting) · lines 1547–1577
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1579–1598
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1600–1609
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1612–1654
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1656–1689
+  - [A `date`](#a-date) · lines 436–457
+  - [A `month-day`](#a-month-day) · lines 459–479
+  - [A `recurrence`](#a-recurrence) · lines 481–502
+  - [An image on a record](#an-image-on-a-record) · lines 504–532
+  - [A `reference` inside a sub-record item](#a-reference-inside-a-sub-record-item) · lines 534–593
+  - [A `yes/no` marked `toggle`](#a-yesno-marked-toggle) · lines 595–610
+  - [Keep column definitions stable](#keep-column-definitions-stable) · lines 612–620
+  - [The view](#the-view) · lines 622–740
+  - [The view: long text and notes](#the-view-long-text-and-notes) · lines 742–796
+  - [The view: quick actions and editing in place](#the-view-quick-actions-and-editing-in-place) · lines 798–856
+  - [The table opens the view, and the form returns to it](#the-table-opens-the-view-and-the-form-returns-to-it) · lines 858–869
+  - [`<SelectValue>` shows the value, not the label](#selectvalue-shows-the-value-not-the-label) · lines 871–917
+  - [Choosing how each column looks](#choosing-how-each-column-looks) · lines 919–933
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 935–1439
+  - [The record view](#the-record-view) · lines 1078–1258
+  - [Forms](#forms) · lines 1260–1343
+  - [Dialogs](#dialogs) · lines 1345–1378
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1380–1439
+- [What not to copy](#what-not-to-copy) · lines 1441–1468
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1470–1487
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1489–1549
+- [Deleting](#deleting) · lines 1551–1581
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1583–1602
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1604–1613
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1616–1658
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1660–1693
 
 <!-- /index -->
 
@@ -449,7 +449,11 @@ date like 3/14 or Mar 14" and gives `''`. Editing in place is
 `inPlace.date({ value, save })`: Enter or leaving saves the day typed,
 a day picked in the calendar saves at once. (`typing={false}` is the
 button alone; in place then `editInPlace({ kind: 'choice', ... })` with
-`defaultOpen`, `modal={false}` and `onChange={(day) => props.commit(day)}`.) The backend column
+`defaultOpen`, `modal={false}` and `onChange={(day) => props.commit(day)}`.) The calendar's weeks
+start on Monday. An app whose weeks start on Sunday gives `DateField`,
+`inPlace.date`, `FilterDate` and `FillInField` `weekStart="SU"`, the
+`weekStart` it gives `MonthCalendar` and `RecurrenceField` (a `Calendar`
+of its own takes react-day-picker's `weekStartsOn={0}`). The backend column
 is a SQL `date` (`datetime.date` in the model).
 
 ### A `month-day`

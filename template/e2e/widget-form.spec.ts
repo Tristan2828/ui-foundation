@@ -215,6 +215,27 @@ test.describe('widget form', () => {
     await expect(page.getByRole('cell', { name: 'Playwright Success Widget', exact: true })).toBeVisible()
   })
 
+  test('picking a date closes the calendar, so the next press is for the field under it', async ({ page }) => {
+    // November 2026 starts on a Sunday: six rows with weeks from Monday, the last one over Tags.
+    await page.clock.setFixedTime(new Date(2026, 10, 22, 12))
+    await page.goto('/widgets/new')
+    const date = page.locator('#widget-available-from')
+    const calendar = page.locator('[data-slot="popover-content"]')
+    await date.click()
+    await expect(calendar.locator('tbody tr')).toHaveCount(6)
+    await page.getByRole('button', { name: /^Today,/ }).click()
+    await expect(calendar).toHaveCount(0)
+    await expect(date).toBeFocused()
+    await pickTag(page, 'Bulky')
+    await expect(date).toHaveText('Nov 22, 2026')
+
+    // Picking the chosen day again keeps it.
+    await date.click()
+    await page.getByRole('button', { name: /^Today,/ }).click()
+    await expect(calendar).toHaveCount(0)
+    await expect(date).toHaveText('Nov 22, 2026')
+  })
+
   test('cancel: leaving a new widget unsaved asks first, then goes back to the list', async ({ page }) => {
     await page.goto('/widgets/new')
     // Nothing typed: nothing asked.

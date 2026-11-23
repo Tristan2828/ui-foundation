@@ -108,6 +108,7 @@ export function WidgetFormRoute() {
 
   const [submitError, setSubmitError] = useState<AppError | null>(null)
   const [descriptionProblem, setDescriptionProblem] = useState<string | null>(null)
+  const [availableFromOpen, setAvailableFromOpen] = useState(false)
 
   const form = useForm<WidgetFormValues>({
     resolver: zodResolver(widgetFormSchema),
@@ -286,7 +287,9 @@ export function WidgetFormRoute() {
         <FieldError errors={[form.formState.errors.status]} />
       </Field>
 
-      {/* A date picker of its own: `kind="date"` keeps it beside another date on a phone. */}
+      {/* A date picker of its own: `kind="date"` keeps it beside another date on a phone.
+          A pick closes it, as DateField's does: left open it covers the fields below, and a
+          press meant for one of them picks another day. */}
       <Field size="m" kind="date" data-invalid={!!form.formState.errors.availableFrom}>
         <FieldLabel htmlFor="widget-available-from" required>
           Available From
@@ -295,7 +298,7 @@ export function WidgetFormRoute() {
           control={form.control}
           name="availableFrom"
           render={({ field }) => (
-            <Popover>
+            <Popover open={availableFromOpen} onOpenChange={setAvailableFromOpen}>
               <PopoverTrigger
                 render={
                   <Button
@@ -311,7 +314,16 @@ export function WidgetFormRoute() {
                 {field.value ? pickerDateFormatter.format(field.value) : 'Pick a date'}
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                <Calendar
+                  mode="single"
+                  // Picking the chosen day again keeps it, never unsets it.
+                  required
+                  selected={field.value}
+                  onSelect={(date: Date) => {
+                    field.onChange(date)
+                    setAvailableFromOpen(false)
+                  }}
+                />
               </PopoverContent>
             </Popover>
           )}

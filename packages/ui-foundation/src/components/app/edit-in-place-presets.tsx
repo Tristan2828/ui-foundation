@@ -116,6 +116,8 @@ export type InPlaceDateConfig<TRequired extends boolean = boolean> = {
   typing?: boolean
   /** How the day reads. Defaults to `{ dateStyle: 'medium' }`. */
   format?: Intl.DateTimeFormatOptions
+  /** DateField's `weekStart`: `'SU'` for an app whose weeks start on Sunday. */
+  weekStart?: WeekdayCode
   locale?: string
   placeholder?: string
 }
@@ -408,6 +410,7 @@ function dateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainDate> 
         clearable={!config.required}
         placeholder={config.placeholder}
         format={config.format}
+        weekStart={config.weekStart}
         locale={config.locale}
         invalid={props.invalid}
         readOnly={props.disabled}
@@ -449,6 +452,7 @@ function typedDateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainD
         clearable={!config.required}
         placeholder={config.placeholder}
         format={config.format}
+        weekStart={config.weekStart}
         locale={config.locale}
         invalid={props.invalid}
         readOnly={props.disabled}

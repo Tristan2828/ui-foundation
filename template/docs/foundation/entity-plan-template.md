@@ -52,7 +52,8 @@ One or two sentences: what one record is, and who uses the screens.
     check).
   - *From the package, no Widget example:* `date` (a calendar day, no
     time: OpenAPI `format: date`; the foundation's `DateField`; say
-    whether it's optional), `month-day` (a day that comes round every
+    whether it's optional, and the day the app's weeks start on when it
+    isn't Monday (`weekStart`)), `month-day` (a day that comes round every
     year, no year: `'MM-DD'`; the foundation's `MonthDayField`; say
     whether it's optional), `recurrence` (how it repeats: the
     foundation's `Recurrence` schema and `RecurrenceField`; say whether
