@@ -46,6 +46,7 @@ design-language.md "A settings page" has the whole of it.
   `DataTable` after it can be wider.
 - The groups wrap in a row above by the page's own width (under 40rem), not
   the window's.
+
 ## 4.141.0 — Date calendars start their weeks on Monday
 
 npm package and `ui-foundation-backend` 4.141.0 (the backend is unchanged
