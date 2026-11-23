@@ -80,14 +80,14 @@ export function PaletteSetting({ label = 'Palette', help = THIS_BROWSER }: Palet
           onValueChange={(next) => {
             if (isPaletteName(next)) setPalette(next)
           }}
-          className="max-w-180 grid-cols-[repeat(auto-fit,minmax(min(100%,--spacing(37.5)),1fr))] gap-3"
+          className="max-w-180 grid-cols-[repeat(auto-fit,minmax(min(100%,--spacing(35)),1fr))] gap-3"
         >
           {PALETTES.map((name) => (
             <label key={name} data-slot="palette-tile" className={TILE}>
               {/* Important: the radio's own size and position come after it. */}
               <RadioGroupItem value={name} className="sr-only!" />
               <PalettePreview name={name} />
-              <span className="block px-2.5 py-2 text-sm">{PALETTE_LABELS[name]}</span>
+              <span className="block px-2.5 py-2 type-caption">{PALETTE_LABELS[name]}</span>
             </label>
           ))}
         </RadioGroup>

@@ -341,6 +341,45 @@ test.describe('on a phone', () => {
   })
 })
 
+// The tiles: two to a row on a 390px phone, and every name on one line
+// where four sit in a row.
+test.describe('the tiles at a phone’s width', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
+
+  test('two to a row', async ({ page }) => {
+    await open(page, story('default'))
+    // The harness pads every story by 24px more each side than an app has:
+    // without it, the page is a 390px phone's.
+    await page.addStyleTag({ content: '#root > div > div { padding: 0 !important }' })
+    expect(await page.locator('[data-slot="settings-card"]').evaluate((el) => el.getBoundingClientRect().width)).toBeCloseTo(342, 0)
+    const tiles = page.locator('[data-slot="palette-tile"]')
+    const [a, b, c] = [await box(tiles.nth(0)), await box(tiles.nth(1)), await box(tiles.nth(2))]
+    expect(b.y).toBeCloseTo(a.y, 0)
+    expect(b.x).toBeGreaterThan(right(a))
+    expect(c.y).toBeGreaterThanOrEqual(bottom(a))
+    expect(await sideways(page)).toBeLessThanOrEqual(0)
+  })
+})
+
+for (const width of [1280, 1920]) {
+  test(`at ${width} the four tiles sit in a row, each name on one line`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await open(page, story('default'))
+    const tiles = page.locator('[data-slot="palette-tile"]')
+    const first = await box(tiles.nth(0))
+    expect((await box(tiles.nth(3))).y).toBeCloseTo(first.y, 0)
+    const lines = await tiles.evaluateAll((all) =>
+      all.map((tile) => {
+        const name = tile.lastElementChild as HTMLElement
+        const style = getComputedStyle(name)
+        const text = name.getBoundingClientRect().height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+        return Math.round(text / parseFloat(style.lineHeight))
+      }),
+    )
+    expect(lines).toEqual([1, 1, 1, 1])
+  })
+}
+
 // By the box's width, not the window's: at a window wide enough for the
 // groups' column, the sidebar leaves the page too little for it.
 test('the groups wrap by the width the page has, not the window’s', async ({ page }) => {
