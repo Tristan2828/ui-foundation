@@ -7,6 +7,46 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.142.0 — A settings page
+
+npm package and `ui-foundation-backend` 4.142.0 (the backend is unchanged
+apart from its version). An app with several device choices wants one page
+for them: `SettingsPage` lists its groups down the side, `SettingsCard` and
+`SettingsRow` are a group's card of rows, `PaletteSetting` and `RowsSetting`
+are the look menu's two choices as rows, and `AppShell lookMenu={false}`
+takes the look menu out of the header. Nothing on screen changes for an app
+that doesn't use them.
+
+### How an app adopts it
+
+design-language.md "A settings page" has the whole of it.
+
+1. Make the page's route a layout, with a route per group and the first
+   group its index:
+   `<SettingsPage title="Settings" groups={GROUPS}><Outlet /></SettingsPage>`,
+   `GROUPS` being `{ to, label }` each.
+2. Put each group's settings in a `SettingsCard` of `SettingsRow`s. A row's
+   `control` can be a function: spread what it is handed on the control, and
+   the row's label and help name it.
+3. An app with `palettePicker` or `rowsPicker` renders `PaletteSetting` and
+   `RowsSetting` in a card. **Only then** set `lookMenu={false}` on
+   `AppShell`, and keep `palettePicker` and `rowsPicker` on: with the menu
+   off and neither setting on a page, a device that picked has no way to
+   change back.
+
+### What to know
+
+- The two settings keep the choice where the look menu did
+  (`ui-foundation:palette`, `ui-foundation:rows`), so what a device picked
+  before carries over. Each draws nothing where the app doesn't let a device
+  pick, or under a light palette.
+- `lookMenu` takes away the menu only. The light/dark toggle of an app
+  without a palette stays.
+- The card stops at 832px (and grows with the density); a framed
+  `DataTable` after it can be wider.
+- The groups wrap in a row above by the page's own width (under 40rem), not
+  the window's.
+
 ## 4.141.0 — Date calendars start their weeks on Monday
 
 npm package and `ui-foundation-backend` 4.141.0 (the backend is unchanged

@@ -259,6 +259,17 @@ export {
   type ListHeaderSecondaryAction,
   type ListHeaderSibling,
 } from '@/components/app/list-header'
+export {
+  SettingsCard,
+  SettingsPage,
+  SettingsRow,
+  type SettingsCardProps,
+  type SettingsGroup,
+  type SettingsPageProps,
+  type SettingsRowAria,
+  type SettingsRowProps,
+} from '@/components/app/settings-page'
+export { PaletteSetting, RowsSetting, type PaletteSettingProps, type RowsSettingProps } from '@/components/app/look-settings'
 export { Timeline, type TimelineItem, type TimelineProps } from '@/components/app/timeline'
 export {
   EqualItems,

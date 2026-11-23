@@ -1,8 +1,8 @@
 // How tall a table's rows are on this device (design-language.md
 // "Density", "Rows on this device"). Compact is the default; with
-// FoundationProviders' `rowsPicker` the app shell's look menu offers
-// Regular too, remembered on this device (localStorage, this store). The
-// choice rides on <html> as data-rows, and styles/theme.css's
+// FoundationProviders' `rowsPicker` the app shell's look menu or a settings
+// page (RowsSetting) offers Regular too, remembered on this device
+// (localStorage, this store). The choice rides on <html> as data-rows, and styles/theme.css's
 // [data-rows="regular"] retunes every table's cells under it: DataTable,
 // the Table primitive and tables in notes. A data-density on a nearer
 // ancestor (a hub's compact wrapper) still wins there.

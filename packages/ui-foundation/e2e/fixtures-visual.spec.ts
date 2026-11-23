@@ -55,6 +55,12 @@ const COMPOSITE_STORIES = [
   { id: 'app-emptytext--places', mustShow: 'No budget yet' },
   // Invalid fields with their typed values, on a card.
   { id: 'ui-input--invalid-with-values', mustShow: "That code didn't match" },
+  // A settings page: its groups, rows of controls, the palette's tiles, a
+  // list to order, a framed table under the card, and without the pickers.
+  { id: 'app-settingspage--default', mustShow: 'Text Size' },
+  { id: 'app-settingspage--below-rows', mustShow: 'Up to five, in this order.' },
+  { id: 'app-settingspage--with-table', mustShow: 'Suggest Labels' },
+  { id: 'app-settingspage--no-picker', mustShow: 'Text Size' },
   { id: 'app-markdown--default', mustShow: 'Measure twice, cut once.' },
   // One-line values (`inline`) in a table's cells and a card's lines.
   { id: 'app-markdown--inline', mustShow: 'Waiting on the landlord' },
@@ -708,6 +714,7 @@ const LARGE_COMPOSITE_STORIES = [
   { id: 'app-widgetcard--all-states', mustShow: 'Nothing on hold' },
   { id: 'app-modulecard--default', mustShow: 'beds planted' },
   { id: 'app-modulecard--all-states', mustShow: 'No slot: a plain band' },
+  { id: 'app-settingspage--default', mustShow: 'Text Size' },
 ]
 
 for (const density of LARGE_DENSITIES) {

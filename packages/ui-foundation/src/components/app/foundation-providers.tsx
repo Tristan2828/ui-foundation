@@ -48,15 +48,17 @@ export function FoundationProviders({
    */
   palette?: AppPaletteName
   /**
-   * With `palette`: the shell offers all four palettes, and the one picked
-   * is remembered on this device. A new device starts on `palette`.
+   * With `palette`: a device may pick any of the four palettes, in the
+   * shell's look menu or on a settings page (`PaletteSetting`), and the one
+   * picked is remembered on this device. A new device starts on `palette`.
    * Ignored with a light palette, which is never in the picker.
    */
   palettePicker?: boolean
   /**
-   * The shell's look menu offers the table rows, Compact (the default) or
-   * Regular, remembered on this device (design-language.md "Density",
-   * "Rows on this device"). Off, every device is compact.
+   * A device may pick its table rows, Compact (the default) or Regular, in
+   * the shell's look menu or on a settings page (`RowsSetting`), remembered
+   * on this device (design-language.md "Density", "Rows on this device").
+   * Off, every device is compact.
    */
   rowsPicker?: boolean
   children: ReactNode

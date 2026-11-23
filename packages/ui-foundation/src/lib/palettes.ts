@@ -1,8 +1,8 @@
 // The four palettes (design-language.md "Palettes"): an app's own dark
 // look, one of those the shared style guide chose. FoundationProviders'
-// `palette` names the app's default; with `palettePicker` the app shell
-// offers all four and the choice is remembered on this device
-// (localStorage, this store). A new device starts on the default. The
+// `palette` names the app's default; with `palettePicker` the app shell's
+// look menu or a settings page (PaletteSetting) offers all four and the
+// choice is remembered on this device (localStorage, this store). A new device starts on the default. The
 // palette rides on <html> as data-palette, so popups portaled to <body>
 // wear it too, and styles/theme.css's `.dark[data-palette]` blocks do the
 // rest (components/app/palette-provider.tsx, hooks/use-palette.ts).
