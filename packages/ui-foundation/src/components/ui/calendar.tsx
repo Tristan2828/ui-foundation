@@ -18,6 +18,10 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
+  // Patched (ui-foundation): upstream leaves this to react-day-picker, which
+  // starts weeks on Sunday. Monday unless the caller says, the default of
+  // MonthCalendar, RecurrenceField and byDay; a `locale` doesn't change it.
+  weekStartsOn = 1,
   locale,
   formatters,
   components,
@@ -37,6 +41,7 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
+      weekStartsOn={weekStartsOn}
       locale={locale}
       formatters={{
         formatMonthDropdown: (date) =>

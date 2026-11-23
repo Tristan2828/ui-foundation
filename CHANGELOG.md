@@ -46,6 +46,48 @@ design-language.md "A settings page" has the whole of it.
   `DataTable` after it can be wider.
 - The groups wrap in a row above by the page's own width (under 40rem), not
   the window's.
+## 4.141.0 — Date calendars start their weeks on Monday
+
+npm package and `ui-foundation-backend` 4.141.0 (the backend is unchanged
+apart from its version). **This changes what every app shows**: the
+calendar a date opens started its weeks on Sunday and now starts them on
+Monday, the default `MonthCalendar`, `RecurrenceField` and `byDay` already
+have. Nothing is removed or renamed.
+
+### How an app adopts it
+
+An app whose weeks start on Monday does nothing. It sees Monday first in
+`DateField` on a form, `inPlace.date`, `FilterDate`'s From and To,
+`FillInField` and `FillInInput`'s dates, and any `Calendar` of its own.
+
+**An app whose weeks start on Sunday** keeps it by saying so, with the
+`weekStart` it gives `MonthCalendar` and `RecurrenceField`:
+
+- `weekStart="SU"` on `DateField`, `FilterDate`, `FillInField` and
+  `FillInInput`
+- `inPlace.date({ weekStart: 'SU', … })`, and on a date part of
+  `inPlace.fields`
+- `weekStartsOn={0}` on a `Calendar` of its own
+
+`DateField` takes any weekday (`'SA'` too). Any app's own test that picks a
+day by its place in the grid, and not by its name, needs a look.
+
+### What to know
+
+- Home and End go to the week's ends, the weekday row starts on the same
+  day, and each day's name for a screen reader, its weekday first, is as
+  before.
+- `Calendar`'s default is Monday whatever its `locale` is: a `locale` that
+  starts weeks on Sunday (`enUS`) used to decide, and now `weekStartsOn`
+  does.
+- `DateField`'s popup is named Calendar to a screen reader; it had no
+  name.
+- A month that starts on a Sunday now takes six rows where it took five
+  (30 or 31 days), so its calendar is a row taller. **An app with a picker
+  of its own, copied from the template's widget form,** closes it on a
+  pick, as `DateField` does: left open, the last row can cover the field
+  below, and a press meant for that field picks another day. The
+  template's form now does (and picking the chosen day again keeps it).
 
 ## 4.140.0 — Search on the phone's bottom bar
 
