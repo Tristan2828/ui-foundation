@@ -322,6 +322,16 @@ export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/compon
 export { RatingScore, type RatingScoreGlyph, type RatingScoreProps } from '@/components/app/rating-score'
 export { RatingInput, type RatingInputProps, type RatingInputSource } from '@/components/app/rating-input'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
+export {
+  addPlainDays,
+  comingWeekday,
+  DATE_QUICK_PICKS,
+  NEXT_WEEK_PICK,
+  THIS_WEEKEND_PICK,
+  TODAY_PICK,
+  TOMORROW_PICK,
+  type DateQuickPick,
+} from '@/lib/date-quick-picks'
 export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'

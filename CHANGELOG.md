@@ -7,6 +7,36 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.143.0 — Quick picks on a date field
+
+npm package and `ui-foundation-backend` 4.143.0 (the backend is unchanged
+apart from its version). `DateField` takes `quickPicks`: a column of days
+over the calendar, each set in one press. `true` is Today, Tomorrow, This
+Weekend (the coming Saturday, today on a Saturday) and Next Week (the
+coming week start, by `weekStart`; a week on when today is one), or an app
+passes its own list of `{ label, day: (today, weekStart) => day }`. Each
+pick is a button named for its words and the day it sets ("This Weekend,
+Sat, Nov 28"), sets the day and closes, as a day picked in the calendar
+does. `inPlace.date` passes `quickPicks` through. New exports:
+`DATE_QUICK_PICKS`, `TODAY_PICK`, `TOMORROW_PICK`, `THIS_WEEKEND_PICK`,
+`NEXT_WEEK_PICK`, the `DateQuickPick` type, and the day sums under them,
+`addPlainDays` and `comingWeekday`. Off unless asked for: nothing on screen
+changes for an app that doesn't pass it.
+
+### How an app adopts it
+
+design-language.md "A date field's quick picks" has the look.
+
+1. On a due or start day, add `quickPicks` to its `DateField`
+   (`<DateField quickPicks … />`) and to its `inPlace.date({ quickPicks:
+   true, … })`. Give the same `weekStart` the app gives its calendars, so
+   Next Week is its week's first day.
+2. For other picks, pass a list: `quickPicks={[TODAY_PICK, { label: 'In a
+   Month', day: (today) => addPlainDays(today, 30) }]}`.
+3. A Playwright test of a pick fixes today first
+   (`page.clock.setFixedTime(...)` before `goto`), then presses the pick by
+   its name within the group named Quick Picks.
+
 ## 4.142.1 — A job's schedule survives a deploy
 
 npm package and `ui-foundation-backend` 4.142.1 (the npm package is
