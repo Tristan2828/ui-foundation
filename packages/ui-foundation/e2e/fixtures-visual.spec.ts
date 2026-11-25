@@ -90,7 +90,15 @@ const COMPOSITE_STORIES = [
   { id: 'app-ratinginput--default', mustShow: 'Locked' },
   { id: 'app-ratinginput--in-a-record', mustShow: 'My Rating' },
   { id: 'app-emojifield--default', mustShow: 'Routine Emoji' },
-  { id: 'app-emojifield--open', mustShow: 'Morning and Sleep' },
+  { id: 'app-emojifield--open', mustShow: 'Smileys and Emotion' },
+  // Emoji as Noto's pictures, and EmojiTile's filled and dashed tiles.
+  { id: 'app-emoji--pictures', mustShow: 'Walk the dog' },
+  { id: 'app-emoji--tiles', mustShow: 'Call the plumber' },
+  // IconField closed and open: the grid and the line naming the icon.
+  { id: 'app-iconfield--default', mustShow: 'Place Icon' },
+  { id: 'app-iconfield--open', mustShow: 'Computer' },
+  // PillFilter with a lead before some labels.
+  { id: 'app-pillfilter--with-leads', mustShow: 'Science' },
   // <Board>: a list as columns of cards, every app's second view of a list.
   { id: 'app-board--default', mustShow: 'Repaint the fence' },
   { id: 'app-board--empty-columns', mustShow: 'No planned projects' },

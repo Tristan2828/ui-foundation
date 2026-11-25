@@ -74,3 +74,16 @@ export type PwaShortcut = {
  * apple-touch-icon tags to index.html.
  */
 export function pwa(options: PwaOptions): Plugin
+
+export type EmojiOptions = {
+  /** Another folder of pictures, for tests. Defaults to the package's own `emoji/`. */
+  dir?: string
+}
+
+/**
+ * Serves (in dev) and builds (into `dist/`) the pictures `<Emoji>` draws, at
+ * `/assets/emoji-18.0/`: one Noto SVG per emoji `EmojiField` offers, and
+ * their `LICENSE`. Under `assets/` the reference backend serves them
+ * immutable.
+ */
+export function emoji(options?: EmojiOptions): Plugin

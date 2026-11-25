@@ -3,49 +3,50 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [Palettes](#palettes) · lines 58–141
-- [Glow](#glow) · lines 143–162
-- [Semantic tones](#semantic-tones) · lines 164–192
-- [The three badge styles](#the-three-badge-styles) · lines 194–211
-- [Status marks](#status-marks) · lines 213–256
-- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 258–287
-- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 289–300
-- [Logos and brand marks](#logos-and-brand-marks) · lines 302–342
-- [Categorical colour](#categorical-colour) · lines 344–409
-- [Heat scale](#heat-scale) · lines 411–463
-- [Depth ramps](#depth-ramps) · lines 465–532
-- [A stored colour](#a-stored-colour) · lines 534–581
-- [Shapes and sizes](#shapes-and-sizes) · lines 583–604
-- [Typography](#typography) · lines 606–776
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 640–672
-  - [Written text (notes)](#written-text-notes) · lines 674–776
-- [Density](#density) · lines 778–900
-  - [Rows on this device](#rows-on-this-device) · lines 845–873
-  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 875–900
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 902–1012
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1014–1086
-- [Notices](#notices) · lines 1088–1115
-- [A value over time](#a-value-over-time) · lines 1117–1247
-  - [Several values over time](#several-values-over-time) · lines 1166–1204
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1206–1247
-- [A list as a board](#a-list-as-a-board) · lines 1249–1359
-  - [Order, groups and the header](#order-groups-and-the-header) · lines 1302–1359
-- [A list as cards](#a-list-as-cards) · lines 1361–1408
-- [Images full screen](#images-full-screen) · lines 1410–1456
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1458–1494
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1496–1532
-- [A few equal things](#a-few-equal-things) · lines 1534–1649
-- [An overview page](#an-overview-page) · lines 1651–1716
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1718–1781
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1783–1870
-- [Picking at random](#picking-at-random) · lines 1872–1903
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1905–1972
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 1974–1993
-- [A quick add line](#a-quick-add-line) · lines 1995–2023
-- [A date field's quick picks](#a-date-fields-quick-picks) · lines 2025–2049
-- [A month calendar](#a-month-calendar) · lines 2051–2081
-- [A settings page](#a-settings-page) · lines 2083–2140
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2142–2201
+- [Palettes](#palettes) · lines 59–142
+- [Glow](#glow) · lines 144–163
+- [Semantic tones](#semantic-tones) · lines 165–193
+- [The three badge styles](#the-three-badge-styles) · lines 195–212
+- [Status marks](#status-marks) · lines 214–257
+- [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 259–288
+- [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 290–301
+- [Logos and brand marks](#logos-and-brand-marks) · lines 303–343
+- [Emoji](#emoji) · lines 345–377
+- [Categorical colour](#categorical-colour) · lines 379–444
+- [Heat scale](#heat-scale) · lines 446–498
+- [Depth ramps](#depth-ramps) · lines 500–567
+- [A stored colour](#a-stored-colour) · lines 569–616
+- [Shapes and sizes](#shapes-and-sizes) · lines 618–639
+- [Typography](#typography) · lines 641–811
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 675–707
+  - [Written text (notes)](#written-text-notes) · lines 709–811
+- [Density](#density) · lines 813–935
+  - [Rows on this device](#rows-on-this-device) · lines 880–908
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 910–935
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 937–1047
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1049–1121
+- [Notices](#notices) · lines 1123–1150
+- [A value over time](#a-value-over-time) · lines 1152–1282
+  - [Several values over time](#several-values-over-time) · lines 1201–1239
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1241–1282
+- [A list as a board](#a-list-as-a-board) · lines 1284–1394
+  - [Order, groups and the header](#order-groups-and-the-header) · lines 1337–1394
+- [A list as cards](#a-list-as-cards) · lines 1396–1443
+- [Images full screen](#images-full-screen) · lines 1445–1491
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1493–1529
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1531–1567
+- [A few equal things](#a-few-equal-things) · lines 1569–1684
+- [An overview page](#an-overview-page) · lines 1686–1751
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1753–1816
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1818–1905
+- [Picking at random](#picking-at-random) · lines 1907–1938
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1940–2007
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2009–2028
+- [A quick add line](#a-quick-add-line) · lines 2030–2058
+- [A date field's quick picks](#a-date-fields-quick-picks) · lines 2060–2084
+- [A month calendar](#a-month-calendar) · lines 2086–2116
+- [A settings page](#a-settings-page) · lines 2118–2175
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2177–2236
 
 <!-- /index -->
 
@@ -340,6 +341,40 @@ Colour them in one of two ways:
   held to the 3:1 above, but check it against the page in both themes;
   where it vanishes in one, give it a `currentColor` outline or use the
   one-colour mark there.
+
+## Emoji
+
+Lucide is the icon set for the app's own things: modules, the sidebar,
+hub cards, statuses, kinds, actions, fact labels, one icon per meaning.
+Emoji are for things the person names: a routine, a to-do, a list, a
+topic. Every emoji a field holds is drawn as Noto's own SVG, the same on
+every device (no Noto font draws reliably on iPhone Safari); emoji typed
+inside text (notes, rich text) stay the device's.
+
+- **`<Emoji emoji label? className?>`:** one emoji as Noto's picture,
+  from `/assets/emoji-18.0/` (the `emoji()` Vite plugin serves and builds
+  them; an app adds it to its plugins). `size-4` unless a `size-*` class
+  says otherwise. Beside the words that name the thing it is decorative;
+  alone, give it a `label`. With no picture (an emoji newer than the set,
+  or one with a skin tone) it falls back to the character.
+- **`<EmojiTile emoji>`:** a row's emoji on a 26px `bg-muted` tile with a
+  `border-border` edge, between a to-do's tick and its title. None is a
+  dashed empty tile, so every title in the list starts at the same place.
+  It is never a control: a row's emoji is set on its record or form.
+- **`EmojiField`:** picking one emoji on a form or in place. Every
+  fully-qualified Unicode emoji, without skin tones: a search, tabs that
+  jump to Recent, Suggested and Unicode's nine groups, an 8-across grid.
+  A popup on a laptop, a sheet from the bottom on a phone.
+- **`IconField`:** picking one icon out of an app's fixed set (a
+  category's, a place's) from a 6-across grid, with a line naming the
+  icon under the pointer or focus. For a value that always has an icon,
+  so no Clear.
+- **Contrast:** emoji pictures are images in their own colours, so the
+  3:1 glyph rule above doesn't apply to them; the tile's edge is
+  `border-border`. IconField's icons are `text-foreground`, as glyphs are.
+- **`PillFilter`'s `lead`:** a topic's `<Emoji className="size-3.5">`
+  before its label inside the pill. Decorative: the pill is still named
+  by its label.
 
 ## Categorical colour
 
