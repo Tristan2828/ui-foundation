@@ -443,6 +443,13 @@ export interface WidgetListItemProps {
   /** A small muted note after the text: "2 h ago", "holds 2". */
   note?: ReactNode
   /**
+   * A muted line under the text: what the row is about in a few words
+   * ("Every day · 4 steps"). Unlike the text it isn't cut: on a narrow row
+   * it wraps, and the row grows to hold it. Outside the link, so it isn't
+   * part of the row's name.
+   */
+  line?: ReactNode
+  /**
    * What ends the row: a badge, or a control. A control needs a name: pass
    * a function, and put the id it gets in the control's `aria-labelledby`,
    * so the row's text names it.
@@ -451,12 +458,17 @@ export interface WidgetListItemProps {
   className?: string
 }
 
+// A row with a line under its text keeps room under the line at every
+// density, so a wrapped line doesn't sit against the divider (a compact
+// phone row has no padding of its own: its link's is the target).
+const ROW_WITH_LINE_CLASS = 'density-compact:py-1.5 max-sm:density-compact:pb-2'
+
 const ROW_LINK_CLASS =
   'min-w-0 truncate rounded-sm font-medium text-foreground underline-offset-4 outline-none ' +
   'hover:underline focus-visible:underline focus-visible:ring-3 focus-visible:ring-ring/50 ' +
   'max-sm:density-compact:py-3'
 
-export function WidgetListItem({ children, to, href, lead, note, trailing, className }: WidgetListItemProps) {
+export function WidgetListItem({ children, to, href, lead, note, line, trailing, className }: WidgetListItemProps) {
   const textId = useId()
   const hasLead = lead !== undefined && lead !== null && lead !== false
   // With a lead the text is its own cut span after it, both on one line.
@@ -495,9 +507,19 @@ export function WidgetListItem({ children, to, href, lead, note, trailing, class
       </span>
     )
 
+  const hasLine = line !== undefined && line !== null && line !== false
   return (
-    <li data-slot="widget-list-item" className={cn(ROW_CLASS, 'type-body', className)}>
-      {text}
+    <li data-slot="widget-list-item" className={cn(ROW_CLASS, 'type-body', hasLine && ROW_WITH_LINE_CLASS, className)}>
+      {hasLine ? (
+        <span data-slot="widget-list-item-text" className="flex min-w-0 flex-col gap-0.5">
+          {text}
+          <span data-slot="widget-list-item-line" className="type-caption text-muted-foreground">
+            {line}
+          </span>
+        </span>
+      ) : (
+        text
+      )}
       {(note !== undefined || trailing !== undefined) && (
         <span className="ml-auto flex shrink-0 items-center gap-3">
           {note !== undefined && <span className="type-caption tabular-nums text-muted-foreground">{note}</span>}
