@@ -322,6 +322,7 @@ export { RatingStar, type RatingStarProps, type RatingStarValue } from '@/compon
 export { RatingScore, type RatingScoreGlyph, type RatingScoreProps } from '@/components/app/rating-score'
 export { RatingInput, type RatingInputProps, type RatingInputSource } from '@/components/app/rating-input'
 export { DateField, type DateFieldProps } from '@/components/app/date-field'
+export { DateChoices, type DateChoice, type DateChoicesProps } from '@/components/app/date-choices'
 export {
   addPlainDays,
   comingWeekday,

@@ -7,6 +7,38 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.145.0 — DateChoices: a few choices, then the month
+
+npm package and `ui-foundation-backend` 4.146.0 (the backend is unchanged
+apart from its version).
+
+- **`DateChoices`** is a row's "move to" picker in DateField's look,
+  opened from the app's own `trigger`. It shows the app's `choices`, each
+  a label with its value muted on the right ("Tomorrow, Thu, Nov 26"),
+  optionally `disabled`, under a `choicesLabel` heading, then the month on
+  the day the thing is on (`value`), with `today` ringed. A choice runs its
+  `onSelect`, and a day picked runs `onPick` with its `'YYYY-MM-DD'`.
+  Either closes the popup first. It's a dialog named `label`, not a menu,
+  because a calendar's grid can't sit inside `role="menu"` (axe's
+  `aria-required-children`), and a menu's arrows never reach the grid.
+  - **The keyboard:** it opens on the first choice that can be pressed.
+    Tab goes through the choices to the month, where the arrows move the
+    day. Escape closes, and focus returns to the trigger.
+  - **Coverage:** `e2e/date-choices.spec.ts` covers the look, a choice, a
+    pick, the keyboard, Escape, a picker with no choices, the week start,
+    and axe in both themes.
+- **DateField's popup is built from the same parts:** its quick picks
+  are `DateChoices`' rows, and its month is the same calendar. It looks
+  and behaves as before.
+- **design-language.md** has a new section, "A few choices, then the
+  month".
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. Then use `DateChoices`
+wherever a `DropdownMenu` would have needed a calendar. Nothing else
+changes.
+
 ## 4.145.0 — Emoji in the rail, a hub row and the month; the facts rail at Large text
 
 npm package and `ui-foundation-backend` 4.145.0 (the backend is unchanged
