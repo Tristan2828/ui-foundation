@@ -619,8 +619,10 @@
      large and extra-large densities to scale. */
   --control-text-sm: 0.8rem;
 
-  /* A record's facts rail (EntityView): a fixed width, wide enough for a
-     label beside its value. Only extra-large widens it. */
+  /* A record's facts rail (EntityView): wide enough for a label beside a
+     short value. It grows with Text Size by the text's own scale (375px
+     at large, 420px at extra-large), and the record page grows with it;
+     a value that still doesn't fit wraps, never cut. */
   --facts-rail-width: 300px;
 
   /* Layer 2 — semantic (light) */
@@ -946,7 +948,7 @@
   --table-cell-py: 0.75rem;
   --table-head-height: 3.5rem;
 
-  --facts-rail-width: 300px; /* the default's: its rows still fit side by side */
+  --facts-rail-width: 375px; /* 300px × 1.25, the text's own growth: a short value keeps its one line */
 }
 
 /*
@@ -990,7 +992,7 @@
   --table-cell-py: 0.8125rem;
   --table-head-height: 3.9375rem;
 
-  --facts-rail-width: 336px; /* 300px, so a label still fits beside its value */
+  --facts-rail-width: 420px; /* 300px × 1.4, as large's grows with its text */
 }
 
 .dark {

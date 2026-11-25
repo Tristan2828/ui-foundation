@@ -2,16 +2,22 @@
 // facts rail beside the tabs may hold, and how each is drawn.
 //
 // A rail holds short values only, so a fact isn't free markup: it's one
-// of a few kinds, each drawn the one way it fits on a line, and nothing
-// long can be passed. A status (its StatusMark), short text (a date, a
-// number, a person's name: one line, cut with its whole text on hover),
-// a few short badges, a count (optionally a link to what it counts), a
+// of a few kinds, each drawn the one way it fits, and nothing long can
+// be passed. A status (its StatusMark), short text (a date, a number, a
+// person's name), an emoji (Noto's picture), a few short badges, a count (optionally a link to what it counts), a
 // rating (stars, hearts or a step bar, as the list's cells draw it), an
 // external link, and a link to another record, which must say it's
 // short (`short: true`, a provider's name), since most linked records
 // (a list of discussions, a log's entries) have long titles and belong in
 // a tab. Anything else is a section with `fields` or `content`, in a tab
 // or in Details, never the rail.
+//
+// Nothing in the rail is ever cut, at any Text Size: a value too long
+// for its line (text, a badge, a link, a record, a list item) wraps onto
+// another, a badge inside its badge, and unbroken text breaks anywhere.
+// The same in Details where the rail folds. The rail grows with the text
+// (`--facts-rail-width`: 300px, 375px at Large, 420px at Extra Large), so
+// a short value still keeps one line beside its label.
 //
 // The record's status (record standard A1): a fact marked
 // `recordStatus: true` is drawn first, at the top of the rail (and of
@@ -42,13 +48,20 @@ import { StepBar } from './step-bar'
 import type { IconComponent } from './icon-component'
 import { StatusMark } from './status-mark'
 import { FactSwitch } from './fact-extras'
+import { Emoji } from './emoji'
 
 /** What a fact holds: one of the short kinds a rail can draw. */
 export type EntityViewFactValue =
   /** A status, drawn as its StatusMark; `word` is the status's own ("As needed"). */
   | { kind: 'status'; status: StatusKind; word?: string }
-  /** Short text: a date, a number, a person's name. One line, cut with its whole text on hover. `null` is empty. */
+  /** Short text: a date, a number, a person's name. A long one wraps onto another line, never cut. `null` is empty. */
   | { kind: 'text'; text: string | number | null | undefined }
+  /**
+   * One emoji (`🎂`), drawn as Noto's picture (`<Emoji>`, `size-5`), named
+   * by the emoji itself for a screen reader. Printed as the character.
+   * `null` or `''` is empty.
+   */
+  | { kind: 'emoji'; emoji: string | null | undefined }
   /** A few short labels (areas, tags) as badges, each with its icon if it has one. None is empty. */
   | { kind: 'badges'; items: readonly (string | EntityViewFactBadge)[] }
   /** A count, and where it links to, if anywhere (`/discussions?provider=3`). */
@@ -171,6 +184,11 @@ export type EntityViewFact = EntityViewFactValue & {
   action?: EntityViewFactAction
 }
 
+// Nothing in the rail is ever cut, at any Text Size (4.145): a value too
+// long for its line wraps onto another, and unbroken text (a code, an
+// address) breaks anywhere rather than running past the rail.
+const NEVER_CUT_INLINE = 'wrap-anywhere'
+
 const LINK_CLASS =
   'rounded-sm font-medium text-link underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50'
 
@@ -188,9 +206,16 @@ function badgeIcon(icon: IconComponent | ReactNode, toned = false) {
   )
 }
 
-/** A fact as the view draws it: `null` when empty. `label` names a control the fact draws (a switch). */
-export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
+/**
+ * A fact as the view draws it: `null` when empty. `label` names a control
+ * the fact draws (a switch). `printed`: as the printout has it (an emoji
+ * as its character, not Noto's picture).
+ */
+export function factValue(fact: EntityViewFactValue, label = '', printed = false): ReactNode {
   switch (fact.kind) {
+    case 'emoji':
+      if (!fact.emoji) return null
+      return printed ? fact.emoji : <Emoji emoji={fact.emoji} label={fact.emoji} className="size-5" />
     case 'switch':
       return <FactSwitch fact={fact} label={label} />
     case 'status':
@@ -199,7 +224,7 @@ export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
       if (fact.text === null || fact.text === undefined || fact.text === '') return null
       const text = String(fact.text)
       return (
-        <span data-slot="entity-view-fact-text" title={text} className="inline-block max-w-full truncate align-bottom tabular-nums">
+        <span data-slot="entity-view-fact-text" className={cn(NEVER_CUT_INLINE, 'tabular-nums')}>
           {text}
         </span>
       )
@@ -207,13 +232,20 @@ export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
     case 'badges':
       if (fact.items.length === 0) return null
       return (
-        <span className="inline-flex max-w-full flex-wrap gap-1">
+        <span className="inline-flex max-w-full min-w-0 flex-wrap gap-1">
           {fact.items.map((item, index) => {
             const { label, icon, tone } = typeof item === 'string' ? { label: item, icon: undefined, tone: undefined } : item
             return (
-              <Badge key={`${index}:${label}`} variant={tone ? BADGE_TONE[tone] : 'outline'} data-tone={tone} className="max-w-full">
+              // A label longer than the rail wraps inside its badge, which
+              // grows a line rather than cutting it.
+              <Badge
+                key={`${index}:${label}`}
+                variant={tone ? BADGE_TONE[tone] : 'outline'}
+                data-tone={tone}
+                className="h-auto min-h-5 max-w-full shrink whitespace-normal"
+              >
                 {icon !== undefined && icon !== null && badgeIcon(icon, tone !== undefined)}
-                <span className="min-w-0 truncate">{label}</span>
+                <span className={cn('min-w-0', NEVER_CUT_INLINE)}>{label}</span>
               </Badge>
             )
           })}
@@ -229,9 +261,9 @@ export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
       )
     case 'link':
       return (
-        <a href={fact.href} target="_blank" rel="noreferrer" className={cn(LINK_CLASS, 'inline-flex max-w-full items-center gap-1')}>
-          <span className="truncate">{fact.name}</span>
-          <ExternalLinkIcon aria-hidden="true" className="size-3.5 shrink-0" />
+        <a href={fact.href} target="_blank" rel="noreferrer" className={cn(LINK_CLASS, NEVER_CUT_INLINE)}>
+          {fact.name}
+          <ExternalLinkIcon aria-hidden="true" className="ml-1 inline size-3.5 align-[-0.125em]" />
           <span className="sr-only">(opens in a new tab)</span>
         </a>
       )
@@ -269,7 +301,7 @@ export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
     }
     case 'record':
       return (
-        <Link to={fact.to} title={fact.name} className={cn(LINK_CLASS, 'inline-block max-w-full truncate align-bottom')}>
+        <Link to={fact.to} className={cn(LINK_CLASS, NEVER_CUT_INLINE)}>
           {fact.name}
         </Link>
       )
@@ -277,10 +309,10 @@ export function factValue(fact: EntityViewFactValue, label = ''): ReactNode {
 }
 
 /** A facts section's facts as fields rows, for Details, the column and printing: the status first. */
-export function factsAsFields(facts: readonly EntityViewFact[]) {
+export function factsAsFields(facts: readonly EntityViewFact[], printed = false) {
   return statusFirst(facts).map((fact) => ({
     label: fact.label,
-    value: factValue(fact, fact.label),
+    value: factValue(fact, fact.label, printed),
     emptyLabel: fact.emptyLabel,
     // A switch is its own editor: an `edit` would wrap it in another.
     edit: fact.kind === 'switch' ? undefined : fact.edit,
@@ -314,24 +346,61 @@ export function statusSectionFirst<T extends { placement?: string; tab?: string 
   return rest
 }
 
-/** The width the view needs for the facts rail beside its column: 60rem (the column ~40rem, a 300px rail, the gap). */
+/**
+ * The width the view needs for the facts rail beside its column at
+ * Regular: 60rem (the column ~40rem, the 300px rail, the gap). At the
+ * large densities it grows by the rail's extra width and the gap's
+ * (`factsRailMinWidth`).
+ */
 export const FACTS_RAIL_MIN_WIDTH = 960
+
+// The column's share of FACTS_RAIL_MIN_WIDTH: what's left of 960 without
+// Regular's 300px rail and its 24px gap (gap-6).
+const FACTS_RAIL_COLUMN = FACTS_RAIL_MIN_WIDTH - 300 - 24
+
+/**
+ * The room the rail needs where `node` is, read from the density's own
+ * `--facts-rail-width` and `--spacing` (the gap is `gap-6`): 960px at
+ * Regular, 1041px at Large, about 1090px at Extra Large.
+ */
+export function factsRailMinWidth(node: Element) {
+  const style = getComputedStyle(node)
+  const rail = parseFloat(style.getPropertyValue('--facts-rail-width'))
+  const spacing = style.getPropertyValue('--spacing').trim()
+  const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const step = spacing.endsWith('rem') ? parseFloat(spacing) * rootSize : parseFloat(spacing)
+  if (!Number.isFinite(rail) || !Number.isFinite(step)) return FACTS_RAIL_MIN_WIDTH
+  return FACTS_RAIL_COLUMN + rail + step * 6
+}
 
 /**
  * Whether the element's parent (the room the view has: the page's content
- * area, or a dialog's body) is at least `min` px wide. A ResizeObserver
- * measures it: its first report comes after layout and before paint, and
- * then on every resize, so the rail and the Details tab never flash.
+ * area, or a dialog's body) is wide enough for the facts rail: `min` px,
+ * or by default the rail's room at the density in force
+ * (`factsRailMinWidth`). A ResizeObserver measures it: its first report
+ * comes after layout and before paint, and then on every resize, so the
+ * rail and the Details tab never flash. A change of Text Size
+ * (`data-density` on <html>) measures again.
  */
-export function useWideParent<T extends HTMLElement>(enabled: boolean, min = FACTS_RAIL_MIN_WIDTH) {
+export function useWideParent<T extends HTMLElement>(enabled: boolean, min?: number) {
   const [node, setNode] = useState<T | null>(null)
   const [wide, setWide] = useState(false)
   useLayoutEffect(() => {
     const parent = node?.parentElement
-    if (!enabled || !parent || typeof ResizeObserver === 'undefined') return
-    const observer = new ResizeObserver(() => setWide(parent.getBoundingClientRect().width >= min))
+    if (!enabled || !node || !parent || typeof ResizeObserver === 'undefined') return
+    // Its layout width, not its box on screen: a dialog scaling in as it
+    // opens reads ~5% narrow on screen, and the observer doesn't report
+    // again when the scale ends, which left a rail that only just fits
+    // (Extra Large's ~1,090px in a 70rem dialog) folded for good.
+    const measure = () => setWide(parent.offsetWidth >= (min ?? factsRailMinWidth(node)))
+    const observer = new ResizeObserver(measure)
     observer.observe(parent)
-    return () => observer.disconnect()
+    const density = typeof MutationObserver === 'undefined' ? null : new MutationObserver(measure)
+    density?.observe(document.documentElement, { attributes: true, attributeFilter: ['data-density', 'class', 'style'] })
+    return () => {
+      observer.disconnect()
+      density?.disconnect()
+    }
   }, [node, enabled, min])
   return [setNode, enabled && wide] as const
 }

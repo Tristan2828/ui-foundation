@@ -4,11 +4,15 @@ import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import {
   CalendarClockIcon,
   CalendarIcon,
+  ChevronsUpIcon,
   CircleDotIcon,
+  FlagIcon,
   HashIcon,
+  HouseIcon,
   PackageIcon,
   PlusIcon,
   Trash2Icon,
+  ZapIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -41,6 +45,8 @@ import {
 import { KeyStats } from './key-stats'
 import { Markdown } from './markdown'
 import { Notice } from './notice'
+import { RecordDialogRoute } from './record-dialog'
+import { recordDialogState } from './record-dialog-context'
 import { RichTextEditor } from './rich-text-editor'
 import { StatusMark } from './status-mark'
 import { SourceCredit } from './source-credit'
@@ -679,6 +685,131 @@ function FactsRailRatingInRouter() {
 }
 
 export const FactsRailRating: StoryObj = { name: 'Facts rail, rating', render: () => <FactsRailRatingInRouter /> }
+
+// --- The facts rail with long values ----------------------------------
+// A task-like record whose rail values run long: a place, a word or two
+// more than the rail fits, a badge with its icon, two badges, one badge
+// longer than the rail, an unbroken code, a record, a link out and a
+// list. Nothing in the rail is ever cut: each value wraps onto another
+// line, a badge inside its badge, unbroken text anywhere. The Emoji fact
+// is Noto's picture, edited in place. The rail is 300px at Regular,
+// 375px at Large and 420px at Extra Large; the title takes its row up to
+// the header's buttons. e2e/facts-rail-long.spec.ts measures it at all
+// three densities (`&density=large`), and in a dialog.
+const EFFORT_OPTIONS = [
+  { value: 'quick', label: 'Quick win' },
+  { value: 'small', label: 'Small' },
+  { value: 'large', label: 'Large' },
+]
+
+function FactsRailLongRecord() {
+  const [emoji, setEmoji] = useState<string | null>('🔧')
+  const [effort, setEffort] = useState<string | null>('quick')
+  const [savedTitle, , titleText] = useText('Fix the leaking tap')
+  const title = savedTitle ?? 'Fix the leaking tap'
+  const sections: EntityViewSection[] = [
+    { title: 'Notes', tab: 'Notes', print: true, content: <Markdown>{'The washer is the half-inch kind. Turn the water off first.'}</Markdown> },
+    {
+      title: 'Task',
+      placement: 'rail',
+      print: true,
+      facts: [
+        { label: 'Status', kind: 'status', status: 'active', word: 'Doing', recordStatus: true },
+        { label: 'Type', kind: 'text', text: 'Project' },
+        {
+          label: 'Effort',
+          kind: 'badges',
+          items: effort ? [{ label: EFFORT_OPTIONS.find((option) => option.value === effort)!.label, icon: ZapIcon }] : [],
+          edit: inPlace.select({
+            value: effort,
+            options: EFFORT_OPTIONS,
+            save: (next) => new Promise((resolve) => setTimeout(() => resolve(setEffort(next)), 200)),
+          }),
+        },
+        { label: 'Impact', kind: 'badges', items: [{ label: 'Critical', icon: ChevronsUpIcon, tone: 'destructive' }] },
+        { label: 'Where', kind: 'text', text: 'Under the kitchen sink, left side' },
+        { label: 'Interest', kind: 'text', text: 'Somewhat interested' },
+        { label: 'Categories', kind: 'badges', items: [{ label: 'Home', icon: HouseIcon }, 'Plumbing and water'] },
+        { label: 'Waiting On', kind: 'badges', items: ['The second payment on the car has cleared'] },
+        { label: 'Part Code', kind: 'text', text: 'WASHER-HALF-INCH-COMPRESSION-0012' },
+        {
+          label: 'Emoji',
+          kind: 'emoji',
+          emoji,
+          emptyLabel: 'None',
+          edit: inPlace.text({
+            value: emoji,
+            save: (next) => new Promise((resolve) => setTimeout(() => resolve(setEmoji(next)), 200)),
+          }),
+        },
+        { label: 'Supplier', kind: 'record', name: 'Example Hardware and Plumbing Supply', to: '/suppliers/4', short: true },
+        { label: 'Guide', kind: 'link', href: 'https://example.com/washer', name: 'Replacing a compression washer, step by step' },
+        {
+          label: 'Parts',
+          kind: 'list',
+          items: [
+            { name: 'Half-inch rubber washer, pack of ten', to: '/parts/1' },
+            { name: 'Thread seal tape', href: 'https://example.com/tape' },
+          ],
+        },
+      ],
+    },
+  ]
+  return (
+    <EntityView
+      isLoading={false}
+      back={{ to: '/', label: 'Tasks' }}
+      title={title}
+      titleEdit={{ ...titleText, label: 'Title' }}
+      subtitle="No more drip under the sink"
+      factsRail
+      actions={
+        <>
+          <IconAction icon={FlagIcon} label="Flag as a focus task" />
+          <Button variant="outline">Delete</Button>
+        </>
+      }
+      sections={sections}
+    />
+  )
+}
+
+function FactsRailLongInRouter() {
+  const [router] = useState(() =>
+    createMemoryRouter([{ path: '*', element: <FactsRailLongRecord /> }], {
+      initialEntries: [new URLSearchParams(window.location.search).get('tab') ? `/?tab=${new URLSearchParams(window.location.search).get('tab')}` : '/'],
+    }),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const FactsRailLong: StoryObj = { name: 'Facts rail, long values', render: () => <FactsRailLongInRouter /> }
+
+// The same record in a record dialog (RecordDialogRoute) over its list:
+// the rail beside the body where the dialog's 70rem has room for it at
+// the Text Size in force, folded into Details where it hasn't; either way
+// nothing in it is cut.
+function FactsRailLongDialogInRouter() {
+  const [router] = useState(() => {
+    const list = { pathname: '/tasks', search: '', hash: '' }
+    return createMemoryRouter(
+      [
+        {
+          path: '/tasks',
+          element: <RecordDialogRoute list={<p className="type-body text-foreground">Tasks</p>} label="Task" />,
+          children: [{ path: ':id', element: <FactsRailLongRecord /> }],
+        },
+      ],
+      { initialEntries: [list, { pathname: '/tasks/1', state: recordDialogState({ ...list, state: null }) }], initialIndex: 1 },
+    )
+  })
+  return <RouterProvider router={router} />
+}
+
+export const FactsRailLongInADialog: StoryObj = {
+  name: 'Facts rail, long values in a dialog',
+  render: () => <FactsRailLongDialogInRouter />,
+}
 
 // The record extras: yes/no facts as switches in the rail (one
 // with on/off words and a slow save, one plain, one read-only with a hint

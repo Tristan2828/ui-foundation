@@ -15,11 +15,24 @@ import { factValue, type EntityViewFact } from '../src/components/app/entity-vie
 const render = (node: ReactNode) => renderToStaticMarkup(<MemoryRouter>{node}</MemoryRouter>)
 
 describe('a fact draws its kind', () => {
-  it('as one short line each', () => {
+  it('each in its own way, never cut (4.145)', () => {
     expect(render(factValue({ kind: 'status', status: 'paused', word: 'On Hold' }))).toContain('data-kind="paused"')
+    // A long value wraps, unbroken text anywhere: no ellipsis, so no tooltip with its whole text.
     const text = render(factValue({ kind: 'text', text: 'Mar 2, 2026' }))
-    expect(text).toContain('truncate')
-    expect(text).toContain('title="Mar 2, 2026"')
+    expect(text).toContain('wrap-anywhere')
+    expect(text).not.toContain('truncate')
+    expect(text).not.toContain('title=')
+    for (const fact of [
+      { kind: 'badges', items: ['A long label'] },
+      { kind: 'record', name: 'Sam Example', to: '/people/3', short: true },
+      { kind: 'link', href: 'https://example.com', name: 'Plan' },
+    ] as const) {
+      const html = render(factValue(fact))
+      expect(html).not.toContain('truncate')
+      expect(html).not.toContain('title=')
+    }
+    // A badge grows a line rather than cutting its label.
+    expect(render(factValue({ kind: 'badges', items: ['A long label'] }))).toContain('whitespace-normal')
     expect(render(factValue({ kind: 'text', text: 12 }))).toContain('>12<')
     expect(render(factValue({ kind: 'record', name: 'Sam Example', to: '/people/3', short: true }))).toContain('href="/people/3"')
     const out = render(factValue({ kind: 'link', href: 'https://example.com', name: 'Plan' }))
@@ -27,6 +40,16 @@ describe('a fact draws its kind', () => {
     expect(out).toContain('(opens in a new tab)')
     expect(render(factValue({ kind: 'count', count: 4, to: '/tasks' }))).toContain('href="/tasks"')
     expect(render(factValue({ kind: 'badges', items: ['Finance', 'Support'] })).match(/data-slot="badge"/g)).toHaveLength(2)
+  })
+
+  it("an emoji as Noto's picture, named by the emoji; printed as the character", () => {
+    const html = render(factValue({ kind: 'emoji', emoji: '🔧' }))
+    expect(html).toContain('data-slot="emoji"')
+    expect(html).toContain('alt="🔧"')
+    expect(html).toContain('size-5')
+    expect(factValue({ kind: 'emoji', emoji: '🔧' }, 'Emoji', true)).toBe('🔧')
+    expect(factValue({ kind: 'emoji', emoji: null })).toBeNull()
+    expect(factValue({ kind: 'emoji', emoji: '' })).toBeNull()
   })
 
   it('empty text and no badges are empty, so the empty label shows', () => {

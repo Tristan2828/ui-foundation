@@ -11,42 +11,42 @@
 - [Mapping an enum to tones](#mapping-an-enum-to-tones) · lines 259–288
 - [Glyphs and icons: 3:1](#glyphs-and-icons-31) · lines 290–301
 - [Logos and brand marks](#logos-and-brand-marks) · lines 303–343
-- [Emoji](#emoji) · lines 345–377
-- [Categorical colour](#categorical-colour) · lines 379–444
-- [Heat scale](#heat-scale) · lines 446–498
-- [Depth ramps](#depth-ramps) · lines 500–567
-- [A stored colour](#a-stored-colour) · lines 569–616
-- [Shapes and sizes](#shapes-and-sizes) · lines 618–639
-- [Typography](#typography) · lines 641–811
-  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 675–707
-  - [Written text (notes)](#written-text-notes) · lines 709–811
-- [Density](#density) · lines 813–935
-  - [Rows on this device](#rows-on-this-device) · lines 880–908
-  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 910–935
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 937–1047
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1049–1121
-- [Notices](#notices) · lines 1123–1150
-- [A value over time](#a-value-over-time) · lines 1152–1282
-  - [Several values over time](#several-values-over-time) · lines 1201–1239
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1241–1282
-- [A list as a board](#a-list-as-a-board) · lines 1284–1394
-  - [Order, groups and the header](#order-groups-and-the-header) · lines 1337–1394
-- [A list as cards](#a-list-as-cards) · lines 1396–1443
-- [Images full screen](#images-full-screen) · lines 1445–1491
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1493–1529
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1531–1567
-- [A few equal things](#a-few-equal-things) · lines 1569–1684
-- [An overview page](#an-overview-page) · lines 1686–1751
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1753–1816
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1818–1905
-- [Picking at random](#picking-at-random) · lines 1907–1938
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1940–2007
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2009–2028
-- [A quick add line](#a-quick-add-line) · lines 2030–2058
-- [A date field's quick picks](#a-date-fields-quick-picks) · lines 2060–2084
-- [A month calendar](#a-month-calendar) · lines 2086–2116
-- [A settings page](#a-settings-page) · lines 2118–2175
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2177–2236
+- [Emoji](#emoji) · lines 345–385
+- [Categorical colour](#categorical-colour) · lines 387–452
+- [Heat scale](#heat-scale) · lines 454–506
+- [Depth ramps](#depth-ramps) · lines 508–575
+- [A stored colour](#a-stored-colour) · lines 577–624
+- [Shapes and sizes](#shapes-and-sizes) · lines 626–647
+- [Typography](#typography) · lines 649–819
+  - [Words on screen: Title Case and sentence case](#words-on-screen-title-case-and-sentence-case) · lines 683–715
+  - [Written text (notes)](#written-text-notes) · lines 717–819
+- [Density](#density) · lines 821–950
+  - [Rows on this device](#rows-on-this-device) · lines 894–922
+  - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 924–950
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 952–1064
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1066–1138
+- [Notices](#notices) · lines 1140–1167
+- [A value over time](#a-value-over-time) · lines 1169–1299
+  - [Several values over time](#several-values-over-time) · lines 1218–1256
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1258–1299
+- [A list as a board](#a-list-as-a-board) · lines 1301–1411
+  - [Order, groups and the header](#order-groups-and-the-header) · lines 1354–1411
+- [A list as cards](#a-list-as-cards) · lines 1413–1460
+- [Images full screen](#images-full-screen) · lines 1462–1508
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1510–1546
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1548–1584
+- [A few equal things](#a-few-equal-things) · lines 1586–1701
+- [An overview page](#an-overview-page) · lines 1703–1768
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1770–1833
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1835–1922
+- [Picking at random](#picking-at-random) · lines 1924–1955
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1957–2024
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2026–2045
+- [A quick add line](#a-quick-add-line) · lines 2047–2075
+- [A date field's quick picks](#a-date-fields-quick-picks) · lines 2077–2101
+- [A month calendar](#a-month-calendar) · lines 2103–2135
+- [A settings page](#a-settings-page) · lines 2137–2194
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2196–2255
 
 <!-- /index -->
 
@@ -375,6 +375,14 @@ inside text (notes, rich text) stay the device's.
 - **`PillFilter`'s `lead`:** a topic's `<Emoji className="size-3.5">`
   before its label inside the pill. Decorative: the pill is still named
   by its label.
+- **The parts that draw an emoji beside its words** (4.145), each
+  decorative, the words still naming the thing:
+  - a facts rail's `kind: 'emoji'` fact: `size-5`, alone as the value, so
+    named by the emoji itself; printed as the character;
+  - `WidgetListItem`'s `lead`: `size-4`, before the row's text in its link;
+  - `MonthCalendarItem`'s `emoji`: `size-3.5`, no tile, before the title in
+    the month's cell and in the day's list. The day's summary line keeps
+    the titles' words only.
 
 ## Categorical colour
 
@@ -853,9 +861,15 @@ set, not a `DataTable` prop:
 - `extra-large` is `large` about a ninth bigger again: body text 18 → 20px,
   captions 15 → 17px, spacing 5 → 5.6px (controls 45px tall, icons 22px, the
   sidebar 358px), and every other size in proportion. It sets every token
-  `large` sets, so whatever follows `large` follows it. It also widens a
-  record's facts rail to 336px (`--facts-rail-width`; 300px at every other
-  density), so a label still sits beside its value.
+  `large` sets, so whatever follows `large` follows it.
+- **A record's facts rail grows with the text** (`--facts-rail-width`):
+  300px at the default, 375px at `large` and 420px at `extra-large`, the
+  text's own scale (1.25× and 1.4×), so a short value keeps its one line
+  beside its label. The record page grows by the same amount (see "Page
+  width"), and the room the view needs before it draws the rail beside
+  the body grows with it (960px at the default, about 1,040px and
+  1,090px). Nothing in the rail is ever cut, at any size: a value too
+  long for its line wraps (add-an-entity.md, "The facts rail").
 - For `large` and `extra-large`, set it on **`<html>`**. Menus, selects,
   dialogs and tooltips are portaled to `<body>`, so a wrapper `<div>` doesn't reach
   them. `compact` and `comfortable` only touch tables and hub cards, so a
@@ -910,8 +924,9 @@ on a page ("A settings page").
 ### Page width (a record on a wide screen)
 
 A record page (`EntityView`) keeps a reading width: its column is at most
-`max-w-4xl`, and with a facts rail the page is that plus the 300px rail (336px
-at `extra-large` density).
+`max-w-4xl`, and with a facts rail the page is that plus the gap and the rail
+(300px, 375px at `large`, 420px at `extra-large`): the column keeps its
+width and the page grows by the rail's extra width.
 On a TV the right of the page is then empty. `data-width="wide"` on
 `<html>` lifts the cap: the column fills the page and the rail
 keeps its width, moving right with it.
@@ -1034,7 +1049,9 @@ const layout = useWidgetLayout('my-app:hub', Object.keys(HUB_CARDS))
 - **A row is one line:** its text is a link (`to` for a route in the
   app, `href` for an external address, which opens in a new tab with the
   external-link mark) or plain text, cut with an ellipsis, the whole of
-  it in the link's name and its tooltip. After it, an optional `note`
+  it in the link's name and its tooltip. A `lead` (an `<Emoji
+  className="size-4">`, an icon) goes before the text inside the link;
+  it's decorative, so the text alone still names the row. After it, an optional `note`
   (muted, small: "2 h ago", "holds 2") and an optional `trailing`
   element: a tone badge (pattern 5's mapping) or a control.
 - **A control in a row is named by the row's text.** Pass `trailing` as
@@ -2092,6 +2109,8 @@ package's `MonthCalendar`. Not a date picker, which is
 - **On a laptop the days hold titles**: two to a day, by time, each
   after a dot in its tone, and the rest folded to "+N more". **On a phone
   they hold dots**, one per item in its tone, up to four.
+- **An item's `emoji`** is drawn before its title, in the cell and the
+  day's list (Noto's picture, `size-3.5`, decorative).
 - **The picked day's list is under the month**, every item with its time
   ("All day" without one), its `detail` and a link (`to`). The app's own
   actions for that day sit beside its heading (`dayActions`, an Add
