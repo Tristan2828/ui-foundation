@@ -24,7 +24,7 @@ test.describe('DateChoices', () => {
     await expect(popup(page)).toBeVisible()
     await expect(page.getByRole('menu')).toHaveCount(0)
     const rows = popup(page).getByRole('group', { name: 'Move to' })
-    await expect(rows.getByRole('button')).toHaveText(['Morning7:00 AM', 'Work1:00 PM', 'Evening5:00 PM', 'Night8:00 PM', 'TomorrowThu, Nov 26'])
+    await expect(rows.getByRole('button')).toHaveText(['Morning 7:00 AM', 'Work 1:00 PM', 'Evening 5:00 PM', 'Night 8:00 PM', 'Tomorrow Thu, Nov 26'])
     await expect(rows.getByRole('button', { name: 'Morning, 7:00 AM' })).toBeDisabled()
     await expect(rows.getByRole('button', { name: 'Tomorrow, Thu, Nov 26' }).locator('span').last()).toHaveClass(/text-muted-foreground/)
     await expect(popup(page).getByRole('grid')).toBeVisible()
@@ -49,7 +49,7 @@ test.describe('DateChoices', () => {
     // The month moves on with its next button, and stays open.
     await popup(page).getByRole('button', { name: /Next Month/ }).click()
     await expect(popup(page).getByRole('grid')).toHaveAccessibleName(/December 2026/)
-    await popup(page).getByRole('button', { name: /December 3rd, 2026/ }).click()
+    await popup(page).getByRole('button', { name: /December 3, 2026/ }).click()
     await expect(popup(page)).toHaveCount(0)
     await expect(page.getByTestId('did')).toHaveText('picked 2026-12-03')
     await expect(page.getByTestId('row-day')).toHaveText('Thu, Dec 3')
@@ -71,11 +71,11 @@ test.describe('DateChoices', () => {
     await page.keyboard.press('Tab')
     expect(await focused(page)).toMatch(/Next Month/)
     await page.keyboard.press('Tab')
-    expect(await focused(page)).toMatch(/November 25th, 2026/)
+    expect(await focused(page)).toMatch(/November 25, 2026/)
     await page.keyboard.press('ArrowRight')
-    expect(await focused(page)).toMatch(/November 26th, 2026/)
+    expect(await focused(page)).toMatch(/November 26, 2026/)
     await page.keyboard.press('ArrowDown')
-    expect(await focused(page)).toMatch(/December 3rd, 2026/)
+    expect(await focused(page)).toMatch(/December 3, 2026/)
     await page.keyboard.press('Enter')
     await expect(popup(page)).toHaveCount(0)
     await expect(page.getByTestId('did')).toHaveText('picked 2026-12-03')
@@ -96,7 +96,7 @@ test.describe('DateChoices', () => {
     await page.goto(story('calendar-only'))
     await trigger(page).click()
     await expect(popup(page).locator('[data-slot="date-choices-rows"]')).toHaveCount(0)
-    expect(await focused(page)).toMatch(/November 25th, 2026/)
+    expect(await focused(page)).toMatch(/November 25, 2026/)
   })
 
   test('weeks start on the app’s day', async ({ page }) => {
@@ -110,10 +110,8 @@ test.describe('DateChoices', () => {
       await page.goto(`${story('move-to')}&theme=${theme}`)
       await trigger(page).click()
       await expect(popup(page).getByRole('grid')).toBeVisible()
-      // A day's name is react-day-picker's "Monday, September 14th, 2026", and
-      // axe doesn't find the "14" it shows as a word of that (docs/DEFERRED.md).
       const results = await new AxeBuilder({ page })
-        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region', 'label-content-name-mismatch'])
+        .disableRules(['landmark-one-main', 'page-has-heading-one', 'region'])
         .analyze()
       expect(results.violations).toEqual([])
     })

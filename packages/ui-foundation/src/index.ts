@@ -17,6 +17,7 @@ export {
   type NavLook,
   type NavSection,
 } from '@/components/app/app-shell'
+export { navItems, navPathname } from '@/components/app/app-shell-nav'
 export type { IconComponent } from '@/components/app/icon-component'
 export { Board, type BoardColumn, type BoardGroup, type BoardMoveTarget, type BoardPlace, type BoardProps } from '@/components/app/board'
 export { SpinWheel, type SpinWheelProps } from '@/components/app/spin-wheel'

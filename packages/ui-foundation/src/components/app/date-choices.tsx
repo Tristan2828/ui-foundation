@@ -161,6 +161,9 @@ export function DateChoiceRows({
           onClick={choice.onSelect}
         >
           <span>{choice.label}</span>
+          {/* A space between the two in its text (a flex row lays it out as
+              nothing), so axe finds the words shown in its name. */}
+          {choice.value && ' '}
           {choice.value && <span className="text-muted-foreground tabular-nums">{choice.value}</span>}
         </Button>
       ))}

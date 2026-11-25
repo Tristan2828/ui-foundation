@@ -7,6 +7,40 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.147.0 — Calendar day names, the sidebar's page helpers, a hub row's line
+
+npm package and `ui-foundation-backend` 4.147.0 (the backend is unchanged
+apart from its version).
+
+- **A date calendar's days are named "Monday, September 14, 2026"**, the
+  locale's long date, where react-day-picker said "Monday, September 14th,
+  2026". axe's `label-content-name-mismatch` didn't find the "14" a day
+  shows as a word of "14th", so every day of an open `Calendar` (DateField,
+  DateChoices, a date filter) was a violation; the package's e2e specs now
+  scan the open calendar with that rule on, in both themes.
+  "Today, " and ", selected" stay as they were, and a caller's own
+  `labels` still win.
+  - **DateChoices' and DateField's quick-pick rows** had the same
+    violation, hidden by the same rule being off: their text ran its two
+    parts together ("Tomorrow" then "Thu, Nov 26" read "TomorrowThu, Nov
+    26"). A space now sits between them in the text, laid out as nothing.
+    Their names ("Tomorrow, Thu, Nov 26") are unchanged; a test reading a
+    row's text gets the space.
+  - **What an app must do:** a test that picks a day by its name with an
+    ordinal (`{ name: /September 14th, 2026/ }`) changes to the new name
+    (`/September 14, 2026/`). Nothing else changes.
+- **`navItems(nav)` and `navPathname(to)`** are exported from the root:
+  every page in a sidebar's nav (sections' items and children flattened,
+  in order), and a link's path without its query or hash. They're the
+  ones AppShell uses, so an app listing its pages (a start page picker)
+  needn't flatten its nav itself.
+- **`WidgetListItem`'s `line`:** a muted line under the row's text ("Every
+  day · 4 steps"). Unlike the text it isn't cut: it wraps on a narrow row,
+  and the row keeps room under it at every density, so a wrapped line
+  doesn't sit against the divider. It's outside the link, so not part of
+  the row's name; `note` stays beside the text. The `app/WidgetCard`
+  stories' Routines rows show it.
+
 ## 4.146.0 — DateChoices: a few choices, then the month
 
 npm package and `ui-foundation-backend` 4.146.0 (the backend is unchanged

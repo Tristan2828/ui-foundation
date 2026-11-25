@@ -123,7 +123,8 @@ const SAVED_LINKS: Widget = {
 }
 
 // Rows led by an emoji (`lead`), drawn as Noto's picture inside the
-// link; the row's words alone name it.
+// link; the row's words alone name it. Each has a muted `line` under its
+// name, the second long enough to wrap on a phone.
 const ROUTINES: Widget = {
   title: 'Routines',
   icon: RepeatIcon,
@@ -133,10 +134,15 @@ const ROUTINES: Widget = {
   summary: '2',
   body: (
     <WidgetList>
-      <WidgetListItem to="/routines/1" lead={<Emoji emoji="🌅" className="size-4" />} note="7:00">
+      <WidgetListItem to="/routines/1" lead={<Emoji emoji="🌅" className="size-4" />} note="7:00" line="Every day · 4 steps">
         Morning
       </WidgetListItem>
-      <WidgetListItem to="/routines/2" lead={<Emoji emoji="🌙" className="size-4" />} note="21:30">
+      <WidgetListItem
+        to="/routines/2"
+        lead={<Emoji emoji="🌙" className="size-4" />}
+        note="21:30"
+        line="Weekdays · 6 steps · stretch, breathe and read before the lights go out"
+      >
         Wind down before bed with a long name that runs on
       </WidgetListItem>
     </WidgetList>

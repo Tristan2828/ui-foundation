@@ -81,7 +81,7 @@ test('date: typed (Enter saves), or picked from the calendar on its button (a pi
   await row(page, 'Due').getByRole('button', { name: 'Open Calendar' }).click()
   const calendar = page.locator('[data-slot="date-field-calendar"]')
   await expect(calendar).toBeVisible()
-  await calendar.getByRole('button', { name: /September 9th, 2026/ }).click()
+  await calendar.getByRole('button', { name: /September 9, 2026/ }).click()
   await expect(row(page, 'Due')).toContainText('Sep 9, 2026')
 })
 

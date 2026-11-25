@@ -25,6 +25,7 @@ function Calendar({
   locale,
   formatters,
   components,
+  labels,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
@@ -47,6 +48,11 @@ function Calendar({
         formatMonthDropdown: (date) =>
           date.toLocaleString(locale?.code, { month: "short" }),
         ...formatters,
+      }}
+      labels={{
+        labelDayButton: (date, modifiers) =>
+          dayButtonLabel(date, modifiers, locale?.code),
+        ...labels,
       }}
       classNames={{
         root: cn("w-fit", defaultClassNames.root),
@@ -183,6 +189,27 @@ function Calendar({
       {...props}
     />
   )
+}
+
+// Patched (ui-foundation): react-day-picker names a day "Monday, September
+// 14th, 2026" (date-fns' PPPP), and axe's label-content-name-mismatch doesn't
+// find the "14" the button shows in "14th". The locale's own long date
+// ("Monday, September 14, 2026"), with react-day-picker's "Today, " and
+// ", selected" kept, so the shown number is a word of the name.
+function dayButtonLabel(
+  date: Date,
+  modifiers: { today?: boolean; selected?: boolean },
+  localeCode?: string
+) {
+  let label = date.toLocaleDateString(localeCode ?? "en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  })
+  if (modifiers.today) label = `Today, ${label}`
+  if (modifiers.selected) label = `${label}, selected`
+  return label
 }
 
 function CalendarDayButton({

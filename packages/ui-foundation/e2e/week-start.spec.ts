@@ -8,9 +8,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 // weekday row, the weeks and the keyboard agree.
 const story = (id: string, query = '') => `http://localhost:6180/story.html?id=app-datefield--${id}${query}`
 
-// A day's name is react-day-picker's "Monday, September 14th, 2026", and
-// axe doesn't find the "14" it shows as a word of that (docs/DEFERRED.md).
-const AXE_RULES = ['landmark-one-main', 'page-has-heading-one', 'region', 'label-content-name-mismatch']
+const AXE_RULES = ['landmark-one-main', 'page-has-heading-one', 'region']
 
 const popup = (page: Page) => page.locator('[data-slot="date-field-calendar"]')
 const section = (page: Page, name: string) => page.getByRole('region', { name })
@@ -53,7 +51,7 @@ for (const [id, week] of Object.entries(WEEKS)) {
       test(`in ${place}`, async ({ page }) => {
         await page.goto(story(id))
         const calendar = await open(page)
-        const picked = calendar.getByRole('button', { name: /September 16th, 2026/ })
+        const picked = calendar.getByRole('button', { name: /September 16, 2026/ })
         await expect(picked).toBeFocused()
 
         // The row over the days: what's shown, and its label.
@@ -64,7 +62,7 @@ for (const [id, week] of Object.entries(WEEKS)) {
         // Each day sits under its own weekday, named with it.
         const names = await calendar
           .locator('tbody tr')
-          .filter({ has: page.getByRole('button', { name: /September 16th, 2026/ }) })
+          .filter({ has: page.getByRole('button', { name: /September 16, 2026/ }) })
           .getByRole('button')
           .evaluateAll((all) => all.map((day) => day.getAttribute('aria-label') ?? ''))
         expect(names.map((name) => /(\w+day), September (\d+)/.exec(name)?.slice(1).join(' '))).toEqual(
@@ -73,9 +71,9 @@ for (const [id, week] of Object.entries(WEEKS)) {
 
         // Home and End are the week's ends.
         await page.keyboard.press('Home')
-        await expect(calendar.getByRole('button', { name: new RegExp(`${week.days[0]}, September ${week.first}th`) })).toBeFocused()
+        await expect(calendar.getByRole('button', { name: new RegExp(`${week.days[0]}, September ${week.first},`) })).toBeFocused()
         await page.keyboard.press('End')
-        await expect(calendar.getByRole('button', { name: new RegExp(`${week.days[6]}, September ${week.last}th`) })).toBeFocused()
+        await expect(calendar.getByRole('button', { name: new RegExp(`${week.days[6]}, September ${week.last},`) })).toBeFocused()
       })
     }
 

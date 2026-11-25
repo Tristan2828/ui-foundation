@@ -23,31 +23,31 @@
 - [Density](#density) · lines 822–951
   - [Rows on this device](#rows-on-this-device) · lines 895–923
   - [Page width (a record on a wide screen)](#page-width-a-record-on-a-wide-screen) · lines 925–951
-- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 953–1065
-- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1067–1139
-- [Notices](#notices) · lines 1141–1168
-- [A value over time](#a-value-over-time) · lines 1170–1300
-  - [Several values over time](#several-values-over-time) · lines 1219–1257
-  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1259–1300
-- [A list as a board](#a-list-as-a-board) · lines 1302–1412
-  - [Order, groups and the header](#order-groups-and-the-header) · lines 1355–1412
-- [A list as cards](#a-list-as-cards) · lines 1414–1461
-- [Images full screen](#images-full-screen) · lines 1463–1509
-- [Key numbers on a record](#key-numbers-on-a-record) · lines 1511–1547
-- [Parts of the page standards](#parts-of-the-page-standards) · lines 1549–1585
-- [A few equal things](#a-few-equal-things) · lines 1587–1702
-- [An overview page](#an-overview-page) · lines 1704–1769
-- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1771–1834
-- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1836–1923
-- [Picking at random](#picking-at-random) · lines 1925–1956
-- [Filling in what's missing](#filling-in-whats-missing) · lines 1958–2025
-- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2027–2046
-- [A quick add line](#a-quick-add-line) · lines 2048–2076
-- [A date field's quick picks](#a-date-fields-quick-picks) · lines 2078–2102
-- [A few choices, then the month](#a-few-choices-then-the-month) · lines 2104–2130
-- [A month calendar](#a-month-calendar) · lines 2132–2164
-- [A settings page](#a-settings-page) · lines 2166–2223
-- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2225–2284
+- [Widget cards (hub pages)](#widget-cards-hub-pages) · lines 953–1070
+- [Module cards (a hub's places)](#module-cards-a-hubs-places) · lines 1072–1144
+- [Notices](#notices) · lines 1146–1173
+- [A value over time](#a-value-over-time) · lines 1175–1305
+  - [Several values over time](#several-values-over-time) · lines 1224–1262
+  - [Parts of a whole over time](#parts-of-a-whole-over-time) · lines 1264–1305
+- [A list as a board](#a-list-as-a-board) · lines 1307–1417
+  - [Order, groups and the header](#order-groups-and-the-header) · lines 1360–1417
+- [A list as cards](#a-list-as-cards) · lines 1419–1466
+- [Images full screen](#images-full-screen) · lines 1468–1514
+- [Key numbers on a record](#key-numbers-on-a-record) · lines 1516–1552
+- [Parts of the page standards](#parts-of-the-page-standards) · lines 1554–1590
+- [A few equal things](#a-few-equal-things) · lines 1592–1707
+- [An overview page](#an-overview-page) · lines 1709–1774
+- [A record's header and empty values](#a-records-header-and-empty-values) · lines 1776–1839
+- [A record's tabs, mark and facts](#a-records-tabs-mark-and-facts) · lines 1841–1928
+- [Picking at random](#picking-at-random) · lines 1930–1961
+- [Filling in what's missing](#filling-in-whats-missing) · lines 1963–2030
+- [Values edited in place: the presets' looks](#values-edited-in-place-the-presets-looks) · lines 2032–2051
+- [A quick add line](#a-quick-add-line) · lines 2053–2081
+- [A date field's quick picks](#a-date-fields-quick-picks) · lines 2083–2107
+- [A few choices, then the month](#a-few-choices-then-the-month) · lines 2109–2135
+- [A month calendar](#a-month-calendar) · lines 2137–2169
+- [A settings page](#a-settings-page) · lines 2171–2228
+- [The sidebar and the phone's bar](#the-sidebar-and-the-phones-bar) · lines 2230–2289
 
 <!-- /index -->
 
@@ -997,6 +997,11 @@ const { data, isLoading, error, refetch } = useReadyTasksQuery() // one page of 
   <service>' }}` opens it in a new tab, with the external-link mark and
   "(opens in a new tab)" for a screen reader. Set `skeletonRows` to the number it usually holds, so the card
   keeps its height when the data arrives.
+- **A row's words:** its text is one line, cut. A small muted `note`
+  ("2 h ago", "holds 2") sits beside it, at the row's end; a `line`
+  ("Every day · 4 steps", 4.147) sits under it, wraps rather than cuts,
+  and the row keeps room under it. Neither is part of the link's name.
+  Don't reach into the row's spans through `className` to move a note.
 - **Each widget owns its four states.** Loading is a skeleton of rows,
   empty is one quiet line the app writes ("Nothing waiting", not "No
   data"), and **an error stays inside the card**: the compact
