@@ -7,6 +7,69 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.145.0 — Emoji in the rail, a hub row and the month; the facts rail at Large text
+
+npm package and `ui-foundation-backend` 4.145.0 (the backend is unchanged
+apart from its version).
+
+- **Three parts draw an emoji as Noto's picture** (`<Emoji>`, 4.144.0),
+  where they took only words:
+  - a facts rail's **`kind: 'emoji'`** fact (`emoji: string | null`): a
+    `size-5` picture named by the emoji, `emptyLabel` when there's none,
+    edited in place through `edit`, the same in Details, printed as the
+    character;
+  - **`WidgetListItem`'s `lead`**: drawn before the row's text inside its
+    link, decorative; `children` is still the string that names the row
+    and its tooltip;
+  - **`MonthCalendarItem`'s `emoji`**: a `size-3.5` picture before the
+    title in the month's cell and in the day's list; the day's summary line
+    keeps the titles' words.
+- **The facts rail grows with Text Size**: `--facts-rail-width` is 300px,
+  375px at `data-density="large"` and 420px at `"extra-large"` (was 300px,
+  300px, 336px), the text's own scale. The record page grows by the same
+  amount, and the room the view needs before it draws the rail beside the
+  body is read from the variable: 960px at the default, about 1,040px at
+  Large and 1,090px at Extra Large. A change of Text Size measures again.
+- **Nothing in the rail is ever cut**, at any size: text, badges, links,
+  record links and list items wrap onto another line where they don't fit,
+  a badge too long for the rail wraps inside its badge, and unbroken text
+  breaks anywhere. The same in Details where the rail folds. The `title`
+  tooltip that gave a cut value's whole text is gone, since nothing is
+  cut. (A badge edited in place was cut with room beside it: its row keeps
+  a hidden pencil's room, which left it about 90px on a 300px rail at
+  Large.)
+- **A record's title no longer wraps narrow at Large and Extra Large.** The
+  title edited in place capped its width at its column plus a fixed
+  0.75rem, the room its negative margins give back; those margins are
+  spacing steps, which grow at the large densities, so the cap came out
+  3-5px short and the title wrapped ("Fix the leaking / tap"). The cap is
+  now in spacing steps too.
+- **The rail in a record dialog** follows the same widths and rule: it
+  stays beside the body in the 70rem dialog at every size. Whether there is
+  room is now measured on the dialog's layout width, not its box on screen:
+  the dialog scales in as it opens, and a rail that only just fits was left
+  folded when the scale ended.
+- A fixture, **Facts rail, long values** (and in a dialog), draws a
+  task-like record at all three densities; `e2e/facts-rail-long.spec.ts`
+  checks nothing in the rail is wider than its box or past its edge, in
+  Details on a phone and in the dialog, and that the title is one line at
+  1920. Axe runs it in both themes, and at both large densities.
+
+### How an app adopts it
+
+Bump both pins. Nothing else is needed: the rail widens and wraps by
+itself at Large and Extra Large. To draw an emoji where these parts showed
+the device's character:
+
+- the rail's Emoji fact: `{ label: 'Emoji', kind: 'emoji', emoji: record.emoji }`
+  in place of `kind: 'text'`;
+- a hub row: `<WidgetListItem lead={record.emoji && <Emoji emoji={record.emoji} className="size-4" />}>{record.name}</WidgetListItem>`,
+  the name alone as its children;
+- a calendar entry: `emoji: entry.emoji` on its `MonthCalendarItem`.
+
+A spec that read a cut rail value's whole text from its `title` reads the
+value itself.
+
 ## 4.144.1 — `inPlace.date({ typing: false })`: a pick saves
 
 npm package and `ui-foundation-backend` 4.144.1 (the backend is unchanged

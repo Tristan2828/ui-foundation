@@ -66,9 +66,10 @@ for (const density of ['large', 'extra-large']) {
   }
 }
 
-// The rail is a fixed width; at 300px the extra-large rows would be 3px too
-// narrow for a label beside its value, so only that density widens it.
-for (const [density, railWidth] of [['default', 300], ['large', 300], ['extra-large', 336]] as const) {
+// The rail grows with the text by the density's own scale (300px × 1.25 at
+// large, × 1.4 at extra-large), so a short value keeps its line beside its
+// label.
+for (const [density, railWidth] of [['default', 300], ['large', 375], ['extra-large', 420]] as const) {
   test(`the facts rail keeps each label beside its value (${density})`, async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 })
     await page.goto(story('app-entityview--facts-rail', density))

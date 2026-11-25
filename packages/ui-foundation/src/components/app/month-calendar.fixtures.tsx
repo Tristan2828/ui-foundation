@@ -13,7 +13,8 @@ import { RecordDialogRoute } from './record-dialog'
 // - Default: November with events (info) and visits (success), a busy day
 //   folded to "+1 more", today ringed and picked, an Add action beside the
 //   picked day's heading (it writes what it would add under the month).
-//   On a phone the days hold dots.
+//   On a phone the days hold dots. Two events carry an emoji, drawn
+//   before their titles in the cell and the day's list.
 // - WeeksFromSunday: the same month with Sunday first.
 // - States: loading, empty (a month with nothing) and an error with Try Again.
 // - OpensDialog: the same month at /events under a RecordDialogRoute, with
@@ -33,9 +34,9 @@ export default meta
 const TODAY = '2026-11-20'
 
 const ITEMS: MonthCalendarItem[] = [
-  { id: 1, day: '2026-11-20', title: 'Book club', time: '19:00', tone: 'info', to: '/events/1', detail: 'Event' },
+  { id: 1, day: '2026-11-20', title: 'Book club', emoji: '📚', time: '19:00', tone: 'info', to: '/events/1', detail: 'Event' },
   { id: 2, day: '2026-11-24', title: 'Checkup', time: '09:15', tone: 'success', to: '/visits/2', detail: 'Visit' },
-  { id: 3, day: '2026-11-26', title: 'Holiday dinner', tone: 'info', to: '/events/3', detail: 'Event' },
+  { id: 3, day: '2026-11-26', title: 'Holiday dinner', emoji: '🦃', tone: 'info', to: '/events/3', detail: 'Event' },
   { id: 4, day: '2026-11-26', title: 'Parade', time: '08:00', tone: 'info', to: '/events/4', detail: 'Event' },
   { id: 5, day: '2026-11-26', title: 'Call the family', time: '17:30', tone: 'warning', to: '/events/5', detail: 'Event' },
   { id: 6, day: '2026-11-11', title: 'Recycling pickup moved to a long title that runs on', tone: 'neutral', detail: 'Event' },

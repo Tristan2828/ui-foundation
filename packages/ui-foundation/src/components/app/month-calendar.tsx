@@ -27,6 +27,7 @@ import type { AppError } from '@/api/contracts'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPlainDate, localToPlainDate, type PlainDate } from '@/lib/plain-date'
+import { Emoji } from './emoji'
 import { ErrorState } from './error-state'
 import { recordDialogState } from './record-dialog-context'
 
@@ -38,6 +39,12 @@ export type MonthCalendarItem = {
   /** Its day, `'YYYY-MM-DD'`. */
   day: PlainDate
   title: string
+  /**
+   * Its emoji (`🎂`), drawn as Noto's picture before the title in the
+   * month's cell and in the day's list. Decorative: the title names it,
+   * and the day's summary line keeps the title's words only.
+   */
+  emoji?: string | null
   /** `'HH:MM'`, or none for all day. */
   time?: string | null
   /** Its dot and mark (design-language.md "Semantic tones"). Defaults to `info`. */
@@ -334,6 +341,7 @@ export function MonthCalendar({
                                 {list.slice(0, 2).map((item) => (
                                   <li key={item.id} className="flex min-w-0 items-center gap-1 text-xs text-foreground">
                                     <span className={cn('size-1.5 shrink-0 rounded-full', TONE_DOT[item.tone ?? 'info'])} />
+                                    {item.emoji && <Emoji emoji={item.emoji} className="size-3.5" />}
                                     <span className="truncate">{item.title}</span>
                                   </li>
                                 ))}
@@ -384,6 +392,7 @@ export function MonthCalendar({
                   const body = (
                     <>
                       <span className={cn('size-2 shrink-0 rounded-full', TONE_DOT[item.tone ?? 'info'])} aria-hidden="true" />
+                      {item.emoji && <Emoji emoji={item.emoji} className="size-3.5" />}
                       <span className="min-w-0 flex-1 truncate">{item.title}</span>
                       <span className="shrink-0 text-xs text-muted-foreground">{when}</span>
                     </>

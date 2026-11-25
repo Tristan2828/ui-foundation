@@ -178,6 +178,9 @@ const COMPOSITE_STORIES = [
   { id: 'app-entityview--facts-rail-no-tabs', mustShow: 'Not booked' },
   // The status first with its action and hint, badges with icons, an editable strip.
   { id: 'app-entityview--facts-rail-status', mustShow: 'Close…' },
+  // Long values in the rail, wrapped rather than cut; the Emoji fact as Noto's picture.
+  { id: 'app-entityview--facts-rail-long', mustShow: 'Somewhat interested' },
+  { id: 'app-entityview--facts-rail-long-in-a-dialog', mustShow: 'Fix the leaking tap' },
   // A confirm (420px) and the discard prompt.
   { id: 'ui-dialog--confirm', mustShow: "This can't be undone." },
   { id: 'ui-dialog--discard-prompt', mustShow: 'What you typed will be lost.' },
@@ -725,6 +728,9 @@ const LARGE_COMPOSITE_STORIES = [
   { id: 'app-modulecard--default', mustShow: 'beds planted' },
   { id: 'app-modulecard--all-states', mustShow: 'No slot: a plain band' },
   { id: 'app-settingspage--default', mustShow: 'Text Size' },
+  // The record page at Large and Extra Large: the wider rail, wrapped values.
+  { id: 'app-entityview--facts-rail-long', mustShow: 'Somewhat interested' },
+  { id: 'app-monthcalendar--default', mustShow: 'Holiday dinner' },
 ]
 
 for (const density of LARGE_DENSITIES) {

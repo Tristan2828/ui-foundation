@@ -351,9 +351,11 @@ export type EntityViewProps = {
   railLabel?: string
   /**
    * The facts rail (record standard A1), in the `tabs` layout:
-   * where the view has room (60rem beside it: a laptop's page, a record
-   * dialog), the sections of short facts (`facts`, placed `rail`, no
-   * `tab`) go in a column (300px, `--facts-rail-width`) beside the record's body, and leave
+   * where the view has room (60rem beside it at Regular, more at the large
+   * Text Sizes: a laptop's page, a record dialog), the sections of short
+   * facts (`facts`, placed `rail`, no `tab`) go in a column
+   * (`--facts-rail-width`: 300px, 375px at Large, 420px at Extra Large)
+   * beside the record's body, and leave
    * Details. The strip stays above, full width; the rail starts level with
    * the first content under it (the open tab's first section, or the first
    * card when cards come before the tabs). A Details tab left with
@@ -617,8 +619,9 @@ const RAIL_LAYOUT = {
 }
 
 // The facts rail (A1): the record's column at its usual reading width
-// (max-w-4xl) and a 300px rail beside it (`--facts-rail-width`, 336px at extra-large
-// density). The strip stays above both, at
+// (max-w-4xl) and the rail beside it (`--facts-rail-width`: 300px, 375px
+// at Large and 420px at Extra Large, so the page grows by the rail's
+// extra width at those sizes). The strip stays above both, at
 // full width; the rail starts level with the first content under it: the
 // first section of the open tab (beside the tab's content, never its bar),
 // or the first card when the record's first content isn't the tabs.
@@ -1087,7 +1090,7 @@ export function EntityView({
       title: section.title,
       ...('fields' in section || 'facts' in section
         ? {
-            fields: ('fields' in section ? section.fields : factsAsFields(section.facts)).map((field) => ({
+            fields: ('fields' in section ? section.fields : factsAsFields(section.facts, true)).map((field) => ({
               label: field.label,
               value: field.value !== undefined ? field.value : field.edit?.shown,
             })),

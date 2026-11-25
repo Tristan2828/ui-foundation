@@ -1,16 +1,18 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import { ClockIcon, LinkIcon, ListChecksIcon } from 'lucide-react'
+import { ClockIcon, LinkIcon, ListChecksIcon, RepeatIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import type { AppError } from '@/api/contracts'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Emoji } from './emoji'
 import type { IconComponent } from './icon-component'
 import { WidgetCard, WidgetCardGroup, WidgetList, WidgetListItem, type WidgetCardLink } from './widget-card'
 
-// A hub page's widgets: three made-up widgets, each a list
+// A hub page's widgets: four made-up widgets, each a list
 // with a different trailing element (a tone badge, a note and a switch, a
-// muted time on external links, and the header linking out). Default is the page as loaded; All
+// muted time on external links, and the header linking out), the fourth's
+// rows led by an emoji (`lead`). Default is the page as loaded; All
 // states is every widget in each of the four states; Brand mark is a card
 // about an outside service, titled with that service's mark;
 // Collapsible folds and remembers each card; Folded summary is a
@@ -120,7 +122,28 @@ const SAVED_LINKS: Widget = {
   ),
 }
 
-const WIDGETS = [READY, WAITING_ON, SAVED_LINKS]
+// Rows led by an emoji (`lead`), drawn as Noto's picture inside the
+// link; the row's words alone name it.
+const ROUTINES: Widget = {
+  title: 'Routines',
+  icon: RepeatIcon,
+  link: { to: '/routines', label: 'All' },
+  emptyMessage: 'No routines today',
+  rows: 2,
+  summary: '2',
+  body: (
+    <WidgetList>
+      <WidgetListItem to="/routines/1" lead={<Emoji emoji="🌅" className="size-4" />} note="7:00">
+        Morning
+      </WidgetListItem>
+      <WidgetListItem to="/routines/2" lead={<Emoji emoji="🌙" className="size-4" />} note="21:30">
+        Wind down before bed with a long name that runs on
+      </WidgetListItem>
+    </WidgetList>
+  ),
+}
+
+const WIDGETS = [READY, WAITING_ON, SAVED_LINKS, ROUTINES]
 
 // In All states each widget appears four times, so its title says which
 // state it shows: landmarks on one page need distinct names.

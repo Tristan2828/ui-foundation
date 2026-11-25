@@ -435,6 +435,11 @@ export interface WidgetListItemProps {
   to?: To
   /** An external address: the row is a link that opens in a new tab. Without `to` or `href` the row is plain text. */
   href?: string
+  /**
+   * Drawn before the text, inside the link: an emoji (`<Emoji>` at
+   * `size-4`) or an icon. Decorative: `children` still names the row.
+   */
+  lead?: ReactNode
   /** A small muted note after the text: "2 h ago", "holds 2". */
   note?: ReactNode
   /**
@@ -451,12 +456,25 @@ const ROW_LINK_CLASS =
   'hover:underline focus-visible:underline focus-visible:ring-3 focus-visible:ring-ring/50 ' +
   'max-sm:density-compact:py-3'
 
-export function WidgetListItem({ children, to, href, note, trailing, className }: WidgetListItemProps) {
+export function WidgetListItem({ children, to, href, lead, note, trailing, className }: WidgetListItemProps) {
   const textId = useId()
+  const hasLead = lead !== undefined && lead !== null && lead !== false
+  // With a lead the text is its own cut span after it, both on one line.
+  const words = hasLead ? (
+    <>
+      <span data-slot="widget-list-item-lead" aria-hidden="true" className="inline-flex shrink-0">
+        {lead}
+      </span>
+      <span className="min-w-0 truncate">{children}</span>
+    </>
+  ) : (
+    children
+  )
+  const leadRow = hasLead && 'flex items-center gap-1.5'
   const text =
     to !== undefined ? (
-      <Link id={textId} to={to} title={children} className={ROW_LINK_CLASS}>
-        {children}
+      <Link id={textId} to={to} title={children} className={cn(ROW_LINK_CLASS, leadRow)}>
+        {words}
       </Link>
     ) : href !== undefined ? (
       <a
@@ -465,15 +483,15 @@ export function WidgetListItem({ children, to, href, note, trailing, className }
         target="_blank"
         rel="noreferrer"
         title={children}
-        className={cn(ROW_LINK_CLASS, 'flex items-center gap-1')}
+        className={cn(ROW_LINK_CLASS, 'flex items-center gap-1', hasLead && 'gap-1.5')}
       >
-        <span className="truncate">{children}</span>
+        {hasLead ? words : <span className="truncate">{children}</span>}
         <ExternalLinkIcon aria-hidden="true" className="size-3 shrink-0 text-muted-foreground" />
         <span className="sr-only"> (opens in a new tab)</span>
       </a>
     ) : (
-      <span id={textId} title={children} className="min-w-0 truncate text-foreground">
-        {children}
+      <span id={textId} title={children} className={cn('min-w-0 truncate text-foreground', leadRow)}>
+        {words}
       </span>
     )
 

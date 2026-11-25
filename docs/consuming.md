@@ -174,6 +174,7 @@ Since 4.106 a record's short facts can sit beside its tabs on a laptop
    - a count: `{ label: 'Open', kind: 'count', count: r.open, to: '/things?parent=3' }`
    - a link out: `{ label: 'Task', kind: 'link', href: t.url, name: t.name }`
    - another record with a short name: `{ label: 'From', kind: 'record', name: p.name, to: '/people/3', short: true }`
+   - the record's emoji (4.145): `{ label: 'Emoji', kind: 'emoji', emoji: r.emoji }`
 
    Keep its `placement: 'rail'`, and its `edit`s: they work as on a
    field.
@@ -189,6 +190,10 @@ Since 4.106 a record's short facts can sit beside its tabs on a laptop
 5. Specs: at a laptop width, read a fact in the rail (`getByRole(
    'complementary', { name: '<title> facts' })`); a spec that opened
    Details for it either does that or sets a phone width.
+
+Since 4.145 the rail grows with Text Size (300px, 375px at Large, 420px at
+Extra Large) and nothing in it is cut: a long value wraps. A spec that read
+a cut value's whole text from its `title` tooltip reads the value itself.
 
 ## A list's header as wide as its table (4.106)
 

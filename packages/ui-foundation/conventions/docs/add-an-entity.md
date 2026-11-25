@@ -38,19 +38,19 @@
   - [The table opens the view, and the form returns to it](#the-table-opens-the-view-and-the-form-returns-to-it) · lines 860–871
   - [`<SelectValue>` shows the value, not the label](#selectvalue-shows-the-value-not-the-label) · lines 873–919
   - [Choosing how each column looks](#choosing-how-each-column-looks) · lines 921–935
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 937–1441
-  - [The record view](#the-record-view) · lines 1080–1260
-  - [Forms](#forms) · lines 1262–1345
-  - [Dialogs](#dialogs) · lines 1347–1380
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1382–1441
-- [What not to copy](#what-not-to-copy) · lines 1443–1470
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1472–1489
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1491–1551
-- [Deleting](#deleting) · lines 1553–1583
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1585–1604
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1606–1615
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1618–1660
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1662–1695
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 937–1448
+  - [The record view](#the-record-view) · lines 1080–1267
+  - [Forms](#forms) · lines 1269–1352
+  - [Dialogs](#dialogs) · lines 1354–1387
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1389–1448
+- [What not to copy](#what-not-to-copy) · lines 1450–1477
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1479–1496
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1498–1558
+- [Deleting](#deleting) · lines 1560–1590
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1592–1611
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1613–1622
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1625–1667
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1669–1702
 
 <!-- /index -->
 
@@ -1123,8 +1123,9 @@ A record uses the parts it has, in this order:
   of labels; keep labels to a word or two.
 - **The facts rail**: `factsRail` on the
   view puts the record's short facts in a narrow column beside the
-  record's body where the view has room (60rem: a laptop's page, a record
-  dialog), so the page doesn't end 900px in. The strip stays above it at
+  record's body where the view has room (60rem at the default Text Size,
+  more at Large and Extra Large as the rail grows: a laptop's page, a
+  record dialog), so the page doesn't end 900px in. The strip stays above it at
   full width, and the rail starts level with the first content under the
   strip: the open tab's first section (beside the tab's content, not its
   bar), or the first card when cards come before the tabs. Beside
@@ -1147,8 +1148,14 @@ A record uses the parts it has, in this order:
   ] }
   ```
 
-  - `text` is a date, a number or a person's name: one line, cut with
-    its whole text on hover. `badges` are a few short labels.
+  - `text` is a date, a number or a person's name. `badges` are a few
+    short labels. `emoji` is the record's emoji (`{ label: 'Emoji', kind:
+    'emoji', emoji: record.emoji }`), drawn as Noto's picture.
+  - **Nothing in the rail is ever cut**, at any Text Size (4.145): a value
+    too long for its line wraps onto another (text, a badge inside its
+    badge, a link, a record, a list item), and unbroken text breaks
+    anywhere. The same in Details. The rail is 300px, 375px at Large and
+    420px at Extra Large, so a short value still keeps one line.
   - A link to another record is `record`, and must say `short: true`:
     the app vouches its names are short (a person, a place). Records
     with long titles (a list of discussions, a log's entries) never go in
