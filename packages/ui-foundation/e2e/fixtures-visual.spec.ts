@@ -1555,7 +1555,7 @@ test.describe('widget card', () => {
 
   test('each widget is a region named by its heading, in the page outline', async ({ page }) => {
     await page.goto(storyUrlById('app-widgetcard--default', 'light'))
-    for (const title of ['Ready to Start', 'Waiting on', 'Saved links']) {
+    for (const title of ['Ready to Start', 'Waiting on', 'Saved links', 'Routines']) {
       await expect(page.getByRole('region', { name: title })).toBeVisible()
       await expect(page.getByRole('heading', { level: 2, name: title })).toBeVisible()
     }
@@ -1587,13 +1587,13 @@ test.describe('widget card', () => {
 
   test('every state is in each widget: skeleton, empty line, compact error with retry, rows', async ({ page }) => {
     await page.goto(storyUrlById(ALL, 'light'))
-    await expect(inState(page, 'loading').locator('[data-slot=widget-card][data-state=loading]')).toHaveCount(3)
+    await expect(inState(page, 'loading').locator('[data-slot=widget-card][data-state=loading]')).toHaveCount(4)
     await expect(inState(page, 'empty').getByText('Nothing waiting')).toBeVisible()
     const errors = inState(page, 'error')
-    await expect(errors.getByText('Connection problem')).toHaveCount(3)
-    await expect(errors.getByRole('button', { name: 'Try Again' })).toHaveCount(3)
-    await expect(errors.locator('[data-state=error][data-size=compact]')).toHaveCount(3)
-    await expect(inState(page, 'success').getByRole('listitem')).toHaveCount(8)
+    await expect(errors.getByText('Connection problem')).toHaveCount(4)
+    await expect(errors.getByRole('button', { name: 'Try Again' })).toHaveCount(4)
+    await expect(errors.locator('[data-state=error][data-size=compact]')).toHaveCount(4)
+    await expect(inState(page, 'success').getByRole('listitem')).toHaveCount(10)
   })
 
   // The skeleton holds as many rows as the widget usually does, so a card
