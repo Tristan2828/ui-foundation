@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { emoji } from './vite/emoji.js'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const harness = path.resolve(dirname, 'e2e/harness')
@@ -13,7 +14,7 @@ const harness = path.resolve(dirname, 'e2e/harness')
 export default defineConfig({
   root: harness,
   publicDir: path.resolve(harness, 'public'),
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), emoji()],
   resolve: { alias: { '@': path.resolve(dirname, 'src') } },
   build: {
     outDir: path.resolve(dirname, 'harness-dist'),

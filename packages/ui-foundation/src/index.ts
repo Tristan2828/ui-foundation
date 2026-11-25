@@ -333,6 +333,9 @@ export {
   type DateQuickPick,
 } from '@/lib/date-quick-picks'
 export { EmojiField, type EmojiFieldProps } from '@/components/app/emoji-field'
+export { Emoji, EmojiTile, type EmojiProps, type EmojiTileProps } from '@/components/app/emoji'
+export { EMOJI_ASSET_PATH, emojiImageName } from '@/components/app/emoji-image'
+export { IconField, type IconFieldOption, type IconFieldProps } from '@/components/app/icon-field'
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
 export { ImageViewer, type ImageViewerImage, type ImageViewerProps } from '@/components/app/image-viewer'

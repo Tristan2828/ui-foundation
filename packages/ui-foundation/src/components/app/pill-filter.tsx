@@ -9,11 +9,21 @@
 // with `setFilter`. Built on shadcn's ToggleGroup (Base UI): a group named
 // by `label`, one tab stop, the arrow keys along it, each pill a toggle
 // button with aria-pressed.
+import type { ReactNode } from 'react'
 import { cn } from 'cn'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { navCountText } from './app-shell-nav'
 
-export type PillFilterOption = { value: string; label: string }
+export type PillFilterOption = {
+  value: string
+  label: string
+  /**
+   * Drawn before the label inside the pill (a topic's `<Emoji>`, a small
+   * icon). Decorative: it is hidden from screen readers and the pill's
+   * name stays its label.
+   */
+  lead?: ReactNode
+}
 
 export type PillFilterProps = {
   /** What the pills choose ("Type"): the group's accessible name. */
@@ -93,14 +103,20 @@ export function PillGroup({
     >
       {pills.map((option) => {
         const count = countText(option.count)
+        const lead = option.lead ?? null
         return (
           <ToggleGroupItem
             key={option.value}
             value={option.value}
             // Read as "Needs a Look, 3": the dot isn't in the name.
             aria-label={count !== undefined ? `${option.label}, ${count}` : undefined}
-            className={PILL_CLASS}
+            className={cn(PILL_CLASS, lead !== null && 'gap-1.5')}
           >
+            {lead !== null && (
+              <span data-slot="pill-lead" aria-hidden="true" className="inline-flex shrink-0 items-center">
+                {lead}
+              </span>
+            )}
             {option.counted || count !== undefined ? <CountedLabel label={option.label} count={count} counted={option.counted} /> : option.label}
           </ToggleGroupItem>
         )

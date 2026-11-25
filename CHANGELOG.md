@@ -7,6 +7,63 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.144.0 — Every emoji, drawn as Noto's; IconField; EmojiTile; PillFilter lead
+
+npm package and `ui-foundation-backend` 4.144.0 (the backend is unchanged
+apart from its version).
+
+- **`EmojiField` offers every emoji:** all 1,923 fully-qualified Unicode
+  18.0 emoji with a Noto picture, without skin tones, in place of the 101
+  it had. A search, a row of tabs (Recent, Suggested and Unicode's nine
+  groups) that scroll to their group and light up as you scroll, an
+  8-across grid, and Clear. Below 768px it opens as a sheet from the bottom
+  with bigger emoji. Recent is the device's last 16 picks
+  (`localStorage`, `ui-foundation:emoji-recent`); Suggested is the 101 it
+  had, whose keywords still find their emoji ("meds" finds 💊). The data
+  (`emoji-data.generated.ts`, from Unicode's `emoji-test.txt` and CLDR
+  release-49's names and keywords) loads only when a picker opens. Same
+  props as before.
+- **`<Emoji emoji label? className?>`** draws an emoji as Noto's SVG from
+  `/assets/emoji-18.0/<code points>.svg`, the same on every device, and
+  falls back to the character where there is no picture.
+  **`<EmojiTile emoji>`** is a row's emoji on a 26px tile, or a dashed
+  empty one for none. `emojiImageName` and `EMOJI_ASSET_PATH` are exported
+  too.
+- **`emoji()` from `@tristan2828/ui-foundation/vite`** serves the pictures
+  in dev and copies them into the build under `assets/emoji-18.0/`, which
+  the reference backend serves immutable. The package carries them in its
+  new `emoji/` folder (about 21 MB unpacked: Noto's SVGs under Apache-2.0,
+  with their `LICENSE`); a browser downloads only the ones a page shows.
+- **`IconField`** picks one icon of an app's set from a 6-across grid: a
+  popup on a laptop, a sheet on a phone, with a line naming the icon under
+  the pointer or focus. `renderIcon` draws the trigger's icon (a tinted
+  glyph).
+- **`PillFilter` options take `lead`**, drawn before the label inside the
+  pill and hidden from screen readers.
+- The package's `npm run gen:emoji` (`scripts/gen-emoji.mjs`) regenerates
+  the data and the pictures, on Node's own `fetch`; a new Emoji version is
+  its three pinned tags bumped and a rerun.
+
+### How an app adopts it
+
+design-language.md "Emoji" says which to use where.
+
+1. Add `emoji()` to `vite.config.ts`'s plugins:
+   `import buildInfo, { emoji } from '@tristan2828/ui-foundation/vite'`,
+   then `plugins: [react(), tailwindcss(), buildInfo(), emoji()]`. Without
+   it, `<Emoji>` and the picker show the device's own characters instead
+   of Noto's pictures.
+2. An app served behind its own server copies `dist/assets/emoji-18.0/`
+   with the rest of `dist/`; the reference backend already serves it
+   immutable.
+3. Draw a stored emoji with `<Emoji emoji={value} />` beside its words, or
+   `<EmojiTile emoji={value} />` in a list's rows, instead of the
+   character.
+4. A Playwright test that picked an emoji by name in the open picker may
+   now find it twice (in Suggested and in its group): scope it to the
+   section, `getByRole('tabpanel', { name: 'Suggested' })`. Tab from the
+   search box reaches the tab row first, then the grid.
+
 ## 4.143.0 — Quick picks on a date field
 
 npm package and `ui-foundation-backend` 4.143.0 (the backend is unchanged
