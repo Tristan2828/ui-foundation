@@ -28,6 +28,13 @@ function saved(page: Page, name: string) {
   return page.getByTestId(`saved-${name}`)
 }
 
+// How long a test waits after a click focuses the editor before a key
+// takes the caret to the document's start (Home on the first line,
+// Ctrl/Cmd+Home). ProseMirror reads a collapse onto the start within
+// 200ms of taking focus as the browser resetting the selection, and puts
+// the old one back, so a quicker key is undone. No person is that fast.
+const PAST_FOCUS_MS = 300
+
 // Puts the caret at the very end of the document: a click on its last
 // block, then the end of the document. ProseMirror settles the selection
 // a moment after it takes focus; a key pressed inside that moment (no
@@ -264,7 +271,7 @@ test.describe('editing features', () => {
     await page.mouse.down()
     await page.mouse.move(box.x + box.width - 2, box.y + box.height / 2, { steps: 5 })
     await page.mouse.up()
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(PAST_FOCUS_MS)
     expect(popups).toBe(0)
     await expect(link).toHaveCSS('cursor', 'pointer')
   })
@@ -345,7 +352,7 @@ test.describe('toolbar', () => {
   // Selects the first word of the first line ("Format"), from the keyboard.
   async function selectFormat(page: Page) {
     await editor(page, 'formats').locator('p').first().click()
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(PAST_FOCUS_MS)
     await page.keyboard.press('Home')
     for (let i = 0; i < 'Format'.length; i++) await page.keyboard.press('Shift+ArrowRight')
     await page.waitForTimeout(100)
@@ -539,7 +546,7 @@ test.describe('floating toolbar', () => {
   // Selects the first word of the first line ("Format"), from the keyboard.
   async function selectFormat(page: Page) {
     await editor(page, 'formats').locator('p').first().click()
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(PAST_FOCUS_MS)
     await page.keyboard.press('Home')
     for (let i = 0; i < 'Format'.length; i++) await page.keyboard.press('Shift+ArrowRight')
     await page.waitForTimeout(100)
@@ -950,7 +957,7 @@ test.describe('Notion shortcuts', () => {
 
   test('Ctrl/Cmd+Shift+S strikes the selected words through', async ({ page }) => {
     await editor(page, 'formats').locator('p').first().click()
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(PAST_FOCUS_MS)
     await page.keyboard.press('Home')
     for (let i = 0; i < 'Format'.length; i++) await page.keyboard.press('Shift+ArrowRight')
     // ProseMirror reads a keyboard selection a moment after it changes.
@@ -1352,7 +1359,7 @@ test.describe('image upload', () => {
       await picker.setFiles([{ name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from([37, 80, 68, 70]) }])
       await expect(page.getByText('That file is a PDF. Choose a JPEG, PNG or WebP image.')).toBeVisible()
       await expect(editor(page, 'floating')).toBeFocused()
-      await page.waitForTimeout(300)
+      await page.waitForTimeout(PAST_FOCUS_MS)
       await expect(editor(page, 'floating').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
       await afterPause(page)
       expect(await saved(page, 'floating').textContent()).toBe('No bar above: paste, drop or the Image button upload.\n')
@@ -1368,7 +1375,7 @@ test.describe('image upload', () => {
     await expect(page.getByText("Images can't be added here.")).toHaveCount(1)
     await dropFiles(page, 'noUpload', [photo()])
     await expect(page.getByText("Images can't be added here.")).toHaveCount(2)
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(PAST_FOCUS_MS)
     await expect(editor(page, 'noUpload').locator('[data-slot=rich-text-image-upload], img[src]')).toHaveCount(0)
     await afterPause(page)
     expect(await saved(page, 'noUpload').textContent()).toBe('No upload: files are ignored.\n')
@@ -1648,7 +1655,7 @@ test.describe('a value that arrives later', () => {
     // and the caret stay, so every key lands in order where it's typed.
     await box.getByText('Loaded').click()
     await expect(box).toBeFocused()
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(PAST_FOCUS_MS)
     await page.keyboard.press('Home')
     await page.keyboard.type('Freshly ')
     await expect(box).toBeFocused()
@@ -1912,7 +1919,7 @@ test.describe('typing', () => {
   async function caretAtStart(page: Page, name: string) {
     await editor(page, name).locator(':scope > *').first().click()
     await expect(editor(page, name)).toBeFocused()
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(PAST_FOCUS_MS)
     await page.keyboard.press('ControlOrMeta+Home')
   }
 
