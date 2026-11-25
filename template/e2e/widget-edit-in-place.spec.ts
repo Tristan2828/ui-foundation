@@ -464,9 +464,13 @@ test.describe('widget view: editing in place', () => {
     await description.getByText('Runs on one AA battery').click()
     const editor = page.getByRole('textbox', { name: 'Description' })
     await expect(editor).toBeFocused()
-    // "basic", in the first paragraph.
+    // "basic", in the first paragraph. The wait is past ProseMirror's
+    // focus window: a caret that lands on the document's start within
+    // 200ms of the editor taking focus is read as the browser resetting
+    // the selection, and put back where it was, so a quicker Ctrl+Home
+    // is undone.
     await editor.locator('p').first().click()
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(300)
     await page.keyboard.press('ControlOrMeta+Home')
     for (let i = 0; i < 'A '.length; i++) await page.keyboard.press('ArrowRight')
     for (let i = 0; i < 'basic'.length; i++) await page.keyboard.press('Shift+ArrowRight')
