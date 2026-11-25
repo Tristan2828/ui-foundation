@@ -406,6 +406,7 @@ function dateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainDate> 
     control: (props, alone) => (
       <DateField
         id={props.id}
+        typing={false}
         value={props.value}
         // Alone, a pick saves and the calendar opens with the field; closing
         // it with nothing picked gives up (a pick has already saved by then).

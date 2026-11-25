@@ -102,6 +102,35 @@ for (const timezoneId of ['Pacific/Honolulu', 'Pacific/Kiritimati']) {
   })
 }
 
+// inPlace.date's `typing: false` (the Filed value of app/DateField's
+// EveryCalendar story): the field is the date button alone, its calendar
+// opens with it, and a pick saves. Closing the calendar gives up the edit,
+// so a pick must be saved before the close, never after it.
+test.describe('inPlace.date with typing: false', () => {
+  test.use({ timezoneId: 'America/Chicago', locale: 'en-US' })
+
+  test('the button alone, its calendar open; Esc gives up, and a pick saves', async ({ page }) => {
+    await page.goto(story('every-calendar'))
+    const details = page.getByRole('region', { name: 'Details' })
+    const calendar = page.locator('[data-slot="date-field-calendar"]')
+    // Due and Filed both start on Sep 16.
+    await expect(details.getByText('Sep 16, 2026', { exact: true })).toHaveCount(2)
+    await page.getByRole('button', { name: 'Edit Filed' }).click()
+    await expect(calendar).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(calendar).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Edit Filed' })).toBeVisible()
+    await expect(details.getByText('Sep 16, 2026', { exact: true })).toHaveCount(2)
+
+    await page.getByRole('button', { name: 'Edit Filed' }).click()
+    await expect(calendar).toBeVisible()
+    await expect(details.getByRole('textbox', { name: 'Filed' })).toHaveCount(0)
+    await calendar.getByRole('button', { name: /September 21st, 2026/ }).click()
+    await expect(calendar).toHaveCount(0)
+    await expect(details.getByText('Sep 21, 2026')).toBeVisible({ timeout: 5000 })
+  })
+})
+
 // Quick picks (app/DateField's QuickPicks) on a fixed today, Tuesday Nov
 // 24, 2026: each sets its day and closes, from the mouse and the keyboard.
 test.describe('DateField quick picks', () => {

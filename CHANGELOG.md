@@ -7,6 +7,25 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.144.1 — `inPlace.date({ typing: false })`: a pick saves
+
+npm package and `ui-foundation-backend` 4.144.1 (the backend is unchanged
+apart from its version).
+
+- **A date edited in place with `typing: false` saves its pick.** The
+  preset gave its `DateField` no `typing={false}`, so the typed box showed
+  in place of the date button. Its calendar still opened with the field,
+  but a pick closed the calendar first, closing gave the edit up, and the
+  pick then found nothing open to save: the value stayed as it was, with no
+  request sent. The preset now draws the date button alone, whose pick
+  saves before the calendar closes. A spec in `e2e/date-field.spec.ts`
+  picks a day and sees it saved.
+
+### How an app adopts it
+
+Nothing to change: bump both pins. A value set with `inPlace.date({
+typing: false })` opens its calendar in one click, and a pick saves.
+
 ## 4.144.0 — Every emoji, drawn as Noto's; IconField; EmojiTile; PillFilter lead
 
 npm package and `ui-foundation-backend` 4.144.0 (the backend is unchanged
