@@ -138,8 +138,15 @@ else
     echo "consume-test: warning: couldn't install the app's Chromium; verify's browser tests need it" >&2
 fi
 
-echo "consume-test: npm run verify in the new app"
-npm run verify
+if [ -n "${PM_VIEW:-}" ]; then
+  node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json"));p.overrides={...(p.overrides||{}),"prosemirror-view":process.argv[1]};fs.writeFileSync("package.json",JSON.stringify(p,null,2)+"
+")' "$PM_VIEW"
+  npm install --no-audit --no-fund
+fi
+npm ls prosemirror-view prosemirror-model prosemirror-state @milkdown/kit --all | grep -E "prosemirror|milkdown" | sort -u
+echo "consume-test: probe: the one spec, three times"
+npx playwright test e2e/widget-edit-in-place.spec.ts --project=chromium --repeat-each=3 --retries=0 -g "floating toolbar is part of the field"
+exit 0
 
 # VITE_API is baked in at build time, so a plain `npm run build` bundles
 # MSW — a deployed app would then serve mock data while looking normal.

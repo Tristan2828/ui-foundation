@@ -32,6 +32,12 @@ jobs:
   install-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        pm: ["", "1.43.0", "1.43.1", "1.44.0"]
+    env:
+      PM_VIEW: ${{ matrix.pm }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
