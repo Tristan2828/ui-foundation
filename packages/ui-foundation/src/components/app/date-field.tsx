@@ -17,6 +17,13 @@
 // The calendar's weeks start on Monday, MonthCalendar's and
 // RecurrenceField's default; `weekStart="SU"` for an app whose weeks start
 // on Sunday.
+//
+// `quickPicks` puts a short list of days over the calendar: `true` is Today,
+// Tomorrow, This Weekend (the coming Saturday) and Next Week (the coming
+// week start), or an app passes its own list. Each is a button named for
+// its words and the day it sets ("Next Week, Mon, Nov 30"); pressing one
+// sets that day and closes, as a day picked in the calendar does. Off
+// unless asked for.
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import { CalendarIcon } from 'lucide-react'
 import { cn } from 'cn'
@@ -24,6 +31,7 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DATE_QUICK_PICKS, type DateQuickPick } from '@/lib/date-quick-picks'
 import {
   formatPlainDate,
   localToPlainDate,
@@ -79,6 +87,12 @@ export type DateFieldProps = {
   format?: Intl.DateTimeFormatOptions
   /** The day the calendar's weeks start on (`'MO'` to `'SU'`; Monday when left out). */
   weekStart?: WeekdayCode
+  /**
+   * Days to pick in one press, over the calendar: `true` for Today,
+   * Tomorrow, This Weekend and Next Week (`DATE_QUICK_PICKS`), or the
+   * app's own list. Each sets its day and closes. None when left out.
+   */
+  quickPicks?: boolean | readonly DateQuickPick[]
   locale?: string
   className?: string
   'aria-label'?: string
@@ -95,6 +109,52 @@ type ModeProps = Omit<DateFieldProps, 'typing'>
 // Calendar's `weekStartsOn` by code. Left out, it's Calendar's own default (Monday).
 const WEEK_STARTS_ON = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 } as const satisfies Record<WeekdayCode, number>
 
+// The quick picks over the calendar, each named for its words and its day,
+// counted from the browser's own today when the calendar opens.
+function QuickPicks({
+  picks,
+  weekStart = 'MO',
+  locale,
+  onPick,
+}: {
+  picks: DateFieldProps['quickPicks']
+  weekStart?: WeekdayCode
+  locale?: string
+  onPick: (day: PlainDate) => void
+}) {
+  const list = picks === true ? DATE_QUICK_PICKS : picks || []
+  if (list.length === 0) return null
+  const today = localToPlainDate(new Date())
+  return (
+    <div
+      role="group"
+      aria-label="Quick Picks"
+      data-slot="date-field-quick-picks"
+      className="flex flex-col gap-0.5 border-b border-border p-2"
+    >
+      {list.map((pick) => {
+        const day = pick.day(today, weekStart)
+        const shown = formatPlainDate(day, { weekday: 'short', month: 'short', day: 'numeric' }, locale)
+        return (
+          <Button
+            key={pick.label}
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full justify-between gap-4 font-normal"
+            // Its words first, so speech input finds it by what it shows.
+            aria-label={`${pick.label}, ${shown}`}
+            onClick={() => onPick(day)}
+          >
+            <span>{pick.label}</span>
+            <span className="text-muted-foreground">{shown}</span>
+          </Button>
+        )
+      })}
+    </div>
+  )
+}
+
 function TypedDate({
   id,
   value,
@@ -110,6 +170,7 @@ function TypedDate({
   onOpenChange,
   format,
   weekStart,
+  quickPicks,
   locale,
   className,
   'aria-describedby': describedBy,
@@ -221,6 +282,7 @@ function TypedDate({
               // Back to the box, where typing goes on.
               finalFocus={box}
             >
+              <QuickPicks picks={quickPicks} weekStart={weekStart} locale={locale} onPick={pick} />
               <Calendar
                 mode="single"
                 // Picking the chosen day again keeps it (and closes), never unsets it: Clear does that.
@@ -264,6 +326,7 @@ function DateButton({
   onOpenChange,
   format,
   weekStart,
+  quickPicks,
   locale,
   className,
   ...aria
@@ -312,6 +375,7 @@ function DateButton({
         // otherwise take focus itself, past the Calendar's autoFocus.
         initialFocus={() => popup.current?.querySelector<HTMLElement>('button[data-day][tabindex="0"]') ?? true}
       >
+        <QuickPicks picks={quickPicks} weekStart={weekStart} locale={locale} onPick={pick} />
         <Calendar
           mode="single"
           // Picking the chosen day again keeps it (and closes), never unsets it: Clear does that.

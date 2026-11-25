@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@/fixtures/types'
 import { useState } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { addPlainDays, type DateQuickPick } from '@/lib/date-quick-picks'
 import { formatPlainDate, type PlainDate } from '@/lib/plain-date'
 import type { WeekdayCode } from '@/lib/recurrence'
 import { DateField } from './date-field'
@@ -153,6 +154,50 @@ function EverywhereOnAPage({ weekStart }: { weekStart?: WeekdayCode }) {
   return <RouterProvider router={router} />
 }
 
+// Quick picks over the calendar: the four on a typed field and on a
+// button, the four with weeks from Sunday, and an app's own list.
+// e2e/date-field.spec.ts presses each on a fixed today.
+const IN_A_MONTH: DateQuickPick = { label: 'In a Month', day: (today) => addPlainDays(today, 30) }
+
+function WithQuickPicks() {
+  const [due, setDue] = useState<PlainDate>('')
+  const [start, setStart] = useState<PlainDate>('')
+  const [sunday, setSunday] = useState<PlainDate>('')
+  const [review, setReview] = useState<PlainDate>('')
+  const locale = 'en-US'
+  return (
+    <FieldGroup className="max-w-sm">
+      <Field>
+        <FieldLabel htmlFor="due">Due</FieldLabel>
+        <DateField id="due" value={due} onChange={setDue} quickPicks clearable placeholder="No due date" locale={locale} />
+        <output data-testid="due-value">{due || 'empty'}</output>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="start">Start</FieldLabel>
+        <DateField id="start" typing={false} value={start} onChange={setStart} quickPicks clearable placeholder="No start date" locale={locale} />
+        <output data-testid="start-value">{start || 'empty'}</output>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="sunday">Weeks From Sunday</FieldLabel>
+        <DateField id="sunday" typing={false} value={sunday} onChange={setSunday} quickPicks weekStart="SU" locale={locale} />
+        <output data-testid="sunday-value">{sunday || 'empty'}</output>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="review">Review</FieldLabel>
+        <DateField
+          id="review"
+          typing={false}
+          value={review}
+          onChange={setReview}
+          quickPicks={[{ label: 'Today', day: (today) => today }, IN_A_MONTH]}
+          locale={locale}
+        />
+        <output data-testid="review-value">{review || 'empty'}</output>
+      </Field>
+    </FieldGroup>
+  )
+}
+
 const meta: Meta = {
   title: 'app/DateField',
   parameters: { controls: { disable: true } },
@@ -169,3 +214,5 @@ export const Typed: StoryObj = { render: () => <OnAForm typing /> }
 export const EveryCalendar: StoryObj = { render: () => <EverywhereOnAPage /> }
 
 export const WeeksFromSunday: StoryObj = { render: () => <EverywhereOnAPage weekStart="SU" /> }
+
+export const QuickPicks: StoryObj = { render: () => <WithQuickPicks /> }

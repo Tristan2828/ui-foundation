@@ -234,6 +234,8 @@ const COMPOSITE_STORIES = [
   // Every date calendar's control, with weeks from Monday and from Sunday (open ones: e2e/week-start.spec.ts).
   { id: 'app-datefield--every-calendar', mustShow: 'File the return' },
   { id: 'app-datefield--weeks-from-sunday', mustShow: 'File the return' },
+  // Quick picks over the calendar (open: e2e/date-field.spec.ts).
+  { id: 'app-datefield--quick-picks', mustShow: 'No start date' },
   // The form standard's controls: choice buttons, typed dates, a
   // reference with Create, a long multi-pick, and a record's rows edited in place.
   { id: 'app-datefield--typed', mustShow: '2026-09-02' },

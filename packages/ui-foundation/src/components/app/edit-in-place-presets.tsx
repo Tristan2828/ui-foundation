@@ -17,6 +17,7 @@ import type { ReactNode } from 'react'
 import type { AppError } from '@/api/contracts'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group'
+import type { DateQuickPick } from '@/lib/date-quick-picks'
 import { linkHost, linkRule } from '@/lib/link-href'
 import { formatMonthDay, monthDayProblem, type MonthDay } from '@/lib/month-day'
 import { formatPlainDate, unreadableDateMessage, type PlainDate } from '@/lib/plain-date'
@@ -118,6 +119,8 @@ export type InPlaceDateConfig<TRequired extends boolean = boolean> = {
   format?: Intl.DateTimeFormatOptions
   /** DateField's `weekStart`: `'SU'` for an app whose weeks start on Sunday. */
   weekStart?: WeekdayCode
+  /** DateField's `quickPicks`: `true` for Today, Tomorrow, This Weekend and Next Week over the calendar, or the app's own. */
+  quickPicks?: boolean | readonly DateQuickPick[]
   locale?: string
   placeholder?: string
 }
@@ -411,6 +414,7 @@ function dateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainDate> 
         placeholder={config.placeholder}
         format={config.format}
         weekStart={config.weekStart}
+        quickPicks={config.quickPicks}
         locale={config.locale}
         invalid={props.invalid}
         readOnly={props.disabled}
@@ -453,6 +457,7 @@ function typedDateKind(config: InPlaceDateConfig): Kind<PlainDate | null, PlainD
         placeholder={config.placeholder}
         format={config.format}
         weekStart={config.weekStart}
+        quickPicks={config.quickPicks}
         locale={config.locale}
         invalid={props.invalid}
         readOnly={props.disabled}
