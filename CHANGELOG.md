@@ -7,7 +7,7 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.145.0 — DateChoices: a few choices, then the month
+## 4.146.0 — DateChoices: a few choices, then the month
 
 npm package and `ui-foundation-backend` 4.146.0 (the backend is unchanged
 apart from its version).
