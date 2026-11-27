@@ -7,6 +7,68 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.151.0 — The editor's behaviour: no key lost as it starts, the caret at the end, Tab that stays, Ctrl/Cmd+S
+
+npm package and `ui-foundation-backend` 4.151.0 (the backend is unchanged
+apart from its version). Everything here is additive: new optional props
+on `RichTextEditor` and fixes to what it already did.
+
+- **No key lost while the editor starts.** An `autoFocus` editor whose
+  code is still loading puts a hidden textarea, named as the field is,
+  beside the loading view; it takes focus and holds what's typed, and the
+  editor types it in once it's up (each character as typed, so `# ` makes
+  a heading; a newline as Enter), after it has read the text it opened
+  with, so the typing is saved. Focus passes from one to the other in one
+  task, so editing in place never sees it leave.
+- **A load that failed is tried again.** `rich-text-load.ts` keeps the
+  loaded module: an editor mounted once it's here is drawn at once, with
+  no loading view. A failed load is forgotten, so the next editor to
+  mount (an app's Try Again) loads it, rather than every editor failing
+  until a reload.
+- **The editor is built in a layout effect**, so it's built and focused
+  in the task that puts it in the page.
+- **`autoFocus?: boolean | 'end'`.** `true` is as before. `'end'` puts the
+  caret after the last words (past a divider or an image that ends the
+  note), scrolled into view, and saves nothing. A note whose last section
+  is folded gets the caret at the end of that section's heading, and the
+  section stays folded.
+- **`focusKey?: string | number`.** Each change after the editor mounts
+  focuses it again with its caret put back in the same task: for an editor
+  kept mounted while hidden (a tab behind another) that comes back to the
+  front. Focusing the editable element through the DOM leaves the caret at
+  the text's start for about 20 ms, where a key typed at once would land.
+- **`tabStaysInText?: boolean`**, for an editor that is the page. Tab and
+  Shift+Tab on a plain line stay in the text and change nothing (in a list
+  or code they indent as before); Esc, then Tab, moves on (Shift+Tab
+  back), and Alt+F10 still reaches the toolbar. The way out is told
+  through the field's `aria-describedby` and shown under the text the
+  first time a Tab stays. Default `false`.
+- **Ctrl/Cmd+S in an autosaving value saves now** and stays open, in place
+  of the browser's Save Page dialog (`EditInPlaceStore.saveNow(key)` is
+  new).
+- **Spaces at a line's start aren't saved**, as spaces at its end already
+  weren't: a paragraph's, a heading's (both ends), and a line's either side
+  of a hard break, never inside inline code. They were saved as `&#x20;`.
+  A note that already holds one still saves, and keeps it where it isn't
+  edited. Blank lines typed for spacing aren't saved either; cell pattern
+  18 now says both.
+- **Coverage:** `e2e/rich-text-editor.spec.ts` "starting" (the chunk held
+  with `page.route`, and failed then let through), "caret at the end",
+  "focus again", "Tab stays in the text", "spaces" and a refused edit
+  holding a later one; `e2e/entity-view.spec.ts` Ctrl/Cmd+S (the key
+  dispatched, `defaultPrevented` asserted); `tests/rich-text-load-retry.test.ts`,
+  `tests/rich-text-typing.test.ts` and `tests/markdown-merge.test.ts` in
+  node. New stories: `app/RichTextEditor` Starting, AutoFocusEnd,
+  AutoFocusFoldedEnd, FocusAgain, TabStays and Spaces.
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. Nothing changes unless
+you pass the new props. A notes app whose editor is the page gives it
+`autoFocus="end"` and `tabStaysInText`, and, keeping one editor per tab,
+bumps `focusKey` as a tab comes to the front instead of focusing the
+editable element itself.
+
 ## 4.148.0 — Editing in place on a page of the app's own; the editor loaded ahead
 
 npm package and `ui-foundation-backend` 4.148.0 (the backend is unchanged

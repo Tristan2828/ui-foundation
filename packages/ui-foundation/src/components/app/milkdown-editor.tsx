@@ -57,11 +57,18 @@
 // - `foldKey`: the text folds by its toggle headings, as <Markdown> does
 //   (rich-text-fold.ts), remembered on this device and shared with
 //   NotesOutline; the document never changes.
+// - Built in a layout effect, focused (`autoFocus`, `'end'` after the last
+//   words shown) only once the baseline is read, with any keys typed while
+//   it loaded typed in after (rich-text-held-keys.ts). `focusKey` focuses
+//   it again, the caret put back as focus arrives.
+// - `tabStaysInText`: Tab and Shift+Tab nothing in the text took stay in
+//   it; Esc, then Tab, moves on, told through the field's description and
+//   shown under it the first time.
 // - `pageLink`: links the app marks as its pages drawn as page links,
 //   opened in this tab; `onCreatePage`: "/page" and Turn into page make
 //   one through the app and link it (a title box, rich-text-page-box.tsx).
 //   The Markdown stays a plain link.
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useInRouterContext, useNavigate } from 'react-router'
 import {
@@ -89,7 +96,7 @@ import {
 import type { NodeParserSpec } from '@milkdown/kit/transformer'
 import { gfm, tableCellSchema, tableHeaderSchema, tableSchema } from '@milkdown/kit/preset/gfm'
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
-import { NodeSelection, Plugin, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
+import { NodeSelection, Plugin, Selection, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
 import { isInTable, selectedRect, TableMap } from '@milkdown/kit/prose/tables'
 import { Decoration, DecorationSet, type EditorView, type NodeView } from '@milkdown/kit/prose/view'
 import { $markSchema, $nodeSchema, $prose, $remark, getMarkdown } from '@milkdown/kit/utils'
@@ -108,7 +115,7 @@ import {
   setPendingPage,
   type PageSpan,
 } from './rich-text-page-links'
-import { passEscapeThrough } from './escape-passthrough'
+import { escapePassedThrough, passEscapeThrough } from './escape-passthrough'
 import { calloutHandler, remarkCalloutNodes, type CalloutKind } from '@/lib/markdown-callout'
 import { formatTableWidths, remarkTableWidths } from '@/lib/markdown-table-widths'
 import { DEFAULT_HIGHLIGHT, highlightHandler, isHighlightColor, remarkHighlightNodes, type HighlightColor } from '@/lib/markdown-highlight'
@@ -118,7 +125,8 @@ import { holdPendingEdit } from '@/lib/pending-edits'
 import { foldStore, listenForOtherTabs } from '@/hooks/fold-store'
 import { toggleFold } from '@/lib/markdown-fold'
 import { DEFAULT_HEADING_LEVEL } from './prose-look'
-import { foldPlugin, setFolds } from './rich-text-fold'
+import { foldPlugin, setFolds, shownEnd } from './rich-text-fold'
+import { replayKeys, type HeldKeys } from './rich-text-held-keys'
 import type { RichTextEditorProps } from './rich-text-editor'
 import { headingView } from './rich-text-heading-view'
 import { taskItemView, toggleTaskItem } from './rich-text-task-item-view'
@@ -328,6 +336,20 @@ function NavigateBridge({ targetRef }: { targetRef: RefObject<((href: string) =>
   return null
 }
 
+/** RichTextEditor's props, and what it hands the editor itself. */
+export type MilkdownEditorProps = RichTextEditorProps & {
+  /** Keys typed while the editor's code loaded, to type in once it's up (rich-text-held-keys.ts). */
+  held?: HeldKeys
+  /** Whether `focusKey` is one not yet acted on (RichTextEditor keeps the last across a remount or a load). */
+  isNewFocus?: (key: string | number | undefined) => boolean
+}
+
+// What the field tells, and shows the first time a Tab stays in the text.
+const TAB_HINT = 'Tab stays in the text. Press Esc, then Tab, to move on.'
+
+// Keys on their own that come before another (Shift, for Shift+Tab).
+const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta'])
+
 export default function MilkdownEditor({
   id,
   defaultValue,
@@ -335,6 +357,10 @@ export default function MilkdownEditor({
   onProblem,
   readOnly = false,
   autoFocus = false,
+  focusKey,
+  tabStaysInText = false,
+  held,
+  isNewFocus,
   placeholder,
   maxLength,
   toolbar = true,
@@ -353,7 +379,7 @@ export default function MilkdownEditor({
   'aria-labelledby': ariaLabelledBy,
   'aria-describedby': ariaDescribedBy,
   'aria-invalid': ariaInvalid,
-}: RichTextEditorProps) {
+}: MilkdownEditorProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<Editor | null>(null)
   const [linkBox, setLinkBox] = useState<LinkBox | null>(null)
@@ -404,9 +430,9 @@ export default function MilkdownEditor({
   // rendered into through a portal.
   const [widgets, setWidgets] = useState<Widget[]>([])
   // The latest props, for the editor's callbacks, which are set up once.
-  const latest = useRef({ onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize, pageLink, onCreatePage })
+  const latest = useRef({ onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize, pageLink, onCreatePage, tabStaysInText })
   useEffect(() => {
-    latest.current = { onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize, pageLink, onCreatePage }
+    latest.current = { onChange, onProblem, readOnly, placeholder, upload, imageAccept, imageMaxSize, pageLink, onCreatePage, tabStaysInText }
   })
   // Whether focus is on the floating toolbar, or in a menu opened from it
   // (the Highlight menu's popup is in a portal).
@@ -448,7 +474,15 @@ export default function MilkdownEditor({
   // The field says it itself when the app hears of it through no
   // `onProblem` (a form that passes none would save the old text quietly).
   const ownProblem = onProblem ? null : refused
-  const describedBy = [ariaDescribedBy, ownProblem ? problemId : undefined, showCount ? counterId : undefined].filter(Boolean).join(' ')
+  // Tab staying in the text: the way out, told through the description,
+  // shown under the text the first time a Tab stays (until focus leaves).
+  const tabHintId = `${ids}-tab-hint`
+  const tellsTab = tabStaysInText && !readOnly
+  const [tabHintShown, setTabHintShown] = useState(false)
+  const tabHintUsed = useRef(false)
+  const describedBy = [ariaDescribedBy, tellsTab ? tabHintId : undefined, ownProblem ? problemId : undefined, showCount ? counterId : undefined]
+    .filter(Boolean)
+    .join(' ')
 
   const attributes: Record<string, string> = {
     'aria-multiline': 'true',
@@ -481,8 +515,14 @@ export default function MilkdownEditor({
   const attributesKey = JSON.stringify(attributes)
 
 
-  // The editor is made once, from the Markdown it opened with.
-  useEffect(() => {
+  // `focusKey` changed: focus wanted, done at once or once the editor is up.
+  const focusWanted = useRef(false)
+
+  // The editor is made once, from the Markdown it opened with: in a layout
+  // effect, so the editor is built, and focused, in the task that puts it
+  // in the page, with no frame drawn between (an empty field there, an
+  // inline one collapsed for a moment, a key typed into nothing).
+  useLayoutEffect(() => {
     const root = rootRef.current
     if (!root) return
     const original = defaultValue
@@ -915,12 +955,78 @@ export default function MilkdownEditor({
       setEditorView(view)
       shown = shownKey(view.state)
       setEditorState(view.state)
-      if (autoFocus) editor.action((ctx) => ctx.get(editorViewCtx).focus())
       if (foldKey !== undefined) {
         listenForOtherTabs()
         stopFolds = foldStore.subscribe(foldKey, () => view.dispatch(setFolds(view.state, foldStore.get(foldKey))))
       }
+      // Focus, and the keys typed while it loaded, only now that the
+      // baseline is read: typed in before, they'd be part of it, and never
+      // saved.
+      if (autoFocus) start(view)
+      if (focusWanted.current) {
+        focusWanted.current = false
+        view.focus()
+      }
     })
+
+    // autoFocus: the caret placed (at the start, or after the last words
+    // shown), focus, and the held keys typed in. Focus goes from the
+    // textarea to the text in one task, so a field around them (editing
+    // in place) never sees focus leave. Mid-composition, after it ends.
+    const start = (view: EditorView) => {
+      const area = held?.element() ?? null
+      const handOver = () => {
+        if (cancelled || view.isDestroyed) return
+        const text = area?.value ?? ''
+        if (autoFocus === 'end') {
+          const end = Selection.findFrom(view.state.doc.resolve(shownEnd(view.state)), -1, true)
+          if (end) view.dispatch(view.state.tr.setSelection(end))
+        }
+        // Focus moved on from the textarea meanwhile (Tab): it stays there.
+        if (!area || document.activeElement === area) view.focus()
+        if (text) replayKeys(view, text)
+        if (autoFocus === 'end' || text) view.dispatch(view.state.tr.scrollIntoView())
+        held?.release()
+      }
+      if (area && held?.composing()) area.addEventListener('compositionend', handOver, { once: true })
+      else handOver()
+    }
+
+    // tabStaysInText: Tab and Shift+Tab that nothing in the text took
+    // (a list's indent, a table's next cell) stay in it, after
+    // ProseMirror's own keys. An Esc that reaches the field lets the next
+    // Tab go on to the page; any other key, a click or focus leaving
+    // takes that back.
+    let tabGoesOn = false
+    const onRootKeyDown = (event: KeyboardEvent) => {
+      if (!latest.current.tabStaysInText) return
+      if (event.key === 'Escape') {
+        tabGoesOn = !event.defaultPrevented || escapePassedThrough(event)
+        return
+      }
+      if (event.key !== 'Tab') {
+        if (!MODIFIER_KEYS.has(event.key)) tabGoesOn = false
+        return
+      }
+      if (tabGoesOn) {
+        tabGoesOn = false
+        return
+      }
+      const view = editorRef.current?.action((ctx) => ctx.get(editorViewCtx))
+      if (!view || !view.editable || event.defaultPrevented || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return
+      if (!(event.target instanceof Node) || !view.dom.contains(event.target)) return
+      event.preventDefault()
+      if (!tabHintUsed.current) {
+        tabHintUsed.current = true
+        setTabHintShown(true)
+      }
+    }
+    const tabStays = () => {
+      tabGoesOn = false
+    }
+    root.addEventListener('keydown', onRootKeyDown)
+    root.addEventListener('mousedown', tabStays)
+    root.addEventListener('focusout', tabStays)
 
     // Hiding the page (another tab, a phone's home screen) reports what
     // was typed: the page may not come back.
@@ -931,6 +1037,9 @@ export default function MilkdownEditor({
     window.addEventListener('pagehide', emit)
 
     return () => {
+      root.removeEventListener('keydown', onRootKeyDown)
+      root.removeEventListener('mousedown', tabStays)
+      root.removeEventListener('focusout', tabStays)
       document.removeEventListener('visibilitychange', onHidden)
       window.removeEventListener('pagehide', emit)
       // Unmounting reports what was typed since the last pause.
@@ -949,6 +1058,23 @@ export default function MilkdownEditor({
     // Attributes and read-only follow below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // `focusKey` changed since it was last acted on: the text focused, the
+  // caret put back where it was in the same task (ProseMirror's focus
+  // does), so a key typed at once lands there.
+  const focusSeen = useRef(focusKey)
+  const [ownNewFocus] = useState(() => (key: string | number | undefined) => {
+    if (focusSeen.current === key) return false
+    focusSeen.current = key
+    return true
+  })
+  const newFocus = isNewFocus ?? ownNewFocus
+  useLayoutEffect(() => {
+    if (!newFocus(focusKey)) return
+    const view = editorRef.current?.action((ctx) => ctx.get(editorViewCtx))
+    if (view) view.focus()
+    else focusWanted.current = true
+  }, [focusKey, newFocus])
 
   // The page links follow the app's answers (a page renamed, removed or
   // restored): redrawn only when those have changed.
@@ -1289,6 +1415,19 @@ export default function MilkdownEditor({
             '[&_p[data-placeholder]]:before:pointer-events-none [&_p[data-placeholder]]:before:float-left [&_p[data-placeholder]]:before:h-0 [&_p[data-placeholder]]:before:text-muted-foreground [&_p[data-placeholder]]:before:content-[attr(data-placeholder)]',
           )}
         />
+        {tellsTab && (
+          <p
+            id={tabHintId}
+            data-slot="rich-text-editor-tab-hint"
+            className={
+              tabHintShown && focused
+                ? cn('type-caption text-muted-foreground', inline ? 'pt-1' : 'border-t border-border px-2.5 py-1.5', fullScreen && 'px-4 md:px-8')
+                : 'sr-only'
+            }
+          >
+            {TAB_HINT}
+          </p>
+        )}
         {ownProblem && (
           // In the field, so it's seen wherever the field is (full screen
           // too).

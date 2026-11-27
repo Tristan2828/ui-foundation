@@ -10,6 +10,7 @@ import { EditorState, TextSelection, type Transaction } from '@milkdown/kit/pros
 import { describe, expect, it } from 'vitest'
 import { toggleFormat } from '../src/components/app/rich-text-formats'
 import { DIVIDER, EMPHASIS_STAR, HIGHLIGHT, STRONG } from '../src/components/app/rich-text-input-rules'
+import { withoutLineSpaces } from '../src/components/app/rich-text-empty-paragraph'
 import { handleEditingKey } from '../src/components/app/rich-text-shortcuts'
 import { slashItems } from '../src/components/app/rich-text-slash'
 
@@ -31,8 +32,9 @@ const schema = new Schema({
     callout: { group: 'block', content: 'block+', attrs: { kind: { default: 'note' } } },
     table_cell: { content: 'paragraph', attrs: { alignment: { default: null } } },
     text: { group: 'inline' },
+    hardbreak: { group: 'inline', inline: true },
   },
-  marks: { strong: {}, emphasis: {}, highlight: { attrs: { color: { default: 'amber' } } } },
+  marks: { strong: {}, emphasis: {}, highlight: { attrs: { color: { default: 'amber' } } }, inlineCode: { code: true } },
 })
 
 const p = (text: string) => schema.node('paragraph', null, text ? [schema.text(text)] : [])
@@ -190,5 +192,37 @@ describe('undo and redo (F21)', () => {
     expect(run(state, (s, d) => handleEditingKey(s, d, key('Z', { code: 'KeyZ', ctrlKey: true, shiftKey: true }))).ran).toBe(true)
     press(key('Z', { code: 'KeyZ', ctrlKey: true, shiftKey: true }))
     expect(state.doc.eq(typed)).toBe(true)
+  })
+})
+
+describe('spaces at the ends of a line, left out of what is saved', () => {
+  const text = (value: string, code = false) => schema.text(value, code ? [schema.mark('inlineCode')] : [])
+  const br = () => schema.node('hardbreak')
+  const line = (...nodes: ProseNode[]) => schema.node('paragraph', null, nodes)
+  const shown = (node: ProseNode) => {
+    const out: string[] = []
+    withoutLineSpaces(node.content).forEach((child) => out.push(child.isText ? `${child.marks.length ? 'code' : 'text'}:${child.text}` : child.type.name))
+    return out
+  }
+
+  it("a paragraph's spaces at its start and end", () => {
+    expect(shown(line(text('  indented  ')))).toEqual(['text:indented'])
+    expect(shown(line(text(' \t'), text('words')))).toEqual(['text:words'])
+  })
+
+  it('a line after a hard break, and before one', () => {
+    expect(shown(line(text('one  '), br(), text('  two')))).toEqual(['text:one', 'hardbreak', 'text:two'])
+  })
+
+  it('never inside inline code', () => {
+    expect(shown(line(text('  spaced', true), text(' after ')))).toEqual(['code:  spaced', 'text: after'])
+    expect(shown(line(text('before '), text('code  ', true)))).toEqual(['text:before ', 'code:code  '])
+  })
+
+  it('nothing to trim: the same content', () => {
+    const plain = line(text('As it is.'))
+    expect(withoutLineSpaces(plain.content)).toBe(plain.content)
+    expect(withoutLineSpaces(line().content).size).toBe(0)
+    expect(shown(line(text('   ')))).toEqual([])
   })
 })

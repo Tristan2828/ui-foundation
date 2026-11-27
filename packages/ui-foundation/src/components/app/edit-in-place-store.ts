@@ -591,6 +591,16 @@ export class EditInPlaceStore {
   }
 
   /**
+   * Saves an autosaving field's draft now, without waiting for the pause
+   * (Ctrl/Cmd+S), and leaves it open. Resolves true once it's saved, or
+   * there was nothing to save.
+   */
+  saveNow(key: string): Promise<boolean> {
+    if (!this.autosaves(key)) return Promise.resolve(false)
+    return this.flush(key)
+  }
+
+  /**
    * Saves every autosaving field that holds something unsaved, now
    * (leaving the page). Resolves true once nothing unsaved is left.
    */

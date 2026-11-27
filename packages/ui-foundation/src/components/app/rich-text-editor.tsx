@@ -44,17 +44,24 @@
 // Markdown never downloads it. Until it arrives the text shows as
 // <Markdown> draws it, the field's size, so nothing moves when the editor
 // takes its place; an empty one shows skeleton lines. An app that opens on
-// an editor loads it ahead with `preloadRichTextEditor()`.
-import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
+// an editor loads it ahead with `preloadRichTextEditor()`. Once loaded it's
+// drawn at once; a load that failed is tried again by the next editor. Keys
+// typed into an `autoFocus` editor while it loads are held and typed in
+// once it's up (rich-text-held-keys.ts), and saved.
+//
+// What Markdown can't hold isn't saved: spaces at a line's start or end
+// (rich-text-empty-paragraph.ts; inline code keeps its own) and blank lines
+// typed for spacing.
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type ComponentType } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ImageUpload } from '@/lib/image-file'
 import type { CreatePage, PageLinkResolver } from '@/lib/page-link'
 import { Markdown } from './markdown'
+import type { MilkdownEditorProps } from './milkdown-editor'
 import type { HeadingFrom, HeadingLevel, TableLook } from './prose-look'
-import { loadRichTextEditor } from './rich-text-load'
-
-const MilkdownEditor = lazy(loadRichTextEditor)
+import type { HeldKeys } from './rich-text-held-keys'
+import { loadedRichTextEditor, loadRichTextEditor } from './rich-text-load'
 
 export type RichTextEditorProps = {
   /** The editable element's id, for a label's `htmlFor` or a test. */
@@ -84,7 +91,35 @@ export type RichTextEditorProps = {
   onProblem?: (message: string | null) => void
   /** Shown but not editable (while a save is in flight). */
   readOnly?: boolean
-  autoFocus?: boolean
+  /**
+   * Takes focus as it mounts. `true`: the caret at the text's start;
+   * `'end'`: after its last words (past a divider or an image that ends
+   * it, and in a folded last section, at the end of its heading, which
+   * stays folded), scrolled into view. Neither saves anything. Keys typed
+   * while the editor's code is still loading are kept and typed in once
+   * it's up.
+   */
+  autoFocus?: boolean | 'end'
+  /**
+   * Focuses the text again, the caret where it was, each time this
+   * changes after the editor mounts: for an editor kept mounted while
+   * hidden (a tab behind another) that comes back to the front. The
+   * caret is put back as focus arrives, so a key typed at once lands
+   * where it was; focusing the editable element yourself leaves the
+   * caret at the start for a moment. A change before the editor is up
+   * focuses it once it is.
+   */
+  focusKey?: string | number
+  /**
+   * Tab and Shift+Tab stay in the text, for an editor that is the page (a
+   * notes app's note): in a list or code they indent as always, and on a
+   * plain line they do nothing (Markdown holds no indent). Esc, then Tab,
+   * moves on (Shift+Tab back); Alt+F10 still reaches the toolbar. The way
+   * out is told through the field's description, and shown under it the
+   * first time a Tab stays. Default `false`: Tab on a plain line leaves the
+   * text, the keyboard's way on to the rest of the page.
+   */
+  tabStaysInText?: boolean
   /** Shown while the document is empty (and given to screen readers as `aria-placeholder`). */
   placeholder?: string
   /**
@@ -225,54 +260,96 @@ export function RichTextEditor(props: RichTextEditorProps) {
   useLayoutEffect(() => {
     live.current = opening
   })
+  // Chosen once per mount: the editor itself when its code is here (drawn
+  // at once, no loading view), else loaded behind Suspense. The lazy is
+  // this mount's own, so a load that failed isn't kept for the next.
+  const [MilkdownEditor] = useState<ComponentType<MilkdownEditorProps>>(() => loadedRichTextEditor()?.default ?? lazy(loadRichTextEditor))
+  // Loading, focused: a textarea beside the loading view holds the keys
+  // typed meanwhile, and the editor types them in once it's up
+  // (rich-text-held-keys.ts). Beside the Suspense boundary, not in its
+  // fallback, which goes the moment the editor's code arrives.
+  const [holding, setHolding] = useState(() => loadedRichTextEditor() === null && Boolean(props.autoFocus) && !props.readOnly)
+  const heldRef = useRef<HTMLTextAreaElement>(null)
+  const composing = useRef(false)
+  const [held] = useState<HeldKeys>(() => ({
+    element: () => heldRef.current,
+    composing: () => composing.current,
+    release: () => setHolding(false),
+  }))
+  // The `focusKey` last acted on: kept here, so neither a load nor a
+  // remount (a reset) takes an unchanged key for a new one.
+  const focusHandled = useRef(props.focusKey)
+  const [isNewFocus] = useState(() => (key: string | number | undefined) => {
+    if (focusHandled.current === key) return false
+    focusHandled.current = key
+    return true
+  })
   return (
-    <Suspense
-      fallback={
-        <div
-          data-slot="rich-text-editor"
-          data-state="loading"
-          className={cn('flex w-full flex-col', !props.inline && 'rounded-lg border border-input', props.className)}
-        >
-          {/* The toolbar's height, so nothing moves when it arrives (none on
-              a touch screen, whose toolbar is pinned to the keyboard). */}
-          {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input pointer-coarse:hidden" />}
-          {/* The text itself while the editor loads: it's as tall as
-              the editor will be, so nothing under it moves when the editor
-              arrives (a phone's notes, edited in place above the facts).
-              Skeleton lines only for an empty one. */}
+    <>
+      {holding && (
+        <textarea
+          ref={heldRef}
+          id={props.id}
+          data-slot="rich-text-editor-held"
+          autoFocus
+          aria-label={props['aria-label']}
+          aria-labelledby={props['aria-labelledby']}
+          aria-describedby={props['aria-describedby']}
+          className="sr-only"
+          onCompositionStart={() => (composing.current = true)}
+          onCompositionEnd={() => (composing.current = false)}
+        />
+      )}
+      <Suspense
+        fallback={
           <div
-            aria-busy="true"
-            className={cn(
-              'flex flex-col gap-2',
-              props.inline ? 'py-0.5' : 'min-h-24 px-2.5 py-2',
-              // The room of the add-row bar the editor draws under a table.
-              !props.readOnly && '[&_table]:mb-5',
-            )}
+            data-slot="rich-text-editor"
+            data-state="loading"
+            className={cn('flex w-full flex-col', !props.inline && 'rounded-lg border border-input', props.className)}
           >
-            {props.defaultValue.trim() ? (
-              <Markdown headingLevel={props.headingLevel} headingFrom={props.headingFrom} foldKey={props.foldable === false ? undefined : props.foldKey}>
-                {props.defaultValue}
-              </Markdown>
-            ) : (
-              <>
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </>
-            )}
+            {/* The toolbar's height, so nothing moves when it arrives (none on
+                a touch screen, whose toolbar is pinned to the keyboard). */}
+            {(props.toolbar ?? true) === true && <div className="h-9 border-b border-input pointer-coarse:hidden" />}
+            {/* The text itself while the editor loads: it's as tall as
+                the editor will be, so nothing under it moves when the editor
+                arrives (a phone's notes, edited in place above the facts).
+                Skeleton lines only for an empty one. */}
+            <div
+              aria-busy="true"
+              className={cn(
+                'flex flex-col gap-2',
+                props.inline ? 'py-0.5' : 'min-h-24 px-2.5 py-2',
+                // The room of the add-row bar the editor draws under a table.
+                !props.readOnly && '[&_table]:mb-5',
+              )}
+            >
+              {props.defaultValue.trim() ? (
+                <Markdown headingLevel={props.headingLevel} headingFrom={props.headingFrom} foldKey={props.foldable === false ? undefined : props.foldKey}>
+                  {props.defaultValue}
+                </Markdown>
+              ) : (
+                <>
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      }
-    >
-      <MilkdownEditor
-        key={opening}
-        {...props}
-        onChange={(markdown) => {
-          if (live.current !== opening) return
-          report(markdown)
-          onChange(markdown)
-        }}
-        foldKey={props.foldable === false ? undefined : props.foldKey}
-      />
-    </Suspense>
+        }
+      >
+        <MilkdownEditor
+          key={opening}
+          {...props}
+          onChange={(markdown) => {
+            if (live.current !== opening) return
+            report(markdown)
+            onChange(markdown)
+          }}
+          foldKey={props.foldable === false ? undefined : props.foldKey}
+          held={holding ? held : undefined}
+          isNewFocus={isNewFocus}
+        />
+      </Suspense>
+    </>
   )
 }

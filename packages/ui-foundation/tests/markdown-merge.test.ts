@@ -271,6 +271,27 @@ describe('mergeParts: content counts every field meaning compares', () => {
   }
 })
 
+describe("spaces at a line's start", () => {
+  // The editor leaves a paragraph's leading spaces out of what it writes
+  // (rich-text-empty-paragraph.ts); a note that already holds one escaped
+  // still matches what the editor shows.
+  const original = '&#x20; escaped start.\n\nSecond.\n'
+  const baseline = 'escaped start.\n\nSecond.\n'
+
+  it('an untouched block holding an escaped space is kept as written', () => {
+    expect(mergeMarkdown(original, baseline, baseline)).toBe(original)
+    expect(mergeMarkdown(original, baseline, 'escaped start.\n\nSecond. Edited\n')).toBe('&#x20; escaped start.\n\nSecond. Edited\n')
+  })
+
+  it('edited, it is written as the editor writes it', () => {
+    expect(mergeMarkdown(original, baseline, 'escaped start. Too\n\nSecond.\n')).toBe('escaped start. Too\n\nSecond.\n')
+  })
+
+  it('a heading likewise', () => {
+    expect(mergeMarkdown('## &#x20;Title\n\nText.\n', '## Title\n\nText.\n', '## Title\n\nText. Edited\n')).toBe('## &#x20;Title\n\nText. Edited\n')
+  })
+})
+
 describe('markdownStyle', () => {
   it("reads the document's own bullet and rule marks", () => {
     expect(markdownStyle('* a\n\n***\n')).toEqual({ bullet: '*', rule: '*' })

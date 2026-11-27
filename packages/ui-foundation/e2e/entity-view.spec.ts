@@ -336,6 +336,41 @@ test.describe('EntityView, long text that autosaves', () => {
     await expect(editor).toBeFocused()
   })
 
+  // Ctrl/Cmd+S, dispatched rather than pressed: a real press in a headed
+  // browser would open its Save dialog if the key weren't taken.
+  const pressSave = (element: ReturnType<Page['getByRole']>) =>
+    element.evaluate((node) => {
+      const event = new KeyboardEvent('keydown', { key: 's', code: 'KeyS', ctrlKey: true, bubbles: true, cancelable: true })
+      node.dispatchEvent(event)
+      return event.defaultPrevented
+    })
+
+  test('Ctrl/Cmd+S saves now, not after the pause, and the browser never sees it', async ({ page }) => {
+    await openAutosave(page)
+    const notes = region(page, 'Notes')
+    const editor = notes.getByRole('textbox', { name: 'Notes' })
+    await typeAtEnd(page, editor, ' Then desks.')
+    expect(await pressSave(editor)).toBe(true)
+    // Saving well inside the pause (1s) it would otherwise wait.
+    const notesElement = await notes.elementHandle()
+    await page.waitForFunction((element) => element?.querySelector('[role=status]')?.textContent === 'Saving…', notesElement, {
+      polling: 'raf',
+      timeout: 600,
+    })
+    await expect(page.getByTestId('saved-notes')).toHaveText('Pack the shared shelves first. Then desks.')
+    await expect(editor).toBeFocused()
+    await expect(saves(page)).toHaveText('1')
+
+    // Opened on a click: saved, and still open.
+    const summary = region(page, 'Summary')
+    await summary.getByText('Moving to the third floor.').click()
+    const summaryEditor = summary.getByRole('textbox', { name: 'Summary' })
+    await typeAtEnd(page, summaryEditor, ' In March.')
+    expect(await pressSave(summaryEditor)).toBe(true)
+    await expect(summary.getByRole('status')).toHaveText('Saved', { timeout: 1200 })
+    await expect(summaryEditor).toBeFocused()
+  })
+
   test('always editable: a refusal keeps exactly what was typed, with the reason', async ({ page }) => {
     await openAutosave(page)
     const notes = region(page, 'Notes')

@@ -295,6 +295,10 @@ const COMPOSITE_STORIES = [
   // Task items ticked where they are read: checkboxes, nested and in a callout.
   { id: 'app-markdown--tickable-tasks', mustShow: '2/7 done' },
   { id: 'app-richtexteditor--folding', mustShow: 'Fold All' },
+  // The editor starting, a note to Tab in, and spaces at a line's start.
+  { id: 'app-richtexteditor--starting', mustShow: 'Then the desks, then the chairs.' },
+  { id: 'app-richtexteditor--tab-stays', mustShow: 'Another' },
+  { id: 'app-richtexteditor--spaces', mustShow: 'escaped start.' },
   // Allow reminders in every state, on a card.
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },

@@ -141,6 +141,23 @@ function meaning(node: unknown, definitions: Map<string, MdNode>): unknown {
     if (typeof value === 'string') out[key] = value.replace(/\r\n?/g, '\n')
     else out[key] = key === 'children' && INLINE_PARENTS.has(md.type) ? runs(md.children ?? [], definitions) : meaning(value, definitions)
   }
+  if (LINE_PARENTS.has(md.type)) withoutEndSpaces(out.children as Record<string, unknown>[])
+  return finish(md, out)
+}
+
+// Blocks whose spaces at either end mean nothing: the editor leaves them
+// out of what it writes (rich-text-empty-paragraph.ts), so a note that
+// holds one (`&#x20;` at a paragraph's start) still matches what it shows.
+const LINE_PARENTS = new Set(['paragraph', 'heading'])
+
+function withoutEndSpaces(children: Record<string, unknown>[]) {
+  const first = children[0]
+  if (first?.type === 'text') first.value = String(first.value).replace(/^[ \t]+/, '')
+  const last = children.at(-1)
+  if (last?.type === 'text') last.value = String(last.value).replace(/[ \t]+$/, '')
+}
+
+function finish(md: MdNode, out: Record<string, unknown>): unknown {
   if ((md.type === 'link' || md.type === 'image') && out.title === undefined) out.title = null
   if (md.type === 'table') {
     const rows = out.children as { children: unknown[] }[]

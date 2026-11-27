@@ -365,9 +365,17 @@ Long text written as Markdown edits as formatted text (Notion-style), on
 the form and in place, through the package's `RichTextEditor`, built on
 Milkdown (`@milkdown/kit`, with `unified` and `remark-parse` imported
 directly; `packages/ui-foundation/deps-allowlist.json`). It is loaded on
-first use (`React.lazy`, through `rich-text-load.ts`), so a view's own
-chunk doesn't grow; an app whose first screen is an editor starts that
-load as it starts with `preloadRichTextEditor()`, which never throws.
+first use (through `rich-text-load.ts`), so a view's own chunk doesn't
+grow; an app whose first screen is an editor starts that load as it
+starts with `preloadRichTextEditor()`, which never throws. The loaded
+module is kept, so an editor mounted once it's here is drawn at once,
+with no Suspense fallback; before then each mount makes its own
+`React.lazy`, so a failed load is tried again by the next editor, not
+kept for the session. The editor is built in a layout effect, so it's
+built and focused in the task that puts it in the page. An `autoFocus`
+editor still loading puts a textarea beside the Suspense boundary that
+holds the keys typed meanwhile; the editor types them in once it has
+read its baseline (`rich-text-held-keys.ts`).
 Editing in place is run by `EntityView`, `DataTable`, or, on a page of
 the app's own, `EditInPlaceScope` (cell pattern 18).
 
