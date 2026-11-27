@@ -7,9 +7,9 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.152.0 — The app's own icon in every size and shape; the phone's back arrow a finger's target
+## 4.151.0 — The app's own icon in every size and shape; the phone's back arrow a finger's target
 
-npm package and `ui-foundation-backend` 4.152.0 (the backend is unchanged
+npm package and `ui-foundation-backend` 4.151.0 (the backend is unchanged
 apart from its version).
 
 - **`pwa()` takes the rest of an app's own icon.** Beside `icon` (the
