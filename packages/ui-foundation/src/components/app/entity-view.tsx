@@ -114,6 +114,7 @@ import { EditInPlaceStore } from './edit-in-place-store'
 import { EditableList } from './editable-list'
 import { editRowClass, onEditRowClick } from './edit-row'
 import { EditableField, EditableValue, LeaveGuard } from './editable-value'
+import { toastLostEdit } from './lost-edit-toast'
 import { EmptyText } from './empty-value'
 import { EMPTY_DASH, isEmptyValue } from '@/lib/empty-value'
 import { useRecordDialog } from './record-dialog-context'
@@ -1036,7 +1037,7 @@ export function EntityView({
   const sections = statusSectionFirst(givenSections)
   // Editing in place: one store per view, and the leave-page prompt only
   // while a field is open (or one is always editable).
-  const [store] = useState(() => new EditInPlaceStore())
+  const [store] = useState(() => new EditInPlaceStore({ onLost: toastLostEdit }))
   // Opened over its list (RecordDialogRoute): the heading names the dialog,
   // and the dialog's own bar replaces the back link.
   const dialog = useRecordDialog()

@@ -26,26 +26,26 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 636–715
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 717–758
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 760–832
-- [18. Editable value](#18-editable-value) · lines 834–1645
+- [18. Editable value](#18-editable-value) · lines 834–1661
   - [Presets: one line per field](#presets-one-line-per-field) · lines 1233–1305
   - [Several fields edited as one](#several-fields-edited-as-one) · lines 1307–1343
   - [A link and its label](#a-link-and-its-label) · lines 1345–1369
   - [A list of sub-items](#a-list-of-sub-items) · lines 1371–1504
-  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1506–1562
-  - [In a table's rows](#in-a-tables-rows) · lines 1564–1638
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1640–1645
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1647–1713
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1715–1769
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1771–1853
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1855–1880
-- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1882–1915
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1917–1968
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1970–2044
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1990–2044
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2046–2258
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2207–2258
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2260–2294
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2296–2343
+  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1506–1578
+  - [In a table's rows](#in-a-tables-rows) · lines 1580–1654
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1656–1661
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1663–1729
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1731–1785
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1787–1869
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1871–1896
+- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1898–1931
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1933–1984
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1986–2060
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2006–2060
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2062–2274
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2223–2274
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2276–2310
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2312–2359
 
 <!-- /index -->
 
@@ -1547,9 +1547,24 @@ const body = editInPlace<string>({
   `tabStaysInText`: Tab on a plain line stays in the text (Esc, then
   Tab, moves on, which the field tells and shows), so a Tab typed out of
   habit doesn't land on the next control and a Space press it.
+- **Tabs that are URLs** (`/notes/1`, `/notes/2`, the one in front
+  being the route) pass `staysOnPage`, given the next location (and the
+  current one), true for a move that only brings another of the scope's
+  panes to the front:
+  `staysOnPage={(next) => matchPath('/notes/:id', next.pathname) !== null}`.
+  A move that stays is never held for a save and never asks, even with a
+  refused save open: the text behind goes on saving itself. Without it,
+  every move to another path is leaving the page. A move within the same
+  path never is.
 - **A value that leaves the page mid-typing is still saved** (a tab
   closed, a pane unmounted): what was typed goes at once rather than
-  after the pause.
+  after the pause, and a value whose save had been refused tries once
+  more. If that save fails, nothing on screen holds the text any more,
+  so a toast says "Couldn't save *label*" with the reason and stays until
+  dismissed, with **Copy Text** to put what was typed on the clipboard.
+  `onLostEdit`, given `{ label, value, reason }` (`LostEdit`), is for the
+  app to do more, such as reopen the note's tab. A record's view and a
+  table toast the same way.
 - **An app that opens on an editor** calls `preloadRichTextEditor()`
   as it starts (in `main.tsx`), so the editor's code is loading while
   the note is fetched, not after. It returns nothing, never throws, and
@@ -1558,7 +1573,8 @@ const body = editInPlace<string>({
   into an `autoFocus` editor while its code still loads are kept, and
   typed in once it's up.
 
-The stories are `app/EditInPlaceScope` (one note, and two in one scope);
+The stories are `app/EditInPlaceScope` (one note, two in one scope, and
+the two as URL tabs with `staysOnPage`);
 `e2e/edit-in-place-scope.spec.ts` is the browser behaviour.
 
 ### In a table's rows

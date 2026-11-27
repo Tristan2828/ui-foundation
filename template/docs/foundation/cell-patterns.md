@@ -26,26 +26,26 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 636–715
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 717–758
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 760–832
-- [18. Editable value](#18-editable-value) · lines 834–1645
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1233–1305
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1307–1343
-  - [A link and its label](#a-link-and-its-label) · lines 1345–1369
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1371–1504
-  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1506–1562
-  - [In a table's rows](#in-a-tables-rows) · lines 1564–1638
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1640–1645
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1647–1713
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1715–1769
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1771–1853
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1855–1880
-- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1882–1915
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1917–1968
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1970–2044
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1990–2044
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2046–2258
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2207–2258
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2260–2294
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2296–2343
+- [18. Editable value](#18-editable-value) · lines 834–1643
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1227–1299
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1301–1337
+  - [A link and its label](#a-link-and-its-label) · lines 1339–1363
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1365–1498
+  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1500–1560
+  - [In a table's rows](#in-a-tables-rows) · lines 1562–1636
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1638–1643
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1645–1711
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1713–1767
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1769–1851
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1853–1878
+- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1880–1913
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1915–1966
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1968–2042
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1988–2042
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2044–2256
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2205–2256
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2258–2292
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2294–2341
 
 <!-- /index -->
 
@@ -1537,19 +1537,24 @@ const body = editInPlace<string>({
   tabs are: one pane per open note, all mounted, only the one in front
   shown (the others `hidden`), so each keeps its caret and undo. A
   hidden value still saves, and the one leave guard covers them all.
-  The editor's `focusKey` (a number the app bumps as a tab comes to the
-  front) focuses it again with its caret put back in the same task, so
-  a key typed at once lands where it was; don't focus the editable
-  element through the DOM, which leaves the caret at the text's start
-  for a moment.
-- **An editor that is the page** (a note the app opens on) takes
-  `autoFocus="end"`, the caret after its last words, in view, and
-  `tabStaysInText`: Tab on a plain line stays in the text (Esc, then
-  Tab, moves on, which the field tells and shows), so a Tab typed out of
-  habit doesn't land on the next control and a Space press it.
+- **Tabs that are URLs** (`/notes/1`, `/notes/2`, the one in front
+  being the route) pass `staysOnPage`, given the next location (and the
+  current one), true for a move that only brings another of the scope's
+  panes to the front:
+  `staysOnPage={(next) => matchPath('/notes/:id', next.pathname) !== null}`.
+  A move that stays is never held for a save and never asks, even with a
+  refused save open: the text behind goes on saving itself. Without it,
+  every move to another path is leaving the page. A move within the same
+  path never is.
 - **A value that leaves the page mid-typing is still saved** (a tab
   closed, a pane unmounted): what was typed goes at once rather than
-  after the pause.
+  after the pause, and a value whose save had been refused tries once
+  more. If that save fails, nothing on screen holds the text any more,
+  so a toast says "Couldn't save *label*" with the reason and stays until
+  dismissed, with **Copy Text** to put what was typed on the clipboard.
+  `onLostEdit`, given `{ label, value, reason }` (`LostEdit`), is for the
+  app to do more, such as reopen the note's tab. A record's view and a
+  table toast the same way.
 - **An app that opens on an editor** calls `preloadRichTextEditor()`
   as it starts (in `main.tsx`), so the editor's code is loading while
   the note is fetched, not after. It returns nothing, never throws, and
@@ -1558,7 +1563,8 @@ const body = editInPlace<string>({
   into an `autoFocus` editor while its code still loads are kept, and
   typed in once it's up.
 
-The stories are `app/EditInPlaceScope` (one note, and two in one scope);
+The stories are `app/EditInPlaceScope` (one note, two in one scope, and
+the two as URL tabs with `staysOnPage`);
 `e2e/edit-in-place-scope.spec.ts` is the browser behaviour.
 
 ### In a table's rows

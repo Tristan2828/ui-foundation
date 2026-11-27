@@ -65,6 +65,7 @@ import type { ArtworkAspect } from './artwork'
 import { EditInPlaceContext } from './edit-in-place'
 import { EditInPlaceStore } from './edit-in-place-store'
 import { LeaveGuard } from './editable-value'
+import { toastLostEdit } from './lost-edit-toast'
 import { recordDialogState } from './record-dialog-context'
 import { IconAction } from './icon-action'
 import type { IconComponent } from './icon-component'
@@ -1294,7 +1295,7 @@ export function DataTable<TData extends Record<string, unknown>, TView extends D
   // a cell that renders an <EditableValue> edits where it's shown, one at
   // a time, with the leave-page prompt while one is open, the same rules
   // as a record's view.
-  const [store] = useState(() => new EditInPlaceStore())
+  const [store] = useState(() => new EditInPlaceStore({ onLost: toastLostEdit }))
   const editing = useSyncExternalStore(
     store.subscribe,
     () => store.editing,

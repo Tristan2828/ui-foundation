@@ -194,6 +194,7 @@ const COMPOSITE_STORIES = [
   // A page of the app's own editing in place (EditInPlaceScope): one note, and two in one scope.
   { id: 'app-editinplacescope--note', mustShow: 'Milk, eggs and bread.' },
   { id: 'app-editinplacescope--two-notes', mustShow: 'Milk, eggs and bread.' },
+  { id: 'app-editinplacescope--note-tabs', mustShow: 'Milk, eggs and bread.' },
   { id: 'app-entityview--print-notes', mustShow: 'Climbing the stairs' },
   // A notice across the page and a source credit under both columns.
   { id: 'app-entityview--notice-and-footer', mustShow: 'Data from' },

@@ -7,9 +7,9 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
-## 4.151.0 — The editor's behaviour: no key lost as it starts, the caret at the end, Tab that stays, Ctrl/Cmd+S
+## 4.152.0 — The editor's behaviour: no key lost as it starts, the caret at the end, Tab that stays, Ctrl/Cmd+S
 
-npm package and `ui-foundation-backend` 4.151.0 (the backend is unchanged
+npm package and `ui-foundation-backend` 4.152.0 (the backend is unchanged
 apart from its version). Everything here is additive: new optional props
 on `RichTextEditor` and fixes to what it already did.
 
@@ -68,6 +68,45 @@ you pass the new props. A notes app whose editor is the page gives it
 `autoFocus="end"` and `tabStaysInText`, and, keeping one editor per tab,
 bumps `focusKey` as a tab comes to the front instead of focusing the
 editable element itself.
+## 4.150.0 — Editing in place: tabs that are URLs, and text a closed value couldn't save
+
+npm package and `ui-foundation-backend` 4.150.0 (the backend is unchanged
+apart from its version).
+
+- **`EditInPlaceScope`'s `staysOnPage`** (optional,
+  `(next: Location, current: Location) => boolean`) says which moves to
+  another path stay on the page: a notes app whose tabs are URLs
+  (`/notes/1`, `/notes/2`), all kept mounted. A move that stays is never
+  held for a save and never asks "Discard your changes?", even with a
+  refused save open, so Discard can no longer throw away a tab that
+  wasn't going anywhere. A real leave (to `/notes`, closing the window)
+  saves first and asks as before. Without it, nothing changes.
+- **A value that leaves the page and then can't save says so.** A value
+  unmounted holding unsaved text (a tab closed) sends it at once, as
+  before, and now also when its last save had been refused (once more).
+  If that save fails, or the text can't be sent (a conflict, a problem
+  the editor reported), a toast says "Couldn't save *label*" with the
+  reason and stays until dismissed, with **Copy Text** for what was
+  typed. Before, it failed silently and the text was gone. The same holds
+  in a record's view and a table, which share the path.
+- **`EditInPlaceScope`'s `onLostEdit`** (optional,
+  `(lost: LostEdit) => void`, `LostEdit = { label, value, reason }`,
+  exported) is called beside that toast, for the app to do more, such as
+  reopen the note.
+- **Coverage:** `e2e/edit-in-place-scope.spec.ts` has a new story,
+  `note-tabs` (URL tabs with `staysOnPage`), and specs for a tab move
+  mid-typing, a refused save across tab moves, a tab closed on a refused
+  save and the toast's copy; `tests/edit-in-place-store.test.ts` covers
+  the store's `onLost`. cell-patterns.md "On a page of the app's own"
+  says both.
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. An app whose
+`EditInPlaceScope` panes are routes passes
+`staysOnPage={(next) => matchPath('/notes/:id', next.pathname) !== null}`;
+`onLostEdit` is optional. Nothing else changes.
+
 ## 4.149.0 — Picture uploads: the template's reference, shrinkImage and foundation_backend.uploads
 
 npm package and `ui-foundation-backend` 4.149.0. Both are additive: an

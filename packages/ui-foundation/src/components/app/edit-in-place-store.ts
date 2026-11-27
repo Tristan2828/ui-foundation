@@ -26,9 +26,12 @@
 // - A problem the control reports (rich text that can't round-trip) means
 //   nothing is saved; it counts as unsaved at once (leaving asks), and its
 //   message shows after the pause.
-// - A field leaving the view mid-save (unmounted) still sends what was
-//   typed after that save started: the last draft and its config go with
-//   the save waiting behind it (`register`'s cleanup).
+// - A field leaving the view (unmounted) still sends what it holds
+//   unsaved: at once, or once a save in flight lands, from its last draft
+//   and config (`register`'s cleanup). If that can't save (refused, a
+//   problem, a conflict), nothing is left on screen to say so: the store's
+//   `onLost` gets the draft and the reason, so the person hears of it and
+//   can keep what they typed.
 // - The saved value changing elsewhere (another tab, a phone, an AI chat)
 //   shows at once in a field with nothing of its own unsaved, even with the
 //   caret in it (`refresh`). Under unsaved typing it's a conflict: nothing
@@ -83,6 +86,18 @@ export type EditFieldConfig = {
    * typed over theirs. Long text's default is `rebaseMarkdown`.
    */
   rebase?: ((base: unknown, mine: unknown, theirs: unknown) => unknown) | false
+  /** The field's name as the person knows it ("Notes"), for `onLost`'s words. */
+  label?: string
+}
+
+/** A field that left the view holding something that couldn't be saved (`onLost`). */
+export type LostEdit = {
+  /** The field's label, or "your changes" when its config gives none. */
+  label: string
+  /** What was typed: the draft that didn't save, as the control held it (long text's markdown). */
+  value: unknown
+  /** Why it didn't save: the server's or the schema's words, a problem, or the conflict. */
+  reason: string
 }
 
 export type EditFieldState = { status: 'closed' } | OpenFieldState
@@ -126,6 +141,11 @@ export const AUTOSAVE_DELAY_MS = 1000
 export type EditInPlaceStoreOptions = {
   /** The pause before an autosave, in ms. Defaults to AUTOSAVE_DELAY_MS. */
   autosaveDelay?: number
+  /**
+   * A field left the view (unmounted) holding something unsaved that then
+   * couldn't be saved: nothing on screen says so any more, so this does.
+   */
+  onLost?: (lost: LostEdit) => void
 }
 
 const CLOSED: EditFieldState = { status: 'closed' }
@@ -167,7 +187,8 @@ const ECHOES = 4
 
 const sameAsJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
-type InFlight = { promise: Promise<boolean>; draft: unknown }
+// A save in flight: what it sent, and why it failed once it has.
+type InFlight = { promise: Promise<boolean>; draft: unknown; failure?: string }
 
 // The refusal's messages for the value's own fields, or null for none.
 function fieldErrorsOf(config: EditFieldConfig | undefined, cause: unknown): Record<string, string> | undefined {
@@ -201,9 +222,19 @@ export class EditInPlaceStore {
   private detached = new Set<Promise<boolean>>()
   // The page is hidden: an autosave doesn't wait for the pause.
   private hurried = false
+  private lostListeners = new Set<(lost: LostEdit) => void>()
 
   constructor(options: EditInPlaceStoreOptions = {}) {
     this.autosaveDelay = options.autosaveDelay ?? AUTOSAVE_DELAY_MS
+    if (options.onLost) this.lostListeners.add(options.onLost)
+  }
+
+  /** Called as `onLost` is, besides it, until the returned function is. */
+  subscribeLost = (listener: (lost: LostEdit) => void) => {
+    this.lostListeners.add(listener)
+    return () => {
+      this.lostListeners.delete(listener)
+    }
   }
 
   subscribe = (listener: () => void) => {
@@ -239,15 +270,11 @@ export class EditInPlaceStore {
       const inFlight = this.autosaving.get(key)
       const state = this.state(key)
       const last = this.configs.get(key)?.()
-      // With a save in flight, what was typed since goes once it lands,
-      // from this draft and config: the field is gone by then.
-      if (inFlight) {
-        this.clearTimer(key)
-        if (state.status === 'open' && last) this.sendDetached(inFlight, state, last)
-      }
-      // A save still waiting for the pause goes now: the field is leaving,
-      // not giving up what was typed.
-      else if (this.timers.has(key)) void this.flush(key)
+      // An autosaving field is leaving, not giving up what was typed: what
+      // it holds unsaved goes now, or once the save in flight lands, from
+      // this draft and config (the field is gone by then).
+      this.clearTimer(key)
+      if (state.status === 'open' && last && this.autosaves(key)) this.sendDetached(state, last, inFlight)
       this.configs.delete(key)
       this.states.delete(key)
       this.seen.delete(key)
@@ -257,24 +284,42 @@ export class EditInPlaceStore {
     }
   }
 
-  // A field that left mid-save: once its save in flight settles, its last
-  // draft is sent if it's newer than what that save held.
-  private sendDetached(inFlight: InFlight, state: OpenFieldState, config: EditFieldConfig) {
+  // A field that left the view: what it holds unsaved is sent now, or,
+  // with a save in flight, once that settles if it's newer than what that
+  // save held. Whatever can't be saved goes to `onLost` with the reason:
+  // the field isn't there to show it.
+  private sendDetached(state: OpenFieldState, config: EditFieldConfig, inFlight?: InFlight) {
     const isEqual = config.isEqual ?? sameAsJson
-    const run: Promise<boolean> = inFlight.promise
-      .then((saved) => {
-        if (state.problem || state.conflict || isEqual(state.draft, inFlight.draft)) return saved
-        const parsed = config.schema ? config.schema.safeParse(state.draft) : { success: true as const, data: state.draft }
-        if (!parsed.success) return false
-        return config.save(parsed.data).then(
-          () => true,
-          () => false,
-        )
+    const lose = (reason: string) => {
+      const lost = { label: config.label ?? 'your changes', value: state.draft, reason }
+      for (const listener of this.lostListeners) listener(lost)
+      return false
+    }
+    const send = (): Promise<boolean> | boolean => {
+      if (state.problem) return lose(state.problem)
+      if (state.conflict) return lose(conflictMessage(config))
+      const parsed = config.schema ? config.schema.safeParse(state.draft) : { success: true as const, data: state.draft }
+      if (!parsed.success) return lose(parsed.error.issues[0]?.message ?? 'Check this value.')
+      return config.save(parsed.data).then(
+        () => true,
+        (error: unknown) => lose(isConflict(error) ? conflictMessage(config) : messageOf(error)),
+      )
+    }
+    let pending: Promise<boolean>
+    if (inFlight) {
+      pending = inFlight.promise.then((saved) => {
+        if (!state.problem && isEqual(state.draft, inFlight.draft)) return saved || lose(inFlight.failure ?? 'The save failed.')
+        return send()
       })
-      .finally(() => {
-        this.detached.delete(run)
-        this.emit()
-      })
+    } else {
+      // Nothing unsaved: nothing to send.
+      if (!state.problem && isEqual(state.draft, state.initial)) return
+      pending = Promise.resolve(send())
+    }
+    const run = pending.finally(() => {
+      this.detached.delete(run)
+      this.emit()
+    })
     this.detached.add(run)
     this.emit()
   }
@@ -562,7 +607,8 @@ export class EditInPlaceStore {
     this.remember(key, sent)
     if (parsed.data !== sent) this.remember(key, parsed.data)
     this.set(key, { ...state, error: null, fieldErrors: undefined, autosave: 'saving' })
-    const promise = config
+    const flight: InFlight = { promise: Promise.resolve(true), draft: sent }
+    flight.promise = config
       .save(parsed.data)
       .then(
         () => {
@@ -574,6 +620,7 @@ export class EditInPlaceStore {
           return true
         },
         (error: unknown) => {
+          flight.failure = isConflict(error) ? conflictMessage(config) : messageOf(error)
           const now = this.state(key)
           if (now.status !== 'open') return false
           // Another writer saved since (a 409): nothing was written, and
@@ -586,8 +633,8 @@ export class EditInPlaceStore {
         },
       )
       .finally(() => this.autosaving.delete(key))
-    this.autosaving.set(key, { promise, draft: sent })
-    return promise
+    this.autosaving.set(key, flight)
+    return flight.promise
   }
 
   /**
