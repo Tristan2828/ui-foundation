@@ -91,44 +91,31 @@ What this machine taught the planner:
 
 ## What Exists Now
 
-All of it is **uncommitted and unverified** unless a line says so. The
-developer chose to keep it: review it and finish it, don't redo it,
-don't take it as done. While it is uncommitted it exists only in these
-two folders, so the first worker in each commits it before anything
-else, and later workers start from that commit.
+Kept true as packages finish (2026-11-27).
 
-**The app, `C:\Repos\quick-jot`** (one commit, from
-`scripts/create-app.sh quick-jot v4.147.0`; that commit passed the
-template's full `npm run verify`). No git remote. On top, uncommitted:
+**Foundation, released** (each merged with its three checks green, and
+`release-smoke` read):
 
-| Piece | State |
+| Package | Release | PR |
+|---|---|---|
+| F1 `EditInPlaceScope`, `preloadRichTextEditor` | 4.148.0 | #444 |
+| F3 uploads reference, `shrinkImage`, `foundation_backend.uploads` | 4.149.0 | #445 |
+| F4 (found by A3) `staysOnPage`, the lost-edit toast, `onLostEdit` | 4.150.0 | #446 (its squash commit's title says 4.151.0; the code is 4.150.0) |
+| F5 (found by A5) `pwa()`'s `smallIcon`, `maskableIcon`, `iconSvg`; the phone's back link 44 px | 4.151.0 | #447 |
+| F2 the editor's behaviour: held keys, retried load, `autoFocus="end"`, `focusKey`, `tabStaysInText`, Ctrl/Cmd+S, leading spaces | 4.152.0 | #448 |
+| F6 (found by A4) "Save Status" and "Uploads" names, the lost edit's own title, SQLite URLs | 4.153.0 | #449 |
+
+**The app, `C:\Repos\quick-jot`,** committed (no remote, no CI):
+
+| Package | State |
 |---|---|
-| `docs/entities/note.md` | Written for "title is the first line". Needs `name` (A1). Names `docs/product.md`, which does not exist |
-| `openapi.yaml`, `src/api/schema.d.ts` | Widgets out, Notes in. Needs `name` (A1) |
-| `src/lib/note-title.ts`, `tests/fixtures/note-titles.json`, `tests/note-title.test.ts` | The first-line rule, 33 cases, passing. Stays; the name goes in front of it |
-| `src/mocks/notes.ts`, `data.ts`, `handlers.ts`, `tests/mocks/conformance.test.ts` | Written, passing |
-| `src/api/gateway/notes.ts` | Written |
-| `tests/gateway/notes.test.ts` | Written from the spec. Its `getNotesByIds` describe (9 cases) tests a filter that was dropped: remove that describe |
-| `src/routes/notes/` | Hooks, the tab store (`open-tabs.ts`), the workspace and tab strip, the note page, the home page, All Notes, search, delete. `tsc -b` and ESLint pass. Ran in a browser. **Rebuilds the editor on every tab switch**, which the developer has since ruled out (A3) |
-| `src/App.tsx`, `nav.ts`, `main.tsx`, `vite.config.ts`, `index.html` | Wired, named, ports moved. `/register` is not routed |
-| `e2e/` | **Not done.** No Notes spec. Fourteen kept specs need changes (the list is under A3). `playwright.config.ts`'s `mobile-chrome` `testMatch` still names the deleted Widgets specs |
-| `backend/` | A stopped helper left `routers/notes.py`, `note_title.py`, models, schemas, the MCP entity and tests written. **No migration.** `npm run verify:backend` never ran. `main.py` still mounts `auth.register_router` (public sign-up) |
-| `AGENTS.md` "This app", `README.md`, deploy files | Not done |
-| `node_modules/@tristan2828/ui-foundation` | The planner's local build of the package, installed `--no-save`. `npm ci` puts 4.147.0 back, and then `EditInPlaceScope` and `preloadRichTextEditor` are missing until F1 is released |
-| `dist/` | A mock-mode build the planner measured on. Ignore it |
-
-**The foundation, this worktree**
-(`C:\Repos\ui-foundation-work\ui-foundation\.claude\worktrees\sleepy-wu-3043f7`,
-branch `claude/quick-jot-notes-app-707563`, nothing committed):
-
-- `packages/ui-foundation/src/components/app/edit-in-place-scope.tsx`,
-  exported as `EditInPlaceScope`.
-- `packages/ui-foundation/src/components/app/rich-text-load.ts`,
-  exported as `preloadRichTextEditor()`; `rich-text-editor.tsx` now
-  loads through it.
-- A changed error message and two comments in `editable-value.tsx`.
-- Both build and lint. No test, fixture story, docs or `CHANGELOG.md`
-  entry.
+| A1 contract (`name`, no sign-up) | Done |
+| A2 backend (migrations 0018 drop widgets, 0019 notes) | Done: `verify:backend` passes. `check-backend-postgres.sh` rewritten for notes, never run (no Docker) |
+| A3 frontend (kept-alive panes, tabs, keys, renaming, specs) | Done: `verify` passed |
+| A6 deploy files; Homebase's `quick_jot` database | Done locally. Homebase's change is a local branch `claude/quick-jot-database` in the worktree `C:\Repos\homebase\.claude\worktrees\quick-jot-db`, not pushed |
+| A5 install, start, phone | Done; two typing-at-start specs are `test.fixme` until the app takes 4.152.0 |
+| A4 pictures (migration 0020) | Done on 4.150.0: `verify`, `verify:backend`, `build:real` passed |
+| A7 upgrade to the last release, use it, report | Next |
 
 ## The Design
 
