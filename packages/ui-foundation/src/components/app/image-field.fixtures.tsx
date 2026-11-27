@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import type { ImageUpload } from '@/lib/image-file'
+import { shrinkImage, type ImageUpload } from '@/lib/image-file'
 import { EntityForm } from './entity-form'
 import { ImageField } from './image-field'
 import { delayedUpload, failingUpload, SAVED_PHOTO } from './image-upload.fixtures'
@@ -158,3 +158,35 @@ function Looks() {
 }
 
 export const AllLooks: StoryObj<typeof ImageField> = { render: () => <Looks /> }
+
+// The upload an app writes, shrinking first: `shrinkImage` redraws the
+// picked photo (upright, at most 2560 px on its long edge, as WebP, with
+// no EXIF) and the "server" stores what it's sent. Under the form, what
+// was sent (e2e/image-shrink.spec.ts).
+function ShrunkPhotoForm() {
+  const [sent, setSent] = useState('nothing yet')
+  const upload: ImageUpload = async (file) => {
+    const small = await shrinkImage(file)
+    let drawn = 'not a picture'
+    try {
+      const bitmap = await createImageBitmap(small)
+      drawn = `${bitmap.width} × ${bitmap.height}`
+      bitmap.close()
+    } catch {
+      // Not one the browser reads: sent as it was picked.
+    }
+    setSent(`${small.name} · ${small.type} · ${drawn} · ${small.size} bytes`)
+    const url = URL.createObjectURL(small)
+    return { id: `shrunk-${small.size}`, thumbUrl: url, url }
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      <PlantPhotoForm title="Shrink Before Upload" upload={upload} initial={{ name: 'Fern', photoId: null }} />
+      <p className="type-caption text-muted-foreground">
+        Sent: <output data-testid="shrink-sent">{sent}</output>
+      </p>
+    </div>
+  )
+}
+
+export const ShrunkBeforeUpload: StoryObj<typeof ImageField> = { render: () => <ShrunkPhotoForm /> }

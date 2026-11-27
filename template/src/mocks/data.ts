@@ -3,6 +3,7 @@
 // the demo credentials are the foundation's (@tristan2828/ui-foundation/mocks).
 import { resetMockAuth, resetMockClientErrors, resetMockPush } from "@tristan2828/ui-foundation/mocks";
 import type { components } from "../api/schema";
+import { resetFilesData } from "./files";
 
 type Widget = components["schemas"]["Widget"];
 type WidgetCategory = components["schemas"]["WidgetCategory"];
@@ -120,6 +121,7 @@ export function resetMockData(): void {
   resetMockAuth();
   resetMockClientErrors();
   resetMockPush();
+  resetFilesData();
 }
 
 export function nextWidgetId(): number {

@@ -1,7 +1,8 @@
 // Images a person picks, pastes or drops, before they're uploaded: which
 // files are accepted, and why one isn't, in words. Shared by ImageField
 // and the rich-text editor's upload. The upload itself is the app's (an
-// `ImageUpload`): the package knows no endpoint and no storage.
+// `ImageUpload`): the package knows no endpoint and no storage. Before it
+// sends a picture, `shrinkImage` redraws it smaller and without its EXIF.
 
 /** What an app's upload resolves to: the stored file's id and its addresses. */
 export type ImageUploadResult = {
@@ -121,6 +122,63 @@ export function imageRefusal(
 function article(name: string): 'a' | 'an' {
   const spelled = /^[A-Z][A-Z0-9]+$/.test(name)
   return (spelled ? /^[AEFHILMNORSX]/ : /^[aeiou]/i).test(name) ? 'an' : 'a'
+}
+
+export type ShrinkImageOptions = {
+  /** The longest edge, in pixels, the picture is drawn at most. Defaults to 2560. A smaller picture is never enlarged. */
+  maxEdge?: number
+  /** The type it's written as. Defaults to `image/webp`. */
+  type?: string
+  /** Quality for a lossy type, 0 to 1. Defaults to 0.85. */
+  quality?: number
+}
+
+/**
+ * A picture redrawn before it's uploaded: turned upright from its EXIF
+ * orientation, no longer than `maxEdge` on its long edge, and written as
+ * `type` (WebP unless asked otherwise). A phone photo of several
+ * megabytes becomes a few hundred kilobytes, and a redraw carries no
+ * EXIF, so no location. Resolves to the original file, untouched, when
+ * the browser can't: it can't read the file as a picture, or can't write
+ * the type. A courtesy, not a defence: the server checks what it's sent
+ * either way. An app's `ImageUpload` calls it before it sends the file.
+ */
+export async function shrinkImage(file: File, options: ShrinkImageOptions = {}): Promise<File> {
+  const { maxEdge = 2560, type = 'image/webp', quality = 0.85 } = options
+  if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file
+  let bitmap: ImageBitmap
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+  } catch {
+    return file
+  }
+  try {
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height))
+    const width = Math.max(1, Math.round(bitmap.width * scale))
+    const height = Math.max(1, Math.round(bitmap.height * scale))
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d')
+    if (!context) return file
+    context.imageSmoothingQuality = 'high'
+    context.drawImage(bitmap, 0, 0, width, height)
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality))
+    // A browser that can't write the type hands back a PNG instead.
+    if (!blob || blob.type !== type) return file
+    return new File([blob], renamed(file.name, type), { type, lastModified: file.lastModified })
+  } finally {
+    bitmap.close()
+  }
+}
+
+const EXTENSIONS: Record<string, string> = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png' }
+
+// "IMG_0042.HEIC" written as WebP is "IMG_0042.webp".
+function renamed(name: string, type: string): string {
+  const extension = EXTENSIONS[type] ?? type.split('/')[1] ?? 'img'
+  const stem = name.includes('.') ? name.slice(0, name.lastIndexOf('.')) : name
+  return `${stem || 'image'}.${extension}`
 }
 
 /** What a failed upload says: the rejection's own `message` (an `AppError`'s), else a generic sentence. */
