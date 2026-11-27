@@ -1,7 +1,8 @@
 // A value on a record's view that turns into its form control where it's
 // shown, and saves when you leave it (cell-patterns.md "Editable value").
 // EntityView wraps every field, section and title marked `edit`; a header
-// badge uses <EditableValue> itself. The rules are edit-in-place-store.ts.
+// badge uses <EditableValue> itself, and so does a page of the app's own
+// inside an <EditInPlaceScope>. The rules are edit-in-place-store.ts.
 //
 // - Start: click the value (a link inside it still navigates), or tab to
 //   its edit button and press Enter. Hover and focus show it's editable.
@@ -205,7 +206,7 @@ function usePinnedStatus(
 
 function useStore(): EditInPlaceStore {
   const store = useContext(EditInPlaceContext)
-  if (!store) throw new Error('<EditableValue> works inside an <EntityView>, which runs editing in place.')
+  if (!store) throw new Error('<EditableValue> works inside an <EntityView> or an <EditInPlaceScope>, which run editing in place.')
   return store
 }
 
@@ -693,8 +694,9 @@ const sameAsJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.string
 /**
  * While a field holds something unsaved, leaving asks first: an in-app
  * link or Back (React Router's blocker, so the app needs a data router),
- * or closing the tab (`beforeunload`). Rendered by EntityView only while
- * a field is being edited, so a view nobody's editing never blocks anything.
+ * or closing the tab (`beforeunload`). Rendered by EntityView, DataTable
+ * and EditInPlaceScope only while a field is being edited, so a view
+ * nobody's editing never blocks anything.
  *
  * When everything unsaved autosaves, an in-app move saves it first and
  * goes on once saved, asking only if that save fails. Closing the tab
