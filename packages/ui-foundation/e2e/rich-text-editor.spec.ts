@@ -2217,8 +2217,10 @@ test.describe('starting', () => {
     await expect(page.locator('[data-load-failed="jot"]')).toBeVisible()
     fail = false
     await page.locator('[data-load-failed="jot"]').getByRole('button', { name: 'Try Again' }).click()
-    await expect(editor(page, 'jot')).toBeVisible()
-    await expect(editor(page, 'jot')).toBeFocused()
+    // The editor itself (not the textarea that holds keys while it loads).
+    await expect(page.locator('[data-fixture="jot"] [contenteditable=true]')).toBeVisible()
+    await expect(page.locator('[data-fixture="jot"] [contenteditable=true]')).toBeFocused()
+    await expect(page.locator('[data-load-failed]')).toHaveCount(1)
   })
 
   test('the note keeps its height while the editor takes the place of the text', async ({ page }) => {
