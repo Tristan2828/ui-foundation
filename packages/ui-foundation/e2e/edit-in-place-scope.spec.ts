@@ -20,6 +20,9 @@ async function typeAtEnd(page: Page, editor: Locator, text: string) {
   await page.keyboard.type(text)
 }
 
+// The lost edit's title: what was typed has left the page unsaved.
+const LOST_SHOPPING = "Shopping wasn't saved and is no longer on the page"
+
 const saves = (page: Page, id: string) => page.getByTestId(`${id}-saves`)
 const saved = (page: Page, id: string) => page.getByTestId(`${id}-saved`)
 // From outside the editor without taking the caret from it: a click on
@@ -124,9 +127,11 @@ test.describe('EditInPlaceScope, one note that autosaves', () => {
     await typeAtEnd(page, editor, ' refuse this')
     await press(page, 'Close Shopping')
     await expect(editor).toHaveCount(0)
-    const lost = page.locator('[data-sonner-toast]').filter({ hasText: "Couldn't save Shopping" })
+    const lost = page.locator('[data-sonner-toast]').filter({ hasText: LOST_SHOPPING })
     await expect(lost).toBeVisible({ timeout: 5000 })
-    await expect(lost).toContainText('The server refused it, as a server would.')
+    // Not the title of a refusal on the page, which can still be retried.
+    await expect(lost).not.toContainText("Couldn't save")
+    await expect(lost).toContainText('The server refused it, as a server would. Copy what you typed to keep it.')
     await expect(saves(page, 'shopping')).toHaveText('1')
     await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread.')
     // It stays until it's dealt with: nothing else holds the text now.
@@ -240,7 +245,7 @@ test.describe('EditInPlaceScope, each tab its own URL (staysOnPage)', () => {
     await press(page, 'Close Shopping')
     await expect(page.getByTestId('packing-pane')).toBeVisible()
     await expect(dialog(page)).toHaveCount(0)
-    await expect(page.locator('[data-sonner-toast]').filter({ hasText: "Couldn't save Shopping" })).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('[data-sonner-toast]').filter({ hasText: LOST_SHOPPING })).toBeVisible({ timeout: 5000 })
     await expect(page.getByTestId('lost-edits')).toHaveText(
       'Shopping: Milk, eggs and bread. refuse (The server refused it, as a server would.)',
     )

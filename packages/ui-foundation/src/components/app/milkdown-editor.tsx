@@ -54,6 +54,8 @@
 // - Images show at most the field's width. With `upload`, an image pasted,
 //   dropped or picked is uploaded through it and goes in as `![](url)`
 //   (rich-text-image-upload.ts); a refusal or a failed upload is a toast.
+//   What's uploading is read from a live region named "Uploads"
+//   (`role="status"`, empty while nothing uploads).
 // - `foldKey`: the text folds by its toggle headings, as <Markdown> does
 //   (rich-text-fold.ts), remembered on this device and shared with
 //   NotesOutline; the document never changes.
@@ -1560,8 +1562,10 @@ export default function MilkdownEditor({
       </div>
       {upload && (
         // The placeholders in the text are drawn, not read: this says
-        // what's uploading.
-        <p role="status" className="sr-only">
+        // what's uploading. There, empty, from the start, so the first
+        // upload is heard; named, so it isn't mistaken for a save line
+        // beside it (EditableValue's "Save Status").
+        <p role="status" aria-label="Uploads" className="sr-only">
           {uploading > 0 ? `Uploading ${uploading === 1 ? 'an image' : `${uploading} images`}…` : ''}
         </p>
       )}

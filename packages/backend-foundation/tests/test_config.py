@@ -46,6 +46,27 @@ def test_surrounding_whitespace_from_a_paste_is_dropped() -> None:
     assert ssl is True
 
 
+@pytest.mark.parametrize(
+    "sqlite",
+    [
+        "sqlite+aiosqlite:///./app.db",
+        "sqlite+aiosqlite:////var/data/app.db",
+        "sqlite+aiosqlite:///C:/data/app.db",
+        "sqlite+aiosqlite://",
+        "sqlite+aiosqlite:///:memory:",
+        "sqlite:///./app.db?mode=ro",
+    ],
+)
+def test_a_sqlite_url_passes_through_untouched(sqlite: str) -> None:
+    assert normalize_database_url(sqlite) == (sqlite, None)
+    assert normalize_database_url(f" {sqlite}\n") == (sqlite, None)
+
+
+def test_a_postgres_url_with_no_query_is_unchanged() -> None:
+    url = "postgresql+asyncpg://u:p@host:5432/db"
+    assert normalize_database_url(url) == (url, None)
+
+
 @pytest.fixture
 def reload_config(monkeypatch: pytest.MonkeyPatch) -> Iterator[Callable[[dict[str, str]], ModuleType]]:
     """Reloads foundation_backend.config with exactly these database

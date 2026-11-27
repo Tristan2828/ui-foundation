@@ -26,26 +26,26 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 636–715
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 717–758
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 760–832
-- [18. Editable value](#18-editable-value) · lines 834–1661
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1233–1305
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1307–1343
-  - [A link and its label](#a-link-and-its-label) · lines 1345–1369
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1371–1504
-  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1506–1578
-  - [In a table's rows](#in-a-tables-rows) · lines 1580–1654
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1656–1661
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1663–1729
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1731–1785
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1787–1869
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1871–1896
-- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1898–1931
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1933–1984
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1986–2060
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2006–2060
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2062–2274
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2223–2274
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2276–2310
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2312–2359
+- [18. Editable value](#18-editable-value) · lines 834–1667
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1237–1309
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1311–1347
+  - [A link and its label](#a-link-and-its-label) · lines 1349–1373
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1375–1508
+  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1510–1584
+  - [In a table's rows](#in-a-tables-rows) · lines 1586–1660
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1662–1667
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1669–1735
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1737–1791
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1793–1875
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1877–1902
+- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1904–1937
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1939–1990
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1992–2066
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2012–2066
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2068–2280
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2229–2280
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2282–2316
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2318–2365
 
 <!-- /index -->
 
@@ -1027,8 +1027,11 @@ nobody has to click away to save notes. Opt in per field:
   the next save waits for the one in flight and sends whatever the text
   is by then, so saves never cross and the latest always wins.
 - Under the text, a quiet line in the muted caption tone
-  (`role="status"`): "Saving…" with a spinner while a save is in flight,
-  "Saved" with a check once nothing typed is waiting. **On a note longer
+  (`role="status"`, named "Save Status"): "Saving…" with a spinner while a save is in flight,
+  "Saved" with a check once nothing typed is waiting. An editor with
+  `upload` has a live region of its own beside it, named "Uploads", so a
+  test finds the save line by its name:
+  `field.getByRole('status', { name: 'Save Status' })`. **On a note longer
   than the screen the line is pinned to the screen's bottom edge** while
   the note runs past it, so the save's state and a refusal are never off
   screen.
@@ -1219,7 +1222,8 @@ const price = editInPlace({
   app's `upload` (the same one `ImageField` takes) and an image pasted,
   dropped or picked with an Image button (the fixed toolbar's, the tools
   strip's, the phone's row) is uploaded and goes
-  in as `![](url)`, a placeholder showing meanwhile (never saved), a
+  in as `![](url)`, a placeholder showing meanwhile (never saved, and
+  read out from a live region named "Uploads"), a
   refusal or failure in a toast. No `upload`, no file handling at all.
 - **The save is the single-field save** (`useRecordUpdate` with
   `optimistic: false, toastOnError: false`, the entity's
@@ -1560,8 +1564,10 @@ const body = editInPlace<string>({
   closed, a pane unmounted): what was typed goes at once rather than
   after the pause, and a value whose save had been refused tries once
   more. If that save fails, nothing on screen holds the text any more,
-  so a toast says "Couldn't save *label*" with the reason and stays until
-  dismissed, with **Copy Text** to put what was typed on the clipboard.
+  so a toast says "*Label* wasn't saved and is no longer on the page"
+  (not a refusal's "Couldn't save *label*", which can still be retried
+  where it is) with the reason, and stays until dismissed, with
+  **Copy Text** to put what was typed on the clipboard.
   `onLostEdit`, given `{ label, value, reason }` (`LostEdit`), is for the
   app to do more, such as reopen the note's tab. A record's view and a
   table toast the same way.

@@ -29,8 +29,13 @@ def normalize_database_url(raw: str) -> tuple[str, bool | None]:
     plain `postgres://…`) and turn it into what SQLAlchemy + asyncpg need:
     the `postgresql+asyncpg://` scheme, minus the libpq-only query params.
     Returns (url, the SSL its sslmode implies, or None when it doesn't say).
-    An already-normalized URL passes through."""
-    parts = urlsplit(raw.strip())
+    An already-normalized URL passes through, and so does any URL that
+    isn't Postgres's (a SQLite one, `sqlite+aiosqlite:///./app.db`, as it
+    is: rebuilding it from its parts would drop the empty host's `//`)."""
+    url = raw.strip()
+    parts = urlsplit(url)
+    if not parts.scheme.startswith("postgres"):
+        return url, None
     scheme = parts.scheme
     if scheme in ("postgres", "postgresql"):
         scheme = "postgresql+asyncpg"

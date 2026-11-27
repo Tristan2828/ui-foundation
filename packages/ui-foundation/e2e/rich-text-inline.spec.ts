@@ -66,7 +66,7 @@ test.describe('rich text edited inline', () => {
     await openInline(page)
     await caretAtEnd(page)
     await page.keyboard.type(' And chairs.')
-    await expect(region(page, 'Notes').getByRole('status')).toHaveText('Saved', { timeout: 5000 })
+    await expect(region(page, 'Notes').getByRole('status', { name: 'Save Status' })).toHaveText('Saved', { timeout: 5000 })
     await expect(page.getByTestId('saved-notes')).toHaveText('Pack the **shared** shelves first.\n\nThen the desks. And chairs.\n')
     await expect(page.getByTestId('saves')).toHaveText('1')
     await expect(notes(page)).toBeFocused()
