@@ -7,6 +7,48 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.155.0 — Held keys inside the page's landmarks; a paste held with them
+
+npm package and `ui-foundation-backend` 4.155.0 (the backend is unchanged
+apart from its version). Two things the Quick Jot app found in
+`holdKeysForNextEditor()` on 4.154.0.
+
+- **The held textarea is inside the page's landmarks.** It used to stay
+  at the end of `<body>` after the editor took it over, so axe reported
+  `region` while the editor's code loaded, in both themes and on the
+  phone. Now it sits in the page's `<main>` while it waits (on the body
+  only before the app has rendered one, as at its start, when a `<main>`
+  arriving takes it in), and the editor that takes it over moves it into
+  its own field, where its own held textarea sits. Each move keeps focus,
+  the caret and what's typed, within the task that caused it: in place
+  with `moveBefore` where the browser has it, else focused again at once
+  with the move's focus and blur events stopped before the page hears
+  them, so neither an editable value's blur save nor the hold's own
+  let-go sees one. The editor's own held textarea (its code loading with
+  no hold before it) was already in its field, and is now checked too.
+- **A paste during the hold is held with the keys.** A paste into either
+  held textarea used to be lost (a paste event the browser doesn't act
+  on) or, at best, typed in as its plain characters, its HTML dropped and
+  its Markdown left unread. Its text and HTML are now kept, and once the editor is up it goes in after the
+  text it opened with is read, in order with the keys typed around it,
+  through the editor's own paste handling: plain text read as Markdown,
+  HTML by the editor's rules (no markup or script of its own). A paste
+  deleted before the editor is up (Backspace over where it went) is
+  dropped. A paste of files alone is still not held.
+- **Coverage:** `e2e/rich-text-editor.spec.ts` "keys before the editor"
+  checks where the textarea is, its focus and that no focus event reaches
+  the page (with and without `moveBefore`), axe in both themes while the
+  editor's code is held, a hold from the app's start, and pastes of plain
+  text and HTML with keys around them, for both held textareas. The
+  `app/RichTextEditor` NextEditor story is in a `<main>`, with an Open
+  Note button and an `&start` mode.
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. Nothing else changes.
+An app whose axe checks skipped `region` around a held note can drop
+that exception.
+
 ## 4.154.0 — Keys held before the editor mounts; typed callouts, tight lists, a line after an image
 
 npm package and `ui-foundation-backend` 4.154.0 (the backend is unchanged

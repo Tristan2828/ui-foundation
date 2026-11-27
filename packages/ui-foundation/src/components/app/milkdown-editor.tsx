@@ -998,7 +998,7 @@ export default function MilkdownEditor({
         }
         // Focus moved on from the textarea meanwhile (Tab): it stays there.
         if (!area || document.activeElement === area) view.focus()
-        if (text) replayKeys(view, text)
+        if (text) replayKeys(view, text, held?.pastes())
         if (autoFocus === 'end' || text) view.dispatch(view.state.tr.scrollIntoView())
         held?.release()
       }

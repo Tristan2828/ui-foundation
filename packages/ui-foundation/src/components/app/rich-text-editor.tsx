@@ -46,10 +46,10 @@
 // takes its place; an empty one shows skeleton lines. An app that opens on
 // an editor loads it ahead with `preloadRichTextEditor()`. Once loaded it's
 // drawn at once; a load that failed is tried again by the next editor. Keys
-// typed into an `autoFocus` editor while it loads are held and typed in
-// once it's up (rich-text-held-keys.ts), and saved; so are keys typed
-// before it mounted, after `holdKeysForNextEditor()` (a New Note press, an
-// app's start; rich-text-hold-keys.ts).
+// typed and pastes made into an `autoFocus` editor while it loads are held
+// and put in once it's up (rich-text-held-keys.ts), and saved; so are those
+// from before it mounted, after `holdKeysForNextEditor()` (a New Note
+// press, an app's start; rich-text-hold-keys.ts).
 //
 // What Markdown can't hold isn't saved: spaces at a line's start or end
 // (rich-text-empty-paragraph.ts; inline code keeps its own) and blank lines
@@ -62,7 +62,7 @@ import type { CreatePage, PageLinkResolver } from '@/lib/page-link'
 import { Markdown } from './markdown'
 import type { MilkdownEditorProps } from './milkdown-editor'
 import type { HeadingFrom, HeadingLevel, TableLook } from './prose-look'
-import type { HeldKeys } from './rich-text-held-keys'
+import { holdPaste, type HeldKeys, type HeldPaste } from './rich-text-held-keys'
 import { claimKeyHold, keyHoldWaiting, type ClaimedHold } from './rich-text-hold-keys'
 import { loadedRichTextEditor, loadRichTextEditor } from './rich-text-load'
 
@@ -272,15 +272,20 @@ export function RichTextEditor(props: RichTextEditorProps) {
   // (rich-text-held-keys.ts). Beside the Suspense boundary, not in its
   // fallback, which goes the moment the editor's code arrives.
   // Keys held from before this editor mounted (`holdKeysForNextEditor()`,
-  // rich-text-hold-keys.ts) are taken over instead, loaded or not.
+  // rich-text-hold-keys.ts) are taken over instead, loaded or not: that
+  // textarea moves into the place its own would be, inside the page's
+  // landmarks.
   const [adopting] = useState(() => Boolean(props.autoFocus) && !props.readOnly && keyHoldWaiting())
   const [holding, setHolding] = useState(() => adopting || (loadedRichTextEditor() === null && Boolean(props.autoFocus) && !props.readOnly))
   const heldRef = useRef<HTMLTextAreaElement>(null)
+  const placeRef = useRef<HTMLSpanElement>(null)
   const composing = useRef(false)
+  const pastes = useRef<HeldPaste[]>([])
   const claimed = useRef<ClaimedHold | null>(null)
   const [held] = useState<HeldKeys>(() => ({
     element: () => (adopting ? (claimed.current?.element() ?? null) : heldRef.current),
     composing: () => (adopting ? (claimed.current?.composing() ?? false) : composing.current),
+    pastes: () => (adopting ? (claimed.current?.pastes() ?? []) : pastes.current),
     release: () => {
       claimed.current?.release()
       claimed.current = null
@@ -289,7 +294,7 @@ export function RichTextEditor(props: RichTextEditorProps) {
   }))
   useLayoutEffect(() => {
     if (!adopting) return
-    claimed.current = claimKeyHold()
+    claimed.current = claimKeyHold(placeRef.current)
     return () => {
       claimed.current?.giveBack()
       claimed.current = null
@@ -317,8 +322,12 @@ export function RichTextEditor(props: RichTextEditorProps) {
           className="sr-only"
           onCompositionStart={() => (composing.current = true)}
           onCompositionEnd={() => (composing.current = false)}
+          onPaste={(event) => holdPaste(event.currentTarget, pastes.current, event.nativeEvent)}
         />
       )}
+      {/* The taken-over hold's textarea is put in here: React renders
+          nothing into it, so it never touches that child. */}
+      {holding && adopting && <span ref={placeRef} data-slot="rich-text-editor-held-place" className="contents" />}
       <Suspense
         fallback={
           <div

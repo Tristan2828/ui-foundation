@@ -2413,6 +2413,139 @@ test.describe('keys before the editor', () => {
     await expect(saved(page, 'next')).toHaveText('')
     await expect(page.getByTestId('presses')).toHaveText('1')
   })
+
+  // The story is all in a <main>: content outside the page's landmarks is
+  // axe's `region`.
+  const axeClean = async (page: Page, rules?: string[]) => {
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme })
+      const builder = new AxeBuilder({ page })
+      const results = await (rules ? builder.withRules(rules) : builder.disableRules(['page-has-heading-one'])).analyze()
+      expect(results.violations, scheme).toEqual([])
+    }
+    await page.emulateMedia({ colorScheme: 'light' })
+  }
+  // Focus events on a held textarea, as the page hears them.
+  const countFocusEvents = (page: Page) =>
+    page.addInitScript(() => {
+      const events: string[] = []
+      ;(window as unknown as { focusEvents: string[] }).focusEvents = events
+      for (const type of ['focus', 'blur', 'focusin', 'focusout']) {
+        document.addEventListener(type, (event) => {
+          if (event.target instanceof Element && event.target.matches('[data-slot=rich-text-editor-held]')) events.push(type)
+        }, true)
+      }
+    })
+  const focusEvents = (page: Page) => page.evaluate(() => (window as unknown as { focusEvents: string[] }).focusEvents.splice(0))
+
+  for (const inPlace of [true, false]) {
+    test(`the held textarea is in the page's <main>, then in the editor's field once it takes the keys over: focus, caret and keys kept, no focus event (${inPlace ? 'moved in place' : 'moved and focused again'})`, async ({ page }) => {
+      // Where the browser can't move an element in place, the textarea is
+      // moved and focused again.
+      if (!inPlace) {
+        await page.addInitScript(() => {
+          for (const proto of [Element.prototype, Document.prototype, DocumentFragment.prototype]) delete (proto as { moveBefore?: unknown }).moveBefore
+        })
+      }
+      await countFocusEvents(page)
+      const release = await holdEditor(page)
+      await page.goto(NEXT_EDITOR)
+      await page.getByRole('button', { name: 'New Note', exact: true }).click()
+      await page.keyboard.type('Hi ')
+      // From here on the textarea only moves.
+      await focusEvents(page)
+      await expect(page.locator('main > [data-slot=rich-text-editor-held]')).toBeFocused()
+      await axeClean(page, ['region'])
+      // The editor mounts, its code still loading: it has the hold's
+      // textarea, in its own field.
+      await expect(page.locator('[data-fixture="next"] [data-state=loading]')).toBeVisible()
+      const area = page.locator('[data-fixture="next"] [data-slot=rich-text-editor-held]')
+      await expect(area).toBeFocused()
+      await expect(held(page)).toHaveCount(1)
+      expect(await focusEvents(page)).toEqual([])
+      await page.keyboard.type('there')
+      await expect(area).toHaveValue('Hi there')
+      await axeClean(page)
+      release()
+      await expect(editor(page, 'next')).toBeFocused()
+      await expect.poll(() => saved(page, 'next').textContent()).toBe('Hi there\n')
+      await expect(held(page)).toHaveCount(0)
+    })
+  }
+
+  test("held as the app starts, before its <main> exists: the textarea goes into <main> once it renders, keys kept", async ({ page }) => {
+    const release = await holdEditor(page)
+    await page.goto(`${NEXT_EDITOR}&start`)
+    await page.keyboard.type('Early ')
+    await expect(page.locator('main > [data-slot=rich-text-editor-held]')).toBeFocused()
+    await axeClean(page, ['region'])
+    await expect(page.locator('[data-fixture="next"] [data-slot=rich-text-editor-held]')).toBeFocused()
+    await page.keyboard.type('words')
+    release()
+    await expect(editor(page, 'next')).toBeFocused()
+    await expect.poll(() => saved(page, 'next').textContent()).toBe('Early words\n')
+    await expect(page.getByTestId('page-keys')).toHaveText('0')
+  })
+
+  test("the editor's own held textarea, with no hold before it, is in its field and passes axe", async ({ page }) => {
+    const release = await holdEditor(page)
+    await page.goto(NEXT_EDITOR)
+    await page.getByRole('button', { name: 'Open Note' }).click()
+    const area = page.locator('[data-fixture="next"] [data-slot=rich-text-editor-held]')
+    await expect(area).toBeFocused()
+    await page.keyboard.type('Own')
+    await axeClean(page)
+    release()
+    await expect.poll(() => saved(page, 'next').textContent()).toBe('Own\n')
+  })
+
+  // A paste as the keyboard's would arrive: a paste event on what has focus.
+  const paste = (page: Page, text: string, html?: string) =>
+    page.evaluate(
+      ([text, html]) => {
+        const data = new DataTransfer()
+        data.setData('text/plain', text)
+        if (html) data.setData('text/html', html)
+        document.activeElement!.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
+      },
+      [text, html] as const,
+    )
+
+  for (const open of ['New Note', 'Open Note']) {
+    test(`a paste while the editor's code loads goes in once it's up, as a paste, in order with the keys (${open})`, async ({ page }) => {
+      const release = await holdEditor(page)
+      await page.goto(NEXT_EDITOR)
+      await page.getByRole('button', { name: open, exact: true }).click()
+      if (open === 'Open Note') await expect(page.locator('[data-fixture="next"] [data-slot=rich-text-editor-held]')).toBeFocused()
+      await page.keyboard.type('A ')
+      // Plain text is read as Markdown, as a paste into the editor is.
+      await paste(page, '**plain** text')
+      await page.keyboard.type(' B ')
+      // HTML by the editor's rules: its markup kept, its script not.
+      await paste(page, 'web words', '<b>web</b> <span onclick="alert(1)">words</span><script>alert(2)</script>')
+      await page.keyboard.type(' C')
+      await page.waitForTimeout(700)
+      release()
+      const box = editor(page, 'next')
+      await expect(box).toBeFocused()
+      await expect.poll(() => saved(page, 'next').textContent()).toBe('A **plain** text B **web** words C\n')
+      await expect(box.locator('[onclick], script')).toHaveCount(0)
+      await expect(page.getByTestId('page-keys')).toHaveText('0')
+    })
+  }
+
+  test('a held paste deleted before the editor is up is dropped', async ({ page }) => {
+    const release = await holdEditor(page)
+    await page.goto(NEXT_EDITOR)
+    await page.getByRole('button', { name: 'New Note', exact: true }).click()
+    await page.keyboard.type('Keep ')
+    await paste(page, 'gone')
+    await page.keyboard.press('Backspace')
+    await page.keyboard.type('this')
+    await page.waitForTimeout(700)
+    release()
+    await expect.poll(() => saved(page, 'next').textContent()).toBe('Keep this\n')
+  })
 })
 
 // `autoFocus="end"` (app/RichTextEditor AutoFocusEnd, AutoFocusFoldedEnd).

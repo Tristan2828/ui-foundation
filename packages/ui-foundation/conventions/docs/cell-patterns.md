@@ -26,26 +26,26 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 636–715
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 717–758
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 760–832
-- [18. Editable value](#18-editable-value) · lines 834–1696
+- [18. Editable value](#18-editable-value) · lines 834–1702
   - [Presets: one line per field](#presets-one-line-per-field) · lines 1240–1312
   - [Several fields edited as one](#several-fields-edited-as-one) · lines 1314–1350
   - [A link and its label](#a-link-and-its-label) · lines 1352–1376
   - [A list of sub-items](#a-list-of-sub-items) · lines 1378–1511
-  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1513–1613
-  - [In a table's rows](#in-a-tables-rows) · lines 1615–1689
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1691–1696
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1698–1764
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1766–1820
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1822–1904
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1906–1931
-- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1933–1966
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1968–2019
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 2021–2095
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2041–2095
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2097–2309
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2258–2309
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2311–2345
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2347–2394
+  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1513–1619
+  - [In a table's rows](#in-a-tables-rows) · lines 1621–1695
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1697–1702
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1704–1770
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1772–1826
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1828–1910
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1912–1937
+- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1939–1972
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1974–2025
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 2027–2101
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2047–2101
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2103–2315
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2264–2315
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2317–2351
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2353–2400
 
 <!-- /index -->
 
@@ -1595,14 +1595,20 @@ const body = editInPlace<string>({
   is safe to call more than once; a failed load is the editor's to meet
   when one mounts, and the next editor to mount tries again. Keys typed
   into an `autoFocus` editor while its code still loads are kept, and
-  typed in once it's up.
+  typed in once it's up; so is a paste, which goes in as a paste, in
+  order with the keys around it.
 - **Keys typed before the editor mounts:** call
   `holdKeysForNextEditor()` on the press that leads to a note (New
   Note, before its request) and, for a cold start, in `main.tsx` beside
   `preloadRichTextEditor()`. Until the next `autoFocus` editor mounts,
   what's typed is held (not delivered to the page, so Enter doesn't
   press New Note again) and typed into it in order, an IME's composition
-  included. It never takes focus from an input, and lets go, dropping
+  and a paste included (a paste goes in through the editor's own paste
+  handling, after the text it opened with is read). The hidden textarea
+  that holds them sits in the page's `<main>` (the body's, before the app
+  has rendered one), then in the editor's own field once it mounts, so
+  it's inside the page's landmarks for axe; each move keeps focus and
+  what's typed. It never takes focus from an input, and lets go, dropping
   what it held, when focus moves to another control, on a click
   elsewhere, on Esc, or after `timeout` (5 s); call the function it
   returns to let go yourself (the request failed). It also starts
