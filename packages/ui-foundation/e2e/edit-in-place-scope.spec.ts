@@ -3,8 +3,9 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 // EditInPlaceScope (app/EditInPlaceScope stories), in a real browser: an
 // always-editable note on a page of the app's own, with no EntityView or
 // DataTable around it, saving the way cell pattern 18 promises. The second
-// story is two notes in one scope, one hidden, as a notes app's tabs. Axe
-// in both themes is e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
+// story is two notes in one scope, one hidden, as a notes app's tabs; the
+// third, the same with each tab its own URL (`staysOnPage`). Axe in both
+// themes is e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
 const story = (id: string) => `http://localhost:6180/story.html?id=app-editinplacescope--${id}`
 
 async function open(page: Page, id: string) {
@@ -115,6 +116,36 @@ test.describe('EditInPlaceScope, one note that autosaves', () => {
     await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread. And tea.', { timeout: 5000 })
     await expect(saves(page, 'shopping')).toHaveText('1')
   })
+
+  test('a note taken off the page whose save is then refused says so, and offers what was typed', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' refuse this')
+    await press(page, 'Close Shopping')
+    await expect(editor).toHaveCount(0)
+    const lost = page.locator('[data-sonner-toast]').filter({ hasText: "Couldn't save Shopping" })
+    await expect(lost).toBeVisible({ timeout: 5000 })
+    await expect(lost).toContainText('The server refused it, as a server would.')
+    await expect(saves(page, 'shopping')).toHaveText('1')
+    await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread.')
+    // It stays until it's dealt with: nothing else holds the text now.
+    await page.waitForTimeout(5000)
+    await expect(lost).toBeVisible()
+    await lost.getByRole('button', { name: 'Copy Text' }).click()
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Milk, eggs and bread. refuse this')
+    await expect(lost).toHaveCount(0)
+  })
+
+  test('a note taken off the page after its save was refused tries once more, then says so', async ({ page }) => {
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' refuse')
+    await expect(saves(page, 'shopping')).toHaveText('1', { timeout: 5000 })
+    await press(page, 'Close Shopping')
+    await expect(saves(page, 'shopping')).toHaveText('2', { timeout: 5000 })
+    await expect(page.locator('[data-sonner-toast]').filter({ hasText: 'Copy Text' })).toBeVisible()
+  })
 })
 
 test.describe('EditInPlaceScope, two notes in one scope (tabs)', () => {
@@ -164,5 +195,54 @@ test.describe('EditInPlaceScope, two notes in one scope (tabs)', () => {
     await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread. And tea.', { timeout: 5000 })
     await expect(saves(page, 'shopping')).toHaveText('1')
     await expect(saves(page, 'packing')).toHaveText('0')
+  })
+})
+
+test.describe('EditInPlaceScope, each tab its own URL (staysOnPage)', () => {
+  const tab = (page: Page, name: string) => page.getByRole('navigation').getByRole('link', { name, exact: true })
+  const dialog = (page: Page) => page.getByRole('dialog', { name: 'Discard your changes?' })
+
+  test('moving to another tab mid-typing goes at once; the text behind saves itself', async ({ page }) => {
+    await open(page, 'note-tabs')
+    const shopping = page.getByTestId('shopping-pane')
+    await typeAtEnd(page, shopping.getByRole('textbox', { name: 'Shopping' }), ' And tea.')
+    await tab(page, 'Packing').click()
+    await expect(page.getByTestId('packing-pane')).toBeVisible()
+    // Not held for the save: it hasn't landed yet (each takes 500ms).
+    await expect(saves(page, 'shopping')).toHaveText('0')
+    await expect(shopping).toBeHidden()
+    await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread. And tea.', { timeout: 5000 })
+  })
+
+  test('a refused save never asks on a move between tabs, and keeps its text; leaving still asks', async ({ page }) => {
+    await open(page, 'note-tabs')
+    const shopping = page.getByTestId('shopping-pane')
+    const editor = shopping.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' refuse')
+    await expect(page.getByText('The server refused it, as a server would.').first()).toBeVisible({ timeout: 5000 })
+    await tab(page, 'Packing').click()
+    await expect(page.getByTestId('packing-pane')).toBeVisible()
+    await expect(dialog(page)).toHaveCount(0)
+    await tab(page, 'Shopping').click()
+    await expect(shopping).toBeVisible()
+    await expect(dialog(page)).toHaveCount(0)
+    await expect(editor).toContainText('Milk, eggs and bread. refuse')
+
+    await page.getByRole('link', { name: 'All Notes' }).click()
+    await expect(dialog(page)).toBeVisible({ timeout: 5000 })
+    await page.getByRole('button', { name: 'Keep Editing' }).click()
+    await expect(editor).toContainText('Milk, eggs and bread. refuse')
+  })
+
+  test('closing a tab whose save is refused says so and tells the app (onLostEdit)', async ({ page }) => {
+    await open(page, 'note-tabs')
+    await typeAtEnd(page, page.getByTestId('shopping-pane').getByRole('textbox', { name: 'Shopping' }), ' refuse')
+    await press(page, 'Close Shopping')
+    await expect(page.getByTestId('packing-pane')).toBeVisible()
+    await expect(dialog(page)).toHaveCount(0)
+    await expect(page.locator('[data-sonner-toast]').filter({ hasText: "Couldn't save Shopping" })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByTestId('lost-edits')).toHaveText(
+      'Shopping: Milk, eggs and bread. refuse (The server refused it, as a server would.)',
+    )
   })
 })

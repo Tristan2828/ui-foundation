@@ -43,7 +43,7 @@
 //   instead of the pencil. The control still opens in the row.
 import { CheckIcon, ChevronRightIcon, PencilIcon } from 'lucide-react'
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type FocusEvent, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from 'react'
-import { useBlocker } from 'react-router'
+import { useBlocker, type Location } from 'react-router'
 import { toast } from 'sonner'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
@@ -211,7 +211,7 @@ function useStore(): EditInPlaceStore {
 }
 
 // What the store reads: the field, with its `rebase` decided.
-type FieldConfig = Omit<EditInPlace, 'rebase'> & { rebase?: (base: unknown, mine: unknown, theirs: unknown) => unknown }
+type FieldConfig = Omit<EditInPlace, 'rebase'> & { rebase?: (base: unknown, mine: unknown, theirs: unknown) => unknown; label?: string }
 
 // Long text's "Keep Mine": both sides kept block by block (rebaseMarkdown).
 function rebaseText(base: unknown, mine: unknown, theirs: unknown): unknown {
@@ -250,7 +250,7 @@ export function EditableField({
   const config = useRef<FieldConfig>({ ...edit, rebase: undefined })
   useLayoutEffect(() => {
     const rebase = edit.rebase === false ? undefined : (edit.rebase ?? (edit.kind === 'long-text' ? rebaseText : undefined))
-    config.current = { ...edit, alwaysEditable: always || edit.alwaysEditable, rebase }
+    config.current = { ...edit, alwaysEditable: always || edit.alwaysEditable, rebase, label }
   })
   useEffect(() => store.register(key, () => config.current), [store, key])
 
@@ -698,12 +698,22 @@ const sameAsJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.string
  * and EditInPlaceScope only while a field is being edited, so a view
  * nobody's editing never blocks anything.
  *
+ * A move within the same path never counts, nor one `staysOnPage` says
+ * stays (a notes app's tabs, each its own URL, all kept mounted).
+ *
  * When everything unsaved autosaves, an in-app move saves it first and
  * goes on once saved, asking only if that save fails. Closing the tab
  * can't wait, so it starts the save and asks; hiding the page (another
  * tab, a phone's home screen) saves too.
  */
-export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
+export function LeaveGuard({
+  store,
+  staysOnPage,
+}: {
+  store: EditInPlaceStore
+  /** A move to another path that stays on this page (EditInPlaceScope's `staysOnPage`): never blocked. */
+  staysOnPage?: (next: Location, current: Location) => boolean
+}) {
   const dirty = useSyncExternalStore(
     store.subscribe,
     () => store.dirty,
@@ -719,7 +729,8 @@ export function LeaveGuard({ store }: { store: EditInPlaceStore }) {
   const holding = useSyncExternalStore(subscribePendingEdits, hasPendingEdits, hasPendingEdits)
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
     flushPendingEdits()
-    return store.dirty && currentLocation.pathname !== nextLocation.pathname
+    if (!store.dirty || currentLocation.pathname === nextLocation.pathname) return false
+    return !staysOnPage?.(nextLocation, currentLocation)
   })
   const [saveFailed, setSaveFailed] = useState(false)
 
