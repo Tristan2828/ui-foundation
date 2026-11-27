@@ -986,6 +986,33 @@ test.describe('callouts', () => {
     await expect(saved(page, 'callout')).toContainText('> [!NOTE]\n> Measure twice. Then cut.\n\nAfter the callout.')
   })
 
+  test('typed: `> [!tip]`, then Enter, makes a callout of that kind, its marker as typed', async ({ page }) => {
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('> [!tip]')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Heads up')
+    await expect(editor(page, 'formats').locator('[data-callout=tip]')).toContainText('Heads up')
+    await expect.poll(() => saved(page, 'formats').textContent()).toBe('Format me here.\n\nSecond line.\n\nThird line.\n\n> [!tip]\n> Heads up\n')
+  })
+
+  test('typed with words after it on its line, the marker stays a quote\'s words', async ({ page }) => {
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('> [!NOTE] and more')
+    await page.keyboard.press('Enter')
+    await expect(editor(page, 'formats').locator('blockquote')).toHaveCount(1)
+    await expect(editor(page, 'formats').locator('[data-callout]')).toHaveCount(0)
+  })
+
+  test('pasted as Markdown text, a callout comes in as one, with no break after its marker', async ({ page }) => {
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+    await paste(page, 'formats', { 'text/plain': '> [!NOTE]\n> Pasted words.\n' })
+    await expect(editor(page, 'formats').locator('[data-callout=note]')).toContainText('Pasted words.')
+    await expect.poll(() => saved(page, 'formats').textContent()).toBe('Format me here.\n\nSecond line.\n\nThird line.\n\n> [!NOTE]\n> Pasted words.\n')
+  })
+
   test('"/callout" makes one; "/" at a line\'s start in one changes its kind', async ({ page }) => {
     await caretAtEnd(page, 'formats')
     await page.keyboard.press('Enter')
@@ -1236,6 +1263,19 @@ test.describe('image upload', () => {
     await expect(placeholder).toHaveCount(0)
     await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(1)
     await expect(saved(page, 'uploads')).toHaveText(/^Paste or drop a photo here\.!\[\]\(blob:[^)]+\)\n$/)
+  })
+
+  test('words typed once a pasted image is in go on a line of their own under it', async ({ page }) => {
+    await caretAtEnd(page, 'uploads')
+    // A tap's caret can settle after the first key: the end again, past it.
+    await page.waitForTimeout(PAST_FOCUS_MS)
+    await page.keyboard.press('ControlOrMeta+End')
+    await page.keyboard.press('Enter')
+    await pasteFiles(page, 'uploads', [photo('screenshot.png')])
+    await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(1)
+    await page.keyboard.type('after the picture')
+    await expect(saved(page, 'uploads')).toHaveText(/^Paste or drop a photo here\.\n\n!\[\]\(blob:[^)]+\)\n\nafter the picture\n$/)
+    await expect(editor(page, 'uploads').locator('p').filter({ hasText: 'after the picture' }).locator('img')).toHaveCount(0)
   })
 
   test('a dropped image goes in where it was dropped', async ({ page }) => {
@@ -1976,6 +2016,41 @@ test.describe('typing', () => {
     await expect(editor(page, 'writing')).toBeVisible()
   })
 
+  test('a list typed with Tab and Shift+Tab stays tight, as written by hand', async ({ page }) => {
+    await page.goto(FEATURES)
+    await editor(page, 'empty').click()
+    await expect(editor(page, 'empty')).toBeFocused()
+    await page.keyboard.type('- a')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('b')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Tab')
+    await page.keyboard.type('c')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Shift+Tab')
+    await page.keyboard.type('d')
+    await expect.poll(() => saved(page, 'empty').textContent()).toBe('- a\n- b\n  - c\n- d\n')
+  })
+
+  test('tight lists pasted as Markdown text stay tight, a nested item and all', async ({ page }) => {
+    await page.goto(FEATURES)
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+    const lists = '- one\n- two\n  - nested\n- three\n\n1. first\n2. second\n   - inside\n3. third\n'
+    await paste(page, 'formats', { 'text/plain': lists })
+    await expect.poll(() => saved(page, 'formats').textContent()).toBe(`Format me here.\n\nSecond line.\n\nThird line.\n\n${lists}`)
+  })
+
+  test('a loose list stays loose, its new items too', async ({ page }) => {
+    await page.goto(FEATURES)
+    await caretAtEnd(page, 'formats')
+    await page.keyboard.press('Enter')
+    await paste(page, 'formats', { 'text/plain': '- one\n\n- two\n' })
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('three')
+    await expect.poll(() => saved(page, 'formats').textContent()).toBe('Format me here.\n\nSecond line.\n\nThird line.\n\n- one\n\n- two\n\n- three\n')
+  })
+
   test('ArrowDown at the end of a last code block puts a line under it; a last paragraph gets none', async ({ page }) => {
     await caretAtEnd(page, 'onlyCode')
     await page.keyboard.press('ArrowDown')
@@ -2248,6 +2323,95 @@ test.describe('starting', () => {
     expect(final).toBeGreaterThan(20)
     // Every frame drawn: never the empty field between the two.
     expect(Math.min(...heights)).toBeGreaterThan(final * 0.8)
+  })
+})
+
+// `holdKeysForNextEditor()` (app/RichTextEditor NextEditor): keys typed
+// after New Note, before its editor exists, are typed into it once it's up.
+const NEXT_EDITOR = 'http://localhost:6180/story.html?id=app-richtexteditor--next-editor'
+
+test.describe('keys before the editor', () => {
+  const held = (page: Page) => page.locator('[data-slot=rich-text-editor-held]')
+
+  for (const loaded of [true, false]) {
+    test(`keys typed before the editor mounts land in it, in order, once, and not on the page (code ${loaded ? 'loaded' : 'still loading'})`, async ({ page }) => {
+      const release = loaded ? () => {} : await holdEditor(page)
+      await page.goto(NEXT_EDITOR)
+      await page.getByRole('button', { name: 'New Note', exact: true }).click()
+      await page.keyboard.type('# Plan')
+      await page.keyboard.press('Enter')
+      await page.keyboard.type('Milk and eggs')
+      // No editor yet: the keys are held, and Enter didn't press New Note again.
+      await expect(editor(page, 'next')).toHaveCount(0)
+      await page.waitForTimeout(700)
+      release()
+      const box = editor(page, 'next')
+      await expect(box.locator('h3')).toHaveText('Plan')
+      await expect(box).toBeFocused()
+      await expect.poll(() => saved(page, 'next').textContent()).toBe('# Plan\n\nMilk and eggs\n')
+      await page.keyboard.type('.')
+      await expect.poll(() => saved(page, 'next').textContent()).toBe('# Plan\n\nMilk and eggs.\n')
+      await expect(page.getByTestId('presses')).toHaveText('1')
+      await expect(page.getByTestId('page-keys')).toHaveText('0')
+      await expect(held(page)).toHaveCount(0)
+    })
+  }
+
+  test('a composition open as the editor arrives is typed in once it ends', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'composition through the DevTools protocol')
+    await page.goto(NEXT_EDITOR)
+    await page.getByRole('button', { name: 'New Note', exact: true }).click()
+    await page.keyboard.type('Say ')
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('Input.imeSetComposition', { text: 'にほ', selectionStart: 2, selectionEnd: 2 })
+    // The editor mounts mid-composition; the hand-over waits for its end.
+    await expect(editor(page, 'next')).toBeVisible()
+    await page.waitForTimeout(200)
+    await cdp.send('Input.insertText', { text: '日本' })
+    await expect.poll(() => saved(page, 'next').textContent()).toBe('Say 日本\n')
+    await expect(editor(page, 'next')).toBeFocused()
+  })
+
+  test('a click on another control lets go: what it takes is its own, and nothing held reaches the editor', async ({ page }) => {
+    await page.goto(NEXT_EDITOR)
+    await page.getByRole('button', { name: 'New Note', exact: true }).click()
+    await page.keyboard.type('ab')
+    const search = page.getByRole('textbox', { name: 'Search notes' })
+    await search.click()
+    await page.keyboard.type('xy')
+    await expect(search).toHaveValue('xy')
+    await expect(held(page)).toHaveCount(0)
+    await expect(editor(page, 'next')).toBeVisible()
+    await afterPause(page)
+    await expect(saved(page, 'next')).toHaveText('')
+  })
+
+  test('called with focus in an input, it takes nothing from it', async ({ page }) => {
+    await page.goto(NEXT_EDITOR)
+    const search = page.getByRole('textbox', { name: 'Search notes' })
+    await search.click()
+    // New Note pressed from the keyboard elsewhere would move focus; here
+    // the hold is asked for while the input has it.
+    await page.evaluate(() => {
+      const button = [...document.querySelectorAll('button')].find((each) => each.textContent === 'New Note')!
+      button.click()
+    })
+    await page.keyboard.type('find me')
+    await expect(search).toHaveValue('find me')
+    await expect(held(page)).toHaveCount(0)
+  })
+
+  test('with no editor by the timeout it lets go, focus goes back to the button, and what was held is dropped', async ({ page }) => {
+    await page.goto(NEXT_EDITOR)
+    const button = page.getByRole('button', { name: 'New Note, Short Wait' })
+    await button.click()
+    await page.keyboard.type('zz')
+    await expect(held(page)).toHaveCount(0)
+    await expect(button).toBeFocused()
+    await expect(editor(page, 'next')).toBeVisible()
+    await afterPause(page)
+    await expect(saved(page, 'next')).toHaveText('')
+    await expect(page.getByTestId('presses')).toHaveText('1')
   })
 })
 

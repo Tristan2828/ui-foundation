@@ -375,7 +375,10 @@ kept for the session. The editor is built in a layout effect, so it's
 built and focused in the task that puts it in the page. An `autoFocus`
 editor still loading puts a textarea beside the Suspense boundary that
 holds the keys typed meanwhile; the editor types them in once it has
-read its baseline (`rich-text-held-keys.ts`).
+read its baseline (`rich-text-held-keys.ts`). Keys typed before any
+editor is mounted (New Note's request, a cold start) are held the same
+way from `holdKeysForNextEditor()`: a textarea at the body's end, taken
+over by the next `autoFocus` editor (`rich-text-hold-keys.ts`).
 Editing in place is run by `EntityView`, `DataTable`, or, on a page of
 the app's own, `EditInPlaceScope` (cell pattern 18).
 
@@ -466,7 +469,8 @@ the same `upload`: the value is the stored file's id.
 syntax, a quote whose first line is `[!NOTE]` (or tip, important,
 warning, caution), so a note stays plain Markdown that GitHub and
 Obsidian also render as a callout. The merge needs nothing: to it a
-callout is the quote it's written as.
+callout is the quote it's written as. Typed, `> [!NOTE]` and Enter
+makes one (`rich-text-shortcuts.ts`), as `# ` makes a heading.
 
 **Folding by headings (4.54)** (`src/lib/markdown-fold.ts`,
 `rich-text-fold.ts`, `notes-outline.tsx`, `src/hooks/fold-store.ts`):

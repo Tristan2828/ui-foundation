@@ -47,7 +47,9 @@
 // an editor loads it ahead with `preloadRichTextEditor()`. Once loaded it's
 // drawn at once; a load that failed is tried again by the next editor. Keys
 // typed into an `autoFocus` editor while it loads are held and typed in
-// once it's up (rich-text-held-keys.ts), and saved.
+// once it's up (rich-text-held-keys.ts), and saved; so are keys typed
+// before it mounted, after `holdKeysForNextEditor()` (a New Note press, an
+// app's start; rich-text-hold-keys.ts).
 //
 // What Markdown can't hold isn't saved: spaces at a line's start or end
 // (rich-text-empty-paragraph.ts; inline code keeps its own) and blank lines
@@ -61,6 +63,7 @@ import { Markdown } from './markdown'
 import type { MilkdownEditorProps } from './milkdown-editor'
 import type { HeadingFrom, HeadingLevel, TableLook } from './prose-look'
 import type { HeldKeys } from './rich-text-held-keys'
+import { claimKeyHold, keyHoldWaiting, type ClaimedHold } from './rich-text-hold-keys'
 import { loadedRichTextEditor, loadRichTextEditor } from './rich-text-load'
 
 export type RichTextEditorProps = {
@@ -268,14 +271,30 @@ export function RichTextEditor(props: RichTextEditorProps) {
   // typed meanwhile, and the editor types them in once it's up
   // (rich-text-held-keys.ts). Beside the Suspense boundary, not in its
   // fallback, which goes the moment the editor's code arrives.
-  const [holding, setHolding] = useState(() => loadedRichTextEditor() === null && Boolean(props.autoFocus) && !props.readOnly)
+  // Keys held from before this editor mounted (`holdKeysForNextEditor()`,
+  // rich-text-hold-keys.ts) are taken over instead, loaded or not.
+  const [adopting] = useState(() => Boolean(props.autoFocus) && !props.readOnly && keyHoldWaiting())
+  const [holding, setHolding] = useState(() => adopting || (loadedRichTextEditor() === null && Boolean(props.autoFocus) && !props.readOnly))
   const heldRef = useRef<HTMLTextAreaElement>(null)
   const composing = useRef(false)
+  const claimed = useRef<ClaimedHold | null>(null)
   const [held] = useState<HeldKeys>(() => ({
-    element: () => heldRef.current,
-    composing: () => composing.current,
-    release: () => setHolding(false),
+    element: () => (adopting ? (claimed.current?.element() ?? null) : heldRef.current),
+    composing: () => (adopting ? (claimed.current?.composing() ?? false) : composing.current),
+    release: () => {
+      claimed.current?.release()
+      claimed.current = null
+      setHolding(false)
+    },
   }))
+  useLayoutEffect(() => {
+    if (!adopting) return
+    claimed.current = claimKeyHold()
+    return () => {
+      claimed.current?.giveBack()
+      claimed.current = null
+    }
+  }, [adopting])
   // The `focusKey` last acted on: kept here, so neither a load nor a
   // remount (a reset) takes an unchanged key for a new one.
   const focusHandled = useRef(props.focusKey)
@@ -286,7 +305,7 @@ export function RichTextEditor(props: RichTextEditorProps) {
   })
   return (
     <>
-      {holding && (
+      {holding && !adopting && (
         <textarea
           ref={heldRef}
           id={props.id}

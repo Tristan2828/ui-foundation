@@ -10,6 +10,7 @@ import { FOLDING_SAMPLE, startFolded } from './folding.fixtures'
 import { Markdown } from './markdown'
 import { NotesOutline } from './notes-outline'
 import { RichTextEditor, type RichTextEditorProps } from './rich-text-editor'
+import { holdKeysForNextEditor } from './rich-text-hold-keys'
 import { MARKDOWN_FIXTURES } from './rich-text-editor.fixtures'
 import { delayedUpload, failingUpload, SAVED_PHOTO } from './image-upload.fixtures'
 import { longNote } from './rich-text-long-note.fixtures'
@@ -670,3 +671,47 @@ function FocusAgainStory() {
 }
 
 export const FocusAgain: StoryObj<typeof RichTextEditor> = { render: () => <FocusAgainStory /> }
+
+// `holdKeysForNextEditor()`: keys typed before the note's editor exists
+// (e2e/rich-text-editor.spec.ts "keys before the editor"). New Note holds
+// the keys, then mounts an `autoFocus` editor 600 ms later, as a notes
+// app's request does; New Note, Short Wait lets go after 300 ms, and its
+// editor comes at 1.5 s. How many keydowns reached the page from outside the
+// fixtures (the held textarea, a button) is counted beside them.
+function NextEditorStory() {
+  const [note, setNote] = useState(0)
+  const [presses, setPresses] = useState(0)
+  const [pageKeys, setPageKeys] = useState(0)
+  useLayoutEffect(() => {
+    const count = (event: KeyboardEvent) => {
+      if (!(event.target instanceof Element && event.target.closest('[data-fixture]'))) setPageKeys((keys) => keys + 1)
+    }
+    document.addEventListener('keydown', count)
+    return () => document.removeEventListener('keydown', count)
+  }, [])
+  const press = (timeout?: number) => {
+    holdKeysForNextEditor({ timeout })
+    setPresses((count) => count + 1)
+    setTimeout(() => setNote((count) => count + 1), timeout ? 1500 : 600)
+  }
+  const button = 'rounded-md border border-border px-2 py-1'
+  return (
+    <div className="flex max-w-xl flex-col gap-4">
+      <div className="flex gap-2">
+        <button type="button" className={button} onClick={() => press()}>
+          New Note
+        </button>
+        <button type="button" className={button} onClick={() => press(300)}>
+          New Note, Short Wait
+        </button>
+        <input aria-label="Search notes" className="rounded-md border border-input px-2 py-1" />
+      </div>
+      <p className="type-caption text-muted-foreground">
+        Presses: <span data-testid="presses">{presses}</span>, keys on the page: <span data-testid="page-keys">{pageKeys}</span>
+      </p>
+      {note > 0 && <Labelled key={note} label="next" markdown="" placeholder="Write something" autoFocus />}
+    </div>
+  )
+}
+
+export const NextEditor: StoryObj<typeof RichTextEditor> = { render: () => <NextEditorStory /> }

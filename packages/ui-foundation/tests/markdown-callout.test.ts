@@ -37,6 +37,19 @@ describe('callouts', () => {
     }
   })
 
+  it("takes the break that ends the marker's line too, as the editor's parser reads a newline", () => {
+    // The tree the editor's parser makes of `> [!NOTE]\n> Body text.`: the newline a break node.
+    const quote: Node = {
+      type: 'root',
+      children: [{ type: 'blockquote', children: [{ type: 'paragraph', children: [{ type: 'text', value: '[!NOTE]' }, { type: 'break' }, { type: 'text', value: 'Body text.' }] }] }],
+    }
+    ;(remarkCalloutNodes() as (tree: unknown) => void)(quote)
+    const [callout] = quote.children!
+    expect(callout.type).toBe('callout')
+    expect(callout.children![0].children!.map((child) => child.type)).toEqual(['text'])
+    expect(text(callout)).toBe('Body text.')
+  })
+
   it('takes the marker paragraph away when the marker was all of it', () => {
     const [callout] = nodes('> [!TIP]\n>\n> - a list first\n')
     expect(callout.children!.map((child) => child.type)).toEqual(['list'])

@@ -47,7 +47,12 @@ function takeCallout(node: MdNode): { kind: CalloutKind; marker: string } | null
   if (!found) return null
   const rest = text.value.slice(found[0].length)
   if (rest) text.value = rest
-  else paragraph.children!.shift()
+  else {
+    paragraph.children!.shift()
+    // The marker's line ended in a break node (the editor's parser reads
+    // each newline as one): it ends the marker, not a line of the body.
+    if (paragraph.children![0]?.type === 'break') paragraph.children!.shift()
+  }
   if (paragraph.children!.length === 0) node.children!.shift()
   return { kind: found[1].toLowerCase() as CalloutKind, marker: found[0].trim() }
 }

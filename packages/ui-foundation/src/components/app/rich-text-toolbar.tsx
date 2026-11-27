@@ -76,7 +76,7 @@ export type FormatButtonsProps = {
   fullScreen?: boolean
   /** The editable element, for the Highlight menu to give focus back to. */
   text?: () => HTMLElement | null
-  /** 40px buttons, for a touch screen (the keyboard bar's). */
+  /** 44px buttons, for a touch screen (the keyboard bar's). */
   touch?: boolean
 }
 
@@ -92,8 +92,8 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
   const pageIndex = onPage ? items.length : -1
   const imageIndex = onImage ? items.length + (onPage ? 1 : 0) : -1
   const fullScreenIndex = onFullScreen ? items.length + (onPage ? 1 : 0) + (onImage ? 1 : 0) : -1
-  // A touch screen's 40px buttons; a laptop's 28px.
-  const sized = touch ? 'size-10 min-w-10 [&_svg]:size-5' : undefined
+  // A touch screen's 44px buttons, a finger's; a laptop's 28px.
+  const sized = touch ? 'size-11 min-w-11 [&_svg]:size-5' : undefined
   const count = items.length + (onPage ? 1 : 0) + (onImage ? 1 : 0) + (onFullScreen ? 1 : 0)
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
   // The one button Tab reaches: the last one used.
@@ -139,7 +139,7 @@ export function FormatButtons({ formats, state, readOnly, onFormat, onPage, onIm
                   onKeyDown={onKeyDown}
                   onFormat={onFormat}
                   text={text}
-                  className={touch ? 'h-10 min-w-10' : undefined}
+                  className={touch ? 'h-11 min-w-11' : undefined}
                 />
               )
             const Icon = item.icon

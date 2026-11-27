@@ -300,6 +300,7 @@ const COMPOSITE_STORIES = [
   { id: 'app-richtexteditor--starting', mustShow: 'Then the desks, then the chairs.' },
   { id: 'app-richtexteditor--tab-stays', mustShow: 'Another' },
   { id: 'app-richtexteditor--spaces', mustShow: 'escaped start.' },
+  { id: 'app-richtexteditor--next-editor', mustShow: 'keys on the page' },
   // Allow reminders in every state, on a card.
   { id: 'app-allowreminders--default', mustShow: 'Reminders are on for this device.' },
   { id: 'app-datatable--content-width', mustShow: 'Finance' },

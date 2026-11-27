@@ -27,6 +27,11 @@
 //   here whether or not there is a step to take: ProseMirror's keymap,
 //   finding nothing to redo, would run Shift+Mod+Z's unshifted key, Mod+Z,
 //   so a redo pressed once too often would undo a step.
+// - Enter after `[!NOTE]` (or `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`,
+//   `[!CAUTION]`, any case) alone on a quote's first line makes the quote
+//   a callout of that kind, its marker kept as typed, the caret on in it:
+//   GitHub's syntax typed as it's written, as `# ` makes a heading
+//   (src/lib/markdown-callout.ts). Words after the marker keep it a quote.
 import { redo, undo } from '@milkdown/kit/prose/history'
 import { liftListItem, sinkListItem } from '@milkdown/kit/prose/schema-list'
 import type { EditorState, Transaction } from '@milkdown/kit/prose/state'
@@ -153,7 +158,28 @@ export function handleEditingKey(state: EditorState, dispatch: Dispatch, event: 
   if (event.metaKey || event.ctrlKey || event.altKey) return false
   if (event.key === 'Backspace' && !event.shiftKey) return liftAtItemStart(state, dispatch)
   if (event.key === 'Tab') return handleTab(state, dispatch, event.shiftKey)
+  if (event.key === 'Enter' && !event.shiftKey) return calloutFromMarker(state, dispatch)
   return false
+}
+
+const TYPED_CALLOUT = /^\[!(note|tip|important|warning|caution)\][ \t]*$/i
+
+// A quote whose first line is a callout's marker, the caret at its end:
+// made the callout, the marker's line emptied for the caret.
+function calloutFromMarker(state: EditorState, dispatch: Dispatch): boolean {
+  const { selection, schema } = state
+  const callout = schema.nodes.callout
+  const { $from } = selection
+  if (!callout || !selection.empty || $from.depth < 2) return false
+  const line = $from.parent
+  if (line.type.name !== 'paragraph' || $from.parentOffset !== line.content.size) return false
+  if (line.childCount !== 1 || !line.firstChild!.isText || line.firstChild!.marks.length > 0) return false
+  const found = TYPED_CALLOUT.exec(line.textContent)
+  if (!found || $from.node(-1).type.name !== 'blockquote' || $from.index(-1) !== 0) return false
+  const tr = state.tr.delete($from.start(), $from.end())
+  tr.setNodeMarkup($from.before(-1), callout, { kind: found[1].toLowerCase(), marker: found[0].trim() })
+  dispatch(tr.scrollIntoView())
+  return true
 }
 
 /**
