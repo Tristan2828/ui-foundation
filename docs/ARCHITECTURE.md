@@ -374,11 +374,16 @@ with no Suspense fallback; before then each mount makes its own
 kept for the session. The editor is built in a layout effect, so it's
 built and focused in the task that puts it in the page. An `autoFocus`
 editor still loading puts a textarea beside the Suspense boundary that
-holds the keys typed meanwhile; the editor types them in once it has
-read its baseline (`rich-text-held-keys.ts`). Keys typed before any
-editor is mounted (New Note's request, a cold start) are held the same
-way from `holdKeysForNextEditor()`: a textarea at the body's end, taken
-over by the next `autoFocus` editor (`rich-text-hold-keys.ts`).
+holds the keys typed meanwhile, and pastes as marks beside their
+clipboard data; the editor types the keys in once it has read its
+baseline, each paste through its own paste handling
+(`rich-text-held-keys.ts`). Keys typed before any editor is mounted (New
+Note's request, a cold start) are held the same way from
+`holdKeysForNextEditor()`: a textarea in the page's `<main>` (the body
+until one renders), which the next `autoFocus` editor takes over and
+moves into its own markup, keeping focus with `moveBefore` where the
+browser has it, else refocusing with the move's focus events stopped
+(`rich-text-hold-keys.ts`).
 Editing in place is run by `EntityView`, `DataTable`, or, on a page of
 the app's own, `EditInPlaceScope` (cell pattern 18).
 
