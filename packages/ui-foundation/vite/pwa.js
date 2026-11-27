@@ -11,7 +11,9 @@
 // - /icons/: an SVG with the name's first letter (Chrome, Android) and
 //   plain PNGs in the theme colour (iOS's Home Screen icon must be a PNG,
 //   and drawing a letter into one needs a font rasteriser the package
-//   doesn't carry). `icon` replaces them all with the app's own PNG.
+//   doesn't carry). `icon` replaces them all with the app's own PNG, and
+//   `smallIcon`, `maskableIcon` and `iconSvg` add its other sizes and
+//   shapes beside it; each PNG's `sizes` is read from its header.
 // - /push-sw.js: ./push-sw.js, showing pushes, opening their path, and
 //   posting a message's action (a Done button) to the app's own path.
 // And adds the manifest, theme-color and apple-touch-icon tags to
@@ -150,6 +152,37 @@ export function letterSvg(name, background, foreground) {
   )
 }
 
+// ---------------------------------------------------------- own icons
+
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+
+/** A PNG's width and height, from its IHDR chunk; undefined if it isn't a PNG. */
+export function pngSize(bytes) {
+  if (bytes.length < 24 || !bytes.subarray(0, 8).equals(PNG_SIGNATURE)) return undefined
+  if (bytes.toString('ascii', 12, 16) !== 'IHDR') return undefined
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) }
+}
+
+/** An app's own PNG (path from the Vite root), with the manifest's `sizes` read from it. */
+function ownPng(file, option, root) {
+  const own = path.resolve(root, file)
+  if (own.toLowerCase().endsWith('.svg')) {
+    throw new Error(`pwa: ${option} must be a PNG file; an SVG goes in \`iconSvg\`, beside a PNG \`icon\` (iOS's Home Screen takes a PNG only).`)
+  }
+  const bytes = fs.existsSync(own) ? fs.readFileSync(own) : undefined
+  const size = bytes && pngSize(bytes)
+  if (!size) throw new Error(`pwa: ${option} must be a PNG file; ${own} isn't one.`)
+  return { bytes, sizes: `${size.width}x${size.height}` }
+}
+
+/** An app's own SVG (path from the Vite root). */
+function ownSvg(file, option, root) {
+  const own = path.resolve(root, file)
+  const source = own.toLowerCase().endsWith('.svg') && fs.existsSync(own) ? fs.readFileSync(own, 'utf8') : undefined
+  if (!source || !/<svg[\s>]/.test(source)) throw new Error(`pwa: ${option} must be an SVG file; ${own} isn't one.`)
+  return source
+}
+
 // --------------------------------------------------------------- plugin
 
 /**
@@ -169,13 +202,34 @@ export function pwaFiles(options, base = '/', root = process.cwd()) {
   const files = new Map()
   let icons
   let touchIcon
+  let workerIcon
   if (options.icon) {
-    const own = path.resolve(root, options.icon)
-    if (!own.endsWith('.png') || !fs.existsSync(own)) throw new Error(`pwa: icon must be a PNG file; ${own} isn't one.`)
-    files.set('icons/icon.png', { type: 'image/png', source: fs.readFileSync(own) })
-    icons = [{ src: at('icons/icon.png'), sizes: '512x512', type: 'image/png', purpose: 'any' }]
+    // The app's own: its PNG (the Home Screen's on iOS, the push's), and
+    // beside it any of a smaller PNG, a maskable PNG and an SVG it has.
+    const own = ownPng(options.icon, 'icon', root)
+    files.set('icons/icon.png', { type: 'image/png', source: own.bytes })
+    icons = [{ src: at('icons/icon.png'), sizes: own.sizes, type: 'image/png', purpose: 'any' }]
+    workerIcon = 'icons/icon.png'
+    if (options.smallIcon) {
+      const small = ownPng(options.smallIcon, 'smallIcon', root)
+      files.set('icons/icon-small.png', { type: 'image/png', source: small.bytes })
+      icons.unshift({ src: at('icons/icon-small.png'), sizes: small.sizes, type: 'image/png', purpose: 'any' })
+      workerIcon = 'icons/icon-small.png'
+    }
+    if (options.iconSvg) {
+      files.set('icons/icon.svg', { type: 'image/svg+xml', source: ownSvg(options.iconSvg, 'iconSvg', root) })
+      icons.unshift({ src: at('icons/icon.svg'), sizes: 'any', type: 'image/svg+xml', purpose: 'any' })
+    }
+    if (options.maskableIcon) {
+      const maskable = ownPng(options.maskableIcon, 'maskableIcon', root)
+      files.set('icons/icon-maskable.png', { type: 'image/png', source: maskable.bytes })
+      icons.push({ src: at('icons/icon-maskable.png'), sizes: maskable.sizes, type: 'image/png', purpose: 'maskable' })
+    }
     touchIcon = 'icons/icon.png'
   } else {
+    for (const option of ['iconSvg', 'smallIcon', 'maskableIcon']) {
+      if (options[option]) throw new Error(`pwa: \`${option}\` goes with \`icon\`, the app's own PNG; pass that too.`)
+    }
     files.set('icons/icon.svg', { type: 'image/svg+xml', source: letterSvg(shortName, theme, onTheme) })
     for (const size of [192, 512]) files.set(`icons/icon-${size}.png`, { type: 'image/png', source: solidPng(size, theme) })
     files.set('icons/apple-touch-icon.png', { type: 'image/png', source: solidPng(180, theme) })
@@ -187,6 +241,7 @@ export function pwaFiles(options, base = '/', root = process.cwd()) {
       { src: at('icons/icon-512.png'), sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ]
     touchIcon = 'icons/apple-touch-icon.png'
+    workerIcon = 'icons/icon-192.png'
   }
   const shortcuts = (options.shortcuts ?? []).map((shortcut, index) => {
     const label = shortcut?.name?.trim()
@@ -197,11 +252,10 @@ export function pwaFiles(options, base = '/', root = process.cwd()) {
     }
     let icon
     if (shortcut.icon) {
-      const own = path.resolve(root, shortcut.icon)
-      if (!own.endsWith('.png') || !fs.existsSync(own)) throw new Error(`pwa: shortcuts[${index}].icon must be a PNG file; ${own} isn't one.`)
+      const own = ownPng(shortcut.icon, `shortcuts[${index}].icon`, root)
       const file = `icons/shortcut-${index}.png`
-      files.set(file, { type: 'image/png', source: fs.readFileSync(own) })
-      icon = [{ src: at(file), sizes: '192x192', type: 'image/png' }]
+      files.set(file, { type: 'image/png', source: own.bytes })
+      icon = [{ src: at(file), sizes: own.sizes, type: 'image/png' }]
     }
     return {
       name: label,
@@ -226,7 +280,7 @@ export function pwaFiles(options, base = '/', root = process.cwd()) {
     type: 'application/manifest+json',
     source: `${JSON.stringify(manifest, null, 2)}\n`,
   })
-  const worker = fs.readFileSync(WORKER_SOURCE, 'utf8').replace('__ICON__', options.icon ? at('icons/icon.png') : at('icons/icon-192.png'))
+  const worker = fs.readFileSync(WORKER_SOURCE, 'utf8').replace('__ICON__', at(workerIcon))
   files.set('push-sw.js', { type: 'text/javascript', source: worker })
   return {
     files,

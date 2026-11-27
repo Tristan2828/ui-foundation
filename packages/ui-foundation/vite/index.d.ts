@@ -45,9 +45,32 @@ export type PwaOptions = {
   backgroundColor?: string
   /**
    * The app's own icon, a square PNG of at least 512×512 (path from the Vite
-   * root). Replaces the generated ones everywhere.
+   * root). Replaces the generated ones everywhere: the manifest's `any`
+   * entry (its `sizes` read from the PNG), the apple-touch-icon and, without
+   * a `smallIcon`, a push's icon. Alone it is the manifest's only icon;
+   * the three below add the rest.
    */
   icon?: string
+  /**
+   * A smaller copy of `icon`, a square PNG of 192×192 (path from the Vite
+   * root): a second `any` entry, for the places that would scale the large
+   * one down (Windows, the install prompt), and a push's icon. Needs `icon`.
+   */
+  smallIcon?: string
+  /**
+   * The icon to crop to the device's mask shape (Android's circle or
+   * squircle), a square PNG of at least 512×512 (path from the Vite root)
+   * with the mark inside the central 80% circle and the background to the
+   * edges: the manifest's `maskable` entry. Without one, Android draws
+   * `icon` shrunk on a plain disc. Needs `icon`.
+   */
+  maskableIcon?: string
+  /**
+   * The app's mark as an SVG (path from the Vite root): an `any` entry
+   * with `sizes: 'any'`, which Chrome and Android draw sharp at every size.
+   * Needs `icon`, since iOS's Home Screen takes a PNG only.
+   */
+  iconSvg?: string
   /**
    * Home-screen shortcuts: actions offered when the installed icon is
    * long-pressed (Android, Chrome and Edge on desktop). Left out, the manifest
