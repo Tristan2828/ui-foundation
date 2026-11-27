@@ -43,7 +43,8 @@
 // The editor (Milkdown) is loaded on first use, so a page that only reads
 // Markdown never downloads it. Until it arrives the text shows as
 // <Markdown> draws it, the field's size, so nothing moves when the editor
-// takes its place; an empty one shows skeleton lines.
+// takes its place; an empty one shows skeleton lines. An app that opens on
+// an editor loads it ahead with `preloadRichTextEditor()`.
 import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react'
 import { cn } from 'cn'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -51,8 +52,9 @@ import type { ImageUpload } from '@/lib/image-file'
 import type { CreatePage, PageLinkResolver } from '@/lib/page-link'
 import { Markdown } from './markdown'
 import type { HeadingFrom, HeadingLevel, TableLook } from './prose-look'
+import { loadRichTextEditor } from './rich-text-load'
 
-const MilkdownEditor = lazy(() => import('./milkdown-editor'))
+const MilkdownEditor = lazy(loadRichTextEditor)
 
 export type RichTextEditorProps = {
   /** The editable element's id, for a label's `htmlFor` or a test. */

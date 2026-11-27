@@ -1,0 +1,168 @@
+import { expect, test, type Locator, type Page } from '@playwright/test'
+
+// EditInPlaceScope (app/EditInPlaceScope stories), in a real browser: an
+// always-editable note on a page of the app's own, with no EntityView or
+// DataTable around it, saving the way cell pattern 18 promises. The second
+// story is two notes in one scope, one hidden, as a notes app's tabs. Axe
+// in both themes is e2e/fixtures-visual.spec.ts's COMPOSITE_STORIES.
+const story = (id: string) => `http://localhost:6180/story.html?id=app-editinplacescope--${id}`
+
+async function open(page: Page, id: string) {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto(story(id))
+  await expect(page.getByRole('link', { name: 'All Notes' })).toBeVisible()
+}
+
+async function typeAtEnd(page: Page, editor: Locator, text: string) {
+  await editor.locator('p').last().click()
+  await page.keyboard.press('ControlOrMeta+End')
+  await page.keyboard.type(text)
+}
+
+const saves = (page: Page, id: string) => page.getByTestId(`${id}-saves`)
+const saved = (page: Page, id: string) => page.getByTestId(`${id}-saved`)
+// From outside the editor without taking the caret from it: a click on
+// the button would move focus, and leaving the note saves on its own.
+const press = (page: Page, name: string) => page.getByRole('button', { name }).dispatchEvent('click')
+
+test.describe('EditInPlaceScope, one note that autosaves', () => {
+  test('typing saves with no click away, and the note stays editable while saving', async ({ page }) => {
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await expect(editor).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit Shopping' })).toHaveCount(0)
+
+    await typeAtEnd(page, editor, ' And tea.')
+    // Watched every frame: the 500ms "Saving…" is easy to step over.
+    await page.waitForFunction(() => [...document.querySelectorAll('[role=status]')].some((s) => s.textContent === 'Saving…'), undefined, {
+      polling: 'raf',
+      timeout: 5000,
+    })
+    await expect(editor).toBeFocused()
+    await expect(editor).toHaveAttribute('aria-readonly', 'false')
+    await page.keyboard.type(' And jam.')
+    await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread. And tea. And jam.', { timeout: 5000 })
+    await expect(saves(page, 'shopping')).toHaveText('2')
+    await expect(editor).toBeFocused()
+  })
+
+  test('a refusal keeps exactly what was typed, with the reason', async ({ page }) => {
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' refuse')
+    await expect(page.getByText('The server refused it, as a server would.').first()).toBeVisible({ timeout: 5000 })
+    await expect(editor).toContainText('Milk, eggs and bread. refuse')
+    await expect(editor).toHaveAttribute('aria-invalid', 'true')
+    await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread.')
+  })
+
+  test('leaving the page saves first and goes on, asking only when the save fails', async ({ page }) => {
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' refuse')
+    await page.getByRole('link', { name: 'All Notes' }).click()
+    const prompt = page.getByRole('dialog', { name: 'Discard your changes?' })
+    await expect(prompt).toBeVisible({ timeout: 5000 })
+    await prompt.getByRole('button', { name: 'Keep Editing' }).click()
+    await expect(prompt).toHaveCount(0)
+
+    await editor.locator('p').last().click()
+    await page.keyboard.press('ControlOrMeta+End')
+    for (let i = 0; i < ' refuse'.length; i++) await page.keyboard.press('Backspace')
+    await page.keyboard.type(' And tea.')
+    await page.getByRole('link', { name: 'All Notes' }).click()
+    await expect(page.getByText('All notes', { exact: true })).toBeVisible({ timeout: 5000 })
+    await expect(prompt).toHaveCount(0)
+  })
+
+  test('a value saved elsewhere under unsaved typing says so, and nothing saves over it until a pick', async ({ page }) => {
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' Mine.')
+    await press(page, 'Change Shopping Elsewhere')
+    // Said under the note, and in a toast.
+    await expect(page.getByRole('alert').filter({ hasText: /changed elsewhere/ })).toBeVisible()
+    await page.waitForTimeout(2000)
+    await expect(saves(page, 'shopping')).toHaveText('0')
+    await expect(saved(page, 'shopping')).toContainText('Added in another tab.')
+
+    await page.getByRole('button', { name: 'Show Saved' }).click()
+    await expect(editor).toContainText('Added in another tab.')
+    await expect(editor).not.toContainText('Mine.')
+    await expect(saves(page, 'shopping')).toHaveText('0')
+  })
+
+  test('"Keep Mine" keeps both: what was typed, laid onto the value saved elsewhere', async ({ page }) => {
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' Mine.')
+    await press(page, 'Change Shopping Elsewhere')
+    await page.getByRole('button', { name: 'Keep Mine' }).click()
+    await expect(editor).toContainText('Mine.')
+    await expect(editor).toContainText('Added in another tab.')
+    await expect(saves(page, 'shopping')).toHaveText('1', { timeout: 5000 })
+    await expect(saved(page, 'shopping')).toContainText('Milk, eggs and bread. Mine.')
+    await expect(saved(page, 'shopping')).toContainText('Added in another tab.')
+  })
+
+  test('a note taken off the page mid-typing still saves what was typed', async ({ page }) => {
+    await open(page, 'note')
+    const editor = page.getByRole('textbox', { name: 'Shopping' })
+    await typeAtEnd(page, editor, ' And tea.')
+    // At once, inside the pause: nothing has been sent yet.
+    await press(page, 'Close Shopping')
+    await expect(editor).toHaveCount(0)
+    await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread. And tea.', { timeout: 5000 })
+    await expect(saves(page, 'shopping')).toHaveText('1')
+  })
+})
+
+test.describe('EditInPlaceScope, two notes in one scope (tabs)', () => {
+  test('both editors stay mounted; each saves its own text, the hidden one included', async ({ page }) => {
+    await open(page, 'two-notes')
+    const shopping = page.getByTestId('shopping-pane')
+    const packing = page.getByTestId('packing-pane')
+    await expect(shopping.getByRole('textbox', { name: 'Shopping' })).toBeVisible()
+    // The tab behind is mounted, editor and all, and hidden.
+    await expect(packing.getByRole('textbox', { name: 'Packing', includeHidden: true })).toHaveCount(1)
+    await expect(packing).toBeHidden()
+
+    await typeAtEnd(page, shopping.getByRole('textbox', { name: 'Shopping' }), ' And tea.')
+    await page.getByRole('button', { name: 'Packing', exact: true }).click()
+    await expect(packing).toBeVisible()
+    await expect(shopping).toBeHidden()
+    await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread. And tea.', { timeout: 5000 })
+
+    const packingEditor = packing.getByRole('textbox', { name: 'Packing' })
+    await typeAtEnd(page, packingEditor, ' Then desks.')
+    await expect(saved(page, 'packing')).toHaveText('Pack the shared shelves first. Then desks.', { timeout: 5000 })
+    await expect(saves(page, 'packing')).toHaveText('1')
+    await expect(saves(page, 'shopping')).toHaveText('1')
+
+    // Back to the first: its text was never rebuilt from the server's.
+    await page.getByRole('button', { name: 'Shopping', exact: true }).click()
+    await expect(shopping.getByRole('textbox', { name: 'Shopping' })).toContainText('Milk, eggs and bread. And tea.')
+  })
+
+  test('one leave guard for both: a refused save in the hidden tab asks once', async ({ page }) => {
+    await open(page, 'two-notes')
+    await typeAtEnd(page, page.getByTestId('shopping-pane').getByRole('textbox', { name: 'Shopping' }), ' refuse')
+    await page.getByRole('button', { name: 'Packing', exact: true }).click()
+    await page.getByRole('link', { name: 'All Notes' }).click()
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toHaveCount(1, { timeout: 5000 })
+    await page.getByRole('button', { name: 'Keep Editing' }).click()
+    await expect(page.getByRole('dialog', { name: 'Discard your changes?' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'All Notes' })).toBeVisible()
+  })
+
+  test('closing the tab in front mid-typing saves it, and the other comes to the front', async ({ page }) => {
+    await open(page, 'two-notes')
+    await typeAtEnd(page, page.getByTestId('shopping-pane').getByRole('textbox', { name: 'Shopping' }), ' And tea.')
+    await press(page, 'Close Shopping')
+    await expect(page.getByTestId('shopping-pane')).toHaveCount(0)
+    await expect(page.getByTestId('packing-pane').getByRole('textbox', { name: 'Packing' })).toBeVisible()
+    await expect(saved(page, 'shopping')).toHaveText('Milk, eggs and bread. And tea.', { timeout: 5000 })
+    await expect(saves(page, 'shopping')).toHaveText('1')
+    await expect(saves(page, 'packing')).toHaveText('0')
+  })
+})
