@@ -16,7 +16,7 @@
   - Step 8: Add Playwright specs for all three screens · lines 255–335
   - Step 9: Register the nav entry and route names · lines 336–349
   - Step 10: `npm run verify`. · lines 350–351
-- [Step 6 in detail](#step-6-in-detail) · lines 353–935
+- [Step 6 in detail](#step-6-in-detail) · lines 353–959
   - [A `reference`](#a-reference) · lines 358–360
   - [A `single choice`](#a-single-choice) · lines 362–368
   - [A `date-time`](#a-date-time) · lines 370–373
@@ -28,29 +28,29 @@
   - [A `date`](#a-date) · lines 436–459
   - [A `month-day`](#a-month-day) · lines 461–481
   - [A `recurrence`](#a-recurrence) · lines 483–504
-  - [An image on a record](#an-image-on-a-record) · lines 506–534
-  - [A `reference` inside a sub-record item](#a-reference-inside-a-sub-record-item) · lines 536–595
-  - [A `yes/no` marked `toggle`](#a-yesno-marked-toggle) · lines 597–612
-  - [Keep column definitions stable](#keep-column-definitions-stable) · lines 614–622
-  - [The view](#the-view) · lines 624–742
-  - [The view: long text and notes](#the-view-long-text-and-notes) · lines 744–798
-  - [The view: quick actions and editing in place](#the-view-quick-actions-and-editing-in-place) · lines 800–858
-  - [The table opens the view, and the form returns to it](#the-table-opens-the-view-and-the-form-returns-to-it) · lines 860–871
-  - [`<SelectValue>` shows the value, not the label](#selectvalue-shows-the-value-not-the-label) · lines 873–919
-  - [Choosing how each column looks](#choosing-how-each-column-looks) · lines 921–935
-- [How a list opens a record](#how-a-list-opens-a-record) · lines 937–1448
-  - [The record view](#the-record-view) · lines 1080–1267
-  - [Forms](#forms) · lines 1269–1352
-  - [Dialogs](#dialogs) · lines 1354–1387
-  - [Toasts and feedback](#toasts-and-feedback) · lines 1389–1448
-- [What not to copy](#what-not-to-copy) · lines 1450–1477
-- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1479–1496
-- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1498–1558
-- [Deleting](#deleting) · lines 1560–1590
-- [Fields only a script writes](#fields-only-a-script-writes) · lines 1592–1611
-- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1613–1622
-- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1625–1667
-- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1669–1702
+  - [An image on a record](#an-image-on-a-record) · lines 506–558
+  - [A `reference` inside a sub-record item](#a-reference-inside-a-sub-record-item) · lines 560–619
+  - [A `yes/no` marked `toggle`](#a-yesno-marked-toggle) · lines 621–636
+  - [Keep column definitions stable](#keep-column-definitions-stable) · lines 638–646
+  - [The view](#the-view) · lines 648–766
+  - [The view: long text and notes](#the-view-long-text-and-notes) · lines 768–822
+  - [The view: quick actions and editing in place](#the-view-quick-actions-and-editing-in-place) · lines 824–882
+  - [The table opens the view, and the form returns to it](#the-table-opens-the-view-and-the-form-returns-to-it) · lines 884–895
+  - [`<SelectValue>` shows the value, not the label](#selectvalue-shows-the-value-not-the-label) · lines 897–943
+  - [Choosing how each column looks](#choosing-how-each-column-looks) · lines 945–959
+- [How a list opens a record](#how-a-list-opens-a-record) · lines 961–1472
+  - [The record view](#the-record-view) · lines 1104–1291
+  - [Forms](#forms) · lines 1293–1376
+  - [Dialogs](#dialogs) · lines 1378–1411
+  - [Toasts and feedback](#toasts-and-feedback) · lines 1413–1472
+- [What not to copy](#what-not-to-copy) · lines 1474–1501
+- [After a commit, in the backend](#after-a-commit-in-the-backend) · lines 1503–1520
+- [Saves that don't overwrite](#saves-that-dont-overwrite) · lines 1522–1582
+- [Deleting](#deleting) · lines 1584–1614
+- [Fields only a script writes](#fields-only-a-script-writes) · lines 1616–1635
+- [Searching one part of the app](#searching-one-part-of-the-app) · lines 1637–1646
+- [What a chat is told about an entity](#what-a-chat-is-told-about-an-entity) · lines 1649–1691
+- [Behind a sign-in proxy](#behind-a-sign-in-proxy) · lines 1693–1726
 
 <!-- /index -->
 
@@ -505,33 +505,57 @@ rule it refuses); `next_after` and `occurrences` say when it falls
 
 ### An image on a record
 
-**An image on a record** (a photo of it) is the stored file's id on the
-wire (`string`, nullable), and on the form the foundation's
-`ImageField` in a `Controller` (`z.string().nullable()`): `value` and
-`onChange` are the id, `thumbUrl` the record's saved photo,
-`onBusyChange` holds the submit while a file uploads. Its `upload` is the app's own, one function in the
-gateway that sends the file to the app's endpoint and resolves to
-`{ id, thumbUrl, url }` (the `ImageUploadResult`), rejecting with the
-`AppError`; the same function goes to a notes field's
-`RichTextEditor`, so pictures in its text use the same storage:
+**Pictures are stored once, for the whole app**, by the template's
+reference: copy it whole the first time an entity needs one.
+- *Contract:* `openapi.yaml`'s `/files` (`uploadFile`: the request body
+  is the picture itself, no multipart form; 201 a `File`, 413 over
+  10 MB, 422 on `file` for anything not a JPEG, PNG or WebP), `/files/{id}`
+  (`getFile`) and `/files/{id}/content` (`getFileContent`, the bytes, with
+  a `size` it takes and ignores). Another user's file is a 404.
+- *Gateway:* `src/api/gateway/files.ts`. `uploadImage(file)` is the
+  foundation's `ImageUpload`: it calls `shrinkImage(file)` first (redrawn
+  upright, at most 2560 px on its long edge, as WebP, with no EXIF and so
+  no location; the original file where the browser can't), sends it with
+  `uploadFile`, and resolves to `{ id, thumbUrl, url }` (the
+  `ImageUploadResult`), the 422's reason as its `message`.
+  `fileContentUrl(id)` is the address, `/api/files/{id}/content`; text
+  holds it as `![](/api/files/{id}/content)`. Its tests are
+  `tests/gateway/files.test.ts`.
+- *Mocks:* `src/mocks/files.ts`, reset by `resetMockData()`; read the type
+  from the bytes as the backend does.
+- *Backend:* `app/routers/files.py`, `StoredFile` and `StoredFileContent`
+  in `app/models.py`, migration `0018` (a `files` row, the bytes in
+  `file_contents` so reading the row never loads them). The type sniff,
+  the read with a limit and the serving headers are the backend
+  package's `foundation_backend.uploads` (`image_type`, `read_upload`,
+  `image_response`), never the app's own code: served with `nosniff`, an
+  inline `Content-Disposition` named from the id, `default-src 'none';
+  sandbox`, `same-origin` and a private, immutable cache. Nothing deletes a
+  file: a soft-deleted record can come back with its pictures.
 
-```ts
-// src/api/gateway/files.ts
-export async function uploadImage(file: File): Promise<ImageUploadResult> {
-  const body = new FormData()
-  body.append('file', file)
-  const response = await safeFetch('/files', { method: 'POST', body })
-  if (response.status !== 201) throw toAppError(response.status, response.body, response.headers)
-  const { id } = response.body as components['schemas']['File']
-  return { id, thumbUrl: `/api/files/${id}/content?size=thumb`, url: `/api/files/${id}/content` }
-}
-```
+**Pictures in long text** (a notes field): the description editor's
+`upload` is that function, through a mutation
+(`src/routes/widgets/use-upload-image.ts`, `upload={useUploadImage()}` on
+`WidgetDescriptionEditor`); a picture pasted, dropped or picked with the
+Image tool goes in as its address. `e2e/widget-description-images.spec.ts`
+is its spec.
+
+**An image on a record** (a photo of it) is its file's id on the wire
+(`photoFileId`, `integer`, nullable), and on
+the form the foundation's `ImageField` in a `Controller`
+(`z.string().nullable()`, converted with the form's other fields:
+`String(id)` in, `Number(value)` out): `value` and `onChange` are the
+id, `thumbUrl` the record's saved photo (`fileContentUrl(id, 'thumb')`),
+`onBusyChange` holds the submit while a file uploads, and `upload` the
+same `useUploadImage()`. The backend column is a foreign key to
+`files.id`, checked as the record's other references are (another
+user's file is a 422 on the field).
 
 The types it takes default to JPEG, PNG and WebP; never add SVG or
-HTML, which run script when served from the app's own domain. The
-endpoint, the storage and serving the files are the app's (the
-template has none); `<Markdown>` shows an image only from a web
-address or a path on the site, so `url` is one of those.
+HTML, which run script when served from the app's own domain. Don't set
+`maxSize` to the server's limit: the size checked is the picked file's,
+before `shrinkImage` makes it smaller. `<Markdown>` shows an image only
+from a web address or a path on the site, so `url` is one of those.
 
 ### A `reference` inside a sub-record item
 

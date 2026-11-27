@@ -343,7 +343,7 @@ export { IconField, type IconFieldOption, type IconFieldProps } from '@/componen
 export { MonthDayField, type MonthDayFieldProps } from '@/components/app/month-day-field'
 export { ImageField, type ImageFieldProps } from '@/components/app/image-field'
 export { ImageViewer, type ImageViewerImage, type ImageViewerProps } from '@/components/app/image-viewer'
-export { DEFAULT_IMAGE_TYPES, type ImageUpload, type ImageUploadResult } from '@/lib/image-file'
+export { DEFAULT_IMAGE_TYPES, shrinkImage, type ImageUpload, type ImageUploadResult, type ShrinkImageOptions } from '@/lib/image-file'
 export {
   formatPlainDate,
   parsePlainDate,

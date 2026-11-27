@@ -168,3 +168,14 @@ class WidgetUpdate(CamelModel):
         if v is None and info.field_name not in cls.NULLABLE_FIELDS:
             raise ValueError(f"{to_camel(info.field_name or '')} can't be null")
         return v
+
+
+class FileOut(CamelModel):
+    """An uploaded picture's record (openapi.yaml File). Its bytes are at
+    /files/{id}/content; the owner is never on the wire."""
+
+    id: int
+    content_type: Literal["image/jpeg", "image/png", "image/webp"]
+    byte_size: int
+    sha256: str
+    created_at: datetime

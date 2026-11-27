@@ -78,9 +78,16 @@ async function clickParagraphEnd(paragraph: Locator) {
   await paragraph.click({ position: { x: box.width - 2, y: box.height - 2 } })
 }
 
+// The line under a field saying "Saving…", then "Saved". The description's
+// editor takes uploads, so it has a status of its own too (what's
+// uploading, empty otherwise): the save line is the status with words in it.
+function saveLine(field: Locator) {
+  return field.getByRole('status').filter({ hasText: /^(?!Uploading)\S/ })
+}
+
 // Description saved what's on screen: its line says "Saved".
 async function descriptionSaved(page: Page) {
-  await expect(page.getByRole('region', { name: 'Description' }).getByRole('status')).toHaveText('Saved', { timeout: 5000 })
+  await expect(saveLine(page.getByRole('region', { name: 'Description' }))).toHaveText('Saved', { timeout: 5000 })
 }
 
 test.describe('widget view: editing in place', () => {
@@ -241,7 +248,7 @@ test.describe('widget view: editing in place', () => {
     await page.keyboard.type(' Two pages.')
 
     // Saved a pause after typing stops: no click away, the caret stays.
-    const status = description.getByRole('status')
+    const status = saveLine(description)
     await expect(status).toHaveText('Saving…')
     await expect(editor).toBeFocused()
     await expect(editor).toHaveAttribute('aria-readonly', 'false')

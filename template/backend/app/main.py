@@ -18,7 +18,7 @@ from app import mcp_entities  # noqa: F401  (registers the app's MCP entities)
 from app.config import APP_ENV, COOKIE_SECURE, DATA_LABEL, JOBS_ENABLED, MCP_ENABLED, MCP_PUBLIC_URL, PUSH_ENABLED, STATIC_DIR
 from app.db import engine
 from app.errors import register_error_handlers
-from app.routers import widget_categories, widgets
+from app.routers import files, widget_categories, widgets
 from app.spa import SPAStaticFiles
 from foundation_backend.deploy_checks import production_problems
 from foundation_backend import jobs, push, reminders
@@ -73,6 +73,7 @@ app.include_router(jobs_router.router, prefix="/api")
 app.include_router(push_router.router, prefix="/api")
 app.include_router(widget_categories.router, prefix="/api")
 app.include_router(widgets.router, prefix="/api")
+app.include_router(files.router, prefix="/api")
 # AI chats (MCP_ENABLED; 404 otherwise). At the root, not under /api: the
 # addresses are the ones the OAuth documents and chats expect.
 app.include_router(oauth.router)
