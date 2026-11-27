@@ -5,6 +5,7 @@ import type { PwaOptions } from './index'
 
 export function themeToken(css: string, name: string): string
 export function oklchToHex(value: string): string
+export function pngSize(bytes: Buffer): { width: number; height: number } | undefined
 export function solidPng(size: number, hex: string): Buffer
 export function letterSvg(name: string, background: string, foreground: string): string
 export function pwaFiles(

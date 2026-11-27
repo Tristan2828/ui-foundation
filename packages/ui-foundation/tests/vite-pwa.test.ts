@@ -7,7 +7,7 @@ import path from 'node:path'
 import zlib from 'node:zlib'
 import { afterEach, describe, expect, it } from 'vitest'
 import { pwa } from '../vite/index.js'
-import { letterSvg, oklchToHex, pwaFiles, solidPng, themeToken } from '../vite/pwa.js'
+import { letterSvg, oklchToHex, pngSize, pwaFiles, solidPng, themeToken } from '../vite/pwa.js'
 
 type Built = ReturnType<typeof pwaFiles>
 const text = (built: Built, file: string) => String(built.files.get(file)?.source)
@@ -150,6 +150,67 @@ describe('pwaFiles', () => {
     expect(manifest(built).icons).toEqual([{ src: '/icons/icon.png', sizes: '512x512', type: 'image/png', purpose: 'any' }])
     expect(text(built, 'push-sw.js')).toContain("const ICON = '/icons/icon.png'")
     expect(() => pwaFiles({ name: 'App', icon: 'missing.png' }, '/', root)).toThrow(/PNG/)
+  })
+
+  it('reads each own PNG’s size from its header', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pwa-'))
+    dirs.push(root)
+    fs.writeFileSync(path.join(root, 'big.png'), solidPng(1024, '#ff0000'))
+    fs.writeFileSync(path.join(root, 's.png'), solidPng(96, '#ff0000'))
+    expect(pngSize(solidPng(300, '#000000'))).toEqual({ width: 300, height: 300 })
+    expect(pngSize(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'))).toBeUndefined()
+    const built = pwaFiles({ name: 'App', icon: 'big.png', shortcuts: [{ name: 'Add', url: '/add', icon: 's.png' }] }, '/', root)
+    expect(manifest(built).icons).toEqual([{ src: '/icons/icon.png', sizes: '1024x1024', type: 'image/png', purpose: 'any' }])
+    expect((manifest(built).shortcuts as { icons: unknown }[])[0].icons).toEqual([{ src: '/icons/shortcut-0.png', sizes: '96x96', type: 'image/png' }])
+  })
+
+  it('adds the app’s small, maskable and SVG icons beside its own PNG', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pwa-'))
+    dirs.push(root)
+    fs.writeFileSync(path.join(root, 'icon-512.png'), solidPng(512, '#ff0000'))
+    fs.writeFileSync(path.join(root, 'icon-192.png'), solidPng(192, '#ff0000'))
+    fs.writeFileSync(path.join(root, 'maskable.png'), solidPng(512, '#00ff00'))
+    const mark = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>'
+    fs.writeFileSync(path.join(root, 'mark.svg'), mark)
+    const built = pwaFiles(
+      { name: 'App', icon: 'icon-512.png', smallIcon: 'icon-192.png', maskableIcon: 'maskable.png', iconSvg: 'mark.svg' },
+      '/app/',
+      root,
+    )
+    expect(manifest(built).icons).toEqual([
+      { src: '/app/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/app/icons/icon-small.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/app/icons/icon.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/app/icons/icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ])
+    for (const icon of manifest(built).icons as { src: string }[]) expect(built.files.has(icon.src.slice('/app/'.length))).toBe(true)
+    expect(readPng(built.files.get('icons/icon-maskable.png')!.source as Buffer).hex).toBe('#00ff00')
+    expect(built.files.get('icons/icon.svg')).toEqual({ type: 'image/svg+xml', source: mark })
+    // iOS keeps the large PNG; a push takes the small one.
+    expect(built.tags.at(-1)!.attrs).toEqual({ rel: 'apple-touch-icon', href: '/app/icons/icon.png' })
+    expect(text(built, 'push-sw.js')).toContain("const ICON = '/app/icons/icon-small.png'")
+    // Each is optional: the maskable one alone joins the large PNG.
+    expect(manifest(pwaFiles({ name: 'App', icon: 'icon-512.png', maskableIcon: 'maskable.png' }, '/', root)).icons).toEqual([
+      { src: '/icons/icon.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/icons/icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ])
+  })
+
+  it('refuses an own icon of the wrong kind, or the extras without `icon`', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pwa-'))
+    dirs.push(root)
+    fs.writeFileSync(path.join(root, 'icon.png'), solidPng(512, '#ff0000'))
+    fs.writeFileSync(path.join(root, 'mark.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>')
+    fs.writeFileSync(path.join(root, 'fake.png'), 'not a png')
+    fs.writeFileSync(path.join(root, 'fake.svg'), 'not an svg')
+    expect(() => pwaFiles({ name: 'App', icon: 'mark.svg' }, '/', root)).toThrow(/goes in `iconSvg`/)
+    expect(() => pwaFiles({ name: 'App', icon: 'fake.png' }, '/', root)).toThrow(/icon must be a PNG/)
+    expect(() => pwaFiles({ name: 'App', icon: 'icon.png', maskableIcon: 'mark.svg' }, '/', root)).toThrow(/maskableIcon must be a PNG/)
+    expect(() => pwaFiles({ name: 'App', icon: 'icon.png', smallIcon: 'missing.png' }, '/', root)).toThrow(/smallIcon must be a PNG/)
+    expect(() => pwaFiles({ name: 'App', icon: 'icon.png', iconSvg: 'icon.png' }, '/', root)).toThrow(/iconSvg must be an SVG/)
+    expect(() => pwaFiles({ name: 'App', icon: 'icon.png', iconSvg: 'fake.svg' }, '/', root)).toThrow(/iconSvg must be an SVG/)
+    expect(() => pwaFiles({ name: 'App', iconSvg: 'mark.svg' }, '/', root)).toThrow(/`iconSvg` goes with `icon`/)
+    expect(() => pwaFiles({ name: 'App', maskableIcon: 'icon.png' }, '/', root)).toThrow(/`maskableIcon` goes with `icon`/)
   })
 
   it('refuses a missing name or a colour a manifest can’t carry', () => {

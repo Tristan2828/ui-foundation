@@ -68,6 +68,43 @@ you pass the new props. A notes app whose editor is the page gives it
 `autoFocus="end"` and `tabStaysInText`, and, keeping one editor per tab,
 bumps `focusKey` as a tab comes to the front instead of focusing the
 editable element itself.
+
+## 4.151.0 — The app's own icon in every size and shape; the phone's back arrow a finger's target
+
+npm package and `ui-foundation-backend` 4.151.0 (the backend is unchanged
+apart from its version).
+
+- **`pwa()` takes the rest of an app's own icon.** Beside `icon` (the
+  app's PNG), three new optional options, each a path from the Vite root:
+  `smallIcon` (a 192×192 PNG: a second `any` entry, which Windows and
+  the install prompt use instead of scaling the large one down, and a
+  push's icon), `maskableIcon` (a PNG with the mark in the safe zone: the
+  manifest's `maskable` entry, which Android crops to its launcher's
+  shape) and `iconSvg` (an SVG: an `any` entry with `sizes: "any"`). Each
+  needs `icon`, since iOS's Home Screen takes a PNG only; `icon` alone
+  gives the manifest one entry, as before.
+- **Each PNG's `sizes` is read from its own header**, for `icon`, the new
+  ones and a shortcut's `icon`: a 1024×1024 icon was written as
+  `512x512`, a shortcut's always as `192x192`. A file named `.png` that
+  isn't one is now refused, and an SVG passed as `icon` says to pass it
+  as `iconSvg`.
+- **AppShell's back arrow on a phone** ("‹ Accounts", `data-slot="app-shell-back"`)
+  is 44px tall on a touch screen (`pointer-coarse`), up from 32px, inside
+  the same 56px bar. With a mouse it keeps the 32px button.
+- **Coverage:** `tests/vite-pwa.test.ts` covers the four entries, each
+  option alone, the sizes read from the header and every refusal;
+  `e2e/app-shell-phone-back.spec.ts` (chromium and phone) measures the
+  arrow and the bar, with axe in both themes. reminders.md has a new
+  section, "The app's own icon".
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. An app passing `icon`
+can add `smallIcon`, `maskableIcon` and `iconSvg` as it has them
+(reminders.md "The app's own icon" says how to make each). Nothing else
+changes; an app whose `icon` isn't 512×512 gets its real size in the
+manifest.
+
 ## 4.150.0 — Editing in place: tabs that are URLs, and text a closed value couldn't save
 
 npm package and `ui-foundation-backend` 4.150.0 (the backend is unchanged

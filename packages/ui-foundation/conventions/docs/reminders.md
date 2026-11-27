@@ -9,7 +9,7 @@ to the device, where the app's service worker shows it.
 
 | Part | Where | What it does |
 |---|---|---|
-| `pwa({ name })` | `vite.config.ts`, from `@tristan2828/ui-foundation/vite` | The app installable: a manifest, icons in the theme's colours, and `/push-sw.js`, the service worker that shows pushes and opens their path |
+| `pwa({ name })` | `vite.config.ts`, from `@tristan2828/ui-foundation/vite` | The app installable: a manifest, icons in the theme's colours (or the app's own), and `/push-sw.js`, the service worker that shows pushes and opens their path |
 | `usePushPermission()` | the package | Whether this device gets reminders, and `enable`/`disable` |
 | `AllowReminders` | the package | The control: says what reminders are, then asks, on a click |
 | `/push/public-key`, `/push/subscriptions` | `openapi.yaml`, the foundation's part (optional) | The VAPID key to subscribe with; this device's subscription saved or dropped |
@@ -52,6 +52,38 @@ Home Screen) and opened from there, on iOS 16.4 or later. In a Safari tab
 there is no push at all, so `usePushPermission` says `needs-install` and
 `AllowReminders` shows the steps. `pwa()`'s manifest (`display:
 standalone`) is what makes the Home Screen app an app.
+
+## The app's own icon
+
+Without one, `pwa()` draws the icons: an SVG with the name's first letter,
+and PNGs of the theme colour alone (a letter in a PNG needs a font
+rasteriser the package doesn't carry). An app with its own mark passes it,
+each a path from the Vite root:
+
+```ts
+pwa({
+  name: 'Quick Jot',
+  icon: 'icons/icon-512.png', // a square PNG, 512×512 or more
+  smallIcon: 'icons/icon-192.png', // the same at 192×192
+  maskableIcon: 'icons/icon-maskable-512.png', // the mark inside the safe zone, background to the edges
+  iconSvg: 'icons/icon.svg', // the mark as an SVG
+})
+```
+
+| Option | In the manifest | Used for |
+|---|---|---|
+| `icon` (a PNG) | an `any` entry | iOS's Home Screen (the apple-touch-icon), a push's icon without `smallIcon`, and wherever nothing better fits |
+| `smallIcon` (a PNG) | an `any` entry | Windows' Start menu and taskbar and the install prompt, which would scale the large one down; a push's icon |
+| `maskableIcon` (a PNG) | the `maskable` entry | Android's Home Screen, cropped to the launcher's circle or squircle. Keep the mark inside the central 80% circle and the background to every edge. Without one, Android draws `icon` shrunk on a plain disc |
+| `iconSvg` (an SVG) | an `any` entry with `sizes: "any"` | Chrome and Android, sharp at every size |
+
+Each PNG's `sizes` is read from its own header, so a 1024×1024 `icon` is
+named 1024x1024. The three beside `icon` need it (iOS takes a PNG only)
+and are each optional: `icon` alone gives the manifest that one entry, as
+before. `pwa()` can't resize a PNG (that needs a rasteriser, which isn't on
+the allowlist), so export the 192 and maskable copies from the same artwork
+in an image editor and commit the PNGs beside the large one. An SVG passed as `icon` is refused:
+pass it as `iconSvg` beside a PNG.
 
 ## Home-screen shortcuts
 

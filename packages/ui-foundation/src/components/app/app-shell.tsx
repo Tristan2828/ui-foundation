@@ -629,7 +629,8 @@ function CollapsibleNavGroup({ group, activeTo }: { group: NavGroup & { label: s
 
 // The phone's back arrow, below the md breakpoint only: the
 // shell's own way up from a page below a nav entry. Its label is the
-// place it goes, so it reads "Back to Accounts".
+// place it goes, so it reads "Back to Accounts". A finger's 44px tall on
+// a touch screen, inside the 56px bar; a mouse keeps the 32px button.
 function PhoneBack({ back }: { back: { label: string; to: string } }) {
   return (
     <Link
@@ -638,7 +639,7 @@ function PhoneBack({ back }: { back: { label: string; to: string } }) {
       aria-label={`Back to ${back.label}`}
       className={cn(
         buttonVariants({ variant: 'ghost', size: 'sm' }),
-        '-ml-2 max-w-[60vw] gap-0.5 px-1.5 text-link hover:text-link md:hidden',
+        '-ml-2 max-w-[60vw] gap-0.5 px-1.5 text-link hover:text-link pointer-coarse:h-11 md:hidden',
       )}
     >
       <ChevronLeftIcon aria-hidden="true" />
