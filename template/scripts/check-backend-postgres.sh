@@ -220,6 +220,21 @@ grep -q '"pairings":\[{"categoryId":3,"note":"Second"},{"categoryId":2,"note":""
 ref_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X PATCH "http://localhost:8000/api/widgets/$widget_id" -H 'Content-Type: application/json' -d '{"pairings":[{"categoryId":2,"note":""},{"categoryId":9999,"note":""}]}')
 [ "$ref_status" = "422" ] || fail "an unknown pairing category returned $ref_status, expected 422: $(cat "$WIDGET_BODY")"
 grep -q '"loc":\["body","pairings",1,"categoryId"\]' "$WIDGET_BODY" || fail "an unknown pairing category's 422 should be keyed to pairings.1.categoryId: $(cat "$WIDGET_BODY")"
+# Pictures: the bytes as bytea through asyncpg (migration 0018), read back
+# whole, with the stored type, whatever the upload's Content-Type said.
+echo "check-backend-postgres: a picture uploaded and served back byte for byte against real Postgres"
+PICTURE=$(mktemp)
+SERVED=$(mktemp)
+printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89' > "$PICTURE"
+file_status=$(curl -s -b "$COOKIE_JAR" -o "$WIDGET_BODY" -w '%{http_code}' -X POST http://localhost:8000/api/files \
+  -H 'Content-Type: image/jpeg' --data-binary "@$PICTURE")
+[ "$file_status" = "201" ] || fail "POST /api/files returned $file_status — got: $(cat "$WIDGET_BODY")"
+grep -q '"contentType":"image/png"' "$WIDGET_BODY" || fail "the upload's type should come from its bytes (image/png): $(cat "$WIDGET_BODY")"
+file_id=$(sed -n 's/.*"id":\([0-9]*\).*/\1/p' "$WIDGET_BODY")
+content_status=$(curl -s -b "$COOKIE_JAR" -o "$SERVED" -w '%{http_code}' "http://localhost:8000/api/files/$file_id/content")
+[ "$content_status" = "200" ] || fail "GET /api/files/$file_id/content returned $content_status"
+cmp -s "$PICTURE" "$SERVED" || fail "the picture served back isn't the one uploaded"
+rm -f "$PICTURE" "$SERVED"
 # Sign-in limits and TOTP: login_failures.failed_at and
 # pending_logins.expires_at are timestamp columns written through the ORM,
 # the class of bug SQLite-backed pytest can't see (Phase C).

@@ -21,6 +21,7 @@ import { Field } from '@tristan2828/ui-foundation/ui/field'
 import { Input } from '@tristan2828/ui-foundation/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tristan2828/ui-foundation/ui/select'
 import type { components } from '@/api/schema'
+import { useUploadImage } from './use-upload-image'
 import { useWidgetCategoriesByIdsQuery, useWidgetCategoriesQuery, widgetCategoryNames } from './use-widget-categories'
 import { DESCRIPTION_MAX_LENGTH, WIDGET_STATUS_LABELS, WIDGET_STATUSES } from './widget-schema'
 
@@ -100,7 +101,9 @@ export function WidgetStatusSelect({
 // RichTextEditor), saved as Markdown with untouched blocks as written.
 // Uncontrolled: it opens with `value` and reports every edit. A
 // placeholder while it's empty, and a count as it nears the schema's
-// limit (the schema still refuses a save over it).
+// limit (the schema still refuses a save over it). A picture pasted,
+// dropped or picked with the Image tool is uploaded (POST /files) and
+// written into the text as `![](/api/files/{id}/content)`.
 export function WidgetDescriptionEditor({
   value,
   onChange,
@@ -117,6 +120,7 @@ export function WidgetDescriptionEditor({
   inline?: boolean
   'aria-labelledby'?: string
 }) {
+  const upload = useUploadImage()
   return (
     <RichTextEditor
       {...props}
@@ -126,6 +130,7 @@ export function WidgetDescriptionEditor({
       readOnly={readOnly}
       autoFocus={autoFocus}
       inline={inline}
+      upload={upload}
       // The floating toolbar on the form too (the form standard: notes on a
       // form): formats over selected words, the rest in the slash menu
       // and the "Editor Tools" strip (Image there when given `upload`).

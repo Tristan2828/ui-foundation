@@ -2,7 +2,7 @@
 // shared by ImageField and the rich-text editor, and the words a refusal
 // or a failed upload shows.
 import { describe, expect, it } from 'vitest'
-import { acceptAttribute, formatBytes, imageRefusal, uploadFailure } from '../src/lib/image-file'
+import { acceptAttribute, formatBytes, imageRefusal, shrinkImage, uploadFailure } from '../src/lib/image-file'
 
 const MB = 1024 * 1024
 
@@ -78,5 +78,14 @@ describe('acceptAttribute', () => {
   it("is the file input's accept list", () => {
     expect(acceptAttribute()).toBe('image/jpeg,image/png,image/webp')
     expect(acceptAttribute(['image/*'])).toBe('image/*')
+  })
+})
+
+// The redraw itself needs a canvas, so it's tested in a browser
+// (e2e/image-shrink.spec.ts). Here: where there's none, the file is sent as it is.
+describe('shrinkImage', () => {
+  it('resolves to the original file, untouched, where the browser has no createImageBitmap', async () => {
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'photo.png', { type: 'image/png' })
+    expect(await shrinkImage(file)).toBe(file)
   })
 })

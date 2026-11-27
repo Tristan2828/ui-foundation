@@ -68,6 +68,77 @@ you pass the new props. A notes app whose editor is the page gives it
 `autoFocus="end"` and `tabStaysInText`, and, keeping one editor per tab,
 bumps `focusKey` as a tab comes to the front instead of focusing the
 editable element itself.
+## 4.149.0 — Picture uploads: the template's reference, shrinkImage and foundation_backend.uploads
+
+npm package and `ui-foundation-backend` 4.149.0. Both are additive: an
+app changes nothing until it takes the reference.
+
+- **The template stores pictures** (`/files` in `template/openapi.yaml`):
+  `POST /files` takes the picture itself as the request body (no
+  multipart form, so no parser), reads its type from its first bytes
+  (JPEG, PNG or WebP; never SVG, HTML or GIF; the name and the browser's
+  type are not trusted), refuses over 10 MB with a 413 and anything else
+  with a 422 on `file`, and answers a `File` (`id`, `contentType`,
+  `byteSize`, `sha256`, `createdAt`). `GET /files/{id}` reads the record
+  and `GET /files/{id}/content` the bytes, taking and ignoring
+  `?size=large|thumb` so the addresses match an app that keeps
+  thumbnails. Another user's file is a 404. The bytes are in Postgres
+  (`files` and `file_contents`, migration `0018`, every column
+  commented), so the database backup covers them and the deploy needs no
+  volume. Nothing deletes a file.
+  - **The gateway** (`src/api/gateway/files.ts`): `uploadFile(file)`,
+    `getFile(id)`, `fileContentUrl(id, size?)` and `uploadImage(file)`,
+    the foundation's `ImageUpload`, which shrinks first and resolves to
+    `{ id, thumbUrl, url }` with the 422's reason as its message.
+    `tests/gateway/files.test.ts` is derived from the contract.
+  - **The mocks** (`src/mocks/files.ts`) sniff the bytes as the backend
+    does and serve the same headers; `resetMockData()` clears them. The
+    conformance test checks the binary content response against the
+    types it declares (`validateBinary`), which the JSON validator can't.
+  - **A widget's description takes pictures**: `WidgetDescriptionEditor`
+    passes `upload` (`useUploadImage`, a mutation over `uploadImage`), so
+    the Image tool, a paste or a drop stores the picture and writes
+    `![](/api/files/{id}/content)`. `e2e/widget-description-images.spec.ts`
+    covers it and a refusal.
+  - **The backend's tests** (`backend/tests/test_files.py`): the type from
+    the bytes, a lying Content-Type, GIF, SVG, PDF and an empty body
+    refused, a 413 one byte over, another owner's 404, each serving
+    header, `size` ignored. `scripts/check-backend-postgres.sh` uploads a
+    picture and reads it back byte for byte from a real Postgres.
+- **`shrinkImage(file, { maxEdge?, type?, quality? })`** (npm package,
+  exported from the root with `ShrinkImageOptions`): the picture redrawn
+  on a canvas, upright from its EXIF orientation, at most 2560 px on its
+  long edge (never enlarged), as WebP at 0.85, with no EXIF and so no
+  location. A phone photo of several megabytes becomes a few hundred
+  kilobytes. It resolves to the original file, untouched, when the
+  browser can't read it as a picture or can't write the type. A
+  courtesy, not a defence: the server's checks are the same either way.
+  `e2e/image-shrink.spec.ts` covers it on the `app/ImageField` "Shrunk
+  Before Upload" story.
+- **`foundation_backend.uploads`** (backend package, standard library
+  only): `image_type(data)`, `read_upload(request, max_bytes)` (a 413
+  before reading a body declared too big, or as soon as one runs past the
+  limit) and `image_response(data, content_type, file_id)`, which serves
+  with `X-Content-Type-Options: nosniff`, `Content-Disposition: inline`
+  under `{id}.{ext}`, `Content-Security-Policy: default-src 'none';
+  sandbox`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control:
+  private, max-age=31536000, immutable`. It refuses to serve any type but
+  JPEG, PNG and WebP.
+- **Docs:** add-an-entity.md "An image on a record" is rewritten around
+  the reference (it showed a multipart upload the template didn't
+  have); the template's `docs/deploy.md` has "Pictures" (a proxy must let
+  10 MB through; nginx's default is 1 MB). `docs/DEFERRED.md` keeps
+  orphaned pictures, and server-side thumbnails, re-encoding and HEIC as
+  an optional extra of the backend package, as rows.
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. Nothing else changes.
+To store pictures, copy the reference as `docs/consuming.md` "Adding
+picture uploads to an app (4.149)" lists: the contract, gateway, mocks,
+router, models and a migration, and let a 10 MB body through the proxy.
+An app with its own file storage keeps it, and can call `shrinkImage` in
+its own upload.
 
 ## 4.148.0 — Editing in place on a page of the app's own; the editor loaded ahead
 

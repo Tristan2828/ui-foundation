@@ -2,6 +2,7 @@
 // store in ./data. This is what lets the whole UI run with no backend at all.
 import { http, HttpResponse } from "msw";
 import { authHandlers, clientErrorHandlers, environmentHandlers, pushHandlers } from "@tristan2828/ui-foundation/mocks";
+import { fileHandlers } from "./files";
 import { deletedWidgets, nextWidgetId, nextWidgetVersion, widgetCategories, widgets } from "./data";
 import type { components } from "../api/schema";
 
@@ -173,6 +174,7 @@ export const handlers = [
   ...clientErrorHandlers,
   ...environmentHandlers,
   ...pushHandlers,
+  ...fileHandlers,
 
   http.get("*/api/widget-categories", ({ request }) => {
     const url = new URL(request.url);
