@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
 import { useState, type ComponentType } from 'react'
-import { createMemoryRouter, Link, RouterProvider } from 'react-router'
-import { Button } from '@/components/ui/button'
+import { createMemoryRouter, Link, matchPath, RouterProvider, useNavigate, useParams } from 'react-router'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import type { AppError } from '@/api/contracts'
 import { editInPlace } from './edit-in-place'
-import { EditInPlaceScope } from './edit-in-place-scope'
+import { EditInPlaceScope, type LostEdit } from './edit-in-place-scope'
 import { EditableValue } from './editable-value'
 import { RichTextEditor } from './rich-text-editor'
 
@@ -15,7 +15,10 @@ import { RichTextEditor } from './rich-text-editor'
 // way a 500 is. Saves counts the requests a server would get; "Change …
 // Elsewhere" is another tab's save arriving (a refetch); "Close …" takes
 // the value off the page, mid-typing or not. "All Notes" is a route to
-// leave to: the scope's leave guard needs a data router.
+// leave to: the scope's leave guard needs a data router. "Note tabs" is
+// the two notes with the tab in front as the URL (/notes/shopping,
+// /notes/packing): `staysOnPage` says a move between them isn't leaving,
+// and `onLostEdit`'s calls are listed under the notes.
 
 type NoteSeed = { id: string; title: string; body: string }
 
@@ -184,6 +187,77 @@ function TwoNotesPage() {
   )
 }
 
+// A move between the open notes' URLs stays on the page: their panes are
+// all mounted, only the one in front shown.
+const staysOnNotes = (next: { pathname: string }) => matchPath('/notes/:id', next.pathname) !== null
+
+function NoteTabsPage() {
+  const { id: front } = useParams()
+  const navigate = useNavigate()
+  const shopping = useSavedNote(SHOPPING)
+  const packing = useSavedNote(PACKING)
+  const notes = [
+    { note: SHOPPING, state: shopping },
+    { note: PACKING, state: packing },
+  ]
+  const [open, setOpen] = useState<string[]>([SHOPPING.id, PACKING.id])
+  const [lost, setLost] = useState<LostEdit[]>([])
+  const shown = notes.filter(({ note }) => open.includes(note.id))
+  return (
+    <div className="flex max-w-3xl flex-col gap-6 p-6">
+      <nav className="flex flex-wrap items-center gap-2">
+        {shown.map(({ note }) => (
+          <Link
+            key={note.id}
+            to={`/notes/${note.id}`}
+            aria-current={front === note.id ? 'page' : undefined}
+            className={buttonVariants({ variant: front === note.id ? 'secondary' : 'ghost', size: 'sm' })}
+          >
+            {note.title}
+          </Link>
+        ))}
+        <Link to="/notes" className="ml-auto text-link underline">
+          All Notes
+        </Link>
+      </nav>
+      <EditInPlaceScope staysOnPage={staysOnNotes} onLostEdit={(edit) => setLost((all) => [...all, edit])}>
+        {shown.map(({ note, state }) => (
+          <div key={note.id} data-testid={`${note.id}-pane`} hidden={front !== note.id}>
+            <EditableValue label={note.title} edit={state.edit} />
+          </div>
+        ))}
+      </EditInPlaceScope>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {notes.map(({ note, state }) => (
+          <NoteFacts
+            key={note.id}
+            note={note}
+            saved={state.saved}
+            saves={state.saves}
+            open={open.includes(note.id)}
+            onChangeElsewhere={state.changeElsewhere}
+            onClose={() => {
+              const rest = open.filter((id) => id !== note.id)
+              setOpen(rest)
+              if (front === note.id) navigate(rest[0] ? `/notes/${rest[0]}` : '/notes')
+            }}
+          />
+        ))}
+      </div>
+      <section aria-label="Lost edits" className="type-body-sm">
+        <ul data-testid="lost-edits">
+          {lost.map((edit, index) => (
+            <li key={index}>
+              {edit.label}: {String(edit.value)} ({edit.reason})
+            </li>
+          ))}
+        </ul>
+      </section>
+      <Toaster />
+    </div>
+  )
+}
+
 function InRouter({ page }: { page: ComponentType }) {
   const [router] = useState(() =>
     createMemoryRouter([
@@ -204,3 +278,18 @@ export default meta
 export const Note: StoryObj = { render: () => <InRouter page={OneNotePage} /> }
 
 export const TwoNotes: StoryObj = { render: () => <InRouter page={TwoNotesPage} /> }
+
+function NoteTabsRouter() {
+  const [router] = useState(() =>
+    createMemoryRouter(
+      [
+        { path: '/notes/:id', Component: NoteTabsPage },
+        { path: '/notes', element: <p className="p-6">All notes</p> },
+      ],
+      { initialEntries: ['/notes/shopping'] },
+    ),
+  )
+  return <RouterProvider router={router} />
+}
+
+export const NoteTabs: StoryObj = { render: () => <NoteTabsRouter /> }
