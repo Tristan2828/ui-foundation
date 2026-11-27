@@ -7,6 +7,53 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.153.0 — Named save and upload statuses, the lost edit's own title, SQLite URLs kept
+
+npm package and `ui-foundation-backend` 4.153.0. Three rough edges the
+Quick Jot app hit; everything is additive.
+
+- **Each live region in an editing field has a name.** EditableValue's
+  save line ("Saving…", "Saved", and the "✓ Saved" beside a value at
+  rest) is `role="status"` named **"Save Status"**, and the rich-text
+  editor's upload status (with `upload`) is named **"Uploads"**. The
+  upload status is still there and empty while nothing uploads, so the
+  first upload is heard. A field whose editor takes uploads had two
+  unnamed statuses; now each is found by name:
+  `field.getByRole('status', { name: 'Save Status' })`.
+  - **For an app's tests:** an unfiltered `field.getByRole('status')` in
+    such a field still matches both, so swap a filter such as
+    `.filter({ hasText: /^(?!Uploading)\S/ })` for the name. A test that
+    matched either region by `{ name: … }` before matched nothing (they
+    had no name), so none breaks; text matching is unchanged.
+- **The lost-edit toast has its own title.** A value that left the page
+  (a closed tab, an unmounted pane) and whose last save then failed
+  toasts **"*Label* wasn't saved and is no longer on the page"**, not a
+  refusal's "Couldn't save *label*", which is still on the page to retry.
+  The description is the reason, then "Copy what you typed to keep it."
+  for text, with **Copy Text** as before. A test that found the toast by
+  "Couldn't save *label*" finds it by the new title.
+- **`foundation_backend.config.normalize_database_url` keeps a SQLite
+  URL as given.** Only a Postgres URL is rewritten (asyncpg's scheme, the
+  libpq-only params dropped); any other passes through, stripped of
+  surrounding whitespace. Rebuilding `sqlite+aiosqlite:///./app.db` from
+  its parts had dropped the empty host's `//`, leaving a URL SQLAlchemy
+  can't parse.
+- **Coverage:** `e2e/rich-text-editor.spec.ts` "image upload" (the named
+  region, empty before an upload), `e2e/rich-text-inline.spec.ts` (the
+  save line by name), `e2e/edit-in-place-scope.spec.ts` (the lost edit's
+  title, never "Couldn't save"), the template's
+  `e2e/widget-edit-in-place.spec.ts` (both regions in Description, by
+  name), and `tests/test_config.py` in the backend package (relative,
+  absolute, Windows and in-memory SQLite URLs, a Postgres URL unchanged).
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. A test that picks the
+save line out of a field with an editor that takes uploads can use
+`getByRole('status', { name: 'Save Status' })`; one that reads the lost
+edit's toast reads its new title. An app on SQLite can drop any
+workaround for `normalize_database_url`. Nothing else changes.
+
 ## 4.152.0 — The editor's behaviour: no key lost as it starts, the caret at the end, Tab that stays, Ctrl/Cmd+S
 
 npm package and `ui-foundation-backend` 4.152.0 (the backend is unchanged
