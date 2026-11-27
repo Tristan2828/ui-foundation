@@ -13,7 +13,8 @@
 //   the server agrees. Failed: it stays, with the draft and the reason.
 // - `autosave`: it saves itself a pause after typing stops and stays
 //   editable while it does ("Saving…", then "Saved" under it). Leaving,
-//   Ctrl/Cmd+Enter and Esc save what's left now and close it. On a note
+//   Ctrl/Cmd+Enter and Esc save what's left now and close it; Ctrl/Cmd+S
+//   saves now and leaves it open (never the browser's Save dialog). On a note
 //   longer than the screen the line under it is pinned to the screen's
 //   bottom edge, so a refusal or a failed save is never off screen, and
 //   the first one also toasts.
@@ -25,7 +26,7 @@
 //   unsaved, the caret keeping its block; under unsaved typing the line
 //   says so, with "Keep Mine" and "Show Saved".
 // - `alwaysEditable`: the control is shown at rest, with no pencil and no
-//   click to open, and never closes. Ctrl/Cmd+Enter and Esc save now.
+//   click to open, and never closes. Ctrl/Cmd+Enter, Ctrl/Cmd+S and Esc save now.
 // - `inline`: always editable, and the control is told to look like the
 //   value it edits (`inline` among its props).
 // - Always editable and a `choice` (`inPlace.rating`'s stars): a
@@ -69,6 +70,11 @@ const INTERACTIVE =
 // order (a picker's text box before its chips' remove buttons). A box's
 // own native input (a checkbox's, hidden and out of the tab order) isn't
 // a place to type: a list item's text box comes first.
+// Ctrl/Cmd+S, by the key's place (a layout whose S key types another letter too).
+function isSaveKey(event: KeyboardEvent): boolean {
+  return (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && (event.code === 'KeyS' || event.key.toLowerCase() === 's')
+}
+
 const FOCUS_ORDER = [
   'input:not([type="hidden"]):not([tabindex="-1"]):not([aria-hidden="true"]), textarea, [contenteditable="true"]',
   '[role="combobox"], [role="switch"], button, [tabindex]:not([tabindex="-1"])',
@@ -448,6 +454,12 @@ export function EditableField({
       event.preventDefault()
       if (always) saveNow()
       else commitFromKeyboard()
+    } else if (autosave && isSaveKey(event)) {
+      // Ctrl/Cmd+S, by habit: saves now and stays open, in place of the
+      // browser's Save Page dialog over a value that saves itself.
+      event.preventDefault()
+      window.clearTimeout(blurTimer.current)
+      void store.saveNow(key)
     } else if (event.key === 'Enter' && edit.kind === 'text' && !event.shiftKey && !event.altKey) {
       event.preventDefault()
       commitFromKeyboard()

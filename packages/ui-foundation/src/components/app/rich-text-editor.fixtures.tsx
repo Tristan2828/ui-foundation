@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@/fixtures/types'
-import { useId, useState } from 'react'
+import { Component, useId, useLayoutEffect, useState, type ReactNode } from 'react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { Toaster } from '@/components/ui/sonner'
+import { foldStore } from '@/hooks/fold-store'
 import type { ImageUpload } from '@/lib/image-file'
 import { editInPlace } from './edit-in-place'
 import { EntityView, type EntityViewSection } from './entity-view'
@@ -95,6 +96,10 @@ function Labelled({
   foldKey,
   tableLook,
   noProblem,
+  autoFocus,
+  tabStaysInText,
+  inline,
+  focusKey,
 }: {
   label: string
   markdown: string
@@ -110,9 +115,15 @@ function Labelled({
   tableLook?: RichTextEditorProps['tableLook']
   /** No `onProblem`: the editor says a refusal itself. */
   noProblem?: boolean
+  autoFocus?: RichTextEditorProps['autoFocus']
+  tabStaysInText?: boolean
+  inline?: boolean
+  focusKey?: number
 }) {
   const labelId = useId()
   const [saved, setSaved] = useState(markdown)
+  // How many times it reported a change: opening must report none.
+  const [changes, setChanges] = useState(0)
   const [problem, setProblem] = useState<string | null>(null)
   return (
     <div className="flex flex-col gap-2" data-fixture={label}>
@@ -122,7 +133,10 @@ function Labelled({
       <RichTextEditor
         aria-labelledby={labelId}
         defaultValue={markdown}
-        onChange={setSaved}
+        onChange={(next) => {
+          setSaved(next)
+          setChanges((count) => count + 1)
+        }}
         onProblem={noProblem ? undefined : setProblem}
         placeholder={placeholder}
         maxLength={maxLength}
@@ -134,11 +148,18 @@ function Labelled({
         headingFrom={headingFrom}
         foldKey={foldKey}
         tableLook={tableLook}
+        autoFocus={autoFocus}
+        tabStaysInText={tabStaysInText}
+        inline={inline}
+        focusKey={focusKey}
       />
       {/* What would be saved, for the round-trip spec. */}
       <pre data-testid={`saved-${label}`} className="sr-only">
         {saved}
       </pre>
+      <span data-testid={`changes-${label}`} className="sr-only">
+        {changes}
+      </span>
       {problem && <p className="type-caption text-destructive">{problem}</p>}
     </div>
   )
@@ -483,3 +504,169 @@ function LateValueStory() {
 }
 
 export const LateValue: StoryObj<typeof RichTextEditor> = { render: () => <LateValueStory /> }
+
+// Starting to type before the editor is up (e2e/rich-text-editor.spec.ts
+// "starting"): Write a Note mounts an empty editor with `autoFocus`, as a
+// notes app opens on a new note; Close takes it away again. A load that
+// fails shows here, with Try Again, which mounts it afresh. Below, an
+// inline note there from the start, whose height the spec watches while
+// the editor takes the place of the text.
+class LoadFailed extends Component<{ name: string; children: ReactNode }, { failed: boolean; attempt: number }> {
+  state = { failed: false, attempt: 0 }
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+  render() {
+    if (!this.state.failed) return <div key={this.state.attempt}>{this.props.children}</div>
+    return (
+      <div role="alert" data-load-failed={this.props.name} className="flex flex-col items-start gap-2 type-body text-foreground">
+        The editor couldn&apos;t load.
+        <button
+          type="button"
+          className="rounded-md border border-border px-2 py-1"
+          onClick={() => this.setState((state) => ({ failed: false, attempt: state.attempt + 1 }))}
+        >
+          Try Again
+        </button>
+      </div>
+    )
+  }
+}
+
+function StartingStory() {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="flex max-w-xl flex-col gap-6">
+      <div className="flex gap-2">
+        <button type="button" className="rounded-md border border-border px-2 py-1" onClick={() => setOpen(true)}>
+          Write a Note
+        </button>
+        <button type="button" className="rounded-md border border-border px-2 py-1" onClick={() => setOpen(false)}>
+          Close
+        </button>
+      </div>
+      {open && (
+        <LoadFailed name="jot">
+          <Labelled label="jot" markdown="" placeholder="Write something" autoFocus />
+        </LoadFailed>
+      )}
+      <LoadFailed name="inlineNote">
+        <Labelled label="inlineNote" markdown={'Pack the shared shelves first.\n\nThen the desks, then the chairs.\n'} inline toolbar="floating" />
+      </LoadFailed>
+    </div>
+  )
+}
+
+export const Starting: StoryObj<typeof RichTextEditor> = { render: () => <StartingStory /> }
+
+// `autoFocus="end"`: a long note opened with the caret after its last
+// words, in view, though a divider ends it (e2e/rich-text-editor.spec.ts
+// "caret at the end").
+const LONG_ENDING = `${Array.from({ length: 40 }, (_, index) => `Paragraph ${index + 1} of the note.`).join('\n\n')}\n\nLast words.\n\n---\n`
+
+export const AutoFocusEnd: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="max-w-xl">
+      <Labelled label="ending" markdown={LONG_ENDING} autoFocus="end" />
+    </div>
+  ),
+}
+
+// `autoFocus="end"` on a note whose last section is folded: the caret goes
+// to the end of that section's heading, and the section stays folded.
+const FOLDED_ENDING = 'Intro words.\n\n## Later {toggle="true"}\n\nFolded words.\n'
+const FOLDED_KEY = 'story:editor:folded-ending'
+
+function FoldedEndingStory() {
+  useState(() => foldStore.set(FOLDED_KEY, new Set(['2:Later'])))
+  return (
+    <div className="max-w-xl">
+      <Labelled label="foldedEnding" markdown={FOLDED_ENDING} foldKey={FOLDED_KEY} autoFocus="end" />
+    </div>
+  )
+}
+
+export const AutoFocusFoldedEnd: StoryObj<typeof RichTextEditor> = { render: () => <FoldedEndingStory /> }
+
+// `tabStaysInText`, for an editor that is the page: Tab on a plain line
+// stays in the text; Esc, then Tab, moves on (e2e/rich-text-editor.spec.ts
+// "Tab stays in the text"). Inline, with the floating toolbar, as a notes
+// app has it: its tools strip, and Full Screen, come after the text.
+export const TabStays: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-4">
+      <button type="button" className="self-start rounded-md border border-border px-2 py-1">
+        Before
+      </button>
+      <Labelled label="page" markdown={'First line.\n\n- An item\n- Another\n'} inline toolbar="floating" tabStaysInText />
+      <button type="button" className="self-start rounded-md border border-border px-2 py-1">
+        After
+      </button>
+    </div>
+  ),
+}
+
+// Spaces at a line's start (e2e/rich-text-editor.spec.ts "spaces"): a
+// paragraph and a heading to type them into, inline code that keeps its
+// own, and a note that already holds an escaped space.
+export const Spaces: StoryObj<typeof RichTextEditor> = {
+  render: () => (
+    <div className="flex max-w-xl flex-col gap-6">
+      <Labelled label="paragraph" markdown={'First words.\n'} />
+      <Labelled label="heading" markdown={'## Title\n\nUnder it.\n'} />
+      <Labelled label="code" markdown={'`  spaced` code first.\n'} />
+      <Labelled label="escaped" markdown={'&#x20; escaped start.\n\nSecond.\n'} />
+    </div>
+  ),
+}
+
+// `focusKey`: a note kept mounted behind another tab, hidden, and focused
+// again as it comes back to the front (e2e/rich-text-editor.spec.ts "focus
+// again"). Show Note bumps `focusKey`; Show Note, Page Focus focuses the
+// editable element itself, as an app without `focusKey` would.
+function FocusAgainStory() {
+  const [front, setFront] = useState<'note' | 'other'>('note')
+  const [focusKey, setFocusKey] = useState(0)
+  const [pageFocus, setPageFocus] = useState(0)
+  useLayoutEffect(() => {
+    if (pageFocus) document.querySelector<HTMLElement>('[data-fixture="tabNote"] [contenteditable]')?.focus()
+  }, [pageFocus])
+  const button = 'rounded-md border border-border px-2 py-1'
+  return (
+    <div className="flex max-w-xl flex-col gap-4">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className={button}
+          onClick={() => {
+            setFront('note')
+            setFocusKey((key) => key + 1)
+          }}
+        >
+          Show Note
+        </button>
+        <button
+          type="button"
+          className={button}
+          onClick={() => {
+            setFront('note')
+            setPageFocus((count) => count + 1)
+          }}
+        >
+          Show Note, Page Focus
+        </button>
+        <button type="button" className={button} onClick={() => setFront('other')}>
+          Show Other
+        </button>
+      </div>
+      <div hidden={front !== 'note'}>
+        <Labelled label="tabNote" markdown={'First line here.\n\nSecond line.\n'} focusKey={focusKey} />
+      </div>
+      <div hidden={front !== 'other'}>
+        <input aria-label="Other field" className="rounded-md border border-input px-2 py-1" />
+      </div>
+    </div>
+  )
+}
+
+export const FocusAgain: StoryObj<typeof RichTextEditor> = { render: () => <FocusAgainStory /> }

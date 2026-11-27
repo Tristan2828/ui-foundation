@@ -1705,6 +1705,28 @@ test.describe('a refused edit', () => {
     await expect(problem(page)).toHaveCount(0)
     await expect(box).not.toHaveAttribute('aria-invalid', 'true')
   })
+
+  test('while a refused edit stands, a later edit elsewhere waits with it; undoing it saves the later one', async ({ page }) => {
+    const box = editor(page, 'refused')
+    await box.locator('li').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' EDIT')
+    await expect(problem(page)).toBeVisible()
+    // An edit the merge could take on its own is held too: the document
+    // as a whole is what's saved.
+    await caretAtEnd(page, 'refused')
+    await page.keyboard.type(' Later')
+    await afterPause(page)
+    await expect(problem(page)).toBeVisible()
+    expect(await saved(page, 'refused').textContent()).toBe('1) a\n2) b\n10. ten\n11. eleven\n\nTail paragraph.\n')
+    await box.locator('li').first().click()
+    await page.waitForTimeout(100)
+    await page.keyboard.press('End')
+    for (let i = 0; i < ' EDIT'.length; i++) await page.keyboard.press('Backspace')
+    await expect(problem(page)).toHaveCount(0)
+    await expect.poll(() => saved(page, 'refused').textContent()).toBe('1) a\n2) b\n10. ten\n11. eleven\n\nTail paragraph. Later\n')
+  })
 })
 
 // Paste and typed addresses.
@@ -2134,5 +2156,293 @@ test.describe('typing', () => {
     await expect(editor(page, 'tasks')).toBeFocused()
     await page.keyboard.press('ControlOrMeta+z')
     await expect(saved(page, 'tasks')).toContainText('- [ ] Open item')
+  })
+})
+
+// Starting to type before the editor is up (app/RichTextEditor Starting):
+// the editor's code held back by the network, keys typed meanwhile are
+// kept and saved once it arrives; a load that failed is tried again by
+// the next editor; and the note keeps its height while the editor takes
+// the place of the text.
+const STARTING = 'http://localhost:6180/story.html?id=app-richtexteditor--starting'
+const EDITOR_CHUNK = '**/milkdown-editor-*.js'
+
+// Holds the editor's code until `release()`.
+async function holdEditor(page: Page) {
+  let release!: () => void
+  const held = new Promise<void>((resolve) => (release = resolve))
+  await page.route(EDITOR_CHUNK, async (route) => {
+    await held
+    await route.continue()
+  })
+  return release
+}
+
+test.describe('starting', () => {
+  test('keys typed while the editor loads are kept, read as typed, and saved', async ({ page }) => {
+    const release = await holdEditor(page)
+    await page.goto(STARTING)
+    await expect(page.locator('[data-fixture="inlineNote"] [data-state=loading]')).toBeVisible()
+    await page.getByRole('button', { name: 'Write a Note' }).click()
+    // Something holds the keys, named as the field is.
+    await expect(page.getByRole('textbox', { name: 'jot' })).toBeFocused()
+    await page.keyboard.type('# Plan')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('Milk and eggs')
+    release()
+    const box = editor(page, 'jot')
+    await expect(box.locator('h3')).toHaveText('Plan')
+    await expect(box).toBeFocused()
+    // Saved, not taken for the text it opened with.
+    await expect.poll(() => saved(page, 'jot').textContent()).toBe('# Plan\n\nMilk and eggs\n')
+    // Typing goes on where the replay ended.
+    await page.keyboard.type('.')
+    await expect.poll(() => saved(page, 'jot').textContent()).toBe('# Plan\n\nMilk and eggs.\n')
+  })
+
+  test('once the code is here, a new editor takes the first key', async ({ page }) => {
+    await page.goto(STARTING)
+    await expect(editor(page, 'inlineNote')).toBeVisible()
+    await page.getByRole('button', { name: 'Write a Note' }).click()
+    await page.keyboard.type('Quick words')
+    await expect.poll(() => saved(page, 'jot').textContent()).toBe('Quick words\n')
+  })
+
+  test('a load that failed is tried again by the next editor', async ({ page }) => {
+    let fail = true
+    await page.route(EDITOR_CHUNK, (route) => (fail ? route.abort() : route.continue()))
+    await page.goto(STARTING)
+    await expect(page.locator('[data-load-failed="inlineNote"]')).toBeVisible()
+    await page.getByRole('button', { name: 'Write a Note' }).click()
+    await expect(page.locator('[data-load-failed="jot"]')).toBeVisible()
+    fail = false
+    await page.locator('[data-load-failed="jot"]').getByRole('button', { name: 'Try Again' }).click()
+    // The editor itself (not the textarea that holds keys while it loads).
+    await expect(page.locator('[data-fixture="jot"] [contenteditable=true]')).toBeVisible()
+    await expect(page.locator('[data-fixture="jot"] [contenteditable=true]')).toBeFocused()
+    await expect(page.locator('[data-load-failed]')).toHaveCount(1)
+  })
+
+  test('the note keeps its height while the editor takes the place of the text', async ({ page }) => {
+    await page.addInitScript(() => {
+      const heights: number[] = []
+      ;(window as unknown as { heights: number[] }).heights = heights
+      const tick = () => {
+        const field = document.querySelector('[data-fixture="inlineNote"] [data-slot=rich-text-editor]')
+        if (field) heights.push(field.getBoundingClientRect().height)
+        requestAnimationFrame(tick)
+      }
+      requestAnimationFrame(tick)
+    })
+    const release = await holdEditor(page)
+    await page.goto(STARTING)
+    await expect(page.locator('[data-fixture="inlineNote"] [data-state=loading]')).toBeVisible()
+    release()
+    await expect(editor(page, 'inlineNote')).toBeVisible()
+    await page.waitForTimeout(300)
+    const heights = await page.evaluate(() => (window as unknown as { heights: number[] }).heights)
+    const final = heights.at(-1)!
+    expect(final).toBeGreaterThan(20)
+    // Every frame drawn: never the empty field between the two.
+    expect(Math.min(...heights)).toBeGreaterThan(final * 0.8)
+  })
+})
+
+// `autoFocus="end"` (app/RichTextEditor AutoFocusEnd, AutoFocusFoldedEnd).
+test.describe('caret at the end', () => {
+  test('the caret goes after the last words, in view, though a divider ends the note; opening saves nothing', async ({ page }) => {
+    await page.goto('http://localhost:6180/story.html?id=app-richtexteditor--auto-focus-end')
+    const box = editor(page, 'ending')
+    await expect(box).toBeFocused()
+    await expect(box.locator('p').filter({ hasText: 'Last words.' })).toBeInViewport()
+    await afterPause(page)
+    await expect(page.getByTestId('changes-ending')).toHaveText('0')
+    await page.keyboard.type(' More')
+    await expect.poll(() => saved(page, 'ending').textContent()).toMatch(/Paragraph 40 of the note\.\n\nLast words\. More\n\n---\n$/)
+  })
+
+  test('a note ending in a folded section: the caret at the end of its heading, the section left folded as it opens', async ({ page }) => {
+    await page.goto('http://localhost:6180/story.html?id=app-richtexteditor--auto-focus-folded-end')
+    const box = editor(page, 'foldedEnding')
+    await expect(box).toBeFocused()
+    await expect(box.getByText('Folded words.')).toBeHidden()
+    await afterPause(page)
+    await expect(page.getByTestId('changes-foldedEnding')).toHaveText('0')
+    await page.keyboard.type(' soon')
+    // Typed into the heading, which, renamed, is a heading not yet folded.
+    await expect.poll(() => saved(page, 'foldedEnding').textContent()).toBe('Intro words.\n\n## Later soon {toggle="true"}\n\nFolded words.\n')
+  })
+})
+
+// `tabStaysInText` (app/RichTextEditor TabStays): a laptop's keys.
+test.describe('Tab stays in the text', () => {
+  test.skip(({ isMobile }) => isMobile, "a laptop's Tab key")
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:6180/story.html?id=app-richtexteditor--tab-stays')
+    await expect(editor(page, 'page')).toBeVisible()
+  })
+  const hint = (page: Page) => page.locator('[data-fixture="page"] [data-slot=rich-text-editor-tab-hint]')
+
+  test('Tab on a plain line changes nothing and stays; the way out is told, then shown', async ({ page }) => {
+    const box = editor(page, 'page')
+    // Told before any Tab: through the field's description.
+    await expect(hint(page)).toHaveText(/Esc, then Tab/)
+    const hintId = (await hint(page).getAttribute('id'))!
+    expect((await box.getAttribute('aria-describedby'))!.split(' ')).toContain(hintId)
+    await expect(hint(page)).toHaveClass(/sr-only/)
+    await box.locator('p').first().click()
+    await page.waitForTimeout(PAST_FOCUS_MS)
+    await page.keyboard.press('End')
+    await page.keyboard.press('Tab')
+    await expect(box).toBeFocused()
+    await expect(hint(page)).not.toHaveClass(/sr-only/)
+    await expect(hint(page)).toBeVisible()
+    // The words shown pass axe (contrast included), in both themes.
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme })
+      const results = await new AxeBuilder({ page }).include('[data-fixture="page"]').setLegacyMode(true).analyze()
+      expect(results.violations).toEqual([])
+    }
+    await page.emulateMedia({ colorScheme: 'light' })
+    await page.keyboard.press('Shift+Tab')
+    await expect(box).toBeFocused()
+    await page.keyboard.type('!')
+    await expect.poll(() => saved(page, 'page').textContent()).toBe('First line.!\n\n- An item\n- Another\n')
+  })
+
+  test('in a list, Tab still indents', async ({ page }) => {
+    const box = editor(page, 'page')
+    await box.locator('li').nth(1).click()
+    await page.keyboard.press('Tab')
+    await expect(box).toBeFocused()
+    await expect.poll(() => saved(page, 'page').textContent()).toBe('First line.\n\n- An item\n  - Another\n')
+  })
+
+  test('Esc, then Tab, moves on; Esc, then Shift+Tab, back; another key between keeps Tab in the text', async ({ page }) => {
+    const box = editor(page, 'page')
+    await box.locator('p').first().click()
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('ArrowLeft')
+    await page.keyboard.press('Tab')
+    await expect(box).toBeFocused()
+
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Tab')
+    await expect(box).not.toBeFocused()
+
+    // Clicked again apart from a double-click, which would select a word.
+    await page.waitForTimeout(600)
+    await box.locator('p').first().click()
+    await page.keyboard.press('End')
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Shift+Tab')
+    await expect(page.getByRole('button', { name: 'Before' })).toBeFocused()
+  })
+
+  test('Alt+F10 still reaches the tools', async ({ page }) => {
+    const box = editor(page, 'page')
+    await box.locator('p').first().click()
+    await page.keyboard.press('Alt+F10')
+    await expect(box).not.toBeFocused()
+    await expect(page.locator('[data-fixture="page"] button:focus')).toHaveCount(1)
+  })
+})
+
+// Spaces at a line's start (app/RichTextEditor Spaces): Markdown holds no
+// indent, so they're left out of what's saved, never written as `&#x20;`.
+test.describe('spaces', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:6180/story.html?id=app-richtexteditor--spaces')
+    await expect(editor(page, 'escaped')).toBeVisible()
+  })
+
+  test("a paragraph's leading spaces are left out, and a line's after a break", async ({ page }) => {
+    await caretAtEnd(page, 'paragraph')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('  indented')
+    await expect.poll(() => saved(page, 'paragraph').textContent()).toBe('First words.\n\nindented\n')
+    await page.keyboard.press('Shift+Enter')
+    await page.keyboard.type('  after a break')
+    await expect.poll(() => saved(page, 'paragraph').textContent()).toBe('First words.\n\nindented\\\nafter a break\n')
+  })
+
+  test("a heading's spaces at either end are left out", async ({ page }) => {
+    const box = editor(page, 'heading')
+    await box.locator('h4').click()
+    await page.waitForTimeout(PAST_FOCUS_MS)
+    await page.keyboard.press('End')
+    await page.keyboard.type('s  ')
+    await page.keyboard.press('Home')
+    await page.keyboard.type('  ')
+    await expect.poll(() => saved(page, 'heading').textContent()).toBe('## Titles\n\nUnder it.\n')
+  })
+
+  test('inline code keeps its own spaces', async ({ page }) => {
+    await caretAtEnd(page, 'code')
+    await page.keyboard.type(' Edited')
+    await expect.poll(() => saved(page, 'code').textContent()).toBe('`  spaced` code first. Edited\n')
+  })
+
+  test('a note that already holds an escaped space still saves, keeping it where it is untouched', async ({ page }) => {
+    await caretAtEnd(page, 'escaped')
+    await page.keyboard.type(' Edited')
+    await expect.poll(() => saved(page, 'escaped').textContent()).toBe('&#x20; escaped start.\n\nSecond. Edited\n')
+    const box = editor(page, 'escaped')
+    await box.locator('p').first().click()
+    await page.waitForTimeout(PAST_FOCUS_MS)
+    await page.keyboard.press('End')
+    await page.keyboard.type(' Too')
+    await expect.poll(() => saved(page, 'escaped').textContent()).toBe('escaped start. Too\n\nSecond. Edited\n')
+  })
+})
+
+// `focusKey` (app/RichTextEditor FocusAgain): a note kept mounted behind
+// another tab comes back to the front and is focused again, the caret
+// where it was as focus arrives.
+test.describe('focus again', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:6180/story.html?id=app-richtexteditor--focus-again')
+    await expect(editor(page, 'tabNote')).toBeVisible()
+  })
+
+  // The caret left at the end of the first line, then the note sent behind.
+  async function leaveCaret(page: Page) {
+    const box = editor(page, 'tabNote')
+    await box.locator('p').first().click()
+    await page.waitForTimeout(PAST_FOCUS_MS)
+    await page.keyboard.press('End')
+    await page.getByRole('button', { name: 'Show Other' }).click()
+    await expect(box).toBeHidden()
+    // Typing in the other tab takes the page's selection with it.
+    await page.getByRole('textbox', { name: 'Other field' }).fill('Elsewhere')
+  }
+
+  // Where the selection is a moment after a click on `button` (well
+  // inside the 20ms ProseMirror waits before putting its own back).
+  const caretAfter = (page: Page, button: string) =>
+    page.evaluate(async (name) => {
+      const target = [...document.querySelectorAll('button')].find((one) => one.textContent === name)!
+      target.click()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      const selection = window.getSelection()!
+      return { text: selection.anchorNode?.textContent ?? '', offset: selection.anchorOffset, focused: document.activeElement?.getAttribute('contenteditable') }
+    }, button)
+
+  test('a key typed at once lands where the caret was', async ({ page }) => {
+    await leaveCaret(page)
+    await page.getByRole('button', { name: 'Show Note', exact: true }).click()
+    await page.keyboard.type(' X')
+    await expect.poll(() => saved(page, 'tabNote').textContent()).toBe('First line here. X\n\nSecond line.\n')
+  })
+
+  test('the caret is back in the same task; focusing the element itself leaves it at the start a moment', async ({ page }) => {
+    await leaveCaret(page)
+    expect(await caretAfter(page, 'Show Note')).toEqual({ text: 'First line here.', offset: 'First line here.'.length, focused: 'true' })
+    // Negative control: the page's own focus, the caret not yet put back.
+    await page.getByRole('button', { name: 'Show Other' }).click()
+    await page.getByRole('textbox', { name: 'Other field' }).click()
+    const pageFocus = await caretAfter(page, 'Show Note, Page Focus')
+    expect(pageFocus.focused).toBe('true')
+    expect(pageFocus.offset).not.toBe('First line here.'.length)
   })
 })

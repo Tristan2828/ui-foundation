@@ -20,7 +20,9 @@
 //   the text where it can't move (a first item): Tab leaving the editor
 //   from one item and not the next would be a surprise. In a code block they
 //   indent and outdent its lines by two spaces. On a plain line Tab still
-//   leaves the editor, the keyboard's way on to the rest of the page.
+//   leaves the editor, the keyboard's way on to the rest of the page,
+//   unless the editor has `tabStaysInText` (milkdown-editor.tsx: Esc, then
+//   Tab, moves on).
 // - Undo and redo (Mod+Z; Mod+Shift+Z, and Ctrl+Y off Apple) are taken
 //   here whether or not there is a step to take: ProseMirror's keymap,
 //   finding nothing to redo, would run Shift+Mod+Z's unshifted key, Mod+Z,

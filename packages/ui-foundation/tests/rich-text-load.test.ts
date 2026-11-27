@@ -4,7 +4,7 @@
 // is tests/rich-text-load-failed.test.ts (its own file: it mocks the
 // editor's module).
 import { describe, expect, it } from 'vitest'
-import { loadRichTextEditor, preloadRichTextEditor } from '../src/components/app/rich-text-load'
+import { loadedRichTextEditor, loadRichTextEditor, preloadRichTextEditor } from '../src/components/app/rich-text-load'
 
 describe('loadRichTextEditor', () => {
   it("resolves to the editor's module, its component the default export", async () => {
@@ -17,6 +17,11 @@ describe('loadRichTextEditor', () => {
   it('gives the same module on every call', async () => {
     const [first, second] = await Promise.all([loadRichTextEditor(), loadRichTextEditor()])
     expect(first.default).toBe(second.default)
+  })
+
+  it('keeps the module once loaded, for an editor to draw at once', async () => {
+    const loaded = await loadRichTextEditor()
+    expect(loadedRichTextEditor()).toBe(loaded)
   })
 })
 

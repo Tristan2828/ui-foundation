@@ -94,6 +94,24 @@ function caretToEnd(state: EditorState, index: number) {
   return state.tr.setSelection(TextSelection.create(state.doc, end)).scrollIntoView()
 }
 
+/**
+ * Where the text that shows ends: the document's end, or, when its last
+ * blocks are folded away, the end of the outermost heading folding them
+ * (a caret put past it would open the section).
+ */
+export function shownEnd(state: EditorState): number {
+  const fold = foldPluginKey.getState(state)
+  const last = state.doc.childCount - 1
+  if (!fold || !fold.plan.hidden.has(last)) return state.doc.content.size
+  const outer = fold.plan.headings.find((heading) => heading.foldable && fold.folded.has(heading.id) && heading.index < last && last < heading.end)
+  if (!outer) return state.doc.content.size
+  let end = state.doc.content.size
+  state.doc.forEach((node, offset, index) => {
+    if (index === outer.index) end = offset + node.nodeSize - 1
+  })
+  return end
+}
+
 export function foldPlugin(options: { initial: ReadonlySet<string>; onChange: (folded: ReadonlySet<string>) => void }) {
   return new Plugin<FoldState>({
     key: foldPluginKey,

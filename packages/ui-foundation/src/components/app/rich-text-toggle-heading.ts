@@ -16,6 +16,7 @@ import { textblockTypeInputRule } from '@milkdown/kit/prose/inputrules'
 import type { NodeSchema } from '@milkdown/kit/transformer'
 import { $inputRule, $remark } from '@milkdown/kit/utils'
 import { remarkToggleHeadings, TOGGLE_MARKER } from '@/lib/markdown-toggle'
+import { withoutLineSpaces } from './rich-text-empty-paragraph'
 
 export const toggleHeadingRemark = $remark('remarkToggleHeadings', () => remarkToggleHeadings)
 
@@ -41,9 +42,11 @@ export function withToggle<Ctx>(previous: (ctx: Ctx) => NodeSchema): (ctx: Ctx) 
         match: (node) => node.type.name === 'heading',
         runner: (state, node) => {
           state.openNode('heading', undefined, { depth: node.attrs.level })
-          // A hard break at the end is left out, as Milkdown's own does.
+          // A hard break at the end is left out, as Milkdown's own does,
+          // and spaces at either end (withoutLineSpaces): a heading's
+          // Markdown keeps neither, and one at the start is `&#x20;`.
           const last = node.lastChild
-          const content = last?.type.name === 'hardbreak' ? node.content.cut(0, node.content.size - last.nodeSize) : node.content
+          const content = withoutLineSpaces(last?.type.name === 'hardbreak' ? node.content.cut(0, node.content.size - last.nodeSize) : node.content)
           state.next(content)
           if (node.attrs.toggle) state.addNode('text', undefined, content.size > 0 ? ` ${TOGGLE_MARKER}` : TOGGLE_MARKER)
           state.closeNode()
