@@ -207,6 +207,7 @@ export { ListEditor } from '@/components/app/list-editor'
 export { PasswordInput } from '@/components/app/password-input'
 export { RichTextEditor, type RichTextEditorProps } from '@/components/app/rich-text-editor'
 export { preloadRichTextEditor } from '@/components/app/rich-text-load'
+export { holdKeysForNextEditor, type HoldKeysOptions } from '@/components/app/rich-text-hold-keys'
 // Typing a RichTextEditor holds back until a pause, reported now: call it
 // before reading a rich-text field's value to save it in your own form.
 export { flushPendingEdits, hasPendingEdits } from '@/lib/pending-edits'

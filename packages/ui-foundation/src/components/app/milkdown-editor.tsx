@@ -96,7 +96,7 @@ import {
   schema,
 } from '@milkdown/kit/preset/commonmark'
 import type { NodeParserSpec } from '@milkdown/kit/transformer'
-import { gfm, tableCellSchema, tableHeaderSchema, tableSchema } from '@milkdown/kit/preset/gfm'
+import { extendListItemSchemaForTask, gfm, tableCellSchema, tableHeaderSchema, tableSchema } from '@milkdown/kit/preset/gfm'
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import { NodeSelection, Plugin, Selection, TextSelection, type EditorState } from '@milkdown/kit/prose/state'
 import { isInTable, selectedRect, TableMap } from '@milkdown/kit/prose/tables'
@@ -276,6 +276,17 @@ const cellWithWidth = tableCellSchema.extendSchema((previous) => (ctx) => {
 const headerWithWidth = tableHeaderSchema.extendSchema((previous) => (ctx) => {
   const base = previous(ctx)
   return { ...base, parseMarkdown: { match: base.parseMarkdown.match, runner: readCell } }
+})
+
+// A list item is tight unless the Markdown it came from was loose: one
+// made by typing (`- `, Enter, Tab) is tight, as a list written by hand
+// is, and Enter in a loose list's item makes another loose one (a new
+// item copies the one it split from). Milkdown's default was loose, so a
+// typed item that held a nested list was written with a blank line
+// before it. GFM's task item, which this extends, keeps its tick.
+const tightListItem = extendListItemSchemaForTask.extendSchema((previous) => (ctx) => {
+  const base = previous(ctx)
+  return { ...base, attrs: { ...base.attrs, spread: { default: false, validate: 'boolean' } } }
 })
 
 // Milkdown's image node wants a string title, and remark reads an image
@@ -922,6 +933,7 @@ export default function MilkdownEditor({
       .use(edges)
       .use(COMMONMARK)
       .use(gfm)
+      .use(tightListItem)
       .use(taskInputRule)
       .use(toggleHeadingRemark)
       .use(toggleHeadingInputRule)

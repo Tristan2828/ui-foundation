@@ -70,6 +70,31 @@ test.describe('on a phone', () => {
     await expect(bar(page)).toHaveCount(0)
   })
 
+  test("the row's buttons are a finger's 44px, and the row still fits a 360px phone", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 })
+    await page.goto(FEATURES)
+    await tapText(page, 'formats')
+    await expect(bar(page)).toBeVisible()
+    const buttons = await bar(page).getByRole('button').all()
+    expect(buttons.length).toBeGreaterThan(4)
+    for (const button of buttons) {
+      const box = (await button.boundingBox())!
+      expect(box.width).toBeGreaterThanOrEqual(44)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+    }
+    const row = (await bar(page).boundingBox())!
+    expect(row.width).toBeLessThanOrEqual(360)
+    // Aa and Hide Keyboard, at the row's two ends, are whole on screen.
+    for (const name of ['All Formats', 'Hide Keyboard']) {
+      const box = (await bar(page).getByRole('button', { name }).boundingBox())!
+      expect(box.x).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width).toBeLessThanOrEqual(360)
+      expect(box.y).toBeGreaterThanOrEqual(row.y)
+      expect(box.y + box.height).toBeLessThanOrEqual(row.y + row.height)
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
+  })
+
   test('the row waits for the tap that focused the text to end, so the release lands where it was pressed', async ({ page }) => {
     await page.goto(FEATURES)
     // Whether the row could take a press at the moment the finger lifts.

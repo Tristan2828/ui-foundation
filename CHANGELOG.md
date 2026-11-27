@@ -7,6 +7,52 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.154.0 — Keys held before the editor mounts; typed callouts, tight lists, a line after an image
+
+npm package and `ui-foundation-backend` 4.154.0 (the backend is unchanged
+apart from its version). What the Quick Jot notes app found using the
+editor like Notepad on 4.153.0.
+
+- **`holdKeysForNextEditor()`** holds the keys typed before any editor is
+  on the page: call it on the press that leads to a note (New Note,
+  before its request) or as the app starts. A hidden textarea takes them,
+  an IME's composition included, so they aren't delivered to the page
+  (Enter doesn't press New Note again), and the next `autoFocus`
+  `RichTextEditor` to mount types them in, in order, once it has read
+  its text, through the same path as the keys held while its code loads.
+  It never takes focus from an input, and lets go, dropping what it held,
+  when focus moves to another control, on a click elsewhere, on Esc, or
+  after `timeout` (5 s by default); focus goes back where it was on Esc
+  and the timeout. It returns a function that lets go, and starts loading
+  the editor's code.
+- **A typed callout:** `> [!NOTE]` (or tip, important, warning, caution,
+  any case) and Enter makes the quote a callout, its marker kept as
+  typed. It used to stay a quote and save as `> \[!NOTE]`.
+- **A callout pasted as Markdown text** no longer gains a `\` hard break
+  after its marker.
+- **Typed lists stay tight:** a list item made by typing (`- `, Enter,
+  Tab, Shift+Tab) is tight unless its list was loose as written, so
+  `- a`, `- b`, a nested `- c` and `- d` save without a blank line before
+  the nested list.
+- **A line after an image:** a pasted or uploaded image that lands at the
+  end of its line, the caret after it, leaves the caret on a new line
+  under it, so what's typed next is a paragraph of its own rather than
+  words on the image's baseline.
+- **The phone's keyboard bar:** its buttons are 44px (they were 40), and
+  the row still fits a 360px phone.
+- **Docs:** cell pattern 18 describes `holdKeysForNextEditor`,
+  `NotesOutline` beside a long note (one outline, for the note in front:
+  it parses the note on every change), and that a router's `flushSync`
+  tab switch needs `RouterProvider` from `react-router/dom`.
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. An app that opens on a
+note calls `holdKeysForNextEditor()` beside `preloadRichTextEditor()` in
+`main.tsx`, and in its New Note handler before the request that makes the
+note. An app with tabs switched through `navigate(..., { flushSync: true })`
+imports `RouterProvider` from `react-router/dom`. Nothing else changes.
+
 ## 4.153.0 — Named save and upload statuses, the lost edit's own title, SQLite URLs kept
 
 npm package and `ui-foundation-backend` 4.153.0. Three rough edges the

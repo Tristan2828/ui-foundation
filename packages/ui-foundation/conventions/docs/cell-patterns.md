@@ -26,26 +26,26 @@
   - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 636–715
 - [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 717–758
 - [17. Quick action on the view](#17-quick-action-on-the-view) · lines 760–832
-- [18. Editable value](#18-editable-value) · lines 834–1667
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1237–1309
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1311–1347
-  - [A link and its label](#a-link-and-its-label) · lines 1349–1373
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1375–1508
-  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1510–1584
-  - [In a table's rows](#in-a-tables-rows) · lines 1586–1660
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1662–1667
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1669–1735
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1737–1791
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1793–1875
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1877–1902
-- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1904–1937
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1939–1990
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1992–2066
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2012–2066
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2068–2280
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2229–2280
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2282–2316
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2318–2365
+- [18. Editable value](#18-editable-value) · lines 834–1696
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1240–1312
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1314–1350
+  - [A link and its label](#a-link-and-its-label) · lines 1352–1376
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1378–1511
+  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1513–1613
+  - [In a table's rows](#in-a-tables-rows) · lines 1615–1689
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1691–1696
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1698–1764
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1766–1820
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1822–1904
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1906–1931
+- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1933–1966
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1968–2019
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 2021–2095
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 2041–2095
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2097–2309
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2258–2309
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2311–2345
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2347–2394
 
 <!-- /index -->
 
@@ -1187,7 +1187,7 @@ const price = editInPlace({
   table); typing filters ("/warn" finds a warning callout), Enter or Tab
   picks, and Esc closes the list before it gives up the edit. A callout
   is GitHub's `> [!NOTE]` (note, tip, important, warning, caution), its
-  icon a menu of kinds. In a table, Tab in the last cell adds a row,
+  icon a menu of kinds; typed, `> [!NOTE]` and Enter makes one. In a table, Tab in the last cell adds a row,
   Enter goes down a column (and out from the last row), bars under and
   beside it add a row or a column, and a grip on the hovered column and
   row opens its menu: insert, move and delete, align, sort (rewriting the
@@ -1209,8 +1209,11 @@ const price = editInPlace({
   toolbar is instead one row pinned to the top of the keyboard while the
   field has focus (Aa for every format, in the keyboard's place; the list
   buttons, Insert, Image (with `upload`) and Undo; with words selected, their formats first, and
-  no floating bar under the system's Copy bar), and the checkbox, the
-  table grips, the fold button and the callout icon take a 40px tap. A new checklist item
+  no floating bar under the system's Copy bar; its buttons a finger's
+  44px), and the checkbox, the
+  table grips, the fold button and the callout icon take a 40px tap. A
+  pasted or uploaded image that ends its line leaves the caret on a new
+  line under it. A new checklist item
   shows a "To-do" placeholder and the caret until you type. `[] ` (or
   `[x] `) at a line's start makes it a checklist item, a bulleted item
   too; Enter in one makes the next, its box unticked, and Enter in an
@@ -1546,6 +1549,21 @@ const body = editInPlace<string>({
   a key typed at once lands where it was; don't focus the editable
   element through the DOM, which leaves the caret at the text's start
   for a moment.
+- **A tab switch through the router with `flushSync`** (React Router's
+  `flushSync: true` on `navigate`, so the tab in front is drawn in the
+  same task as the key that moved it) needs `RouterProvider` imported
+  from `react-router/dom`, not `react-router`: only that one hands the
+  router's updates to `flushSync`. With the other, the hidden tab is
+  still in front for a moment, and a key typed right after the switch
+  goes into it.
+- **An outline beside a long note** is `NotesOutline`, given the note's
+  Markdown and the editor's `foldKey`: its headings as a list to jump
+  with (each opens its section and brings it into view), with Fold All
+  and Open All. Put it beside the editor (in a rail, or above the note
+  on a phone), fed the value the editor last reported. It parses the
+  whole note on every change, so a page with several mounted editors
+  (a notes app's tabs) renders one outline, for the note in front,
+  never one per pane.
 - **An editor that is the page** (a note the app opens on) takes
   `autoFocus="end"`, the caret after its last words, in view, and
   `tabStaysInText`: Tab on a plain line stays in the text (Esc, then
@@ -1578,6 +1596,17 @@ const body = editInPlace<string>({
   when one mounts, and the next editor to mount tries again. Keys typed
   into an `autoFocus` editor while its code still loads are kept, and
   typed in once it's up.
+- **Keys typed before the editor mounts:** call
+  `holdKeysForNextEditor()` on the press that leads to a note (New
+  Note, before its request) and, for a cold start, in `main.tsx` beside
+  `preloadRichTextEditor()`. Until the next `autoFocus` editor mounts,
+  what's typed is held (not delivered to the page, so Enter doesn't
+  press New Note again) and typed into it in order, an IME's composition
+  included. It never takes focus from an input, and lets go, dropping
+  what it held, when focus moves to another control, on a click
+  elsewhere, on Esc, or after `timeout` (5 s); call the function it
+  returns to let go yourself (the request failed). It also starts
+  loading the editor's code.
 
 The stories are `app/EditInPlaceScope` (one note, two in one scope, and
 the two as URL tabs with `staysOnPage`);

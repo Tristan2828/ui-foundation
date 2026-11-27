@@ -17,7 +17,9 @@
 //   the keyboard button in its place brings the keyboard back. Focus stays
 //   in the text the whole time (`inputmode="none"` hides the keyboard), so
 //   the selection and the caret are kept.
-// - Its buttons are 40px, on semantic tokens only.
+// - Its buttons are 44px, a finger's (the row is 48px tall, and the
+//   buttons between Aa and Hide keyboard scroll sideways on a narrow
+//   phone), on semantic tokens only.
 //
 // Placed inside the field's element, not in a portal, like the floating
 // toolbar (rich-text-floating-toolbar.tsx says why): `position: fixed`,
@@ -248,7 +250,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
           aria-label={panel ? 'Keyboard' : 'All Formats'}
           pressed={panel}
           disabled={readOnly}
-          className="size-10 min-w-10 font-serif text-base aria-pressed:bg-muted aria-pressed:text-foreground [&_svg]:size-5"
+          className="size-11 min-w-11 font-serif text-base aria-pressed:bg-muted aria-pressed:text-foreground [&_svg]:size-5"
           onMouseDown={keep}
           onPressedChange={(open) => {
             setPanel(open)
@@ -268,7 +270,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
                 size="icon-lg"
                 aria-label="Insert Block"
                 disabled={readOnly || inCode}
-                className="[&_svg]:size-5"
+                className="size-11 [&_svg]:size-5"
                 onMouseDown={keep}
                 onClick={() => insertBlock(view)}
               >
@@ -280,7 +282,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
                   size="icon-lg"
                   aria-label="Image"
                   disabled={readOnly}
-                  className="[&_svg]:size-5"
+                  className="size-11 [&_svg]:size-5"
                   onMouseDown={keep}
                   onClick={onImage}
                 >
@@ -294,7 +296,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
                 // Always on: `state` doesn't follow typing, and with nothing
                 // to undo it does nothing.
                 disabled={readOnly}
-                className="[&_svg]:size-5"
+                className="size-11 [&_svg]:size-5"
                 onMouseDown={keep}
                 onClick={press(() => undo(view.state, view.dispatch))}
               >
@@ -307,7 +309,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
           variant="ghost"
           size="icon-lg"
           aria-label="Hide Keyboard"
-          className="[&_svg]:size-5"
+          className="size-11 [&_svg]:size-5"
           onMouseDown={keep}
           onClick={() => {
             setPanel(false)

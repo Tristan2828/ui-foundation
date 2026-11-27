@@ -9,7 +9,9 @@
 // it is. It moves with the text around it, and what's typed at the caret
 // meanwhile goes after it, as if the image were already there; when the
 // upload resolves, the image goes in where it is now and the placeholder
-// goes. If the upload fails, the placeholder goes and `onError` gets the
+// goes. An image that lands at the end of its line, the caret just after
+// it, leaves the caret on a new line under it, so the words typed next
+// are a paragraph of their own. If the upload fails, the placeholder goes and `onError` gets the
 // reason; if the text around it was deleted meanwhile, the image is
 // dropped.
 //
@@ -20,8 +22,8 @@
 // the view draws it), so its rules are unit tested in node
 // (tests/rich-text-image-upload.test.ts).
 import { Fragment, Slice, type Node as ProseNode } from '@milkdown/kit/prose/model'
-import { Plugin, PluginKey, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
-import { dropPoint } from '@milkdown/kit/prose/transform'
+import { Plugin, PluginKey, TextSelection, type EditorState, type Transaction } from '@milkdown/kit/prose/state'
+import { canSplit, dropPoint } from '@milkdown/kit/prose/transform'
 import { Decoration, DecorationSet } from '@milkdown/kit/prose/view'
 import { imageRefusal, uploadFailure, type ImageFileRules, type ImageUpload } from '@/lib/image-file'
 
@@ -108,6 +110,23 @@ function insertPoint(doc: ProseNode, pos: number, image: ProseNode): number {
   return dropPoint(doc, pos, new Slice(Fragment.from(image), 0, 0)) ?? pos
 }
 
+// The caret right after an image that just went in at the end of its line
+// (nothing typed after it meanwhile) goes on to a new line under it, so
+// what's typed next is a paragraph of its own, not words on the image's
+// line. Only where a line may be split into two blocks of their own (the
+// text's top level, a quote, a callout): in a list item a second
+// paragraph would change the list, and a table cell holds one line.
+function lineAfterImage(tr: Transaction, after: number) {
+  const { selection } = tr
+  if (!selection.empty || selection.from !== after) return
+  const $after = tr.doc.resolve(after)
+  if ($after.parent.type.name !== 'paragraph' || $after.parentOffset !== $after.parent.content.size) return
+  if ($after.depth > 1 && !['blockquote', 'callout'].includes($after.node(-1).type.name)) return
+  if (!canSplit(tr.doc, after)) return
+  tr.split(after)
+  tr.setSelection(TextSelection.create(tr.doc, after + 2))
+}
+
 // What the files are uploaded into: the editor's view, or a stand-in in
 // a test.
 export type UploadTarget = {
@@ -155,7 +174,9 @@ export function uploadImages(target: UploadTarget, files: readonly File[], at: n
       const image = imageNode(target.state, outcome.src)
       const where = insertPoint(next.doc, placeholder, image)
       next.replaceWith(where, where, image)
-      next.setMeta(uploadKey, { land: id, at: placeholder, after: next.mapping.map(where, -1) + image.nodeSize } satisfies UploadAction)
+      const after = next.mapping.map(where, -1) + image.nodeSize
+      next.setMeta(uploadKey, { land: id, at: placeholder, after } satisfies UploadAction)
+      lineAfterImage(next, after)
     } else {
       next.setMeta(uploadKey, { remove: id } satisfies UploadAction)
       options.onError(uploadFailure(outcome.error))

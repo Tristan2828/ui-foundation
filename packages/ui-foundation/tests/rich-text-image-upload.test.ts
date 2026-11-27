@@ -84,6 +84,23 @@ describe('uploadImages', () => {
     expect(target.state.doc.firstChild!.child(1).type.name).toBe('image')
   })
 
+  it('an image that lands at the end of its line, the caret after it, leaves the caret on a new line under it', async () => {
+    const target = view('Intro', '')
+    caret(target, 8) // the empty line
+    uploadImages(target, [file('a.png')], null, { upload: async () => ({ id: 'f', thumbUrl: '/t' }), onError: () => {} })
+    await settled()
+    expect(target.state.doc.childCount).toBe(3)
+    expect(target.state.doc.child(1).child(0).type.name).toBe('image')
+    expect(target.state.doc.child(2).content.size).toBe(0)
+    expect(target.state.selection.$from.parent).toBe(target.state.doc.child(2))
+    // Negative control: in the middle of a line it stays in the line.
+    const middle = view('Before after')
+    caret(middle, 7)
+    uploadImages(middle, [file('a.png')], null, { upload: async () => ({ id: 'g', thumbUrl: '/u' }), onError: () => {} })
+    await settled()
+    expect(middle.state.doc.childCount).toBe(1)
+  })
+
   it('inserts the thumbnail when the result has no full-size url', async () => {
     const target = view('Text')
     caret(target, 5)
