@@ -34,6 +34,8 @@
 //   line under it, and "Saved" goes after two seconds, as at rest.
 // - Saved: once a save lands, "✓ Saved" shows beside the value
 //   for two seconds (`role="status"`).
+// - Each of its live regions ("Saving…", "Saved") is named "Save Status",
+//   so a test finds it by name beside the editor's own ("Uploads").
 // - `layout="inline"`: the pencil takes no room until hover or
 //   focus, so nothing gaps before what follows the value on its line.
 //   `keepPencilRoom` (and every value inside a KeyStats) keeps it
@@ -60,6 +62,9 @@ import type { EditInPlaceStore } from './edit-in-place-store'
 import { SAVED_FOR_MS } from './edit-row'
 import { escapePassedThrough } from './escape-passthrough'
 import { KeepPencilRoomContext } from './keep-pencil-room'
+
+// The save line's accessible name, on every live region it uses.
+const SAVE_STATUS = 'Save Status'
 
 // What a click on the shown value must leave alone: links navigate,
 // buttons and boxes do their own thing (a list item's done box ticks it).
@@ -527,6 +532,7 @@ export function EditableField({
           {/* Always there, so a screen reader hears "Saved" arrive. */}
           <span
             role="status"
+            aria-label={SAVE_STATUS}
             data-slot="editable-value-saved"
             className="ml-2 inline-flex items-center gap-1 align-baseline type-caption text-success-text empty:hidden"
           >
@@ -652,7 +658,7 @@ export function EditableField({
             <>
               {lineError && <FieldError className="type-caption">{lineError}</FieldError>}
               {conflictActions}
-              <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
+              <span role="status" aria-label={SAVE_STATUS} className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
                 {/* Beside a value on one line, the icon alone shows (the
                     words are a screen reader's), so it fits a rail's row. */}
                 {autosaving ? (
@@ -673,7 +679,7 @@ export function EditableField({
               </span>
             </>
           ) : saving ? (
-            <span role="status" className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
+            <span role="status" aria-label={SAVE_STATUS} className="inline-flex items-center gap-1.5 type-caption text-muted-foreground">
               <Spinner aria-hidden="true" className="size-3.5" />
               Saving…
             </span>

@@ -1221,11 +1221,14 @@ test.describe('image upload', () => {
   })
 
   test('a pasted image shows a placeholder, nothing saved for it, then goes in as ![](url)', async ({ page }) => {
+    // The live region is there, named and empty, before anything uploads,
+    // so the first upload is heard.
+    await expect(page.locator('[data-fixture="uploads"]').getByRole('status', { name: 'Uploads' })).toBeEmpty()
     await caretAtEnd(page, 'uploads')
     await pasteFiles(page, 'uploads', [photo('screenshot.png')])
     const placeholder = editor(page, 'uploads').locator('[data-slot=rich-text-image-upload]')
     await expect(placeholder).toHaveText('Uploading screenshot.png…')
-    await expect(page.locator('[data-fixture="uploads"]').getByRole('status')).toHaveText('Uploading an image…')
+    await expect(page.locator('[data-fixture="uploads"]').getByRole('status', { name: 'Uploads' })).toHaveText('Uploading an image…')
     // The placeholder isn't in the document: the Markdown is as it was.
     await afterPause(page)
     expect(await saved(page, 'uploads').textContent()).toBe('Paste or drop a photo here.\n')
@@ -1254,7 +1257,7 @@ test.describe('image upload', () => {
       { name: 'two.png', mimeType: 'image/png', buffer: Buffer.from(pngBytes()) },
     ])
     await expect(editor(page, 'uploads').locator('[data-slot=rich-text-image-upload]')).toHaveText(['Uploading one.png…', 'Uploading two.png…'])
-    await expect(page.locator('[data-fixture="uploads"]').getByRole('status')).toHaveText('Uploading 2 images…')
+    await expect(page.locator('[data-fixture="uploads"]').getByRole('status', { name: 'Uploads' })).toHaveText('Uploading 2 images…')
     await expect(editor(page, 'uploads')).toBeFocused()
     await expect(editor(page, 'uploads').locator('img[src^="blob:"]')).toHaveCount(2)
     await afterPause(page)

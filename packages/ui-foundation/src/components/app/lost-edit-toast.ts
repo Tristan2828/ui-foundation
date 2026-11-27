@@ -11,8 +11,10 @@ import type { LostEdit } from './edit-in-place-store'
  */
 export function toastLostEdit({ label, value, reason }: LostEdit) {
   const text = typeof value === 'string' && value.trim() !== '' ? value : null
-  const id = toast.error(`Couldn't save ${label}`, {
-    description: text ? `${reason} It's no longer on the page: copy what you typed to keep it.` : reason,
+  // Its own title, not a refusal's "Couldn't save <label>": that one is
+  // still on the page to retry, this one only Copy Text can get back.
+  const id = toast.error(`${label} wasn't saved and is no longer on the page`, {
+    description: text ? `${reason} Copy what you typed to keep it.` : reason,
     duration: Infinity,
     action: text
       ? {

@@ -10,7 +10,7 @@ under the same version number, from the same commit.
 
 | Module | What it is |
 |---|---|
-| `config` | The settings it reads from the environment (database, cookies and sessions, sign-in limits, TOTP, error reporting, AI chats' OAuth, scheduled jobs, Web Push, the seeded account), `database_connect_args()` and `normalize_database_url()` |
+| `config` | The settings it reads from the environment (database, cookies and sessions, sign-in limits, TOTP, error reporting, AI chats' OAuth, scheduled jobs, Web Push, the seeded account), `database_connect_args()` and `normalize_database_url()` (a Postgres URL made asyncpg's; any other, such as SQLite's, as given) |
 | `db` | The async engine and the `get_session` dependency |
 | `models` | `User`, `Session`, `LoginFailure`, `RecoveryCode`, `PendingLogin`, `OAuthClient`, `OAuthCode`, `OAuthGrant`, `McpAuditEntry`, `JobRunRecord` (table names `users`, `sessions`, …). `PushSubscription` and `Reminder` import from here too, but live in `push_models` and `reminders_models`, on `SQLModel.metadata` only once used |
 | `schemas` | `CamelModel`, `Page`, the sign-in and error-envelope schemas, `JobOut`/`JobRunOut` and the push schemas |
@@ -43,7 +43,7 @@ version as its `@tristan2828/ui-foundation`:
 
 ```toml
 dependencies = [
-  "ui-foundation-backend==4.152.0",
+  "ui-foundation-backend==4.153.0",
   ...
 ]
 ```

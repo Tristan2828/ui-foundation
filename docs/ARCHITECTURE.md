@@ -454,7 +454,9 @@ endpoint), an image pasted, dropped or picked with the toolbar's Image
 button is uploaded and inserted as `![](url)`
 (`rich-text-image-upload.ts`). While it uploads, a placeholder is a
 decoration, never part of the document, so no save (an autosave
-included) ever holds one. Milkdown's own
+included) ever holds one; what's uploading is read from a live region
+named "Uploads", there and empty from the start, so it is never taken for
+EditableValue's save line ("Save Status") beside it. Milkdown's own
 `plugin/upload` was the obvious choice and wasn't used: it keeps the
 placeholder forever when an upload fails, and takes no part in our
 paste handling. `ImageField` (a photo on a record) is the form's side of
