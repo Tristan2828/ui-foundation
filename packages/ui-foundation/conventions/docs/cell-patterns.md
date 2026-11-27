@@ -3,48 +3,49 @@
 <!-- index: written by `npm run docs:index` in the package from the headings below; never edit it by hand -->
 ## Index
 
-- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 63–86
-- [1. Plain text](#1-plain-text) · lines 88–137
-- [2. Icon + label](#2-icon--label) · lines 139–162
-- [3. Icon in a badge](#3-icon-in-a-badge) · lines 164–177
-- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 179–255
-  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 204–255
-- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 257–277
-- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 279–291
-- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 293–314
-- [8. Date, relative](#8-date-relative) · lines 316–353
-- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 355–431
-  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 373–431
-- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 433–482
-  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 451–482
-- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 484–524
-- [12. Boolean](#12-boolean) · lines 526–554
-- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 556–590
-  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 575–590
-- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 592–610
-- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 612–714
-  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 635–714
-- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 716–757
-- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 759–831
-- [18. Editable value](#18-editable-value) · lines 833–1571
-  - [Presets: one line per field](#presets-one-line-per-field) · lines 1217–1289
-  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1291–1327
-  - [A link and its label](#a-link-and-its-label) · lines 1329–1353
-  - [A list of sub-items](#a-list-of-sub-items) · lines 1355–1488
-  - [In a table's rows](#in-a-tables-rows) · lines 1490–1564
-  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1566–1571
-- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1573–1639
-- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1641–1695
-- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1697–1779
-- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1781–1806
-- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1808–1841
-- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1843–1894
-- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1896–1970
-  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1916–1970
-- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 1972–2184
-  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2133–2184
-- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2186–2220
-- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2222–2269
+- [The rules that apply to every cell](#the-rules-that-apply-to-every-cell) · lines 64–87
+- [1. Plain text](#1-plain-text) · lines 89–138
+- [2. Icon + label](#2-icon--label) · lines 140–163
+- [3. Icon in a badge](#3-icon-in-a-badge) · lines 165–178
+- [4. Icon only, label in a tooltip](#4-icon-only-label-in-a-tooltip) · lines 180–256
+  - [Several values: the icons side by side, every name in one tooltip](#several-values-the-icons-side-by-side-every-name-in-one-tooltip) · lines 205–256
+- [5. Enum → tone-mapped badge](#5-enum--tone-mapped-badge) · lines 258–278
+- [6. Multi-value enum, clustered](#6-multi-value-enum-clustered) · lines 280–292
+- [7. Link as an outline button](#7-link-as-an-outline-button) · lines 294–315
+- [8. Date, relative](#8-date-relative) · lines 317–354
+- [9. Ordinal scale (bounded integer)](#9-ordinal-scale-bounded-integer) · lines 356–432
+  - [Three variants the package draws: a step bar, a star and a score](#three-variants-the-package-draws-a-step-bar-a-star-and-a-score) · lines 374–432
+- [10. Summary in the cell, detail in a popover](#10-summary-in-the-cell-detail-in-a-popover) · lines 434–483
+  - [A second example: what a row depends on](#a-second-example-what-a-row-depends-on) · lines 452–483
+- [11. Number or currency — Unproven](#11-number-or-currency--unproven) · lines 485–525
+- [12. Boolean](#12-boolean) · lines 527–555
+- [13. Progress bar — Unproven](#13-progress-bar--unproven) · lines 557–591
+  - [The compact form: `ProgressRing`](#the-compact-form-progressring) · lines 576–591
+- [14. Avatar and name — Unproven](#14-avatar-and-name--unproven) · lines 593–611
+- [15. Yes/no you flip in the row](#15-yesno-you-flip-in-the-row) · lines 613–715
+  - [A variant: a pressed icon inside another value's cell](#a-variant-a-pressed-icon-inside-another-values-cell) · lines 636–715
+- [16. Title linking to the record's view](#16-title-linking-to-the-records-view) · lines 717–758
+- [17. Quick action on the view](#17-quick-action-on-the-view) · lines 760–832
+- [18. Editable value](#18-editable-value) · lines 834–1627
+  - [Presets: one line per field](#presets-one-line-per-field) · lines 1227–1299
+  - [Several fields edited as one](#several-fields-edited-as-one) · lines 1301–1337
+  - [A link and its label](#a-link-and-its-label) · lines 1339–1363
+  - [A list of sub-items](#a-list-of-sub-items) · lines 1365–1498
+  - [On a page of the app's own: `EditInPlaceScope`](#on-a-page-of-the-apps-own-editinplacescope) · lines 1500–1544
+  - [In a table's rows](#in-a-tables-rows) · lines 1546–1620
+  - [A table of a few short columns: `width="content"`](#a-table-of-a-few-short-columns-widthcontent) · lines 1622–1627
+- [19. Stage circle for an ordered status](#19-stage-circle-for-an-ordered-status) · lines 1629–1695
+- [20. Count linking to the related records](#20-count-linking-to-the-related-records) · lines 1697–1751
+- [21. Rows grouped under headings, and a pill filter](#21-rows-grouped-under-headings-and-a-pill-filter) · lines 1753–1835
+- [22. A highlighted row, and rows that are done](#22-a-highlighted-row-and-rows-that-are-done) · lines 1837–1862
+- [28. A list's rows: hover, lines, rows per page](#28-a-lists-rows-hover-lines-rows-per-page) · lines 1864–1897
+- [23. A Group menu, and a record read beside the list](#23-a-group-menu-and-a-record-read-beside-the-list) · lines 1899–1950
+- [24. A stored colour beside its name](#24-a-stored-colour-beside-its-name) · lines 1952–2026
+  - [Picking one on a form: `ColorField`](#picking-one-on-a-form-colorfield) · lines 1972–2026
+- [25. A list's tools: views, filters, columns, row actions, a phone's rows](#25-a-lists-tools-views-filters-columns-row-actions-a-phones-rows) · lines 2028–2240
+  - [The framed look, and sibling lists beside the title](#the-framed-look-and-sibling-lists-beside-the-title) · lines 2189–2240
+- [26. A record's related list, capped](#26-a-records-related-list-capped) · lines 2242–2276
+- [27. A repeat and its next time](#27-a-repeat-and-its-next-time) · lines 2278–2325
 
 <!-- /index -->
 
@@ -840,6 +841,13 @@ header `StatusMark`), Price, Description (rich text edited where it's read,
 `inline`) and Extra Categories, with the controls in `widget-fields.tsx`,
 the same ones the form uses.
 
+Something has to run the editing: one value open at a time, autosave,
+the leave-page prompt. A record's view (`EntityView`) runs it for what's
+on it, a table (`DataTable`) for its rows, and a page of the app's own
+that is neither (a notes screen that is nothing but its text) wraps what
+it edits in `EditInPlaceScope` ("On a page of the app's own" below).
+`<EditableValue>` outside all three throws, naming them.
+
 The rule behind every part of it: **nothing typed is ever lost.**
 
 **No toast, but one.** An edit in place says what happened where it
@@ -1069,7 +1077,9 @@ to open, and it never closes. Ctrl/Cmd+Enter or Esc saves now and leaves
 the caret where it is. It sits beside the one open value rather than
 being it: opening another value leaves it alone. Don't give its control
 `autoFocus`. The cost: at rest the page shows the editor, not the read
-view, and the editor loads on every visit. A click on a link in the
+view, and the editor loads on every visit (an app whose first screen is
+an editor starts that load as it starts: `preloadRichTextEditor()`, "On a
+page of the app's own" below). A click on a link in the
 notes still opens it in a new tab; its words are edited from the
 keyboard or by dragging over them, and Ctrl/Cmd+K edits its address. Use it where the notes are what the page is
 for; elsewhere `autosave` alone keeps the read view at rest.
@@ -1486,6 +1496,52 @@ const files = editInPlace<Attachment>({
   renderItem: (props) => <CaptionInput {...props} />,       // what edits on a click: the caption
 })
 ```
+
+### On a page of the app's own: `EditInPlaceScope`
+
+A page that is neither a record's view nor a table, such as a notes app
+whose screen is nothing but the note, wraps what it edits in
+`<EditInPlaceScope>` and puts `<EditableValue>`s inside: the same rules
+as a view, the same "Saving…" and "Saved", refusals, Keep Mine or Show
+Saved, and leaving the page saves first. The page needs a data router
+(`createBrowserRouter`), as a view does: the leave-page prompt uses its
+blocker.
+
+```tsx
+const body = editInPlace<string>({
+  kind: 'long-text',
+  inline: true,
+  value: note.body,
+  save: (body) => editField.mutateAsync({ body }),
+  // The form's own control, spreading what it gets onto RichTextEditor
+  // with inline={props.inline} toolbar="floating"
+  control: (props) => <NoteBodyEditor … />,
+})
+
+<EditInPlaceScope>
+  <EditableValue label="Note" edit={body} />
+</EditInPlaceScope>
+```
+
+- **One scope per page, around everything it edits**, not one per
+  value. Each scope renders a leave guard, which takes the router's
+  blocker, and a router holds one at a time. A page with an `EntityView`
+  or a `DataTable` doesn't need one: they run their own.
+- **Several always-editable values in one scope** is what a notes app's
+  tabs are: one pane per open note, all mounted, only the one in front
+  shown (the others `hidden`), so each keeps its caret and undo. A
+  hidden value still saves, and the one leave guard covers them all.
+- **A value that leaves the page mid-typing is still saved** (a tab
+  closed, a pane unmounted): what was typed goes at once rather than
+  after the pause.
+- **An app that opens on an editor** calls `preloadRichTextEditor()`
+  as it starts (in `main.tsx`), so the editor's code is loading while
+  the note is fetched, not after. It returns nothing, never throws, and
+  is safe to call more than once; a failed load is the editor's to meet
+  when one mounts.
+
+The stories are `app/EditInPlaceScope` (one note, and two in one scope);
+`e2e/edit-in-place-scope.spec.ts` is the browser behaviour.
 
 ### In a table's rows
 
