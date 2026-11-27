@@ -185,6 +185,30 @@ Access does for requests carrying `X-Requested-With`, which the app
 sends), either is fine. AI chats need some paths let through: see "AI
 chats" below.
 
+## Pictures
+
+Uploaded pictures (`POST /api/files`, a widget description's Image tool)
+are kept in Postgres: a `files` row each and its bytes in
+`file_contents` (migration `0018`). So there is no volume or bucket to
+set up, and the database's own backup covers them; a restore brings the
+pictures back with the rows that point at them. Size the database for
+them: a picture the browser shrank is a few hundred kilobytes, one sent
+whole up to 10 MB.
+
+- **A proxy in front of the app must let a 10 MB body through.** The
+  backend refuses one over 10 MB itself (a 413 the app shows); a proxy
+  with a smaller limit refuses first with its own page, which the app
+  can only call a failed upload. nginx's `client_max_body_size` defaults
+  to 1 MB: set `client_max_body_size 11m;`. Caddy, Cloudflare's free plan
+  (100 MB) and most platforms' defaults are already larger.
+- **Nothing is deleted.** A picture removed from a text, or whose record
+  was deleted, stays (a deleted record can be restored with its
+  pictures). Clearing out pictures nothing points at is not built yet.
+- **Served behind the session**, only to the account that uploaded it,
+  with headers that stop the browser running anything in it
+  (`foundation_backend.uploads`). Don't put the `/api/files/` paths
+  behind a CDN cache: the responses are `Cache-Control: private`.
+
 ## Two-step sign-in (TOTP)
 
 An account can require a code from an authenticator app after its password

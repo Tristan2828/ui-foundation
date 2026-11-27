@@ -23,6 +23,7 @@ under the same version number, from the same commit.
 | `jobs`, `routers.jobs` | Scheduled jobs: `register_job`, `start_jobs`/`stop_jobs` for the app's lifespan, one run at a time across processes, `GET /jobs` and `POST /jobs/{name}/run` |
 | `push`, `reminders`, `routers.push` | Web Push and reminders: `send_push`, `config_problem()`, the `send-reminders` job (`reminders.register()`, or `register(model=...)` on the app's own table), `/push/*`. Needs the `push` extra (`cryptography`) |
 | `recurrence`, `recurrence_models` | Repeating schedules: `Recurrence` (the contract's schema), `next_after`, `occurrences`, `next_after_completion`, `from_weekdays`/`as_weekdays`, a reminder's `step` and `done`; WKST, the day weeks start on, and `week_start_matters`; `RecurringReminderFields`, the columns a repeating reminder adds to the app's table. On python-dateutil's rrule |
+| `uploads` | Uploaded pictures, standard library only: `image_type(data)` (JPEG, PNG or WebP from the first bytes, else None), `read_upload(request, max_bytes)` (the raw body, a 413 `UploadTooLarge` past the limit), `image_response(data, content_type, file_id)` (served with `nosniff`, an inline `Content-Disposition` named from the id, `default-src 'none'; sandbox`, `same-origin`, a private immutable cache); `IMAGE_MAX_BYTES` is 10 MB. The template's `routers/files.py` uses them |
 | `versions` | Saves that don't overwrite: a record's `updated_at` as its version. `check_version` refuses an update built on an older one with a 409 (`VersionConflict`), `touch()` gives a write its new version, `pop_base_version` takes the sent one out of an update |
 | `scripts.set_password`, `scripts.enable_totp`, `scripts.disable_totp` | Run as `python -m foundation_backend.scripts.<name> <email>` from the app's `backend/` |
 | `scripts.generate_vapid_keys`, `scripts.send_test_push`, `scripts.check_jobs_live` | A VAPID key pair; one test notification to a user's devices; the jobs runner against a live Postgres (`check-backend-postgres.sh` runs it) |
@@ -42,7 +43,7 @@ version as its `@tristan2828/ui-foundation`:
 
 ```toml
 dependencies = [
-  "ui-foundation-backend==4.151.0",
+  "ui-foundation-backend==4.150.0",
   ...
 ]
 ```

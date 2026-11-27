@@ -51,6 +51,25 @@ async function validate(pathKey: string, method: string, res: Response) {
   expect(result, JSON.stringify(result)).toBeUndefined();
 }
 
+// A binary response (getFileContent's picture): the validator reads JSON
+// only, so the check is that the response's type is one the operation
+// declares for that status, and that it carries a body.
+async function validateBinary(pathKey: string, method: string, res: Response) {
+  const operation = spec.paths[pathKey][method];
+  const declared = Object.keys(operation.responses[String(res.status)]?.content ?? {});
+  const type = (res.headers.get("content-type") ?? "").split(";")[0].trim();
+  expect(declared, `${res.status} declares ${declared.join(", ")}`).toContain(type);
+  expect(declared).not.toContain("application/json");
+  expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0);
+}
+
+// The first bytes of each picture type the backend accepts.
+const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+
+function upload(body: BodyInit, contentType = "image/png") {
+  return fetch("http://localhost/api/files", { method: "POST", headers: { "content-type": contentType }, body });
+}
+
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
   server.resetHandlers();
@@ -343,6 +362,66 @@ describe("MSW mock conformance", () => {
     expect(res.status).toBe(200);
     await validate("/widgets/{id}/restore", "post", res);
     expect((await fetch("http://localhost/api/widgets/1")).status).toBe(200);
+  });
+
+  it("POST /files matches its 201 schema, the type read from the bytes, not the Content-Type", async () => {
+    const res = await upload(PNG, "image/jpeg");
+    expect(res.status).toBe(201);
+    expect((await res.clone().json()).contentType).toBe("image/png");
+    await validate("/files", "post", res);
+  });
+
+  it.each([
+    ["an SVG", new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"/>')],
+    ["a GIF", new TextEncoder().encode("GIF89a......")],
+    ["nothing", new Uint8Array()],
+  ])("POST /files matches its 422 schema on %s, keyed to file", async (_name, bytes) => {
+    const res = await upload(bytes);
+    expect(res.status).toBe(422);
+    expect((await res.clone().json()).detail[0].loc).toEqual(["body", "file"]);
+    await validate("/files", "post", res);
+  });
+
+  it("POST /files matches its 413 schema over 10 MB", async () => {
+    const big = new Uint8Array(10 * 1024 * 1024 + 1);
+    big.set(PNG);
+    const res = await upload(big);
+    expect(res.status).toBe(413);
+    await validate("/files", "post", res);
+  });
+
+  it("GET /files/:id matches its 200 and 404 schemas", async () => {
+    const { id } = await (await upload(PNG)).json();
+    const res = await fetch(`http://localhost/api/files/${id}`);
+    expect(res.status).toBe(200);
+    await validate("/files/{id}", "get", res);
+    const missing = await fetch("http://localhost/api/files/9999");
+    expect(missing.status).toBe(404);
+    await validate("/files/{id}", "get", missing);
+  });
+
+  it("GET /files/:id/content is the picture with its declared type and headers, size ignored; 404 matches its schema", async () => {
+    const { id } = await (await upload(PNG)).json();
+    for (const query of ["", "?size=thumb", "?size=large"]) {
+      const res = await fetch(`http://localhost/api/files/${id}/content${query}`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+      expect(res.headers.get("content-disposition")).toBe(`inline; filename="${id}.png"`);
+      expect(res.headers.get("content-security-policy")).toBe("default-src 'none'; sandbox");
+      expect(res.headers.get("cross-origin-resource-policy")).toBe("same-origin");
+      expect(res.headers.get("cache-control")).toBe("private, max-age=31536000, immutable");
+      expect(new Uint8Array(await res.clone().arrayBuffer())).toEqual(PNG);
+      await validateBinary("/files/{id}/content", "get", res);
+    }
+    const missing = await fetch("http://localhost/api/files/9999/content");
+    expect(missing.status).toBe(404);
+    await validate("/files/{id}/content", "get", missing);
+  });
+
+  it("files are reset with the rest of the mock data", async () => {
+    const { id } = await (await upload(PNG)).json();
+    resetMockData();
+    expect((await fetch(`http://localhost/api/files/${id}`)).status).toBe(404);
   });
 
   it("POST /widgets/:id/restore matches its 404 schema for a widget that is not deleted", async () => {

@@ -193,6 +193,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload a picture (the request body is the picture itself)
+         * @description The body is the picture's bytes, no multipart form; Content-Type is the browser's guess and is not trusted. The type is read from the first bytes: a JPEG, PNG or WebP image of at most 10 MB, stored as it is. Anything else (a GIF, an SVG, HTML, a PDF, nothing) is a 422 on file, over 10 MB a 413. Per user: only the uploader reads it back. A record or a text points at it by its content address (/api/files/{id}/content), as a widget's description does in its Markdown. Nothing deletes a file.
+         */
+        post: operations["uploadFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * Get an uploaded picture's record
+         * @description Another user's file is a 404, the same as a missing one.
+         */
+        get: operations["getFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * The picture's bytes, what an <img> loads
+         * @description Behind the session cookie, like every /api path; another user's file is a 404. Served as its stored type with X-Content-Type-Options nosniff, Content-Disposition inline under a name made from the id ({id}.jpg), Content-Security-Policy "default-src 'none'; sandbox", Cross-Origin-Resource-Policy same-origin, and Cache-Control "private, max-age=31536000, immutable": a file never changes, a new picture is a new id.
+         */
+        get: operations["getFileContent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/client-errors": {
         parameters: {
             query?: never;
@@ -462,6 +526,21 @@ export interface components {
         WidgetListResponse: {
             items: components["schemas"]["Widget"][];
             total: number;
+        };
+        /** @description An uploaded picture's record. Its bytes are at /files/{id}/content. Per user; the owner is never on the wire. */
+        File: {
+            readonly id: number;
+            /**
+             * @description The type read from the bytes at upload, and served as.
+             * @enum {string}
+             */
+            contentType: "image/jpeg" | "image/png" | "image/webp";
+            /** @description The size of the stored bytes, in bytes. */
+            byteSize: number;
+            /** @description Hex sha256 of the stored bytes. */
+            sha256: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         PushPublicKey: {
             /** @description The P-256 public key, base64url (applicationServerKey). */
@@ -959,6 +1038,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Widget"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    uploadFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+                "image/webp": string;
+            };
+        };
+        responses: {
+            /** @description Stored. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["File"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description The file is over 10 MB. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPErrorBody"];
+                };
+            };
+            422: components["responses"]["ValidationError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    getFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["File"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["ServerError"];
+        };
+    };
+    getFileContent: {
+        parameters: {
+            query?: {
+                /** @description Taken and ignored: there is one copy, served for either. The address is the same as an app's that keeps a thumbnail, so stored text never changes if one is added. */
+                size?: "large" | "thumb";
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The picture. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/webp": string;
                 };
             };
             401: components["responses"]["UnauthorizedError"];

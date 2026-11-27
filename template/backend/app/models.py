@@ -13,7 +13,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, Text, Time
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, Text, Time
 from sqlmodel import Field, Relationship, SQLModel
 
 from foundation_backend.versions import touch
@@ -239,3 +239,34 @@ class Widget(SQLModel, table=True):
     def set_tags(self, tags: list[WidgetTag]) -> None:
         """Replace the whole set — PATCH semantics for tags (openapi.yaml)."""
         self.tag_links = [WidgetTagLink(tag=tag) for tag in tags]
+
+
+class StoredFile(SQLModel, table=True):
+    """An uploaded picture's record (migration 0018): who uploaded it and
+    what its bytes are. The bytes are in `file_contents`, so reading this
+    row never loads the picture. Per user: another user's file is a plain
+    404, as a widget is. Nothing deletes one yet (docs/DEFERRED.md)."""
+
+    __tablename__ = "files"
+
+    id: int | None = Field(default=None, primary_key=True)
+    owner_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    # Sniffed from the bytes at upload (foundation_backend.uploads.image_type),
+    # never the name or the browser's type: image/jpeg, image/png or image/webp.
+    content_type: str = Field(max_length=50)
+    byte_size: int
+    sha256: str = Field(max_length=64, index=True)
+    created_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+
+
+class StoredFileContent(SQLModel, table=True):
+    """A file's bytes, one row per `files` row, apart so a list or a
+    record's read never pulls them. bytea on Postgres; the database backup
+    covers them, with no volume to keep."""
+
+    __tablename__ = "file_contents"
+
+    file_id: int = Field(
+        sa_column=Column(Integer, ForeignKey("files.id", ondelete="CASCADE"), primary_key=True)
+    )
+    data: bytes = Field(sa_column=Column(LargeBinary, nullable=False))

@@ -202,6 +202,41 @@ table as `pageHeader={<ListHeader … />}`. The header then ends on the
 card's right edge above a short table, and where the page ends above a
 wide one. A phone is unchanged, as is `width="full"`.
 
+## Adding picture uploads to an app (4.149)
+
+4.149 gives the template a reference for uploaded pictures (`/files`),
+and the packages the parts it stands on: `shrinkImage` in the npm
+package, `foundation_backend.uploads` in the backend package. Nothing
+changes in an app until it copies the reference; an app that already
+stores files its own way (Homebase) keeps its own. To add it, from the
+template at the release's tag (`docs/foundation/add-an-entity.md` "An
+image on a record" says what each part is):
+
+1. **Contract:** copy `/files`, `/files/{id}` and `/files/{id}/content`
+   and the `File` schema from `template/openapi.yaml`, then
+   `npm run gen:api`.
+2. **Gateway and tests:** `src/api/gateway/files.ts` and
+   `tests/gateway/files.test.ts`. Its `uploadImage` is the `upload` for
+   `ImageField` and `RichTextEditor`, through a mutation
+   (`src/routes/widgets/use-upload-image.ts`).
+3. **Mocks:** `src/mocks/files.ts`; add `...fileHandlers` to
+   `handlers.ts` and `resetFilesData()` to `resetMockData()`. Copy the
+   `/files` tests from `tests/mocks/conformance.test.ts` with its
+   `validateBinary`, which checks the picture response the JSON validator
+   can't read.
+4. **Backend:** `backend/app/routers/files.py` (included in `main.py`
+   under `/api`), `StoredFile` and `StoredFileContent` from
+   `backend/app/models.py`, `FileOut` from `backend/app/schemas.py`, the
+   migration (`0018_files.py`, renumbered after the app's last, with its
+   `COMMENT ON`s) and `backend/tests/test_files.py`. No new Python
+   dependency: the backend package's `uploads` is the standard library.
+5. **Deploy:** a proxy in front of the app must let a 10 MB body through
+   (`template/docs/deploy.md` "Pictures"); the database backup covers the
+   pictures.
+6. `npm run verify` and `npm run verify:backend`, and
+   `scripts/check-backend-postgres.sh` where Docker is (it uploads a
+   picture and reads it back from a real Postgres).
+
 ## End-to-end tests on the mocks
 
 An app's Playwright suite runs on MSW: every `/api/` request is answered
