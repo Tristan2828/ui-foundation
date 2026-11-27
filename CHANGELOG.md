@@ -79,6 +79,47 @@ router, models and a migration, and let a 10 MB body through the proxy.
 An app with its own file storage keeps it, and can call `shrinkImage` in
 its own upload.
 
+## 4.148.0 — Editing in place on a page of the app's own; the editor loaded ahead
+
+npm package and `ui-foundation-backend` 4.148.0 (the backend is unchanged
+apart from its version).
+
+- **`EditInPlaceScope`** runs editing in place on a page that is neither
+  a record's view nor a table, such as a notes screen that is nothing but
+  its text. `<EditableValue>`s inside it follow cell pattern 18 exactly as
+  on an `EntityView`: one value open at a time, autosave a pause after
+  typing, "Saving…" and "Saved", a refusal kept with its reason, Keep
+  Mine or Show Saved when the value changed elsewhere, and leaving the
+  page saves first, asking only when a save fails. It needs a data
+  router (its leave prompt uses the router's blocker).
+  - **One scope per page**, not one per value: each renders a leave
+    guard and a router holds one blocker at a time. One scope holds any
+    number of always-editable values, such as a notes app's tabs kept
+    mounted with only the one in front shown; a hidden one still saves.
+  - **A value that leaves mid-typing** (a tab closed, a pane unmounted)
+    still saves what was typed, at once.
+  - `<EditableValue>` outside every host now throws naming `EntityView`
+    and `EditInPlaceScope` (a `DataTable` hosts its rows' cells too).
+  - **Coverage:** the `app/EditInPlaceScope` stories (one note, and two
+    in one scope), `e2e/edit-in-place-scope.spec.ts`, axe in both
+    themes, and `tests/edit-in-place-scope.test.tsx`.
+- **`preloadRichTextEditor()`** starts loading the rich-text editor's
+  code before an editor is on screen, for an app whose first screen is
+  one. It returns nothing, never throws, is safe to call more than once,
+  and a failed load is left for the editor to meet when one mounts.
+  `RichTextEditor` loads through the same module, so the two share one
+  download (`tests/rich-text-load.test.ts`).
+- **cell-patterns.md** section 18 has "On a page of the app's own:
+  `EditInPlaceScope`".
+
+### How an app adopts it
+
+Bump both pins and run `npx ui-foundation sync`. Nothing changes for an
+app that doesn't use them. A page that edits in place outside an
+`EntityView` or a `DataTable` wraps its values in one `EditInPlaceScope`;
+an app that opens on an editor calls `preloadRichTextEditor()` in
+`main.tsx`.
+
 ## 4.147.0 — Calendar day names, the sidebar's page helpers, a hub row's line
 
 npm package and `ui-foundation-backend` 4.147.0 (the backend is unchanged

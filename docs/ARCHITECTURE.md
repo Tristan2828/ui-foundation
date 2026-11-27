@@ -365,7 +365,11 @@ Long text written as Markdown edits as formatted text (Notion-style), on
 the form and in place, through the package's `RichTextEditor`, built on
 Milkdown (`@milkdown/kit`, with `unified` and `remark-parse` imported
 directly; `packages/ui-foundation/deps-allowlist.json`). It is loaded on
-first use (`React.lazy`), so a view's own chunk doesn't grow.
+first use (`React.lazy`, through `rich-text-load.ts`), so a view's own
+chunk doesn't grow; an app whose first screen is an editor starts that
+load as it starts with `preloadRichTextEditor()`, which never throws.
+Editing in place is run by `EntityView`, `DataTable`, or, on a page of
+the app's own, `EditInPlaceScope` (cell pattern 18).
 
 **The bar:** notes are stored as Markdown, and saving must never rewrite
 what the person didn't change. Milkdown is faithful to meaning but writes
