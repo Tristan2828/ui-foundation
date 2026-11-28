@@ -193,6 +193,19 @@ test.describe('on a phone', () => {
     await expect(editor(page, 'formats')).toBeFocused()
   })
 
+  test('two quick presses on the row or the panel never zoom the page: no double-tap zoom there', async ({ page }) => {
+    await page.goto(FEATURES)
+    await tapText(page, 'formats')
+    await bar(page).getByRole('button', { name: 'All Formats' }).click()
+    const panel = page.getByRole('group', { name: 'All Formats' })
+    await expect(panel).toBeVisible()
+    // Safari zooms on a double-tap unless `touch-action` says the place
+    // only pans and pinches; a button pressed twice fast is one.
+    // Set on the row and the panel, so it holds for every button in them.
+    for (const place of [bar(page), panel])
+      expect(await place.evaluate((element) => getComputedStyle(element).touchAction)).toBe('manipulation')
+  })
+
   test('Insert opens the slash menu on a new line, and the menu fits above the row', async ({ page }) => {
     await page.goto(FEATURES)
     // A keyboard's worth of the window gone.

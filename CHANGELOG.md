@@ -7,6 +7,21 @@ published a patch, with its `release-smoke` result in the notes; those
 are listed on the
 [releases page](https://github.com/Tristan2828/ui-foundation/releases).
 
+## 4.155.1 — No double-tap zoom on the editor's keyboard bar
+
+npm package and `ui-foundation-backend` 4.155.1 (the backend is unchanged
+apart from its version). Found by the Quick Jot app on an iPhone.
+
+- **Two quick presses on the rich-text editor's keyboard bar no longer
+  zoom the page.** Safari took a button pressed twice fast (Indent, say)
+  for a double-tap and zoomed in: buttons at the row's end went out of
+  sight (Image), the page's right edge was cut off, and while the zoom
+  ran the row sat behind the keyboard's own bar. The row and the Aa
+  panel are `touch-action: manipulation` now; pinch zoom still works.
+  `e2e/rich-text-phone.spec.ts` checks both.
+
+Nothing to change in an app: update the package.
+
 ## 4.155.0 — Held keys inside the page's landmarks; a paste held with them
 
 npm package and `ui-foundation-backend` 4.155.0 (the backend is unchanged
