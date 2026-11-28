@@ -10,54 +10,12 @@ This is the only place a question for the developer goes, never a PR
 
 ## Open
 
-- **Quick Jot on the home server** (the app at `C:\Repos\quick-jot`).
-  Blocked: needs the developer, in this order. Nothing here can build an
-  image, push, or reach the server.
-  1. Create `Tristan2828/quick-jot` on GitHub, add it as `origin`, run
-     `git remote set-head origin --auto`, and push `main`.
-  2. Where Docker runs: `gh auth refresh -s write:packages`, then
-     `npm run publish:image`.
-  3. Make the GHCR package `quick-jot` public, or give the server pull
-     access.
-  4. In Homebase, review the local branch `claude/quick-jot-database`
-     (commit `e9e13f3f`, worktree
-     `C:\Repos\homebase\.claude\worktrees\quick-jot-db`, not pushed): the
-     `quick_jot` database and role beside every `palm_datebook` line in
-     `deploy/home-lab/`. Push it, merge it through a PR, then copy the
-     home-lab files to the server (`docs/home-lab.md` "Add an app's
-     database" step 1).
-  5. Add `QUICK_JOT_DB_PASSWORD` to the home-lab `.env`, then
-     `docker compose up -d --build` and run `10-create-databases.sh`
-     (step 2). Check the walls (step 3).
-  6. Create the Cloudflare tunnel `quick-jot` and a public hostname
-     pointing to `http://quick-jot:8000`.
-  7. In Compose Manager, create the stack `quick-jot` from
-     `deploy/unraid/compose.yml`, and its `.env` from `.env.example`:
-     `DATABASE_URL` with the password, the seed email and a real
-     password, the tunnel token, and optionally the GlitchTip DSN.
-  8. Compose Up and wait for healthy. Check
-     `https://<host>/build-info.json` (`api: real`, `schema: 0020`).
-  9. Paste `deploy/unraid/update-quick-jot.sh` as the `quick-jot-update`
-     User Script.
-  10. Run a backup, then `restore-drill quick_jot`. Re-paste the four
-      home-lab User Scripts and run `home-lab-status`; it should end
-      `STATUS OK`.
-  11. Smoke test on a phone.
-  12. Turn on TOTP: `docker exec -it quick_jot-quick-jot-1 sh -c 'cd
-      backend && python -m foundation_backend.scripts.enable_totp
-      <email>'`.
-  13. Install and pin the app (the app's README "Install").
-- **Quick Jot's backend has not run on Postgres.** Blocked: needs the
-  app's `scripts/check-backend-postgres.sh` run where Docker is (the
-  machine that built it has none). It was rewritten for notes and
-  pictures with no sign-up (a second account written to the database, a
-  note's byte-for-byte body, rename, the 409, search by name, delete and
-  restore, an upload read back, another account's 404) and has never
-  run. Its migrations 0018 (drop widgets), 0019 (notes) and 0020
-  (pictures) ran on SQLite stand-ins and as offline SQL only.
-- **Quick Jot, checks only a person can make.** Blocked: needs the
-  developer, once it's installed (nothing here can install a PWA or
-  drive a real phone):
+- **Quick Jot, checks only a person can make** (the app at
+  `C:\Repos\quick-jot`, live at `https://jot.tristanlab.online` with its
+  database, backups, scheduled checks and TOTP in place). Blocked: needs
+  the developer (nothing here can install a PWA or drive a real phone):
+  - Install and pin it on the PC and the phone (the app's README
+    "Install"), and use it on the phone once.
   - Edge and Chrome offer to install, and the icon looks right in the
     window, the taskbar, the Start menu and Alt+Tab (the manifest has an
     SVG, a 192 px, a 512 px and a maskable icon); the maskable one on an
@@ -89,16 +47,6 @@ This is the only place a question for the developer goes, never a PR
     stay app code until a second app wants a strip of open records.
   - Its phone checks run at 393 px; Pixel 7's own 412 px would be a
     slightly less strict check.
-
-- **The picture uploads reference has not run against Postgres here**
-  (4.149.0). Went ahead without it: the machine that built it has no
-  Docker, so `template/scripts/check-backend-postgres.sh` (which now
-  uploads a picture and reads it back byte for byte, the `bytea` column
-  through asyncpg) has not run. CI's `verify-backend` migrates a real
-  Postgres to `0018` and checks every new table and column has a
-  comment. Blocked: needs someone with Docker to run
-  `template/scripts/check-backend-postgres.sh` once; remove this item
-  when it passes.
 
 - **Print Notes on a real phone** ([#364](https://github.com/Tristan2828/ui-foundation/pull/364), 4.124.1).
   Blocked: needs someone to try Print Notes on Android Chrome and iOS
