@@ -10,25 +10,6 @@ This is the only place a question for the developer goes, never a PR
 
 ## Open
 
-- **Quick Jot, checks only a person can make** (the app at
-  `C:\Repos\quick-jot`, live at `https://jot.tristanlab.online` with its
-  database, backups, scheduled checks and TOTP in place). Blocked: needs
-  the developer (nothing here can install a PWA or drive a real phone):
-  - Install and pin it on the PC and the phone (the app's README
-    "Install"), and use it on the phone once.
-  - Edge and Chrome offer to install, and the icon looks right in the
-    window, the taskbar, the Start menu and Alt+Tab (the manifest has an
-    SVG, a 192 px, a 512 px and a maskable icon); the maskable one on an
-    Android launcher.
-  - In the installed window, Ctrl+T, Ctrl+W, Ctrl+Tab and
-    Ctrl+PageDown/PageUp reach the app (new, close, switch) rather than
-    doing nothing. Alt+N, Alt+W and Alt+PageDown/PageUp always do.
-  - The Start-menu shortcut's Shortcut key opens the app.
-  - On a real phone: the editor's bottom bar rides above the keyboard
-    and doesn't cover the text being typed; its buttons are big enough;
-    Hide Keyboard works.
-  - A real Ctrl+F over a folded toggle section (it isn't found: see
-    `DEFERRED.md` "Find in page doesn't see folded text").
 - **Quick Jot's own decisions** (from its plan; the app is its own repo,
   so they're recorded here). Went ahead with each:
   - Name and folder `quick-jot` in `C:\Repos`. Renaming means the
