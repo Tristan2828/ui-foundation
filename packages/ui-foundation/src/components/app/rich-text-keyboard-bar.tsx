@@ -20,6 +20,10 @@
 // - Its buttons are 44px, a finger's (the row is 48px tall, and the
 //   buttons between Aa and Hide keyboard scroll sideways on a narrow
 //   phone), on semantic tokens only.
+// - No double-tap zoom on the row or the panel (`touch-manipulation`):
+//   Safari takes two quick presses of a button for a double-tap and
+//   zooms the page, which pushes buttons off the row and leaves the row
+//   behind the keyboard until the zoom settles. Pinch zoom still works.
 //
 // Placed inside the field's element, not in a portal, like the floating
 // toolbar (rich-text-floating-toolbar.tsx says why): `position: fixed`,
@@ -242,7 +246,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
         aria-controls={controls}
         style={edge ? { top: bottom, left: edge.left, width: edge.width } : undefined}
         className={cn(
-          'fixed z-50 flex h-12 -translate-y-full items-center gap-0.5 border-t border-border bg-card px-1 text-card-foreground',
+          'fixed z-50 flex h-12 -translate-y-full touch-manipulation items-center gap-0.5 border-t border-border bg-card px-1 text-card-foreground',
           !shown && 'invisible',
         )}
       >
@@ -325,7 +329,7 @@ export function RichTextKeyboardBar({ view, state, readOnly, controls, onFormat,
           aria-label="All Formats"
           data-slot="rich-text-keyboard-panel"
           style={{ top: edge.bottom - panelHeight, left: edge.left, width: edge.width, height: panelHeight }}
-          className="fixed z-50 flex flex-col gap-3 overflow-y-auto bg-card px-3 py-3 text-card-foreground"
+          className="fixed z-50 flex touch-manipulation flex-col gap-3 overflow-y-auto bg-card px-3 py-3 text-card-foreground"
           onMouseDown={keep}
         >
           <p className="type-caption text-muted-foreground">Words</p>
